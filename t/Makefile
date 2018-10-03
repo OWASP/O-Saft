@@ -22,14 +22,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.22 18/09/30 19:12:30
+#?      @(#) Makefile 1.23 18/10/03 14:50:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.22
+_SID.test       = 1.23
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -54,8 +54,7 @@ endif
 #___________________________________________________________ default target __|
 
 # TODO: following targets are not fully generic, need to be adapted here
-help.test:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+help.test: help.HEAD
 	@echo $(MORE-cmds)    ; # no quotes!
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-warnings)
@@ -63,6 +62,10 @@ help.test:
 	@echo $(MORE-cgi)
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-ext)
+	@echo " $(_HELP_LINE_)"
+	@echo $(MORE-tcl)
+	@echo " $(_HELP_LINE_)"
+	@echo $(MORE-exit)
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-misc)
 	@echo " $(_HELP_LINE_)"
@@ -86,7 +89,10 @@ help.test.all:
 	@echo "  $(MAKE) t-critic"
 	@echo ""
 
-.PHONY: help.test help.test.all
+help.HEAD:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)"
+
+.PHONY: help.test help.test.all help.HEAD
 
 # FIXME: some of above HELP-* should be extracted from t/Makefile.*
 
@@ -97,6 +103,15 @@ help.test.all:
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
 
+# following may be redefined in included t/Makefiles*
+# TEST.init       = --header
+# TEST.args       =
+
+# macro for list of hostnames needs to be unique in each Makefile*
+# otherwise some targets in other Makefile* get confused
+#TEST.host       = localhost
+#TEST.hosts      =
+
 # following defined in ../Makefile
 # TEST.do  =
 # SRC.test =
@@ -105,20 +120,11 @@ TEST.logdir     = $(TEST.dir)/log
 # defined in other t/Makefile*
 # ALL.tests =
 
-# internal used tools (paths hardcoded!)
+# internal used tools and files (paths hardcoded!)
 EXE.bench       = t/o-saft_bench
 EXE.test.bunt   = t/test-bunt.pl.txt
 
 _TODAY_         = $(shell date +%Y""%m%d)
-
-# following may be redefined in included Makefiles
-# TEST.init       = --header
-# TEST.args       =
-
-# macro Lname for list of hostnames needs to be unique in each Makefile*
-# otherwise some targets in other Makefile* get confused
-#TEST.host       = localhost
-#TEST.hosts      =
 
 MORE-env        = " \
 \# Following variables are intended to be used on command line:$(_NL)\
@@ -127,10 +133,10 @@ MORE-env        = " \
 \#   TEST.init   - arguments and options always passed to EXE.pl; default: $(TEST.init)$(_NL)\
 \#   TEST.args   - arguments and options to be passed to EXE.pl per target$(_NL)\
 \#   TEST.host   - hostname to be used for tests (when only one is expected)$(_NL)\
-\#   TEST.hosts  - list of hostnames to perform tests$(_NL)\
+\#   TEST.hosts  - list of hostnames to perform tests with$(_NL)\
 \#   TEST.dir    - directory in which EXE.pl will be executed; default: $(TEST.dir)$(_NL)\
 \#   TEST.logdir - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
-\#   TEST.rc     - content of RC-file to be used by $(EXE.pl)$(_NL)\
+\#   TEST.rc     - content of RC-file to be used by EXE.pl: $(TEST.rc)$(_NL)\
 \#$(_NL)\
 \# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
 \#   $(EXE.pl)  .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
@@ -150,33 +156,41 @@ test,file-2:
 test_file-3:
 test.target: test.file-1 test,file-2 test_file-3
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
-	@echo '# show some private make variables:'
+	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
 	@echo '# $$(_SID.help)     = $(_SID.help)'
+	@echo '# $$(_SID.test)     = $(_SID.test)'
 	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
+	@echo '# $$(_SID.exit)     = $(_SID.exit)'
+	@echo '# $$(_SID.misc)     = $(_SID.misc)'
 	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
+	@echo '# $$(_SID.opt)      = $(_SID.opt)'
+	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
+	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
-	@echo '# $$(PWD.dir)L      = $(notdir $(PWD))'
+	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
 	@echo '# $$(TEST.dir)      = $(TEST.dir)'
 	@echo '# $$(TEST.logdir)   = $(TEST.logdir)'
+	@echo '# $$(TEST.host)     = $(TEST.host)'
+	@echo '# $$(TEST.hosts)    = $(TEST.hosts)'
 	@echo '# $$(ALL.Makefiles) = $(ALL.Makefiles)'
 	@echo '# $$(ALL.includes)  = $(ALL.includes)'
 	@echo '# show some make variables:'
-	@echo '# $$@  = $@ #'
-	@echo '# $$<  = $< #'
-	@echo '# $$?  = $? #'
-	@echo '# $$^  = $^ #'
-	@echo '# $$+  = $+ #'
-	@echo '# $$|  = $| #'
-	@echo '# $$%  = $% #'
-	@echo '# $$*  = $* #'
-	@echo '# $$>  = $> #'
-	@echo '# $$-  = $- #'
-	@echo '# $$D  = $D #'
-	@echo '# $$F  = $F #'
+	@echo '# $$@    = $@ #'
+	@echo '# $$<    = $< #'
+	@echo '# $$?    = $? #'
+	@echo '# $$^    = $^ #'
+	@echo '# $$+    = $+ #'
+	@echo '# $$|    = $| #'
+	@echo '# $$%    = $% #'
+	@echo '# $$*    = $* #'
+	@echo '# $$>    = $> #'
+	@echo '# $$-    = $- #'
+	@echo '# $$D    = $D #'
+	@echo '# $$F    = $F #'
 	@echo '# $$(MAKE)          = $(MAKE)'
 	@echo '# $$(CURDIR)        = $(CURDIR)'
 	@echo '# $$(MAKE_COMMAND)  = $(MAKE_COMMAND)'
@@ -224,29 +238,50 @@ _no-hosts:
 $(TEST.logdir):
 	@mkdir $@
 
-# Testing for messages (i.e **WARNING) works as follows:
+# Testing for messages or other strings (i.e **WARNING) works as follows:
 #   call $(EXE.pl) with command and/or options in question
-#   then search (grep) output for message (number in case of warnings)
+#   then search (grep) output for message (string)
 # For some behaviours of $(EXE.pl) a RC-file is required.
-# For testing all different warning-* targets, the pattern rule  message-% is
-# used, which gets the message number from the automatic variable $*  and the
-# arguments for $(SRC.pl) with following Makefile variables:
+# Different target rules can be mapped to the pattern rule message-%. It gets
+# the message string  from the automatic variable  $* , and all arguments for
+# $(EXE.pl) with following Makefile variables:
 #   $(TEST.init)    - command, options to be passed to $(EXE.pl)
 #   $(TEST.args)    - command, options and hostname to be passed to $(EXE.pl)
+#   $(TEST.rc)      - content of RC-file to be used by $(EXE.pl)
+# These variables can be set conditinally for each target, see example below.
+# Some tests are not yet implemented, or difficult to implement. In this case
+# $(TEST.args) contains a string starting with "TODO:". The  message-% target
+# tests the variable for this string and then simply prints it. Otherwise the
+# check will be performed (see  if - else - fi  in message-% rule).
+# The pattern rule succeeds (returns status 0)  if the pattern is found.  The
+# rule fails, if the pattern is not found. That's why it is very important to
+# define  TEST.args  propperly. Even the sequence of the arguments may count.
+#
+# Note:  even  _TMP.rc  is generated for each call, it will only be used when
+# requested with the  --rc=$(_TMP.rc)  option.
+# Note:  if  TEST.args  contains special characters, syntax errors may occour
+# when used in the shell. Quoting  TEST.args  is not possible because then it
+# becomes a single argument instead of discrete arguments. At least following
+# special characters should not be used:  ; & | # < > ` [ ]
+#
+# Example of Usage
+#       pattern rule:   warning-%
+#       target rule:    warning-049
+#       pattern:        049
+#       arguments:      TEST.args = +unknown_command +quit
+#   Example for the target rule with above settings will be:
+#       warning-%:      EXE.pl      = ../$(SRC.pl)
+#       warning-%:      TEST.init   = --init-option
+#       warning-049:    TEST.args   = +unknown_command +quit
+#   Map all pattern rules to message-% pattern rule (recipe need command)
+#       warning-%: message-%
+#               @echo -n ""
+#   The recipe in the pattern rule message-% will be:
+#       $(EXE.pl)    $(TEST.init)  $(TEST.args)           2>&1 | grep 049
+#   which finally evaluates to:
+#       ../o-saft.pl --init-option +unknown_command +quit 2>&1 | grep 049
 #                     +quit  command or  other command and hostname is needed
 #                     for testing the warning message
-#   $(TEST.rc)      - content of RC-file to be used by $(EXE.pl)
-# These variables are set conditinally for each target (see above).
-# Some tests are not yet implemented, or difficult to implement. In this case
-# $(TEST.args) contains a string starting with "TODO:". The  message-%  target
-# tests the variable for this string and then simply prints it. Otherwise the
-# check will be performed (see  if - else - fi  in target).
-# Note:  even '$(_TMP.rc)'  is generated for each call,  it will only be used
-# when requested with the  --rc=$(_TMP.rc)  option.
-# Note: if $(TEST.args) contains special characters, syntax errors may occour
-# when used in the shell. Quoting  $(TEST.args)  is not possible because then
-# it becomes one string instead of discrete arguments.
-# At least following special characters should not be used: ; & | # < > ` [ ]
 
 # target succeeds if message is there
 message-%:
@@ -264,9 +299,6 @@ message-%:
 # following removed from above, too noicy:
 #            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ;
 
-warning-%: message-%
-	@echo -n ""
-
 # target succeeds if message is missing
 # TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
@@ -281,7 +313,7 @@ no.message-%:
 # command may consist of space separated words like: "+info --header".
 # Hence each command is defined in the macro  TEST.args, which will be set for
 # an individual target, for example: testcmd-001 . We have one target for each
-# specific test case, which actually is alist of  commands and options for the
+# specific test case, which actually is a list of commands and options for the
 # tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above) is just
 # a number to make each target unique.
 # To feed the hostname to that target,  the target is defined as  pattern rule
@@ -297,38 +329,44 @@ no.message-%:
 # contain the hostname.
 # Unfortunatelly, this pattern contains  DDD_  (for example 001_host.some.tld)
 # as hostname.  This  DDD_  prefix must then be removed in the target command,
-# the  $(shell awk ...)  does the dirty work.
+# the  $(shell awk ...)  does the dirty work. in detail (as defined below):
+#       # pattern rule to handle all targets testcmd-DDD_HOSTNAME
+#       testcmd-%:
+#       #
+#       # remove prefix  DDD-  from hostname
+#       $(shell awk 'END{h="$*";sub(/^[^_]*-/,"",h);print h}' /dev/null)
+#       # or
+#       $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
+#       #   c00-aa.tld returns: aa.tld
 #
 # Note: following does not work (in GNUmake), hence the solution above:
-#     testcmd-no1: TEST.args  = +quit $*
-#     testcmd-no2: TEST.args := +quit $*
+#       testcmd-no1: TEST.args  = +quit $*
+#       testcmd-no2: TEST.args := +quit $*
 #
-# Summary:
-#     ### defined in t/Makefile.*
-#     # define list of hostnames
-#     TEST.hosts    = aa.tld  bb.tld
-#     # define the commands to be used for $(EXE.pl) in the target
-#     testcmd-00c-%: TEST.args = +cipher
-#     testcmd-00i-%: TEST.args = +info
-#
-#     ### defined below
-#     # pattern rule to handle all targets testcmd-DDD_HOSTNAME
-#     testcmd-%
-#
-#     # remove prefix  DDD-  from hostname
-#     $(shell awk 'END{h="$*";sub(/^[^_]*-/,"",h);print h}' /dev/null)
-#     # or
-#     $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
-#     #   00c-aa.tld returns: aa.tld
-#
-#     ### defined in t/Makefile.*
-#     # dynamically generate list of all testcmd-DDD  targets
-#     ALL.ext.cmd = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' t/Makefile.ext)
-#     #   returns: testcmd-00c testcmd-00i
-#
-#     # dynamically generate list of all testcmd-DDD for all hostnames
-#     ALL.by_host   = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
-#     #   returns: testcmd-00c_aa.tld testcmd-00i_aa.tld testcmd-00c_bb.tld testcmd_00i-bb.tld
+# Example of Usage
+#       pattern rule:   testcmd-%
+#       target rule:    testcmd-c00
+#       pattern:        00c_aa.tld
+#       arguments:      TEST.args = +cipher
+#       hosts tested:   aa.tld  bb.tld
+#   Example for the target rule in t/Makefile.* with above settings will be:
+#       # define list of hostnames
+#       TEST.hosts      = aa.tld  bb.tld
+#       # define targets
+#       testcmd-c%:     EXE.pl      = ../$(SRC.pl)
+#       testcmd-c%:     TEST.init   = --header
+#       #
+#       # define the commands to be used for $(EXE.pl) in the target
+#       testcmd-c00_%:  TEST.args   += +cipher --enabled
+#       testcmd-c01_%:  TEST.args   += +info
+#       #
+#       # dynamically generate list of all testcmd-DDD  targets
+#       ALL.ext.cmd     = $(shell awk -F_ '/^testcmd-c[0-9]/{print $$1}' t/Makefile.ext)
+#       #   returns: testcmd-c00 testcmd-c01
+#       #
+#       # dynamically generate list of all testcmd-DDD for all hostnames
+#       ALL.by_host     = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
+#       #   returns: testcmd-c00_aa.tld testcmd-c01_aa.tld testcmd-c00_bb.tld testcmd_c01-bb.tld
 
 testcmd-%:
 	@$(TARGET_VERBOSE)
