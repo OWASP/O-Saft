@@ -39,17 +39,18 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.13 18/10/03 14:59:21
+#?      @(#) Makefile.warnings 1.14 18/10/06 23:13:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.13
+_SID.warnings   = 1.14
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
+ALL.inc.type   += warning
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -67,43 +68,35 @@ endif
 #_____________________________________________________________________________
 #_________________________________________________________ testing warnings __|
 
-MORE-warnings    = " \
-\#               __________________________________________ test warnings _$(_NL)\
- help.test.warnings.all - print individual targets for testing warnings$(_NL)\
- test.warnings   - test **WARNING messages of '$(SRC.pl)'$(_NL)\
- test.warnings.log    - test **WARNING messages of '$(SRC.pl)' and compare with previous one$(_NL)\
- message-STR     - test for specific STR in output of '$(SRC.pl)'$(_NL)\
- warning-NR      - test for specific messages number NR of '$(SRC.pl)'$(_NL)\
- warnings.gen.template - generate template Makefile for testing warning messages$(_NL)\
- warnings.show.todo    - show not implemented tests for warnings$(_NL)\
+HELP.warnings    = "\
+\#              __________________________________________ test warnings _$(_NL)\
+ test.warnings          - test **WARNING messages of '$(SRC.pl)'$(_NL)\
+ test.warnings.log      - test **WARNING messages of '$(SRC.pl)' and compare with previous one$(_NL)\
+ message-STR            - test for specific STR in output of '$(SRC.pl)'$(_NL)\
+ warning-NR             - test for specific messages number NR of '$(SRC.pl)'$(_NL)\
+ warnings.gen.template  - generate template Makefile for testing warning messages$(_NL)\
+ warnings.show.todo     - show not implemented tests for warnings$(_NL)\
  warnings.show.difficult - show tests for warnings which are difficult to implement$(_NL)\
 \#$(_NL)\
 \# Hint: message-STR can test for any string in output, example$(_NL)\
 \#    make message-Certificate TEST.args='+cn localhost'$(_NL)\
 \#$(_NL)\
 \# To print all available individual  test-*  and  warning-*  targets, use:$(_NL)\
-\#    make e-ALL.warnings$(_NL)\
+\#    make e-ALL.test.warnings$(_NL)\
 \#    make help.test.all$(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make warning-042 $(_NL)\
 \#    make message-Certificate TEST.args='+cn localhost' $(_NL)\
-\#$(_NL)\
 "
 
+ALL.help.test  += $(_NL)$(HELP.warnings)
+
 HELP-help.test.warnings = print targets for testing WARNING messages
-help.test.warnings:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-warnings) ; # no quotes!
 
-help.test.warnings.all:
-	@echo "# individual targets for testing warnings"
-	@$(MAKE) -s echo=ALL.warnings  echo
-	@echo ""
-	@echo "# for more details, use following target"
-	@echo "  $(MAKE) t-warn"
-
-.PHONY: help.test.warnings
+HELP.warnings.all   = "\
+\# for more details, use:  $(MAKE) t-warn$(_NL)\
+"
 
 # testing warning messages
 _TMP.rc         = /tmp/o-saft.tmprc
@@ -249,7 +242,8 @@ warning-841: TEST.args  = TODO: used openssl version differs from compiled Net:S
 warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
 warning-861: TEST.args  = TODO: not all ciphers listed
 
-ALL.warnings    = $(shell awk -F: '/^warning-...:/{print $$1}' $(_MYSELF.warnings) | sort -u)
+#ALL.testwarnings   = # same as ALL.test.warnings
+ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{print $$1}' $(_MYSELF.warnings) | sort -u)
 
 warning-%: message-%
 	@echo -n ""
@@ -277,13 +271,13 @@ warnings.show.todo:
 warnings.show.difficult:
 	grep "^warning..*difficult" $(TEST.dir)/Makefile
 
-test.warnings: $(ALL.warnings)
+test.warnings: $(ALL.test.warnings)
 
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.13: make test.warnings.log" > $@
-	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
+	@echo "# Makefile.warnings 1.14: make test.warnings.log" > $@
+	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
@@ -307,5 +301,5 @@ test.warnings.log: $(_WARNING.log)
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests       += $(ALL.warnings)
+ALL.tests       += $(ALL.test.warnings)
 ALL.tests.logs  += test.warnings.log
