@@ -17,22 +17,24 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.12 18/08/10 01:26:36
+#?      @(#) Makefile.cgi 1.13 18/10/06 23:19:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.12
+_SID.cgi        = 1.13
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
+ALL.inc.type   += cgi
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-cgi-target-is-default: help.test.cgi
+    # see help.test.%
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -43,7 +45,7 @@ ifdef TEST.hosts
     TEST.cgi.hosts  = $(TEST.hosts)
 endif
 
-MORE-cgi        = " \
+HELP.cgi        = "\
 \#               ___________________________________________ testing .cgi _$(_NL)\
  test.cgi            - test all bad IPs, hostnames and options for $(SRC.cgi) $(_NL)\
  test.cgi.log        - same as test.cgi but store output in $(TEST.logdir)/ $(_NL)\
@@ -66,12 +68,9 @@ MORE-cgi        = " \
 \# there are no  test.cgi.*.log targets, please use  test.cgi.log  instead $(_NL)\
 "
 
-HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
-help.test.cgi:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-cgi)      ; # no quotes!
+ALL.help.test  += $(_NL)$(HELP.cgi)
 
-.PHONY: help.test.cgi
+HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -110,6 +109,12 @@ test.cgi.badIPv6    = \
 # TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
 #       fc00:21ab:22cd:2323::1 fdff:21ab:22cd:2323::1
 
+HELP.cgi.internal   = "\
+\# test.cgi.badhosts: $(test.cgi.badhosts)$(_NL)\
+\# test.cgi.badIPs:   $(test.cgi.badIPs)$(_NL)\
+\# test.cgi.goodIPs:  $(test.cgi.goodIPs)$(_NL)\
+"
+
 # TODO: *goodIP*  not yet ready
 test.cgi.goodIPv4   =
 
@@ -123,6 +128,14 @@ ALL.cgi.badhosts    = $(test.cgi.badhosts:%=test.cgibad_%)
 ALL.cgi.badIPs      = $(test.cgi.badIPs:%=test.cgibad_%)
 ALL.cgi.goodIPs     = $(test.cgi.goodIPs:%=test.cgigood_%)
 
+HELP.cgi.all        = "\
+\# targets for testing bad hosts:$(_NL)\
+$(ALL.cgi.badhosts)$(_NL)\
+\# targets for testing bad IPs:$(_NL)\
+$(ALL.cgi.badIPs)$(_NL)\
+\# targets for testing good IPs:$(_NL)\
+$(ALL.cgi.goodIPs)$(_NL)\
+"
 
 # Testing for invalid arguments, hostnames and IPs uses following command:
 #       o-saft.cgi --cgi +quit --exit=BEGIN0 --host=10.0.0.1
@@ -204,6 +217,7 @@ test.cgigood%:
 
 ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
 ALL.cgi.badopt  = $(ALL.testcgiopt:%=%any.FQDN)
+ALL.testcgi     = $(ALL.testcgiopt)
 ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
@@ -217,7 +231,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.12: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.13: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
