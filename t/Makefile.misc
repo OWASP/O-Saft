@@ -18,17 +18,18 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.4 18/07/17 16:49:38
+#?      @(#) Makefile.misc 1.5 18/10/06 23:21:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.4
+_SID.misc       = 1.5
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
+ALL.inc.type   += misc
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -39,7 +40,7 @@ ifeq (,$(_SID.test))
     -include t/Makefile.misc
 endif
 
-MORE-misc        = " \
+HELP.misc        = "\
 \#               ____________________________________________ misc. tests _$(_NL)\
  test.bench      - call '$(EXE.bench)' for some benchmarks$(_NL)\
  test.bench.log  - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
@@ -47,12 +48,9 @@ MORE-misc        = " \
  test.docker     - test docker image$(_NL)\
 "
 
-HELP-help.test.misc = print misc. testing targets
-help.test.misc:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-misc)    ; # no quotes!
+ALL.help.test  += $(_NL)$(HELP.misc)
 
-.PHONY: help.test.misc
+HELP-help.test.misc = print misc. testing targets
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
