@@ -39,6 +39,7 @@
 #.      or an IP) to be tested with $(EXE.pl).
 #.      The term  argument(s)  is used, when (command line) arguments for to be
 #.      passed to $(EXE.pl) are meant.
+#.      The terms  macro  and variable  are used interchangeable.
 #.
 #.      Note that the O-Saft's documentation uses  target  for the system to be
 #.      tested.
@@ -53,14 +54,13 @@
 #.            example:   HELP-doc  contains the description of the target  doc
 #.          * variable names with prefix  HELP-_  are treated as header texts,
 #.            example:   HELP-_help = ____ targets for help about Makefile _
-#.          * variables used in  @echo  commands, are named with prefix  MORE-
 #.
 #.      Targets in the makefiles are grouped.  Each group is headed by the help
 #.      texts for the targets.  The first line of this group should be a header
 #.      text describing the group. Example:
 #.          HELP-_group     = _______________________________ some targets _
 #.          HELP-help       = print overview of all targets
-#.          HELP-doc        = same as help, but evaluates variables
+#.          HELP-doc        = same as help, but evaluates macros
 #.      These variables are used by the  help  and  doc  target.  Each of these
 #.      lines is printed as follows (from example above):
 #.                 _______________________________ some targets _
@@ -74,6 +74,8 @@
 #.      All variable names used for help texts use - (dash) instead of . (dot).
 #.      This simplifies matching the names, as the dash is not a meta character
 #.      in RegEx and so must not be escaped.
+#.      Exception is the  HELP.something  variable, which defines the help text
+#.      for the corresponding Makefile itself (it must not be matched).
 #.
 #.      Unfortunately some of the macros use variables of the makefile,  like
 #.      $(T), while other macros must use the TAB character verbatim,  which is
@@ -180,6 +182,7 @@
 #.          make -f t/Makefile.cgi targets.me
 #.          make -f t/Makefile.cgi macros.me
 #.          make -f t/Makefile.cgi s-ALL.test.cgi
+#.          ...
 #.
 #.   Most included Makefiles.SUFFIX contain very limited comments.  For general
 #.   details of their functionality, see t/Makefile.template .
@@ -189,14 +192,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.19 18/08/10 23:54:30
+#?      @(#) Makefile.help 1.20 18/10/06 23:01:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.19
+_SID.help       = 1.20
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -240,13 +243,16 @@ EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
+# NOTE all EXE.* macros above cannot be shown using echo, eval or show target
+#      they all may return errors like: /bin/sh: 1: Syntax error:...
+
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
 
 # no HELP-* macros are used herein to avoid printing their content with "make"
 
 
-MORE-help       = " \
+HELP.help       = " \
 \#              __________________________ targets for help about Makefile _$(_NL)\
  macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
  targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
@@ -263,17 +269,28 @@ $(_NL)\
  help.test      - print documentation about test targets$(_NL)\
  help.critic    - print documentation about perlcritic targets$(_NL)\
  help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
+ help.HEAD      - print header line for documentation texts$(_NL)\
+$(_NL)\
 "
 
-help.doc:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+ALL.help        +=$(HELP.help)
+# TODO: auch zu ALL.help.test ??
+
+help.help: help.HEAD
 	@$(EXE.help) $(_MYSELF.help)
-	@echo $(MORE-help) ; # no quotes!
+	@echo $(HELP.help) ; # no quotes!
+
+help.doc: help.help
+#  legacy alias
 
 help.syntax:
 	$(EXE.syntax) Makefile.help
 
-.PHONY: help.doc help.help help.syntax
+help.HEAD:
+	@echo "$(_HELP_HEADER_)"
+
+.PHONY: help.doc help.help help.syntax help.HEAD
+
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
 # NOTE: following target is adapted to be use in echo, show, macro and target
