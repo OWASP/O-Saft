@@ -17,23 +17,24 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.9 18/07/13 16:55:20
+#?      @(#) Makefile.cmds 1.10 18/10/06 23:15:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.9
+_SID.cmds       = 1.10
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
+ALL.inc.type   += cmd
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-cmds-target-is-default: help.test.cmds
-    # otherwise the first target from included files would be used
+    # see help.test.%
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -44,9 +45,8 @@ ifdef TEST.hosts
     TEST.cmds.hosts = $(TEST.hosts)
 endif
 
-MORE-cmds       = " \
-\#               ________________________________________ summary targets _$(_NL)\
- help.test.cmds.all - print available individual targets for testing commands$(_NL)\
+HELP.cmds       = "\
+\#               __________________________________________ test commands _$(_NL)\
  test.help       - test  help   commands and options$(_NL)\
  test.info       - test  info   commands with $(TEST.cmds.hosts)$(_NL)\
  test.check      - test  check  commands with $(TEST.cmds.hosts)$(_NL)\
@@ -76,6 +76,8 @@ MORE-cmds       = " \
 \# Some of the examples above use  localhost  as hostname by default.$(_NL)\
 "
 
+ALL.help.test  += $(_NL)$(HELP.cmds)
+
 # TODO: implement following
 #     make test-+help-+VERSION
 #     make test-+help-+VERSION TEST.init=--norc
@@ -83,27 +85,7 @@ MORE-cmds       = " \
 #     make testrun-'+cn --traceCMD'
 #     make testrun-'+cipher --enabled'
 
-HELP-help.test.cmds = print targets for testing $(SRC.pl) commands and options
-help.test.cmds:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-cmds)    ; # no quotes!
-
-help.test.cmds.all:
-	@echo "# individual targets for tests"
-	@$(MAKE) -s echo=ALL.test.cmds     echo
-	@echo ""
-	@$(MAKE) -s echo=ALL.test.cmds.log echo
-	@echo ""
-
-test.cmds.internal:
-	@echo "# TEST.file:       $(TEST.file)"
-	@echo "# TEST.cmds.hosts: $(TEST.cmds.hosts)"
-	@echo "# ALL.testinfo:    $(words $(ALL.testinfo))  : $(ALL.testinfo)"
-	@echo "# ALL.test.info:   $(words $(ALL.test.info)) : $(ALL.test.info)"
-	@echo "# ALL.test.cmds:   $(words $(ALL.test.cmds)) : $(ALL.test.cmds)"
-	@echo "# -------------------------------------------------------------"
-
-.PHONY: help.test.cmds help.test.cmds.all test.cmds.internal
+HELP-help.test.cmds = print targets for testing '$(SRC.pl)' commands
 
 testcmd-c%:     EXE.pl      = ../$(SRC.pl)
 testcmd-c%:     TEST.init   = --header
@@ -197,6 +179,21 @@ ALL.test.cipher = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcipher:%=%$(host))
 ALL.test.summary= $(foreach host,$(TEST.cmds.hosts),$(ALL.testsummary:%=%$(host)))
 ALL.test.local  = $(foreach host,$(TEST.cmds.hosts),$(ALL.testlocal:%=%$(host)))
 
+HELP.cmds.internal  = "\
+\# ALL.test.help:    $(ALL.test.help)$(_NL)\
+\# ALL.test.info:    $(ALL.test.info)$(_NL)\
+\# ALL.test.vuln:    $(ALL.test.vuln)$(_NL)\
+\# ALL.test.check:   $(ALL.test.check)$(_NL)\
+\# ALL.test.cipher:  $(ALL.test.cipher)$(_NL)\
+"
+
+ALL.testcmds    = \
+		  $(ALL.testhelp) \
+		  $(ALL.testinfo) \
+		  $(ALL.testcheck) \
+		  $(ALL.testcipher) \
+		  $(ALL.testsummary) \
+		  $(ALL.testlocal)
 ALL.test.cmds   = \
 		  $(ALL.test.help) \
 		  $(ALL.test.info) \
@@ -215,7 +212,7 @@ testrun-%: testcmd-%
 	@echo -n ""
 
 # TODO: use target _no-hosts
-# for debugging add test.cmds.internal to the target's dependencies
+# for debugging add help.cmds.internal to the target's dependencies
 test.help:          $(ALL.test.help)
 test.info:          $(ALL.test.info)
 test.check:         $(ALL.test.check)
@@ -233,7 +230,7 @@ test.local.log:     $(ALL.test.info:%=%.log)
 test.cmds.all:      $(ALL.test.cmds)
 test.cmds.log:      $(ALL.test.cmds.log)
 
-test.cmds.all-%:    test.cmds.internal test.cmds.all
+test.cmds.all-%:    help.test.cmds.internal test.cmds.all
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
