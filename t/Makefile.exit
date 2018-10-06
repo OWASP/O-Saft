@@ -17,17 +17,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.1 18/08/10 22:42:20
+#?      @(#) Makefile.exit 1.2 18/10/06 23:17:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.1
+_SID.exit       = 1.2
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
+ALL.inc.type   += exit
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -43,22 +44,18 @@ ifdef TEST.hosts
     TEST.exit.hosts = $(TEST.hosts)
 endif
 
-MORE-exit       = " \
+HELP.exit       = "\
 \#               _______________________________________ testing --exit=* _$(_NL)\
  test.exit       - test --exit=* options$(_NL)\
  test.exit.log   - same as test.exit but store output in t/test.exit.log$(_NL)\
 \#$(_NL)\
 \# Examples (get list of all targets): $(_NL)\
 \#    make s-ALL.test.exit $(_NL)\
-\#$(_NL)\
 "
 
-HELP-help.test.exit  = print targets for testing $(SRC.pl) commands and options
-help.test.exit:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-exit)   ; # no quotes!
+ALL.help.test  += $(_NL)$(HELP.exit)
 
-.PHONY: help.test.exit
+HELP-help.test.exit = print targets for testing '$(SRC.pl)' --exit= option
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -101,13 +98,14 @@ test.exit-END:      TEST.args  += --exit=END
 test.exit-%: message-%
 	@echo -n ""
 
+#ALL.testexit       = same as ALL.test.exit
 ALL.test.exit       = $(test.exit.labels:%=test.exit-%)
 
 test.exit:          $(ALL.test.exit)
 
 _EXIT.log           = $(TEST.logdir)/test.exit.log-$(_TODAY_)
 $(_EXIT.log):
-	@echo "# Makefile.exit 1.1: make test.exit.log" > $@
+	@echo "# Makefile.exit 1.2: make test.exit.log" > $@
 	@$(MAKE) -s $(ALL.test.exit) >> $@ 2>&1
 test.exit.log:      $(_EXIT.log)
 
