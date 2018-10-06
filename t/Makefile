@@ -16,20 +16,42 @@
 #       For details please see
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
+#    Naming conventions for t/Makefile*
+#       * macro names have the prefix  TEST.
+#       * target names for public use have the prefix  test.
+#       * individual, special targets have the prefix  test  (exceptions exist)
+#
+#    Special macros in t/Makefile*
+#       ALL.includes    - list of Makefiles
+#       ALL.inc.type    - type of tests (should be suffix of Makefile's name)
+#       ALL.help.test   - list of documentation (help) texts
+#       _SID.TYPE       - version number
+#       _MYSELF.TYPE    - name of current file
+#       HELP.TYPE       - documentation (help) text for the corresponding file
+#       HELP.TYPE.all   - list of all targets for the corresponding file
+#       HELP.TYPE.internal  - some more documentation (help) text
+#           where  TYPE  is the suffix of the Makefile's filename
+#
+#    Special targets for documentation (help) in t/Makefile*
+#       help.test.%     - print individual documentation using $(HELP.TYPE)
+#       help.test.%.all - print all targets using $(HELP.TYPE.all)
+#       help.test.%.internal - print details using $(HELP.TYPE.internal)
+#           where  %  is the suffix of the Makefile's filename
+#
 #       TODO:
 #          * include Makefile.* should be generic
 #          * unify test.warnings.log and test.tests.log (should use same target)
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.23 18/10/03 14:50:39
+#?      @(#) Makefile 1.24 18/10/06 23:07:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.23
+_SID.test       = 1.24
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -53,48 +75,58 @@ endif
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
-# TODO: following targets are not fully generic, need to be adapted here
 help.test: help.HEAD
-	@echo $(MORE-cmds)    ; # no quotes!
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-warnings)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-cgi)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-ext)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-tcl)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-exit)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-misc)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-critic)
-	@echo " $(_HELP_LINE_)"
-	@echo $(MORE-env)
-	@echo " $(_HELP_LINE_)"
+	@echo $(ALL.help.test)
 
 help.test.all:
-	@echo "# individual targets for tests"
+	@echo " # individual targets for tests"
 	@$(MAKE) -s echo=ALL.tests     echo
 	@echo ""
+	@echo " # targets which write results to logfiles"
 	@$(MAKE) -s echo=ALL.tests.log echo
 	@echo ""
-	@echo "# individual targets for testing warnings"
-	@$(MAKE) -s echo=ALL.warnings  echo
-	@echo ""
-	@echo "# for more details, use following targets"
-	@echo "  $(MAKE) t-test"
-	@echo "  $(MAKE) t-warn"
-	@echo "  $(MAKE) t-critic"
-	@echo ""
+	@echo " # for more target and details, following targets can be used"
+	@echo $(foreach target,$(ALL.inc.type),t-$(target))
 
-help.HEAD:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)"
-
-.PHONY: help.test help.test.all help.HEAD
+.PHONY: help.test help.test.all
 
 # FIXME: some of above HELP-* should be extracted from t/Makefile.*
+
+#_____________________________________________________________________________
+#____________________________________________ target for help in t/Makefile*__|
+
+help.test.%: help.HEAD
+	@$(TARGET_VERBOSE)
+	@echo $(HELP.$*)
+
+help.test.%.all:
+	@echo " # individual targets for testing $* :"
+	@echo $(ALL.test.$*)
+	@echo ""
+	@echo $(HELP.$*.all)
+
+help.test.%.internal:
+	@echo " # TEST.file:       $(TEST.file)"
+	@echo " # TEST.init.$*:    $(TEST.init.$*)"
+	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
+	@echo " # ALL.test$*:     $(words $(ALL.test$*))  : $(ALL.test$*)"
+	@echo " # ALL.test.$*:    $(words $(ALL.test.$*)) : $(ALL.test.$*)"
+	@echo $(HELP.$*.internal)
+	@echo " # -------------------------------------------------------------"
+
+# TODO:  some alias because suffix differs from type
+help.test.cmd.all:     help.test.cmds.all
+help.test.warning.all: help.test.warnings.all
+help.test.cmd.internal:     help.test.cmds.internal
+help.test.warning.internal: help.test.warnings.internal
+
+help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
+help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
+help.test.targets:
+	@$(MAKE) -s $(help-test-all) $(help-test-internal)
+
+.PHONY: help.test.targets
+
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -126,7 +158,7 @@ EXE.test.bunt   = t/test-bunt.pl.txt
 
 _TODAY_         = $(shell date +%Y""%m%d)
 
-MORE-env        = " \
+HELP.test       = " \
 \# Following variables are intended to be used on command line:$(_NL)\
 \#$(_NL)\
 \#   EXE.pl      - program to perform tests, default: $(EXE.pl)$(_NL)\
@@ -139,12 +171,12 @@ MORE-env        = " \
 \#   TEST.rc     - content of RC-file to be used by EXE.pl: $(TEST.rc)$(_NL)\
 \#$(_NL)\
 \# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
-\#   $(EXE.pl)  .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
+\#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
 \# which are used by EXE.pl or other tools used for the tests.$(_NL)\
-\# The test targets call  EXE.pl  without a path, so it must be found in the$(_NL)\
-\# PATH  environment variable (which should contain .)$(_NL)\
 "
 #  $(SRC.rc)  may not be defined here, hence hardcoded
+
+ALL.help.test   += $(_NL)$(HELP.test)
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
