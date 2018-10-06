@@ -17,17 +17,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.5 18/07/13 17:08:03
+#?      @(#) Makefile.tcl 1.6 18/10/06 23:20:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.5
+_SID.tcl        = 1.6
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
+ALL.inc.type   += tcl
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -44,32 +45,15 @@ ifdef TEST.hosts
 endif
 
 
-MORE-tcl         = " \
+HELP.tcl         = "\
 \#               ______________________________________________ GUI tests _$(_NL)\
- help.test.tcl.all  - print all targets$(_NL)\
  test.tcl        - test functionality of $(SRC.tcl)$(_NL)\
  test.tcl.log    - same as test.tcl but store output in $(TEST.logdir)/$(_NL)\
 "
 
-HELP-help.test.tcl  = print targets for GUI testing
-help.test.tcl:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-tcl)    ; # no quotes!
+ALL.help.test  += $(_NL)$(HELP.tcl)
 
-help.test.tcl.all:
-	@echo "# list of all targets:"
-	@echo "$(ALL.test.tcl)"                                                 
-	@echo "#"
-
-test.tcl.internal:
-	@echo "# TEST.file:       $(TEST.file)"
-	@echo "# TEST.tcl.hosts:  $(TEST.tcl.hosts)"
-	@echo "# ALL.testtcl:     $(words $(ALL.testtcl))  : $(ALL.testtcl)"
-	@echo "# ALL.test.tcl:    $(words $(ALL.test.tcl)) : $(ALL.test.tcl)"
-	@echo "# testcmd-tcl%:    TEST.init = +quit"
-	@echo "# -------------------------------------------------------------"
-
-.PHONY: help.test.tcl test.tcl.internal
+HELP-help.test.tcl  = print targets for testing GUI '$(Project).tcl'
 
 testcmd-tcl%:     EXE.pl      = ../o-saft.tcl
 testcmd-tcl%:     TEST.init   = +quit
