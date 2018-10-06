@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.36 18/09/27 07:55:56
+#?      @(#) Makefile 1.37 18/10/06 23:03:02
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.36
+_SID            = 1.37
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -271,11 +271,12 @@ ALL.Makefiles   = \
 		  $(SRC.make) Makefile.help \
 		  $(TEST.dir)/Makefile          $(TEST.dir)/Makefile.inc \
 		  $(TEST.dir)/Makefile.opt      $(TEST.dir)/Makefile.cmds \
-		  $(TEST.dir)/Makefile.cgi      $(TEST.dir)/Makefile.tcl \
 		  $(TEST.dir)/Makefile.ext      $(TEST.dir)/Makefile.exit \
-		  $(TEST.dir)/Makefile.critic   $(TEST.dir)/Makefile.misc \
-		  $(TEST.dir)/Makefile.warnings $(TEST.dir)/Makefile.template \
+		  $(TEST.dir)/Makefile.cgi      $(TEST.dir)/Makefile.tcl \
+		  $(TEST.dir)/Makefile.warnings $(TEST.dir)/Makefile.misc \
+		  $(TEST.dir)/Makefile.critic   $(TEST.dir)/Makefile.template \
 		  $(TEST.dir)/Makefile.FQDN
+# NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
 ALL.test        = $(SRC.test)
@@ -307,11 +308,14 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.36
+_INST.text      = generated from Makefile 1.37
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
+
+# generate targets to print HELP texts
+_HELP.targets   = $(shell $(EXE.eval) $(ALL.Makefiles))
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -326,7 +330,7 @@ default:
 
 doc:
 	@$(TARGET_VERBOSE)
-	@$(MAKE) -s e-_HELP_HEADER_ `$(EXE.eval) $(ALL.Makefiles)`
+	@$(MAKE) -s e-_HELP_HEADER_ $(_HELP.targets)
 
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
@@ -413,8 +417,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.36
-tar:     GREP_EDIT = 1.36
+GREP_EDIT = 1.37
+tar:     GREP_EDIT = 1.37
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
