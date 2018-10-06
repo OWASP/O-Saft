@@ -19,23 +19,23 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.1 18/09/27 07:44:16
+#?      @(#) Makefile.opt 1.2 18/10/06 23:16:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.1
+_SID.opt        = 1.2
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
+ALL.inc.type   += opt
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-opt-target-is-default: help.test.opt
-    # otherwise the first target from included files would be used
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -46,34 +46,18 @@ ifdef TEST.hosts
     TEST.opt.hosts  = $(TEST.hosts)
 endif
 
-MORE-opt        = " \
-\#               ________________________________________ summary targets _$(_NL)\
- help.test.opt.all - print available individual targets for testing options$(_NL)\
+HELP.opt        = "\
+\#               ________________________________________ testing options _$(_NL)\
  test.opt        - test various alias options$(_NL)\
  test.opt.log    - same as test.opt but store output in t/testcmd-CMD.log$(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make s-ALL.test.opt $(_NL)\
-\#$(_NL)\
 "
 
-HELP-help.test.opt  = print targets for testing $(SRC.pl) commands and options
-help.test.opt:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-opt)    ; # no quotes!
+ALL.help.test  += $(_NL)$(HELP.opt)
 
-help.test.opt.all:
-	@echo "# individual targets for tests"
-	@$(MAKE) -s echo=ALL.test.opt     echo
-	@echo ""
-
-test.opt.internal:
-	@echo "# TEST.file:       $(TEST.file)"
-	@echo "# TEST.opt.hosts: $(TEST.opt.hosts)"
-	@echo "# ALL.test.opt:    $(words $(ALL.test.opt))  : $(ALL.test.opt)"
-	@echo "# -------------------------------------------------------------"
-
-.PHONY: help.test.opt help.test.opt.all test.opt.internal
+HELP-help.test.opt  = print targets for testing '$(SRC.pl)' options
 
 testopt-alias%: EXE.pl      = ../$(SRC.pl)
 testopt-alias%: EXE.pl      = ../yeast.pl
@@ -97,10 +81,9 @@ testopt-alias_HOST0:     TEST.args  += --exit=HOST0 +cn ::1 ::244
 # yeast.pl --exit=HOST0 +cn demo demo:42 egal --port 23 localhost ::1/erkannt_aber_falsch "[::266]" --port=22 "[::244]:32/egal" ::1:333/x/ambigious_port_falsch
 
 testopt-alias_%: message-%
-	@echo "x"
+	@echo "# testopt-alias_%"
 
 #       message-"enabled= 1"
-# note that . inside // below is a meta character
 # note: no sort because we want the sequence as defined above
 ALL.testopt     = $(shell awk -F: '/^testopt-alias_[^%]/   {print $$1}' $(_MYSELF.opt))
 
