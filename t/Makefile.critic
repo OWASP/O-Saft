@@ -21,16 +21,18 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.3 18/09/30 20:56:19
+#?      @(#) Makefile.critic 1.4 18/10/06 23:12:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.3
+_SID.critic     = 1.4
 
-ALL.includes   += t/Makefile.critic
+_MYSELF.critic  = t/Makefile.critic
+ALL.includes   += $(_MYSELF.critic)
+ALL.inc.type   += critic
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -63,16 +65,9 @@ _CRITIC.verb10o = --verbose '%f: $(_CRITIC.verb10)'
 CRITIC.opt      = $(_CRITIC.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
 
-#_____________________________________________________________________________
-#___________________________________________________________ default target __|
+HELP-help.test.critic = print targets for using perlcritic
 
-HELP-help.critic= print targets for using perlcritic with $(Project)
-help.test.critic:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-critic)   ; # no quotes!
-
-.PHONY: help.critic
-
+# some aliases
 help.critic: help.test.critic
 critic.help: help.test.critic
 criticdoc:   help.test.critic
@@ -80,7 +75,7 @@ criticdoc:   help.test.critic
 #_____________________________________________________________________________
 #__________________________________________________ targets for testing cgi __|
 
-MORE-critic     = " \
+HELP.critic     = "\
 \#              ________________________________ targets for code quality _$(_NL)\
  critic         - check files with perlcritic $(_NL)\
  critic345      - check files with perlcritic for severity 3,4,5 using t/critic_345.sh $(_NL)\
@@ -121,6 +116,9 @@ MORE-critic     = " \
 \#   * perlcritic uses '$(CRITIC.dir)/$(CRITIC.rc)'$(_NL)\
 \# See also '$(CONTRIB.dir)/critic.sh'$(_NL)\
 "
+
+ALL.help.test  += $(_NL)$(HELP.critic)
+
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
 
