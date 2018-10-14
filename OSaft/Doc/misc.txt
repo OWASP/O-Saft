@@ -1,5 +1,7 @@
 
-# SID	@(#) misc.txt 1.1 18/01/10 21:53:16
+# SID	@(#) misc.txt 1.2 18/10/14 21:39:13
+
+## miscellaneous observations and texts (som in German only)
 
     # Additional informations:
 OCSP
@@ -81,4 +83,15 @@ SRI - Subresource Integrity
                    # Representation and Verification of Domain-Based Application Service
                    # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
                    # Certificates in the Context of Transport Layer Security (TLS)
+
+CIPHER Output (cipherscan)
+    # prio  ciphersuite                  protocols  pfs                 curves
+    # 1     ECDHE-RSA-AES256-GCM-SHA384  TLSv1.2    ECDH,P-521,521bits  secp521r1,secp384r1,prime256v1
+
+CIPHER Output (sslscan)
+    # Preferred TLSv1.2  256 bits  ECDHE-RSA-AES256-GCM-SHA384   Curve P-521 DHE 521
+    # Accepted  TLSv1.2  256 bits  ECDHE-RSA-AES256-SHA          Curve P-521 DHE 521
+
+Certificate Output
+    # Certificate: untrusted, 2048 bits, sha256WithRSAEncryption signature
 
