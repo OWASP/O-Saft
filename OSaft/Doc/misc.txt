@@ -1,0 +1,84 @@
+
+# SID	@(#) misc.txt 1.1 18/01/10 21:53:16
+
+    # Additional informations:
+OCSP
+    # cat some.crl | openssl crl -text -inform der -noout
+    # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
+    # SPDY - SPDY Protocol : http://www.chromium.org/spdy/spdy-protocol
+ALPN
+    #        https://tools.ietf.org/html/rfc7301
+    #        ExtensionType Values 16
+    #        ProtocolNameList:
+    #        Protocol:  HTTP/1.1
+    #           Identification Sequence: http/1.1
+    #        Protocol:  SPDY/1
+    #           Identification Sequence: spdy/1
+    #        Protocol:  SPDY/2
+    #           Identification Sequence: spdy/2
+    #        Protocol:  SPDY/3
+    #           Identification Sequence: spdy/3
+    #        Application-Layer Protocol Negotiation (ALPN) is available with
+    #        Net::SSLeay 1.56+ and +openssl-1.0.2+.
+    #        Check support with: 'IO::Socket::SSL->can_alpn()'.
+    #        Note that some client implementations may encounter problems if
+    #        both NPN and ALPN are +specified. Since ALPN is intended as a
+    #        replacement for NPN, try providing ALPN protocols +then fall back
+    #        to NPN if that fails.
+HSTS
+    #        Strict-Transport-Security: max-age=16070400; includeSubDomains
+    #        Apache config:
+    #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
+    # SNI apache: https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
+    #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host.
+    #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
+Resumption
+    # TLS session resumption problem with session ticket
+    #        see https://www.imperialviolet.org/2011/11/22/forwardsecret.html
+    #        "Since the session ticket contains the state of the session, and
+    #         thus keys that can decrypt the session, it too must be protected
+    #         by ephemeral keys. But, in order for session resumption to be
+    #         effective, the keys protecting the session ticket have to be kept
+    #         around for a certain amount of time: the idea of session resumption
+    #         is that you can resume the session in the future, and you can't
+    #         do that if the server can't decrypt the ticket!
+    #         So the ephemeral, session ticket keys have to be distributed to
+    #         all the frontend machines, without being written to any kind of
+    #         persistent storage, and frequently rotated."
+    #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
+    #
+HPKP
+
+SRI - Subresource Integrity
+    #        supported by: Chrome 45, Firefox 43, Opera 32
+    #        Note that SRI is SSL/TLS-related but security-related
+
+    # zu RFC 2412:
+    #           alle *DH* sind im Prinzip PFS.
+    #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
+    #           also flüchtige, vergängliche Schlüssel steht
+    #           D.H. ECDHE_* und DHE_* an den Anfang der Cipherliste stellen, z.B.
+    #                TLS_ECDHE_RSA_WITH_RC4_128_SHA
+    #                TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+    #                TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+    #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
+    # zu RFC 4366
+                   # AKID - authority key identifier
+                   # Server name Indication (SNI): server_name
+                   # Maximum Fragment Length Negotiation: max_fragment_length
+                   # Client Certificate URLs: client_certificate_url
+                   # Trusted CA Indication: trusted_ca_keys
+                   # Truncated HMAC: truncated_hmac
+                   # Certificate Status Request (i.e. OCSP stapling): status_request
+                   # Error Alerts
+    # zu RFC 6066
+                   # PkiPath
+                   # Truncated CA keys (value 3)
+                   # Truncated HMAC (value 4)
+                   # (Certificate) Status Request (value 5)
+                   # OCSP stapling mechanism
+    # zu RFC 6125
+                   # Representation and Verification of Domain-Based Application Service
+                   # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
+                   # Certificates in the Context of Transport Layer Security (TLS)
+
