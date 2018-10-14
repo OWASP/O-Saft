@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.37 18/10/06 23:03:02
+#?      @(#) Makefile 1.38 18/10/14 21:52:48
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.37
+_SID            = 1.38
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -148,6 +148,7 @@ _CIPHER         = \
 		  _ciphers_openssl_low.pm \
 		  _ciphers_openssl_medium.pm \
 		  _ciphers_openssl_high.pm
+# add to SRC.pm  $(_CIPHER:%=OSaft/%)  when used
 OSAFT.pm        = Ciphers.pm error_handler.pm
 USR.pm          = \
 		  $(Project)-dbx.pm \
@@ -156,7 +157,6 @@ USR.pm          = \
 SRC.pm          = \
 		  osaft.pm \
 		  $(NET.pm:%=Net/%)   \
-		  $(_CIPHER:%=OSaft/%) \
 		  $(OSAFT.pm:%=OSaft/%) \
 		  $(USR.pm) \
 		  $(OSD.pm)
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.37
+_INST.text      = generated from Makefile 1.38
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -417,8 +417,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.37
-tar:     GREP_EDIT = 1.37
+GREP_EDIT = 1.38
+tar:     GREP_EDIT = 1.38
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
