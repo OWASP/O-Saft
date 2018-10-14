@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.38 18/10/14 21:52:48
+#?      @(#) Makefile 1.39 18/10/14 22:27:59
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.38
+_SID            = 1.39
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.38
+_INST.text      = generated from Makefile 1.39
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -353,10 +353,11 @@ clean:
 	-rm -r --interactive=never $(ALL.gen)
 clear:  clean
 
+# target calls installed $(SRC.pl) to test general functionality
 install: $(GEN.inst) $(INSTALL.dir)
 	@$(TARGET_VERBOSE)
 	$(GEN.inst) $(INSTALL.dir) \
-	    && $(SRC.pl) --no-warning --tracearg +quit > /dev/null
+	    && $(INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
@@ -417,8 +418,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.38
-tar:     GREP_EDIT = 1.38
+GREP_EDIT = 1.39
+tar:     GREP_EDIT = 1.39
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
