@@ -355,8 +355,8 @@ clear:  clean
 
 install: $(GEN.inst) $(INSTALL.dir)
 	@$(TARGET_VERBOSE)
-	$(GEN.inst) $(INSTALL.dir) \
-	    && $(SRC.pl) --no-warning --tracearg +quit > /dev/null
+	sh $(GEN.inst) $(INSTALL.dir) \
+	    && perl $(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
