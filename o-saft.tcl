@@ -152,6 +152,8 @@ exec wish "$0" ${1+"$@"}
 #.      --tip   use own tooltip
 #.      --trace use Tcl's trace to trace proc calls
 #?      --load=FILE read FILE and show in result TAB
+#?      --id=ID     use Docker image ID (registry:tag); default: owasp/o-saft
+#?      --tag=TAG   use Docker image ID with tag; default: (empty)
 #?      --docker    use o-saft-docker instead of o-saft.pl
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
@@ -377,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.176 Sommer Edition 2018
+#?      @(#) 1.177 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -447,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.176 18/09/30 13:37:39 Sommer Edition 2018}
-set cfg(VERSION) {1.176}
+set cfg(SID)    {@(#) o-saft.tcl 1.177 18/10/16 23:06:57 Sommer Edition 2018}
+set cfg(VERSION) {1.177}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3165,7 +3167,9 @@ foreach arg $argv {
         {--img}     { set   cfg(bstyle) "image";}
         {--text}    { set   cfg(bstyle) "text"; }
         {--tip}     { set   cfg(TIP)    1;  }
-        --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
+        --id=*      { set   prg(docker-id)  [regsub {^--id=}   $arg {}]; }
+        --tag=*     { set   prg(docker-tag) [regsub {^--tag=}  $arg {}]; }
+        --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --post=*    { set   prg(post) $arg; }
         {--h}       -
         {--help}    { puts [osaft_about "HELP"]; exit; }
