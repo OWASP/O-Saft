@@ -154,7 +154,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.26 18/07/16 16:51:46" \
+	SID="@(#) Dockerfile 1.27 18/10/16 23:38:13" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -167,18 +167,18 @@ ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 ENV     BUILD_DIR       /tmp_src
 ENV     WORK_DIR	/
 
-# Install required packages, development tools and libs
-#RUN apk update && \   # no update neded and not wanted
-RUN     apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
-		 gcc make musl-dev linux-headers \
-		 krb5-dev zlib-dev perl perl-readonly perl-dev \
-		 ca-certificates
-	# perl-io-socket-ssl perl-net-ssleay
-
 WORKDIR	$WORK_DIR
 
-# Pull, build and install enhanced openssl
 RUN \
+	#== Install required packages, development tools and libs
+	#apk update && \   # no update neded and not wanted
+	apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
+		gcc make musl-dev linux-headers \
+		krb5-dev zlib-dev perl perl-readonly perl-dev \
+		ca-certificates			&& \
+		# perl-io-socket-ssl perl-net-ssleay
+
+	#== Pull, build and install enhanced openssl
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
@@ -240,10 +240,9 @@ RUN \
 	# cleanup
 	apk  del --purge gmp-dev lksctp-tools-dev && \
 	cd    $WORK_DIR				&& \
-	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL
+	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
 
-# Pull, build and install Net::SSLeay
-RUN \
+	#== Pull, build and install Net::SSLeay
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
@@ -265,10 +264,9 @@ RUN \
 		# installation in (default) /usr/local, hence no PREFIX=
 	make && make test && make install	&& \
 	cd    $WORK_DIR				&& \
-	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY
+	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 
-# Pull, build and install IO::Socket::SSL
-RUN \
+	#== Pull, build and install IO::Socket::SSL
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SOCKET -O $OSAFT_VM_TAR_SOCKET && \
 	# check sha256 if there is one
@@ -280,10 +278,9 @@ RUN \
 	echo "n" | perl Makefile.PL INC=-I$OPENSSL_DIR/include	&& \
 	make && make test && make install	&& \
 	cd    $WORK_DIR				&& \
-	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET
+	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
 
-# Pull and install O-Saft
-RUN \
+	#== Pull and install O-Saft
 	cd    $WORK_DIR				&& \
 	mkdir -p $OSAFT_DIR			&& \
 	adduser -D -h ${OSAFT_DIR} osaft	&& \
@@ -295,19 +292,22 @@ RUN \
 	\
 	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
 	# handle master directory from github, mv to $OSAFT_DIR
-	[ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           $OSAFT_DIR/	&& \
-	[ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  $OSAFT_DIR/	&& \
-	[ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/ 	&& \
+	# checks fail sometimes, hence in a sub-shell
+	(\
+	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           $OSAFT_DIR/ ; \
+	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  $OSAFT_DIR/ ; \
+	  [ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/ 	; \
+	  exit 0 ; \
+	) && \
 	chown -R root:root   $OSAFT_DIR		&& \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
 	cp       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
 	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl && \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
-	rm    -f $OSAFT_VM_TAR_OSAFT
+	rm    -f $OSAFT_VM_TAR_OSAFT 		&& \
 
-# Cleanup
-RUN \
+	#== Cleanup
 	apk del --purge gcc make musl-dev linux-headers perl-dev
 	    # do not delete  krb5-dev zlib-dev  because we need
 	    #  libkrb5.so.3, libk5crypto.so.3 and libz.so to run openssl
