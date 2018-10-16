@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.177 Sommer Edition 2018
+#?      @(#) 1.178 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.177 18/10/16 23:06:57 Sommer Edition 2018}
-set cfg(VERSION) {1.177}
+set cfg(SID)    {@(#) o-saft.tcl 1.178 18/10/16 23:20:44 Sommer Edition 2018}
+set cfg(VERSION) {1.178}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3080,7 +3080,7 @@ proc osaft_exec   {parent cmd} {
             lappend do $idx
         }
     } else {
-        set do $cmd
+        lappend do $cmd
     }
     foreach {idx val} [array get cfg] {     # collect selected options
         if {[regexp {^[^-]} $idx]}  { continue };# want options only
