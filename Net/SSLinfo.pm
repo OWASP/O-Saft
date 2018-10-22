@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.09.28',
+    SSLINFO_VERSION => '18.10.18',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.215 18/09/28 21:52:42',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.216 18/10/23 00:15:28',
 };
 
 ######################################################## public documentation #
@@ -1337,7 +1337,7 @@ sub _ssleay_get     {
 
     my $ret = '';
     if ($key =~ 'serial') {
-print "#SERIAL# $key #\n";
+#dbx# print "#SERIAL# $key #\n";
 # TODO: dead code as Net::SSLeay::X509_get_serialNumber() does not really return an integer
         $ret = Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509));
         return $ret if($key eq 'serial_hex');
@@ -3606,7 +3606,8 @@ sub verify_altname  {
     return "No alternate name defined in certificate" if ('' eq $cname);
     _trace("verify_altname: $cname");
     foreach my $alt (split(/ /, $cname)) {
-        last if ($alt =~ m/^\s*$/);
+        # list of strings like: DNS:some.tld DNS:other.tld email:who@some.tld
+        next if ($alt =~ m/^\s*$/);
         my ($type, $name) = split(/:/, $alt);
 #dbx# print "#ALT# $alt: ($type, $name)";
 # TODO: implement IP and URI; see also o-saft.pl: _checkwildcards()
@@ -3621,10 +3622,13 @@ sub verify_altname  {
             $rex =~ s/(\*)/[^.]*/;
         }
         _trace("verify_altname: $host =~ $rex ");
-        if ($host =~ /^$rex$/) {
-            $match = 'matches';
-            $cname = $alt;   # only show matching name
+        if ($host  =~ /^$rex$/) {
+            $match =  'matches';
+            $cname =  $alt;   # only show matching name
+            $cname =~ s/^[a-zA-Z0-9]+://;   # remove leading type, i.e. DNS:
             last;
+        # else
+            # $cname still contains type like DNS:
         }
     }
     _trace("verify_altname() done.");
