@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.6 18/08/21 22:53:28
+# SID	@(#) rfc.txt 1.7 18/10/28 07:57:35
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -7,7 +7,6 @@
 #	http://tools.ietf.org/html/rfcXXXX
 #	http://tools.ietf.org/rfc/rfcXXXX.txt
 url	http://tools.ietf.org/
-6167	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 6101	SSL Version 3.0
 2246	TLS Version 1.0 (with Cipher Suites)
 4346	TLS Version 1.1 (with Cipher Suites)
@@ -46,31 +45,32 @@ url	http://tools.ietf.org/
 2437	PKCS#1: RSA Cryptography Specifications Version 2.0
 3447	PKCS#1: RSA Cryptography Specifications Version 2.1
 8017	PKCS#1: RSA Cryptography Specifications Version 2.2
+2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
+3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
+4279	TLSPSK: Pre-Shared Key Ciphersuites for TLS
 5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2007
 6091	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2011
+3711	The Secure Real-time Transport Protocol (SRTP)
+6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
-3749	TLS Compression Method
+3749	TLS Compression Method (obsolete)
 3943	TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)
+4749	TLS Compression Methods
 3546	TLS Extensions (obsolete)
 4366	TLS Extensions
-4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
-5116	An Interface and Algorithms for Authenticated Encryption
-4749	TLS Compression Methods
-5077	TLS session resumption without Server-Side State
 5746	TLS Extension: Renegotiation Indication Extension
 5764	TLS Extension: Secure Real-time Transport Protocol (SRTP)
 5929	TLS Extension: Channel Bindings
 6066	TLS Extension: Extension Definitions
+6520	TLS Extension: Heartbeat
 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
 7633	TLS Extension: Feature Extension: Must Staple
 8449	TLS Extension: Record Size Limit
-6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
-3711	The Secure Real-time Transport Protocol (SRTP)
-6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
-6520	TLS Extensions: Heartbeat
+5077	TLS session resumption without Server-Side State
 6961	TLS Multiple Certificate Status Request Extension
 7627	TLS Session Hash and Extended Master Secret Extension
+6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 6460	NSA Suite B Profile for TLS
 2560	Online Certificate Status Protocol (OCSP, obsolete)
 6267	Online Certificate Status Protocol Algorithm Agility (OCSP, obsolete)
@@ -84,13 +84,11 @@ url	http://tools.ietf.org/
 5480	X509 PKI Elliptic Curve Cryptography Subject
 5758	X509 PKI Additional Algorithms and Identifiers for DSA and ECDSA
 6960	X509 Online Certificate Status Protocol (OCSP)
-2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
-3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
 4132	Addition of Camellia Cipher Suites to TLS
 4162	Addition of SEED Cipher Suites to TLS
-4279	TLSPSK: Pre-Shared Key Ciphersuites for TLS
 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
+4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
 5054	Secure Remote Password (SRP) Protocol for TLS Authentication
 5114	Additional Diffie-Hellman Groups for Use with IETF Standards
@@ -139,3 +137,7 @@ url	http://tools.ietf.org/
 4086	Randomness Requirements for Security
 4107	Guidelines for Cryptographic Key Management
 8032	Edwards-Curve Digital Signature Algorithm (EdDSA)
+7710	Captive Portal Using DHCP
+8484	DNS over HTTPS (DoH)
+8467	Padding for DoH und DoT
+
