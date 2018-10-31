@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.14 18/09/30 12:44:57
+# SID   @(#) help.txt 1.15 18/10/31 01:07:01
 
 NAME
 
@@ -149,6 +149,17 @@ CONCEPTS
         learn a new tool or to install "newer" software first.
         However, the user "should do something" if necessary depending on the
         reported results.
+
+    Results
+
+        Results of checks are marked  'yes'  or 'no'.  This leaves the proper
+        interpretation, if the result is "good" or "bad", to the user.
+        Background:  it is not always possible to rate a result as  "good" or
+        "bad" or "insecure" or whatever. That's why  O-Saft  can not give the
+        "the best" or a "proper" recomendation. In practice it depends on the
+        context what a recomendation, or countermeasure should be. That's why
+        all results are marked  'yes'  or  'no'  if considered "questionable"
+        or "not good" (for example according other checks).
 
         ... more comming soon ...
 
@@ -1436,6 +1447,14 @@ OPTIONS
           Name of protocol to be added to list of  next protocol negotiations
           (NPN), which is used for any connection to the targets.
           See  --cipher-npn=NAME  also.
+
+      --ssl-compression --compression
+
+          Use SSL option "compression" for connection.
+
+      --no-ssl-compression --no-compression
+
+          Use SSL option "no compression" for connection (default: don't use)
 
       --no-reconnect
 
