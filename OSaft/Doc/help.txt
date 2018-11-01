@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.15 18/10/31 01:07:01
+# SID   @(#) help.txt 1.16 18/11/02 00:37:32
 
 NAME
 
@@ -883,6 +883,10 @@ OPTIONS
       --help=todo
 
           Show known problems and bugs.
+
+      --help=exit
+
+          Show possible  --exit=KEY  options. Used for debugging only.
 
       --help=program.code
 
