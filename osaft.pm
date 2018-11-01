@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.10.31',  # official version number of this file
+    OSAFT_VERSION   => '18.11.01',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.148 18/11/01 14:48:39',
+    OSAFT_SID   => '@(#) osaft.pm 1.149 18/11/01 18:40:03',
 
 };
 
@@ -1373,7 +1373,7 @@ our %cfg = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
-    'compression'   => 1,       # 0: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+    'no_comp'       => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
     'sni_name'      => undef,   # if set, name to be used for connection with SNI
                                 # must be set to $host if undef and 'usesni'=1 (see above)
                                 # all other strings are used verbatim, even empty one
