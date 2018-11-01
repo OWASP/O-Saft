@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.218 18/11/01 13:47:40',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.219 18/11/01 14:46:18',
 };
 
 ######################################################## public documentation #
@@ -860,10 +860,12 @@ my %_OpenSSL_opt = (    # openssl capabilities
     # openssl has various capabilities which can be used with options.
     # Depending on the version of openssl, these options are available or not.
     # The data structure contains the important options, each as key where its
-    # value is is 1 if the option is available at openssl.
+    # value is  1  if the option is available at openssl.
     # Currently only options for openssl's  s_client  command are supported.
     # This data structure is for one openssl command. More than one command is
     # not expected, not usefull, hence it is thread save.
+    # NOTE:  some options are present in different spellings because different
+    #        openssl version use different spellings, grrr.
     'done'          => 0, # set to 1 if initialized
     'data'          => '',# contains output from "openssl s_client -help"
     #--------------+------------
@@ -874,6 +876,8 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-nextprotoneg' => 0,
     '-reconnect'    => 0,
     '-fallback_scsv'=> 0,
+    '-comp'         => 0,
+    '-no_comp'      => 0,
     '-no_ticket'    => 0,
     '-no_tlsext'    => 0,
     '-serverinfo'   => 0,
@@ -885,20 +889,36 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-bugs'         => 0,
     '-key'          => 0,
     '-msg'          => 0,
+    '-nbio'         => 0,
     '-psk'          => 0,
     '-psk_identity' => 0,
     '-pause'        => 0,
+    '-prexit'       => 0,
     '-proxy'        => 0,
+    '-quiet'        => 0,
+    '-sigalgs'      => 0,
     '-state'        => 0,
     '-status'       => 0,
-    '-sigalgs'      => 0,
-    '-client_sigalgs'       => 0,
+    '-strict'       => 0,
+    '-client_sigalgs'           => 0,
     '-nbio_test'    => 0,
+    '-record_padding'           => 0,
     '-tlsextdebug'  => 0,
-    '-legacy_renegotiation' => 0,
+    '-no_renegotiation'         => 0,
+    '-legacyrenegotiation'      => 0,
+    '-legacy_renegotiation'     => 0,
+    '-legacy_server_connect'    => 0,
+    '-no_legacy_server_connect' => 0,
     '-CAfile'       => 0,
     '-CApath'       => 0,
     #--------------+------------
+    # options in server mode
+    #--------------+------------
+    #'-anti_replay'  => 0,
+    #'-no_anti_replay'           => 0,
+    #'-dhparam'      => 0,
+    #'-prioritize_chacha'        => 0,
+    #'-no_resumption_on_reneg'   => 0,
 );
 
 my %_SSLmap = ( # map libssl's constants to speaking names
@@ -1909,7 +1929,7 @@ sub s_client_check  {
     # store data very simple: set value to 1 if option appears in output
     foreach my $key (keys %_OpenSSL_opt) {
         next if ($key !~ m/^-/);    # ensure that only options are set
-        $_OpenSSL_opt{$key} = grep{/^ *$key\s/} split("\n", $_OpenSSL_opt{'data'});
+        $_OpenSSL_opt{$key} = grep{/^ *$key\s/} split("\n", $_OpenSSL_opt{'data'}); # returns 1 or 0
     }
     $_OpenSSL_opt{'-npn'} = $_OpenSSL_opt{'-nextprotoneg'}; # -npn is an alias
     $_OpenSSL_opt{'done'} = 1;
