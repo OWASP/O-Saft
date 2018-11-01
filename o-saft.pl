@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.813 18/09/30 21:10:08",
-    STR_VERSION => "18.09.29",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.814 18/11/01 19:06:22",
+    STR_VERSION => "18.11.01",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -2311,7 +2311,7 @@ sub _enable_sclient     {
     # SEE Note:OpenSSL s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
-    my $txt = $cfg{'openssl'}->{$opt}[1];
+    my $txt = $cfg{'openssl'}->{$opt}[1] || STR_UNDEF; # my be undefined
     my $val = $cfg{'openssl'}->{$opt}[0];   # 1 if supported
     if ($val == 0) {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
@@ -7251,7 +7251,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(J|-logjam)$/)       { $arg = '+logjam';         } # alias: testssl.sh
     if ($arg =~ /^-(D|-drown)$/)        { $arg = '+drown';          } # alias: testssl.sh
     if ($arg =~ /^--(p?fs|nsa)$/)       { $arg = '+pfs';            } # alias: testssl.sh
-    if ($arg =~ /^--(rc4|appelbaum)$/)  { $arg = '+pfs';            } # alias: testssl.sh
+    if ($arg =~ /^--(?:rc4|appelbaum)$/){ $arg = '+pfs';            } # alias: testssl.sh
     if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # alias: testssl.sh
     if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # alias: sslyze, testssl.sh
     if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # alias: sslyze
@@ -7297,7 +7297,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
-    if ($arg =~ /^--trace(@|key)/i)     { $cfg{'traceKEY'}++;       } # ..
+    if ($arg =~ /^--trace(?:@|key)/i)   { $cfg{'traceKEY'}++;       } # ..
     if ($arg =~ /^--traceme/i)          { $cfg{'traceME'}++;        } # ..
     if ($arg =~ /^--tracenotme/i)       { $cfg{'traceME'}--;        } # ..
     if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
@@ -7306,7 +7306,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--timerelative')      { $cfg{'time_absolut'} = 0; }
     if ($arg eq  '--linuxdebug')        { $cfg{'--linux_debug'}++;  }
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
-    if ($arg =~ /^--exp(erimental)?$/)  { $cfg{'experimental'} = 1; }
+    if ($arg =~ /^--exp(?:erimental)?$/){ $cfg{'experimental'} = 1; }
     if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
     if ($arg eq  '--filesclient')       { $typ = 'FILE_SCLIENT';    }
     if ($arg eq  '--fileciphers')       { $typ = 'FILE_CIPHERS';    }
@@ -7352,6 +7352,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--nonpn')             { $cfg{'usenpn'}    = 0;    }
     if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'usenpn'}    = 1;    } # openssl
     if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
+    if ($arg =~ /^--?comp(?:ression)?$/){ $cfg{'no_comp'}   = 0;    } # openssl s_client -comp
+    if ($arg =~ /^--?nocomp(ression)?$/){ $cfg{'no_comp'}   = 1;    } # openssl s_client -no_comp
     if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
     if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
     if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
@@ -7964,6 +7966,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::slowly           = $cfg{'slowly'};
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
+    $Net::SSLinfo::no_compression   = $cfg{'no_comp'};
     $Net::SSLinfo::no_cert          = $cfg{'no_cert'};
     $Net::SSLinfo::no_cert_txt      = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case      = $cfg{'ignorecase'};
