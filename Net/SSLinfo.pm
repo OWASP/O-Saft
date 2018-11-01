@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.10.31',
+    SSLINFO_VERSION => '18.11.01',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.217 18/11/01 10:19:14',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.218 18/11/01 13:47:40',
 };
 
 ######################################################## public documentation #
@@ -158,6 +158,10 @@ Value will not be used at all is set C<undef>.
 Depth of peer certificate verification; default: 9
 
 Value will not be used at all if set C<undef>.
+
+=item $Net::SSLinfo::op_compression
+
+Set SSL/TLS option to use compression; default: 1
 
 =item $Net::SSLinfo::ignore_handshake
 
@@ -688,6 +692,7 @@ $Net::SSLinfo::proxyuser   = '';# password for proxy authentication (Basic or Di
 $Net::SSLinfo::proxyauth   = '';# authentication string used for proxy
 $Net::SSLinfo::method      = '';# used Net::SSLeay::*_method
 $Net::SSLinfo::socket_reuse= 1; # 0: close and reopen socket for each connection
+$Net::SSLinfo::op_compression   = 0; # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
@@ -1537,16 +1542,22 @@ sub _ssleay_ctx_new {
             # specified protocol version, like SSLv3_method()
         }
         #2.3. set protocol options
+        my  $options  = &Net::SSLeay::OP_ALL;
+            # sets all options, even those for all protocol versions (which are removed later)
+        if (0 < $Net::SSLinfo::op_compression) {
+            $options |= &Net::SSLeay::OP_NO_COMPRESSION;
+            # default:  OP_ALL does not contain OP_NO_COMPRESSION
+            # this is ok as we want to detect if targets support compression,
+            # disabling compression must be requested with special option
+        }
+            #test# # quick$dirty disable SSL_OP_TLSEXT_PADDING 0x00000010L (see ssl.h)
+            #test# $options ^= 0x00000010;
+            # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+            # should also be set now
         $src = 'Net::SSLeay::CTX_set_options()';
             #   Net::SSLeay::CTX_set_options(); # can not fail according description!
                 Net::SSLeay::CTX_set_options($ctx, 0); # reset options
-                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
-# TODO:         Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL | &Net::SSLeay::OP_NO_COMPRESSION);
-                #test# # quick$dirty disable SSL_OP_TLSEXT_PADDING 0x00000010L (see ssl.h)
-                #test# Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL ^ 0x00000010);
-            # sets all options, even those for all protocol versions (which are removed later)
-            # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-            # should also be set now
+                Net::SSLeay::CTX_set_options($ctx, $options);
         $src = 'Net::SSLeay::CTX_set_timeout()';
         ($old = Net::SSLeay::CTX_set_timeout($ctx, $Net::SSLinfo::timeout_sec)) or do {$err = $!; } and last;
         _trace("_ssleay_ctx_new ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
@@ -1556,7 +1567,6 @@ sub _ssleay_ctx_new {
                SSLINFO . "::_ssleay_ctx_new CTX options",
                Net::SSLeay::CTX_get_options($ctx)
               ) if (0 < $trace);
-
         _trace("_ssleay_ctx_new: $ctx");
         return $ctx;
     } # TRY
