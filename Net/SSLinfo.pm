@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.219 18/11/01 14:46:18',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.220 18/11/01 18:52:28',
 };
 
 ######################################################## public documentation #
@@ -159,7 +159,7 @@ Depth of peer certificate verification; default: 9
 
 Value will not be used at all if set C<undef>.
 
-=item $Net::SSLinfo::op_compression
+=item $Net::SSLinfo::no_compression
 
 Set SSL/TLS option to use compression; default: 1
 
@@ -692,7 +692,7 @@ $Net::SSLinfo::proxyuser   = '';# password for proxy authentication (Basic or Di
 $Net::SSLinfo::proxyauth   = '';# authentication string used for proxy
 $Net::SSLinfo::method      = '';# used Net::SSLeay::*_method
 $Net::SSLinfo::socket_reuse= 1; # 0: close and reopen socket for each connection
-$Net::SSLinfo::op_compression   = 0; # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+$Net::SSLinfo::no_compression   = 0; # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
@@ -1564,7 +1564,7 @@ sub _ssleay_ctx_new {
         #2.3. set protocol options
         my  $options  = &Net::SSLeay::OP_ALL;
             # sets all options, even those for all protocol versions (which are removed later)
-        if (0 < $Net::SSLinfo::op_compression) {
+        if (0 < $Net::SSLinfo::no_compression) {
             $options |= &Net::SSLeay::OP_NO_COMPRESSION;
             # default:  OP_ALL does not contain OP_NO_COMPRESSION
             # this is ok as we want to detect if targets support compression,
@@ -1941,15 +1941,14 @@ sub _OpenSSL_opt_get{
     #? get specified value from %_OpenSSL_opt, parameter 'key' is mandatory
     my $key = shift;
     _traceset();
-    _trace("_OpenSSL_opt_get('$key')");
     if (0 <= $_OpenSSL_opt{'done'}) {
         # initilize %_OpenSSL_opt
         if (not defined s_client_check()) {
-            _trace("_OpenSSL_opt_get undef");
+            _trace("_OpenSSL_opt_get('$key') undef");
             return SSLINFO_HASH;
         }
     }
-    _trace("_OpenSSL_opt_get '$key'=" . ($_OpenSSL_opt{$key} || ''));
+    _trace("_OpenSSL_opt_get('$key')=" . ($_OpenSSL_opt{$key} || 0));
     return (grep{/^$key$/} keys %_OpenSSL_opt) ? $_OpenSSL_opt{$key} : '';
 } # _OpenSSL_opt_get
 
