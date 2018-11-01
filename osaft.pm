@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.146 18/08/19 12:43:19',
+    OSAFT_SID   => '@(#) osaft.pm 1.147 18/11/01 02:22:30',
 
 };
 
@@ -312,32 +312,53 @@ our %prot_txt = (
 ); # %prot_txt
 
 our %tls_handshake_type = (
-    'hello_request'         => 0,
-    'client_hello'          => 1,
-    'server_hello'          => 2,
-    'hello_verify_request'  => 3,       # RFC4347 DTLS
-    'certificate'           => 11,
-    'server_key_exchange'   => 12,
-    'certificate_request'   => 13,
-    'server_hello_done'     => 14,
-    'certificate_verify'    => 15,
-    'client_key_exchange'   => 16,
-    'finished'              => 20,
-    'certificate_url'       => 21,      # RFC6066 10.2
-    'certificate_status'    => 22,      # RFC6066 10.2
-    '255'                   => 255,
-    '<<undefined>>'         => -1,      # added for internal use
-    '<<fragmented_message>>'=> -99      # added for internal use
+    #----+--------------------------+-----------------------
+    # ID  name                       comment
+    #----+--------------------------+-----------------------
+    0 => 'hello_request',
+    1 => 'client_hello',
+    2 => 'server_hello',
+    3 => 'hello_verify_request',    # RFC4347 DTLS
+    4 => 'NewSessionTicket',
+   11 => 'certificate',
+   12 => 'server_key_exchange',
+   13 => 'certificate_request',
+   14 => 'server_hello_done',
+   15 => 'certificate_verify',
+   16 => 'client_key_exchange',
+   20 => 'finished',
+   21 => 'certificate_url',         # RFC6066 10.2
+   22 => 'certificate_status',      # RFC6066 10.2
+   23 => 'supplemental_data',       # RFC??
+  255 => '255',
+   -1 => '<<undefined>>',           # added for internal use
+  -99 => '<<fragmented_message>>',  # added for internal use
+    #----+--------------------------+-----------------------
 ); # tls_handshake_type
 
 our %tls_record_type = (
-    'change_cipher_spec'    => 20,
-    'alert'                 => 21,
-    'handshake'             => 22,
-    'application_data'      => 23,
-    'heartbeat'             => 24,
-    '255'                   => 255,
-    '<<undefined>>'         => -1       # added for internal use
+    #----+--------------------------+-----------------------
+    # ID  name                       comment
+    #----+--------------------------+-----------------------
+   20 => 'change_cipher_spec',
+   21 => 'alert',
+   22 => 'handshake',
+   23 => 'application_data',
+   24 => 'heartbeat',
+  255 => '255',
+   -1 => '<<undefined>>',           # added for internal use
+    #----+--------------------------+-----------------------
+); # %tls_record_type
+
+our %tls_compression_method = (
+    #----+--------------------------+-----------------------
+    # ID  name                       comment
+    #----+--------------------------+-----------------------
+    0 => 'NONE',
+    1 => 'zlib compression',
+   64 => 'LZS compression',
+   -1 => '<<undefined>>',           # added for internal use
+    #----+--------------------------+-----------------------
 ); # %tls_record_type
 
 our %tls_error_alerts = ( # mainly RFC6066
@@ -377,6 +398,7 @@ our %tls_error_alerts = ( # mainly RFC6066
   113 => [qw( bad_certificate_status_response   6066  Y  -)],
   114 => [qw( bad_certificate_hash_value        6066  Y  -)],
   115 => [qw( unknown_psk_identity              4279  Y  -)],
+  120 => [qw( no_application_protocol           7301  Y  -)],
     #----+-------------------------------------+----+--+---------------
 ); # %tls_error_alerts
 
@@ -633,7 +655,7 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
         # see also: http://www.zytrax.com/books/ldap/apa/oid.html
         #
         # wir koennen dann einen Parser fuer OIDs bauen:
-        #   loop ueber OID und dabei immer .N vom Ende wegnehmen und rest mit OBJ_obj2txt() ausgeben
+        #   loop ueber OID und dabei immer .N vom Ende wegnehmen und Rest mit OBJ_obj2txt() ausgeben
         #   # 1.3.6.1.4 -->  "" . identified-organization . dot . iana . Private
         #   # 2.5.29.32 -->  "" . directory services (X.500) . id-ce . X509v3 Certificate Policies
 
@@ -709,6 +731,14 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '2.16.840.1.113733.1.7.48.1'=> {'txt' => STR_UNDEF},    #  ''
     '2.16.840.1.113733.1.7.54'  => {'txt' => STR_UNDEF},    #  ''
     '0.9.2342.19200300.100.1.3' => {'txt' => "subject:mail"},
+    # TODO: see http://oidref.com/
+    #'2.16.840.1.114028.10.1.2'  => {'txt' => "Entrust Extended Validation (EV) Certification Practice Statement (CPS)"},
+    #'2.16.840.1.114412.1.3.0.2' => {'txt' => "DigiCert Extended Validation (EV) Certification Practice Statement (CPS) v. 1.0.3"},
+    #'2.16.840.1.114412.2.1'     => {'txt' => "DigiCert Extended Validation (EV) Certification Practice Statement (CPS) v. 1.0.3"},
+    #'2.16.578.1.26.1.3.3'       => {'txt' => ""},
+    #'1.3.6.1.4.1.17326.10.14.2.1.2' => {'txt' => "Camerfirma Certification Practice Statement (CPS) v3.2.3"},
+    #'1.3.6.1.4.1.17326.10.8.12.1.2' => {'txt' => "Camerfirma Certification Practice Statement (CPS) v3.2.3"},
+    #'1.3.6.1.4.1.13177.10.1.3.10'   => {'txt' => "SSL SECURE WEB SERVER CERTIFICATES"},
 ); # %data_oid
 
 
@@ -1149,7 +1179,18 @@ our %cipher_names = (
     '0x030016B9' => [qw(CECPQ1-RSA-AES256-GCM-SHA384    CECPQ1_RSA_WITH_AES_256_GCM_SHA384)],
     '0x030016BA' => [qw(CECPQ1-ECDSA-AES256-GCM-SHA384  CECPQ1_ECDSA_WITH_AES_256_GCM_SHA384)],
     #!#----------+-------------------------------------+--------------------------+
-#
+    #
+    # Note(a)
+    #   according https://tools.ietf.org/html/rfc6101#appendix-E
+    #   following SSLv2 ciphers are valid for SSLv3 too:
+    #       '0x02010080' => RC4_128_WITH_MD5
+    #       '0x02020080' => RC4_128_EXPORT40_WITH_MD5
+    #       '0x02030080' => RC2_128_CBC_WITH_MD5
+    #       '0x02040080' => RC2_128_CBC_EXPORT40_WITH_MD5
+    #       '0x02050080' => IDEA_128_CBC_WITH_MD5
+    #       '0x02060040' => DES_64_CBC_WITH_MD5
+    #       '0x020700C0' => DES_192_EDE3_CBC_WITH_MD5
+    #
     # Note(c)
     #   according https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04
     #   some hex keys for ciphers changed
@@ -1332,6 +1373,7 @@ our %cfg = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
+    'compression'   => 1,       # 0: use OP_NO_COMPRESSION for connetion in Net::SSLeay
     'sni_name'      => undef,   # if set, name to be used for connection with SNI
                                 # must be set to $host if undef and 'usesni'=1 (see above)
                                 # all other strings are used verbatim, even empty one
@@ -1390,7 +1432,67 @@ our %cfg = (
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
+                                # should simply be   ALL:COMPLEMENTOFALL,  but
+                                # seen implementations  where it does not list
+                                # all compiled-in ciphers, hence the long list
                                 # TODO: must be same as in Net::SSLinfo or used from there
+    'cipherpatterns'    => {    # openssl patterns for cipher lists (NOT YET USED)
+        # key             description                cipher pattern for openssl
+        #----------------+--------------------------+---------------------------
+        'null'      => [ "Null Ciphers",            'NULL:eNULL'              ], 
+        'anull'     => [ "Anonymous NULL Ciphers",  'aNULL'                   ], 
+        'anon'      => [ "Anonymous DH Ciphers",    'ADH'                     ], 
+        'adh'       => [ "Anonymous DH Ciphers",    'ADH'                     ], 
+        'aes'       => [ "AES Ciphers",             'AES'   ], 
+        'aes128'    => [ "AES128 Ciphers",          'AES128'], 
+        'aes256'    => [ "AES256 Ciphers",          'AES256'], 
+        'aesGCM'    => [ "AESGCM Ciphers",          'AESGCM'], 
+        'chacha'    => [ "CHACHA20 Ciphers",        'CHACHA'], # NOTE: not possible with some openssl
+        'dhe'       => [ "Ephermeral DH Ciphers",   'EDH'   ], # NOTE: DHE not possible some openssl
+        'edh'       => [ "Ephermeral DH Ciphers",   'EDH'                     ], 
+        'ecdh'      => [ "Ecliptical curve DH Ciphers",             'ECDH'    ], 
+        'ecdsa'     => [ "Ecliptical curve DSA Ciphers",            'ECDSA'   ], 
+        'ecdhe'     => [ "Ephermeral ecliptical curve DH Ciphers",  'EECDH'   ], # TODO:  ECDHE not possible with openssl
+        'eecdh'     => [ "Ephermeral ecliptical curve DH Ciphers",  'EECDH'   ], 
+        'aecdh'     => [ "Anonymous ecliptical curve DH Ciphers",   'AECDH'   ], 
+        'exp40'     => [ "40 Bit encryption",       'EXPORT40'                ], 
+        'exp56'     => [ "56 Bit export ciphers",   'EXPORT56'                ], 
+        'export'    => [ "all Export Ciphers",      'EXPORT'],
+        'exp'       => [ "all Export Ciphers",      'EXPORT'], # alias for export
+        'des'       => [ "DES Ciphers",             'DES:!ADH:!EXPORT:!aNULL' ], 
+        '3des'      => [ "Triple DES Ciphers",      '3DES'  ], # TODO: 3DES:!ADH:!aNULL
+        'fips'      => [ "FIPS compliant Ciphers",  'FIPS'  ], # NOTE: not possible with some openssl
+        'gost'      => [ "all GOST Ciphers",        'GOST'  ], # NOTE: not possible with some openssl
+        'gost89'    => [ "all GOST89 Ciphers",      'GOST89'], # NOTE: not possible with some openssl
+        'gost94'    => [ "all GOST94 Ciphers",      'GOST94'], # NOTE: not possible with some openssl
+        'idea'      => [ "IDEA Ciphers",            'IDEA'  ], # NOTE: not possible with some openssl
+        'krb'       => [ "KRB5 Ciphers",            'KRB5'  ], # alias for krb5
+        'krb5'      => [ "KRB5 Ciphers",            'KRB5'  ], 
+        'md5'       => [ "Ciphers with MD5 Mac",    'MD5'   ], 
+        'psk'       => [ "PSK Ciphers",             'PSK'   ], 
+        'rc2'       => [ "RC2 Ciphers",             'RC2'   ], # NOTE: not possible with some openssl
+        'rc4'       => [ "RC4 Ciphers",             'RC4'   ], 
+        'rsa'       => [ "RSA Ciphers",             'RSA'   ], 
+        'seed'      => [ "Seed Ciphers",            'SEED'  ], 
+        'sslv2'     => [ "all SSLv2 Ciphers",       'SSLv2' ], # NOTE: not possible with some openssl
+        'sslv3'     => [ "all SSLv3 Ciphers",       'SSLv3' ], # NOTE: not possible with some openssl
+        'tlsv1'     => [ "all TLSv1 Ciphers",       'TLSv1' ], # NOTE: not possible with some openssl
+        'tlsv11'    => [ "all TLSv11 Ciphers",      'TLSv1' ], # alias for tlsv1
+        'tlsv12'    => [ "all TLSv12 Ciphers",      'TLSv1.2' ],
+        'srp'       => [ "SRP Ciphers",             'SRP'   ], 
+        'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
+        'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
+        'sha1'      => [ "Ciphers with SHA1 Mac",   'SHA1'  ], # NOTE: not possible with some openssl
+        'sha2'      => [ "Ciphers with SHA256 Mac", 'SHA256'],
+        'sha256'    => [ "Ciphers with SHA256 Mac", 'SHA256'],
+        'sha384'    => [ "Ciphers with SHA384 Mac", 'SHA384'],
+        'sha512'    => [ "Ciphers with SHA512 Mac", 'SHA512'], # NOTE: not possible with some openssl
+        'low'       => [ "Low grade encryption",    'LOW:!ADH'    ],  # <=64 Bit
+        'medium'    => [ "Medium grade encryption", 'MEDIUM:!NULL:!aNULL:!SSLv2:!3DES' ], 
+        'high'      => [ "High grade encryption",   'HIGH:!NULL:!aNULL:!DES:!3DES' ], 
+        #----------------+--------------------------+---------------------------
+        # TODO: list with 'key exchange': kRSA, kDHr, kDHd, kDH, kEDH, kECDHr, kECDHe, kECDH, kEECDH
+    }, # cipherpatterns
     'ciphers'       => [],      # contains all ciphers to be tested
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
@@ -1416,20 +1518,17 @@ our %cfg = (
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
                        ",
         'long'      =>          # more lazy list of constants for cipher
-                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
-                       ",
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF",
         'huge'      =>          # huge range of constants for cipher
-                       "0x03000000 .. 0x0300FFFF,
-                       ",
+                       "0x03000000 .. 0x0300FFFF",
         'safe'      =>          # safe full range of constants for cipher
                                 # because some network stack (NIC) will crash for 0x033xxxxx
-                       "0x03000000 .. 0x032FFFFF,
-                       ",
+                       "0x03000000 .. 0x032FFFFF",
         'full'      =>          # full range of constants for cipher
-                       "0x03000000 .. 0x03FFFFFF,
-                       ",
+                       "0x03000000 .. 0x03FFFFFF",
 # TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
         'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
+                                # see Note(a) above also
                        "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,
@@ -1447,13 +1546,36 @@ our %cfg = (
                         0x03000000 .. 0x0300002F, 0x030000FF,
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ",
-                       # 0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
+        'SSLv3'     =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
+                       "0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
+                        0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
+                        0x0300C000 .. 0x0300C022. 0x0300FEE0 .. 0x0300FEFF,
+                        0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
+                       ",
+        'SSLv3_SSLv2' =>        # constants for SSLv3 ciphers (with SSLv2 ciphers)
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
+                        0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
+                        0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
+                        0x0300C000 .. 0x0300C0FF. 0x0300FEE0 .. 0x0300FEFF,
+                        0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
+                       ",
+# TODO: 'SSLv3_old' =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
+# TODO:                "0x03000000 .. 0x0300002F, 0x030000FF",  # old SSLv3 ciphers
+# TODO: 'TLSv10'    => # same as SSLv3
+# TODO: 'TLSv11'    => # same as SSLv3
+        'TLSv12'    =>          # constants for TLSv1.2 ciphers
+                       "0x0300003B .. 0x03000040, 0x03000067 .. 0x0300006D,
+                        0x0300009C .. 0x030000A7, 0x030000BA .. 0x030000C5,
+                        0x0300C023 .. 0x0300C032. 0x0300C072 .. 0x0300C079,
+                        0x0300CC13 .. 0x0300CC15, 0x0300FFFF,
+                       ",
+# TODO: 'TLSv13'    => # ??
         'c0xx'      => "0x0300C000 .. 0x0300C0FF",  # constants for ciphers using ecc
         'ccxx'      => "0x0300CC00 .. 0x0300CCFF",  # constants for ciphers using ecc
         'ecc'       =>          # constants for ciphers using ecc
-                       "0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF,
-                       ",
+                       "0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF",
     }, # cipherranges
     'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
@@ -2090,6 +2212,7 @@ Get information from internal C<%cipher> data structure.
 
 =cut
 
+sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
 sub get_cipher_suitename { my $c=shift; return $cipher_names{$c}[0] if (defined $cipher_names{$c}[0]); return ""; }
 sub get_cipher_suiteconst{ my $c=shift; return $cipher_names{$c}[1] if (defined $cipher_names{$c}[1]); return ""; }
 sub get_cipher_suitealias{ my $c=shift; return $cipher_alias{$c}[0] if (defined $cipher_alias{$c}[0]); return ""; }
