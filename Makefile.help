@@ -19,8 +19,9 @@
 #?          make e-MAKEFILE
 #?          make p-MAKEFILE
 #?          make t-help.doc
-#?          gake targets
-#?          gake targets.me
+#?          make targets
+#?          make targets.me
+#?          make cloc
 #?
 #? LIMITATIONS
 #?       Requires GNU Make > 2.0.
@@ -192,14 +193,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.20 18/10/06 23:01:14
+#?      @(#) Makefile.help 1.21 18/11/01 21:13:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.20
+_SID.help       = 1.21
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -245,6 +246,10 @@ EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
 # NOTE all EXE.* macros above cannot be shown using echo, eval or show target
 #      they all may return errors like: /bin/sh: 1: Syntax error:...
+
+# other tools
+OPT.cloc        =
+EXE.cloc        = cloc $(OPT.cloc)
 
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
@@ -375,5 +380,24 @@ p-%:
 t-%:
 	@$(MAKE) -s target=$* target
 
-.PHONY: macros targets rules list vars eval echo show macro pmacro target
+# cloc is not realy a "help" target, anyway defined here as rarely use is expected
+HELP-_cloc      = ________________________________________ statistic targets _
+HELP-cloc       = count lines of code of all source files; summary output
+HELP-cloc.file  = count lines of code of all source files; output by file
+HELP-cloc.lang  = same as cloc.file and cloc
+# NOTE: also possible usage:
+#       make cloc OPT.cloc=--3
+#       make cloc OPT.cloc=--csv
+#       make cloc OPT.cloc=--xml
+# NOTE: --quiet suppresses count of files also, hence not used by default
+cloc%:
+	@$(TARGET_VERBOSE)
+	@$(EXE.cloc) $(sort $(ALL.src))
+
+cloc.stat:  OPT.cloc    +=
+cloc.file:  OPT.cloc    += --by-file
+cloc.lang:  OPT.cloc    += --by-file-by-lang
+cloc:       cloc.stat
+
+.PHONY: macros targets rules list vars eval echo show macro pmacro target cloc
 
