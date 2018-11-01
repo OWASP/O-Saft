@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.220 18/11/01 18:52:28',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.221 18/11/01 18:59:23',
 };
 
 ######################################################## public documentation #
@@ -2363,8 +2363,8 @@ sub do_ssl_open($$$@) {
             $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
             $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
-            _trace("request {\n$host:$port\n$request"); _trace("request }");
-            _trace("response {\n$response");            _trace("response }");
+            _trace("request #{\n$host:$port\n$request"); _trace("request #}");
+            _trace("response #{\n$response");            _trace("response #}");
             if ($response =~ /handshake_failed/) {  # may get: http2_handshake_failed
                 $response = "<<HTTP handshake failed>>";
                 # no last; # as it will break checks outside
@@ -2416,8 +2416,8 @@ sub do_ssl_open($$$@) {
             # NOTE that get_http() returns all keys in %headers capitalized
             my $headers = "";   # for trace only
             foreach  my $h (keys %headers) { $headers .= "$h: $headers{$h}\n"; }
-            _trace("request {\n$host:$port\n$request"); _trace("request }");
-            _trace("response {\n$headers\n$response");  _trace("response }");
+            _trace("request #{\n$host:$port\n$request"); _trace("request #}");
+            _trace("response #{\n$headers\n$response");  _trace("response #}");
                 # Net::SSLeay 1.58 (and before)
                 # Net::SSLeay::get_http() may return:
                 # Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
