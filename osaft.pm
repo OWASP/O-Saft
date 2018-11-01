@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.08.18',  # official version number of this file
+    OSAFT_VERSION   => '18.10.31',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.147 18/11/01 02:22:30',
+    OSAFT_SID   => '@(#) osaft.pm 1.148 18/11/01 14:48:39',
 
 };
 
@@ -1791,6 +1791,8 @@ our %cfg = (
         '-nextprotoneg' => [ 1,   "checks with NPN  disabled"], # alias for -npn
         '-reconnect'    => [ 1,   "checks with openssl reconnect disabled"],
         '-fallback_scsv'=> [ 1,   "checks for TLS_FALLBACK_SCSV wrong"],
+        '-comp'         => [ 1,   "<<NOT YET USED>>"],
+        '-no_comp'      => [ 1,   "<<NOT YET USED>>"],
         '-no_tlsext'    => [ 1,   "<<NOT YET USED>>"],
         '-no_ticket'    => [ 1,   "<<NOT YET USED>>"],
         '-serverinfo'   => [ 1,   "checks without TLS extension disabled"],
@@ -1802,16 +1804,25 @@ our %cfg = (
         '-bugs'         => [ 1,   "<<NOT YET USED>>"],
         '-key'          => [ 1,   "<<NOT YET USED>>"],
         '-msg'          => [ 1,   "using -msg disabled, DH paramaters missing or wrong"],
+        '-nbio'         => [ 1,   "<<NOT YET USED>>"],
         '-psk'          => [ 1,   "PSK  missing or wrong"],
         '-psk_identity' => [ 1,   "PSK identity missing or wrong"],
         '-pause'        => [ 1,   "<<NOT YET USED>>"],
+        '-prexit'       => [ 1,   "<<NOT YET USED>>"],
         '-proxy'        => [ 1,   "<<NOT YET USED>>"],
+        '-quiet'        => [ 1,   "<<NOT YET USED>>"],
+        '-sigalgs'      => [ 1,   "<<NOT YET USED>>"],
         '-state'        => [ 1,   "<<NOT YET USED>>"],
         '-status'       => [ 1,   "<<NOT YET USED>>"],
-        '-sigalgs'      => [ 1,   "<<NOT YET USED>>"],
+        '-strict'       => [ 1,   "<<NOT YET USED>>"],
         '-client_sigalgs' => [ 1, "<<NOT YET USED>>"],
         '-tlsextdebug'    => [ 1, "TLS extension missing or wrong"],
+        '-record_padding'       => [ 1, "<<NOT YET USED>>"],
+        '-no_renegotiation'     => [ 1, "<<NOT YET USED>>"],
+        '-legacyrenegotiation'  => [ 1, "<<NOT YET USED>>"],
         '-legacy_renegotiation' => [ 1, "<<NOT YET USED>>"],
+        '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"],
+        '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"],
         '-nbio_test'    => [ 1,   "<<NOT YET USED>>"],
         '-CAfile'       => [ 1,   "using -CAfile disabled"],
         '-CApath'       => [ 1,   "using -CApath disabled"],
