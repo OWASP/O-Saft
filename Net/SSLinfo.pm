@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.10.18',
+    SSLINFO_VERSION => '18.10.31',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.216 18/10/23 00:15:28',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.217 18/11/01 10:19:14',
 };
 
 ######################################################## public documentation #
@@ -783,7 +783,8 @@ sub _setcmd     {
 
 sub _traceSSLbitmasks {
     # print bitmasks of available SSL constants
-    my $txt = shift; # prefix string as in _trace()
+    my $txt  = shift; # prefix string as in _trace()
+    my $mask = shift;
     # cannot use _trace() 'cause we want our own formatting
     my $_op_sub;
     _traceset();
@@ -833,13 +834,13 @@ sub _traceSSLbitmasks {
             OP_NO_RENEGOTIATION
             OP_PRIORITIZE_CHACHA
             )) {
-        no strict;  # necessary as we {"Net::SSLeay::$op"}
+        no strict;  # necessary as we use {"Net::SSLeay::$op"}
         printf("#%s: %-30s ", $txt, $op);
         ## $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
         my $opt;
         my $_ok = eval { $opt = &{"Net::SSLeay::$op"}; };
         if (defined $_ok) {
-            my $bit = ((&Net::SSLeay::OP_ALL & $opt)>0) || 0;
+            my $bit = (($mask & $opt)>0) || 0;
             printf("0x%08x %s\n", $opt, $bit);
         } else {
             printf("<<$@>>\n"); # error string from Net::SSLeay instead <<undef>>
@@ -1551,7 +1552,10 @@ sub _ssleay_ctx_new {
         _trace("_ssleay_ctx_new ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
         _trace("_ssleay_ctx_new ::CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
         _trace("_ssleay_ctx_new ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
-        _traceSSLbitmasks(SSLINFO . "::_ssleay_ctx_new CTX options") if (0 < $trace);
+        _traceSSLbitmasks(
+               SSLINFO . "::_ssleay_ctx_new CTX options",
+               Net::SSLeay::CTX_get_options($ctx)
+              ) if (0 < $trace);
 
         _trace("_ssleay_ctx_new: $ctx");
         return $ctx;
@@ -2146,7 +2150,11 @@ sub do_ssl_open($$$@) {
     _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
-    _traceSSLbitmasks(SSLINFO . "::do_ssl_open SSL version bitmask") if (0 < $trace);
+    #_traceSSLbitmasks(
+    #    SSLINFO . "::do_ssl_open SSL version bitmask",
+    #    &Net::SSLeay::OP_ALL
+    #) if (0 < $trace);
+    # TODO: no real value for _traceSSLbitmasks() 
 
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
     if ($cipher =~ m/^\s*$/) {
