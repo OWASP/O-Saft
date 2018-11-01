@@ -1,8 +1,22 @@
 
-# SID	@(#) misc.txt 1.2 18/10/14 21:39:13
+# SID	@(#) misc.txt 1.3 18/11/01 02:25:01
 
-## miscellaneous observations and texts (som in German only)
+## miscellaneous observations and texts (some in German only)
 
+SSLv2
+    #
+SSLv3
+    # https://tools.ietf.org/html/rfc6101#appendix-E
+    #       Appendix E.  Version 2.0 Backward Compatibility
+    # SSLv2 Ciphers used in SSLv3
+    #    0x01,0x00,0x80 SSL_RC4_128_WITH_MD5
+    #    0x02,0x00,0x80 SSL_RC4_128_EXPORT40_WITH_MD5
+    #    0x03,0x00,0x80 SSL_RC2_CBC_128_CBC_WITH_MD5
+    #    0x04,0x00,0x80 SSL_RC2_CBC_128_CBC_EXPORT40_WITH_MD5
+    #    0x05,0x00,0x80 SSL_IDEA_128_CBC_WITH_MD5
+    #    0x06,0x00,0x40 SSL_DES_64_CBC_WITH_MD5
+    #    0x07,0x00,0xC0 SSL_DES_192_EDE3_CBC_WITH_MD5
+    #
     # Additional informations:
 OCSP
     # cat some.crl | openssl crl -text -inform der -noout
