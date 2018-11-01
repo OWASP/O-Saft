@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.64 18/07/16 11:29:49";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.65 18/11/02 00:09:00";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -121,11 +121,11 @@ sub _yTIME    {
        $now = time() if (1 == $cfg{'time_absolut'});# $time0 defined in main
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
-sub _yeast    { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
-sub _y_ARG    { local $\ = "\n"; print "#" . $cfg{'mename'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
-sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
-sub _yTRAC    { local $\ = "\n"; printf("#%s: %14s= %s\n", $cfg{'mename'}, $_[0], $_[1]); return; }
-sub _yline    { _yeast("#----------------------------------------------------"  . $_[0]); return; }
+sub _yeast    { local $\ = "\n"; print $cfg{'prefix_verbose'} . $_[0]; return; }
+sub _y_ARG    { local $\ = "\n"; print $cfg{'prefix_verbose'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
+sub _y_CMD    { local $\ = "\n"; print $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
+sub _yTRAC    { local $\ = "\n"; printf("%s%14s= %s\n",  $cfg{'prefix_verbose'}, $_[0], $_[1]); return; }
+sub _yline    { _yeast("#----------------------------------------------------" . $_[0]); return; }
 sub _y_ARR    { return join(" ", "[", @_, "]"); }
 sub _yeast_trac {}   # forward declaration
 sub _yeast_trac {
@@ -245,30 +245,30 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $cfg{'port'} (last specified)");
     if (0 == $cfg{'trace'}) { # simple list
-        printf("#%s: %14s= [ ", $cfg{'mename'}, "targets");
+        printf("%s%14s= [ ", $cfg{'prefix_verbose'}, "targets");
         foreach my $target (@{$cfg{'targets'}}) {
             next if (0 == @{$target}[0]);   # first entry conatins default settings
             printf("%s:%s ", @{$target}[2..3]); # the perlish way
         }
         printf("]\n");
     } else { # complete array
-        printf("#%s: %14s targets = [\n", $cfg{'mename'}, "# - - - -ARRAY");
-        printf("#%s: #  Index %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'mename'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
+        printf("%s%14s targets = [\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
+        printf("%s#  Index %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
         foreach my $target (@{$cfg{'targets'}}) {
             next if (0 == @{$target}[0]);   # first entry conatins default settings
-            printf("#%s:    [%3s] %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'mename'}, @{$target}[0,1..7]);
+            printf("%s   [%3s] %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, @{$target}[0,1..7]);
         }
-        printf("#%s: %14s ]\n", $cfg{'mename'}, "# - - - -ARRAY");
+        printf("%s%14s ]\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
     }
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
-        printf("#%s: %14s= %s\n", $cfg{'mename'}, $key, $cfg{$key});
+        printf("%s%14s= %s\n", $cfg{'prefix_verbose'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
     }
     foreach my $key (qw(starttls_phase starttls_error)) {
         _yeast(      "$key= " . _y_ARR(@{$cfg{$key}}));
     }
     _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
-    printf("#%s: %14s= %s", $cfg{'mename'}, "SSL versions", "[ ");
+    printf("%s%14s= %s", $cfg{'prefix_verbose'}, "SSL versions", "[ ");
     printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});   ## no critic qw(ControlStructures::ProhibitPostfixControls)
     printf("]\n");
     _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
@@ -377,18 +377,18 @@ sub _yeast_args {
     return;
 } # _yeast_args
 
-sub _v_print  { local $\ = "\n"; print "# "       . join(" ", @_) if (0 < $cfg{'verbose'}); return; }
-sub _v2print  { local $\ = "\n"; print "# "       . join(" ", @_) if (1 < $cfg{'verbose'}); return; }
-sub _v3print  { local $\ = "\n"; print "# "       . join(" ", @_) if (2 < $cfg{'verbose'}); return; }
-sub _v4print  { local $\ = "";   print "# "       . join(" ", @_) if (3 < $cfg{'verbose'}); return; }
-sub _trace    { print "#" . $cfg{'mename'} . "::" . $_[0]         if (0 < $cfg{'trace'});   return; }
-sub _trace0   { print "#" . $cfg{'mename'} . "::"                 if (0 < $cfg{'trace'});   return; }
-sub _trace1   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if (1 < $cfg{'trace'});   return; }
-sub _trace2   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if (2 < $cfg{'trace'});   return; }
-sub _trace3   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if (3 < $cfg{'trace'});   return; }
+sub _v_print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (0 < $cfg{'verbose'}); return; }
+sub _v2print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (1 < $cfg{'verbose'}); return; }
+sub _v3print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (2 < $cfg{'verbose'}); return; }
+sub _v4print  { local $\ = "";   print $cfg{'prefix_verbose'} . join(" ", @_) if (3 < $cfg{'verbose'}); return; }
+sub _trace    { print $cfg{'prefix_trace'} . $_[0]         if (0 < $cfg{'trace'}); return; }
+sub _trace0   { print $cfg{'prefix_trace'}                 if (0 < $cfg{'trace'}); return; }
+sub _trace1   { print $cfg{'prefix_trace'} . join(" ", @_) if (1 < $cfg{'trace'}); return; }
+sub _trace2   { print $cfg{'prefix_trace'} . join(" ", @_) if (2 < $cfg{'trace'}); return; }
+sub _trace3   { print $cfg{'prefix_trace'} . join(" ", @_) if (3 < $cfg{'trace'}); return; }
 sub _trace_   { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace'}); return; }
 # if --trace-arg given
-sub _trace_cmd { printf("#%s %s->\n", $cfg{'mename'}, join(" ",@_))if (0 < $cfg{'traceCMD'}); return; }
+sub _trace_cmd { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_))if (0 < $cfg{'traceCMD'}); return; }
 
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
