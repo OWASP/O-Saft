@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.149 18/11/01 18:40:03',
+    OSAFT_SID   => '@(#) osaft.pm 1.150 18/11/02 00:06:10',
 
 };
 
@@ -1315,6 +1315,10 @@ our %cfg = (
     'ARGV'          => [],      # arguments passed on command line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
     'RC-FILE'       => "",      # our RC-FILE, search in pwd only!
+    # following should be in %text, but as %cfg is available everywhere,
+    # it's better defined here and initialized in _osaft_init()
+    'prefix_trace'  => "",      # prefix string used in trace   messages
+    'prefix_verbose'=> "",      # prefix string used in verbose messages
 
    # config. key        default   description
    #------------------+---------+----------------------------------------------
@@ -2684,6 +2688,8 @@ sub _osaft_init {
     $cfg{'RC-FILE'} = "./.$me";
     $cfg{'ARG0'}    = $0;
     $cfg{'ARGV'}    = [@ARGV];
+    $cfg{'prefix_trace'}    = "#${me}::";
+    $cfg{'prefix_verbose'}  = "#${me}: ";
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallize dynamic data in %cfg
     _cmd_init();        # initallize dynamic commands in %cfg
