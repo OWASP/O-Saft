@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.7 18/08/22 22:11:48
+# SID	@(#) glossary.txt 1.8 18/11/02 08:58:51
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -36,6 +36,7 @@ BADA55-VR-384	curve useing the same prime as NIST P-384
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
+BLAKE2b	see BLAKE (32 bit)
 BLAKE-32	see BLAKE (32 bit)
 BLAKE-64	see BLAKE (64 bit)
 BLAKE-224	see BLAKE (224 bit)
@@ -113,6 +114,7 @@ CTS	Cipher Text Stealing
 Curve448	signature algorithm, aka Goldilocks (224 bit)
 Curve25519	signature algorithm by Dan J. Bernstein (ca. 128 bit)
 CWC	CWC Mode (Carter-Wegman + CTR mode; block cipher mode)
+CyaSSL	formerly name of wolfSSL
 DAA	Data Authentication Algorithm
 DAC	Data Authentication Code
 DACL	Discretionary Access Control List
@@ -333,6 +335,7 @@ NPN	Next Protocol Negotiation
 NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
+NTRU	asymetric cipher algorithm using lattice reduction
 NULL	no encryption
 NUMS	nothing up my sleeve numbers
 OAEP	Optimal Asymmetric Encryption Padding
@@ -579,6 +582,7 @@ VR-224	alias for BADA55-VR-224
 VR-256	alias for BADA55-VR-256
 VR-384	alias for BADA55-VR-384
 WHIRLPOOL	hash function
+wolfSSL	SSL library mainly intended and used for embedded and real-time systems
 X.680	X.680: ASN.1
 X.509	X.509: The Directory - Authentication Framework
 X25519	alias for Curve25519 ?
@@ -601,6 +605,7 @@ XTEA	extended Tiny Encryption Algorithm
 XTS	XEX-based tweaked-codebook mode with ciphertext stealing
 XUDA	Xcert Universal Database API
 XXTEA	enhanced/corrected Tiny Encryption Algorithm
+yaSSL	same as CyaSSL
 ZLIB	Lossless compression file format
 ZRTP	SRTP for VoIP
 ZSK	Zone Signing Key (DNSSEC)
