@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.814 18/11/01 19:06:22",
+    SID         => "@(#) yeast.pl 1.815 18/11/02 01:00:59",
     STR_VERSION => "18.11.01",          # <== our official version number
 };
 
@@ -7352,8 +7352,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--nonpn')             { $cfg{'usenpn'}    = 0;    }
     if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'usenpn'}    = 1;    } # openssl
     if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
-    if ($arg =~ /^--?comp(?:ression)?$/){ $cfg{'no_comp'}   = 0;    } # openssl s_client -comp
-    if ($arg =~ /^--?nocomp(ression)?$/){ $cfg{'no_comp'}   = 1;    } # openssl s_client -no_comp
+    if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   }  # alias:
+    if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; }  # alias:
+    if ($arg =~ /^--sslcompression$/)   { $cfg{'no_comp'}   = 0;    } # openssl s_client -comp
+    if ($arg =~ /^--nosslcompression$/) { $cfg{'no_comp'}   = 1;    } # openssl s_client -no_comp
     if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
     if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
     if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
