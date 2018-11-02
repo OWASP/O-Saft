@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.16 18/11/02 00:37:32
+# SID   @(#) help.txt 1.17 18/11/02 01:27:00
 
 NAME
 
@@ -4362,6 +4362,12 @@ TESTING
           Only (perl) scalars or arrays can be set. The type will be detected
           automatically.
 
+          Example,  this option can be used to change the text used as prefix
+          in each output line triggerd by the  --v  option:
+              $0 --cfg-init=prefix_verbose="#VERBOSE: "
+
+          or the text used as prefix triggerd by the  --trace  option:
+              $0 --cfg-init=prefix_trace="#TRACE: "
 
 EXAMPLES
 
