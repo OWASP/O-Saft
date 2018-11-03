@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.10 18/04/13 18:56:35";
+my  $VERSION    = "18.11.03";  # official verion number of tis file
+my  $SID        = "@(#) Data.pm 1.11 18/11/03 15:56:53";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -162,8 +162,14 @@ sub get_markup    {
             # we only want to catch header lines, hence all capital letters
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
-            s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT|INSTALLATION) / X&$1& /g;
-            s/ (CUSTOMIZATION|SCORING|LIMITATIONS|DEBUG|EXAMPLES) / X&$1& /g;
+            s/ (CIPHER NAMES)/ X&$1&/g;
+            s/ (LAZY SYNOPSIS)/ X&$1&/g;
+            s/ (KNOWN PROBLEMS)/ X&$1&/g;
+            s/ (BUILD DOCKER IMAGE)/ X&$1&/g;
+            s/ (RESULTS|COMMANDS|OPTIONS|CHECKS|OUTPUT|CUSTOMIZATION) / X&$1& /g;
+            s/ (LIMITATIONS|DEPENDENCIES|INSTALLATION|DOCKER|TESTING) / X&$1& /g;
+            s/ (CUSTOMIZATION|SCORING|EXAMPLES|ATTRIBUTION|VERSION) / X&$1& /g;
+            s/ (DESCRIPTION|SYNOPSIS|QUICKSTART|SECURITY|DEBUG|AUTHOR) / X&$1& /g;
         }
         push(@txt, $_);
     }
