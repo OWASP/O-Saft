@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.262 18/11/03 19:45:48";
+my  $man_SID= "@(#) o-saft-man.pm 1.263 18/11/03 22:16:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -273,20 +273,32 @@ EoHTML
     return;
 } # _man_html_head
 
+sub _man_help_button{
+    #? return href tag for a help button
+    my $url   = shift;
+    my $cmd   = shift;      # must be --help=* option; also used for button text
+    my $class = shift;      # value for class= attribute (if not empty)
+    my $title = shift;      # value for title= attribute
+    my $txt   = $cmd;       # 
+       $txt  =~ s/^--//;    # button text without --help
+       $txt  =~ s/^help=//; # button text without --help
+       $class = "class='$class'" if ($class !~ m/^\s*$/);
+    return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>', $class, $url, $cmd, $title, $txt);
+} # _man_help_button
+
 sub _man_form_head  {
     #? print start of CGI form
-    my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
-        # TODO: use variable for /cgi-bin/o-saft.cgi
+    my $cgi = shift;
+    printf(" <div class=h ><b>Help:</b>\n");
+    printf("  %s\n", _man_help_button($cgi, "--help",         '', "open window with complete help"));
+    printf("  %s\n", _man_help_button($cgi, "--help=command", '', "open window with help for commands"));
+    printf("  %s\n", _man_help_button($cgi, "--help=checks",  '', "open window with help for checks"));
+    printf("  %s\n", _man_help_button($cgi, "--help=example", '', "open window with examples"));
+    printf("  %s\n", _man_help_button($cgi, "--help=opt",     '', "open window with help for options"));
+    printf("  %s\n", _man_help_button($cgi, "--help=FAQ",     '', "open window with FAQs"));
+    printf("  %s\n", _man_help_button($cgi, "--help=abbr",    '', "open window with the glossar"));
+    printf("  %s\n", _man_help_button($cgi, "--help=todo",    '', "open window with help for ToDO"));
     print << "EoHTML";
- <div class=h ><b>Help:</b>
-  <a href="$cgi?--cgi&--help"         target=_help title="open window with complete help"     >help</a>
-  <a href="$cgi?--cgi&--help=command" target=_help title="open window with help for commands" >commands</a>
-  <a href="$cgi?--cgi&--help=checks"  target=_help title="open window with help for checks"   >checks</a>
-  <a href="$cgi?--cgi&--help=example" target=_help title="open window with examples"          >examples</a>
-  <a href="$cgi?--cgi&--help=opt"     target=_help title="open window with help for options"  >options</a>
-  <a href="$cgi?--cgi&--help=FAQ"     target=_help title="open window with FAQs"              >FAQ</a>
-  <a href="$cgi?--cgi&--help=abbr"    target=_help title="open window with the glossar"       >Glossar</a>
-  <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
  </div>
  <form id="o-saft" action="$cgi" method="GET" onsubmit="return osaft_submit()" target="cmd" >
   <noscript><div>
@@ -383,7 +395,7 @@ EoHTML
     return;
 } # _man_html_foot
 
-sub _man_html_cbox  { ## no critic qw(Subroutines::ProhibitManyArgs)
+sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
     #? return input checkbox tag with clickable label and hover highlight
     my ($mode, $prefix, $tag_id, $tag_nam, $tag_val, $cmd_txt) = @_;
     return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
@@ -474,6 +486,7 @@ sub _man_html_cmds  {
 sub _man_html       {
     #? print text in HTML format
     my $key = shift; # cgi or html
+    my $url = shift; # URL
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $skip= 0;
@@ -508,12 +521,16 @@ sub _man_html       {
         m/^=head3 (.*)/   && do {
                     # commands and options expected with =head3 only
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    print _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
                     print _man_html_ankor($a) . "\n";
                     printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
                 };
         m/Discrete commands,/ && do { $skip=2; next; }; # skip next 3 lines; SEE Help:Syntax
         # encode special markup
+        m/(--help=[A-Za-z0-9_.-]+)/ && do {         # add button for own help (must be first in sequence)
+                    print _man_help_button($url, $1, "b r", "open window with special help");
+                };
         m/^\s*S&([^&]*)&/ && do { my $v=$1; $v=~s!<<!&lt;&lt;!g; print "<div class=c >$v</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
@@ -1116,7 +1133,7 @@ sub man_html        {
     _man_dbx("man_html() ...");
     _man_http_head();
     _man_html_head(STR_VERSION);
-    _man_html('html', 'NAME', 'TODO');  # print complete help
+    _man_html('html', '', 'NAME', 'TODO');  # print complete help
     _man_html_foot();
     return;
 } # man_html
@@ -1133,11 +1150,14 @@ sub man_cgi         {
     # <from action= > and <a href= > values (link) must be specified using the
     # option  --usr-action=  at script start.
     #
+    my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
+        # get action from --usr-action= or set to default
+        # TODO: use variable for /cgi-bin/o-saft.cgi
     _man_dbx("man_cgi() ...");
     _man_http_head();
     _man_html_head(STR_VERSION);
-    _man_form_head();
-    _man_html('cgi', 'COMMANDS', 'LAZY');# print help starting at COMMANDS
+    _man_form_head($cgi);
+    _man_html('cgi', $cgi, 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     _man_form_foot();
     _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
