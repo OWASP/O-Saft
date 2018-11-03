@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.178 Sommer Edition 2018
+#?      @(#) 1.179 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.178 18/10/16 23:20:44 Sommer Edition 2018}
-set cfg(VERSION) {1.178}
+set cfg(SID)    {@(#) o-saft.tcl 1.179 18/11/03 19:27:44 Sommer Edition 2018}
+set cfg(VERSION) {1.179}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -892,7 +892,7 @@ set search(mode)    "regex";# search pattern is exact text, or regex, or fuzzy
     # HELP-HEAD-*   individual tag for a header text
     # HELP-TOC      tag assigned to all lines in table of content
     # HELP-TOC-*    individual tag for a TOC line
-    # HELP-XXX
+    # HELP-REF      tag assigned to all TOC reference
     # HELP-XXX-*
     # HELP-CODE     tag assigned to all code texts
 
@@ -1238,6 +1238,7 @@ proc notTOC       {str} {
     #? return 0 if string should be part of TOC; 1 otherwise
     if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1; };  # skip some special strings
     if {[regexp {^ *$} $str]}               { return 1; };  # skip empty
+    if {[regexp {^(HIGH|MDIUM|LOW|WEAK|SSL|DHE|OWASP)} [string trim $str]]} { return 1; };
     _dbx " no: »$str«";
     return 0
 }; # notTOC
@@ -2064,6 +2065,7 @@ proc create_help  {sect} {
 
     _dbx " 3. search for section head lines, mark them and add (prefix) to text"
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? '()=+,:.-]+$} 1.0]
+    #dbx# puts "3. $anf\n$end"
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -2076,13 +2078,13 @@ proc create_help  {sect} {
         if {[regexp {^[A-Z]} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
         set toc "$toc\n  $t"                   ;# prefix headline with spaces in TOC
         set name [str2obj [string trim $t]]
-        $txt tag add  HELP-HEAD       $a "$a + $e c"
-        $txt tag add  HELP-HEAD-$name $a "$a + $e c"
+        $txt tag add    HELP-HEAD       $a "$a + $e c"
+        $txt tag add    HELP-HEAD-$name $a "$a + $e c"
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n"
-    $txt tag     add  HELP-LNK    2.0 2.7      ;# add markup
-    $txt tag     add  HELP-LNK-T  2.0 2.7      ;#
+    $txt tag     add    HELP-LNK    2.0 2.7    ;# add markup
+    $txt tag     add    HELP-LNK-T  2.0 2.7    ;#
     set_readonly $txt
     #_dbx "TOC:[$txt get 1.0 end]";
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
@@ -2094,38 +2096,44 @@ proc create_help  {sect} {
     _dbx " 4. search for all references to section head lines in TOC and add click event"
     # NOTE: used regex must be similar to the one used in 1. above !!
     set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? '()=,:.-]+( |$)} 3.0 $nam]
+    #dbx# puts "4. $anf\n$end"
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
-        _dbx " 4. TOC: $i\t$t"
-        if {[notTOC $t]} { continue; }         ;# skip some special strings
         incr i
+        _dbx " 4. TOC: $i\t$t"
+        if {[regexp { - } $t]}  { continue }   ;# skip glossar lines
+        if {[notTOC $t]}        { continue }   ;# skip some special strings
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a]
-        $txt tag add  HELP-TOC    $b "$b + $e c";# do not markup leading spaces
-        $txt tag add  HELP-TOC-$i $a "$a + $e c";# but complete line is clickable
-        $txt tag bind HELP-TOC-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
+        $txt tag add    HELP-TOC    $b "$b + $e c" ;# do not markup leading spaces
+        $txt tag add    HELP-TOC-$i $a "$a + $e c" ;# but complete line is clickable
+        $txt tag bind   HELP-TOC-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
     }
 
-#    # 4a. search for all references to section head in text
-#    set anf [$txt search -regexp -nolinestop -all -count end { +[A-Z_ -]+( |$)} $nam]
-#    # FIXME: returns too much false positives
-#    set i 0
-#    foreach a $anf {
-#        set e [lindex $end $i];
-#        set t [$txt get $a "$a + $e c"];
-#        incr i
-#        if {[regexp {^[A-Z_ -]+$} $t]} { continue };# skip headlines itself
-#        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
-#        if {[notTOC $t]} { continue; }; # skip some special strings
-#        $txt tag add    HELP-XXX $a "$a + $e c"
-#        $txt tag bind   HELP-XXX-$i <ButtonPress> "search_show $txt {HELP-LNK-$name}"
-#        $txt tag config HELP-XXX    -foreground [get_color link]
-#    }
+    # 4a. search for all references to section head in text
+        # only search words with all upper case characters and preceeded by 2 spaces
+    set anf [$txt search -regexp -nolinestop -all -count end {  [A-Z]{4}[A-Z -]+ } $nam]
+    #dbx# puts "4.a $anf\n$end"
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        set t [$txt get $a "$a + $e c"];
+        incr i
+        _dbx " 4a. REF: $i\t$t"
+        if {[regexp {^[A-Z]+} $t]} { continue };# skip headlines itself
+        if {[regexp { - } $t]}  { continue }   ;# skip glossar lines
+        if {[notTOC $t]}        { continue }   ;# skip some special strings
+        set name [str2obj [string trim $t]]
+        $txt tag add    HELP-REF    $a "$a + $e c"
+        $txt tag add    HELP-REF-$i $a "$a + $e c"
+        $txt tag bind   HELP-REF-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
+    }
 
     _dbx " 5. search all commands and options and try to set click event"
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0]
+    #dbx# puts "4. $anf\n$end"
     # Now loop over all matches. The difficulty is to distinguish matches,
     # which are the head lines like:
     #   --v
@@ -2170,42 +2178,45 @@ proc create_help  {sect} {
     # must then be removed from the match, so they are not highlighted
     # FIXME: stiil matches some lines accidently, i.e. in  DEBUG  section
     set anf [$txt search -regexp -nolinestop -all -count end "^ \{9,\}$prg(rexCOMMANDS)\( \[^\\n\]+|$\)" 3.0]
+    #dbx# puts "6. $anf\n$end"
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"]
         _dbx " 6. CODE: $i\tHELP-CODE\t$t"
         set s 10
-        regexp {^ *} $t spaces                     ;# get count of leading spaces
+        regexp {^ *} $t spaces                 ;# get count of leading spaces
         set s [string length $spaces]
-        $txt tag add  HELP-CODE "$a + $s c" "$a + $e c";# start highlight at $s
+        $txt tag add    HELP-CODE "$a + $s c" "$a + $e c";# start highlight at $s
         incr i
     }
 
     _dbx " 7. search for all special quoted strings and highlight them"
     #dbx# puts "$txt\n[$txt get 0.0 end]"
     set anf [$txt search -regexp -all -count end {'[^']+'} 3.0]
+    #dbx# puts "7. $anf\n$end"
     set i 0
     foreach a $anf {
-        set e [expr [lindex $end $i] - 1];      # without trailing quote
+        set e [expr [lindex $end $i] - 1]      ;# without trailing quote
         set t [$txt get "$a + 1 c" "$a + $e c"];# without leading  quote
-        _dbx " 7. CODE: $i\tHELP-CODE\t'$t'";   # add quotes in debug output
-        $txt tag add  HELP-CODE $a "$a + $e c"
-        $txt replace  $a         "$a + 1 c"        { }
-        $txt replace "$a + $e c" "$a + $e c + 1 c" { }
+        _dbx " 7. CODE: $i\tHELP-CODE\t'$t'"   ;# add quotes in debug output
+        $txt tag add    HELP-CODE $a "$a + $e c"
+        $txt replace    $a         "$a + 1 c"        { }
+        $txt replace   "$a + $e c" "$a + $e c + 1 c" { }
         incr i
     }
 
     _dbx " 8. highlight all URLs and bind key"
-    bind_browser $txt HELP-URL
+    bind_browser $txt   HELP-URL
 
     # finally global markups
-    $txt tag config   HELP-CODE -background [get_color code]
-    $txt tag config   HELP-URL  -foreground [get_color link]
-    $txt tag config   HELP-TOC  -foreground [get_color link]
-    $txt tag config   HELP-TOC  -font osaftBold
-    $txt tag config   HELP-LNK  -font osaftBold
-    $txt tag config   HELP-HEAD -font osaftBold
+    $txt tag config     HELP-CODE -background [get_color code]
+    $txt tag config     HELP-URL  -foreground [get_color link]
+    $txt tag config     HELP-REF  -foreground [get_color link]
+    $txt tag config     HELP-TOC  -foreground [get_color link]
+    $txt tag config     HELP-TOC  -font osaftBold
+    $txt tag config     HELP-LNK  -font osaftBold
+    $txt tag config     HELP-HEAD -font osaftBold
 
     _dbx " 9. MARK: [$txt mark names]"
     if {$cfg(DEBUG) > 1} {
@@ -2564,6 +2575,7 @@ proc search_view  {w key} {
 proc search_show  {w mark} {
     #? jump to mark in given text widget
     _dbx "($w,$mark)"
+puts "($w,$mark)"
     catch { $w see [$w index $mark.first] } err
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
@@ -2909,12 +2921,12 @@ proc osaft_help   {} {
               {alias}   { set head "Aliases for commands and options"
                           set txt [regsub -all -line {\n}  $txt "\n        "]
                         }
-              {data}    { set head "Available informations"
+              {data}    { set head "Available commands for informations"
                           set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
                           set txt [regsub {^(\s*)} $txt {\1        +}] ;# pretty print
                               # each key (left) is a command, hence add +
                         }
-              {checks}  { set head "Available checks"
+              {checks}  { set head "Available commands for checks"
                           set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
                           set txt [regsub {^(\s*)} $txt {\1        +}] ;# pretty print
                               # each key (left) is a command, hence add +
@@ -2927,7 +2939,7 @@ proc osaft_help   {} {
               {text}    { set head "Texts used in various messages" }
               {ourstr}  { set head "Regular expressions to match our own strings" }
               {range}   { set head "List of cipherranges" }
-              {compliance} { set head "INFO: Available compliance checks" }
+              {compliance} { set head "INFO: Available commands for compliance checks" }
               {todo}    { set head "Known problems and bugs"              }
             }
             append info "\n\nINFO $head\n$txt"   ;# initial TAB for $txt important
