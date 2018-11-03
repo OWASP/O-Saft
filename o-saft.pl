@@ -30,15 +30,14 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code"  (file coding.txt) if you want to improve the program.
 
-# NOTE
-#       Perl's  `use' and `require' will be used for common and well known Perl
+# NOTE: Perl's  `use' and `require' will be used for common and well known Perl
 #       modules only. All other modules, in particular our own ones, are loaded
 #       using an internal function, see _load_file().  All required modules are
 #       included as needed. This keeps away noisy messages and allows to be run
 #       and print some information even if installed incompletely.
 
 ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-#  NOTE:  see .perlcritic for detailed description of "no critic"
+#  NOTE: see .perlcritic for detailed description of "no critic"
 
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
 #  NOTE: Perl::Critic seems to be buggy as it does not honor the  allow  option
@@ -66,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.815 18/11/02 01:00:59",
+    SID         => "@(#) yeast.pl 1.816 18/11/03 13:02:14",
     STR_VERSION => "18.11.01",          # <== our official version number
 };
 
@@ -501,8 +500,8 @@ our %info   = (     # same as %data with values only; keys are identical to %dat
 our %data0  = ();   # same as %data but has 'val' only, no 'txt'
                     # contains values from first connection only
 
-    # NOTE do not change names of keys in %data and all %check_* as these keys
-    #      are used in output with --trace-key
+    # NOTE: do not change names of keys in %data and all %check_* as these keys
+    #       are used in output with --trace-key
 our %data   = (     # connection and certificate details
     # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -2021,11 +2020,11 @@ sub _enable_functions   {
     # enable internal functionality based on available functionality of modules
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # verbose messages with --v --v
-    # Note: don't bother users with warnings, if functionality is not required
+    # NOTE: don't bother users with warnings, if functionality is not required
     #       hence some additional checks around the warnings
-    # Note: instead of requiring a specific version with Perl's use,  only the
-    #       version of the loaded module is checked; this allows continuing to
-    #       use this tool even if the version is too old; but  shout  out loud
+    # NOTE: instead of requiring a specific version with Perl's use,  only the
+    #       version of the loaded module is checked; this allows to go on with
+    #       this tool even if the version is too old; but  shout out  loud
     my $version_openssl  = shift;
     my $version_ssleay   = shift;
     my $version_iosocket = shift;
@@ -3470,9 +3469,9 @@ sub _can_connect        {
 sub _usesocket($$$$)    {
     # return protocol and cipher accepted by SSL connection
     # should return the target's prefered cipher if none are given in $ciphers
-    # NOTE that this function is used to check for supported ciphers only,
-    # hence no need for sophisticated options in new() and no certificate
-    # checks, $ciphers must be colon (:) separated list
+    # NOTE: this function is used to check for supported ciphers only, hence
+    #       no need for sophisticated options in new() and no certificate checks
+    #       $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
     my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
@@ -3656,8 +3655,8 @@ sub _get_ciphers_range  {
        $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
     my @all;
     _trace("_get_ciphers_range($ssl, $range");
-    #  NOTE: following eval must not use the block form because the
-    #        value needs to be evaluated
+    #  NOTE: following eval must not use the block form because the value
+    #        needs to be evaluated
     foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         push(@all, sprintf("0x%08X",$c));
     }
@@ -3740,7 +3739,7 @@ sub _get_default($$$$)  {
     } else { # force openssl
         ($version, $cipher, $dh)= _useopenssl($ssl, $host, $port, $cipher_list);
            # NOTE: $ssl will be converted to corresponding option for openssl,
-           # for example: DTLSv1 becomes -dtlsv1
+           #       for example: DTLSv1 becomes -dtlsv1
            # Unfortunately openssl (or Net::SSLinfo) returns a cipher even if
            # the protocoll is not supported. Reason (aka bug) yet unknown.
            # Hence the caller should ensure that openssl supports $ssl .
@@ -4386,7 +4385,7 @@ sub checkdates($$)  {
     $cfg{'done'}->{'checkdates'}++;
     return if ($cfg{'done'}->{'checkdates'} > 1);
 
-    # NOTE all $data{'valid_*'} are values, not functions
+    # NOTE: all $data{'valid_*'} are values, not functions
 
     my $before= $data{'before'}->{val}($host, $port);
     my $after = $data{'after'} ->{val}($host, $port);
@@ -5404,6 +5403,9 @@ sub checkprot($$)   {
         $checks{'hassslv3'}->{val}  = _get_text('disabled', "--no-SSLv3");
         $checks{'poodle'}  ->{val}  = _get_text('disabled', "--no-SSLv3");
     } else {    # SSLv3 enabled, check if there are ciphers
+        # FIXME: should uses $cfg{'regex'}->{'POODLE'}, hence check in checkcipher() would be better
+        # FIXME: TLSv1 is vulnerable too, but not TLSv11
+        # FIXME: OSaft/Doc/help.txt ok noe, but needs to be fixed too
         if ($prot{'SSLv3'}->{'cnt'} > 0) {
             $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3 and ciphers
             $checks{'poodle'}  ->{val}  = "SSLv3";
@@ -6157,9 +6159,9 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
 
     if ($legacy ne 'sslyze') {
         $total = _print_results($legacy, $ssl, $host, $port, "", @results);
-            # NOTE: $checks{'cnt_totals'}->{val} is the number of all checked
-            # ciphers for all protocols,  here only the number of ciphers for
-            # the protocol $ssl should be printed
+            # NOTE: $checks{'cnt_totals'}->{val}  is the number of all checked
+            #       ciphers for all protocols, here only the number of ciphers
+            #       for the protocol $ssl should be printed
         print_cipherruler() if ($legacy eq 'simple');
         print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
     } else {
@@ -6880,8 +6882,8 @@ while ($#argv >= 0) {
     # NOTE: the sequence of following code must be:
     #   1. check argument (otherwise relooped before)
     #   2. check for options (as they may have arguments)
-    #      NOTE: unknown remaining options are silently ignored, because they
-    #            cannot easily be distinguished from known ones
+    #      unknown remaining options here  are silently ignored, because they
+    #      cannot easily be distinguished from known ones
     #   3. check for commands (as they all start with '+' and we don't expect
     #      any argument starting with '+')
     #   4. check for HOST argument
@@ -6894,6 +6896,8 @@ while ($#argv >= 0) {
         # first matching if condition is executed; sequence is important!
         _y_ARG("argument? $arg, typ= $typ");
         push(@{$dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
+        # programming: for better readability  "if($typ eq CONST)"  is used
+        #              instead of recommended  "if(CONST eq $typ)"  below
         #  $typ = '????'; # expected next argument
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
@@ -6913,7 +6917,6 @@ while ($#argv >= 0) {
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; }
-        if ($typ eq 'CIPHER')   { push(@{$cfg{'cipher'}}, $arg);$typ = 'HOST'; }
         if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPT')      { $cfg{'sclient_opt'}.=" $arg"; $typ = 'HOST'; }
         if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; }
@@ -6940,20 +6943,32 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}  = $arg;$typ = 'HOST'; }
         if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'CONNECT_DLY')  { $cfg{'connect_delay'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'TLSDELAY') { $cfg{'starttls_delay'}        = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SLOWDELAY'){ $cfg{'slow_server_delay'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE1'){$cfg{'starttls_error'}[1]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE2'){$cfg{'starttls_error'}[2]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE3'){$cfg{'starttls_error'}[3]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP1'){$cfg{'starttls_phase'}[1]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP2'){$cfg{'starttls_phase'}[2]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP3'){$cfg{'starttls_phase'}[3]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP4'){$cfg{'starttls_phase'}[4]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP5'){$cfg{'starttls_phase'}[5]     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLS')     { $cfg{'starttls'}          = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'TLSDELAY')     { $cfg{'starttls_delay'}    = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SLOWDELAY')    { $cfg{'slow_server_delay'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE1')   { $cfg{'starttls_error'}[1] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE2')   { $cfg{'starttls_error'}[2] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE3')   { $cfg{'starttls_error'}[3] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP1')   { $cfg{'starttls_phase'}[1] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP2')   { $cfg{'starttls_phase'}[2] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP3')   { $cfg{'starttls_phase'}[3] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP4')   { $cfg{'starttls_phase'}[4] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5] = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'PORT')         { $cfg{'port'}              = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
+        if ($typ eq 'CIPHER')   {
+            if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
+                $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
+            } else {    # anything else,
+                if ($arg !~ m/^[A-Z0-9-]+/) {   # must be upper case
+                    _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
+                    $arg = "";
+                }
+            }
+            push(@{$cfg{'cipher'}}, $arg) if ($arg !~ m/^\s*$/);
+            $typ = 'HOST';
+        }
         if ($typ eq 'STD_FORMAT') {
             if ($arg =~ /^(?:unix|raw|crlf|utf8|win32|perlio)$/) {
                 _set_binmode($arg);
@@ -7204,7 +7219,7 @@ while ($#argv >= 0) {
 
     _y_ARG("option?  $arg");
     #{ OPTIONS
-    #  NOTE that strings miss - and _ characters (see normalization above)
+    #  NOTE: that strings miss - and _ characters (see normalization above)
     #!# You may read the lines as table with columns like: SEE Note:alias
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check         alias for ...               # used by ...
