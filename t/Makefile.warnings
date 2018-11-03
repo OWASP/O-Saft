@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.14 18/10/06 23:13:43
+#?      @(#) Makefile.warnings 1.15 18/11/03 12:54:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.14
+_SID.warnings   = 1.15
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -151,7 +151,9 @@ warning-057: TEST.args  = --ciphercurves=unknown            +quit
 warning-058: TEST.args  = --ca-path=unknown                 +quit
 warning-059: TEST.args  = --ca-path=unknown                 +quit
 warning-060: TEST.args  = --ca-paths=unknown --cfg-init=ca_files=unknown +quit
-warning-063: TEST.args  = --cipher=unknown +cipher          any-host
+#warning-061: TEST.args  = free
+warning-062: TEST.args  = --cipher=unknown +cipher          any-host
+warning-063: TEST.args  = --cipher=UNKNOWN +cipher          any-host
 warning-064: TEST.args  = +sts --no-http                    any-host
 #warning-065: TEST.args  = free
 warning-066: TEST.args  = --ignore-out=cn +cn               any-host
@@ -276,7 +278,7 @@ test.warnings: $(ALL.test.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.14: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.15: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
