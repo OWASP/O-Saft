@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.261 18/11/03 13:34:03";
+my  $man_SID= "@(#) o-saft-man.pm 1.262 18/11/03 19:45:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1266,7 +1266,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('links'),         return if ($hlp =~ /^links?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/);
-    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?|pattern)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
