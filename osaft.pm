@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.11.01',  # official version number of this file
+    OSAFT_VERSION   => '18.11.03',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.150 18/11/02 00:06:10',
+    OSAFT_SID   => '@(#) osaft.pm 1.151 18/11/03 22:58:03',
 
 };
 
@@ -801,7 +801,7 @@ our %cipher_names = (
     #       with openssl), as the cipher suite name is without this suffix  -OLD
     #       This does not matter when we work with the cipher suite name instead
     #       of the corresponding hex keys, unless the underlaying openssl or libssl
-    #       uses these cipher suite name with suffix -OLD too.
+    #       uses these cipher suite names with suffix -OLD too.
     #
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name              # cipher suite value
@@ -1437,10 +1437,11 @@ our %cfg = (
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # should simply be   ALL:COMPLEMENTOFALL,  but
-                                # seen implementations  where it does not list
-                                # all compiled-in ciphers, hence the long list
+                                # have seen implementations  where it does not
+                                # list all compiled-in ciphers, hence the long
+                                # list
                                 # TODO: must be same as in Net::SSLinfo or used from there
-    'cipherpatterns'    => {    # openssl patterns for cipher lists (NOT YET USED)
+    'cipherpatterns'    => {    # openssl patterns for cipher lists
         # key             description                cipher pattern for openssl
         #----------------+--------------------------+---------------------------
         'null'      => [ "Null Ciphers",            'NULL:eNULL'              ], 
@@ -1491,8 +1492,10 @@ our %cfg = (
         'sha256'    => [ "Ciphers with SHA256 Mac", 'SHA256'],
         'sha384'    => [ "Ciphers with SHA384 Mac", 'SHA384'],
         'sha512'    => [ "Ciphers with SHA512 Mac", 'SHA512'], # NOTE: not possible with some openssl
-        'low'       => [ "Low grade encryption",    'LOW:!ADH'    ],  # <=64 Bit
-        'medium'    => [ "Medium grade encryption", 'MEDIUM:!NULL:!aNULL:!SSLv2:!3DES' ], 
+        'weak'      => [ "Weak grade encryption",   'LOW:3DES:DES:RC4:ADH:EXPORT'  ],
+#       'low'       => [ "Low grade encryption",    'LOW:!ADH'    ],    # LOW according openssl
+        'low'       => [ "Low grade encryption",    'LOW:3DES:RC4:!ADH' ],
+        'medium'    => [ "Medium grade encryption", 'MEDIUM:!NULL:!aNULL:!SSLv2:!3DES:!RC4' ], 
         'high'      => [ "High grade encryption",   'HIGH:!NULL:!aNULL:!DES:!3DES' ], 
         #----------------+--------------------------+---------------------------
         # TODO: list with 'key exchange': kRSA, kDHr, kDHd, kDH, kEDH, kECDHr, kECDHe, kECDH, kEECDH
@@ -1959,14 +1962,18 @@ our %cfg = (
             #
             # In a perfect (perl) world we can use negative lokups like
             #     (ABC)(?!XYZ)
-            # which means: contains `ABC' but not `XYZ' where `XYZ' could be
-            # to the right or left of `ABC'.
-            # But in real world some perl implementations fail to match such
-            # pattern correctly. Hence we use two pattern:  one for positive
-            # match and second for the negative (not) match. Both patterns
-            # must be used programatically.
+            # which means: contains `ABC' but not `XYZ' where `XYZ' could be to
+            # the right or left of `ABC'.
+            # But in real world some perl implementations fail can't match such
+            # pattern correctly. Hence we define two pattern:  one for positive
+            # match and second for the negative (not) match. Both patterns must
+            # be used programatically.
             # Key 'TYPE' must match and key 'notTYPE' must not match.
         # The following RegEx define what is "vulnerable":
+            # NOTE: the  (?:SSL[23]?|TLS[12]|PCT1?[_-])  protocol prefix is not
+            #       yet used in the checks,  but its optional in the RegEx here
+            #       note also that internal strings are like SSLv2, TLSv11, etc
+            #       which would not match the protocol prefix in the RegEx here
         'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',# borrowed from 'Lucky13'. There may be another better RegEx.
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
@@ -1976,6 +1983,7 @@ our %cfg = (
         'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
         'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',        # match against cipher
                        # Logjam is same as regex{EXPORT} above
+        'POODLE'    => '^(?:SSL[23]?|TLS1)?[A-Z].*?[_-]CBC',    # must not match TLS11, hence [A-Z]
         'ROBOT'     => '^(?:(?:SSLv?3|TLSv?1(?:[12]))[_-])?(?:A?DH[_-])?(RC2|RC4|RSA)[_-]',
         'notROBOT'  => '(?:(?:EC)?DHE[_-])',                    # match against cipher
                        # ROBOT are all TLS_RCA except those with DHE or ECDHE
