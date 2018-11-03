@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.260 18/09/30 18:35:00";
+my  $man_SID= "@(#) o-saft-man.pm 1.261 18/11/03 13:34:03";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -906,6 +906,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;
+       $typ =~ s/^cipher(pattern|range)/$1/;# normalize: cipherrange and range are possible
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
@@ -916,6 +917,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  " Brief description of performed checks"],
         'range' => ["range name",    " - ",  " hex values in this range"],
+        'pattern' =>["pattern name", " - ",  " pattern description; used pattern"],
         'rfc'   => ["Number",        " - ",  " RFC Title and URL"],
         'links' => ["Title",         " - ",  " URL"],
         'check' => ["key",           " - ",  " Label text"],
@@ -957,16 +959,20 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     # now all lists, which can be redefined with --cfg-*=
     # _man_cfg() prints different data for  --help=TYP and --help=TYP-cfg
-    if ($typ =~ m/(hint|ourstr|range|regex)/) {
+    if ($typ =~ m/(hint|ourstr|pattern|range|regex)/) {
         my $list = $1;
            $list =~ s/^cfg[._-]?//;
            $list =~ s/[._-]?cfg$//;
            $list =  'hints' if ($list =~ m/hint/);  # the key in %cfg is 'hints'; 'hint' is different
-           $list =  'cipherranges' if ($list =~ m/range/);
+           $list =  'cipherpatterns' if ($list =~ m/pattern/);
+           $list =  'cipherranges'   if ($list =~ m/range/);
         # TODO: --cfg_range=* and --cfg-regex=*  are not yet implemented
         #       however, we can print it using --help=cfg-regex
         foreach my $key (sort keys %{$cfg{$list}}) {
             $txt =  $cfg{$list}->{$key};
+            if ('ARRAY' eq ref($cfg{$list}->{$key})) {
+                $txt = join("\t", @{$cfg{$list}->{$key}});
+            }
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
@@ -1261,6 +1267,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('links'),         return if ($hlp =~ /^links?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
@@ -1423,6 +1430,8 @@ on the $type parameter, which is a literal string, as follows:
 =item * data    -> list of all SSL/TLS data values (each can be used as command)
 
 =item * info    -> list of all SSL/TLS info values (each can be used as command)
+
+=item * pattern -> list of supported pttern for SSL/TLS cipher ranges (for +cipher)
 
 =item * range   -> list of supported SSL/TLS cipher ranges (for +cipher)
 
