@@ -23,7 +23,7 @@
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
-#?          --openssl   - use  contrib/build_openssl.sh  to install  openssl
+#?          --openssl   - use  contrib/install_openssl.sh to install openssl
 #?                        and  Net::SSLeay
 #?
 #? OPTIONS
@@ -55,7 +55,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.12 18/07/16 11:53:45
+#?      @(#) INSTALL-template.sh 1.13 18/11/04 09:30:40
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -130,7 +130,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.12 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.13 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -176,7 +176,7 @@ fi
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
-	build=contrib/build_openssl.sh
+	build=contrib/install_openssl.sh
 	[ ! -x "$build" ] && echo_red "**ERROR: $build does not exist; exit" && exit 2
 	$build $optn
 	status=$?
