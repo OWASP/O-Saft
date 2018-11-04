@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-my  $VERSION    = "18.11.03";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.11 18/11/03 15:56:53";
+our $VERSION    = "18.11.03";  # official verion number of tis file
+my  $SID        = "@(#) Data.pm 1.12 18/11/04 15:38:22";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
