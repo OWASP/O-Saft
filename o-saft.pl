@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.816 18/11/03 13:02:14",
+    SID         => "@(#) yeast.pl 1.817 18/11/04 20:11:33",
     STR_VERSION => "18.11.01",          # <== our official version number
 };
 
@@ -78,16 +78,18 @@ sub _set_binmode    {
 } # _set_binmode
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
+sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:ARGV
+sub _is_v_trace { return _is_argv('--(?:v|trace)'); }               # SEE Note:ARGV
+    # need to check @ARGV directly as this is called before any options are parsed
+
 our $time0  = time();
 sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
-    # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     my $now = time() - ($time0 || 0);
-       #$now =- ($time0 || 0) if (not (grep{/(?:--time.*absolut)/i} @ARGV));
-       $now = time() if ((grep{/(?:--time.*absolut)/i} @ARGV));
-    if ((grep{/(?:--trace.*time)/i} @ARGV) > 0) {
+       $now = time() if _is_argv('(?:--time.*absolut)');
+    if (_is_argv('(?:--trace)') > 0) {
         printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime($now))[2,1,0], @txt);
     }
     return;
@@ -97,7 +99,7 @@ sub _yeast_EXIT($)  {
     my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
+    if (_is_argv('(?:([+]|--)$arg).*') > 0) {
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         exit 0;
     }
@@ -108,7 +110,7 @@ sub _yeast_NEXT($)  {
     my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
+    if (_is_argv('(?:([+]|--)$arg).*') > 0) {
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         return 1;
     }
@@ -132,7 +134,7 @@ BEGIN {
     );
 
     # handle simple help very quickly
-    if ((grep{/^(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
+    if (_is_argv('(?:--|\+)VERSION') > 0) { print STR_VERSION . "\n"; exit 0; }
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
@@ -155,7 +157,7 @@ my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 $cfg{'mename'} = $me;
 
-printf("#$me %s\n", join(" ", @ARGV)) if ((grep{/(?:--trace[_.-]?CLI$)/i} @ARGV) > 0);
+printf("#$me %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?CLI$)');
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -188,7 +190,7 @@ my  $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
-    die STR_ERROR, "020: CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
+    die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
     $cgi = 1;
 } # CGI
 # $me might not be .cgi but called with --cgi-exec option
@@ -203,7 +205,7 @@ sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
     # don't print if ($warning <= 0);
     my @txt = @_;
-    return if ((grep{/(?:--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
+    return if _is_argv('(?:--no.?warn)');  # ugly hack 'cause we won't pass $warning
     local $\ = "\n";
     print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -217,7 +219,7 @@ sub _warn_and_exit      {
     #-command: name of command subject to this message
     my @txt = @_;
     local $\ = "\n";
-    if ((grep{/(?:--experimental)/i} @ARGV) > 0) {
+    if (_is_argv('(?:--experimental)') > 0) {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
@@ -231,7 +233,7 @@ sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
     my @txt = @_;
-    return if ((grep{/(?:--no.?hint)/i} @ARGV) > 0);
+    return if _is_argv('(?:--no.?hint)');
     local $\ = "\n"; print(STR_HINT, join(" ", @txt));
     return;
 } # _hint
@@ -295,18 +297,18 @@ sub _load_file          {
 #| -------------------------------------
 _yeast_TIME("cfg{");
 _yeast_EXIT("exit=CONF0 - RC-FILE start");
-if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # (re-)compute default RC-File
+if (_is_argv('(?:--rc)') > 0) {                 # (re-)compute default RC-File
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
-if ((grep{/(?:--rc=)/i} @ARGV) > 0) {           # other RC-FILE given
+if (_is_argv('(?:--rc=)') > 0) {                # other RC-FILE given
     $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
     $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
     # no check if file exists, will be done below
 }
-print "#o-saft.pl  RC-FILE: $cfg{'RC-FILE'}\n" if ((grep{/--v/i} @ARGV) > 0);
+print "#o-saft.pl  RC-FILE: $cfg{'RC-FILE'}\n" if _is_v_trace();
 my @rc_argv = "";
-if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
+if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
         push(@{$dbx{file}}, $cfg{'RC-FILE'});
@@ -320,9 +322,9 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
-        print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if ((grep{/--v/i} @ARGV) > 0);
+        print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if _is_v_trace();
     } else {
-        _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);
+        _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_v_trace();
     }
 }
 _yeast_EXIT("exit=CONF1 - RC-FILE end");
@@ -2667,7 +2669,7 @@ sub _cfg_set($$)        {
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
-                    _warn("043: command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);
+                    _warn("043: command '+$key' specified by user") if _is_v_trace();
                 }
             }
         }
@@ -2675,9 +2677,9 @@ sub _cfg_set($$)        {
 
     # invalid keys are silently ignored (Perl is that clever:)
 
-    if ($typ eq 'CFG-score') {          # set new score value
+    if ($typ eq 'CFG-score') {              # set new score value
         _trace("_cfg_set: KEY=$key, SCORE=$val");
-        if ($val !~ m/^(?:\d\d?|100)$/) { # allow 0 .. 100
+        if ($val !~ m/^(?:\d\d?|100)$/) {   # allow 0 .. 100
             _warn("076: configuration: invalid score value '$val'; setting ignored");
             goto _CFG_RETURN;
         }
@@ -3635,7 +3637,7 @@ sub _useopenssl($$$$)   {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
         _warn("312: SSL version '$ssl': unknown result from openssl");
-        _warn("312: result from openssl: '$data'") if ($cfg{'verbose'} > 0);
+        _warn("312: result from openssl: '$data'") if _is_v_trace();
     }
     _trace2("_useopenssl: #{ $data }");
     if ($cfg{'verbose'} < 1) {
@@ -3792,7 +3794,7 @@ sub _get_data0          {
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
-    if ($cfg{'verbose'} >  0) {
+    if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
         _warn("206: $_") foreach Net::SSLinfo::errors();
     }
     Net::SSLinfo::do_ssl_close($host, $port);
@@ -6403,7 +6405,6 @@ sub printquit           {
     #       for the correspoding commands.
 
     if ($cfg{'trace'} + $cfg{'traceARG'} + $cfg{'verbose'} <= 0) {
-        #_warn("831: +quit  command usefull with --v and/or --trace* option only");
         _warn("831: +quit  command should be used with  --trace=arg  option");
     }
     $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
@@ -8857,6 +8858,15 @@ Each warning has a unique number. The numbers are grouped as follows:
 
 Check for used numbers with:
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
+
+
+=head2 Note:ARGV
+
+Command line arguments are read after some other internal initializations.
+Unfortunatelly sometimes options need to be check  before argument parsing
+is completed. Therfore somthing like '(grep{/--trace)/} @ARGV)' is needed.
+These check are implemented as simple functions, return grep's result.
+
 
 =head2 Note:SSL protocol versions
 
