@@ -76,7 +76,12 @@ o-saft.pl some.tld +check | contrib/bunt.pl --purple
 # If the  "aha - Ansi HTML Adapter"  (from https://github.com/theZiz/aha)  is
 # available, the output can be converted to an HTML page:
 
-o-saft.pl some.tld +check | contrib/bunt.pl | aha -w -b > some.tld_check.html
+o-saft.pl some.tld +check | contrib/bunt.pl | aha -w -b -t "some.tld +check" > some.tld_check.html
+
+# If  "ansi2html"  is availabe (sometimes in package colorized-logs),  output
+# can be converted to an HTML page:
+
+o-saft.pl some.tld +check | contrib/bunt.pl | ansi2html > some.tld_check.html
 
 
 ###############################################################################
@@ -90,16 +95,25 @@ o-saft.pl --help=cmd
 
 o-saft.pl --help=cmd --norc | awk 'BEGIN{i=4}{while (i<NF){print $i;i++}}' 
 
-# generate list with  --cfg-data=CMD=  options (empty text):
+# or more lazy:
 
-o-saft.pl --help=cmd --norc \
-| awk 'BEGIN{i=4}{while (i<NF){sub(/+/,"",$i);print "--cfg-data="$i"="i;i++}}' 
+o-saft.pl --help=cmd | tr ' ' '\012'
+
+# list all commands with brief description
+
+o-saft.pl --help=commands
 
 
 ###############################################################################
 ###
 ### Redefine label texts in output
 ###
+
+# generate list with  --cfg-data=CMD=  options, which can be used to rewite
+# the labels for output (the old way without --help=cfg-data ):
+
+o-saft.pl --help=cmd --norc \
+| awk 'BEGIN{i=4}{while (i<NF){sub(/+/,"",$i);print "--cfg-data="$i"="i;i++}}' 
 
 # To change the label (text) of a command, the option  --cfg-data=CMD=TEXT or
 # --cfg-check=CMD=TEXT  can be used: 
