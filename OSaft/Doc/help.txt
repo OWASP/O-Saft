@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.17 18/11/02 01:27:00
+# SID   @(#) help.txt 1.18 18/11/04 22:51:47
 
 NAME
 
@@ -76,6 +76,7 @@ QUICKSTART
 
         * Start the simple GUI
           o-saft.tcl 
+# above o-saft.tcl  must have trailing space, otherwise markup fails
 
         * Start the simple GUI which uses $0 in a Docker image
           o-saft.tcl --docker
@@ -128,7 +129,7 @@ SECURITY
         are no checks according any kind of code injection.
 
         Care should be taken, when additional tools and modules are installed
-        as described in  INSTALLATION  below.  In particular  it is recommend
+        as described in  INSTALLATION  below. In particular it is recommended
         to do these installations into directoies  specially prepared for use
         with $0 . No other tools of your system should use these installations
         i.e. by accident or because your environment variables point to them.
@@ -809,6 +810,10 @@ OPTIONS
       --help=alias
 
           Show alias for commands and options.
+
+      --help=pattern
+
+          Show list of cipher pattern (used for  --cipher=CIPHER).
 
       --help=range
 
@@ -3534,6 +3539,8 @@ LIMITATIONS
         When both  --trace-key  and  --trace-cmd  options are used, output is
         mixed, obviously. Hint: output for --trace-cmd always contains "CMD".
 
+        Any  --trace*  option implies  --trace-time .
+
 
 DEPENDENCIES
 
@@ -3595,7 +3602,7 @@ INSTALLATION
     OpenSSL
 
         Currently (since 18.06.18) it is recommend to build openssl using
-            contrib/build_openssl.sh
+            contrib/install_openssl.sh
 
         Other possibilities are:
           * compiling openssl using following sources
@@ -3606,7 +3613,7 @@ INSTALLATION
 
         The sources are available at
           * https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.zip
-        The precomiled static versions are available at
+        A precomiled static versions are available at
           * https://github.com/drwetter/testssl.sh/ (see bin directory there)
 
         For all following installation examples we assume:
