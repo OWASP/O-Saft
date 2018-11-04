@@ -244,14 +244,23 @@ HACKER's INFO
         As long as these options are not used,  $0  works without
         o-saft-dbx.pm.
 
-        Trace messages always start with  '#O-Saft :'.
-        Debug messages always start with  '#o-saft.pl::'.
-        Following formats are used:
+        Debug messages always start with    '#dbx#'.
+        verbose messages always start with  '#o-saft.pl: '.
+        Trace messages always start with    '#o-saft.pl::'.
+        Following formats are used in trace messages:
           #o-saft.pl:: some data           - output from $0's main
           #o-saft.pl::subfunc(){           - inital output in subfunc
           #o-saft.pl::subfunc: some data   - some output in subfunc
           #o-saft.pl::subfunc() = result } - result output of subfunc
         However, these rules are implemented very lazy.
+
+        The prefix for verbose and trace message can be configured like:
+          $0 --cfg-init=prefix_verbose="#VERBOSE: "
+          $0 --cfg-init=prefix_trace="#my-trace:: "
+
+        When  --trace  is used,  additional trace output  with timestamps are
+        are also printed,even if no  --trace-time  was given.  This is useful
+        because it automatically "scopes" other output with  '{'  and  '}'.
 
         Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
         is hard-coded.
