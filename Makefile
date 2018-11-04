@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.39 18/10/14 22:27:59
+#?      @(#) Makefile 1.40 18/11/04 09:15:31
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.39
+_SID            = 1.40
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -185,11 +185,11 @@ CONTRIB.post.awk= \
 		  lazy_checks.awk
 CONTRIB.post    = bunt.pl bunt.sh
 CONTRIB.misc    = \
-		  build_openssl.sh \
 		  cipher_check.sh \
 		  critic.sh \
 		  gen_standalone.sh \
 		  distribution_install.sh \
+		  install_openssl.sh \
 		  install_perl_modules.pl \
 		  INSTALL-template.sh \
 		  Dockerfile.alpine-3.6 \
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.39
+_INST.text      = generated from Makefile 1.40
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -418,8 +418,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.39
-tar:     GREP_EDIT = 1.39
+GREP_EDIT = 1.40
+tar:     GREP_EDIT = 1.40
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
