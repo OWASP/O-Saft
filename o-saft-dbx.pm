@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.65 18/11/02 00:09:00";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.66 18/11/04 20:58:11";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -392,9 +392,10 @@ sub _trace_cmd { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_))if (0 < 
 
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-    _v_print("$0 " . $VERSION);
-    _v_print("$0 " . join(" ", @{$cfg{'ARGV'}}));
-    _v_print("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
+    return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
+    _yeast("$0 " . $VERSION);
+    _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
+    _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
     return;
 } # _vprintme
 
