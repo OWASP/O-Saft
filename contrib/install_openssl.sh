@@ -13,14 +13,16 @@
 #? DESCRIPTION
 #?      Build special openssl based on Peter Mosman's openssl.  Enables SSLv2
 #?      and SSLv3 and all possible ciphers.
-#?      Installs build in specified directory; default: /usr/local/openssl .
+#?      Installs build in specified directory;  default: /usr/local/openssl .
 #?      Additionally builds perl module Net::SSLeay based on special openssl.
-#?      Net::SSLeay will be installed in usr/local/lib.
+#?      Net::SSLeay will be installed in  /usr/local/lib .
 #?      Modifies  .o-saft.pl  .
 #?      This script is intended to be executed in the  installation directory
 #?      of O-Saft.
 #?
-#?      Final output should look like (paths may differ):
+#?      Finally this script starts  "o-saft.pl +version"  using the installed
+#?      openssl binary and the installed Net::SSLeay.  The output should look
+#?      like (paths may differ):
 #?    -------------------------------------------------------------------------
 #?    # test o-saft.pl ...
 #?    **WARNING: 143: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
@@ -108,12 +110,14 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#) build_openssl.sh 1.4 18/07/16 12:16:59
+#?      @(#) install_openssl.sh 1.5 18/11/04 09:11:03
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
+
+dir=`pwd`
 
 # Parameters passed to build
 OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"}
@@ -134,12 +138,9 @@ OPENSSL_DIR=${OPENSSL_DIR:=/usr/local/openssl}
 LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
        PATH=${OPENSSL_DIR}/bin:$PATH
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
-
-dir=`pwd`
-optn=0
-
    WORK_DIR=$dir
 
+optn=0
 while [ $# -gt 0 ]; do
 	ich=${0##*/}
 	arg="$1"
@@ -151,6 +152,7 @@ while [ $# -gt 0 ]; do
 		;;
 	  '-n' | '--n')
 		optn=1
+	        try=echo
 		cat <<EoT
 
 # start build in WORK_DIR=
@@ -162,22 +164,25 @@ while [ $# -gt 0 ]; do
 # check with OSAFT_VM_SHA_OPENSSL=
 	$OSAFT_VM_SHA_OPENSSL
 # build OSAFT_VM_DYN_OPENSSL=$OSAFT_VM_DYN_OPENSSL
+# install openssl binary in OPENSSL_DIR=  # (full path)
+	$OPENSSL_DIR
+# use libraries for openssl from LD_RUN_PATH=
+	$LD_RUN_PATH
+
 # get Net-SSLeay from OSAFT_VM_SRC_SSLEAY=
 	$OSAFT_VM_SRC_SSLEAY
 # store tar in OSAFT_VM_TAR_SSLEAY=
 	$OSAFT_VM_TAR_SSLEAY
 # check with OSAFT_VM_SHA_SSLEAY=
 	$OSAFT_VM_SHA_SSLEAY
-# install openssl binary in OPENSSL_DIR=  # (full path)
-	$OPENSSL_DIR
-# use libraries for openssl from LD_RUN_PATH=
-	$LD_RUN_PATH
+# install Net-SSLeay in (path from Net-SSLeay's Makefile)
+	/usr/local/lib
 
 # build openssl in (temporary dir) BUILD_DIR=$BUILD_DIR
 # modify  OSAFT_DIR/.o-saft.pl  OSAFT_DIR=$OSAFT_DIR
 # and store in:  $dir/.o-saft.pl
 
-# PATH may be set to:
+# consider setting PATH to:
 	${OPENSSL_DIR}/bin:$dir:$PATH
 
 # found perl: `which perl`
@@ -196,7 +201,6 @@ EoT
 		# TODO: use find in all paths of perl's @INC and search libidn.so
 		echo ""
 		;;
-	  '--n')        optn=1; try=echo; ;;
 	esac
 done
 
@@ -208,8 +212,8 @@ done
 [ $optn -eq 1 ] && exit 0
 
 # create aliases, so Dockerfile's syntax can be used
-alias     RUN="\cd $dir && "
-alias     apk="\echo #apk"
+alias   RUN="\cd $dir && "
+alias   apk="\echo '#'apk"
 
 # Dockerfile 1.20 {
 
