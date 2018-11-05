@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.40 18/11/04 09:15:31
+#?      @(#) Makefile 1.41 18/11/06 00:09:55
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.40
+_SID            = 1.41
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -228,7 +228,7 @@ ALL.test        = $(SRC.test)
 
 # documentation files
 DOC.dir         = docs
-DOC.src         = o-saft.odg o-saft.pdf
+DOC.src         = o-saft.odg o-saft.pdf o-saft-docker.pdf
 SRC.doc         = $(DOC.src:%=$(DOC.dir)/%)
 WEB.dir         = doc/img
 WEB.src         = \
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.40
+_INST.text      = generated from Makefile 1.41
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -418,8 +418,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.40
-tar:     GREP_EDIT = 1.40
+GREP_EDIT = 1.41
+tar:     GREP_EDIT = 1.41
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
