@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.179 Sommer Edition 2018
+#?      @(#) 1.180 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.179 18/11/03 19:27:44 Sommer Edition 2018}
-set cfg(VERSION) {1.179}
+set cfg(SID)    {@(#) o-saft.tcl 1.180 18/11/05 15:16:34 Sommer Edition 2018}
+set cfg(VERSION) {1.180}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -473,8 +473,9 @@ set cfg(quit)   0                      ;# quit without GUI
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
 set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
-set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
 set prg(INIT)        {.o-saft.pl}      ;# name of O-Saft's startup file
+set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
+                                       ;# set to o-saft-docker with --docker
 
 #   some regex to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win()
@@ -1346,6 +1347,19 @@ proc update_status {val} {
     return
 }; # update_status
 
+proc docker_args  {} {
+    #? if in "docker mode" pass image ID to Docker;
+    # note that docker specific options must be before o-saft.pl commands or options
+    global prg
+    set do  {}
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+        lappend do "-id=$prg(docker-id)"
+        #lappend do "-tag=$prg(docker-tag)"
+        # FIXME: need to distinguish if --id= or --tag= was specified
+    }
+    return $do
+}; # docker_args
+
 proc toggle_cfg   {w opt val} {
     #? use widget config command to change options value
     if {$val ne {}} { $w config $opt $val; }
@@ -1609,7 +1623,7 @@ proc create_selected {title val} {
     return 1
 }; # create_selected
 
-proc create_window {title size} {
+proc create_window  {title size} {
     #? create new toplevel window with given title and size; returns widget
     global cfg myX
     set this    .[str2obj $title]
@@ -2893,19 +2907,21 @@ proc osaft_help   {} {
     global cfg prg
     _dbx "()"
     # get information from O-Saft; it's a performance penulty, but simple ;-)
-    _dbx               " exec {*}$prg(PERL) $prg(SAFT) +help"
-    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help } help
-    if {2 > [llength [split $help "\n"]]} {
+    _dbx               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help"
+    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help } help
+    if {5 > [llength [split $help "\n"]]} {
         # exec call failed, probably because  PATH  does not contain . then
         # prg(SAFT) returns an error, most likely just one line, like:
         #   couldn't execute "o-saft.pl": no such file or directory
         # as this message depends on the  lanuguage setting  of the calling
         # shell, we do not check for any specific string, but for more than
         # one line, means that $help must be more than one line
+        # if it was a problem with docker, following most likely fails too
         set prg(SAFT) [file join "." $prg(SAFT)];# try current directory also
     }
-    _dbx               " exec {*}$prg(PERL) $prg(SAFT) --no-rc +help"
-    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) --no-rc +help } help
+    # FIXME: workaround does not work with --docker
+    _dbx               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc +help"
+    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc +help } help
 
     _dbx " 1. collect more documentations with --help=*"
     set info ""
@@ -3169,7 +3185,8 @@ foreach arg $argv {
         {+quit}     { set   cfg(quit)   1;  }
         {+VERSION}  { puts $cfg(VERSION); exit; }
         {--version} { puts $cfg(SID);     exit; }
-        {--docker}  { set   prg(SAFT)   {o-saft-docker}; }
+        {-docker}   -
+        {--docker}  { set   prg(SAFT)   "o-saft-docker"; }
         {--dbx}     -
         {--d}       { incr  cfg(DEBUG);     }
         {--v}       { set   cfg(VERB)   1;  }
@@ -3179,7 +3196,9 @@ foreach arg $argv {
         {--img}     { set   cfg(bstyle) "image";}
         {--text}    { set   cfg(bstyle) "text"; }
         {--tip}     { set   cfg(TIP)    1;  }
+         -id=*      -
         --id=*      { set   prg(docker-id)  [regsub {^--id=}   $arg {}]; }
+         -tag=*     -
         --tag=*     { set   prg(docker-tag) [regsub {^--tag=}  $arg {}]; }
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --post=*    { set   prg(post) $arg; }
@@ -3223,22 +3242,26 @@ read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
 #        will be empty if O-Saft's default Docker image is not (found) running
 #        workaround: use environment variables, see o-saft-docker
-set cfg(HELP)   [osaft_help]
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=opt"
-set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=opt }      cfg(OPTS)
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=commands"
-set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=commands } cfg(CMDS)
+set cfg(HELP)   [osaft_help]   ;# calls also:  $prg(SAFT) +help
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=opt"
+set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=opt }      cfg(OPTS)
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=commands"
+set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=commands } cfg(CMDS)
+
+if {5 > [llength [split $cfg(CMDS) "\n"]]} {
+    # failed, so we have no commands, no options and no help text
+    # checking cfg(CMDS) is sufficient, as without commands nothing can be done
+    tk_messageBox -icon error -title "**ERROR: $prg(SAFT) failed" \
+        -message "$prg(SAFT) did not return list of commands
+----
+$cfg(CMDS)
+----
+"
+    exit 2
+}
 
 # special debug output
 if {99==$cfg(DEBUG)} { puts "$cfg(HELP)"; exit; }
-
-#if {2 > [llength [split $cfg(HELP) "\n"]]} {
-#    # failed again, so we have no command and no options also
-#    # would be better to exit here, however some parts of the GUI may work ...
-#    tk_messageBox -icon error \
-#        -message "**ERROR: could not call $prg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
-#    exit 2
-#}
 
 gui_init
 
