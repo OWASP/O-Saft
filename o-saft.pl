@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.817 18/11/04 20:11:33",
-    STR_VERSION => "18.11.01",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.818 18/11/06 00:46:24",
+    STR_VERSION => "18.11.03",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -133,8 +133,8 @@ BEGIN {
             "/bin",                 # special installation on portable media
     );
 
-    # handle simple help very quickly
-    if (_is_argv('(?:--|\+)VERSION') > 0) { print STR_VERSION . "\n"; exit 0; }
+    # handle simple help very quickly; _is_argv() cannot be used because upper case
+    if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
