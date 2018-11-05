@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.4 18/11/04 22:18:15
+# SID   @(#) tools.txt 1.5 18/11/06 00:13:04
 
 NAME
 
@@ -117,6 +117,8 @@ TOOLS
 
           o-saft-docker [COMMANDS] [OPTIONS] target
           o-saft-docker -id=osawp/o-saft.pl [COMMANDS] [OPTIONS] target
+
+        See also docs/o-saft-docker.pdf .
 
     Postprocess
         Various postprocessors exist.  They all change the  content or format
