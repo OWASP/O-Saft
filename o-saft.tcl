@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.180 Sommer Edition 2018
+#?      @(#) 1.181 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.180 18/11/05 15:16:34 Sommer Edition 2018}
-set cfg(VERSION) {1.180}
+set cfg(SID)    {@(#) o-saft.tcl 1.181 18/11/05 15:30:14 Sommer Edition 2018}
+set cfg(VERSION) {1.181}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1477,6 +1477,7 @@ proc apply_filter_table {w} {
         set cfg(HELP-$key) ""
     }
     set nr  -1
+    # lines look like: 009 {Certificate Common Name} mail.google.com {}
     foreach l [$w get 0 end] {
         #set nr    [lindex $l 0];# cannot use stored number, because of leading 0
         incr nr
@@ -1486,6 +1487,7 @@ proc apply_filter_table {w} {
         set cmt   [lindex $l 3]
         if {[regexp -nocase ^no $value] && [regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $cmt]} { continue }
             # no colour for lines with ciphers (from +cipher) which are not supported
+        if {[regexp -nocase ^none $value]} { continue };# NONE, None are valid values
         set col      1
         set matchtxt $label
         foreach {k key} [array get f_key] {
