@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.151 18/11/03 22:58:03',
+    OSAFT_SID   => '@(#) osaft.pm 1.152 18/11/05 23:07:24',
 
 };
 
@@ -1538,7 +1538,7 @@ our %cfg = (
                                 # see Note(a) above also
                        "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
+                        0x02FF0800,   0x02FF0810, 0x02FFFFFF,
                         0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ",
