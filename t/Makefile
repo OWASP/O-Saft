@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.25 18/11/06 09:35:23
+#?      @(#) Makefile 1.26 18/11/06 09:54:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.25
+_SID.test       = 1.26
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -481,6 +481,8 @@ endif
 HELP-_test      = ______________________________________ targets for testing _
 HELP-tests      = make all tests
 HELP-test       = alias for tests
+HELP-tests.quick    = like tests, but less targets (for development)
+HELP-tests.quick.log= like tests.log, but less targets (for development)
 HELP-help.test  = print more targets for testing
 HELP-help.test.all  = print available individual targets for testing
 
@@ -491,6 +493,15 @@ tests:      $(ALL.tests)
 
 tests.log:  $(ALL.tests.log)
 	@echo -n ""
+
+# quick tests for development
+tests.quick:
+	@$(MAKE) $(MFLAGS) -s tests     ALL.test.ext= ALL.test.misc= ALL.test.critic=
+#tests.quick.log:
+#	@$(MAKE) $(MFLAGS) -s tests.log ALL.test.ext= ALL.test.misc ALL.test.critic=
+# FIXME: tests.quick.log not yet working; need to use macro in each Makefile.*
+tests.quick.log:
+	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmds.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
 
 # aliases for convenience
 test:       tests
