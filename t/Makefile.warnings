@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.15 18/11/03 12:54:54
+#?      @(#) Makefile.warnings 1.16 18/11/06 09:11:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.15
+_SID.warnings   = 1.16
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -278,7 +278,7 @@ test.warnings: $(ALL.test.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.15: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.16: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -303,5 +303,5 @@ test.warnings.log: $(_WARNING.log)
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests       += $(ALL.test.warnings)
-ALL.tests.logs  += test.warnings.log
+ALL.tests      += $(ALL.test.warnings)
+ALL.tests.log  += test.warnings.log
