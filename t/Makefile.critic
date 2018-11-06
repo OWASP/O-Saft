@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.4 18/10/06 23:12:11
+#?      @(#) Makefile.critic 1.5 18/11/06 07:51:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.4
+_SID.critic     = 1.5
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
@@ -229,5 +229,5 @@ critic345:
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(ALL.critic)
+ALL.tests      += $(ALL.test.critic)
 #ALL.tests.log  +=
