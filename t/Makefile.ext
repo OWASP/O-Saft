@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.10 18/10/06 23:18:22
+#?      @(#) Makefile.ext 1.11 18/11/06 08:08:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.10
+_SID.ext        = 1.11
 
 _MYSELF.ext     = t/Makefile.ext
 ALL.includes   += $(_MYSELF.ext)
@@ -101,13 +101,13 @@ ALL.by_host     = $(foreach host,$(TEST.ext.hosts),$(ALL.testext:%=%_$(host)))
 ALL.by_command  = $(foreach cmd,$(ALL.testext),$(TEST.ext.hosts:%=$(cmd)_%))
 ALL.test.ext    = $(ALL.by_host)
 
+ALL.ext.host    = $(ALL.by_host)
+ALL.ext.host.log= $(ALL.by_host:%=%.log)
+
 HELP.ext.internal   = "\
 \# test.ext.host:    $(test.ext.host)$(_NL)\
 \# test.ext.command: $(test.ext.command)$(_NL)\
 "
-
-ALL.ext.host    = $(ALL.by_host)
-ALL.ext.host.log= $(ALL.by_host:%=%.log)
 
 # TODO: use target _no-hosts
 test.ext.host:      $(ALL.by_host)
@@ -127,6 +127,6 @@ test.ext.host.quick:     $(foreach host,$(TEST.ext.hosts),$(ALL.ext.quick:%=%_$(
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(ALL.ext.host)
+ALL.tests      += $(ALL.test.ext)
 ALL.tests.log  += test.ext.log
 
