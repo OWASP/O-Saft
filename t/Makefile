@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.24 18/10/06 23:07:56
+#?      @(#) Makefile 1.25 18/11/06 09:35:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.24
+_SID.test       = 1.25
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -489,7 +489,8 @@ tests:      $(ALL.tests)
 	@echo -n ""
 # bench.log
 
-tests.log:  $(ALL.tests.logs)
+tests.log:  $(ALL.tests.log)
+	@echo -n ""
 
 # aliases for convenience
 test:       tests
