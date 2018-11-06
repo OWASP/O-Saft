@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.819 18/11/06 10:03:42",
-    STR_VERSION => "18.11.03",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.820 18/11/06 22:31:20",
+    STR_VERSION => "18.11.06",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6971,7 +6971,7 @@ while ($#argv >= 0) {
             $typ = 'HOST';
         }
         if ($typ eq 'STD_FORMAT') {
-            if ($arg =~ /^(?:unix|raw|crlf|utf8|win32|perlio)$/) {
+            if ($arg =~ /$cfg{'regex'}->{'std-format'}/) {
                 _set_binmode($arg);
             } else {
                 _set_binmode(":encoding($arg)") if ($arg =~ /^[a-zA-Z0-9_.-]+$/);
