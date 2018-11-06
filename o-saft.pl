@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.820 18/11/06 22:31:20",
+    SID         => "@(#) yeast.pl 1.821 18/11/06 23:18:17",
     STR_VERSION => "18.11.06",          # <== our official version number
 };
 
@@ -79,7 +79,7 @@ sub _set_binmode    {
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
 sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:ARGV
-sub _is_v_trace { return _is_argv('--(?:v|trace)'); }               # SEE Note:ARGV
+sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace)/} @ARGV); }  # case-sensitive! SEE Note:ARGV
     # need to check @ARGV directly as this is called before any options are parsed
 
 our $time0  = time();
