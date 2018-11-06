@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.18 18/11/04 22:51:47
+# SID   @(#) help.txt 1.19 18/11/06 22:09:52
 
 NAME
 
@@ -1764,7 +1764,7 @@ OPTIONS
 #         However, it applies partially if used twice for  +info.
 
       --std-format=utf8
-      --std-format=crnl
+      --std-format=crlf
       --std-format=raw
       --std-format=unix
       --std-format=CHARSET
@@ -1781,7 +1781,7 @@ OPTIONS
             Note:  binary here just means characters (as all output is text).
 
           * 'utf8'      Convert all characters to UTF-8.
-          * 'crnl'      Use CR LF as end of line.
+          * 'crlf'      Use CR LF as end of line.
 
           * 'CHARSET'   'CHARSET' can be any of the local installed character
                         sets, like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
@@ -1795,12 +1795,14 @@ OPTIONS
           further checks on the converted characters. In contrast, 'UTF-8' is
           used as real encoding and does some checks.
 
+          For more details, please see  "perldoc -f binmode" .
+
           Currently (Jan. 2018), these options must be used before any --help
           option.
 
       --win-CR
 
-          Obsolete, please use  --std-format=crnl .
+          Obsolete, please use  --std-format=crlf .
 
     Options for compatibility with other programs
 
