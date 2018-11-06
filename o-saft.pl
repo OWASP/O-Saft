@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.818 18/11/06 00:46:24",
+    SID         => "@(#) yeast.pl 1.819 18/11/06 10:03:42",
     STR_VERSION => "18.11.03",          # <== our official version number
 };
 
@@ -99,7 +99,7 @@ sub _yeast_EXIT($)  {
     my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if (_is_argv('(?:([+]|--)$arg).*') > 0) {
+    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         exit 0;
     }
@@ -110,7 +110,7 @@ sub _yeast_NEXT($)  {
     my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if (_is_argv('(?:([+]|--)$arg).*') > 0) {
+    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         return 1;
     }
