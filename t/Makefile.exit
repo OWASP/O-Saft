@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.2 18/10/06 23:17:37
+#?      @(#) Makefile.exit 1.3 18/11/06 08:10:40
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.2
+_SID.exit       = 1.3
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
@@ -98,20 +98,20 @@ test.exit-END:      TEST.args  += --exit=END
 test.exit-%: message-%
 	@echo -n ""
 
-#ALL.testexit       = same as ALL.test.exit
-ALL.test.exit       = $(test.exit.labels:%=test.exit-%)
+#ALL.testexit   = same as ALL.test.exit
+ALL.test.exit   = $(test.exit.labels:%=test.exit-%)
 
-test.exit:          $(ALL.test.exit)
+test.exit:      $(ALL.test.exit)
 
-_EXIT.log           = $(TEST.logdir)/test.exit.log-$(_TODAY_)
+_EXIT.log       = $(TEST.logdir)/test.exit.log-$(_TODAY_)
 $(_EXIT.log):
-	@echo "# Makefile.exit 1.2: make test.exit.log" > $@
+	@echo "# Makefile.exit 1.3: make test.exit.log" > $@
 	@$(MAKE) -s $(ALL.test.exit) >> $@ 2>&1
 test.exit.log:      $(_EXIT.log)
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
 
-ALL.tests          += $(ALL.test.exit)
-ALL.tests.log      += test.exit.log
+ALL.tests      += $(ALL.test.exit)
+ALL.tests.log  += test.exit.log
 
