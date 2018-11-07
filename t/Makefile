@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.27 18/11/07 07:32:41
+#?      @(#) Makefile 1.28 18/11/07 23:20:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.27
+_SID.test       = 1.28
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -130,6 +130,9 @@ help.test.targets:
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
+
+# store -n (dry-run) option in own variable
+_n := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 
 # test tools (part of distribution)
 TEST.dir        = t
@@ -339,6 +342,29 @@ no.message-%:
 	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(_TMP.rc)
 
+# Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
+testarg0-%:
+	@$(TARGET_VERBOSE)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+
+ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
+# simple target for -n (dry-run) to avoid generation of file(s)
+testarg0-%.log: $(TEST.logdir)
+	@echo "$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1"
+else
+testarg0-%.log: $(TEST.logdir)
+	@$(TARGET_VERBOSE)
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
+	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
+	    && rm $@ \
+	    || mv $@ $(_NEW.log)
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
+	@-ls -l  $(TEST.logdir)/testarg0-$(*)*
+# TODO: target should fail if there is a diff
+endif
+
+
 # The goal for test targets is to perform (test) all commands with all hosts.
 # The hostnames are provided in a simple list: $(TEST.hosts) .
 # The commands couldn't be provided in a make macro all together, because each
@@ -419,6 +445,12 @@ test-%: testcmd-%
 # errors if the command fails (as failture is intended, somehow).
 # Note that  testcmd-%.log  called from within t/ may return:  is up to date.
 # diff's STDERR is discarded (may return: "file does not exist").
+
+ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
+# simple target for -n (dry-run) to avoid generation of file(s)
+testcmd-%.log: $(TEST.logdir)
+	@echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1"
+else
 testcmd-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
@@ -429,6 +461,7 @@ testcmd-%.log: $(TEST.logdir)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
 	@-ls -l  $(TEST.logdir)/testcmd-$(*)*
 # TODO: target should fail if there is a diff
+endif
 
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
