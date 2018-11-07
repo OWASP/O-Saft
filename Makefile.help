@@ -193,22 +193,22 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.21 18/11/01 21:13:32
+#?      @(#) Makefile.help 1.22 18/11/07 07:28:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.21
+_SID.helpme     = 1.22
 
-_MYSELF.help    = Makefile.help
-ALL.includes   += $(_MYSELF.help)
+_MYSELF.helpme  = Makefile.help.me
+ALL.includes   += $(_MYSELF.helpme)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-help-target-is-default: help.doc
+first-helpme-target-is-default: help.doc
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -257,7 +257,7 @@ EXE.cloc        = cloc $(OPT.cloc)
 # no HELP-* macros are used herein to avoid printing their content with "make"
 
 
-HELP.help       = " \
+HELP.helpme     = " \
 \#              __________________________ targets for help about Makefile _$(_NL)\
  macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
  targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
@@ -278,12 +278,12 @@ $(_NL)\
 $(_NL)\
 "
 
-ALL.help        +=$(HELP.help)
+ALL.help        +=$(HELP.helpme)
 # TODO: auch zu ALL.help.test ??
 
 help.help: help.HEAD
-	@$(EXE.help) $(_MYSELF.help)
-	@echo $(HELP.help) ; # no quotes!
+	@$(EXE.help) $(_MYSELF.helpme)
+	@echo $(HELP.helpme) ; # no quotes!
 
 help.doc: help.help
 #  legacy alias
