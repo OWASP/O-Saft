@@ -19,14 +19,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.2 18/11/07 20:52:42
+#?      @(#) Makefile.hlp 1.3 18/11/07 21:03:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.2
+_SID.hlp        = 1.3
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
@@ -60,17 +60,19 @@ ALL.help.test  += $(_NL)$(HELP.hlp)
 
 HELP-help.test.hlp  = print targets for testing '$(SRC.pl)' --help options
 
-testhlp%:     EXE.pl      = ../$(SRC.pl)
-testhlp%:     TEST.init   = --no-rc --header
+testhlp-%:      EXE.pl      = ../$(SRC.pl)
+testhlp-%:      TEST.init   = --no-rc --header
 
-# some targets, which are kind of help, but do not use --help
+# these are kind of help, but do not use --help
 testhlp-+VERSION:           TEST.args  += +VERSION
 testhlp-+help:              TEST.args  += +help=command
-testhlp-+ciphers:           TEST.args  += +ciphers -V
 testhlp-+version:           TEST.args  += +version
 testhlp-+version--usr:      TEST.args  += +version --v --usr
 testhlp---v+version:        TEST.args  += --v +version
 testhlp---v+help:           TEST.args  += --v +help
+testhlp-+ciphers:                TEST.args  += +ciphers --V
+testhlp-+ciphers-legacy-full:    TEST.args  += +ciphers --legacy=full
+testhlp-+ciphers-legacy-openssl: TEST.args  += +ciphers --legacy=openssl
 
 # --help
 testhlp--help-FAQ:          TEST.args  += --help=FAQ
@@ -116,22 +118,22 @@ testhlp--help--yeast-data:  TEST.args  += --yeast-data
 testhlp--help--yeast-prot:  TEST.args  += --yeast-prot
 
 # cannot use testcmd-% because $* is not needed here
-testhlp%:
+testhlp-%:
 	@$(TARGET_VERBOSE)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
-testhlp%.log: $(TEST.logdir)
+testhlp-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@$(MAKE) $(MFLAGS) -s testhlp$* > $@ 2>&1
+	@$(MAKE) $(MFLAGS) -s testhlp-$* > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
-	@-ls -l  $(TEST.logdir)/testhlp$(*)*
+	@-ls -l  $(TEST.logdir)/testhlp-$(*)*
 # TODO: target should fail if there is a diff
 
-ALL.testhlp     = $(shell awk -F: '/^testhlp%/{next} /^testhlp/{print $$1}' $(_MYSELF.hlp))
+ALL.testhlp     = $(shell awk -F: '/^testhlp-%/{next} /^testhlp-/{print $$1}' $(_MYSELF.hlp))
 ALL.test.hlp    = $(ALL.testhlp)
 ALL.test.hlp.log    = $(ALL.test.hlp:%=%.log)
 
