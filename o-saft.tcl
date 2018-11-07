@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.182 Sommer Edition 2018
+#?      @(#) 1.183 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.182 18/11/08 00:08:23 Sommer Edition 2018}
-set cfg(VERSION) {1.182}
+set cfg(SID)    {@(#) o-saft.tcl 1.183 18/11/08 00:13:00 Sommer Edition 2018}
+set cfg(VERSION) {1.183}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3197,9 +3197,9 @@ foreach arg $argv {
         {--img}     { set   cfg(bstyle) "image";}
         {--text}    { set   cfg(bstyle) "text"; }
         {--tip}     { set   cfg(TIP)    1;  }
-         -id=*      -
+         -id=*      { set   prg(docker-id)  [regsub {^-id=}    $arg {}]; }
         --id=*      { set   prg(docker-id)  [regsub {^--id=}   $arg {}]; }
-         -tag=*     -
+         -tag=*     { set   prg(docker-tag) [regsub {^-tag=}   $arg {}]; }
         --tag=*     { set   prg(docker-tag) [regsub {^--tag=}  $arg {}]; }
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --post=*    { set   prg(post) $arg; }
