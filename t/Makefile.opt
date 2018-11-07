@@ -19,14 +19,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.2 18/10/06 23:16:43
+#?      @(#) Makefile.opt 1.3 18/11/07 23:59:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.2
+_SID.opt        = 1.3
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
@@ -59,33 +59,47 @@ ALL.help.test  += $(_NL)$(HELP.opt)
 
 HELP-help.test.opt  = print targets for testing '$(SRC.pl)' options
 
-testopt-alias%: EXE.pl      = ../$(SRC.pl)
-testopt-alias%: EXE.pl      = ../yeast.pl
-testopt-alias%: TEST.init   = --traceARG --v +quit
+testopt-alias%:                EXE.pl      = ../$(SRC.pl)
+testopt-alias%:                TEST.init   = --traceARG --v +quit
 
-# The part right of the  _  in the target name testopt-alias*  is the pattern
+# The part right of the  _  in the target name testarg0-alias*  is the pattern
 # to be searched for in the output of $(EXE.pl).  As this might contain chars
 # not allowed in make's target names, . (dot) are used (i.e. for = or space).
 
-#message-enabled..1:     TEST.args  += --exit=MAIN  -b
-#message-ca_path..x:     TEST.args  += --exit=MAIN  -c x
-testopt-alias_enabled..1:     TEST.args  += --exit=MAIN  -b
-testopt-alias_enabled..2:     TEST.args  += --exit=MAIN  -b
-testopt-alias_ca_path..x:     TEST.args  += --exit=MAIN  -c x
+testopt-alias_enabled..1:      TEST.args  += --exit=MAIN  -b
+testopt-alias_enabled..2:      TEST.args  += --exit=MAIN  -b
+testopt-alias_ca_path..x:      TEST.args  += --exit=MAIN  -c x
 
 # folgende noch in passende Makefile verschieben
-testopt-alias_HOST0:     TEST.init   =
-testopt-alias_HOST0:     TEST.args  += --exit=HOST0 +cn demo demo:42 egal --port 23 localhost
-testopt-alias_HOST0:     TEST.args  += --exit=HOST0 +cn ::1 ::244
+testopt-alias_HOST0:            TEST.init   =
+#testarg0-alias_HOST0:           TEST.args  += --exit=HOST0 +cn demo demo:42 egal --port 23 localhost
+testopt-alias_HOST0:            TEST.args  += --exit=HOST0 +cn ::1 ::244
 
 # yeast.pl --exit=HOST0 +cn demo demo:42 egal --port 23 localhost ::1/erkannt_aber_falsch "[::266]" --port=22 "[::244]:32/egal" ::1:333/x/ambigious_port_falsch
 
 testopt-alias_%: message-%
-	@echo "# testopt-alias_%"
+	@echo ""
+
+testarg0-stdformat-%:           EXE.pl      = ../$(SRC.pl)
+testarg0-stdformat-%:           TEST.init   = --no-rc --help=pod
+
+testarg0-stdformat-crlf:        TEST.args  += --stdformat=crlf
+testarg0-stdformat-raw:         TEST.args  += --stdformat=raw
+testarg0-stdformat-unix:        TEST.args  += --stdformat=unix
+testarg0-stdformat-utf8:        TEST.args  += --stdformat=utf8
+testarg0-stdformat-UTF8:        TEST.args  += --stdformat=UTF-8
+testarg0-stdformat-UTF-8: testarg0-stdformat-UTF8
 
 #       message-"enabled= 1"
 # note: no sort because we want the sequence as defined above
-ALL.testopt     = $(shell awk -F: '/^testopt-alias_[^%]/   {print $$1}' $(_MYSELF.opt))
+ALL.testalias       = $(shell awk -F: '/^testarg0-alias_[^%]/     {print $$1}' $(_MYSELF.opt))
+ALL.teststdformat   = $(shell awk -F: '/^testarg0-stdformat-[^%]/     {print $$1}' $(_MYSELF.opt))
+ALL.test.stdformat  = $(ALL.teststdformat)
+ALL.testopt    += $(ALL.testalias)
+ALL.testopt    += $(ALL.teststdformat)
+
+test.stdformat  = $(ALL.teststdformat)
+.PHONY: test.stdformat
 
 #ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testhelp:%=%$(host)))
 
@@ -95,7 +109,7 @@ ALL.test.opt.log= $(ALL.testopt:%=%.log)
 # TODO: use target _no-hosts
 # for debugging add test.opt.internal to the target's dependencies
 test.opt:         $(ALL.test.opt)
-test.opt.log:     $(ALL.test.info:%=%.log)
+test.opt.log:     $(ALL.test.opt.log)
 test.opt-%:       test.opt.internal test.opt
 
 #_____________________________________________________________________________
@@ -103,5 +117,5 @@ test.opt-%:       test.opt.internal test.opt
 
 # feed main Makefile
 ALL.tests      += $(ALL.test.opt)
-ALL.tests.log  += test.opt.log
+ALL.tests.log  += $(ALL.test.opt.log)
 
