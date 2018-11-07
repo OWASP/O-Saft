@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.181 Sommer Edition 2018
+#?      @(#) 1.182 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.181 18/11/05 15:30:14 Sommer Edition 2018}
-set cfg(VERSION) {1.181}
+set cfg(SID)    {@(#) o-saft.tcl 1.182 18/11/08 00:08:23 Sommer Edition 2018}
+set cfg(VERSION) {1.182}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2591,7 +2591,6 @@ proc search_view  {w key} {
 proc search_show  {w mark} {
     #? jump to mark in given text widget
     _dbx "($w,$mark)"
-puts "($w,$mark)"
     catch { $w see [$w index $mark.first] } err
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
