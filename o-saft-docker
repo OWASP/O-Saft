@@ -244,6 +244,7 @@
 #?           OSAFT_VM_SRC_SSLEAY    - URL to Net-SSLeay.tgz
 #?           OSAFT_VM_SRC_SOCKET    - URL to IO-Socket.tgz
 #?           OSAFT_VM_SRC_OPENSSL   - URL to openssl.tgz
+#?           OSAFT_VM_SHA_OSAFT     - checksum of o-saft.tgz
 #?           o_saft_docker_name     - contains an image registry name
 #?           o_saft_docker_tag      - contains an image tag
 #?
@@ -257,14 +258,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.37 18/10/02 00:01:09
+#?       @(#) o-saft-docker 1.38 18/11/09 00:34:06
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-VERSION="${OSAFT_VERSION:-18.07.18}"
+VERSION="${OSAFT_VERSION:-18.11.18}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
@@ -410,6 +411,7 @@ docker_build () {
 	_arg2=
 	_arg3=
 	_arg4=
+	_arg5=
 	_tar=./o-saft_docker.tar
 	_cfg=./Dockerfile
 	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
@@ -419,9 +421,10 @@ docker_build () {
 	[ -n "$OSAFT_VM_SRC_SSLEAY"  ] && _arg2="--build-arg OSAFT_VM_SRC_SSLEAY=$OSAFT_VM_SRC_SSLEAY"
 	[ -n "$OSAFT_VM_SRC_SOCKET"  ] && _arg3="--build-arg OSAFT_VM_SRC_SOCKET=$OSAFT_VM_SRC_SOCKET"
 	[ -n "$OSAFT_VM_SRC_OPENSSL" ] && _arg4="--build-arg OSAFT_VM_SRC_OPENSSL=$OSAFT_VM_SRC_OPENSSL"
+	[ -n "$OSAFT_VM_SHA_OSAFT"   ] && _arg5="--build-arg OSAFT_VM_SHA_OSAFT=$OSAFT_VM_SHA_OSAFT"
 	# TODO: do we need more of these variables?
 	$try \docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
-		$_arg0 $_arg1 $_arg2 $_arg3 $_arg4 .	&& \
+		$_arg0 $_arg1 $_arg2 $_arg3 $_arg4 $_arg5 .	&& \
 	$try \docker image save  -o $_tar ${image_name}	&& \
 	$try \docker image rm    `$try docker image ls -q ${image_name}` && \
 	$try \docker image load  -i $_tar && \
