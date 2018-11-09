@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 18.07.18  )
+                                                          Version: 18.11.18  )
         O-Saft  - OWASP SSL advanced forensic tool                          (
 	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -100,10 +100,10 @@
 (       (tarball) version.
  )
 (       SHA256 checksum of o-saft.tgz
- )           1d9871d4838625a6c6bffb24dced9fb1f2d9292617aac9e21d540290c0b2417f
+ )           b945a474d5417d3c26da411f24fbf9b95799491a29ee733dc61f5516a318b361
 (
- )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:18.07.18
-(            e334caafe4c003e7e3818335e7813a614d7bc2d85429ee3a61267eaf8c033f17
+ )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:18.11.18
+(            b85423d142c186c1cf10494aa0e993f6f2030ab769977aca9584d7d650421697
  )
 (       NOTE that the checksums listed here are the previous versions if this
  )      file is from  o-saft.tgz  itself, or inside the docker image.
