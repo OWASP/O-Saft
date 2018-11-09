@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.11.01',
+    SSLINFO_VERSION => '18.11.18',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.221 18/11/01 18:59:23',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.222 18/11/09 01:31:47',
 };
 
 ######################################################## public documentation #
