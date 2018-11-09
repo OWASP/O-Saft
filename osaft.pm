@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.11.06',  # official version number of this file
+    OSAFT_VERSION   => '18.11.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.153 18/11/06 22:19:34',
+    OSAFT_SID   => '@(#) osaft.pm 1.154 18/11/09 01:32:23',
 
 };
 
