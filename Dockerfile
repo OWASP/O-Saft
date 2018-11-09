@@ -154,7 +154,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.27 18/10/16 23:38:13" \
+	SID="@(#) Dockerfile 1.28 18/11/09 01:28:39" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -177,7 +177,7 @@ RUN \
 		krb5-dev zlib-dev perl perl-readonly perl-dev \
 		ca-certificates			&& \
 		# perl-io-socket-ssl perl-net-ssleay
-
+	\
 	#== Pull, build and install enhanced openssl
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
 	cd    $WORK_DIR				&& \
@@ -241,7 +241,7 @@ RUN \
 	apk  del --purge gmp-dev lksctp-tools-dev && \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
-
+	\
 	#== Pull, build and install Net::SSLeay
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
@@ -265,7 +265,7 @@ RUN \
 	make && make test && make install	&& \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
-
+	\
 	#== Pull, build and install IO::Socket::SSL
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SOCKET -O $OSAFT_VM_TAR_SOCKET && \
@@ -279,7 +279,7 @@ RUN \
 	make && make test && make install	&& \
 	cd    $WORK_DIR				&& \
 	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
-
+	\
 	#== Pull and install O-Saft
 	cd    $WORK_DIR				&& \
 	mkdir -p $OSAFT_DIR			&& \
@@ -306,7 +306,7 @@ RUN \
 	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl && \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f $OSAFT_VM_TAR_OSAFT 		&& \
-
+	\
 	#== Cleanup
 	apk del --purge gcc make musl-dev linux-headers perl-dev
 	    # do not delete  krb5-dev zlib-dev  because we need
