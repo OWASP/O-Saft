@@ -258,7 +258,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.39 18/11/09 00:42:44
+#?       @(#) o-saft-docker 1.40 18/11/09 01:03:22
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -333,9 +333,9 @@ docker_usage () {
 		o-saft -docker +info your.tld
 
       # o-saft.tcl:
-	The GUI  o-saft.tcl  will only work inside Docker if the the packages
-	tcl tk and xvfb   are installed.  However  o-saft.tcl  may be started
-        on the host and then use  o-saft.pl  from the Docker image.
+	The GUI  o-saft.tcl  will only work inside Docker if the packages tcl
+	tk and xvfb are installed. However  o-saft.tcl  may be started on the
+        host and then use  o-saft.pl  from the Docker image.
 
 	# run on host:
 
