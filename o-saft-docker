@@ -258,7 +258,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.40 18/11/09 01:03:22
+#?       @(#) o-saft-docker 1.41 18/11/09 01:14:13
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -310,12 +310,15 @@ check_image_name () {
 }
 
 docker_usage () {
+	_me=${0##*/}
 	# TODO: env|grep osaft_vm_build
 	_openssl="/openssl/bin/openssl";      # TODO: still hardcoded for docker
 	if [ -n "$osaft_vm_build" ]; then
 		_openssl="openssl"            # we're inside docker
+		_me=${0##*/}
 	else
 		_openssl="$0 call $_openssl"  # we're outside docker
+		_me=$0
 	fi
 	_ciphers=`$_openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL | \wc -l`
 	cat << EoDescription
@@ -328,7 +331,7 @@ docker_usage () {
 
 		docker run --rm -it ${image_name} +info your.tld
 	or:
-		$0 +info your.tld
+		$me +info your.tld
 	or:
 		o-saft -docker +info your.tld
 
