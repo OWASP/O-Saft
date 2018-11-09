@@ -149,7 +149,7 @@ here are some examples of the most common use cases:
 
 =back
 
-	o-saft.tcl
+	o-saft.tcl 
 
 =over
 
@@ -256,10 +256,9 @@ roughly sanatised according unwanted characters.  In particular there
 are no checks according any kind of code injection.
 
 Care should be taken, when additional tools and modules are installed
-as described in  L</INSTALLATION>  below.  In particular  we recommend to
-do such installations into directoies specially prepared for use with
-
-	o-saft.pl . No other tools of your system should use these installations
+as described in  L</INSTALLATION>  below. In particular it is recommended
+to do these installations into directoies  specially prepared for use
+with o-saft.pl . No other tools of your system should use these installations
 i.e. by accident or because your environment variables point to them.
 
 Note that compilation and installation of additional tools  (openssl,
@@ -277,6 +276,17 @@ The purpose of  O-Saft  is to do the work, not to force the user to
 learn a new tool or to install "newer" software first.
 However, the user "should do something" if necessary depending on the
 reported results.
+
+=head2 Results
+
+Results of checks are marked  C<yes>  or C<no>.  This leaves the proper
+interpretation, if the result is "good" or "bad", to the user.
+Background:  it is not always possible to rate a result as  "good" or
+"bad" or "insecure" or whatever. That's why  O-Saft  can not give the
+"the best" or a "proper" recomendation. In practice it depends on the
+context what a recomendation, or countermeasure should be. That's why
+all results are marked  C<yes>  or  C<no>  if considered "questionable"
+or "not good" (for example according other checks).
 
 ... more comming soon ...
 
@@ -452,7 +462,7 @@ modules are missing, they can be installed i.e. with:
 	cpan Net::SSLeay
 
 Note: if you want to use advanced features of openssl or Net::SSLeay,
-please see  INSTALLTION  section how to compile and install the tools
+please see  L</INSTALLATION> section how to compile and install the tools
 fully customized.
 
 Also an openssl executable should be available, but is not mandatory.
@@ -687,7 +697,8 @@ Show version of openssl.
 
 =head3 +quit
 
-Show internal data and exit, used for debugging only.
+Show internal data and exit, used for testing and debugging only.
+Please see  L</TESTING>  below.
 
 =head2 Commands to check SSL details
 
@@ -816,7 +827,8 @@ Does not depend on local SSL implementation.
 
 In contrast to  I<+cipher>  this command has some options to tweak the
 cipher tests, connection results and some strange behaviours of the
-target. See  L</Options for cipherall command>  for details.
+target. See  L</Options for  cipherall and cipherraw  command>  for
+details.
 
 =head3 +cipherall
 
@@ -891,15 +903,9 @@ Check if target selects strongest cipher.
 
 Check if target selects weak cipher (oposite of  I<+cipher-strong>).
 
-=head2 Commands to test SSL connection to target
+=head2 Discrete commands to test SSL connection and certificate details
 
-Please see:
-
-	o-saft.pl --help=commands
-
-=head2 Commands to show certificate details of the target
-
-Please see:
+Discrete commands, please see:
 
 	o-saft.pl --help=commands
 
@@ -1034,6 +1040,10 @@ Show available options with their description.
 
 Show available checks.
 
+=head3 --help=tools
+
+Description of tools around O-Saft, when, where and how to use.
+
 =head3 --help=check-cfg
 
 =head3 --help=cfg-check
@@ -1092,6 +1102,10 @@ Show internal commands.
 
 Show alias for commands and options.
 
+=head3 --help=pattern
+
+Show list of cipher pattern (used for  I<--cipher=CIPHER>).
+
 =head3 --help=range
 
 Show list of cipherranges (see  I<--cipherrange=RANGE>).
@@ -1112,7 +1126,7 @@ Show headlines from help text. Useful to get an overview.
 
 =head3 --help=SECTION
 
-Show  <SECTION>  from documentation, see  I<--help=toc>  for a list.
+Show  C<SECTION>  from documentation, see  I<--help=toc>  for a list.
 Example:
 
 	o-saft.pl --help=EXAMPLES
@@ -1147,12 +1161,12 @@ Print documentation in format to be used for CGI.
 
 =head3 --help=problem
 
-Show  KNOWN PROBLEMS  section with  description of known  error and
+Show  L</KNOWN PROBLEMS>  section with  description of known  error and
 warning messages.
 
 =head3 --help=faq
 
-Show  KNOWN PROBLEMS  and  L</LIMITATIONS>  section.
+Show  L</KNOWN PROBLEMS>  and  L</LIMITATIONS>  section.
 
 =head3 --help=glossary
 
@@ -1169,6 +1183,10 @@ Show list of RFC related to SSL/TLS.
 =head3 --help=todo
 
 Show known problems and bugs.
+
+=head3 --help=exit
+
+Show possible  I<--exit=KEY>  options. Used for debugging only.
 
 =head3 --help=program.code
 
@@ -1262,9 +1280,9 @@ This option is a shortcut for  I<--starttls=SMTP> .
 
 =head3 --starttls=PROT
 
-Use C<STARTTLS> command to start a TLS connection via protocol. PORT
-PORT may be any of: C<SMTP>, C<IMAP>, C<IMAP2>, C<POP3>, C<FTPS>, C<RDP>,
-C<LDAP> or C<XMPP> .
+Use C<STARTTLS> command to start a TLS connection via protocol.
+C<PROT> may be any of:  C<SMTP>, C<IMAP>, C<IMAP2>, C<POP3>, C<FTPS>,
+C<RDP>, C<LDAP> or C<XMPP> .
 
 For  I<--starttls=SMTP>  see  I<--dns-mx>  also to use MX records instead
 of host
@@ -1418,17 +1436,13 @@ Check your system for the proper name, i.e.:
 
 =head3 --ssl-error
 
-Stop trying to connect to target if  I<--ssl-error-max>  erros occourd
-sequentially, or if the total amount of errors  I<--ssl-error-total>
-is reached.
-
 The connection to  a target may fail, or even block, due to various
-resons, for example lost network at all, blocking at firewall, etc.
+reasons for example lost network at all, blocking at firewall, etc.
 In particular when checking ciphers with  I<+cipher> , this may result
 in long delays until results are printed.
 Using this option stops trying to do more connections to the target
-when  I<--ssl-error-max>  consecutive errors occoured, or if the total
-amount of errors increases  I<--ssl-error-total>.
+when  I<--ssl-error-max=CNT>  consecutive errors occoured, or when the
+total amount of errors increases  I<--ssl-error-total=CNT>.
 
 Note that this may result in loss of information and/or checks.
 
@@ -1884,6 +1898,26 @@ Do not use  -alpn  option for openssl.
 
 Do not use  -nextprotoneg  option for openssl.
 
+=head3 --proto-alpn=NAME
+
+Name of protocol to be added to list of  applcation layer protocols
+(ALPN), which is used for any connection to the targets.
+See  I<--cipher-alpn=NAME>  also.
+
+=head3 --proto-npn=NAME
+
+Name of protocol to be added to list of  next protocol negotiations
+(NPN), which is used for any connection to the targets.
+See  I<--cipher-npn=NAME>  also.
+
+=head3 --ssl-compression --compression
+
+Use SSL option "compression" for connection.
+
+=head3 --no-ssl-compression --no-compression
+
+Use SSL option "no compression" for connection (default: don't use)
+
 =head3 --no-reconnect
 
 Do not use  -reconnect  option for openssl.
@@ -1903,18 +1937,6 @@ Argument or option passed to openssl's  s_client  command.
 Additional delay in seconds  after each connect for a cipher check.
 This is useful when connecting to servers which have IPS in place,
 or are slow in accepting new connections or requests.
-
-=head3 --proto-alpn=NAME
-
-Name of protocol to be added to list of  applcation layer protocols
-(ALPN), which is used for any connection to the targets.
-See  I<--cipher-alpn=NAME>  also.
-
-=head3 --proto-npn=NAME
-
-Name of protocol to be added to list of  next protocol negotiations
-(NPN), which is used for any connection to the targets.
-See  I<--cipher-npn=NAME>  also.
 
 =head3 --cipher-alpn=NAME
 
@@ -1946,14 +1968,14 @@ I<--cipher-curve=>,,  sets list to empty element "".
 Note:  setting empty list or element most likely does not work with
 openssl executable (i.e.  I<--force-openssl>).
 
-=head2 Options for  +cipherall and +cipherraw  command
+=head2 Options for  cipherall and cipherraw  command
 
 =head3 --range=RANGE
 
 =head3 --cipherrange=RANGE
 
 Specify range of cipher constants to be tested by  I<+cipherall>.
-Following RANGEs are supported (see also:  I<--cipherrange=RANGE>):
+Following RANGEs are supported:
 
 =over
 
@@ -2087,16 +2109,16 @@ certificate compared to the given hostname are effected.
 
 =head3 --ignore-no-reply
 
-When checking for the  TLS heartbeat extension,  the server may not
+When checking for the TLS "heartbeat" extension, the server may not
 respond at all, which would result in a  "no reply"  message.  This
 marks the check for  I<+heartbleed>  as C<no>.
 I.g.  a server is  not vulnerable to the  heartbleed attack  if the
-TLS heartbeat extension is disabled.  Hence the  check result  C<no>
+TLS "heartbeat" extension is disabled. Hence the check result  C<no>
 may be mis-leading.  This option  treats the  "no reply"  result as
 "not vulnerable" and returns  C<yes>  then.
 
 Note: if the server does not respond for this check,  does not mean
-that the heartbeat extension is switched off. So if unsure, disable
+that the "heartbeat" extension is switched off.  If unsure, disable
 this lazy check with  I<--no-ignore-no-reply> .
 
 =head2 Options for output format
@@ -2195,6 +2217,8 @@ ciphers. Other texts like headers and footers are adapted slightly.
 Please do not expect identical output as the TOOL  when using these
 options, it's a best guess and should be parsable in a very similar
 way.
+
+=head3 --legacy=TYPE
 
 =head3 --legacy=compact
 
@@ -2328,7 +2352,7 @@ The hostname will be followed by the separator character.
 
 =head3 --std-format=utf8
 
-=head3 --std-format=crnl
+=head3 --std-format=crlf
 
 =head3 --std-format=raw
 
@@ -2365,7 +2389,7 @@ Note:  binary here just means characters (as all output is text).
 
 =over
 
-=item * C<crnl>      Use CR LF as end of line.
+=item * C<crlf>      Use CR LF as end of line.
 
 =back
 
@@ -2386,12 +2410,14 @@ Note:  C<utf8> just defines the format of the characters, it does no
 further checks on the converted characters. In contrast, C<UTF-8> is
 used as real encoding and does some checks.
 
+For more details, please see  "perldoc -f binmode" .
+
 Currently (Jan. 2018), these options must be used before any I<--help>
 option.
 
 =head3 --win-CR
 
-Obsolete, please use  I<--std-format=crnl> .
+Obsolete, please use  I<--std-format=crlf> .
 
 =head2 Options for compatibility with other programs
 
@@ -2559,6 +2585,10 @@ To get a list of preconfigured texts, use:
 Note that \n, \r and \t are replaced by the corresponding character
 when read from L</RC-FILE>.
 
+=head3 --cfg-text=FILE
+
+Read definitions for  %text{KEY}="my text" from file  C<FILE>.
+
 =head3 --cfg-hint=KEY=TEXT
 
 Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  C<TEXT>.
@@ -2566,6 +2596,11 @@ Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  C<TEXT>.
 To get a list of preconfigured texts, use:
 
 	o-saft.pl --help=cfg-hint
+
+=head3 --cfg-init=KEY=VALUE
+
+Set the internal  %cfg  hash.  This options is intended for testing
+and debugging only. Please see  L</TESTING>  below.
 
 =head3 --call=METHOD
 
@@ -2668,7 +2703,14 @@ Example with    I<--trace-key> :
 
 	#serial#          Certificate Serial Number:          deadbeef
 
+=head3 --trace-time
+
+Prints trace output with timestamps. More timestamps are printed if
+used together with  I<--trace-cmd>.
+
 =head3 --trace=VALUE
+
+Alias for  I<--trace-VALUE>  options (see above).
 
 Trace Option        Alias Option
 
@@ -2702,10 +2744,11 @@ Trace Option        Alias Option
 
 =back
 
-=head3 --trace-time
+=over
 
-Prints trace output with timestamps. More timestamps are printed if
-used together with  I<--trace-cmd>.
+=item * --trace=time        same as  --trace-time
+
+=back
 
 =head3 --trace=FILE
 
@@ -2744,8 +2787,7 @@ Do not print warning messages (**WARNING:).
 
 =head3 --exit=KEY
 
-For debugging only: terminate  o-saft.pl  at specified C<KEY>.
-For C<KEY> please see:  C<grep exit= o-saft.pl>
+Terminate  o-saft.pl  at specified C<KEY>. Please see  L</TESTING>  below.
 
 =head2 Options vs. Commands
 
@@ -2915,7 +2957,7 @@ details of this check.
 
 =head3 heartbeat
 
-Check if heartbeat extension is supported by target.
+Check if "heartbeat" extension is supported by target.
 
 =head3 poodle
 
@@ -2945,6 +2987,7 @@ Check if target supports ALPN. Following messages are evaluated:
 
 	ALPN protocol: h2-14
 	No ALPN negotiated
+
 Please see also  L</CHECKS>  ALPN and NPN  below.
 
 =head2 SSL Vulnerabilities
@@ -3601,7 +3644,7 @@ Truncated HMAC according RFC 6066 not recommended.
 No TLS compression.
 
 3.4.4 Der Lucky13-Angriff
-3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
+3.4.5 Die "Encrypt-then-MAC"-Erweiterung
 
 Use of AES-GCM ciphers only.
 Use of Encrypt-then-MAC according RFC 7366 cannot be checked.
@@ -4022,7 +4065,7 @@ settings used in output. The options are:
 
 =over
 
-=item * --cfg-cmd=KEY=LIST
+=item * --cfg-cmd=CMD=LIST
 
 =back
 
@@ -4056,8 +4099,8 @@ settings used in output. The options are:
 
 =back
 
-KEY  is the key used in the internal data structure, and  TEXT is the
-value to be set for this key.  Note that unknown keys will be ignored
+C<KEY>  is the key used in the internal data structure, and  C<TEXT> is
+the value to be set for this key.  Note that unknown keys are ignored
 silently.
 
 If KEY=TEXT is an exiting filename, all lines from that file are read
@@ -4072,13 +4115,13 @@ or  I<--help=*>  option, otherwise the changed setting is not visible.
 
 =head2 CONFIGURATION FILE
 
-Note that the file can contain KEY=TEXT pairs for any kind of the
+Note that the file can contain C<KEY=TEXT> pairs for any kind of the
 configuration as given by the  I<--cfg-CFG>  option.
 
-For example  when used with  I<--cfg-text=file>  only values for  %text
-will be set, when used with  I<--cfg-data=file>  only values for  %data
-will be set, and so on. KEY is not used  when KEY=TEXT is an existing
-filename. Though, it's recommended to use a non-existing key, i.e.:
+For example  when used with  I<--cfg-text=FILE>  only values for  %text
+will be set, when used with  I<--cfg-data=FILE>  only values for  %data
+will be set, and so on. C<KEY> will not be used when C<KEY=TEXT> is an
+existing filename. It i recommended to use a non-existing key, i.e.:
 I<--cfg-text=my_file=some/path/to/private/file> .
 
 =head2 RC-FILE
@@ -4097,7 +4140,7 @@ Note that options with arguments must be used as  C<KEY=VALUE> instead
 of  C<KEY VALUE>.
 
 Configurations options must be written like C<--cfg-CFG=KEY=VALUE>.
-Where C<CFG> is any of:  cmd, check, data, text  or score and C<KEY> is
+Where C<CFG> is any of:  C<cmd>, C<check>, C<data>, C<text>  and  C<KEY> is
 any key from internal data structure (see above).
 
 All commands and options given on command line will  overwrite  those
@@ -4352,6 +4395,7 @@ supported. Subject are mainly  SSLv2, SSLv3 TLSv1.3 and DTLSv1.
 For DTLSv1 the full message looks like:
 
 	invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
+
 See also  L</Note on SSL versions> .
 
 Workaround: use option: I<--no-sslv2> I<--no-sslv3> I<--no-tlsv13> I<--no-dtlsv1>
@@ -4411,7 +4455,7 @@ Please report a bug with output of following command:
 
 	o-saft.pl +s_client +dump your.tld
 
-=head2 <<openssl did not return DH Paramter>>
+=head2 openssl did not return DH Paramter>>
 
 Text may be part of a value. This means that all checks according  DH
 parameters and logkam attack cannot be done.
@@ -4537,12 +4581,12 @@ Use  I<--no-openssl>
 =back
 
 Use  I<--ssl-error>
-For a detailed description, please see "Connection Problems".
+For a detailed description, please see L</Connection Problems>.
 
 Other options which may help to get closer to the problem's cause:
-I<--trace=time>,  I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
+I<--trace-time>,  I<--timeout=SEC>,  I<--trace>,  I<--trace-cmd>
 
-Using  I<--trace=time>   should show following times:
+Using  I<--trace-time>   should show following times:
 
 =over
 
@@ -4636,7 +4680,8 @@ option. Otherwise the value will be empty.
 The option  I<--port=PORT>  must preceed  I<--host=HOST>  for a target like
 HOST:PORT  .
 
-The characters  C<+> and C<=>  cannot be used for  I<--separator>  option.
+The characters  C<+> and C<=>  cannot be used for  I<--separator=CHAR>
+option.
 
 Following strings should not be used in any value for options:
 C<+check>, C<+info>, C<+quick>, C<--header>
@@ -4645,7 +4690,7 @@ as they my trigger the  I<--header>   option unintentional.
 The used L<timeout(1)|timeout(1)> command cannot be defined with a full path like
 L<openssl(1)|openssl(1)> can with the  I<--openssl=path/to/openssl> .
 
-I<--cfg-text=file>  cannot be used to redefine the texts  C<yes> and C<no>
+I<--cfg-text=FILE>  cannot be used to redefine the texts  C<yes> and C<no>
 as used in the output for  I<+cipher>  command.
 
 =head2 Checks (general)
@@ -4828,18 +4873,20 @@ Examples:
 
 no more connections are made if for example  any sequence of timeouts
 occour:
-0 5 2 2                   - I<--ssl-error-max> matches
-0 1 3 0 0 0 4 1 2 2 2     - I<--ssl-error-max> matches
-0 5 0 2 0 2 2 0 2 0 2     - I<--ssl-error-total> matches
+
+	0 5 2 2                   - --ssl-error-max matches
+	0 1 3 0 0 0 4 1 2 2 2     - --ssl-error-max matches
+	0 5 0 2 0 2 2 0 2 0 2     - --ssl-error-total matches
 
 This allows to fine-tune the condition when to stop connecting to the
 target. For example, continous but not consecutive timeouts may indi-
 cate a bad or instable network connection, but not that the target to
 be connected blocks. In such a case sequence of timeouts like follows
 may be observed (assuming I<--ssl-error-max=3>):
-0 5 1 2 2 2 4 2 3 2 3 3 3 2
-   ^                 ^____ stop for I<--ssl-error-timeout=3>
-   |______________________ stop for I<--ssl-error-timeout=2>
+
+	0 5 1 2 2 2 4 2 3 2 3 3 3 2
+	. . . ^                 ^____ stop for --ssl-error-timeout=3
+	. . . |______________________ stop for --ssl-error-timeout=2
 
 On normal (even slow) network connections  dozens of  connections per
 second are usual, hence the timeout is always  0 or 1.  Based on that
@@ -4871,8 +4918,8 @@ performance problems. It needs to be enabled with  I<--openssl>  option.
 On Windows the usage of  "openssl s_client" needs to be enabled using
 I<--s_client>  option.
 
-On Windows it's a pain to specify the path for  I<--openssl=>..  option.
-Variants are:
+On Windows it's a pain to specify a correct path for  I<--openssl=TOOL>
+option. Variants are:
 
 =over
 
@@ -4914,8 +4961,10 @@ You have to fiddle around to find the proper one.
 
 =head2 Debug and Trace Output
 
-When both  I<--trace=key>  and  I<--trace=cmd>  options are used, output is
-mixed, obviously. Hint: output for I<--trace=cmd> always contains "CMD".
+When both  I<--trace-key>  and  I<--trace-cmd>  options are used, output is
+mixed, obviously. Hint: output for I<--trace-cmd> always contains "CMD".
+
+Any  I<--trace*>  option implies  I<--trace-time> .
 
 =head1 DEPENDENCIES
 
@@ -5025,7 +5074,7 @@ To see which files have been included use:
 =head1 INSTALLATION
 
 The tool can be installed in any path. It just requres the modules as
-described in  DEPENDENCIES  above. However, it's recommended that the
+described in  L</DEPENDENCIES>  above. However, it's recommended that the
 modules L<Net::SSLhello|Net::SSLhello> and L<Net::SSLinfo|Net::SSLinfo> are found in the directory
 C<./Net/>  where  C<o-saft.pl>  is installed.
 
@@ -5066,13 +5115,13 @@ Therefore we recommend to compile and install at least following:
 
 =back
 
-Please read the  SECURITY  section first before following the install
+Please read the  L</SECURITY>  section first before following the install
 instructions below.
 
 =head2 OpenSSL
 
 Currently (since 18.06.18) it is recommend to build openssl using
-contrib/build_openssl.sh
+contrib/install_openssl.sh
 
 Other possibilities are:
 
@@ -5105,7 +5154,7 @@ The sources are available at
 
 =back
 
-The precomiled static versions are available at
+A precomiled static versions are available at
 
 =over
 
@@ -5175,15 +5224,14 @@ Example with openssl-1.0.2d:
 
 	echo == patch files
 	vi ssl/tls1.h         +/TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES/
-          # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
-
+	# define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
 	vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/"
-          #==> remove all   # if 0  and corresponding  #endif
-          #    except if lines contain:
-          #        _FZA
-          #        /* Fortezza ciphersuite from SSL 3.0
-          #        /* Do not set the compare functions,
-          #        if (s->shutdown & SSL_SEND_SHUTDOWN)
+	#==> remove all   # if 0  and corresponding  #endif
+	#    except if lines contain:
+	#        _FZA
+	#        /* Fortezza ciphersuite from SSL 3.0
+	#        /* Do not set the compare functions,
+	#        if (s->shutdown  SSL_SEND_SHUTDOWN)&
 
 	echo == configure with static libraries
 	echo omitt the zlib options if zlib-1g-dev is not installed
@@ -5246,8 +5294,7 @@ Building our own library and module (with openssl from C</usr/local>):
 	LD_RUN_PATH=/usr/local/openssl/lib
 	LDFLAGS="-rpath=$LD_RUN_PATH" & export LDFLAGS&
 	env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
-       INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
-
+	INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
 	make
 	make install
 	cd /tmp & o-saft.pl +version&
@@ -5320,7 +5367,7 @@ After installation as descibed above finished, openssl may be tested:
 	/usr/local/openssl ciphers -V ALL:eNULL:EXP
 
 The difference should be obvious.
-Note, the commands using  "ALL:COMPLEMENTOFALL"  and  "ALL:eNULL:EXP"
+Note, the commands using  C<ALL:COMPLEMENTOFALL>  and  C<ALL:eNULL:EXP>
 should return the same result.
 
 =head2 Testing Net::SSLeay
@@ -5569,7 +5616,7 @@ This is the default environment variable used herein.  If your system
 uses  another name it must be specified with the  I<--envlibvar=NAME>
 option, where  NAME  is the name of the environment variable.
 
-=head2 Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
+=head2 Understanding  --exe=PATH, --lib=PATH, --openssl=TOOL
 
 If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragram calls
 (C<exec>) itself recursively with all given options, except the option
@@ -5591,7 +5638,7 @@ set before executing as follows:
 This is exactly, what L</Cumbersome Approach> below describes. So these
 option simply provide a shortcut for that.
 
-Note that  I<--openssl=FILE>  is a full path to the  openssl  executable
+Note that  I<--openssl=TOOL>  is a full path to the  openssl  executable
 and will not be changed.  However, if it is a relative path, it might
 be searched for using the previously set  C<PATH>  (see above).
 
@@ -5608,9 +5655,9 @@ which shared libraries will be used.
 NOTE that no checks are done if the options are set proper. To verify
 the settings, following commands may be used:
 
-	o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE +version
-	o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE --v +version
-	o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE --v --v +version
+	o-saft.pl --lib=YOUR-PATH --exe=YOUR-EXE +version
+	o-saft.pl --lib=YOUR-PATH --exe=YOUR-EXE --v +version
+	o-saft.pl --lib=YOUR-PATH --exe=YOUR-EXE --v --v +version
 
 Why so many options?  Exactly as described above, these options allow
 the users to tune the behaviour of the tool to their needs.  A common
@@ -5879,7 +5926,7 @@ Following formats are used:
 
 =over
 
-=item *            #<space>
+=item *            #[space]
 
 =back
 
@@ -5887,7 +5934,7 @@ Additional text for verbosity (--v options).
 
 =over
 
-=item *            #[variable name]<TAB>
+=item *            #[variable name][TAB]
 
 =back
 
@@ -5954,32 +6001,27 @@ Following example shows the result without warnings:
 	path to shared libraries
 	full path to openssl.cnf file    <<undef>>
 	common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                      /etc/ssl/openssl.cnf \
-                                      /System//Library/OpenSSL/openssl.cnf \
-                                      /usr/ssl/openssl.cnf
-
+	.                                /etc/ssl/openssl.cnf \
+	.                                /System//Library/OpenSSL/openssl.cnf \
+	.                                /usr/ssl/openssl.cnf
 	URL where to find CRL file       <<undef>>
 	directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
 	PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
 	common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
-                                       /System/Library/OpenSSL
-
+	.                                 /System/Library/OpenSSL
 	common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
 	number of supported ciphers      177
 	openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
 	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                      DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-
+	.                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
 	= o-saft.pl +cipherall =
 	default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                      0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-
+	.                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
 	= Required (and used) Modules =
 	@INC                 ./ ./lib . /bin /usr/share/perl5 \
-                          /usr/lib/x86_64-linux-gnu/perl5/5.20 \
-                          /usr/lib/x86_64-linux-gnu/perl/5.20 \
-                          /usr/share/perl/5.20 /usr/local/lib/site_perl .
-
+	.                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+	.                    /usr/lib/x86_64-linux-gnu/perl/5.20 \
+	.                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
 	=   module name            VERSION  found in
 	=   ----------------------+--------+------------------------------------------
 	IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
@@ -6020,10 +6062,9 @@ Following example shows the result with warnings (line nr. may vary):
 	path to shared libraries
 	full path to openssl.cnf file    <<undef>>
 	common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                      /etc/ssl/openssl.cnf \
-                                      /System//Library/OpenSSL/openssl.cnf \
-                                      /usr/ssl/openssl.cnf
-
+	.                                /etc/ssl/openssl.cnf \
+	.                                /System//Library/OpenSSL/openssl.cnf \
+	.                                /usr/ssl/openssl.cnf
 	URL where to find CRL file       <<undef>>
 	directory with PEM files for CAs /System/Library/OpenSSL/certs
 	PEM format file with CAs         <<undef>>
@@ -6032,26 +6073,23 @@ Following example shows the result with warnings (line nr. may vary):
 	number of supported ciphers      43
 	openssl supported SSL versions   SSLv2 SSLv3 TLSv1
 	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                      DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-
+	.                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
 	**WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
 	**WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
 	= o-saft.pl +cipherall =
 	default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                      0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-
+	.                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
 	= Required (and used) Modules =
 	@INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
-                          /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                          /System/Library/Perl/5.10.0 \
-                          /Library/Perl/5.10.0/darwin-thread-multi-2level \
-                          /Library/Perl/5.10.0 \
-                          /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                          /Network/Library/Perl/5.10.0 \
-                          /Network/Library/Perl \
-                          /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
-                          /System/Library/Perl/Extras/5.10.0 .
-
+	.                    /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+	.                    /System/Library/Perl/5.10.0 \
+	.                    /Library/Perl/5.10.0/darwin-thread-multi-2level \
+	.                    /Library/Perl/5.10.0 \
+	.                    /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+	.                    /Network/Library/Perl/5.10.0 \
+	.                    /Network/Library/Perl \
+	.                    /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+	.                    /System/Library/Perl/Extras/5.10.0 .
 	=   module name            VERSION  found in
 	=   ----------------------+--------+------------------------------------------
 	IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
@@ -6071,6 +6109,49 @@ be shown. The warnings depend on the installed version of the module.
 	o-saft.pl  is known to work with at least:
 	IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
 	Net::SSLeay 1.30
+
+=head1 TESTING
+
+When talking about "testing the tool", functional tests are meant. So
+this section describes "developer" rather that "user" options.
+
+Testing the tool is a challenging task. Beside the oddities described
+elsewhere, for example  L</Name Rodeo>,  there are a bunch of problems
+and errors which may occour during runtime.
+
+Following options and commands are available to improve testing. They
+mainly can simulate error conditions or stop execution properly (they
+are not intended for other use cases):
+
+=head3 +quit
+
+Stop execution after processing all arguments and before precessing
+any target. The runtime configuration is complete at this point.
+
+=head3 --exit=KEY
+
+Terminate tool at specified C<KEY>. For available C<KEY>, please see:
+
+	o-saft.pl --help=exit
+	grep exit= o-saft.pl
+
+=head3 --cfg-init=KEY=VALUE
+
+With this option values in the internal  %cfg  hash can be set:
+
+	$cfg{KEY} = VALUE
+
+Only (perl) scalars or arrays can be set. The type will be detected
+automatically.
+
+Example,  this option can be used to change the text used as prefix
+in each output line triggerd by the  I<--v>  option:
+
+	o-saft.pl --cfg-init=prefix_verbose="#VERBOSE: "
+
+or the text used as prefix triggerd by the  I<--trace>  option:
+
+	o-saft.pl --cfg-init=prefix_trace="#TRACE: "
 
 =head1 EXAMPLES
 
@@ -6414,7 +6495,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 18.07.18
+@(#) 18.11.18
 
 =head1 AUTHOR
 
@@ -6784,10 +6865,11 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.3 18/05/16 11:45:48
+# # SID	@(#) glossary.txt 1.8 18/11/02 08:58:51
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
+# 0-RTT	zero round-trip time
 # AA	Attribute Authority
 # AAD	additional authenticated data
 # ACME	Automated Certificate Management Environment
@@ -6804,15 +6886,25 @@ Generated with:
 # AKC	Agreement with Key Confirmation
 # AKID	Authority Key IDentifier
 # ALPN	Application Layer Protocol Negotiation
+# AMASTRID	stream cipher algorithm
 # ARC4	Alleged RC4 (see RC4)
 # ARCFOUR	alias for ARC4
 # ARIA	128-bit Symmetric Block Cipher
 # ASN	Autonomous System Number
 # ASN.1	Abstract Syntax Notation number One
+# AtE	Authenticate-then-Encrypt (see also MtE)
 # BACPA	Blockwise-adaptive chosen-plaintext attack
+# BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
+# BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
+# BADA55-VR-224	curve useing the same prime as NIST P-224
+# BADA55-VR-256	curve useing the same prime as NIST P-256
+# BADA55-VR-384	curve useing the same prime as NIST P-384
 # bcrypt	hash function (Niels Provos, David Mazières, 1999)
 # BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 # BLAKE2	fast secure hashing function (2012)
+# BLAKE2b	see BLAKE (32 bit)
+# BLAKE-32	see BLAKE (32 bit)
+# BLAKE-64	see BLAKE (64 bit)
 # BLAKE-224	see BLAKE (224 bit)
 # BLAKE-256	see BLAKE (256 bit)
 # BLAKE-384	see BLAKE (384 bit)
@@ -6820,6 +6912,7 @@ Generated with:
 # BEAR	block cipher combining stream cipher and hash function
 # BDH	Bilinear Diffie-Hellman
 # BEAST	Browser Exploit Against SSL/TLS
+# BEAST .	fast block cipher for arbitrary blocksizes
 # BER	Basic Encoding Rules
 # BGP	Boorder Gateway Protocol
 # Blowfish	symmetric block cipher
@@ -6850,6 +6943,9 @@ Generated with:
 # CFB3	Cipher Feedback
 # CFBx	Cipher Feedback x bit mode
 # ChaCha	stream cipher algorithm
+# ChaCha8	see ChaCha
+# ChaCha12	see ChaCha
+# ChaCha20	see ChaCha
 # ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 # CHAP	Challenge Handshake Authentication Protocol
 # CKA	(PKCS#11)
@@ -6884,6 +6980,7 @@ Generated with:
 # Curve448	signature algorithm, aka Goldilocks (224 bit)
 # Curve25519	signature algorithm by Dan J. Bernstein (ca. 128 bit)
 # CWC	CWC Mode (Carter-Wegman + CTR mode; block cipher mode)
+# CyaSSL	formerly name of wolfSSL
 # DAA	Data Authentication Algorithm
 # DAC	Data Authentication Code
 # DACL	Discretionary Access Control List
@@ -6908,27 +7005,38 @@ Generated with:
 # DN	Distinguished Name
 # DNSSEC	DNS Security Extension
 # DPA	Dynamic Passcode Authentication (see CAP)
+# DRAGON	stream cipher algorithm
+# DRG	Deterministic Random Generator
 # DRBG	Deterministic Random Bit Generator
 # DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
 # DSA	Digital Signature Algorithm
+# DSCP	Differentiated Services Code Point
 # DSS	Digital Signature Standard
 # DTLS	Datagram TLS
 # DTLSv1	Datagram TLS 1.0
-# Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator
+# Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
+# Dual_EC_DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 # DV	Domain Validation
 # DV-SSL	Domain Validated Certificate
 # EAL	Evaluation Assurance Level
 # EAP	Extensible Authentication Protocol
 # EAP-PSK	Extensible Authentication Protocol using a Pre-Shared Key
-# EAX	EAX Mode (block cipher mode)
+# EAX	Encrypt-then-Authenticate-then-Translate
+# EAX 	EAX Mode (block cipher mode)
 # EAXprime	alias for EAX Mode
 # EBC	Edge Boundery Controller
 # EC	Elliptic Curve
 # ECB	Electronic Code Book mode
+# ECC 	Error Corection Code
 # ECC	Elliptic Curve Cryptography
+# ECCSI	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption
 # ECDH	Elliptic Curve Diffie-Hellman
 # ECDHE	Ephemeral ECDH
+# ECDLP	Elliptic Curve Discrete Logarithm Problem
 # ECDSA	Elliptic Curve Digital Signature Algorithm
+# ECDSA-256	Elliptic Curve Digital Signature Algorithm (256 bits)
+# ECDSA-384	Elliptic Curve Digital Signature Algorithm (384 bits)
+# ECDSA-521	Elliptic Curve Digital Signature Algorithm (521 bits)
 # ECGDSA	Elliptic Curve ??? DSA
 # ECHO	hash function (Ryad Benadjila, Olivier Billet, Henri Gilbert, Gilles Macario-Rat, Thomas Peyrin, Matt Robshaw, Yannick Seurin, 2010)
 # ECIES	Elliptic Curve Integrated Encryption Scheme
@@ -6936,10 +7044,14 @@ Generated with:
 # ECKA-EG	Elliptic Curve Key Agreement of ElGamal Type
 # ECKDSA	Elliptic Curve ??? DSA
 # ECMQV	Elliptic Curve Menezes-Qu-Vanstone
+# ECN	Explicit Congestion Notification
 # ECOH	Elliptic Curve only hash
 # # ECRYPT	??
+# ECSVDP-DH	Elliptic Curve Secret Value Derivation Primitive, Diffie-Hellman version
 # Ed25519	alias for Curve25519
 # Ed448	alias for Curve448
+# edwards25519	alias for Curve25519
+# edwards448	alias for Curve448
 # EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 # EDE	Encryption-Decryption-Encryption
 # EDH	Ephemeral Diffie-Hellman
@@ -6953,7 +7065,10 @@ Generated with:
 # EME 	Encoding Method for Encryption
 # ESP	Encapsulating Security Payload
 # ESSIV	Encrypted salt-sector initialization vector
-# EtM	Encrypt-then-MAC
+# EtA	Encrypt-then-Authenticate (see also EtM)
+# E&A	Encrypt-and-Authenticate (see also E&M)
+# E&M	Encrypt-and-MAC (see also E&A)
+# EtM	Encrypt-then-MAC (see also EtA)
 # ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 # EV	Extended Validation
 # EV-SSL	Extended Validation Certificate
@@ -6984,25 +7099,37 @@ Generated with:
 # Grainv1	stream cipher (64-bit IV)
 # Grainv128	stream cipher (96-bit IV)
 # GREASE	Generate Random Extensions And Sustain Extensibility
+# GRØSTL256	hash function
+# GRØSTL512	hash function
+# GROESTL256	alias for GRØSTL256
+# GROESTL512	alias for GRØSTL512
 # HAIFA	HAsh Iterative FrAmework
 # hash127	fast hash function (by Dan Bernstein)
 # HAVAL	one-way hashing
 # HAS-160	hash function
 # HAS-V	hash function
-# HC128	stream cipher
-# HC256	stream cipher
+# HC128	alias for HC128
+# HC256	alias for HC256
+# HC-128	stream cipher algorithm
+# HC-256	stream cipher algorithm
+# HCH	Hash-Coputer-Hash
+# HCTR	a variable-input-length encryption mode
 # HEARTBLEED	attack against TLS extension heartbeat
 # HEIST	HTTP Encrypted Information can be Stolen through TCP-windows
 # HIBE	hierarchical identity-based encryption
+# HKDF	HMAC-based Extract-and-Expand Key Derivation Function
 # HNF-256	hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)
 # HMAC	keyed-Hash Message Authentication Code
 # HMQV	h? Menezes-Qu-Vanstone
-# HSM	Hardware Security Module
+# HPC	Hasty Putting Cipher
 # HPKP	HTTP Public Key Pinning
+# HPolyC	ChaCha stream cipher with Poly1305 and XChaCha12, XChaCha20
+# HSM	Hardware Security Module
 # HSR	Header + Secret + Random
 # HSTS	HTTP Strict Transport Security
 # HTOP	HMAC-Based One-Time Password
 # IAPM	Integrity Aware Parallelizable Mode (block cipher mode of operation)
+# IBE	Identity-Based Encryption
 # ICM	Integer Counter Mode (alias for CTR)
 # IDP	Issuing Distribution Points
 # IDEA	International Data Encryption Algorithm (by James Massey and Xuejia Lai)
@@ -7020,14 +7147,23 @@ Generated with:
 # ISAKMP	Internet Security Association and Key Management Protocol
 # IV	Initialization Vector
 # JH	hash function (Hongjun Wu, 2011)
+# JH-224	see JH (224 bits)
+# JH-256	see JH (256 bits)
+# JH-384	see JH (384 bits)
+# JH-512	see JH (512 bits)
 # JSSE	Java Secure Socket Extension
 # Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 # KCI	Key Compromise Impersonation
+# KDF	Key Derivation Function
 # KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 # KEK	Key Encryption Key
+# KMS	Key Management Service
+# KPAK	KMS Public Authentication Key
+# KSAK	KMS Secret Authentication Key
 # KSK	Key Signing Key (DNSSEC)
 # KU	Key Usage
 # LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
+# LEXv2	stream cipher algorithm
 # LFSR	Linear Feedback Shift Register
 # LION	block cipher combining stream cipher and hash function
 # LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
@@ -7045,19 +7181,27 @@ Generated with:
 # MD2	Message Digest 2
 # MD4	Message Digest 4
 # MD5	Message Digest 5
-# MEE	MAC-then-Encode-then-Encrypt
+# MEE	MAC-then-Encode-then-Encrypt (see also MtE, AtE)
 # MEK	Message Encryption Key
 # MECAI	Mutually Endorsing CA Infrastrukture
 # MGF	Mask Generation Function
 # MISTY1	block cipher algorithm
 # MQV	Menezes-Qu-Vanstone (authentecated key agreement)
-# MtE	MAC-then-encrypt
+# MtE	MAC-then-encrypt (see also AtE)
 # NCP	Normalized Certification Policy (according TS 102 042)
 # Neokeon	symmetric block cipher algorithm
+# nistp192	alias for P-192
+# nistp224	alias for P-224
+# nistp256	alias for P-256
+# nistp384	alias for P-384
+# nistp521	alias for P-521
+# NLSv2	stream cipher algorithm
 # nonce	(arbitrary) number used only once
 # NPN	Next Protocol Negotiation
 # NSS	Network Security Services
+# NTG	none-Deterministic Random Generator
 # NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
+# NTRU	asymetric cipher algorithm using lattice reduction
 # NULL	no encryption
 # NUMS	nothing up my sleeve numbers
 # OAEP	Optimal Asymmetric Encryption Padding
@@ -7065,6 +7209,8 @@ Generated with:
 # OCB1	same as OCB
 # OCB2	improved OCB aka AEM
 # OCB3	improved OCB2
+# OCELOT1	stream cipher algorithm
+# OCELOT2	stream cipher algorithm
 # OCSP	Online Certificate Status Protocol
 # OCSP stapling	formerly known as: TLS Certificate Status Request
 # OFB	Output Feedback
@@ -7079,8 +7225,16 @@ Generated with:
 # OV-SSL	Organisational Validated Certificate
 # P12	see PKCS#12
 # P7B	see PKCS#7
+# P-192	Elliptic Curve used in FIPS 186-4 (NIST)
+# P-224	Elliptic Curve used in FIPS 186-4 (NIST)
+# P-256	Elliptic Curve used in FIPS 186-4 (NIST)
+# P-384	Elliptic Curve used in FIPS 186-4 (NIST)
+# P-521	Elliptic Curve used in FIPS 186-4 (NIST)
 # PACE	Password Authenticated Connection Establishment
+# PAD	Peer Authorization Database
 # PAKE	Password Authenticated Key Exchange
+# Panama	stream cipher algorithm
+# PCN	Pre-Congestion Notification
 # PBE	Password Based Encryption
 # PBKDF2	Password Based Key Derivation Function
 # PC	Policy Constraints (certificate extension)
@@ -7114,9 +7268,18 @@ Generated with:
 # Poly1305-AES	MAC (by D. Bernstein)
 # POP	Proof of Possession
 # POODLE	Padding Oracle On Downgraded Legacy Encryption
+# PQC	Post-Quantum Crypto
 # PRF	pseudo-random function
+# PRP	pseudo-random permutation
+# prime192v1	alias for P-192
+# prime224v1	alias for P-224
+# prime256v1	alias for P-256
+# prime384v1	alias for P-384
+# prime521v1	alias for P-521
 # PRNG	pseudo-random number generator
 # PSK	Pre-shared Key
+# PTG	Physical Random Generator
+# PVT	Public Validation Token
 # PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
 # QUIC	Quick UDP Internet Connection
 # RA	Registration Authority (aka Registration CA)
@@ -7131,19 +7294,22 @@ Generated with:
 # RC6	Rivest Cipher 6
 # RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 # RFC	Request for Comments
-# Rijndael	symmetric block cipher algorithm
+# Rijndael	symmetric block cipher algorithm (AES)
 # RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 # RMAC	Randomized MAC (block cipher authentication mode)
 # RNG	Random Number Generator
 # ROT-13	see XOR
 # ROBOT	Return Of Bleichenbacher's Oracle Threat
 # RTP	Real-time Transport Protocol
+# RSASSA-PSS	RSA Probabilistic Signature Scheme
 # RSA	Rivest Sharmir Adelman (public key cryptographic algorithm)
 # RSS-14	Reduced Space Symbology, see GS1
 # RTN	Routing transit number
 # S/KEY	One-time pad Password system
 # SA	Subordinate Authority (aka Subordinate CA)
 # SACL	System Access Control List
+# SAD	Security Association Database
+# SAE	Simultaneous Authentication of Equals
 # SAFER	Secure And Fast Encryption Routine, block cipher
 # Salsa20	stream cipher (by D. Bernstein, 2005)
 # Salsa20/8	see scrypt
@@ -7153,8 +7319,8 @@ Generated with:
 # SAN	Subject Alternate Name
 # Sarmal	hash function
 # SAX	Symmetric Authenticated eXchange
-# SCA	Selfsigned CA signature
 # SBCS	single-byte character set
+# SCA	Selfsigned CA signature
 # SCEP	Simple Certificate Enrollment Protocol
 # scrypt	password based key derivation function (Colin Percival)
 # SCSU	Standard Compression Scheme for Unicode (compressed UTF-16)
@@ -7162,6 +7328,11 @@ Generated with:
 # SCVP	Server-Based Certificate Validation Protocol
 # SCT	Signed Certificate Timestamp
 # SDES	Security Description Protokol
+# secp192r1	alias for P-192
+# secp224r1	alias for P-224
+# secp256r1	alias for P-256
+# secp384r1	alias for P-384
+# secp521r1	alias for P-521
 # SEED	128-bit Symmetric Block Cipher
 # Serpent	symmetric key block cipher (128 bit)
 # SGC	Server-Gated Cryptography
@@ -7175,9 +7346,10 @@ Generated with:
 # SHA-256	Secure Hash Algorithm (256 bit)
 # SHA-384	Secure Hash Algorithm (384 bit)
 # SHA-512	Secure Hash Algorithm (512 bit)
-# SHA1	see for SHA-1 (160 bit)
-# SHA2	see for SHA-2 (224, 256, 384 or 512 bit)
-# SHA3	see for SHA-3 (224, 256, 384 or 512 bit)
+# SHA1	alias for SHA-1 (160 bit)
+# SHA2	alias for SHA-2 (224, 256, 384 or 512 bit)
+# SHA3	alias for SHA-3 (224, 256, 384 or 512 bit)
+# SHA3256	alias for SHA3-256
 # SHA3-224	Secure Hash Algorithm (224 bit)
 # SHA3-256	Secure Hash Algorithm (256 bit)
 # SHA3-384	Secure Hash Algorithm (384 bit)
@@ -7185,50 +7357,65 @@ Generated with:
 # SHAKE128	Secure Hash Algorithm (variable bit)
 # SHAKE256	Secure Hash Algorithm (variable bit)
 # SHAvite-3	hash function (Eli Biham, Orr Dunkelman, 2009)
-# SPHINCS	post-quantum hash function
-# SPHINCS-256	alias for SPHINCS
-# SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
-# SWIFFTX	see SWIFFT
 # SHS	Secure Hash Standard
 # SIA	Subject Information Access (certificate extension)
 # SIC	Segmented Integer Counter (alias for CTR)
+# SIMON	block cipher combining
 # Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
+# Skein-256-256	see Skein (256 bits)
+# Skein-512-256	see Skein (256 bits)
+# Skein-512-512	see Skein (512 bits)
+# Skein-1024-1024	see Skein (1024 bits)
 # SKID	subject key ID (certificate extension)
 # SKIP	Message Skipping Attacks on TLS
 # SKIP-TLS	see SKIP
 # Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 # SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
+# SM4	Block Cipher Algorithm
+# SMS4	see SM4
 # SMACK	State Machine AttaCKs
 # Snefu	hash function
+# Snow20	stream cipher algorithm
 # SNI	Server Name Indication
 # SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
 # Snuffle 2005	see Salsa20
 # Snuffle 2008	see ChaCha
+# Sosemanuk	stream cipher algorithm
+# SPD	Security Policy Database
 # SPDY	Google's application-layer protocol on top of SSL
+# SPECK	block cipher combining
+# SPHINCS	post-quantum hash function
+# SPHINCS-256	alias for SPHINCS
+# SPI	Security Parameters Index
 # SPKI	Subject Public Key Infrastructure
 # SPN	Substitution-Permutation Network
+# SPRP	strong pseudo-random permutation
 # Square	block cipher
 # SRI	Subresource Integrity
 # SRP	Secure Remote Password protocol
 # SRTP	Secure RTP
 # SSCD	Secure Signature Creation Device
 # SSEE	Sichere Signaturerstellungseinheit (same as SSCD)
+# SSK	Secret Signing Key
 # SSL	Secure Sockets Layer
 # SSLv2	Secure Sockets Layer Version 2
 # SSLv3	Secure Sockets Layer Version 3
 # SSP	Security Support Provider
 # SSPI	Security Support Provider Interface
 # SST	Serialized Certificate Store format
-# SCT	Signed Certificate Timestamp
+# STES	stream cipher
 # STS	Strict Transport Security
 # STS 	Station-to-Station protocol
 # Sweet32	Sweet32: Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
+# SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
+# SWIFFTX	see SWIFFT
 # TA	Trust Agent
 # TACK	Trust Assertions for Certificate Keys
 # TCB	Trusted Computing Base
 # TDEA	Tripple DEA
 # TEA	Tiny Encryption Algorithm
 # TEK	Traffic Encryption Key
+# TET	?
 # Tiger	hash function
 # TIME	Timing Info-leak Made Easy (Exploit SSL/TLS)
 # TIME 	A Perfect CRIME? TIME Will Tell
@@ -7242,6 +7429,7 @@ Generated with:
 # TOFU	Trust on First Use
 # TR-02102	Technische Richtlinie 02102 (des BSI)
 # TR-03116	Technische Richtlinie 03116 (des BSI)
+# Trivium	stream cipher algorithm
 # TSK	Transmission Security Key
 # TSK 	TACK signing key
 # TSP	trust-Management Service Provider
@@ -7256,16 +7444,22 @@ Generated with:
 # URL	Uniform Resource Locator
 # VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
 # VMPC	stream cipher
+# VR-224	alias for BADA55-VR-224
+# VR-256	alias for BADA55-VR-256
+# VR-384	alias for BADA55-VR-384
 # WHIRLPOOL	hash function
+# wolfSSL	SSL library mainly intended and used for embedded and real-time systems
 # X.680	X.680: ASN.1
 # X.509	X.509: The Directory - Authentication Framework
 # X25519	alias for Curve25519 ?
 # X448	alias for Curve448 ?
 # X680	X.680: ASN.1
 # X509	X.509: The Directory - Authentication Framework
+# X3DH	Extended Triple Diffie-Hellman
 # XCBC	eXtended CBC-MAC
 # XCBC-MAC	same as XCBC
-# X3DH	Extended Triple Diffie-Hellman
+# XChaCha12	stream cipher algorithm
+# XChaCha20	stream cipher algorithm
 # XEX	XOR Encrypt XOR
 # XKMS	XML Key Management Specification
 # XMACC	counter-based XOR-MAC
@@ -7277,6 +7471,7 @@ Generated with:
 # XTS	XEX-based tweaked-codebook mode with ciphertext stealing
 # XUDA	Xcert Universal Database API
 # XXTEA	enhanced/corrected Tiny Encryption Algorithm
+# yaSSL	same as CyaSSL
 # ZLIB	Lossless compression file format
 # ZRTP	SRTP for VoIP
 # ZSK	Zone Signing Key (DNSSEC)
@@ -7287,7 +7482,7 @@ Generated with:
 # =head1 rfc
 
 
-# # SID	@(#) rfc.txt 1.2 18/05/16 07:47:22
+# # SID	@(#) rfc.txt 1.7 18/10/28 07:57:35
 # 
 # # number| title / description
 # #------+----------------------------------------------------------------------+
@@ -7295,11 +7490,11 @@ Generated with:
 # #	http://tools.ietf.org/html/rfcXXXX
 # #	http://tools.ietf.org/rfc/rfcXXXX.txt
 # url	http://tools.ietf.org/
-# 6167	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 # 6101	SSL Version 3.0
 # 2246	TLS Version 1.0 (with Cipher Suites)
 # 4346	TLS Version 1.1 (with Cipher Suites)
 # 5246	TLS Version 1.2 (with Cipher Suites)
+# 8446	TLS Version 1.3 (with Cipher Suites)
 # 4347	DTLS Version 0.9
 # 6347	DTLS Version 1.2
 # 2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
@@ -7323,34 +7518,42 @@ Generated with:
 # 4306	The Internet Key Exchange (IKEv2) Protocol - 2005
 # 7296	The Internet Key Exchange Protocol 2 (IKEv2) - 2014
 # 4753	ECP Groups for IKE and IKEv2
+# 4754	IKE and IKEv2 Authentication Using the Elliptic Curve Digital Signature Algorithm (ECDSA)
 # 2412	AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec)
 # 2818	HTTP Over TLS
 # 2945	SRP Authentication & Key Exchange System
 # 2986	PKCS#10
 # 5967	PKCS#10
-# 5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
-# 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
-# 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
-# 3749	TLS Compression Method
-# 3943	TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)
-# 3546	TLS Extensions (obsolete)
-# 4366	TLS Extensions
-# 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
-# 5116	An Interface and Algorithms for Authenticated Encryption
-# 4749	TLS Compression Methods
-# 5077	TLS session resumption without Server-Side State
-# 5746	TLS Extension: Renegotiation Indication Extension
-# 5764	TLS Extension: SRTP
-# 5929	TLS Extension: Channel Bindings
-# 6066	TLS Extension: Extension Definitions
-# 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
-# 7633	TLS Extension: Feature Extension: Must Staple
-# 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
+# 2313	PKCS#1: RSA Cryptography Specifications Version 1.5
+# 2437	PKCS#1: RSA Cryptography Specifications Version 2.0
+# 3447	PKCS#1: RSA Cryptography Specifications Version 2.1
+# 8017	PKCS#1: RSA Cryptography Specifications Version 2.2
+# 2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
+# 3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
+# 4279	TLSPSK: Pre-Shared Key Ciphersuites for TLS
+# 5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2007
+# 6091	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2011
 # 3711	The Secure Real-time Transport Protocol (SRTP)
 # 6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
-# 6520	TLS Extensions: Heartbeat
+# 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
+# 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
+# 3749	TLS Compression Method (obsolete)
+# 3943	TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)
+# 4749	TLS Compression Methods
+# 3546	TLS Extensions (obsolete)
+# 4366	TLS Extensions
+# 5746	TLS Extension: Renegotiation Indication Extension
+# 5764	TLS Extension: Secure Real-time Transport Protocol (SRTP)
+# 5929	TLS Extension: Channel Bindings
+# 6066	TLS Extension: Extension Definitions
+# 6520	TLS Extension: Heartbeat
+# 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
+# 7633	TLS Extension: Feature Extension: Must Staple
+# 8449	TLS Extension: Record Size Limit
+# 5077	TLS session resumption without Server-Side State
 # 6961	TLS Multiple Certificate Status Request Extension
 # 7627	TLS Session Hash and Extended Master Secret Extension
+# 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 # 6460	NSA Suite B Profile for TLS
 # 2560	Online Certificate Status Protocol (OCSP, obsolete)
 # 6267	Online Certificate Status Protocol Algorithm Agility (OCSP, obsolete)
@@ -7361,15 +7564,14 @@ Generated with:
 # 4158	X509 PKI Certification Path Building
 # 4387	X509 PKI Operational Protocols: Certificate Store Access via HTTP
 # 5280	X509 PKI Certificate and Certificate Revocation List (CRL) Profile
+# 5480	X509 PKI Elliptic Curve Cryptography Subject
+# 5758	X509 PKI Additional Algorithms and Identifiers for DSA and ECDSA
 # 6960	X509 Online Certificate Status Protocol (OCSP)
-# 2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
-# 3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
 # 4132	Addition of Camellia Cipher Suites to TLS
 # 4162	Addition of SEED Cipher Suites to TLS
-# 4279	TLSPSK: Pre-Shared Key Ciphersuites for TLS
 # 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
 # 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
-# 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
+# 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 # 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
 # 5054	Secure Remote Password (SRP) Protocol for TLS Authentication
 # 5114	Additional Diffie-Hellman Groups for Use with IETF Standards
@@ -7379,8 +7581,12 @@ Generated with:
 # 5487	Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode
 # 5489	ECDHE_PSK Cipher Suites for TLS
 # 5589	Session Initiation Protocol (SIP) Call Control - Transfer
+# 6040	Tunnelling of Explicit Congestion Notification
+# 6090	Fundamental Elliptic Curve Cryptography Algorithms
+# 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
 # 5639	Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation
 # 5903	Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2
+# 6507	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption (ECCSI)
 # 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 # 7748	Elliptic Curve for Security
 # 5741	RFC Streams, Headers, and Boilerplates
@@ -7404,6 +7610,7 @@ Generated with:
 # 7539	ChaCha20 and Poly1305 for IETF Protocols
 # 7627	TLS Session Hash and Extended Master Secret Extension
 # 7905	ChaCha20-Poly1305 Cipher Suites for TLS
+# 7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
 # 1135	The Helminthiasis of the Internet
 # 6698	DNS-Based Authentication of Named Entities (DANE)
 # 6844	DNS Certification Authority Authorization (CAA) Resource Record
@@ -7412,6 +7619,10 @@ Generated with:
 # 5083	Cryptographic Message Syntax (CMS) Authenticated-Enveloped-Data Content Type
 # 4086	Randomness Requirements for Security
 # 4107	Guidelines for Cryptographic Key Management
+# 8032	Edwards-Curve Digital Signature Algorithm (EdDSA)
+# 7710	Captive Portal Using DHCP
+# 8484	DNS over HTTPS (DoH)
+# 8467	Padding for DoH und DoT
 # 
 ## end rfc
 
