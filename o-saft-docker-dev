@@ -168,6 +168,10 @@
 #        is build.  This must be done by additional Docker commands (save and
 #        load).
 #
+#        Empty lines in Docker RUN commands may result in
+#            [WARNING]: Empty continuation lines will become errors in a future release.
+#        hence a single  \  is used as "empty line".
+#
 #? LIMITATIONS
 #?       The options  -n  -v  and  -help  must be specified  first (leftmost)
 #?       if they should apply for this script.
@@ -193,7 +197,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#) o-saft-docker-dev 1.5 17/08/06 22:29:42
+#?       @(#) o-saft-docker-dev 1.6 18/11/09 01:24:58
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -219,7 +223,7 @@ inst_tcl=0
 instwget=1
 host_del=1
 host_tar=""
-hostdate=`date +%y%m%d08/06/17M%S`
+hostdate=`date +%y%m%d11/09/18M%S`
 apt="apk"
 upd="$apt update"
 apt_add="add"
@@ -487,7 +491,7 @@ dockerfile ()   {
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.5"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.6"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
@@ -542,7 +546,7 @@ docker_build_file () {
 
 	cat > $_dockerfile_f <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.5" \
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.6" \
 	SOURCE="$_file_f"
 WORKDIR /
 COPY  $_file_f /
