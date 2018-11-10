@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.11 18/11/08 00:02:15
+#?      @(#) Makefile.cmds 1.12 18/11/10 21:16:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.11
+_SID.cmds       = 1.12
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -92,12 +92,15 @@ testcmd-c%:     TEST.init   = --header
 testcmd-c+info_%:               TEST.args  += +info
 testcmd-c+info--trace-cmd_%:    TEST.args  += +info   --trace-cmd
 testcmd-c+info--trace-key_%:    TEST.args  += +info   --trace-key
+testcmd-c+info--trace-time_%:   TEST.args  += +info   --trace-time
 testcmd-c+info--trace-key-norc_%:   TEST.args  += +info   --trace-key --norc
 testcmd-c+check_%:              TEST.args  += +check
 testcmd-c+check--trace-key_%:   TEST.args  += +check  --trace-key
+testcmd-c+check--trace-time_%:  TEST.args  += +check  --trace-time
 testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
 testcmd-c+check--trace-norc_%:  TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
 testcmd-c+check--nossltls_%:    TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+#    simulates a server not responding to ciphers
 testcmd-c+cipher_%:             TEST.args  += +cipher
 testcmd-c+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
 testcmd-c+cipher--cipher-openssl_%: TEST.args  += +cipher --cipher-openssl
@@ -113,6 +116,7 @@ testcmd-c+cipher-dh_%:          TEST.args  += +cipher-dh
 testcmd-c+cipher-default_%:     TEST.args  += +cipher-default
 testcmd-c+ciphercheck_%:        TEST.args  += +ciphercheck
 testcmd-c+cipher--nossltls_%:   TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+#    simulates a server not responding to ciphers
 testcmd-c_vuln-+BEAST_%:        TEST.args  += +BEAST
 testcmd-c_vuln-+CRIME_%:        TEST.args  += +CRIME
 testcmd-c_vuln-+DROWN_%:        TEST.args  += +DROWN
