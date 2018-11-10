@@ -38,14 +38,14 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.263 18/11/03 22:16:27";
+my  $SID_man= "@(#) o-saft-man.pm 1.264 18/11/10 16:17:39";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
 my  $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
     $ich    = "o-saft-man.pm" if (not defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
-my  $version= "$man_SID";               # version of myself
+my  $version= "$SID_man";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
