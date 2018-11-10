@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "18.11.03";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.12 18/11/04 15:38:22";
+my  $SID_data   = "@(#) Data.pm 1.13 18/11/10 16:44:01";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -370,16 +370,16 @@ sub _main       {
     # got arguments, do something special
     while (my $cmd = shift @argv) {
         my $arg = shift @argv;
-        if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help;         exit 0; }
+        if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help;           exit 0; }
         # ----------------------------- commands
-        if ($cmd =~ /^list$/)           { print list();               }
-        if ($cmd =~ /^get$/)            { print get($arg);            }
-        if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg);     }
-        if ($cmd =~ /^get.?text/)       { print get_text($arg);       }
-        if ($cmd =~ /^get.?as.?text/)   { print get_as_text($arg);    }
-        if ($cmd =~ /^print$/)          { print_as_text($arg);        }
-        if ($cmd =~ /^version$/)        { print "$SID\n";     exit 0; }
-        if ($cmd =~ /^(-+)?V(ERSION)?$/){ print "$VERSION\n"; exit 0; }
+        if ($cmd =~ /^list$/)           { print list();                 }
+        if ($cmd =~ /^get$/)            { print get($arg);              }
+        if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg);       }
+        if ($cmd =~ /^get.?text/)       { print get_text($arg);         }
+        if ($cmd =~ /^get.?as.?text/)   { print get_as_text($arg);      }
+        if ($cmd =~ /^print$/)          { print_as_text($arg);          }
+        if ($cmd =~ /^version$/)        { print "$SID_data\n";  exit 0; }
+        if ($cmd =~ /^(-+)?V(ERSION)?$/){ print "$VERSION\n";   exit 0; }
     }
     exit 0;
 } # _main
