@@ -3,6 +3,10 @@
 ## no critic qw(Documentation::RequirePodSections)
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 
+# HACKER's INFO
+#       To get a list of RegEx for invalid hosts, use:
+#           grep qr/ $0
+
 =pod
 
 =head1 NAME
@@ -18,7 +22,7 @@ Does some lazy checks according parameters and exits if found:
 
 =over 4
 
-=item not characters in parameters:
+=item not allowed characters in parameters, except:
 
  a-zA-Z0-9,.:_&\!\/=\+-
 
@@ -28,7 +32,7 @@ Does some lazy checks according parameters and exits if found:
 
 =item illegal hostnames or IPs:
 
-localhost, (0|10|127|169|172|192|224|240|255).X.X.X
+localhost, (0|10|127|169|172|192|224|240|255).X.X.X *.local
 
 =item any IPv6 addresses in URLs
 
@@ -61,8 +65,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = '@(#) o-saft.cgi 1.22 18/07/16 11:32:14';
-my $VERSION = '18.07.18';
+my $SID     = '@(#) o-saft.cgi 1.24 18/11/10 20:40:50';
+my $VERSION = '18.11.10';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -122,19 +126,30 @@ if ($me =~/\.cgi$/) {
 	#   check if target is suspicious host or net, die if so
 	#   then split data at & to get our options and arguments
 	#   ready we go with the existing code :)
+        # NOTE: in true CGI-mode, QUERY_STRING just contains the form fields,
+        #       when used with our own  osaft:  schema, it also contains the
+        #       the schema and path, i.e.  osaft:///o-saft.cgi?
+        # NOTE: for debugging using system() writing to a file is better than
+        #       using perl's print().
 	my $qs =  '';
 	$qs  = $ENV{'QUERY_STRING'} if (defined $ENV{'QUERY_STRING'});
+        #dbx# system "echo  '$qs #' >> /tmp/osaft-handler.log";
 	$qs  =~ s/^"?(.*?)"?$/$1/;      # remove enclosing " (windows problem)
+	$qs  =~ s#^o-?saft://##g;       # remove schema if any (used in o-saft.cgi.html)
+	$qs  =~ s#^[^?]*\?##g;          # remove path left of ? if any (used in o-saft.cgi.html)
 	$qs  =~ s/[+]/ /g;
 	$qs  =~ s/(?:%([0-9a-f]{2,2}))/pack("H2", $1)/egi;  # url-decode once
 	undef @argv;
-	push(@argv, split(/&/, $qs));
+	push(@argv, split(/[&?]/, $qs));
+        #dbx# print join "\n", @argv;
+        #dbx# system "echo  '@argv :' >> /tmp/osaft-handler.log";
+
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
 	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.22\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.24\r\n";
 	if ($qs =~ m/--cmd=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
@@ -185,6 +200,9 @@ if ($me =~/\.cgi$/) {
 			# common Class B RFC networks for private use
 			# TODO: 100.64.0.0/10 is not really class B
 
+		qr/(-(host|url)=.*?\.local$)/i,
+			# multicast domain .local (RFC6762)
+
 		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
 
@@ -192,7 +210,7 @@ if ($me =~/\.cgi$/) {
 			# IPv6 link local or site local
 
 		qr/(-(host|url)=((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
-			# IPv6 multicast or unique local unicast
+			# IPv6 multicast or unique local unicast (RFC6762)
 
 		qr{(-(host|url)=([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
 			# IPv6
@@ -216,9 +234,9 @@ if ($me =~/\.cgi$/) {
 
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
-
-	#dbx# print "exec $osaft, @argv\n";
+        local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
+        #dbx# system "$osaft @argv >> /tmp/osaft-handler.log";
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
-	#Win32# exec 'perl.exe', $osaft, @argv;
+	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
 exit 0; # never reached
