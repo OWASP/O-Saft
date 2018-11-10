@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.13 18/10/06 23:19:25
+#?      @(#) Makefile.cgi 1.14 18/11/10 21:13:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.13
+_SID.cgi        = 1.14
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -79,7 +79,7 @@ HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
 
 test.cgi.badhosts   = \
 	hostname.ok.to.show.failed-status \
-	localhost 
+	localhost     any.local
 
 # range from - - - - - - - - - - - - - - - - - - to
 test.cgi.badIPv4    = \
@@ -104,6 +104,7 @@ test.cgi.badIPv4    = \
 # possible verbatim because they contain : in the name; the : must be escaped
 test.cgi.badIPv6    = \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
+	ff02\:\:1     ff02\:\:fb \
 
 # TODO: ff01::1 ff02::1
 # TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
@@ -231,7 +232,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.13: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.14: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
