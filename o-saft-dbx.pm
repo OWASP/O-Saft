@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.66 18/11/04 20:58:11";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.67 18/11/10 16:13:44";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -170,7 +170,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("#") if (3 > $cfg{'trace'});
     _yline("");
     _yTRAC("$0", $VERSION);     # $0 is same as $ARG0
-    _yTRAC("_yeast_init::SID", $DBX_SID) if (2 > $cfg{'trace'});
+    _yTRAC("_yeast_init::SID", $SID_dbx) if (2 > $cfg{'trace'});
     _yTRAC("::osaft",  $osaft::VERSION);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
