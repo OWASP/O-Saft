@@ -19,14 +19,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.4 18/11/07 23:26:18
+#?      @(#) Makefile.hlp 1.5 18/11/10 22:57:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.4
+_SID.hlp        = 1.5
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
@@ -64,6 +64,7 @@ testarg0-h-%:      EXE.pl       = ../$(SRC.pl)
 testarg0-h-%:      TEST.init    = --no-rc --header
 
 # these are kind of help, but do not use --help
+testarg0-h---cmd-VERSION:       TEST.args  += --cmd=VERSION
 testarg0-h-+VERSION:            TEST.args  += +VERSION
 testarg0-h-+help:               TEST.args  += +help=command
 testarg0-h-+version:            TEST.args  += +version
