@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.822 18/11/09 01:31:05",
-    STR_VERSION => "18.11.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.823 18/11/10 22:46:37",
+    STR_VERSION => "18.12.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -116,6 +116,8 @@ sub _yeast_NEXT($)  {
     }
     return 0;
 } # _yeast_NEXT
+sub _version_exit   { print STR_VERSION . "\n"; exit 0; }
+    # print VERSION and exit
 
 #$DB::single=1;  # for debugging; start with: PERL5OPT='-dt' $0
 
@@ -134,7 +136,7 @@ BEGIN {
     );
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
-    if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
+    if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { _version_exit(); }
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
@@ -7192,13 +7194,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
-    if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
-    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
+    if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
+    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
+    if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used in with --cgi
         # in CGI mode commands need to be passed as --cmd=* option
-    if ($arg eq '--openssl')            { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
+    if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
@@ -7680,6 +7683,7 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+_dbx "C $arg";
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
