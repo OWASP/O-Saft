@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.154 18/11/09 01:32:23',
+    SID_osaft   => '@(#) osaft.pm 1.155 18/11/10 16:21:37',
 
 };
 
