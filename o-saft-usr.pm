@@ -126,7 +126,7 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.22 18/03/22 23:16:25";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.23 18/11/10 16:18:47";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
