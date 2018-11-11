@@ -13,7 +13,7 @@ OSaft::Ciphers - common perl module to define O-Saft ciphers
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
 
 ########################  E X P E R I M E N T A L  #######################
-######################  not used in O-Saft 16.09.16  #####################
+######################  not used in O-Saft 18.11.18  #####################
 
 =cut
 
@@ -41,7 +41,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '18.03.28';     # official verion number of tis file
-my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.24 18/04/06 09:23:30';
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.25 18/11/11 18:13:49";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
