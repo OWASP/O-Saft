@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.41 18/11/06 00:09:55
+#?      @(#) Makefile 1.42 18/11/11 17:22:13
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.41
+_SID            = 1.42
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.41
+_INST.text      = generated from Makefile 1.42
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -366,6 +366,10 @@ uninstall:
 	-rm -r --interactive=never $(INSTALL.dir)
 
 _RELEASE    = $(shell perl -nle '/^\s*STR_VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
+
+release.show:
+	@echo "Release: $(_RELEASE)"
+
 release: $(GEN.tgz)
 	mkdir -p $(_RELEASE)
 	sha256sum $(GEN.tgz) > $(_RELEASE)/$(GEN.tgz).sha256
@@ -418,8 +422,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.41
-tar:     GREP_EDIT = 1.41
+GREP_EDIT = 1.42
+tar:     GREP_EDIT = 1.42
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
