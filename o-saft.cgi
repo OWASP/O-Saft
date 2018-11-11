@@ -65,7 +65,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = '@(#) o-saft.cgi 1.24 18/11/10 20:40:50';
+my $SID     = "@(#) o-saft.cgi 1.25 18/11/11 16:18:55";
 my $VERSION = '18.11.10';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -149,7 +149,7 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
 	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.24\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.25\r\n";
 	if ($qs =~ m/--cmd=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
