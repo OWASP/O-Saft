@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.42 18/11/11 17:22:13
+#?      @(#) Makefile 1.43 18/11/11 17:48:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.42
+_SID            = 1.43
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -261,6 +261,7 @@ GEN.pod         = $(Project).pod
 GEN.src         = $(Project)-standalone.pl
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
+GEN.rel         = $(Project).rel
 
 GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
@@ -308,7 +309,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.42
+_INST.text      = generated from Makefile 1.43
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -386,8 +387,30 @@ release: $(GEN.tgz)
 	@echo "#   make docker.push"
 # TODO: check if files are edited or missing
 
+# generating a release file, containing all files with their SID
+# this file should be easily readable by humans and easily parsable by scripts
+# hence following format is used (one per line):
+#    SID\tdate\ttime\tfilename\tfull_path
+# how it works:
+#    "sccs what" returns multiple lines, at least 2, these look like:
+#      path/filename:
+#          o-saft.pl 1.823 18/11/18 23:42:23
+#    this is resotred to have the fixed-width field  SID, date and time at the
+#    beginning (left), followed by the filename and the full path
+# NOTE: only files available in the repository are used,  $(ALL.src)  contains
+#       $(ALL.gen) , which is wrong here, hence set empty for this target
+#    o-saft.pl is generated from yeast.pl but is not a repository file,  hence
+#    yeast is substituded by o-saft (should occour only once)
+$(GEN.rel):   ALL.gen =
+$(GEN.rel): $(ALL.src)
+	sccs what $(ALL.src) | perl -anle '/^(.*):$$/&&do{$$f=$$m=$$1;$$m=~s#.*/##;next;};/.*?($$m|%[M]%)/&&do{$$f=~s/yeast/o-saft/;$$F[0]=~s/yeast/o-saft/;printf("%s\t%s\t%s\t%s\t%s\n",$$F[1],$$F[2],$$F[3],$$F[0],$$f)};'
+rel :$(GEN.rel)
 
-.PHONY: all clean install install-f uninstall release doc default
+$(_RELEASE).rel: Makefile
+	@$(MAKE) -s $(GEN.rel) > $@
+
+
+.PHONY: all clean install install-f uninstall release.show release rel doc default
 
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
@@ -422,8 +445,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.42
-tar:     GREP_EDIT = 1.42
+GREP_EDIT = 1.43
+tar:     GREP_EDIT = 1.43
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
