@@ -337,3 +337,50 @@ HACKER's INFO
         times. Using POD is also a huge performance penulty on all platforms.
         POD  will now be genereated on request using  --help=pod  option.
 
+
+    Repository
+
+        All code is maintained in a repository. Due to various conceptual and
+        personal opinions,  the master repository used internally is based on
+        SCCS/CSSC, while the public repository is git/github.  The maintainer
+        keeps both in sync.  The public repository must contain workable code
+        only, well nobody is perfect ...
+
+      Rules
+
+        * Each file has at least one string containing  the unuique id of the
+          file version in the repository. This id is named  SID  or SID_<id>.
+          This string looks like:
+            filename ID_in_repository date_of_last_change time_of_last_change
+          example:     filename 1.42 18/10/23 23:42:23 
+          If this is assigned to a variable, it may look like:
+            my $SID = "coding.txt 1.4 18/11/11 18:12:37";
+          (Note beside: previous example is the SID of this file)
+
+          Exceptions: some files for documentation only miss the SID string.
+
+        * Changes are made in very small chunks,  each commited separately to
+          the repository.
+
+        * Different types of changes see  Commit Comments  below) must not be
+          mixed in one commit.
+
+      Commit Comments
+
+        * Since 11/2018 all comments are prefixed with a 2-letter code, which
+          describes the type of the committed change. The types are:
+
+          Bd: - bugfix in internal (developer) documentation
+          BD: - bugfix in public/user documentation
+          BT: - bugfix in core SSL/TLS check or test functionality
+          BF: - bugfix in general functionality or feature
+          ED: - enhancement/improvement in documentation
+          ET: - enhancement/improvement in core SSL/TLS checks or tests
+          EF: - enhancement/improvement in general functionality or feature
+          ND: - new documentation
+          NT: - new core SSL/TLS check or test functionality
+          NF: - new general functionality or feature
+
+          Lower case b instead of B means  that the bug was  introduced in a
+          recent change.
+
