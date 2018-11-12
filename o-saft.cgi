@@ -17,6 +17,8 @@ o-saft.cgi  - wrapper script to start o-saft.pl as CGI script
 
 Calls ./o-saft.pl if first parameter is  I<--cgi>.
 Returns results as:  Content-type: text/plain;charset=utf-8
+If parameter  I<--format=html>  is given returns results as:
+ Content-type: text/html;charset=utf-8
 
 Does some lazy checks according parameters and exits if found:
 
@@ -65,7 +67,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = "@(#) o-saft.cgi 1.25 18/11/11 16:18:55";
+my $SID     = "@(#) o-saft.cgi 1.26 18/11/13 00:05:41";
 my $VERSION = '18.11.10';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -149,8 +151,8 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
 	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.25\r\n";
-	if ($qs =~ m/--cmd=html/) {
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.26\r\n";
+	if ($qs =~ m/--format=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
 		print "Content-type: text/plain; charset=utf-8\r\n";# normal results
