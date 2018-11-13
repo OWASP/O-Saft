@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.265 18/11/13 21:40:40";
+my  $SID_man= "@(#) o-saft-man.pm 1.266 18/11/13 22:09:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -302,9 +302,9 @@ sub _man_form_head  {
  </div>
  <form id="o-saft" action="$cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
   <noscript><div>
-JavaScript disabled. The buttons for most common commans are missing.<br>
+JavaScript disabled. The buttons for most common commands are missing.<br>
 The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
-All options with values are passd to o-saft.cgi.
+All options with values are passed to $cgi_bin .
   </div><br></noscript>
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
@@ -1277,10 +1277,6 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
     man_pod(),                  return if ($hlp =~ /^(gen-)?pod$/i);
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
-        # Note: gen-cgi is called from within parent's BEGIN and hence
-        # causes some   Use of uninitialized value within %cfg
-        # when called as  gen-CGI  it will not be called from within
-        # BEGIN and hence %cfg is defined and will not result in warnings
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
     # anything below requires data defined in parent
