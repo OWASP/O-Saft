@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.823 18/11/10 22:46:37",
+    SID         => "@(#) yeast.pl 1.824 18/11/14 19:23:59",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -7683,7 +7683,6 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
-_dbx "C $arg";
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
