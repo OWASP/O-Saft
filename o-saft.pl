@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.825 18/11/14 23:53:35",
+    SID         => "@(#) yeast.pl 1.827 18/11/15 00:48:54",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -183,21 +183,15 @@ sub _is_member($$); #   "
 #| README if any
 #| -------------------------------------
 #if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
-    # 6/2016: o-saft-README disabled because most people asked how to remove it
-    # which is clearly described in o-saft-README itself. People won't read :-(
+    # SEE Since VERSION 16.06.16
 
 #| CGI
 #| -------------------------------------
-my  $cgi  = 0;
-if ($me =~/\.cgi$/) {
-    # SEE Note:CGI mode
-    # CGI mode is pretty simple: see {yeast,o-saft}.cgi
-    #   code removed here! hence it always fails
-    die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
-    $cgi = 1;
-} # CGI
-# $me might not be .cgi but called with --cgi-exec option
-$cgi = 1 if ((grep{/(?:--cgi|--cgi-?exec)/i} @ARGV) > 0);
+my  $cgi = 0;
+    $cgi = 1 if ((grep{/(?:--cgi-?(?:exec|trace))/i} @ARGV) > 0);
+#if ($me =~/\.cgi$/) { SEE Since VERSION 18.12.18
+    #die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
+#} # CGI
 
 #| definitions: debug and tracing
 #| -------------------------------------
@@ -261,7 +255,7 @@ sub _print_read         {
     # $cfg{'out_header'} is also not yet properly set, see LIMITATIONS also
     my ($fil, @txt) = @_;
     #_dbx "ARGV @ARGV : ". (grep{/(?:--no.?header|--cgi)/i} @ARGV);
-    return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));
+    return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));  # --cgi-exec or --cgi-trace
     return if (0 >= (grep{/(?:--warn|--v$|--trace)/i} @ARGV));
     printf("=== reading: %s (%s) ===\n", $fil, @txt);
     return;
@@ -7193,13 +7187,13 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
-    if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # ignore; SEE Note:CGI mode
+    if ($arg =~ /^--cgi.?(?:exec|trace)/){$cgi = 1;                 next; } # SEE Note:CGI mode
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
     if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
-    if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used in with --cgi
+    if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
@@ -7683,7 +7677,6 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
-_dbx "C $arg";
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
@@ -8672,6 +8665,12 @@ The term   perlcritic   is used when the program perlcritic is meant.
 
 =head2 Note:Documentation
 
+=head3 Since VERSION 18.12.18
+
+Switching to CGI mode if the script is named *.cgi is no longer supported,
+this script should be called by a proper wrapper, i.e o-saft.cgi .
+Functionality silently removed, no warning or error is printed.
+
 =head3 Since VERSION 18.01.18
 
 All public user documentation is now in plain text files which use charset
@@ -8696,6 +8695,11 @@ alone script, see  contrib/gen_standalone.sh .
 All user documentation is now in  o-saft-man.pl, which uses a mix of texts
 defined in Perl variables,  i.e. %man_text.  The public user documentation
 is defined in the  __DATA__  section (mainly all the documentation).
+
+=head3 Since VERSION 16.06.16
+
+Reading of o-saft-README  disabled because most people asked how to remove
+it, which is described in o-saft-README itself. People won't read :-(
 
 =head3 Until VERSION 14.11.12
 
