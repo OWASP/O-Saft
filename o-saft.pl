@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.824 18/11/14 19:23:59",
+    SID         => "@(#) yeast.pl 1.825 18/11/14 23:53:35",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -190,6 +190,7 @@ sub _is_member($$); #   "
 #| -------------------------------------
 my  $cgi  = 0;
 if ($me =~/\.cgi$/) {
+    # SEE Note:CGI mode
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
     die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
@@ -254,11 +255,10 @@ sub _warn_nosni         {
 
 sub _print_read         {
     #? print information which file will be read
-    #? will only be written if --v or --warn or --trace is given and  --cgi or
-    #? --no-header are not given
-    # $cgi is not (yet) available, hence we use @ARGV, which may contain:
-    # --cgi or --cgi-exec
-    # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
+    #? will only be written if --v or --warn or --trace is given and  --cgi-exec
+    #? or  --no-header   are not given
+    # $cgi is not (yet) available, hence we use @ARGV to check for options
+    # $cfg{'out_header'} is also not yet properly set, see LIMITATIONS also
     my ($fil, @txt) = @_;
     #_dbx "ARGV @ARGV : ". (grep{/(?:--no.?header|--cgi)/i} @ARGV);
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));
@@ -376,7 +376,7 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| -------------------------------------
 my $err = "";
 my @dbx = grep{/--(?:trace|v$|yeast)/} @argv;   # may have --trace=./file
-if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
+if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
@@ -2621,7 +2621,7 @@ sub _cfg_set($$)        {
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
-        if ($cgi == 1) {
+        if ($cgi == 1) { # SEE Note:CGI mode
             _warn("072: configuration files are not read in CGI mode; ignored");
             return;
         }
@@ -7136,7 +7136,7 @@ while ($#argv >= 0) {
     # such options are incorrectly used, or are passed in in CGI mode
     # NOTE: this means that we cannot have empty strings as value
     if ($arg =~ m/^-[^=]*=$/) {
-        # SEE Note:CGI mode
+        # SEE Note:Option in CGI mode
         # only options in RegEx are ignored if the value is empty
         if ($arg =~ /$cfg{'regex'}->{'opt-empty'}/) {
             _warn("050: option with empty argument '$arg'; option ignored") if ($cgi == 0);
@@ -7193,7 +7193,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
-    if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
+    if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # ignore; SEE Note:CGI mode
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
@@ -7683,6 +7683,7 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+_dbx "C $arg";
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
@@ -9154,6 +9155,37 @@ https://www.nginx.com/blog/nginx-and-the-heartbleed-vulnerability/
 
 
 =head2 Note:CGI mode
+
+Using the general concept of pipes which returns all results on STDOUT, it
+is possible that the tool operates as CGI script in a web server. However,
+some additional checks are necessary then to avoid misuse.
+
+* Disabled functionality in CGI mode:
+
+    * early verbose messages are not printed
+    * debug and trace is not allowed (disabled)
+    * configuration cannot be read from files
+
+* Following checks must be done by the caller:
+
+    * rejecting invalid target names
+    * some dangerous options (i.e. --lib, --exe, etc.  see o-saft.cgi)
+    * checking parameters (options) for dangerous characters
+
+* The caller is also responsible to print proper HTTP headers.
+
+Following special options are avaiable for CGI mode:
+
+    * --cgi         - must be passed to o-saft.cgi as first parameter
+    * --cgi-exec    - must be set by caller only (i.g. o-saft.cgi)
+    * --cgi-trace   - print HTTP header (for debugging only)
+
+The option --cgi-trace is for debugging when used from command line only.
+
+It is recommended that this script is called by  o-saft.cgi  in CGI mode.
+
+
+=head2 Note:Option in CGI mode
 
 In CGI mode all options are passed with a trailing  =  even those which do
 not have an argument (value). This means that options cannot be ignored in
