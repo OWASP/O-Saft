@@ -44,6 +44,12 @@ Exits silently if any above error is detected.
 Exits with verbose error message for detected errors, if environment variable
 I<OSAFT_CGI_TEST>  is set.
 
+=head1 DEBUG
+
+If the environment variable  I<OSAFT_CGI_TEST>  is set, detailed error messages
+are printed.  This is only useful when used on command line, but not within the
+web server.
+
 =head1 EXAMPLE
 
 Call as CGI from command line:
@@ -67,8 +73,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = "@(#) o-saft.cgi 1.26 18/11/13 00:05:41";
-my $VERSION = '18.11.10';
+my $SID_cgi = "@(#) o-saft.cgi 1.27 18/11/15 00:07:34";
+my $VERSION = '18.11.18';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -119,7 +125,6 @@ if (not $ENV{'QUERY_STRING'}) {
 	exec $0;
 }
 
-my $cgi     = 0;
 if ($me =~/\.cgi$/) {
 	# CGI mode is pretty simple:
 	#   use QUERY_STRING and POST data and URL-decode once
@@ -133,7 +138,9 @@ if ($me =~/\.cgi$/) {
         #       the schema and path, i.e.  osaft:///o-saft.cgi?
         # NOTE: for debugging using system() writing to a file is better than
         #       using perl's print().
-	my $qs =  '';
+        my $cgi = 0;
+        my $typ = 'plain';
+	my $qs  = '';
 	$qs  = $ENV{'QUERY_STRING'} if (defined $ENV{'QUERY_STRING'});
         #dbx# system "echo  '$qs #' >> /tmp/osaft-handler.log";
 	$qs  =~ s/^"?(.*?)"?$/$1/;      # remove enclosing " (windows problem)
@@ -143,21 +150,19 @@ if ($me =~/\.cgi$/) {
 	$qs  =~ s/(?:%([0-9a-f]{2,2}))/pack("H2", $1)/egi;  # url-decode once
 	undef @argv;
 	push(@argv, split(/[&?]/, $qs));
-        #dbx# print join "\n", @argv;
         #dbx# system "echo  '@argv :' >> /tmp/osaft-handler.log";
 
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
-	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
-	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
+	push(@argv, "--cgi-exec");      # argument required for some more checks
+	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
+
+	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.26\r\n";
-	if ($qs =~ m/--format=html/) {
-		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
-	} else {
-		print "Content-type: text/plain; charset=utf-8\r\n";# normal results
-	}
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.27\r\n";
+	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
+
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
 	}
@@ -171,8 +176,7 @@ if ($me =~/\.cgi$/) {
 		qr/(cmd=list|--(env|exe|lib|call|openssl))/i,
 			# dangerous commands and options
 
-		# RFC addresses are not allowed
-		# see https://tools.ietf.org/html/rfc5735
+		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
 		#     0.0.0.0/8       This Network
 		#     10.0.0.0/8      Private-Use Networks
 		#     100.64.0.0/10   ?
@@ -202,11 +206,11 @@ if ($me =~/\.cgi$/) {
 			# common Class B RFC networks for private use
 			# TODO: 100.64.0.0/10 is not really class B
 
-		qr/(-(host|url)=.*?\.local$)/i,
-			# multicast domain .local (RFC6762)
-
 		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
+
+		qr/(-(host|url)=.*?\.local$)/i,
+			# multicast domain .local (RFC6762)
 
 		qr/(-(host|url)=((fe80|fe[c-f][0-9a-f]:)))/i,
 			# IPv6 link local or site local
