@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.266 18/11/13 22:09:17";
+my  $SID_man= "@(#) o-saft-man.pm 1.267 18/11/15 01:05:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -72,9 +72,9 @@ sub _man_file_get   {
 
 sub _man_http_head  {
     #? print HTTP headers (for CGI mode)
-    return if (0 >= (grep{/--cgi/} @ARGV));
-    # checking @ARGV for --cgi is ok, as this option is for simulating
-    # CGI mode only.
+    return if (0 >= (grep{/--cgi.?trace/} @ARGV));
+    # Checking @ARGV for --cgi-trace is ok, as this option is for simulating
+    # CGI mode only, in o-saft.pl SEE Note:CGI mode
     # When called from o-saft.cgi, HTTP headers are already written.
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
     print "Content-type: text/html; charset=utf-8\r\n";
