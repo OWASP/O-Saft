@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.827 18/11/15 00:48:54",
+    SID         => "@(#) yeast.pl 1.828 18/11/18 16:58:57",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -89,7 +89,7 @@ sub _yeast_TIME(@)  {
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     my $now = time() - ($time0 || 0);
        $now = time() if _is_argv('(?:--time.*absolut)');
-    if (_is_argv('(?:--trace)') > 0) {
+    if (_is_argv('(?:--trace.?(?:time|cmd))') > 0) {
         printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime($now))[2,1,0], @txt);
     }
     return;
