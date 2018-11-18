@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.829 18/11/18 17:29:56",
+    SID         => "@(#) yeast.pl 1.830 18/11/18 19:07:22",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -6815,7 +6815,7 @@ sub _get_target         {
     my $arg   =  shift;
 
     # TODO:  ugly and just simple cases, not very perlish code ...
-    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*#); # defensive programming
+    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#); # defensive programming
     return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
     # something complicated, analyze ...
     my $prot  =  $arg;
