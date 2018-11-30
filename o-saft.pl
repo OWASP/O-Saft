@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.830 18/11/18 19:07:22",
+    SID         => "@(#) yeast.pl 1.831 18/11/30 17:39:07",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -6266,8 +6266,13 @@ sub printprotocols      {
         my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
         if ($cfg{'trace'} <= 0) {
            # avoid internal strings, pretty print for humans
-           $cipher_strong = "" if ($cipher_strong eq STR_UNDEF);
-           $cipher_pfs    = "" if ($cipher_pfs eq STR_UNDEF);
+           $cipher_strong = "" if (STR_UNDEF eq $cipher_strong);
+           $cipher_pfs    = "" if (STR_UNDEF eq $cipher_pfs);
+        }
+        if (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</) {  # somthing went wrong
+           #$cipher_pfs   # should be empty
+           $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
+           $prot{$ssl}->{'ciphers_pfs'} = [];   # empty list, so that count below is 0
         }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
         printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
