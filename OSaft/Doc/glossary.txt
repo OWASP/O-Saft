@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.8 18/11/02 08:58:51
+# SID	@(#) glossary.txt 1.9 18/11/29 21:24:00
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -197,6 +197,7 @@ ElGamal	asymmetric block cipher
 ENCIPHER	synonym for encryption
 EME	ECB-mask-ECB
 EME 	Encoding Method for Encryption
+ESNI	Encrypted Server Name Indication
 ESP	Encapsulating Security Payload
 ESSIV	Encrypted salt-sector initialization vector
 EtA	Encrypt-then-Authenticate (see also EtM)
