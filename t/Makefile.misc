@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.5 18/10/06 23:21:03
+#?      @(#) Makefile.misc 1.6 18/12/01 18:15:07
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.5
+_SID.misc       = 1.6
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -37,7 +37,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 first-misc-target-is-default: help.test.misc
 
 ifeq (,$(_SID.test))
-    -include t/Makefile.misc
+    -include t/Makefile
 endif
 
 HELP.misc        = "\
