@@ -1,11 +1,11 @@
 
-# SID	@(#) glossary.txt 1.9 18/11/29 21:24:00
+# SID	@(#) glossary.txt 1.10 18/12/01 16:27:11
 
 # acronym | description
 #------+----------------------------------------------------------------------+
-0-RTT	zero round-trip time
+0-RTT	zero Round-Trip Time
 AA	Attribute Authority
-AAD	additional authenticated data
+AAD	Additional Authenticated Data
 ACME	Automated Certificate Management Environment
 ACL	Access Control List
 ADH	Anonymous Diffie-Hellman
@@ -23,11 +23,11 @@ ALPN	Application Layer Protocol Negotiation
 AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
-ARIA	128-bit Symmetric Block Cipher
+ARIA	128-bit Symmetric block cipher
 ASN	Autonomous System Number
 ASN.1	Abstract Syntax Notation number One
 AtE	Authenticate-then-Encrypt (see also MtE)
-BACPA	Blockwise-adaptive chosen-plaintext attack
+BACPA	Blockwise-Adaptive Chosen-Plaintext Attack
 BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
 BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
 BADA55-VR-224	curve useing the same prime as NIST P-224
@@ -76,10 +76,11 @@ CEK	Content Encryption Key
 CFB	Cipher Feedback
 CFB3	Cipher Feedback
 CFBx	Cipher Feedback x bit mode
-ChaCha	stream cipher algorithm
+CFRG	Crypto Forum Research Group
+ChaCha	stream cipher algorithm (with 256-bit key)
 ChaCha8	see ChaCha
-ChaCha12	see ChaCha
-ChaCha20	see ChaCha
+ChaCha12	see ChaCha (aka 12-round ChaCha)
+ChaCha20	see ChaCha (aka 20-round ChaCha)
 ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 CHAP	Challenge Handshake Authentication Protocol
 CKA	(PKCS#11)
@@ -107,6 +108,7 @@ CSP 	Cryptographic Service Provider
 CSP  	Critical Security Parameter (used in FIPS 140-2)
 CSP:	Content Security Policy (used as HTTP header)
 CSR	Certificate Signing Request
+CSPRNG	Cryptographically Secure Pseudo-Random Number Generator
 CT	Certificate Transparency
 CTL	Certificate Trust Line
 CTR	Counter Mode (sometimes: CM; block cipher mode)
@@ -254,7 +256,7 @@ HEIST	HTTP Encrypted Information can be Stolen through TCP-windows
 HIBE	hierarchical identity-based encryption
 HKDF	HMAC-based Extract-and-Expand Key Derivation Function
 HNF-256	hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)
-HMAC	keyed-Hash Message Authentication Code
+HMAC	keyed-Hash Message Authentication Code (aka Hashed MAC)
 HMQV	h? Menezes-Qu-Vanstone
 HPC	Hasty Putting Cipher
 HPKP	HTTP Public Key Pinning
@@ -279,6 +281,7 @@ IND-CCA	Indistinguishability of encryptions under chosen-cipgertext attack
 IND-CPA	Indistinguishability of encryptions under chosen-plaintext attack
 INT-CTXT	Integrity of ciphertext
 INT-PTXT	Integrity of plaintext
+IRTF	Internet Research Task Force
 ISAKMP	Internet Security Association and Key Management Protocol
 IV	Initialization Vector
 JH	hash function (Hongjun Wu, 2011)
@@ -323,6 +326,7 @@ MGF	Mask Generation Function
 MISTY1	block cipher algorithm
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MtE	MAC-then-encrypt (see also AtE)
+NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 NCP	Normalized Certification Policy (according TS 102 042)
 Neokeon	symmetric block cipher algorithm
 nistp192	alias for P-192
@@ -398,20 +402,20 @@ PKIX	Internet Public Key Infrastructure Using X.509
 PKP	Public-Key-Pins
 PM	Policy Mappings (certificate extension)
 PMAC	Parallelizable MAC (by Phillip Rogaway)
-PMS	pre-master secret
-Poly1305	Authenticator
+PMS	Pre-Master Secret
+Poly1305	Authenticator (MAC)
 Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption
 PQC	Post-Quantum Crypto
-PRF	pseudo-random function
-PRP	pseudo-random permutation
+PRF	Pseudo-Random Function
+PRP	Pseudo-Random Permutation
 prime192v1	alias for P-192
 prime224v1	alias for P-224
 prime256v1	alias for P-256
 prime384v1	alias for P-384
 prime521v1	alias for P-521
-PRNG	pseudo-random number generator
+PRNG	Pseudo-Random Number Generator
 PSK	Pre-shared Key
 PTG	Physical Random Generator
 PVT	Public Validation Token
@@ -468,7 +472,7 @@ secp224r1	alias for P-224
 secp256r1	alias for P-256
 secp384r1	alias for P-384
 secp521r1	alias for P-521
-SEED	128-bit Symmetric Block Cipher
+SEED	128-bit Symmetric block cipher
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
@@ -501,12 +505,12 @@ Skein-256-256	see Skein (256 bits)
 Skein-512-256	see Skein (256 bits)
 Skein-512-512	see Skein (512 bits)
 Skein-1024-1024	see Skein (1024 bits)
-SKID	subject key ID (certificate extension)
+SKID	Subject Key ID (certificate extension)
 SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
-SM4	Block Cipher Algorithm
+SM4	block cipher algorithm
 SMS4	see SM4
 SMACK	State Machine AttaCKs
 Snefu	hash function
@@ -524,7 +528,7 @@ SPHINCS-256	alias for SPHINCS
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
-SPRP	strong pseudo-random permutation
+SPRP	Strong Pseudo-Random Permutation
 Square	block cipher
 SRI	Subresource Integrity
 SRP	Secure Remote Password protocol
@@ -538,10 +542,11 @@ SSLv3	Secure Sockets Layer Version 3
 SSP	Security Support Provider
 SSPI	Security Support Provider Interface
 SST	Serialized Certificate Store format
-STES	stream cipher
+STES	stream cipher algorithm
 STS	Strict Transport Security
 STS 	Station-to-Station protocol
-Sweet32	Sweet32: Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
+SUF-CMA	Strong UnForgeability against Chosen-Message Attacks
+Sweet32	Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
 SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
 SWIFFTX	see SWIFFT
 TA	Trust Agent
@@ -578,7 +583,7 @@ UMAC	Universal hashing MAC; optimized for 32-bit architectures
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
 VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
-VMPC	stream cipher
+VMPC	stream cipher algorithm
 VR-224	alias for BADA55-VR-224
 VR-256	alias for BADA55-VR-256
 VR-384	alias for BADA55-VR-384
