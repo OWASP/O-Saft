@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.831 18/11/30 17:39:07",
+    SID         => "@(#) yeast.pl 1.832 18/12/01 17:02:01",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -6260,6 +6260,7 @@ sub printprotocols      {
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
+        my $cnt = ($#{$prot{$ssl}->{'ciphers_pfs'}} + 1);
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
@@ -6272,14 +6273,13 @@ sub printprotocols      {
         if (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</) {  # somthing went wrong
            #$cipher_pfs   # should be empty
            $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
-           $prot{$ssl}->{'ciphers_pfs'} = [];   # empty list, so that count below is 0
+           $cnt = 0;
         }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
         printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
-                ($#{$prot{$ssl}->{'ciphers_pfs'}} + 1), $prot{$ssl}->{'cnt'},
-                $cipher_strong, $cipher_pfs
+                $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
         );
         # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
