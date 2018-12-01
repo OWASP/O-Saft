@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.156 18/11/11 16:17:39",
+    SID_osaft   => "@(#) osaft.pm 1.157 18/12/01 16:31:20",
 
 };
 
@@ -319,7 +319,10 @@ our %tls_handshake_type = (
     1 => 'client_hello',
     2 => 'server_hello',
     3 => 'hello_verify_request',    # RFC4347 DTLS
-    4 => 'NewSessionTicket',
+    4 => 'new_session_ticket',
+#   4 => 'NewSessionTicket',
+    6 => 'hello_retry_request',     # RFC8446
+    8 => 'encrypted_extensions',    # RFC8446
    11 => 'certificate',
    12 => 'server_key_exchange',
    13 => 'certificate_request',
@@ -330,11 +333,27 @@ our %tls_handshake_type = (
    21 => 'certificate_url',         # RFC6066 10.2
    22 => 'certificate_status',      # RFC6066 10.2
    23 => 'supplemental_data',       # RFC??
+   24 => 'key_update',              # RFC8446
+  254 => 'message_hash',            # RFC8446
   255 => '255',
    -1 => '<<undefined>>',           # added for internal use
   -99 => '<<fragmented_message>>',  # added for internal use
     #----+--------------------------+-----------------------
 ); # tls_handshake_type
+
+our %tls_key_exchange_type = (
+    #----+--------------------------+-----------------------
+    # ID  name                       comment
+    #----+--------------------------+-----------------------
+   20 => 'change_cipher_spec',
+   21 => 'alert',
+   22 => 'handshake',
+   23 => 'application_data',
+   24 => 'heartbeat',
+  255 => '255',
+   -1 => '<<undefined>>',           # added for internal use
+    #----+--------------------------+-----------------------
+); # %%tls_key_exchange_type
 
 our %tls_record_type = (
     #----+--------------------------+-----------------------
@@ -361,7 +380,7 @@ our %tls_compression_method = (
     #----+--------------------------+-----------------------
 ); # %tls_record_type
 
-our %tls_error_alerts = ( # mainly RFC6066
+our %tls_error_alerts = ( # mainly RFC 6066
     #----+-------------------------------------+----+--+---------------
     # ID      name                              RFC DTLS OID
     #----+-------------------------------------+----+--+---------------
@@ -392,38 +411,59 @@ our %tls_error_alerts = ( # mainly RFC6066
    86 => [qw( inappropriate_fallback            RFC5246_update-Draft-2014-05-31  Y  -)], # added according 'https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1'
    90 => [qw( user_canceled                     6066  Y  -)],
   100 => [qw( no_renegotiation                  6066  Y  -)],
+  109 => [qw( missing_extension                 8446  Y  -)],
   110 => [qw( unsupported_extension             6066  Y  -)],
   111 => [qw( certificate_unobtainable          6066  Y  -)],
   112 => [qw( unrecognized_name                 6066  Y  -)],
   113 => [qw( bad_certificate_status_response   6066  Y  -)],
   114 => [qw( bad_certificate_hash_value        6066  Y  -)],
   115 => [qw( unknown_psk_identity              4279  Y  -)],
+  116 => [qw( certificate_required              8446  Y  -)],
   120 => [qw( no_application_protocol           7301  Y  -)],
     #----+-------------------------------------+----+--+---------------
 ); # %tls_error_alerts
 
-our %tls_extensions = ( # RFC 6066
+our %tls_extensions = (         # RFC 6066, 8446, ...
     #----+-----------------------------+----+---+------------------------------
     # ID      name                      RFC DTLS other names
     #----+-----------------------------+----+---+------------------------------
     0 => [qw( server_name               4366  -   )],   # also 6066
-    1 => [qw( max_fragment_length       ????  -   )],
+    1 => [qw( max_fragment_length       6066  -   )],
     2 => [qw( client_certificate_url    ????  -   )],
     3 => [qw( trusted_ca_keys           ????  -   )],
     4 => [qw( truncated_hmac            ????  -   )],
-    5 => [qw( status_request            ????  -   )],
+    5 => [qw( status_request            6066  -   )],
     6 => [qw( user_mapping              ????  -   )],
     7 => [qw( reserved_7                ????  -   )],
     8 => [qw( reserved_8                ????  -   )],
     9 => [qw( cert_type                 5081  -   )],   # also 6091
-   10 => [qw( ecliptic_curves           4492  -   )],
+   10 => [qw( supported_groups          8422  -   )],   # also 7919
+#   10 => [qw( ecliptic_curves           4492  -   )],  # TODO: old name (see above)?
    11 => [qw( ec_point_formats          4492  -   )],
    12 => [qw( srp                       5054  -   )],
-   13 => [qw( signature_algorithms      5246  -   )],
-#  14 => [qw( unassigned                5246  -   )],
-#  ...
+   13 => [qw( signature_algorithms      8446  -   )],
+   14 => [qw( use_srp                   5764  -   )],
+   15 => [qw( heartbeat                 6520  -   )],
+   16 => [qw( application_layer_protocol_negotiation 7301  -  )],
+   18 => [qw( signed_certificate_timestamp 6962 - )],
+   19 => [qw( client_certificate_type   7250  -   )],
+   20 => [qw( server_certificate_type   7250  -   )],
+   21 => [qw( padding                   7685  -   )],
 #  34 => [qw( unassigned                5246  -   )],
    35 => [qw( SessionTicket             4507  -   )],
+   40 => [qw( RESERVERD_40              ????  -   )],
+   41 => [qw( pre_shared_key            8446  -   )],
+   42 => [qw( early_data                8446  -   )],
+   43 => [qw( supported_versions        8446  -   )],
+   44 => [qw( cookie                    8446  -   )],
+   45 => [qw( psk_key_exchange_modes    8446  -   )],
+   46 => [qw( RESERVERD_46              ????  -   )],
+#  ...
+   47 => [qw( certificate_authorities   8446  -   )],
+   48 => [qw( oid_filters               8446  -   )],
+   49 => [qw( post_handshake_auth       8446  -   )],
+   50 => [qw( signature_algorithms_cert 8446  -   )],
+   51 => [qw( key_share                 8446  -   )],
 62208 => [qw( TACK                      ????  -   )],
 65535 => [qw( 65535                     ????  -   )],
 ); # %tls_extensions
@@ -444,7 +484,71 @@ my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_
     },
 ); # %tls_extensions__text
 
-our %ec_point_formats = ( # RFC 4492
+our %tls_signature_algorithms = (
+    #----+--------------------------+-----------------------
+    # ID  name                       comment
+    #----+--------------------------+-----------------------
+                                    # Legacy algorithms
+0x0201 => "rsa_pkcs1_sha1",
+0x0203 => "ecdsa_sha1",
+                                    # RSASSA-PKCS1-v1_5 algorithms
+0x0401 => "rsa_pkcs1_sha256",
+0x0501 => "rsa_pkcs1_sha384",
+0x0601 => "rsa_pkcs1_sha512",
+                                    # ECDSA algorithms
+0x0403 => "ecdsa_secp256r1_sha256",
+0x0503 => "ecdsa_secp384r1_sha384",
+0x0603 => "ecdsa_secp521r1_sha512",
+                                    # RSASSA-PSS algorithms with public key OID rsaEncryption
+0x0804 => "rsa_pss_rsae_sha256",
+0x0805 => "rsa_pss_rsae_sha384",
+0x0806 => "rsa_pss_rsae_sha512",
+                                    # EdDSA algorithms
+0x0807 => "ed25519",
+0x0808 => "ed448",
+                                    # RSASSA-PSS algorithms with public key OID RSASSA-PSS
+0x0809 => "rsa_pss_pss_sha256",
+0x080a => "rsa_pss_pss_sha384",
+0x080b => "rsa_pss_pss_sha512",
+                                    # Reserved Code Points
+#0x0000..0x0200 => "obsolete_RESERVED",
+0x0202 => "dsa_sha1_RESERVED",
+#0x0204..0x0400 => "obsolete_RESERVED",
+0x0402 => "dsa_sha256_RESERVED",
+#0x0404..0x0500 => "obsolete_RESERVED",
+0x0502 => "dsa_sha384_RESERVED",
+#0x0504..0x0600 => "obsolete_RESERVED",
+0x0602 => "dsa_sha512_RESERVED",
+#0x0604..0x06FF => "obsolete_RESERVED",
+#0xFE00..0xFFFF => "private_use",
+0xFFFF => "private_use",
+    #----+--------------------------+-----------------------
+); # %tls_signature_algorithms
+
+our %tls_supported_groups = (   # RFC 8446
+    #----+--------------------------+-----------------------
+0x0001 => "obsolete_RESERVED",      # 0x0001..0x0016 => "obsolete_RESERVED",
+0x0017 => "secp256r1",              # Elliptic Curve Groups (ECDHE)
+0x0018 => "secp384r1",              # 
+0x0019 => "secp521r1",              # 
+0x001A => "obsolete_RESERVED",      #0x001A..0x001C => "obsolete_RESERVED",
+0x001D => "x25519",                 #
+0x001E => "x448",                   #
+0x0100 => "ffdhe2048",              # Finite Field Groups (DHE)
+0x0101 => "ffdhe3072",              # 
+0x0102 => "ffdhe4096",              # 
+0x0103 => "ffdhe6144",              # 
+0x0104 => "ffdhe8192",              # 
+                                    # Reserved Code Points
+0x01FC => "ffdhe_private_use",      # 0x01FC..0x01FF => "ffdhe_private_use",
+0xFE00 => "ecdhe_private_use",      # 0xFE00..0xFEFF => "ecdhe_private_use",
+0xFF01 => "obsolete_RESERVED_ff01",
+0xFF02 => "obsolete_RESERVED_ff02",
+0xFFFF => "FFFF",
+    #----+--------------------------+-----------------------
+); # %tls_supported_groups
+
+our %ec_point_formats = (       # RFC 4492
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-----------------------------+----+---+------------------------------
     # ID      name                      RFC  DTLS other names
@@ -489,6 +593,7 @@ our %ec_curve_types = ( # RFC 4492
 # Value =>   Description bits(added) DTLS-OK Reference
 # our %named_curves =
 our %tls_curves = (
+# TODO: merge with %tls_signature_algorithms and %tls_supported_groups
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-------------------------------------+----+--+-------+---+-------------------------
     # ID      name                              RFC DTLS NIST  bits OID
@@ -1004,8 +1109,8 @@ our %cipher_names = (
     '0x03000096' => [qw(SEED-SHA                        RSA_WITH_SEED_SHA)],
 #
 #    https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
-    '0x03001301' => [qw(AES128-GCM-SHA256               RSA_WITH_AES_128_GCM_SHA256)],  # TLS 1.3; see Note(d)
-    '0x03001302' => [qw(AES256-GCM-SHA384               RSA_WITH_AES_256_GCM_SHA384)],  # TLS 1.3; see Note(d)
+    '0x03001301' => [qw(AES128-GCM-SHA256               AES_128_GCM_SHA256)],           # TLS 1.3; see Note(d)
+    '0x03001302' => [qw(AES256-GCM-SHA384               AES_256_GCM_SHA384)],           # TLS 1.3; see Note(d)
     '0x03001303' => [qw(CHACHA20-POLY1305-SHA256        CHACHA20_POLY1305_SHA256)],     # TLS 1.3
     '0x03001304' => [qw(AES128-CCM-SHA256               AES_128_CCM_SHA256)],           # TLS 1.3
     '0x03001305' => [qw(AES128-CCM8-SHA256              AES_128_CCM_8_SHA256)],         # TLS 1.3
@@ -1063,24 +1168,24 @@ our %cipher_names = (
     '0x030000B8' => [qw(RSA-PSK-SHA256                  RSA_PSK_WITH_NULL_SHA256)],
     '0x030000B9' => [qw(RSA-PSK-SHA384                  RSA_PSK_WITH_NULL_SHA384)],
 #
-    '0x0300C09C' => [qw(RSA-AES128-CCM                  RSA_WITH_AES_128_CCM)],
-    '0x0300C09D' => [qw(RSA-AES256-CCM                  RSA_WITH_AES_256_CCM)],
-    '0x0300C09E' => [qw(DHE-RSA-AES128-CCM              DHE_RSA_WITH_AES_128_CCM)],
-    '0x0300C09F' => [qw(DHE-RSA-AES256-CCM              DHE_RSA_WITH_AES_256_CCM)],
-    '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM              PSK_WITH_AES_128_CCM)],
-    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM              PSK_WITH_AES_256_CCM)],
-    '0x0300C0A6' => [qw(DHE-PSK-RSA-AES128-CCM          DHE_PSK_WITH_AES_128_CCM)],
-    '0x0300C0A7' => [qw(DHE-PSK-RSA-AES256-CCM          DHE_PSK_WITH_AES_256_CCM)],
+    '0x0300C09C' => [qw(RSA-AES128-CCM                  RSA_WITH_AES_128_CCM)],         # RFC 6655
+    '0x0300C09D' => [qw(RSA-AES256-CCM                  RSA_WITH_AES_256_CCM)],         # RFC 6655
+    '0x0300C09E' => [qw(DHE-RSA-AES128-CCM              DHE_RSA_WITH_AES_128_CCM)],     # RFC 6655
+    '0x0300C09F' => [qw(DHE-RSA-AES256-CCM              DHE_RSA_WITH_AES_256_CCM)],     # RFC 6655
+    '0x0300C0A0' => [qw(RSA-AES128-CCM8                 RSA_WITH_AES_128_CCM_8)],       # RFC 6655
+    '0x0300C0A1' => [qw(RSA-AES256-CCM8                 RSA_WITH_AES_256_CCM_8)],       # RFC 6655
+    '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM8             DHE_RSA_WITH_AES_128_CCM_8)],   # RFC 6655
+    '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM8             DHE_RSA_WITH_AES_256_CCM_8)],   # RFC 6655
+    '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM              PSK_WITH_AES_128_CCM)],         # RFC 6655
+    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM              PSK_WITH_AES_256_CCM)],         # RFC 6655
+    '0x0300C0A6' => [qw(DHE-PSK-RSA-AES128-CCM          DHE_PSK_WITH_AES_128_CCM)],     # RFC 6655
+    '0x0300C0A7' => [qw(DHE-PSK-RSA-AES256-CCM          DHE_PSK_WITH_AES_256_CCM)],     # RFC 6655
+    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8             PSK_WITH_AES_128_CCM_8)],       # RFC 6655
+    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8             PSK_WITH_AES_256_CCM_8)],       # RFC 6655
+    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8         DHE_PSK_WITH_AES_128_CCM_8)],   # RFC 6655
+    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8         DHE_PSK_WITH_AES_256_CCM_8)],   # RFC 6655
     '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)], # RFC 7251
     '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)], # RFC 7251
-    '0x0300C0A0' => [qw(RSA-AES128-CCM8                 RSA_WITH_AES_128_CCM_8)],
-    '0x0300C0A1' => [qw(RSA-AES256-CCM8                 RSA_WITH_AES_256_CCM_8)],
-    '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM8             DHE_RSA_WITH_AES_128_CCM_8)],
-    '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM8             DHE_RSA_WITH_AES_256_CCM_8)],
-    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8             PSK_WITH_AES_128_CCM_8)],
-    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8             PSK_WITH_AES_256_CCM_8)],
-    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8         DHE_PSK_WITH_AES_128_CCM_8)],
-    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8         DHE_PSK_WITH_AES_256_CCM_8)],
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM8           ECDHE_ECDSA_WITH_AES_128_CCM_8)], # RFC 7251
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM8           ECDHE_ECDSA_WITH_AES_256_CCM_8)], # RFC 7251
     '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/7507.html
