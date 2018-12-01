@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.7 18/12/01 18:44:02
+#?      @(#) Makefile.misc 1.8 18/12/01 23:23:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.7
+_SID.misc       = 1.8
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -91,12 +91,42 @@ test.docker:
 # following will be shown with "main" Makefile or target help.dev
 HELP-_dev       = __________________________________ targets for development _
 HELP-tags       = generate tags file for vi(m)
+HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
+HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
 
 help.dev: help.HEAD
 	@$(EXE.help) $(_MYSELF.misc)
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
+
+# TODO: Profiling should go to Makefile.profile or alike
+# Profiling:
+#   For building the function calling tree, perldebug (PERLDB_OPTS) is used.
+#   The results can be stored in a file, see LineInfo= options.
+#   Unfortunately perldebug writes output to the device directly (for example
+#   /dev/stdout). It is not possible to merge output from the executed script
+#   with that of perldebug. Following options are not helpful:
+#      pager=|cat  LineInfo=/dev/stdout  noTTY=1
+# Uses perl modules DProf and/or NYTProf
+# (may be in package libdevel-dprof-perl libdevel-nytprof-perl)
+
+_DEBUG.profile.log  = $(TEST.logdir)/profile.sub.log-$(_TODAY_)
+_DEBUG.profile.log  = $(TEST.logdir)/profile.sub.log
+
+DEBUG.host      = localhost
+profile.sub%:           TEST.args  += +cn
+profile.sub.entry:      PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
+profile.sub.exit:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
+profile.sub.parm:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
+profile.sub.entry.log:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  LineInfo=$(_DEBUG.profile.log)'
+profile.sub.exit.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  LineInfo=$(_DEBUG.profile.log)'
+profile.sub.parm.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 LineInfo=$(_DEBUG.profile.log)'
+profile.sub%:  $(DEV.pl)
+	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(DEBUG.host) $(TEST.args) 2>&1 
+#profile.sub%.log:
+#	@ls -l $(_DEBUG.profile.log)
+# reformating $(_DEBUG.profile.log)  with: sed -e 's/^\s*out /  &/'
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
