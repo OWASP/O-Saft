@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.4 18/09/07 09:51:20
+# SID	@(#) links.txt 1.5 18/12/01 16:28:52
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -24,6 +24,7 @@ HPKP 	https://blog.pregos.info/2015/02/23/http-public-key-pinning-hpkp-erklaerun
 HPKP  	https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead
 HPKP in Chrome	hrome://net-internals/#hsts    (show, reset pins in Chrome)
 HSTS	http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
+NaCl	http://nacl.cr.yp.to
 NPN (draft)	https://tools.ietf.org/id/draft-agl-tls-nextprotoneg-04.html
 NPN	https://technotes.googlecode.com/git/nextprotoneg.html
 NPN 	https://www.imperialviolet.org/2013/03/20/alpn.html
@@ -37,6 +38,10 @@ Server Pinning	https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
 SNI apache	https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
 SIMON and SPECK	https://eprint.iacr.org/2013/404
 SM4	https://tools.ietf.org/id/draft-crypto-sm4-00.html
+LatinDances	http://cr.yp.to/rumba20/newfeatures-20071218.pdf
+LatinDances2	https://eprint.iacr.org/2012/065.pdf
+Poly1305_Donna	https://github.com/floodyberry/poly1305-donna
+Cache-Collisions	http://research.microsoft.com/pubs/64024/aes-timing.pdf
 Snuffle	https://cr.yp.to/snuffle/812.pdf
 BADA55	https://bada55.cr.yp.to/
 SPDY/3	http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
