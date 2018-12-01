@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.7 18/10/28 07:57:35
+# SID	@(#) rfc.txt 1.8 18/12/01 16:24:04
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -8,12 +8,14 @@
 #	http://tools.ietf.org/rfc/rfcXXXX.txt
 url	http://tools.ietf.org/
 6101	SSL Version 3.0
+6601	SSL Version 3.0
 2246	TLS Version 1.0 (with Cipher Suites)
 4346	TLS Version 1.1 (with Cipher Suites)
 5246	TLS Version 1.2 (with Cipher Suites)
 8446	TLS Version 1.3 (with Cipher Suites)
 4347	DTLS Version 0.9
 6347	DTLS Version 1.2
+8447	IANA Registry Updates for TLS and DTLS
 2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
 7540	Hypertext Transfer Protocol Version 2 (HTTP/2)
 7230	HTTP/1.1: Message Syntax and Routing
@@ -56,11 +58,13 @@ url	http://tools.ietf.org/
 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
 3749	TLS Compression Method (obsolete)
 3943	TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)
+4680	TLS Handshake Message for Supplemental Data
 4749	TLS Compression Methods
 3546	TLS Extensions (obsolete)
 4366	TLS Extensions
 5746	TLS Extension: Renegotiation Indication Extension
 5764	TLS Extension: Secure Real-time Transport Protocol (SRTP)
+5878	TLS Extension: Authorization
 5929	TLS Extension: Channel Bindings
 6066	TLS Extension: Extension Definitions
 6520	TLS Extension: Heartbeat
@@ -71,6 +75,7 @@ url	http://tools.ietf.org/
 6961	TLS Multiple Certificate Status Request Extension
 7627	TLS Session Hash and Extended Master Secret Extension
 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
+7568	Deprecating Secure Sockets Layer Version 3.0
 6460	NSA Suite B Profile for TLS
 2560	Online Certificate Status Protocol (OCSP, obsolete)
 6267	Online Certificate Status Protocol Algorithm Agility (OCSP, obsolete)
@@ -100,12 +105,13 @@ url	http://tools.ietf.org/
 5589	Session Initiation Protocol (SIP) Call Control - Transfer
 6040	Tunnelling of Explicit Congestion Notification
 6090	Fundamental Elliptic Curve Cryptography Algorithms
-4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
+4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS (obsolete)
 5639	Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation
 5903	Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2
 6507	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption (ECCSI)
 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 7748	Elliptic Curve for Security
+8422	Elliptic Curve Cryptography (ECC) Cipher Suites for TLS Versions 1.2 and Earlier
 5741	RFC Streams, Headers, and Boilerplates
 5794	Description of the ARIA Encryption Algorithm
 5932	Camellia Cipher Suites for TLS
@@ -120,11 +126,14 @@ url	http://tools.ietf.org/
 6125	Representation and Verification of Domain-Based Application Service (PKIX) for TLS
 6797	HTTP Strict Transport Security (HSTS)
 6962	Certificate Transparency
+6979	Deterministic Usage of the Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
 7366	Encrypt-then-MAC for TLS and DTLS
 7457	Summarizing Known Attacks on TLS and DTLS
+7465	Prohibiting RC4 Cipher Suites
 7469	Public Key Pinning Extension for HTTP
 7525	Recommendations for Secure Use of TLS and DTLS
-7539	ChaCha20 and Poly1305 for IETF Protocols
+7539	ChaCha20 and Poly1305 for IETF Protocols (obsolete)
+8439	ChaCha20 and Poly1305 for IETF Protocols
 7627	TLS Session Hash and Extended Master Secret Extension
 7905	ChaCha20-Poly1305 Cipher Suites for TLS
 7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
