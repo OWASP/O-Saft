@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.6 18/12/01 18:15:07
+#?      @(#) Makefile.misc 1.7 18/12/01 18:44:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.6
+_SID.misc       = 1.7
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -40,17 +40,19 @@ ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
-HELP.misc        = "\
+HELP.misc       = "\
 \#               ____________________________________________ misc. tests _$(_NL)\
  test.bench      - call '$(EXE.bench)' for some benchmarks$(_NL)\
  test.bench.log  - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
  test.bunt       - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
  test.docker     - test docker image$(_NL)\
+ help.dev        - print targets for development$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.misc)
 
 HELP-help.test.misc = print misc. testing targets
+HELP-help.dev       = print targets for development
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -86,9 +88,12 @@ test.docker:
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
 
-# following will be shown with "main" Makefile
+# following will be shown with "main" Makefile or target help.dev
 HELP-_dev       = __________________________________ targets for development _
 HELP-tags       = generate tags file for vi(m)
+
+help.dev: help.HEAD
+	@$(EXE.help) $(_MYSELF.misc)
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
