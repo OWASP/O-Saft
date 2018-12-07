@@ -1,0 +1,124 @@
+#! /usr/bin/perldoc 
+#?
+#? NAME
+#?      Makefile.pod  - documentation for Makefiles in POD format
+#?
+#? SYNOPSYS
+#?      Makefile.pod
+#?      perldoc Makefile.pod
+#?
+#? DESCRIPTION
+#?      This file conatains the internal (developer) documentation for all other
+#?      Makefiles.  This is done to keep other Makefiles  as simple as possible,
+#?      and just containing the user documentation.
+#?
+# HACKER's INFO
+#
+#? VERSION
+#?      @(#) Makefile.pod 1.1 18/12/08 00:05:57
+#?
+#? AUTHOR
+#?      18-nov-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+=pod
+
+=head2 Make:GNU
+
+some text
+
+=head2 Make:Profiling
+
+Profiling is mainly done with Perl's built-in functionality: perldebug.
+
+There are also targets using special Perl modules  DProf and/or NYTProf to
+do the profiling.
+
+=head3 Perl packages
+
+  * debian: libdevel-dprof-perl libdevel-nytprof-perl
+
+=head2 Make:profile.sub
+
+For building the function calling tree, perldebug (PERLDB_OPTS) is used.
+The results can be stored in a file, see  LineInfo=  options.
+Unfortunately perldebug writes output to the device directly  (for example
+/dev/stdout).  It is not possible to merge output from the executed script
+with that of perldebug. Following options are not helpful:
+
+  * pager=|cat
+  * LineInfo=/dev/stdout
+  * noTTY=1
+
+=head2 Make:profile.sub*_%
+
+It should be simply possible to extend the  pattern rules  with additional
+arguments. For example:  profile.sub.args   and  profile.sub.args_+cn .
+These arguments are extracted in the  pattern rule itself.  This avoids to
+define additional conditional rules for each pattern rule to set the macro
+$(TEST.args)  with the arguments.
+
+The simplest way to split the arguments would be:
+
+  @$(eval _args = $(shell echo "$*" | tr '_' ' '))
+
+but the last part of the target name needs to be removed, hence following
+is used for splitting:
+
+  @$(eval _args = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
+
+To use the default setting if no arguments are given, following is used:
+
+  @$(eval TEST.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args) ))
+
+=head3 profile.sub_%.log
+
+Rules writing to logfiles cannot be named like  profile.sub.%.log  if they
+should contain additional arguments like  profile.sub.%_+cn.log,  but must
+be named  profile.sub.%.log_+cn  otherwise the  .log  extension becomes an
+argument (see description how to split arguments above).
+
+=head2 Make:profile.sub% target rule
+
+This rule matches all targets, e.g.  profile.sub.entry, profile.sub.args .
+It should also be possible to pass additional arguments to  $(DEV.pl). The
+default argument is defined in  $(TEST.args). Other arguments to be passed
+are simply added to the target, separated by  _  for example:
+
+    profile.sub.args_+cn_--noheader
+
+This is actually a shortcut for calling:
+
+    profile.sub.args TEST.args="+cn --noheader"
+
+The conditional rules split the additional arguments as follows:
+
+  * split the rule's automatic variable  $*  by _
+  * ignore the first value of the splitted arguments as it is part of the
+    target name
+
+=head3 Example for splitting: profile.sub.args_+cn_--noheader
+
+    $*       : args_+cn_--noheader
+    splitted : args +cn --noheader
+    TEST.args:      +cn --noheader
+
+This is done using (see above)
+
+  awk -F_ '{i=1;while(i<NF){i++;print $$i}}'
+
+=head3 Limitations
+
+  * arguments with  _  itself cannot be used
+  * when target names with or without additional arguments are used,  GNU
+    Make's syntax requires separate conditional rules, hence there're:
+        profile.sub.args:
+        profile.sub.args_%:
+  * miss-spelled targets fall back to the corresponding  basic conditional
+    rules; for example  profile.sub.args-+cn  calls  profile.sub.args
+  * if called from within  $(TEST.dir),  $(DEV.pl)  should be set on make
+    call like:
+       make profile.sub.args-+cn DEV.pl=../yeast.pl
+
+=cut
