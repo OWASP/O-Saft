@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.183 Sommer Edition 2018
+#?      @(#) 1.185 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,8 +449,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.183 18/11/08 00:13:00 Sommer Edition 2018}
-set cfg(VERSION) {1.183}
+set cfg(SID)    "@(#) o-saft.tcl 1.185 18/12/07 22:35:01"
+set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
+                 # contribution to SCCS's "what" to avoid additional characters
+set cfg(VERSION) {1.185}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1946,7 +1948,7 @@ proc create_filter      {parent cmd} {
                     -text $f_key($k) -variable filter_bool($obj,HELP-$key) \
                     -command "toggle_filter $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
              ] -anchor w ;
-        # note: useing $f_key($k) instead of $key as text
+        # note: using $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
         # TODO: following "-fg white" makes check in checkbox invisible
         if {$fg ne ""}  { $this.x$key config -fg $fg }; # Tk is picky ..
@@ -3185,7 +3187,7 @@ foreach arg $argv {
     switch -glob $arg {
         {+quit}     { set   cfg(quit)   1;  }
         {+VERSION}  { puts $cfg(VERSION); exit; }
-        {--version} { puts $cfg(SID);     exit; }
+        {--version} { puts $cfg(mySID);   exit; }
         {-docker}   -
         {--docker}  { set   prg(SAFT)   "o-saft-docker"; }
         {--dbx}     -
