@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.10 18/12/01 16:27:11
+# SID	@(#) glossary.txt 1.11 18/12/07 22:32:30
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -30,9 +30,9 @@ AtE	Authenticate-then-Encrypt (see also MtE)
 BACPA	Blockwise-Adaptive Chosen-Plaintext Attack
 BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
 BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
-BADA55-VR-224	curve useing the same prime as NIST P-224
-BADA55-VR-256	curve useing the same prime as NIST P-256
-BADA55-VR-384	curve useing the same prime as NIST P-384
+BADA55-VR-224	curve useng the same prime as NIST P-224
+BADA55-VR-256	curve useng the same prime as NIST P-256
+BADA55-VR-384	curve useng the same prime as NIST P-384
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
