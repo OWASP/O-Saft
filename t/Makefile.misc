@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.8 18/12/01 23:23:25
+#?      @(#) Makefile.misc 1.9 18/12/07 23:58:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.8
+_SID.misc       = 1.9
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -57,6 +57,7 @@ HELP-help.dev       = print targets for development
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
+TEST.args         = +quit
 BENCH.times       = $(EXE.bench).times
 BENCH.host        = $(TEST.host)
 
@@ -93,6 +94,7 @@ HELP-_dev       = __________________________________ targets for development _
 HELP-tags       = generate tags file for vi(m)
 HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
 HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
+HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out and parameter)
 
 help.dev: help.HEAD
 	@$(EXE.help) $(_MYSELF.misc)
@@ -100,33 +102,48 @@ help.dev: help.HEAD
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
 
-# TODO: Profiling should go to Makefile.profile or alike
-# Profiling:
-#   For building the function calling tree, perldebug (PERLDB_OPTS) is used.
-#   The results can be stored in a file, see LineInfo= options.
-#   Unfortunately perldebug writes output to the device directly (for example
-#   /dev/stdout). It is not possible to merge output from the executed script
-#   with that of perldebug. Following options are not helpful:
-#      pager=|cat  LineInfo=/dev/stdout  noTTY=1
-# Uses perl modules DProf and/or NYTProf
-# (may be in package libdevel-dprof-perl libdevel-nytprof-perl)
+ALL.test.dev    = $(GEN.tags)
+ALL.test.dev   += profile.sub.entry
 
-_DEBUG.profile.log  = $(TEST.logdir)/profile.sub.log-$(_TODAY_)
+# TODO: Profiling should go to Makefile.profile or alike
+# SEE Make:Profiling
+# SEE Make:profile.sub
+# SEE Make:profile.sub*_%
+# SEE Make:profile.sub% target rule
+
 _DEBUG.profile.log  = $(TEST.logdir)/profile.sub.log
 
-DEBUG.host      = localhost
-profile.sub%:           TEST.args  += +cn
+DEBUG.host          = localhost
 profile.sub.entry:      PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
+profile.sub.entry_%:    PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.exit:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
-profile.sub.parm:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
-profile.sub.entry.log:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  LineInfo=$(_DEBUG.profile.log)'
-profile.sub.exit.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  LineInfo=$(_DEBUG.profile.log)'
-profile.sub.parm.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 LineInfo=$(_DEBUG.profile.log)'
-profile.sub%:  $(DEV.pl)
+profile.sub.exit_%:     PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
+profile.sub.args:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
+profile.sub.args_%:     PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
+
+# pattern rules can contain one % only, hence following sequence for _lineinfo is mandatory
+profile.sub.%:          _lineinfo   = LineInfo=$(_DEBUG.profile.log)
+profile.sub.%.log:      _lineinfo   = LineInfo=$(_DEBUG.profile.log)
+
+profile.sub.entry.log:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  $(_lineinfo)'
+profile.sub.exit.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinfo)'
+profile.sub.args.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinfo)'
+profile.sub.entry.log%: PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  $(_lineinfo)'
+profile.sub.exit.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinfo)'
+profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinfo)'
+
+profile.sub%:
+	@$(eval _args = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
+	@$(eval TEST.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args) ))
 	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(DEBUG.host) $(TEST.args) 2>&1 
 #profile.sub%.log:
 #	@ls -l $(_DEBUG.profile.log)
 # reformating $(_DEBUG.profile.log)  with: sed -e 's/^\s*out /  &/'
+
+# TODO: 
+#     make profile.sub.entry | sed -e 's/ entering //'
+#     make profile.sub.exit  | sed -e 's/ entering /+/' -e 's/exited / -/'
+#     make profile.sub.args  | sed -e 's/ in  /+/' -e 's/out / -/' -e 's/ from .*\//\t/'
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
