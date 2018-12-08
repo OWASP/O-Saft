@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.833 18/12/08 19:27:56",
+    SID         => "@(#) yeast.pl 1.834 18/12/08 22:36:09",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -7625,6 +7625,19 @@ while ($#argv >= 0) {
     if ($arg eq  '+export')             { $arg = '+cipher_exp';     } # alias:
     if ($arg eq  '+null')               { $arg = '+cipher_null';    } # alias:
     if ($arg eq  '+weak')               { $arg = '+cipher_weak';    } # alias:
+    # alias commands for CVEs
+    if ($arg =~ /^[+]cve.?2009.?3555/i) { $arg = '+renegotiation';  } # alias:
+    if ($arg =~ /^[+]cve.?2011.?3389/i) { $arg = '+beast';          } # alias:
+    if ($arg =~ /^[+]cve.?2012.?4929/i) { $arg = '+crime';          } # alias:
+    if ($arg =~ /^[+]cve.?2013.?3587/i) { $arg = '+breach';         } # alias:
+    if ($arg =~ /^[+]cve.?2014.?0160/i) { $arg = '+heartbleed';     } # alias:
+    if ($arg =~ /^[+]cve.?2014.?0224/i) { $arg = '+ccs';            } # alias:
+    if ($arg =~ /^[+]cve.?2014.?3566/i) { $arg = '+poodle';         } # alias:
+    if ($arg =~ /^[+]cve.?2015.?0204/i) { $arg = '+freak';          } # alias:
+    if ($arg =~ /^[+]cve.?2016.?0703/i) { $arg = '+drown';          } # alias:
+    if ($arg =~ /^[+]cve.?2015.?4000/i) { $arg = '+logjam';         } # alias:
+    if ($arg =~ /^[+]cve.?2013.?2566/i) { $arg = '+rc4';            } # alias:
+    if ($arg =~ /^[+]cve.?2015.?2808/i) { $arg = '+rc4';            } # alias:
     # check and info commands
     if ($arg eq  '+owner')              { $arg = '+subject';        } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
