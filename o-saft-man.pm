@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.267 18/11/15 01:05:27";
+my  $SID_man= "@(#) o-saft-man.pm 1.268 18/12/08 22:30:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1079,6 +1079,7 @@ sub man_alias       {
             $regex =~ s/^\\//;      # remove leading \
             $regex =~ s/\$$//;      # remove trailing $
             $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
+            $regex =~ s/\[\+\]/+/g; # replace [+] with +
             $regex =~ s/\$p\?/-/g;  # replace variable
             if (29 > length($regex)) {
                 printf("%-29s%-21s# %s\n", $regex, $alias, $commt);
