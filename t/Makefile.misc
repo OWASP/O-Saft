@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.9 18/12/07 23:58:17
+#?      @(#) Makefile.misc 1.10 18/12/08 18:59:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.9
+_SID.misc       = 1.10
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -89,15 +89,24 @@ test.docker:
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
 
-# following will be shown with "main" Makefile or target help.dev
-HELP-_dev       = __________________________________ targets for development _
-HELP-tags       = generate tags file for vi(m)
-HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
-HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
-HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out and parameter)
+HELP.dev        = "\
+\#               ________________________________ targets for development _$(_NL)\
+ tags            - generate tags file for vi(m)$(_NL)\
+ profile.sub.entry  - generate function calling tree of '$(DEV.pl)' (entry only)$(_NL)\
+ profile.sub.exit   - generate function calling tree of '$(DEV.pl)' (entry and exit)$(_NL)\
+ profile.sub.args   - generate function calling tree of '$(DEV.pl)' (in, out and parameter)$(_NL)\
+ nytprof.out     - generate profiling data (for nytprofcalls)$(_NL)\
+ nytprof.html    - generate profiling data in HTML format$(_NL)\
+ dprof.out       - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
+"
 
+# TODO: if we switch HELP.dev to single lines HELP-*
+#help.dev: help.HEAD
+#	@$(EXE.help) $(_MYSELF.misc)
+#	@$(ECHO) "$(_HELP_LINE_)"
 help.dev: help.HEAD
-	@$(EXE.help) $(_MYSELF.misc)
+	@$(ECHO)  $(HELP.dev)
+	@$(ECHO) "$(_HELP_LINE_)"
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
@@ -111,9 +120,9 @@ ALL.test.dev   += profile.sub.entry
 # SEE Make:profile.sub*_%
 # SEE Make:profile.sub% target rule
 
-_DEBUG.profile.log  = $(TEST.logdir)/profile.sub.log
+_PROFILE.profile.log= $(TEST.logdir)/profile.sub.log
 
-DEBUG.host          = localhost
+PROFILE.host        = localhost
 profile.sub.entry:      PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.entry_%:    PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.exit:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
@@ -122,8 +131,8 @@ profile.sub.args:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
 profile.sub.args_%:     PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
 
 # pattern rules can contain one % only, hence following sequence for _lineinfo is mandatory
-profile.sub.%:          _lineinfo   = LineInfo=$(_DEBUG.profile.log)
-profile.sub.%.log:      _lineinfo   = LineInfo=$(_DEBUG.profile.log)
+profile.sub.%:          _lineinfo   = LineInfo=$(_PROFILE.profile.log)
+profile.sub.%.log:      _lineinfo   = LineInfo=$(_PROFILE.profile.log)
 
 profile.sub.entry.log:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  $(_lineinfo)'
 profile.sub.exit.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinfo)'
@@ -135,15 +144,35 @@ profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinf
 profile.sub%:
 	@$(eval _args = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
 	@$(eval TEST.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args) ))
-	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(DEBUG.host) $(TEST.args) 2>&1 
-#profile.sub%.log:
-#	@ls -l $(_DEBUG.profile.log)
-# reformating $(_DEBUG.profile.log)  with: sed -e 's/^\s*out /  &/'
+	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(PROFILE.host) $(TEST.args) 2>&1 
 
 # TODO: 
 #     make profile.sub.entry | sed -e 's/ entering //'
 #     make profile.sub.exit  | sed -e 's/ entering /+/' -e 's/exited / -/'
 #     make profile.sub.args  | sed -e 's/ in  /+/' -e 's/out / -/' -e 's/ from .*\//\t/'
+# better use dprof.out below
+
+_nytprof.log    = $(TEST.logdir)/nytprof.out
+nytprof.out: $(_nytprof.log)
+	@perl -d:NYTProf $(DEV.pl) $(PROFILE.host) $(TEST.args)
+	@mv $@ $<
+	@echo "# inspect with: nytprofcalls $(_nytprof.log)"
+nytprof.html: $(_nytprof.log)
+	@nytprofhtml --file $<
+	@echo "# inspect with: firefox $(TEST.dir)/nytprof/index.html"
+nytprof: nytprof.html
+
+_dprof.log      = $(TEST.logdir)/dprof.out
+$(_dprof.log):
+	@env PERL_DPROF_OUT_FILE_NAME=$(_dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(TEST.args)
+	@dprofpp    $(_dprof.log)
+	@echo ""
+	@echo "# show calling tree: dprofpp -t $(_dprof.log)"
+#dprof.out: PERL_DPROF_OUT_FILE_NAME=$(_dprof.log)
+dprof.out: $(_dprof.log)
+# useful options: -T -I
+# dprofpp -t -f "(Carp::)|(Exporter::)|(Symbol::)|(DynaLoader::)"
+.PHONY: $(_dprof.log)
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
