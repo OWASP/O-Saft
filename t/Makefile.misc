@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.11 18/12/15 17:47:47
+#?      @(#) Makefile.misc 1.12 18/12/15 18:58:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.11
+_SID.misc       = 1.12
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -99,6 +99,8 @@ HELP.dev        = "\
  nytprof.html    - generate profiling data in HTML format$(_NL)\
  dprof.out       - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
 "
+#code.quality    - search for various common coding mistakes$(_NL)\
+
 
 # TODO: if we switch HELP.dev to single lines HELP-*
 #help.dev: help.HEAD
@@ -113,6 +115,27 @@ $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles
 
 ALL.test.dev    = $(GEN.tags)
 ALL.test.dev   += profile.sub.entry profile.sub.exit profile.sub.args nytprof.html dprof.out
+#ALL.test.dev   += code.quality
+
+# following checks based on http://perldoc.perl.org/perldiag.html
+# TODO: all targets fail if checks returns nothing
+ALL.qa          = $(ALL.pm) $(SRC.pl)
+qa.double_dref:
+	@echo "#make: check depricated double dereferencing ..."
+	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)
+qa.defined_arr:
+	@echo "#make: check depricated defined(@array) ..."
+	@-egrep -H 'defined[( ]*@' $(ALL.qa)
+qa.defined_hash:
+	@echo "#make: check depricated defined(%hash) ..."
+	@-egrep -H 'defined[( ]*%' $(ALL.qa)
+qa.misspelled_regex:
+	@echo "#make: check misspelled grouping in RegEx ..."
+	@-egrep -H '\(:\?'         $(ALL.qa)
+qa.misspelled_critic:
+	@echo "#make: check misspelled use of ## no critic ..."
+	@-egrep -H ' # no critic'  $(ALL.qa)
+code.quality: qa.double_dref qa.defined_arr qa.defined_hash qa.misspelled_regex	qa.misspelled_critic
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
