@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.268 18/12/08 22:30:48";
+my  $SID_man= "@(#) o-saft-man.pm 1.269 18/12/15 23:53:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -847,9 +847,15 @@ sub _man_cmd_from_source {
             $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
             next if (1 == $skip);
             next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
-            my $t   = "\t";
-           #   $t  .= "\t" if (length($1) < 7);
-            $txt .= sprintf("+%-17s%s\n", $1, $2) if m/^\s+'([^']*)'.*"([^"]*)"/;
+            if (m/^\s+'([^']*)'.*"([^"]*)"/) {
+                my $key = $1;
+                my $val = $2;
+                my $len = "%-17s";
+                   $len = "%s " if (length($key) > 16); # ensure that there is at least one space
+                my $t   = "\t";
+               #   $t  .= "\t" if (length($1) < 7);
+                $txt .= sprintf("+$len%s\n", $1, $2);
+            }
         }
         close($fh);
     }
