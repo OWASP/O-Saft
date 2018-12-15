@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.834 18/12/08 22:36:09",
+    SID         => "@(#) yeast.pl 1.835 18/12/15 17:40:32",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -6270,7 +6270,7 @@ sub printprotocols      {
            $cipher_strong = "" if (STR_UNDEF eq $cipher_strong);
            $cipher_pfs    = "" if (STR_UNDEF eq $cipher_pfs);
         }
-        if ((defined @{$prot{$ssl}->{'ciphers_pfs'}}) and
+        if ((@{$prot{$ssl}->{'ciphers_pfs'}}) and
             (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # somthing went wrong
            #$cipher_pfs   # should be empty
            $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
