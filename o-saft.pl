@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.835 18/12/15 17:40:32",
+    SID         => "@(#) yeast.pl 1.836 18/12/15 22:39:56",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -593,6 +593,8 @@ our %data   = (     # connection and certificate details
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
     'session_timeout'=>{'val' => sub { Net::SSLinfo::session_timeout($_[0],$_[1])}, 'txt' => "Target's TLS Session Timeout"},
+    'session_starttime'   => {'val' => sub { Net::SSLinfo::session_starttime($_[0],$_[1])}, 'txt' => "Target's TLS Session Start Time EPOCH"},
+    'session_startdate'   => {'val' => sub { Net::SSLinfo::session_startdate($_[0],$_[1])}, 'txt' => "Target's TLS Session Start Time locale"},
     'dh_parameter'  => {'val' => sub { Net::SSLinfo::dh_parameter(  $_[0], $_[1])}, 'txt' => "Target's DH Parameter"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
@@ -637,7 +639,7 @@ our %data   = (     # connection and certificate details
     'valid_host'    => {'val' =>  0, 'txt' => "dummy used for printing DNS stuff"},
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|next_protocols|
-# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
+# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout|session_starttime|session_startdate
 
 # add keys from %prot to %data,
 foreach my $ssl (keys %prot) {
@@ -807,7 +809,8 @@ my %check_dest = (  ## target (connection) data
     'srp'           => {'txt' => "Target supports SRP"},
     'ocsp_stapling' => {'txt' => "Target supports OCSP Stapling"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
-    'session_lifetime'=>{'txt'=> "Target TLS Session Ticket Lifetime"},
+    'session_lifetime'  =>{ 'txt'=> "Target TLS Session Ticket Lifetime"},
+    'session_starttime' =>{ 'txt'=> "Target TLS Session Start Time match"},
     'session_random'=> {'txt' => "Target TLS Session Ticket is random"},
     'heartbeat'     => {'txt' => "Target does not support heartbeat extension"},
     'scsv'          => {'txt' => "Target does not support SCSV"},
@@ -1034,6 +1037,8 @@ our %shorttexts = (
     'session_lifetime'  => "TLS Session Ticket Lifetime",
     'session_random'    => "TLS Session Ticket random",
     'session_timeout'   => "TLS Session Timeout",
+    'session_startdate' => "TLS Session Start Time locale",
+    'session_starttime' => "TLS Session Start Time EPOCH",
     'dh_parameter'  => "DH Parameter",
     'dh_512'        => "DH Parameter >= 512",
     'dh_2048'       => "DH Parameter >= 2048",
@@ -5489,6 +5494,13 @@ sub checkdest($$)   {
         # if supported we have a value
         # TODO: see ZLIB also (seems to be wrong currently)
     }
+    # time on server differs more tnan +/- 5 seconds?
+    my $currenttime = time() -6;
+    $key    = 'session_starttime';
+    $value  = $data{$key}->{val}($host);
+    $checks{$key}->{val} = "$value < $currenttime" if ($value < ($currenttime - 5));
+    $checks{$key}->{val} = "$value > $currenttime" if ($value > ($currenttime + 5));
+
     foreach my $key (qw(heartbeat)) { # these are good if there is no value
         $checks{$key}->{val} = $data{$key}->{val}($host);
         $checks{$key}->{val} = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
