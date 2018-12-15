@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.11.18',
+    SSLINFO_VERSION => '18.12.18',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.222 18/11/09 01:31:47',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.223 18/12/15 22:37:21',
 };
 
 ######################################################## public documentation #
@@ -611,6 +611,8 @@ our @EXPORT = qw(
         srp
         master_key
         session_id
+        session_startdate
+        session_starttime
         session_lifetime
         session_ticket
         session_ticket_hint
@@ -1069,6 +1071,8 @@ my %_SSLinfo= ( # our internal data structure
     'srp'               => "",  # SRP username
     'master_key'        => "",  # Master-Key
     'session_id'        => "",  # Session-ID
+    'session_startdate' => "",  # TLS session start time (human readable)
+    'session_starttime' => "",  # TLS session start time (seconds EPOCH)
     'session_lifetime'  => "",  # TLS session ticket lifetime hint
     'session_ticket'    => "",  # TLS session ticket
     'session_timeout'   => "",  # SSL-Session Timeout
@@ -2604,6 +2608,7 @@ sub do_ssl_open($$$@) {
             'session_protocol' => "Protocol\\s+:",      # \s must be meta
             'session_timeout'  => "Timeout\\s+:",       # \s must be meta
             'session_lifetime' => "TLS session ticket lifetime hint:",
+            'session_starttime'=> "Start Time:",
             #'session_ticket'   => "TLS session ticket:",
                 # this is a multiline value, must be handled special, see below
             #'renegotiation'    => "Renegotiation",
@@ -2676,6 +2681,15 @@ sub do_ssl_open($$$@) {
                     # no_alpn: single line, has no value: No ALPN negotiated
             }
         }
+            # from s_client:
+            # ....
+            #     Start Time: 1544899903
+            #     Timeout   : 300 (sec)
+            #     Verify return code: 0 (ok)
+            # ---
+        my $key = 'session_starttime';
+        $_SSLinfo{'session_startdate'} = scalar localtime($_SSLinfo{$key});
+            # add human readable time
 
             # from s_client:
             #  OCSP response: no response sent
@@ -3249,6 +3263,14 @@ Get target's Master-Key.
 
 Get target's announced SSL protocols.
 
+=head2 session_startdate
+
+Get target's TLS Start Time (human readable format))
+
+=head2 session_starttime
+
+Get target's TLS Start Time (seconds since EPOCH)
+
 =head2 session_ticket
 
 Get target's TLS session ticket.
@@ -3563,9 +3585,11 @@ sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
 sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
 sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
 sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
-sub session_ticket  { return _SSLinfo_get('session_ticket',   $_[0], $_[1]); }
+sub session_startdate{return _SSLinfo_get('session_startdate',$_[0], $_[1]); }
+sub session_starttime{return _SSLinfo_get('session_starttime',$_[0], $_[1]); }
 sub session_lifetime{ return _SSLinfo_get('session_lifetime', $_[0], $_[1]); }
 sub session_ticket_hint{return _SSLinfo_get('session_lifetime',$_[0],$_[1]); } # alias
+sub session_ticket  { return _SSLinfo_get('session_ticket',   $_[0], $_[1]); }
 sub session_timeout { return _SSLinfo_get('session_timeout',  $_[0], $_[1]); }
 sub session_protocol{ return _SSLinfo_get('session_protocol', $_[0], $_[1]); }
 sub fingerprint_hash{ return _SSLinfo_get('fingerprint_hash', $_[0], $_[1]); }
