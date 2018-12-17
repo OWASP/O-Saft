@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.836 18/12/15 22:39:56",
+    SID         => "@(#) yeast.pl 1.837 18/12/17 11:23:33",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -5495,7 +5495,7 @@ sub checkdest($$)   {
         # TODO: see ZLIB also (seems to be wrong currently)
     }
     # time on server differs more tnan +/- 5 seconds?
-    my $currenttime = time() -6;
+    my $currenttime = time();
     $key    = 'session_starttime';
     $value  = $data{$key}->{val}($host);
     $checks{$key}->{val} = "$value < $currenttime" if ($value < ($currenttime - 5));
@@ -7489,15 +7489,15 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nohints?cipher/)    { $cfg{'out_hint_cipher'}=0;}
     if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
-    if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
-    if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
+    if ($arg =~ /^--headers?$/)         { $cfg{'out_header'}= 1;    } # some people type --headers
+    if ($arg =~ /^--noheaders?$/)       { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg =~ /^--showhosts?/i)       { $cfg{'showhost'}++;       }
     if ($arg eq  '--nosniname')         { $cfg{'usesni'}    = 0;    } # 0: don't use SNI, different than empty string
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
-    if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      }
-    if ($arg =~ /^--protonpns?/)        { $typ = 'PROTO_NPN';       }
+    if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      } # some people type --protoalpns
+    if ($arg =~ /^--protonpns?/)        { $typ = 'PROTO_NPN';       } # some people type --protonpns
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
