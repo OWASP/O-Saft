@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.11 18/12/07 22:32:30
+# SID	@(#) glossary.txt 1.12 19/01/07 20:25:41
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -8,6 +8,7 @@ AA	Attribute Authority
 AAD	Additional Authenticated Data
 ACME	Automated Certificate Management Environment
 ACL	Access Control List
+Adiantum	ChaCha stream cipher with Poly1305 and XChaCha12
 ADH	Anonymous Diffie-Hellman
 Adler32	hash function
 AE	Authenticated Encryption
@@ -24,6 +25,7 @@ AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
 ARIA	128-bit Symmetric block cipher
+ARX	add–rotate–xor
 ASN	Autonomous System Number
 ASN.1	Abstract Syntax Notation number One
 AtE	Authenticate-then-Encrypt (see also MtE)
@@ -54,7 +56,7 @@ boomerang attack	attack on BLAKE
 Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
 Bullrun	NSA program to break encrypted communication
-CAMELLIA	Encryption algorithm 128 bit (by Mitsubishi and NTT)
+CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
 CAST-128	Carlisle Adams and Stafford Tavares, block cipher
 CAST5	alias for CAST-128
 CAST-256	Carlisle Adams and Stafford Tavares, block cipher
@@ -68,6 +70,7 @@ CBC 	Cipher Block Chaining (sometimes)
 CBC  	Ciplier Block Chaining (sometimes)
 CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
+CCA	chosen-ciphertext attack
 CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
 CCS	Change Cipher Spec (protocol)
 CDH	?  Diffie-Hellman
@@ -93,6 +96,7 @@ CMS	Cryptographic Message Syntax
 CMVP	Cryptographic Module Validation Program (NIST)
 CN	Common Name
 CP	Certificate Policy (certificate extension)
+CPA	chosen-plaintext attack
 CPD	Certificate Policy Definitions
 CPS	Certification Practice Statement
 CRC	Cyclic Redundancy Check
@@ -103,6 +107,7 @@ CRC64	CRC with polynomial length 64
 CRAM	Challenge Response Authentication Mechanism
 CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
 CRL	Certificate Revocation List
+CRYPTREC	Cryptography Research and Evaluation Committees
 CSP	Certificate Service Provider
 CSP 	Cryptographic Service Provider
 CSP  	Critical Security Parameter (used in FIPS 140-2)
@@ -233,6 +238,7 @@ GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
 Goldilocks	see Curve448
 GOST	Gossudarstwenny Standard (block cipher)
+GOST 	hash function (used in GOST cipher suite)
 Grainv1	stream cipher (64-bit IV)
 Grainv128	stream cipher (96-bit IV)
 GREASE	Generate Random Extensions And Sustain Extensibility
@@ -309,8 +315,9 @@ LM hash	LAN Manager hash aka LanMan hash
 Logjam	Attack to force server to downgrade to export ciphers
 LRA	Local Registration Authority
 LRW	Liskov, Rivest, and Wagner (blok encryption)
+Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky 13	Break SSL/TLS Protocol
-MARS	
+MARS	128-bit block cipher (developed at IBM)
 MAC	Message Authentication Code
 MCF	Modular Crypt Format
 MDC	Modification Detection Code
@@ -417,6 +424,7 @@ prime384v1	alias for P-384
 prime521v1	alias for P-521
 PRNG	Pseudo-Random Number Generator
 PSK	Pre-shared Key
+PSKC	Portable Symmetric Key Container
 PTG	Physical Random Generator
 PVT	Public Validation Token
 PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
@@ -520,6 +528,7 @@ SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdah
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
 Sosemanuk	stream cipher algorithm
+Speck	block cipher algorithm
 SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
 SPECK	block cipher combining
@@ -543,6 +552,9 @@ SSP	Security Support Provider
 SSPI	Security Support Provider Interface
 SST	Serialized Certificate Store format
 STES	stream cipher algorithm
+Streebog	hash function
+Streebog-256	see Streebog
+Streebog-512	see Streebog
 STS	Strict Transport Security
 STS 	Station-to-Station protocol
 SUF-CMA	Strong UnForgeability against Chosen-Message Attacks
@@ -579,7 +591,7 @@ Twofish	symmetric key block cipher (128 bit)
 UC 	Unified Capabilities
 UC	Unified Communications (SSL Certificate using SAN)
 UCC	Unified Communications Certificate (rarley used)
-UMAC	Universal hashing MAC; optimized for 32-bit architectures
+UMAC	message authentication code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
 VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
