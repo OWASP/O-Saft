@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.5 18/12/01 16:28:52
+# SID	@(#) links.txt 1.6 19/01/07 20:19:06
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -11,6 +11,8 @@ BSI TR-02102 Teil 2	https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikat
 ENISA: Algorithms, Key Sizes and Parameters Report	http://www.enisa.europa.eu/activities/identity-and-trust/library/deliverables/algorithms-key-sizes-and-parameters-report
 EV Certificate	http://www.evsslcertificate.com/
 EV Certificate Guidelines	https://www.cabforum.org/EV_Certificate_Guidelines.pdf
+Adantium	https://eprint.iacr.org/2018/720.pdf
+Adantium 	https://github.com/google/adiantum
 AIA	http://www.startssl.com/certs/sub.class4.server.ca.crt
 ALPN (draft)	http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
 ALPN 	https://www.imperialviolet.org/2013/03/20/alpn.html
