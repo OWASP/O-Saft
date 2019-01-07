@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.9 18/12/20 15:01:34
+# SID	@(#) rfc.txt 1.10 19/01/07 20:23:12
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -93,7 +93,9 @@ url	http://tools.ietf.org/
 4132	Addition of Camellia Cipher Suites to TLS
 4162	Addition of SEED Cipher Suites to TLS
 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
+4418	UMAC: Message Authentication Code using Universal Hashing
 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
+6986	GOST R 34.11-2012: Hash Function
 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
 5054	Secure Remote Password (SRP) Protocol for TLS Authentication
@@ -113,6 +115,7 @@ url	http://tools.ietf.org/
 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 7748	Elliptic Curve for Security
 8422	Elliptic Curve Cryptography (ECC) Cipher Suites for TLS Versions 1.2 and Earlier
+5528	Camellia Counter Mode and Camellia Counter with CBC-MAC Mode Algorithms
 5741	RFC Streams, Headers, and Boilerplates
 5794	Description of the ARIA Encryption Algorithm
 5932	Camellia Cipher Suites for TLS
