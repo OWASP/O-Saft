@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.11.18',  # official version number of this file
+    OSAFT_VERSION   => '19.01.07',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.157 18/12/01 16:31:20",
+    SID_osaft   => "@(#) osaft.pm 1.158 19/01/07 20:37:13",
 
 };
 
@@ -1854,7 +1854,8 @@ our %cfg = (
                                 # used in conjunction with --format=hex
                                 # not usefull in this list: serial extension
                         qw(
-                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
+                         fingerprint fingerprint_hash fingerprint_md5
+                         fingerprint_sha1 fingerprint_sha2
                          sigkey_value pubkey_value modulus
                          master_key session_id session_ticket
                        )],      # fingerprint is special, see _ishexdata()
