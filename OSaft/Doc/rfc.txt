@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.10 19/01/07 20:23:12
+# SID	@(#) rfc.txt 1.11 19/01/11 00:05:23
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -90,6 +90,7 @@ url	http://tools.ietf.org/
 5480	X509 PKI Elliptic Curve Cryptography Subject
 5758	X509 PKI Additional Algorithms and Identifiers for DSA and ECDSA
 6960	X509 Online Certificate Status Protocol (OCSP)
+8410	X509 PKI Algorithm Identifiers for Ed25519, Ed448, X25519, and X448
 4132	Addition of Camellia Cipher Suites to TLS
 4162	Addition of SEED Cipher Suites to TLS
 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
