@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.01.07',  # official version number of this file
+    OSAFT_VERSION   => '19.01.11',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.158 19/01/07 20:37:13",
+    SID_osaft   => "@(#) osaft.pm 1.159 19/01/11 00:18:08",
 
 };
 
@@ -2018,6 +2018,7 @@ our %cfg = (
         'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
                        # Anonymous DH has various acronyms:
                        #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, ...
+                       # TODO:missing: AECDH
         'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
                        # RC4 has other names due to copyright problems:
                        #     ARC4, ARCFOUR, RC4
@@ -2064,6 +2065,21 @@ our %cfg = (
         'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
         'isSPDY3'       => '(?:spdy\/3)',           # match in protocols (NPN)
                        # TODO: lazy match as it matches spdy/3.1 also
+
+        # TODO: replace following RegEx by concrete list of constants
+        # RegEx matching OWASP TLS Cipher String Cheat Sheet
+            # matching list of concrete constants would be more accurate, but
+            # that cannot be done with RegEx or ranges, unfortunatelly
+        'OWASP_A'   => '^(?:TLSv1[123]?)?(?:EC(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
+        'OWASP_B'   => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
+        'OWASP_C'   => '^(?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]',
+        'OWASP_D'   => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
+        'OWASP_NA'  => '(?:ARIA|CAMELLIA|GOST|IDEA|SEED|CECPQ)',
+        # TODO: need exception, i.e. TLSv1 and TLSv11
+        'notOWASP_A'=> '^(?:TLSv11?)',
+        'notOWASP_B'=> '',
+        'notOWASP_C'=> '',
+        'notOWASP_D'=> '',
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
