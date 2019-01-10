@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.12 19/01/07 20:25:41
+# SID	@(#) glossary.txt 1.13 19/01/11 00:04:14
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -75,6 +75,8 @@ CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
 CCS	Change Cipher Spec (protocol)
 CDH	?  Diffie-Hellman
 CDP	CRL Distribution Points
+CECPQ1	key-agreement algorithm; Combined elliptic Curve and Post-Quantum Cryptography Key Exchange
+CECPQ2	Combined elliptic Curve and Post-Quantum Cryptography Key Exchange
 CEK	Content Encryption Key
 CFB	Cipher Feedback
 CFB3	Cipher Feedback
@@ -267,6 +269,7 @@ HMQV	h? Menezes-Qu-Vanstone
 HPC	Hasty Putting Cipher
 HPKP	HTTP Public Key Pinning
 HPolyC	ChaCha stream cipher with Poly1305 and XChaCha12, XChaCha20
+HRSS	encryption algorithm
 HSM	Hardware Security Module
 HSR	Header + Secret + Random
 HSTS	HTTP Strict Transport Security
@@ -336,6 +339,7 @@ MtE	MAC-then-encrypt (see also AtE)
 NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 NCP	Normalized Certification Policy (according TS 102 042)
 Neokeon	symmetric block cipher algorithm
+NewHope	post-quantum key exchange
 nistp192	alias for P-192
 nistp224	alias for P-224
 nistp256	alias for P-256
@@ -443,6 +447,7 @@ RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 RFC	Request for Comments
 Rijndael	symmetric block cipher algorithm (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
+RLWE	Ring Learning-with-Errors
 RMAC	Randomized MAC (block cipher authentication mode)
 RNG	Random Number Generator
 ROT-13	see XOR
@@ -600,6 +605,7 @@ VR-224	alias for BADA55-VR-224
 VR-256	alias for BADA55-VR-256
 VR-384	alias for BADA55-VR-384
 WHIRLPOOL	hash function
+WPAD	Web Proxy Auto-Discovery
 wolfSSL	SSL library mainly intended and used for embedded and real-time systems
 X.680	X.680: ASN.1
 X.509	X.509: The Directory - Authentication Framework
