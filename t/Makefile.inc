@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.10 19/01/11 22:15:49
+#?      @(#) Makefile.inc 1.11 19/01/11 22:55:01
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.10
+_SID.inc        = 1.11
 
 ALL.includes   += t/Makefile.inc
 ALL.inc.type   += inc
@@ -96,6 +96,10 @@ ifndef MAKE
     MAKE        = $(MAKE_COMMAND)
 endif
 
+ifndef MAKEFLAGS
+    MAKEFLAGS   = --no-builtin-variables --no-builtin-rules --no-print-directory
+endif
+
 ifndef ECHO
     ECHO        = /bin/echo -e
 endif
@@ -115,3 +119,6 @@ endif
 ifndef _CR
     _CR         = \\015
 endif
+
+# also set pseudo macro .SUFFIXES empty (in the hope, it's never needed)
+.SUFFIXES:
