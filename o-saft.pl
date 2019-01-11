@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.837 18/12/17 11:23:33",
+    SID         => "@(#) yeast.pl 1.838 19/01/11 01:00:16",
     STR_VERSION => "18.12.18",          # <== our official version number
 };
 
@@ -6697,32 +6697,67 @@ sub printciphers        {
                 $enc, $bit, $sep, $mac, $sep, $tag,
             );
         }
+        return;
+    }
+
+    if ($cfg{'legacy'} eq "owasp") {
+        # print ciphers with internal severity and OWASP severity
+        my $hh = "";
+        my $hl = "";
+        if ($cfg{'verbose'} > 0) {
+           $hh = "O-Saft";
+           $hl = "-------+";
+        }
+        if (0 < $cfg{'out_header'}) {
+            printf("= %s\t%s\t%s\n", "OWASP", $hh, "cipher");
+            printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
+        }
+        foreach my $c (sort keys %ciphers) {
+            # following sequence is important, but OWASP_D must be last as it is weakest
+            my $sec_owasp  = "miss";
+            $sec_owasp = "-?-" if ($c =~ /$cfg{'regex'}->{'OWASP_NA'}/);
+            $sec_owasp = " C"  if ($c =~ /$cfg{'regex'}->{'OWASP_C'}/);
+            $sec_owasp = " B"  if ($c =~ /$cfg{'regex'}->{'OWASP_B'}/);
+            $sec_owasp = " A"  if ($c =~ /$cfg{'regex'}->{'OWASP_A'}/);
+            $sec_owasp = " D"  if ($c =~ /$cfg{'regex'}->{'OWASP_D'}/);
+            if (" D" ne $sec_owasp) { # if it is A, B or C check OWASP_NA again
+                $sec_owasp = "-?-" if ($c =~ /$cfg{'regex'}->{'OWASP_NA'}/);
+            }
+            my $sec_osaft = get_cipher_sec($c);
+               $sec_osaft = "" if (0 >= $cfg{'verbose'});
+            printf("  %s\t%s\t%s\n", $sec_owasp, $sec_osaft,  $c);
+        }
+        if (0 < $cfg{'out_header'}) {
+            printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
+        }
+        return;
     }
 
     if ($cfg{'legacy'} eq "simple") { # this format like for +list up to VERSION 14.07.14
         $sep = "\t";
-        if ($cfg{'out_header'} > 0) {
+        if (0 < $cfg{'out_header'}) {
             printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
         foreach my $c (sort keys %ciphers) {
             printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
         }
-        if ($cfg{'out_header'} > 0) {
+        if (0 < $cfg{'out_header'}) {
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
+        return;
     }
 
-    if ($cfg{'legacy'} eq "full") {
+    if ($cfg{'legacy'} eq "full") { # internal format with leading hex number
         $sep = $text{'separator'};
-        if ($cfg{'out_header'} > 0) {
+        if (0 < $cfg{'out_header'}) {
             printf("= Constant$sep%s%-20s${sep}Aliases\n",   "Cipher", join($sep, @{$ciphers_desc{'text'}}));
             printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
         }
         foreach my $c (sort keys %ciphers) {
             my $can = " "; # FIXME
-            if ($cfg{'verbose'} > 0) {
+            if (0 < $cfg{'verbose'}) {
                 if (0 >= (grep{$_ eq $c} split(/:/, $ciphers))) {
                     $can = "#";
                     $miss_cipher++;
@@ -6736,10 +6771,10 @@ sub printciphers        {
             $hex = sprintf("%s$sep", ($hex || "    -?-"));
             printf("%s %s%-30s$sep%s$sep%s\n", $can, $hex, $c, join($sep, @{$ciphers{$c}}), $alias);
         }
-        if ($cfg{'out_header'} > 0) {
+        if (0 < $cfg{'out_header'}) {
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
         }
-        if ($cfg{'verbose'} > 0) {
+        if (0 < $cfg{'verbose'}) {
             my @miss = ();
             my @test = ();
             my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
@@ -7818,7 +7853,7 @@ if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
 if (_is_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
-    $cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
+    #$cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
