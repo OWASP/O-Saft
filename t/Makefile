@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for testing O-Saft
+#?      Makefile        - makefile for testing O-Saft
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -44,17 +44,19 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.28 18/11/07 23:20:53
+#?      @(#) Makefile 1.29 19/01/11 22:24:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.28
+_SID.test       = 1.29
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
+ALL.inc.type   += test
+                # this is the parent makefile in the directory
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -185,7 +187,9 @@ ALL.help.test   += $(_NL)$(HELP.test)
 #_____________________________________________________ internal test target __|
 
 # internal information (nothing related to $(Project))
-# note that the $(_SID*) variables indicate if a sub-makefile was included
+# Note that the $(_SID*) variables indicate if a sub-makefile was included.
+# Note that $$ neds to be used to ensure that the variables are evaluated when
+#      the targets executes and not when the Makefile is read.
 test.file-1:
 test,file-2:
 test_file-3:
@@ -195,12 +199,14 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID)          = $(_SID)'
 	@echo '# $$(_SID.help)     = $(_SID.help)'
 	@echo '# $$(_SID.test)     = $(_SID.test)'
+	@echo '# $$(_SID.critic)   = $(_SID.critic)'
 	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
 	@echo '# $$(_SID.exit)     = $(_SID.exit)'
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
 	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
+	@echo '# $$(_SID.hlp)      = $(_SID.hlp)'
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
 	@echo '# $$(_SID.opt)      = $(_SID.opt)'
 	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
