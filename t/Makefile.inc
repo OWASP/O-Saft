@@ -12,16 +12,17 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.8 18/08/21 00:55:00
+#?      @(#) Makefile.inc 1.10 19/01/11 22:15:49
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.8
+_SID.inc        = 1.10
 
 ALL.includes   += t/Makefile.inc
+ALL.inc.type   += inc
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -70,19 +71,24 @@ ifndef SRC.tcl
     SRC.tcl     = o-saft.tcl
 endif
 
+ifndef DEV.pl
+    DEV.pl      = yeast.pl
+endif
+
 ifndef MAKEFILE
     MAKEFILE    = $(firstword $(MAKEFILE_LIST))
-    # define variable for myself, its the first file in MAKEFILE_LIST, usually
-    # $(MAKEFILE)  will be used where any makefile is possible,  and  Makefile
-    # is used when exactly Makefile file is meant.  $(ALL.Makefiles)  is used,
-    # when all makefiles are needed.  Existance of  ALL.Makefiles  can also be
-    # used to check if this file should be included.
+        # Define a variable for myself, it is the first file in MAKEFILE_LIST.
+        # $(MAKEFILE)  will be used where  any makefile is possible.
+        # Makefile  is used when exactly Makefile file is meant.
+        # $(ALL.Makefiles)  is used, when all makefiles are needed.  Existance
+        # of  ALL.Makefiles  can also be used to check if  this file should be
+        # included.
 endif
 
 ifndef ALL.Makefiles
     MAKE        = $(MAKE_COMMAND) -f $(firstword $(MAKEFILE_LIST))
-        # redefine  MAKE  with proper makefile if not called from  ../Makefile
-        # makefile given with -f option is first in  MAKEFILE_LIST, usually
+        # Redefine  MAKE  with proper makefile if not called from  ../Makefile
+        # makefile given with -f option is first in  MAKEFILE_LIST,  usually
 endif
 
 # internal used tools (paths hardcoded!)
