@@ -87,21 +87,21 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.46 19/01/11 21:23:09
+#?      @(#) Makefile 1.47 19/01/11 23:08:12
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.46
+_SID            = 1.47
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
                 # must be  :=  to avoid overwrite after includes
                 # each $(TEST.dir)/Makefile* will add itself to ALL.includes
 
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
+MAKEFLAGS       = --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-target-is-default: default
@@ -305,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.46
+_INST.text      = generated from Makefile 1.47
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -443,8 +443,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.46
-tar:     GREP_EDIT  = 1.46
+GREP_EDIT           = 1.47
+tar:     GREP_EDIT  = 1.47
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
