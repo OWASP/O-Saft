@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.12 18/11/10 21:16:31
+#?      @(#) Makefile.cmds 1.13 19/01/11 21:45:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.12
+_SID.cmds       = 1.13
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -142,8 +142,8 @@ testcmd-c_summ-+sts_%:          TEST.args  += +sts
 testcmd-c_summ-+sni_%:          TEST.args  += +sni
 testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
-# note that . inside // below is a meta character
-# note: no sort because we want the sequence as defined above
+# Note that . inside // below is a meta character
+# NOTE: no sort because we want the sequence as defined above
 ALL.testinfo    = $(shell awk -F% '/^testcmd-c.info/   {print $$1}' $(_MYSELF.cmds))
 ALL.testcheck   = $(shell awk -F% '/^testcmd-c.check/  {print $$1}' $(_MYSELF.cmds))
 ALL.testvuln    = $(shell awk -F% '/^testcmd-c.vuln/   {print $$1}' $(_MYSELF.cmds))
@@ -180,9 +180,9 @@ ALL.test.cmds  += \
 ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
 
 # testrun target to allow something like:  testrun-+my-fancy-command
-# note that we use  testrun-+%  and not  testrun+%  to avoid double definition
+# Note that we use  testrun-+%  and not  testrun+%  to avoid double definition
 # of the pattern rule (problem in GNUmake)
-# unfortunatelly this restrict the usage to pattern starting with +
+# unfortunatelly this restricts the usage to pattern starting with +
 testrun-+%: TEST.args += $(TEST.cmds.hosts)
 testrun-%: testcmd-%
 	@echo -n ""
