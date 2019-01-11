@@ -1,13 +1,13 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for testing o-saft.cgi
+#?      Makefile        - makefile for testing o-saft.cgi
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for o-saft.cgi
+#?      Makefile to perform testing tasks for o-saft.cgi .
 #?
 #? LIMITATIONS
 #?      Requires GNU Make > 2.0.
@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.14 18/11/10 21:13:12
+#?      @(#) Makefile.cgi 1.15 19/01/11 21:42:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.14
+_SID.cgi        = 1.15
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -152,8 +152,8 @@ $(ALL.cgi.goodIPs)$(_NL)\
 # The option  --exit=BEGIN0  ensures that nothing will be done in o-saft.pl .
 # It ensures that the last line of the output contains exit=BEGIN0 . This last
 # line is missing if  o-saft.cgi  exits because  an invalid argument, hostname
-# or IPs was detected. The purpose here is to check if o-saft.cgi exits, hence
-# The test succeeds, if the last line is missing.
+# or IP  was detected. The purpose here is to check if o-saft.cgi exits, hence
+# the test succeeds, if the last line is missing.
 # The target no.message is used for each individual test. It is a pattern rule
 # in t/Makefile and uses the variables  EXE.pl, TEST.args and TEST.INIT, which
 # are passed as arguments to the recursive MAKE call.
@@ -232,7 +232,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.14: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.15: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
@@ -243,6 +243,7 @@ test.cgi.log: $(_TEST.CGI.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.CGI.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
+ALL.tests.cgi.log  += $(test.cgi.log)
 
 .PHONY: test.cgi.log
 
@@ -251,4 +252,4 @@ test.cgi.log: $(_TEST.CGI.log)
 
 # feed main Makefile
 ALL.tests      += $(ALL.test.cgi)
-ALL.tests.log  += test.cgi.log
+ALL.tests.log  += $(ALL.test.cgi.log)
