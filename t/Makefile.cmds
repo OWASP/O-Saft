@@ -17,18 +17,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.13 19/01/11 21:45:24
+#?      @(#) Makefile.cmds 1.14 19/01/11 22:05:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.13
+_SID.cmds       = 1.14
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
-ALL.inc.type   += cmd
+ALL.inc.type   += cmds
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
