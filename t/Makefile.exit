@@ -17,21 +17,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.4 18/11/06 21:00:39
+#?      @(#) Makefile.exit 1.5 19/01/11 22:59:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.4
+_SID.exit       = 1.5
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
 ALL.inc.type   += exit
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
-.SUFFIXES:
 
 first-exit-target-is-default: help.test.exit
 
@@ -101,7 +98,7 @@ test.exit-%: message-%
 test.exit.log:  $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.4: make $@" > $@
+	@echo "# Makefile.exit 1.5: make $@" > $@
 	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
