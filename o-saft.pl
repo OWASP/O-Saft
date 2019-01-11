@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.839 19/01/11 11:59:56",
+    SID         => "@(#) yeast.pl 1.840 19/01/11 16:06:55",
     STR_VERSION => "19.01.10",          # <== our official version number
 };
 
@@ -4289,6 +4289,13 @@ sub checkcipher($$) {
     $prot{$ssl}->{'LOW'}++      if ($risk =~ /LOW/i);
     $prot{$ssl}->{'MEDIUM'}++   if ($risk =~ /MEDIUM/i);
     $prot{$ssl}->{'HIGH'}++     if ($risk =~ /HIGH/i);
+    $risk = get_cipher_owasp($c);
+    $prot{$ssl}->{'OWASP_miss'}++   if ($risk eq 'miss');
+    $prot{$ssl}->{'OWASP_NA'}++ if ($risk eq '-?-');
+    $prot{$ssl}->{'OWASP_D'}++  if ($risk eq 'D');
+    $prot{$ssl}->{'OWASP_C'}++  if ($risk eq 'C');
+    $prot{$ssl}->{'OWASP_B'}++  if ($risk eq 'B');
+    $prot{$ssl}->{'OWASP_A'}++  if ($risk eq 'A');
     return;
 } # checkcipher
 
@@ -5834,6 +5841,7 @@ sub printtitle($$$$)    {
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy eq 'compact')   { print "=== Checking $ssl Ciphers ..."; }
     if ($legacy eq 'quick')     { printheader($txt, ""); }
+    if ($legacy eq 'owasp')     { printheader($txt, ""); }
     if ($legacy eq 'simple')    { printheader($txt, ""); }
     if ($legacy eq 'full')      { printheader($txt, ""); }
     return;
@@ -5969,6 +5977,8 @@ sub print_cipherhead($) {
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
     if ($legacy eq 'simple')    { printf("=   %-34s%s\t%s\n", $text{'cipher'}, $text{'support'}, $text{'security'});
                                   print_cipherruler(); }
+    if ($legacy eq 'owasp')     { printf("=   %-34s\t%s\n", $text{'cipher'}, $text{'security'});
+                                  print_cipherruler(); }  # TODO: ruler is same as for legacy=simple
     if ($legacy eq 'cipher_dh') { printf("=   %-34s\t%s\n", $text{'cipher'}, $text{'dh_param'});
                                   print_cipherruler_dh(); }
     if ($legacy eq 'full')      {
@@ -5985,6 +5995,7 @@ sub print_cipherline($$$$$$) {
     # variables for better (human) readability
     my $bit   = get_cipher_bits($cipher);
     my $sec   = get_cipher_sec($cipher);
+       $sec   = get_cipher_owasp($cipher) if ('owasp' eq $legacy);
 #   my $ssl   = get_cipher_ssl($cipher);
     my $desc  =  join(" ", get_cipher_desc($cipher));
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
@@ -5995,10 +6006,11 @@ sub print_cipherline($$$$$$) {
         $desc =  join("\t", get_cipher_desc($cipher));
         $desc =~ s/\s*:\s*$//;
     }
-    if ($legacy =~ m/compact|full|quick|simple|key/) {
+    if ($legacy =~ m/compact|full|owasp|quick|simple|key/) {
         my $k = sprintf("%s", get_cipher_hex($cipher));
         print_line('_cipher', $host, $port, $k, $cipher, ""); # just host:port:#[key]:
         printf("[%s]\t%-28s\t%s\t%s\n", $k, $cipher, $yesno, $sec) if ($legacy eq 'key');
+        printf("    %-28s\t%s\n",           $cipher, $sec        ) if ($legacy eq 'owasp');
         printf("    %-28s\t(%s)\t%s\n",     $cipher, $bit,   $sec) if ($legacy eq 'quick');
         printf("    %-28s\t%s\t%s\n",       $cipher, $yesno, $sec) if ($legacy eq 'simple');
         printf("%s %s %s\n",                $cipher, $yesno, $sec) if ($legacy eq 'compact');
@@ -6084,7 +6096,7 @@ sub print_ciphertotals($$$$) {
         printf("Intermediate: %s\n", $prot{$ssl}->{'MEDIUM'}); # MEDIUM
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
-    if ($legacy =~ /(full|compact|simple|quick)/) {
+    if ($legacy =~ /(full|compact|simple|owasp|quick)/) {
         printheader(_get_text('out_summary', $ssl), "");
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
@@ -6172,7 +6184,7 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
             # NOTE: $checks{'cnt_totals'}->{val}  is the number of all checked
             #       ciphers for all protocols, here only the number of ciphers
             #       for the protocol $ssl should be printed
-        print_cipherruler() if ($legacy eq 'simple');
+        print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
         print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
     } else {
         print "\n  * $ssl Cipher Suites :";
@@ -6264,8 +6276,13 @@ sub printprotocols      {
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     if ($cfg{'out_header'}>0) {
-        printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=enabled ciphers  PFS=enabled cipher with PFS\n") if ($verbose > 0);
-        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot prefered-strong-cipher PFS-cipher));
+        if ($legacy eq 'owasp') {
+            printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
+            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot prefered-strong-cipher PFS-cipher));
+        } else {
+            printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
+            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot prefered-strong-cipher PFS-cipher));
+        }
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
@@ -6289,11 +6306,19 @@ sub printprotocols      {
            $cnt = 0;
         }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
-        printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
-                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
-                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
-                $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
-        );
+        if ($legacy eq 'owasp') {
+            printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
+                    $prot{$ssl}->{'OWASP_A'}, $prot{$ssl}->{'OWASP_B'},
+                    $prot{$ssl}->{'OWASP_C'}, $prot{$ssl}->{'OWASP_D'},
+                    $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
+            );
+        } else {
+            printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
+                    $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                    $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                    $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
+            );
+        }
         # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
     if ($cfg{'out_header'}>0) {
@@ -6305,7 +6330,7 @@ sub printprotocols      {
 sub printciphersummary  {
     #? print summary of cipher check (+cipher, +cipherall, +cipherraw)
     my ($legacy, $host, $port, $total) = @_;
-    if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
+    if ($legacy =~ /(full|compact|simple|owasp|quick)/) {   # but only our formats
         printheader("\n" . _get_text('out_summary', ""), "");
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
@@ -6326,7 +6351,8 @@ sub printdata($$$)      {
     _trace_cmd('%data');
     if (_is_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
-        print_line($legacy, $host, $port, 'cipher_selected', $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+        print_line($legacy, $host, $port, 'cipher_selected',
+                   $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
     }
     foreach my $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}})  > 0);
