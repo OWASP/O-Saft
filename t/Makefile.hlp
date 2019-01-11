@@ -19,21 +19,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.6 19/01/11 22:06:27
+#?      @(#) Makefile.hlp 1.7 19/01/11 22:59:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.6
+_SID.hlp        = 1.7
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
 ALL.inc.type   += hlp
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
-.SUFFIXES:
 
 first-hlp-target-is-default: help.test.hlp
     # see help.test.%
