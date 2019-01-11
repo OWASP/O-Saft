@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for testing o-saft.pl
+#?      Makefile        - makefile for testing o-saft.pl
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.5 18/11/06 07:51:42
+#?      @(#) Makefile.critic 1.6 19/01/11 22:30:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.5
+_SID.critic     = 1.6
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
@@ -127,9 +127,9 @@ $(CRITIC.dir):
 	@$(TARGET_VERBOSE)
 	@mkdir -p $(CRITIC.dir)
 
-# all targets use $(ALL.critic) as list of sources, which must be set as
+# All targets use $(ALL.critic) as list of sources, which must be set as
 # environment or on command line
-# note that $(ALL.test.critic)  is a list of targets
+# Note that $(ALL.test.critic)  is a list of targets.
 
 # target prints command with echo so that it is also shown when called with
 # "make -s critic ..."
@@ -145,8 +145,8 @@ cf: $(CRITIC.dir)
 	@-cd $(CRITIC.dir) && \
 	  echo perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
 
-# same target as above but piped to filter for pretty printing
-# because the filter is a pipe, we loose the coloured output from perlcritic
+# Same target as above but piped to filter for pretty printing.
+# Because the filter is a pipe, we loose the coloured output from perlcritic
 critic-pretty: $(CRITIC.dir)
 	@$(TARGET_VERBOSE)
 	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
