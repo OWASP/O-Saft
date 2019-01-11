@@ -44,22 +44,19 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.29 19/01/11 22:24:04
+#?      @(#) Makefile 1.30 19/01/11 23:00:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.29
+_SID.test       = 1.30
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
 ALL.inc.type   += test
                 # this is the parent makefile in the directory
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
-.SUFFIXES:
 
 first-test-target-is-default: help.test
 
