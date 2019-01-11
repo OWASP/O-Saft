@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.159 19/01/11 00:18:08",
+    SID_osaft   => "@(#) osaft.pm 1.160 19/01/11 11:59:12",
 
 };
 
@@ -222,6 +222,7 @@ our @EXPORT     = qw(
                 get_cipher_desc
                 get_cipher_hex
                 get_cipher_name
+                get_cipher_owasp
                 get_openssl_version
                 get_dh_paramter
                 get_target_nr
@@ -1981,7 +1982,7 @@ our %cfg = (
     'legacy'        => "simple",
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
                         ssltest-g sslyze testsslserver thcsslcheck openssl
-                        simple full compact quick key)],
+                        simple full compact quick key owasp)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
     'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
@@ -2398,6 +2399,10 @@ Get cipher's hex key from C<%cipher_names> or C<%cipher_alias> data structure.
 
 Check if given C<%cipher> name is a known cipher.
 
+=head2 get_cipher_owasp($cipher)
+
+Get OWASP rating of given C<%cipher>.
+
 =cut
 
 sub get_cipher_hex      {
@@ -2438,6 +2443,23 @@ sub get_cipher_name     {
     }
     return "";
 } # get_cipher_name
+
+sub get_cipher_owasp    {
+    # return OWASP rating for cipher (see $cfg{regex}->{{OWASP_*}
+    my $cipher  = shift;
+    my $sec     = "miss";
+    # following sequence is important:
+    $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/); # unrated in OWASP TLS Cipher Cheat Sheet (2018)
+    $sec = " C"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_C'}/);  # 1st legacy
+    $sec = " B"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_B'}/);  # 2nd broad compatibility
+    $sec = " A"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_A'}/);  # 3rd best practice
+    $sec = " D"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_D'}/);  # finally brocken ciphers, overwrite previous
+    if (" D" ne $sec) {     # if it is A, B or C check OWASP_NA again
+        $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
+    }
+    # TODO: implement when necessary: notOWASP_A, notOWASP_B, notOWASP_C, notOWASP_D
+    return $sec;
+} # get_ciphers_list
 
 
 =pod
