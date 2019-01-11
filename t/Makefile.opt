@@ -19,21 +19,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.4 18/11/10 21:15:17
+#?      @(#) Makefile.opt 1.5 19/01/11 22:59:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.4
+_SID.opt        = 1.5
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
 ALL.inc.type   += opt
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
-.SUFFIXES:
 
 first-opt-target-is-default: help.test.opt
 
