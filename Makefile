@@ -23,42 +23,34 @@
 #       targets. None of them are disabled explicitly. Therefore some behaviour
 #       may depend on the local make configuration.
 #
-#        Note: macro is a synonym for variable in makefiles.
-#        Note: macro definitions in makefiles must not be sequential!
+#       SEE  Make:automatic variables  also.
 #
-#    Remember make's automatic variables:
-#           $@    - target (file)
-#           $+    - all dependencies of the target
-#           $^    - all dependencies of the target (without duplicates)
-#           $<    - first dependency of the target
-#           $?    - dependencies newer than the target
-#           $|    - "orde-only" dependencies
-#           $*    - matching files of the rule
-#           $%    - target (archive) member name (rarely used)
-#        Use of $$ avoids evaluating $ .
+#       Note: macro is a synonym for variable in makefiles.
+#       Note: macro definitions in makefiles must not be sequential!
+#       Use of $$ avoids evaluating $ (the macro).
 #
 #    Variable, macro names
-#        General rules for our variable names in this Makefile:
+#       General rules for our variable names in this Makefile:
 #           * variable names consist only of characters a-zA-Z0-9_.
 #           * variable names start with upper case letters or _
 #
-#        Internal variables:
+#       Internal variables:
 #           _SID        - version in project's Makefile
 #           _SID.*      - version in included makefiles
-#           _MYSELF.*   - name of the Makefile itself
+#           _MYSELF.*   - name of the Makefile itself (in included makefiles)
 #
-#        The _SID* variables are used to check if sub-makefiles were included.
-#        More variables and targets are defined in following included files:
+#       The  _SID*  variables are used to check if sub-makefiles were included.
+#       More variables and targets are defined in following included files:
 #           Makefile.help
 #           t/Makefile
 #           t/Makefile.inc
-#        Where  t/Makefile  may include more files.
-#        Each of the included files may be used independently with  -f  option,
-#        for example::
+#       Where  t/Makefile  may include more files.
+#       Each of the included files may be used independently using  -f  option,
+#       for example::
 #           make -f Makefile.help
 #           make -f t/Makefile
 #
-#        Following name prefixes are used:
+#       Following name prefixes are used:
 #           SRC         - defines a source file
 #           GEN         - defines a genarted file
 #           EXE         - defines a tools to be used
@@ -70,37 +62,40 @@
 #                         intended to be overwritten on command line)
 #           HELP        - defines texts to be used in  help  and  doc  target
 #
-#        Following names are used, which potentially conflict with make itself:
+#       Following names are used, which potentially conflict with make itself:
 #           ECHO        - echo command
 #           MAKE        - make command
 #           MAKEFILE    - Makefile (i.g. myself, but may be redifined)
 #
-#        Notes about some special variables:
+#       Notes about some special variables:
 #           ALL.src     - list of all sources to be distributed
 #           ALL.tgz     - same as ALL.src but all sources prefixed with O-Saft/
 #           ALL.test    - list of all sources used for testing the project
 #           ALL.tests   - list of all targets for testing
 #           ALL.includes - dynamically generated list of all included makefiles
+#           ALL.inc.type - list of all types of included makefiles
 #           ALL.Makefiles - static list of all source makefiles of the project
 #
-#        In general no quotes are used around texts in variables. Though, it is
-#        sometimes necessary to use quotes  to force correct evaluation of used
-#        variables in the text (mainly in target actions).
+#       In general no quotes are used around texts in variables. Though, it is
+#       sometimes necessary to use quotes  to force correct evaluation of used
+#       variables in the text (mainly in target actions).
 #
 # HACKER's HELP
-#        For details, in particular the syntax of the  HELP-*  macros used here
-#        please see Makefile.help .
+#       For details, in particular the syntax of the  HELP-*  macros used here,
+#       please see Makefile.help .
+#       More details  why and how  some things are implemented are described in
+#       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.44 18/12/08 00:11:52
+#?      @(#) Makefile 1.45 19/01/11 21:05:17
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.44
-    # define our own SID as variable, if needed ...
+_SID            = 1.45
+                # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
                 # must be  :=  to avoid overwrite after includes
@@ -111,11 +106,12 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-target-is-default: default
 
-MAKEFILE    = Makefile
-# define variable for myself, it allows to use some targets within other files
-# Note  that  $(MAKEFILE)  is used where any Makefile is possible and  Makefile
-#       is used when exactly this file is meant. $(ALL.Makefiles) is used, when
-#       all Makefiles are needed.
+MAKEFILE        = Makefile
+                # define variable for myself,  this allows to use  some targets
+                # within other makefiles
+                # Note that  $(MAKEFILE) is used where any Makefile is possible
+                # and  Makefile  is used when exactly this file is meant.
+                # $(ALL.Makefiles) is used, when all Makefiles are needed.
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -309,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.44
+_INST.text      = generated from Makefile 1.45
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -372,6 +368,7 @@ release.show:
 	@echo "Release: $(_RELEASE)"
 
 release: $(GEN.tgz)
+	@$(TARGET_VERBOSE)
 	mkdir -p $(_RELEASE)
 	sha256sum $(GEN.tgz) > $(_RELEASE)/$(GEN.tgz).sha256
 	@cat $(_RELEASE)/$(GEN.tgz).sha256
@@ -387,20 +384,21 @@ release: $(GEN.tgz)
 	@echo "#   make docker.push"
 # TODO: check if files are edited or missing
 
-# generating a release file, containing all files with their SID
-# this file should be easily readable by humans and easily parsable by scripts
+# Generating a release file, containing all files with their SID.
+# This file should be easily readable by humans and easily parsable by scripts,
 # hence following format is used (one per line):
 #    SID\tdate\ttime\tfilename\tfull_path
-# how it works:
+# How it works:
 #    "sccs what" returns multiple lines, at least 2, these look like:
 #      path/filename:
 #          o-saft.pl 1.823 18/11/18 23:42:23
-#    this is resotred to have the fixed-width field  SID, date and time at the
-#    beginning (left), followed by the filename and the full path
-# NOTE: only files available in the repository are used,  $(ALL.src)  contains
-#       $(ALL.gen) , which is wrong here, hence set empty for this target
-#    o-saft.pl is generated from yeast.pl but is not a repository file,  hence
-#    yeast is substituded by o-saft (should occour only once)
+#    this is resorted to have the fixed-width field  SID, date and time  at the
+#    beginning (left), followed by the  filename and the full path.
+# NOTE: only files available in the repository are used,  therefor the variable
+#       $(ALL.src)  is used. Because $(ALL.src) also contains $(ALL.gen), which
+#       is wrong here, $(ALL.gen) is  set empty for this target.
+#    o-saft.pl is generated from yeast.pl,  but  o-saft.pl  is not a repository
+#    file, hence yeast is substituded by o-saft (should occour only once).
 $(GEN.rel):   ALL.gen =
 $(GEN.rel): $(ALL.src)
 	sccs what $(ALL.src) | perl -anle '/^(.*):$$/&&do{$$f=$$m=$$1;$$m=~s#.*/##;next;};/.*?($$m|%[M]%)/&&do{$$f=~s/yeast/o-saft/;$$F[0]=~s/yeast/o-saft/;printf("%s\t%s\t%s\t%s\t%s\n",$$F[1],$$F[2],$$F[3],$$F[0],$$f)};'
@@ -427,7 +425,7 @@ HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker-dev = generate local docker image (development version)
-HELP-docker-push= install local docker image at Docker repository
+HELP-docker.push= install local docker image at Docker repository
 HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
@@ -445,9 +443,9 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.44
-tar:     GREP_EDIT = 1.44
-tmptar:  GREP_EDIT = something which hopefully does not exist in the file
+GREP_EDIT           = 1.45
+tar:     GREP_EDIT  = 1.45
+tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
 cleantar:   clean.tar
@@ -464,7 +462,7 @@ tgz:    OPT.single =
 tmptar: OPT.single =
 tmptgz: OPT.single =
 
-# docker target uses our own script to build a proper image
+# docker target uses project's own script to build a proper image
 docker:
 	@$(TARGET_VERBOSE)
 	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
@@ -478,7 +476,10 @@ docker.dev:
 		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
 		-f Dockerfile -t owasp/o-saft .
 
-# TODO: docker.push should depend on docker, but thats not a file or target
+# TODO: docker.push should depend on target docker (above), but docker is not a
+#       file or target and creates a Docker image; means that the target docker
+#       itself has no dependency.  Make then executes the target always,  which
+#       fails if a Docker image already exists.
 docker.push:
 	@$(TARGET_VERBOSE)
 	docker push owasp/o-saft:latest
@@ -540,8 +541,8 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
 
-# Special target to check for edited files; it only checks the
-# source files of the tool (o-saft.pl) but no other source files.
+# Special target to check for edited files;  it only checks the source files of
+# the tool (o-saft.pl) but no other source files.
 _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	@grep -q '$(GREP_EDIT)' $? \
@@ -559,8 +560,9 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 # The target itself is called in the current directory,  hence the dependencies
 # are local to that which is $(ALL.src). Note that $(ALL.tgz) is generated from
 # $(ALL.src), so it contains the same members.  Executing tar in the parent dir
-# would generate the tarball ther also,  hence the tarball is specified as full
+# would generate the tarball there also, hence the tarball is specified as full
 # path with $(PWD).
+# The directory prefix in the tarball is the current directory, aka $(PWD) .
 $(GEN.tgz): $(ALL.src)
 	@$(TARGET_VERBOSE)
 	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
