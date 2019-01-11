@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.160 19/01/11 11:59:12",
+    SID_osaft   => "@(#) osaft.pm 1.161 19/01/11 16:04:32",
 
 };
 
@@ -2450,10 +2450,10 @@ sub get_cipher_owasp    {
     my $sec     = "miss";
     # following sequence is important:
     $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/); # unrated in OWASP TLS Cipher Cheat Sheet (2018)
-    $sec = " C"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_C'}/);  # 1st legacy
-    $sec = " B"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_B'}/);  # 2nd broad compatibility
-    $sec = " A"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_A'}/);  # 3rd best practice
-    $sec = " D"  if ($cipher =~ /$cfg{'regex'}->{'OWASP_D'}/);  # finally brocken ciphers, overwrite previous
+    $sec = "C"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_C'}/);  # 1st legacy
+    $sec = "B"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_B'}/);  # 2nd broad compatibility
+    $sec = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_A'}/);  # 3rd best practice
+    $sec = "D"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_D'}/);  # finally brocken ciphers, overwrite previous
     if (" D" ne $sec) {     # if it is A, B or C check OWASP_NA again
         $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
     }
@@ -2773,6 +2773,12 @@ sub _prot_init_value    {
         $prot{$ssl}->{'LOW'}            = 0;
         $prot{$ssl}->{'MEDIUM'}         = 0;
         $prot{$ssl}->{'HIGH'}           = 0;
+        $prot{$ssl}->{'OWASP_A'}        = 0;
+        $prot{$ssl}->{'OWASP_B'}        = 0;
+        $prot{$ssl}->{'OWASP_C'}        = 0;
+        $prot{$ssl}->{'OWASP_D'}        = 0;
+        $prot{$ssl}->{'OWASP_NA'}       = 0;
+        $prot{$ssl}->{'OWASP_miss'}     = 0;    # for internal use
         $prot{$ssl}->{'protocol'}       = 0;
         $prot{$ssl}->{'ciphers_pfs'}    = [];
         $prot{$ssl}->{'cipher_pfs'}     = STR_UNDEF;
