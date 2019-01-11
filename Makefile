@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.45 19/01/11 21:05:17
+#?      @(#) Makefile 1.46 19/01/11 21:23:09
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.45
+_SID            = 1.46
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -305,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.45
+_INST.text      = generated from Makefile 1.46
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -443,8 +443,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.45
-tar:     GREP_EDIT  = 1.45
+GREP_EDIT           = 1.46
+tar:     GREP_EDIT  = 1.46
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -462,12 +462,17 @@ tgz:    OPT.single =
 tmptar: OPT.single =
 tmptgz: OPT.single =
 
-# docker target uses project's own script to build a proper image
-docker:
+# docker target uses project's own script to build and remove the image
+docker.build:
 	@$(TARGET_VERBOSE)
 	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
 	$(EXE.docker) cp Dockerfile
 	$(EXE.docker) cp README
+docker: docker.build
+
+docker.rm:
+	@$(TARGET_VERBOSE)
+	$(EXE.docker) rmi
 
 docker.dev:
 	@$(TARGET_VERBOSE)
@@ -476,16 +481,17 @@ docker.dev:
 		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
 		-f Dockerfile -t owasp/o-saft .
 
-# TODO: docker.push should depend on target docker (above), but docker is not a
-#       file or target and creates a Docker image; means that the target docker
-#       itself has no dependency.  Make then executes the target always,  which
-#       fails if a Docker image already exists.
+# TODO: docker.push  should depend on  docker.build  (above), but  docker.build
+#       is not a file and creates a Docker image; means that this target itself
+#       has no dependency. Make then executes the target always, which fails if
+#       a Docker image already exists.  Need a target, which checks the current
+#       Docker image for the proper version.
 docker.push:
 	@$(TARGET_VERBOSE)
 	docker push owasp/o-saft:latest
 
 .PHONY: pl cgi pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
-.PHONY: docker docker.dev docker.push
+.PHONY: docker docker.rm docker.dev docker.push
 
 clean.tmp:
 	@$(TARGET_VERBOSE)
@@ -494,6 +500,7 @@ clean.tar:
 	@$(TARGET_VERBOSE)
 	rm -rf $(GEN.tgz)
 clean.tgz: clean.tar
+clean.docker: docker.rm
 
 # targets for generation
 $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
