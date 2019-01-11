@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for testing O-Saft warning messages
+#?      Makefile        - makefile for testing O-Saft warning messages
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -39,18 +39,18 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.16 18/11/06 09:11:53
+#?      @(#) Makefile.warnings 1.17 19/01/11 22:01:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.16
+_SID.warnings   = 1.17
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
-ALL.inc.type   += warning
+ALL.inc.type   += warnings
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -278,7 +278,7 @@ test.warnings: $(ALL.test.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.16: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.17: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
