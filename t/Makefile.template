@@ -18,14 +18,14 @@
 #           ../Makefile  ../Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.6 19/01/11 21:50:22
+#?      @(#) Makefile.template 1.7 19/01/11 23:00:09
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.6
+_SID.TEMPL      = 1.7
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -34,9 +34,6 @@ ALL.includes   += $(_MYSELF.TEMPL)
                 # add ourself to list of all included makefiles
 ALL.inc.type   += TEMPL
                 # add our type to list of all included types
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
-.SUFFIXES:
 
 first-TEMPL-target-is-default: help.test.TEMPL
     # otherwise the first target from other included files would be used
