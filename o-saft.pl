@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.838 19/01/11 01:00:16",
-    STR_VERSION => "18.12.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.839 19/01/11 11:59:56",
+    STR_VERSION => "19.01.10",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6714,15 +6714,7 @@ sub printciphers        {
         }
         foreach my $c (sort keys %ciphers) {
             # following sequence is important, but OWASP_D must be last as it is weakest
-            my $sec_owasp  = "miss";
-            $sec_owasp = "-?-" if ($c =~ /$cfg{'regex'}->{'OWASP_NA'}/);
-            $sec_owasp = " C"  if ($c =~ /$cfg{'regex'}->{'OWASP_C'}/);
-            $sec_owasp = " B"  if ($c =~ /$cfg{'regex'}->{'OWASP_B'}/);
-            $sec_owasp = " A"  if ($c =~ /$cfg{'regex'}->{'OWASP_A'}/);
-            $sec_owasp = " D"  if ($c =~ /$cfg{'regex'}->{'OWASP_D'}/);
-            if (" D" ne $sec_owasp) { # if it is A, B or C check OWASP_NA again
-                $sec_owasp = "-?-" if ($c =~ /$cfg{'regex'}->{'OWASP_NA'}/);
-            }
+            my $sec_owasp = get_cipher_owasp($c);
             my $sec_osaft = get_cipher_sec($c);
                $sec_osaft = "" if (0 >= $cfg{'verbose'});
             printf("  %s\t%s\t%s\n", $sec_owasp, $sec_osaft,  $c);
