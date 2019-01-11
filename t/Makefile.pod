@@ -1,7 +1,7 @@
 #! /usr/bin/perldoc 
 #?
 #? NAME
-#?      Makefile.pod  - documentation for Makefiles in POD format
+#?      Makefile.pod    - documentation for Makefiles in POD format
 #?
 #? SYNOPSYS
 #?      Makefile.pod
@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.1 18/12/08 00:05:57
+#?      @(#) Makefile.pod 1.2 19/01/11 23:07:15
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -27,6 +27,26 @@
 =head2 Make:GNU
 
 some text
+
+=head2 Make:automatic variables
+
+Note: macro is a synonym for variable in makefiles.
+
+Note: macro definitions in makefiles must not be sequential!
+
+Remember make's automatic variables:
+
+        $@    - target (file)
+        $+    - all dependencies of the target
+        $^    - all dependencies of the target (without duplicates)
+        $<    - first dependency of the target
+        $?    - dependencies newer than the target
+        $|    - "orde-only" dependencies
+        $*    - matching files of the rule
+        $%    - target (archive) member name (rarely used)
+
+Use of $$ avoids evaluating $ .
+
 
 =head2 Make:Profiling
 
