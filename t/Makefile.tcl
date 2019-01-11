@@ -17,21 +17,18 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.6 18/10/06 23:20:15
+#?      @(#) Makefile.tcl 1.7 19/01/11 23:00:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.6
+_SID.tcl        = 1.7
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
 ALL.inc.type   += tcl
-
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
-.SUFFIXES:
 
 first-tcl-target-is-default: help.test.tcl
 
