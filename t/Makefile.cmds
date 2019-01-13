@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.16 19/01/13 14:19:31
+#?      @(#) Makefile.cmds 1.17 19/01/13 21:00:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.16
+_SID.cmds       = 1.17
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -151,6 +151,7 @@ ALL.test.cmds   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcmds:%=%$(host)))
 ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
 
 test.cmds.all:      $(ALL.test.cmds)
+test.cmds:          test.cmds.all
 test.cmds.log:      $(ALL.test.cmds.log)
 
 # For calling various targets together and other examples,
