@@ -13,18 +13,18 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#       For more details please see
+#           Makefile  ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.15 19/01/11 22:59:38
+#?      @(#) Makefile.cmds 1.16 19/01/13 14:19:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.15
+_SID.cmds       = 1.16
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -44,32 +44,36 @@ endif
 
 HELP.cmds       = "\
 \#               __________________________________________ test commands _$(_NL)\
- test.info       - test  info   commands with $(TEST.cmds.hosts)$(_NL)\
- test.check      - test  check  commands with $(TEST.cmds.hosts)$(_NL)\
- test.cipher     - test  cipher commands with $(TEST.cmds.hosts)$(_NL)\
- test.summary    - test summary commands with $(TEST.cmds.hosts)$(_NL)\
- test.local      - test commands with $(TEST.cmds.hosts)$(_NL)\
- test.*.log      - same as test.* but store output in t/testcmd-CMD.log$(_NL)\
+ test.pattern-*  - test group of commands with $(TEST.cmds.hosts)$(_NL)\
+ testcmd-*       - test commands with $(TEST.cmds.hosts)$(_NL)\
+ testcmd-*.log   - same as testcmd-* but store output in t/testcmd-*.log$(_NL)\
  test.cmds.all   - test all commands with $(TEST.cmds.hosts)$(_NL)\
- test.cmds.log   - same as test.cmds.all but store output in t/testcmd-CMD.log$(_NL)\
+ test.cmds.log   - same as test.cmds.all but store output in t/testcmd-*.log$(_NL)\
 \#               ________________________________________ special targets _$(_NL)\
  testrun-CMD     - test specific command CMD with $(TEST.cmds.hosts)$(_NL)\
  testrun-CMD.log - same as testrun-CMD but store output in t/testcmd-CMD.log$(_NL)\
 \#$(_NL)\
-\# Examples: $(_NL)\
-\#    make s-ALL.test.cmds $(_NL)\
+\# To get a list of targets, use:$(_NL)\
+\#    make e-ALL.test.cmds$(_NL)\
+\#    make s-ALL.test.cmds$(_NL)\
+\# Targets can be executed individually, or a group of targets can be executed$(_NL)\
+\# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
+\# Examples to execute individual targets: $(_NL)\
+\#    make testcmd-c+info_localhost $(_NL)\
+\#    make testcmd-c+cipher--cipher-alpn_localhost $(_NL)\
 \#    make testrun-+cn $(_NL)\
-\# All following examples are the same: $(_NL)\
-\#    make testrun-+info $(_NL)\
-\#    make testcmd-egal_localhost TEST.args='+info --header' $(_NL)\
-\#    make test.info TEST.args='+info --header' ALL.testinfo=testcmd-egal_ $(_NL)\
-\#    make testcmd-001_localhost $(_NL)\
+\# Examples to execute group of similar targets: $(_NL)\
+\#    make test.pattern-+info $(_NL)\
+\#    make test.pattern-+check $(_NL)\
+\#    make test.pattern-+cipher $(_NL)\
+\#    make test.pattern-+summ $(_NL)\
+\#    make test.pattern-+vuln $(_NL)\
 \# All following examples are the same: $(_NL)\
 \#    make testrun-+cipher TEST.init='--header --enabled' $(_NL)\
-\#    make test-+cipher TEST.init='--header --enabled localhost' $(_NL)\
-\#    make test-+cipher TEST.args='--header --enabled localhost' $(_NL)\
+\#    make testcmd-+cipher TEST.init='--header --enabled localhost' $(_NL)\
+\#    make testcmd-+cipher TEST.args='--header --enabled localhost' $(_NL)\
 \#$(_NL)\
-\# Some of the examples above use  localhost  as hostname by default.$(_NL)\
+\# Some of the examples above use  localhost  as hostname by default.\
 "
 
 ALL.help.test  += $(_NL)$(HELP.cmds)
@@ -81,10 +85,11 @@ ALL.help.test  += $(_NL)$(HELP.cmds)
 
 HELP-help.test.cmds = print targets for testing '$(SRC.pl)' commands
 
-testcmd-c%:     EXE.pl      = ../$(SRC.pl)
-testcmd-c%:     TEST.init   = --header
+# SEE Make:target name
+# SEE Make:target name prefix
 
-# for better readability, "speaking names" are used for DDD here
+testcmd-c%:                     EXE.pl      = ../$(SRC.pl)
+testcmd-c%:                     TEST.init   = --header
 
 testcmd-c+info_%:               TEST.args  += +info
 testcmd-c+info--trace-cmd_%:    TEST.args  += +info   --trace-cmd
@@ -92,13 +97,13 @@ testcmd-c+info--trace-key_%:    TEST.args  += +info   --trace-key
 testcmd-c+info--trace-time_%:   TEST.args  += +info   --trace-time
 testcmd-c+info--trace-key-norc_%:   TEST.args  += +info   --trace-key --norc
 testcmd-c+check_%:              TEST.args  += +check
+testcmd-c+check--nossltls_%:    TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+    #    simulates a server not responding to ciphers
 testcmd-c+check--trace-key_%:   TEST.args  += +check  --trace-key
 testcmd-c+check--trace-time_%:  TEST.args  += +check  --trace-time
-testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
 testcmd-c+check--trace-norc_%:  TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
-testcmd-c+check--nossltls_%:    TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
-#    simulates a server not responding to ciphers
-testcmd-c+cipher_%:             TEST.args  += +cipher
+testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
+testcmd-c+cipher_%:                 TEST.args  += +cipher
 testcmd-c+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
 testcmd-c+cipher--cipher-openssl_%: TEST.args  += +cipher --cipher-openssl
 testcmd-c+cipher--cipher-alpn_%:    TEST.args  += +cipher --cipher-alpn
@@ -113,7 +118,7 @@ testcmd-c+cipher-dh_%:          TEST.args  += +cipher-dh
 testcmd-c+cipher-default_%:     TEST.args  += +cipher-default
 testcmd-c+ciphercheck_%:        TEST.args  += +ciphercheck
 testcmd-c+cipher--nossltls_%:   TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
-#    simulates a server not responding to ciphers
+    #    simulates a server not responding to ciphers
 testcmd-c_vuln-+BEAST_%:        TEST.args  += +BEAST
 testcmd-c_vuln-+CRIME_%:        TEST.args  += +CRIME
 testcmd-c_vuln-+DROWN_%:        TEST.args  += +DROWN
@@ -139,69 +144,29 @@ testcmd-c_summ-+sts_%:          TEST.args  += +sts
 testcmd-c_summ-+sni_%:          TEST.args  += +sni
 testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
-# Note that . inside // below is a meta character
-# NOTE: no sort because we want the sequence as defined above
-ALL.testinfo    = $(shell awk -F% '/^testcmd-c.info/   {print $$1}' $(_MYSELF.cmds))
-ALL.testcheck   = $(shell awk -F% '/^testcmd-c.check/  {print $$1}' $(_MYSELF.cmds))
-ALL.testvuln    = $(shell awk -F% '/^testcmd-c.vuln/   {print $$1}' $(_MYSELF.cmds))
-ALL.testcipher  = $(shell awk -F% '/^testcmd-c.cipher/ {print $$1}' $(_MYSELF.cmds))
-ALL.testsummary = $(shell awk -F% '/^testcmd-c.summ/   {print $$1}' $(_MYSELF.cmds))
-ALL.testlocal   = $(shell awk -F% '/^testcmd-c.local/  {print $$1}' $(_MYSELF.cmds))
-
-ALL.test.info   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testinfo:%=%$(host)))
-ALL.test.vuln   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testvuln:%=%$(host)))
-ALL.test.check  = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcheck:%=%$(host)))
-ALL.test.cipher = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcipher:%=%$(host)))
-ALL.test.summary= $(foreach host,$(TEST.cmds.hosts),$(ALL.testsummary:%=%$(host)))
-ALL.test.local  = $(foreach host,$(TEST.cmds.hosts),$(ALL.testlocal:%=%$(host)))
-
-HELP.cmds.internal  = "\
-\# ALL.test.info:    $(ALL.test.info)$(_NL)\
-\# ALL.test.vuln:    $(ALL.test.vuln)$(_NL)\
-\# ALL.test.check:   $(ALL.test.check)$(_NL)\
-\# ALL.test.cipher:  $(ALL.test.cipher)$(_NL)\
-"
-
-ALL.testcmds   += \
-		  $(ALL.testinfo) \
-		  $(ALL.testcheck) \
-		  $(ALL.testcipher) \
-		  $(ALL.testsummary) \
-		  $(ALL.testlocal)
-ALL.test.cmds  += \
-		  $(ALL.test.info) \
-		  $(ALL.test.check) \
-		  $(ALL.test.cipher) \
-		  $(ALL.test.summary) \
-		  $(ALL.test.local)
+# SEE Make:target matching
+# NOTE: no sort because we want the sequence of target definitions above.
+ALL.testcmds    = $(shell awk -F% '($$1 ~ /^testcmd-c./){print $$1}' $(_MYSELF.cmds))
+ALL.test.cmds   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcmds:%=%$(host)))
 ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
+
+test.cmds.all:      $(ALL.test.cmds)
+test.cmds.log:      $(ALL.test.cmds.log)
+
+# For calling various targets together and other examples,
+# see  test.pattern-%  pattern rule
+
 
 # testrun target to allow something like:  testrun-+my-fancy-command
 # Note that we use  testrun-+%  and not  testrun+%  to avoid double definition
 # of the pattern rule (problem in GNUmake)
 # unfortunatelly this restricts the usage to pattern starting with +
-testrun-+%: TEST.args += $(TEST.cmds.hosts)
+# EXE.pl and TEST.init will be inhereted from  testcmd-c% .
+testrun-+%:     TEST.args  += $(TEST.cmds.hosts)
 testrun-%: testcmd-%
 	@echo -n ""
 
 # TODO: use target _no-hosts
-# for debugging add help.cmds.internal to the target's dependencies
-test.info:          $(ALL.test.info)
-test.check:         $(ALL.test.check)
-test.cipher:        $(ALL.test.cipher)
-test.summary:       $(ALL.test.summary)
-test.local:         $(ALL.test.local)
-
-test.info.log:      $(ALL.test.info:%=%.log)
-test.check.log:     $(ALL.test.check:%=%.log)
-test.cipher.log:    $(ALL.test.cipher:%=%.log)
-test.summary.log:   $(ALL.test.summary:%=%.log)
-test.local.log:     $(ALL.test.local:%=%.log)
-
-test.cmds.all:      $(ALL.test.cmds)
-test.cmds.log:      $(ALL.test.cmds.log)
-
-test.cmds.all-%:    help.test.cmds.internal test.cmds.all
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
