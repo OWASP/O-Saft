@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.17 19/01/13 20:05:23
+#?      @(#) Makefile.cgi 1.18 19/01/13 20:58:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.17
+_SID.cgi        = 1.18
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -240,11 +240,12 @@ test.cgi.badchr:   $(ALL.cgi.badchr)
 test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 
 test.cgi.all:      $(ALL.test.cgi)
+test.cgi:          $(ALL.test.cgi)
 
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.17: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.18: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
