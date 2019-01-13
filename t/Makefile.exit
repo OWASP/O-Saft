@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.5 19/01/11 22:59:44
+#?      @(#) Makefile.exit 1.6 19/01/13 20:53:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.5
+_SID.exit       = 1.6
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
@@ -48,14 +48,13 @@ HELP.exit       = "\
 \#$(_NL)\
 \# Examples (get list of all targets): $(_NL)\
 \#    make s-ALL.test.exit $(_NL)\
+\# Hint: use  test.pattern-exit-  instead of  test.pattern-exit , as the$(_NL)\
+\#       patttern  cgi  may match other targets too.\
 "
 
 ALL.help.test  += $(_NL)$(HELP.exit)
 
 HELP-help.test.exit = print targets for testing '$(SRC.pl)' --exit= option
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
 
 # all known --exit=  are shown with:  o-saft.pl --norc --help=exit
 test.exit.labels    = \
@@ -67,38 +66,43 @@ test.exit.labels    = \
 	HOST0  HOST1 HOST2 HOST3 HOST4 HOST5 HOST6 HOST8 HOST9 \
 	END
 
-test.exit-%:        EXE.pl      = ../$(SRC.pl)
-test.exit-%:        TEST.init   = +cn $(TEST.host)
+# SEE Make:target name
+# SEE Make:target name prefix
+# using prefix testmsg- to avoid conflict with pattern rule testcmd-%
 
-test.exit-000:      TEST.args  += --exit=invalid_label_to_show_failed-status
-test.exit-BEGIN0:   TEST.args  += --exit=BEGIN0
-test.exit-BEGIN1:   TEST.args  += --exit=BEGIN1
-test.exit-INIT0:    TEST.args  += --exit=INIT0
-test.exit-WARN:     TEST.args  += --exit=WARN   +force-warning
-test.exit-CONF0:    TEST.args  += --exit=CONF0
-test.exit-CONF1:    TEST.args  += --exit=CONF1
-test.exit-INIT1:    TEST.args  += --exit=INIT1
-test.exit-ARGS:     TEST.args  += --exit=ARGS
-test.exit-MAIN:     TEST.args  += --exit=MAIN
-test.exit-HOST0:    TEST.args  += --exit=HOST0
-test.exit-HOST1:    TEST.args  += --exit=HOST1
-test.exit-HOST2:    TEST.args  += --exit=HOST2
-test.exit-HOST3:    TEST.args  += --exit=HOST3
-test.exit-HOST4:    TEST.args  += --exit=HOST4
-test.exit-HOST5:    TEST.args  += --exit=HOST5
-test.exit-HOST6:    TEST.args  += --exit=HOST6
-test.exit-HOST7:    TEST.args  += --exit=HOST7
-test.exit-HOST8:    TEST.args  += --exit=HOST8
-test.exit-HOST9:    TEST.args  += --exit=HOST9
-test.exit-END:      TEST.args  += --exit=END
+testmsg-exit-%:         EXE.pl      = ../$(SRC.pl)
+testmsg-exit-%:         TEST.init   = +cn $(TEST.host)
 
-test.exit-%: message-%
+testmsg-exit-000:       TEST.args  += --exit=invalid_label_to_show_failed-status
+testmsg-exit-BEGIN0:    TEST.args  += --exit=BEGIN0
+testmsg-exit-BEGIN1:    TEST.args  += --exit=BEGIN1
+testmsg-exit-INIT0:     TEST.args  += --exit=INIT0
+testmsg-exit-WARN:      TEST.args  += --exit=WARN   +force-warning
+testmsg-exit-CONF0:     TEST.args  += --exit=CONF0
+testmsg-exit-CONF1:     TEST.args  += --exit=CONF1
+testmsg-exit-INIT1:     TEST.args  += --exit=INIT1
+testmsg-exit-ARGS:      TEST.args  += --exit=ARGS
+testmsg-exit-MAIN:      TEST.args  += --exit=MAIN
+testmsg-exit-HOST0:     TEST.args  += --exit=HOST0
+testmsg-exit-HOST1:     TEST.args  += --exit=HOST1
+testmsg-exit-HOST2:     TEST.args  += --exit=HOST2
+testmsg-exit-HOST3:     TEST.args  += --exit=HOST3
+testmsg-exit-HOST4:     TEST.args  += --exit=HOST4
+test.exit-HOST4:     TEST.args  += --exit=HOST4
+testmsg-exit-HOST5:     TEST.args  += --exit=HOST5
+testmsg-exit-HOST6:     TEST.args  += --exit=HOST6
+testmsg-exit-HOST7:     TEST.args  += --exit=HOST7
+testmsg-exit-HOST8:     TEST.args  += --exit=HOST8
+testmsg-exit-HOST9:     TEST.args  += --exit=HOST9
+testmsg-exit-END:       TEST.args  += --exit=END
+
+testmsg-exit-%: message-%
 	@echo -n ""
 
-test.exit.log:  $(TEST.logdir)
+testmsg-exit.log:  $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.5: make $@" > $@
+	@echo "# Makefile.exit 1.6: make $@" > $@
 	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
@@ -108,9 +112,11 @@ test.exit.log:  $(TEST.logdir)
 # FIXME: need to remove $(_NEW.log) when -n was given
 
 ALL.test.exit.log   = test.exit.log
+
 #ALL.testexit   = same as ALL.test.exit
-ALL.test.exit   = $(test.exit.labels:%=test.exit-%)
-test.exit:      $(ALL.test.exit)
+ALL.test.exit   = $(test.exit.labels:%=testmsg-exit-%)
+test.exit.all:  $(ALL.test.exit)
+test.exit:      test.exit.all
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
