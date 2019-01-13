@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.840 19/01/11 16:06:55",
-    STR_VERSION => "19.01.10",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.841 19/01/13 22:59:54",
+    STR_VERSION => "19.01.12",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6133,7 +6133,7 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
     foreach my $c (@results) {
         next if  (${$c}[0] ne $ssl);
         $total++;
-        next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
+        next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
         print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
     }
@@ -7862,6 +7862,11 @@ if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
+if (('owasp' eq $legacy) and (0 <= _need_cipher())) {
+        # --legacy=owasp does not print the "supported" columns, hence all
+        # supported=no results must be skipped (cannot be distinguished)
+        $cfg{'disabled'}= 0;
+}
 if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
