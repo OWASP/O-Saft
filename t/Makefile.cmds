@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.17 19/01/13 21:00:12
+#?      @(#) Makefile.cmds 1.18 19/01/13 21:43:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.17
+_SID.cmds       = 1.18
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -91,7 +91,7 @@ HELP-help.test.cmds = print targets for testing '$(SRC.pl)' commands
 testcmd-c%:                     EXE.pl      = ../$(SRC.pl)
 testcmd-c%:                     TEST.init   = --header
 
-testcmd-c+info_%:               TEST.args  += +info
+testcmd-c+info-_%:              TEST.args  += +info
 testcmd-c+info--trace-cmd_%:    TEST.args  += +info   --trace-cmd
 testcmd-c+info--trace-key_%:    TEST.args  += +info   --trace-key
 testcmd-c+info--trace-time_%:   TEST.args  += +info   --trace-time
@@ -103,7 +103,8 @@ testcmd-c+check--trace-key_%:   TEST.args  += +check  --trace-key
 testcmd-c+check--trace-time_%:  TEST.args  += +check  --trace-time
 testcmd-c+check--trace-norc_%:  TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
 testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
-testcmd-c+cipher_%:                 TEST.args  += +cipher
+testcmd-c+cipher-_%:                TEST.args  += +cipher
+testcmd-c+cipher--legacy-owasp_%:   TEST.args  += +cipher --legacy=owasp
 testcmd-c+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
 testcmd-c+cipher--cipher-openssl_%: TEST.args  += +cipher --cipher-openssl
 testcmd-c+cipher--cipher-alpn_%:    TEST.args  += +cipher --cipher-alpn
