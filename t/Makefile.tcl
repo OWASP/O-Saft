@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for testing o-saft.tcl
+#?      Makefile        - makefile for testing o-saft.tcl
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.7 19/01/11 23:00:06
+#?      @(#) Makefile.tcl 1.8 19/01/13 13:20:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.7
+_SID.tcl        = 1.8
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
@@ -44,7 +44,7 @@ endif
 
 HELP.tcl         = "\
 \#               ______________________________________________ GUI tests _$(_NL)\
- test.tcl        - test functionality of $(SRC.tcl)$(_NL)\
+ test.tcl.all    - test functionality of $(SRC.tcl)$(_NL)\
  test.tcl.log    - same as test.tcl but store output in $(TEST.logdir)/$(_NL)\
 "
 
@@ -52,48 +52,52 @@ ALL.help.test  += $(_NL)$(HELP.tcl)
 
 HELP-help.test.tcl  = print targets for testing GUI '$(Project).tcl'
 
-testcmd-tcl%:     EXE.pl      = ../o-saft.tcl
-testcmd-tcl%:     TEST.init   = +quit
+# SEE Make:target name
+# SEE Make:target name prefix
+
+testcmd-tcl%:                   EXE.pl      = ../o-saft.tcl
+testcmd-tcl%:                   TEST.init   = +quit
     # ensure that o-saft.tcl exits and does not build the GUI
 
-testcmd-tcl001_%: TEST.args  += +VERSION
-testcmd-tcl002_%: TEST.args  += --version
-testcmd-tcl003_%: TEST.args  += --rc
-testcmd-tcl004_%: TEST.args  += --v --load=Makefile
+testcmd-tclverb+VERSION_%:      TEST.args  += +VERSION
+testcmd-tclverb--version_%:     TEST.args  += --version
+testcmd-tclverb--rc_%:          TEST.args  += --rc
+testcmd-tclverb--v--load_%:     TEST.args  += --v --load=Makefile
 #               returns: TAB tabs: .... .note.oX1XX1
-testcmd-tcl005_%: TEST.args  += --d
-testcmd-tcl006_%: TEST.args  += --v
-testcmd-tcl007_%: TEST.args  += --v --img
-testcmd-tcl008_%: TEST.args  += --v --text
-testcmd-tcl009_%: TEST.args  += --v host1 host2
-#testcmd-tcl010_%: TEST.args  += --v --load=/tmp/some-file
-# TODO:  compare results of testcmd-tcl006 with
-#           testcmd-tcl007, testcmd-tcl008, testcmd-tclcmd-t009
-testcmd-tcl020_%: TEST.args  += --help
-testcmd-tcl021_%: TEST.args  += --help-flow
-testcmd-tcl022_%: TEST.args  += --help-procs
-testcmd-tcl023_%: TEST.args  += --help-descr
-testcmd-tcl024_%: TEST.args  += --help-o-saft
+testcmd-tclverb--d_%:           TEST.args  += --d
+testcmd-tclverb--v_%:           TEST.args  += --v
+testcmd-tclverb--v--img_%:      TEST.args  += --v --img
+testcmd-tclverb--v--text_%:     TEST.args  += --v --text
+testcmd-tclverb--v-host_%:      TEST.args  += --v host1 host2
+#testcmd-tclverb--v--load_%: TEST.args  += --v --load=/tmp/some-file
+    # TODO:  compare results of testcmd-tclverb--v with
+    #           testcmd-tclverb--v--img, testcmd-tclverb--v--text, testcmd-tclcmd-verb--v-host
+testcmd-tclhelp--help_%:        TEST.args  += --help
+testcmd-tclhelp--help-flow_%:   TEST.args  += --help-flow
+testcmd-tclhelp--help-procs_%:  TEST.args  += --help-procs
+testcmd-tclhelp--help-descr_%:  TEST.args  += --help-descr
+testcmd-tclhelp--help-o-saft_%: TEST.args  += --help-o-saft
 
 # test some warnings
-#testcmd-tcl030_%: TEST.args  += unknown
-testcmd-tcl031_%: TEST.args  += --v host1 host2 host3 host4 host5 host6 
-#testcmd-tcl032_%: TEST.args  += --load=/tmp/bad  # file with large value > 5000
+#testcmd-tclargs-unknown_%: TEST.args  += unknown
+testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
+#testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
-ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl..._/ {print $$1}' $(_MYSELF.tcl))
+# SEE Make:target matching
+ALL.testtcl     = $(shell awk -F% '($$1 ~ /^testcmd-tcl.../){print $$1}' $(_MYSELF.tcl))
 ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
-test.tcl:       $(ALL.test.tcl)
+test.tcl.all:   $(ALL.test.tcl)
 test.tcl.log:   $(ALL.test.tcl.log)
 
-test.tcl-%:     test.tcl.internal test.tcl
+test.tcl-%:     test.tcl.internal test.tcl.all
 	echo -n ""
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(All.test.tcl)
-ALL.tests.log  += test.tcl.log
+ALL.tests      += $(ALL.test.tcl)
+ALL.tests.log  += $(ALL.test.tcl.log)
 
