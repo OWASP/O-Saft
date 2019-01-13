@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.8 19/01/13 13:20:32
+#?      @(#) Makefile.tcl 1.9 19/01/13 20:55:55
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.8
+_SID.tcl        = 1.9
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
@@ -44,7 +44,7 @@ endif
 
 HELP.tcl         = "\
 \#               ______________________________________________ GUI tests _$(_NL)\
- test.tcl.all    - test functionality of $(SRC.tcl)$(_NL)\
+ test.tcl        - test functionality of $(SRC.tcl)$(_NL)\
  test.tcl.log    - same as test.tcl but store output in $(TEST.logdir)/$(_NL)\
 "
 
@@ -89,6 +89,7 @@ ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
 test.tcl.all:   $(ALL.test.tcl)
+test.tcl:       test.tcl.all
 test.tcl.log:   $(ALL.test.tcl.log)
 
 test.tcl-%:     test.tcl.internal test.tcl.all
