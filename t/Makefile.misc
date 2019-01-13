@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for various O-Saft tests
+#?      Makefile        - makefile for various O-Saft tests
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.13 19/01/11 22:59:56
+#?      @(#) Makefile.misc 1.14 19/01/13 12:21:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.13
+_SID.misc       = 1.14
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -54,11 +54,14 @@ HELP-help.dev       = print targets for development
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-TEST.args         = +quit
-BENCH.times       = $(EXE.bench).times
-BENCH.host        = $(TEST.host)
+#TEST.args       =
+    # is special in this makefile; do not overwrite TEST.args in other files
+_args.misc      = +quit
+BENCH.times     = $(EXE.bench).times
+BENCH.host      = $(TEST.host)
 
-ALL.test.misc     = test.bench test.bunt test.docker
+ALL.test.misc   = test.bench test.bunt test.docker
+    # explicit list of targets in this makefile
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
@@ -162,9 +165,9 @@ profile.sub.exit.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinf
 profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinfo)'
 
 profile.sub%:
-	@$(eval _args = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
-	@$(eval TEST.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args) ))
-	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(PROFILE.host) $(TEST.args) 2>&1 
+	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
+	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(_args.misc) ))
+	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(PROFILE.host) $(my.args) 2>&1 
 
 # TODO: 
 #     make profile.sub.entry | sed -e 's/ entering //'
@@ -174,7 +177,7 @@ profile.sub%:
 
 _nytprof.log    = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_nytprof.log)
-	@perl -d:NYTProf $(DEV.pl) $(PROFILE.host) $(TEST.args)
+	@perl -d:NYTProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_nytprof.log)"
 nytprof.html: $(_nytprof.log)
@@ -184,7 +187,7 @@ nytprof: nytprof.html
 
 _dprof.log      = $(TEST.logdir)/dprof.out
 $(_dprof.log):
-	@env PERL_DPROF_OUT_FILE_NAME=$(_dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(TEST.args)
+	@env PERL_DPROF_OUT_FILE_NAME=$(_dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
 	@dprofpp    $(_dprof.log)
 	@echo ""
 	@echo "# show calling tree: dprofpp -t $(_dprof.log)"
@@ -193,6 +196,11 @@ dprof.out: $(_dprof.log)
 # useful options: -T -I
 # dprofpp -t -f "(Carp::)|(Exporter::)|(Symbol::)|(DynaLoader::)"
 .PHONY: $(_dprof.log)
+
+# TODO: define summary macro for all profile targets
+ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
+	nytprof.out nytprof.html dprof.out \
+	code.quality
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
