@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.18 19/01/11 23:00:55
+#?      @(#) Makefile.warnings 1.19 19/01/13 21:14:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.18
+_SID.warnings   = 1.19
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -270,12 +270,13 @@ warnings.show.todo:
 warnings.show.difficult:
 	grep "^warning..*difficult" $(TEST.dir)/Makefile
 
-test.warnings: $(ALL.test.warnings)
+test.warnings.all:  $(ALL.test.warnings)
+test.warnings:      test.warnings.all
 
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.18: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.19: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
