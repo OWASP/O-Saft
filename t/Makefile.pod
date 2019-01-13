@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.2 19/01/11 23:07:15
+#?      @(#) Makefile.pod 1.3 19/01/13 21:24:02
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -27,6 +27,7 @@
 =head2 Make:GNU
 
 some text
+
 
 =head2 Make:automatic variables
 
@@ -48,6 +49,37 @@ Remember make's automatic variables:
 Use of $$ avoids evaluating $ .
 
 
+=head2 Make:target name
+
+For better readability, "speaking names"  should be used for pattern rules
+and targets. It also allows to use the special pattern rule test.pattern-%
+to execute a group of similar targets.
+
+
+=head2 Make:target name prefix
+
+A  unique name prefix  for targets and pattern rules should be used in all
+Makefile.* to distinguish similar names. It also allows to use the pattern
+rule  test.pattern-%  to execute a group of similar targets.
+
+Following macros should then be set only for these targets, like:
+
+    testcmd-TEMPL%:     EXE.pl      = ../program-for.TEMPL
+    testcmd-TEMPL%:     TEST.init   = +quit
+
+
+=head2 Make:target matching
+
+For collecting all targets defined in a Makefile.*, following $(shell awk)
+is used:
+
+  $(shell awk -F% '($$1 ~ /^testcmd-c./){print $$1}' $(_MYSELF.some-type))
+
+(where  testcmd-c  is an example target name). The pattern rule testcmd-c%
+itself must not be matched, hence the pattern /^testcmd-c./ needs to match
+$1 instead of $0 in the awk.
+
+
 =head2 Make:Profiling
 
 Profiling is mainly done with Perl's built-in functionality: perldebug.
@@ -58,6 +90,7 @@ do the profiling.
 =head3 Perl packages
 
   * debian: libdevel-dprof-perl libdevel-nytprof-perl
+
 
 =head2 Make:profile.sub
 
@@ -70,6 +103,7 @@ with that of perldebug. Following options are not helpful:
   * pager=|cat
   * LineInfo=/dev/stdout
   * noTTY=1
+
 
 =head2 Make:profile.sub*_%
 
@@ -98,6 +132,7 @@ Rules writing to logfiles cannot be named like  profile.sub.%.log  if they
 should contain additional arguments like  profile.sub.%_+cn.log,  but must
 be named  profile.sub.%.log_+cn  otherwise the  .log  extension becomes an
 argument (see description how to split arguments above).
+
 
 =head2 Make:profile.sub% target rule
 
