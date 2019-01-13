@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.14 19/01/13 12:21:08
+#?      @(#) Makefile.misc 1.15 19/01/13 12:32:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.14
+_SID.misc       = 1.15
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -98,9 +98,8 @@ HELP.dev        = "\
  nytprof.out     - generate profiling data (for nytprofcalls)$(_NL)\
  nytprof.html    - generate profiling data in HTML format$(_NL)\
  dprof.out       - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
+ code.quality    - search for various common coding mistakes, see make e-ALL.test.quality\
 "
-#code.quality    - search for various common coding mistakes$(_NL)\
-
 
 # TODO: if we switch HELP.dev to single lines HELP-*
 #help.dev: help.HEAD
@@ -135,7 +134,8 @@ qa.misspelled_regex:
 qa.misspelled_critic:
 	@echo "#make: check misspelled use of ## no critic ..."
 	@-egrep -H ' # no critic'  $(ALL.qa)
-code.quality: qa.double_dref qa.defined_arr qa.defined_hash qa.misspelled_regex	qa.misspelled_critic
+ALL.test.quality= qa.double_dref qa.defined_arr qa.defined_hash qa.misspelled_regex qa.misspelled_critic
+code.quality:     $(ALL.test.quality)
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
