@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.31 19/01/13 14:21:39
+#?      @(#) Makefile 1.32 19/01/13 19:50:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.31
+_SID.test       = 1.32
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -160,6 +160,10 @@ TEST.logdir     = $(TEST.dir)/log
 
 # defined in other t/Makefile*
 # ALL.tests =
+
+OPT.grep        = -q
+    # grep (mainly used in message-% target) should not report matching lines
+    # macro can be reset or redifined for more verbose output
 
 # internal used tools and files (paths hardcoded!)
 EXE.bench       = t/o-saft_bench
@@ -335,9 +339,9 @@ message-%:
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* " ; \
+	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* ; \
 	    _status=$$? ; \
 	    rm -f $(_TMP.rc) ; \
 	    exit $$_status ; \
