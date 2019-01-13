@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.15 19/01/13 12:32:53
+#?      @(#) Makefile.misc 1.16 19/01/13 21:06:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.15
+_SID.misc       = 1.16
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -60,9 +60,6 @@ _args.misc      = +quit
 BENCH.times     = $(EXE.bench).times
 BENCH.host      = $(TEST.host)
 
-ALL.test.misc   = test.bench test.bunt test.docker
-    # explicit list of targets in this makefile
-
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
 
@@ -83,6 +80,10 @@ test.docker:
 	$(EXE.docker) +VERSION
 	$(EXE.docker) +version
 	$(EXE.docker) usage
+
+ALL.test.misc   = test.bench test.bunt test.docker
+    # explicit list of targets in this makefile
+test.misc:        $(ALL.test.misc)
 
 .PHONY: test.bench test.bench.log test.bunt test.docker
 
@@ -201,6 +202,8 @@ dprof.out: $(_dprof.log)
 ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
 	nytprof.out nytprof.html dprof.out \
 	code.quality
+
+test.misc.all:    test.misc $(ALL.test.profile)
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
