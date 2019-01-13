@@ -19,14 +19,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.7 19/01/11 22:59:47
+#?      @(#) Makefile.hlp 1.8 19/01/13 21:32:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.7
+_SID.hlp        = 1.8
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
@@ -57,8 +57,8 @@ ALL.help.test  += $(_NL)$(HELP.hlp)
 
 HELP-help.test.hlp  = print targets for testing '$(SRC.pl)' --help options
 
-testarg0-h-%:      EXE.pl       = ../$(SRC.pl)
-testarg0-h-%:      TEST.init    = --no-rc --header
+testarg0-h-%:                   EXE.pl      = ../$(SRC.pl)
+testarg0-h-%:                   TEST.init   = --no-rc --header
 
 # these are kind of help, but do not use --help
 testarg0-h---cmd-VERSION:       TEST.args  += --cmd=VERSION
@@ -68,9 +68,11 @@ testarg0-h-+version:            TEST.args  += +version
 testarg0-h-+version--usr:       TEST.args  += +version --v --usr
 testarg0-h---v+version:         TEST.args  += --v +version
 testarg0-h---v+help:            TEST.args  += --v +help
-testarg0-h-+ciphers:                 TEST.args  += +ciphers --V
-testarg0-h-+ciphers-legacy-full:     TEST.args  += +ciphers --legacy=full
-testarg0-h-+ciphers-legacy-openssl:  TEST.args  += +ciphers --legacy=openssl
+testarg0-h-+ciphers:                TEST.args  += +ciphers --V
+testarg0-h-+ciphers-legacy-full:    TEST.args  += +ciphers --legacy=full
+testarg0-h-+ciphers-legacy-openssl: TEST.args  += +ciphers --legacy=openssl
+testarg0-h-+ciphers-legacy-owasp:   TEST.args  += +ciphers --legacy=owasp
+    # TODO: --legacy=owasp may change in future
 
 # --help
 testarg0-h--help-FAQ:           TEST.args  += --help=FAQ
@@ -119,7 +121,8 @@ ALL.testhlp     = $(shell awk -F: '/^testarg0-h-%/{next} /^testarg0-h-/{print $$
 ALL.test.hlp    = $(ALL.testhlp)
 ALL.test.hlp.log= $(ALL.test.hlp:%=%.log)
 
-test.hlp:       $(ALL.test.hlp)
+test.hlp.all:   $(ALL.test.hlp)
+test.hlp:       test.hlp.all
 test.hlp.log:   $(ALL.test.hlp.log)
 
 .PHONY: test.hlp.log
