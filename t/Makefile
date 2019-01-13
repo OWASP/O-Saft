@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.30 19/01/11 23:00:39
+#?      @(#) Makefile 1.31 19/01/13 14:21:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.30
+_SID.test       = 1.31
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -90,6 +90,13 @@ help.test.all:
 .PHONY: help.test help.test.all
 
 # FIXME: some of above HELP-* should be extracted from t/Makefile.*
+
+# FIXME: missing public (not internal) documentation for pattern rules:
+#       message-%:
+#       no.message-%:
+#       testarg0-%:
+#       testcmd-%
+#       test.all-%:
 
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
@@ -276,6 +283,7 @@ _no-hosts:
 $(TEST.logdir):
 	@mkdir $@
 
+
 # Testing for messages or other strings (i.e **WARNING) works as follows:
 #   call $(EXE.pl) with command and/or options in question
 #   then search (grep) output for message (string)
@@ -378,16 +386,16 @@ endif
 # tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above) is just
 # a number to make each target unique.
 # To feed the hostname to that target,  the target is defined as  pattern rule
-# testcmd-001_% , which means that we can pass the hostname, for example:
-# testcmd-001_host.some.tld
+# testcmd-001_% , which means that the hostname can be passed like:
+#       testcmd-001_host.some.tld
 # Now we can simply use:  $(TESTS.hosts:%=testcmd-001_%) , which generates one
 # target for each host in the list. But that would require to build a list for
 # each such target:  testcmd-002_%  and  testcmd-003_%  and so on.
 # As we want to perform all these targets with all hostnames,  this would also
-# require an additional pattern rule for the hostname part.
-# To avoid such a addditional pattern rule for each  testcmd-DDD,  the general
-# pattern rule  testcmd-% is used. It handles all the individual targets which
-# contain the hostname.
+# require  an additional pattern rule for the hostname part.  To avoid such an
+# addditional pattern rule for each  testcmd-DDD,  the general  pattern rule
+# testcmd-%  is used.  It handles all the individual targets which contain the
+# hostname.
 # Unfortunatelly, this pattern contains  DDD_  (for example 001_host.some.tld)
 # as hostname.  This  DDD_  prefix must then be removed in the target command,
 # the  $(shell awk ...)  does the dirty work. in detail (as defined below):
@@ -400,7 +408,7 @@ endif
 #       $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
 #       #   c00-aa.tld returns: aa.tld
 #
-# Note: following does not work (in GNUmake), hence the solution above:
+# Note: following does not work proper (in GNUmake), hence the solution above:
 #       testcmd-no1: TEST.args  = +quit $*
 #       testcmd-no2: TEST.args := +quit $*
 #
@@ -429,15 +437,12 @@ endif
 #       ALL.by_host     = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
 #       #   returns: testcmd-c00_aa.tld testcmd-c01_aa.tld testcmd-c00_bb.tld testcmd_c01-bb.tld
 
+testcmd-%:      EXE.pl  = ../$(SRC.pl)
 testcmd-%:
 	@$(TARGET_VERBOSE)
 	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
 # TODO: need verbose for executed command
 # TODO: need to add --no-dns if hostname is an IP
-
-# alias target
-test-%: testcmd-%
-	@echo -n ""
 
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
@@ -465,6 +470,47 @@ testcmd-%.log: $(TEST.logdir)
 	@-ls -l  $(TEST.logdir)/testcmd-$(*)*
 # TODO: target should fail if there is a diff
 endif
+
+
+# The pattern rule  testcmd-%  executes an individual target, for example:
+# testcmd-c001_localhost . The following pattern executes all matching targets
+# at once. The grouping is done by the rule's pattern. The pattern is searched
+# for in  $(ALL.tests) .
+# TODO: more documentation ...
+# TODO: Examples:
+#       test.pattern.info
+#       test.pattern.+info
+#       test.pattern.+check
+#       test.pattern.+cipher
+#       test.pattern.+ciphers
+#       test.pattern.-header
+#
+dbx-test.pattern-%:
+	@$(TARGET_VERBOSE)
+	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
+	@echo "# $(_targets) #"
+test.pattern-%:
+	@$(TARGET_VERBOSE)
+	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
+	@-test -n "$(_targets)" \
+	    && $(MAKE) $(MFLAGS) -s $(_targets) \
+	    || echo "# pattern '$*' does not match any target"
+
+# TODO: logging not yet tested (01/2019)
+test.pattern-%.log:
+	@$(TARGET_VERBOSE)
+	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0".log";}'))
+	@-test -n "$(_targets)" \
+	    && $(MAKE) $(MFLAGS) -s $(_targets) \
+	    || echo "# pattern '$*' does not match any target"
+
+
+# some alias targets (humans tend to be lazy:)
+# FIXME: following buggy; ends with command:  rm test.pattern-%
+test.pat-%:  test.pattern-%
+	@echo -n ""
+test.patt-%: test.pattern-%
+	@echo -n ""
 
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
