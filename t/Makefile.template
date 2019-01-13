@@ -18,14 +18,14 @@
 #           ../Makefile  ../Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.7 19/01/11 23:00:09
+#?      @(#) Makefile.template 1.8 19/01/13 21:22:42
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.7
+_SID.TEMPL      = 1.8
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -53,11 +53,6 @@ ifdef TEST.hosts
     TEST.TEMPL.hosts= $(TEST.hosts)
                     # list of TEST.hosts can be passed with environment or on command line
 endif
-
-TEST.init           = --header
-                    # initial  arguments for EXE.pl
-TEST.args           = $(TEST.init)
-                    # specific arguments will be added in targets below
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -99,6 +94,10 @@ MORE-TEMPL      = " \
 \#    make s-ALL.test.TEMPL$(_NL)\
 "
 
+# SEE Make:target name
+# SEE Make:target name prefix
+# SEE Make:target matching
+
 # There are two variants of defining unique targets in this Makefile.  Only one
 # of them must be used: all from "Variant-1" or all from "Variant-2" !
 
@@ -114,7 +113,7 @@ testcmd-TEMPL%:     TEST.init   = +quit
 testcmd-TEMPL001_%: TEST.args  += +VERSION
 testcmd-TEMPL002_%: TEST.args  += --help
 
-ALL.testTEMPL   = $(shell awk -F% '/^testcmd-TEMPL..._/ {print $$1}' $(_MYSELF.TEMPL))
+ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){print $$1}' $(_MYSELF.TEMPL))
                 # dynamically generate list of all  testcmd_TEMPLDDD  targets
 
 ## Variant-1 }
@@ -127,7 +126,7 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
-ALL.testTEMPL   = $(shell awk -F% '/^testTEMPL-..._/ {print $$1}' $(_MYSELF.TEMPL))
+ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){print $$1}' $(_MYSELF.TEMPL))
 
 # pattern rule to map to testcmd-%
 testTEMPL-%:  testcmd-%
@@ -142,7 +141,8 @@ ALL.test.TEMPL.log= $(ALL.test.TEMPL:%=%.log)
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-test.TEMPL:     $(ALL.test.TEMPL)
+test.TEMPL.all: $(ALL.test.TEMPL)
+test.TEMPL:     test.TEMPL.all
 test.TEMPL.log: $(ALL.test.TEMPL.log)
 
 # more verbose target: test.TEMPL-v and test.TEMPL-vv
@@ -153,6 +153,6 @@ test.TEMPL-%:   test.TEMPL.internal test.TEMPL
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(All.test.TEMPL)
+ALL.tests      += $(ALL.test.TEMPL)
 ALL.tests.log  += $(ALL.test.TEMPL.log)
 
