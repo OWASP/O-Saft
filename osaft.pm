@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.162 19/01/14 21:44:50",
+    SID_osaft   => "@(#) osaft.pm 1.163 19/01/14 23:58:41",
 
 };
 
@@ -1983,7 +1983,7 @@ our %cfg = (
     'legacy'        => "simple",
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
                         ssltest-g sslyze testsslserver thcsslcheck openssl
-                        simple full compact quick key owasp)],
+                        simple full compact quick owasp)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
     'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
