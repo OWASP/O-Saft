@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.01.11',  # official version number of this file
+    OSAFT_VERSION   => '19.01.14',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.161 19/01/11 16:04:32",
+    SID_osaft   => "@(#) osaft.pm 1.162 19/01/14 21:44:50",
 
 };
 
@@ -1516,8 +1516,9 @@ our %cfg = (
     'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
     'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
-    'ignorenoreply' => 1,       # 1: treat "no reply" as hertabeat not enabled
-    'shorttxt'      => 0,       # 1: use short label texts
+    'ignorenoreply' => 1,       # 1: treat "no reply" as heartbeat not enabled
+    'label'         => 'long',  # fomat of labels
+    'labels'        => [qw(full long short key)],   # all supported label formats
     'version'       => [],      # contains the versions to be checked
     'versions'      =>          # all supported versions; SEE Note:%prot (in o-saft.pl)
                        # [reverse sort keys %prot], # do not use generic list 'cause we want special order
