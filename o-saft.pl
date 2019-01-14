@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.843 19/01/14 21:05:18",
-    STR_VERSION => "19.01.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.844 19/01/14 21:46:14",
+    STR_VERSION => "19.01.14",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -7139,6 +7139,13 @@ while ($#argv >= 0) {
             $typ = 'HOST';
         }
         # following ($arg !~ /^\s*$/) check avoids warnings in CGI mode
+        if ($typ eq 'LABEL')   {
+            if (1 == (grep{/^$arg$/i} @{$cfg{'labels'}})) {
+                $cfg{'label'} = lc($arg);
+            } else {
+                _warn("051: option with unknown label '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            }
+        }
         if ($typ eq 'LEGACY')   {
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
             if (1 == (grep{/^$arg$/i} @{$cfg{'legacys'}})) {
@@ -7592,7 +7599,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
     if ($arg eq  '--nodisabled')        { $cfg{'disabled'}  = 0;    }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
-    if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'shorttxt'}  = 1;    }
     if ($arg =~ /^--hints?$/)           { $cfg{'out_hint_info'} = 1; $cfg{'out_hint_check'} = 1; }
     if ($arg =~ /^--nohints?$/)         { $cfg{'out_hint_info'} = 0; $cfg{'out_hint_check'} = 0; }
     if ($arg =~ /^--hints?infos?/)      { $cfg{'out_hint_info'} = 1;}
@@ -7624,6 +7630,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
+    if ($arg eq  '--label')             { $typ = 'LABEL';           }
+    if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'label'} = 'short';  } # ancient sinc 19.01.14
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
@@ -8102,7 +8110,7 @@ if ($cfg{'usehttp'} == 0)   {               # was explizitely set with --no-http
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
     $cfg{'enabled'} = 1;
-    $cfg{'shorttxt'}= 1;
+    $cfg{'label'}   = 'short';
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 
@@ -8193,7 +8201,7 @@ if (defined $Net::SSLhello::VERSION) {
 }
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
-if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
+if ($cfg{'label'} eq 'short') {     # reconfigure texts
     foreach my $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
