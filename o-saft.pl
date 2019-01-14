@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.842 19/01/14 15:04:26",
+    SID         => "@(#) yeast.pl 1.843 19/01/14 21:05:18",
     STR_VERSION => "19.01.13",          # <== our official version number
 };
 
@@ -6125,11 +6125,12 @@ sub _sort_results       {
     my @tmp_arr;
     foreach my $line (@unsorted) {
         my $cipher    = ${$line}[1];
-        my $sec_osaft = get_cipher_sec($cipher);
+        my $sec_osaft = lc(get_cipher_sec($cipher));# lower case
         my $sec_owasp = get_cipher_owasp($cipher);
            $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
         # Idea about sorting according severity/security risk of a cipher:
         #   * sort first according OWASP rating A, B, C
+        #   then use a weight for each cipher:
         #   * most secure cipher first
         #   * prefer ECDHE over DHE over ECDH
         #   * prefer SHA384 over /SHA256 over SHA
@@ -6137,12 +6138,12 @@ sub _sort_results       {
         #   * prefer AES265 over AES128
         #   * sort any anon (ADH, DHA, ..) and EXPort at end
         #   * NULL is last
-        # withing above, sort according OpenSSL/O-Saft rating, hence the string
-        # to be sorted looks like:
-        #       # A 20 HIGH ...
+        # then use OpenSSL/O-Saft rating, hence the string to be sorted looks
+        # like:
+        #       # A 20 high ...
         #       # A 23 high ...
-        #       # B 33 HIGH ...
-        #       # B 37 MDIUM ...
+        #       # B 33 high ...
+        #       # B 37 medium ...
         # One line in incomming array in @unsorted:
         #       # TLSv12, ECDHE-RSA-AES128-GCM-SHA256, yes
         # will be converted to following line:
@@ -6153,7 +6154,8 @@ sub _sort_results       {
         $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
         $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
         $weight  = 69 if ($cipher =~ /^EXP/i);
-        $weight  = 79 if ($cipher =~ /^A/i);
+        $weight  = 89 if ($cipher =~ /^A/i);    # NOTE: must be before ^AEC
+        $weight  = 79 if ($cipher =~ /^AEC/i);  # NOTE: must be after ^A
         $weight  = 99 if ($cipher =~ /^NULL/i);
         $weight -= 5  if ($cipher =~ /SHA512$/);
         $weight -= 4  if ($cipher =~ /SHA384$/);
@@ -6164,7 +6166,7 @@ sub _sort_results       {
         $weight -= 3  if ($cipher =~ /CHACHA/);
         $weight -= 2  if ($cipher =~ /256.GCM/);
         $weight -= 1  if ($cipher =~ /128.GCM/);
-        # TODO: need to "rate"  -CBC- and -RC4-
+        # TODO: need to "rate"  -CBC- and -RC4- and -DSS-
         #push(@tmp_arr, ["$sec_owasp $sec_osaft", $cipher, ${$line}[0], ${$line}[2]]);
         push(@tmp_arr, "$sec_owasp $weight $sec_osaft $cipher ${$line}[0] ${$line}[2]");
     }
