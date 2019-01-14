@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.19 19/01/13 21:14:57
+#?      @(#) Makefile.warnings 1.20 19/01/14 23:52:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.19
+_SID.warnings   = 1.20
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -137,7 +137,7 @@ warning-047: TEST.args  = +info  +cn                        any-host
 warning-048: TEST.args  = +check +cn                        any-host
 warning-049: TEST.args  = +unknown_command                  +quit
 warning-050: TEST.args  = +cn --port=                       +quit
-#warning-051: TEST.args  = free
+warning-051: TEST.args  = --label=unknown                   +quit
 warning-052: TEST.args  = --rc=$(_TMP.rc)
 warning-052:                                     TEST.rc = "--option=-with_trailing_spaces   "
 warning-053: TEST.args  = --capath='/path with spaces'      +quit
@@ -276,7 +276,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.19: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.20: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
