@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.844 19/01/14 21:46:14",
+    SID         => "@(#) yeast.pl 1.845 19/01/14 23:57:31",
     STR_VERSION => "19.01.14",          # <== our official version number
 };
 
@@ -5866,8 +5866,11 @@ sub print_line($$$$$$)  {
     if ($legacy =~ m/(compact|full|quick)/) {
         $label .= sprintf("%s",    $text . $text{'separator'});
     } else {
-        $label .= sprintf("[%s]",  $key)   if ($legacy eq 'key');
-        $label .= sprintf("%-36s", $text . $text{'separator'}) if ($legacy ne 'key');
+        if ($cfg{'label'} eq 'key') {
+            $label .= sprintf("[%s]",  $key);
+        } else {
+            $label .= sprintf("%-36s", $text . $text{'separator'});
+        }
     }
     # formats full, quick and compact differ in separator
     my $sep = "\t";
@@ -5949,7 +5952,7 @@ sub print_check($$$$$)  {
     my ($legacy, $host, $port, $key, $value) = @_;
     $value = $checks{$key}->{val} if not defined $value; # defensive programming ..
     my $label = "";
-    $label = $checks{$key}->{txt} if ($legacy ne 'key');
+    $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
     printhint($key) if ($cfg{'out_hint_check'} > 0);
     return;
@@ -5996,7 +5999,6 @@ sub print_cipherline($$$$$$) {
     my $bit   = get_cipher_bits($cipher);
     my $sec   = get_cipher_sec($cipher);
        $sec   = get_cipher_owasp($cipher) if ('owasp' eq $legacy);
-#   my $ssl   = get_cipher_ssl($cipher);
     my $desc  =  join(" ", get_cipher_desc($cipher));
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
     # first our own formats
@@ -6009,10 +6011,15 @@ sub print_cipherline($$$$$$) {
     if ($legacy =~ m/compact|full|owasp|quick|simple|key/) {
         my $k = sprintf("%s", get_cipher_hex($cipher));
         print_line('_cipher', $host, $port, $k, $cipher, ""); # just host:port:#[key]:
-        printf("[%s]\t%-28s\t%s\t%s\n", $k, $cipher, $yesno, $sec) if ($legacy eq 'key');
-        printf("    %-28s\t%s\n",           $cipher, $sec        ) if ($legacy eq 'owasp');
-        printf("    %-28s\t(%s)\t%s\n",     $cipher, $bit,   $sec) if ($legacy eq 'quick');
-        printf("    %-28s\t%s\t%s\n",       $cipher, $yesno, $sec) if ($legacy eq 'simple');
+        if ('key' eq $cfg{'label'}) {   # TODO: $cfg{'label'} should be a parameter
+            $k = "[$k]\t";
+        } else {
+            $k = "    ";
+        }
+        printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'full');
+        printf("%s%-28s\t%s\n",         $k, $cipher, $sec        ) if ($legacy eq 'owasp');
+        printf("%s%-28s\t(%s)\t%s\n",   $k, $cipher, $bit,   $sec) if ($legacy eq 'quick');
+        printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'simple');
         printf("%s %s %s\n",                $cipher, $yesno, $sec) if ($legacy eq 'compact');
         printf("%s\t%s\t%s\t%s\t%s\t%s\n", $ssl, $yesno, $cipher, '-?-', $sec, $desc) if ($legacy eq 'full');
         return;
@@ -7286,6 +7293,10 @@ while ($#argv >= 0) {
     }
     if ($arg =~ /^--set[_-]?score=(.*)/) {
         _warn("021: old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
+        next;
+    }
+    if ($arg =~ /^--legacy=key/) {
+        _warn("023: old (pre 19.01.14) syntax '--legacy=key' obsolete, please use --label=key; option ignored");
         next;
     }
     # ignore -post= option passed from shell script; ugly but defensive programming
