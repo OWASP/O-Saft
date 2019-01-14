@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.841 19/01/13 22:59:54",
-    STR_VERSION => "19.01.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.842 19/01/14 15:04:26",
+    STR_VERSION => "19.01.13",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6118,6 +6118,64 @@ sub _is_print           {
     return 0;
 } # _is_print
 
+sub _sort_results       {
+    #? sort @results array according security of ciphers, most secure first
+    my @unsorted= @_;   # each line is array: ssl, cipher, yes-or-no
+    my @results;
+    my @tmp_arr;
+    foreach my $line (@unsorted) {
+        my $cipher    = ${$line}[1];
+        my $sec_osaft = get_cipher_sec($cipher);
+        my $sec_owasp = get_cipher_owasp($cipher);
+           $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
+        # Idea about sorting according severity/security risk of a cipher:
+        #   * sort first according OWASP rating A, B, C
+        #   * most secure cipher first
+        #   * prefer ECDHE over DHE over ECDH
+        #   * prefer SHA384 over /SHA256 over SHA
+        #   * prefer CHACHA over AES
+        #   * prefer AES265 over AES128
+        #   * sort any anon (ADH, DHA, ..) and EXPort at end
+        #   * NULL is last
+        # withing above, sort according OpenSSL/O-Saft rating, hence the string
+        # to be sorted looks like:
+        #       # A 20 HIGH ...
+        #       # A 23 high ...
+        #       # B 33 HIGH ...
+        #       # B 37 MDIUM ...
+        # One line in incomming array in @unsorted:
+        #       # TLSv12, ECDHE-RSA-AES128-GCM-SHA256, yes
+        # will be converted to following line:
+        #       # A 20 HIGH ECDHE-RSA-AES128-GCM-SHA256 TLSv12 yes
+        my $weight = 50; # default if nothing below matches
+        $weight  = 19 if ($cipher =~ /^ECDHE/i);
+        $weight  = 29 if ($cipher =~ /^(?:DHE|EDH)/i);
+        $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
+        $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
+        $weight  = 69 if ($cipher =~ /^EXP/i);
+        $weight  = 79 if ($cipher =~ /^A/i);
+        $weight  = 99 if ($cipher =~ /^NULL/i);
+        $weight -= 5  if ($cipher =~ /SHA512$/);
+        $weight -= 4  if ($cipher =~ /SHA384$/);
+        $weight -= 3  if ($cipher =~ /SHA256$/);
+        $weight -= 3  if ($cipher =~ /SHA128$/);
+        $weight -= 2  if ($cipher =~ /256.SHA$/);
+        $weight -= 1  if ($cipher =~ /128.SHA$/);
+        $weight -= 3  if ($cipher =~ /CHACHA/);
+        $weight -= 2  if ($cipher =~ /256.GCM/);
+        $weight -= 1  if ($cipher =~ /128.GCM/);
+        # TODO: need to "rate"  -CBC- and -RC4-
+        #push(@tmp_arr, ["$sec_owasp $sec_osaft", $cipher, ${$line}[0], ${$line}[2]]);
+        push(@tmp_arr, "$sec_owasp $weight $sec_osaft $cipher ${$line}[0] ${$line}[2]");
+    }
+    foreach my $line (sort @tmp_arr) {
+        #_dbx $line;
+        my @arr = split(" ", $line);
+        push(@results, [$arr[4], $arr[3], $arr[5]]);#  convert back to original result
+    }
+    return @results;
+} # _sort_results
+
 #  NOTE: Perl::Critic's violation for next 2 subs are false positives
 sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
@@ -6150,7 +6208,7 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
     my $port    = shift;
     my $outtitle= shift; # print title line if 0
     my @results = @_;    # contains only accepted ciphers
-    my $uniqe   = 0;     # count unique ciphers
+    my $unique  = 0;     # count unique ciphers
     my $last_r  = "";    # avoid duplicates
     local    $\ = "\n";
     print_cipherhead( $legacy) if ($outtitle == 0);
@@ -6159,11 +6217,11 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
         my $cipher = get_cipher_suitename($key);
         print_cipherline($legacy, $ssl, $host, $port, $cipher, "yes");
         $last_r = $key;
-        $uniqe++;
+        $unique++;
     }
     print_cipherruler() if ($legacy eq 'simple');
     printfooter($legacy);
-    return $uniqe;
+    return $unique;
 } # printcipherall
 
 sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
@@ -6179,6 +6237,7 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherprefered($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
+    @results = _sort_results(@results); # sorting has no impact on severity
     if ($legacy ne 'sslyze') {
         $total = _print_results($legacy, $ssl, $host, $port, "", @results);
             # NOTE: $checks{'cnt_totals'}->{val}  is the number of all checked
