@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.19 18/11/06 22:09:52
+# SID   @(#) help.txt 1.20 19/01/15 14:20:15
 
 NAME
 
@@ -458,7 +458,7 @@ COMMANDS
 
       +quick
 
-          Quick overview of checks. Implies  --enabled  and  --short.
+          Quick overview of checks. Implies  --enabled  and  --label=short.
 
       +pfs
 
@@ -1629,10 +1629,27 @@ OPTIONS
 
     Options for output format
 
-      --short
+      --label=TYPE
 
-          Use short, less descriptive, text labels for  +check  and  +info
-          command.
+          Defines the format of the descriptive text (label) for  +check  and
+          +info  command.
+          
+          Following 'TYPE's are supported:
+
+          * 'long'              use full text for labels
+          * 'short'             use short less descriptive text for labels
+          * 'key'               use unique key as text for labels
+
+          Examples:
+
+              $0 some.tld +cn --label=long
+              Certificate Common Name:  some.tld
+
+              $0 some.tld +cn --label=short
+              Common Name:              some.tld
+
+              $0 some.tld +cn --label=key
+              [cn]                      some.tld
 
       --legacy=TOOL
 
