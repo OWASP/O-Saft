@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.186 Sommer Edition 2018
+#?      @(#) 1.187 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,10 +449,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.186 19/01/16 01:00:11"
+set cfg(SID)    "@(#) o-saft.tcl 1.187 19/01/16 01:18:36"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.186}
+set cfg(VERSION) {1.187}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2005,8 +2005,8 @@ proc create_help  {sect} {
     #? create new window with complete help text; store widget in cfg(winH)
     #? if  sect  is given, jump to this section
 
-    global cfg myX prg search
     _dbx "($sect)"
+    global cfg myX prg search
     putv "create_help(»$sect«)"
 
     if {[info exists prg(TKPOD)]==1} {
@@ -2263,6 +2263,7 @@ proc create_help  {sect} {
 
 proc create_note  {parent title} {
     #? create notebook TAB; returns widget
+    _dbx "(»$title«)"
     set name [str2obj $title]
     set this $parent.$name
     set alt  0
@@ -2274,6 +2275,7 @@ proc create_note  {parent title} {
 
 proc create_tab   {parent cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
+    _dbx "($cmd,»$content«)"
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
     set _layout $cfg(layout)
@@ -2296,6 +2298,7 @@ proc create_tab   {parent cmd content} {
 
 proc create_cmd   {parent title} {
     #? create button to run O-Saft command; returns widget
+    _dbx "(»$title«)"
     global cfg
     set name [regsub {^\+} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
@@ -2306,6 +2309,7 @@ proc create_cmd   {parent title} {
 
 proc create_opt   {parent title} {
     #? create checkbutton for O-Saft options; returns widget
+    _dbx "(»$title«)"
     global cfg
     set name [regsub {^--} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
@@ -2318,7 +2322,7 @@ proc create_win   {parent title cmd} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
-    _dbx "create_win(»$title« $cmd)"
+    _dbx "(»$title« $cmd)"
     global cfg myX prg
     set this $parent
     set win  $this
@@ -2826,6 +2830,7 @@ proc osaft_write_rc {} {
     #? print data for resource file
     # print all lines between  RC-ANF and RC-END
     global cfg argv0
+    _dbx "()"
     if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
     # TODO: print docu, see contrib/.o-saft.tcl
     puts "#!/bin/cat
@@ -2982,6 +2987,7 @@ proc osaft_help   {} {
 proc osaft_reset  {} {
     #? reset all options in cfg()
     global cfg
+    _dbx "()"
     update_status "reset"
     foreach {idx val} [array get cfg] {
         if {[regexp {^[^-]} $idx]}     { continue };# want options only
@@ -2997,6 +3003,7 @@ proc osaft_reset  {} {
 proc osaft_init   {} {
     #? set values from .o-saft.pl in cfg()
     global cfg prg
+    _dbx "()"
     if {[regexp {\-docker$} $prg(SAFT)]} { return };# skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
         # expected lines look like:
@@ -3038,6 +3045,7 @@ proc osaft_save   {tbl type nr} {
     #? save selected output to file; $nr used if $type == TAB
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg prg tab
+    _dbx "($tbl,$type,$nr)"
     if {$type eq "TTY"} {
         switch $cfg(layout) {
             text    { puts $tab($nr) }
@@ -3076,6 +3084,7 @@ proc osaft_save   {tbl type nr} {
 proc osaft_load   {cmd} {
     #? load results from file and create a new TAB for it
     global cfg tab
+    _dbx "($cmd)"
     if {$cmd eq "Load"} {
         set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
     } else {
@@ -3099,6 +3108,7 @@ proc osaft_exec   {parent cmd} {
     #? run $prg(SAFT) with given command; write result to global $osaft
     # parent is a dummy here
     global cfg hosts prg tab
+    _dbx "($cmd)"
     update_cursor watch
     update_status "#{ $cmd"
     set do  {};     # must be set to avoid tcl error
