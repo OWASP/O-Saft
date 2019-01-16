@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.847 19/01/16 16:24:20",
-    STR_VERSION => "19.01.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.848 19/01/16 21:43:58",
+    STR_VERSION => "19.01.15",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -5771,7 +5771,7 @@ sub _cleanup_data   {
     return $value;
 } # _cleanup_data
 
-sub _printdump($$)  {
+sub _printdump      {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
@@ -5780,7 +5780,7 @@ sub _printdump($$)  {
     # using curly brackets 'cause they most likely are not part of any data
     return;
 } # _printdump
-sub printdump($$$)  {
+sub printdump       {
     #? just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
     print '######################################################################### %data';
@@ -5793,12 +5793,12 @@ sub printdump($$$)  {
     return;
 } # printdump
 
-sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
+sub printruler      { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
 
-sub printheader($$) {
+sub printheader     {
     #? print title line and table haeder line if second argument given
-    my ($txt, $desc, $rest) = @_;
-    return if ($cfg{'out_header'} <= 0);
+    my ($txt, $desc, $rest, $header) = @_;
+    return if (0 >= $header);
     print $txt;
     return if ($desc =~ m/^ *$/); # title only if no more arguments
     printf("= %-37s %s\n", $text{'desc'}, $desc);
@@ -5806,7 +5806,7 @@ sub printheader($$) {
     return;
 } # printheader
 
-sub printfooter($)  {
+sub printfooter     {
     #? print footer line according given legacy format
     my $legacy  = shift;
     if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
@@ -5814,9 +5814,9 @@ sub printfooter($)  {
     return;
 } # printfooter
 
-sub printtitle($$$$)    {
+sub printtitle      {
     #? print title according given legacy format
-    my ($legacy, $ssl, $host, $port) = @_;
+    my ($legacy, $ssl, $host, $port, $header) = @_;
     local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
         my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
@@ -5840,10 +5840,10 @@ sub printtitle($$$$)    {
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy eq 'compact')   { print "=== Checking $ssl Ciphers ..."; }
-    if ($legacy eq 'quick')     { printheader($txt, ""); }
-    if ($legacy eq 'owasp')     { printheader($txt, ""); }
-    if ($legacy eq 'simple')    { printheader($txt, ""); }
-    if ($legacy eq 'full')      { printheader($txt, ""); }
+    if ($legacy eq 'quick')     { printheader($txt, "", "", $header); }
+    if ($legacy eq 'owasp')     { printheader($txt, "", "", $header); }
+    if ($legacy eq 'simple')    { printheader($txt, "", "", $header); }
+    if ($legacy eq 'full')      { printheader($txt, "", "", $header); }
     return;
 } # printtitle
 
@@ -6104,7 +6104,7 @@ sub print_ciphertotals($$$$) {
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {
-        printheader(_get_text('out_summary', $ssl), "");
+        printheader(_get_text('out_summary', $ssl), "", $cfg{'out_header'});
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
@@ -6196,7 +6196,6 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
     my @results = @_;
     my $print   = 0; # default: do not print
     my $total   = 0;
-    my $lastssl = "";
     local    $\ = "\n";
     foreach my $c (@results) {
         next if  (${$c}[0] ne $ssl);
@@ -6204,10 +6203,6 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
         next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
         print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
-        if (0 >= $cfg{'out_header'}) {  # empty line to separate list per $ssl
-            print "" if ($lastssl ne ${$c}[0]);
-        }
-        $lastssl = ${$c}[0];
     }
     return $total;
 } # _print_results
@@ -6239,7 +6234,7 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
 } # printcipherall
 
 sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
-    #? print all cipher check results according given legacy format
+    #? print all cipher check results for given $ssl according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
@@ -6289,7 +6284,7 @@ sub printciphers_dh($$$) {
             # SEE Note:Stand-alone
     }
     foreach my $ssl (@{$cfg{'version'}}) {
-        printtitle($legacy, $ssl, $host, $port);
+        printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
         print_cipherhead( 'cipher_dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
             #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
@@ -6404,7 +6399,7 @@ sub printciphersummary  {
     #? print summary of cipher check (+cipher, +cipherall, +cipherraw)
     my ($legacy, $host, $port, $total) = @_;
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {   # but only our formats
-        printheader("\n" . _get_text('out_summary', ""), "");
+        printheader("\n" . _get_text('out_summary', ""), "", "", $cfg{'out_header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
@@ -6420,7 +6415,7 @@ sub printdata($$$)      {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    printheader($text{'out_infos'}, $text{'desc_info'});
+    printheader($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out_header'});
     _trace_cmd('%data');
     if (_is_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
@@ -6466,7 +6461,7 @@ sub printchecks($$$)    {
     my ($legacy, $host, $port) = @_;
     my $value = "";
     local $\ = "\n";
-    printheader($text{'out_checks'}, $text{'desc_check'});
+    printheader($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
     _trace_cmd(' printchecks: %checks');
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
@@ -6743,7 +6738,7 @@ sub printciphers        {
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_openssl() if ($cfg{'verbose'} > 0);
 
-    printheader(_get_text('out_list', $0), "");
+    printheader(_get_text('out_list', $0), "", "", $cfg{'out_header'});
     # all following headers printed directly instead of using printheader()
 
     if ($cfg{'legacy'} eq "ssltest") {      # output looks like: ssltest --list
@@ -6901,7 +6896,7 @@ sub printscores         {
             + $scores{'check_http'}->{val}
             + $scores{'check_size'}->{val}
             ) / 5 ) + 0.5);
-    printheader($text{'out_scoring'}."\n", $text{'desc_score'});
+    printheader($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out_header'});
     _trace_cmd('%scores');
     foreach my $key (sort keys %scores) {
         next if ($key !~ m/^check_/); # print totals only
@@ -8354,7 +8349,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     $Net::SSLinfo::use_http = $cfg{'usehttp'};  # reset
     _resetchecks();
-    printheader(_get_text('out_target', "$host:$port"), "");
+    printheader(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
 
     _yeast_TIME("DNS{");
 
@@ -8478,7 +8473,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
             my @accepted = ();                          # accepted ciphers
             $total += scalar @all;
-            printtitle($legacy, $ssl, $host, $port);
+            printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
             if (not _is_do('cipherall')) {
                 _v_print("cipher range: $cfg{'cipherrange'}");
                 _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
@@ -8597,10 +8592,12 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 # format of sslscan not yet supported correctly
+                my $header = $cfg{'out_header'};
                 if (($cfg{'out_header'} > 0) or (scalar @{$cfg{'version'}}) > 1) {
                     # need a header when more than one protocol is checked
-                    printtitle($legacy, $ssl, $host, $port);
+                    $header = 1;
                 }
+                printtitle($legacy, $ssl, $host, $port, $header);
             }
             # TODO: need to simplify above conditions
             printciphercheck($legacy, $ssl, $host, $port,
