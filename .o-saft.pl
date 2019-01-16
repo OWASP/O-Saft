@@ -22,13 +22,13 @@
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.93 18/11/10 16:09:58
+#?      @(#) .o-saft.pl 1.94 19/01/16 01:23:29
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID.rc  = 1.93; # our own SID required for Makefile and some tools
+SID.rc  = 1.94; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -81,7 +81,7 @@ SID.rc  = 1.93; # our own SID required for Makefile and some tools
 ###
 ### make output parsable
 ###
-#--short
+#--label=owasp
 #--showhost
 #--trace=key
 #--header
