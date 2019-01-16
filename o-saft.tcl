@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.185 Sommer Edition 2018
+#?      @(#) 1.186 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,10 +449,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.185 18/12/07 22:35:01"
+set cfg(SID)    "@(#) o-saft.tcl 1.186 19/01/16 01:00:11"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.185}
+set cfg(VERSION) {1.186}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -980,6 +980,11 @@ txt2arr [string map "
   HIGH	-regexp	4	_lGreen	{}	{}	0	(HIGH|high)	word  HIGH  anywhere
  **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
  !!HINT	-exact	0	_lBlue	{}	{}	0	!!Hint	line  !!Hint (hint from _ME_)
+  A	-regexp	1	_lGreen	{}	{}	0	(A$)	word  A  at end of line
+  B	-regexp	1	yellow	{}	{}	0	(B$)	word  B  at end of line
+  C	-regexp	1	_orange	{}	{}	0	(C$)	word  C  at end of line
+  D	-regexp	1	red	{}	{}	0	(D$)	word  D  at end of line
+  ?	-regexp	3	_lGray	{}	{}	0	(-\?-$)	word -?- at end of line
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
   YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
  == CMT	-regexp	-1	_lGray	{}	__bold	1	^==*	line starting with  == (formatting lines)
@@ -1524,10 +1529,11 @@ proc apply_filter_table {w} {
                 # regex are designed for Tcl's text search where we have the
                 # -exact or -regex option; this regex must be converted for
                 # use in Tcl's regexp: need to escape special characters
+            if {[regexp         ^(A|B|C|D|-?-)$         $key]} { set col 2; set matchtxt $value }
             if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt }
             if {[regexp -nocase -- $rex "$matchtxt"]} {
                 if {$col == 1} {
-                    # if the match is agains the first column, coulorize the whole line
+                    # if the match is against the first column, colourize the whole line
                     if {$fg ne ""}  { $w rowconfig  $nr -foreground $fg }
                     if {$bg ne ""}  { $w rowconfig  $nr -background $bg }
                     if {$fn ne ""}  { $w rowconfig  $nr -font       $fn }
@@ -2542,9 +2548,9 @@ proc create_main  {targets} {
     set tab_cmds    [create_note $cfg(objN) "Commands"]
     set tab_opts    [create_note $cfg(objN) "Options"]
     set tab_filt    [create_note $cfg(objN) "Filter"]
-    create_buttons  $tab_cmds {CMD}; # fill Commands pane
-    create_buttons  $tab_opts {OPT}; # fill Options pane
-    create_filtertab $tab_filt {FIL}; # fill Filter pane
+    create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
+    create_buttons  $tab_opts {OPT}    ;# fill Options pane
+    create_filtertab $tab_filt {FIL}   ;# fill Filter pane
 
     ## add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
