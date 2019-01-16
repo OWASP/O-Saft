@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.845 19/01/14 23:57:31",
+    SID         => "@(#) yeast.pl 1.846 19/01/16 01:37:18",
     STR_VERSION => "19.01.14",          # <== our official version number
 };
 
@@ -6344,7 +6344,7 @@ sub printprotocols      {
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     if ($cfg{'out_header'}>0) {
-        if ($legacy eq 'owasp') {
+        if ('owasp' eq $legacy) {
             printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
             printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot prefered-strong-cipher PFS-cipher));
         } else {
@@ -6374,7 +6374,7 @@ sub printprotocols      {
            $cnt = 0;
         }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
-        if ($legacy eq 'owasp') {
+        if ('owasp' eq $legacy) {
             printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
                     $prot{$ssl}->{'OWASP_A'}, $prot{$ssl}->{'OWASP_B'},
                     $prot{$ssl}->{'OWASP_C'}, $prot{$ssl}->{'OWASP_D'},
@@ -7935,7 +7935,7 @@ while ($#argv >= 0) {
 local $\ = "\n";
 
 # TODO: use cfg{'targets'} for proxy
-if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
+if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
     my $q = "'";
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
@@ -7943,11 +7943,12 @@ $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
 if (('owasp' eq $legacy) and (0 <= _need_cipher())) {
-        # --legacy=owasp does not print the "supported" columns, hence all
-        # supported=no results must be skipped (cannot be distinguished)
-        $cfg{'disabled'}= 0;
+    # --legacy=owasp does not print the "supported" columns, hence all
+    # supported=no results must be skipped (cannot be distinguished)
+    $cfg{'disabled'}    = 0;
+    $cfg{'enabled'}     = 1;
 }
-if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
+if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'usehttp'}     = 0;
