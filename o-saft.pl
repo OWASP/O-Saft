@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.846 19/01/16 01:37:18",
+    SID         => "@(#) yeast.pl 1.847 19/01/16 16:24:20",
     STR_VERSION => "19.01.14",          # <== our official version number
 };
 
@@ -6196,6 +6196,7 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
     my @results = @_;
     my $print   = 0; # default: do not print
     my $total   = 0;
+    my $lastssl = "";
     local    $\ = "\n";
     foreach my $c (@results) {
         next if  (${$c}[0] ne $ssl);
@@ -6203,6 +6204,10 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
         next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
         print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
+        if (0 >= $cfg{'out_header'}) {  # empty line to separate list per $ssl
+            print "" if ($lastssl ne ${$c}[0]);
+        }
+        $lastssl = ${$c}[0];
     }
     return $total;
 } # _print_results
