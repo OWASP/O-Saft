@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.187 Sommer Edition 2018
+#?      @(#) 1.188 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,10 +449,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.187 19/01/16 01:18:36"
+set cfg(SID)    "@(#) o-saft.tcl 1.188 19/01/16 22:46:09"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.187}
+set cfg(VERSION) {1.188}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1764,11 +1764,13 @@ proc create_table {parent content} {
     $this.t columnconfigure 2 -width 25            ;# value
     # insert content
     set n 1;   # add uniwue number to each line, for initial sorting
+    set ssl "";# TODO: ungly hack: need to detect header line with protocol
     foreach line [split $content "\n"] {
         # content consist of lines separated by \n , where each line is a label
         # and a value separated by a tab (and additional spaces for formatting)
         # in tabular context, only label and value is required; no tabs, spaces
         if {[regexp {^\s*$} $line]} { continue };# skip empty lines
+        #_dbx " line: $line"
         set nr [format %03d [incr n]]
             # integer must have leading 0, otherwise sorting of tablelist fails
             # no more than 999 lines are expected, may be more with --v --trace
@@ -1778,6 +1780,13 @@ proc create_table {parent content} {
             $this.t insert end [list $nr $line]
             $this.t togglerowhide end
             $this.t cellconfigure end,0 -stretch 1 ;# FIXME: does not work
+            if {[regexp {Ciphers:\s*Checking} $line]} {
+                # +cipher header line containing protocol, like:
+                # === Ciphers: Checking TLSv12 ===
+                # TODO: matches content, only default settings detected
+                set ssl [lindex [split $line " "] 3];# remember current protocol
+                #dbx puts "C $ssl"
+            }
             # tablelist does not support "colspan", hence lines are ignored
             continue
             set col2 $col1
@@ -1828,6 +1837,7 @@ proc create_table {parent content} {
         } else {
             # lines containing cipher, like:
             #   AES128-SHA256 yes HIGH
+            append line " $ssl"                    ;# add protocol
             set line [regsub {^[ \t]+} $line {}]   ;# remove trailing spaces
             set line [regsub -all {([ \t])+} $line { }]
             set cols [split $line " "]
