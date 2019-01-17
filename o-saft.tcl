@@ -379,7 +379,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.188 Sommer Edition 2018
+#?      @(#) 1.189 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,10 +449,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.188 19/01/16 22:46:09"
+set cfg(SID)    "@(#) o-saft.tcl 1.189 19/01/17 23:46:43"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.188}
+set cfg(VERSION) {1.189}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -510,6 +510,7 @@ set prg(post)   {}             ;# --post=  parameter, if passed on command line
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
 set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
+                                # see also comment in gui_init()
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
 set cfg(max53)  4090           ;# max. size of text to be stored in table columns
 #   Some combinations of Tcl/Tk and X-Servers are limited in the size of text,
@@ -533,7 +534,7 @@ set myX(geoA)   "660x610"      ;# geometry and position of About   window
 set myX(geoF)   ""             ;# geometry and position of Filter  window (computed dynamically)
 set myX(geoT)   ""             ;#
 set myX(minx)   700            ;# O-Saft  window min. width
-set myX(miny)   720            ;# O-Saft  window min. height
+set myX(miny)   780            ;# O-Saft  window min. height
 set myX(lenl)   15             ;# fixed width of labels in Options window
 set myX(rpad)   15             ;# right padding in the lower right corner
 set myX(padx)   5              ;# padding to right border
@@ -1147,6 +1148,13 @@ proc gui_init     {} {
     if {[catch { package require tablelist } err]} {
         pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
         set cfg(layout) {text}
+            # cfg(layout) used in create_tab() and create_filtertab()
+            # it's hardcoded set to {text} here if package is missing, that's
+            # working for create_filtertab() as the widgets there are created
+            # only once at startup.
+            # Changing cfg(layout) in the GUI later does only affect creating
+            # tables in the result tab after  osaft_exec(), and will not harm
+            # widgets or functionality created by create_filtertab().
     }
     font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
@@ -1553,7 +1561,7 @@ proc apply_filter_table {w} {
 }; # apply_filter_table
 
 proc apply_filter {w cmd} {
-    #? apply filters for markup in output, data is in text or table widget $w
+    #? apply filters for markup in output tab, data is in text or table widget $w
     global cfg
     set _layout $cfg(layout)
     if {$cmd eq "docker_status"} { set _layout "text" };  # don't have table here
@@ -1860,13 +1868,11 @@ proc create_filter_head {parent txt tip col} {
     create_tip  $this $tip
 }; # create_filter_head
 
-proc create_filtertab   {parent cmd} {
+proc create_filter_text {parent cmd} {
     #? create table with filter data
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
-    pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
-    set this $parent.g
-    pack [frame $this] -fill x -fill both -expand 1
+    set this $parent
     # { set header line with descriptions
         create_filter_head $this f_key    $f_key(0) 0
         create_filter_head $this f_moder "$f_mod(0) (-regexp)" 1
@@ -1922,14 +1928,100 @@ proc create_filtertab   {parent cmd} {
     }
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4   -minsize 20   -weight 1; # minsize does not work
+    return $this
+}; # create_filter_text
+
+proc create_filter_table {parent cmd} {
+    #? create scrollable table widget with filter data
+    #################### experimental, not yet ready #################
+    ##### table ok, but missing:
+    #####    radiobutton for column r und e ; probaly needs to use checkbutton
+    #####    set variablen in all columns
+    #####    changing font or colour must adapt cell in column 0
+    #####    Tooltip
+    #
+    global cfg
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
+    set this $parent
+    font create osaftBig    {*}[font config TkFixedFont] -size 9
+    pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
+    pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
+    pack [tablelist::tablelist $this.t   \
+             -exportselection true \
+             -selectmode    extended  \
+             -selecttype    cell   \
+             -arrowcolor    black  \
+             -background    white  \
+             -borderwidth   2     \
+             -stripebackground #e7e7e7 \
+             -arrowstyle    $cfg(tfont) \
+             -labelrelief   solid   \
+             -labelfont     osaftBold \
+             -labelpady     3     \
+             -labelcommand  tablelist::sortByColumn -showarrow true \
+             -movablecolumns true  \
+             -movablerows    false \
+             -showseparators true  \
+             -xscrollcommand [list $this.x set] \
+             -yscrollcommand [list $this.y set] \
+             -font  osaftBig \
+             -spacing 1 \
+             -height 16 \
+             -width 150 \
+             -stretch 4 \
+         ] -side left -fill both -expand yes
+    # insert header line
+    set head [list f_key f_moder f_modee f_chars f_regex f_fg f_bg f_font f_u ]
+    foreach f $head { lappend titles 0 [get_tipp $f] }
+# TODO: -tooltipaddcommand,
+    $this.t config -columns $titles
+    $this.t columnconfigure 0 -width  10;#
+    $this.t columnconfigure 7 -width  10;#
+    # insert lines
+    set row -1
+    foreach {k key} [array get f_key] { # set all filter lines
+        if {$k eq 0} { continue };
+        incr row
+        #set key $f_key($k)
+        set key [str2obj [string trim $key]]
+        set mod $f_mod($k)
+        set len $f_len($k)
+        set rex $f_rex($k)
+        set fg  $f_fg($k)
+        set bg  $f_bg($k)
+        set nr  $f_un($k)
+        set fn  $f_fn($k)
+        $parent.t insert end [list $f_key($k) r e $f_len($k) $f_rex($k) $f_fg($k) $f_bg($k) $f_fn($k) ]
+        #				$f_mod($k $f_mod($k)
+
+        foreach col [list 0 3 4 5 6 7] {
+            $parent.t cellconfig $row,$col -editable yes -editwindow entry
+        }
+        $parent.t cellconfig $row,8    -editable yes -editwindow checkbutton
+        $parent.t cellconfig $row,0 -fg $f_fg($k) -bg $f_bg($k) -font $f_fn($k)
+    }
+    return $this
+}; # create_filter_table
+
+proc create_filtertab   {parent cmd} {
+    #? create tab with filter data
+    global cfg
+    pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
+    set this $parent.g
+    pack [frame $this] -side top -expand yes -fill both
+    set tab [create_filter_text  $this $cmd].t
+    #if {"text"  eq $cfg(layout)} { set tab [create_filter_text  $this $cmd].t }
+    #if {"table" eq $cfg(layout)} { set tab [create_filter_table $this $cmd].t }
+        # create_filter_* returns widget, which is same as $parent
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
-    tk fontchooser config -command {create_selected "Font"}; # what to do with selection
-        # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
-    pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
-    theme_set    $parent.tkfont $cfg(bstyle)
+        tk fontchooser config -command {create_selected "Font"}; # what to do with selection
+            # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
+        pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
+        theme_set    $parent.tkfont $cfg(bstyle)
     }
     pack [button $parent.tkcolor -command {create_selected "Color" [tk_chooseColor]} ] -side right
     theme_set    $parent.tkcolor $cfg(bstyle)
+    return
 }; # create_filtertab
 
 proc create_filter      {parent cmd} {
