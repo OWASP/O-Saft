@@ -298,6 +298,10 @@ exec wish "$0" ${1+"$@"}
 #.      Following options of  o-saft.pl  are used:
 #.          --help  --help=opt  --help=commands
 #.      A detailed example of the format can be found in  proc create_win().
+#.      The functions  create_win() and create_buttons()  mainly use the RegEx
+#.      prg(rec*)  defined in the  CONFIGURATION  (see below) to  match output
+#.      from o-saft.pl . The code in these functions may be used to parse data
+#.      from other tools too.
 #.
 #.      When building the complete documention (help window),  additional text
 #.      documentation (beside that provided by +help) will be added before the
@@ -379,7 +383,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.189 Sommer Edition 2018
+#?      @(#) 1.190 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -449,10 +453,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.189 19/01/17 23:46:43"
+set cfg(SID)    "@(#) o-saft.tcl 1.190 19/01/18 10:23:06"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.189}
+set cfg(VERSION) {1.190}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -480,12 +484,16 @@ set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
                                        ;# set to o-saft-docker with --docker
 
 #   some regex to match output from o-saft.pl or data in .o-saft.pl
-#   mainly used in create_win()
+#   mainly used in create_win() and create_buttons()
 set prg(DESC)   {-- CONFIGURATION regex to match output from o-saft.pl -------}
+set prg(rexCMD-int)  {^\+(cgi|exec)}   ;# internal use only
 set prg(rexOPT-cfg)  {^([^=]*)=(.*)}   ;# match  --cfg-CONF=KEY=VAL
+set prg(rexOPT-help) {^--(h$|help)}    ;# match  --h  ot  --help
 set prg(rexOUT-head) {^(==|\*\*)}      ;# match header lines starting with ==
 set prg(rexOUT-int)  {^--(cgi|call)}   ;# use other tools for that
-set prg(rexCMD-int)  {^\+(cgi|exec)}   ;# internal use only
+set prg(rexOUT-cmd)  {^(Commands|Options)} ;# match header lines for --help=cmd
+set prg(rexOUT-hide) {^Options\s*for\s*(help|compatibility) }  ;# match groups not shown here
+set prg(rexOUT-show) {^Commands to show }  ;# commands without explizit HELP section
 
 #set _me [regsub -all {^[./]*} $prg(SAFT) {}]   ;# remove ./ but prg(SAFT) later
     # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
@@ -2468,14 +2476,14 @@ proc create_win   {parent title cmd} {
     set skip 1;     # skip data until $title found
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
-        if {[regexp {^(Commands|Options)} $dat]} { set skip 1; };    # next group starts
+        if {[regexp $prg(rexOUT-cmd) $dat]} { set skip 1; };# next group starts
         if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use regex
             # title matches: create a window for checkboxes and entries
             set skip 0;
             _dbx " create window: $win »$dat«"
             set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
-            if {$win eq ""} { return; };    # do nothing, even no: show_window $this;
+            if {$win eq ""} { return; }    ;# do nothing, even no: show_window $this;
             set this $win.g
             frame $this;    # frame for grid
             continue
@@ -2484,14 +2492,13 @@ proc create_win   {parent title cmd} {
         #dbx# puts "DATA $dat"
         # skipped general
         if {$dat eq ""}                      { continue; }
-        if {[regexp $prg(rexOUT-head) $dat]} { continue; }; # ignore header lines
+        if {[regexp $prg(rexOUT-head) $dat]} { continue; } ;# ignore header lines
         # skipped commands
-        if {[regexp $prg(rexCMD-int)  $dat]} { continue; }; # internal use only
+        if {[regexp $prg(rexCMD-int)  $dat]} { continue; } ;# internal use only
         # skipped options
        #if {"OPTIONS" eq $dat}               { continue; }
-        if {[regexp {^--h$}           $dat]} { continue; }
-        if {[regexp {^--help}         $dat]} { continue; }
-        if {[regexp $prg(rexOUT-int)  $dat]} { continue; }; # use other tools for that
+        if {[regexp $prg(rexOPT-help) $dat]} { continue; }
+        if {[regexp $prg(rexOUT-int)  $dat]} { continue; } ;# use other tools for that
 
         # the line $l looks like:
         #    our_key   some descriptive text
@@ -2511,23 +2518,23 @@ proc create_win   {parent title cmd} {
             putv "**WARNING: create_win exists: $this.$name; ignored"
             continue
         }
-        frame $this.$name;              # create frame for command' or options' checkbutton
+        frame $this.$name              ;# create frame for command' or options' checkbutton
 # # pack [button $this.$name.h -text {?} -command "create_help {$dat}" -borderwidth 1] -side left
         if {[regexp {=} $dat]==0} {
             #dbx# puts "create_win: check: $this.$name.c -variable cfg($dat)"
-            pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
+            pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)]  -side left -anchor w -fill x
         } else {
             regexp $prg(rexOPT-cfg) $l dumm idx val
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
-            pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -fill x -side left -anchor w
-            pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
-            if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
-            $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
+            pack [label  $this.$name.l -text $idx -width $myX(lenl)] -fill x -side left -anchor w
+            pack [entry  $this.$name.e -textvariable cfg($idx)]      -fill x -side left -expand 1
+            if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val }   ;# only set if all lower case
+            $this.$name.l config -font TkDefaultFont   ;# reset to default as Label is bold
         }
         grid $this.$name -sticky w
-        create_tip $this.$name "$tip";  # $tip may be empty, i.e. for options
+        create_tip $this.$name "$tip"  ;# $tip may be empty, i.e. for options
     }
-    pack $this -fill both -expand 1;    # delayed pac for better performance
+    pack $this -fill both -expand 1    ;# delayed pac for better performance
 
     # now arrange grid in rows and columns
     # idea: arrange widgets in at least 3 columns
@@ -2575,10 +2582,8 @@ proc create_buttons {parent cmd} {
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
-        if {[regexp {^(Commands|Options) } $txt]==0} { continue }
-            # buttons for Commands and Options only
-        if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
-            # we do not support these options in the GUI
+        if {[regexp $prg(rexOUT-cmd)  $txt] == 0} { continue }  ;# buttons for Commands and Options only
+        if {[regexp $prg(rexOUT-hide) $txt] != 0} { continue }  ;# we do not support these options in the GUI
         # skipped general
         if {$txt eq ""}                      { continue; }
         if {[regexp $prg(rexOUT-head) $txt]} { continue; }; # header or Warning
@@ -2595,8 +2600,8 @@ proc create_buttons {parent cmd} {
         theme_set    $this.help_me $cfg(bstyle)
         create_tip   $this.b [get_tipp settings]
 
-        # argh, some command sections are missing in HELP
-        if {[regexp {^Commands to show } $txt]==1} { $this.help_me config -state disable }
+        # argh, some command sections are missing in HELP, then disable help button
+        if {[regexp $prg(rexOUT-show) $txt] == 1} { $this.help_me config -state disable }
     }
 }; # create_buttons
 
