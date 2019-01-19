@@ -16,19 +16,25 @@
 #?      New commands may be defined herein using  --cfg_cmd=  .
 #?      Please see example  +preload  below.
 #?      New Hints may be defined herein using  --cfg_hint=  .
+#?
 #?      It is recommended to use a prefix in each private command to avoid
 #?      conflicts with existing (or future) commands in o-saft.pl itself.
 #?      Following prefixes (for commands) are not used by o-saft.pl:
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
+#?
+#?      The special line
+#?         ##? Some text
+#?      contains a brief description for the next new command defined with
+#?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.94 19/01/16 01:23:29
+#?      @(#) .o-saft.pl 1.95 19/01/19 14:10:20
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID.rc  = 1.94; # our own SID required for Makefile and some tools
+SID.rc  = 1.95; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -114,7 +120,7 @@ SID.rc  = 1.94; # our own SID required for Makefile and some tools
 ###
 ### define new command +preload
 ###
-# STS header preload attribute
+##? Check STS header preload attributes
 #       To satisfy the requirements on  https://hstspreload.appspot.com/  the
 #       HSTS header must:
 #         * have the max-age with at least 18 weeks (10886400 seconds)
@@ -134,6 +140,7 @@ SID.rc  = 1.94; # our own SID required for Makefile and some tools
 ###
 ### define new command +ciphercheck
 ###
+##? Check various cipher usage
 # +ciphers shows which ciphers are accepted/supported and shows the severity.
 # This command summarizes the other cipher checks.
 #
@@ -142,14 +149,14 @@ SID.rc  = 1.94; # our own SID required for Makefile and some tools
 ###
 ### define new command +names
 ###
-# Collection of all info and check commands related to certificate names
+##? Collection of all info and check commands related to certificate names
 #
 --cfg_cmd=names=cn subject issuer altname verify_altname verify_hostname hostname sni certfqdn wildcard wildhost rfc_2818_names rfc_6125_names
 
 ###
 ### define new command +ocsp
 ###
-# Collection of all info and check commands related to OCSP data.
+##? Collection of all info and check commands related to OCSP data
 #
 --cfg_cmd=ocsp=ocsp_response ocsp_response_status ocsp_cert_status ocsp_this_update ocsp_next_update ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid ocsp_stapling len_ocsp
 
@@ -158,6 +165,7 @@ SID.rc  = 1.94; # our own SID required for Makefile and some tools
 ###
 ### define new command +fingerprints
 ###
+##? Check all certificate fingerprints
 # +ciphers shows which ciphers are accepted/supported and shows the severity.
 # This command summarizes the other cipher checks.
 #
@@ -174,6 +182,8 @@ SID.rc  = 1.94; # our own SID required for Makefile and some tools
 #
 # NOTE that the list defined here overwrites o-saft.pl's default list, which
 #      can result in missing output.
+#      In particular after updates, the local .o-saft.pl containing redefines
+#      should be checked against o-saft.pl's default commands.
 # Hint: use --tracekey which prints the keys
 
 ###
