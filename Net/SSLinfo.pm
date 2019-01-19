@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.223 18/12/15 22:37:21',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.224 19/01/19 17:12:36',
 };
 
 ######################################################## public documentation #
@@ -841,7 +841,8 @@ sub _traceSSLbitmasks {
             OP_NO_RENEGOTIATION
             OP_PRIORITIZE_CHACHA
             )) {
-        no strict;  # necessary as we use {"Net::SSLeay::$op"}
+        no strict;  ## no critic (TestingAndDebugging::ProhibitNoStrict)
+            # necessary as we use {"Net::SSLeay::$op"}
         printf("#%s: %-30s ", $txt, $op);
         ## $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
         my $opt;
