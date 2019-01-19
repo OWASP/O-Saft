@@ -383,7 +383,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.190 Sommer Edition 2018
+#?      @(#) 1.191 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -453,10 +453,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.190 19/01/18 10:23:06"
+set cfg(SID)    "@(#) o-saft.tcl 1.191 19/01/19 11:46:44"
 set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.190}
+set cfg(VERSION) {1.191}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -989,11 +989,11 @@ txt2arr [string map "
   HIGH	-regexp	4	_lGreen	{}	{}	0	(HIGH|high)	word  HIGH  anywhere
  **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
  !!HINT	-exact	0	_lBlue	{}	{}	0	!!Hint	line  !!Hint (hint from _ME_)
-  A	-regexp	1	_lGreen	{}	{}	0	(A$)	word  A  at end of line
-  B	-regexp	1	yellow	{}	{}	0	(B$)	word  B  at end of line
-  C	-regexp	1	_orange	{}	{}	0	(C$)	word  C  at end of line
-  D	-regexp	1	red	{}	{}	0	(D$)	word  D  at end of line
-  ?	-regexp	3	_lGray	{}	{}	0	(-\?-$)	word -?- at end of line
+  A	-regexp	1	_lGreen	{}	{}	0	(^A$)	word  A  at end of line
+  B	-regexp	1	yellow	{}	{}	0	(^B$)	word  B  at end of line
+  C	-regexp	1	_orange	{}	{}	0	(^C$)	word  C  at end of line
+  D	-regexp	1	red	{}	{}	0	(^D$)	word  D  at end of line
+  ?	-regexp	3	_lGray	{}	{}	0	(^-\?-$)	word -?- at end of line
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
   YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
  == CMT	-regexp	-1	_lGray	{}	__bold	1	^==*	line starting with  == (formatting lines)
