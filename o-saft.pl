@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.848 19/01/16 21:43:58",
+    SID         => "@(#) yeast.pl 1.849 19/01/19 17:30:17",
     STR_VERSION => "19.01.15",          # <== our official version number
 };
 
@@ -1804,6 +1804,7 @@ our %text = (
         'simple'    => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
         'full'      => { 'not' => '-?-', 'yes' => "Yes",         'no' => "No" },
         'key'       => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
+        'owasp'     => { 'not' => '-?-', 'yes' => "",            'no' => ""   },
         #              #----------------+------------------------+---------------------
         # following keys are roughly the names of the tool they are used
         #              #----------------+------------------------+---------------------
@@ -8407,7 +8408,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     # print DNS stuff
     if (_is_do('host') or (($info + $check + $cmdsni) > 0)) {
         _y_CMD("+info || +check || +sni*");
-        if ($legacy =~ /(full|compact|simple)/) {
+        if ($legacy =~ /(full|compact|simple|owasp)/) {
             printruler();
             print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
             print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
