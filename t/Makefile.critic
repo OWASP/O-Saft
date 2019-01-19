@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.7 19/01/11 22:59:42
+#?      @(#) Makefile.critic 1.8 19/01/19 17:14:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.7
+_SID.critic     = 1.8
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
@@ -49,7 +49,7 @@ CRITIC.severity = -5
 CRITIC.opt      =
 CRITIC.pretty   =
 
-ALL.critic      = $(SRC.pl) $(ALL.pm)
+ALL.critic      = $(SRC.pl) $(ALL.pm) $(GEN.pod)
 # $(CHK.pl)
 
 # using perlcritic's --verbose options without ( and ) ; see: man perlcritic
@@ -75,7 +75,7 @@ criticdoc:   help.test.critic
 HELP.critic     = "\
 \#              ________________________________ targets for code quality _$(_NL)\
  critic         - check files with perlcritic $(_NL)\
- critic345      - check files with perlcritic for severity 3,4,5 using t/critic_345.sh $(_NL)\
+ critic345      - check files with perlcritic for severity 3,4,5 $(_NL)\
  help.critic    - print more details about  critic-*  targets $(_NL)\
 \#$(_NL)\
 \# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
@@ -123,6 +123,9 @@ $(CRITIC.dir):
 	echo C && exit 1
 	@$(TARGET_VERBOSE)
 	@mkdir -p $(CRITIC.dir)
+
+perlcritic-%: $(CRITIC.dir)
+	@mkdir    $@
 
 # All targets use $(ALL.critic) as list of sources, which must be set as
 # environment or on command line
@@ -214,13 +217,23 @@ critic-3:       critic
 critic-2:       critic
 criticp:        critic-pretty
 
-# TODO: replace functionality of t/critic_345.sh with targets above,
-#       just redirect to logfiles is missing
-critic345:
-	-cd $(CRITIC.dir) && \
-	  critic_345.sh $(ALL.critic)
+$(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt:
+	@$(TARGET_VERBOSE)
+	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
+	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-count  >> $@
+	@(echo "" && echo "" && echo "## Statistik ...")       >> $@
+	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-stat   >> $@
+	@(echo "" && echo "" && echo "## Fehler ...")          >> $@
+	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic CRITIC.opt= >> $@
 
-.PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345
+critic345: $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-5.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-4.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-3.txt
+
+# TODO: dirty hack target critic345.log 
+critic345.log:
+	@rm $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-5.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-4.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-3.txt
+	@$(MAKE) $(MFLAGS) -s critic345
+
+.PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345 critic345.log
 
 #_____________________________________________________________________________ 
 #_____________________________________________________________________ test __|
