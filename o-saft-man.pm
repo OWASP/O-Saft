@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.269 18/12/15 23:53:04";
+my  $SID_man= "@(#) o-saft-man.pm 1.270 19/01/19 14:08:58";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -465,6 +465,7 @@ sub _man_html_cmds  {
     my $key = shift;
     my $txt = "";
     my $cmds= _man_cmd_from_source(); # get all command from %data and %check_*
+    # $cmds.= _man_cmd_from_rcfile(); # RC-FILE not used here
     foreach my $cmd (split(/[\r\n]/, $cmds)) {
         next if ($cmd =~ m/^\s*$/);
         $cmd =~ s/^\s*//;
@@ -862,6 +863,31 @@ sub _man_cmd_from_source {
     return $txt;
 } # _man_cmd_from_source
 
+sub _man_cmd_from_rcfile {
+    #? return all command RC-FILE
+    my $txt  = "\n                  Commands locally defined in $cfg{'RC-FILE'}\n";
+    my $val  = "";
+    my $skip = 1;
+    my $fh   = undef;
+    if (open($fh, '<:encoding(UTF-8)', $cfg{'RC-FILE'})) {
+        while(<$fh>) {
+            if (m/^##[?]\s+([a-zA-Z].*)/) { # looks like:  ##? Some text here ...
+                $skip = 0;
+                $val  = $1;
+                next;
+            }
+            if (m/^--cfg_cmd=([^=]*)=/) {   # looks like:  --cfg_cmd=MyCommad=list items
+                next if (1 == $skip);   # continue only if previous match succedded
+                $skip = 1;
+                $txt .= sprintf("+%-17s%s\n", $1, $val);
+                $val  = "";
+            }
+        }
+        close($fh);
+    }
+    return $txt;
+} # _man_cmd_from_rcfile
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -921,6 +947,7 @@ sub man_commands    {
 EoHelp
 
     print _man_cmd_from_source();
+    print _man_cmd_from_rcfile();
     _man_foot(15);
     print "\n";
     return;
