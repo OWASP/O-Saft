@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.270 19/01/19 14:08:58";
+my  $SID_man= "@(#) o-saft-man.pm 1.271 19/01/20 22:33:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -586,7 +586,7 @@ sub _man_opt        {
 sub _man_cfg        {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
-    $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
+    $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg(?!_cmd)/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
     _man_opt($key, $sep, $txt);
     return;
@@ -957,7 +957,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
-    my $typ = shift;
+    my $typ = shift;# NOTE: lazy matches against $typ below, take care with furure changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalize: cipherrange and range are possible
     my %types = (
         # typ        header left    separator  header right
@@ -976,6 +976,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         'data'  => ["key",           " - ",  " Label text"],
         'hint'  => ["key",           " - ",  " Hint text"],
         'text'  => ["key",           " - ",  " text"],
+        'cmd'   => ["key",           " - ",  " list of commands"],
     );
     my $txt = "";
     my $sep = "\t";
@@ -1025,6 +1026,20 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             if ('ARRAY' eq ref($cfg{$list}->{$key})) {
                 $txt = join("\t", @{$cfg{$list}->{$key}});
             }
+            _man_cfg($typ, $key, $sep, $txt);
+        }
+    }
+    if ($typ =~ m/cmd/) {
+        foreach my $key (sort keys %cfg) {
+            next if ($key !~ m/^cmd-/);
+            next if ($key =~ m/^cmd-(?:check|info)/); # FIXME: currently disabled
+            $txt =  $cfg{$key};
+            if ('ARRAY' eq ref($cfg{$key})) {
+                $txt = join(" ", @{$cfg{$key}});
+            }
+            $key =~ s/^cmd.// if ($typ =~ m/cfg/);
+                # $key in %cfg looks like  cmd-sni, but when configuering the
+                # key in RC-FILE it looks like  --cfg_cmd=sni=   ...
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
@@ -1319,12 +1334,14 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?|pattern)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
-    man_table(lc($1)),          return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)[_-]?cfg$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(cmd|check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
-    if ($hlp =~ /^cmds?$/i)     { # print program's commands
+        # we do not allow --help=cfg-cmds or --help=cfg-checks due to conflict
+        #    with --help=cmds (see next condiftion);  since 19.01.19
+    if ($hlp =~ /^cmds$/i)      { # print program's commands
         print "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
         return;
     }
