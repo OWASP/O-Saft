@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.21 19/01/20 13:40:02
+# SID   @(#) help.txt 1.22 19/01/20 23:08:32
 
 NAME
 
@@ -347,7 +347,7 @@ COMMANDS
           +check +cipher +info +http +list +quick +sni +sni_check +version
 
         A list of all available commands will be printed with:
-          $0 --help=cmd
+          $0 --help=cmds
 
         The description of all other commands will be printed with:
           $0 --header --help=commands
@@ -734,7 +734,7 @@ OPTIONS
 
           WYSIWYG
 
-      --help=cmd
+      --help=cmds
 
           Show available commands; short form.
 
@@ -757,6 +757,15 @@ OPTIONS
       --help=tools
 
           Description of tools around O-Saft, when, where and how to use.
+
+      --help=cmd
+
+          Show additional and user specified commands.
+
+      --help=cfg-cmd
+
+          Show additional and user specified commands.  Output can be use in
+          RC-FILE  or as option.
 
       --help=check-cfg
       --help=cfg-check
