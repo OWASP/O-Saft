@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.271 19/01/20 22:33:08";
+my  $SID_man= "@(#) o-saft-man.pm 1.272 19/01/20 22:35:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -957,7 +957,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
-    my $typ = shift;# NOTE: lazy matches against $typ below, take care with furure changes
+    my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalize: cipherrange and range are possible
     my %types = (
         # typ        header left    separator  header right
