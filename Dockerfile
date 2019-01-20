@@ -129,7 +129,7 @@ MAINTAINER Achim <achim@owasp.org>
 	# OSAFT_VM_FROM must be defined again, otherwise its value is not available
 ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-ARG     OSAFT_VM_SHA_OSAFT="bc7051a076720fbf30e7dff5518f4813c890ce68dd90ace6f77caa0c850a98d0"
+ARG     OSAFT_VM_SHA_OSAFT="29d4faa2ed3025ed18d31175e868d6be9312b36ba486c6e5f305afeb34947f68"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"
 ARG     OSAFT_VM_SHA_SSLEAY="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"
@@ -154,7 +154,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.28 18/11/09 01:28:39" \
+	SID="@(#) Dockerfile 1.29 19/01/20 23:25:44" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
