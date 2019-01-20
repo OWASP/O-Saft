@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.20 19/01/15 14:20:15
+# SID   @(#) help.txt 1.21 19/01/20 13:40:02
 
 NAME
 
@@ -1636,20 +1636,28 @@ OPTIONS
           
           Following 'TYPE's are supported:
 
-          * 'long'              use full text for labels
-          * 'short'             use short less descriptive text for labels
-          * 'key'               use unique key as text for labels
+      --label=long
 
-          Examples:
+          Prints full text for labels:
 
-              $0 some.tld +cn --label=long
               Certificate Common Name:  some.tld
 
-              $0 some.tld +cn --label=short
+      --label=short
+
+          Prints short less descriptive text for labels:
+
               Common Name:              some.tld
 
-              $0 some.tld +cn --label=key
+      --label=key
+
+          Internal format: print name of key instead of text as label. Key is
+          Prints name of key instead of text as label. The key is that of the
+          internal data structure(s).
+
               [cn]                      some.tld
+
+          For ciphers and protocols, the corresponding  hex value  is used as
+          key. Note that these values are unique.
 
       --legacy=TOOL
 
@@ -1692,6 +1700,10 @@ OPTIONS
           Internal format: pretty print each label in its own line,  followed
           by data prepended by tab character (useful for  +info  only).
 
+      --legacy=owasp
+
+          Results for cipher checks use rating from OWASP Cipher Cheat Sheet.
+
       --legacy=quick
 
           Internal format: use tab as separator; ciphers are printed with bit
@@ -1700,13 +1712,6 @@ OPTIONS
       --legacy=simple
 
           Internal default format.
-
-      --legacy=key
-
-          Internal format: print name of key instead of text as label. Key is
-          that of the internal data structure(s).  For ciphers and protocols,
-          the corresponding hex value is used as key.  Note that these values
-          are unique.
 
       --format=0x
       --format=\x
@@ -4644,7 +4649,6 @@ TODO
           ** Ticketbleed
           ** complete TIME, BREACH check
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
-          ** ROBOT
 
         * verify CA chain:
           ** Net::SSLinfo.pm implement verify*
@@ -4660,15 +4664,13 @@ TODO
           ** write postprocessor for tabular data, like
              ssl-cert-check -p 443 -s mail.google.com -i -V
 
-        * Net::SSLeay
-          ** remove all warn() as Net::SSLeay should be silent
-          ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
-             return error message
+        * Net::SSLinfo
+          ** Net::SSLeay::ctrl()  sometimes fails, but doesn't return error message
           ** Net::SSLeay::CTX_clear_options()
              Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
              SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
              see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
-          ** Net::SSLeay::do_ssl_close()  does not realy work
+          ** Net::SSLinfo::do_ssl_close()  does not realy work
 
         * Windows
           ** Unicode:
