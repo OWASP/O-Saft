@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated from Makefile 1.30
+#? File generated from Makefile 1.47
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -23,8 +23,8 @@
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
-#?          --openssl   - use  contrib/build_openssl.sh  to install  openssl
-#?                        and  Net::SSLeay
+#?          --openssl   - same as calling  contrib/install_openssl.sh
+#?                        (build and install openssl and  Net::SSLeay)
 #?
 #? OPTIONS
 #?      --h     got it
@@ -45,7 +45,7 @@
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts some values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       generated from Makefile 1.30 .
+#       generated from Makefile 1.47 .
 # TODO: --check does not work if installed in other dir than default one
 #
 #       Environment variable inst can be set to installation directory: This
@@ -55,7 +55,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.12 18/07/16 11:53:45
+#?      @(#) INSTALL-template.sh 1.14 18/11/04 15:45:10
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -80,22 +80,32 @@ text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
+osaft_exe="o-saft.pl"
+osaft_gui="o-saft.tcl"
+# corresponding RC-files do not need their own variable; simply prefix with .
 
+inst_openssl="contrib/install_openssl.sh"
+
+# generated from Makefile 1.47 {
 files_contrib="
-	contrib/.o-saft.tcl contrib/Cert-beautify.awk contrib/Cert-beautify.pl contrib/Dockerfile.alpine-3.6 contrib/HTML-simple.awk contrib/HTML-table.awk contrib/INSTALL-template.sh contrib/JSON-array.awk contrib/JSON-struct.awk contrib/XML-attribute.awk contrib/XML-value.awk contrib/bash_completion_o-saft contrib/build_openssl.sh contrib/bunt.pl contrib/bunt.sh contrib/cipher_check.sh contrib/critic.sh contrib/dash_completion_o-saft contrib/distribution_install.sh contrib/filter_examples contrib/fish_completion_o-saft contrib/gen_standalone.sh contrib/install_perl_modules.pl contrib/lazy_checks.awk contrib/o-saft.php contrib/tcsh_completion_o-saft contrib/usage_examples contrib/zap_config.sh contrib/zap_config.xml
+	contrib/.o-saft.tcl contrib/Cert-beautify.awk contrib/Cert-beautify.pl contrib/Dockerfile.alpine-3.6 contrib/HTML-simple.awk contrib/HTML-table.awk contrib/INSTALL-template.sh contrib/JSON-array.awk contrib/JSON-struct.awk contrib/XML-attribute.awk contrib/XML-value.awk contrib/bash_completion_o-saft contrib/bunt.pl contrib/bunt.sh contrib/cipher_check.sh contrib/critic.sh contrib/dash_completion_o-saft contrib/distribution_install.sh contrib/filter_examples contrib/fish_completion_o-saft contrib/gen_standalone.sh contrib/install_openssl.sh contrib/install_perl_modules.pl contrib/lazy_checks.awk contrib/o-saft.php contrib/tcsh_completion_o-saft contrib/usage_examples contrib/zap_config.sh contrib/zap_config.xml
 		"
 
 files_install="
-	.o-saft.pl Dockerfile Net/SSLhello.pm Net/SSLinfo.pm OSaft/Ciphers.pm OSaft/Doc/Data.pm OSaft/Doc/coding.txt OSaft/Doc/glossary.txt OSaft/Doc/help.txt OSaft/Doc/links.txt OSaft/Doc/misc.txt OSaft/Doc/rfc.txt OSaft/Doc/tools.txt OSaft/_ciphers_iana.pm OSaft/_ciphers_openssl_all.pm OSaft/_ciphers_openssl_high.pm OSaft/_ciphers_openssl_low.pm OSaft/_ciphers_openssl_medium.pm OSaft/_ciphers_osaft.pm OSaft/error_handler.pm checkAllCiphers.pl o-saft o-saft-dbx.pm o-saft-docker o-saft-docker-dev o-saft-img.tcl o-saft-man.pm o-saft-usr.pm o-saft.pl o-saft.tcl osaft.pm
+	.o-saft.pl Dockerfile Net/SSLhello.pm Net/SSLinfo.pm OSaft/Ciphers.pm OSaft/Doc/Data.pm OSaft/Doc/coding.txt OSaft/Doc/glossary.txt OSaft/Doc/help.txt OSaft/Doc/links.txt OSaft/Doc/misc.txt OSaft/Doc/rfc.txt OSaft/Doc/tools.txt OSaft/error_handler.pm checkAllCiphers.pl o-saft o-saft-dbx.pm o-saft-docker o-saft-docker-dev o-saft-img.tcl o-saft-man.pm o-saft-usr.pm o-saft.pl o-saft.tcl osaft.pm
 		"
+# generated from Makefile 1.47 }
 
 files_not_installed="
-		o-saft.cgi contrb/o-saft.php contrib/install_perl_modules.pl
+		o-saft.cgi contrb/o-saft.php
+		contrib/install_openssl.sh contrib/install_perl_modules.pl
 		"
 
-files_develop=".perlcriticrc o-saft_bench o-saft-docker-dev Dockerfile"
+files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
+		INSTALL-devel.sh .perlcriticrc o-saft_bench
+		"
 
-files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README INSTALL-devel.sh"
+files_develop="o-saft-docker-dev Dockerfile Makefile Makefile.help t/"
 
 files_info="CHANGES README o-saft.tgz"
 
@@ -130,7 +140,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.12 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.14 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -176,18 +186,17 @@ fi
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
-	build=contrib/build_openssl.sh
-	[ ! -x "$build" ] && echo_red "**ERROR: $build does not exist; exit" && exit 2
-	$build $optn
+	[ ! -x "$inst_openssl" ] && echo_red "**ERROR: $inst_openssl does not exist; exit" && exit 2
+	$inst_openssl $optn
 	status=$?
 	if [ $status -ne 0 ]; then
 		cat << EoT
-# $build uses its default settings. To check the settings, use:
+# $inst_openssl uses its default settings. To check the settings, use:
 #     $0 --openssl --n
 # If other configurations should be used, please use directly:
-#     $build --help
-#     $build --n
-#     $build /path/to/install
+#     $inst_openssl --help
+#     $inst_openssl --n
+#     $inst_openssl /path/to/install
 EoT
 	fi
 	exit $status
@@ -227,8 +236,8 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	if [ $force -eq 1 ]; then
-		$try \cp .o-saft.pl  "$inst/"         || echo_red ".o-saft.pl  failed"
-		$try \cp contrib/.o-saft.tcl "$inst/" || echo_red ".o-saft.tcl failed"
+		$try \cp .$osaft_exe  "$inst/"        || echo_red ".$osaft_exe  failed"
+		$try \cp contrib/.$osaft_gui "$inst/" || echo_red ".$osaft_gui failed"
 	fi
 
 	echo -n "# installation in $inst "; echo_green "completed."
@@ -263,7 +272,7 @@ echo "#--------------------------------------------------------------"
 echo ""
 echo "# check for installed O-Saft"
 echo "#--------------------------------------------------------------"
-for o in o-saft.pl o-saft.tcl ; do
+for o in $osaft_exe $osaft_gui ; do
 	for p in `echo $PATH|tr ':' ' '` ; do
 		d="$p/$o"
 		if [ -e "$d" ]; then
@@ -278,26 +287,27 @@ echo ""
 echo "# check for installed O-Saft resource files"
 echo "#--------------------------------------------------------------"
 # currently no version check
-rc="$HOME/.o-saft.tcl"
-if [ -e "$rc" ]; then
-	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
-	echo -n "# found $rc\t"   && echo_green "$v"
-	echo -n "# exist $rc\t"   && echo_yellow "consider updating from contrib/.o-saft.tcl"
-else
-	echo -n "# miss. $rc\t"   && echo_yellow "consider copying contrib/.o-saft.tcl into your HOME directory: $HOME"
-fi
 for p in `echo $HOME $PATH|tr ':' ' '` ; do
-	rc="$p/.o-saft.pl"
+	rc="$p/.$osaft_exe"
 	if [ -e "$rc" ]; then
 		echo -n "# $rc\t" && echo_yellow "will be used when started in $p only"
 	fi
 done
+rc="$HOME/.$osaft_gui"
+if [ -e "$rc" ]; then
+	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
+	echo -n "# found $rc\t"   && echo_green "$v"
+	echo -n "# exist $rc\t"   && echo_yellow "consider updating from contrib/.$osaft_gui"
+else
+	echo -n "# miss. $rc\t"   && echo_yellow "consider copying contrib/.$osaft_gui into your HOME directory: $HOME"
+fi
 echo "#--------------------------------------------------------------"
 
 echo ""
 echo "# check for installed perl modules"
 echo "#--------------------------------------------------------------"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL Net::SSLinfo Net::SSLhello osaft OSaft::error_handler"
+modules="Net::DNS Net::SSLeay IO::Socket::SSL 
+	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
 	echo -n "# testing for $m ...\t"
 	v=`perl -M$m -le 'printf"\t%s",$'$m'::VERSION' 2>/dev/null`
@@ -311,6 +321,7 @@ for m in $modules ; do
 		  'Net::SSLinfo' | 'Net::SSLhello') c="green"; ;;
 		  'OSaft::error_handler' | 'osaft') c="green"; ;;
 		  'OSaft::Ciphers' )                c="green"; ;;
+		  'OSaft::Doc::Data' )              c="green"; ;;
 		  *) c=`perl -le "print (($expect > $v) ? 'red' : 'green')"`; ;;
 		esac
 		[ "$c" = "green" ] && echo_green "$v"
@@ -324,6 +335,7 @@ for m in $modules ; do
 		echo e $err
 	fi
 done
+exit
 echo "#--------------------------------------------------------------"
 
 echo ""
@@ -331,7 +343,7 @@ echo "# check for important perl modules used by O-Saft"
 echo "#--------------------------------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 for p in `echo $PATH|tr ':' ' '` ; do
-	o="$p/o-saft.pl"
+	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
 	echo "# testing $o ...\t"
 	for m in $modules ; do
@@ -353,8 +365,8 @@ echo ""
 echo "# check for openssl executable used by O-Saft"
 echo "#--------------------------------------------------------------"
 for p in `echo $PATH|tr ':' ' '` ; do
-	o="$p/yeast.pl"
-	r="$p/.o-saft.pl"
+	o="$p/$osaft_exe"
+	r="$p/.$osaft_exe"
 	if [ -x "$o" ]; then
 		(
 		cd $p
