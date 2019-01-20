@@ -1,4 +1,59 @@
 
+Version: 19.01.19
+  BUGFIX
+    * t/Makefile.*: BT: macro ALL.inc.type corrected
+    * osaft.pm: BF: +fingerprint_sha2 honors --format=hex
+    * o-saft.pl: BF: printing header (for list of ciphers) corrected
+    * o-saft.pl: BF: "Ciphers: Summary" prints correct numbers if no ciphers found
+    * o-saft.pl: BF: --legacy=key disabled; --label=key enabled (honors --header option)
+  CHANGES
+    * t/Makefile.*: ET: targets simplified and unified; critic345 implemented
+    * o-saft.pl: EF: +cipher results are sorted according "severity/security risk"
+  NEW
+    * o-saft.pl: NF: --help=cmd and --help=cfg-cmd added
+    * o-saft.pl: NT: +session_startdate and +session_starttime added
+    * o-saft.pl: NF: new option --legacy=owasp for +cipher
+    * o-saft.pl: NF: new option --label=long|short|key
+    * o-saft.pl: NF: alias commands for CVEs added
+    * t/Makefile.misc: targets for profiling
+
+Version: 18.10.18
+  BUGFIX
+    * o-saft-docker: use correct VERSION in docker_build()
+    * o-saft-man.pm: output for --help=cfg-text correctd
+    * o-saft-man.pm: HTML encode << ; CSS improved
+    * o-saft.pl: warning added if https request failed
+    * o-saft.pl: --exit=MAIN corrected
+    * o-saft.tcl: value None not highlighted
+    * o-saft.tcl: --docker and --id=* handled correctly
+    * t/Makefile.opt: added (missed at github)
+    * t/Makefile: message-% rule description to avoid syntax errors
+    * Makefile: missing files t/Makefile.exit, t/Makefile.FQDN added to ALL.Makefiles
+    * Makefile: dependencies for generated files improved
+  CHANGES
+    * o-saft-docker: docker_build() uses OSAFT_VM_SHA_OSAFT environment variable
+    * contrib/build_openssl.sh renamed to contrib/install_openssl.sh
+    * o-saft-dbx.pm: trace and verbose output use cfg{prefix_trace} and cfg{prefix_verbose} instead of cfg{mename}
+    * t/Makefile.*: various minor bugfixes
+    * Makefile: install target improved
+    * Net::SSLinfo.pm: set https_body to private string if https request fails
+    * osaft: call other tools with proper path
+    * osaft.pm: cipher suites for RFC 8446 (TLS 1.3) added
+    * o-saft-man.pm: new button to change schema in generated o-saft.cgi.html
+    * o-saft-man.pm: online documentation in generated html improved
+    * --help: section TESTING added
+    * o-saft.tcl: using o-saft.pl in docker container improved
+    * t/o-saft_bench renamed to t/o-saft_bench.sh
+    * t/Makefile* improved
+  NEW
+    * "help"-Button foreach --help=* in o-saft.cgi.html
+    * --help=cipherpattern added
+    * options -comp and -no_comp implemented (OP_NO_COMPRESSION)
+    * Makefile.help: cloc* target added
+    * o-saft-man.pm: cgi and html page provides discrete commands
+    * o-saft-man.pm: cgi page provides input fields for options with values
+    * o-saft-man.pm: "return to top" button in generated .cgi.html added
+
 Version: 18.07.18
   BUGFIX
     * o-saft: pass $* instead of $@
