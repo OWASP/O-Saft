@@ -609,7 +609,7 @@ I<+check> I<+cipher> I<+info> I<+http> I<+list> I<+quick> I<+sni> I<+sni_check> 
 
 A list of all available commands will be printed with:
 
-	o-saft.pl --help=cmd
+	o-saft.pl --help=cmds
 
 The description of all other commands will be printed with:
 
@@ -737,7 +737,7 @@ the used L<Net::SSLinfo|Net::SSLinfo> module.
 
 =head3 +quick
 
-Quick overview of checks. Implies  I<--enabled>  and  I<--short>.
+Quick overview of checks. Implies  I<--enabled>  and  I<--label=short>.
 
 =head3 +pfs
 
@@ -1020,7 +1020,7 @@ the description here is text provided by the user.
 
 B<WYSIWYG>
 
-=head3 --help=cmd
+=head3 --help=cmds
 
 Show available commands; short form.
 
@@ -1043,6 +1043,15 @@ Show available checks.
 =head3 --help=tools
 
 Description of tools around O-Saft, when, where and how to use.
+
+=head3 --help=cmd
+
+Show additional and user specified commands.
+
+=head3 --help=cfg-cmd
+
+Show additional and user specified commands.  Output can be use in
+L</RC-FILE>  or as option.
 
 =head3 --help=check-cfg
 
@@ -2123,10 +2132,35 @@ this lazy check with  I<--no-ignore-no-reply> .
 
 =head2 Options for output format
 
-=head3 --short
+=head3 --label=TYPE
 
-Use short, less descriptive, text labels for  I<+check>  and  I<+info>
-command.
+Defines the format of the descriptive text (label) for  I<+check>  and
+I<+info>  command.
+
+Following C<TYPE>s are supported:
+
+=head3 --label=long
+
+Prints full text for labels:
+
+	Certificate Common Name:  some.tld
+
+=head3 --label=short
+
+Prints short less descriptive text for labels:
+
+	Common Name:              some.tld
+
+=head3 --label=key
+
+Internal format: print name of key instead of text as label. Key is
+Prints name of key instead of text as label. The key is that of the
+internal data structure(s).
+
+	[cn]                      some.tld
+
+For ciphers and protocols, the corresponding  hex value  is used as
+key. Note that these values are unique.
 
 =head3 --legacy=TOOL
 
@@ -2230,6 +2264,10 @@ Internal format: mainly avoid tabs and spaces format is as follows:
 Internal format: pretty print each label in its own line,  followed
 by data prepended by tab character (useful for  I<+info>  only).
 
+=head3 --legacy=owasp
+
+Results for cipher checks use rating from OWASP Cipher Cheat Sheet.
+
 =head3 --legacy=quick
 
 Internal format: use tab as separator; ciphers are printed with bit
@@ -2238,13 +2276,6 @@ length (implies I<--tab>).
 =head3 --legacy=simple
 
 Internal default format.
-
-=head3 --legacy=key
-
-Internal format: print name of key instead of text as label. Key is
-that of the internal data structure(s).  For ciphers and protocols,
-the corresponding hex value is used as key.  Note that these values
-are unique.
 
 =head3 --format=0x
 
@@ -6495,7 +6526,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 18.11.18
+@(#) 19.01.19
 
 =head1 AUTHOR
 
@@ -6673,12 +6704,6 @@ authenticated and encrypted)
 
 =over
 
-=item ** ROBOT
-
-=back
-
-=over
-
 =item * verify CA chain:
 
 =back
@@ -6729,23 +6754,15 @@ ssl-cert-check -p 443 -s mail.google.com -i -V
 
 =over
 
-=item * Net::SSLeay
+=item * L<Net::SSLinfo|Net::SSLinfo>
 
 =back
 
 =over
 
-=item ** remove all warn() as Net::SSLeay should be silent
+=item ** Net::SSLeay::ctrl()  sometimes fails, but doesn't return error message
 
 =back
-
-=over
-
-=item ** L<Net::SSLinfo|Net::SSLinfo>.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
-
-=back
-
-return error message
 
 =over
 
@@ -6759,7 +6776,7 @@ see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
 
 =over
 
-=item ** Net::SSLeay::do_ssl_close()  does not realy work
+=item ** L<Net::SSLinfo|Net::SSLinfo>::do_ssl_close()  does not realy work
 
 =back
 
@@ -6865,15 +6882,16 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.8 18/11/02 08:58:51
+# # SID	@(#) glossary.txt 1.13 19/01/11 00:04:14
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
-# 0-RTT	zero round-trip time
+# 0-RTT	zero Round-Trip Time
 # AA	Attribute Authority
-# AAD	additional authenticated data
+# AAD	Additional Authenticated Data
 # ACME	Automated Certificate Management Environment
 # ACL	Access Control List
+# Adiantum	ChaCha stream cipher with Poly1305 and XChaCha12
 # ADH	Anonymous Diffie-Hellman
 # Adler32	hash function
 # AE	Authenticated Encryption
@@ -6889,16 +6907,17 @@ Generated with:
 # AMASTRID	stream cipher algorithm
 # ARC4	Alleged RC4 (see RC4)
 # ARCFOUR	alias for ARC4
-# ARIA	128-bit Symmetric Block Cipher
+# ARIA	128-bit Symmetric block cipher
+# ARX	add–rotate–xor
 # ASN	Autonomous System Number
 # ASN.1	Abstract Syntax Notation number One
 # AtE	Authenticate-then-Encrypt (see also MtE)
-# BACPA	Blockwise-adaptive chosen-plaintext attack
+# BACPA	Blockwise-Adaptive Chosen-Plaintext Attack
 # BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
 # BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
-# BADA55-VR-224	curve useing the same prime as NIST P-224
-# BADA55-VR-256	curve useing the same prime as NIST P-256
-# BADA55-VR-384	curve useing the same prime as NIST P-384
+# BADA55-VR-224	curve useng the same prime as NIST P-224
+# BADA55-VR-256	curve useng the same prime as NIST P-256
+# BADA55-VR-384	curve useng the same prime as NIST P-384
 # bcrypt	hash function (Niels Provos, David Mazières, 1999)
 # BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 # BLAKE2	fast secure hashing function (2012)
@@ -6920,7 +6939,7 @@ Generated with:
 # Brainpool	signature algorithm, from BSI
 # BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
 # Bullrun	NSA program to break encrypted communication
-# CAMELLIA	Encryption algorithm 128 bit (by Mitsubishi and NTT)
+# CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
 # CAST-128	Carlisle Adams and Stafford Tavares, block cipher
 # CAST5	alias for CAST-128
 # CAST-256	Carlisle Adams and Stafford Tavares, block cipher
@@ -6934,18 +6953,22 @@ Generated with:
 # CBC  	Ciplier Block Chaining (sometimes)
 # CBC-MAC	Cipher Block Chaining - Message Authentication Code
 # CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
+# CCA	chosen-ciphertext attack
 # CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
 # CCS	Change Cipher Spec (protocol)
 # CDH	?  Diffie-Hellman
 # CDP	CRL Distribution Points
+# CECPQ1	key-agreement algorithm; Combined elliptic Curve and Post-Quantum Cryptography Key Exchange
+# CECPQ2	Combined elliptic Curve and Post-Quantum Cryptography Key Exchange
 # CEK	Content Encryption Key
 # CFB	Cipher Feedback
 # CFB3	Cipher Feedback
 # CFBx	Cipher Feedback x bit mode
-# ChaCha	stream cipher algorithm
+# CFRG	Crypto Forum Research Group
+# ChaCha	stream cipher algorithm (with 256-bit key)
 # ChaCha8	see ChaCha
-# ChaCha12	see ChaCha
-# ChaCha20	see ChaCha
+# ChaCha12	see ChaCha (aka 12-round ChaCha)
+# ChaCha20	see ChaCha (aka 20-round ChaCha)
 # ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 # CHAP	Challenge Handshake Authentication Protocol
 # CKA	(PKCS#11)
@@ -6958,6 +6981,7 @@ Generated with:
 # CMVP	Cryptographic Module Validation Program (NIST)
 # CN	Common Name
 # CP	Certificate Policy (certificate extension)
+# CPA	chosen-plaintext attack
 # CPD	Certificate Policy Definitions
 # CPS	Certification Practice Statement
 # CRC	Cyclic Redundancy Check
@@ -6968,11 +6992,13 @@ Generated with:
 # CRAM	Challenge Response Authentication Mechanism
 # CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
 # CRL	Certificate Revocation List
+# CRYPTREC	Cryptography Research and Evaluation Committees
 # CSP	Certificate Service Provider
 # CSP 	Cryptographic Service Provider
 # CSP  	Critical Security Parameter (used in FIPS 140-2)
 # CSP:	Content Security Policy (used as HTTP header)
 # CSR	Certificate Signing Request
+# CSPRNG	Cryptographically Secure Pseudo-Random Number Generator
 # CT	Certificate Transparency
 # CTL	Certificate Trust Line
 # CTR	Counter Mode (sometimes: CM; block cipher mode)
@@ -7063,6 +7089,7 @@ Generated with:
 # ENCIPHER	synonym for encryption
 # EME	ECB-mask-ECB
 # EME 	Encoding Method for Encryption
+# ESNI	Encrypted Server Name Indication
 # ESP	Encapsulating Security Payload
 # ESSIV	Encrypted salt-sector initialization vector
 # EtA	Encrypt-then-Authenticate (see also EtM)
@@ -7096,6 +7123,7 @@ Generated with:
 # Grøstl	hash function (Lars Knudsen, 2010)
 # Goldilocks	see Curve448
 # GOST	Gossudarstwenny Standard (block cipher)
+# GOST 	hash function (used in GOST cipher suite)
 # Grainv1	stream cipher (64-bit IV)
 # Grainv128	stream cipher (96-bit IV)
 # GREASE	Generate Random Extensions And Sustain Extensibility
@@ -7119,11 +7147,12 @@ Generated with:
 # HIBE	hierarchical identity-based encryption
 # HKDF	HMAC-based Extract-and-Expand Key Derivation Function
 # HNF-256	hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)
-# HMAC	keyed-Hash Message Authentication Code
+# HMAC	keyed-Hash Message Authentication Code (aka Hashed MAC)
 # HMQV	h? Menezes-Qu-Vanstone
 # HPC	Hasty Putting Cipher
 # HPKP	HTTP Public Key Pinning
 # HPolyC	ChaCha stream cipher with Poly1305 and XChaCha12, XChaCha20
+# HRSS	encryption algorithm
 # HSM	Hardware Security Module
 # HSR	Header + Secret + Random
 # HSTS	HTTP Strict Transport Security
@@ -7144,6 +7173,7 @@ Generated with:
 # IND-CPA	Indistinguishability of encryptions under chosen-plaintext attack
 # INT-CTXT	Integrity of ciphertext
 # INT-PTXT	Integrity of plaintext
+# IRTF	Internet Research Task Force
 # ISAKMP	Internet Security Association and Key Management Protocol
 # IV	Initialization Vector
 # JH	hash function (Hongjun Wu, 2011)
@@ -7171,8 +7201,9 @@ Generated with:
 # Logjam	Attack to force server to downgrade to export ciphers
 # LRA	Local Registration Authority
 # LRW	Liskov, Rivest, and Wagner (blok encryption)
+# Lucifer	block cipher (developed at IBM in the 1970s)
 # Lucky 13	Break SSL/TLS Protocol
-# MARS	
+# MARS	128-bit block cipher (developed at IBM)
 # MAC	Message Authentication Code
 # MCF	Modular Crypt Format
 # MDC	Modification Detection Code
@@ -7188,8 +7219,10 @@ Generated with:
 # MISTY1	block cipher algorithm
 # MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 # MtE	MAC-then-encrypt (see also AtE)
+# NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 # NCP	Normalized Certification Policy (according TS 102 042)
 # Neokeon	symmetric block cipher algorithm
+# NewHope	post-quantum key exchange
 # nistp192	alias for P-192
 # nistp224	alias for P-224
 # nistp256	alias for P-256
@@ -7263,21 +7296,22 @@ Generated with:
 # PKP	Public-Key-Pins
 # PM	Policy Mappings (certificate extension)
 # PMAC	Parallelizable MAC (by Phillip Rogaway)
-# PMS	pre-master secret
-# Poly1305	Authenticator
+# PMS	Pre-Master Secret
+# Poly1305	Authenticator (MAC)
 # Poly1305-AES	MAC (by D. Bernstein)
 # POP	Proof of Possession
 # POODLE	Padding Oracle On Downgraded Legacy Encryption
 # PQC	Post-Quantum Crypto
-# PRF	pseudo-random function
-# PRP	pseudo-random permutation
+# PRF	Pseudo-Random Function
+# PRP	Pseudo-Random Permutation
 # prime192v1	alias for P-192
 # prime224v1	alias for P-224
 # prime256v1	alias for P-256
 # prime384v1	alias for P-384
 # prime521v1	alias for P-521
-# PRNG	pseudo-random number generator
+# PRNG	Pseudo-Random Number Generator
 # PSK	Pre-shared Key
+# PSKC	Portable Symmetric Key Container
 # PTG	Physical Random Generator
 # PVT	Public Validation Token
 # PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
@@ -7296,6 +7330,7 @@ Generated with:
 # RFC	Request for Comments
 # Rijndael	symmetric block cipher algorithm (AES)
 # RIPEMD	RACE Integrity Primitives Evaluation Message Digest
+# RLWE	Ring Learning-with-Errors
 # RMAC	Randomized MAC (block cipher authentication mode)
 # RNG	Random Number Generator
 # ROT-13	see XOR
@@ -7333,7 +7368,7 @@ Generated with:
 # secp256r1	alias for P-256
 # secp384r1	alias for P-384
 # secp521r1	alias for P-521
-# SEED	128-bit Symmetric Block Cipher
+# SEED	128-bit Symmetric block cipher
 # Serpent	symmetric key block cipher (128 bit)
 # SGC	Server-Gated Cryptography
 # SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
@@ -7366,12 +7401,12 @@ Generated with:
 # Skein-512-256	see Skein (256 bits)
 # Skein-512-512	see Skein (512 bits)
 # Skein-1024-1024	see Skein (1024 bits)
-# SKID	subject key ID (certificate extension)
+# SKID	Subject Key ID (certificate extension)
 # SKIP	Message Skipping Attacks on TLS
 # SKIP-TLS	see SKIP
 # Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 # SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
-# SM4	Block Cipher Algorithm
+# SM4	block cipher algorithm
 # SMS4	see SM4
 # SMACK	State Machine AttaCKs
 # Snefu	hash function
@@ -7381,6 +7416,7 @@ Generated with:
 # Snuffle 2005	see Salsa20
 # Snuffle 2008	see ChaCha
 # Sosemanuk	stream cipher algorithm
+# Speck	block cipher algorithm
 # SPD	Security Policy Database
 # SPDY	Google's application-layer protocol on top of SSL
 # SPECK	block cipher combining
@@ -7389,7 +7425,7 @@ Generated with:
 # SPI	Security Parameters Index
 # SPKI	Subject Public Key Infrastructure
 # SPN	Substitution-Permutation Network
-# SPRP	strong pseudo-random permutation
+# SPRP	Strong Pseudo-Random Permutation
 # Square	block cipher
 # SRI	Subresource Integrity
 # SRP	Secure Remote Password protocol
@@ -7403,10 +7439,14 @@ Generated with:
 # SSP	Security Support Provider
 # SSPI	Security Support Provider Interface
 # SST	Serialized Certificate Store format
-# STES	stream cipher
+# STES	stream cipher algorithm
+# Streebog	hash function
+# Streebog-256	see Streebog
+# Streebog-512	see Streebog
 # STS	Strict Transport Security
 # STS 	Station-to-Station protocol
-# Sweet32	Sweet32: Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
+# SUF-CMA	Strong UnForgeability against Chosen-Message Attacks
+# Sweet32	Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
 # SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
 # SWIFFTX	see SWIFFT
 # TA	Trust Agent
@@ -7439,15 +7479,16 @@ Generated with:
 # UC 	Unified Capabilities
 # UC	Unified Communications (SSL Certificate using SAN)
 # UCC	Unified Communications Certificate (rarley used)
-# UMAC	Universal hashing MAC; optimized for 32-bit architectures
+# UMAC	message authentication code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 # URI	Uniform Resource Identifier
 # URL	Uniform Resource Locator
 # VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
-# VMPC	stream cipher
+# VMPC	stream cipher algorithm
 # VR-224	alias for BADA55-VR-224
 # VR-256	alias for BADA55-VR-256
 # VR-384	alias for BADA55-VR-384
 # WHIRLPOOL	hash function
+# WPAD	Web Proxy Auto-Discovery
 # wolfSSL	SSL library mainly intended and used for embedded and real-time systems
 # X.680	X.680: ASN.1
 # X.509	X.509: The Directory - Authentication Framework
@@ -7482,7 +7523,7 @@ Generated with:
 # =head1 rfc
 
 
-# # SID	@(#) rfc.txt 1.7 18/10/28 07:57:35
+# # SID	@(#) rfc.txt 1.11 19/01/11 00:05:23
 # 
 # # number| title / description
 # #------+----------------------------------------------------------------------+
@@ -7491,12 +7532,14 @@ Generated with:
 # #	http://tools.ietf.org/rfc/rfcXXXX.txt
 # url	http://tools.ietf.org/
 # 6101	SSL Version 3.0
+# 6601	SSL Version 3.0
 # 2246	TLS Version 1.0 (with Cipher Suites)
 # 4346	TLS Version 1.1 (with Cipher Suites)
 # 5246	TLS Version 1.2 (with Cipher Suites)
 # 8446	TLS Version 1.3 (with Cipher Suites)
 # 4347	DTLS Version 0.9
 # 6347	DTLS Version 1.2
+# 8447	IANA Registry Updates for TLS and DTLS
 # 2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
 # 7540	Hypertext Transfer Protocol Version 2 (HTTP/2)
 # 7230	HTTP/1.1: Message Syntax and Routing
@@ -7520,6 +7563,7 @@ Generated with:
 # 4753	ECP Groups for IKE and IKEv2
 # 4754	IKE and IKEv2 Authentication Using the Elliptic Curve Digital Signature Algorithm (ECDSA)
 # 2412	AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec)
+# 2817	Upgrading to TLS Within HTTP/1.1
 # 2818	HTTP Over TLS
 # 2945	SRP Authentication & Key Exchange System
 # 2986	PKCS#10
@@ -7539,11 +7583,13 @@ Generated with:
 # 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
 # 3749	TLS Compression Method (obsolete)
 # 3943	TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)
+# 4680	TLS Handshake Message for Supplemental Data
 # 4749	TLS Compression Methods
 # 3546	TLS Extensions (obsolete)
 # 4366	TLS Extensions
 # 5746	TLS Extension: Renegotiation Indication Extension
 # 5764	TLS Extension: Secure Real-time Transport Protocol (SRTP)
+# 5878	TLS Extension: Authorization
 # 5929	TLS Extension: Channel Bindings
 # 6066	TLS Extension: Extension Definitions
 # 6520	TLS Extension: Heartbeat
@@ -7554,6 +7600,7 @@ Generated with:
 # 6961	TLS Multiple Certificate Status Request Extension
 # 7627	TLS Session Hash and Extended Master Secret Extension
 # 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
+# 7568	Deprecating Secure Sockets Layer Version 3.0
 # 6460	NSA Suite B Profile for TLS
 # 2560	Online Certificate Status Protocol (OCSP, obsolete)
 # 6267	Online Certificate Status Protocol Algorithm Agility (OCSP, obsolete)
@@ -7567,10 +7614,13 @@ Generated with:
 # 5480	X509 PKI Elliptic Curve Cryptography Subject
 # 5758	X509 PKI Additional Algorithms and Identifiers for DSA and ECDSA
 # 6960	X509 Online Certificate Status Protocol (OCSP)
+# 8410	X509 PKI Algorithm Identifiers for Ed25519, Ed448, X25519, and X448
 # 4132	Addition of Camellia Cipher Suites to TLS
 # 4162	Addition of SEED Cipher Suites to TLS
 # 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
+# 4418	UMAC: Message Authentication Code using Universal Hashing
 # 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
+# 6986	GOST R 34.11-2012: Hash Function
 # 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 # 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
 # 5054	Secure Remote Password (SRP) Protocol for TLS Authentication
@@ -7583,12 +7633,14 @@ Generated with:
 # 5589	Session Initiation Protocol (SIP) Call Control - Transfer
 # 6040	Tunnelling of Explicit Congestion Notification
 # 6090	Fundamental Elliptic Curve Cryptography Algorithms
-# 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
+# 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS (obsolete)
 # 5639	Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation
 # 5903	Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2
 # 6507	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption (ECCSI)
 # 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 # 7748	Elliptic Curve for Security
+# 8422	Elliptic Curve Cryptography (ECC) Cipher Suites for TLS Versions 1.2 and Earlier
+# 5528	Camellia Counter Mode and Camellia Counter with CBC-MAC Mode Algorithms
 # 5741	RFC Streams, Headers, and Boilerplates
 # 5794	Description of the ARIA Encryption Algorithm
 # 5932	Camellia Cipher Suites for TLS
@@ -7603,11 +7655,14 @@ Generated with:
 # 6125	Representation and Verification of Domain-Based Application Service (PKIX) for TLS
 # 6797	HTTP Strict Transport Security (HSTS)
 # 6962	Certificate Transparency
+# 6979	Deterministic Usage of the Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
 # 7366	Encrypt-then-MAC for TLS and DTLS
 # 7457	Summarizing Known Attacks on TLS and DTLS
+# 7465	Prohibiting RC4 Cipher Suites
 # 7469	Public Key Pinning Extension for HTTP
 # 7525	Recommendations for Secure Use of TLS and DTLS
-# 7539	ChaCha20 and Poly1305 for IETF Protocols
+# 7539	ChaCha20 and Poly1305 for IETF Protocols (obsolete)
+# 8439	ChaCha20 and Poly1305 for IETF Protocols
 # 7627	TLS Session Hash and Extended Master Secret Extension
 # 7905	ChaCha20-Poly1305 Cipher Suites for TLS
 # 7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
