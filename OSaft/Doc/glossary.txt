@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.13 19/01/11 00:04:14
+# SID	@(#) glossary.txt 1.14 19/02/12 13:11:56
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -97,6 +97,8 @@ CMP	X509 Certificate Management Protocol
 CMS	Cryptographic Message Syntax
 CMVP	Cryptographic Module Validation Program (NIST)
 CN	Common Name
+CNT_IMIT	cipher suite
+CTR_OMAC	cipher suite (GOST R 34.12-2015 aka GOST3412-2015)
 CP	Certificate Policy (certificate extension)
 CPA	chosen-plaintext attack
 CPD	Certificate Policy Definitions
@@ -241,6 +243,17 @@ Grøstl	hash function (Lars Knudsen, 2010)
 Goldilocks	see Curve448
 GOST	Gossudarstwenny Standard (block cipher)
 GOST 	hash function (used in GOST cipher suite)
+GOST28147-89	block cipher
+GOST3410-2012	signature algorithm
+GOST3411-2012	hash algorith
+GOST3412-2015	block cipher
+GOST3413-2015	modes of operation for block ciphers
+GOST3431095	cryptographic algorithm?
+GOST3431004	cryptographic algorithm?
+GOST3431195	cryptographic algorithm?
+GOSTR341001	cryptographic algorithm?
+GOSTR341094	cryptographic algorithm?
+GOSTR341194	cryptographic algorithm?
 Grainv1	stream cipher (64-bit IV)
 Grainv128	stream cipher (96-bit IV)
 GREASE	Generate Random Extensions And Sustain Extensibility
@@ -309,6 +322,7 @@ KPAK	KMS Public Authentication Key
 KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
+Kuznyechik	block cipher  (used in GOST)
 LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
 LEXv2	stream cipher algorithm
 LFSR	Linear Feedback Shift Register
