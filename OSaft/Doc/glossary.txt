@@ -1,9 +1,10 @@
 
-# SID	@(#) glossary.txt 1.14 19/02/12 13:11:56
+# SID	@(#) glossary.txt 1.15 19/02/13 02:04:27
 
 # acronym | description
 #------+----------------------------------------------------------------------+
 0-RTT	zero Round-Trip Time
+3Fish	see Threefish
 AA	Attribute Authority
 AAD	Additional Authenticated Data
 ACME	Automated Certificate Management Environment
@@ -322,8 +323,11 @@ KPAK	KMS Public Authentication Key
 KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
-Kuznyechik	block cipher  (used in GOST)
+Kuznyechik	blockcipher  (used in GOST)
 LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
+LEA	? algorithm
+LEA-128	see LEA
+LEA-256	see LEA
 LEXv2	stream cipher algorithm
 LFSR	Linear Feedback Shift Register
 LION	block cipher combining stream cipher and hash function
@@ -527,6 +531,7 @@ SHS	Secure Hash Standard
 SIA	Subject Information Access (certificate extension)
 SIC	Segmented Integer Counter (alias for CTR)
 SIMON	block cipher combining
+SIMON	block cipher combining (NSA algorithm, questionable security)
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 Skein-256-256	see Skein (256 bits)
 Skein-512-256	see Skein (256 bits)
@@ -537,7 +542,7 @@ SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
-SM4	block cipher algorithm
+SM4	block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
 SMS4	see SM4
 SMACK	State Machine AttaCKs
 Snefu	hash function
@@ -547,7 +552,12 @@ SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdah
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
 Sosemanuk	stream cipher algorithm
-Speck	block cipher algorithm
+SPARX	? algorithm
+Speck	block cipher algorithm (NSA algorithm, questionable security)
+Speck64	see Speck
+Speck128	see Speck
+Speck256	see Speck
+Speck256-XTS	see Speck
 SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
 SPECK	block cipher combining
