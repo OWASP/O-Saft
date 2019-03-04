@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.6 19/01/07 20:19:06
+# SID	@(#) links.txt 1.7 19/03/04 01:45:07
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -36,10 +36,12 @@ PFS	http://en.wikipedia.org/wiki/Perfect_forward_secrecy
 Resumtion	https://www.imperialviolet.org/2011/11/22/forwardsecret.html
 Resumtion	https://www.imperialviolet.org/2013/06/27/botchingpfs.html
 SCSV	https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
+Security Flaws by CBC Padding	https://link.springer.com/content/pdf/10.1007/3-540-46035-7_35.pdf
 Server Pinning	https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
 SNI apache	https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
 SIMON and SPECK	https://eprint.iacr.org/2013/404
 SM4	https://tools.ietf.org/id/draft-crypto-sm4-00.html
+Pseudo Constant Time Implementations of TLS	https://eprint.iacr.org/2018/747.pdf
 LatinDances	http://cr.yp.to/rumba20/newfeatures-20071218.pdf
 LatinDances2	https://eprint.iacr.org/2012/065.pdf
 Poly1305_Donna	https://github.com/floodyberry/poly1305-donna
@@ -51,6 +53,7 @@ SPDY Protocol	http://www.chromium.org/spdy/spdy-protocol
 SRI	Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
 SRI (Mozilla)	https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
 TACK	http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
+TLS Attacker	https://www.nds.ruhr-uni-bochum.de/media/nds/veroeffentlichungen/2016/10/19/tls-attacker-ccs16.pdf
 TLS Lite	http://trevp.net/tlslite/
 Elliptic Curve	https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
 Elliptic Curve for IPsec	https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
@@ -64,21 +67,28 @@ Elliptic Curve      	http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pd
 Elliptic Curve       	https://datatracker.ietf.org/doc/draft-harkins-ikev3/
 XMSS	https://eprint.iacr.org/2011/484.pdf
 
-BEAST	https://vnhacker.blogspot.com/2011/09/beast.html
+3SHAKE	https://mitls.org/pages/attacks/3SHAKE
+Bar Mitzvah	https://www.blackhat.com/docs/asia-15/materials/asia-15-Mantin-Bar-Mitzvah-Attack-Breaking-SSL-With-13-Year-Old-RC4-Weakness-wp.pdf
+BEAST	https://vnhacker.blogspot.com/2011/09/beast.html https://nerdoholic.org/uploads/dergln/beast_part2/ssl_jun21.pdf
 BREACH	http://www.breachattack.com/
 CCS	http://ccsinjection.lepidum.co.jp/
-CRIME	http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
+CRIME	http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl https://www.gracefulsecurity.com/crime-against-tls/
 DROWN	https://drownattack.com/
+EFAIL	https://efail.de/ https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-poddebniak.pdf
 FREAK	https://freakattack.com/
 FREAK	https://mitls.org/pages/attacks/SMACK#freak
 Lucky 13	?
+Lucky 13 Microseconds	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.738.4741&rep=rep1&type=pdf
+Lucky 13 Strickes Back	http://v.wpi.edu/wp-content/uploads/Papers/Publications/asiaccs2015_lucky.pdf
 LogJam	https://weakdh.org/
-POODLE	https://www.openssl.org/~bodo/ssl-poodle.pdf
+NOMORE	https://www.rc4nomore.com/
+POODLE	https://www.openssl.org/~bodo/ssl-poodle.pdf  https://www.imperialviolet.org/2014/10/14/poodle.html  https://www.imperialviolet.org/2014/12/08/poodleagain.html
+ROCA	https://crocs.fi.muni.cz/public/papers/rsa_ccs17
 ROBOT	https://robotattack.org/
 SLOTH	https://www.mitls.org/pages/attacks/SLOTH
 SKIP	https://mitls.org/pages/attacks/SMACK
-SMACK	https://mitls.org/pages/attacks/SMACK
-Sweet32	https://sweet32.info/
+SMACK	https://mitls.org/pages/attacks/SMACK  https://www.smacktls.com/
+Sweet32	https://sweet32.info/  https://www.openssl.org/blog/blog/2016/08/24/sweet32/
 TIME	?
 
 # TS 102 042 : http://
