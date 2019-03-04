@@ -1,10 +1,11 @@
 
-# SID	@(#) glossary.txt 1.15 19/02/13 02:04:27
+# SID	@(#) glossary.txt 1.16 19/03/04 01:46:39
 
 # acronym | description
 #------+----------------------------------------------------------------------+
 0-RTT	zero Round-Trip Time
 3Fish	see Threefish
+3SHAKE	sometimes for: TLS Triple Handshake Attack
 AA	Attribute Authority
 AAD	Additional Authenticated Data
 ACME	Automated Certificate Management Environment
@@ -36,6 +37,7 @@ BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
 BADA55-VR-224	curve useng the same prime as NIST P-224
 BADA55-VR-256	curve useng the same prime as NIST P-256
 BADA55-VR-384	curve useng the same prime as NIST P-384
+Bar Mitzvah	vilnerabilty of TLS sessions protected with RC4
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
@@ -338,6 +340,7 @@ LRA	Local Registration Authority
 LRW	Liskov, Rivest, and Wagner (blok encryption)
 Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky 13	Break SSL/TLS Protocol
+Lucky Thirteen	see Lucky 13
 MARS	128-bit block cipher (developed at IBM)
 MAC	Message Authentication Code
 MCF	Modular Crypt Format
@@ -370,6 +373,7 @@ NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
 NTRU	asymetric cipher algorithm using lattice reduction
+NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
 NULL	no encryption
 NUMS	nothing up my sleeve numbers
 OAEP	Optimal Asymmetric Encryption Padding
@@ -468,6 +472,7 @@ RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 RLWE	Ring Learning-with-Errors
 RMAC	Randomized MAC (block cipher authentication mode)
 RNG	Random Number Generator
+ROCA	Return of the Coppersmith Attack
 ROT-13	see XOR
 ROBOT	Return Of Bleichenbacher's Oracle Threat
 RTP	Real-time Transport Protocol
