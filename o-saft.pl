@@ -6929,7 +6929,7 @@ sub printusage_exit     {
   $me +info     your.tld
   $me +check    your.tld
   $me +cipher   your.tld
-  $me +cipherll your.tld
+  $me +cipherall your.tld
 # for more help use:
   $me --help
     ";
