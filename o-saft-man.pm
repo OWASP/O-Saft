@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.272 19/01/20 22:35:16";
+my  $SID_man= "@(#) o-saft-man.pm 1.273 19/03/05 18:25:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -273,6 +273,31 @@ EoHTML
     return;
 } # _man_html_head
 
+sub _man_html_note  {
+    #? print "Note" text box for CGI usage; only visible with fragment #Note
+    _man_dbx("_man_html_note() ...");
+    print << 'EoHTML';
+ <style>
+  /* message box "Note", if necessary */
+  .m            {opacity:0; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:rgba(0,0,0,0.8); top:0; right:0; bottom:0; left:0; z-index:9; }
+  .m:target     {opacity:1; pointer-events:auto; }
+  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:#fff; background:linear-gradient(#fff, #226); }
+  .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:#226; color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 1px 3px #5bb; }
+  .m > div > a:hover  {background: #5bb; }
+  .m > div > h3       {margin:-0.8em; border-bottom:1px solid black; margin-bottom:1em; }
+  .m > div > h3:before{content:"\00a0\00a0\00a0" }
+ </style>
+ <div id="Note" class="m"> <div>
+  <a href="" title="I understand">X</a>
+  <h3>O-Saft as CGI </h3>
+  <p>This is a sample implementation to show O-Saft's functionality.</p>
+  <p>It is not intended to be used for regular tests of foreign servers.</p>
+  <p>The server may be slow and is short on memory, so please don't expect miracles.</p>
+ </div> </div>
+EoHTML
+    return;
+} # _man_html_note
+
 sub _man_help_button{
     #? return href tag for a help button
     my $url   = shift;
@@ -378,7 +403,7 @@ sub _man_form_foot  {
   toggle_checked("--header");       // want nice output
   toggle_checked("--enabled");      // avoid huge cipher lists
   toggle_checked("--no-tlsv13");    // most likely not yet implemented
-</script>
+ </script>
 EoHTML
     return;
 } # _man_form_foot
@@ -1209,6 +1234,7 @@ sub man_cgi         {
     _man_form_head(  $cgi_bin);
     _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     _man_form_foot(  $cgi_bin);
+    _man_html_note();   # not exactly the place in HTML for this <div>, but syntactically ok
     _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
     return;
