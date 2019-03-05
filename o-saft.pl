@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.850 19/01/20 23:10:09",
-    STR_VERSION => "19.01.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.851 19/03/05 10:53:16",
+    STR_VERSION => "05.03.19",          # <== our official version number
 };
 
 sub _set_binmode    {
