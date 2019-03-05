@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.275 19/03/05 21:03:25";
+my  $SID_man= "@(#) o-saft-man.pm 1.276 19/03/05 21:15:10";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -64,7 +64,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ my $v = '1.275'; $v = STR_VERSION if (defined STR_VERSION); return $v; }
+sub _man_get_version{ no strict; my $v = '1.276'; $v = STR_VERSION if (defined STR_VERSION); return $v; }
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
