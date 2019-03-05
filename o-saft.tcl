@@ -383,7 +383,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.191 Sommer Edition 2018
+#?      @(#) 1.192 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -453,10 +453,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.191 19/01/19 11:46:44"
-set cfg(mySID)  "$cfg(SID) Sommer Edition 2018"
+set cfg(SID)    "@(#) o-saft.tcl 1.192 19/03/05 23:42:45"
+set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.191}
+set cfg(VERSION) {1.192}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2473,7 +2473,10 @@ proc create_win   {parent title cmd} {
         # Note that "Discrete Commands ..." in cfg(HELP) are missing and have
         # no description; must use that from cfg(CMDS).
 
-    set skip 1;     # skip data until $title found
+    set last_key "";# remember last option
+    set last_obj "";# remember last entry widget
+    set values   {};# collected values of last option
+    set skip 1     ;# skip data until $title found
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
         if {[regexp $prg(rexOUT-cmd) $dat]} { set skip 1; };# next group starts
@@ -2510,7 +2513,7 @@ proc create_win   {parent title cmd} {
         set tip [regsub {[^\s]+\s*}   $dat {} ]
         set dat [lindex [split $dat " "] 0]
 
-        _dbx " create: »$dat« $cmd"
+        _dbx " verify: »$dat«\t$cmd"
         set name [str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
@@ -2524,15 +2527,26 @@ proc create_win   {parent title cmd} {
             #dbx# puts "create_win: check: $this.$name.c -variable cfg($dat)"
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)]  -side left -anchor w -fill x
         } else {
-            regexp $prg(rexOPT-cfg) $l dumm idx val
+            regexp $prg(rexOPT-cfg) $l dumm idx val    ;# --idx=val --> --idx val
+            if {$last_key eq $idx} { lappend values $val; continue };# ignore repeated options, but keep value
+            if {[winfo exists $last_obj]} {
+                set txt "<text>"
+                if {[llength $values] > 0} { set txt [join $values { | }]; }
+                create_tip $last_obj "possible values: $txt"   ;# $tip may containing collected values
+            }
+            _dbx " create: »$idx« »$val«"
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
             pack [label  $this.$name.l -text $idx -width $myX(lenl)] -fill x -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)]      -fill x -side left -expand 1
+            set last_obj $this.$name.e
+            set last_key $idx
+            set values {}
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val }   ;# only set if all lower case
             $this.$name.l config -font TkDefaultFont   ;# reset to default as Label is bold
         }
         grid $this.$name -sticky w
         create_tip $this.$name "$tip"  ;# $tip may be empty, i.e. for options
+        # TODO: create tooltip with $values for very last $this.$name.e
     }
     pack $this -fill both -expand 1    ;# delayed pac for better performance
 
@@ -2542,9 +2556,9 @@ proc create_win   {parent title cmd} {
     # sorting is vertical (horizontal sorting commented out)
     set slaves [lsort -nocase [grid slaves $this]]
     set cnt [llength $slaves]
-    if {$cnt < 1} { return };   # avoid math errors, no need to resize window
-    set max 2;                          # 3 columns: 0..2
-    if {$cmd eq "CMD"} { incr max };    # 4 columns in Commands
+    if {$cnt < 1} { return }   ;# avoid math errors, no need to resize window
+    set max 2                          ;# 3 columns: 0..2
+    if {$cmd eq "CMD"} { incr max }    ;# 4 columns in Commands
     set rows [expr $cnt / [expr $max + 1]]
     _dbx " cnt/(max+1) = rows: $cnt/($max+1) = $rows"
     set col 0
