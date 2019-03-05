@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.273 19/03/05 18:25:56";
+my  $SID_man= "@(#) o-saft-man.pm 1.274 19/03/05 20:53:43";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -49,6 +49,8 @@ my  $version= "$SID_man";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
+{ no strict;
+}
 my  $mytool = qr/(?:$parent|o-saft.tcl|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
@@ -60,6 +62,10 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
+
+sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
+sub _man_get_version{ my $v = '1.274'; $v = STR_VERSION if (defined STR_VERSION); return $v; }
+    # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
     #? get filename containing text for specified keyword
@@ -85,18 +91,24 @@ sub _man_http_head  {
 sub _man_html_head  {
     #? print footer of HTML page
     # SEE HTML:JavaScript
-    my $vers = shift;
-    _man_dbx("_man_html_head($vers) ...");
+    _man_dbx("_man_html_head() ...");
     print << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title> . :  O - S a f t  &#151;  OWASP - SSL advanced forensic tool : . </title>
+<title><!-- set below --></title>
 <script>
 function $(id){return document.getElementById(id);}
 function d(id){return $(id).style;}
 function toggle_checked(id){id=$(id);id.checked=(id.checked=='false')?'true':'false';;}
 function toggle_display(id){id.display=(id.display=='none')?'block':'none';}
+function osaft_title(txt, ver){
+        document.title      = ". : " + txt + " : .";
+        $("title").title    = ver;
+        $("txt").innerText  = txt;
+        return;
+}
+
 function osaft_buttons(){
         var buttons = ['+quick', '+check', '+cipher', '+cipherall', '+info', '+protocols', '+vulns' ];
         var table   = $('osaft_buttons');
@@ -262,9 +274,7 @@ function toggle_handler(){
 </style>
 </head>
 <body>
-EoHTML
-    print << "EoHTML";
- <h2 title=$vers >O - S a f t &#160; &#151; &#160; OWASP - SSL advanced forensic tool
+ <h2 id=title title="" ><span id=txt ></span>
      <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all\naction and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
@@ -411,11 +421,16 @@ EoHTML
 sub _man_html_foot  {
     #? print footer of HTML page
     _man_dbx("_man_html_foot() ...");
+    my $title   = _man_get_title();
+    my $vers    = _man_get_version();
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
  <hr><p><span style="display:none">&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
+ <script>
+  osaft_title("$title", "$vers");
+ </script>
 </body></html>
 EoHTML
     return;
@@ -1208,7 +1223,7 @@ sub man_html        {
     # for concept and functionality of the generated page  SEE HTML:HTML
     _man_dbx("man_html() ...");
     _man_http_head();
-    _man_html_head(STR_VERSION);
+    _man_html_head();
     _man_html('html', '', 'NAME', 'TODO');  # print complete help
     _man_html_foot();
     return;
@@ -1230,7 +1245,7 @@ sub man_cgi         {
         # get action from --usr-action= or set to default (defensive programming)
     _man_dbx("man_cgi() ...");
     _man_http_head();
-    _man_html_head(STR_VERSION);
+    _man_html_head();
     _man_form_head(  $cgi_bin);
     _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     _man_form_foot(  $cgi_bin);
