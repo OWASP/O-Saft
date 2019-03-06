@@ -329,7 +329,7 @@ exec wish "$0" ${1+"$@"}
 #.          cfg()       - global variable containing most configurations
 #.          cfg_colors()- global variable containing colours for widgets
 #.          cfg_texts() - global variable containing texts for widgets
-#.          cfg_tips()  - global variable containing texts for tooltips
+#.          cfg_tipps() - global variable containing texts for tooltips
 #.          search()    - global variable containing texts used for searching
 #.          myX()       - global variable for windows and window manager
 #.          tab()       - global variable containing results of executions
@@ -383,7 +383,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.192 Spring Edition 2019
+#?      @(#) 1.193 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -453,10 +453,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.192 19/03/05 23:42:45"
+set cfg(SID)    "@(#) o-saft.tcl 1.193 19/03/06 16:59:47"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.192}
+set cfg(VERSION) {1.193}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -642,21 +642,21 @@ array set cfg_buttons "
     # using  cfg(RC).  Configurable are:  text (-text), background colour (-bg)
     # and the tooltip. Because configuering the above table is a bit cumbersome
     # for most users, we provide simple lists with key=value pairs. These lists
-    # are:  cfg_colors, cfg_texts and cfg_tips. The settings here are defaults,
+    # are: cfg_colors, cfg_texts and cfg_tipps. The settings here are defaults,
     # and may be redifined in cfg(RC) using  cfg_color, cfg_label and cfg_tipp.
     # These lists (arrays in Tcl terms) contain not just the button values, but
     # also values for other objects.  So the lists are initialized here for all
     # other values, and then the values from cfg_buttons are added.
     #
-    # array in cfg(RC)  array herein   (see also cfg_update() )
+    # array in cfg(RC)  array herein   (see also update_cfg() )
     #     cfg_color     cfg_colors
     #     cfg_label     cfg_texts
-    #     cfg_tipp      cfg_tips
+    #     cfg_tipp      cfg_tipps
 
-proc buttons_txt  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 0]; }
-proc buttons_bg   {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 1]; }
-proc buttons_img  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 2]; }
-proc buttons_tip  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 3]; }
+proc _get_btn_txt {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 0]; }
+proc _get_btn_bg  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 1]; }
+proc _get_btn_img {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 2]; }
+proc _get_btn_tip {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 3]; }
 
 array set cfg_colors "
     DESC        {-- CONFIGURATION colours used in GUI ------------------------}
@@ -674,7 +674,7 @@ array set cfg_texts "
     c_toggle    {toggle visibility\nof various texts}
 "
 
-array set cfg_tips "
+array set cfg_tipps "
     DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
     settings    {Open window with more settings}
     layout      {Format used in result TAB}
@@ -714,113 +714,26 @@ Changes apply to next +command.
     --no-sslv2  {do not check for SSLv2 ciphers}
     --no-tlsv13 {do not check for TLSv13 ciphers}
     docker-id   {Docker image ID (registry:tag) to be connected}
-"; # cfg_tips; # Note: text for tab* contain new lines.
+"; # cfg_tipps; # Note: text for tab* contain new lines.
 
 # now add default to cfg_* as described before
 foreach key [array names cfg_buttons] {
-    set cfg_colors($key) [buttons_bg  $key]
-    set cfg_texts($key)  [buttons_txt $key]
-    set cfg_tips($key)   [buttons_tip $key]
-    set cfg_images($key) [buttons_img $key]
+    set cfg_colors($key) [_get_btn_bg  $key]
+    set cfg_texts($key)  [_get_btn_txt $key]
+    set cfg_tipps($key)  [_get_btn_tip $key]
+    set cfg_images($key) [_get_btn_img $key]
 }
 
-proc cfg_update   {} {
-    #? legacy conversion of old (pre 1.86) keys from cfg(RC) aka .o-saft.tcl
-    #
-    # Until version 1.84, respectively 1.6 of cfg(RC), the variables in cfg(RC)
-    # were identical to the ones used herein:
-    #   cfg_color,  cfg_label, cfg_tipp
-    # As cfg(RC) will only be sourced, it needs to have the complete definition
-    # of each of these variables, otherwise we may run into some syntax errors.
-    # Starting with version 1.86, the variables herein have been renamed to:
-    #   cfg_colors, cfg_texts, cfg_tips
-    # and also some keys have been renamed.
-    # This function copies the settings from cfg(RC) to the internal variables.
-    # By doing this, the old keys are converted automatically (see switch cases
-    # below).
-    # Finally we remove the variables set by cfg(RC).
-    #
-    _dbx "()"
-    global cfg
-    if {[info exists cfg(RCSID)]==1} {
-        # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
-        _dbx " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
-        if {$cfg(RCmin) > $cfg(RCSID)} {
-            tk_messageBox -icon warning -title "$cfg(RC) version $cfg(RCSID)" \
-                -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
-        }
-    }
-    global cfg_colors cfg_color
-    foreach key [array names cfg_color] {
-        set value $cfg_color($key)
-        # keys used in version < 1.86
-        switch -exact $key {
-          {start}       { set cfg_colors(cmdstart)  $value }
-          {closew}      { set cfg_colors(closewin)  $value }
-          {search}      { set cfg_colors(helpsearch) $value }
-          {choosecolor} { set cfg_colors(tkcolor)   $value }
-          {choosefont}  { set cfg_colors(tkfont)    $value }
-          {plus}        { set cfg_colors(host_add)  $value }
-          {minus}       { set cfg_colors(host_del)  $value }
-          default       { set cfg_colors($key)      $value }
-        }
-    }
-    array unset cfg_color
-    global cfg_texts cfg_label
-    foreach key [array names cfg_label] {
-        set value $cfg_label($key)
-        switch -exact $key {
-          {start}       { set cfg_texts(cmdstart)   $value }
-          {close}       { set cfg_texts(closewin)   $value }
-          {search}      { set cfg_texts(helpsearch) $value }
-          {color}       { set cfg_texts(tkcolor)    $value }
-          {font}        { set cfg_texts(tkfont)     $value }
-          {plus}        { set cfg_texts(host_add)   $value }
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set cfg_texts($key)       $value }
-        }
-    }
-    array unset cfg_label
-    global cfg_tips cfg_tipp
-    foreach key [array names cfg_tipp] {
-        set value $cfg_tipp($key)
-        switch -exact $key {
-          {start}       { set cfg_tips(cmdstart)    $value }
-          {closew}      { set cfg_tips(closewin)    $value }
-          {showfilterconfig}  { set cfg_tips(filter) $value }
-          {resetfilterconfig} { set cfg_tips(reset)  $value }
-          {goback}      { set cfg_tips(help_prev)   $value }
-          {goforward}   { set cfg_tips(help_next)   $value }
-          {search}      { set cfg_tips(helpsearch)  $value }
-          {choosecolor} { set cfg_tips(tkcolor)     $value }
-          {choosefont}  { set cfg_tips(tkfont)      $value }
-          {plus}        { set cfg_tips(host_add)    $value }
-          {minus}       { set cfg_tips(host_del)    $value }
-          default       { set cfg_tips($key)        $value }
-        }
-    }
-    array unset cfg_tipp
-    global myX cfg_geo
-    foreach key [array names cfg_geo] {
-        set value $cfg_geo($key)
-        switch -exact $key {
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set myX($key)             $value }
-        }
-    }
-    array unset cfg_geo
-    global cfg cfg_cmd
-    foreach key [array names cfg_cmd] {
-        set value $cfg_cmd($key)
-        switch -exact $key {
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set cfg($key)             $value }
-        }
-    }
-    array unset cfg_geo
-
-   return
-}; # cfg_update
+proc _get_color   {key} { global cfg_colors;  return $cfg_colors($key) };
+    #? return color name for key from global cfg_colors variable
+proc _get_text    {key} { global cfg_texts;   return $cfg_texts($key)  };
+    #? return text string for key from global cfg_texts variable
+proc _get_tipp    {key} { global cfg_tipps;   return $cfg_tipps($key)  };
+    #? return text string for key from global cfg_tipps variable
+proc _get_image   {key} { global cfg_images;  return $cfg_images($key) };
+    #? return image for key from global cfg_images variablle
+proc _get_padx    {key} { global myX;         return $myX($key)        };
+    #? return padx value for key from global myX variable
 
 if {[regexp {indows} $tcl_platform(os)]} {
     # Some platforms are too stupid to run our executable prg(SAFT) directly,
@@ -925,7 +838,7 @@ set f_un(0)     {Underline matching text (0 or 1)}
 set f_rex(0)    {Regex to match text}
 set f_cmt(0)    {Description of regex}
 
-proc txt2arr      {str} {
+proc _txt2arr     {str} {
     #? convert string with filter definitions to arrays
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     set k 0
@@ -945,7 +858,7 @@ proc txt2arr      {str} {
         set f_rex($k) [lindex $_l 7]
         set f_cmt($k) [lindex $_l 8]
     }
-}; # txt2arr
+}; # _txt2arr
 
 #   Filters to match results are defined as tabular text.
 #   For better readability we do not use output of  "o-saft.pl +help=ourstr".
@@ -958,7 +871,7 @@ proc txt2arr      {str} {
 
 #   use map to replace variables (and short names to fit in 8 characters)
 
-txt2arr [string map "
+_txt2arr [string map "
     _lGreen lightgreen
     _yellow yellow
     _orange orange
@@ -1011,10 +924,19 @@ txt2arr [string map "
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
-proc pwarn        {txt} { puts "**WARNING: $txt" }
+proc _str2obj     {str} {
+    #? convert string to valid Tcl object name; returns new string
+    set name [regsub -all {[+]} $str  {Y}];     # commands
+    set name [regsub -all {[-]} $name {Z}];     # options (mainly)
+    set name [regsub -all {[^a-zA-Z0-9_]} $name {X}];
+    set name "o$name";  # first character must be lower case letter
+    return $name
+}; # _str2obj
+
+proc pwarn        {txt} { puts stderr "**WARNING: $txt"; return }
     #? output WARNING message
 
-proc perr         {txt} { puts "**ERROR: $txt" }
+proc perr         {txt} { puts stderr "**ERROR: $txt";   return }
     #? output ERROR message
 
 proc putv         {txt} {
@@ -1022,6 +944,7 @@ proc putv         {txt} {
     global cfg
     if {$cfg(VERB) <= 0} { return; }
     puts stderr "#\[$cfg(ICH)\]:$txt";
+    return
 }; # putv
 
 proc _ident       {cnt} {
@@ -1066,12 +989,14 @@ proc _dbx         {txt} {
     catch { dict get [info frame -1] proc } me; # name of procedure or error
     if {[regexp {not known in dictionary} $me]} { set me "." }; # is toplevel
     puts stderr "#dbx \[$cfg(ICH)\]$me$txt"
+    return
 }; # _dbx
 
 proc _trace_add   {cmd} {
     #? initilaize Tcl's tracing for given command or widget
     trace add execution $cmd enter _trace
     trace add execution $cmd leave _trace
+    return
 }; # _trace_add
 
 proc trace_commands  {} {
@@ -1096,9 +1021,10 @@ proc trace_buttons   {} {
             {Button}    { _trace_add $obj }
         }
     }
+    return
 }; # trace_buttons
 
-proc read_images  {theme} {
+proc read_images  {theme}   {
     #? read $cfg(IMG) if exists and not already done
     global cfg IMG
     _dbx "($theme)";
@@ -1118,14 +1044,112 @@ proc read_images  {theme} {
     return
 }; # read_images
 
+proc update_cfg   {}    {
+    #? legacy conversion of old (pre 1.86) keys from cfg(RC) aka .o-saft.tcl
+    #
+    # Until version 1.84, respectively 1.6 of cfg(RC), the variables in cfg(RC)
+    # were identical to the ones used herein:
+    #   cfg_color,  cfg_label, cfg_tipp
+    # As cfg(RC) will only be sourced, it needs to have the complete definition
+    # of each of these variables, otherwise we may run into some syntax errors.
+    # Starting with version 1.86, the variables herein have been renamed to:
+    #   cfg_colors, cfg_texts, cfg_tipps
+    # and also some keys have been renamed.
+    # This function copies the settings from cfg(RC) to the internal variables.
+    # By doing this, the old keys are converted automatically (see switch cases
+    # below).
+    # Finally we remove the variables set by cfg(RC).
+    #
+    _dbx "()"
+    global cfg
+    if {[info exists cfg(RCSID)]==1} {
+        # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
+        _dbx " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
+        if {$cfg(RCmin) > $cfg(RCSID)} {
+            tk_messageBox -icon warning -title "$cfg(RC) version $cfg(RCSID)" \
+                -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
+        }
+    }
+    global cfg_colors cfg_color
+    foreach key [array names cfg_color] {
+        set value $cfg_color($key)
+        # keys used in version < 1.86
+        switch -exact $key {
+          {start}       { set cfg_colors(cmdstart)  $value }
+          {closew}      { set cfg_colors(closewin)  $value }
+          {search}      { set cfg_colors(helpsearch) $value }
+          {choosecolor} { set cfg_colors(tkcolor)   $value }
+          {choosefont}  { set cfg_colors(tkfont)    $value }
+          {plus}        { set cfg_colors(host_add)  $value }
+          {minus}       { set cfg_colors(host_del)  $value }
+          default       { set cfg_colors($key)      $value }
+        }
+    }
+    array unset cfg_color
+    global cfg_texts cfg_label
+    foreach key [array names cfg_label] {
+        set value $cfg_label($key)
+        switch -exact $key {
+          {start}       { set cfg_texts(cmdstart)   $value }
+          {close}       { set cfg_texts(closewin)   $value }
+          {search}      { set cfg_texts(helpsearch) $value }
+          {color}       { set cfg_texts(tkcolor)    $value }
+          {font}        { set cfg_texts(tkfont)     $value }
+          {plus}        { set cfg_texts(host_add)   $value }
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set cfg_texts($key)       $value }
+        }
+    }
+    array unset cfg_label
+    global cfg_tipps cfg_tipp
+    foreach key [array names cfg_tipp] {
+        set value $cfg_tipp($key)
+        switch -exact $key {
+          {start}       { set cfg_tipps(cmdstart)   $value }
+          {closew}      { set cfg_tipps(closewin)   $value }
+          {showfilterconfig}  { set cfg_tipps(filter) $value }
+          {resetfilterconfig} { set cfg_tipps(reset)  $value }
+          {goback}      { set cfg_tipps(help_prev)  $value }
+          {goforward}   { set cfg_tipps(help_next)  $value }
+          {search}      { set cfg_tipps(helpsearch) $value }
+          {choosecolor} { set cfg_tipps(tkcolor)    $value }
+          {choosefont}  { set cfg_tipps(tkfont)     $value }
+          {plus}        { set cfg_tipps(host_add)   $value }
+          {minus}       { set cfg_tipps(host_del)   $value }
+          default       { set cfg_tipps($key)       $value }
+        }
+    }
+    array unset cfg_tipp
+    global myX cfg_geo
+    foreach key [array names cfg_geo] {
+        set value $cfg_geo($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set myX($key)             $value }
+        }
+    }
+    array unset cfg_geo
+    global cfg cfg_cmd
+    foreach key [array names cfg_cmd] {
+        set value $cfg_cmd($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set cfg($key)             $value }
+        }
+    }
+    array unset cfg_geo
+   return
+}; # update_cfg
+
 # if {$cfg(TIP)==1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
-proc tooltip      {w help} {
+proc tooltip      {w help}  {
     bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
     bind $w <Any-Leave> "destroy %W.balloon"
+    return
 }; # tooltip
 
-proc tooltip:show {w arg} {
+proc tooltip:show {w arg}   {
     if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
     set top $w.balloon
     catch {destroy $top}
@@ -1141,6 +1165,7 @@ proc tooltip:show {w arg} {
     wm geometry $top [winfo reqwidth $top.txt]x[
         winfo reqheight $top.txt]+$wmx+$wmy
     raise $top
+    return
 }; # tooltip:show
 #
 # # Example:
@@ -1150,7 +1175,7 @@ proc tooltip:show {w arg} {
 #
 # }
 
-proc gui_init     {} {
+proc gui_init     {}    {
     #? initialize GUI
     global cfg prg myX argv
     if {[catch { package require tablelist } err]} {
@@ -1227,7 +1252,7 @@ proc gui_init     {} {
     return
 }; # gui_init
 
-proc create_tip   {w txt} {
+proc create_tip   {w txt}   {
     #? add tooltip message to given widget
     global cfg
     if {$cfg(TIP)==1} {     # package tooltip not available, use own one
@@ -1236,27 +1261,8 @@ proc create_tip   {w txt} {
         set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
         tooltip::tooltip $w "$txt"
     }
+    return
 }; # create_tip
-
-proc get_color    {key} { global cfg_colors; return $cfg_colors($key) };
-    #? return color name for key from global cfg_colors variable
-proc get_text     {key} { global cfg_texts;  return $cfg_texts($key)  };
-    #? return text string for key from global cfg_texts variable
-proc get_tipp     {key} { global cfg_tips;   return $cfg_tips($key)   };
-    #? return text string for key from global cfg_tips variable
-proc get_image    {key} { global cfg_images; return $cfg_images($key) };
-    #? return image for key from global cfg_images variablle
-proc get_padx     {key} { global myX;        return $myX($key)        };
-    #? return padx value for key from global myX variable
-
-proc str2obj      {str} {
-    #? convert string to valid Tcl object name; returns new string
-    set name [regsub -all {[+]} $str  {Y}];     # commands
-    set name [regsub -all {[-]} $name {Z}];     # options (mainly)
-    set name [regsub -all {[^a-zA-Z0-9_]} $name {X}];
-    set name "o$name";  # first character must be lower case letter
-    return $name
-}; # str2obj
 
 proc notTOC       {str} {
     #? return 0 if string should be part of TOC; 1 otherwise
@@ -1277,13 +1283,13 @@ proc theme_set    {w theme} {
     _dbx "($w, $theme)"
     # text and tip are always configured
     set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
-    set val [get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
-    set val [get_text  $key]; if {$val ne ""} { $w config -text  $val }
+    set val [_get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
+    set val [_get_text  $key]; if {$val ne ""} { $w config -text  $val }
     if {[regexp {docker status$} $val]} { $w config -width 10 }; # FIXME: quick&dirty, not really necessary
-    set val [get_image $key]; if {![info exists IMG($val)]} { set theme "text" }
+    set val [_get_image $key]; if {![info exists IMG($val)]} { set theme "text" }
     _dbx " $w\t-> $key\t$theme\t-> $val"
     if {$theme eq "text"} {
-        set val [get_color  $key];
+        set val [_get_color  $key];
         if {$val ne ""} { $w config -bg    $val }
         $w config -image {} -height 1 -relief raised
     }
@@ -1298,7 +1304,7 @@ proc theme_set    {w theme} {
     return
 }; # theme_set
 
-proc theme_init   {theme} {
+proc theme_init   {theme}   {
     #? configure buttons with simple text or graphics
     global cfg_buttons
     _dbx "($theme)"
@@ -1318,13 +1324,13 @@ proc theme_init   {theme} {
     return
 }; # theme_init
 
-proc set_disabled {w} {
+proc set_disabled {w}   {
     #? set widget to disabled state (mode)
     $w config -state disabled
     return
 }; # set_disabled
 
-proc set_readonly {w} {
+proc set_readonly {w}   {
     #? set widget to readonly state (mode)
     # The definition of "read-only" here is, that any action or event for the
     # widget is allowed, except changing its content anyhow  (delete, insert,
@@ -1358,7 +1364,7 @@ proc update_cursor {cursor} {
     return
 }; # update_cursor
 
-proc update_status {val} {
+proc update_status {val}    {
     #? add text to status line
     global cfg
     if {$cfg(quit) == 1 } { return }; # no GUI update
@@ -1370,7 +1376,7 @@ proc update_status {val} {
     return
 }; # update_status
 
-proc docker_args  {} {
+proc docker_args  {}    {
     #? if in "docker mode" pass image ID to Docker;
     # note that docker specific options must be before o-saft.pl commands or options
     global prg
@@ -1459,7 +1465,7 @@ proc apply_filter_text  {w} {
         if {$rex eq ""} { continue };   # -"-
         _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
         # anf contains start, end corresponding end position of match
-        set key [str2obj [string trim $key]]
+        set key [_str2obj [string trim $key]]
         set anf [$w search -all $mod -count end "$rex" 1.0]
         set i 0
         foreach a $anf {
@@ -1496,7 +1502,7 @@ proc apply_filter_table {w} {
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
-        set key [str2obj [string trim $key]]
+        set key [_str2obj [string trim $key]]
         set cfg(HELP-$key) ""
     }
     set nr  -1
@@ -1560,7 +1566,7 @@ proc apply_filter_table {w} {
                     if {$fn ne ""}  { $w cellconfig $nr,$col -font       $fn }
                    #if {$un ne "0"} { $w cellconfig $nr,$col -underline  1   }
                 }
-                set key [str2obj [string trim $key]]
+                set key [_str2obj [string trim $key]]
                 lappend cfg(HELP-$key) $nr
             }
         }
@@ -1568,7 +1574,7 @@ proc apply_filter_table {w} {
     return
 }; # apply_filter_table
 
-proc apply_filter {w cmd} {
+proc apply_filter {w cmd}   {
     #? apply filters for markup in output tab, data is in text or table widget $w
     global cfg
     set _layout $cfg(layout)
@@ -1580,18 +1586,19 @@ proc apply_filter {w cmd} {
     return
 }; # apply_filter
 
-proc show_window  {w} {
+proc show_window  {w}       {
     #? show window near current cursor position
     set y   [winfo pointery $w]; incr y 23
     set x   [winfo pointerx $w]; incr x 23
     wm geometry  $w "+$x+$y"
     wm deiconify $w
+    return
 }; # show_window
 
-proc www_browser  {url} {
+proc www_browser  {url}     {
     #? open URL in browser, uses system's native browser
     global cfg prg
-    if {[string length $prg(BROWSER)] < 1} { puts {**WARNING: no browser found}; return; }
+    if {[string length $prg(BROWSER)] < 1} { pwarn "no browser found"; return; }
     #win32# [tk windowingsystem]  eq "win32"
     #win32# { does not work with ActiveTcl
     #win32# package require twapi_com
@@ -1611,6 +1618,7 @@ proc www_browser  {url} {
         puts  " exec {*}$prg(BROWSER) $url & "
     }
         catch { exec {*}$prg(BROWSER) $url & }
+    return
 }; # www_browser
 
 proc bind_browser {w tagname} {
@@ -1625,7 +1633,7 @@ proc bind_browser {w tagname} {
         incr i
         $w tag add    $tagname     $a "$a + $e c"
         $w tag add    $tagname-$i  $a "$a + $e c"
-        $w tag config $tagname-$i -foreground [get_color link]
+        $w tag config $tagname-$i -foreground [_get_color link]
         $w tag bind   $tagname-$i <ButtonPress> "www_browser $t"
         if {$cfg(TIP)==0} { tooltip::tooltip $w -tag $tagname-$i "Open in browser: $t" }
             # cannot use create_tip as we want to bind to $tagnmae and not $w
@@ -1644,7 +1652,7 @@ proc create_selected {title val} {
     pack [entry  $w.choosen  -textvariable __var -relief flat]
     pack [button $w.closewin -command "destroy $w"] -side right -padx $myX(rpad)
     theme_set    $w.closewin $cfg(bstyle)
-    create_tip   $w.choosen "[get_tipp choosen] $title"
+    create_tip   $w.choosen "[_get_tipp choosen] $title"
     set __var "$val"
     return 1
 }; # create_selected
@@ -1652,7 +1660,7 @@ proc create_selected {title val} {
 proc create_window  {title size} {
     #? create new toplevel window with given title and size; returns widget
     global cfg myX
-    set this    .[str2obj $title]
+    set this    .[_str2obj $title]
     if {[winfo exists $this]}  { return ""; }; # do nothing
     toplevel     $this
     wm title     $this "$cfg(TITLE): $title"
@@ -1674,7 +1682,7 @@ proc create_window  {title size} {
     return $this
 }; # create_window
 
-proc create_host  {parent} {
+proc create_host  {parent}  {
     #? frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts myX
     set host  $hosts($hosts(0))
@@ -1682,7 +1690,7 @@ proc create_host  {parent} {
     _dbx " host($hosts(0)): $host"
     set this $parent.ft$hosts(0)
           frame  $this
-    grid [label  $this.lh -text [get_text host]] \
+    grid [label  $this.lh -text [_get_text host]] \
          [entry  $this.eh -textvariable hosts($hosts(0))] \
          [button $this.host_add -command "create_host {$parent};"] \
          [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] \
@@ -1709,11 +1717,13 @@ proc create_host  {parent} {
     # if we reach here a previous frame exists
     # or i==0 which should never occour and then will force an error in next line
     pack $this -fill x -after $prev
+    return
 }; # create_host
 
-proc remove_host  {parent} {
+proc remove_host  {parent}  {
     #? destroy frame with label and entry for host:port
     catch {destroy $parent.eh $parent.bp $parent.bm $parent.lh $parent}
+    return
 }; # remove_host
 
 proc create_text  {parent content} {
@@ -1872,8 +1882,9 @@ proc create_filter_head {parent txt tip col} {
     #       directly because it then must be converted to an object name also,
     #       see next setting of $this
     set this $parent.$txt
-    grid [label $this -text [get_tipp $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
+    grid [label $this -text [_get_tipp $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
     create_tip  $this $tip
+    return
 }; # create_filter_head
 
 proc create_filter_text {parent cmd} {
@@ -1895,7 +1906,7 @@ proc create_filter_text {parent cmd} {
     foreach {k key} [array get f_key] { # set all filter lines
         if {$k eq 0} { continue };
         #set key $f_key($k)
-        set key [str2obj [string trim $key]]
+        set key [_str2obj [string trim $key]]
         set mod $f_mod($k)
         set len $f_len($k)
         set rex $f_rex($k)
@@ -1980,7 +1991,7 @@ proc create_filter_table {parent cmd} {
          ] -side left -fill both -expand yes
     # insert header line
     set head [list f_key f_moder f_modee f_chars f_regex f_fg f_bg f_font f_u ]
-    foreach f $head { lappend titles 0 [get_tipp $f] }
+    foreach f $head { lappend titles 0 [_get_tipp $f] }
 # TODO: -tooltipaddcommand,
     $this.t config -columns $titles
     $this.t columnconfigure 0 -width  10;#
@@ -1991,7 +2002,7 @@ proc create_filter_table {parent cmd} {
         if {$k eq 0} { continue };
         incr row
         #set key $f_key($k)
-        set key [str2obj [string trim $key]]
+        set key [_str2obj [string trim $key]]
         set mod $f_mod($k)
         set len $f_len($k)
         set rex $f_rex($k)
@@ -2014,7 +2025,7 @@ proc create_filter_table {parent cmd} {
 proc create_filtertab   {parent cmd} {
     #? create tab with filter data
     global cfg
-    pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
+    pack [label $parent.text -relief flat -text [_get_tipp tabFILTER]]
     set this $parent.g
     pack [frame $this] -side top -expand yes -fill both
     set tab [create_filter_text  $this $cmd].t
@@ -2049,16 +2060,16 @@ proc create_filter      {parent cmd} {
     set this $cfg(winF)
     _dbx " parent: $obj | $cmd | $myX(geoF)"
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
-    pack [label $this.f.t -relief flat -text [get_text c_toggle]] -fill x
-    pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($obj,line)] -anchor w;
-    create_tip $this.f.c [get_tipp hideline]
+    pack [label $this.f.t -relief flat -text [_get_text c_toggle]] -fill x
+    pack [checkbutton $this.f.c -text [_get_text hideline] -variable filter_bool($obj,line)] -anchor w;
+    create_tip $this.f.c [_get_tipp hideline]
     set_readonly $this.f.c
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
         set bg $f_bg($k)
         set fg $f_fg($k)
-        set key [str2obj [string trim $key]]
+        set key [_str2obj [string trim $key]]
         set filter_bool($obj,HELP-$key) 1;  # default: text is visible
         pack [checkbutton $this.x$key \
                     -text $f_key($k) -variable filter_bool($obj,HELP-$key) \
@@ -2069,9 +2080,9 @@ proc create_filter      {parent cmd} {
         # TODO: following "-fg white" makes check in checkbox invisible
         if {$fg ne ""}  { $this.x$key config -fg $fg }; # Tk is picky ..
         if {$bg ne ""}  { $this.x$key config -bg $bg }; # empty colour not allowd
-        create_tip $this.x$key "[get_tipp show_hide] $f_cmt($k)";
+        create_tip $this.x$key "[_get_tipp show_hide] $f_cmt($k)";
     }
-
+    return
 }; # create_filter
 
 proc create_about {} {
@@ -2081,7 +2092,7 @@ proc create_about {} {
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window "About" $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
-    $txt config -bg [get_color osaft]
+    $txt config -bg [_get_color osaft]
 
     # search for section headers and mark them bold
     set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-ZÄÖÜß ]+$} 1.0]
@@ -2163,7 +2174,7 @@ proc create_help  {sect} {
     _dbx " 1. build help window"
     if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
-        set name [str2obj [string trim $sect]]
+        set name [_str2obj [string trim $sect]]
         search_show $cfg(winH).t "HELP-HEAD-$name"
         return
     }
@@ -2186,8 +2197,8 @@ proc create_help  {sect} {
     theme_set    $this.f1.help_prev   $cfg(bstyle)
     theme_set    $this.f1.help_next   $cfg(bstyle)
     theme_set    $this.f1.help_help   $cfg(bstyle)
-    create_tip   $this.f1.m [get_tipp help_mode]
-    create_tip   $this.f1.s [get_tipp helpsearch]
+    create_tip   $this.f1.m [_get_tipp help_mode]
+    create_tip   $this.f1.s [_get_tipp helpsearch]
     bind         $this.f1.s <Return> "
            global search
            if {\$search(last) != \$search(text)} {
@@ -2211,7 +2222,7 @@ proc create_help  {sect} {
         if {[string trim $t] eq ""} { continue };# skip empty entries
         if {[regexp {^[A-Z]} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
         set toc "$toc\n  $t"                   ;# prefix headline with spaces in TOC
-        set name [str2obj [string trim $t]]
+        set name [_str2obj [string trim $t]]
         $txt tag add    HELP-HEAD       $a "$a + $e c"
         $txt tag add    HELP-HEAD-$name $a "$a + $e c"
     }
@@ -2239,7 +2250,7 @@ proc create_help  {sect} {
         _dbx " 4. TOC: $i\t$t"
         if {[regexp { - } $t]}  { continue }   ;# skip glossar lines
         if {[notTOC $t]}        { continue }   ;# skip some special strings
-        set name [str2obj [string trim $t]]
+        set name [_str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a]
         $txt tag add    HELP-TOC    $b "$b + $e c" ;# do not markup leading spaces
         $txt tag add    HELP-TOC-$i $a "$a + $e c" ;# but complete line is clickable
@@ -2259,7 +2270,7 @@ proc create_help  {sect} {
         if {[regexp {^[A-Z]+} $t]} { continue };# skip headlines itself
         if {[regexp { - } $t]}  { continue }   ;# skip glossar lines
         if {[notTOC $t]}        { continue }   ;# skip some special strings
-        set name [str2obj [string trim $t]]
+        set name [_str2obj [string trim $t]]
         $txt tag add    HELP-REF    $a "$a + $e c"
         $txt tag add    HELP-REF-$i $a "$a + $e c"
         $txt tag bind   HELP-REF-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
@@ -2291,7 +2302,7 @@ proc create_help  {sect} {
         set t [string trim [$txt get $a "$a + $e c"]];
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
-        set name [str2obj [string trim $t]]
+        set name [_str2obj [string trim $t]]
         _dbx " 5. LNK: $i\tHELP-LNK-$name\t$t"
         if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: does not match all lines proper
             # these matches are assumed to be the header lines
@@ -2301,7 +2312,7 @@ proc create_help  {sect} {
             # these matches are assumed references
             $txt tag add    HELP-LNK-$i $a "$a + $e c - 1 c"; # do not markup spaces
             $txt tag bind   HELP-LNK-$i <ButtonPress> "search_show $txt {HELP-LNK-$name}"
-            $txt tag config HELP-LNK-$i -foreground [get_color link]
+            $txt tag config HELP-LNK-$i -foreground [_get_color link]
             $txt tag config HELP-LNK-$i -font osaftSlant
         }
         incr i
@@ -2344,10 +2355,10 @@ proc create_help  {sect} {
     bind_browser $txt   HELP-URL
 
     # finally global markups
-    $txt tag config     HELP-CODE -background [get_color code]
-    $txt tag config     HELP-URL  -foreground [get_color link]
-    $txt tag config     HELP-REF  -foreground [get_color link]
-    $txt tag config     HELP-TOC  -foreground [get_color link]
+    $txt tag config     HELP-CODE -background [_get_color code]
+    $txt tag config     HELP-URL  -foreground [_get_color link]
+    $txt tag config     HELP-REF  -foreground [_get_color link]
+    $txt tag config     HELP-TOC  -foreground [_get_color link]
     $txt tag config     HELP-TOC  -font osaftBold
     $txt tag config     HELP-LNK  -font osaftBold
     $txt tag config     HELP-HEAD -font osaftBold
@@ -2365,7 +2376,7 @@ proc create_help  {sect} {
 
     set cfg(winH) $this
     if {$sect ne ""} {
-        set name [str2obj [string trim $sect]]
+        set name [_str2obj [string trim $sect]]
         search_show $cfg(winH).t "HELP-HEAD-$name"
     }
     return
@@ -2374,7 +2385,7 @@ proc create_help  {sect} {
 proc create_note  {parent title} {
     #? create notebook TAB; returns widget
     _dbx "(»$title«)"
-    set name [str2obj $title]
+    set name [_str2obj $title]
     set this $parent.$name
     set alt  0
     if {[regexp {^\(} $title]} { set alt 1; };  # don't use (, but next charcter
@@ -2424,7 +2435,7 @@ proc create_opt   {parent title} {
     set name [regsub {^--} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
     pack [checkbutton $this -text $title -variable cfg($title)] -side left -padx 5
-    create_tip   $this [get_tipp $title]
+    create_tip   $this [_get_tipp $title]
     return $this
 }; # create_opt
 
@@ -2436,9 +2447,11 @@ proc create_win   {parent title cmd} {
     global cfg myX prg
     set this $parent
     set win  $this
-    set data $cfg(OPTS)
-    if {$cmd eq "CMD"} {
-        set data $cfg(CMDS)
+    set max  2     ;# OPT: 3 columns 0..2; CMD: 4 columns
+    switch $cmd {
+      "CMD" { set data $cfg(CMDS); incr max }
+      "OPT" { set data $cfg(OPTS) }
+      default { pwarn "create_win called with wrong command »$cmd«"; return }
     }
         # data is a huge list which contains commands or options grouped by a
         # header line. The window to be created just contains the lines which
@@ -2514,7 +2527,7 @@ proc create_win   {parent title cmd} {
         set dat [lindex [split $dat " "] 0]
 
         _dbx " verify: »$dat«\t$cmd"
-        set name [str2obj $dat]
+        set name [_str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
             # hence the warning is visible only in verbose mode
@@ -2557,8 +2570,6 @@ proc create_win   {parent title cmd} {
     set slaves [lsort -nocase [grid slaves $this]]
     set cnt [llength $slaves]
     if {$cnt < 1} { return }   ;# avoid math errors, no need to resize window
-    set max 2                          ;# 3 columns: 0..2
-    if {$cmd eq "CMD"} { incr max }    ;# 4 columns in Commands
     set rows [expr $cnt / [expr $max + 1]]
     _dbx " cnt/(max+1) = rows: $cnt/($max+1) = $rows"
     set col 0
@@ -2571,15 +2582,17 @@ proc create_win   {parent title cmd} {
         #incr col;   # horizontal
         incr row;   # vertical
     }
+    return
 }; # create_win
 
 proc create_buttons {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
-    # cmd must be "OPT" or "CMD" or "TRC"
+    #  cmd must be "OPT" or "CMD"
+    _dbx "($parent, $cmd)"
     global cfg prg
     set data $cfg(OPTS)
-    set txt  [get_tipp "tab$cmd"];      # tabCMD and tabOPT
+    set txt  [_get_tipp "tab$cmd"];      # tabCMD and tabOPT
     switch $cmd {
       "CMD" { # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
               set data $cfg(CMDS) }
@@ -2589,8 +2602,9 @@ proc create_buttons {parent cmd} {
                    [radiobutton $parent.of.t$cmd -variable cfg(layout) -value "table" -text "table"] \
                    [radiobutton $parent.of.s$cmd -variable cfg(layout) -value "text"  -text "text"] \
                    -padx 5 -anchor w -side left
-              create_tip $parent.of [get_tipp "layout"]
+              create_tip $parent.of [_get_tipp "layout"]
             }
+      default { pwarn "create_buttons called with wrong command »$cmd«"; return }
     }
     #_dbx "$data";
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
@@ -2604,19 +2618,20 @@ proc create_buttons {parent cmd} {
         if {"OPTIONS" eq $txt}               { continue; }
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
-        set name [str2obj $txt]
+        set name [_str2obj $txt]
         set this $parent.$name
         _dbx " .$name {$txt}"
         pack [frame $this] -anchor c -padx 10 -pady 2
-        pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [get_color button] ] \
+        pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [_get_color button] ] \
              [button $this.help_me -command "create_help {$txt}" ] \
                -side left
         theme_set    $this.help_me $cfg(bstyle)
-        create_tip   $this.b [get_tipp settings]
+        create_tip   $this.b [_get_tipp settings]
 
         # argh, some command sections are missing in HELP, then disable help button
         if {[regexp $prg(rexOUT-show) $txt] == 1} { $this.help_me config -state disable }
     }
+    return
 }; # create_buttons
 
 proc create_main  {targets} {
@@ -2660,7 +2675,7 @@ proc create_main  {targets} {
     }
     if {[regexp {\-docker$} $prg(SAFT)]} {
         pack [entry $w.fo.dockerid -textvariable prg(docker-id) -width 12] -anchor w
-        create_tip  $w.fo.dockerid [get_tipp docker-id]
+        create_tip  $w.fo.dockerid [_get_tipp docker-id]
     }
 
     ## create notebook object and set up Ctrl+Tab traversal
@@ -2684,13 +2699,13 @@ proc create_main  {targets} {
 
     ## create status line
     pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
-    pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
+    pack [text      $w.fl.t -relief flat   -height 3 -background [_get_color status] ] -fill x
     set cfg(objS)   $w.fl.t
     set_readonly $cfg(objS)
 
     ## add hosts from command line
     foreach host $targets {         # display hosts
-        if {$hosts(0) > 5} { puts "**WARNING: only 6 hosts possible; '$host' ignored"; continue };
+        if {$hosts(0) > 5} { pwarn "only 6 hosts possible; »$host« ignored"; continue };
         create_host $w
         set hosts($hosts(0)) $host
     }
@@ -2746,7 +2761,7 @@ proc search_mark  {w see} {
     _dbx " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
     $w tag delete HELP-search-box  $anf
     $w tag add    HELP-search-box "$box_anf + 2 c" "$box_end + 1 c"
-    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [get_color osaft]
+    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [_get_color osaft]
     $w tag delete HELP-search-mark $anf
     $w tag add    HELP-search-mark $anf $end
     $w tag config HELP-search-mark -font osaftBold -background yellow
@@ -2788,10 +2803,10 @@ proc search_more  {w search_text regex} {
         $txt tag add    TAG-$i  "$tag_anf + 1 char" "$tag_end - 1 char"
         $txt tag config TAG-$i  -relief raised -borderwidth 1
         # bind events to highlight text
-        $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [get_color osaft]"
+        $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [_get_color osaft]"
         $txt tag bind   TAG-$i  <Any-Leave>  "$txt tag config TAG-$i -background white"
         $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search_mark $w \"$anf $end\"";
-        create_tip $txt "[get_tipp helpclick]"
+        create_tip $txt "[_get_tipp helpclick]"
         # TAG-$i  are never used again; new searches overwrite existing tags
     }
     set_readonly $txt
@@ -2920,7 +2935,7 @@ proc search_text  {w search_text} {
     set tags [$w tag ranges HELP-search-pos]
     _dbx " HELP-search-pos: $tags"
     set search(see)  [lrange $tags 0 1];# remember current position
-    $w tag config HELP-search-pos -background [get_color osaft]
+    $w tag config HELP-search-pos -background [_get_color osaft]
     search_mark $w $search(see)
     $w see [lindex $search(see) 0]
     _dbx " see: $search(see)\tlast: $search(last)"
@@ -2971,8 +2986,8 @@ set cfg(TITLE)  {$cfg(TITLE)}"
         puts $l
     }
     close $fid
-    # print other configurations in simple format, see also cfg_update()
-    global cfg_colors cfg_texts cfg_tips
+    # print other configurations in simple format, see also update_cfg()
+    global cfg_colors cfg_texts cfg_tipps
     set qq {"} ;# dumm "
     puts ""
     puts "array set cfg_color $qq"
@@ -2991,10 +3006,10 @@ set cfg(TITLE)  {$cfg(TITLE)}"
     puts "$qq;\n"
 
     puts "array set cfg_tipp $qq"
-    puts "    DESC\t{$cfg_tips(DESC)}"
-    foreach key [lsort [array names cfg_tips]] {
+    puts "    DESC\t{$cfg_tipps(DESC)}"
+    foreach key [lsort [array names cfg_tipps]] {
         if {$key eq "DESC"} { continue }
-        puts "    $key\t{$cfg_tips($key)}"
+        puts "    $key\t{$cfg_tipps($key)}"
     }
     puts "$qq;\n"
     return
@@ -3119,6 +3134,7 @@ proc osaft_reset  {} {
             set cfg($idx]) ""
         }
     }
+    return
 }; # osaft_reset
 
 proc osaft_init   {} {
@@ -3144,6 +3160,7 @@ proc osaft_init   {} {
         _dbx " cfg($idx) = »$val«"
         set cfg($idx) $val
     }
+    return
 }; # osaft_init
 
 proc _get_table   {tbl} {
@@ -3175,7 +3192,7 @@ proc osaft_save   {tbl type nr} {
         return;     # ready
     }
     if {$type eq "TAB"} {
-        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$prg(SAFT)--$nr.log"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveresult]" -initialfile "$prg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         switch $cfg(layout) {
@@ -3184,7 +3201,7 @@ proc osaft_save   {tbl type nr} {
         }
     }
     if {$type eq "CFG"} {
-        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$prg(SAFT)--new"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveconfig]" -initialfile ".$prg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
@@ -3207,7 +3224,7 @@ proc osaft_load   {cmd} {
     global cfg tab
     _dbx "($cmd)"
     if {$cmd eq "Load"} {
-        set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
+        set name [tk_getOpenFile -title "$cfg(TITLE): [_get_tipp loadresult]"]
     } else {
         set name $cmd
     }
@@ -3360,7 +3377,7 @@ foreach arg $argv {
         {--helpprocs}   { puts [osaft_procs PROC]; exit; }
 
         *           { lappend targets $arg;     }
-        default     { puts "**WARNING: unknown parameter '$arg'; ignored" }
+        default     { pwarn "unknown parameter »$arg«; ignored" }
     }
 }
 
@@ -3374,7 +3391,7 @@ set rcfile [file join $env(HOME) $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
-cfg_update;                     # update configuration as needed
+update_cfg;                     # update configuration as needed
 
 ## read $cfg(IMG)               # must be read before any widget is created
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
