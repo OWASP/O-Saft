@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.32 19/01/13 19:50:53
+#?      @(#) Makefile 1.33 19/03/07 00:44:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.32
+_SID.test       = 1.33
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -362,22 +362,21 @@ testarg0-%:
 	@$(TARGET_VERBOSE)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
-ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
-# simple target for -n (dry-run) to avoid generation of file(s)
-testarg0-%.log: $(TEST.logdir)
-	@echo "$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1"
-else
+# SEE Make:--dry-run
+# following pattern rule should be unified with testcmd-%.log
 testarg0-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
 	@$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
+	@expr "$(MAKEFLAGS)" : n >/dev/null \
+	    && echo "$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
 	@-ls -l  $(TEST.logdir)/testarg0-$(*)*
 # TODO: target should fail if there is a diff
-endif
 
 
 # The goal for test targets is to perform (test) all commands with all hosts.
@@ -458,22 +457,18 @@ testcmd-%:
 # Note that  testcmd-%.log  called from within t/ may return:  is up to date.
 # diff's STDERR is discarded (may return: "file does not exist").
 
-ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
-# simple target for -n (dry-run) to avoid generation of file(s)
-testcmd-%.log: $(TEST.logdir)
-	@echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1"
-else
 testcmd-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
+	@expr "$(MAKEFLAGS)" : n >/dev/null \
+	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
 	@-ls -l  $(TEST.logdir)/testcmd-$(*)*
 # TODO: target should fail if there is a diff
-endif
 
 
 # The pattern rule  testcmd-%  executes an individual target, for example:
