@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.3 19/01/13 21:24:02
+#?      @(#) Makefile.pod 1.4 19/03/07 00:31:27
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -78,6 +78,43 @@ is used:
 (where  testcmd-c  is an example target name). The pattern rule testcmd-c%
 itself must not be matched, hence the pattern /^testcmd-c./ needs to match
 $1 instead of $0 in the awk.
+
+
+=head2 Make:--dry-run
+
+When make is called with the  -n  (--dry-run) option,  make usually simply
+prints the commands to be executed instead of executing them. If a command
+redirects its output to a file, the file will not be generated. But if the
+command is  $(MAKE)  make will be called recursively and redirected to the
+specified file. This generated file then does not contain expeced content.
+Hence the generation of the file should be avoided.
+
+The recursive make command should be printed instead of being executed.
+GNU make has following documented recipe for this:
+
+    ifeq (n,$(findstring n,$(MAKEFLAGS)))
+        @echo "$(MAKE) $(MAKEFLAGS) $* > $@"
+    else
+        @$(MAKE) $(MAKEFLAGS) $* > $@
+    endif
+
+Unfortunately this solution has the drawback that it
+
+  * depends on the version of GNU make (may work or not)
+  * is not compatible with other make
+
+Another possibility is to use shell's if-then-else syntax for the target's
+commands. Beside the ugly definition of a shell inline script, this script
+then also acts as one command in the target which makes the output hard to
+read (by humans).
+
+Hence following simplifyed if-then-else construct is used:
+
+    @expr "$(MAKEFLAGS)" : n >/dev/null \
+            && echo "$(MAKE) $(MFLAGS) -s $* > $@ 2>&1" \
+            ||       $(MAKE) $(MFLAGS) -s $* > $@ 2>&1
+
+Note that $(MAKEFLAGS) may look like:  nrR --no-print-directory
 
 
 =head2 Make:Profiling
