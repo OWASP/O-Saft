@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.6 19/03/07 21:53:24
+#?      @(#) Makefile.opt 1.7 19/03/07 23:10:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.6
+_SID.opt        = 1.7
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
@@ -44,12 +44,12 @@ ifdef TEST.hosts
 endif
 
 HELP.opt        = "\
-\#               ________________________________________ testing options _$(_NL)\
- test.opt        - test various alias options$(_NL)\
- test.opt.log    - same as test.opt but store output in t/testcmd-CMD.log$(_NL)\
+\#              __________________________________________ testing options _$(_NL)\
+ test.opt       - test various alias options$(_NL)\
+ test.opt.log   - same as test.opt but store output in t/testcmd-CMD.log$(_NL)\
 \#$(_NL)\
-\# Examples: $(_NL)\
-\#    make s-ALL.test.opt $(_NL)\
+\# Examples:$(_NL)\
+\#    make s-ALL.test.opt$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.opt)
