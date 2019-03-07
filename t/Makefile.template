@@ -15,17 +15,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help
+#           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.8 19/01/13 21:22:42
+#?      @(#) Makefile.template 1.9 19/03/08 00:26:00
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.8
+_SID.TEMPL      = 1.9
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -62,7 +62,7 @@ HELP-help.test.TEMPL= print targets for testing SOMETHING
 
 # private help target for this makefile
 help.test.TEMPL:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo "$(_HELP_LINE_)$(_NL)$(_HELP_INFO_)$(_NL)$(_HELP_LINE_)"
 	@echo $(MORE-TEMPL)    ; # no quotes!
 
 #_____________________________________________________________________________
@@ -85,9 +85,9 @@ test.TEMPL.internal:
 # Note that we use quotes here,  even if not really necessary (but makes syntax
 # highlighting in some editors more happy ;-)
 MORE-TEMPL      = " \
-\#               ______________________________________________ testing ... _$(_NL)\
+\#               _____________________________________________ testing ... _$(_NL)\
  test.TEMPL      - test functionality of SOMETHING$(_NL)\
- test.TEMPL.log  - same as test.TEMPL but store output in $(TEST.logdir)/$(_NL)\
+ test.TEMPL.log  - same as test.TEMPL but store output in '$(TEST.logdir)/'$(_NL)\
 \#$(_NL)\
 \# Examples:$(_NL)\
 \#    make e-ALL.testTEMPL$(_NL)\
