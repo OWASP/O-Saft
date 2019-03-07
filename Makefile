@@ -82,19 +82,19 @@
 #
 # HACKER's HELP
 #       For details, in particular the syntax of the  HELP-*  macros used here,
-#       please see Makefile.help .
+#       please see t/Makefile.help .
 #       More details  why and how  some things are implemented are described in
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.48 19/03/07 19:34:56
+#?      @(#) Makefile 1.49 19/03/07 20:07:46
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.48
+_SID            = 1.49
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -264,16 +264,13 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
-ALL.Makefiles   = \
-		  $(SRC.make)   Makefile.help   $(TEST.dir)/Makefile.pod \
-		  $(TEST.dir)/Makefile          $(TEST.dir)/Makefile.inc \
-		  $(TEST.dir)/Makefile.opt      $(TEST.dir)/Makefile.cmds \
-		  $(TEST.dir)/Makefile.ext      $(TEST.dir)/Makefile.exit \
-		  $(TEST.dir)/Makefile.cgi      $(TEST.dir)/Makefile.tcl \
-		  $(TEST.dir)/Makefile.warnings $(TEST.dir)/Makefile.misc \
-		  $(TEST.dir)/Makefile.critic   $(TEST.dir)/Makefile.template \
-		  $(TEST.dir)/Makefile.FQDN
+inc.Makefiles   = \
+		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
+		  Makefile.opt     Makefile.cmds  Makefile.ext   Makefile.exit \
+		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
+		  Makefile.critic  Makefile.template   Makefile.FQDN
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
+ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
 ALL.test        = $(SRC.test)
@@ -305,7 +302,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.48
+_INST.text      = generated from Makefile 1.49
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -443,8 +440,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.48
-tar:     GREP_EDIT  = 1.48
+GREP_EDIT           = 1.49
+tar:     GREP_EDIT  = 1.49
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
