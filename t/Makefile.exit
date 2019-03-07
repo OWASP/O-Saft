@@ -14,17 +14,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.6 19/01/13 20:53:22
+#?      @(#) Makefile.exit 1.7 19/03/07 22:50:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.6
+_SID.exit       = 1.7
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
@@ -42,14 +42,14 @@ ifdef TEST.hosts
 endif
 
 HELP.exit       = "\
-\#               _______________________________________ testing --exit=* _$(_NL)\
- test.exit       - test --exit=* options$(_NL)\
- test.exit.log   - same as test.exit but store output in t/test.exit.log$(_NL)\
+\#              _________________________________________ testing --exit=* _$(_NL)\
+ test.exit      - test --exit=* options$(_NL)\
+ test.exit.log  - same as test.exit but store output in t/test.exit.log$(_NL)\
 \#$(_NL)\
-\# Examples (get list of all targets): $(_NL)\
-\#    make s-ALL.test.exit $(_NL)\
+\# Examples (get list of all targets):$(_NL)\
+\#    make s-ALL.test.exit$(_NL)\
 \# Hint: use  test.pattern-exit-  instead of  test.pattern-exit , as the$(_NL)\
-\#       patttern  cgi  may match other targets too.\
+\#       patttern  cgi  may match other targets too.$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.exit)
@@ -102,7 +102,7 @@ testmsg-exit-%: message-%
 testmsg-exit.log:  $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.6: make $@" > $@
+	@echo "# Makefile.exit 1.7: make $@" > $@
 	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
