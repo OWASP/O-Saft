@@ -14,7 +14,7 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #    Naming conventions for t/Makefile*
 #       * macro names have the prefix  TEST.
@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.35 19/03/07 14:21:34
+#?      @(#) Makefile 1.36 19/03/07 20:16:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.35
+_SID.test       = 1.36
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -63,12 +63,6 @@ first-test-target-is-default: help.test
 ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines macros if called directly (not from ../Makefile)
-endif
-
-ifeq (,$(_SID.help))
-    -include    Makefile.help
-    -include ../Makefile.help
-    # it's intended that only one will be found
 endif
 
 #_____________________________________________________________________________
@@ -244,7 +238,7 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$D    = $D #'
 	@echo '# $$F    = $F #'
 	@echo '# $$T    = $T #'
-	@echo '# not shown: %D ?D @D *D <D ?D ^D %F ?F @F *F <F ?F ^F'
+	@echo '# not shown: $$(%D) $$(?D) $$(@D) $$(*D) $$(<D) $$(?D) $$(^D) $$(%F) $$(?F) $$(@F) $$(*F) $$(<F) $$(?F) $$(^F)'
 	@echo '# $$(MAKE)          = $(MAKE)'
 	@echo '# $$(CURDIR)        = $(CURDIR)'
 	@echo '# $$(MAKE_COMMAND)  = $(MAKE_COMMAND)'
@@ -532,6 +526,10 @@ test.patt-%: test.pattern-%
 # to avoid multiple inlcudes of the same file, which would result in make
 # errors complaining about target redefinitions
 # for a detailed description see t/Makefile.template
+
+ifeq (,$(_SID.help))
+    -include t/Makefile.help
+endif
 
 ifeq (,$(_SID.warnings))
     -include t/Makefile.warnings
