@@ -158,6 +158,7 @@
 #.                  include t/Makefile.opt
 #.                  include t/Makefile.ext
 #.                  include t/Makefile.cgi
+#.                  include t/Makefile.hlp
 #.                  include t/Makefile.tcl
 #.                  include t/Makefile.misc
 #.                  include t/Makefile.critic
@@ -193,14 +194,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.23 19/03/07 19:32:50
+#?      @(#) Makefile.help 1.24 19/03/07 21:49:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.23
+_SID.help       = 1.24
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -284,12 +285,13 @@ ALL.help        +=$(HELP.help)
 help.help: help.HEAD
 	@$(EXE.help) $(_MYSELF.help)
 	@echo $(HELP.help) ; # no quotes!
+# TODO: make help.help and make help.test.help are identical
 
 help.doc: help.help
 #  legacy alias
 
 help.syntax:
-	$(EXE.syntax) Makefile.help
+	$(EXE.syntax) $(_MYSELF.help)
 
 help.HEAD:
 	@echo "$(_HELP_HEADER_)"
@@ -400,4 +402,51 @@ cloc.lang:  OPT.cloc    += --by-file-by-lang
 cloc:       cloc.stat
 
 .PHONY: macros targets rules list vars eval echo show macro pmacro target cloc
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+HELP-help.test.help = print targets for testing makefile help targets
+
+# testcmd-% pattern rule uses the stem as argument to the executed command
+# this is all we need, hence all other arguments must be set empty
+# help target itself is special as defined in global Makefile only
+testcmd-help:              EXE.pl      = make
+testcmd-help:              TEST.dir    = .
+
+testcmd-help%:             EXE.pl      = make
+testcmd-help%:             TEST.init   =
+
+testcmd-help:              TEST.args  +=
+testcmd-help.doc:          TEST.args  +=
+testcmd-help.dev:          TEST.args  +=
+testcmd-help.test.help:    TEST.args  +=
+testcmd-help.test.make:    TEST.args  +=
+#testcmd-help.critic:       TEST.args  +=
+testcmd-help.syntax:       TEST.args  +=
+testcmd-help.test:         TEST.args  +=
+testcmd-help.test.cgi:     TEST.args  +=
+testcmd-help.test.cmds:    TEST.args  +=
+testcmd-help.test.opt:     TEST.args  +=
+testcmd-help.test.ext:     TEST.args  +=
+testcmd-help.test.exit:    TEST.args  +=
+testcmd-help.test.hlp:     TEST.args  +=
+testcmd-help.test.misc:    TEST.args  +=
+testcmd-help.test.tcl:     TEST.args  +=
+testcmd-help.test.critic:  TEST.args  +=
+testcmd-help.test.warnings:TEST.args  +=
+testcmd-help.test.all:     TEST.args  +=
+
+ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{print $$1}' $(_MYSELF.help))
+ALL.test.help       = $(ALL.testhelp)
+ALL.test.help.log   = $(ALL.test.help:%=%.log)
+
+# TODO: explain test.help uses "make help", while test.hlp uses "o-saft.pl --help"
+test.help.all:    $(ALL.test.help)
+test.help:        test.help.all
+test.help.log:    $(ALL.test.help.log)
+
+# feed main Makefile
+ALL.tests          += $(ALL.test.help)
+ALL.tests.log      += $(ALL.test.help.log)
 
