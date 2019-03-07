@@ -193,14 +193,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.21 18/11/01 21:13:32
+#?      @(#) Makefile.help 1.22 19/03/07 15:26:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.21
+_SID.help       = 1.22
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -228,10 +228,10 @@ _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
+# TODO: replace sed by awk, as sed matches last occurrence of a pattern
 EXE.list        = awk       '/^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}'
 EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
-EXE.help        = sed -n -e 's/^HELP-_[^=]*=[" ]*\([^"]*\)"*/		\1/p' \
-			 -e 's/^HELP-\(.*\)[	 ]*=[" ]*\([^"]*\)"*/ \1    - \2/p'
+EXE.help        = awk -F=   '/^HELP-_/{sub(/ /,"",$$2);print "\t\t"$$2;next}/^HELP-/{z=substr($$0,index($$0,"=")+2);sub(/HELP-/," ");print $$1"\t- "z}'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
