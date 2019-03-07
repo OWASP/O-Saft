@@ -16,17 +16,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.5 19/01/11 22:59:58
+#?      @(#) Makefile.opt 1.6 19/03/07 21:53:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.5
+_SID.opt        = 1.6
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
@@ -146,7 +146,7 @@ ALL.testopt    += $(ALL.teststdformat)
 test.stdformat  = $(ALL.teststdformat)
 .PHONY: test.stdformat
 
-#ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testhelp:%=%$(host)))
+#ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testopt:%=%$(host)))
 
 ALL.test.opt    = $(ALL.testopt)
 ALL.test.opt.log= $(ALL.testopt:%=%.log)
