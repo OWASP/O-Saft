@@ -15,17 +15,17 @@
 # HACKER's INFO
 #       For details please see ../Makefile .
 #
-#       Naming conventions for targets see ../Makefile.help .
+#       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.16 19/01/13 21:06:52
+#?      @(#) Makefile.misc 1.17 19/03/07 23:02:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.16
+_SID.misc       = 1.17
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -38,12 +38,12 @@ ifeq (,$(_SID.test))
 endif
 
 HELP.misc       = "\
-\#               ____________________________________________ misc. tests _$(_NL)\
- test.bench      - call '$(EXE.bench)' for some benchmarks$(_NL)\
- test.bench.log  - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
- test.bunt       - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
- test.docker     - test docker image$(_NL)\
- help.dev        - print targets for development$(_NL)\
+\#              ______________________________________________ misc. tests _$(_NL)\
+ test.bench     - call '$(EXE.bench)' for some benchmarks$(_NL)\
+ test.bench.log - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
+ test.bunt      - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
+ test.docker    - test docker image$(_NL)\
+ help.dev       - print targets for development$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.misc)
@@ -91,15 +91,15 @@ test.misc:        $(ALL.test.misc)
 #__________________________________________________ targets for development __|
 
 HELP.dev        = "\
-\#               ________________________________ targets for development _$(_NL)\
- tags            - generate tags file for vi(m)$(_NL)\
+\#              __________________________________ targets for development _$(_NL)\
+ tags           - generate tags file for vi(m)$(_NL)\
  profile.sub.entry  - generate function calling tree of '$(DEV.pl)' (entry only)$(_NL)\
  profile.sub.exit   - generate function calling tree of '$(DEV.pl)' (entry and exit)$(_NL)\
  profile.sub.args   - generate function calling tree of '$(DEV.pl)' (in, out and parameter)$(_NL)\
- nytprof.out     - generate profiling data (for nytprofcalls)$(_NL)\
- nytprof.html    - generate profiling data in HTML format$(_NL)\
- dprof.out       - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
- code.quality    - search for various common coding mistakes, see make e-ALL.test.quality\
+ nytprof.out    - generate profiling data (for nytprofcalls)$(_NL)\
+ nytprof.html   - generate profiling data in HTML format$(_NL)\
+ dprof.out      - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
+ code.quality   - search for various common coding mistakes, see make e-ALL.test.quality$(_NL)\
 "
 
 # TODO: if we switch HELP.dev to single lines HELP-*
