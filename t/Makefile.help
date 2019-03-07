@@ -135,7 +135,7 @@
 #.          endif
 #.
 #.      GNU make cannot manage recursive includes of the  same file.  This must
-#.      be check before including, for example with (using our private  _SID.*
+#.      be checked before including, for example with (using our private _SID.*
 #.      variable):
 #.          ifeq (,$(_SID.test))
 #.              include t/Makefile
@@ -149,8 +149,8 @@
 #.      Makefile simply includes all other files. The includes are organised as
 #.      follows:
 #.          Makefile
-#.              include Makefile.help
 #.              include t/Makefile
+#.                  include t/Makefile.help
 #.                  include t/Makefile.inc
 #.                  include t/Makefile.warnings
 #.                  include t/Makefile.cmds
@@ -193,16 +193,16 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.22 19/03/07 15:26:33
+#?      @(#) Makefile.help 1.23 19/03/07 19:32:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.22
+_SID.help       = 1.23
 
-_MYSELF.help    = Makefile.help
+_MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
