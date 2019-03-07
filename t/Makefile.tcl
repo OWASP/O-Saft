@@ -14,17 +14,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template 
+#           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.9 19/01/13 20:55:55
+#?      @(#) Makefile.tcl 1.10 19/03/07 23:16:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.9
+_SID.tcl        = 1.10
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
@@ -42,10 +42,12 @@ ifdef TEST.hosts
 endif
 
 
-HELP.tcl         = "\
-\#               ______________________________________________ GUI tests _$(_NL)\
- test.tcl        - test functionality of $(SRC.tcl)$(_NL)\
- test.tcl.log    - same as test.tcl but store output in $(TEST.logdir)/$(_NL)\
+HELP.tcl        = "\
+\#              _________________________________________ testing GUI tool _$(_NL)\
+ test.tcl       - test functionality of '$(SRC.tcl)'$(_NL)\
+ test.tcl.log   - same as test.tcl but store output in '$(TEST.logdir)/'$(_NL)\
+\#              ________________________________________________ GUI tests _$(_NL)\
+\# not yet implemented ...$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.tcl)
