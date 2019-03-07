@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.34 19/03/07 13:54:21
+#?      @(#) Makefile 1.35 19/03/07 14:21:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.34
+_SID.test       = 1.35
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -243,26 +243,36 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$-    = $- #'
 	@echo '# $$D    = $D #'
 	@echo '# $$F    = $F #'
+	@echo '# $$T    = $T #'
+	@echo '# not shown: %D ?D @D *D <D ?D ^D %F ?F @F *F <F ?F ^F'
 	@echo '# $$(MAKE)          = $(MAKE)'
 	@echo '# $$(CURDIR)        = $(CURDIR)'
 	@echo '# $$(MAKE_COMMAND)  = $(MAKE_COMMAND)'
 	@echo '# $$(MAKE_VERSION)  = $(MAKE_VERSION)'
 	@echo '# $$(MAKE_HOST)     = $(MAKE_HOST)'
+	@echo '# $$(MAKE_RESTARTS) = $(MAKE_RESTARTS)'
+	@echo '# $$(MAKE_TERMOUT)  = $(MAKE_TERMOUT)'
+	@echo '# $$(MAKE_TERMERR)  = $(MAKE_TERMERR)'
+	@echo '# $$(MFLAGS)        = $(MFLAGS)'
+	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
 	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
 	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
 	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
 	@echo '# $$(MAKEFILE_LIST) = $(MAKEFILE_LIST)'
 	@echo '# $$(MAKEFILE_LIST)F= $(firstword $(MAKEFILE_LIST))'
 	@echo '# $$(MAKEFILE_LIST)L= $(lastword  $(MAKEFILE_LIST))'
-	@echo '# $$(MFLAGS)        = $(MFLAGS)'
-	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
 	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
 	@echo '# $$(MAKECMDGOALS)  = $(MAKECMDGOALS)'
 	@echo '# $$(GNUMAKEFLAGS)  = $(GNUMAKEFLAGS)'
-	@echo '# $$(.PRECIOUS)     = $(.PRECIOUS)'
-	@echo '# $$(.SECONDARY)    = $(.SECONDARY)'
+	@echo '# $$(.DEFAULT_GOAL) = $(.DEFAULT_GOAL)'
+	@echo '# $$(.INCLUDE_DIRS) = $(.INCLUDE_DIRS)'
 	@echo '# $$(.INTERMEDIATE) = $(.INTERMEDIATE)'
+	@echo '# $$(.PRECIOUS)     = $(.PRECIOUS)'
+	@echo '# $$(.RECIPEPREFIX) = $(.RECIPEPREFIX)'
+	@echo '# $$(.SECONDARY)    = $(.SECONDARY)'
+	@echo '# $$(.SHELLFLAGS)   = $(.SHELLFLAGS)'
 	@echo '# $$(.SUFFIXES)     = $(.SUFFIXES)'
+	@echo '# $$(.FEATURES)     = $(.FEATURES)'
 	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
 
 #_____________________________________________________________________________
