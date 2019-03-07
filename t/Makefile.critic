@@ -15,20 +15,20 @@
 # HACKER's INFO
 #       For details please see ../Makefile .
 #
-#       Naming conventions for targets see ../Makefile.help .
+#       Naming conventions for targets see Makefile.help .
 #
 #       TODO:
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.8 19/01/19 17:14:11
+#?      @(#) Makefile.critic 1.9 19/03/07 22:32:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.8
+_SID.critic     = 1.9
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
@@ -73,33 +73,33 @@ criticdoc:   help.test.critic
 #__________________________________________________ targets for testing cgi __|
 
 HELP.critic     = "\
-\#              ________________________________ targets for code quality _$(_NL)\
+\#              _________________________________ targets for code quality _$(_NL)\
  critic         - check files with perlcritic $(_NL)\
  critic345      - check files with perlcritic for severity 3,4,5 $(_NL)\
  help.critic    - print more details about  critic-*  targets $(_NL)\
 \#$(_NL)\
 \# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
-\#               _______________________________________________ severity _$(_NL)\
- critic          - perlcritic --severity 5 <all files>$(_NL)\
- critic-5        - perlcritic --severity 5 <all files>$(_NL)\
- critic-4        - perlcritic --severity 4 <all files>$(_NL)\
- critic-3        - perlcritic --severity 3 <all files>$(_NL)\
- critic-2        - perlcritic --severity 2 <all files>$(_NL)\
-\#               _____________________________________________ statistics _$(_NL)\
- critic-count    - perlcritic --severity 5 -count$(_NL)\
- critic-stat     - perlcritic --severity 5 --statistics-only $(_NL)\
- critic-stat-4   - perlcritic --severity 4 --statistics-only $(_NL)\
- critic-stat-3   - perlcritic --severity 3 --statistics-only $(_NL)\
-\#               ___________________________________ single file severity _$(_NL)\
- c5-FILE         - perlcritic --severity 5 FILE$(_NL)\
- c4-FILE         - perlcritic --severity 4 FILE$(_NL)\
- c3-FILE         - perlcritic --severity 3 FILE$(_NL)\
-\#               ___________________________ single file verbose severity _$(_NL)\
- c5v-FILE        - perlcritic --severity 5 FILE --verbose 10$(_NL)\
- c4v-FILE        - perlcritic --severity 4 FILE --verbose 10$(_NL)\
- c3v-FILE        - perlcritic --severity 3 FILE --verbose 10$(_NL)\
-\#               _____________________ targets with pretty-printed output _$(_NL)\
- TARGETp         - call TARGET and pretty print output$(_NL)\
+\#              _________________________________________________ severity _$(_NL)\
+ critic         - perlcritic --severity 5 <all files>$(_NL)\
+ critic-5       - perlcritic --severity 5 <all files>$(_NL)\
+ critic-4       - perlcritic --severity 4 <all files>$(_NL)\
+ critic-3       - perlcritic --severity 3 <all files>$(_NL)\
+ critic-2       - perlcritic --severity 2 <all files>$(_NL)\
+\#              _______________________________________________ statistics _$(_NL)\
+ critic-count   - perlcritic --severity 5 -count$(_NL)\
+ critic-stat    - perlcritic --severity 5 --statistics-only $(_NL)\
+ critic-stat-4  - perlcritic --severity 4 --statistics-only $(_NL)\
+ critic-stat-3  - perlcritic --severity 3 --statistics-only $(_NL)\
+\#              _____________________________________ single file severity _$(_NL)\
+ c5-FILE        - perlcritic --severity 5 FILE$(_NL)\
+ c4-FILE        - perlcritic --severity 4 FILE$(_NL)\
+ c3-FILE        - perlcritic --severity 3 FILE$(_NL)\
+\#              _____________________________ single file verbose severity _$(_NL)\
+ c5v-FILE       - perlcritic --severity 5 FILE --verbose 10$(_NL)\
+ c4v-FILE       - perlcritic --severity 4 FILE --verbose 10$(_NL)\
+ c3v-FILE       - perlcritic --severity 3 FILE --verbose 10$(_NL)\
+\#              _______________________ targets with pretty-printed output _$(_NL)\
+ TARGETp        - call TARGET and pretty print output$(_NL)\
 \#$(_NL)\
 \# Where   FILE   is any of the *.pm or *.pl files (including path).$(_NL)\
 \# Where  TARGET  is any of:$(_NL)\
@@ -113,6 +113,7 @@ HELP.critic     = "\
 \#   * perlcritic uses '$(CRITIC.dir)/$(CRITIC.rc)'$(_NL)\
 \# See also '$(CONTRIB.dir)/critic.sh'$(_NL)\
 "
+
 
 ALL.help.test  += $(_NL)$(HELP.critic)
 
