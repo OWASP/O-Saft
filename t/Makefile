@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.33 19/03/07 00:44:28
+#?      @(#) Makefile 1.34 19/03/07 13:54:21
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.33
+_SID.test       = 1.34
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -194,6 +194,9 @@ ALL.help.test   += $(_NL)$(HELP.test)
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
 
+HELP-_internal  = _____________________________________ internal test target _
+HELP-help.test.make = print GNUmake's internals and global project settings
+
 # internal information (nothing related to $(Project))
 # Note that the $(_SID*) variables indicate if a sub-makefile was included.
 # Note that $$ neds to be used to ensure that the variables are evaluated when
@@ -201,7 +204,7 @@ ALL.help.test   += $(_NL)$(HELP.test)
 test.file-1:
 test,file-2:
 test_file-3:
-test.target: test.file-1 test,file-2 test_file-3
+help.test.make: test.file-1 test,file-2 test_file-3
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
