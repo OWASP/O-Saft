@@ -13,20 +13,20 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       To avoid naming conflicts with ../Makefile.help this file must be named
+#       To avoid naming conflicts with  Makefile.help this file must be named
 #       Makefile.hlp .
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.8 19/01/13 21:32:26
+#?      @(#) Makefile.hlp 1.9 19/03/08 00:14:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.8
+_SID.hlp        = 1.9
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
@@ -45,9 +45,9 @@ ifdef TEST.hosts
 endif
 
 HELP.hlp        = "\
-\#               __________________________________________ test commands _$(_NL)\
- test.hlp        - test  help   commands and options$(_NL)\
- test.hlp.log    - same as test.hlp but store output in t/testcmd-CMD.log$(_NL)\
+\#              ____________________________________________ test commands _$(_NL)\
+ test.hlp       - test  help  commands and options of '$(SRC.pl)'$(_NL)\
+ test.hlp.log   - same as test.hlp but store output in t/testcmd-CMD.log$(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make s-ALL.test.hlp $(_NL)\
