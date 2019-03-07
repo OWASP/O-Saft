@@ -14,17 +14,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.18 19/01/13 20:58:16
+#?      @(#) Makefile.cgi 1.19 19/03/07 22:39:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.18
+_SID.cgi        = 1.19
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -48,16 +48,16 @@ MAKEFLAGS          += --no-print-directory
     # needed here, even if set in Makefile.inc; reason yet unknown (01/2019)
 
 HELP.cgi        = "\
-\#               ___________________________________________ testing .cgi _$(_NL)\
- test.cgi.all        - test all bad IPs, hostnames and options for $(SRC.cgi) $(_NL)\
- test.cgi.log        - same as test.cgi.all but store output in $(TEST.logdir)/ $(_NL)\
- test.cgi.badhosts   - test that some hostnames are ignored in $(SRC.cgi) $(_NL)\
- test.cgi.badIPs     - test that some IPs are ignored in $(SRC.cgi) $(_NL)\
- test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
- test.cgi.badopt     - test bad options and characters$(_NL)\
- test.cgi.goodIPs    - test IPs to be passed$(_NL)\
- test.cgi-NAME       - same as testcmd-cgi-bad_NAME$(_NL)\
- testcmd-cgi-bad_NAME - check if a single NAME (IP or hostname) allowed in $(SRC.cgi) $(_NL)\
+\#              _____________________________________________ testing .cgi _$(_NL)\
+ test.cgi.all       - test all bad IPs, hostnames and options for '$(SRC.cgi)' $(_NL)\
+ test.cgi.log       - same as test.cgi.all but store output in '$(TEST.logdir)/' $(_NL)\
+ test.cgi.badhosts  - test that some hostnames are ignored in '$(SRC.cgi)' $(_NL)\
+ test.cgi.badIPs    - test that some IPs are ignored in '$(SRC.cgi)' $(_NL)\
+ test.cgi.badall    - test all bad and good IPs and hostnames $(_NL)\
+ test.cgi.badopt    - test bad options and characters$(_NL)\
+ test.cgi.goodIPs   - test IPs to be passed$(_NL)\
+ test.cgi-NAME      - same as testcmd-cgi-bad_NAME$(_NL)\
+ testcmd-cgi-bad_NAME - check if a single NAME (IP or hostname) allowed in '$(SRC.cgi)' $(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make test.cgiall $(_NL)\
@@ -245,7 +245,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.18: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.19: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
