@@ -14,17 +14,17 @@
 #?
 # HACKER's INFO
 #       For more details please see
-#           Makefile  ../Makefile  ../Makefile.help  Makefile.template
+#           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.18 19/01/13 21:43:27
+#?      @(#) Makefile.cmds 1.19 19/03/07 22:46:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.18
+_SID.cmds       = 1.19
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -43,14 +43,14 @@ ifdef TEST.hosts
 endif
 
 HELP.cmds       = "\
-\#               __________________________________________ test commands _$(_NL)\
- test.pattern-*  - test group of commands with $(TEST.cmds.hosts)$(_NL)\
- testcmd-*       - test commands with $(TEST.cmds.hosts)$(_NL)\
- testcmd-*.log   - same as testcmd-* but store output in t/testcmd-*.log$(_NL)\
- test.cmds.all   - test all commands with $(TEST.cmds.hosts)$(_NL)\
- test.cmds.log   - same as test.cmds.all but store output in t/testcmd-*.log$(_NL)\
-\#               ________________________________________ special targets _$(_NL)\
- testrun-CMD     - test specific command CMD with $(TEST.cmds.hosts)$(_NL)\
+\#              ____________________________________________ test commands _$(_NL)\
+ test.pattern-* - test group of commands with '$(TEST.cmds.hosts)'$(_NL)\
+ testcmd-*      - test commands with '$(TEST.cmds.hosts)'$(_NL)\
+ testcmd-*.log  - same as testcmd-* but store output in t/testcmd-*.log$(_NL)\
+ test.cmds.all  - test all commands with '$(TEST.cmds.hosts)$'(_NL)\
+ test.cmds.log  - same as test.cmds.all but store output in t/testcmd-*.log$(_NL)\
+\#              __________________________________________ special targets _$(_NL)\
+ testrun-CMD    - test specific command CMD with '$(TEST.cmds.hosts)'$(_NL)\
  testrun-CMD.log - same as testrun-CMD but store output in t/testcmd-CMD.log$(_NL)\
 \#$(_NL)\
 \# To get a list of targets, use:$(_NL)\
@@ -58,20 +58,20 @@ HELP.cmds       = "\
 \#    make s-ALL.test.cmds$(_NL)\
 \# Targets can be executed individually, or a group of targets can be executed$(_NL)\
 \# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
-\# Examples to execute individual targets: $(_NL)\
-\#    make testcmd-c+info_localhost $(_NL)\
-\#    make testcmd-c+cipher--cipher-alpn_localhost $(_NL)\
-\#    make testrun-+cn $(_NL)\
-\# Examples to execute group of similar targets: $(_NL)\
-\#    make test.pattern-+info $(_NL)\
-\#    make test.pattern-+check $(_NL)\
-\#    make test.pattern-+cipher $(_NL)\
-\#    make test.pattern-+summ $(_NL)\
-\#    make test.pattern-+vuln $(_NL)\
-\# All following examples are the same: $(_NL)\
-\#    make testrun-+cipher TEST.init='--header --enabled' $(_NL)\
-\#    make testcmd-+cipher TEST.init='--header --enabled localhost' $(_NL)\
-\#    make testcmd-+cipher TEST.args='--header --enabled localhost' $(_NL)\
+\# Examples to execute individual targets:$(_NL)\
+\#    make testcmd-c+info_localhost$(_NL)\
+\#    make testcmd-c+cipher--cipher-alpn_localhost$(_NL)\
+\#    make testrun-+cn$(_NL)\
+\# Examples to execute group of similar targets:$(_NL)\
+\#    make test.pattern-+info$(_NL)\
+\#    make test.pattern-+check$(_NL)\
+\#    make test.pattern-+cipher$(_NL)\
+\#    make test.pattern-+summ$(_NL)\
+\#    make test.pattern-+vuln$(_NL)\
+\# All following examples are the same:$(_NL)\
+\#    make testrun-+cipher TEST.init='--header --enabled'$(_NL)\
+\#    make testcmd-+cipher TEST.init='--header --enabled localhost'$(_NL)\
+\#    make testcmd-+cipher TEST.args='--header --enabled localhost'$(_NL)\
 \#$(_NL)\
 \# Some of the examples above use  localhost  as hostname by default.\
 "
