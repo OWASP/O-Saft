@@ -41,8 +41,8 @@
 #
 #       The  _SID*  variables are used to check if sub-makefiles were included.
 #       More variables and targets are defined in following included files:
-#           Makefile.help
 #           t/Makefile
+#           t/Makefile.help
 #           t/Makefile.inc
 #       Where  t/Makefile  may include more files.
 #       Each of the included files may be used independently using  -f  option,
@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.47 19/01/11 23:08:12
+#?      @(#) Makefile 1.48 19/03/07 19:34:56
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.47
+_SID            = 1.48
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -305,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.47
+_INST.text      = generated from Makefile 1.48
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -443,8 +443,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.47
-tar:     GREP_EDIT  = 1.47
+GREP_EDIT           = 1.48
+tar:     GREP_EDIT  = 1.48
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -615,7 +615,6 @@ HELP--vv        = verbose: print target and all dependencies
 #_____________________________________________________________________________
 #_____________________________________________ targets for testing and help __|
 
-include Makefile.help
 include $(TEST.dir)/Makefile
     # Note that $(TEST.dir)/Makefile includes all other Makefile.* there
 
