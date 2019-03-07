@@ -14,17 +14,17 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template
+#           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.12 19/01/11 22:59:45
+#?      @(#) Makefile.ext 1.13 19/03/07 22:54:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.12
+_SID.ext        = 1.13
 
 _MYSELF.ext     = t/Makefile.ext
 ALL.includes   += $(_MYSELF.ext)
@@ -45,24 +45,24 @@ else
 endif
 
 HELP.ext        = "\
-\#               _______________________________ test with external hosts _$(_NL)\
+\#              _________________________________ test with external hosts _$(_NL)\
  test.ext           - test all commands with all hostnames, alias for test.ext.host$(_NL)\
  test.ext.host      - test all commands with all hostnames (sorted by host)$(_NL)\
  test.ext.host.log  - same as test.ext.host but store output in logfile$(_NL)\
  test.ext.command   - test all commands with all hostnames (sorted by command)$(_NL)\
  test.ext.log       - alias for test.ext.host.log$(_NL)\
  test.ext.host.quick- test some commands with all hostnames$(_NL)\
-\#               ________________________________________ special targets _$(_NL)\
+\#              __________________________________________ special targets _$(_NL)\
  testcmd-eDDD_HOST  - specific test target with HOST (available targets see: help.test.ext.all)$(_NL)\
  testcmd-eDDD_HOST.log  - same as testcmd-DDD_HOST but store output in t/testcmd-DDD_HOST.log$(_NL)\
 \#$(_NL)\
-\# Examples: $(_NL)\
-\#    make testcmd-e001_localhost $(_NL)\
+\# Examples:$(_NL)\
+\#    make testcmd-e001_localhost$(_NL)\
 \#    make s-ALL.ext.host TEST.file=t/Makefile.FQDN $(_NL)\
-\#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
-\#    make  test.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
+\#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
+\#    make  test.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
 \#$(_NL)\
-\# To see which commands are executed, simply call 'make -n ...' $(_NL)\
+\# To see which commands are executed, simply call 'make -n ...'$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.ext)
