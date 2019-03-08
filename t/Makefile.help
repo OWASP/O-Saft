@@ -55,6 +55,10 @@
 #.            example:   HELP-doc  contains the description of the target  doc
 #.          * variable names with prefix  HELP-_  are treated as header texts,
 #.            example:   HELP-_help = ____ targets for help about Makefile _
+#.          * if such a variable has a multiline value, care needs to be taken
+#.            at least for  the left-most word starting in a line.  It is good
+#.            practice to start each line with a space,  so it does not  match
+#.            other target or variable names.
 #.
 #.      Targets in the makefiles are grouped.  Each group is headed by the help
 #.      texts for the targets.  The first line of this group should be a header
@@ -194,14 +198,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.24 19/03/07 21:49:05
+#?      @(#) Makefile.help 1.25 19/03/08 01:09:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.24
+_SID.help       = 1.25
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -232,7 +236,7 @@ _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 # TODO: replace sed by awk, as sed matches last occurrence of a pattern
 EXE.list        = awk       '/^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}'
 EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
-EXE.help        = awk -F=   '/^HELP-_/{sub(/ /,"",$$2);print "\t\t"$$2;next}/^HELP-/{z=substr($$0,index($$0,"=")+2);sub(/HELP-/," ");print $$1"\t- "z}'
+EXE.help        = awk -F=   '/^HELP-_/{sub(/ /,"",$$2);print " \#\t\t"$$2;next}/^HELP-/{z=substr($$0,index($$0,"=")+2);sub(/HELP-/," ");gsub(/ /,"",$$1);t="\t";if(length($$1)<7){t="\t\t";}printf(" %s%s- %s\n",$$1, t, z)}'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
@@ -276,7 +280,6 @@ $(_NL)\
  help.critic    - print documentation about perlcritic targets$(_NL)\
  help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
  help.HEAD      - print header line for documentation texts$(_NL)\
-$(_NL)\
 "
 
 ALL.help        +=$(HELP.help)
