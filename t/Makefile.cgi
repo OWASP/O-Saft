@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.19 19/03/07 22:39:23
+#?      @(#) Makefile.cgi 1.20 19/03/08 01:03:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.19
+_SID.cgi        = 1.20
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -71,7 +71,7 @@ HELP.cgi        = "\
 \# There are no  test.cgi.*.log targets, please use  test.cgi.log  instead.$(_NL)\
 \#$(_NL)\
 \# Hint: use  test.pattern-cgi-  instead of  test.pattern-cgi , as the$(_NL)\
-\#       patttern  cgi  may match other targets too.\
+\#       patttern  cgi  may match other targets too.$(_NL)\
 "
 
 ALL.help.test  += $(_NL)$(HELP.cgi)
@@ -245,7 +245,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.19: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.20: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
