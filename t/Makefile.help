@@ -198,17 +198,18 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.25 19/03/08 01:09:20
+#?      @(#) Makefile.help 1.26 19/03/09 08:21:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.25
+_SID.help       = 1.26
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
+ALL.inc.type   += help
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -227,23 +228,35 @@ T               = $$""(_NL)
 # internal help
 # (for details about the commands, please see  Syntax  above)
 _HELP_INFO_     = \# Name          | Description/Content
+_HELP_HEAD_     = \# Target        | Description
 _HELP_LINE_     = \#---------------+------------------------------------------------------------
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_INFO_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 
+_AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
+_AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
+_AWK_print_file     =
+_AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t"$$2; next} \
+                          /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
+                                    sub(/HELP-/,"",key); gsub(/ /,"",key);    \
+                                    tab="\t"; if(length(key)<8){tab="\t\t";}  \
+                                    printf("%s%s- %s\n",key,tab,txt);         \
+                                  }
+%-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
+
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
 # TODO: replace sed by awk, as sed matches last occurrence of a pattern
-EXE.list        = awk       '/^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}'
 EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
-EXE.help        = awk -F=   '/^HELP-_/{sub(/ /,"",$$2);print " \#\t\t"$$2;next}/^HELP-/{z=substr($$0,index($$0,"=")+2);sub(/HELP-/," ");gsub(/ /,"",$$1);t="\t";if(length($$1)<7){t="\t\t";}printf(" %s%s- %s\n",$$1, t, z)}'
+EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
+EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
-EXE.targets     = awk       '/^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}'
+EXE.targets     = awk       '$(_AWK_print_file)$(_AWK_target_by_line)'
 EXE.syntax      = sed -n -e 's/^\#\.//p'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
@@ -347,6 +360,7 @@ echo:
 	@$(TARGET_VERBOSE)
 	@$(ECHO) '$($($@))'
 
+HELP-show       = show macro content
 show: _notempty=show
 show: _notempty
 	@$(TARGET_VERBOSE)
