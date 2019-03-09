@@ -12,24 +12,27 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.11 19/01/11 22:55:01
+#?      @(#) Makefile.inc 1.12 19/03/09 17:06:00
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.11
+_SID.inc        = 1.12
 
-ALL.includes   += t/Makefile.inc
+_MYSELF.inc     = t/Makefile.inc
+ALL.includes   += $(_MYSELF.inc)
 ALL.inc.type   += inc
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-# NOTE: all definitions herein should be idempotent, so that this file could be
-#       included sevaral times. That's why only  =  and no  +=  assignments are
-#       used.
+HELP.inc        = $(_NL)\
+\# Makefile to define required macros. It does not contain targets.    $(_NL)\
+\# Note that all definitions herein should be idempotent, so that this $(_NL)\
+\# file could be included several times. That's why only  =  and no  +=$(_NL)\
+\# assignments are used. $(_NL)\
 
 ifndef Project
     Project     = o-saft
@@ -106,6 +109,14 @@ endif
 
 ifndef EXE.pl
     EXE.pl      = o-saft.pl
+endif
+
+ifndef EXE.tcl
+    EXE.tcl     = o-saft.tcl
+endif
+
+ifndef EXE.dummy
+    EXE.dummy   = /bin/echo -n ""
 endif
 
 ifndef TAB
