@@ -48,17 +48,20 @@
 #.
 #.   Syntax used in all makefiles
 #.      For extracting information from the Makefiles, i.e macros/variables and
-#.      their definitions, following special syntax is used:
-#.          * all texts for documentation (help) are stored in variables
-#.          * all these variables are named with the prefix  HELP-
-#.          * anything following the prefix is the name of an existing target,
+#.      targets and their definitions, following special syntax is used:
+#.          * All texts for documentation (help) are stored in variables.
+#.          * All these variables are named with the prefix  HELP- .
+#.          * Anything following the prefix is the name of an existing target,
 #.            example:   HELP-doc  contains the description of the target  doc
-#.          * variable names with prefix  HELP-_  are treated as header texts,
+#.          * Variable names with prefix  HELP-_  are treated as header texts,
 #.            example:   HELP-_help = ____ targets for help about Makefile _
-#.          * if such a variable has a multiline value, care needs to be taken
-#.            at least for  the left-most word starting in a line.  It is good
-#.            practice to start each line with a space,  so it does not  match
-#.            other target or variable names.
+#.          * The variable with the prefix  HELP. for example  HELP.help, con-
+#.            tains additional documentation; as the variable usually contains
+#.            multiline texts, each line must be terminated by  $(_NL)\  which
+#.            will be evaluated when the variable is used. It is good practice
+#-            to start each line with  \# .
+#.          * The value of a variable needs not to be quoted.  However, quotes
+#.            may or may not be needed when the value is evaluated.
 #.
 #.      Targets in the makefiles are grouped.  Each group is headed by the help
 #.      texts for the targets.  The first line of this group should be a header
@@ -68,9 +71,9 @@
 #.          HELP-doc        = same as help, but evaluates macros
 #.      These variables are used by the  help  and  doc  target.  Each of these
 #.      lines is printed as follows (from example above):
-#.                 _______________________________ some targets _
-#.          help     - print overview of all targets
-#.          doc      - same as help, but evaluates variables
+#.                   #_______________________________ some targets _
+#.          help     # print overview of all targets
+#.          doc      # same as help, but evaluates variables
 #.
 #.      To extract and format the texts, the targets use external tools, mainly
 #.      awk,  sed  and  tr.  Each tool including its command line arguments  is
@@ -108,6 +111,7 @@
 #.      in all other makefiles too (as they include this one).
 #.
 #.   Naming conventions for targets:
+#.          _tst_name    - internal target, not iintended for public use
 #.          tst.name     - public available targets use  .  (dot) as separator
 #.          tst-name     - internal and pattern rule targets use  -  (dash) as
 #.                          separator
@@ -132,7 +136,7 @@
 #.      Example:
 #.          ./t/ (directory)  contains:  t -> .
 #.          ./t/Makefile.cgi  contains:  include t/Makefile
-#.      This avoid sophistcated syntax in the files itself, like:
+#.      This avoids sophistcated syntax in the files itself, like:
 #.          ifeq (t,$(findstring t,$(PWD)))
 #.              TEST.dir = .
 #.              # if called inside t directory,  TEST.dir  must be redifined
@@ -182,7 +186,7 @@
 #.      and targets from the Makefiles itself.  They are mainly meant to show a
 #.      readable (for humans) information  in contrast to the sometimes cryptic
 #.      syntax of makefiles can do. This is done in  Makefile.help , see:
-#.          make -f Makefile.help
+#.          make -f t/Makefile.help
 #.      To get brief (mainly technical) information about a makefile, use:
 #.          make -f t/Makefile.cgi
 #.          make -f t/Makefile.cgi targets.me
@@ -193,19 +197,19 @@
 #.   Most included Makefiles.SUFFIX contain very limited comments.  For general
 #.   details of their functionality, see t/Makefile.template .
 #.
-#.   Special Syntax here
+#.   Special Syntax here in this file
 #.      To extract the syntax documentation, all the lines start with  #. , see
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.26 19/03/09 08:21:35
+#?      @(#) Makefile.help 1.27 19/03/09 17:27:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.26
+_SID.help       = 1.27
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -214,7 +218,7 @@ ALL.inc.type   += help
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-help-target-is-default: help.doc
+first-help-target-is-default: help.help
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -226,27 +230,39 @@ _CR             = \\015
 T               = $$""(_NL)
 
 # internal help
-# (for details about the commands, please see  Syntax  above)
+# default dummy _HELP_TYP__ to avoid errors; results in wrong output
+# however, its for development and testing only; help*-v  may give hints
+_HELP_TYP__     = help
+# some often uses formatting strings
 _HELP_INFO_     = \# Name          | Description/Content
-_HELP_HEAD_     = \# Target        | Description
+_HELP_NAME_     = \# Macro/Variable| Value
+_HELP_RULE_     = \# Target        | Description
 _HELP_LINE_     = \#---------------+------------------------------------------------------------
-_HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_INFO_)\012$(_HELP_LINE_)
+_HELP_HEAD_     = $(_HELP_NAME_)
+_HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 
+# setting if Makefile.inc not included
+help.inc:       _HELP_TYP__ = inc
+help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
+
+# define scripts as variables, for better human readability
+# (for details about the commands, please see  Syntax  above)
+# _HELP_HEAD_   will be set conditionally per target/rule
 _AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
 _AWK_print_file     =
-_AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t"$$2; next} \
-                          /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
-                                    sub(/HELP-/,"",key); gsub(/ /,"",key);    \
-                                    tab="\t"; if(length(key)<8){tab="\t\t";}  \
-                                    printf("%s%s- %s\n",key,tab,txt);         \
-                                  }
+_AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
+                      /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
+                                sub(/HELP-/,"",key); gsub(/ /,"",key);    \
+                                tab="\t"; if(length(key)<8){tab="\t\t";}  \
+                                printf("%s%s\# %s\n",key,tab,txt);         \
+                              }
 %-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
-# TODO: replace sed by awk, as sed matches last occurrence of a pattern
+# prefer awk where possible, as sed matches last occurrence of a pattern
 EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
 EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
 EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
@@ -265,54 +281,127 @@ EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 # NOTE all EXE.* macros above cannot be shown using echo, eval or show target
 #      they all may return errors like: /bin/sh: 1: Syntax error:...
 
+ifndef EXE.dummy
+    EXE.dummy   = /bin/echo -n ""
+endif
+
+ifndef _MYSELF.inc
+    # dummy setting until Makefile.inc is included, keeps errors away
+    _MYSELF.inc = t/Makefile.inc
+endif
+
 # other tools
 OPT.cloc        =
 EXE.cloc        = cloc $(OPT.cloc)
 
 #_____________________________________________________________________________
+#_________________________________________________________ internal targets __|
+
+_HELP-_help0     = _________________________________ targets for internal use _
+_HELP-help.HEAD  = print table header for documentation texts
+_HELP-help.BODY  = print table body   for documentation texts (all HELP-* lines)
+_HELP-help.FOOT  = print table footer for documentation texts
+_HELP-help.HELP  = print individual documentation texts (HELP.TYP variale)
+
+_help.HEAD:
+	@echo "$(_HELP_HEADER_)"
+
+_help.FOOT:
+	@echo "$(_HELP_LINE_)"
+
+_help.BODY:
+	@$(TARGET_VERBOSE)
+	@$(EXE.help) $(_MYSELF.$(_HELP_TYP__))
+
+# neet to set own variable name because $($(HELP.$(_HELP_TYP__))) does not work
+_help.HELP: _HELP_HELP_ = HELP.$(_HELP_TYP__)
+_help.HELP:
+	@$(TARGET_VERBOSE)
+	@echo "$($(_HELP_HELP_))"
+
+.PHONY: _help.HEAD _help.BODY _help.FOOT _help.HELP
+
+#_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
 
-# no HELP-* macros are used herein to avoid printing their content with "make"
+# line printed with help should work copy&paste, hence some summy definitions
+MYmacro         = dummy macro/variable used in examples
+MYtarget: MYVAR = dummy target macro used in examples
+MYtarget:         dummy_dependency
+	@$(EXE.dummy)
+
+HELP.help       = $(_NL)\
+\# The targets to show information/content from the Makefile are:$(_NL)\
+\#    echo eval macro pmacro show target$(_NL)\
+\# which are used like:                 $(_NL)\
+\#    make echo  echo=MYVAR             $(_NL)\
+\#    make macro macro=MYVAR            $(_NL)\
+\# For easy use, following alias exist: $(_NL)\
+\#    e-  m-  p-  s-  t-                $(_NL)\
+\# which are used like:                 $(_NL)\
+\#    make e-MYmacro                    $(_NL)\
+\#    make m-MYmacro                    $(_NL)\
+\#    make p-MYmacro                    $(_NL)\
+\#    make s-MYmacro                    $(_NL)\
+\#    make t-MYtarget                   $(_NL)\
+
+HELP-_help1     = __________________________ targets for help about Makefile _
+HELP-macros     = list all macro names used in Makefile* (alias: list, vars)
+HELP-targets    = list all targets used in Makefile* (alias: rules)
+HELP-macros.me  = list all macro names used in calling Makefile
+HELP-targets.me = list all targets used in calling Makefile
+HELP-e-MYmacro  = show content of MYmacro expanded (all in one line)
+HELP-s-MYmacro  = show content of MYmacro expanded (one word per line)
+HELP-m-MYmacro  = show definition of MYmacro as is      - exact macro match
+HELP-p-MYmacro  = show all definitions of MYmacro as is - macro pattern match
+HELP-t-MYtarget = show MYtarget                         - exact target match
+
+HELP-_help2     = ________________________________ targets for documentation _
+HELP-help.doc   = print this documentation
+HELP-help.all   = print list of all targets
+HELP-help.test  = print documentation about test targets
+HELP-help.critic= print documentation about perlcritic targets
+HELP-help.syntax= print documentation about syntax used in Makefile.*
+
+HELP-help.test.help = print targets for testing makefile help targets
+
+ALL.help       += help.help help.critic help.syntax help.test
+# TODO: does help.test need to be here?
+
+ALL.help       += $(ALL.help.test)
+# add all other help.test* targets
+
+# our own targets using help% or alike
+help.help:      _HELP_TYP__ = help
+help.help-%:    _HELP_TYP__ = help
+help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
+help.help-%:    _HELP_HEAD_ = $(_HELP_RULE_)
+help.all:       _HELP_HEAD_ = $(_HELP_RULE_)
+target:         _HELP_HEAD_ = $(_HELP_RULE_)
+
+help.test.%:    _HELP_HEAD_ = $(_HELP_RULE_)
 
 
-HELP.help       = " \
-\#              __________________________ targets for help about Makefile _$(_NL)\
- macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
- targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
- macros.me      - list all macro names used in calling Makefile$(_NL)\
- targets.me     - list all targets used in calling Makefile$(_NL)\
- e-MACRO        - show content of MACRO expanded (all in one line)$(_NL)\
- s-MACRO        - show content of MACRO expanded (one word per line)$(_NL)\
- m-MACRO        - show definition of MACRO as is --exact macro match$(_NL)\
- p-MACRO        - show all definitions of MACRO as is --macro pattern match$(_NL)\
- t-TARGET       - show TARGET --exact target match$(_NL)\
-$(_NL)\
-\#              ________________________________ targets for documentation _$(_NL)\
- help.doc       - print this documentation$(_NL)\
- help.test      - print documentation about test targets$(_NL)\
- help.critic    - print documentation about perlcritic targets$(_NL)\
- help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
- help.HEAD      - print header line for documentation texts$(_NL)\
-"
+help.%: _help.HEAD _help.BODY _help.FOOT _help.HELP
+	@$(TARGET_VERBOSE)
+	@$(EXE.dummy)
 
-ALL.help        +=$(HELP.help)
-# TODO: auch zu ALL.help.test ??
-
-help.help: help.HEAD
-	@$(EXE.help) $(_MYSELF.help)
-	@echo $(HELP.help) ; # no quotes!
-# TODO: make help.help and make help.test.help are identical
+help.test.%: _help.HEAD _help.BODY _help.FOOT _help.HELP
+	@$(TARGET_VERBOSE)
+	@$(EXE.dummy)
 
 help.doc: help.help
 #  legacy alias
 
+help.all: _help.HEAD
+	@$(TARGET_VERBOSE)
+	@$(EXE.help) $(ALL.Makefiles)
+
+
 help.syntax:
 	$(EXE.syntax) $(_MYSELF.help)
 
-help.HEAD:
-	@echo "$(_HELP_HEADER_)"
-
-.PHONY: help.doc help.help help.syntax help.HEAD
+.PHONY: help.all help.doc help.syntax
 
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
@@ -352,15 +441,15 @@ targets%me:
 rules: targets
 rules%me: targets.me
 
+# TODO: eval is quick&dirty; format should be same as with  _AWK_target_by_line
 eval:
 	@$(TARGET_VERBOSE)
-	@$(ECHO) "$($@)$(_TAB)$(_TAB)- $(HELP-$($@))"
+	@$(ECHO) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
 
 echo:
 	@$(TARGET_VERBOSE)
 	@$(ECHO) '$($($@))'
 
-HELP-show       = show macro content
 show: _notempty=show
 show: _notempty
 	@$(TARGET_VERBOSE)
@@ -422,8 +511,6 @@ cloc:       cloc.stat
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
-
-HELP-help.test.help = print targets for testing makefile help targets
 
 # testcmd-% pattern rule uses the stem as argument to the executed command
 # this is all we need, hence all other arguments must be set empty
