@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.17 19/03/07 23:02:53
+#?      @(#) Makefile.misc 1.18 19/03/11 00:01:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.17
+_SID.misc       = 1.18
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -33,23 +33,31 @@ ALL.inc.type   += misc
 
 first-misc-target-is-default: help.test.misc
 
+ALL.help.test  += help.test.misc help.test.dev
+
+HELP-help.test.misc = print misc. testing targets
+help.test.misc:     _HELP_TYP__ = misc
+help.test.misc-v:   _HELP_TYP__ = misc
+help.test.misc-vv:  _HELP_TYP__ = misc
+# some targets may move to Makefile.dev in future
+help.test.dev:      _HELP_TYP__ = dev
+help.test.dev-v:    _HELP_TYP__ = dev
+help.test.dev-vv:   _HELP_TYP__ = dev
+
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
-HELP.misc       = "\
-\#              ______________________________________________ misc. tests _$(_NL)\
- test.bench     - call '$(EXE.bench)' for some benchmarks$(_NL)\
- test.bench.log - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
- test.bunt      - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
- test.docker    - test docker image$(_NL)\
- help.dev       - print targets for development$(_NL)\
-"
 
-ALL.help.test  += $(_NL)$(HELP.misc)
-
-HELP-help.test.misc = print misc. testing targets
+HELP-_misc1         = ____________________________________________ testing misc. _
+HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
+HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(BENCH.times)'
+HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
+HELP-test.docker    = test docker image
 HELP-help.dev       = print targets for development
+
+HELP.misc           = # no special documentation yet
+HELP.test.misc.all  = # no special documentation yet
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -66,7 +74,7 @@ BENCH.host      = $(TEST.host)
 bench: test.bench
 test.bench:
 	$(EXE.bench) $(BENCH.host)
-	@echo "# use '$(MAKE) test.bench.log' to save result in '$(BENCH.times)'"
+	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(BENCH.times)'"
 test.bench.log:
 	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
 
@@ -90,23 +98,18 @@ test.misc:        $(ALL.test.misc)
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
 
-HELP.dev        = "\
-\#              __________________________________ targets for development _$(_NL)\
- tags           - generate tags file for vi(m)$(_NL)\
- profile.sub.entry  - generate function calling tree of '$(DEV.pl)' (entry only)$(_NL)\
- profile.sub.exit   - generate function calling tree of '$(DEV.pl)' (entry and exit)$(_NL)\
- profile.sub.args   - generate function calling tree of '$(DEV.pl)' (in, out and parameter)$(_NL)\
- nytprof.out    - generate profiling data (for nytprofcalls)$(_NL)\
- nytprof.html   - generate profiling data in HTML format$(_NL)\
- dprof.out      - generate profiling data (for dprofpp; times, counts, calling tree)$(_NL)\
- code.quality   - search for various common coding mistakes, see make e-ALL.test.quality$(_NL)\
-"
+HELP.dev        = # TODO: collect following HELP-*
+HELP-_dev1          = __________________________________ targets for development _
+HELP-tags           = generate tags file for vi(m)
+HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
+HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
+HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out and parameter)
+HELP-nytprof.out    = generate profiling data (for nytprofcalls)
+HELP-nytprof.html   = generate profiling data in HTML format
+HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
+HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
 
-# TODO: if we switch HELP.dev to single lines HELP-*
-#help.dev: help.HEAD
-#	@$(EXE.help) $(_MYSELF.misc)
-#	@$(ECHO) "$(_HELP_LINE_)"
-help.dev: help.HEAD
+help.dev: _help.HEAD
 	@$(ECHO)  $(HELP.dev)
 	@$(ECHO) "$(_HELP_LINE_)"
 
