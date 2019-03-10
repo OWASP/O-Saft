@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.6 19/03/10 20:45:18
+#?      @(#) Makefile.pod 1.7 19/03/10 23:49:24
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -27,6 +27,42 @@
 =head2 Make:GNU
 
 some text
+
+
+=head2 Make:include
+
+GNU make's include directive doesn't understand macros, the used path must
+be verbatim. To keep make's functionality (targets) maintainable, multiple
+files are used.  They are all named  Makefile  or  Makefile.SUFFIX,  where
+the  SUFFIX  describes the content, somehow. I.g. it should be possible to
+use each of these makefiles by its own, like:
+
+    make -f Makefile.SUFFIX target
+
+GNU make's include functionality, in particular when including files  sub-
+directories, is difficult to use. Hence following trick is used:
+
+    * sub-directories contains a symbolic link to . (itself)
+    * Makefiles always include other files with relative paths
+
+Example:
+
+    ./t/ (directory)  contains:  t -> .
+    ./t/Makefile.cgi  contains:  include t/Makefile
+
+This avoids sophistcated syntax in the files itself, like:
+
+    ifeq (t,$(findstring t,$(PWD)))
+        TEST.dir = .
+        # if called inside t directory,  TEST.dir  must be redifined
+    endif
+
+GNU make also cannot manage recursive includes of the same file. This must
+be checked before including, for example (using private _SID.* variable):
+
+    ifeq (,$(_SID.test))
+        include t/Makefile
+    endif
 
 
 =head2 Make:automatic variables
@@ -82,7 +118,7 @@ Following macros should then be set only for these targets, like:
 For collecting all targets defined in a Makefile.*, following $(shell awk)
 is used:
 
-  $(shell awk -F% '($$1 ~ /^testcmd-c./){print $$1}' $(_MYSELF.some-type))
+    $(shell awk -F% '($$1 ~ /^testcmd-c./){print $$1}' $(_MYSELF.some-type))
 
 (where  testcmd-c  is an example target name). The pattern rule testcmd-c%
 itself must not be matched, hence the pattern /^testcmd-c./ needs to match
