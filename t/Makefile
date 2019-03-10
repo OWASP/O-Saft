@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.36 19/03/07 20:16:18
+#?      @(#) Makefile 1.37 19/03/11 00:08:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.36
+_SID.test       = 1.37
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -60,50 +60,31 @@ ALL.inc.type   += test
 
 first-test-target-is-default: help.test
 
+ALL.help.test  += help.test
+
+HELP-help.test      = print general testing targets
+help.test:          _HELP_TYP__ = test
+help.test-v:        _HELP_TYP__ = test
+help.test-vv:       _HELP_TYP__ = test
+help.test.test:     _HELP_TYP__ = test
+help.test.test-v:   _HELP_TYP__ = test
+help.test.test-vv:  _HELP_TYP__ = test
+help.test:          _HELP_HEAD_ = $(_HELP_RULE_)
+
 ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines macros if called directly (not from ../Makefile)
 endif
 
 #_____________________________________________________________________________
-#___________________________________________________________ default target __|
-
-help.test: help.HEAD
-	@echo $(ALL.help.test)
-
-help.test.all:
-	@echo " # individual targets for tests"
-	@$(MAKE) -s echo=ALL.tests     echo
-	@echo ""
-	@echo " # targets which write results to logfiles"
-	@$(MAKE) -s echo=ALL.tests.log echo
-	@echo ""
-	@echo " # for more target and details, following targets can be used"
-	@echo $(foreach target,$(ALL.inc.type),t-$(target))
-
-.PHONY: help.test help.test.all
-
-# FIXME: some of above HELP-* should be extracted from t/Makefile.*
-
-# FIXME: missing public (not internal) documentation for pattern rules:
-#       message-%:
-#       no.message-%:
-#       testarg0-%:
-#       testcmd-%
-#       test.all-%:
-
-#_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
-help.test.%: help.HEAD
-	@$(TARGET_VERBOSE)
-	@echo $(HELP.$*)
-
+#	@echo " # testing '$(HELP-help.test.$*)' :"
 help.test.%.all:
 	@echo " # individual targets for testing $* :"
 	@echo $(ALL.test.$*)
 	@echo ""
-	@echo $(HELP.$*.all)
+	@echo "$(HELP.test.$*.all)"
 
 help.test.%.internal:
 	@echo " # TEST.file:       $(TEST.file)"
@@ -114,19 +95,10 @@ help.test.%.internal:
 	@echo $(HELP.$*.internal)
 	@echo " # -------------------------------------------------------------"
 
-# TODO:  some alias because suffix differs from type
-help.test.cmd.all:     help.test.cmds.all
-help.test.warning.all: help.test.warnings.all
-help.test.cmd.internal:     help.test.cmds.internal
-help.test.warning.internal: help.test.warnings.internal
-
 help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
 help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
 help.test.targets:
 	@$(MAKE) -s $(help-test-all) $(help-test-internal)
-
-.PHONY: help.test.targets
-
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -155,6 +127,8 @@ TEST.logdir     = $(TEST.dir)/log
 # defined in other t/Makefile*
 # ALL.tests =
 
+#  $(SRC.rc)  may not be defined here, hence hardcoded
+
 OPT.grep        = -q
     # grep (mainly used in message-% target) should not report matching lines
     # macro can be reset or redifined for more verbose output
@@ -163,33 +137,48 @@ OPT.grep        = -q
 EXE.bench       = t/o-saft_bench
 EXE.test.bunt   = t/test-bunt.pl.txt
 
+ifndef CONTRIB.dir
+    CONTRIB.dir = contrib
+endif
+
 _TODAY_         = $(shell date +%Y""%m%d)
 
-HELP.test       = " \
+HELP.test       = $(_NL)\
 \# Following variables are intended to be used on command line:$(_NL)\
 \#$(_NL)\
-\#   EXE.pl      - program to perform tests, default: $(EXE.pl)$(_NL)\
-\#   TEST.init   - arguments and options always passed to EXE.pl; default: $(TEST.init)$(_NL)\
-\#   TEST.args   - arguments and options to be passed to EXE.pl per target$(_NL)\
+\#   EXE.pl      - program to perform tests, default: '$(EXE.pl)'$(_NL)\
+\#   TEST.init   - arguments and options always passed to EXE.pl; default: '$(TEST.init)'$(_NL)\
+\#   TEST.args   - arguments and options to be  passed to EXE.pl per target$(_NL)\
 \#   TEST.host   - hostname to be used for tests (when only one is expected)$(_NL)\
 \#   TEST.hosts  - list of hostnames to perform tests with$(_NL)\
-\#   TEST.dir    - directory in which EXE.pl will be executed; default: $(TEST.dir)$(_NL)\
-\#   TEST.logdir - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
-\#   TEST.rc     - content of RC-file to be used by EXE.pl: $(TEST.rc)$(_NL)\
+\#   TEST.dir    - directory in which EXE.pl will be executed; default: '$(TEST.dir)/'$(_NL)\
+\#   TEST.logdir - directory where results of EXE.pl will be stored; default: '$(TEST.logdir)/'$(_NL)\
+\#   TEST.rc     - content of RC-file to be used by EXE.pl: '$(TEST.rc)'$(_NL)\
 \#$(_NL)\
-\# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
+\# Keep in mind that following files are located in '$(TEST.dir)/':$(_NL)\
 \#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
-\# which are used by EXE.pl or other tools used for the tests.$(_NL)\
-"
-#  $(SRC.rc)  may not be defined here, hence hardcoded
+\# which are used by EXE.pl or other tools used for the tests.
 
-ALL.help.test   += $(_NL)$(HELP.test)
+HELP.test.test.all  = $(_NL)\
+\# individual targets for tests$(_NL)\
+$(ALL.tests)$(_NL)\
+\#$(_NL)\
+\# targets which write results to logfiles$(_NL)\
+$(ALL.tests.log)$(_NL)\
+\#$(_NL)\
+\# for more target and details, following targets can be used$(_NL)\
+$(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
+
+HELP.test.all   = $(HELP.test.test.all)
+help.test.all:      help.test.test.all
+    # convenience to satisfy  help.test.all
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
 
 HELP-_internal  = _____________________________________ internal test target _
-HELP-help.test.make = print GNUmake's internals and global project settings
+HELP-help.test.make = print GNU make's internals and global project settings
+# dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
 # Note that the $(_SID*) variables indicate if a sub-makefile was included.
@@ -271,6 +260,13 @@ help.test.make: test.file-1 test,file-2 test_file-3
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
+
+# FIXME: missing public (not internal) documentation for pattern rules:
+#       message-%:
+#       no.message-%:
+#       testarg0-%:
+#       testcmd-%
+#       test.all-%:
 
 # target to check for empty hostname list, can also be used for more debugging
 _no-hosts__not-yet-working:
@@ -418,7 +414,7 @@ testarg0-%.log: $(TEST.logdir)
 #       $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
 #       #   c00-aa.tld returns: aa.tld
 #
-# Note: following does not work proper (in GNUmake), hence the solution above:
+# Note: following does not work proper (in GNU make), hence the solution above:
 #       testcmd-no1: TEST.args  = +quit $*
 #       testcmd-no2: TEST.args := +quit $*
 #
@@ -577,9 +573,10 @@ endif
 HELP-_test      = ______________________________________ targets for testing _
 HELP-tests      = make all tests
 HELP-test       = alias for tests
+HELP-tests.log  = same as tests but stpre results in '$(TEST.logdir)/'
 HELP-tests.quick    = like tests, but less targets (for development)
 HELP-tests.quick.log= like tests.log, but less targets (for development)
-HELP-help.test  = print more targets for testing
+HELP-help.test      = print more targets for testing
 HELP-help.test.all  = print available individual targets for testing
 
 tests: TARGET_VERBOSE=echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
