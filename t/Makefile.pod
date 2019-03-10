@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.4 19/03/07 00:31:27
+#?      @(#) Makefile.pod 1.5 19/03/10 18:26:25
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -78,6 +78,34 @@ is used:
 (where  testcmd-c  is an example target name). The pattern rule testcmd-c%
 itself must not be matched, hence the pattern /^testcmd-c./ needs to match
 $1 instead of $0 in the awk.
+
+
+=head2 Make:variables and quotes
+
+Values of variables in makefiles follow some strange rules:
+
+  * anything right of leftmost # character is a comment and ignored
+  * anything right of leftmost = character is part of the value
+  * single quotes, double quotes and \ character have no special meaning
+  * single quotes, double quotes and \ become meta characters depending on
+    how a variable is used, in particular used with or without quotes
+  * newlines in a variable are not preserved when the variable is used
+
+For most common usage of variables, these rules are less important. But if
+the variable contains descriptive texts, some care needs to be taken. This
+description is about defining and using such variables with random texts.
+
+In general it is not necessary to use quotes for variable values. However,
+reading the values would be easyer and syntax highlighting in some editors
+more accurate using quotes.
+
+It is more a personal preference if quotes for variable definitions should
+be used or not. The decision here is to not use quotes for definition, but
+use (double) quotes for variales usage.  This also has the benefit, that a
+variable is identifiable as "descriptive text" when used.
+
+Keep in mind, that newlines to be printed must be explicitly  written in a
+variable's value, $(_NL) is used for that.
 
 
 =head2 Make:--dry-run
