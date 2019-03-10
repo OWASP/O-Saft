@@ -19,21 +19,27 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.9 19/03/08 00:14:14
+#?      @(#) Makefile.hlp 1.10 19/03/11 00:01:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.9
+_SID.hlp        = 1.10
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
 ALL.inc.type   += hlp
 
 first-hlp-target-is-default: help.test.hlp
-    # see help.test.%
+
+ALL.help.test  += help.test.hlp
+
+HELP-help.test.hlp  = print targets for testing '$(SRC.pl)' --help options
+help.test.hlp:      _HELP_TYP__ = hlp
+help.test.hlp-v:    _HELP_TYP__ = hlp
+help.test.hlp-vv:   _HELP_TYP__ = hlp
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -44,18 +50,13 @@ ifdef TEST.hosts
     TEST.hlp.hosts = $(TEST.hosts)
 endif
 
-HELP.hlp        = "\
-\#              ____________________________________________ test commands _$(_NL)\
- test.hlp       - test  help  commands and options of '$(SRC.pl)'$(_NL)\
- test.hlp.log   - same as test.hlp but store output in t/testcmd-CMD.log$(_NL)\
-\#$(_NL)\
-\# Examples: $(_NL)\
-\#    make s-ALL.test.hlp $(_NL)\
-"
 
-ALL.help.test  += $(_NL)$(HELP.hlp)
+HELP-_hlp1          = ___________________________________ testing --help options _
+HELP-test.hlp       = test  help  commands and options of '$(SRC.pl)'
+HELP-test.hlp.log   = same as test.hlp but store output in t/testcmd-CMD.log
 
-HELP-help.test.hlp  = print targets for testing '$(SRC.pl)' --help options
+HELP.hlp            = # no special documentation yet
+HELP.test.hlp.all   = # no special documentation yet
 
 testarg0-h-%:                   EXE.pl      = ../$(SRC.pl)
 testarg0-h-%:                   TEST.init   = --no-rc --header
