@@ -176,14 +176,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.31 19/03/11 00:43:32
+#?      @(#) Makefile.help 1.32 19/03/11 00:59:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.31
+_SID.help       = 1.32
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -356,11 +356,9 @@ HELP.help       = $(_NL)\
 
 HELP-help.test.help = print targets for testing makefile help targets
 
-ALL.help       += help.help help.critic help.syntax help.test
-# TODO: does help.test need to be here?
-
+ALL.help       += help.help help.critic help.syntax
 ALL.help       += $(ALL.help.test)
-# add all other help.test* targets
+                # add all other help.test* targets
 
 # our own targets using help% or alike
 help.help:      _HELP_TYP__ = help
