@@ -17,20 +17,27 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.13 19/03/07 22:54:51
+#?      @(#) Makefile.ext 1.14 19/03/11 00:00:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.13
+_SID.ext        = 1.14
 
 _MYSELF.ext     = t/Makefile.ext
 ALL.includes   += $(_MYSELF.ext)
 ALL.inc.type   += ext
 
 first-ext-target-is-default: help.test.ext
+
+ALL.help.test  += help.test.ext
+
+HELP-help.test.ext  = print targets for testing '$(SRC.pl)' with external FQDN
+help.test.ext:      _HELP_TYP__ = ext
+help.test.ext-v:    _HELP_TYP__ = ext
+help.test.ext-vv:   _HELP_TYP__ = ext
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -44,32 +51,32 @@ else
     TEST.ext.hosts  = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
 endif
 
-HELP.ext        = "\
-\#              _________________________________ test with external hosts _$(_NL)\
- test.ext           - test all commands with all hostnames, alias for test.ext.host$(_NL)\
- test.ext.host      - test all commands with all hostnames (sorted by host)$(_NL)\
- test.ext.host.log  - same as test.ext.host but store output in logfile$(_NL)\
- test.ext.command   - test all commands with all hostnames (sorted by command)$(_NL)\
- test.ext.log       - alias for test.ext.host.log$(_NL)\
- test.ext.host.quick- test some commands with all hostnames$(_NL)\
-\#              __________________________________________ special targets _$(_NL)\
- testcmd-eDDD_HOST  - specific test target with HOST (available targets see: help.test.ext.all)$(_NL)\
- testcmd-eDDD_HOST.log  - same as testcmd-DDD_HOST but store output in t/testcmd-DDD_HOST.log$(_NL)\
-\#$(_NL)\
+
+HELP-_ext1              = ______________________________ testing with external hosts _
+HELP-test.ext           = test all commands with all hostnames, alias for test.ext.host
+HELP-test.ext.host      = test all commands with all hostnames (sorted by host)
+HELP-test.ext.host.log  = same as test.ext.host but store output in logfile
+HELP-test.ext.command   = test all commands with all hostnames (sorted by command)
+HELP-test.ext.log       = alias for test.ext.host.log
+HELP-test.ext.host.quick= test some commands with all hostnames
+
+HELP-_ext2              = ________________ testing a special cmd with external hosts _
+HELP-testcmd-eDDD_HOST  = specific test target with HOST
+HELP-testcmd-eDDD_HOST.log  = store output of testcmd-DDD_HOST in t/testcmd-DDD_HOST.log
+
+HELP.ext                = $(_NL)\
 \# Examples:$(_NL)\
-\#    make testcmd-e001_localhost$(_NL)\
-\#    make s-ALL.ext.host TEST.file=t/Makefile.FQDN $(_NL)\
-\#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
-\#    make  test.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-e001_localhost$(_NL)\
+\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.file=t/Makefile.FQDN $(_NL)\
+\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
+\#    $(MAKE_COMMAND)  test.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
 \#$(_NL)\
-\# To see which commands are executed, simply call 'make -n ...'$(_NL)\
-"
+\# Note that external hosts are listed on per line in t/Makefile.FQDN
 
-ALL.help.test  += $(_NL)$(HELP.ext)
+HELP.test.ext.all       = # no special documentation yet
 
-HELP-help.test.ext  = print targets for testing '$(SRC.pl)' with external FQDN
-
-HELP.ext.all        = "\# targets for testing all command for all hosts:$(_NL)$(ALL.by_host)"
+# SEE Make:target name
+# SEE Make:target name prefix
 
 testcmd-e%:     EXE.pl      = ../$(SRC.pl)
 testcmd-e%:     TEST.init   = --header
@@ -100,11 +107,6 @@ ALL.test.ext    = $(ALL.by_host)
 
 ALL.ext.host    = $(ALL.by_host)
 ALL.ext.host.log= $(ALL.by_host:%=%.log)
-
-HELP.ext.internal   = "\
-\# test.ext.host:    $(test.ext.host)$(_NL)\
-\# test.ext.command: $(test.ext.command)$(_NL)\
-"
 
 # TODO: use target _no-hosts
 test.ext.host:      $(ALL.by_host)
