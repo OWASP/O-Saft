@@ -202,14 +202,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.27 19/03/09 17:27:43
+#?      @(#) Makefile.help 1.28 19/03/10 09:06:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.27
+_SID.help       = 1.28
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -219,6 +219,8 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-help-target-is-default: help.help
+
+HELP-help.help  = print targets to get information/documentation from Makefiles
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -302,6 +304,12 @@ _HELP-help.HEAD  = print table header for documentation texts
 _HELP-help.BODY  = print table body   for documentation texts (all HELP-* lines)
 _HELP-help.FOOT  = print table footer for documentation texts
 _HELP-help.HELP  = print individual documentation texts (HELP.TYP variale)
+#HELP-help.LIST  = print targets for getting list of targets (testing targets only)
+_HELP-help.LIST  = $(_NL)\
+\# To get a list of targets, use:       $(_NL)\
+\#    make help.test.$(_HELP_TYP__).all $(_NL)\
+\#    make e-ALL.test.$(_HELP_TYP__)    $(_NL)\
+\#    make s-ALL.test.$(_HELP_TYP__)
 
 _help.HEAD:
 	@echo "$(_HELP_HEADER_)"
@@ -313,13 +321,17 @@ _help.BODY:
 	@$(TARGET_VERBOSE)
 	@$(EXE.help) $(_MYSELF.$(_HELP_TYP__))
 
+_help.LIST:
+	@$(TARGET_VERBOSE)
+	@echo "$(_HELP-help.LIST)"
+
 # neet to set own variable name because $($(HELP.$(_HELP_TYP__))) does not work
 _help.HELP: _HELP_HELP_ = HELP.$(_HELP_TYP__)
 _help.HELP:
 	@$(TARGET_VERBOSE)
 	@echo "$($(_HELP_HELP_))"
 
-.PHONY: _help.HEAD _help.BODY _help.FOOT _help.HELP
+.PHONY: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
@@ -382,11 +394,11 @@ target:         _HELP_HEAD_ = $(_HELP_RULE_)
 help.test.%:    _HELP_HEAD_ = $(_HELP_RULE_)
 
 
-help.%: _help.HEAD _help.BODY _help.FOOT _help.HELP
+help.%:      _help.HEAD _help.BODY _help.FOOT _help.HELP
 	@$(TARGET_VERBOSE)
 	@$(EXE.dummy)
 
-help.test.%: _help.HEAD _help.BODY _help.FOOT _help.HELP
+help.test.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TARGET_VERBOSE)
 	@$(EXE.dummy)
 
