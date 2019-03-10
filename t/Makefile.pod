@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.5 19/03/10 18:26:25
+#?      @(#) Makefile.pod 1.6 19/03/10 20:45:18
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -47,6 +47,15 @@ Remember make's automatic variables:
         $%    - target (archive) member name (rarely used)
 
 Use of $$ avoids evaluating $ .
+
+
+=head2 Make:MAKE vs. MAKE_COMMAND
+
+Traditionally  $(MAKE) is used for the make command itself. For conveience
+t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
+
+When  $(MAKE)  is used in documentation (variables or texts),  make should 
+be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 
 =head2 Make:target name
