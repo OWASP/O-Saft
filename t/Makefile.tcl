@@ -17,20 +17,27 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.10 19/03/07 23:16:48
+#?      @(#) Makefile.tcl 1.11 19/03/11 00:01:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.10
+_SID.tcl        = 1.11
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
 ALL.inc.type   += tcl
 
 first-tcl-target-is-default: help.test.tcl
+
+ALL.help.test  += help.test.tcl
+
+HELP-help.test.tcl  = print targets for testing GUI '$(Project).tcl'
+help.test.tcl:      _HELP_TYP__ = tcl
+help.test.tcl-v:    _HELP_TYP__ = tcl
+help.test.tcl-vv:   _HELP_TYP__ = tcl
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -42,17 +49,14 @@ ifdef TEST.hosts
 endif
 
 
-HELP.tcl        = "\
-\#              _________________________________________ testing GUI tool _$(_NL)\
- test.tcl       - test functionality of '$(SRC.tcl)'$(_NL)\
- test.tcl.log   - same as test.tcl but store output in '$(TEST.logdir)/'$(_NL)\
-\#              ________________________________________________ GUI tests _$(_NL)\
-\# not yet implemented ...$(_NL)\
-"
+HELP-_tcl1          = _________________________________________ testing GUI tool _
+HELP-test.tcl       = test functionality of '$(SRC.tcl)'
+HELP-test.tcl.log   = same as test.tcl but store output in '$(TEST.logdir)/'
+HELP-_tcl1          = ________________________________________________ GUI tests _
+HELP-GUI-not-yet    = not yet implemented ...
 
-ALL.help.test  += $(_NL)$(HELP.tcl)
-
-HELP-help.test.tcl  = print targets for testing GUI '$(Project).tcl'
+HELP.tcl            = # no special documentation yet
+HELP.test.tcl.all   = # no special documentation yet
 
 # SEE Make:target name
 # SEE Make:target name prefix
