@@ -121,33 +121,7 @@
 #.                         allow spelling variants, like tst.ext or tst-ext
 #.
 #.   Makefiles and Includes
-#.      Note that GNU make's  include directive does not understand macros, the
-#.      used path must be verbatim.
-#.      To keep the make's functionality (targets) maintainable, multiple files
-#.      are used. They are all named  Makefile  or  Makefile.SUFFIX,  where the
-#.      SUFFIX  describes the content, somehow.  I.g. it should be  possible to
-#.      use each of these makefiles by its own, like:
-#.           make -f Makefile.SUFFIX target
-#.
-#.      As GNU make's include functionality is difficult to use,  in particular
-#.      when including files from sub-directories,  following trick is used:
-#.          * sub-directories contain a symbolic link to . (itself)
-#.          * Makefiles always include other files with relative paths
-#.      Example:
-#.          ./t/ (directory)  contains:  t -> .
-#.          ./t/Makefile.cgi  contains:  include t/Makefile
-#.      This avoids sophistcated syntax in the files itself, like:
-#.          ifeq (t,$(findstring t,$(PWD)))
-#.              TEST.dir = .
-#.              # if called inside t directory,  TEST.dir  must be redifined
-#.          endif
-#.
-#.      GNU make cannot manage recursive includes of the  same file.  This must
-#.      be checked before including, for example with (using our private _SID.*
-#.      variable):
-#.          ifeq (,$(_SID.test))
-#.              include t/Makefile
-#.          endif
+#.      SEE Make:include
 #.
 #.   Makefiles
 #.      All targets of the Makefiles --the make system-- are for testing O-Saft
@@ -202,14 +176,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.29 19/03/10 23:32:39
+#?      @(#) Makefile.help 1.30 19/03/10 23:52:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.29
+_SID.help       = 1.30
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
