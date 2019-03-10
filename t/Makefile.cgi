@@ -17,21 +17,25 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.20 19/03/08 01:03:39
+#?      @(#) Makefile.cgi 1.21 19/03/10 23:59:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.20
+_SID.cgi        = 1.21
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
 ALL.inc.type   += cgi
 
 first-cgi-target-is-default: help.test.cgi
-    # see help.test.%
+
+ALL.help.test  += help.test.cgi
+
+HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
+help.test.cgi:  _HELP_TYP__ = cgi
 
 TEST.init       =
 
@@ -47,36 +51,32 @@ endif
 MAKEFLAGS          += --no-print-directory
     # needed here, even if set in Makefile.inc; reason yet unknown (01/2019)
 
-HELP.cgi        = "\
-\#              _____________________________________________ testing .cgi _$(_NL)\
- test.cgi.all       - test all bad IPs, hostnames and options for '$(SRC.cgi)' $(_NL)\
- test.cgi.log       - same as test.cgi.all but store output in '$(TEST.logdir)/' $(_NL)\
- test.cgi.badhosts  - test that some hostnames are ignored in '$(SRC.cgi)' $(_NL)\
- test.cgi.badIPs    - test that some IPs are ignored in '$(SRC.cgi)' $(_NL)\
- test.cgi.badall    - test all bad and good IPs and hostnames $(_NL)\
- test.cgi.badopt    - test bad options and characters$(_NL)\
- test.cgi.goodIPs   - test IPs to be passed$(_NL)\
- test.cgi-NAME      - same as testcmd-cgi-bad_NAME$(_NL)\
- testcmd-cgi-bad_NAME - check if a single NAME (IP or hostname) allowed in '$(SRC.cgi)' $(_NL)\
-\#$(_NL)\
+
+HELP-_cgi0              = _____________________________________________ testing .cgi _
+HELP-test.cgi.all       = test all bad IPs, hostnames and options for '$(SRC.cgi)'
+HELP-test.cgi.log       = same as test.cgi.all but store output in '$(TEST.logdir)/'
+HELP-test.cgi.badhosts  = test that some hostnames are ignored in '$(SRC.cgi)'
+HELP-test.cgi.badIPs    = test that some IPs are ignored in '$(SRC.cgi)'
+HELP-test.cgi.badall    = test all bad and good IPs and hostnames
+HELP-test.cgi.badopt    = test bad options and characters
+HELP-test.cgi.goodIPs   = test IPs to be passed
+HELP-test.cgi-NAME      = same as testcmd-cgi-bad_NAME
+HELP-testcmd-cgi-bad_NAME = check if a single NAME (IP or hostname) allowed in '$(SRC.cgi)'
+
+HELP.cgi                = $(_NL)\
 \# Examples: $(_NL)\
-\#    make test.cgiall $(_NL)\
-\#    make testcmd-cgi-bad_42.42.42.42 $(_NL)\
-\#    make testcmd-cgi-bad_127.0.0.127 $(_NL)\
-\#    make testcmd-cgi-bad_localhost   $(_NL)\
-\#    make e-test.cgi.badhosts $(_NL)\
-\#    make s-test.cgi.badIPs $(_NL)\
-\#    make s-test.cgi.badopt $(_NL)\
+\#    $(MAKE_COMMAND) test.cgiall$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_42.42.42.42  $(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_127.0.0.127  $(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_localhost    $(_NL)\
+\#    $(MAKE_COMMAND) e-test.cgi.badhosts          $(_NL)\
+\#    $(MAKE_COMMAND) s-test.cgi.badIPs            $(_NL)\
+\#    $(MAKE_COMMAND) s-test.cgi.badopt            $(_NL)\
 \#$(_NL)\
 \# There are no  test.cgi.*.log targets, please use  test.cgi.log  instead.$(_NL)\
 \#$(_NL)\
 \# Hint: use  test.pattern-cgi-  instead of  test.pattern-cgi , as the$(_NL)\
-\#       patttern  cgi  may match other targets too.$(_NL)\
-"
-
-ALL.help.test  += $(_NL)$(HELP.cgi)
-
-HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
+\#       patttern  cgi  may match other targets too.
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -135,14 +135,16 @@ ALL.cgi.badhosts    = $(test.cgi.badhosts:%=testcmd-cgi-bad_%)
 ALL.cgi.badIPs      = $(test.cgi.badIPs:%=testcmd-cgi-bad_%)
 ALL.cgi.goodIPs     = $(test.cgi.goodIPs:%=testcmd-cgi-good_%)
 
-HELP.cgi.all        = "\
+HELP.test.cgi.all   = $(_NL)\
 \# targets for testing bad hosts:$(_NL)\
 $(ALL.cgi.badhosts)$(_NL)\
+$(_NL)\
 \# targets for testing bad IPs:$(_NL)\
 $(ALL.cgi.badIPs)$(_NL)\
+$(_NL)\
 \# targets for testing good IPs:$(_NL)\
 $(ALL.cgi.goodIPs)$(_NL)\
-"
+
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -245,7 +247,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.20: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.21: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
