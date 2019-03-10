@@ -181,6 +181,9 @@
 #.
 #.      The default target in each makefile simply prints a brief help.
 #.
+#.      Most included t/Makefiles.* contain very limited comments.  For general
+#.      details of their functionality, see t/Makefile.template t/Makefile.pod.
+#.
 #.   Quick Hints
 #.      There are a bunch of targets which provide information about the macros
 #.      and targets from the Makefiles itself.  They are mainly meant to show a
@@ -194,22 +197,19 @@
 #.          make -f t/Makefile.cgi s-ALL.test.cgi
 #.          ...
 #.
-#.   Most included Makefiles.SUFFIX contain very limited comments.  For general
-#.   details of their functionality, see t/Makefile.template .
-#.
-#.   Special Syntax here in this file
+#.   Special Syntax (here in this file)
 #.      To extract the syntax documentation, all the lines start with  #. , see
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.28 19/03/10 09:06:38
+#?      @(#) Makefile.help 1.29 19/03/10 23:32:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.28
+_SID.help       = 1.29
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -242,7 +242,7 @@ _HELP_RULE_     = \# Target        | Description
 _HELP_LINE_     = \#---------------+------------------------------------------------------------
 _HELP_HEAD_     = $(_HELP_NAME_)
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
-_HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
+_HELP_USAGE_    = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
 
 # setting if Makefile.inc not included
 help.inc:       _HELP_TYP__ = inc
@@ -311,6 +311,10 @@ _HELP-help.LIST  = $(_NL)\
 \#    make e-ALL.test.$(_HELP_TYP__)    $(_NL)\
 \#    make s-ALL.test.$(_HELP_TYP__)
 
+_HELP-help.make  = $(_NL)\
+\# To see which commands in a TARGET are executed, simply call 'make -n TARGET'$(_NL)\
+\# Note that the *.log targets then report a bunch of shell commands.$(_NL)\
+
 _help.HEAD:
 	@echo "$(_HELP_HEADER_)"
 
@@ -330,6 +334,7 @@ _help.HELP: _HELP_HELP_ = HELP.$(_HELP_TYP__)
 _help.HELP:
 	@$(TARGET_VERBOSE)
 	@echo "$($(_HELP_HELP_))"
+	@echo "$(_HELP-help.make)"
 
 .PHONY: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 
@@ -341,21 +346,6 @@ MYmacro         = dummy macro/variable used in examples
 MYtarget: MYVAR = dummy target macro used in examples
 MYtarget:         dummy_dependency
 	@$(EXE.dummy)
-
-HELP.help       = $(_NL)\
-\# The targets to show information/content from the Makefile are:$(_NL)\
-\#    echo eval macro pmacro show target$(_NL)\
-\# which are used like:                 $(_NL)\
-\#    make echo  echo=MYVAR             $(_NL)\
-\#    make macro macro=MYVAR            $(_NL)\
-\# For easy use, following alias exist: $(_NL)\
-\#    e-  m-  p-  s-  t-                $(_NL)\
-\# which are used like:                 $(_NL)\
-\#    make e-MYmacro                    $(_NL)\
-\#    make m-MYmacro                    $(_NL)\
-\#    make p-MYmacro                    $(_NL)\
-\#    make s-MYmacro                    $(_NL)\
-\#    make t-MYtarget                   $(_NL)\
 
 HELP-_help1     = __________________________ targets for help about Makefile _
 HELP-macros     = list all macro names used in Makefile* (alias: list, vars)
@@ -374,6 +364,21 @@ HELP-help.all   = print list of all targets
 HELP-help.test  = print documentation about test targets
 HELP-help.critic= print documentation about perlcritic targets
 HELP-help.syntax= print documentation about syntax used in Makefile.*
+
+HELP.help       = $(_NL)\
+\# The targets to show information/content from the Makefile are:$(_NL)\
+\#    echo eval macro pmacro show target$(_NL)\
+\# which are used like:                 $(_NL)\
+\#    make echo  echo=MYVAR             $(_NL)\
+\#    make macro macro=MYVAR            $(_NL)\
+\# For easy use, following alias exist: $(_NL)\
+\#    e-  m-  p-  s-  t-                $(_NL)\
+\# which are used like:                 $(_NL)\
+\#    make e-MYmacro                    $(_NL)\
+\#    make m-MYmacro                    $(_NL)\
+\#    make p-MYmacro                    $(_NL)\
+\#    make s-MYmacro                    $(_NL)\
+\#    make t-MYtarget                   $(_NL)\
 
 HELP-help.test.help = print targets for testing makefile help targets
 
