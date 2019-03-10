@@ -39,20 +39,27 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.21 19/01/15 00:12:45
+#?      @(#) Makefile.warnings 1.22 19/03/11 00:01:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.21
+_SID.warnings   = 1.22
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
 ALL.inc.type   += warnings
 
 first-warn-target-is-default: help.test.warnings
+
+ALL.help.test  += help.test.warnings
+
+HELP-help.test.warnings = print targets for testing WARNING messages
+help.test.warnings:     _HELP_TYP__ = warnings
+help.test.warnings-v:   _HELP_TYP__ = warnings
+help.test.warnings-vv:  _HELP_TYP__ = warnings
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -65,35 +72,31 @@ endif
 #_____________________________________________________________________________
 #_________________________________________________________ testing warnings __|
 
-HELP.warnings    = "\
-\#              __________________________________________ test warnings _$(_NL)\
- test.warnings          - test **WARNING messages of '$(SRC.pl)'$(_NL)\
- test.warnings.log      - test **WARNING messages of '$(SRC.pl)' and compare with previous one$(_NL)\
- message-STR            - test for specific STR in output of '$(SRC.pl)'$(_NL)\
- warning-NR             - test for specific messages number NR of '$(SRC.pl)'$(_NL)\
- warnings.gen.template  - generate template Makefile for testing warning messages$(_NL)\
- warnings.show.todo     - show not implemented tests for warnings$(_NL)\
- warnings.show.difficult - show tests for warnings which are difficult to implement$(_NL)\
-\#$(_NL)\
+HELP-_warnings          = ____________________________________________ test warnings _
+HELP-test.warnings      = test **WARNING messages of '$(SRC.pl)'
+HELP-test.warnings.log  = test **WARNING messages of '$(SRC.pl)' and compare with previous one
+HELP-message-STR        = test for specific STR in output of '$(SRC.pl)'
+HELP-warning-NR         = test for specific messages number NR in output of '$(SRC.pl)'
+HELP-warnings.gen.template  = generate template Makefile for testing warning messages
+HELP-warnings.show.todo     = show not implemented tests for warnings
+HELP-warnings.show.difficult= show tests for warnings which are difficult to implement
+
+HELP.warnings           = $(_NL)\
 \# Hint: message-STR can test for any string in output, example$(_NL)\
-\#    make message-Certificate TEST.args='+cn localhost'$(_NL)\
+\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(_NL)\
 \#$(_NL)\
-\# To print all available individual  test-*  and  warning-*  targets, use:$(_NL)\
-\#    make e-ALL.test.warnings$(_NL)\
-\#    make help.test.all$(_NL)\
+\# Examples:$(_NL)\
+\#    $(MAKE_COMMAND) warning-042$(_NL)\
+\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(_NL)\
 \#$(_NL)\
-\# Examples: $(_NL)\
-\#    make warning-042 $(_NL)\
-\#    make message-Certificate TEST.args='+cn localhost' $(_NL)\
-"
+\# Note that using -n reports a bunch of shell commands.
 
-ALL.help.test  += $(_NL)$(HELP.warnings)
+HELP.test.warnings.all  = \
+\# for more details, use:$(_NL)\
+\#    $(MAKE_COMMAND) t-warn$(_NL)\
 
-HELP-help.test.warnings = print targets for testing WARNING messages
-
-HELP.warnings.all   = "\
-\# for more details, use:  $(MAKE) t-warn$(_NL)\
-"
+# SEE Make:target name
+# SEE Make:target name prefix
 
 # testing warning messages
 _TMP.rc         = /tmp/o-saft.tmprc
@@ -279,7 +282,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.21: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.22: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
