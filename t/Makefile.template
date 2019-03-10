@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.9 19/03/08 00:26:00
+#?      @(#) Makefile.template 1.10 19/03/11 00:01:03
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.9
+_SID.TEMPL      = 1.10
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -38,6 +38,14 @@ ALL.inc.type   += TEMPL
 first-TEMPL-target-is-default: help.test.TEMPL
     # otherwise the first target from other included files would be used
 
+ALL.help.test  += help.test.TEMPL
+
+HELP-help.test.TEMPL= print targets for testing SOMETHING
+                    # defines message for main Makefile's help* targets
+help.test.TEMPL:        _HELP_TYP__ = TEMPL
+help.test.TEMPL-v:      _HELP_TYP__ = TEMPL
+help.test.TEMPL-vv:     _HELP_TYP__ = TEMPL
+
 ifeq (,$(_SID.test))
     -include t/Makefile
     # get general macros for testing from master makefile
@@ -46,24 +54,19 @@ endif
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-TEST.TEMPL.hosts    = host.to.be.tested
-                    # define our list of TEST.hosts
+TEST.init       =
+TEST.args       =
+
+TEST.TEMPL.args = \
+	-TEMPL-opt   \
 
 ifdef TEST.hosts
     TEST.TEMPL.hosts= $(TEST.hosts)
                     # list of TEST.hosts can be passed with environment or on command line
 endif
-
-#_____________________________________________________________________________
-#___________________________________________________________ default target __|
-
-HELP-help.test.TEMPL= print targets for testing SOMETHING
-                    # defines message for main Makefile's help* targets
-
-# private help target for this makefile
-help.test.TEMPL:
-	@echo "$(_HELP_LINE_)$(_NL)$(_HELP_INFO_)$(_NL)$(_HELP_LINE_)"
-	@echo $(MORE-TEMPL)    ; # no quotes!
+# or
+TEST.TEMPL.hosts= host.to.be.tested
+                    # define our list of TEST.hosts
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
@@ -76,23 +79,24 @@ test.TEMPL.internal:
 	@echo "# testcmd-TEMPL%:    TEST.init = +quit"
 	@echo "# -------------------------------------------------------------"
 
-.PHONY: help.test.TEMPL test.TEMPL.internal
+.PHONY: test.TEMPL.internal
 
 #_____________________________________________________________________________
 #______________________________________________________________ testing ... __|
 
 # Description for private help text.
-# Note that we use quotes here,  even if not really necessary (but makes syntax
-# highlighting in some editors more happy ;-)
-MORE-TEMPL      = " \
-\#               _____________________________________________ testing ... _$(_NL)\
- test.TEMPL      - test functionality of SOMETHING$(_NL)\
- test.TEMPL.log  - same as test.TEMPL but store output in '$(TEST.logdir)/'$(_NL)\
-\#$(_NL)\
+# SEE Make:variables and quotes
+# SEE Make:MAKE vs. MAKE_COMMAND
+
+HELP-_TEMPL1        = _____________________________________________ testing ... _
+HELP-test.TEMPL     = test functionality of SOMETHING
+HELP-test.TEMPL.log = same as test.TEMPL but store output in '$(TEST.logdir)/'
+
+HELP.TEMPL          = $(_NL)\
 \# Examples:$(_NL)\
-\#    make e-ALL.testTEMPL$(_NL)\
-\#    make s-ALL.test.TEMPL$(_NL)\
-"
+\#    $(MAKE_COMMAND)t.TEMPL
+
+HELP.test.TEMPL.all = # no special documentation yet
 
 # SEE Make:target name
 # SEE Make:target name prefix
