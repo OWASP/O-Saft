@@ -176,14 +176,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.30 19/03/10 23:52:14
+#?      @(#) Makefile.help 1.31 19/03/11 00:43:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.30
+_SID.help       = 1.31
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -409,7 +409,7 @@ _notempty:
 
 _line:
 	@echo ""
-	@$(ECHO) "$(_TAB)$(_TAB)$($($@))"
+	@$(ECHO) "$(_TAB)$(_TAB)# $($($@))"
 
 .PHONY: _notempty _line
 
