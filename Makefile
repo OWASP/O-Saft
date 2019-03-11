@@ -60,7 +60,7 @@
 #           CRITIC      - something related to percritic targets
 #           _           - names of internal (helper) variables (they are not
 #                         intended to be overwritten on command line)
-#           HELP        - defines texts to be used in  help  and  doc  target
+#           HELP        - defines texts to be used in  help  and  doc  targets
 #
 #       Following names are used, which potentially conflict with make itself:
 #           ECHO        - echo command
@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.49 19/03/07 20:07:46
+#?      @(#) Makefile 1.50 19/03/11 01:57:04
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.49
+_SID            = 1.50
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -290,9 +290,13 @@ ALL.src         = \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
 
-# internal used tools (paths hardcoded!)
+# tools for targets
 ECHO            = /bin/echo -e
 MAKE            = $(MAKE_COMMAND)
+# some rules need to have a command, otherwise they are not evaluated
+EXE.dummy       = /bin/echo -n ""
+
+# internal used tools (paths hardcoded!)
 EXE.single      = contrib/gen_standalone.sh
 EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
@@ -302,29 +306,45 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.49
+_INST.text      = generated from Makefile 1.50
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
 
-# generate targets to print HELP texts
+# generate f- targets to print HELP text for each target
+_HELP.targets.me= $(shell $(EXE.eval) $(MAKEFILE))
 _HELP.targets   = $(shell $(EXE.eval) $(ALL.Makefiles))
+_HELP.help      = $(ALL.help:%=f-%)
+                # quick&dirty because each target calls make (see below)
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
-default:
+default:  _HELP_HEAD_ = $(_HELP_RULE_)
+help:     _HELP_HEAD_ = $(_HELP_RULE_)
+doc:      _HELP_HEAD_ = $(_HELP_RULE_)
+doc.all:  _HELP_HEAD_ = $(_HELP_RULE_)
+
+# TODO: use help% for default
+default: _help.HEAD
 	@$(TARGET_VERBOSE)
-	@$(ECHO) "$(_HELP_HEADER_)"
-	@$(EXE.help) $(ALL.Makefiles)
+	@$(EXE.help) $(MAKEFILE)
+	@echo ""
+	@echo "$(_HELP_LINE_)"
+	@$(MAKE) $(_HELP.help)
 	@echo "$(_HELP_LINE_)"
 	@echo "# see also: $(MAKE) doc"
 	@echo ""
 
 doc:
 	@$(TARGET_VERBOSE)
-	@$(MAKE) -s e-_HELP_HEADER_ $(_HELP.targets)
+	@$(MAKE) -s _HELP_HEAD_="$(_HELP_RULE_)" e-_HELP_HEADER_ $(_HELP.targets.me)
+
+# TODO: improve and move target to t/Makefile.help (hence not yet documented)
+doc.all:
+	@$(TARGET_VERBOSE)
+	@$(MAKE) -s _HELP_HEAD_="$(_HELP_RULE_)" e-_HELP_HEADER_ $(_HELP.targets)
 
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
@@ -333,7 +353,7 @@ HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
 HELP-clean      = remove all generated files '$(ALL.gen)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
-HELP-install    = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) must exist
+HELP-install    = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) must exist
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
 
 $(INSTALL.dir):
@@ -410,7 +430,8 @@ $(_RELEASE).rel: Makefile
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
 HELP-_project   = ____________________________________ targets for $(Project) _
-HELP-help       = print overview of all targets
+HELP-help       = print overview of common targets (this one)
+HELP-help.all   = print all targets, including test and development targets
 HELP-doc        = same as help, but evaluates '$(variables)'
 HELP-pl         = generate '$(SRC.pl)' from managed source files
 HELP-cgi        = generate HTML page for use with CGI '$(GEN.cgi.html)'
@@ -421,12 +442,12 @@ HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-docker     = generate local docker image (release version) and add updated files
-HELP-docker-dev = generate local docker image (development version)
+HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
 HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
-HELP-install-f  = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) may exist
+HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) may exist
 
 OPT.single = --s
 
@@ -440,8 +461,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.49
-tar:     GREP_EDIT  = 1.49
+GREP_EDIT           = 1.50
+tar:     GREP_EDIT  = 1.50
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -578,8 +599,8 @@ $(GEN.tmptgz): $(ALL.src)
 #_____________________________________________________________________________
 
 HELP-_special   = ___________ any target may be used with following suffixes _
-HELP--v         = verbose: print target and newer dependencies
-HELP--vv        = verbose: print target and all dependencies
+HELP--v         = verbose: print target and newer dependencies also
+HELP--vv        = verbose: print target and all dependencies also
 
 # verbose command
 #       TARGET_VERBOSE  is the string to be printed in verbose mode
