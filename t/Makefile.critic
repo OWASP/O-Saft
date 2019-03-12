@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile        - makefile for testing o-saft.pl
+#?      Makefile        - makefile for performing perlcritic in project
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -21,20 +21,31 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.9 19/03/07 22:32:44
+#?      @(#) Makefile.critic 1.11 19/03/12 21:29:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.9
+_SID.critic     = 1.11
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
 ALL.inc.type   += critic
 
 first-critic-target-is-default: help.test.critic
+
+ALL.help.test  += help.test.critic
+
+HELP-help.test.critic   = print targets for using perlcritic
+help.critic:            _HELP_TYP__ = critic
+help.critic-v:          _HELP_TYP__ = critic
+help.critic-vv:         _HELP_TYP__ = critic
+help.test.critic:       _HELP_TYP__ = critic
+help.test.critic-v:     _HELP_TYP__ = critic
+help.test.critic-vv:    _HELP_TYP__ = critic
+    # not really for testing, hence we have 'critic' and 'test.critic'
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -62,8 +73,6 @@ _CRITIC.verb10o = --verbose '%f: $(_CRITIC.verb10)'
 CRITIC.opt      = $(_CRITIC.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
 
-HELP-help.test.critic = print targets for using perlcritic
-
 # some aliases
 help.critic: help.test.critic
 critic.help: help.test.critic
@@ -72,35 +81,33 @@ criticdoc:   help.test.critic
 #_____________________________________________________________________________
 #__________________________________________________ targets for testing cgi __|
 
-HELP.critic     = "\
-\#              _________________________________ targets for code quality _$(_NL)\
- critic         - check files with perlcritic $(_NL)\
- critic345      - check files with perlcritic for severity 3,4,5 $(_NL)\
- help.critic    - print more details about  critic-*  targets $(_NL)\
-\#$(_NL)\
-\# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
-\#              _________________________________________________ severity _$(_NL)\
- critic         - perlcritic --severity 5 <all files>$(_NL)\
- critic-5       - perlcritic --severity 5 <all files>$(_NL)\
- critic-4       - perlcritic --severity 4 <all files>$(_NL)\
- critic-3       - perlcritic --severity 3 <all files>$(_NL)\
- critic-2       - perlcritic --severity 2 <all files>$(_NL)\
-\#              _______________________________________________ statistics _$(_NL)\
- critic-count   - perlcritic --severity 5 -count$(_NL)\
- critic-stat    - perlcritic --severity 5 --statistics-only $(_NL)\
- critic-stat-4  - perlcritic --severity 4 --statistics-only $(_NL)\
- critic-stat-3  - perlcritic --severity 3 --statistics-only $(_NL)\
-\#              _____________________________________ single file severity _$(_NL)\
- c5-FILE        - perlcritic --severity 5 FILE$(_NL)\
- c4-FILE        - perlcritic --severity 4 FILE$(_NL)\
- c3-FILE        - perlcritic --severity 3 FILE$(_NL)\
-\#              _____________________________ single file verbose severity _$(_NL)\
- c5v-FILE       - perlcritic --severity 5 FILE --verbose 10$(_NL)\
- c4v-FILE       - perlcritic --severity 4 FILE --verbose 10$(_NL)\
- c3v-FILE       - perlcritic --severity 3 FILE --verbose 10$(_NL)\
-\#              _______________________ targets with pretty-printed output _$(_NL)\
- TARGETp        - call TARGET and pretty print output$(_NL)\
-\#$(_NL)\
+HELP-_critic0       = _________________________________ targets for code quality _
+HELP-critic         = check files with perlcritic
+HELP-critic345      = check files with perlcritic for severity 3,4,5
+HELP-help.critic    = print more details about  critic-*  targets
+HELP-_critic1       =  targets calling perlcritic with additional options:
+HELP-_critic3       = _________________________________________________ severity _
+HELP-critic-5       = perlcritic --severity 5 <all files>
+HELP-critic-4       = perlcritic --severity 4 <all files>
+HELP-critic-3       = perlcritic --severity 3 <all files>
+HELP-critic-2       = perlcritic --severity 2 <all files>
+HELP-_critic4       = _______________________________________________ statistics _
+HELP-critic-count   = perlcritic --severity 5 -count
+HELP-critic-stat    = perlcritic --severity 5 --statistics-only
+HELP-critic-stat-4  = perlcritic --severity 4 --statistics-only
+HELP-critic-stat-3  = perlcritic --severity 3 --statistics-only
+HELP-_critic5       = _____________________________________ single file severity _
+HELP-c5-FILE        = perlcritic --severity 5 FILE
+HELP-c4-FILE        = perlcritic --severity 4 FILE
+HELP-c3-FILE        = perlcritic --severity 3 FILE
+HELP-_critic6       = _____________________________ single file verbose severity _
+HELP-c5v-FILE       = perlcritic --severity 5 FILE --verbose 10
+HELP-c4v-FILE       = perlcritic --severity 4 FILE --verbose 10
+HELP-c3v-FILE       = perlcritic --severity 3 FILE --verbose 10
+HELP-_critic7       = _______________________ targets with pretty-printed output _
+HELP-TARGETp        = call TARGET and pretty print output
+
+HELP.critic         = $(_NL)\
 \# Where   FILE   is any of the *.pm or *.pl files (including path).$(_NL)\
 \# Where  TARGET  is any of:$(_NL)\
 \#        critic critic-5 critic-4 critic-3 critic-2 critic-count critic-stat$(_NL)\
@@ -111,11 +118,9 @@ HELP.critic     = "\
 \# Note about perlcritic used here:$(_NL)\
 \#   * perlcritic is executed in directory '$(CRITIC.dir)'$(_NL)\
 \#   * perlcritic uses '$(CRITIC.dir)/$(CRITIC.rc)'$(_NL)\
-\# See also '$(CONTRIB.dir)/critic.sh'$(_NL)\
-"
+\# See also '$(CONTRIB.dir)/critic.sh'
 
-
-ALL.help.test  += $(_NL)$(HELP.critic)
+HELP.test.critic.all= # no special documentation yet
 
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
