@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.37 19/03/11 00:08:52
+#?      @(#) Makefile 1.38 19/03/12 21:39:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.37
+_SID.test       = 1.38
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -576,7 +576,6 @@ HELP-test       = alias for tests
 HELP-tests.log  = same as tests but stpre results in '$(TEST.logdir)/'
 HELP-tests.quick    = like tests, but less targets (for development)
 HELP-tests.quick.log= like tests.log, but less targets (for development)
-HELP-help.test      = print more targets for testing
 HELP-help.test.all  = print available individual targets for testing
 
 tests: TARGET_VERBOSE=echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
