@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile        - makefile for various O-Saft tests
+#?      Makefile        - makefile for various O-Saft tests and development
 #?
 #? SYNOPSYS
 #?      make [options] [target] [...]
@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.19 19/03/12 22:16:15
+#?      @(#) Makefile.misc 1.20 19/03/13 00:35:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.19
+_SID.misc       = 1.20
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -33,31 +33,16 @@ ALL.inc.type   += misc
 
 first-misc-target-is-default: help.test.misc
 
-ALL.help.test  += help.test.misc help.test.dev
+ALL.help.test  += help.test.misc
 
-HELP-help.test.misc = print misc. testing targets
+HELP-help.test.misc = print targets for misc. tests and development
 help.test.misc:     _HELP_TYP__ = misc
 help.test.misc-v:   _HELP_TYP__ = misc
 help.test.misc-vv:  _HELP_TYP__ = misc
-# some targets may move to Makefile.dev in future
-help.test.dev:      _HELP_TYP__ = dev
-help.test.dev-v:    _HELP_TYP__ = dev
-help.test.dev-vv:   _HELP_TYP__ = dev
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
-
-
-HELP-_misc1         = ____________________________________________ testing misc. _
-HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
-HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(BENCH.times)'
-HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
-HELP-test.docker    = test docker image
-HELP-help.dev       = print targets for development
-
-HELP.misc           = # no special documentation yet
-HELP.test.misc.all  = # no special documentation yet
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -68,8 +53,23 @@ _args.misc      = +quit
 BENCH.times     = $(EXE.bench).times
 BENCH.host      = $(TEST.host)
 
+OPT.cloc        =
+EXE.cloc        = cloc $(OPT.cloc)
+
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
+
+HELP-_misc1         = ____________________________________________ testing misc. _
+HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
+HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(BENCH.times)'
+HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
+HELP-test.docker    = test docker image
+
+HELP.misc           = $(_NL)\
+\# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
+\# errorneous.
+
+HELP.test.misc.all  = # no special documentation yet
 
 bench: test.bench
 test.bench:
@@ -98,7 +98,26 @@ test.misc:        $(ALL.test.misc)
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
 
-HELP.dev        = # TODO: collect following HELP-*
+HELP-_cloc      = ________________________________________ statistic targets _
+HELP-cloc       = count lines of code of all source files; summary output
+HELP-cloc.file  = count lines of code of all source files; output by file
+HELP-cloc.lang  = same as cloc.file and cloc
+# NOTE: also possible usage:
+#       make cloc OPT.cloc=--3
+#       make cloc OPT.cloc=--csv
+#       make cloc OPT.cloc=--xml
+# NOTE: --quiet suppresses count of files also, hence not used by default
+cloc%:
+	@$(TARGET_VERBOSE)
+	@$(EXE.cloc) $(sort $(ALL.src))
+
+cloc.stat:  OPT.cloc    +=
+cloc.file:  OPT.cloc    += --by-file
+cloc.lang:  OPT.cloc    += --by-file-by-lang
+cloc:       cloc.stat
+
+.PHONY: cloc
+
 HELP-_dev1          = __________________________________ targets for development _
 HELP-tags           = generate tags file for vi(m)
 HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
@@ -107,62 +126,12 @@ HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out
 HELP-nytprof.out    = generate profiling data (for nytprofcalls)
 HELP-nytprof.html   = generate profiling data in HTML format
 HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
-HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
-
-help.dev: _help.HEAD
-	@$(ECHO)  $(HELP.dev)
-	@$(ECHO) "$(_HELP_LINE_)"
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
 
-ALL.test.dev    = $(GEN.tags)
-ALL.test.dev   += profile.sub.entry profile.sub.exit profile.sub.args nytprof.html dprof.out
-#ALL.test.dev   += code.quality
-
-# following checks based on http://perldoc.perl.org/perldiag.html
-# TODO: all targets fail if checks returns nothing
-ALL.qa          = $(ALL.pm) $(SRC.pl)
-qa.double_dref:
-	@echo "#make: check depricated double dereferencing ..."
-	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)
-qa.defined_arr:
-	@echo "#make: check depricated defined(@array) ..."
-	@-egrep -H 'defined[( ]*@' $(ALL.qa)
-qa.defined_hash:
-	@echo "#make: check depricated defined(%hash) ..."
-	@-egrep -H 'defined[( ]*%' $(ALL.qa)
-qa.misspelled_regex:
-	@echo "#make: check misspelled grouping in RegEx ..."
-	@-egrep -H '\(:\?'         $(ALL.qa)
-qa.misspelled_critic:
-	@echo "#make: check misspelled use of ## no critic ..."
-	@-egrep -H ' # no critic'  $(ALL.qa)
-
-# some simple checks for Makefiles
-qa.makefile_HELP:
-	@echo "#make: check HELP- macro definitions in Makefiles ..."
-	@-awk '/^HELP-/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
-	@echo ""
-	@echo "#make: check duplicate HELP- macro definitions in Makefiles ..."
-	@-awk '/^HELP-/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
-qa.makefile_help:
-	@echo "#make: check help target definitions in Makefiles ..."
-	@-awk '/^help/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
-	@echo ""
-	@echo "#make: check duplicate help target definitions in Makefiles ..."
-	@-awk '($$3=="="){next}/^help/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
-#       # duplicate checks for targets need to avoid collecting the conditional
-#       # targets which just define macros, hence $3=="=" 
-ALL.test.quality    = \
-		qa.double_dref \
-		qa.defined_arr \
-		qa.defined_hash \
-		qa.misspelled_regex \
-		qa.misspelled_critic \
-		qa.makefile_HELP \
-		qa.makefile_help
-code.quality:     $(ALL.test.quality)
+ALL.test.misc  += $(GEN.tags)
+ALL.test.misc  += profile.sub.entry profile.sub.exit profile.sub.args nytprof.html dprof.out
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
@@ -230,6 +199,53 @@ ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
 	code.quality
 
 test.misc.all:    test.misc $(ALL.test.profile)
+
+HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
+# following checks based on http://perldoc.perl.org/perldiag.html
+# TODO: all targets fail if checks returns nothing
+ALL.qa          = $(ALL.pm) $(SRC.pl)
+qa.double_dref:
+	@echo "#make: check depricated double dereferencing ..."
+	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)
+qa.defined_arr:
+	@echo "#make: check depricated defined(@array) ..."
+	@-egrep -H 'defined[( ]*@' $(ALL.qa)
+qa.defined_hash:
+	@echo "#make: check depricated defined(%hash) ..."
+	@-egrep -H 'defined[( ]*%' $(ALL.qa)
+qa.misspelled_regex:
+	@echo "#make: check misspelled grouping in RegEx ..."
+	@-egrep -H '\(:\?'         $(ALL.qa)
+qa.misspelled_critic:
+	@echo "#make: check misspelled use of ## no critic ..."
+	@-egrep -H ' # no critic'  $(ALL.qa)
+
+# some simple checks for Makefiles
+qa.makefile_HELP:
+	@echo "#make: check HELP- macro definitions in Makefiles ..."
+	@-awk '/^HELP-/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
+	@echo ""
+	@echo "#make: check duplicate HELP- macro definitions in Makefiles ..."
+	@-awk '/^HELP-/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
+qa.makefile_help:
+	@echo "#make: check help target definitions in Makefiles ..."
+	@-awk '/^help/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
+	@echo ""
+	@echo "#make: check duplicate help target definitions in Makefiles ..."
+	@-awk '($$3=="="){next}/^help/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
+#       # duplicate checks for targets need to avoid collecting the conditional
+#       # targets which just define macros, hence $3=="=" 
+ALL.test.quality    = \
+		qa.double_dref \
+		qa.defined_arr \
+		qa.defined_hash \
+		qa.misspelled_regex \
+		qa.misspelled_critic \
+		qa.makefile_HELP \
+		qa.makefile_help
+code.quality:     $(ALL.test.quality)
+
+#ALL.test.misc  += $(ALL.test.quality)
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
