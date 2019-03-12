@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.11 19/03/11 00:01:02
+#?      @(#) Makefile.tcl 1.12 19/03/12 21:31:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.11
+_SID.tcl        = 1.12
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
@@ -52,7 +52,7 @@ endif
 HELP-_tcl1          = _________________________________________ testing GUI tool _
 HELP-test.tcl       = test functionality of '$(SRC.tcl)'
 HELP-test.tcl.log   = same as test.tcl but store output in '$(TEST.logdir)/'
-HELP-_tcl1          = ________________________________________________ GUI tests _
+HELP-_tcl2          = ________________________________________________ GUI tests _
 HELP-GUI-not-yet    = not yet implemented ...
 
 HELP.tcl            = # no special documentation yet
