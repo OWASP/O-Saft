@@ -176,14 +176,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.32 19/03/11 00:59:34
+#?      @(#) Makefile.help 1.33 19/03/12 23:12:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.32
+_SID.help       = 1.33
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -273,19 +273,19 @@ EXE.cloc        = cloc $(OPT.cloc)
 #_____________________________________________________________________________
 #_________________________________________________________ internal targets __|
 
-_HELP-_help0     = _________________________________ targets for internal use _
-_HELP-help.HEAD  = print table header for documentation texts
-_HELP-help.BODY  = print table body   for documentation texts (all HELP-* lines)
-_HELP-help.FOOT  = print table footer for documentation texts
-_HELP-help.HELP  = print individual documentation texts (HELP.TYP variale)
-#HELP-help.LIST  = print targets for getting list of targets (testing targets only)
-_HELP-help.LIST  = $(_NL)\
+_HELP-_help0    = _________________________________ targets for internal use _
+_HELP-help.HEAD = print table header for documentation texts
+_HELP-help.BODY = print table body   for documentation texts (all HELP-* lines)
+_HELP-help.FOOT = print table footer for documentation texts
+_HELP-help.HELP = print individual documentation texts (HELP.TYP variale)
+#HELP-help.LIST = print targets for getting list of targets (testing targets only)
+_HELP-help.LIST = $(_NL)\
 \# To get a list of targets, use:       $(_NL)\
 \#    make help.test.$(_HELP_TYP__).all $(_NL)\
 \#    make e-ALL.test.$(_HELP_TYP__)    $(_NL)\
 \#    make s-ALL.test.$(_HELP_TYP__)
 
-_HELP-help.make  = $(_NL)\
+_HELP-help.make = $(_NL)\
 \# To see which commands in a TARGET are executed, simply call 'make -n TARGET'$(_NL)\
 \# Note that the *.log targets then report a bunch of shell commands.$(_NL)\
 
@@ -318,7 +318,7 @@ _help.HELP:
 # line printed with help should work copy&paste, hence some summy definitions
 MYmacro         = dummy macro/variable used in examples
 MYtarget: MYVAR = dummy target macro used in examples
-MYtarget:         dummy_dependency
+MYtarget: dummy_dependency
 	@$(EXE.dummy)
 
 HELP-_help1     = __________________________ targets for help about Makefile _
@@ -334,27 +334,29 @@ HELP-t-MYtarget = show MYtarget                         - exact target match
 
 HELP-_help2     = ________________________________ targets for documentation _
 HELP-help.doc   = print this documentation
-HELP-help.all   = print list of all targets
+HELP-help.all   = print all targets, including test and development targets
+#               # HELP-help.all - same as in ../Makefile (cannot be reused)
 HELP-help.test  = print documentation about test targets
 HELP-help.critic= print documentation about perlcritic targets
 HELP-help.syntax= print documentation about syntax used in Makefile.*
+HELP-help.test.help = print targets for testing makefile help targets
 
 HELP.help       = $(_NL)\
+\# To see in which Makefile* the listed targets are defined, use following:$(_NL)\
+\#    $(MAKE_COMMAND) help.all-v        $(_NL)\
 \# The targets to show information/content from the Makefile are:$(_NL)\
 \#    echo eval macro pmacro show target$(_NL)\
 \# which are used like:                 $(_NL)\
-\#    make echo  echo=MYVAR             $(_NL)\
-\#    make macro macro=MYVAR            $(_NL)\
+\#    $(MAKE_COMMAND) echo  echo=MYVAR  $(_NL)\
+\#    $(MAKE_COMMAND) macro macro=MYVAR $(_NL)\
 \# For easy use, following alias exist: $(_NL)\
 \#    e-  m-  p-  s-  t-                $(_NL)\
 \# which are used like:                 $(_NL)\
-\#    make e-MYmacro                    $(_NL)\
-\#    make m-MYmacro                    $(_NL)\
-\#    make p-MYmacro                    $(_NL)\
-\#    make s-MYmacro                    $(_NL)\
-\#    make t-MYtarget                   $(_NL)\
-
-HELP-help.test.help = print targets for testing makefile help targets
+\#    $(MAKE_COMMAND) e-MYmacro         $(_NL)\
+\#    $(MAKE_COMMAND) m-MYmacro         $(_NL)\
+\#    $(MAKE_COMMAND) p-MYmacro         $(_NL)\
+\#    $(MAKE_COMMAND) s-MYmacro         $(_NL)\
+\#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
 
 ALL.help       += help.help help.critic help.syntax
 ALL.help       += $(ALL.help.test)
@@ -385,12 +387,14 @@ help.doc: help.help
 help.all: _help.HEAD
 	@$(TARGET_VERBOSE)
 	@$(EXE.help) $(ALL.Makefiles)
+help.all-v help.all-vv: help.all
+	@$(EXE.dummy)
 
 
 help.syntax:
 	$(EXE.syntax) $(_MYSELF.help)
 
-.PHONY: help.all help.doc help.syntax
+.PHONY: help.doc help.syntax
 
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
