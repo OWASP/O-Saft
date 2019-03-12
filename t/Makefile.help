@@ -21,7 +21,6 @@
 #?          make t-help.doc
 #?          make targets
 #?          make targets.me
-#?          make cloc
 #?
 #? LIMITATIONS
 #?       Requires GNU Make > 2.0.
@@ -176,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.33 19/03/12 23:12:27
+#?      @(#) Makefile.help 1.34 19/03/13 00:31:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.33
+_SID.help       = 1.34
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -265,10 +264,6 @@ ifndef _MYSELF.inc
     # dummy setting until Makefile.inc is included, keeps errors away
     _MYSELF.inc = t/Makefile.inc
 endif
-
-# other tools
-OPT.cloc        =
-EXE.cloc        = cloc $(OPT.cloc)
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal targets __|
@@ -481,26 +476,7 @@ p-%:
 t-%:
 	@$(MAKE) -s target=$* target
 
-# cloc is not realy a "help" target, anyway defined here as rarely use is expected
-HELP-_cloc      = ________________________________________ statistic targets _
-HELP-cloc       = count lines of code of all source files; summary output
-HELP-cloc.file  = count lines of code of all source files; output by file
-HELP-cloc.lang  = same as cloc.file and cloc
-# NOTE: also possible usage:
-#       make cloc OPT.cloc=--3
-#       make cloc OPT.cloc=--csv
-#       make cloc OPT.cloc=--xml
-# NOTE: --quiet suppresses count of files also, hence not used by default
-cloc%:
-	@$(TARGET_VERBOSE)
-	@$(EXE.cloc) $(sort $(ALL.src))
-
-cloc.stat:  OPT.cloc    +=
-cloc.file:  OPT.cloc    += --by-file
-cloc.lang:  OPT.cloc    += --by-file-by-lang
-cloc:       cloc.stat
-
-.PHONY: macros targets rules list vars eval echo show macro pmacro target cloc
+.PHONY: macros targets rules list vars eval echo show macro pmacro target
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
