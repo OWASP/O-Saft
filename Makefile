@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.50 19/03/11 01:57:04
+#?      @(#) Makefile 1.51 19/03/12 23:35:28
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.50
+_SID            = 1.51
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -104,7 +104,7 @@ ALL.includes   := Makefile
 MAKEFLAGS       = --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-target-is-default: default
+first-target-is-default: help
 
 MAKEFILE        = Makefile
                 # define variable for myself,  this allows to use  some targets
@@ -306,7 +306,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.50
+_INST.text      = generated from Makefile 1.51
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -321,13 +321,12 @@ _HELP.help      = $(ALL.help:%=f-%)
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
-default:  _HELP_HEAD_ = $(_HELP_RULE_)
 help:     _HELP_HEAD_ = $(_HELP_RULE_)
 doc:      _HELP_HEAD_ = $(_HELP_RULE_)
 doc.all:  _HELP_HEAD_ = $(_HELP_RULE_)
 
-# TODO: use help% for default
-default: _help.HEAD
+# ensure that target help: from this file is used and not help%
+help: _help.HEAD
 	@$(TARGET_VERBOSE)
 	@$(EXE.help) $(MAKEFILE)
 	@echo ""
@@ -360,7 +359,7 @@ $(INSTALL.dir):
 	@$(TARGET_VERBOSE)
 	mkdir $(_INSTALL_FORCE_) $(INSTALL.dir)
 
-all:    default
+all:    help
 
 clean:
 	@$(TARGET_VERBOSE)
@@ -425,13 +424,14 @@ $(_RELEASE).rel: Makefile
 	@$(MAKE) -s $(GEN.rel) > $@
 
 
-.PHONY: all clean install install-f uninstall release.show release rel doc default
+.PHONY: all clean install install-f uninstall release.show release rel doc
 
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
 HELP-_project   = ____________________________________ targets for $(Project) _
 HELP-help       = print overview of common targets (this one)
 HELP-help.all   = print all targets, including test and development targets
+#               # defined in t/Makefile.help also
 HELP-doc        = same as help, but evaluates '$(variables)'
 HELP-pl         = generate '$(SRC.pl)' from managed source files
 HELP-cgi        = generate HTML page for use with CGI '$(GEN.cgi.html)'
@@ -452,7 +452,6 @@ HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTAL
 OPT.single = --s
 
 # alias targets
-help:   default
 pl:     $(SRC.pl)
 cgi:    $(GEN.cgi.html)
 pod:    $(GEN.pod)
@@ -461,8 +460,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.50
-tar:     GREP_EDIT  = 1.50
+GREP_EDIT           = 1.51
+tar:     GREP_EDIT  = 1.51
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
