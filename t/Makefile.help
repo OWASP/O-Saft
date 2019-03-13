@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.34 19/03/13 00:31:12
+#?      @(#) Makefile.help 1.35 19/03/14 00:57:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.34
+_SID.help       = 1.35
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -365,14 +365,7 @@ help.help-%:    _HELP_HEAD_ = $(_HELP_RULE_)
 help.all:       _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
-help.test.%:    _HELP_HEAD_ = $(_HELP_RULE_)
-
-
-help.%:      _help.HEAD _help.BODY _help.FOOT _help.HELP
-	@$(TARGET_VERBOSE)
-	@$(EXE.dummy)
-
-help.test.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
+help.%: _help.HEAD _help.BODY _help.FOOT _help.HELP
 	@$(TARGET_VERBOSE)
 	@$(EXE.dummy)
 
@@ -384,7 +377,6 @@ help.all: _help.HEAD
 	@$(EXE.help) $(ALL.Makefiles)
 help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
-
 
 help.syntax:
 	$(EXE.syntax) $(_MYSELF.help)
