@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.14 19/03/11 00:00:59
+#?      @(#) Makefile.ext 1.15 19/03/15 00:07:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.14
+_SID.ext        = 1.15
 
 _MYSELF.ext     = t/Makefile.ext
 ALL.includes   += $(_MYSELF.ext)
@@ -100,7 +100,7 @@ testcmd-e070_%: TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +
 testcmd-e071_%: TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
 testcmd-e081_%: TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
 
-ALL.testext     = $(shell awk -F_ '/^testcmd-e[0-9]/{print $$1}' $(_MYSELF.ext))
+ALL.testext     = $(shell awk -F_ '/^testcmd-e[0-9]/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.ext))
 ALL.by_host     = $(foreach host,$(TEST.ext.hosts),$(ALL.testext:%=%_$(host)))
 ALL.by_command  = $(foreach cmd,$(ALL.testext),$(TEST.ext.hosts:%=$(cmd)_%))
 ALL.test.ext    = $(ALL.by_host)
