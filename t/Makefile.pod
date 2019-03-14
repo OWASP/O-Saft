@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.7 19/03/10 23:49:24
+#?      @(#) Makefile.pod 1.8 19/03/14 23:30:37
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -151,6 +151,38 @@ variable is identifiable as "descriptive text" when used.
 
 Keep in mind, that newlines to be printed must be explicitly  written in a
 variable's value, $(_NL) is used for that.
+
+
+=head2 Make:collecting targets
+
+Target names are collected in variables. GNU make's  $(shell ...)  is used
+for that, which dynamically extracts the target names from the Makefile.
+Target names may occour as following constructs:
+
+    static-target:
+    pattern-rule-%:
+    pattern-%-rule:
+    static-target:    VAR = value
+    pattern-rule-%:   VAR = value
+
+The variables should contain real (static) targets only, no pattern rules.
+Duplicate target names should also be avoided.
+
+Using) awk satisfies both requirements. Matching targets is as simple as:
+
+    /^target-%/{next}              # skips pattern rules
+    /^target-[^%]*:/               # matches static targets
+    /^target-[^%]*:/{arr[$$1]=1}   # stores target name in an array
+
+awk's array "arr[]" now contains all target names.  Duplicates are ignored
+because the already existing "arr[target]" is overwritten. Finally we just
+need to print all array elements:
+
+    END { for (idx in arr) { print idx } }
+
+Matching targets needs to be done individually in each Makefile*, printing
+the array is always the same. Hence the code for awk's "END{}"  can be put
+in a make variable also.
 
 
 =head2 Make:--dry-run
