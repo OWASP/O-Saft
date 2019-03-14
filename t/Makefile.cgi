@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.22 19/03/13 22:57:44
+#?      @(#) Makefile.cgi 1.23 19/03/15 00:05:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.22
+_SID.cgi        = 1.23
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -68,12 +68,12 @@ HELP-testcmd-cgi-bad_NAME = check if a single NAME (IP or hostname) allowed in '
 HELP.cgi                = $(_NL)\
 \# Examples: $(_NL)\
 \#    $(MAKE_COMMAND) test.cgiall$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_42.42.42.42  $(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_127.0.0.127  $(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_localhost    $(_NL)\
-\#    $(MAKE_COMMAND) e-test.cgi.badhosts          $(_NL)\
-\#    $(MAKE_COMMAND) s-test.cgi.badIPs            $(_NL)\
-\#    $(MAKE_COMMAND) s-test.cgi.badopt            $(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_42.42.42.42$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_127.0.0.127$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_localhost$(_NL)\
+\#    $(MAKE_COMMAND) e-test.cgi.badhosts$(_NL)\
+\#    $(MAKE_COMMAND) s-test.cgi.badIPs$(_NL)\
+\#    $(MAKE_COMMAND) s-test.cgi.badopt$(_NL)\
 \#$(_NL)\
 \# There are no  test.cgi.*.log targets, please use  test.cgi.log  instead.$(_NL)\
 \#$(_NL)\
@@ -229,8 +229,8 @@ testcmd-cgi-good%:
 test.cgi-%: testcmd-cgi-bad_%
 	@echo ""
 
-ALL.testcgiopt  = $(shell awk -F% '/^testcmd-cgi-opt-/ {print $$1}' $(_MYSELF.cgi))
-ALL.testcgichr  = $(shell awk -F% '/^testcmd-cgi-chr-/ {print $$1}' $(_MYSELF.cgi))
+ALL.testcgiopt  = $(shell awk -F% '/^testcmd-cgi-opt-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
+ALL.testcgichr  = $(shell awk -F% '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 ALL.cgi.badchr  = $(ALL.testcgichr:%=%any.FQDN)
 ALL.cgi.badopt  = $(ALL.testcgiopt:%=%any.FQDN)
 ALL.testcgi     = $(ALL.testcgiopt)
@@ -249,7 +249,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.22: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.23: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
