@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.38 19/03/12 21:39:34
+#?      @(#) Makefile 1.39 19/03/14 01:04:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.38
+_SID.test       = 1.39
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -70,6 +70,7 @@ help.test.test:     _HELP_TYP__ = test
 help.test.test-v:   _HELP_TYP__ = test
 help.test.test-vv:  _HELP_TYP__ = test
 help.test:          _HELP_HEAD_ = $(_HELP_RULE_)
+help.test.%:        _HELP_HEAD_ = $(_HELP_RULE_)
 
 ifndef ALL.Makefiles
     -include t/Makefile.inc
@@ -79,14 +80,19 @@ endif
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
+help.test.%:    _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
+	@$(TARGET_VERBOSE)
+
 #	@echo " # testing '$(HELP-help.test.$*)' :"
 help.test.%.all:
+	@$(TARGET_VERBOSE)
 	@echo " # individual targets for testing $* :"
 	@echo $(ALL.test.$*)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
 help.test.%.internal:
+	@$(TARGET_VERBOSE)
 	@echo " # TEST.file:       $(TEST.file)"
 	@echo " # TEST.init.$*:    $(TEST.init.$*)"
 	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
@@ -188,6 +194,7 @@ test.file-1:
 test,file-2:
 test_file-3:
 help.test.make: test.file-1 test,file-2 test_file-3
+	@$(TARGET_VERBOSE)
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
