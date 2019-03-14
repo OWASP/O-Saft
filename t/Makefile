@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.39 19/03/14 01:04:43
+#?      @(#) Makefile 1.40 19/03/14 22:06:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.39
+_SID.test       = 1.40
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -66,9 +66,11 @@ HELP-help.test      = print general testing targets
 help.test:          _HELP_TYP__ = test
 help.test-v:        _HELP_TYP__ = test
 help.test-vv:       _HELP_TYP__ = test
+help.test.all:      _HELP_TYP__ = test
 help.test.test:     _HELP_TYP__ = test
 help.test.test-v:   _HELP_TYP__ = test
 help.test.test-vv:  _HELP_TYP__ = test
+help.test.test.all: _HELP_TYP__ = test
 help.test:          _HELP_HEAD_ = $(_HELP_RULE_)
 help.test.%:        _HELP_HEAD_ = $(_HELP_RULE_)
 
@@ -76,35 +78,6 @@ ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines macros if called directly (not from ../Makefile)
 endif
-
-#_____________________________________________________________________________
-#____________________________________________ target for help in t/Makefile*__|
-
-help.test.%:    _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
-	@$(TARGET_VERBOSE)
-
-#	@echo " # testing '$(HELP-help.test.$*)' :"
-help.test.%.all:
-	@$(TARGET_VERBOSE)
-	@echo " # individual targets for testing $* :"
-	@echo $(ALL.test.$*)
-	@echo ""
-	@echo "$(HELP.test.$*.all)"
-
-help.test.%.internal:
-	@$(TARGET_VERBOSE)
-	@echo " # TEST.file:       $(TEST.file)"
-	@echo " # TEST.init.$*:    $(TEST.init.$*)"
-	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
-	@echo " # ALL.test$*:     $(words $(ALL.test$*))  : $(ALL.test$*)"
-	@echo " # ALL.test.$*:    $(words $(ALL.test.$*)) : $(ALL.test.$*)"
-	@echo $(HELP.$*.internal)
-	@echo " # -------------------------------------------------------------"
-
-help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
-help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
-help.test.targets:
-	@$(MAKE) -s $(help-test-all) $(help-test-internal)
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -139,10 +112,6 @@ OPT.grep        = -q
     # grep (mainly used in message-% target) should not report matching lines
     # macro can be reset or redifined for more verbose output
 
-# internal used tools and files (paths hardcoded!)
-EXE.bench       = t/o-saft_bench
-EXE.test.bunt   = t/test-bunt.pl.txt
-
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
 endif
@@ -175,9 +144,41 @@ $(ALL.tests.log)$(_NL)\
 \# for more target and details, following targets can be used$(_NL)\
 $(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
 
+HELP.test.test  = $(HELP.test)
 HELP.test.all   = $(HELP.test.test.all)
+help.test:          help.test.test
 help.test.all:      help.test.test.all
+	@$(TARGET_VERBOSE)
     # convenience to satisfy  help.test.all
+
+#_____________________________________________________________________________
+#____________________________________________ target for help in t/Makefile*__|
+
+help.test.%:  _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
+	@$(TARGET_VERBOSE)
+
+#	@echo " # testing '$(HELP-help.test.$*)' :"
+help.test.%.all:
+	@$(TARGET_VERBOSE)
+	@echo " # individual targets for testing $* :"
+	@echo $(ALL.test.$*)
+	@echo ""
+	@echo "$(HELP.test.$*.all)"
+
+help.test.%.internal:
+	@$(TARGET_VERBOSE)
+	@echo " # TEST.file:       $(TEST.file)"
+	@echo " # TEST.init.$*:    $(TEST.init.$*)"
+	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
+	@echo " # ALL.test$*:     $(words $(ALL.test$*))  : $(ALL.test$*)"
+	@echo " # ALL.test.$*:    $(words $(ALL.test.$*)) : $(ALL.test.$*)"
+	@echo $(HELP.$*.internal)
+	@echo " # -------------------------------------------------------------"
+
+help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
+help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
+help.test.targets:
+	@$(MAKE) -s $(help-test-all) $(help-test-internal)
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
@@ -587,11 +588,10 @@ HELP-help.test.all  = print available individual targets for testing
 
 tests: TARGET_VERBOSE=echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
 tests:      $(ALL.tests)
-	@echo -n ""
-# bench.log
+	@$(TARGET_VERBOSE)
 
 tests.log:  $(ALL.tests.log)
-	@echo -n ""
+	@$(TARGET_VERBOSE)
 
 # quick tests for development
 tests.quick:
@@ -606,5 +606,10 @@ tests.quick.log:
 test:       tests
 test.log:   tests.log
 
+# collect targets in this file
+ALL.test.test  += tests tests.quick tests.log tests.quick.log
+
 .PHONY: test tests
+
+ALL.tests      += # nothing added here!
 
