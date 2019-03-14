@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.21 19/03/10 23:59:53
+#?      @(#) Makefile.cmds 1.22 19/03/15 00:10:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.21
+_SID.cmds       = 1.22
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -143,7 +143,7 @@ testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
-ALL.testcmds    = $(shell awk -F% '($$1 ~ /^testcmd-c./){print $$1}' $(_MYSELF.cmds))
+ALL.testcmds    = $(shell awk -F% '($$1 ~ /^testcmd-c./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmds))
 ALL.test.cmds   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcmds:%=%$(host)))
 ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
 
