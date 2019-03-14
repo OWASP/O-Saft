@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.51 19/03/12 23:35:28
+#?      @(#) Makefile 1.52 19/03/14 01:07:15
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.51
+_SID            = 1.52
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -306,7 +306,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.51
+_INST.text      = generated from Makefile 1.52
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -460,8 +460,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.51
-tar:     GREP_EDIT  = 1.51
+GREP_EDIT           = 1.52
+tar:     GREP_EDIT  = 1.52
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -597,9 +597,10 @@ $(GEN.tmptgz): $(ALL.src)
 
 #_____________________________________________________________________________
 
-HELP-_special   = ___________ any target may be used with following suffixes _
+HELP-_vv1       = ___________ any target may be used with following suffixes _
 HELP--v         = verbose: print target and newer dependencies also
 HELP--vv        = verbose: print target and all dependencies also
+HELP-_vv2       =  Note: help.*.all-v and help.*.all-vv is not yet supported
 
 # verbose command
 #       TARGET_VERBOSE  is the string to be printed in verbose mode
@@ -616,11 +617,11 @@ HELP--vv        = verbose: print target and all dependencies also
 # Note: need at least one command for target execution
 %-v: TARGET_VERBOSE=echo "\# $@: $?"
 %-v: %
-	@echo -n ""
+	@$(EXE.dummy)
 
 %-vv: TARGET_VERBOSE=echo "\# $@: $^"
 %-vv: %
-	@echo -n ""
+	@$(EXE.dummy)
 
 # the traditional way, when target-dependent variables do not work
 #%-v:
