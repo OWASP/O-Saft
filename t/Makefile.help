@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.37 19/03/14 22:51:49
+#?      @(#) Makefile.help 1.38 19/03/14 23:34:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.37
+_SID.help       = 1.38
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -217,13 +217,15 @@ _HELP_HEAD_     = $(_HELP_NAME_)
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
 
+# _HELP_HEAD_ and _HELP_RULE_  will be set conditionally per target/rule also
+
 # setting if Makefile.inc not included
 help.inc:       _HELP_TYP__ = inc
 help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
 
 # define scripts as variables, for better human readability
-# (for details about the commands, please see  Syntax  above)
-# _HELP_HEAD_   will be set conditionally per target/rule
+# for details about the commands, please see  Syntax  above, and
+# SEE Make:collecting targets
 _AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
 _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
