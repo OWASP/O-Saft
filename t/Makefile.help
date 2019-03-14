@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.36 19/03/14 22:19:50
+#?      @(#) Makefile.help 1.37 19/03/14 22:51:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.36
+_SID.help       = 1.37
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -226,13 +226,14 @@ help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
 # _HELP_HEAD_   will be set conditionally per target/rule
 _AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
-_AWK_print_file     =
 _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                       /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
                                 sub(/HELP-/,"",key); gsub(/ /,"",key);    \
                                 tab="\t"; if(length(key)<8){tab="\t\t";}  \
                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
+_AWK_print_arr_END  = END{for(idx in arr){print idx}}
+_AWK_print_file     =
 %-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
 
 # tools used to gather information from herein
@@ -503,7 +504,8 @@ testcmd-help.test.critic:  TEST.args  +=
 testcmd-help.test.warnings:TEST.args  +=
 testcmd-help.test.all:     TEST.args  +=
 
-ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{print $$1}' $(_MYSELF.help))
+ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
+#                   # awk collect target herin (duplicates are ignored)
 ALL.test.help       = $(ALL.testhelp)
 ALL.test.help.log   = $(ALL.test.help:%=%.log)
 
