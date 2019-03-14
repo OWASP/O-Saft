@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.10 19/03/11 00:01:03
+#?      @(#) Makefile.template 1.11 19/03/14 23:57:35
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.10
+_SID.TEMPL      = 1.11
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -117,7 +117,7 @@ testcmd-TEMPL%:     TEST.init   = +quit
 testcmd-TEMPL001_%: TEST.args  += +VERSION
 testcmd-TEMPL002_%: TEST.args  += --help
 
-ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){print $$1}' $(_MYSELF.TEMPL))
+ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
                 # dynamically generate list of all  testcmd_TEMPLDDD  targets
 
 ## Variant-1 }
@@ -130,7 +130,7 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
-ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){print $$1}' $(_MYSELF.TEMPL))
+ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
 
 # pattern rule to map to testcmd-%
 testTEMPL-%:  testcmd-%
