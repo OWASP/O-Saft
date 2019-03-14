@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.20 19/03/13 00:35:27
+#?      @(#) Makefile.misc 1.21 19/03/14 21:51:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.20
+_SID.misc       = 1.21
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -49,12 +49,19 @@ endif
 
 #TEST.args       =
     # is special in this makefile; do not overwrite TEST.args in other files
+# internal used tools and files (paths hardcoded!)
+EXE.bench       = t/o-saft_bench
+EXE.test.bunt   = t/test-bunt.pl.txt
 _args.misc      = +quit
 BENCH.times     = $(EXE.bench).times
 BENCH.host      = $(TEST.host)
 
 OPT.cloc        =
 EXE.cloc        = cloc $(OPT.cloc)
+
+ifndef CONTRIB.dir
+    CONTRIB.dir = contrib
+endif
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
