@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.10 19/03/11 00:01:00
+#?      @(#) Makefile.hlp 1.11 19/03/15 00:19:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.10
+_SID.hlp        = 1.11
 
 _MYSELF.hlp     = t/Makefile.hlp
 ALL.includes   += $(_MYSELF.hlp)
@@ -118,7 +118,7 @@ testarg0-h--help-exit:          TEST.args  += --help=exit
 testarg0-h--help--yeast-data:   TEST.args  += --yeast-data
 testarg0-h--help--yeast-prot:   TEST.args  += --yeast-prot
 
-ALL.testhlp     = $(shell awk -F: '/^testarg0-h-%/{next} /^testarg0-h-/{print $$1}' $(_MYSELF.hlp))
+ALL.testhlp     = $(shell awk -F: '/^testarg0-h-%/{next} /^testarg0-h-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
 ALL.test.hlp    = $(ALL.testhlp)
 ALL.test.hlp.log= $(ALL.test.hlp:%=%.log)
 
