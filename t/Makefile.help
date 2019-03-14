@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.39 19/03/14 23:52:54
+#?      @(#) Makefile.help 1.40 19/03/15 00:30:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.39
+_SID.help       = 1.40
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -481,30 +481,41 @@ t-%:
 # testcmd-% pattern rule uses the stem as argument to the executed command
 # this is all we need, hence all other arguments must be set empty
 # help target itself is special as defined in global Makefile only
-testcmd-help:              EXE.pl      = make
-testcmd-help:              TEST.dir    = .
+testcmd-help:                   EXE.pl      = make
+testcmd-help:                   TEST.dir    = .
 
-testcmd-help%:             EXE.pl      = make
-testcmd-help%:             TEST.init   =
+testcmd-help%:                  EXE.pl      = make
+testcmd-help%:                  TEST.init   =
 
-testcmd-help:              TEST.args  +=
-testcmd-help.doc:          TEST.args  +=
-testcmd-help.test.help:    TEST.args  +=
-testcmd-help.test.make:    TEST.args  +=
-#testcmd-help.critic:       TEST.args  +=
-testcmd-help.syntax:       TEST.args  +=
-testcmd-help.test:         TEST.args  +=
-testcmd-help.test.cgi:     TEST.args  +=
-testcmd-help.test.cmds:    TEST.args  +=
-testcmd-help.test.opt:     TEST.args  +=
-testcmd-help.test.ext:     TEST.args  +=
-testcmd-help.test.exit:    TEST.args  +=
-testcmd-help.test.hlp:     TEST.args  +=
-testcmd-help.test.misc:    TEST.args  +=
-testcmd-help.test.tcl:     TEST.args  +=
-testcmd-help.test.critic:  TEST.args  +=
-testcmd-help.test.warnings:TEST.args  +=
-testcmd-help.test.all:     TEST.args  +=
+# TODO: following conditions should be automatically set using $(ALL.inc.type)
+testcmd-help:                   TEST.args  +=
+testcmd-help.doc:               TEST.args  +=
+testcmd-help.test.help:         TEST.args  +=
+testcmd-help.test.make:         TEST.args  +=
+#testcmd-help.critic:            TEST.args  +=
+testcmd-help.syntax:            TEST.args  +=
+testcmd-help.test:              TEST.args  +=
+testcmd-help.test.cgi:          TEST.args  +=
+testcmd-help.test.cmds:         TEST.args  +=
+testcmd-help.test.opt:          TEST.args  +=
+testcmd-help.test.ext:          TEST.args  +=
+testcmd-help.test.exit:         TEST.args  +=
+testcmd-help.test.hlp:          TEST.args  +=
+testcmd-help.test.misc:         TEST.args  +=
+testcmd-help.test.tcl:          TEST.args  +=
+testcmd-help.test.critic:       TEST.args  +=
+testcmd-help.test.warnings:     TEST.args  +=
+testcmd-help.test.all:          TEST.args  +=
+testcmd-help.test.cgi.all:      TEST.args  +=
+testcmd-help.test.cmds.all:     TEST.args  +=
+testcmd-help.test.opt.all:      TEST.args  +=
+testcmd-help.test.ext.all:      TEST.args  +=
+testcmd-help.test.exit.all:     TEST.args  +=
+testcmd-help.test.hlp.all:      TEST.args  +=
+testcmd-help.test.misc.all:     TEST.args  +=
+testcmd-help.test.tcl.all:      TEST.args  +=
+testcmd-help.test.critic.all:   TEST.args  +=
+testcmd-help.test.warnings.all: TEST.args  +=
 
 ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
 #                   # awk collect target herin (duplicates are ignored)
