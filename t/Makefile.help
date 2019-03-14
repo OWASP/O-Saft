@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.35 19/03/14 00:57:02
+#?      @(#) Makefile.help 1.36 19/03/14 22:19:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.35
+_SID.help       = 1.36
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -360,8 +360,10 @@ ALL.help       += $(ALL.help.test)
 # our own targets using help% or alike
 help.help:      _HELP_TYP__ = help
 help.help-%:    _HELP_TYP__ = help
+help.help.all:  _HELP_TYP__ = help
 help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
 help.help-%:    _HELP_HEAD_ = $(_HELP_RULE_)
+help.help.all:  _HELP_HEAD_ = $(_HELP_RULE_)
 help.all:       _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
@@ -484,7 +486,6 @@ testcmd-help%:             TEST.init   =
 
 testcmd-help:              TEST.args  +=
 testcmd-help.doc:          TEST.args  +=
-testcmd-help.dev:          TEST.args  +=
 testcmd-help.test.help:    TEST.args  +=
 testcmd-help.test.make:    TEST.args  +=
 #testcmd-help.critic:       TEST.args  +=
