@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.12 19/03/12 21:31:12
+#?      @(#) Makefile.tcl 1.13 19/03/14 23:39:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.12
+_SID.tcl        = 1.13
 
 _MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
@@ -90,7 +90,7 @@ testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 ho
 #testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
 # SEE Make:target matching
-ALL.testtcl     = $(shell awk -F% '($$1 ~ /^testcmd-tcl.../){print $$1}' $(_MYSELF.tcl))
+ALL.testtcl     = $(shell awk -F% '($$1 ~ /^testcmd-tcl.../){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
 ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
