@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.22 19/03/11 00:01:04
+#?      @(#) Makefile.warnings 1.23 19/03/15 00:02:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.22
+_SID.warnings   = 1.23
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -248,7 +248,7 @@ warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
 warning-861: TEST.args  = TODO: not all ciphers listed
 
 #ALL.testwarnings   = # same as ALL.test.warnings
-ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{print $$1}' $(_MYSELF.warnings) | sort -u)
+ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.warnings))
 
 warning-%: message-%
 	@echo -n ""
@@ -282,7 +282,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.22: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.23: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
