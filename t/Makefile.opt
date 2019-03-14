@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.8 19/03/11 00:01:01
+#?      @(#) Makefile.opt 1.9 19/03/14 22:53:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.8
+_SID.opt        = 1.9
 
 _MYSELF.opt     = t/Makefile.opt
 ALL.includes   += $(_MYSELF.opt)
@@ -62,16 +62,16 @@ HELP.opt            = $(_NL)\
 
 HELP.test.opt.all   = # no special documentation yet
 
-testopt-alias%:                EXE.pl      = ../$(SRC.pl)
-testopt-alias%:                TEST.init   = --traceARG --v +quit
+testopt-alias%:                 EXE.pl      = ../$(SRC.pl)
+testopt-alias%:                 TEST.init   = --traceARG --v +quit
 
 # The part right of the  _  in the target name testarg0-alias*  is the pattern
 # to be searched for in the output of $(EXE.pl).  As this might contain chars
 # not allowed in make's target names, . (dot) are used (i.e. for = or space).
 
-testopt-alias_enabled..1:      TEST.args  += --exit=MAIN  -b
-testopt-alias_enabled..2:      TEST.args  += --exit=MAIN  -b
-testopt-alias_ca_path..x:      TEST.args  += --exit=MAIN  -c x
+testopt-alias_enabled..1:       TEST.args  += --exit=MAIN  -b
+testopt-alias_enabled..2:       TEST.args  += --exit=MAIN  -b
+testopt-alias_ca_path..x:       TEST.args  += --exit=MAIN  -c x
 
 # folgende noch in passende Makefile verschieben
 testopt-alias_HOST0:            TEST.init   =
@@ -143,8 +143,8 @@ testarg0-stdformat-UTF-8: testarg0-stdformat-UTF8
 #stdarg0-opt-508:                TEST.args  += +hsts-sts
 
 # note: no sort because we want the sequence as defined above
-ALL.testalias       = $(shell awk -F: '/^testarg0-alias_[^%]/     {print $$1}' $(_MYSELF.opt))
-ALL.teststdformat   = $(shell awk -F: '/^testarg0-stdformat-[^%]/     {print $$1}' $(_MYSELF.opt))
+ALL.testalias       = $(shell awk -F: '/^testarg0-alias_[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.teststdformat   = $(shell awk -F: '/^testarg0-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
 ALL.test.stdformat  = $(ALL.teststdformat)
 ALL.testopt    += $(ALL.testalias)
 ALL.testopt    += $(ALL.teststdformat)
