@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.38 19/03/14 23:34:49
+#?      @(#) Makefile.help 1.39 19/03/14 23:52:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.38
+_SID.help       = 1.39
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -225,7 +225,7 @@ help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
 
 # define scripts as variables, for better human readability
 # for details about the commands, please see  Syntax  above, and
-# SEE Make:collecting targets
+# SEE Make:target matching
 _AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
 _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
