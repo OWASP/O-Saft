@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.40 19/03/15 00:30:08
+#?      @(#) Makefile.help 1.41 19/03/15 22:38:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.40
+_SID.help       = 1.41
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -192,6 +192,8 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-help-target-is-default: help.help
+
+ALL.help.test  += help.test.help
 
 HELP-help.help  = print targets to get information/documentation from Makefiles
 
