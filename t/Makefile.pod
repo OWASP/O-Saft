@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.9 19/03/14 23:54:39
+#?      @(#) Makefile.pod 1.10 19/03/16 00:26:35
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -83,6 +83,27 @@ Remember make's automatic variables:
         $%    - target (archive) member name (rarely used)
 
 Use of $$ avoids evaluating $ .
+
+
+=head2 Make:.SECONDEXPANSION
+
+GNU make's variables can be used as target, in the rules commands and also
+as dependency. When used as dependency, it must be a file (or directory).
+
+When a dependency to  another target is defined in a variable,  GNU make's
+"Secondary Expansion" must be ebabled using the special target:
+
+    .SECONDEXPANSION:
+
+and the dependency have to be written as "escaped" variable, like:
+
+    other = other-target
+    other-target:
+            do-somthing
+    target: $$(other)
+
+If the used make does not support  .SECONDEXPANSION: , the targets must be
+rewritten with the real target name instead of the escaped variable.
 
 
 =head2 Make:MAKE vs. MAKE_COMMAND
