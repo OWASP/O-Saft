@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.10 19/03/16 00:26:35
+#?      @(#) Makefile.pod 1.11 19/03/16 14:41:31
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -26,7 +26,15 @@
 
 =head2 Make:GNU
 
-some text
+Some words about the terms and words used in GNU make and in this project.
+
+    * macro  is a synonym for  variable  in Makefiles.
+    * GNU make uses  prerequisites  when targets depend on something, here
+      we use dependencies.
+    * GNU make distinguishes the terms:  explicit rules,  implicit rules,
+      static pattern rules. For simplicity  target  is used when  explicit
+      rules  are meant and  pattern rule  is used for  static pattern rule
+    * GNU make refers to the commands executed in a target as  recipe.
 
 
 =head2 Make:include
@@ -65,22 +73,40 @@ be checked before including, for example (using private _SID.* variable):
     endif
 
 
-=head2 Make:automatic variables
+=head2 Make:important variables
 
-Note: macro is a synonym for variable in makefiles.
+Remember important variables:
+
+    $(MAKE)         - the make command itself, in sub-make with additional
+                      arguments/options (see make's dosumentation )
+    $(MAKE_COMMAND) - private variable for the make command, without other
+                      arguments/options as in $(MAKE)
+                      SEE Make:MAKE vs. MAKE_COMMAND
+    $(MFLAGS)       - contains all passed arguments/options to make
+    $(MAKEFLAGS)    - same as $(MFLAGS) but omitts leading - character
+    $(MAKECMDGOALS) - name of the target to be satisfied
+    $(MAKEFILE)     - name of the target to be satisfied
+    $(MAKEFILES)    - environment variable containing makefiles to be read
+    $(MAKEFILE_LIST)- inclueded Makefiles in oder they have been read
+
+For details use: make help.test.make
+
+
+=head2 Make:automatic variables
 
 Note: macro definitions in makefiles must not be sequential!
 
 Remember make's automatic variables:
 
-        $@    - target (file)
-        $+    - all dependencies of the target
-        $^    - all dependencies of the target (without duplicates)
-        $<    - first dependency of the target
-        $?    - dependencies newer than the target
-        $|    - "orde-only" dependencies
-        $*    - matching files of the rule
-        $%    - target (archive) member name (rarely used)
+    $@    - target (file name)
+    $*    - matching files of the rule, the stem of the pattern rule
+    $+    - all dependencies of the target
+    $^    - all dependencies of the target (without duplicates)
+    $<    - first dependency of the target
+    $?    - dependencies newer than the target
+    $|    - "orde-only" dependencies
+    $*    - matching files of the rule
+    $%    - target (archive) member name (rarely used)
 
 Use of $$ avoids evaluating $ .
 
@@ -108,7 +134,7 @@ rewritten with the real target name instead of the escaped variable.
 
 =head2 Make:MAKE vs. MAKE_COMMAND
 
-Traditionally  $(MAKE) is used for the make command itself. For conveience
+Traditionally $(MAKE) is used for the make command itself. For convenience
 t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
 
 When  $(MAKE)  is used in documentation (variables or texts),  make should 
@@ -199,6 +225,9 @@ variable is identifiable as "descriptive text" when used.
 
 Keep in mind, that newlines to be printed must be explicitly  written in a
 variable's value, $(_NL) is used for that.
+
+GNU make'  define  directive, which would avoid the use of  $(_NL), is not
+used to set variables.
 
 
 =head2 Make:--dry-run
