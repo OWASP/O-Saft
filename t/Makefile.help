@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.43 19/03/16 02:37:43
+#?      @(#) Makefile.help 1.44 19/03/16 04:09:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.43
+_SID.help       = 1.44
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -195,6 +195,7 @@ first-help-target-is-default: help.help
 
 ALL.help.test  += help.test.help
 
+HELP-_help0     = --------------------------------------------------------------
 HELP-help.help  = print targets to get information/documentation from Makefiles
 
 #_____________________________________________________________________________
@@ -237,13 +238,14 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
 _AWK_print_arr_END  = END{for(idx in arr){print idx}}
+_AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
 _AWK_print_file     =
 %-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
 # prefer awk where possible, as sed matches last occurrence of a pattern
-EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
+EXE.eval        = awk -F=   '$(_AWK_gen_eval_target)'
 EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
 EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
@@ -421,10 +423,12 @@ targets%me:
 rules: targets
 rules%me: targets.me
 
-# TODO: eval is quick&dirty; format should be same as with  _AWK_target_by_line
+# eval target quick&dirty:
+#       @$(ECHO) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
+# pretty printed format using awk see below
 eval:
 	@$(TARGET_VERBOSE)
-	@$(ECHO) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
+	@$(ECHO) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
 
 echo:
 	@$(TARGET_VERBOSE)
