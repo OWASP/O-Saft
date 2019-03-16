@@ -50,7 +50,7 @@
 #           make -f Makefile.help
 #           make -f t/Makefile
 #
-#       Following name prefixes are used:
+#       Following name prefixes are used for variables:
 #           SRC         - defines a source file
 #           GEN         - defines a genarted file
 #           EXE         - defines a tools to be used
@@ -58,9 +58,9 @@
 #           TEST        - something related to the t/ directory
 #           CONTRIB     - something related to the contrib/ directory
 #           CRITIC      - something related to percritic targets
+#           HELP        - defines texts to be used in  help  and  doc  targets
 #           _           - names of internal (helper) variables (they are not
 #                         intended to be overwritten on command line)
-#           HELP        - defines texts to be used in  help  and  doc  targets
 #
 #       Following names are used, which potentially conflict with make itself:
 #           ECHO        - echo command
@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.54 19/03/16 02:35:08
+#?      @(#) Makefile 1.55 19/03/16 14:31:30
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.54
+_SID            = 1.55
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -306,7 +306,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.54
+_INST.text      = generated from Makefile 1.55
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -330,42 +330,58 @@ doc.all:  _HELP_HEAD_ = $(_HELP_RULE_)
 # define body part of default target
 _help_also_           = _help_also
 _help_body_           = _help_body_me
+_help_list_           =
 help.all: _help_body_ = _help_body_all
+help.all: _help_list_ = _help_list
 doc:      _help_body_ = _eval_body_me
 doc.all:  _help_body_ = _eval_body_all
 doc:      _help_also_ =
 doc.all:  _help_also_ =
+doc.all:  _help_list_ = _help_list
+
+_help_text-v          = \# to see Makefile, where targets are defined, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-v
+%.all-v: _help_text-v =
 
 # SEE Make:.SECONDEXPANSION
 .SECONDEXPANSION:
 
+# If variables, like  $(_HELP.*targets),  contain duplicate target names (which
+# is intended), only one will be executed by  $(MAKE),  hence the 2nd occurance
+# is missing.  The targets  help  and  doc  therefore slightly differ in number
+# of lines of their output.  Known duplicates (3/2019):  help.all  help.critic
+# TODO: To avoid the difference,  $(MAKE)  needs to be executed for each target
+#       instead one  $(MAKE)  with the list of targets.
 _eval_body_me:
 	@$(MAKE) -s $(_HELP.my_targets)
+	@echo "$(_HELP_LINE_)"
 
 _eval_body_all:
 	@$(MAKE) -s $(_HELP.alltargets)
 
 _help_body_me:
 	@$(EXE.help) $(MAKEFILE)
+	@echo "$(_HELP_LINE_)"
 
 _help_body_all:
 	@$(EXE.help) $(ALL.Makefiles)
 
 _help_list:
 	@echo ""
-	@echo "$(_HELP_LINE_)"
+	@echo "		#_____________________________ targets for information ... _"
 	@$(MAKE) $(_HELP.help)
 	@echo "$(_HELP_LINE_)"
+	@echo "$(_help_text-v)"
 
 _help_also:
-	@echo "# see also: $(MAKE) doc"
+	@echo "# to expand variables, use: $(MAKE_COMMAND) doc"
 
 # ensure that target help: from this file is used and not help%
-help help.all doc doc.all: _help.HEAD $$(_help_body_) _help_list $$(_help_also_)
+help help.all doc doc.all: _help.HEAD $$(_help_body_) $$(_help_list_) $$(_help_also_)
 	@$(TARGET_VERBOSE)
 
 help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
+#doc.all-v doc.all-vv: help.all     # TODO: not implemented yet
 
 .PHONY: help help.all doc doc.all
 
@@ -484,8 +500,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.54
-tar:     GREP_EDIT  = 1.54
+GREP_EDIT           = 1.55
+tar:     GREP_EDIT  = 1.55
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -624,7 +640,6 @@ $(GEN.tmptgz): $(ALL.src)
 HELP-_vv1       = ___________ any target may be used with following suffixes _
 HELP--v         = verbose: print target and newer dependencies also
 HELP--vv        = verbose: print target and all dependencies also
-HELP-_vv2       =  Note: help.*.all-v and help.*.all-vv is not yet supported
 
 # verbose command
 #       TARGET_VERBOSE  is the string to be printed in verbose mode
