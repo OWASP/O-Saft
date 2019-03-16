@@ -12,18 +12,21 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.12 19/03/09 17:06:00
+#?      @(#) Makefile.inc 1.13 19/03/16 17:29:59
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.12
+_SID.inc        = 1.13
 
 _MYSELF.inc     = t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
 ALL.inc.type   += inc
+
+.DEFAULT:
+	@echo "**ERROR: unknown target: $(MAKECMDGOALS)"
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
