@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.55 19/03/16 14:31:30
+#?      @(#) %M% %I% %E% %U%
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.55
+_SID            = %I%
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -112,6 +112,9 @@ MAKEFILE        = Makefile
                 # Note that  $(MAKEFILE) is used where any Makefile is possible
                 # and  Makefile  is used when exactly this file is meant.
                 # $(ALL.Makefiles) is used, when all Makefiles are needed.
+
+.DEFAULT:
+	@echo "**ERROR: unknown target '$(MAKECMDGOALS)'"
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -306,7 +309,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.55
+_INST.text      = generated from %M% %I%
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -338,6 +341,10 @@ doc.all:  _help_body_ = _eval_body_all
 doc:      _help_also_ =
 doc.all:  _help_also_ =
 doc.all:  _help_list_ = _help_list
+
+# for targets defined in akefile.help
+help.all%:  _help_body_ = _help_body_all
+help.all%:  _help_list_ = _help_list
 
 _help_text-v          = \# to see Makefile, where targets are defined, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-v
 %.all-v: _help_text-v =
@@ -500,8 +507,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.55
-tar:     GREP_EDIT  = 1.55
+GREP_EDIT           = %I%
+tar:     GREP_EDIT  = %I%
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
