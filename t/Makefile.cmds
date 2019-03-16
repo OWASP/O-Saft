@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.22 19/03/15 00:10:10
+#?      @(#) Makefile.cmds 1.23 19/03/16 15:42:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.22
+_SID.cmds       = 1.23
 
 _MYSELF.cmds    = t/Makefile.cmds
 ALL.includes   += $(_MYSELF.cmds)
@@ -52,12 +52,12 @@ endif
 HELP-_cmds1         = _________________________________________ testing commands _
 HELP-test.pattern-* = test group of commands with '$(TEST.cmds.hosts)'
 HELP-testcmd-*      = test commands with '$(TEST.cmds.hosts)'
-HELP-testcmd-*.log  = same as testcmd-* but store output in t/testcmd-*.log
+HELP-testcmd-*.log  = same as testcmd-* but store output in '$(TEST.logdir)/'
 HELP-test.cmds.all  = test all commands with '$(TEST.cmds.hosts)'
-HELP-test.cmds.log  = same as test.cmds.all but store output in t/testcmd-*.log
+HELP-test.cmds.log  = same as test.cmds.all but store output in '$(TEST.logdir)/'
 HELP-_cmds2         = ________________________________ testing a special command _
 HELP-testrun-CMD    = test specific command CMD with '$(TEST.cmds.hosts)'
-HELP-testrun-CMD.log = but store output of testrun-CMD in t/testcmd-CMD.log
+HELP-testrun-CMD.log = same as testrun-CMD but store output in '$(TEST.logdir)/'
 
 HELP.cmds           = $(_NL)\
 \# Targets can be executed individually, or a group of targets can be executed$(_NL)\
