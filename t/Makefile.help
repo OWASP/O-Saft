@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.42 19/03/15 23:10:23
+#?      @(#) Makefile.help 1.43 19/03/16 02:37:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.42
+_SID.help       = 1.43
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -369,7 +369,6 @@ help.help.all:  _HELP_TYP__ = help
 help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
 help.help-%:    _HELP_HEAD_ = $(_HELP_RULE_)
 help.help.all:  _HELP_HEAD_ = $(_HELP_RULE_)
-help.all:       _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
@@ -378,13 +377,8 @@ help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 help.doc: help.help
 #  legacy alias
 
-help.all: _help.HEAD
-	@$(TARGET_VERBOSE)
-	@$(EXE.help) $(ALL.Makefiles)
-help.all-v help.all-vv: help.all
-	@$(EXE.dummy)
-
 help.syntax:
+	@$(TARGET_VERBOSE)
 	$(EXE.syntax) $(_MYSELF.help)
 
 .PHONY: help.doc help.syntax
