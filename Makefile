@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.53 19/03/16 02:29:51
+#?      @(#) Makefile 1.54 19/03/16 02:35:08
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.53
+_SID            = 1.54
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -306,7 +306,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.53
+_INST.text      = generated from Makefile 1.54
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -363,6 +363,9 @@ _help_also:
 # ensure that target help: from this file is used and not help%
 help help.all doc doc.all: _help.HEAD $$(_help_body_) _help_list $$(_help_also_)
 	@$(TARGET_VERBOSE)
+
+help.all-v help.all-vv: help.all
+	@$(EXE.dummy)
 
 .PHONY: help help.all doc doc.all
 
@@ -481,8 +484,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.53
-tar:     GREP_EDIT  = 1.53
+GREP_EDIT           = 1.54
+tar:     GREP_EDIT  = 1.54
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
