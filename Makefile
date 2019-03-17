@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) Makefile 1.57 19/03/17 17:33:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = %I%
+_SID            = 1.57
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -309,7 +309,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from %M% %I%
+_INST.text      = generated from Makefile 1.57
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -507,8 +507,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = %I%
-tar:     GREP_EDIT  = %I%
+GREP_EDIT           = 1.57
+tar:     GREP_EDIT  = 1.57
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -565,6 +565,10 @@ clean.tar:
 	rm -rf $(GEN.tgz)
 clean.tgz: clean.tar
 clean.docker: docker.rm
+
+# avoid matching implicit rule help% in some of following targets
+$(OSD.dir)/help.txt: 
+	@$(TARGET_VERBOSE)
 
 # targets for generation
 $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
