@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.45 19/03/17 16:57:54
+#?      @(#) Makefile.help 1.46 19/03/17 18:33:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.45
+_SID.help       = 1.46
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -195,7 +195,6 @@ first-help-target-is-default: help.help
 
 ALL.help.test  += help.test.help
 
-HELP-_help0     = --------------------------------------------------------------
 HELP-help.help  = print targets to get information/documentation from Makefiles
 
 #_____________________________________________________________________________
@@ -215,7 +214,7 @@ _HELP_TYP__     = help
 _HELP_INFO_     = \# Name          | Description/Content
 _HELP_NAME_     = \# Macro/Variable| Value
 _HELP_RULE_     = \# Target        | Description
-_HELP_LINE_     = \#---------------+------------------------------------------------------------
+_HELP_LINE_     = \#---------------+--------------------------------------------------------------
 _HELP_HEAD_     = $(_HELP_NAME_)
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
@@ -227,8 +226,17 @@ help.inc:       _HELP_TYP__ = inc
 help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
 
 # define scripts as variables, for better human readability
-# for details about the commands, please see  Syntax  above, and
+# for details about the commands, please see  Syntax  above for matching macro
+# and target names, and
 # SEE Make:target matching
+#     _AWK_target_by_line   - extract target names
+#     _AWK_macro_by_line    - extract macro  names
+#     _AWK_HELP_by_line     - extract HELP- macro names for documentation, the
+#                             HELP-_* print as is
+#                             HELP-*  extract target name and print with text
+#     _AWK_gen_eval_target  - print f-* and _f-* target name from HELP-* macro
+#     _AWK_print_arr_END    - print collected data from arr[]
+#     _AWK_print_file       - either print seperator line or the filename
 _AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
 _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
@@ -237,9 +245,9 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                                 tab="\t"; if(length(key)<8){tab="\t\t";}  \
                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
-_AWK_print_arr_END  = END{for(idx in arr){print idx}}
 _AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
-_AWK_print_file     =
+_AWK_print_arr_END  = END{for(idx in arr){print idx}}
+_AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 %-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
 
 # tools used to gather information from herein
