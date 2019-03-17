@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.58 19/03/17 22:29:00
+#?      @(#) Makefile 1.59 19/03/17 23:00:01
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.58
+_SID            = 1.59
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -309,7 +309,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.58
+_INST.text      = generated from Makefile 1.59
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -384,7 +384,7 @@ _help_also:
 
 # ensure that target help: from this file is used and not help%
 help help.all doc doc.all: _help.HEAD $$(_help_body_) $$(_help_list_) $$(_help_also_)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
@@ -403,26 +403,26 @@ HELP-install    = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTAL
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
 
 $(INSTALL.dir):
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	mkdir $(_INSTALL_FORCE_) $(INSTALL.dir)
 
 all:    help
 
 clean:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	-rm -r --interactive=never $(ALL.gen)
 clear:  clean
 
 # target calls installed $(SRC.pl) to test general functionality
 install: $(GEN.inst) $(INSTALL.dir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(GEN.inst) $(INSTALL.dir) \
 	    && $(INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
 uninstall:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	-rm -r --interactive=never $(INSTALL.dir)
 
 _RELEASE    = $(shell perl -nle '/^\s*STR_VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
@@ -431,7 +431,7 @@ release.show:
 	@echo "Release: $(_RELEASE)"
 
 release: $(GEN.tgz)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	mkdir -p $(_RELEASE)
 	sha256sum $(GEN.tgz) > $(_RELEASE)/$(GEN.tgz).sha256
 	@cat $(_RELEASE)/$(GEN.tgz).sha256
@@ -508,8 +508,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.58
-tar:     GREP_EDIT  = 1.58
+GREP_EDIT           = 1.59
+tar:     GREP_EDIT  = 1.59
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -530,18 +530,18 @@ gen.all:    $(ALL.gen)
 
 # docker target uses project's own script to build and remove the image
 docker.build:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
 	$(EXE.docker) cp Dockerfile
 	$(EXE.docker) cp README
 docker: docker.build
 
 docker.rm:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(EXE.docker) rmi
 
 docker.dev:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	docker build --force-rm --rm \
 		--build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \
 		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
@@ -553,67 +553,67 @@ docker.dev:
 #       a Docker image already exists.  Need a target, which checks the current
 #       Docker image for the proper version.
 docker.push:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	docker push owasp/o-saft:latest
 
 .PHONY: pl cgi pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
 
 clean.tmp:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	rm -rf $(TMP.dir)
 clean.tar:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	rm -rf $(GEN.tgz)
 clean.tgz: clean.tar
 clean.docker: docker.rm
 
 # avoid matching implicit rule help% in some of following targets
 $(OSD.dir)/help.txt: 
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 # targets for generation
 $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	mkdir -p $@
 
 # cp fails if SRC.pl is read-only, hence we remove it; it is generated anyway
 $(SRC.pl): $(DEV.pl)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	rm -f $@
 	cp $< $@
 
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(EXE.single) $(OPT.single)
 
 $(GEN.pod):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
 $(GEN.text): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help          > $@
 
 $(GEN.wiki): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
 $(GEN.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
 $(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
 $(GEN.inst): $(SRC.inst) Makefile
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(EXE.install) $(SRC.inst) > $@
 	chmod +x $@
 
 $(GEN.tgz)--to-noisy: $(ALL.src)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@grep -q '$(GREP_EDIT)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
@@ -621,7 +621,7 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
 _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@grep -q '$(GREP_EDIT)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    && exit 1 \
@@ -641,11 +641,11 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 # path with $(PWD).
 # The directory prefix in the tarball is the current directory, aka $(PWD) .
 $(GEN.tgz): $(ALL.src)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
 
 $(GEN.tmptgz): $(ALL.src)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	tar zcf $@ $^
 
 #_____________________________________________________________________________
@@ -654,33 +654,33 @@ HELP-_vv1       = ___________ any target may be used with following suffixes _
 HELP--v         = verbose: print target and newer dependencies also
 HELP--vv        = verbose: print target and all dependencies also
 
-# verbose command
-#       TARGET_VERBOSE  is the string to be printed in verbose mode
+# verbose/trace command
+#       TRACE.target    is the command to be used to print the target's name
 #                       it is epmty by default
-#       TARGET_VERBOSE  can be set as environment variable, or used on command
+#       TRACE.target    can be set as environment variable, or used on command
 #                       line when calling make
 #                       it is also used internal for the -v targets, see below
 # examples:
-#  TARGET_VERBOSE = \# --Target: $@--
-#  TARGET_VERBOSE = \# --Target: $@: newer dependencies: $? --
-#  TARGET_VERBOSE = \# --Target: $@: all dependencies: $^ --
+#  TRACE.target = echo "\# --Target: $@--"
+#  TRACE.target = echo "\# --Target: $@: newer dependencies: $? --"
+#  TRACE.target = echo "\# --Target: $@: all dependencies: $^ --"
 
 # verbose targets
 # Note: need at least one command for target execution
-%-v: TARGET_VERBOSE=echo "\# $@: $?"
+%-v: TRACE.target   = echo "\# $@: $?"
 %-v: %
 	@$(EXE.dummy)
 
-%-vv: TARGET_VERBOSE=echo "\# $@: $^"
+%-vv: TRACE.target  = echo "\# $@: $^"
 %-vv: %
 	@$(EXE.dummy)
 
 # the traditional way, when target-dependent variables do not work
 #%-v:
-#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TARGET_VERBOSE=# $$@: $$?'
+#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TRACE.target=echo \# $$@: $$?'
 #
 #%-vv:
-#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TARGET_VERBOSE=# $$@: $$^'
+#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TRACE.target=echo \# $$@: $$^'
 
 #_____________________________________________________________________________
 #_____________________________________________ targets for testing and help __|
