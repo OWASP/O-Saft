@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.51 19/03/17 23:09:44
+#?      @(#) Makefile.help 1.52 19/03/17 23:11:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.51
+_SID.help       = 1.52
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -309,17 +309,17 @@ _help.FOOT:
 	@echo "$(_HELP_LINE_)"
 
 _help.BODY:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.help) $(_MYSELF.$(_HELP_TYP__))
 
 _help.LIST:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo "$(_HELP-help.LIST)"
 
 # neet to set own variable name because $($(HELP.$(_HELP_TYP__))) does not work
 _help.HELP: _HELP_HELP_ = HELP.$(_HELP_TYP__)
 _help.HELP:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo "$($(_HELP_HELP_))"
 	@echo "$(_HELP-help.make)"
 
@@ -385,13 +385,13 @@ help.doc.all:   _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 #  legacy aliases
 help.doc: help.help
 
 help.syntax:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	$(EXE.syntax) $(_MYSELF.help)
 
 .PHONY: help.doc help.syntax
@@ -433,20 +433,20 @@ _line:
 .PHONY: _notempty _line
 
 macros:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.list) $(MAKEFILE_LIST)    | sort
 macros%me:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.list) $(MAKEFILE)         | sort
 vars: macros
 list: macros
 lists%me: macros.me
 
 targets:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.targets) $(MAKEFILE_LIST) | sort -u
 targets%me:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.targets) $(MAKEFILE)      | sort -u
 rules: targets
 rules%me: targets.me
@@ -455,33 +455,33 @@ rules%me: targets.me
 #       @$(ECHO) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
 # pretty printed format using awk see below
 eval:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(ECHO) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
 
 echo:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(ECHO) '$($($@))'
 
 show: _notempty=show
 show: _notempty
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(ECHO) '$($@) = '
 	@$(ECHO) '$($($@))' | $(EXE.wordperline)
 
 macro: _notempty=macro
 macro: _notempty
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.macro) $(MAKEFILE_LIST)
 makro: macro
 
 pmacro: _notempty=pmacro
 pmacro: _notempty
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.pmacro) $(MAKEFILE_LIST)
 
 target: _notempty=target
 target: _notempty
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.target) $(MAKEFILE_LIST)
 
 # following rules are shortcuts for the above targets
