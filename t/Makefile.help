@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.48 19/03/17 19:03:41
+#?      @(#) Makefile.help 1.49 19/03/17 19:58:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.48
+_SID.help       = 1.49
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -377,6 +377,7 @@ help.help:      _HELP_TYP__ = help
 help.help%:     _HELP_TYP__ = help
 help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
 help.help%:     _HELP_HEAD_ = $(_HELP_RULE_)
+help.doc%:      _HELP_HEAD_ = $(_HELP_RULE_)
 help.doc.all:   _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
@@ -405,9 +406,17 @@ _notempty:
 	fi;
 	@$(ECHO) "$(_HELP_HEADER_)"
 
+# targets _fil und _file-v are used for documentation (help targets) only
+_file:
+	@echo ""
+	@echo "\t\t#-------------------------------------------------------------"
+
+_file-v:
+	@echo ""
+	@echo "\t\t# ---------- $(MAKEFILE)"
 _line:
 	@echo ""
-	@$(ECHO) "$(_TAB)$(_TAB)# $($($@))"
+	@$(ECHO) "$(_TAB)$(_TAB)#$($($@))"
 
 .PHONY: _notempty _line
 
