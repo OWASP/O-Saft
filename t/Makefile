@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.42 19/03/17 17:07:44
+#?      @(#) Makefile 1.43 19/03/17 23:13:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.42
+_SID.test       = 1.43
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -116,7 +116,7 @@ ifndef CONTRIB.dir
     CONTRIB.dir = contrib
 endif
 
-# Tracing just the log-targets is special. Using  $(TARGET_VERBOSE)  is not an
+# Tracing just the log-targets is special. Using  $(TRACE.target)  is not an
 # option, because it would als change the final target called with  $(MAKE) .
 # Hence an additional variable is used.
 # TODO: not public, not documented, variable needs to be defined here
@@ -155,25 +155,25 @@ HELP.test.test  = $(HELP.test)
 HELP.test.all   = $(HELP.test.test.all)
 help.test:          help.test.test
 help.test.all:      help.test.test.all
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
     # convenience to satisfy  help.test.all
 
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
 help.test.%:  _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 #	@echo " # testing '$(HELP-help.test.$*)' :"
 help.test.%.all:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
 	@echo $(ALL.test.$*)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
 help.test.%.internal:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo " # TEST.file:       $(TEST.file)"
 	@echo " # TEST.init.$*:    $(TEST.init.$*)"
 	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
@@ -202,7 +202,7 @@ test.file-1:
 test,file-2:
 test_file-3:
 help.test.make: test.file-1 test,file-2 test_file-3
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
@@ -354,7 +354,7 @@ $(TEST.logdir):
 
 # target succeeds if message is there
 message-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
@@ -371,20 +371,20 @@ message-%:
 # target succeeds if message is missing
 # TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo "$(TEST.rc)" > $(_TMP.rc)
 	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(_TMP.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg0-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
 # SEE Make:--dry-run
 # following pattern rule should be unified with testcmd-%.log
 testarg0-%.log: $(TEST.logdir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
 	@$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
@@ -462,7 +462,7 @@ testarg0-%.log: $(TEST.logdir)
 
 testcmd-%:      EXE.pl  = ../$(SRC.pl)
 testcmd-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
 # TODO: need verbose for executed command
 # TODO: need to add --no-dns if hostname is an IP
@@ -479,7 +479,7 @@ testcmd-%:
 
 _FORCE:
 testcmd-%.log: $(TEST.logdir) _FORCE
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
@@ -508,11 +508,11 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 #       test.pattern.-header
 #
 dbx-test.pattern-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
 	@echo "# $(_targets) #"
 test.pattern-%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
 	@-test -n "$(_targets)" \
 	    && $(MAKE) $(MFLAGS) -s $(_targets) \
@@ -520,7 +520,7 @@ test.pattern-%:
 
 # TODO: logging not yet tested (01/2019)
 test.pattern-%.log:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0".log";}'))
 	@-test -n "$(_targets)" \
@@ -599,12 +599,12 @@ HELP-tests.quick    = like tests, but less targets (for development)
 HELP-tests.quick.log= like tests.log, but less targets (for development)
 HELP-help.test.all  = print available individual targets for testing
 
-tests: TARGET_VERBOSE=echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
+tests: TRACE.target = echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
 tests:      $(ALL.tests)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 tests.log:  $(ALL.tests.log)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 
 # quick tests for development
 tests.quick:
@@ -613,7 +613,7 @@ tests.quick:
 #	@$(MAKE) $(MFLAGS) -s tests.log ALL.test.ext= ALL.test.misc ALL.test.critic=
 # FIXME: tests.quick.log not yet working; need to use macro in each Makefile.*
 tests.quick.log:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(TRACE.target.log)
 	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmds.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
 
