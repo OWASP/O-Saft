@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.43 19/03/17 23:13:53
+#?      @(#) Makefile 1.44 19/03/18 00:44:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.43
+_SID.test       = 1.44
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -535,6 +535,33 @@ test.pat-%:  test.pattern-%
 test.patt-%: test.pattern-%
 	@echo -n ""
 
+# targets for easy checking results and cleanup
+EXE.log-diff        = xxdiff --geometry 1600x1000
+_TEST_log_prefix    = testcmd-
+define _test_log-compare
+	cd $(TEST.logdir) && \
+	for f in $(_TEST_log_prefix)*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
+	done
+endef
+
+define _test_log-move
+	cd $(TEST.logdir) && \
+	for f in $(_TEST_log_prefix)*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    mv $$f-$(_TODAY_) $$f ; \
+	done
+endef
+
+test.log-compare:
+	-$(_test_log-compare)
+	@echo ""
+	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
+
+test.log-move:
+	$(_test_log-move)
+
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
 
@@ -620,6 +647,9 @@ tests.quick.log:
 # aliases for convenience
 test:       tests
 test.log:   tests.log
+	@$(TRACE.target)
+	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
+
 
 # collect targets in this file
 ALL.test.test  += tests tests.quick tests.log tests.quick.log
