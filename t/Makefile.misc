@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.21 19/03/14 21:51:45
+#?      @(#) Makefile.misc 1.22 19/03/17 23:25:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.21
+_SID.misc       = 1.22
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -80,17 +80,21 @@ HELP.test.misc.all  = # no special documentation yet
 
 bench: test.bench
 test.bench:
+	@$(TRACE.target)
 	$(EXE.bench) $(BENCH.host)
 	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(BENCH.times)'"
 test.bench.log:
+	@$(TRACE.target)
+	@$(TRACE.target.log)
 	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
 
 test.bunt: $(EXE.test.bunt)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
 # TODO: simple test, needs to be improved and checked
 test.docker:
+	@$(TRACE.target)
 	docker image ls owasp/o-saft
 	$(EXE.docker) +VERSION
 	$(EXE.docker) +version
@@ -115,7 +119,7 @@ HELP-cloc.lang  = same as cloc.file and cloc
 #       make cloc OPT.cloc=--xml
 # NOTE: --quiet suppresses count of files also, hence not used by default
 cloc%:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@$(EXE.cloc) $(sort $(ALL.src))
 
 cloc.stat:  OPT.cloc    +=
@@ -168,6 +172,7 @@ profile.sub.exit.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinf
 profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinfo)'
 
 profile.sub%:
+	@$(TRACE.target)
 	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
 	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(_args.misc) ))
 	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(PROFILE.host) $(my.args) 2>&1 
@@ -180,16 +185,19 @@ profile.sub%:
 
 _nytprof.log    = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_nytprof.log)
+	@$(TRACE.target)
 	@perl -d:NYTProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_nytprof.log)"
 nytprof.html: $(_nytprof.log)
+	@$(TRACE.target)
 	@nytprofhtml --file $<
 	@echo "# inspect with: firefox $(TEST.dir)/nytprof/index.html"
 nytprof: nytprof.html
 
 _dprof.log      = $(TEST.logdir)/dprof.out
 $(_dprof.log):
+	@$(TRACE.target)
 	@env PERL_DPROF_OUT_FILE_NAME=$(_dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
 	@dprofpp    $(_dprof.log)
 	@echo ""
