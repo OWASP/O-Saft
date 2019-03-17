@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.46 19/03/17 18:33:53
+#?      @(#) Makefile.help 1.47 19/03/17 18:38:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.46
+_SID.help       = 1.47
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -566,7 +566,7 @@ define _help_log-move
 endef
 
 test.help.log-compare:
-	$(_help_log-compare)
+	-$(_help_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.help.log-move"
 
