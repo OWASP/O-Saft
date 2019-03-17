@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.40 19/03/14 22:06:51
+#?      @(#) Makefile 1.41 19/03/17 17:01:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.40
+_SID.test       = 1.41
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -115,6 +115,13 @@ OPT.grep        = -q
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
 endif
+
+# Tracing just the log-targets is special. Using  $(TARGET_VERBOSE)  is not an
+# option, because it would als change the final target called with  $(MAKE) .
+# Hence an additional variable is used.
+# TODO: not public, not documented, variable needs to be defined here
+TRACE.target.log=
+#  example      = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
 _TODAY_         = $(shell date +%Y""%m%d)
 
@@ -265,6 +272,7 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$(.SUFFIXES)     = $(.SUFFIXES)'
 	@echo '# $$(.FEATURES)     = $(.FEATURES)'
 	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+# not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
@@ -377,6 +385,7 @@ testarg0-%:
 # following pattern rule should be unified with testcmd-%.log
 testarg0-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
+	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
 	@$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
@@ -468,12 +477,15 @@ testcmd-%:
 # Note that  testcmd-%.log  called from within t/ may return:  is up to date.
 # diff's STDERR is discarded (may return: "file does not exist").
 
-testcmd-%.log: $(TEST.logdir)
+_FORCE:
+testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(TARGET_VERBOSE)
+	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
 	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1" \
 	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
+	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo DIFF $(TEST.logdir)/$@
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
@@ -509,6 +521,7 @@ test.pattern-%:
 # TODO: logging not yet tested (01/2019)
 test.pattern-%.log:
 	@$(TARGET_VERBOSE)
+	@$(TRACE.target.log)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0".log";}'))
 	@-test -n "$(_targets)" \
 	    && $(MAKE) $(MFLAGS) -s $(_targets) \
@@ -600,6 +613,8 @@ tests.quick:
 #	@$(MAKE) $(MFLAGS) -s tests.log ALL.test.ext= ALL.test.misc ALL.test.critic=
 # FIXME: tests.quick.log not yet working; need to use macro in each Makefile.*
 tests.quick.log:
+	@$(TARGET_VERBOSE)
+	@$(TRACE.target.log)
 	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmds.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
 
 # aliases for convenience
