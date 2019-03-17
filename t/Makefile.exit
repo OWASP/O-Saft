@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.8 19/03/11 00:00:57
+#?      @(#) Makefile.exit 1.9 19/03/17 23:22:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.8
+_SID.exit       = 1.9
 
 _MYSELF.exit    = t/Makefile.exit
 ALL.includes   += $(_MYSELF.exit)
@@ -98,12 +98,13 @@ testmsg-exit-HOST9:     TEST.args  += --exit=HOST9
 testmsg-exit-END:       TEST.args  += --exit=END
 
 testmsg-exit-%: message-%
-	@echo -n ""
+	@$(TRACE.target)
 
 testmsg-exit.log:  $(TEST.logdir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
+	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.8: $(MAKE) $@" > $@
+	@echo "# Makefile.exit 1.9: $(MAKE) $@" > $@
 	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
