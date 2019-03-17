@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.47 19/03/17 18:38:48
+#?      @(#) Makefile.help 1.48 19/03/17 19:03:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.47
+_SID.help       = 1.48
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -248,7 +248,7 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
 _AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
 _AWK_print_arr_END  = END{for(idx in arr){print idx}}
 _AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
-%-v: _AWK_print_file= (FNR==1){ print "\n\#\# "FILENAME" ..." }
+%-v: _AWK_print_file= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
