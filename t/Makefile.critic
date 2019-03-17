@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.11 19/03/12 21:29:15
+#?      @(#) Makefile.critic 1.12 19/03/17 23:28:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.11
+_SID.critic     = 1.12
 
 _MYSELF.critic  = t/Makefile.critic
 ALL.includes   += $(_MYSELF.critic)
@@ -127,7 +127,7 @@ HELP.test.critic.all= # no special documentation yet
 
 $(CRITIC.dir):
 	echo C && exit 1
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@mkdir -p $(CRITIC.dir)
 
 perlcritic-%: $(CRITIC.dir)
@@ -140,13 +140,13 @@ perlcritic-%: $(CRITIC.dir)
 # target prints command with echo so that it is also shown when called with
 # "make -s critic ..."
 critic: $(CRITIC.dir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
 	@-cd $(CRITIC.dir) && \
 	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
 
 cf: $(CRITIC.dir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
 	@-cd $(CRITIC.dir) && \
 	  echo perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
@@ -154,7 +154,7 @@ cf: $(CRITIC.dir)
 # Same target as above but piped to filter for pretty printing.
 # Because the filter is a pipe, we loose the coloured output from perlcritic
 critic-pretty: $(CRITIC.dir)
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
 	@-cd $(CRITIC.dir) && \
 	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt) \
@@ -224,7 +224,7 @@ critic-2:       critic
 criticp:        critic-pretty
 
 $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt:
-	@$(TARGET_VERBOSE)
+	@$(TRACE.target)
 	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
 	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-count  >> $@
 	@(echo "" && echo "" && echo "## Statistik ...")       >> $@
