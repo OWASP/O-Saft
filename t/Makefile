@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.41 19/03/17 17:01:29
+#?      @(#) Makefile 1.42 19/03/17 17:07:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.41
+_SID.test       = 1.42
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -485,7 +485,7 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
 	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1" \
 	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
-	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo DIFF $(TEST.logdir)/$@
+	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo "diff $(TEST.logdir)/$@ ..."
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
