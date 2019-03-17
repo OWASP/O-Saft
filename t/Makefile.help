@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.49 19/03/17 19:58:15
+#?      @(#) Makefile.help 1.50 19/03/17 22:06:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.49
+_SID.help       = 1.50
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -218,6 +218,8 @@ _HELP_LINE_     = \#---------------+--------------------------------------------
 _HELP_HEAD_     = $(_HELP_NAME_)
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
+_HELP_F_TARGET  = _file
+doc.all-v:      _HELP_F_TARGET  = _file-v
 
 # _HELP_HEAD_ and _HELP_RULE_  will be set conditionally per target/rule also
 
@@ -246,6 +248,7 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
 _AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
+_AWK_gen_print_file = (FNR==1){ print "$(_HELP_F_TARGET)"FILENAME}
 _AWK_print_arr_END  = END{for(idx in arr){print idx}}
 _AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 %-v: _AWK_print_file= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
@@ -253,7 +256,7 @@ _AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
 # prefer awk where possible, as sed matches last occurrence of a pattern
-EXE.eval        = awk -F=   '$(_AWK_gen_eval_target)'
+EXE.eval        = awk -F=   '$(_AWK_gen_print_file)$(_AWK_gen_eval_target)'
 EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
 EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
@@ -406,14 +409,22 @@ _notempty:
 	fi;
 	@$(ECHO) "$(_HELP_HEADER_)"
 
-# targets _fil und _file-v are used for documentation (help targets) only
-_file:
+# following file% targets are used for doc.all target only, they just a dirty
+# hack so that output of target help.all and doc.all are similar/compaparable
+# note: quick&dirty a $(TEST.dir) is hardcoded as t/ in the target names
+_FILE_LINE  = \#-------------------------------------------------------------
+_filet/%: _file-egal
 	@echo ""
-	@echo "\t\t#-------------------------------------------------------------"
-
-_file-v:
+	@echo "\t\t$(_FILE_LINE)"
+_file%:
 	@echo ""
-	@echo "\t\t# ---------- $(MAKEFILE)"
+	@echo "\t\t$(_FILE_LINE)"
+_file-vt/%:
+	@echo ""
+	@echo "\t\t# ---------- t/$* ..."
+_file-v%:
+	@echo ""
+	@echo "\t\t# ---------- $* ..."
 _line:
 	@echo ""
 	@$(ECHO) "$(_TAB)$(_TAB)#$($($@))"
