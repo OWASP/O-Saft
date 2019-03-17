@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.44 19/03/16 04:09:52
+#?      @(#) Makefile.help 1.45 19/03/17 16:57:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.44
+_SID.help       = 1.45
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -366,18 +366,17 @@ ALL.help       += $(ALL.help.test)
 
 # our own targets using help% or alike
 help.help:      _HELP_TYP__ = help
-help.help-%:    _HELP_TYP__ = help
-help.help.all:  _HELP_TYP__ = help
+help.help%:     _HELP_TYP__ = help
 help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
-help.help-%:    _HELP_HEAD_ = $(_HELP_RULE_)
-help.help.all:  _HELP_HEAD_ = $(_HELP_RULE_)
+help.help%:     _HELP_HEAD_ = $(_HELP_RULE_)
+help.doc.all:   _HELP_HEAD_ = $(_HELP_RULE_)
 target:         _HELP_HEAD_ = $(_HELP_RULE_)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TARGET_VERBOSE)
 
+#  legacy aliases
 help.doc: help.help
-#  legacy alias
 
 help.syntax:
 	@$(TARGET_VERBOSE)
@@ -477,22 +476,34 @@ t-%:
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
 
+HELP-_help2     = _____________________________________ testing help targets _
+HELP-test.help      = test help* targets of our Makefiles
+HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
+HELP-test.help.log-compare  = compare results of test.help.log (if any)
+
 # testcmd-% pattern rule uses the stem as argument to the executed command
 # this is all we need, hence all other arguments must be set empty
 # help target itself is special as defined in global Makefile only
-testcmd-help:                   EXE.pl      = make
+testcmd-help:                   EXE.pl      = $(MAKE)
 testcmd-help:                   TEST.dir    = .
+#testcmd-help:                   TEST.init   =
 
-testcmd-help%:                  EXE.pl      = make
+testcmd-help%:                  EXE.pl      = $(MAKE)
 testcmd-help%:                  TEST.init   =
 
-# TODO: following conditions should be automatically set using $(ALL.inc.type)
 testcmd-help:                   TEST.args  +=
+#testcmd-doc:                    TEST.args  +=
+testcmd-help.help:              TEST.args  +=
+testcmd-help.all:               TEST.args  +=
+testcmd-help.help.all:          TEST.args  +=
+testcmd-help.help.all-v:        TEST.args  +=
 testcmd-help.doc:               TEST.args  +=
+testcmd-help.doc.all:           TEST.args  +=
+testcmd-help.syntax:            TEST.args  +=
+# TODO: following conditions should be automatically set using $(ALL.inc.type)
 testcmd-help.test.help:         TEST.args  +=
 testcmd-help.test.make:         TEST.args  +=
-#testcmd-help.critic:            TEST.args  +=
-testcmd-help.syntax:            TEST.args  +=
+#testcmd-help.critic:            TEST.args  +=  # no uses as it is the same as testcmd-help.test.critic
 testcmd-help.test:              TEST.args  +=
 testcmd-help.test.cgi:          TEST.args  +=
 testcmd-help.test.cmds:         TEST.args  +=
@@ -507,6 +518,7 @@ testcmd-help.test.warnings:     TEST.args  +=
 testcmd-help.test.all:          TEST.args  +=
 testcmd-help.test.cgi.all:      TEST.args  +=
 testcmd-help.test.cmds.all:     TEST.args  +=
+testcmd-help.test.doc.all:      TEST.args  +=
 testcmd-help.test.opt.all:      TEST.args  +=
 testcmd-help.test.ext.all:      TEST.args  +=
 testcmd-help.test.exit.all:     TEST.args  +=
@@ -525,6 +537,33 @@ ALL.test.help.log   = $(ALL.test.help:%=%.log)
 test.help.all:    $(ALL.test.help)
 test.help:        test.help.all
 test.help.log:    $(ALL.test.help.log)
+	@echo ""
+	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
+
+EXE.log-diff        = xxdiff --geometry 1600x1000
+define _help_log-compare
+	cd $(TEST.logdir) && \
+	for f in testcmd-help*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
+	done
+endef
+
+define _help_log-move
+	cd $(TEST.logdir) && \
+	for f in testcmd-help*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    mv $$f-$(_TODAY_) $$f ; \
+	done
+endef
+
+test.help.log-compare:
+	$(_help_log-compare)
+	@echo ""
+	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.help.log-move"
+
+test.help.log-move:
+	$(_help_log-move)
 
 # feed main Makefile
 ALL.tests          += $(ALL.test.help)
