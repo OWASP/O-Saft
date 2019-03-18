@@ -17,18 +17,18 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.23 19/03/16 15:42:22
+#?      @(#) Makefile.cmds 1.24 19/03/18 11:23:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.23
+_SID.cmds       = 1.24
 
 _MYSELF.cmds    = t/Makefile.cmds
-ALL.includes   += $(_MYSELF.cmds)
-ALL.inc.type   += cmds
+_MY.includes   += $(_MYSELF.cmds)
+_MY.inc.type   += cmds
 
 first-cmds-target-is-default: help.test.cmds
 
