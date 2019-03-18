@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.53 19/03/18 11:28:14
+#?      @(#) Makefile.help 1.54 19/03/18 11:50:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.53
+_SID.help       = 1.54
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -571,30 +571,15 @@ test.help.log:    $(ALL.test.help.log)
 	@echo ""
 	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
 
-EXE.log-diff        = xxdiff --geometry 1600x1000
-define _help_log-compare
-	cd $(TEST.logdir) && \
-	for f in testcmd-help*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
-	done
-endef
-
-define _help_log-move
-	cd $(TEST.logdir) && \
-	for f in testcmd-help*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    mv $$f-$(_TODAY_) $$f ; \
-	done
-endef
-
+test.help.log-compare: _TEST_log_prefix = testcmd-help
 test.help.log-compare:
-	-$(_help_log-compare)
+	-$(_test_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.help.log-move"
 
+test.help.log-move:    _TEST_log_prefix = testcmd-help
 test.help.log-move:
-	$(_help_log-move)
+	$(_test_log-move)
 
 # feed main Makefile
 ALL.tests          += $(ALL.test.help)
