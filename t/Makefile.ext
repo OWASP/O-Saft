@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.15 19/03/15 00:07:59
+#?      @(#) Makefile.ext 1.16 19/03/18 11:24:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.15
+_SID.ext        = 1.16
 
 _MYSELF.ext     = t/Makefile.ext
-ALL.includes   += $(_MYSELF.ext)
-ALL.inc.type   += ext
+_MY.includes   += $(_MYSELF.ext)
+_MY.inc.type   += ext
 
 first-ext-target-is-default: help.test.ext
 
