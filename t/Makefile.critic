@@ -21,18 +21,18 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.12 19/03/17 23:28:23
+#?      @(#) Makefile.critic 1.13 19/03/18 11:29:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.12
+_SID.critic     = 1.13
 
 _MYSELF.critic  = t/Makefile.critic
-ALL.includes   += $(_MYSELF.critic)
-ALL.inc.type   += critic
+_MY.includes   += $(_MYSELF.critic)
+_MY.inc.type   += critic
 
 first-critic-target-is-default: help.test.critic
 
