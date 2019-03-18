@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.9 19/03/17 23:22:51
+#?      @(#) Makefile.exit 1.10 19/03/18 11:24:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.9
+_SID.exit       = 1.10
 
 _MYSELF.exit    = t/Makefile.exit
-ALL.includes   += $(_MYSELF.exit)
-ALL.inc.type   += exit
+_MY.includes   += $(_MYSELF.exit)
+_MY.inc.type   += exit
 
 first-exit-target-is-default: help.test.exit
 
@@ -104,7 +104,7 @@ testmsg-exit.log:  $(TEST.logdir)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.9: $(MAKE) $@" > $@
+	@echo "# Makefile.exit 1.10: $(MAKE) $@" > $@
 	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
