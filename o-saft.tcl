@@ -143,7 +143,7 @@ exec wish "$0" ${1+"$@"}
 #?      the corresponding section in the help window  context sensitive).
 #?
 #? OPTIONS
-#?      --v     print verbose messages (for debugging)
+#?      --v     print verbose messages (calling external tools)
 #?      --d     print more verbose messages (for debugging)
 #?      --rc    print template for .o-saft.pl
 #?      --text  use simple texts as labels for buttons
@@ -350,20 +350,25 @@ exec wish "$0" ${1+"$@"}
 #.      own "Copy Text" (see above) with <Control-ButtonPress-1>,  even if the
 #.      button is displayed as image.
 #.
+#.   Options for information about source code
+#.      --help-flow   - print information about program flow (comments in code)
+#.      --help-procs  - print all proc definitions
+#.      --help-descr  - print all proc definitions and their description
+#.      --help-osaft  - just print text used for help window (help button)
+#.
 #.   Traceing (GUI)
 #.      Tcl's  trace  functionality is used to trace most procs defined herein
 #.      and all created buttons.  See trace_commands() and trace_buttons() for
 #.      details. Tracing does not yet work for buttons created in sub-windows.
 #.      Traceing is invoked with  --trace  option.
 #.
-#.   Traceing and Debugging
-#.      All output for ..trace and/or --dbx is printed on STDERR.
+#.   Traceing (program flow)
+#.      --d --d       - prints information when creating help window
 #.
-#.   Debugging Options
-#.      --help-flow   - print information about program flow (comments in code)
-#.      --help-procs  - print all proc definitions
-#.      --help-descr  - print all proc definitions and their description
-#.      --help-osaft  - just print text used for help window (help button)
+#.   Traceing and Debugging
+#.      All output for --trace and/or --dbx is printed on STDERR.
+#.      Trace messages are prefixed with:   #[$0]:
+#.      Debug messages are prefixed with:   #dbx [$0]:
 #.
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
@@ -383,7 +388,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.193 Spring Edition 2019
+#?      @(#) 1.194 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -453,10 +458,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.193 19/03/06 16:59:47"
+set cfg(SID)    "@(#) o-saft.tcl 1.194 19/03/19 00:41:22"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.193}
+set cfg(VERSION) {1.194}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -942,6 +947,7 @@ proc perr         {txt} { puts stderr "**ERROR: $txt";   return }
 proc putv         {txt} {
     #? verbose output
     global cfg
+    # TODO: if {$cfg(DEBUG) > 0} { _dbx $txt; return }
     if {$cfg(VERB) <= 0} { return; }
     puts stderr "#\[$cfg(ICH)\]:$txt";
     return
@@ -1026,8 +1032,8 @@ proc trace_buttons   {} {
 
 proc read_images  {theme}   {
     #? read $cfg(IMG) if exists and not already done
-    global cfg IMG
     _dbx "($theme)";
+    global cfg IMG
     #  if the file does not exist, the error is silently catched and ignored
     if [info exists cfg(IMGSID)] { puts "IMG da $cfg(IMGSID)" }
     if [info exists cfg(IMGSID)] { return };# already there
@@ -1177,6 +1183,7 @@ proc tooltip:show {w arg}   {
 
 proc gui_init     {}    {
     #? initialize GUI
+    _dbx "()"
     global cfg prg myX argv
     if {[catch { package require tablelist } err]} {
         pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
@@ -1279,8 +1286,8 @@ proc count_tuples {str} { return  [expr [expr [llength $str] +1] / 2]  };
 proc theme_set    {w theme} {
     #? set attributes for specified object
     # last part of the Tcl-widgets is key for array cfg_buttons
-    global cfg cfg_buttons IMG
     _dbx "($w, $theme)"
+    global cfg cfg_buttons IMG
     # text and tip are always configured
     set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
     set val [_get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
@@ -1306,8 +1313,8 @@ proc theme_set    {w theme} {
 
 proc theme_init   {theme}   {
     #? configure buttons with simple text or graphics
-    global cfg_buttons
     _dbx "($theme)"
+    global cfg_buttons
     # Search for all Tcl widgets (aka commands), then check if tail of command
     # (part right of right-most .) exists as key in array  cfg_buttons.  If it
     # exits, then use values defined in  cfg_buttons  to set attributes of the
@@ -1398,8 +1405,8 @@ proc toggle_cfg   {w opt val} {
 proc toggle_filter_text {w tag val line} {
     #? toggle visability of text tagged with name $tag in text widget
     # note that complete line is tagged with name $tag.l (see apply_filter)
-    global cfg
     _dbx " $w tag config $tag -elide [expr ! $val]"
+    global cfg
     #if {$line==0} {
         #$w tag config $tag   -elide [expr ! $val]; # "elide true" hides the text
     #}
@@ -1418,8 +1425,8 @@ proc toggle_filter_text {w tag val line} {
 
 proc toggle_filter_table {w tag val} {
     #? toggle visability of text tagged with name $tag in text widget
-    global cfg
     _dbx " $w rowcget  $tag $val"
+    global cfg
     # toggling a list of rows could be as simple as
     #   $w togglerowhide $cfg($tag)
     # but some lines are in multiple lists, so each line's toggle state will
@@ -1435,7 +1442,7 @@ proc toggle_filter_table {w tag val} {
 
 proc toggle_filter  {w tag val line} {
     #? toggle visability of text tagged with name $tag
-    _dbx "$w $tag $val $line"
+    _dbx "($w $tag $val $line)"
     global cfg
     switch $cfg(layout) {
         text    { toggle_filter_text  $w $tag $val $line }
@@ -1448,6 +1455,7 @@ proc apply_filter_text  {w} {
     #? apply filters for markup in output, data is in text widget $w
     # set tag for all texts matching pattern from each filter
     # also sets a tag for the complete line named with suffix .l
+    _dbx "($w)"
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
@@ -1499,6 +1507,7 @@ proc apply_filter_table {w} {
     # FIXME: this is ugly code because the regex in f_rex are optimized for
     # use in Tcls's text widget, the regex must be changed to match the values
     # in Tcl's tablelist columns
+    _dbx "($w)"
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
@@ -1614,10 +1623,8 @@ proc www_browser  {url}     {
     #win32# package require dde
     #win32# dde execute iexplore WWW_OpenURL http://www.tcl.tk/
     #win32# }
-    if {$cfg(VERB)==1} {
-        puts  " exec {*}$prg(BROWSER) $url & "
-    }
-        catch { exec {*}$prg(BROWSER) $url & }
+    putv  " exec {*}$prg(BROWSER) $url & "
+    catch { exec {*}$prg(BROWSER) $url & }
     return
 }; # www_browser
 
@@ -2045,8 +2052,8 @@ proc create_filtertab   {parent cmd} {
 
 proc create_filter      {parent cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
+    _dbx "($parent, $cmd)"
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
-    putv "create_filter(»$parent« $cmd)"
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
     set obj $parent;    # we want to have a short variable name
     set geo [split [winfo geometry .] {x+-}]
@@ -2088,6 +2095,7 @@ proc create_filter      {parent cmd} {
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
     #  Show the text starting with  #?  from this file.
+    _dbx "()"
     global cfg myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window "About" $myX(geoA)]
@@ -2117,7 +2125,7 @@ proc create_pod   {sect} {
     # TODO: does probably not working on Windows
     #tk_messageBox -icon warning -title " using $prg(TKPOD)" \
     #    -message "$prg(TKPOD) will not be closed with $cfg(ICH)"
-    _dbx          " $prg(TKPOD) o-saft.pod -geo $myX(geoO) &"
+    putv  " exec {*}$prg(TKPOD) o-saft.pod -geo $myX(geoO) & "
     catch { exec {*}$prg(TKPOD) o-saft.pod -geo $myX(geoO) & };
     return
 }; # create_pod
@@ -2128,7 +2136,6 @@ proc create_help  {sect} {
 
     _dbx "($sect)"
     global cfg myX prg search
-    putv "create_help(»$sect«)"
 
     if {[info exists prg(TKPOD)]==1} {
         if {$prg(TKPOD) ne "O-Saft"} {  # external viewer specified, use it ...
@@ -2268,10 +2275,9 @@ proc create_help  {sect} {
         incr i
         _dbx " 4a. REF: $i\t$t"
         if {[regexp {^[A-Z]+} $t]} { continue };# skip headlines itself
-        if {[regexp { - } $t]}  { continue }   ;# skip glossar lines
-        if {[notTOC $t]}        { continue }   ;# skip some special strings
+        if {[regexp { - } $t]}     { continue };# skip glossar lines
+        if {[notTOC $t]}           { continue };# skip some special strings
         set name [_str2obj [string trim $t]]
-        $txt tag add    HELP-REF    $a "$a + $e c"
         $txt tag add    HELP-REF-$i $a "$a + $e c"
         $txt tag bind   HELP-REF-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
     }
@@ -2279,8 +2285,8 @@ proc create_help  {sect} {
     _dbx " 5. search all commands and options and try to set click event"
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0]
     #dbx# puts "4. $anf\n$end"
-    # Now loop over all matches. The difficulty is to distinguish matches,
-    # which are the head lines like:
+    # Loop over all matches.  The difficulty is to distinguish matches,  which
+    # are the head lines like:
     #   --v
     #   +version
     # and those inside the text, like:
@@ -2289,11 +2295,11 @@ proc create_help  {sect} {
     #   start with spaces followed by + or - followed by word 'til end of line
     # Anything else is most likely a reference, but there are exceptions like:
     #   --v --v
-    # is a head line, and folling might be a reference:
+    # is a head line, and following might be a reference:
     #   +version.
     # Unfortunately  --v  --v   (and similar examples) will not be detected as
     # head line. This is due to the regex in "text search ...",  which doesn't
-    # allo spaces. # FIXME:
+    # allow spaces. # FIXME:
 
     set i 0
     foreach a $anf {
@@ -2367,7 +2373,15 @@ proc create_help  {sect} {
     if {$cfg(DEBUG) > 1} {
         #_dbx " TAGS: [$txt tag names]"; # huge output!!
         foreach tag [list HELP-TOC HELP-HEAD HELP-CODE HELP-URL HELP-LNK HELP-LNK-T HELP-search-pos] {
-            _dbx " $tag:\t[$txt tag ranges $tag]"
+            _dbx " $tag [llength [$txt tag ranges $tag]]:\t[$txt tag ranges $tag]"
+            _dbx "   TAG\t\t(start, end)\ttagged text"
+            _dbx " #---------------+---------------+------------------------"
+            foreach {k l} [$txt tag ranges $tag] {
+                set t [$txt get $k $l]
+                # TODO: set rex "cipher"; if {[regexp $rex $t]} { _dbx "   $tag:\t($k, $l)\t»$t«" }
+                _dbx "   $tag:\t($k, $l)\t»$t«"
+            }
+            _dbx " #---------------+---------------+------------------------"
         }
     }
 
@@ -2637,8 +2651,8 @@ proc create_buttons {parent cmd} {
 proc create_main  {targets} {
     #? create main window (the complete GUI)
     ## main {
-    global cfg prg myX hosts
     _dbx "(»$targets«)"
+    global cfg prg myX hosts
     set w ""
     pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
@@ -2773,8 +2787,8 @@ proc search_more  {w search_text regex} {
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
     # start and end position (index)
-    global search myX
     _dbx "($w,»$search_text«)"
+    global search myX
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [count_tuples $matches]
     set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
@@ -2840,8 +2854,8 @@ proc search_next  {w direction} {
 
 proc search_text  {w search_text} {
     #? search given text in help window' $w widget
-    global search
     _dbx "($w,»$search_text«)"
+    global search
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
     # new text to be searched, initialize ...
     set search(last) $search_text
@@ -2948,8 +2962,8 @@ proc search_text  {w search_text} {
 
 proc search_list  {direction} {
     #? get next or previous search text from search list (history)
-    global search
     _dbx "($direction)"
+    global search
     set  len [llength $search(list)]
     switch $direction {
         {up}   { incr search(curr) +1 }
@@ -2965,8 +2979,8 @@ proc search_list  {direction} {
 proc osaft_write_rc {} {
     #? print data for resource file
     # print all lines between  RC-ANF and RC-END
-    global cfg argv0
     _dbx "()"
+    global cfg argv0
     if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
     # TODO: print docu, see contrib/.o-saft.tcl
     puts "#!/bin/cat
@@ -3017,8 +3031,8 @@ set cfg(TITLE)  {$cfg(TITLE)}"
 
 proc osaft_about  {mode} {
     #? extract description from myself; returns text
-    global arrv argv0
     _dbx "($mode)"
+    global arrv argv0
     set fid [open $argv0 r]
     set txt [read $fid]
     set hlp ""
@@ -3036,8 +3050,8 @@ proc osaft_about  {mode} {
 proc osaft_procs  {mode} {
     #? extract procedures and description from myself; returns text
     #  for debugging only; mode: PROC or DESC or FLOW
-    global arrv argv0
     _dbx "($mode)"
+    global arrv argv0
     set fid [open $argv0 r]
     set txt [read $fid]
     set hlp ""
@@ -3054,10 +3068,10 @@ proc osaft_procs  {mode} {
 
 proc osaft_help   {} {
     #? get help from o-saft.pl --help (for use in own help window)
-    global cfg prg
     _dbx "()"
+    global cfg prg
     # get information from O-Saft; it's a performance penulty, but simple ;-)
-    _dbx               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help"
+    putv               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help "
     set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help } help
     if {5 > [llength [split $help "\n"]]} {
         # exec call failed, probably because  PATH  does not contain . then
@@ -3070,7 +3084,7 @@ proc osaft_help   {} {
         set prg(SAFT) [file join "." $prg(SAFT)];# try current directory also
     }
     # FIXME: workaround does not work with --docker
-    _dbx               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc +help"
+    putv               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc +help "
     set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc +help } help
 
     _dbx " 1. collect more documentations with --help=*"
@@ -3078,7 +3092,7 @@ proc osaft_help   {} {
     foreach key [list alias data checks regex rfc glossar] {
         # missing: text ourstr
         set txt ""
-        _dbx       " 0. $prg(PERL) $prg(SAFT) --no-rc --help=$key"
+        putv  " exec {*}$prg(PERL) $prg(SAFT) --no-rc --help=$key "
         catch { exec {*}$prg(PERL) $prg(SAFT) --no-rc --help=$key } txt
         if {2 < [llength [split $txt "\n"]]} {
             set txt [regsub -all {[&]} $txt {\\&}] ;# avoid interpretation by regexp
@@ -3122,8 +3136,8 @@ proc osaft_help   {} {
 
 proc osaft_reset  {} {
     #? reset all options in cfg()
-    global cfg
     _dbx "()"
+    global cfg
     update_status "reset"
     foreach {idx val} [array get cfg] {
         if {[regexp {^[^-]} $idx]}     { continue };# want options only
@@ -3139,8 +3153,8 @@ proc osaft_reset  {} {
 
 proc osaft_init   {} {
     #? set values from .o-saft.pl in cfg()
-    global cfg prg
     _dbx "()"
+    global cfg prg
     if {[regexp {\-docker$} $prg(SAFT)]} { return };# skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
         # expected lines look like:
@@ -3182,8 +3196,8 @@ proc _get_table   {tbl} {
 proc osaft_save   {tbl type nr} {
     #? save selected output to file; $nr used if $type == TAB
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
-    global cfg prg tab
     _dbx "($tbl,$type,$nr)"
+    global cfg prg tab
     if {$type eq "TTY"} {
         switch $cfg(layout) {
             text    { puts $tab($nr) }
@@ -3221,8 +3235,8 @@ proc osaft_save   {tbl type nr} {
 
 proc osaft_load   {cmd} {
     #? load results from file and create a new TAB for it
-    global cfg tab
     _dbx "($cmd)"
+    global cfg tab
     if {$cmd eq "Load"} {
         set name [tk_getOpenFile -title "$cfg(TITLE): [_get_tipp loadresult]"]
     } else {
@@ -3245,8 +3259,8 @@ proc osaft_load   {cmd} {
 proc osaft_exec   {parent cmd} {
     #? run $prg(SAFT) with given command; write result to global $osaft
     # parent is a dummy here
-    global cfg hosts prg tab
     _dbx "($cmd)"
+    global cfg hosts prg tab
     update_cursor watch
     update_status "#{ $cmd"
     set do  {};     # must be set to avoid tcl error
@@ -3289,7 +3303,6 @@ proc osaft_exec   {parent cmd} {
         lappend do  "status"
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
-        putv "$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]"
         set execcmd [list exec {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # windows has no proper STDERR etc.
     } else {
@@ -3309,6 +3322,7 @@ proc osaft_exec   {parent cmd} {
     incr cfg(EXEC)
     set result  ""
     set status  0
+    putv          " $execcmd "
     if {[catch { {*}$execcmd } result errors]} {
         # exited abnormaly, get status and sanatize result
         # dict get $errors --errorcode   looks like:  CHILDSTATUS 9498 42
@@ -3390,6 +3404,7 @@ if {[regexp {\-docker$} $prg(SAFT)]} { lappend prg(Ocmd) {docker_status}; }
 set rcfile [file join $env(HOME) $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 set rcfile [file join {./}       $cfg(RC)]
+putv " source $rcfile"
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 update_cfg;                     # update configuration as needed
 
@@ -3400,9 +3415,9 @@ read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 #        will be empty if O-Saft's default Docker image is not (found) running
 #        workaround: use environment variables, see o-saft-docker
 set cfg(HELP)   [osaft_help]   ;# calls also:  $prg(SAFT) +help
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=opt"
+putv                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=opt"
 set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=opt }      cfg(OPTS)
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=commands"
+putv                      " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=commands"
 set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --help=commands } cfg(CMDS)
 
 if {5 > [llength [split $cfg(CMDS) "\n"]]} {
@@ -3459,18 +3474,16 @@ if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
     set geo "";          if {[info exists geometry]==1}   { set geo "$geometry" }
    #.CFG:      $cfg(.CFG)   # don't print, too much data
 
-    puts "
+    puts [regsub -all -lineanchor {^} "
 PRG $argv0  -- $cfg(ICH)
  |  RC:        $cfg(RC)\t$rc
  |  O-Saft:    $prg(SAFT)
  |  INIT:      $prg(INIT)\t$ini
  |  post:      $prg(post)
-ARGS
- |  argv:      $argv
+ARG argv:      $argv
  |  targets:   $targets
  |  files:     $cfg(files)
-CFG
- |  TITLE:     $cfg(TITLE)
+CFG TITLE:     $cfg(TITLE)
  |  debug:     $cfg(DEBUG)
  |  trace:     $cfg(TRACE)
  |  tooltip:   tooltip package\t$tip
@@ -3499,7 +3512,7 @@ WM  :          [wm frame      .]
  |  geometry:  $geo
 TAB tabs:      [$cfg(objN) tabs]
  |
-_/"
+_/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv
     #          [tk windowingsystem] # we believe this a window manager property
 
 }
