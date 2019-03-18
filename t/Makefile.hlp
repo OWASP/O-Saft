@@ -19,18 +19,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.11 19/03/15 00:19:18
+#?      @(#) Makefile.hlp 1.12 19/03/18 11:26:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.11
+_SID.hlp        = 1.12
 
 _MYSELF.hlp     = t/Makefile.hlp
-ALL.includes   += $(_MYSELF.hlp)
-ALL.inc.type   += hlp
+_MY.includes   += $(_MYSELF.hlp)
+_MY.inc.type   += hlp
 
 first-hlp-target-is-default: help.test.hlp
 
