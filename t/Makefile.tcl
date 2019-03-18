@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.13 19/03/14 23:39:26
+#?      @(#) Makefile.tcl 1.14 19/03/18 11:26:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.13
+_SID.tcl        = 1.14
 
 _MYSELF.tcl     = t/Makefile.tcl
-ALL.includes   += $(_MYSELF.tcl)
-ALL.inc.type   += tcl
+_MY.includes   += $(_MYSELF.tcl)
+_MY.inc.type   += tcl
 
 first-tcl-target-is-default: help.test.tcl
 
