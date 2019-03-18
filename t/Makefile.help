@@ -145,7 +145,7 @@
 #.                  include t/Makefile.critic
 #.
 #.      To get a list of all makefiles, use:
-#.          make s-ALL.includes
+#.          make s-_MY.includes
 #.
 #.      Each of the t/Makefile.*  includes  t/Makefile. This allows to use each
 #.      Makefile.* on its own, like:
@@ -175,18 +175,18 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.52 19/03/17 23:11:33
+#?      @(#) Makefile.help 1.53 19/03/18 11:28:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.52
+_SID.help       = 1.53
 
 _MYSELF.help    = t/Makefile.help
-ALL.includes   += $(_MYSELF.help)
-ALL.inc.type   += help
+_MY.includes   += $(_MYSELF.help)
+_MY.inc.type   += help
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -531,7 +531,7 @@ testcmd-help.help.all-v:        TEST.args  +=
 testcmd-help.doc:               TEST.args  +=
 testcmd-help.doc.all:           TEST.args  +=
 testcmd-help.syntax:            TEST.args  +=
-# TODO: following conditions should be automatically set using $(ALL.inc.type)
+# TODO: following conditions should be automatically set using $(_MY.inc.type)
 testcmd-help.test.help:         TEST.args  +=
 testcmd-help.test.make:         TEST.args  +=
 #testcmd-help.critic:            TEST.args  +=  # no uses as it is the same as testcmd-help.test.critic
