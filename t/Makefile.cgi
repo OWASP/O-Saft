@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.24 19/03/17 23:18:33
+#?      @(#) Makefile.cgi 1.25 19/03/18 11:22:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.24
+_SID.cgi        = 1.25
 
 _MYSELF.cgi     = t/Makefile.cgi
-ALL.includes   += $(_MYSELF.cgi)
-ALL.inc.type   += cgi
+_MY.includes   += $(_MYSELF.cgi)
+_MY.inc.type   += cgi
 
 first-cgi-target-is-default: help.test.cgi
 
@@ -249,7 +249,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.24: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.25: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
