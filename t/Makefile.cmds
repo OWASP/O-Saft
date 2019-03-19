@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.24 19/03/18 11:23:13
+#?      @(#) Makefile.cmds 1.25 19/03/19 22:51:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.24
+_SID.cmds       = 1.25
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -141,6 +141,10 @@ testcmd-c_summ-+sts_%:          TEST.args  += +sts
 testcmd-c_summ-+sni_%:          TEST.args  += +sni
 testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
+test.cmds.log-compare: _TEST_log_prefix = testcmd-c
+test.cmds.log-move:    _TEST_log_prefix = testcmd-c
+test.cmds.log:         _TEST_log_prefix = testcmd-c
+
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
 ALL.testcmds    = $(shell awk -F% '($$1 ~ /^testcmd-c./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmds))
@@ -149,7 +153,7 @@ ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
 
 test.cmds.all:  $(ALL.test.cmds)
 test.cmds:      test.cmds.all
-test.cmds.log:  $(ALL.test.cmds.log)
+test.cmds.log:  $(ALL.test.cmds.log) test.log-compare-hint
 
 # For calling various targets together and other examples,
 # see  test.pattern-%  pattern rule
