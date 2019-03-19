@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.16 19/03/19 19:43:52
+#?      @(#) Makefile.tcl 1.17 19/03/19 22:57:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.16
+_SID.tcl        = 1.17
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -93,29 +93,23 @@ testcmd-tclhelp--help-o-saft_%: TEST.args  += --help-o-saft
 testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
 #testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
+test.tcl.log-compare:  _TEST_log_prefix = testcmd-tcl
+test.tcl.log-move:     _TEST_log_prefix = testcmd-tcl
+test.tcl.log:          _TEST_log_prefix = testcmd-tcl
+
 # SEE Make:target matching
-ALL.testtcl     = $(shell awk -F% '($$1 ~ /^testcmd-tcl.../){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
+ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl%/{next} /^testcmd-tcl/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
 ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
 test.tcl.all:   $(ALL.test.tcl)
 test.tcl:       test.tcl.all
-test.tcl.log:   $(ALL.test.tcl.log)
-	@echo ""
-	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
+test.tcl.log:   $(ALL.test.tcl.log) test.log-compare-hint
 
 test.tcl-%:     test.tcl.internal test.tcl.all
-	echo -n ""
+	@$(EXE.dummy)
 
-test.tcl.log-compare:  _TEST_log_prefix = testcmd-tcl
-test.tcl.log-compare:
-	-$(_test_log-compare)
-	@echo ""
-	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.tcl.log-move"
-
-test.tcl.log-move:     _TEST_log_prefix = testcmd-tcl
-test.tcl.log-move:
-	$(_test_log-move)
+.PHONY: test.tcl.log
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
