@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.12 19/03/18 11:21:17
+#?      @(#) Makefile.template 1.13 19/03/19 23:10:44
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.12
+_SID.TEMPL      = 1.13
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -130,11 +130,15 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
+test.TEMPL.log-compare: _TEST_log_prefix = testcmd-TEMPL
+test.TEMPL.log-move:    _TEST_log_prefix = testcmd-TEMPL
+test.TEMPL.log:         _TEST_log_prefix = testcmd-TEMPL
+
 ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
 
 # pattern rule to map to testcmd-%
 testTEMPL-%:  testcmd-%
-	@echo -n ""
+	@$(EXE.dummy)
 
 ## Variant-2 }
 
@@ -147,11 +151,13 @@ ALL.test.TEMPL.log= $(ALL.test.TEMPL:%=%.log)
 
 test.TEMPL.all: $(ALL.test.TEMPL)
 test.TEMPL:     test.TEMPL.all
-test.TEMPL.log: $(ALL.test.TEMPL.log)
+test.TEMPL.log: $(ALL.test.TEMPL.log) test.log-compare-hint
 
 # more verbose target: test.TEMPL-v and test.TEMPL-vv
 test.TEMPL-%:   test.TEMPL.internal test.TEMPL
-	@echo -n ""
+	@$(EXE.dummy)
+
+.PHONY: test.TEMPL.log
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
