@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.196 Spring Edition 2019
+#?      @(#) 1.197 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.196 19/03/19 18:54:51"
+set cfg(SID)    "@(#) o-saft.tcl 1.197 19/03/19 19:18:16"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.196}
+set cfg(VERSION) {1.197}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1593,13 +1593,11 @@ proc apply_filter_table {w} {
     return
 }; # apply_filter_table
 
-proc apply_filter {w cmd}   {
+proc apply_filter {w layout cmd}   {
     #? apply filters for markup in output tab, data is in text or table widget $w
+    _dbx 2 "{$w, $layout, $cmd}"
     global cfg
-    set _layout $cfg(layout)
-    if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data
-    if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
-    switch $_layout {
+    switch $layout {
         text    { apply_filter_text  $w }
         table   { apply_filter_table $w }
     }
@@ -2422,17 +2420,16 @@ proc create_note  {parent title} {
     return $this
 }; # create_note
 
-proc create_tab   {parent cmd content} {
+proc create_tab   {parent layout cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
-    _dbx 2 "{$parent, $cmd, ...}"
+    _dbx 2 "{$parent, $layout, $cmd, ...}"
     _dbx 4 " content=»$content«"
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
-    set _layout $cfg(layout)
-    if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
-    if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
-    if {$_layout eq "text"}  { set txt [create_text  $tab $content].t }
-    if {$_layout eq "table"} { set txt [create_table $tab $content].t }
+    switch $layout {
+        text    { set txt [create_text  $tab $content].t }
+        table   { set txt [create_table $tab $content].t }
+    }
         # ugly hardcoded .t from .note
     pack [button $tab.saveresult -command "osaft_save $txt {TAB} $cfg(EXEC)"] \
          [button $tab.ttyresult  -command "osaft_save $txt {TTY} $cfg(EXEC)"    ] \
@@ -3265,8 +3262,9 @@ proc osaft_load   {cmd} {
     set fid [open $name r]
     set tab($cfg(EXEC)) [read $fid]
     close $fid
-    set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
-    apply_filter $txt $cmd ;    # text placed in pane, now do some markup
+    set txt [create_tab  $cfg(objN) $cfg(layout) $cmd $tab($cfg(EXEC))]
+    apply_filter $txt $cfg(layout) $cmd    ;# text placed in pane, now do some markup
+    # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $tab($nr)
     update_status "loaded file: $name"
     update_cursor {}
@@ -3356,8 +3354,11 @@ proc osaft_exec   {parent cmd} {
     #else: nothing to do, everything in $result
     }
     set tab($cfg(EXEC)) "\n$exectxt\n\n$result\n";  # store result for later use
-    set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
-    apply_filter $txt $cmd ;    # text placed in pane, now do some markup
+    set _layout $cfg(layout)
+    if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
+    if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
+    set txt [create_tab  $cfg(objN) $_layout $cmd $tab($cfg(EXEC))]
+    apply_filter $txt $_layout $cmd    ;# text placed in pane, now do some markup
     destroy $cfg(winF);         # workaround, see FIXME in create_filtertab
     update_status "#} $do done (status=$status).";  # status not yet used ...
     update_cursor {}
