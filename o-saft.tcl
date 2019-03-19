@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.197 Spring Edition 2019
+#?      @(#) 1.198 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.197 19/03/19 19:18:16"
+set cfg(SID)    "@(#) o-saft.tcl 1.198 19/03/19 19:27:15"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.197}
+set cfg(VERSION) {1.198}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3331,8 +3331,8 @@ proc osaft_exec   {parent cmd} {
     # Tcl uses {} to quote strings, which need to be '' for a shell
     # finally we use $execcmd for execution and $exectxt for print
     set exectxt $execcmd
-    set exectxt [regsub {^\s*exec\s*.*?stdout\s*} $exectxt {}]; # remove exec ..
-    set exectxt [regsub -all {[\}\{]} $exectxt {'}];            # replace {}
+    set exectxt [regsub {^\s*exec\s*.*?stdout\s*} $exectxt {}] ;# remove exec ..
+    set exectxt [regsub -all {[\}\{]} $exectxt {'}]            ;# replace {}
     update_status "$exectxt"
     incr cfg(EXEC)
     set result  ""
@@ -3359,8 +3359,8 @@ proc osaft_exec   {parent cmd} {
     if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
     set txt [create_tab  $cfg(objN) $_layout $cmd $tab($cfg(EXEC))]
     apply_filter $txt $_layout $cmd    ;# text placed in pane, now do some markup
-    destroy $cfg(winF);         # workaround, see FIXME in create_filtertab
-    update_status "#} $do done (status=$status).";  # status not yet used ...
+    destroy $cfg(winF)                 ;# workaround, see FIXME in create_filtertab
+    update_status "#} $do done (status=$status)."  ;# status not yet used ...
     update_cursor {}
     return
 }; # osaft_exec
