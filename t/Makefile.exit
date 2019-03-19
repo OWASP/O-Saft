@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.10 19/03/18 11:24:00
+#?      @(#) Makefile.exit 1.11 19/03/19 21:31:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.10
+_SID.exit       = 1.11
 
 _MYSELF.exit    = t/Makefile.exit
 _MY.includes   += $(_MYSELF.exit)
@@ -52,20 +52,12 @@ endif
 
 HELP-_exit1         = ___________________________________ testing --exit* option _
 HELP-test.exit      = test --exit=* options
-HELP-test.exit.log  = same as test.exit but store output in t/test.exit.log
+HELP-test.exit.log  = same as test.exit but store output in '$(TEST.logdir)/'
 
 HELP.exit           = # no special documentation yet
 HELP.test.exit.all  = # no special documentation yet
 
 # all known --exit=  are shown with:  o-saft.pl --norc --help=exit
-test.exit.labels    = \
-	BEGIN0 BEGIN1 \
-	INIT0  WARN   \
-	CONF0  CONF1  \
-	INIT1  ARGS   \
-	MAIN   \
-	HOST0  HOST1 HOST2 HOST3 HOST4 HOST5 HOST6 HOST8 HOST9 \
-	END
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -89,35 +81,44 @@ testmsg-exit-HOST1:     TEST.args  += --exit=HOST1
 testmsg-exit-HOST2:     TEST.args  += --exit=HOST2
 testmsg-exit-HOST3:     TEST.args  += --exit=HOST3
 testmsg-exit-HOST4:     TEST.args  += --exit=HOST4
-test.exit-HOST4:     TEST.args  += --exit=HOST4
 testmsg-exit-HOST5:     TEST.args  += --exit=HOST5
 testmsg-exit-HOST6:     TEST.args  += --exit=HOST6
-testmsg-exit-HOST7:     TEST.args  += --exit=HOST7
+#testmsg-exit-HOST7:     TEST.args  += --exit=HOST7
 testmsg-exit-HOST8:     TEST.args  += --exit=HOST8
 testmsg-exit-HOST9:     TEST.args  += --exit=HOST9
 testmsg-exit-END:       TEST.args  += --exit=END
 
+#ALL.testexit   = same as ALL.test.exit
+ALL.test.exit   = $(shell awk -F: '/^testmsg-exit-%/{next} /^testmsg-exit/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.exit))
+
 testmsg-exit-%: message-%
 	@$(TRACE.target)
 
-testmsg-exit.log:  $(TEST.logdir)
+_TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(_TODAY_)
+
+test.exit.log-compare: _TEST_log_prefix = test.exit
+test.exit.log-move:    _TEST_log_prefix = test.exit
+test.exit.log:         _TEST_log_file   = $(_TEST.exit.log)
+    # see _TEST.exit.log below
+
+$(_TEST.exit.log):
+	@echo "# $(_MYSELF.exit) $(_SID.exit): $(MAKE) test.exit.log" > $@
+	@$(MAKE) test.exit >> $@ 2>&1
+
+# not yet needed: test.log-compare-hint
+# TODO: diff not yet working proper
+test.exit.log: $(_TEST.exit.log)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@echo "# Makefile.exit 1.10: $(MAKE) $@" > $@
-	@$(MAKE) $(MFLAGS) -s $(ALL.test.exit) >> $@ 2>&1
-	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
-	    && rm $@ \
-	    || mv $@ $(_NEW.log)
-	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
-	@-ls -l  $(TEST.logdir)/$(@)*
-# FIXME: need to remove $(_NEW.log) when -n was given
-# TODO: use global target from t/Makefile
+	@diff $(TEST.logdir)/$@ $(_TEST.exit.log) \
+	    && rm $(_TEST.exit.log) \
+	    || mv $(_TEST.exit.log) $(TEST.logdir)/$@
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.exit.log) $(TEST.logdir)/$@
+	@ls -l    $(TEST.logdir)/$@*
+# TODO: same target as test.warnings.log
 
 ALL.test.exit.log   = test.exit.log
 
-#ALL.testexit   = same as ALL.test.exit
-ALL.test.exit   = $(test.exit.labels:%=testmsg-exit-%)
 test.exit.all:  $(ALL.test.exit)
 test.exit:      test.exit.all
 
