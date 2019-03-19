@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.15 19/03/19 19:32:59
+#?      @(#) Makefile.tcl 1.16 19/03/19 19:43:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.15
+_SID.tcl        = 1.16
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -101,9 +101,21 @@ ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 test.tcl.all:   $(ALL.test.tcl)
 test.tcl:       test.tcl.all
 test.tcl.log:   $(ALL.test.tcl.log)
+	@echo ""
+	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
 
 test.tcl-%:     test.tcl.internal test.tcl.all
 	echo -n ""
+
+test.tcl.log-compare:  _TEST_log_prefix = testcmd-tcl
+test.tcl.log-compare:
+	-$(_test_log-compare)
+	@echo ""
+	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.tcl.log-move"
+
+test.tcl.log-move:     _TEST_log_prefix = testcmd-tcl
+test.tcl.log-move:
+	$(_test_log-move)
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
