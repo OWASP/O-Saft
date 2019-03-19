@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.14 19/03/18 11:26:06
+#?      @(#) Makefile.tcl 1.15 19/03/19 19:32:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.14
+_SID.tcl        = 1.15
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -75,9 +75,13 @@ testcmd-tclverb--v_%:           TEST.args  += --v
 testcmd-tclverb--v--img_%:      TEST.args  += --v --img
 testcmd-tclverb--v--text_%:     TEST.args  += --v --text
 testcmd-tclverb--v-host_%:      TEST.args  += --v host1 host2
+testcmd-tclverb--d2_%:          TEST.args  += --d=2
+testcmd-tclverb--d6_%:          TEST.args  += --d=6
 #testcmd-tclverb--v--load_%: TEST.args  += --v --load=/tmp/some-file
     # TODO:  compare results of testcmd-tclverb--v with
     #           testcmd-tclverb--v--img, testcmd-tclverb--v--text, testcmd-tclcmd-verb--v-host
+#testcmd-tclverb--trace_%:   TEST.args  += --trace
+    # not useful, as there will be no events
 testcmd-tclhelp--help_%:        TEST.args  += --help
 testcmd-tclhelp--help-flow_%:   TEST.args  += --help-flow
 testcmd-tclhelp--help-procs_%:  TEST.args  += --help-procs
