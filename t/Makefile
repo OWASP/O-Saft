@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.46 19/03/19 22:06:28
+#?      @(#) Makefile 1.48 19/03/20 00:50:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.46
+_SID.test       = 1.48
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -535,44 +535,6 @@ test.pat-%:  test.pattern-%
 	@echo -n ""
 test.patt-%: test.pattern-%
 	@echo -n ""
-
-#_____________________________________________________________________________
-#________________________________________ targets for checking test results __|
-
-EXE.log-diff        = xxdiff --geometry 1600x1000
-
-# default prefix, may be redifined per target
-_TEST_log_prefix    = testcmd-
-_TEST_log_file      = $(TEST.logdir)/testcmd-
-
-define _test_log-compare
-	cd $(TEST.logdir) && \
-	for f in $(_TEST_log_prefix)*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
-	done
-endef
-
-define _test_log-move
-	cd $(TEST.logdir) && \
-	for f in $(_TEST_log_prefix)*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    mv $$f-$(_TODAY_) $$f ; \
-	done
-endef
-
-test.log-compare-hint:
-	@echo ""
-	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-
-test.%.log-compare:
-	-$(_test_log-compare)
-	@echo ""
-	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
-
-test.%.log-move:
-	$(_test_log-move)
-
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
 
@@ -666,6 +628,52 @@ test.log:   tests.log
 ALL.test.test  += tests tests.quick tests.log tests.quick.log
 
 .PHONY: test tests
+
+#_____________________________________________________________________________
+#________________________________________ targets for checking test results __|
+
+EXE.log-diff        = xxdiff --geometry 1600x1000
+
+# default prefix, may be redifined per target
+_TEST_log_prefix    = testcmd-
+_TEST_log_file      = $(TEST.logdir)/testcmd-
+
+define _test_log-compare
+	cd $(TEST.logdir) && \
+	for f in $(_TEST_log_prefix)*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
+	done
+endef
+
+define _test_log-move
+	cd $(TEST.logdir) && \
+	for f in $(_TEST_log_prefix)*.log; do \
+	    [ -f $$f-$(_TODAY_) ] || continue ; \
+	    mv $$f-$(_TODAY_) $$f ; \
+	done
+endef
+
+test.log-compare-hint:
+	@echo ""
+	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+
+test.%.log-compare:
+	-$(_test_log-compare)
+	@echo ""
+	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
+
+test.%.log-move:
+	$(_test_log-move)
+
+test.log-compare:
+	-$(_test_log-compare)
+	@echo ""
+	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
+
+test.log-move:
+	$(_test_log-move)
+
 
 ALL.tests      += # nothing added here!
 
