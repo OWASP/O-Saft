@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.195 Spring Edition 2019
+#?      @(#) 1.196 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.195 19/03/19 18:33:45"
+set cfg(SID)    "@(#) o-saft.tcl 1.196 19/03/19 18:54:51"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.195}
+set cfg(VERSION) {1.196}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1597,7 +1597,8 @@ proc apply_filter {w cmd}   {
     #? apply filters for markup in output tab, data is in text or table widget $w
     global cfg
     set _layout $cfg(layout)
-    if {$cmd eq "docker_status"} { set _layout "text" };  # don't have table here
+    if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data
+    if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
     switch $_layout {
         text    { apply_filter_text  $w }
         table   { apply_filter_table $w }
@@ -1745,6 +1746,7 @@ proc remove_host  {parent}  {
 
 proc create_text  {parent content} {
     #? create scrollable text widget and insert given text; returns widget
+    _dbx 2 "{$parent, ...}"
     set this    $parent
     text        $this.t -wrap char -yscroll "$this.s set";  # -width 40 -height 10
     scrollbar   $this.s -orient vertical -command "$this.t yview"
@@ -2427,7 +2429,8 @@ proc create_tab   {parent cmd content} {
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
     set _layout $cfg(layout)
-    if {$cmd eq "docker_status"} { set _layout "text" };  # don't need table here
+    if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
+    if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
     if {$_layout eq "text"}  { set txt [create_text  $tab $content].t }
     if {$_layout eq "table"} { set txt [create_table $tab $content].t }
         # ugly hardcoded .t from .note
