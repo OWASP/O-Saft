@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.10 19/03/18 11:25:29
+#?      @(#) Makefile.opt 1.11 19/03/19 22:35:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.10
+_SID.opt        = 1.11
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -142,6 +142,11 @@ testarg0-stdformat-UTF-8: testarg0-stdformat-UTF8
 #stdarg0-opt-507:                TEST.args  += +quit-
 #stdarg0-opt-508:                TEST.args  += +hsts-sts
 
+test.opt.log-compare:  _TEST_log_prefix = testarg0-std
+test.opt.log-move:     _TEST_log_prefix = testarg0-std
+test.opt.log:          _TEST_log_prefix = testarg0-std
+# TODO: testopt-* missing
+
 # note: no sort because we want the sequence as defined above
 ALL.testalias       = $(shell awk -F: '/^testarg0-alias_[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
 ALL.teststdformat   = $(shell awk -F: '/^testarg0-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
@@ -150,7 +155,6 @@ ALL.testopt    += $(ALL.testalias)
 ALL.testopt    += $(ALL.teststdformat)
 
 test.stdformat  = $(ALL.teststdformat)
-.PHONY: test.stdformat
 
 #ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testopt:%=%$(host)))
 
@@ -160,8 +164,10 @@ ALL.test.opt.log= $(ALL.testopt:%=%.log)
 # TODO: use target _no-hosts
 # for debugging add test.opt.internal to the target's dependencies
 test.opt:         $(ALL.test.opt)
-test.opt.log:     $(ALL.test.opt.log)
+test.opt.log:     $(ALL.test.opt.log) test.log-compare-hint
 test.opt-%:       test.opt.internal test.opt
+
+.PHONY: test.stdformat test.opt.log
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
