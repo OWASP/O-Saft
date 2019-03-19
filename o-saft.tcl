@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.198 Spring Edition 2019
+#?      @(#) 1.199 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.198 19/03/19 19:27:15"
+set cfg(SID)    "@(#) o-saft.tcl 1.199 19/03/20 00:37:56"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.198}
+set cfg(VERSION) {1.199}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3491,6 +3491,10 @@ if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
     set ini "not found"; if {$cfg(.CFG) ne ""}            { set ini "found" };
     set tip "not used";  if {$cfg(TIP)  == 0 }            { set tip "used" };
     set geo "";          if {[info exists geometry]==1}   { set geo "$geometry" }
+    set wmf "";
+    if {$cfg(DEBUG)==1} {
+        set wmf [wm frame .]   ;# returns a pointer; use with --v  or  --d only
+    }
    #.CFG:      $cfg(.CFG)   # don't print, too much data
 
     puts [regsub -all -lineanchor {^} "
@@ -3522,7 +3526,7 @@ TCL version:   $::tcl_patchLevel
 Tk  version:   $::tk_patchLevel
  |  library:   $::tk_library
  |  strictMotif: $::tk_strictMotif
-WM  :          [wm frame      .]
+WM  :          $wmf
  |  geometry:  [wm geometry   .]
  |  maxsize:   [wm maxsize    .]
  |  focusmodel:[wm focusmodel .]
