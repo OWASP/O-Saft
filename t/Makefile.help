@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.54 19/03/18 11:50:57
+#?      @(#) Makefile.help 1.55 19/03/19 23:14:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.54
+_SID.help       = 1.55
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -559,27 +559,21 @@ testcmd-help.test.tcl.all:      TEST.args  +=
 testcmd-help.test.critic.all:   TEST.args  +=
 testcmd-help.test.warnings.all: TEST.args  +=
 
+test.help.log-compare: _TEST_log_prefix = testcmd-help
+test.help.log-move:    _TEST_log_prefix = testcmd-help
+test.help.log:         _TEST_log_prefix = testcmd-help
+
 ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
-#                   # awk collect target herin (duplicates are ignored)
+#                   # awk collect target herein (duplicates are ignored)
 ALL.test.help       = $(ALL.testhelp)
 ALL.test.help.log   = $(ALL.test.help:%=%.log)
 
 # TODO: explain test.help uses "make help", while test.hlp uses "o-saft.pl --help"
 test.help.all:    $(ALL.test.help)
 test.help:        test.help.all
-test.help.log:    $(ALL.test.help.log)
-	@echo ""
-	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
+test.help.log:    $(ALL.test.help.log) test.log-compare-hint
 
-test.help.log-compare: _TEST_log_prefix = testcmd-help
-test.help.log-compare:
-	-$(_test_log-compare)
-	@echo ""
-	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.help.log-move"
-
-test.help.log-move:    _TEST_log_prefix = testcmd-help
-test.help.log-move:
-	$(_test_log-move)
+.PHONY: test.help.log
 
 # feed main Makefile
 ALL.tests          += $(ALL.test.help)
