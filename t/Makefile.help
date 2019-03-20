@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.56 19/03/20 22:15:56
+#?      @(#) Makefile.help 1.57 19/03/20 23:33:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.56
+_SID.help       = 1.57
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -231,16 +231,17 @@ help.inc: HELP_HEAD = $(HELP_RULE)
 # for details about the commands, please see  Syntax  above for matching macro
 # and target names, and
 # SEE Make:target matching
-#     _AWK_target_by_line   - extract target names
+# script variables defined in t/Makefile:
 #     _AWK_macro_by_line    - extract macro  names
+#     _AWK_target_by_line   - extract target names
+#     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
+#     _AWK_print_arr_END    - print collected data from arr[]
+#     _AWK_print_file       - either print seperator line or the filename
+# defined below:
 #     _AWK_HELP_by_line     - extract HELP- macro names for documentation, the
 #                             HELP-_* print as is
 #                             HELP-*  extract target name and print with text
 #     _AWK_gen_eval_target  - print f-* and _f-* target name from HELP-* macro
-#     _AWK_print_arr_END    - print collected data from arr[]
-#     _AWK_print_file       - either print seperator line or the filename
-_AWK_target_by_line = /^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}
-_AWK_macro_by_line  = /^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}
 _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                       /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
                                 sub(/HELP-/,"",key); gsub(/ /,"",key);    \
@@ -249,8 +250,6 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                               }
 _AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
 _AWK_gen_print_file = (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
-_AWK_print_arr_END  = END{for(idx in arr){print idx}}
-_AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 %-v: _AWK_print_file= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
 
 # tools used to gather information from herein
