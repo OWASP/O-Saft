@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.59 19/03/17 23:00:01
+#?      @(#) Makefile 1.61 19/03/20 23:03:56
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.59
+_SID            = 1.61
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -309,7 +309,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.59
+_INST.text      = generated from Makefile 1.61
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -317,7 +317,7 @@ EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 
 # generate f- targets to print HELP text for each target
 _HELP.my_targets= $(shell $(EXE.eval) $(MAKEFILE))
-_HELP.alltargets= $(shell $(EXE.eval) $(ALL.Makefiles))
+_HELP.alltargets= $(shell $(EXE.eval) $(ALL.includes))
 _HELP.help      = $(ALL.help:%=f-%)
                 # quick&dirty because each target calls make (see below)
 
@@ -325,10 +325,10 @@ _HELP.help      = $(ALL.help:%=f-%)
 #___________________________________________________________ default target __|
 
 # define header part of default target
-help:     _HELP_HEAD_ = $(_HELP_RULE_)
-help.all: _HELP_HEAD_ = $(_HELP_RULE_)
-doc:      _HELP_HEAD_ = $(_HELP_RULE_)
-doc.all:  _HELP_HEAD_ = $(_HELP_RULE_)
+help:       HELP_HEAD = $(HELP_RULE)
+help.all:   HELP_HEAD = $(HELP_RULE)
+doc:        HELP_HEAD = $(HELP_RULE)
+doc.all:    HELP_HEAD = $(HELP_RULE)
 
 # define body part of default target
 _help_also_           = _help_also
@@ -360,23 +360,23 @@ _help_text-v          = \# to see Makefile, where targets are defined, use: $(MA
 #       instead one  $(MAKE)  with the list of targets.
 _eval_body_me:
 	@$(MAKE) -s $(_HELP.my_targets)
-	@echo "$(_HELP_LINE_)"
+	@echo "$(HELP_LINE)"
 
 _eval_body_all:
 	@$(MAKE) -s $(_HELP.alltargets)
 
 _help_body_me:
 	@$(EXE.help) $(MAKEFILE)
-	@echo "$(_HELP_LINE_)"
+	@echo "$(HELP_LINE)"
 
 _help_body_all:
-	@$(EXE.help) $(ALL.Makefiles)
+	@$(EXE.help) $(ALL.includes)
 
 _help_list:
 	@echo ""
 	@echo "		#_____________________________ targets for information ... _"
 	@$(MAKE) $(_HELP.help)
-	@echo "$(_HELP_LINE_)"
+	@echo "$(HELP_LINE)"
 	@echo "$(_help_text-v)"
 
 _help_also:
@@ -508,8 +508,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.59
-tar:     GREP_EDIT  = 1.59
+GREP_EDIT           = 1.61
+tar:     GREP_EDIT  = 1.61
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
