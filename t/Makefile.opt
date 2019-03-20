@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.12 19/03/20 22:15:58
+#?      @(#) Makefile.opt 1.13 19/03/20 23:58:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.12
+_SID.opt        = 1.13
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -142,9 +142,9 @@ testarg0-stdformat-UTF-8: testarg0-stdformat-UTF8
 #stdarg0-opt-507:                TEST.args  += +quit-
 #stdarg0-opt-508:                TEST.args  += +hsts-sts
 
-test.opt.log-compare:  _TEST_log_prefix = testarg0-std
-test.opt.log-move:     _TEST_log_prefix = testarg0-std
-test.opt.log:          _TEST_log_prefix = testarg0-std
+test.opt.log-compare:   TEST.target_prefix  = testarg0-std
+test.opt.log-move:      TEST.target_prefix  = testarg0-std
+test.opt.log:           TEST.target_prefix  = testarg0-std
 # TODO: testopt-* missing
 
 # note: no sort because we want the sequence as defined above
