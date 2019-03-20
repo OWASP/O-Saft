@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.27 19/03/20 22:15:41
+#?      @(#) Makefile.cgi 1.28 19/03/20 23:58:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.27
+_SID.cgi        = 1.28
 
 _MYSELF.cgi     = t/Makefile.cgi
 _MY.includes   += $(_MYSELF.cgi)
@@ -214,9 +214,9 @@ testcmd-cgi-chr-caret_%:    _args.cgi  += '--bad-char=_^_'
 testcmd-cgi-chr-bar_%:      _args.cgi  += '--bad-char=_|_'
 testcmd-cgi-chr-hash_%:     _args.cgi  += '--bad-char=_\#_'
 
-test.cgi.log-compare:  _TEST_log_prefix = testcmd-cgi
-test.cgi.log-move:     _TEST_log_prefix = testcmd-cgi
-    # _TEST_log_prefix not yet used
+test.cgi.log-compare:   TEST.target_prefix  = testcmd-cgi
+test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
+    # TEST.target_prefix not yet used
 
 testcmd-cgi-%:
 	@$(TRACE.target)
@@ -253,7 +253,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.27: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.28: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
