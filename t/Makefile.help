@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.57 19/03/20 23:33:05
+#?      @(#) Makefile.help 1.58 19/03/20 23:58:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.57
+_SID.help       = 1.58
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -558,9 +558,9 @@ testcmd-help.test.tcl.all:      TEST.args  +=
 testcmd-help.test.critic.all:   TEST.args  +=
 testcmd-help.test.warnings.all: TEST.args  +=
 
-test.help.log-compare: _TEST_log_prefix = testcmd-help
-test.help.log-move:    _TEST_log_prefix = testcmd-help
-test.help.log:         _TEST_log_prefix = testcmd-help
+test.help.log-compare:  TEST.target_prefix  = testcmd-help
+test.help.log-move:     TEST.target_prefix  = testcmd-help
+test.help.log:          TEST.target_prefix  = testcmd-help
 
 ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
 #                   # awk collect target herein (duplicates are ignored)
