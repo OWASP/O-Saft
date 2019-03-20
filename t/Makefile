@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.50 19/03/20 23:34:46
+#?      @(#) Makefile 1.51 19/03/20 23:57:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.50
+_SID.test       = 1.51
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -656,12 +656,12 @@ ALL.test.test  += tests tests.quick tests.log tests.quick.log
 EXE.log-diff        = xxdiff --geometry 1600x1000
 
 # default prefix, may be redifined per target
-_TEST_log_prefix    = testcmd-
-_TEST_log_file      = $(TEST.logdir)/testcmd-
+TEST.target_prefix  = testcmd-
+TEST.target_logfile = $(TEST.logdir)/testcmd-
 
 define _test_log-compare
 	cd $(TEST.logdir) && \
-	for f in $(_TEST_log_prefix)*.log; do \
+	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $$f-$(_TODAY_) ] || continue ; \
 	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
 	done
@@ -669,7 +669,7 @@ endef
 
 define _test_log-move
 	cd $(TEST.logdir) && \
-	for f in $(_TEST_log_prefix)*.log; do \
+	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $$f-$(_TODAY_) ] || continue ; \
 	    mv $$f-$(_TODAY_) $$f ; \
 	done
