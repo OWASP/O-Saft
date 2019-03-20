@@ -44,14 +44,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.48 19/03/20 00:50:51
+#?      @(#) Makefile 1.49 19/03/20 22:16:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.48
+_SID.test       = 1.49
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -63,16 +63,16 @@ first-test-target-is-default: help.test
 ALL.help.test  += help.test
 
 HELP-help.test      = print general testing targets
-help.test:          _HELP_TYP__ = test
-help.test-v:        _HELP_TYP__ = test
-help.test-vv:       _HELP_TYP__ = test
-help.test.all:      _HELP_TYP__ = test
-help.test.test:     _HELP_TYP__ = test
-help.test.test-v:   _HELP_TYP__ = test
-help.test.test-vv:  _HELP_TYP__ = test
-help.test.test.all: _HELP_TYP__ = test
-help.test:          _HELP_HEAD_ = $(_HELP_RULE_)
-help.test.%:        _HELP_HEAD_ = $(_HELP_RULE_)
+help.test:            HELP_TYPE = test
+help.test-v:          HELP_TYPE = test
+help.test-vv:         HELP_TYPE = test
+help.test.all:        HELP_TYPE = test
+help.test.test:       HELP_TYPE = test
+help.test.test-v:     HELP_TYPE = test
+help.test.test-vv:    HELP_TYPE = test
+help.test.test.all:   HELP_TYPE = test
+help.test:            HELP_HEAD = $(HELP_RULE)
+help.test.%:          HELP_HEAD = $(HELP_RULE)
 
 ifndef ALL.Makefiles
     -include t/Makefile.inc
