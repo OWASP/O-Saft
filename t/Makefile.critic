@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.13 19/03/18 11:29:53
+#?      @(#) Makefile.critic 1.14 19/03/20 22:15:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.13
+_SID.critic     = 1.14
 
 _MYSELF.critic  = t/Makefile.critic
 _MY.includes   += $(_MYSELF.critic)
@@ -39,12 +39,12 @@ first-critic-target-is-default: help.test.critic
 ALL.help.test  += help.test.critic
 
 HELP-help.test.critic   = print targets for using perlcritic
-help.critic:            _HELP_TYP__ = critic
-help.critic-v:          _HELP_TYP__ = critic
-help.critic-vv:         _HELP_TYP__ = critic
-help.test.critic:       _HELP_TYP__ = critic
-help.test.critic-v:     _HELP_TYP__ = critic
-help.test.critic-vv:    _HELP_TYP__ = critic
+help.critic:              HELP_TYPE = critic
+help.critic-v:            HELP_TYPE = critic
+help.critic-vv:           HELP_TYPE = critic
+help.test.critic:         HELP_TYPE = critic
+help.test.critic-v:       HELP_TYPE = critic
+help.test.critic-vv:      HELP_TYPE = critic
     # not really for testing, hence we have 'critic' and 'test.critic'
 
 ifeq (,$(_SID.test))
