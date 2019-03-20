@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.26 19/03/20 22:15:52
+#?      @(#) Makefile.cmds 1.27 19/03/20 23:58:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.26
+_SID.cmds       = 1.27
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -141,9 +141,9 @@ testcmd-c_summ-+sts_%:          TEST.args  += +sts
 testcmd-c_summ-+sni_%:          TEST.args  += +sni
 testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
-test.cmds.log-compare: _TEST_log_prefix = testcmd-c
-test.cmds.log-move:    _TEST_log_prefix = testcmd-c
-test.cmds.log:         _TEST_log_prefix = testcmd-c
+test.cmds.log-compare:  TEST.target_prefix  = testcmd-c
+test.cmds.log-move:     TEST.target_prefix  = testcmd-c
+test.cmds.log:          TEST.target_prefix  = testcmd-c
 
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
