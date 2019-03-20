@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.12 19/03/20 22:15:54
+#?      @(#) Makefile.exit 1.13 19/03/20 23:58:07
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.12
+_SID.exit       = 1.13
 
 _MYSELF.exit    = t/Makefile.exit
 _MY.includes   += $(_MYSELF.exit)
@@ -96,9 +96,9 @@ testmsg-exit-%: message-%
 
 _TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(_TODAY_)
 
-test.exit.log-compare: _TEST_log_prefix = test.exit
-test.exit.log-move:    _TEST_log_prefix = test.exit
-test.exit.log:         _TEST_log_file   = $(_TEST.exit.log)
+test.exit.log-compare:  TEST.target_prefix  = test.exit
+test.exit.log-move:     TEST.target_prefix  = test.exit
+test.exit.log:          TEST.target_logfile = $(_TEST.exit.log)
     # see _TEST.exit.log below
 
 $(_TEST.exit.log):
