@@ -19,9 +19,9 @@
 #    Naming conventions for t/Makefile*
 #       * macro names have the prefix  TEST.
 #       * target names for public use have the prefix  test.
-#       * individual, special targets have the prefix  test  (exceptions exist)
+#       * individual, special targets have the prefix  _test (exceptions exist)
 #
-#    Special macros in t/Makefile*
+#    Special variables specific for each t/Makefile*
 #       _SID.TYPE       - version number
 #       _MYSELF.TYPE    - name of current file
 #       _MY.includes    - list of Makefiles
@@ -31,6 +31,10 @@
 #       HELP.TYPE.all   - list of all targets for the corresponding file
 #       HELP.TYPE.internal  - some more documentation (help) text
 #           where  TYPE  is the suffix of the Makefile's filename
+#
+#    Each t/Makefile* may also redefine following variables
+#       HELP_TYPE       - suffix (and type) of Makefile*
+#       HELP_HEAD       - descriptive header line, set to HELP_NAME, HELP_RULE 
 #
 #    Special targets for documentation (help) in t/Makefile*
 #       help.test.%     - print individual documentation using $(HELP.TYPE)
@@ -44,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.49 19/03/20 22:16:20
+#?      @(#) Makefile 1.50 19/03/20 23:34:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.49
+_SID.test       = 1.50
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -121,9 +125,26 @@ endif
 # Hence an additional variable is used.
 # TODO: not public, not documented, variable needs to be defined here
 TRACE.target.log=
-#  example      = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
+    #  example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
 _TODAY_         = $(shell date +%Y""%m%d)
+    # current date in ISO format
+
+# define script or parts of it as variables, for better human readability
+# SEE Make:target matching
+#     _AWK_macro_by_line    - extract all macro  names
+#     _AWK_target_by_line   - extract all target names
+#     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
+#     _AWK_print_arr_END    - print collected data from arr[]
+#     _AWK_print_file       - either print seperator line or the filename
+TEST.target_prefix  =   [a-zA-Z][_a-zA-Z.]
+   # matching target names not starting with _
+_AWK_macro_by_line  = /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
+_AWK_target_by_line = /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
+_AWK_target_to_arr  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
+_AWK_print_arr_END  = END{for(idx in arr){print idx}}
+_AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
+
 
 HELP.test       = $(_NL)\
 \# Following variables are intended to be used on command line:$(_NL)\
@@ -156,7 +177,7 @@ HELP.test.all   = $(HELP.test.test.all)
 help.test:          help.test.test
 help.test.all:      help.test.test.all
 	@$(TRACE.target)
-    # convenience to satisfy  help.test.all
+# convenience to satisfy  help.test.all
 
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
