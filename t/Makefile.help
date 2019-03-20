@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.55 19/03/19 23:14:41
+#?      @(#) Makefile.help 1.56 19/03/20 22:15:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.55
+_SID.help       = 1.56
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -207,25 +207,25 @@ _CR             = \\015
 T               = $$""(_NL)
 
 # internal help
-# default dummy _HELP_TYP__ to avoid errors; results in wrong output
+# default dummy  HELP_TYPE  to avoid errors; results in wrong output
 # however, its for development and testing only; help*-v  may give hints
-_HELP_TYP__     = help
+HELP_TYPE       = help
 # some often uses formatting strings
-_HELP_INFO_     = \# Name          | Description/Content
-_HELP_NAME_     = \# Macro/Variable| Value
-_HELP_RULE_     = \# Target        | Description
-_HELP_LINE_     = \#---------------+--------------------------------------------------------------
-_HELP_HEAD_     = $(_HELP_NAME_)
-_HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_HEAD_)\012$(_HELP_LINE_)
-_HELP_USAGE_    = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
-_HELP_F_TARGET  = _file
-doc.all-v:      _HELP_F_TARGET  = _file-v
+HELP_INFO       = \# Name          | Description/Content
+HELP_NAME       = \# Macro/Variable| Value
+HELP_RULE       = \# Target        | Description
+HELP_LINE       = \#---------------+--------------------------------------------------------------
+HELP_HEAD       = $(HELP_NAME)
+HELP_HEADER     = $(HELP_LINE)\012$(HELP_HEAD)\012$(HELP_LINE)
+HELP_USAGE      = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
+HELP_F_TARGET   = _file
+doc.all-v:HELP_F_TARGET = _file-v
 
-# _HELP_HEAD_ and _HELP_RULE_  will be set conditionally per target/rule also
+# HELP_HEAD and HELP_RULE  will be set conditionally per target/rule also
 
 # setting if Makefile.inc not included
-help.inc:       _HELP_TYP__ = inc
-help.inc:       _HELP_HEAD_ = $(_HELP_RULE_)
+help.inc: HELP_TYPE = inc
+help.inc: HELP_HEAD = $(HELP_RULE)
 
 # define scripts as variables, for better human readability
 # for details about the commands, please see  Syntax  above for matching macro
@@ -248,7 +248,7 @@ _AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
 _AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
-_AWK_gen_print_file = (FNR==1){ print "$(_HELP_F_TARGET)"FILENAME}
+_AWK_gen_print_file = (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
 _AWK_print_arr_END  = END{for(idx in arr){print idx}}
 _AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 %-v: _AWK_print_file= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
@@ -293,34 +293,34 @@ _HELP-help.FOOT = print table footer for documentation texts
 _HELP-help.HELP = print individual documentation texts (HELP.TYP variale)
 #HELP-help.LIST = print targets for getting list of targets (testing targets only)
 _HELP-help.LIST = $(_NL)\
-\# To get a list of targets, use:       $(_NL)\
-\#    make help.test.$(_HELP_TYP__).all $(_NL)\
-\#    make e-ALL.test.$(_HELP_TYP__)    $(_NL)\
-\#    make s-ALL.test.$(_HELP_TYP__)
+\# To get a list of targets, use:$(_NL)\
+\#    make help.test.$(HELP_TYPE).all$(_NL)\
+\#    make e-ALL.test.$(HELP_TYPE)$(_NL)\
+\#    make s-ALL.test.$(HELP_TYPE)
 
 _HELP-help.make = $(_NL)\
 \# To see which commands in a TARGET are executed, simply call 'make -n TARGET'$(_NL)\
 \# Note that the *.log targets then report a bunch of shell commands.$(_NL)\
 
 _help.HEAD:
-	@echo "$(_HELP_HEADER_)"
+	@echo "$(HELP_HEADER)"
 
 _help.FOOT:
-	@echo "$(_HELP_LINE_)"
+	@echo "$(HELP_LINE)"
 
 _help.BODY:
 	@$(TRACE.target)
-	@$(EXE.help) $(_MYSELF.$(_HELP_TYP__))
+	@$(EXE.help) $(_MYSELF.$(HELP_TYPE))
 
 _help.LIST:
 	@$(TRACE.target)
 	@echo "$(_HELP-help.LIST)"
 
-# neet to set own variable name because $($(HELP.$(_HELP_TYP__))) does not work
-_help.HELP: _HELP_HELP_ = HELP.$(_HELP_TYP__)
+# neet to set own variable name because $($(HELP.$(HELP_TYPE))) does not work
+_help.HELP:  _HELP_HELP = HELP.$(HELP_TYPE)
 _help.HELP:
 	@$(TRACE.target)
-	@echo "$($(_HELP_HELP_))"
+	@echo "$($(_HELP_HELP))"
 	@echo "$(_HELP-help.make)"
 
 .PHONY: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
@@ -376,13 +376,13 @@ ALL.help       += $(ALL.help.test)
                 # add all other help.test* targets
 
 # our own targets using help% or alike
-help.help:      _HELP_TYP__ = help
-help.help%:     _HELP_TYP__ = help
-help.help:      _HELP_HEAD_ = $(_HELP_RULE_)
-help.help%:     _HELP_HEAD_ = $(_HELP_RULE_)
-help.doc%:      _HELP_HEAD_ = $(_HELP_RULE_)
-help.doc.all:   _HELP_HEAD_ = $(_HELP_RULE_)
-target:         _HELP_HEAD_ = $(_HELP_RULE_)
+help.help:        HELP_TYPE = help
+help.help%:       HELP_TYPE = help
+help.help:        HELP_HEAD = $(HELP_RULE)
+help.help%:       HELP_HEAD = $(HELP_RULE)
+help.doc%:        HELP_HEAD = $(HELP_RULE)
+help.doc.all:     HELP_HEAD = $(HELP_RULE)
+target:           HELP_HEAD = $(HELP_RULE)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
@@ -421,10 +421,10 @@ _file-v%:
 _notempty:
 	@if [ '$($($@))' = '' ]; then \
 	    $(ECHO) "$(HELP-$($@))"; \
-	    $(ECHO) "$(_HELP_USAGE_)"; \
+	    $(ECHO) "$(HELP_USAGE)"; \
 	    exit 1; \
 	fi;
-	@$(ECHO) "$(_HELP_HEADER_)"
+	@$(ECHO) "$(HELP_HEADER)"
 
 _line:
 	@echo ""
