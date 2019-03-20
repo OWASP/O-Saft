@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.18 19/03/20 22:15:59
+#?      @(#) Makefile.tcl 1.19 19/03/20 23:58:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.18
+_SID.tcl        = 1.19
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -93,9 +93,9 @@ testcmd-tclhelp--help-o-saft_%: TEST.args  += --help-o-saft
 testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
 #testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
-test.tcl.log-compare:  _TEST_log_prefix = testcmd-tcl
-test.tcl.log-move:     _TEST_log_prefix = testcmd-tcl
-test.tcl.log:          _TEST_log_prefix = testcmd-tcl
+test.tcl.log-compare:   TEST.target_prefix  = testcmd-tcl
+test.tcl.log-move:      TEST.target_prefix  = testcmd-tcl
+test.tcl.log:           TEST.target_prefix  = testcmd-tcl
 
 # SEE Make:target matching
 ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl%/{next} /^testcmd-tcl/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
