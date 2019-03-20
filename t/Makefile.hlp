@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.13 19/03/19 22:26:54
+#?      @(#) Makefile.hlp 1.14 19/03/20 22:15:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.13
+_SID.hlp        = 1.14
 
 _MYSELF.hlp     = t/Makefile.hlp
 _MY.includes   += $(_MYSELF.hlp)
@@ -37,9 +37,9 @@ first-hlp-target-is-default: help.test.hlp
 ALL.help.test  += help.test.hlp
 
 HELP-help.test.hlp  = print targets for testing '$(SRC.pl)' --help options
-help.test.hlp:      _HELP_TYP__ = hlp
-help.test.hlp-v:    _HELP_TYP__ = hlp
-help.test.hlp-vv:   _HELP_TYP__ = hlp
+help.test.hlp:        HELP_TYPE = hlp
+help.test.hlp-v:      HELP_TYPE = hlp
+help.test.hlp-vv:     HELP_TYPE = hlp
 
 ifeq (,$(_SID.test))
     -include t/Makefile
