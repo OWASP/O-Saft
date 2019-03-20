@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.14 19/03/20 22:16:00
+#?      @(#) Makefile.template 1.15 19/03/20 23:58:11
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.14
+_SID.TEMPL      = 1.15
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -130,9 +130,9 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
-test.TEMPL.log-compare: _TEST_log_prefix = testcmd-TEMPL
-test.TEMPL.log-move:    _TEST_log_prefix = testcmd-TEMPL
-test.TEMPL.log:         _TEST_log_prefix = testcmd-TEMPL
+test.TEMPL.log-compare:  TEST.target_prefix  = testcmd-TEMPL
+test.TEMPL.log-move:     TEST.target_prefix  = testcmd-TEMPL
+test.TEMPL.log:          TEST.target_prefix  = testcmd-TEMPL
 
 ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
 
