@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.25 19/03/18 11:30:38
+#?      @(#) Makefile.warnings 1.26 19/03/20 22:16:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.25
+_SID.warnings   = 1.26
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -57,9 +57,9 @@ first-warn-target-is-default: help.test.warnings
 ALL.help.test  += help.test.warnings
 
 HELP-help.test.warnings = print targets for testing WARNING messages
-help.test.warnings:     _HELP_TYP__ = warnings
-help.test.warnings-v:   _HELP_TYP__ = warnings
-help.test.warnings-vv:  _HELP_TYP__ = warnings
+help.test.warnings:       HELP_TYPE = warnings
+help.test.warnings-v:     HELP_TYPE = warnings
+help.test.warnings-vv:    HELP_TYPE = warnings
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -282,7 +282,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.25: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.26: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
