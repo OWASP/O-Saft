@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.51 19/03/20 23:57:58
+#?      @(#) Makefile 1.52 19/03/23 22:47:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.51
+_SID.test       = 1.52
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -468,6 +468,7 @@ testarg0-%.log: $(TEST.logdir)
 #       TEST.hosts      = aa.tld  bb.tld
 #       # define targets
 #       testcmd-c%:     EXE.pl      = ../$(SRC.pl)
+#       #   EXE.pl must be defined wherever testcmd-% is used/referenced
 #       testcmd-c%:     TEST.init   = --header
 #       #
 #       # define the commands to be used for $(EXE.pl) in the target
@@ -482,7 +483,6 @@ testarg0-%.log: $(TEST.logdir)
 #       ALL.by_host     = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
 #       #   returns: testcmd-c00_aa.tld testcmd-c01_aa.tld testcmd-c00_bb.tld testcmd_c01-bb.tld
 
-testcmd-%:      EXE.pl  = ../$(SRC.pl)
 testcmd-%:
 	@$(TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
