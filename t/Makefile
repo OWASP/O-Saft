@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.52 19/03/23 22:47:48
+#?      @(#) Makefile 1.53 19/03/24 11:49:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.52
+_SID.test       = 1.53
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -136,7 +136,7 @@ _TODAY_         = $(shell date +%Y""%m%d)
 #     _AWK_target_by_line   - extract all target names
 #     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
 #     _AWK_print_arr_END    - print collected data from arr[]
-#     _AWK_print_file       - either print seperator line or the filename
+#     _AWK_print_file       - either print separator line or the filename
 TEST.target_prefix  =   [a-zA-Z][_a-zA-Z.]
    # matching target names not starting with _
 _AWK_macro_by_line  = /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
@@ -212,7 +212,7 @@ help.test.targets:
 #_____________________________________________________ internal test target __|
 
 HELP-_internal  = _____________________________________ internal test target _
-HELP-help.test.make = print GNU make's internals and global project settings
+HELP-help.test.make = print GNU Make's internals and global project settings
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
@@ -453,7 +453,7 @@ testarg0-%.log: $(TEST.logdir)
 #       $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
 #       #   c00-aa.tld returns: aa.tld
 #
-# Note: following does not work proper (in GNU make), hence the solution above:
+# Note: following does not work proper (in GNU Make), hence the solution above:
 #       testcmd-no1: TEST.args  = +quit $*
 #       testcmd-no2: TEST.args := +quit $*
 #
