@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.28 19/03/24 11:44:41
+#?      @(#) Makefile.cmds 1.29 19/03/24 12:53:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.28
+_SID.cmds       = 1.29
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -81,24 +81,33 @@ HELP.cmds           = $(_NL)\
 
 HELP.test.cmds.all  = # no special documentation yet
 
+# don't print following keys, because they are different for each call
+# this is done to avoid diffs when testing
+# the  ignored keys are tested with own target  testcmd-c+ignored-keys_
+# --no-out= is used instead --ignore-output= to keep the command line shorter
+_ignore-output-keys = master_key session_id session_ticket sts_expired
+_ignore-output      = $(_ignore-output-keys:%=--no-out=%)
+_ignore-output-cmds = $(_ignore-output-keys:%=+%)
+
 # SEE Make:target name
 # SEE Make:target name prefix
 
 testcmd-c%:                     EXE.pl      = ../$(SRC.pl)
 testcmd-c%:                     TEST.init   = --header
 
-testcmd-c+info-_%:              TEST.args  += +info
-testcmd-c+info--trace-cmd_%:    TEST.args  += +info   --trace-cmd
-testcmd-c+info--trace-key_%:    TEST.args  += +info   --trace-key
-testcmd-c+info--trace-time_%:   TEST.args  += +info   --trace-time
-testcmd-c+info--trace-key-norc_%:   TEST.args  += +info   --trace-key --norc
-testcmd-c+check_%:              TEST.args  += +check
-testcmd-c+check--nossltls_%:    TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+testcmd-c+ignored-keys_%:       TEST.args  += $(_ignore-output-cmds)
+testcmd-c+info-_%:              TEST.args  += +info               $(_ignore-output) 
+testcmd-c+info--trace-cmd_%:    TEST.args  += +info  --trace-cmd  $(_ignore-output) 
+testcmd-c+info--trace-key_%:    TEST.args  += +info  --trace-key  $(_ignore-output) 
+testcmd-c+info--trace-time_%:   TEST.args  += +info  --trace-time $(_ignore-output) 
+testcmd-c+info--trace-key-norc_%:   TEST.args  += +info   --trace-key --norc $(_ignore-output)
+testcmd-c+check_%:              TEST.args  += +check              $(_ignore-output)
+testcmd-c+check--nossltls_%:    TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(_ignore-output) 
     #    simulates a server not responding to ciphers
-testcmd-c+check--trace-key_%:   TEST.args  += +check  --trace-key
-testcmd-c+check--trace-time_%:  TEST.args  += +check  --trace-time
-testcmd-c+check--trace-norc_%:  TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
-testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
+testcmd-c+check--trace-key_%:   TEST.args  += +check --trace-key  $(_ignore-output) 
+testcmd-c+check--trace-time_%:  TEST.args  += +check --trace-time $(_ignore-output) 
+testcmd-c+check--trace-norc_%:  TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(_ignore-output) 
+testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(_ignore-output) 
 testcmd-c+cipher-_%:                TEST.args  += +cipher
 testcmd-c+cipher--legacy-owasp_%:   TEST.args  += +cipher --legacy=owasp
 testcmd-c+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
@@ -129,15 +138,15 @@ testcmd-c_summ-+bsi_%:          TEST.args  += +bsi
 testcmd-c_summ-+TR-02102+_%:    TEST.args  += +TR-02102+
 testcmd-c_summ-+EV_%:           TEST.args  += +EV
 testcmd-c_summ-+quick_%:        TEST.args  += +quick --trace-arg
-testcmd-c_summ-+http_%:         TEST.args  += +http
-testcmd-c_summ-+hsts_%:         TEST.args  += +hsts
+testcmd-c_summ-+http_%:         TEST.args  += +http  --ignore-output=sts_expired
+testcmd-c_summ-+hsts_%:         TEST.args  += +hsts  --ignore-output=sts_expired
 testcmd-c_summ-+ocsp_%:         TEST.args  += +ocsp
 testcmd-c_summ-+preload_%:      TEST.args  += +preload
 testcmd-c_summ-+protocols_%:    TEST.args  += +protocols
 testcmd-c_summ-+fingerprints_%: TEST.args  += +fingerprints
 testcmd-c_summ-+sizes_%:        TEST.args  += +sizes
 testcmd-c_summ-+pfs_%:          TEST.args  += +pfs
-testcmd-c_summ-+sts_%:          TEST.args  += +sts
+testcmd-c_summ-+sts_%:          TEST.args  += +sts  --ignore-output=sts_expired
 testcmd-c_summ-+sni_%:          TEST.args  += +sni
 testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
