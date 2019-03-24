@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.01.19',  # official version number of this file
+    OSAFT_VERSION   => '19.03.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.164 19/01/20 23:15:11",
+    SID_osaft   => "@(#) osaft.pm 1.165 19/03/24 11:52:17",
 
 };
 
@@ -2522,7 +2522,7 @@ sub get_dh_paramter     {
     ## use critic
     _trace("get_dh_paramter: #{ DHE RAW data:\n$data\n#}\n");
     $data =~ s/\s+/ /gi;          # squeeze multible spaces
-    $data =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
+    $data =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non separator
     my ($lenStr, $len) = 0;
     ($lenStr, $data) = split(/_/, $data);   # 2 strings with Hex Octetts!
     _trace3("get_dh_paramter: #{ DHE RAW data): len: $lenStr\n$data\n#}\n");
