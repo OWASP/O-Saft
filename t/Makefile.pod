@@ -15,7 +15,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) Makefile.pod 1.12 19/03/24 01:06:08
+#?      @(#) Makefile.pod 1.13 19/03/24 11:56:01
 #?
 #? AUTHOR
 #?      18-nov-18 Achim Hoffmann
@@ -26,20 +26,20 @@
 
 =head2 Make:GNU
 
-Some words about the terms and words used in GNU make and in this project.
+Some words about the terms and words used in GNU Make and in this project.
 
     * macro  is a synonym for  variable  in Makefiles.
-    * GNU make uses  prerequisites  when targets depend on something, here
+    * GNU Make uses  prerequisites  when targets depend on something, here
       we use dependencies.
-    * GNU make distinguishes the terms:  explicit rules,  implicit rules,
+    * GNU Make distinguishes the terms:  explicit rules,  implicit rules,
       static pattern rules. For simplicity  target  is used when  explicit
       rules  are meant and  pattern rule  is used for  static pattern rule
-    * GNU make refers to the commands executed in a target as  recipe.
+    * GNU Make refers to the commands executed in a target as  recipe.
 
 
 =head2 Make:include
 
-GNU make's include directive doesn't understand macros, the used path must
+GNU Make's include directive doesn't understand macros, the used path must
 be verbatim. To keep make's functionality (targets) maintainable, multiple
 files are used.  They are all named  Makefile  or  Makefile.SUFFIX,  where
 the  SUFFIX  describes the content, somehow. I.g. it should be possible to
@@ -47,7 +47,7 @@ use each of these makefiles by its own, like:
 
     make -f Makefile.SUFFIX target
 
-GNU make's include functionality, in particular when including files  sub-
+GNU Make's include functionality, in particular when including files  sub-
 directories, is difficult to use. Hence following trick is used:
 
     * sub-directories contains a symbolic link to . (itself)
@@ -65,7 +65,7 @@ This avoids sophistcated syntax in the files itself, like:
         # if called inside t directory,  TEST.dir  must be redifined
     endif
 
-GNU make also cannot manage recursive includes of the same file. This must
+GNU Make also cannot manage recursive includes of the same file. This must
 be checked before including, for example (using private _SID.* variable):
 
     ifeq (,$(_SID.test))
@@ -96,7 +96,7 @@ For details use: make help.test.make
 
 Note: macro definitions in makefiles must not be sequential!
 
-Remember make's automatic variables:
+Remember GNU Make's automatic variables:
 
     $@    - target (file name)
     $*    - matching files of the rule, the stem of the pattern rule
@@ -113,11 +113,11 @@ Use of $$ avoids evaluating $ .
 
 =head2 Make:.SECONDEXPANSION
 
-GNU make's variables can be used as target, in the rules commands and also
+GNU Make's variables can be used as target, in the rules commands and also
 as dependency. When used as dependency, it must be a file (or directory).
 
-When a dependency to  another target is defined in a variable,  GNU make's
-"Secondary Expansion" must be ebabled using the special target:
+When a dependency to  another target is defined in a variable,  GNU Make's
+"Secondary Expansion" must be enabled using the special target:
 
     .SECONDEXPANSION:
 
@@ -207,7 +207,7 @@ Values of variables in makefiles follow some strange rules:
   * anything right of leftmost = character is part of the value
   * single quotes, double quotes and \ character have no special meaning
   * single quotes, double quotes and \ become meta characters depending on
-    how a variable is used, in particular used with or without quotes
+    how the variable is used, in particular used with or without quotes
   * newlines in a variable are not preserved when the variable is used
 
 For most common usage of variables, these rules are less important. But if
@@ -226,8 +226,8 @@ variable is identifiable as "descriptive text" when used.
 Keep in mind, that newlines to be printed must be explicitly  written in a
 variable's value, $(_NL) is used for that.
 
-GNU make'  define  directive, which would avoid the use of  $(_NL), is not
-used to set variables.
+GNU Make'  define  directive, which would avoid the use of  $(_NL), is not
+used to set variables. May change in future ...
 
 
 =head2 Make:--dry-run
@@ -236,11 +236,11 @@ When make is called with the  -n  (--dry-run) option,  make usually simply
 prints the commands to be executed instead of executing them. If a command
 redirects its output to a file, the file will not be generated. But if the
 command is  $(MAKE)  make will be called recursively and redirected to the
-specified file. This generated file then does not contain expeced content.
+specified file. This generated file then doesn't contain expected content.
 Hence the generation of the file should be avoided.
 
 The recursive make command should be printed instead of being executed.
-GNU make has following documented recipe for this:
+GNU Make has following documented recipe for this:
 
     ifeq (n,$(findstring n,$(MAKEFLAGS)))
         @echo "$(MAKE) $(MAKEFLAGS) $* > $@"
@@ -250,7 +250,7 @@ GNU make has following documented recipe for this:
 
 Unfortunately this solution has the drawback that it
 
-  * depends on the version of GNU make (may work or not)
+  * depends on the version of GNU Make (may work or not)
   * is not compatible with other make
 
 Another possibility is to use shell's if-then-else syntax for the target's
@@ -258,21 +258,21 @@ commands. Beside the ugly definition of a shell inline script, this script
 then also acts as one command in the target which makes the output hard to
 read (by humans).
 
-Hence following simplifyed if-then-else construct is used:
+Hence following simplified  if-then-else  construct is used:
 
     @expr "$(MAKEFLAGS)" : n >/dev/null \
             && echo "$(MAKE) $(MFLAGS) -s $* > $@ 2>&1" \
             ||       $(MAKE) $(MFLAGS) -s $* > $@ 2>&1
 
-Note that $(MAKEFLAGS) may look like:  nrR --no-print-directory
+Note that  $(MAKEFLAGS)  may look like:  nrR --no-print-directory
 
 
 =head2 Make:Profiling
 
 Profiling is mainly done with Perl's built-in functionality: perldebug.
 
-There are also targets using special Perl modules  DProf and/or NYTProf to
-do the profiling.
+There are also targets using the Perl modules  DProf and/or NYTProf  to do
+the profiling.
 
 =head3 Perl packages
 
@@ -281,7 +281,7 @@ do the profiling.
 
 =head2 Make:profile.sub
 
-For building the function calling tree, perldebug (PERLDB_OPTS) is used.
+For building the function calling tree,  perldebug (PERLDB_OPTS)  is used.
 The results can be stored in a file, see  LineInfo=  options.
 Unfortunately perldebug writes output to the device directly  (for example
 /dev/stdout).  It is not possible to merge output from the executed script
@@ -296,7 +296,7 @@ with that of perldebug. Following options are not helpful:
 
 It should be simply possible to extend the  pattern rules  with additional
 arguments. For example:  profile.sub.args   and  profile.sub.args_+cn .
-These arguments are extracted in the  pattern rule itself.  This avoids to
+These arguments are extracted in the  pattern rule  itself. This avoids to
 define additional conditional rules for each pattern rule to set the macro
 $(TEST.args)  with the arguments.
 
@@ -346,7 +346,7 @@ The conditional rules split the additional arguments as follows:
     splitted : args +cn --noheader
     TEST.args:      +cn --noheader
 
-This is done using (see above)
+This is done using (see above):
 
   awk -F_ '{i=1;while(i<NF){i++;print $$i}}'
 
