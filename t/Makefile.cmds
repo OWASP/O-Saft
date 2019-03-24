@@ -7,24 +7,24 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft project.
+#?      Makefile to perform testing tasks for o-saft.pl .
 #?
 #? LIMITATIONS
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
 #       For more details please see
-#           Makefile  ../Makefile  Makefile.help  Makefile.template
+#           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.27 19/03/20 23:58:06
+#?      @(#) Makefile.cmds 1.28 19/03/24 11:44:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.27
+_SID.cmds       = 1.28
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -160,12 +160,12 @@ test.cmds.log:  $(ALL.test.cmds.log) test.log-compare-hint
 
 # testrun target to allow something like:  testrun-+my-fancy-command
 # Note that we use  testrun-+%  and not  testrun+%  to avoid double definition
-# of the pattern rule (problem in GNUmake)
+# of the pattern rule (problem in GNU Make)
 # unfortunatelly this restricts the usage to pattern starting with +
-# EXE.pl and TEST.init will be inhereted from  testcmd-c% .
+# EXE.pl and TEST.init will be inherited from  testcmd-c% .
 testrun-+%:     TEST.args  += $(TEST.cmds.hosts)
 testrun-%: testcmd-%
-	@echo -n ""
+	@$(TRACE.target)
 
 # TODO: implement following
 #     $(MAKE_COMMAND) testrun-+cn\ --traceCMD
