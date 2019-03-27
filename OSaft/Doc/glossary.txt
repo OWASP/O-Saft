@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.16 19/03/04 01:46:39
+# SID	@(#) glossary.txt 1.17 19/03/27 22:45:52
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -85,6 +85,7 @@ CFB	Cipher Feedback
 CFB3	Cipher Feedback
 CFBx	Cipher Feedback x bit mode
 CFRG	Crypto Forum Research Group
+CGN	Carrier- Grade NAT (RFC6598)
 ChaCha	stream cipher algorithm (with 256-bit key)
 ChaCha8	see ChaCha
 ChaCha12	see ChaCha (aka 12-round ChaCha)
@@ -337,6 +338,7 @@ LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
 LM hash	LAN Manager hash aka LanMan hash
 Logjam	Attack to force server to downgrade to export ciphers
 LRA	Local Registration Authority
+LSN	large-scale NAT (same as CGN)
 LRW	Liskov, Rivest, and Wagner (blok encryption)
 Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky 13	Break SSL/TLS Protocol
