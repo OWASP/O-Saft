@@ -73,8 +73,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.27 18/11/15 00:07:34";
-my $VERSION = '18.11.18';
+my $SID_cgi = "@(#) o-saft.cgi 1.28 19/03/27 22:42:17";
+my $VERSION = '19.03.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -159,7 +159,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.27\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.28\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -179,7 +179,7 @@ if ($me =~/\.cgi$/) {
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
 		#     0.0.0.0/8       This Network
 		#     10.0.0.0/8      Private-Use Networks
-		#     100.64.0.0/10   ?
+		#     100.64.0.0/10   CGN - Carrier- Grade NAT (RFC6598)
 		#     127.0.0.0/8     Loopback
 		#     169.254.0.0/16  Link local
 		#     172.16.0.0/12   Private-Use Networks
@@ -204,7 +204,7 @@ if ($me =~/\.cgi$/) {
 
 		qr/(-(host|url)=((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
 			# common Class B RFC networks for private use
-			# TODO: 100.64.0.0/10 is not really class B
+			# TODO: 100.64.0.0/10 CGN is not really class B
 
 		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
