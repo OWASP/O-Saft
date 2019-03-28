@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.12 19/02/12 13:12:53
+# SID	@(#) rfc.txt 1.13 19/03/28 22:31:50
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -161,4 +161,6 @@ url	http://tools.ietf.org/
 7710	Captive Portal Using DHCP
 8484	DNS over HTTPS (DoH)
 8467	Padding for DoH und DoT
+1918	Address Allocation for Private Internets
+6598	IANA-Reserved IPv4 Prefix for Shared Address Space
 
