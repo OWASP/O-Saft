@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.53 19/03/24 11:49:22
+#?      @(#) Makefile 1.54 19/03/29 21:49:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.53
+_SID.test       = 1.54
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -653,25 +653,62 @@ ALL.test.test  += tests tests.quick tests.log tests.quick.log
 #_____________________________________________________________________________
 #________________________________________ targets for checking test results __|
 
+HELP-_compare   = ______________________________ targets for comparing tests _
+HELP-test.log-compare   = compare logfiles of previous with latest test
+HELP-test.log-move      = rename logfiles of latest test
+HELP-help.test.log-info = print more details about test.log.* targets
+
+HELP.test.log-info      = $(_NL)\
+\#                      $(HELP-_compare)$(_NL)\
+\# targets to compare and rename generated logfiles:$(_NL)\
+\#   test.log-compare   - static rule to compare logfiles$(_NL)\
+\#   test.log-move      - static rule to rename (move) latest logfiles to "standard" logfile$(_NL)\
+\#   test.*.log-compare - pattern rule for test.log-compare$(_NL)\
+\#   test.*.log-move    - pattern rule for test.log-move$(_NL)\
+\#$(_NL)\
+\# all above targets can be controlled with environment variables:$(_NL)\
+\#   TEST.logdir        - directory where to find logfiles$(_NL)\
+\#   TEST.target_prefix - prefix of targets to search logfiles for (files to be matched)$(_NL)\
+\#   TEST.log-suffix    - suffix of logfiles to be compared to "standard" logfile$(_NL)\
+\#   EXE.log-diff       - program used to show difference of latest and "standard" logfile$(_NL)\
+\# defaults:$(_NL)\
+\#   TEST.logdir        = $(TEST.logdir)$(_NL)\
+\#   TEST.target_prefix = $(TEST.target_prefix)$(_NL)\
+\#   TEST.log-suffix    = $(TEST.log-suffix)$(_NL)\
+\#   EXE.log-diff       = $(EXE.log-diff)$(_NL)\
+\# test example with adapted environment variables:$(_NL)\
+\#   $(MAKE_COMMAND) $@  TEST.logdir=/tmp TEST.log-suffix=-0815$(_NL)\
+\#$(_NL)\
+\# to see what the targets actually do, use$(_NL)\
+\# (environment variables may be added as needed, see above):$(_NL)\
+\#   $(MAKE_COMMAND) e-test.log-compare$(_NL)\
+\#   $(MAKE_COMMAND) e-test.log-move$(_NL)\
+
+help.test.log-info:
+	@echo "$(HELP.test.log-info)"
+
 EXE.log-diff        = xxdiff --geometry 1600x1000
 
 # default prefix, may be redifined per target
 TEST.target_prefix  = testcmd-
 TEST.target_logfile = $(TEST.logdir)/testcmd-
 
+# default suffix for logfiles
+TEST.log-suffix     = -$(_TODAY_)
+
 define _test_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    $(EXE.log-diff) $$f $$f-$(_TODAY_) >/dev/null 2>&1 ; \
+	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
 	done
 endef
 
 define _test_log-move
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $$f-$(_TODAY_) ] || continue ; \
-	    mv $$f-$(_TODAY_) $$f ; \
+	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    mv $${f}$(TEST.log-suffix) $${f} ; \
 	done
 endef
 
