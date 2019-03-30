@@ -399,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.204 Spring Edition 2019
+#?      @(#) 1.205 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -469,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.204 19/03/30 23:09:45"
+set cfg(SID)    "@(#) o-saft.tcl 1.205 19/03/30 23:19:14"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.204}
+set cfg(VERSION) {1.205}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2954,7 +2954,7 @@ proc search_text  {w search_text} {
                 set regex [regsub {(\\)$}     $regex {\\\1}];   # trailing \ is bad
             }
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
-            if {$err ne ""} {
+            if {[regexp {compile} $err]} {
                 tk_messageBox -icon warning -title "Invalid regex pattern" -message $err
                 return
             }
