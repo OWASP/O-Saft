@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.200 Spring Edition 2019
+#?      @(#) 1.201 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.200 19/03/23 23:51:58"
+set cfg(SID)    "@(#) o-saft.tcl 1.201 19/03/30 09:41:04"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.200}
+set cfg(VERSION) {1.201}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2869,6 +2869,7 @@ proc search_text  {w search_text} {
     #? search given text in help window' $w widget
     _dbx 2 "{$w, »$search_text«}"
     global search
+    if {[regexp ^\\s*$ $search_text]}  { return; } ;# do not search for spaces
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
     # new text to be searched, initialize ...
     set search(last) $search_text
