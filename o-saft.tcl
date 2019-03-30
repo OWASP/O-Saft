@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.202 Spring Edition 2019
+#?      @(#) 1.203 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.202 19/03/30 10:26:03"
+set cfg(SID)    "@(#) o-saft.tcl 1.203 19/03/30 21:49:34"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.202}
+set cfg(VERSION) {1.203}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2878,6 +2878,10 @@ proc search_text  {w search_text} {
     set regex $search_text
     set words "";       # will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
+    if {"exact" ne $search(mode)} {
+        # some characters need to be escaped before building regex
+        set regex [regsub -all {([(|*)])} $regex {[\1]}]
+    }
     # prepare regex according smart and fuzzy mode; builds a new regex
     switch $search(mode) {
         {smart} {
@@ -2914,7 +2918,7 @@ proc search_text  {w search_text} {
             }
         }
     }
-    if {$search(mode) ne {exact}} {
+    if {"exact" ne $search(mode)} {
         # we have the original search_text as first alternate, and various
         # variants following in a non-capture group
         # Note: $words has already leading | hence missing in concatenation
@@ -2929,6 +2933,8 @@ proc search_text  {w search_text} {
         {regex} {
             # simply catch compile errors using a similar call as for matching
             set rmode "-regexp"
+            set regex [regsub -all {([+{}])} $regex {\\\1}]    ;# + is bad
+            _dbx 4 " regex #$search(mode)#:   $regex";
             set err ""
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {$err ne ""} {
@@ -2948,7 +2954,7 @@ proc search_text  {w search_text} {
     _dbx 4 " regex mode:      $rmode";
     # ready to fire ...
     set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
-    if {$anf eq ""} { return };         # nothing matched
+    if {"" eq $anf} { return }         ;# nothing matched
     # got all matches, tag them
     set i 0
     foreach a $anf {                    # tag matches; store in HELP-search-pos
