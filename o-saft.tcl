@@ -122,8 +122,8 @@ exec wish "$0" ${1+"$@"}
 #?      containing the matched text.
 #?
 #?      When more than 5 matches are found,  an additional window will display
-#?      all matches as an overview.  Click on a highligted match will show the
-#?      paragraph containing the match in the help window.
+#?      all matches as an overview. Click on a highligted match in this window
+#?      will show the paragraph containing the match in the help window.
 #?      When multiple "overview" windows are open, each handles its matches.
 #?
 #?      The search pattern can be used in following modes:
@@ -141,6 +141,7 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      Note: regex are applied to lines only, pattern cannot span more than a
 #?            single line.
+#?      The pattern must have at least 4 characters, except for mode "exact".
 #?
 #?      The GUI contains various [?] buttons. Clicking such a button will show
 #?      the corresponding section in the help window  context sensitive).
@@ -398,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.203 Spring Edition 2019
+#?      @(#) 1.204 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.203 19/03/30 21:49:34"
+set cfg(SID)    "@(#) o-saft.tcl 1.204 19/03/30 23:09:45"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.203}
+set cfg(VERSION) {1.204}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2807,7 +2808,7 @@ proc search_more  {w search_text regex} {
     set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
     set txt  [create_text $this ""].t
     #{ adjust window, quick&dirty
-    wm title $this "Search Results for: $search_text"
+    wm title $this "Search Results for: »$search_text«"
     destroy  $this.f1.saveconfig;   # we don't need a save button here
     $this.f0.help_me config -command {global cfg; create_about; $cfg(winA).t see 60.0}
         # redifine help button to show About and scroll to Help description
@@ -2870,6 +2871,13 @@ proc search_text  {w search_text} {
     _dbx 2 "{$w, »$search_text«}"
     global search
     if {[regexp ^\\s*$ $search_text]}  { return; } ;# do not search for spaces
+    if {"exact" ne $search(mode)} {
+        if {[string length $search_text] < 4} {
+            tk_messageBox -icon warning -title "Search pattern" \
+                -message "pattern should have more than 3 characters"
+            return;
+        }
+    }
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
     # new text to be searched, initialize ...
     set search(last) $search_text
@@ -2878,13 +2886,10 @@ proc search_text  {w search_text} {
     set regex $search_text
     set words "";       # will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
-    if {"exact" ne $search(mode)} {
-        # some characters need to be escaped before building regex
-        set regex [regsub -all {([(|*)])} $regex {[\1]}]
-    }
     # prepare regex according smart and fuzzy mode; builds a new regex
     switch $search(mode) {
         {smart} {
+            set regex [regsub -all {([(|*)])}   $regex {[\1]}] ;# some characters need to be escaped before building regex
             # build pattern with each char optional
             set i 0
             foreach c [lindex [split $regex ""]] {
@@ -2894,6 +2899,7 @@ proc search_text  {w search_text} {
         }
         {fuzzy} {
             # some common synonyms, then each char as optional wildcard
+            set regex [regsub -all {([(|*)])}   $regex {[\1]}]
             set regex [regsub -all -nocase {ou} $regex {o}]
             set regex [regsub -all -nocase {ph} $regex {f}]
             set regex [regsub -all -nocase {qu} $regex {q}]
@@ -2947,6 +2953,11 @@ proc search_text  {w search_text} {
                 set regex [regsub {([|])$}    $regex {[\1]}];   # trailing | is bad
                 set regex [regsub {(\\)$}     $regex {\\\1}];   # trailing \ is bad
             }
+            catch { $w search -regexp -all -nocase -- $regex 1.0 } err
+            if {$err ne ""} {
+                tk_messageBox -icon warning -title "Invalid regex pattern" -message $err
+                return
+            }
             # else { regex OK }
             }
     }
@@ -2954,7 +2965,11 @@ proc search_text  {w search_text} {
     _dbx 4 " regex mode:      $rmode";
     # ready to fire ...
     set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
-    if {"" eq $anf} { return }         ;# nothing matched
+    if {"" eq $anf} {
+        tk_messageBox -icon warning -title "Serach ..." -message "no matches for »$search_text«"
+        # TODO: replace by toplevel and automaticall destroy it
+        return
+    }         ;# nothing matched
     # got all matches, tag them
     set i 0
     foreach a $anf {                    # tag matches; store in HELP-search-pos
