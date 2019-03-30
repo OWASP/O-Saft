@@ -398,7 +398,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.201 Spring Edition 2019
+#?      @(#) 1.202 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -468,10 +468,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.201 19/03/30 09:41:04"
+set cfg(SID)    "@(#) o-saft.tcl 1.202 19/03/30 10:26:03"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.201}
+set cfg(VERSION) {1.202}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2874,7 +2874,7 @@ proc search_text  {w search_text} {
     # new text to be searched, initialize ...
     set search(last) $search_text
     $w tag delete HELP-search-pos;      # tag which contains all matches
-    _dbx 4 " mode: $search(mode)"
+    _dbx 4 " mode:            $search(mode)"
     set regex $search_text
     set words "";       # will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
@@ -2920,21 +2920,17 @@ proc search_text  {w search_text} {
         # Note: $words has already leading | hence missing in concatenation
         set regex "(?:$regex$words)";
     }
-    _dbx 4 " $search(mode) regex: $regex";
+    _dbx 4 " regex ($search(mode)):   $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
     switch $search(mode) {
-        {exact} {
-                # Tcl's "text search" complains when pattern starts with -
-            set regex [regsub {^(-)} $regex {\\\1}];    # leading - is bad
-            set rmode "-exact"
-            }
+        {exact} { set rmode "-exact" }
         {smart} -
         {fuzzy} -
         {regex} {
             # simply catch compile errors using a similar call as for matching
             set rmode "-regexp"
             set err ""
-            catch { $w search -regexp -all -nocase $regex 1.0 } err
+            catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {$err ne ""} {
                 _dbx 4 " **ERROR: $err"
                 # most likely regex failed, try to sanatize most common mistakes
@@ -2948,9 +2944,10 @@ proc search_text  {w search_text} {
             # else { regex OK }
             }
     }
-    _dbx 4 " sanatized regex: $regex";
+    _dbx 4 " regex sanatized: $regex";
+    _dbx 4 " regex mode:      $rmode";
     # ready to fire ...
-    set anf [$w search $rmode -all -nocase -count end $regex 1.0]
+    set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
     if {$anf eq ""} { return };         # nothing matched
     # got all matches, tag them
     set i 0
