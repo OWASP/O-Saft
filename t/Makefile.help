@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.58 19/03/20 23:58:08
+#?      @(#) Makefile.help 1.59 19/03/31 21:46:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.58
+_SID.help       = 1.59
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -504,7 +504,7 @@ t-%:
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
 
-HELP-_help2     = _____________________________________ testing help targets _
+HELP-_help3     = _____________________________________ testing help targets _
 HELP-test.help      = test help* targets of our Makefiles
 HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
 HELP-test.help.log-compare  = compare results of test.help.log (if any)
