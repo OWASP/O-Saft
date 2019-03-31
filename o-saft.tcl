@@ -399,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.206 Spring Edition 2019
+#?      @(#) 1.207 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -469,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.206 19/03/31 10:03:59"
+set cfg(SID)    "@(#) o-saft.tcl 1.207 19/03/31 11:23:50"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.206}
+set cfg(VERSION) {1.207}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -660,7 +660,7 @@ array set cfg_buttons "
     # and the tooltip. Because configuering the above table is a bit cumbersome
     # for most users, we provide simple lists with key=value pairs. These lists
     # are: cfg_colors, cfg_texts and cfg_tipps. The settings here are defaults,
-    # and may be redifined in cfg(RC) using  cfg_color, cfg_label and cfg_tipp.
+    # and may be redefined in cfg(RC) using  cfg_color, cfg_label and cfg_tipp.
     # These lists (arrays in Tcl terms) contain not just the button values, but
     # also values for other objects.  So the lists are initialized here for all
     # other values, and then the values from cfg_buttons are added.
@@ -799,17 +799,20 @@ check PATH environment variable."
 
 set cfg(DESC)   {-- CONFIGURATION internal data storage ----------------------}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
-set cfg(EXEC)   0;  # count executions, used for object names
-set cfg(x--x)   0;  # each option  will have its own entry (this is a dummy)
-set cfg(x++x)   0;  # each command will have its own entry (this is a dummy)
-set cfg(objN)   ""; # object name of notebook; needed to add more note TABS
-set cfg(winA)   ""; # object name of About  window
-set cfg(winH)   ""; # object name of Help   window
-set cfg(winF)   ""; # object name of Filter window
-set cfg(objS)   ""; # object name of status line
-set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
-set cfg(DEBUG)  0;  # set to 1 to print debugging messages
-set cfg(TRACE)  0;  # set to 1 to print program tracing
+set cfg(EXEC)   0  ;# count executions, used for object names
+set cfg(x--x)   0  ;# each option  will have its own entry (this is a dummy)
+set cfg(x++x)   0  ;# each command will have its own entry (this is a dummy)
+set cfg(winO)   "" ;# object name of Help   window
+set cfg(win-)   "" ;# (reserved for future use)
+set cfg(winS)   ".";# object name of main   window (usually not used as just .)
+set cfg(winA)   "" ;# object name of About  window
+set cfg(winF)   "" ;# object name of Filter window
+set cfg(winT)   "" ;# (reserved for future use)
+set cfg(objS)   "" ;# object name of status line
+set cfg(objT)   "" ;# object name of notebook; needed to add more note TABS
+set cfg(VERB)   0  ;# set to 1 to print more informational messages from Tcl/Tk
+set cfg(DEBUG)  0  ;# set to 1 to print debugging messages
+set cfg(TRACE)  0  ;# set to 1 to print program tracing
 
 set cfg(AQUA)   {-- CONFIGURATION Aqua (Mac OS X) ----------------------------}
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
@@ -827,7 +830,7 @@ set search(more)     5;     # show addition overview window when more than this 
 set search(mode)    "regex";# search pattern is exact text, or regex, or fuzzy
 #   variable names and function names used/capable for searching text in HELP
 #   can be found with following patterns:  search.text  search.list  etc.
-# tags used in help text cfg(HELP) aka (window) cfg(winH)
+# tags used in help text cfg(HELP) aka (window) cfg(winO)
     # HELP-search-pos   tag contaning matching text positions (tuple: start end)
     # HELP-search-mark  tag assigned to currently marked search text
     # HELP-search-box   tag assigned to currently paragraph with search text
@@ -1373,7 +1376,7 @@ proc set_readonly {w}   {
 proc update_cursor {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
     global cfg
-    foreach w [list . objN objS winA winF winH] {
+    foreach w [list . objT objS winA winF winO] {
         if {$w ne "."} { set w $cfg($w) }
         if {$w eq ""}  { continue }
         # now get all children too
@@ -1681,6 +1684,7 @@ proc create_selected {title val} {
 
 proc create_window  {title size} {
     #? create new toplevel window with given title and size; returns widget
+    # special handling for windows with title "Help" or "About"
     global cfg myX
     set this    .[_str2obj $title]
     if {[winfo exists $this]}  { return ""; }; # do nothing
@@ -1703,6 +1707,25 @@ proc create_window  {title size} {
     theme_set    $this.f0.help_me    $cfg(bstyle)
     return $this
 }; # create_window
+
+# poor man's OO for created windows
+proc create_window:title    {w txt} {
+    #? destroy "Save" button in created window
+    global cfg
+    wm title     $w "$cfg(TITLE): $txt"
+    wm iconname  $w "o-saft: $txt"
+    return
+}
+proc create_window:helpcmd  {w cmd} { $w.f0.help_me    config -command $cmd; return; }
+    #? configure new command for "?" button in created window
+proc create_window:savecmd  {w cmd} { $w.f1.saveconfig config -command $cmd; return; }
+    #? configure new command for "Save" button in created window
+proc create_window:noclose  {w}     { destroy $w.f1.closewin;   return; }
+    #? destroy "Close" button in created window
+proc create_window:nohelp   {w}     { destroy $w.f0.help_me;    return; }
+    #? destroy "?" button in created window
+proc create_window:nosave   {w}     { destroy $w.f1.saveconfig; return; }
+    #? destroy "Save" button in created window
 
 proc create_host  {parent}  {
     #? frame with label and entry for host:port; $nr is index to hosts()
@@ -2151,7 +2174,7 @@ proc create_pod   {sect} {
 }; # create_pod
 
 proc create_help  {sect} {
-    #? create new window with complete help text; store widget in cfg(winH)
+    #? create new window with complete help text; store widget in cfg(winO)
     #? if  sect  is given, jump to this section
 
     _dbx 2 "{$sect}"
@@ -2199,10 +2222,10 @@ proc create_help  {sect} {
     # TODO: some section lines are not detected properly and hence missing
 
     _dbx 4 " 1. build help window"
-    if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
-        wm deiconify $cfg(winH)
+    if {[winfo exists $cfg(winO)]} {    # if there is a window, just jump to text
+        wm deiconify $cfg(winO)
         set name [_str2obj [string trim $sect]]
-        search_show $cfg(winH).t "HELP-HEAD-$name"
+        search_show $cfg(winO).t "HELP-HEAD-$name"
         return
     }
     set this    [create_window {Help} $myX(geoO)]
@@ -2215,8 +2238,9 @@ proc create_help  {sect} {
          [button $this.f1.help_next -command "search_next $txt {+}"] \
         [spinbox $this.f1.s -textvariable search(text) -values $search(list) -command "search_list %d" -wrap 1 -width 25] \
         [spinbox $this.f1.m -textvariable search(mode) -values [list exact regex smart fuzzy] ] \
-         [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 60.0} ] \
+         [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 84.0} ] \
         -side left
+        # TODO: remove hardcoded text position 84.0 in About
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
     pack config  $this.f1.m  -padx 10
     pack config  $this.f1.help_home   $this.f1.help_help -padx $myX(rpad)
@@ -2406,10 +2430,10 @@ proc create_help  {sect} {
     bind $txt <KeyPress>    "search_view $txt %K"
     #bind $txt <MouseWheel>  "search_view $txt %D" ;# done automatically
 
-    set cfg(winH) $this
+    set cfg(winO) $this
     if {$sect ne ""} {
         set name [_str2obj [string trim $sect]]
-        search_show $cfg(winH).t "HELP-HEAD-$name"
+        search_show $cfg(winO).t "HELP-HEAD-$name"
     }
     return
 }; # create_help
@@ -2446,7 +2470,7 @@ proc create_tab   {parent layout cmd content} {
     theme_set    $tab.saveresult $cfg(bstyle)
     theme_set    $tab.ttyresult  $cfg(bstyle)
     theme_set    $tab.filter     $cfg(bstyle)
-    $cfg(objN) select $tab
+    $cfg(objT) select $tab
     return $txt
 }; # create_tab
 
@@ -2712,15 +2736,15 @@ proc create_main  {targets} {
     }
 
     ## create notebook object and set up Ctrl+Tab traversal
-    set cfg(objN)   $w.note
-    ttk::notebook   $cfg(objN) -padding 5
-    ttk::notebook::enableTraversal $cfg(objN)
-    pack $cfg(objN) -fill both -expand 1
+    set cfg(objT)   $w.note
+    ttk::notebook   $cfg(objT) -padding 5
+    ttk::notebook::enableTraversal $cfg(objT)
+    pack $cfg(objT) -fill both -expand 1
 
     ## create TABs: Command and Options
-    set tab_cmds    [create_note $cfg(objN) "Commands"]
-    set tab_opts    [create_note $cfg(objN) "Options"]
-    set tab_filt    [create_note $cfg(objN) "Filter"]
+    set tab_cmds    [create_note $cfg(objT) "Commands"]
+    set tab_opts    [create_note $cfg(objT) "Options"]
+    set tab_filt    [create_note $cfg(objT) "Filter"]
     create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
     create_buttons  $tab_opts {OPT}    ;# fill Options pane
     create_filtertab $tab_filt {FIL}   ;# fill Filter pane
@@ -2813,10 +2837,10 @@ proc search_more  {w search_text regex} {
     set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
     set txt  [create_text $this ""].t
     #{ adjust window, quick&dirty
-    wm title $this "Search Results for: »$search_text«"
-    destroy  $this.f1.saveconfig;   # we don't need a save button here
-    $this.f0.help_me config -command {global cfg; create_about; $cfg(winA).t see 60.0}
-        # redifine help button to show About and scroll to Help description
+    create_window:title   $this "Search Results for: »$search_text«"
+    create_window:nosave  $this    ;# no "Save" button needed here
+    create_window:helpcmd $this {create_about; global cfg; $cfg(winA).t see 84.0}
+        # redefine help button to show About and scroll to Help description
     #}
     $txt config -state normal
     #_dbx 4 " HELP-search-pos ([llength $matches]): $matches"
@@ -2980,9 +3004,9 @@ proc search_text  {w search_text} {
         # finally, the window will be destroyed after a few seconds.
         global myX
         set warn [create_window "[_get_text h_nomatch] »$search_text«" $myX(geo-)]
-        wm title $warn "Search ..."
-        destroy  $warn.f1.saveconfig   ;# we don't need a save button here
-        $warn.f0.help_me config -command {create_about; global cfg; $cfg(winA).t see 84.0}
+        create_window:title   $warn "Search ..."
+        create_window:nosave  $warn    ;# no "Save" button needed here
+        create_window:helpcmd $warn {create_about; global cfg; $cfg(winA).t see 84.0}
         set   auto_destroy_timeout wait
         after 6000 set auto_destroy_timeout killme
         vwait auto_destroy_timeout
@@ -3300,7 +3324,7 @@ proc osaft_load   {cmd} {
     set fid [open $name r]
     set tab($cfg(EXEC)) [read $fid]
     close $fid
-    set txt [create_tab  $cfg(objN) $cfg(layout) $cmd $tab($cfg(EXEC))]
+    set txt [create_tab  $cfg(objT) $cfg(layout) $cmd $tab($cfg(EXEC))]
     apply_filter $txt $cfg(layout) $cmd    ;# text placed in pane, now do some markup
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $tab($nr)
@@ -3395,7 +3419,7 @@ proc osaft_exec   {parent cmd} {
     set _layout $cfg(layout)
     if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
     if { "docker_status"  eq  $cmd}  { set _layout "text" };# don't need table here
-    set txt [create_tab  $cfg(objN) $_layout $cmd $tab($cfg(EXEC))]
+    set txt [create_tab  $cfg(objT) $_layout $cmd $tab($cfg(EXEC))]
     apply_filter $txt $_layout $cmd    ;# text placed in pane, now do some markup
     destroy $cfg(winF)                 ;# workaround, see FIXME in create_filtertab
     update_status "#} $do done (status=$status)."  ;# status not yet used ...
@@ -3574,7 +3598,7 @@ WM  frame:     $wmf
  |  system:    [tk windowingsystem]
  |  clipboard: $myX(buffer)
  |  geometry:  $geo
-TAB tabs:      [$cfg(objN) tabs]
+TAB tabs:      [$cfg(objT) tabs]
  |
 _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv
     #          [tk windowingsystem] # we believe this a window manager property
