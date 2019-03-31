@@ -254,7 +254,7 @@ exec wish "$0" ${1+"$@"}
 #.
 #.      Filter TAB Description
 #.           +---------------------------------------------------------------+
-#.       (f) |    Key     r  e  #  Regex  Foreground Background  Font     u  |
+#.       (f) |    Key     r  e  #  RegEx  Foreground Background  Font     u  |
 #.           | +---------+--+--+--+------+----------+----------+--------+--- |
 #.       (F) | |== CMT    *  o  0  ^==*               gray      osaftHead x  |
 #.           | +---------+--+--+--+------+----------+----------+--------+--- |
@@ -263,9 +263,9 @@ exec wish "$0" ${1+"$@"}
 #.
 #.       (f) - Headline for filter description
 #.             key        - unique key for this filter
-#.             r          - Regex used as regular expression
-#.             e          - Regex used as exact match
-#.             #          - Nr. of characters to be matched by Regex
+#.             r          - RegEx used as regular expression
+#.             e          - RegEx used as exact match
+#.             #          - Nr. of characters to be matched by RegEx
 #.             Foreground - colour for matched text
 #.             Background - colour for background of matched text
 #.             Font       - use this font for matched text
@@ -399,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.205 Spring Edition 2019
+#?      @(#) 1.206 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -469,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.205 19/03/30 23:19:14"
+set cfg(SID)    "@(#) o-saft.tcl 1.206 19/03/31 10:03:59"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.205}
+set cfg(VERSION) {1.206}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -551,11 +551,12 @@ set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
 set myX(geoo)   "660x720"      ;# geometry of Help window
-set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help    window
-set myX(geo-)   ""             ;#
-set myX(geoS)   "700x720"      ;# geometry and position of O-Saft  window
-set myX(geoA)   "660x610"      ;# geometry and position of About   window
-set myX(geoF)   ""             ;# geometry and position of Filter  window (computed dynamically)
+
+set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help      window
+set myX(geo-)   "400x80"       ;# geometry and position of no match  window
+set myX(geoS)   "700x720"      ;# geometry and position of O-Saft    window
+set myX(geoA)   "660x610"      ;# geometry and position of About     window
+set myX(geoF)   ""             ;# geometry and position of Filter    window (computed dynamically)
 set myX(geoT)   ""             ;#
 set myX(minx)   700            ;# O-Saft  window min. width
 set myX(miny)   780            ;# O-Saft  window min. height
@@ -684,6 +685,10 @@ array set cfg_colors "
 "
 
 array set cfg_texts "
+    DESC_search {-- CONFIGURATION texts used in GUI's Help window ------------}
+    h_min4chars {Pattern should have more than 3 characters.}
+    h_nomatch   {No matches found for}
+    h_badregex  {Invalid RegEx pattern}
     DESC        {-- CONFIGURATION texts used in GUI for buttons or labels ----}
     host        {Host\[:Port\]}
     hideline    {Hide complete line}
@@ -707,7 +712,7 @@ Select and configure options. All options are used for any command button.
     helpclick   {Click to show in Help window}
     help_mode   {Mode how pattern is used for searching}
     tabFILTER   {
-Configure filter for text markup: r, e and # specify how the Regex should work;
+Configure filter for text markup: r, e and # specify how the RegEx should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
 Changes apply to next +command.
 }
@@ -716,7 +721,7 @@ Changes apply to next +command.
     f_moder     r
     f_modee     e
     f_chars     {#}
-    f_regex     Regex
+    f_regex     RegEx
     f_fg        Foreground
     f_bg        Background
     f_font      Font
@@ -851,7 +856,7 @@ set f_bg(0)     {Background color used for matching text (empty: don't change)}
 set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
 set f_fn(0)     {Font used for matching text (empty: don't change)}
 set f_un(0)     {Underline matching text (0 or 1)}
-set f_rex(0)    {Regex to match text}
+set f_rex(0)    {RegEx to match text}
 set f_cmt(0)    {Description of regex}
 
 proc _txt2arr     {str} {
@@ -2521,7 +2526,7 @@ proc create_win   {parent title cmd} {
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
         if {[regexp $prg(rexOUT-cmd) $dat]} { set skip 1; };# next group starts
-        if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use regex
+        if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use RegEx
             # title matches: create a window for checkboxes and entries
             set skip 0;
             _dbx 4 " create window: $win »$dat«"
@@ -2855,13 +2860,13 @@ proc search_next  {w direction} {
     }
     if {$see eq ""} {
         # reached end of range, or range contains only one, switch to beginning
-        set see [lrange [$w tag ranges HELP-search-pos] 0 1];  # get first two from list
+        set see [lrange [$w tag ranges HELP-search-pos] 0 1]   ;# get first two from list
         if {$see eq ""} { return };
         # FIXME: round robin for + but not for -
     }
-    $w see [lindex $see 0];             # show at start of match
+    $w see [lindex $see 0]             ;# show at start of match
     search_mark $w "$see"
-    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
+    #$w yview scroll 1 units           ;# somtimes necessary, but difficult to decide when
     set search(see)  $see
     return
 }; # search_next
@@ -2873,18 +2878,17 @@ proc search_text  {w search_text} {
     if {[regexp ^\\s*$ $search_text]}  { return; } ;# do not search for spaces
     if {"exact" ne $search(mode)} {
         if {[string length $search_text] < 4} {
-            tk_messageBox -icon warning -title "Search pattern" \
-                -message "pattern should have more than 3 characters"
-            return;
+            tk_messageBox -icon warning -title "Search pattern" -message [_get_text h_min4chars]
+            return
         }
     }
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
     # new text to be searched, initialize ...
     set search(last) $search_text
-    $w tag delete HELP-search-pos;      # tag which contains all matches
+    $w tag delete HELP-search-pos      ;# tag which contains all matches
     _dbx 4 " mode:            $search(mode)"
     set regex $search_text
-    set words "";       # will be computed below
+    set words ""       ;# will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
     # prepare regex according smart and fuzzy mode; builds a new regex
     switch $search(mode) {
@@ -2909,7 +2913,7 @@ proc search_text  {w search_text} {
             foreach c [lindex [split $regex ""]] {
                 # only replace well known characters, leave meta as is
                 if {[regexp {[A-Za-z0-9 _#'"$%&/;,-]} $c]} {
-                    # "' quotes to balance those in regex (keeps editor happy:)
+                    # "' quotes to balance those in $regex (keeps editor happy:)
                     set       replace {.?};
                     switch [string tolower $c] {
                       f { set replace {(?:ph|p|f)?} }
@@ -2928,7 +2932,7 @@ proc search_text  {w search_text} {
         # we have the original search_text as first alternate, and various
         # variants following in a non-capture group
         # Note: $words has already leading | hence missing in concatenation
-        set regex "(?:$regex$words)";
+        set regex "(?:$regex$words)"
     }
     _dbx 4 " regex ($search(mode)):   $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
@@ -2948,14 +2952,14 @@ proc search_text  {w search_text} {
                 # most likely regex failed, try to sanatize most common mistakes
                 # leading - is Tcl special, as it will be an option for regex
                 # Note: Tcl is picky about character classes, need \\ inside []
-                set regex [regsub {^(\\)}     $regex {\\\1}];   # leading \ is bad
-                set regex [regsub {^([|*+-])} $regex {[\1]}];   # as leading char is bad
-                set regex [regsub {([|])$}    $regex {[\1]}];   # trailing | is bad
-                set regex [regsub {(\\)$}     $regex {\\\1}];   # trailing \ is bad
+                set regex [regsub {^(\\)}     $regex {\\\1}]   ;# leading \ is bad
+                set regex [regsub {^([|*+-])} $regex {[\1]}]   ;# as leading char is bad
+                set regex [regsub {([|])$}    $regex {[\1]}]   ;# trailing | is bad
+                set regex [regsub {(\\)$}     $regex {\\\1}]   ;# trailing \ is bad
             }
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {[regexp {compile} $err]} {
-                tk_messageBox -icon warning -title "Invalid regex pattern" -message $err
+                tk_messageBox -icon warning -title [_get_text h_badregex] -message $err
                 return
             }
             # else { regex OK }
@@ -2966,10 +2970,25 @@ proc search_text  {w search_text} {
     # ready to fire ...
     set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
     if {"" eq $anf} {
-        tk_messageBox -icon warning -title "Serach ..." -message "no matches for »$search_text«"
-        # TODO: replace by toplevel and automaticall destroy it
+        # Show warning if no matches found. This could simply be accomplished
+        # using Tcl/Tk's tk_messageBox like:
+        #   tk_messageBox -icon warning -title "Serach" -message "no matches"
+        # but we don't want to bother the user to click a button to make this
+        # message box disappear.  Instead we use our own toplevel window with
+        # following adaptions:
+        #   no "Save" button; "Help" button to show description for "Search"
+        # finally, the window will be destroyed after a few seconds.
+        global myX
+        set warn [create_window "[_get_text h_nomatch] »$search_text«" $myX(geo-)]
+        wm title $warn "Search ..."
+        destroy  $warn.f1.saveconfig   ;# we don't need a save button here
+        $warn.f0.help_me config -command {create_about; global cfg; $cfg(winA).t see 84.0}
+        set   auto_destroy_timeout wait
+        after 6000 set auto_destroy_timeout killme
+        vwait auto_destroy_timeout
+        destroy  $warn
         return
-    }         ;# nothing matched
+    }
     # got all matches, tag them
     set i 0
     foreach a $anf {                    # tag matches; store in HELP-search-pos
