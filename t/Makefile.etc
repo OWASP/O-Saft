@@ -1,0 +1,166 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile    - makefile for tests with O-Saft and legacy tools
+#?
+#? SYNOPSYS
+#?      make -f Makefile.etc ....
+#?
+#? DESCRIPTION
+#?      Various tests, formerly implemented in individual scripts.
+#?      This Makefile is not included in O-Saft's make system, hence it must
+#?      be called using make's  -f  option, see  SYNOPSYS  above.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see
+#           Makefile  ../Makefile  Makefile.help  Makefile.template
+#
+#? VERSION
+#?      @(#) Makefile.etc 1.1 19/03/31 21:27:12
+#?
+#? AUTHOR
+#?      19-mar-19 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.etc        = 1.1
+
+_MYSELF.etc     = t/Makefile.etc
+_MY.includes   += $(_MYSELF.etc)
+_MY.inc.type   += etc
+
+first-etc-target-is-default: help.test.etc
+
+ALL.help.test  += help.test.etc
+
+HELP-help.test.etc      = print targets for testing ciphers with various tools
+help.test.etc:          HELP_TYPE   = etc
+help.test.etc-v:        HELP_TYPE   = etc
+help.test.etc-vv:       HELP_TYPE   = etc
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+EXE.pl          = ../o-saft.pl
+TEST.init       =
+TEST.args       =
+
+TEST.etc.hosts  =
+ifdef TEST.hosts
+    TEST.etc.hosts  = $(TEST.hosts)
+endif
+
+#_____________________________________________________________________________
+#______________________________________________________________ testing ... __|
+
+HELP-_etc1          = ________________________________________________ testing ... _
+HELP-test.etc       = various legacy tests
+HELP-test.etc.log   = same as test.etc but store output in '$(TEST.logdir)/'
+HELP-testcmd-sslscan1.8     = test with sslscan version 1.8
+HELP-testcmd-sslscan1.11    = test with sslscan version 1.11.9
+HELP-testcmd-osaft_*        = test with o-saft.pl +cipher*
+HELP-test-cipher.all        = test all tools with cipher tests
+HELP-test-cipher.all.log    = same as HELP-test-cipher.all but store output in '$(TEST.logdir)/'
+
+HELP.etc            = # no general documentation yet
+
+HELP.test.etc.all   = # no special documentation yet
+
+TEST.init  = demo
+TEST.hosts = $(TEST.init)
+
+# testcmd-sslscan* are defined as static targets, similar to testcmd-% , they
+# can be used in the corresponding *.log target (pattern rule) automatically
+
+testcmd-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
+testcmd-sslscan1.8:  TEST.args = --no-failed
+testcmd-sslscan1.8:
+	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+
+testcmd-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
+testcmd-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
+testcmd-sslscan1.11:
+	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+
+testcmd-testssl.sh:  EXE.pl    = testssl.sh
+testcmd-testssl.sh:  TEST.args = -e --color 0
+testcmd-testssl.sh: 
+	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+
+# use testcmd-% pattern rule for all o-saft.pl +cipher tests
+testcmd-osaft_%:     TEST.args = --enabled --header --no-hint
+testcmd-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
+    # tricky illegal option to enforce another (second) command with +cipher
+
+osaft-CMDS          = +cipher +cipherraw
+
+ALL.test-cipher     = \
+	testcmd-sslscan1.8 \
+	testcmd-sslscan1.11 \
+	testcmd-testssl.sh \
+	testcmd-osaft_--legacy-owasp \
+	$(osaft-CMDS:%=testcmd-osaft_%) 
+ALL.test-cipher.log = $(ALL.test-cipher:%=%.log)
+
+# TODO: targets for following:
+# common test wih openssl:
+#    echo | openssl s_client -tlsextdebug -msg -connect ${fqdn}:443 2>&1 | grep " Start"
+# DESCRIPTION
+#      Debugging with special ciphers.
+#      All programs need to return same list of ciphers.
+#      Result with or without SNI may be different.
+#
+_CIPHERS     = DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM-SHA256
+#_CIPHER_LIST = $(shell $(_CIPHERS) :)
+#_CIPHER_REGEX= $(shell $(_CIPHERS) |)
+#  without SSI:
+#    sslscan --tlsall --sni-name="x"  $host  |egrep "($(_CIPHER_REGEX))"
+#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host --nosni
+#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host --nosni --force-openssl
+#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host --nosni
+#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host --nosni --force-openssl
+# ALL.test-openssl = $(_CIPHERS:%=%testcmd-openssl_%))
+#
+#  with SSI:
+#    sslscan --tlsall                 $host  |egrep "($(_CIPHER_REGEX))"
+#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host
+#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host
+
+test-cipher.all:     $(ALL.test-cipher)
+test-cipher.all.log: $(ALL.test-cipher.log)
+
+ALL.test.etc        = $(ALL.test-cipher)
+ALL.test.etc.log    = $(ALL.test-cipher.log)
+
+test-cipher.all.log-compare:  TEST.target_prefix = testcmd-
+test-cipher.all.log-move:     TEST.target_prefix = testcmd-
+test-cipher.all.log-compare:  test.log-compare
+test-cipher.all.log-move:     test.log-move
+    # TODO: test-cipher.all.log-compare not automatically shown in test-cipher.all
+
+testetc-%: message-%
+	@$(EXE.dummy)
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+test.etc.log-compare:   TEST.target_prefix  = testcmd-cgi
+test.etc.log-move:      TEST.target_prefix  = testcmd-cgi
+
+test.etc:       $(ALL.test.etc)
+test.etc.log:   $(ALL.test.etc.log)
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(All.test.etc)
+ALL.tests.log  += $(ALL.test-osaft.log)
+
