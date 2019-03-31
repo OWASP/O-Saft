@@ -399,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.207 Spring Edition 2019
+#?      @(#) 1.208 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -469,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.207 19/03/31 11:23:50"
+set cfg(SID)    "@(#) o-saft.tcl 1.208 19/03/31 19:36:09"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.207}
+set cfg(VERSION) {1.208}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -641,6 +641,7 @@ array set cfg_buttons "
     {help_prev} {{<}        $my_bg  help_prev   {Search baskward for text}}
     {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
     {help_help} {{?}        $my_bg  {?}         {Show help about search functionality}}
+    {helpreset} {{Reset}    $my_bg  reset       {Reset/clear list of search texts}}
     {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
     {cmdstart}  {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with commands selected in 'Commands' tab}}
     {cmdcheck}  {{+check}   #ffd800 +check    {Execute $prg(SAFT) +check   }}
@@ -2236,11 +2237,15 @@ proc create_help  {sect} {
     pack [button $this.f1.help_home -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
          [button $this.f1.help_prev -command "search_next $txt {-}"] \
          [button $this.f1.help_next -command "search_next $txt {+}"] \
-        [spinbox $this.f1.s -textvariable search(text) -values $search(list) -command "search_list %d" -wrap 1 -width 25] \
-        [spinbox $this.f1.m -textvariable search(mode) -values [list exact regex smart fuzzy] ] \
+        [spinbox $this.f1.s -textvariable search(text) -values $search(list) \
+             -command "search_list %d"   -wrap 1 -width 25 ] \
+        [spinbox $this.f1.m -textvariable search(mode) -values [list exact regex smart fuzzy] \
+             -command {global search; set search(last) ""} ] \
+         [button $this.f1.helpreset -command "search_rset" ] \
          [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 84.0} ] \
         -side left
         # TODO: remove hardcoded text position 84.0 in About
+        # changing the search(mode) resets search(last) to ensure search execution
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
     pack config  $this.f1.m  -padx 10
     pack config  $this.f1.help_home   $this.f1.help_help -padx $myX(rpad)
@@ -2248,8 +2253,10 @@ proc create_help  {sect} {
     theme_set    $this.f1.help_prev   $cfg(bstyle)
     theme_set    $this.f1.help_next   $cfg(bstyle)
     theme_set    $this.f1.help_help   $cfg(bstyle)
+    theme_set    $this.f1.helpreset   $cfg(bstyle)
     create_tip   $this.f1.m [_get_tipp help_mode]
     create_tip   $this.f1.s [_get_tipp helpsearch]
+    #create_tip   $this.f1.help.rset  [_get_tipp helpreset]
     bind         $this.f1.s <Return> "
            global search
            if {\$search(last) != \$search(text)} {
@@ -2896,7 +2903,7 @@ proc search_next  {w direction} {
 }; # search_next
 
 proc search_text  {w search_text} {
-    #? search given text in help window' $w widget
+    #? search given text in help window's $w widget
     _dbx 2 "{$w, »$search_text«}"
     global search
     if {[regexp ^\\s*$ $search_text]}  { return; } ;# do not search for spaces
@@ -2951,6 +2958,15 @@ proc search_text  {w search_text} {
                 incr i
             }
         }
+        {regex} {
+            # regex fails, when some meta characters are uses as first or last
+            # character, sanatized regex to avoid compiling regex
+            # Note: Tcl is picky about character classes, need \\ inside []
+            set regex [regsub {^(\\)}     $regex {\\\1}]   ;# leading  \ is bad
+            set regex [regsub {^([|*+-])} $regex {[\1]}]   ;# leading *|+ is bad
+            set regex [regsub {([|])$}    $regex {[\1]}]   ;# trailing | is bad
+            set regex [regsub {(\\)$}     $regex {\\\1}]   ;# trailing \ is bad
+        }
     }
     if {"exact" ne $search(mode)} {
         # we have the original search_text as first alternate, and various
@@ -2966,21 +2982,9 @@ proc search_text  {w search_text} {
         {fuzzy} -
         {regex} {
             # simply catch compile errors using a similar call as for matching
-            set rmode "-regexp"
-            set regex [regsub -all {([+{}])} $regex {\\\1}]    ;# + is bad
             _dbx 4 " regex #$search(mode)#:   $regex";
+            set rmode "-regexp"
             set err ""
-            catch { $w search -regexp -all -nocase -- $regex 1.0 } err
-            if {$err ne ""} {
-                _dbx 4 " **ERROR: $err"
-                # most likely regex failed, try to sanatize most common mistakes
-                # leading - is Tcl special, as it will be an option for regex
-                # Note: Tcl is picky about character classes, need \\ inside []
-                set regex [regsub {^(\\)}     $regex {\\\1}]   ;# leading \ is bad
-                set regex [regsub {^([|*+-])} $regex {[\1]}]   ;# as leading char is bad
-                set regex [regsub {([|])$}    $regex {[\1]}]   ;# trailing | is bad
-                set regex [regsub {(\\)$}     $regex {\\\1}]   ;# trailing \ is bad
-            }
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {[regexp {compile} $err]} {
                 tk_messageBox -icon warning -title [_get_text h_badregex] -message $err
@@ -3034,6 +3038,18 @@ proc search_text  {w search_text} {
     }
     return
 }; # search_text
+
+proc search_rset  {} {
+    #? reset/clear search list (history)
+    _dbx 2 "{}"
+    global search
+    set search(curr) 0
+    set search(list) ""
+    set search(last) ""
+    set search(see)  ""
+    set search(text) "";# resets entry field
+    return
+}; # search_rset
 
 proc search_list  {direction} {
     #? get next or previous search text from search list (history)
