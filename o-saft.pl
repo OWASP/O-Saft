@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.851 19/03/05 10:53:16",
+    SID         => "@(#) yeast.pl 1.852 19/04/02 00:50:01",
     STR_VERSION => "05.03.19",          # <== our official version number
 };
 
@@ -7986,6 +7986,20 @@ if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
 if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
+
+if (2 == @{$cfg{'targets'}}) {
+    # exactly one host defined, check if --port was also given
+    # latest given port can be found in  $cfg{'port'}, if it differs from
+    # the port used in the target list, redefine port for the host there,
+    # assuming that "--port 123 host" was meant instead "host --port 123"
+    # NOTE that the documentation always recommends to use --port first.
+    my $host = get_target_host(1);
+    my $port = get_target_port(1);
+    if ($port != $cfg{'port'}) {
+        _warn("045: --port used after host argument; using '$host:$cfg{'port'}'");
+        set_target_port(1, $cfg{'port'});
+    }
+}
 
 # set environment
 # Note:  openssl  has no option to specify the path to its  configuration
