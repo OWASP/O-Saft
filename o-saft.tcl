@@ -399,7 +399,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.209 Spring Edition 2019
+#?      @(#) 1.210 Spring Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -469,10 +469,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.209 19/04/01 00:12:42"
+set cfg(SID)    "@(#) o-saft.tcl 1.210 19/04/01 22:07:23"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.209}
+set cfg(VERSION) {1.210}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -488,18 +488,11 @@ set cfg(.CFG)   {}                     ;# contains data from prg(INIT)
 set cfg(quit)   0                      ;# quit without GUI
 #et cfg(HELP-key) ""                   ;# contains linenumber of result table
 
-## configuration file # TODO: add descriptions from contrib/.o-saft.tcl
-# RC-ANF {
-
 #-----------------------------------------------------------------------------{
-#   this is the only section where we know about o-saft.pl
-#   all settings for o-saft.pl go here
-set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
-set prg(INIT)        {.o-saft.pl}      ;# name of O-Saft's startup file
-set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
-                                       ;# set to o-saft-docker with --docker
-
-#   some regex to match output from o-saft.pl or data in .o-saft.pl
+#   Definitions outside RC-ANF - RC-END scope, because they're not intended to
+#   be changed in .o-saft.tcl .
+#
+#   define some regex to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win() and create_buttons()
 set prg(DESC)   {-- CONFIGURATION regex to match output from o-saft.pl -------}
 set prg(rexCMD-int)  {^\+(cgi|exec)}   ;# internal use only
@@ -515,37 +508,56 @@ set prg(rexOUT-show) {^Commands to show }  ;# commands without explizit HELP sec
     # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
 set prg(rexCOMMANDS) "\(o-saft\(.pl|.tcl|-docker\)?|checkAllCiphers.pl|\(/usr/local/\)?openssl|docker|mkdir|ldd|ln|perlapp|perl2exe|pp\)"
     # most common tools used in help text...
+set prg(post)   {}             ;# --post=  parameter, if passed on command line
+#-----------------------------------------------------------------------------}
+
+# RC-ANF {
+
+#-----------------------------------------------------------------------------{
+#   This is the only section where we know about  o-saft.pl , all settings for
+#   o-saft.pl go here.
+set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
+set prg(INIT)        {.o-saft.pl}      ;# name of O-Saft's startup file
+set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
+    # Will be set to  o-saft-docker  when  --docker is given
+    # prg(SAFT) must be found with the system's PATH environment variable,
+    # otherwise a full path must be used here.
 #-----------------------------------------------------------------------------}
 
 set prg(DESC)   {-- CONFIGURATION external programs --------------------------}
 set prg(PERL)       {}                 ;# full path to perl; empty on *nix
 set prg(BROWSER)    ""                 ;# external browser program, set below
+    # o-saft.tcl tries to find the browser automatically, a list of well known
+    # browser names is used for that. Another browser can be set here, must be
+    # a full path or found with PATH environment variable.
 set prg(TKPOD)      {O-Saft}           ;# name of external viewer executable
+    # o-saft.tcl uses built-in functionality to show its  documentation.  This
+    # documentation is available in POD format also: o-saft.pod.
+    # If this variable is set to the name of an external program, this program
+    # will be used to show the documentation.  It is recommended to use a full
+    # path to the program.
+    # Possible values, beside others, are:
+    #    O-Saft     - reserved for o-saft.tcl's built-in vierwer
+    #    tkpod      - Tcl/Tk-based viewer
+    #    podviewer  - GTK-based viewer
+    # Advantage of external viewers:
+    #    tkpod      + much better search capabilities
+    # Disadvantage of external viewers:
+    #    tkpod      - context-sensitive help used by o-saft.tcl not possible
+    #    podviewer  - context-sensitive help used by o-saft.tcl not possible
+    #    *          - all viewers must be started in background and will not
+    #                 be closed with o-saft.tcl itself
+
 set prg(docker-id)  {owasp/o-saft}     ;# Docker image ID, if needed
 set prg(docker-tag) {latest}           ;# Docker image tag, if needed
 
 set prg(DESC)   {-- CONFIGURATION default buttons and checkboxes -------------}
 set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
-                                # buttons for quick access commands
+    # List of quick access commands, for which a button will be created in the
+    # GUI. This must be commands of o-saft.pl, which start with  +  character.
 set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
-                                # checkboxes for quick access options
-set prg(post)   {}             ;# --post=  parameter, if passed on command line
-
-set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
-set cfg(bstyle) {image}        ;# button style:  image  or  text
-set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
-                                # see also comment in gui_init()
-set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
-set cfg(max53)  4090           ;# max. size of text to be stored in table columns
-#   Some combinations of Tcl/Tk and X-Servers are limited in the size of text,
-#   which can be stored in Tk's table columns. When such a widget is rendered,
-#   the script crashes with following error message:
-#       X Error of failed request:  BadAlloc (insufficient resources for operation)
-#         Major opcode of failed request:  53 (X_CreatePixmap)
-#         Serial number of failed request:  2223
-#         Current serial number in output stream:  2255
-#   To avoid the crash, large texts (greater than this value) can be stripped.
-#   The default value of ~4000 is based on experience.
+    # List of quick access options,  for which a button will be created in the
+    # GUI. This must be options of o-saft.pl, which start with  --  character.
 
 set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -563,6 +575,22 @@ set myX(miny)   780            ;# O-Saft  window min. height
 set myX(lenl)   15             ;# fixed width of labels in Options window
 set myX(rpad)   15             ;# right padding in the lower right corner
 set myX(padx)   5              ;# padding to right border
+
+set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
+set cfg(bstyle) {image}        ;# button style:  image  or  text
+set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
+                                # see also comment in gui_init()
+set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
+set cfg(max53)  4090           ;# max. size of text to be stored in table columns
+#   Some combinations of Tcl/Tk and X-Servers are limited in the size of text,
+#   which can be stored in Tk's table columns. When such a widget is rendered,
+#   the script crashes with following error message:
+#       X Error of failed request:  BadAlloc (insufficient resources for operation)
+#         Major opcode of failed request:  53 (X_CreatePixmap)
+#         Serial number of failed request:  2223
+#         Current serial number in output stream:  2255
+#   To avoid the crash, large texts (greater than this value) can be stripped.
+#   The default value of ~4000 is based on experience.
 
 # RC-END }
 
@@ -3067,18 +3095,12 @@ proc search_list  {direction} {
     return
 }; # search_list
 
-proc _write_rc_head {txt} {
-    set line1 "#_____________________________________________________________________________"
-    set len   [expr [string length $line1] - [string length $txt] - 5 ]
-    set line2 "#[string repeat _ $len] $txt __|"
-    return $line1\n$line2
-}; # _write_rc_head
-
 proc osaft_write_rc {} {
     #? print data for resource file
     # print all lines between  RC-ANF and RC-END
     _dbx 2 "{}"
     global cfg argv0
+    set qq {"} ;# dumm "
     if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
     # TODO: print docu, see contrib/.o-saft.tcl
     # $rc_doc is used to define help text with the same syntax as used for this
@@ -3097,15 +3119,15 @@ proc osaft_write_rc {} {
  #?      This is the user-configuration file for O-Saft's GUI  o-saft.tcl .
  #?
  #? USAGE
- #?      This file is in O-Saft's  contrib  directory and must be copied to the
- #?      user's  HOME directory or the local directory where o-saft.tcl will be
- #?      started.
+ #?      This file must recide in the user's  HOME  directory or the  directory
+ #?      where  o-saft.tcl  will be started.
  #?
  #? SYNTAX
- #?      Content of this file must be valid Tcl syntax.
+ #?      Content of this file must be valid Tcl syntax. Values may contain  Tcl
+ #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.209 19/04/01 00:12:42
+ #?      @(#) .o-saft.tcl generated by 1.210 19/04/01 22:07:23
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3120,7 +3142,31 @@ package require Tcl 8.5
 
 set cfg(TITLE)  {$cfg(TITLE)}"
 
-    puts [_write_rc_head "misc settings"]
+    global cfg_colors cfg_texts cfg_tipps
+
+    puts "\narray set cfg_color $qq"
+    puts "    DESC\t{$cfg_colors(DESC)}"
+    foreach key [lsort [array names cfg_colors]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_colors($key)}"
+    }
+    puts "$qq;"
+
+    puts "\narray set cfg_label $qq"
+    puts "    DESC\t{$cfg_texts(DESC)}"
+    foreach key [lsort [array names cfg_texts]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_texts($key)}"
+    }
+    puts "$qq;"
+
+    puts "\narray set cfg_tipp $qq"
+    puts "    DESC\t{$cfg_tipps(DESC)}"
+    foreach key [lsort [array names cfg_tipps]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_tipps($key)}"
+    }
+    puts "$qq;"
 
     set skip 1
     foreach l [split [read $fid] "\r\n"] {
@@ -3130,35 +3176,9 @@ set cfg(TITLE)  {$cfg(TITLE)}"
         set l [regsub -all {\$0} $l $cfg(ICH)]
         puts $l
     }
-    #puts [_write_rc_head "settings for sizes"]
-    puts [_write_rc_head "texts for labels and buttons"]
     close $fid
     # print other configurations in simple format, see also update_cfg()
-    global cfg_colors cfg_texts cfg_tipps
-    set qq {"} ;# dumm "
-    puts ""
-    puts "array set cfg_color $qq"
-    puts "    DESC\t{$cfg_colors(DESC)}"
-    foreach key [lsort [array names cfg_colors]] {
-        if {$key eq "DESC"} { continue }
-        puts "    $key\t{$cfg_colors($key)}"
-    }
-    puts "$qq;\n"
-    puts "array set cfg_label $qq"
-    puts "    DESC\t{$cfg_texts(DESC)}"
-    foreach key [lsort [array names cfg_texts]] {
-        if {$key eq "DESC"} { continue }
-        puts "    $key\t{$cfg_texts($key)}"
-    }
-    puts "$qq;\n"
 
-    puts "array set cfg_tipp $qq"
-    puts "    DESC\t{$cfg_tipps(DESC)}"
-    foreach key [lsort [array names cfg_tipps]] {
-        if {$key eq "DESC"} { continue }
-        puts "    $key\t{$cfg_tipps($key)}"
-    }
-    puts "$qq;\n"
     return
 }; # osaft_write_rc
 
