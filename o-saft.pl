@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.854 19/04/02 23:02:38",
+    SID         => "@(#) yeast.pl 1.855 19/04/03 00:17:36",
     STR_VERSION => "05.03.19",          # <== our official version number
 };
 
@@ -259,6 +259,7 @@ sub _print_read         {
     #_dbx "ARGV @ARGV : ". (grep{/(?:--no.?header|--cgi)/i} @ARGV);
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));  # --cgi-exec or --cgi-trace
     return if (0 >= (grep{/(?:--warn|--v$|--trace)/i} @ARGV));
+    return if (0 <  (grep{/(?:--trace[_.-]?CLI$)/i}   @ARGV));  # --trace-CLI
     printf("=== reading: %s (%s) ===\n", $fil, @txt);
     return;
 } # _print_read
