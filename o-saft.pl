@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.853 19/04/02 22:17:43",
+    SID         => "@(#) yeast.pl 1.854 19/04/02 23:02:38",
     STR_VERSION => "05.03.19",          # <== our official version number
 };
 
@@ -159,7 +159,9 @@ my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 $cfg{'mename'} = $me;
 
-printf("#$me %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?CLI$)');
+printf("#$me %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
+    # print complete command line if any --trace-* was given, it's intended
+    # that it works if unknown --trace-* was given, for example --trace-CLI
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -7335,6 +7337,7 @@ while ($#argv >= 0) {
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
+    if ($arg =~ /^--trace.?CLI$/)       {                           next; } # ignore, already handled
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.?(?:exec|trace)/){$cgi = 1;                 next; } # SEE Note:CGI mode
