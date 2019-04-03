@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.03.19',  # official version number of this file
+    OSAFT_VERSION   => '19.04.09',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.165 19/03/24 11:52:17",
+    SID_osaft   => "@(#) osaft.pm 1.166 19/04/03 23:57:41",
 
 };
 
@@ -1797,11 +1797,11 @@ our %cfg = (
                     # need-* lists used to improve performance and warning messages
     'need-sslv3'    => [        # commands which need SSLv3 protocol
                         qw(check cipher cipher_dh cipher_strong cipher_selected
-                         protocols hassslv3 beast freak poodle
+                         cipher_weak protocols hassslv3 beast freak poodle
                          tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
                        )],
     'need-cipher'   => [        # commands which need +cipher
-                        qw(check cipher cipher_dh cipher_strong
+                        qw(check cipher cipher_dh cipher_strong cipher_weak
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
                          cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
                          beast crime time breach drown freak logjam
