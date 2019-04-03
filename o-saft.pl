@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.856 19/04/03 16:37:35",
-    STR_VERSION => "05.03.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.857 19/04/04 00:11:06",
+    STR_VERSION => "19.03.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -4249,6 +4249,10 @@ sub checkprefered   {
         $checks{'cipher_strong'}->{val} .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # FIXME: assumtion wrong if only one cipher accepted
         $checks{'cipher_order'}->{val}  .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # NOT YET USED
         $checks{'cipher_weak'}->{val}   .= _prot_cipher($ssl, $txt) if ($weak eq $strong);  # remember: eq !
+        # FIXME: assumtion wrong if target returns always strongest cipher; meanwhile print hint
+        if ($weak eq $strong) {
+            $cfg{'hints'}->{'cipher_weak'} = 'check if "weak" cipher was returned may be misleading if the strongest cipher is returned always';
+        }
     }
     _trace("checkprefered() }");
     return;
