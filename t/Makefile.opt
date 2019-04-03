@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.13 19/03/20 23:58:09
+#?      @(#) Makefile.opt 1.14 19/04/03 20:27:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.13
+_SID.opt        = 1.14
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -62,8 +62,10 @@ HELP.opt            = $(_NL)\
 
 HELP.test.opt.all   = # no special documentation yet
 
+# SEE EXE.pl:--trace-CLI 
+
 testopt-alias%:                 EXE.pl      = ../$(SRC.pl)
-testopt-alias%:                 TEST.init   = --traceARG --v +quit
+testopt-alias%:                 TEST.init   = --trace-CLI --traceARG --v +quit
 
 # The part right of the  _  in the target name testarg0-alias*  is the pattern
 # to be searched for in the output of $(EXE.pl).  As this might contain chars
@@ -84,7 +86,7 @@ testopt-alias_%: message-%
 	@echo ""
 
 testarg0-stdformat-%:           EXE.pl      = ../$(SRC.pl)
-testarg0-stdformat-%:           TEST.init   = --no-rc --help=pod
+testarg0-stdformat-%:           TEST.init   = --trace-CLI --no-rc --help=pod
 
 testarg0-stdformat-crlf:        TEST.args  += --stdformat=crlf
 testarg0-stdformat-raw:         TEST.args  += --stdformat=raw
@@ -167,7 +169,7 @@ test.opt:         $(ALL.test.opt)
 test.opt.log:     $(ALL.test.opt.log) test.log-compare-hint
 test.opt-%:       test.opt.internal test.opt
 
-.PHONY: test.stdformat test.opt.log
+.PHONY: test.stdformat
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
