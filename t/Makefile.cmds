@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.29 19/03/24 12:53:03
+#?      @(#) Makefile.cmds 1.30 19/04/03 19:57:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.29
+_SID.cmds       = 1.30
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -93,7 +93,7 @@ _ignore-output-cmds = $(_ignore-output-keys:%=+%)
 # SEE Make:target name prefix
 
 testcmd-c%:                     EXE.pl      = ../$(SRC.pl)
-testcmd-c%:                     TEST.init   = --header
+testcmd-c%:                     TEST.init   = --trace-CLI --header
 
 testcmd-c+ignored-keys_%:       TEST.args  += $(_ignore-output-cmds)
 testcmd-c+info-_%:              TEST.args  += +info               $(_ignore-output) 
