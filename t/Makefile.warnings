@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.30 19/04/09 00:12:27
+#?      @(#) Makefile.warnings 1.31 19/04/09 00:34:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.30
+_SID.warnings   = 1.31
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -261,25 +261,26 @@ warning-%: message-%
 #       _warn("
 # replacing die|warn bei **WARNING; finally remove anything behind closing ")
 define _extract_warn
-	perl -nle 'm/^\s*_?warn/ && do {\
+	perl -nle '\
+		m/^\s*warn\s+=/ && do {next};\
+		m/^\s*_?warn/ && do {\
 		s/^\s*(?:die|warn)\sSTR_ERROR,\s"/**ERROR: /;\
-		s/^\s*(?:die|warn)\sSTR_WARN,\s"/**WARNING: /;\
+		s/^\s*(?:die|warn)\sSTR_WARN[,.\s]+"/**WARNING: /;\
 		s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
 		s/ +if +\(.*//;\
 		s/"\s*\)?\s*;?\s*$$//;\
-		print}' $^ 
+		print}'
+endef
+
+define _gen_warning_target
+	perl -nle '\
+		s/^..(?:ERROR|WARNING): /warning-/;\
+		s/:/: TEST.args  = TODO:/;\
+		print;'
 endef
 
 warnings.info: $(SRC.pl)
-	@$(_extract_warn)
-
-aaa: $(SRC.pl)
-	@$(_extract_warn) \
-	    | perl -nle '\
-		s/^..(?:ERROR|WARNING): /warning-/;\
-		s/:/: TEST.args  = TODO:/;\
-		print;' \
-	    | sort
+	@$(_extract_warn) $^
 
 _TEST.template  = t/test.warning.Makefile-template
 $(_TEST.template): $(SRC.pl)
@@ -288,16 +289,14 @@ $(_TEST.template): $(SRC.pl)
 	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
 	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
 	@echo ""                                                       >> $@
-	@$(_extract_warn) \
-	    | perl -nle '\
-		s/^..(?:ERROR|WARNING): /warning-/;\
-		s/:/: TEST.args  = TODO:/;\
-		print;' \
+	@$(_extract_warn) $^ \
+	    | $(_gen_warning_target) \
 	    | sort >> $@
 	@-ls -l $@
 
 warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
 # TODO: Makefile dependency does not work, probably need to use $(MAKE)
+.PHONY: warnings.gen.template
 
 warnings.show.todo:
 	grep "^warning..*TODO" $(TEST.dir)/Makefile
@@ -311,7 +310,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.30: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.31: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
