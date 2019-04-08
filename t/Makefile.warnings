@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.28 19/04/08 23:39:17
+#?      @(#) Makefile.warnings 1.29 19/04/08 23:59:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.28
+_SID.warnings   = 1.29
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -254,12 +254,19 @@ ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_a
 warning-%: message-%
 	@$(TRACE.target)
 
+# extract all line looking like:
+#       die STR_ERROR, 
+#       warn STR_ERROR, 
+#       warn STR_WARN, 
+#       _warn("
+# replacing die|warn bei **WARNING; finally remove anything behind closing ")
 define _extract_warn
 	perl -nle 'm/^\s*_?warn/ && do {\
 		s/^\s*(?:die|warn)\sSTR_ERROR,\s"/**ERROR: /;\
 		s/^\s*(?:die|warn)\sSTR_WARN,\s"/**WARNING: /;\
 		s/^\s*_warn\s*\(\s*"/**WARNING: /;\
-		s/"\s*\)?\s*;\s*$$//;\
+		s/ +if +\(.*//;\
+		s/"\s*\)?\s*;?\s*$$//;\
 		print}' $^ 
 endef
 
@@ -295,7 +302,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.28: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.29: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
