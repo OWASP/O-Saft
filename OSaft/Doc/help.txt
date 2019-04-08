@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.22 19/01/20 23:08:32
+# SID   @(#) help.txt 1.23 19/04/09 01:29:34
 
 NAME
 
@@ -2864,7 +2864,7 @@ OUTPUT
         Following rules are used:
           * Lines for formatting or header lines start with  '='.
           * Lines for verbosity or tracing start with  '#'.
-          * Errors and warnings start with  '**'.
+          * Errors and warnings start with  '**', hints start with '!!'.
           * Empty lines are comments ;-)
           * Label texts end with a separation character; default is  ':'.
           * Label and value for all checks are separated by at least one  TAB
@@ -2881,6 +2881,18 @@ OUTPUT
 
         When used in  --legacy=full  or --legacy=simple  mode, the output may
         contain formatting lines for better (human) readability.
+
+    Errors, Warnings, Hints
+
+        Errors, warnings and hints may be part of the output as needed. While
+        errors and warnings are printed immediately as they occour during the
+        program flow, hints are printed right after the corresponding result.
+
+        Errors and warnings start with a unique 3-digit number.
+
+        Hints print an additional explanation of a specific result.  They are
+        are defined statically in the program code, or can be added on demand
+        by using the option  --cfg-hint=KEY=TEXT .
 
     Postprocessing Output
 
