@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.29 19/04/08 23:59:09
+#?      @(#) Makefile.warnings 1.30 19/04/09 00:12:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.29
+_SID.warnings   = 1.30
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -264,7 +264,7 @@ define _extract_warn
 	perl -nle 'm/^\s*_?warn/ && do {\
 		s/^\s*(?:die|warn)\sSTR_ERROR,\s"/**ERROR: /;\
 		s/^\s*(?:die|warn)\sSTR_WARN,\s"/**WARNING: /;\
-		s/^\s*_warn\s*\(\s*"/**WARNING: /;\
+		s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
 		s/ +if +\(.*//;\
 		s/"\s*\)?\s*;?\s*$$//;\
 		print}' $^ 
@@ -273,6 +273,14 @@ endef
 warnings.info: $(SRC.pl)
 	@$(_extract_warn)
 
+aaa: $(SRC.pl)
+	@$(_extract_warn) \
+	    | perl -nle '\
+		s/^..(?:ERROR|WARNING): /warning-/;\
+		s/:/: TEST.args  = TODO:/;\
+		print;' \
+	    | sort
+
 _TEST.template  = t/test.warning.Makefile-template
 $(_TEST.template): $(SRC.pl)
 	@echo "# generated template targets to test **WARNING messages" > $@
@@ -280,11 +288,12 @@ $(_TEST.template): $(SRC.pl)
 	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
 	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
 	@echo ""                                                       >> $@
-	perl -nle 'm/^\s*_?warn/ && do {\
-		s/^[^"]*"([^"]*).*/warning-$$1/;\
+	@$(_extract_warn) \
+	    | perl -nle '\
+		s/^..(?:ERROR|WARNING): /warning-/;\
 		s/:/: TEST.args  = TODO:/;\
-		print}' $^ \
-	| sort >> $@
+		print;' \
+	    | sort >> $@
 	@-ls -l $@
 
 warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
@@ -302,7 +311,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.29: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.30: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
