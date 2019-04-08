@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.31 19/04/09 00:34:14
+#?      @(#) Makefile.warnings 1.32 19/04/09 00:51:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.31
+_SID.warnings   = 1.32
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -258,6 +258,8 @@ warning-%: message-%
 #       die STR_ERROR, 
 #       warn STR_ERROR, 
 #       warn STR_WARN, 
+#       warn STR_WARN . 
+#       warn "**WARNING:
 #       _warn("
 # replacing die|warn bei **WARNING; finally remove anything behind closing ")
 define _extract_warn
@@ -269,6 +271,7 @@ define _extract_warn
 		s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
 		s/ +if +\(.*//;\
 		s/"\s*\)?\s*;?\s*$$//;\
+		s/^\s*_?warn\s*\(?"//;\
 		print}'
 endef
 
@@ -279,11 +282,11 @@ define _gen_warning_target
 		print;'
 endef
 
-warnings.info: $(SRC.pl)
+warnings.info: $(SRC.pl) $(SRC.pm)
 	@$(_extract_warn) $^
 
 _TEST.template  = t/test.warning.Makefile-template
-$(_TEST.template): $(SRC.pl)
+$(_TEST.template): $(SRC.pl) $(SRC.pm)
 	@echo "# generated template targets to test **WARNING messages" > $@
 	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
 	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
@@ -310,7 +313,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.31: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.32: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
