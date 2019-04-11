@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.32 19/04/09 00:51:20
+#?      @(#) Makefile.warnings 1.33 19/04/11 20:08:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.32
+_SID.warnings   = 1.33
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -128,6 +128,8 @@ warning-012: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
 warning-013: TEST.args  = TODO: testing die, missing o-saft-man.pm
 warning-014: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
 warning-015: TEST.args  = TODO: testing die, no ciphers found, may happen with openssl pre 1.0.0, difficult ...
+warning-016: TEST.args  = TODO: testing undefined cipher description for $c, difficult ...
+warning-017: TEST.args  = TODO: testing partial match for cipher name found, difficult ...
 warning-020: TEST.args  = TODO: testing die, CGI mode requires strict settings
 warning-021: TEST.args  = --set-score=unknown               +quit
 warning-022: TEST.args  = --cfgcmd-is=unknown               +quit
@@ -313,7 +315,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.32: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.33: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
