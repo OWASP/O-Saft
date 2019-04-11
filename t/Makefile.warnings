@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.33 19/04/11 20:08:14
+#?      @(#) Makefile.warnings 1.34 19/04/11 22:30:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.33
+_SID.warnings   = 1.34
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -128,7 +128,8 @@ warning-012: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
 warning-013: TEST.args  = TODO: testing die, missing o-saft-man.pm
 warning-014: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
 warning-015: TEST.args  = TODO: testing die, no ciphers found, may happen with openssl pre 1.0.0, difficult ...
-warning-016: TEST.args  = TODO: testing undefined cipher description for $c, difficult ...
+# 016, 017: programing error
+warning-016: TEST.args  = TODO: testing undefined cipher description for, difficult ...
 warning-017: TEST.args  = TODO: testing partial match for cipher name found, difficult ...
 warning-020: TEST.args  = TODO: testing die, CGI mode requires strict settings
 warning-021: TEST.args  = --set-score=unknown               +quit
@@ -250,6 +251,25 @@ warning-841: TEST.args  = TODO: used openssl version differs from compiled Net:S
 warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
 warning-861: TEST.args  = TODO: not all ciphers listed
 
+# not yet used in o-saft.pl (1/2019)
+warning-501: TEST.args  = TODO: cannot read OSaft/_ciphers_openssl_all.pm
+warning-501: EXE.pl     = ../OSaft/Ciphers.pm
+warning-502: TEST.args  = TODO: cannot read OSaft/_ciphers_iana.pm
+warning-502: EXE.pl     = ../OSaft/Ciphers.pm
+warning-503: TEST.args  = TODO: cannot read OSaft/_ciphers_osaft.pm
+warning-503: EXE.pl     = ../OSaft/Ciphers.pm
+warning-511: TEST.args  = getter=0x42
+warning-511: EXE.pl     = ../OSaft/Ciphers.pm
+warning-513: TEST.args  = TODO: partial match for cipher name found, difficult ...
+warning-513: EXE.pl     = ../OSaft/Ciphers.pm
+warning-520: TEST.args  = ciphers=unknown
+warning-520: EXE.pl     = ../OSaft/Ciphers.pm
+# 016, 017: programing error
+warning-521: TEST.args  = TODO: testing duplicate IANA key, difficult ...
+warning-521: EXE.pl     = ../OSaft/Ciphers.pm
+warning-522: TEST.args  = TODO: testing duplicate openssl key, difficult ...
+warning-522: EXE.pl     = ../OSaft/Ciphers.pm
+
 #ALL.testwarnings   = # same as ALL.test.warnings
 ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.warnings))
 
@@ -315,7 +335,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.33: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.34: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
