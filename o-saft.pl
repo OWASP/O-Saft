@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.857 19/04/04 00:11:06",
-    STR_VERSION => "19.03.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.858 19/04/11 21:57:41",
+    STR_VERSION => "19.04.09",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -8067,6 +8067,14 @@ if ($cfg{'exec'} == 0)  {
     }
 }
 
+#| openssl and Net::SSLeay is picky about path names
+#| -------------------------------------
+foreach my $key (qw(ca_file ca_path ca_crl)) {
+    next if not defined $cfg{$key};
+    _warn("053: option with spaces '$key'='$cfg{$key}'; may cause connection problems")
+        if ($cfg{$key} =~ m/\s/);
+}
+
 #| set openssl-specific path for CAs
 #| -------------------------------------
 $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
@@ -8076,14 +8084,6 @@ if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
 $cfg{'ca_path'} = _init_openssl_ca($cfg{'ca_path'});
 if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
     _warn("060: no PEM fila for CA found; some certificate checks may fail");
-}
-
-#| openssl and Net::SSLeay is picky about path names
-#| -------------------------------------
-foreach my $key (qw(ca_file ca_path ca_crl)) {
-    next if not defined $cfg{$key};
-    _warn("053: option with spaces '$key'='$cfg{$key}'; may cause connection problems")
-        if ($cfg{$key} =~ m/\s/);
 }
 
 if ($info > 0) {                # +info does not do anything with ciphers
