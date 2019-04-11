@@ -41,7 +41,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '18.03.28';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.26 19/04/11 21:28:41";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.27 19/04/11 21:37:33";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -374,7 +374,7 @@ my %_ciphers_openssl_all = (
 #   '0x00,0x05'  => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
     #-------------------+----+----+----+----+----+----+----+-------,
 ); # %_ciphers_openssl_all
-eval {require qw{OSaft/_ciphers_openssl_all.pmi}; } or 
+eval {require qw{OSaft/_ciphers_openssl_all.pm}; } or 
     _warn("501: cannot read OSaft/_ciphers_openssl_all.pm");
 
 my %_ciphers_openssl_inc = (
