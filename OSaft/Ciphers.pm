@@ -41,7 +41,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '18.03.28';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.25 18/11/11 18:13:49";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.26 19/04/11 21:28:41";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -374,7 +374,8 @@ my %_ciphers_openssl_all = (
 #   '0x00,0x05'  => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
     #-------------------+----+----+----+----+----+----+----+-------,
 ); # %_ciphers_openssl_all
-eval {require qw{OSaft/_ciphers_openssl_all.pm}; } or _warn "cannot read OSaft/_ciphers_openssl_all.pm";
+eval {require qw{OSaft/_ciphers_openssl_all.pmi}; } or 
+    _warn("501: cannot read OSaft/_ciphers_openssl_all.pm");
 
 my %_ciphers_openssl_inc = (
     #? internal list, generated from openssl source
@@ -389,13 +390,15 @@ my %_ciphers_iana = (
 #   '0xC0,0x33'  => [qw( TLS_ECDHE_PSK_WITH_RC4_128_SHA       5489,6347    N )],
     #-------------------+------------------------------------+-------+---------,
 ); # %__ciphers_iana
-eval {require qw{OSaft/_ciphers_iana.pm}; } or _warn "cannot read OSaft/_ciphers_iana.pm";
+eval {require qw{OSaft/_ciphers_iana.pm}; } or
+    _warn("502: cannot read OSaft/_ciphers_iana.pm");
 
 my %_ciphers_osaft = (
     #? internal list, additions to %_ciphers_openssl
     # /opt/tools/openssl-chacha/bin/openssl ciphers -V ALL:eNULL:LOW:EXP \
 );# %_ciphers_osaft
-eval {require qw{OSaft/_ciphers_osaft.pm}; } or _warn "cannot read OSaft/_ciphers_osaft.pm";
+eval {require qw{OSaft/_ciphers_osaft.pm}; } or
+    _warn("503: cannot read OSaft/_ciphers_osaft.pm");
 
 ######################################################
 sub id2key      {
@@ -487,7 +490,7 @@ sub get_desc    {
     # get description for specified cipher from %ciphers
     my $c=shift;
     if (not defined $ciphers{$c}) {
-       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
+       _warn("511: undefined cipher description for '$c'"); # TODO: correct %ciphers
        return $STR_UNDEF;
     }
     my @x = sort values %{$ciphers{$c}};
@@ -552,7 +555,7 @@ sub get_key     {
 
 sub get_name    {
     #? check if given cipher name is a known cipher
-    #  checks in %ciphers if nof found in %ciphers_names
+    #  checks in %ciphers, if not found in %ciphers_names
     #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES128-SHA256
     # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
     #       use the same cipher suite name (like RC4-MD5).
@@ -566,7 +569,7 @@ sub get_name    {
     # nothing found yet, try more lazy match
     foreach my $k (keys %ciphers_names) {
         if ($ciphers_names{$k}[0] =~ m/$cipher/) {
-            _warn("partial match for cipher name found '$cipher'");
+            _warn("513: partial match for cipher name found '$cipher'");
             return $ciphers_names{$k}[0];
         }
     }
@@ -676,8 +679,8 @@ sub sort_cipher_names   {
         # print warning if above algorithm misses ciphers; uses perl's  warn()
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
-        #warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
-        warn "**WARNING: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
+        #warn STR_WARN . ": 015: missing ciphers in sorted list: $num < $cnt";
+        warn "**WARNING: 015: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
     return @sorted;
@@ -1104,7 +1107,7 @@ sub show_ciphers    {
     printf("#%s:\n", (caller(0))[3]);
 
     if ($format !~ m/(?:dump|tab|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
-        _warn("unknown format '$format'");
+        _warn("520: unknown format '$format'");
         return;
     }
 
@@ -1143,7 +1146,7 @@ sub _ciphers_init_iana  {
     vprint "initialize from IANA tls-parameters.txt ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
         if (grep{/^$key$/} @keys) {
-            _warn(" duplicate IANA key: »$key«");
+            _warn("521: duplicate IANA key: »$key«");
         } else {
             push(@keys, $key);
         }
@@ -1213,7 +1216,7 @@ sub _ciphers_init_openssl   {
     vprint "initialize data from »openssl ciphers -V« ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
         if (grep{/^$key$/} @_keys) {
-            _warn(" duplicate openssl key: »$key«");
+            _warn("522: duplicate openssl key: »$key«");
         } else {
             push(@_keys, $key);
         }
