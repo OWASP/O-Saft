@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.34 19/04/11 22:30:28
+#?      @(#) Makefile.warnings 1.35 19/04/11 23:26:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.34
+_SID.warnings   = 1.35
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -167,10 +167,13 @@ warning-066: TEST.args  = --ignore-out=cn +cn               any-host
 warning-067: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-068: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-069: TEST.args  = --sniname=wrong +cn               $(TEST.host)
-warning-070: TEST.args  = --cfg_cmd=$(_TMP.rc)              +quit
+warning-070: TEST.args  = TODO: testing configuration file cannot be opened
+#warning-070: TEST.args  = --cfg_cmd=$(_TMP.rc)              +quit
 #warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
 warning-071: TEST.args  = --cfg_unknown=dummy=dummy         +quit
-warning-072: TEST.args  = --cfg_cmd=$(_TMP.rc) --cgi        +quit
+warning-070: TEST.args  = TODO: configuration files are not read in CGI mode, difficult ...
+#warning-072: TEST.args  = --cfg_cmd=$(_TMP.rc) --cgi        +quit
+#warning-072:                                     TEST.rc = --cfg_cmd=new_command=not_allowed_with--cgi
 warning-073: TEST.args  = --cfg_cmd=invalid_default_command=default +quit
 #?# warning-074: TEST.args  = --rc=$(_TMP.rc)                +quit
 #?# warning-074:                                     TEST.rc = "--cfg_cmd=dummy=cn unknown_command"
@@ -335,7 +338,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.34: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.35: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
