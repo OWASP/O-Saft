@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.166 19/04/03 23:57:41",
+    SID_osaft   => "@(#) osaft.pm 1.167 19/04/12 14:27:34",
 
 };
 
@@ -250,6 +250,7 @@ our @EXPORT     = qw(
                 set_target_stop
                 set_target_error
                 sort_cipher_names
+                set_hint
                 printhint
                 osaft_done
 );
@@ -2176,25 +2177,8 @@ our %cfg = (
 
     }, # regex
    #------------------+--------------------------------------------------------
-    'hints' => {       # texts used for hints
+    'hints' => {       # texts used for hints, SEE Note:hints
 	#   'key'   => "any string, may contain \t and \n",
-        #
-        # Key can be any string.  If key is same as a  valid command (without
-        # leading +), such hints are printed automatically (see below).
-        # Hint texts can be defined here or anywhere in the code, for example
-        # right at the place where they are used. A definition somewhere else
-        # in the code should look like:
-        #   $cfg{'hints'}->{'your-key'} = "your text\nwith a newline";
-        # This allows that the texts can be customised using the option:
-        #   --cfg-hints=your-key="other text"
-        # How automatic printing works:
-        #   Hint texts can be defined for any valid command (see above). When
-        #   results are printed,  print_check() and print_data()  will  auto-
-        #   matically print such hint texts if any.
-        # However, hint texts can be printed anywhere at anytime using:
-        #   printhint('your-key'),
-        # It is not recommended to use:
-        #   print STR_HINT, "my text";
     }, # hints
    #------------------+--------------------------------------------------------
     'ourstr' => {
