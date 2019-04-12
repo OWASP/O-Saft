@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.23 19/04/09 01:29:34
+# SID   @(#) help.txt 1.24 19/04/12 16:24:05
 
 NAME
 
@@ -2000,7 +2000,7 @@ OPTIONS
 
           Print remotely checked ciphers.
           In contrast to  --v --v  above,  this just prints the ciphers while
-          while being checked, but no other verbose messages.
+          being checked, but no other verbose messages.
 
 # following no longer implemented (8/2016)
 #
