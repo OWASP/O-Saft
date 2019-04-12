@@ -40,8 +40,8 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-my  $VERSION      = '18.03.28';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.27 19/04/11 21:37:33";
+my  $VERSION      = '19.04.11';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.28 19/04/12 10:22:35";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -234,8 +234,22 @@ our @EXPORT_OK  = qw(
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
-# TODO: interanl wrappers for main's methods
-sub _trace      { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+# interanl wrappers for main's methods
+# _trace() and alike should be available when this file is `use'd from another
+# file, or if this file is called directly (as main).  Hence we need to define
+# _trace() depending on the existance of ::_trace(). Unfortunately Perl's subs
+# are defined at startup, hence when a condition (if-then-else) is used,  Perl
+# bails out with an error  "Subroutine _trace redefined ...".
+# That's why the check is done inside _trace() itself.
+# TODO: only _trace() implemented correctly, as others are not yet used
+sub _trace      {
+    if (defined &::_trace) {
+        ::_trace(@_);   ## no critic qw(Subroutines::RequireArgUnpacking)
+    } else {
+        #print "#$0: @_\n"; # no trace output if called itself
+    }
+    return;
+}; # _trace()
 sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
 sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
 sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
@@ -507,7 +521,7 @@ Get cipher's hex key from C<%ciphers_names> or C<%ciphers_alias> data structure.
 
 =head2 get_name($cipher)
 
-Check if given C<%cipher> name is a known cipher.
+Get common name for given cipher hex C<$cipher>.
 
 =cut
 
@@ -554,27 +568,36 @@ sub get_key     {
 } # get_key
 
 sub get_name    {
+    #? return name for given cipher key
+    #  example: 0x01,0x00,0x80 -> RC4-MD5;  0x00,0x3 -> AES128-SHA256
+    my $key = shift;
+    #return $cipher if (0 < (grep{/^$cipher/} %ciphers)); ## TODO: brauchen wir das?
+    if (exists $ciphers_names{$key}) {
+        foreach my $typ (qw( osaft openssl OpenSSL iana)) {
+            my $name = $ciphers_names{$key}->{$typ} || '';
+            return $name if ("" ne $name);
+        }
+    }
+    return $STR_UNDEF;
+} # get_name
+
+sub find_name   {   # TODO: not yet used
     #? check if given cipher name is a known cipher
     #  checks in %ciphers, if not found in %ciphers_names
     #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES128-SHA256
     # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
     #       use the same cipher suite name (like RC4-MD5).
-    my $cipher  = shift;
-    return $cipher if (0 < (grep{/^$cipher/} %ciphers));
-    _trace("get_name: search $cipher");
-    foreach my $k (keys %ciphers_names) {
-        return $ciphers_names{$k}[0] if ($cipher =~ m/$ciphers_names{$k}[0]/);
-        return $ciphers_names{$k}[0] if ($ciphers_names{$k}[1] =~ /$cipher/);
-    }
     # nothing found yet, try more lazy match
+    my $cipher  = shift;
+    _trace("fnd_name: search $cipher");
     foreach my $k (keys %ciphers_names) {
         if ($ciphers_names{$k}[0] =~ m/$cipher/) {
             _warn("513: partial match for cipher name found '$cipher'");
             return $ciphers_names{$k}[0];
         }
     }
-    return '';
-} # get_name
+    return $STR_UNDEF;
+} # find_name
 
 =pod
 
