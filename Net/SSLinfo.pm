@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.12.18',
+    SSLINFO_VERSION => '19.03.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.224 19/01/19 17:12:36',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.225 19/04/12 16:53:46',
 };
 
 ######################################################## public documentation #
@@ -650,7 +650,7 @@ BEGIN {
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
     if (1.45 > $Net::SSLeay::VERSION) {
-        warn "**WARNING: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize";
+        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize");
     } else {
         Net::SSLeay::initialize();
     }
@@ -2213,7 +2213,7 @@ sub do_ssl_open($$$@) {
     }
 
     if (defined $Net::SSLinfo::next_protos) {   # < 1.182
-        warn "**WARNING: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead"
+        warn("**WARNING: 090: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead");
     }
 
     TRY: {
@@ -2286,25 +2286,25 @@ sub do_ssl_open($$$@) {
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'version'}= _ssleay_get('version', $x509);
         } else {
-            warn "**WARNING: Net::SSLeay >= 1.45 required for getting version";
+            warn("**WARNING: 651: Net::SSLeay >= 1.45 required for getting version");
         }
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
             $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
         } else {
-            warn "**WARNING: Net::SSLeay >= 1.33 required for getting subjectAltNames";
+            warn("**WARNING: 652: Net::SSLeay >= 1.33 required for getting subjectAltNames");
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
             $_SSLinfo{'cn'}     = _ssleay_get('cn', $x509);
             $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
-            warn "**WARNING: Net::SSLeay >= 1.30 required for getting commonName";
+            warn("**WARNING: 653: Net::SSLeay >= 1.30 required for getting commonName");
         }
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
             $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
             $_SSLinfo{'fingerprint_sha2'}= _ssleay_get('sha2', $x509);
         } else {
-            warn "**WARNING: Net::SSLeay >= 1.45 required for getting fingerprint_md5";
+            warn("**WARNING: 654: Net::SSLeay >= 1.45 required for getting fingerprint_md5");
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
@@ -2318,7 +2318,7 @@ sub do_ssl_open($$$@) {
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
         } else {
-            warn "**WARNING: Net::SSLeay >= 1.46 required for getting some certificate checks";
+            warn("**WARNING: 655: Net::SSLeay >= 1.46 required for getting some certificate checks");
         }
         $_SSLinfo{'commonName'} = $_SSLinfo{'cn'};
         $_SSLinfo{'authority'}  = $_SSLinfo{'issuer'};
@@ -3141,7 +3141,7 @@ sub cipher_openssl  {
 # _SSLinfo_get()  does not modify the parameters.
 
 sub cipher_local    {
-    warn("WARNING: function obsolete, please use cipher_openssl()");
+    warn("**WARNING: 451: function obsolete, please use cipher_openssl()");
     return cipher_openssl(@_);
 } # cipher_local
 
