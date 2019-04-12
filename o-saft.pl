@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.858 19/04/11 21:57:41",
-    STR_VERSION => "19.04.09",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.859 19/04/12 14:32:32",
+    STR_VERSION => "19.04.10",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -388,7 +388,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     }
 } else {
     # debug functions are defined in o-saft-dbx.pm and loaded on demand
-    # they must be defined always as they are used wheter requested or not
+    # they must be defined always as they are used whether requested or not
     sub _yeast_init   {}
     sub _yeast_exit   {}
     sub _yeast_args   {}
@@ -2626,6 +2626,7 @@ sub _cfg_set($$)        {
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
         if ($cgi == 1) { # SEE Note:CGI mode
+            # should never occour, defensive programming
             _warn("072: configuration files are not read in CGI mode; ignored");
             return;
         }
@@ -5952,18 +5953,18 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if ($cfg{'out_hint_info'} > 0);
+    printhint($key) if ($cfg{'out_hint_info'} > 0);     # SEE Note:hints
     return;
 } # print_data
 
 sub print_check($$$$$)  {
     #? print label and result of check
     my ($legacy, $host, $port, $key, $value) = @_;
-    $value = $checks{$key}->{val} if not defined $value; # defensive programming ..
+    $value = $checks{$key}->{val} if not defined $value;# defensive programming ..
     my $label = "";
     $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if ($cfg{'out_hint_check'} > 0);
+    printhint($key) if ($cfg{'out_hint_check'} > 0);    # SEE Note:hints
     return;
 } # print_check
 
@@ -7192,12 +7193,6 @@ while ($#argv >= 0) {
             } else {
                 push(@{$cfg{'ciphercurves'}}, split(/,/, $arg));
             }
-            # TODO: checking names of curves needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} keys %{$cfg{'ciphercurves'}})) {
-            #    $cfg{'ciphercurves'} = $arg;
-            #} else {
-            #    _warn("057: option with unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
-            #}
         }
 
         # SEE Note:ALPN, NPN
@@ -9506,6 +9501,43 @@ same data structre for the results. Then the program flow should be like:
    checkciphers()
    printciphers()
    printciphersummary()
+
+
+=head2 Note:hints
+
+oThe output may contain  !!Hint  messages, see for --help=output  details.
+
+The texts used for hint messages can be hardcoded in %cfg, set dynamically
+in %cfg in the code, or set using command line options at startup.
+The hash %{$cfg{'hints'}} contains all these texts.  A definition may look
+like:
+
+   $cfg{hints}->{KEY} = 'new text';
+
+KEY can be any string. If KEY (without leading +) is a known valid command
+the message is printed automatically with the commands output (see below).
+The text may contain formatting characters like \t and \n.
+
+All predefined (hardcoded) hints can be listed with:
+
+   --help=hint
+
+To set new hints, following option can be used:
+
+   --cfg_hint=KEY="some text\nin 2 lines"
+
+Automatic printing works as follows:
+
+   print_check()  and  print_data() will automatically print hint texts if
+   defined for the corresponding command.
+
+They can be printed immediately (without being specified in  $cfg{hints} :
+
+   printhint('your-key'),
+
+It is not recommended to use:
+
+   print STR_HINT, "my text";
 
 
 =cut
