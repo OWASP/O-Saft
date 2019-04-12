@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.859 19/04/12 14:32:32",
+    SID         => "@(#) yeast.pl 1.860 19/04/12 16:25:55",
     STR_VERSION => "19.04.10",          # <== our official version number
 };
 
@@ -7463,6 +7463,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
+    if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias:
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
     if ($arg =~ /^--trace(?:@|key)/i)   { $cfg{'traceKEY'}++;       } # ..
