@@ -41,7 +41,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.11';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.28 19/04/12 10:22:35";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.29 19/04/12 22:01:21";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -702,8 +702,8 @@ sub sort_cipher_names   {
         # print warning if above algorithm misses ciphers; uses perl's  warn()
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
-        #warn STR_WARN . ": 015: missing ciphers in sorted list: $num < $cnt";
-        warn "**WARNING: 015: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
+        #warn STR_WARN . ": 412: missing ciphers in sorted list: $num < $cnt";
+        warn "**WARNING: 412: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
     return @sorted;
