@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.25 19/03/20 22:15:58
+#?      @(#) Makefile.misc 1.26 19/04/12 23:42:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.25
+_SID.misc       = 1.26
 
 _MYSELF.misc    = t/Makefile.misc
 _MY.includes   += $(_MYSELF.misc)
@@ -228,6 +228,11 @@ qa.defined_arr:
 qa.defined_hash:
 	@echo "#make: check depricated defined(%hash) ..."
 	@-egrep -H 'defined[( ]*%' $(ALL.qa)
+qa.defined_warnings:
+	@echo "#make: check duplicate error and warning numbers ..."
+	@$(MAKE_COMMAND) warnings.info | sort -k 2 \
+	| awk '{nr=$$2;sub(/:/,"",nr);if(nr==last){print warn;print;}last=nr;warn=$$0}'
+
 qa.misspelled_regex:
 	@echo "#make: check misspelled grouping in RegEx ..."
 	@-egrep -H '\(:\?'         $(ALL.qa)
@@ -254,6 +259,7 @@ ALL.test.quality    = \
 		qa.double_dref \
 		qa.defined_arr \
 		qa.defined_hash \
+		qa.defined_warnings \
 		qa.misspelled_regex \
 		qa.misspelled_critic \
 		qa.makefile_HELP \
