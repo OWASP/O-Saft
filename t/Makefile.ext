@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.19 19/03/20 23:58:07
+#?      @(#) Makefile.ext 1.20 19/04/13 11:24:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.19
+_SID.ext        = 1.20
 
 _MYSELF.ext     = t/Makefile.ext
 _MY.includes   += $(_MYSELF.ext)
@@ -71,7 +71,7 @@ HELP.ext                = $(_NL)\
 \#    $(MAKE_COMMAND) s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
 \#    $(MAKE_COMMAND)  test.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
 \#$(_NL)\
-\# Note that external hosts are listed on per line in t/Makefile.FQDN
+\# Note that external hosts are listed one per line in t/Makefile.FQDN
 
 HELP.test.ext.all       = # no special documentation yet
 
