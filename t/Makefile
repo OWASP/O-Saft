@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.54 19/03/29 21:49:12
+#?      @(#) Makefile 1.55 19/04/13 09:51:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.54
+_SID.test       = 1.55
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -216,8 +216,8 @@ HELP-help.test.make = print GNU Make's internals and global project settings
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
-# Note that the $(_SID*) variables indicate if a sub-makefile was included.
-# Note that $$ neds to be used to ensure that the variables are evaluated when
+# NOTE: $(_SID*) variables indicate if a sub-makefile was included.
+# NOTE: $$  needs to be used to ensure that the variables are evaluated when
 #      the targets executes and not when the Makefile is read.
 test.file-1:
 test,file-2:
@@ -348,9 +348,15 @@ $(TEST.logdir):
 # rule fails, if the pattern is not found. That's why it is very important to
 # define  TEST.args  propperly. Even the sequence of the arguments may count.
 #
-# Note:  even  _TMP.rc  is generated for each call, it will only be used when
+# NOTE: the called $(EXE.pl) may return the expected pattern given by the  $*
+# pattern multiple times, even in not intended output. In this case, the rule
+# succeeds also, as the pattern is found in the output. Example:
+#       make message-unintended TEST.args="host-unintended +cn"
+#
+# NOTE: even  _TMP.rc  is generated for each call,  it will only be used when
 # requested with the  --rc=$(_TMP.rc)  option.
-# Note:  if  TEST.args  contains special characters, syntax errors may occour
+#
+# NOTE: if  TEST.args  contains special characters,  syntax errors may occour
 # when used in the shell. Quoting  TEST.args  is not possible because then it
 # becomes a single argument instead of discrete arguments. At least following
 # special characters should not be used:  ; & | # < > ` [ ]
@@ -453,7 +459,7 @@ testarg0-%.log: $(TEST.logdir)
 #       $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
 #       #   c00-aa.tld returns: aa.tld
 #
-# Note: following does not work proper (in GNU Make), hence the solution above:
+# NOTE: following does not work proper (in GNU Make), hence the solution above:
 #       testcmd-no1: TEST.args  = +quit $*
 #       testcmd-no2: TEST.args := +quit $*
 #
@@ -494,10 +500,10 @@ testcmd-%:
 # created file to name which contains the current date.
 # Finally, if current logfile is/was missing, use newly created one:
 # "test ... || mv ..." . This ensures that the file exists afterwards.
-# Note that all target commands are prefixed with - to avoid make reporting of
-# errors if the command fails (as failture is intended, somehow).
-# Note that  testcmd-%.log  called from within t/ may return:  is up to date.
 # diff's STDERR is discarded (may return: "file does not exist").
+# NOTE: all target commands are prefixed with -  this avoids that make reports
+# errors if the command fails (as failture is intended, somehow).
+# NOTE: testcmd-%.log  called from within t/ may return:  is up to date.
 
 _FORCE:
 testcmd-%.log: $(TEST.logdir) _FORCE
