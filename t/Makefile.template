@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.15 19/03/20 23:58:11
+#?      @(#) Makefile.template 1.16 19/04/13 10:59:01
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.15
+_SID.TEMPL      = 1.16
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -113,7 +113,7 @@ testcmd-TEMPL%:     TEST.init   = +quit
                     # argument to be passed always to  $(EXE.pl)
 
 # Set varables for each unique target.
-# Note that the % in the pattern rule will be used for the hostname later.
+# NOTE: the % in the pattern rule will be used for the hostname later.
 testcmd-TEMPL001_%: TEST.args  += +VERSION
 testcmd-TEMPL002_%: TEST.args  += --help
 
