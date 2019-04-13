@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.39 19/04/12 22:51:13
+#?      @(#) Makefile.warnings 1.40 19/04/13 09:54:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.39
+_SID.warnings   = 1.40
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -56,7 +56,7 @@ first-warn-target-is-default: help.test.warnings
 
 ALL.help.test  += help.test.warnings
 
-HELP-help.test.warnings = print targets for testing WARNING messages
+HELP-help.test.warnings = print targets for testing '$(SRC.pl)' WARNING messages
 help.test.warnings:       HELP_TYPE = warnings
 help.test.warnings-v:     HELP_TYPE = warnings
 help.test.warnings-vv:    HELP_TYPE = warnings
@@ -110,9 +110,17 @@ warning-%:          TEST.init   =
 # $(EXE.pl). If the definition starts with the literal string "TODO:" the
 # target will only print the text (see message-%).
 # The TODO texts ending with  "difficult ..." mark messages, which cannot
-# tested easily.
+# tested easily.  Those ending with  "disabled ..."  mark messages, which
+# are currently disabled (commented out) in the source code.
 # All other targets should define  TEST.args  with those arguments, which 
 # force the warning message DDD given in the target's name  warning-DDD .
+# Some messages can be tested without any target host, they use the +quit
+# command. Others need a target host argument somehow, "any-host" is used
+# for that. Using any-host most likely causes $(EXE.pl) to fail with more
+# WARNNG messages printed, but they are silently ignored because only the 
+# message with the specific number DDD is extracted.
+# NOTE: in rare cases the target may succedd wrongly,  see description of
+# message-%  pattern rule in t/Makefile.
 warning-000: TEST.args  = --invalid_nr_to_show_failed-status
 warning-002: TEST.args  = TODO: testing openssl returning error, difficult ...
 warning-003: TEST.args  = TODO: testing openssl failed with allocate memory, difficult ...
@@ -348,7 +356,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.39: $(MAKE) test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.40: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
