@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.30 19/04/03 19:57:46
+#?      @(#) Makefile.cmds 1.31 19/04/13 11:44:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.30
+_SID.cmds       = 1.31
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -168,10 +168,10 @@ test.cmds.log:  $(ALL.test.cmds.log) test.log-compare-hint
 # see  test.pattern-%  pattern rule
 
 # testrun target to allow something like:  testrun-+my-fancy-command
-# Note that we use  testrun-+%  and not  testrun+%  to avoid double definition
-# of the pattern rule (problem in GNU Make)
-# unfortunatelly this restricts the usage to pattern starting with +
-# EXE.pl and TEST.init will be inherited from  testcmd-c% .
+# NOTE: testrun-+%  and not  testrun+%  is used to avoid double definition of
+# the pattern rule (problem in GNU Make), this restricts the usage to pattern
+# starting with  + , unfortunately.
+# EXE.pl  and  TEST.init  will be inherited from  testcmd-c% .
 testrun-+%:     TEST.args  += $(TEST.cmds.hosts)
 testrun-%: testcmd-%
 	@$(TRACE.target)
