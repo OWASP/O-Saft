@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.59 19/03/31 21:46:00
+#?      @(#) Makefile.help 1.60 19/04/13 10:55:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.59
+_SID.help       = 1.60
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -345,7 +345,8 @@ HELP-p-MYmacro  = show all definitions of MYmacro as is - macro pattern match
 HELP-t-MYtarget = show MYtarget                         - exact target match
 
 HELP-_help2     = ________________________________ targets for documentation _
-HELP-help.doc   = print this documentation
+HELP-help.help  = print this documentation
+HELP-help.doc   = same as help.help
 HELP-help.all   = print all targets, including test and development targets
 #               # HELP-help.all - same as in ../Makefile (cannot be reused)
 HELP-help.test  = print documentation about test targets
@@ -398,7 +399,7 @@ help.syntax:
 
 # Following  file%  targets are used for doc.all target only, they are just a
 # dirty hack so that output of target help.all and doc.all are similar.
-# Note: quick&dirty as  $(TEST.dir)  is hardcoded as t/ in the target names.
+# NOTE: quick&dirty as  $(TEST.dir)  is hardcoded as t/ in the target names.
 _FILE_LINE  = \#-------------------------------------------------------------
 _filet/%: _file-egal
 	@echo ""
@@ -533,7 +534,7 @@ testcmd-help.syntax:            TEST.args  +=
 # TODO: following conditions should be automatically set using $(_MY.inc.type)
 testcmd-help.test.help:         TEST.args  +=
 testcmd-help.test.make:         TEST.args  +=
-#testcmd-help.critic:            TEST.args  +=  # no uses as it is the same as testcmd-help.test.critic
+#testcmd-help.critic:            TEST.args  +=  # not used as it is the same as testcmd-help.test.critic
 testcmd-help.test:              TEST.args  +=
 testcmd-help.test.cgi:          TEST.args  +=
 testcmd-help.test.cmds:         TEST.args  +=
