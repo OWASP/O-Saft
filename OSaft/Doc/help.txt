@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.24 19/04/12 16:24:05
+# SID   @(#) help.txt 1.25 19/04/15 22:20:10
 
 NAME
 
@@ -4384,11 +4384,15 @@ DEBUG
 TESTING
 
         When talking about "testing the tool", functional tests are meant. So
-        this section describes "developer" rather that "user" options.
+        this section describes "developer" rather than "user" options.
 
         Testing the tool is a challenging task. Beside the oddities described
         elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
         and errors which may occour during runtime.
+
+        Makefiles are used for testing  functionality and code quality during
+        development. These tests are implemented in the  ./t/  directory, see
+        the 'Makefile.*' there.
 
         Following options and commands are available to improve testing. They
         mainly can simulate error conditions or stop execution properly (they
@@ -4420,6 +4424,17 @@ TESTING
 
           or the text used as prefix triggerd by the  --trace  option:
               $0 --cfg-init=prefix_trace="#TRACE: "
+
+      --v
+
+          Print more information about checks.
+
+      --trace
+
+          Print debugging messages.
+
+        For more details, please see  X&Options for tracing and debugging& .
+
 
 EXAMPLES
 
