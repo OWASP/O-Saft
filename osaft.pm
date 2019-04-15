@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.04.10',  # official version number of this file
+    OSAFT_VERSION   => '19.04.11',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.168 19/04/12 21:57:49",
+    SID_osaft   => "@(#) osaft.pm 1.169 19/04/15 23:05:20",
 
 };
 
@@ -1516,6 +1516,8 @@ our %cfg = (
     'exitcode_pfs'  => 1,       # 0: do not count ciphers without PFS for --exitcode
     'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
     'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
+    'exitcode_quiet'=> 0,       # 1: do not print "EXIT status" message
+    'exitcode_v'    => 0,       # 1: print verbose checks for exit status
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'ignorenoreply' => 1,       # 1: treat "no reply" as heartbeat not enabled
     'label'         => 'long',  # fomat of labels
