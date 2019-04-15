@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.860 19/04/12 16:25:55",
-    STR_VERSION => "19.04.10",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.861 19/04/15 22:54:19",
+    STR_VERSION => "19.04.11",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -174,7 +174,6 @@ my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
 # arrays to collect data for debugging, they are global!
-our $warning= 1;    # print warnings; need this variable very early
 
 #| definitions: forward declarations
 #| -------------------------------------
@@ -202,9 +201,9 @@ sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @tx
 sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
 sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
-    # don't print if ($warning <= 0);
+    # don't print if ($cfg{'warning'} <= 0);
     my @txt = @_;
-    return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $warning
+    return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $cfg{'warning'}
     local $\ = "\n";
     print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -7946,7 +7945,6 @@ if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
 $verbose = $cfg{'verbose'};
-$warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
 if (('owasp' eq $legacy) and (0 <= _need_cipher())) {
     # --legacy=owasp does not print the "supported" columns, hence all
@@ -8794,7 +8792,9 @@ _yeast_EXIT("exit=END   - end");# for symetric reason, rather useless here
 if ($cfg{'exitcode'} == 0) {
     exit 0;
 } else {
-    exit check_exitcode();
+    my $status = check_exitcode();
+    print "# EXIT $status";
+    exit $status;
 }
 exit 2; # main; code never reached
 
