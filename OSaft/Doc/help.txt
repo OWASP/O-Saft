@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.25 19/04/15 22:20:10
+# SID   @(#) help.txt 1.26 19/04/15 22:50:12
 
 NAME
 
@@ -1016,6 +1016,8 @@ OPTIONS
 
           Parts of these checks can be diasabled,  see  --exitcode-*  options
           below.
+
+          Use  --v  to see details about the performed checks.
 
           Functionality implemented experimental, may change in future.
 
