@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.861 19/04/15 22:54:19",
+    SID         => "@(#) yeast.pl 1.862 19/04/15 23:48:05",
     STR_VERSION => "19.04.11",          # <== our official version number
 };
 
@@ -5681,6 +5681,8 @@ sub check_exitcode  {
     my $cnt_ciphs  = 0; # number of insecure ciphers
     my $cnt_pfs    = 0; # number ciphers without PFS per protocol
     my $cnt_nopfs  = 0; # number ciphers without PFS
+    my $verbose    = $cfg{'verbose'};       # save global verbose
+    $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
     $exitcode = $checks{'cnt_checks_no'}->{val} if ($cfg{'exitcode_checks'} > 0);
 # TODO: $cfg{'exitcode_sizes'}
     _v_print("---------------------------------------------------- exitcode {");
@@ -5715,6 +5717,7 @@ sub check_exitcode  {
     _v_print(sprintf("%s\t%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}));
     _v_print(sprintf("%s\t%s", $checks{'cnt_exitcode'}->{txt},  $checks{'cnt_exitcode'}->{val}));
     _v_print("---------------------------------------------------- exitcode }");
+    $cfg{'verbose'} = $verbose; # restore
     return $checks{'cnt_exitcode'}->{val};
 } # check_exitcode
 
@@ -7546,6 +7549,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--ignorenoreply')     { $cfg{'ignorenoreply'} = 1;}
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
     if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
+    if ($arg =~ /^--exitcodequiet/)     { $cfg{'exitcode_quiet'}= 1;} # -"-
+    if ($arg =~ /^--exitcodesilent/)    { $cfg{'exitcode_quiet'}= 1;} # -"-
+    if ($arg =~ /^--traceexit/)         { $cfg{'exitcode_v'}    = 1;} # -"-
     if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
     if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; } # -"-
     if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;} # -"-
@@ -8793,7 +8799,10 @@ if ($cfg{'exitcode'} == 0) {
     exit 0;
 } else {
     my $status = check_exitcode();
-    print "# EXIT $status";
+    if (0 < $status) {
+        # print EXIT message unless switched off with --exitcode-quiet
+        print "# EXIT $status" if (0 == $cfg{'exitcode_quiet'});
+    }
     exit $status;
 }
 exit 2; # main; code never reached
@@ -9329,6 +9338,12 @@ like: SSLv2 SSLv3 TLSv1 ...
 Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
 By default  --exitcode  counts all settings considered weak or insecure.
 This behaviour can be controlled with the  --exitcode-no-*  options.
+The reasons and calculations of the returned status are printed withh  --v
+or the special  --trace-exit  option.
+By default, the "EXIT status" messages is printed, which can be suppressed
+with  --exitcode-quiet .
+NOTE: option named  --trace-exit  and not  --exitcode-v so that it matches
+all checks according --trace* .
 
 
 =head2 Note:heartbleed
