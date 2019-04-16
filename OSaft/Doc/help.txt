@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.26 19/04/15 22:50:12
+# SID   @(#) help.txt 1.27 19/04/16 08:02:19
 
 NAME
 
@@ -1012,14 +1012,23 @@ OPTIONS
           * ciphers without PFS are supported (disable with --exitcode-cipher)
 
           In particular, the status code will be the total count of all these
-          checks.
+          checks. The status code will also be printed at end, like:
+              # EXIT 23
 
           Parts of these checks can be diasabled,  see  --exitcode-*  options
           below.
 
-          Use  --v  to see details about the performed checks.
+          Use  --v or --exitcode-v  to see details about the performed checks.
 
           Functionality implemented experimental, may change in future.
+
+      --exitcode-v
+
+          Print information about persormed checks.
+
+      --exitcode-quiet
+
+          Do not print status code at end.
 
       --exitcode-no-checks
 
