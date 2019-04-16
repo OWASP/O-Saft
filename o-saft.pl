@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.863 19/04/16 07:47:24",
-    STR_VERSION => "19.04.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.864 19/04/16 09:06:03",
+    STR_VERSION => "19.04.13",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -5683,21 +5683,23 @@ sub check_exitcode  {
     my $cnt_nopfs  = 0; # number ciphers without PFS
     my $verbose    = $cfg{'verbose'};       # save global verbose
     $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
-    $exitcode = $checks{'cnt_checks_no'}->{val} if ($cfg{'exitcode_checks'} > 0);
+    $exitcode = $checks{'cnt_checks_no'}->{val} if (0 < $cfg{'exitcode_checks'});
 # TODO: $cfg{'exitcode_sizes'}
-    _v_print("---------------------------------------------------- exitcode {");
-    _v_print(sprintf("%s\t%3s %3s %3s %3s %3s %s", qw(protocol H M L W no-PFS insecure)));
-    _v_print("-------------+---+---+---+---+------+------------");
+    my $__tableline = "-------------+---+---+---+---+------+------------";
+    my $__exitline  = "---------------------------------------------------- exitcode";
+    _v_print("$__exitline {");
+    _v_print(sprintf("%s\t%3s %3s %3s %3s %7s %s", qw(protocol H M L W no-PFS insecure)));
+    _v_print($__tableline);
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
-        next if ($cfg{$ssl} == 0);      # not requested, don't count
+        next if (0 == $cfg{$ssl});      # not requested, don't count
 # TODO: counts protocol even if no cipher was supported, is this insecure?
-        $cnt_prot++ if ($cfg{$ssl} > 0);
+        $cnt_prot++ if (0 < $cfg{$ssl});
         $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
-        $exitcode += $cnt_pfs                if ($cfg{'exitcode_pfs'}    > 0);
+        $exitcode += $cnt_pfs                if (0 < $cfg{'exitcode_pfs'});
         $cnt_ciph  = 0;
-        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if ($cfg{'exitcode_medium'} > 0);
-        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if ($cfg{'exitcode_weak'}   > 0);
-        $cnt_ciph += $prot{$ssl}->{'LOW'}    if ($cfg{'exitcode_low'}    > 0);
+        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (0 < $cfg{'exitcode_medium'});
+        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (0 < $cfg{'exitcode_weak'});
+        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (0 < $cfg{'exitcode_low'});
         $exitcode += $cnt_ciph;
         _v_print(sprintf("%-7s\t%3s %3s %3s %3s %3s\t%s", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
@@ -5707,16 +5709,23 @@ sub check_exitcode  {
         $cnt_ciphs += $cnt_ciph;
         $cnt_nopfs += $cnt_pfs;
     }
-    _v_print("-------------+---+---+---+---+------+------------");
-    $cnt_prot-- if ($cfg{'TLSv12'} > 0);
-    $exitcode += $cnt_prot if ($cfg{'exitcode_prot'} > 0);
+    # print overview of calculated exitcodes;
+    # for better human readability, counts disabled by --exitcode-no-* options
+    # are marked as "ignored" 
+    my $ign_ciphs   = (0 < ($cfg{'exitcode_low'} + $cfg{'exitcode_weak'} + $cfg{'exitcode_medium'}))   ? "" : " (count ignored)";
+    my $ign_checks  = (0 < $cfg{'exitcode_checks'}) ? "" : " (count ignored)";
+    my $ign_prot    = (0 < $cfg{'exitcode_prot'})   ? "" : " (count ignored)";
+    my $ign_pfs     = (0 < $cfg{'exitcode_pfs'})    ? "" : " (count ignored)";
+    _v_print($__tableline);
+    $cnt_prot-- if (0 < $cfg{'TLSv12'});
+    $exitcode += $cnt_prot if (0 < $cfg{'exitcode_prot'});
     $checks{'cnt_exitcode'}->{val} = $exitcode;
-    _v_print(sprintf("%s\t%s", "Total number of insecure protocols",  $cnt_prot));
-    _v_print(sprintf("%s\t%s", "Total number of insecure ciphers",    $cnt_ciphs));
-    _v_print(sprintf("%s\t%s", "Total number of ciphers without PFS", $cnt_nopfs));
-    _v_print(sprintf("%s\t%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}));
-    _v_print(sprintf("%s\t%s", $checks{'cnt_exitcode'}->{txt},  $checks{'cnt_exitcode'}->{val}));
-    _v_print("---------------------------------------------------- exitcode }");
+    _v_print(sprintf("%s\t%2s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
+    _v_print(sprintf("%s\t%2s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
+    _v_print(sprintf("%s\t%2s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
+    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}, $ign_checks));
+    _v_print(sprintf("%s\t%2s", $checks{'cnt_exitcode'}->{txt},  $checks{'cnt_exitcode'}->{val}));
+    _v_print("$__exitline }");
     $cfg{'verbose'} = $verbose; # restore
     return $checks{'cnt_exitcode'}->{val};
 } # check_exitcode
