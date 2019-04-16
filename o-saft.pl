@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.862 19/04/15 23:48:05",
-    STR_VERSION => "19.04.11",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.863 19/04/16 07:47:24",
+    STR_VERSION => "19.04.12",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -373,7 +373,7 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| read DEBUG-FILE, if any (source for trace and verbose)
 #| -------------------------------------
 my $err = "";
-my @dbx = grep{/--(?:trace|v$|yeast)/} @argv;   # may have --trace=./file
+my @dbx = grep{/--(?:trace|v$|exitcode.?v$|yeast)/} @argv;   # may have --trace=./file
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -7550,8 +7550,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
     if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
     if ($arg =~ /^--exitcodequiet/)     { $cfg{'exitcode_quiet'}= 1;} # -"-
-    if ($arg =~ /^--exitcodesilent/)    { $cfg{'exitcode_quiet'}= 1;} # -"-
-    if ($arg =~ /^--traceexit/)         { $cfg{'exitcode_v'}    = 1;} # -"-
+    if ($arg =~ /^--exitcodesilent/)    { $cfg{'exitcode_quiet'}= 1;} # alias:
+    if ($arg =~ /^--exitcodev/)         { $cfg{'exitcode_v'}    = 1;} # -"-
+    if ($arg =~ /^--traceexit/)         { $cfg{'exitcode_v'}    = 1;} # alias:
     if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
     if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; } # -"-
     if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;} # -"-
