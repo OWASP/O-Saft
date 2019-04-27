@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.12 18/09/30 21:34:45
+#?      @(#) .perlcriticrc 1.13 19/04/27 19:28:03
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -640,7 +640,7 @@ verbose     = 8
 	# sleep( 0.25 );                            # ok
 
     # CHECK DISABLED
-	# We do not wish to use too much external modules. selects is used
+	# We do not wish to use too much external modules. select is used
 	# several times in SSLhello.pm
 	# FIXME: write a  osaft_sleep() which hides the select, this way the
 	# violation is printed only once. Then we can enable it again.
@@ -659,13 +659,17 @@ verbose     = 8
 	# does not make sense to disable it, can even not be disabled :-/
 
 
-[Documentation::RequirePodSections]
+[-Documentation::RequirePodSections]
     lib_sections = NAME | SYNOPSIS | DESCRIPTION | AUTHOR
 
     # Message:
-	#
+	# Missing "OPTIONS" section in POD at line ...
 
-    # CHECK adapted
+    # CHECK DISABLED
+	# cause we consider following correct and useful:  my $last = '';
+	# Perl::Critic is uses a strange list of required sections in POD.
+	# Also there is no possibility to disable Perl::Critic's required
+	# sections, hence generally disabled.
 
 
 [-NamingConventions::ProhibitAmbiguousNames]
