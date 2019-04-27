@@ -104,7 +104,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.69 19/04/27 10:49:32";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.70 19/04/27 11:11:08";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -120,21 +120,23 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
 #        we have a lot of single character strings, herein, that's ok
 
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+#        we have some constants herein, that's ok
 
 # debug functions
-sub _yTIME    {
+sub _yTIME      {
     if (0 >= $cfg{'traceTIME'}) { return ""; }
     my $now = time() - ($time0 || 0);
        $now = time() if (1 == $cfg{'time_absolut'});# $time0 defined in main
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
-sub _yeast    { local $\ = "\n"; print $cfg{'prefix_verbose'} . $_[0]; return; }
-sub _y_ARG    { local $\ = "\n"; print $cfg{'prefix_verbose'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
-sub _y_CMD    { local $\ = "\n"; print $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
-sub _yTRAC    { local $\ = "\n"; printf("%s%14s= %s\n",  $cfg{'prefix_verbose'}, $_[0], $_[1]); return; }
-sub _yline    { _yeast("#----------------------------------------------------" . $_[0]); return; }
-sub _y_ARR    { return join(" ", "[", @_, "]"); }
-sub _yeast_trac {}   # forward declaration
+sub _yeast      { local $\ = "\n"; print $cfg{'prefix_verbose'} . $_[0]; return; }
+sub _y_ARG      { local $\ = "\n"; print $cfg{'prefix_verbose'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
+sub _y_CMD      { local $\ = "\n"; print $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
+sub _yTRAC      { local $\ = "\n"; printf("%s%14s= %s\n",  $cfg{'prefix_verbose'}, $_[0], $_[1]); return; }
+sub _yline      { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub _y_ARR      { return join(" ", "[", @_, "]"); }
+sub _yeast_trac {}          # forward declaration
 sub _yeast_trac {
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
     my $ref  = shift;   # must be a hash reference
@@ -220,7 +222,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 # FIXME: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
-                    if ($key eq "openssl") {
+                    if ("openssl" eq $key) {
                         _yTRAC($k, _y_ARR(@{$cfg{$key}{$k}}));
                     } else {
                         _yTRAC($k, $cfg{$key}{$k});
@@ -254,7 +256,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if (0 == $cfg{'trace'}) { # simple list
         printf("%s%14s= [ ", $cfg{'prefix_verbose'}, "targets");
         foreach my $target (@{$cfg{'targets'}}) {
-            next if (0 == @{$target}[0]);   # first entry conatins default settings
+            next if (0 == @{$target}[0]);       # first entry conatins default settings
             printf("%s:%s ", @{$target}[2..3]); # the perlish way
         }
         printf("]\n");
@@ -262,7 +264,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         printf("%s%14s targets = [\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
         printf("%s#  Index %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
         foreach my $target (@{$cfg{'targets'}}) {
-            next if (0 == @{$target}[0]);   # first entry conatins default settings
+            next if (0 == @{$target}[0]);       # first entry conatins default settings
             printf("%s   [%3s] %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, @{$target}[0,1..7]);
         }
         printf("%s%14s ]\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
@@ -289,7 +291,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return;
 } # _yeast_init
 
-sub _yeast_ciphers {
+sub _yeast_ciphers  {
     #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
@@ -307,8 +309,8 @@ sub _yeast_ciphers {
        } else {
            # expand list
            @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
-              # FIXME: _get_ciphers_range() first arg is the SSL version, which is
-              #        usually unknown here, hence the first is passed
+              # FIXME: _get_ciphers_range() first arg is the SSL version, which
+              #        is usually unknown here, hence the first is passed
               #        this my result in a wrong list; but its trace output only
            $_cnt = scalar @range;
        }
@@ -316,7 +318,7 @@ sub _yeast_ciphers {
     }
     _yeast("  _need_cipher= $need");
     if (0 < $need) {
-        $_cnt = sprintf("%5s", $_cnt); # format count
+        $_cnt = sprintf("%5s", $_cnt);  # format count
         _yeast("      starttls= " . $cfg{'starttls'});
         if (_is_do('cipherraw')) {
             _yeast("   cipherrange= " . $cfg{'cipherrange'});
@@ -338,9 +340,9 @@ sub _yeast_exit {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
     foreach my $key (sort keys %{$cfg{'done'}}) {
-        # cannot use   _yeast_trac(\%{$cfg{'done'}}, $key);
+        # cannot use  _yeast_trac(\%{$cfg{'done'}}, $key);
         # because we want the CMD prefix here
-        if ($key eq 'arg_cmds') {
+        if ('arg_cmds' eq $key) {
             _y_CMD("  $key : [" . join(" ", @{$cfg{'done'}->{$key}}) . "]");
         } else {
             _y_CMD("  $key : " . $cfg{'done'}->{$key});
@@ -384,20 +386,20 @@ sub _yeast_args {
     return;
 } # _yeast_args
 
-sub _v_print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (0 < $cfg{'verbose'}); return; }
-sub _v2print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (1 < $cfg{'verbose'}); return; }
-sub _v3print  { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (2 < $cfg{'verbose'}); return; }
-sub _v4print  { local $\ = "";   print $cfg{'prefix_verbose'} . join(" ", @_) if (3 < $cfg{'verbose'}); return; }
-sub _trace    { print $cfg{'prefix_trace'} . $_[0]         if (0 < $cfg{'trace'}); return; }
-sub _trace0   { print $cfg{'prefix_trace'}                 if (0 < $cfg{'trace'}); return; }
-sub _trace1   { print $cfg{'prefix_trace'} . join(" ", @_) if (1 < $cfg{'trace'}); return; }
-sub _trace2   { print $cfg{'prefix_trace'} . join(" ", @_) if (2 < $cfg{'trace'}); return; }
-sub _trace3   { print $cfg{'prefix_trace'} . join(" ", @_) if (3 < $cfg{'trace'}); return; }
-sub _trace_   { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace'}); return; }
+sub _v_print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (0 < $cfg{'verbose'}); return; }
+sub _v2print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (1 < $cfg{'verbose'}); return; }
+sub _v3print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (2 < $cfg{'verbose'}); return; }
+sub _v4print    { local $\ = "";   print $cfg{'prefix_verbose'} . join(" ", @_) if (3 < $cfg{'verbose'}); return; }
+sub _trace      { print $cfg{'prefix_trace'} . $_[0]         if (0 < $cfg{'trace'}); return; }
+sub _trace0     { print $cfg{'prefix_trace'}                 if (0 < $cfg{'trace'}); return; }
+sub _trace1     { print $cfg{'prefix_trace'} . join(" ", @_) if (1 < $cfg{'trace'}); return; }
+sub _trace2     { print $cfg{'prefix_trace'} . join(" ", @_) if (2 < $cfg{'trace'}); return; }
+sub _trace3     { print $cfg{'prefix_trace'} . join(" ", @_) if (3 < $cfg{'trace'}); return; }
+sub _trace_     { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace'}); return; }
 # if --trace-arg given
-sub _trace_cmd { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_))if (0 < $cfg{'traceCMD'}); return; }
+sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (0 < $cfg{'traceCMD'}); return; }
 
-sub _vprintme {
+sub _vprintme   {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
     _yeast("$0 " . $VERSION);
@@ -406,7 +408,7 @@ sub _vprintme {
     return;
 } # _vprintme
 
-sub __data    { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
+sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub _yeast_data {
     print "
 === _yeast_data: check internal data structure ===
@@ -448,10 +450,10 @@ sub _yeast_data {
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
-# FIXME: FIXME: @{$dbx{'cmd-check'}} is incomplete when o-saft-dbx.pm is 
-#               `require'd in main; some checks above fail (mainly those
-#               those matching $cfg{'regex'}->{'SSLprot'}, hence the dirty
-#               additional  || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
+# FIXME: @{$dbx{'cmd-check'}} is incomplete when o-saft-dbx.pm is require'd in
+#        main; some checks above then fail (mainly those those matching
+#        $cfg{'regex'}->{'SSLprot'}, hence the dirty additional
+#        || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
 #               
     printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
@@ -474,6 +476,7 @@ sub _yeast_data {
     print "\n";
     return;
 } # _yeast_data
+
 sub _yeast_prot {
     #? print information about SSL/TLS protocols in various variables (hashes)
     #? this function is for internal use only
@@ -538,7 +541,7 @@ sub _main           {
     exit 0;
 } # _main
 
-sub o_saft_dbx_done {};         # dummy to check successful include
+sub o_saft_dbx_done {};     # dummy to check successful include
 ## PACKAGE }
 
 #_____________________________________________________________________________
