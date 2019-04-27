@@ -25,8 +25,8 @@
 #
 #       SEE  Make:automatic variables  also.
 #
-#       Note: macro is a synonym for variable in makefiles.
-#       Note: macro definitions in makefiles must not be sequential!
+#       Note that macro is a synonym for variable in makefiles.
+#       Note that macro definitions in makefiles must not be sequential!
 #       Use of $$ avoids evaluating $ (the macro).
 #
 #    Variable, macro names
@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.65 19/04/02 00:34:39
+#?      @(#) Makefile 1.66 19/04/28 01:33:10
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.65
+_SID            = 1.66
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -269,7 +269,8 @@ inc.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
 		  Makefile.opt     Makefile.cmds  Makefile.ext   Makefile.exit \
 		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
-		  Makefile.critic  Makefile.etc   Makefile.template   Makefile.FQDN
+		  Makefile.critic  Makefile.etc   Makefile.template \
+		  Makefile.doc     Makefile.FQDN 
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
@@ -307,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.65
+_INST.text      = generated from Makefile 1.66
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -507,8 +508,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.65
-tar:     GREP_EDIT  = 1.65
+GREP_EDIT           = 1.66
+tar:     GREP_EDIT  = 1.66
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -665,7 +666,7 @@ HELP--vv        = verbose: print target and all dependencies also
 #  TRACE.target = echo "\# --Target: $@: all dependencies: $^ --"
 
 # verbose targets
-# Note: need at least one command for target execution
+# NOTE: need at least one command for target execution
 %-v: TRACE.target   = echo "\# $@: $?"
 %-v: %
 	@$(EXE.dummy)
