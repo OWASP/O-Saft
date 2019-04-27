@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
+#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
 =pod
 
 =encoding utf8
@@ -13,7 +16,7 @@ OSaft::Ciphers - common perl module to define O-Saft ciphers
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
 
 ########################  E X P E R I M E N T A L  #######################
-######################  not used in O-Saft 18.11.18  #####################
+######################  not used in O-Saft 19.04.19  #####################
 
 =cut
 
@@ -40,8 +43,8 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-my  $VERSION      = '19.04.11';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.29 19/04/12 22:01:21";
+my  $VERSION      = '19.04.19';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.30 19/04/27 15:47:22";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -65,6 +68,12 @@ our $VERBOSE = 0;    # >1: option --v
 #  But: this is a violation for severity 1, which is fixed and the produces
 #       another violation for severity 2.
 
+## no critic qw(Documentation::RequirePodLinksIncludeText)
+#        severity 2 only
+
+## no critic qw(ControlStructures::ProhibitPostfixControls)
+#        We believe it's better readable (severity 2 only)
+
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  There're a lot of expressions here, it's ok to use them without /x flag.
 
@@ -72,9 +81,13 @@ our $VERBOSE = 0;    # >1: option --v
 
 =head1 SYNOPSIS
 
-    OSaft::Ciphers.pm       # on command line will print help
+=over 2
 
-    use OSaft::Ciphers;     # from within perl code
+=item  use OSaft::Ciphers;     # from within perl code
+
+=item  OSaft::Ciphers.pm       # on command line will print help
+
+=back
 
 =head1 DESCRIPTION
 
@@ -102,7 +115,7 @@ It's defined as a static hash with the cipher's ID (hex number) as the hash key
 and all cipher suite data (in an array) as value for that hash key. For example
 I<AES256-SHA256>:
 
-    '0x00,0x3D' =E<gt> [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)],
+    '0x00,0x3D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)],
 
 For a more detailed description, please use:
 
@@ -121,7 +134,7 @@ C<%ciphers_names>.
 Each cipher suite is defined as a perl array (,see above) and will be converted
 to a perl hash at initialization like:
 
-    '0x00,0x3D' =E<gt> { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
+    '0x00,0x3D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
 
 Such a hash is simpler to use. Finally a getter method (see L</METHODS>) is
 provided for each value.
@@ -155,6 +168,8 @@ Because all variables are constants, we only provide getter methods for them.
 
 All data structures are defined herein. For testing, the data structures can be
 read from a file.
+
+See also:  OSaft/Ciphers.pm --usage
 
 =head2 Documentaion
 
@@ -242,9 +257,9 @@ our @EXPORT_OK  = qw(
 # bails out with an error  "Subroutine _trace redefined ...".
 # That's why the check is done inside _trace() itself.
 # TODO: only _trace() implemented correctly, as others are not yet used
-sub _trace      {
+sub _trace      {   ## no critic qw(Subroutines::RequireArgUnpacking)
     if (defined &::_trace) {
-        ::_trace(@_);   ## no critic qw(Subroutines::RequireArgUnpacking)
+        ::_trace(@_);
     } else {
         #print "#$0: @_\n"; # no trace output if called itself
     }
@@ -442,25 +457,25 @@ sub id2key      {
 
 =head2 get_param($cipher, $key)
 
-=head2 get_ssl( $cipher)
+=head2 get_ssl(  $cipher)
 
-=head2 get_keyx($cipher)
+=head2 get_keyx( $cipher)
 
-=head2 get_auth($cipher)
+=head2 get_auth( $cipher)
 
-=head2 get_enc( $cipher)
+=head2 get_enc(  $cipher)
 
-=head2 get_bits($cipher)
+=head2 get_bits( $cipher)
 
-=head2 get_mac( $cipher)
+=head2 get_mac(  $cipher)
 
-=head2 get_dtls($cipher)
+=head2 get_dtls( $cipher)
 
-=head2 get_rfc( $cipher)
+=head2 get_rfc(  $cipher)
 
-=head2 get_sec( $cipher)
+=head2 get_sec(  $cipher)
 
-=head2 get_tags($cipher)
+=head2 get_tags( $cipher)
 
 =head2 get_score($cipher)
 
@@ -769,7 +784,7 @@ sub show_getter {
 } # show_getter
 
 sub show_key    {
-    #? print hex key if found in internal data structure
+    #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
     printf("#%s:\n", (caller(0))[3]);
@@ -1129,7 +1144,7 @@ sub show_ciphers    {
     my $format = shift;
     printf("#%s:\n", (caller(0))[3]);
 
-    if ($format !~ m/(?:dump|tab|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
+    if ($format !~ m/(?:dump|tab|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) { ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
         _warn("520: unknown format '$format'");
         return;
     }
@@ -1275,21 +1290,6 @@ sub _ciphers_init   {
     return;
 }; # _ciphers_init
 
-sub _main_help  {
-    #? print help
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exec( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    return;
-}; # _main_help
-
 sub _main_usage {
     #? print usage
     my $name = (caller(0))[1];
@@ -1301,25 +1301,47 @@ sub _main_usage {
     foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
         printf("\t%s %s\n", $name, $cmd);
     }
-    print "# various commands:\n";
-    foreach my $cmd (qw(ciphers=dumptab)) {
+    print "# commands to show cipher data:\n";
+    foreach my $cmd (qw(key=CIPHER-NAME getter=KEY)) {
         printf("\t%s %s\n", $name, $cmd);
     }
-    printf("\t$name getter=KEY #(KEY: )\n");
-    printf("\t$name key=KEY #(KEY: )\n");
-    printf("\t$name ciphers=osaft\n");
-    printf("\t$name ciphers=openssl\n");
+    print "# various commands (examples):\n";
+    printf("\t$name version\n");
+    printf("\t$name getter=0xCC0xA9\n");  # avoid: Possible attempt to separate words with commas at ...
+    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ciphers=dumptab )) {
+        printf("\t%s %s\n", $name, $cmd);
+    }
     printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
-    printf("\t$name ciphersdescr\n");
     return;
 }; # _main_usage
 
+sub _main_help      {
+    #? print own help
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exec( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+}; # _main_help
+
 sub _main       {
-    #? print own documentation
-    if (0 > $#ARGV) { _main_help; exit 0; }
+    #? print own documentation or special required one
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #  see t/.perlcritic for detailed description of "no critic"
+    my @argv = @_;
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
+
+    if (0 > $#argv) { _main_help(); exit 0; }
 
     # got arguments, do something special
-    while (my $arg = shift @ARGV) {
+    while (my $arg = shift @argv) {
+        _main_help()        if ($arg =~ /^--?h(?:elp)?$/);
+        _main_usage()       if ($arg =~ /^--?usage$/);
         # ----------------------------- options
         $VERBOSE++          if ($arg =~ /^--v$/);
         # ----------------------------- commands
@@ -1331,17 +1353,16 @@ sub _main       {
         show_rfc()          if ($arg =~ /^rfc/i);
         show_desc()         if ($arg =~ /^desc(?:ription)?/);
         show_desc()         if ($arg =~ /^ciphers.?desc(?:ription)?/);
+        ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
         #show_ciphers($1)    if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
-        if ($arg =~ /^ciphers=(.*)$/) { show_ciphers($1); } # same as above, but keeps perlcritic quiet
-        if ($arg =~ /^getter=?(.*)/)  { show_getter($1);  }
-        if ($arg =~ /^key=?(.*)/)     { show_key($1);  }
-        if ($arg !~ /^--h(?:elp)?/)   { next; }
-        _main_usage();
+        show_ciphers($1)    if ($arg =~ /^ciphers=(.*)$/);
+        show_getter($1)     if ($arg =~ /^getter=?(.*)/);
+        show_key($1)        if ($arg =~ /^key=?(.*)/);
     }
     exit 0;
 }; # _main
 
-sub cipher_done {};             # dummy to check successful include
+sub cipher_done {};         # dummy to check successful include
 
 # complete initializations
 _ciphers_init();
@@ -1389,6 +1410,10 @@ this modules provides following commands:
 
 - print internal lists of ciphers (all data, internal format)
 
+=item ciphers=dumptab
+
+- same as C<ciphers=dump> but without comments
+
 =item ciphers=osaft
 
 - print internal lists of ciphers (internal format)
@@ -1404,6 +1429,10 @@ this modules provides following commands:
 =head1 OPTIONS
 
 =over 4
+
+=item --usage
+
+- print usage for L<COMMANDS> of CLI mode
 
 =item --v
 
@@ -1421,6 +1450,10 @@ purpose of this module is defining variables. Hence we export them.
 
 # ...
 
+=head1 VERSION
+
+1.30 2019/04/27
+
 =head1 AUTHOR
 
 28-may-16 Achim Hoffmann
@@ -1433,7 +1466,7 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main() if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
