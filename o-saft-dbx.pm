@@ -15,7 +15,14 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =head1 SYNOPSIS
 
-require "o-saft-dbx.pm";
+=over 2
+
+=item require "o-saft-dbx.pm";
+
+=item o-saft-dbx.pm --help
+
+=back
+
 
 =head1 DESCRIPTION
 
@@ -97,7 +104,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.68 19/04/27 08:56:16";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.69 19/04/27 10:49:32";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -514,16 +521,19 @@ sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
     my $arg = shift;
+       $arg = "--help"; # no other options implemented yet
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if (eval {require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 )
-        exec( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    if ($arg =~ m/--?h(elp)?$/) {
+        if (eval {require POD::Perldoc;}) {
+            # pod2usage( -verbose => 1 )
+            exec( Pod::Perldoc->run(args=>[$0]) );
+        }
+        if (qx(perldoc -V)) {
+            # may return:  You need to install the perl-doc package to use this program.
+            #exec "perldoc $0"; # scary ...
+            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        }
     }
     exit 0;
 } # _main
