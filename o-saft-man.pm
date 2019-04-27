@@ -26,9 +26,24 @@ package main;   # ensure that main:: variables are used
 #        We always close our filehandles, Perl::Critic is too stupid to read
 #        over 15 lines.
 
-## no critic qw(Modules::ProhibitExcessMainComplexity)
-#        It's the nature of translations to be complex, hence don't complain.
-# NOTE:  This expception fails, Perl::Critic still complains (probably a bug there)
+## no critic qw(Documentation::RequirePodSections)
+#        Perl::Critic is uses a strange list of required sections in POD.
+#        See  t/.perlcriticrc .
+
+## no critic qw(Documentation::RequirePodLinksIncludeText)
+#        only one L<> used here, which is ok.
+
+## no critic qw(Variables::ProhibitPunctuationVar)
+#        We want to use $\ $0 etc.
+
+## no critic qw(ControlStructures::ProhibitPostfixControls  Modules::RequireVersionVar)
+## no critic qw(RegularExpressions::RequireDotMatchAnything RegularExpressions::RequireLineBoundaryMatching)
+## no critic qw(ValuesAndExpressions::ProhibitEmptyQuotes   RegularExpressions::ProhibitFixedStringMatches)
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers  ValuesAndExpressions::RequireUpperCaseHeredocTerminator)
+## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes   )
+## no critic qw(BuiltinFunctions::ProhibitBooleanGrep       BuiltinFunctions::ProhibitStringySplit)
+#        Keep severity 2 silent.
+# NOTE:  Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
 
 use strict;
 use warnings;
@@ -38,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.277 19/03/24 11:53:23";
+my  $SID_man= "@(#) o-saft-man.pm 1.278 19/04/27 10:35:46";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -49,8 +64,6 @@ my  $version= "$SID_man";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
-{ no strict;
-}
 my  $mytool = qr/(?:$parent|o-saft.tcl|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
@@ -64,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.277'; $v = STR_VERSION if (defined STR_VERSION); return $v; }
+sub _man_get_version{ no strict; my $v = '1.278'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -551,7 +564,7 @@ sub _man_html       {
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
         m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
         m/^=head2 (.*)/   && do {
-                    my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    my $x=$1;
                     if ($x =~ m/Discrete commands to test/) {
                         # SEE Help:Syntax
                         # command used for +info and +check have no description in @help
@@ -901,7 +914,7 @@ sub _man_cmd_from_source {
                 $txt .= sprintf("+$len%s\n", $1, $2);
             }
         }
-        close($fh);
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
     return $txt;
 } # _man_cmd_from_source
@@ -926,7 +939,7 @@ sub _man_cmd_from_rcfile {
                 $val  = "";
             }
         }
-        close($fh);
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
     return $txt;
 } # _man_cmd_from_rcfile
@@ -1180,7 +1193,7 @@ sub man_alias       {
                 printf("%-29s%-21s# %s\n", "", $alias, $commt);
             }
         }
-        close($fh);
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
     _man_foot(27);
     print <<'EoHelp';
@@ -1335,7 +1348,7 @@ sub src_grep        {
             }
             printf("%-15s%s\n", $opt, $comment);
         }
-        close($fh);
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
     _man_foot(14);
     return;
@@ -1440,7 +1453,6 @@ sub _main           {
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
             printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
         }
-        exit 0;
     } else {
         printhelp($ARGV[0]);
     }
@@ -1488,6 +1500,8 @@ see  L<METHODS>  below.
 =over 2
 
 =item * require q{o-saft-man.pm}; printhelp($type);
+
+=item * o-saft-man.pm --help
 
 =item * o-saft-man.pm [<$type>]
 
@@ -1553,6 +1567,8 @@ on the $type parameter, which is a literal string, as follows:
 
 =item * tools   -> list of tools delivered with o-saft.pl
 
+=item * hint    -> list texts used in !!Hint messages
+
 =item * abbr
 
 =item * glossar -> list of abbrevations and terms according SSL/TLS
@@ -1565,6 +1581,8 @@ on the $type parameter, which is a literal string, as follows:
 
 =item * todo    -> show list of TODOs
 
+=item * error   -> show known problems about warning and error messages
+
 =item * intern  -> some internal documentations
 
 =item * Program.Code  -> description of coding style, conventions, etc.
@@ -1575,6 +1593,8 @@ on the $type parameter, which is a literal string, as follows:
 
 If any other string is used,  'printhelp()'  extracts just the section of
 the documention which is headed by that string.
+
+The  --header  option can be used For simple formatting.
 
 NOTE that above list is also documented in ./OSaft/Doc/help.txt in section
 "Options for help and documentation".
