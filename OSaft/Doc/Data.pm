@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "18.11.03";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.13 18/11/10 16:44:01";
+our $VERSION    = "19.04.19";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.14 19/04/27 12:39:53";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -277,16 +277,13 @@ sub _main_help  {
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if (eval {require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
+        exec( Pod::Perldoc->run(args=>[$0]) );
     }
-    ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # SEE Perl:perlcritic
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
     }
+    exit 0;
 }; # _main_help
 
 =pod
@@ -358,33 +355,33 @@ sub list        {
 } # list
 
 sub _main       {
-    #? print own documentation
+    #? print own documentation or that from specified file
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see .perlcritic for detailed description of "no critic"
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8"); # latin1 geht nicht
     binmode(STDERR, ":unix:utf8");
 
-    if (0 > $#argv) { _main_help; exit 0; }
+    if (0 > $#argv) { _main_help(); exit 0; }
 
     # got arguments, do something special
     while (my $cmd = shift @argv) {
         my $arg = shift @argv;
-        if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help;           exit 0; }
+        if ($cmd =~ /^--?h(?:elp)?$/x)  { _main_help();         exit 0; }
         # ----------------------------- commands
-        if ($cmd =~ /^list$/)           { print list();                 }
-        if ($cmd =~ /^get$/)            { print get($arg);              }
-        if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg);       }
-        if ($cmd =~ /^get.?text/)       { print get_text($arg);         }
-        if ($cmd =~ /^get.?as.?text/)   { print get_as_text($arg);      }
-        if ($cmd =~ /^print$/)          { print_as_text($arg);          }
-        if ($cmd =~ /^version$/)        { print "$SID_data\n";  exit 0; }
+        if ($cmd =~ /^list$/x)          { print list();                 }
+        if ($cmd =~ /^get$/x)           { print get($arg);              }
+        if ($cmd =~ /^get.?mark(up)?/x) { print get_markup($arg);       }
+        if ($cmd =~ /^get.?text/x)      { print get_text($arg);         }
+        if ($cmd =~ /^get.?as.?text/x)  { print get_as_text($arg);      }
+        if ($cmd =~ /^print$/x)         { print_as_text($arg);          }
+        if ($cmd =~ /^version$/x)       { print "$SID_data\n";  exit 0; }
         if ($cmd =~ /^(-+)?V(ERSION)?$/){ print "$VERSION\n";   exit 0; }
     }
     exit 0;
 } # _main
 
-sub o_saft_help_done   {};      # dummy to check successful include
+sub o_saft_help_done {};    # dummy to check successful include
 
 =pod
 
@@ -524,7 +521,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-C<$VERSION>
+1.14 2019/04/27
 
 =head1 AUTHOR
 
