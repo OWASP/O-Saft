@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #!#############################################################################
-#!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!#             Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.864 19/04/16 09:06:03",
+    SID         => "@(#) yeast.pl 1.866 19/04/28 01:54:24",
     STR_VERSION => "19.04.13",          # <== our official version number
 };
 
@@ -991,7 +991,7 @@ our %shorttexts = (
     'tr_03116-'     => "TR-03116-4 compliant (lazy)",
     'rfc_7525'      => "RFC 7525 compliant",
     'resumption'    => "Resumption",
-    'renegotiation' => "Renegotiation",     # NOTE used in %data and %check_dest
+    'renegotiation' => "Renegotiation",     # NOTE: used in %data and %check_dest
     'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
     'sts_maxage0d'  => "STS max-age not reset",
@@ -2120,7 +2120,7 @@ sub _check_functions    {
     my $version_iosocket = -1; # -"-
     my $text_ssleay      = "Net::SSLeay\t$version_ssleay supports";
 
-    # Note: $cfg{'ssleay'}->{'can_sni'} are set to 1 be default, will be
+    # NOTE: $cfg{'ssleay'}->{'can_sni'} set to 1 by default
 
     _y_CMD("  check required modules ...");
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
@@ -2438,8 +2438,8 @@ sub _init_openssldir    {
         # Print error message and disable external openssl.
         # In rare cases (i.e. VM with low memory) external call fails due to
         # malloc() problems, in this case print an additional warning.
-        # Note that low memory affects external calls only *but not* further
-        # control flow herein as Perl already managed to load the script.
+        # NOTE: low memory affects external calls only, but not further control
+        #       flow herein as Perl already managed to load the script.
         # For defensive programming  print()  is used insted of  _warn().
         print STR_WARN, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
@@ -3444,7 +3444,7 @@ sub _can_connect        {
         # may result in a connection fail
         # SNI is not necessary, as we just want to know if the server responds
         #    however, SNI may be necessary in future ...
-        # Note that $sni may be undef
+        # NOTE: $sni may be undef
         $socket = IO::Socket::SSL->new(
             PeerAddr        => $host,
             PeerPort        => $port,
@@ -4023,7 +4023,7 @@ sub check_url($$)   {
     # Net::SSLeay::get_http() is used as we already include Net::SSLeay
     # NOTE: must be rewritten if Net::SSLeay is removed
 
-    # Note: all following examples show only the headers checked herein
+    # NOTE: all following examples show only the headers checked herein
     # for CRL  we expect something like:
     # example: http://crl.entrust.net/level1k.crl
     #     HTTP/1.1 200 OK
@@ -4676,7 +4676,7 @@ sub checksizes($$)  {
     $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
     #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
-        # Note: RFC5280 limits the serial number to an integer with not more
+        # NOTE: RFC5280 limits the serial number to an integer with not more
         #       than 20 octets. It should also be not a negative number.
         # It's assumed that a octet equals one byte.
 
@@ -5002,7 +5002,7 @@ sub check6125($$)   {
     #   visually similar (so-called "confusable") characters in certificates;
     #   for discussion, see for example [IDNA-DEFS].
 
-    # Note: wildcards itself are checked in   checkcert() _checkwildcard()
+    # NOTE: wildcards itself are checked in   checkcert() _checkwildcard()
     $txt = $data{'cn'}->{val}($host);
     $val     .= " <<6.4.2:cn $txt>>"      if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
     $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
@@ -5678,9 +5678,9 @@ sub check_exitcode  {
     my $cnt_prot   = 0; # number of insecure protocol versions
                         # only TLSv12 is considered secure
     my $cnt_ciph   = 0; # number of insecure ciphers per protocol
-    my $cnt_ciphs  = 0; # number of insecure ciphers
+    my $cnt_ciphs  = 0; # total number of insecure ciphers
     my $cnt_pfs    = 0; # number ciphers without PFS per protocol
-    my $cnt_nopfs  = 0; # number ciphers without PFS
+    my $cnt_nopfs  = 0; # total number ciphers without PFS
     my $verbose    = $cfg{'verbose'};       # save global verbose
     $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
     $exitcode = $checks{'cnt_checks_no'}->{val} if (0 < $cfg{'exitcode_checks'});
@@ -8011,7 +8011,7 @@ if (2 == @{$cfg{'targets'}}) {
     # latest given port can be found in  $cfg{'port'}, if it differs from
     # the port used in the target list, redefine port for the host there,
     # assuming that "--port 123 host" was meant instead "host --port 123"
-    # NOTE that the documentation always recommends to use --port first.
+    # NOTE: the documentation always recommends to use --port first.
     my $host = get_target_host(1);
     my $port = get_target_port(1);
     if ($port != $cfg{'port'}) {
@@ -8021,7 +8021,7 @@ if (2 == @{$cfg{'targets'}}) {
 }
 
 # set environment
-# Note:  openssl  has no option to specify the path to its  configuration
+# NOTE:  openssl  has no option to specify the path to its  configuration
 # directoy.  However, some sub command (like req) do have -config option.
 # Nevertheless the environment variable is used to specify the path, this
 # is independet of the sub command and any platform.
@@ -9013,7 +9013,10 @@ The tool here roughly destingushes two types of I/O:
     2. reading and writing to network sockets, which is done underneath
 
 We assume that the  I/O socket (2. above)  is handled properly by the used
-modules. This leaves STDOUT and STDERR (1. above) to be set properly.
+modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
+
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
 
 As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
 humans. Only these channels are handled explicitely. The idea is, that all
@@ -9024,11 +9027,13 @@ Perl destingushes between ':utf8' and ':encoding(UTF-8)' layer,  where the
 ':utf8' does not check for valid encodings. ':utf8' is sufficient here, as
 we only want to ensure UTF-8 on output.
 The I/O layers need to be set in the main script only, all modules inherit
-the settings from there.
+the settings from there. However, modules need to use the proper binmode()
+call itself, if they are called from command line.
+Unfortunatelly Perl::Critic  complains that  ':encoding(UTF-8)'  should be
+used, hence  InputOutput::RequireEncodingWithUTF8Layer  must be used.
 
 Note that we use STDOUT and STDERR  and not the pseudo layer ':std' or the
 -S flag/option, because they also contain STDIN.
-
 
 =head2 Perl:map()
 
@@ -9118,7 +9123,7 @@ use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
 stored as a string. Using a string instead of an arrays also simplifies to
 pass the value to functions.
 
-Note: openssl uses a comma-separated list for ALPN and NPN,  but it uses a
+Note that openssl uses a comma-separated list for ALPN and NPN, but uses a
 colon-separated list for ecliptic curves (and also for ciphers).  Hence we
 allow both separators for all lists on command line.
 
