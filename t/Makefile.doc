@@ -1,0 +1,149 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile        - makefile for testing O-Saft internal documentation
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks for O-Saft internal documentation.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see
+#           ../Makefile  Makefile.help  Makefile.template
+#
+#? VERSION
+#?      @(#) Makefile.doc 1.1 19/04/28 01:23:59
+#?
+#? AUTHOR
+#?      19-apr-19 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.doc        = 1.1
+
+_MYSELF.doc     = t/Makefile.doc
+_MY.includes   += $(_MYSELF.doc)
+_MY.inc.type   += doc
+
+first-doc-target-is-default: help.test.doc
+
+ALL.help.test  += help.test.doc
+
+HELP-help.test.doc  = print targets for testing internal documentation and functionality
+help.test.doc:        HELP_TYPE = doc
+help.test.doc-v:      HELP_TYPE = doc
+help.test.doc-vv:     HELP_TYPE = doc
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.doc.hosts  =
+TEST.args       =
+TEST.init       =
+TEST.dir        = .
+   # do not cd; because modules called by EXE.pl will not find their incudes
+TEST.logdir     = ./t/log
+   # needed because of TEST.dir above
+
+EXE.osaft       = ./osaft.pm
+EXE.osaft-dbx   = ./o-saft-dbx.pm
+EXE.osaft-man   = ./o-saft-man.pm
+EXE.osaft-usr   = ./o-saft-usr.pm
+EXE.osaftcipher = ./OSaft/Ciphers.pm
+EXE.osaftdata   = ./OSaft/Doc/Data.pm
+
+HELP-_doc1          = __________________________ testing internal documentations _
+HELP-test.doc       = test various internal documentation and functionality
+HELP-test.doc.log   = same as test.doc but store output in '$(TEST.logdir)/'
+
+HELP.doc            = # no special documentation yet
+HELP.test.doc.all   = # no special documentation yet
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+# remember: testarg0-% executes:
+#       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+
+# osaft.pm
+testarg0-doc1-%:                EXE.pl      = $(EXE.osaft)
+testarg0-doc1-%:                TEST.args   = --help
+
+# OSaft/Doc/Data.pm
+testarg0-doc2-%:                EXE.pl      = $(EXE.osaftdata)
+testarg0-doc2-%:                TEST.args   = help.txt
+testarg0-doc2---help:           TEST.args   =
+testarg0-doc2---help:           TEST.init   = --help
+testarg0-doc2-version:          TEST.init   = version
+testarg0-doc2-+VERSION:         TEST.init   = +VERSION
+testarg0-doc2-list:             TEST.init   = list
+testarg0-doc2-print:            TEST.init   = print
+testarg0-doc2-get:              TEST.init   = get
+testarg0-doc2-get:              TEST.args   = help.txt
+testarg0-doc2-get-markup:       TEST.init   = get-markup
+testarg0-doc2-get-text:         TEST.init   = get-text
+testarg0-doc2-get-as-text:      TEST.init   = get-as-text
+
+# OSaft/Ciphers.pm
+testarg0-doc3-%:                EXE.pl      = $(EXE.osaftcipher)
+testarg0-doc3-%:                TEST.init   =
+testarg0-doc3---help:           TEST.args   = --help
+testarg0-doc3-description:      TEST.args   = description
+testarg0-doc3-alias:            TEST.args   = alias
+testarg0-doc3-const:            TEST.args   = const
+testarg0-doc3-names:            TEST.args   = names
+testarg0-doc3-overview:         TEST.args   = overview
+testarg0-doc3-rfc:              TEST.args   = rfc
+testarg0-doc3-version:          TEST.args   = version
+testarg0-doc3-cipher-dump:      TEST.args   = ciphers=dump
+testarg0-doc3-cipher-osaft:     TEST.args   = ciphers=osaft
+testarg0-doc3-cipher-yeast:     TEST.args   = ciphers=yeast
+testarg0-doc3-cipher-openssl:   TEST.args   = ciphers=openssl
+testarg0-doc3-cipher-dumptab:   TEST.args   = ciphers=dumptab
+testarg0-doc3-getter:           TEST.args   = getter=0xCC,0xA9
+testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256
+
+# o-saft-*.pm
+testarg0-doc%:                  TEST.args   = --help
+testarg0-doc5--help:            EXE.pl      = $(EXE.osaft-man)
+testarg0-doc6--help:            EXE.pl      = $(EXE.osaft-dbx)
+testarg0-doc7--help:            EXE.pl      = $(EXE.osaft-usr)
+
+# perldoc
+testarg0-doc9-%:                EXE.pl      = perldoc
+testarg0-doc9-o-saft:           TEST.args   = $(SRC.pl)
+testarg0-doc9-osaft:            TEST.args   = $(EXE.osaft)
+testarg0-doc9-osaft-data:       TEST.args   = $(EXE.osaftdata)
+testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaftcipher)
+testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
+testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
+testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
+
+test.doc.log-compare:   TEST.target_prefix  = testarg0-doc
+test.doc.log-move:      TEST.target_prefix  = testarg0-doc
+test.doc.log:           TEST.target_prefix  = testarg0-doc
+
+ALL.testdoc     = $(shell awk -F: '/^testarg0-doc.-.*%/{next} /^testarg0-doc.-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc    = $(ALL.testdoc)
+ALL.test.doc.log= $(ALL.test.doc:%=%.log) test.log-compare-hint
+
+test.doc.all:   $(ALL.test.doc)
+test.doc:       test.doc.all
+test.doc.log:   $(ALL.test.doc.log)
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.test.doc)
+ALL.tests.log  += $(ALL.test.doc.log)
+
