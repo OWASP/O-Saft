@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.60 19/04/13 10:55:27
+#?      @(#) Makefile.help 1.61 19/04/28 01:37:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.60
+_SID.help       = 1.61
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -270,8 +270,8 @@ EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
-# NOTE all EXE.* macros above cannot be shown using echo, eval or show target
-#      they all may return errors like: /bin/sh: 1: Syntax error:...
+# NOTE: all EXE.* macros above cannot be shown using echo, eval or show target
+#       they all may return errors like: /bin/sh: 1: Syntax error:...
 
 ifndef EXE.dummy
     EXE.dummy   = /bin/echo -n ""
