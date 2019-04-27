@@ -1,14 +1,22 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
 # SEE Perl:perlcritic
 
+package main;   # ensure that main:: variables are used
+
+
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
 
 =pod
+
+=encoding utf8
+
 
 =head1 NAME
 
@@ -16,11 +24,18 @@ o-saft-usr.pm - module for o-saft.pl's user definable functions
 
 =head1 SYNOPSIS
 
-require "o-saft-usr.pm";
+=over 2
+
+=item require q{o-saft-usr.pm};     # in perl code
+
+=item o-saft-usr.pm --help          # on command line will print help
+
+=back
+
 
 =head1 DESCRIPTION
 
-Defines all function for user customization.
+Defines all functions for user customization.
 
 WARNING: this is not a perl module defined with `package', but uses:
     package main;
@@ -92,6 +107,10 @@ Host completely processed. Right before next host.
 
 Right before program exit.
 
+=item usr_version()
+
+Return version of this interface.
+
 =back
 
 =head2 Variables which may be used herein
@@ -119,19 +138,25 @@ For example:
 
 =head1 VERSION
 
-Call:  usr_version()
+1.24 2019/04/27
+
+=head1 AUTHOR
+
+13-nov-13 Achim Hoffmann
 
 =cut
 
 use strict;
 use warnings;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.23 18/11/10 16:18:47";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.24 19/04/27 12:19:56";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
-package main;   # ensure that main:: variables are used
+
+#_____________________________________________________________________________
+#__________________________________________________________________ methods __|
 
 sub _usr_dbx { my @args = @_; _trace(join(" ", @args, "\n")); return; } # requires --v
 
@@ -139,7 +164,7 @@ sub _usr_dbx { my @args = @_; _trace(join(" ", @args, "\n")); return; } # requir
 # -------------------------------------
 # These functions are called in o-saft.pl
 
-sub usr_version     { return "16.09.16"; }
+sub usr_version     { return "16.09.16"; }  # changed only if fucntionality changed!
 
 sub usr_pre_init    {
     _usr_dbx("usr_pre_init ...");
@@ -222,25 +247,35 @@ sub usr_pre_exit    {
     return;
 };
 
-sub o_saft_usr_done {};         # dummy to check successful include
+sub _main           {
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #   see t/.perlcriticrc for detailed description of "no critic"
+    my $arg = shift;
+       $arg = "--help"; # no other options implemented yet
+    if ($arg =~ m/--?h(elp)?$/x) {
+        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
+        printf("# %s %s\n", __FILE__, $SID_usr);
+        if (eval{require POD::Perldoc;}) {
+            # pod2usage( -verbose => 1 )
+            exit( Pod::Perldoc->run(args=>[$0]) );
+        }
+        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        }
+    }
+    exit 0;
+} # _main
+
+sub o_saft_usr_done {};     # dummy to check successful include
 ## PACKAGE }
 
 # local functions {
 # -------------------------------------
 # local functions }
 
-unless (defined caller) {
-    if (eval{require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 )
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        # SEE Perl:perlcritic
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        print "# try:\n  perldoc $0\n";
-    }
-}
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+_main(@ARGV) if (not defined caller);
 
 1;
