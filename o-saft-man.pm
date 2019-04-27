@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used
@@ -53,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.279 19/04/27 10:47:34";
+my  $SID_man= "@(#) o-saft-man.pm 1.280 19/04/27 19:26:23";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.279'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.280'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -670,7 +670,7 @@ sub _man_usr_value  {
     # expecting something like  usr-action=/some.cgi  in $cfg{'usr-args'}
     my $key =  shift;
        $key =~ s/^(?:--|\+)//;  # strip leading chars
-    my @arg =  '';              # key, value (Note that value is anything right to leftmost = )
+    my @arg =  '';              # key, value # Note: value is anything right to leftmost = 
     map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
     return $arg[1];
 } # _man_usr_value
@@ -1359,7 +1359,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
     _man_dbx("printhelp($hlp) ...");
-    # Note: some lower case strings are special
+    # NOTE: some lower case strings are special
     man_help('NAME'),           return if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
@@ -1375,7 +1375,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #       while  checks  is used to print the labels of performed all
         #       checks. Workaround is to treat all-uppercase words as head-
         #       line of a section and anything else as special meaning.
-        # However, note that  --help=chec  already behaves the  same way as
+        # However, note that  --help=check  already behaves the same way as
         # --help=CHECKS  while  --help=check  prints the labels. Means that
         # this special condition (match CHECKS) is just for commodity.
     man_toc($1),                return if ($hlp =~ /^((?:toc|content)(?:.cfg)?)/i);
@@ -1440,12 +1440,14 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 } # printhelp
 
 sub _main           {
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #   see .perlcritic for detailed description of "no critic"
     my $arg = shift;
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($arg =~ m/--?h(elp)?$/) {
+    if ($arg =~ m/--?h(elp)?$/x) {
+        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
+        printf("# %s %s\n", __FILE__, $version);
         if (eval {require POD::Perldoc;}) {
             # pod2usage( -verbose => 1 );
             exec( Pod::Perldoc->run(args=>[$0]) );
@@ -1459,7 +1461,7 @@ sub _main           {
     exit 0;
 } # _main
 
-sub o_saft_man_done {};         # dummy to check successful include
+sub o_saft_man_done {};     # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1499,11 +1501,11 @@ see  L<METHODS>  below.
 
 =over 2
 
-=item * require q{o-saft-man.pm}; printhelp($type);
+=item * require q{o-saft-man.pm}; printhelp($type); # in perl code
 
-=item * o-saft-man.pm --help
+=item * o-saft-man.pm --help        # on command line will print help
 
-=item * o-saft-man.pm [<$type>]
+=item * o-saft-man.pm [<$type>]     # on command line
 
 =back
 
@@ -1594,12 +1596,15 @@ on the $type parameter, which is a literal string, as follows:
 If any other string is used,  'printhelp()'  extracts just the section of
 the documention which is headed by that string.
 
-The  I<--header>  option can be used For simple formatting.
+The  I<--header>  option can be used for simple formatting.
 
-NOTE that above list is also documented in ./OSaft/Doc/help.txt in section
+Note that above list is also documented in ./OSaft/Doc/help.txt in section
 "Options for help and documentation".
 In a perfect world it would be extracted from there (or vice versa).
 
+=head1 VERSION
+
+1.280 2019/04/27
 
 =head1 AUTHOR
 
