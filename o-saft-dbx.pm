@@ -1,13 +1,15 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2019 Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
 #  our POD below is fine, perlcritic (severity 2) is too pedantic here.
 
 =pod
+
+=encoding utf8
 
 =head1 NAME
 
@@ -104,7 +106,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.70 19/04/27 11:11:08";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.71 19/04/27 11:56:08";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -528,6 +530,8 @@ sub _main           {
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/) {
+        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
+        printf("# %s %s\n", __FILE__, $SID_dbx);
         if (eval {require POD::Perldoc;}) {
             # pod2usage( -verbose => 1 )
             exec( Pod::Perldoc->run(args=>[$0]) );
@@ -542,6 +546,19 @@ sub _main           {
 } # _main
 
 sub o_saft_dbx_done {};     # dummy to check successful include
+
+=pod
+
+=head1 VERSION
+
+1.71 2019/04/27
+
+=head1 AUTHOR
+
+13-nov-13 Achim Hoffmann
+
+=cut
+
 ## PACKAGE }
 
 #_____________________________________________________________________________
