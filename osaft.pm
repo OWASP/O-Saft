@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.169 19/04/15 23:05:20",
+    SID_osaft   => "@(#) osaft.pm 1.170 19/04/27 11:27:30",
 
 };
 
@@ -43,7 +43,11 @@ o-saft-lib -- common perl modul for O-Saft and related tools
 
 =head1 SYNOPSIS
 
-    o-saft-lib.pm           # on command line will print help
+=over 2
+
+=item o-saft-lib.pm --help    # on command line will print help
+
+=back
 
 Thinking perlish, there are two variants to use this module and its constants
 and variables:
@@ -2873,7 +2877,25 @@ sub osaft_sleep {
     return;
 } # osaft_sleep
 
-sub osaft_done  {};     # dummy to check successful include
+sub _main           {
+    my $arg = shift;
+       $arg = "--help"; # no other options implemented yet
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if ($arg =~ m/--?h(elp)?$/) {
+        if (eval {require POD::Perldoc;}) {
+            # pod2usage( -verbose => 1 );
+            exec( Pod::Perldoc->run(args=>[$0]) );
+        }
+        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        }
+    }
+    exit 0;
+} # _main
+
+sub osaft_done  {};         # dummy to check successful include
 
 _osaft_init();          # complete initializations
 
@@ -2913,19 +2935,7 @@ sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 sub _warn       { ::_warn(@_);  return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
-unless (defined caller) {       # print myself or open connection
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
-    }
-} # !caller
+_main(@ARGV) if (not defined caller);
 
 1;
 
