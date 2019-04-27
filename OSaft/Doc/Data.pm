@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.04.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.14 19/04/27 12:39:53";
+my  $SID_data   = "@(#) Data.pm 1.15 19/04/27 17:48:56";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -42,7 +42,16 @@ OSaft::Doc::Data - common Perl module to read data for user documentation
 
 =head1 SYNOPSIS
 
-    use OSaft::Doc::Data;
+=over 2
+
+=item  use OSaft::Doc::Data;        # from within perl code
+
+=item OSaft::Doc::Data --usage      # on command line will print short usage
+
+=item OSaft::Doc::Data [COMMANDS]   # on command line will print help
+
+=back
+
 
 =head1 METHODS
 
@@ -272,20 +281,6 @@ Same as  get()  but prints text directly.
 sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; return; }
 # TODO: misses  close($fh);
 
-sub _main_help  {
-    #? print help
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exec( Pod::Perldoc->run(args=>[$0]) );
-    }
-        # SEE Perl:perlcritic
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    exit 0;
-}; # _main_help
-
 =pod
 
 =head1 COMMANDS
@@ -354,29 +349,59 @@ sub list        {
     return $txt;
 } # list
 
+sub _main_usage {
+    #? print usage
+    my $name = (caller(0))[1];
+    print "# various commands:\n";
+    foreach my $cmd (qw(version +VERSION)) {
+        printf("\t%s %s\n", $name, $cmd);
+    }
+    printf("\t$name list\t# list available files\n");
+    print "# commands to get text from file in various formats(examples):\n";
+    foreach my $cmd (qw(get get-markup get-text get-as-text print)) {
+        printf("\t%s %s help.txt\n", $name, $cmd);
+    }
+    printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
+    return;
+}; # _main_usage
+
+sub _main_help  {
+    #? print own help
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exec( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+}; # _main_help
+
 sub _main       {
     #? print own documentation or that from specified file
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #   see .perlcritic for detailed description of "no critic"
+    #  see t/.perlcritic for detailed description of "no critic"
     my @argv = @_;
-    binmode(STDOUT, ":unix:utf8"); # latin1 geht nicht
+    binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
 
     if (0 > $#argv) { _main_help(); exit 0; }
 
     # got arguments, do something special
     while (my $cmd = shift @argv) {
-        my $arg = shift @argv;
-        if ($cmd =~ /^--?h(?:elp)?$/x)  { _main_help();         exit 0; }
+        my $arg    = shift @argv; # get 2nd argument, which is filename
+        _main_help()            if ($cmd =~ /^--?h(?:elp)?$/);
+        _main_usage()           if ($cmd =~ /^--usage$/);
         # ----------------------------- commands
-        if ($cmd =~ /^list$/x)          { print list();                 }
-        if ($cmd =~ /^get$/x)           { print get($arg);              }
-        if ($cmd =~ /^get.?mark(up)?/x) { print get_markup($arg);       }
-        if ($cmd =~ /^get.?text/x)      { print get_text($arg);         }
-        if ($cmd =~ /^get.?as.?text/x)  { print get_as_text($arg);      }
-        if ($cmd =~ /^print$/x)         { print_as_text($arg);          }
-        if ($cmd =~ /^version$/x)       { print "$SID_data\n";  exit 0; }
-        if ($cmd =~ /^(-+)?V(ERSION)?$/){ print "$VERSION\n";   exit 0; }
+        print list()            if ($cmd =~ /^list$/);
+        print get($arg)         if ($cmd =~ /^get$/);
+        print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
+        print get_text($arg)    if ($cmd =~ /^get.?text/);
+        print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
+        print_as_text($arg)     if ($cmd =~ /^print$/);
+        print "$SID_data\n"     if ($cmd =~ /^version$/);
+        print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
     }
     exit 0;
 } # _main
@@ -521,7 +546,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.14 2019/04/27
+1.15 2019/04/27
 
 =head1 AUTHOR
 
