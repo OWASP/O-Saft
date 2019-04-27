@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.67 18/11/10 16:13:44";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.68 19/04/27 08:56:16";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -506,23 +506,34 @@ sub _yeast_prot {
     return;
 } # _yeast_prot
 
-sub _yeast_cipher {
+sub _yeast_cipher   {
 # TODO: %ciphers %cipher_names
 }
 
-sub o_saft_dbx_done {};         # dummy to check successful include
-## PACKAGE }
-
-unless (defined caller) {
+sub _main           {
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #   see t/.perlcriticrc for detailed description of "no critic"
+    my $arg = shift;
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
     if (eval {require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 )
-        exit( Pod::Perldoc->run(args=>[$0]) );
+        exec( Pod::Perldoc->run(args=>[$0]) );
     }
     if (qx(perldoc -V)) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
-        print "# try:\n  perldoc $0\n";
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
     }
-}
+    exit 0;
+} # _main
+
+sub o_saft_dbx_done {};         # dummy to check successful include
+## PACKAGE }
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+_main(@ARGV) if (not defined caller);
 
 1;
