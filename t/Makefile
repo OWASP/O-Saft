@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.55 19/04/13 09:51:58
+#?      @(#) Makefile 1.56 19/04/28 01:28:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.55
+_SID.test       = 1.56
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -234,6 +234,7 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.exit)     = $(_SID.exit)'
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
 	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
+	@echo '# $$(_SID.doc)      = $(_SID.doc)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
 	@echo '# $$(_SID.hlp)      = $(_SID.hlp)'
@@ -605,6 +606,10 @@ endif
 
 ifeq (,$(_SID.tcl))
     -include t/Makefile.tcl
+endif
+
+ifeq (,$(_SID.doc))
+    -include t/Makefile.doc
 endif
 
 ifeq (,$(_SID.misc))
