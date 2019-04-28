@@ -1,4 +1,6 @@
 
+# SID   @(#) coding.txt 1.5 19/04/28 22:11:12
+
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
 
@@ -354,7 +356,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.4 18/11/11 18:12:37";
+            my $SID = "coding.txt 1.5 19/04/28 22:11:12";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
@@ -384,3 +386,10 @@ HACKER's INFO
           Lower case b instead of B means  that the bug was  introduced in a
           recent change.
 
+VERSION
+
+        @(#) $VERSION
+
+AUTHOR
+
+        18. Jan. 2018 Achim Hoffmann
