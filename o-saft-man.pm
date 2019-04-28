@@ -53,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.280 19/04/27 19:26:23";
+my  $SID_man= "@(#) o-saft-man.pm 1.281 19/04/28 09:18:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.280'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.281'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1044,6 +1044,9 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             # they can be used with copy&paste as command line arguments
             # simply change the separator to =  while other headers are unused
             # (because no header printed at all)
+       $typ = 'text';
+       print STDERR "**WARNING: 510: unknown table type '$typ'; using 'text' instead.\n";
+            # this is a programming error, hence always printed on STDERR
     }
     _man_dbx("man_table($typ) ...");
     _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
@@ -1389,7 +1392,8 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('links'),         return if ($hlp =~ /^links?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/);
-    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?|pattern)s?$/i);
+    man_table('compl'),         return if ($hlp =~ /^compliance$/i);# alias
+    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl|pattern)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)[_-]?cfg$/i);
@@ -1604,7 +1608,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.280 2019/04/27
+1.281 2019/04/28
 
 =head1 AUTHOR
 
