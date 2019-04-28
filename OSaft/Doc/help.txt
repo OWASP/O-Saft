@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.27 19/04/16 08:02:19
+# SID   @(#) help.txt 1.28 19/04/28 09:49:43
 
 NAME
 
@@ -764,7 +764,7 @@ OPTIONS
 
       --help=cfg-cmd
 
-          Show additional and user specified commands.  Output can be use in
+          Show additional and user specified commands.  Output can be used in
           RC-FILE  or as option.
 
       --help=check-cfg
@@ -4549,6 +4549,20 @@ EXAMPLES
         * Just for curiosity
           $0 some.tld +fingerprint --format=raw
           $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
+
+    Testing with exit code
+
+        * Test SSL/TLS connection and return exit code
+          $0 +check  --exitcode  some.tld
+
+        * Test ciphers and return exit code with details about exit code
+          $0 +cipher --exitcode --exitcode-v  some.tld
+
+        * Test ciphers and return exit code for ciphers only
+          $0 +cipher --exitcode --exitcode-no-prot  some.tld
+
+        * Test with exit code but avoid checks considered 'yes' even if 'no'
+          $0 +check  --exitcode --ignore-out=ev- --ignore-out=rfc_7525 some.tld
 
     Specials for hunting problems with connections etc.
 
