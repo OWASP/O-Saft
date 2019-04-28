@@ -6,6 +6,10 @@
 # TODO: see comment at %cipher_names
 
 ## PACKAGE {
+
+#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
 package osaft;
 
 use strict;
@@ -21,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.170 19/04/27 11:27:30",
+    SID_osaft   => "@(#) osaft.pm 1.172 19/04/28 20:43:54",
 
 };
 
@@ -29,6 +33,10 @@ use constant {
 #_____________________________________________________ public documentation __|
 
 # more public documentation, see start of methods section, and at end of file.
+
+# HACKER's INFO
+#       Following (internal) functions from o-saft.pl are used:
+#	_ispfs()
 
 ## no critic qw(Documentation::RequirePodSections)
 #  our POD below is fine, perlcritic (severity 2) is too pedantic here.
@@ -45,7 +53,8 @@ o-saft-lib -- common perl modul for O-Saft and related tools
 
 =over 2
 
-=item o-saft-lib.pm --help    # on command line will print help
+=item use osaft;                  # in perl code
+=item o-saft-lib.pm --help        # on command line will print help
 
 =back
 
@@ -1482,7 +1491,7 @@ our %cfg = (
                                 # even Net::SSLeay functions most likely use an
                                 # array,  this is a string with comma-separated
                                 # names as used by openssl
-                                # Note: must not contain any white spaces!
+                                # NOTE: must not contain any white spaces!
     'protos_alpn'   => [],      # initially same as cfg{protos_next}, see _cfg_init()
     'protos_npn'    => [],      # "-"
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
@@ -1896,10 +1905,12 @@ our %cfg = (
     'rhost'         => "",      # currently scanned target's reverse resolved name
     'DNS'           => "",      # currently scanned target's other IPs and names (DNS aliases)
     'timeout'       => 2,       # default timeout in seconds for connections
-                                # Note that some servers do not connect SSL within this time
-                                #      this may result in ciphers marked as  "not supported"
-                                #      it's recommended to set timeout to 3 or higher, which
-                                #      results in a performance bottleneck, obviously
+                                # NOTE: some servers do not connect SSL within
+                                #       this time,  this may result in ciphers
+                                #       marked as  "not supported"
+                                #       it's recommended to set timeout =3  or
+                                #       higher, which results in a performance
+                                #       bottleneck, obviously
                                 #  see 'sslerror' settings and options also
     'openssl'  =>   {  # configurations for various openssl functionality
        #'openssl'   => "",      # if set, full path of openssl executable
@@ -2753,6 +2764,25 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 
 
 #_____________________________________________________________________________
+#____________________________________________________ internal test methods __|
+
+sub check_regex         {
+# FIXME: funktioniert hier nochn icht, da %ciphers in o-saft.pl definiert
+    #? apply regex to intended text/list
+        # check regex if cipher supports PFS, uses internal sub and not regex
+        # directly
+    print "# PFS\tcipher\n";
+    print "#------+--------------------------------------------------------\n";
+    foreach my $cipher (keys %ciphers) {
+print "# $cipher";
+        my $is_pfs = (_ispfs(get_cipher_ssl($cipher), $cipher) == "") ? "yes" : "no";
+        print "$is_pfs\t$cipher\n";
+    }
+    print "#------+--------------------------------------------------------\n";
+} # check_regex
+
+
+#_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
 sub _prot_init_value    {
@@ -2877,20 +2907,28 @@ sub osaft_sleep {
     return;
 } # osaft_sleep
 
+sub _main_help      {
+    #? print own help
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exec( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+} # _main_help
+
 sub _main           {
-    my $arg = shift;
-       $arg = "--help"; # no other options implemented yet
+    my @argv = @_;
+    push(@argv, "--help") if (0 > $#argv);
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if ($arg =~ m/--?h(elp)?$/) {
-        if (eval {require POD::Perldoc;}) {
-            # pod2usage( -verbose => 1 );
-            exec( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        }
+    # got arguments, do something special
+    while (my $arg = shift @argv) {
+        _main_help()        if ($arg =~ m/^--?h(?:elp)?$/);
+        check_regex()       if ($arg =~ m/^--regex$/);
     }
     exit 0;
 } # _main
@@ -2915,6 +2953,10 @@ purpose of this module is defining variables. Hence we export them.
 =head1 SEE ALSO
 
 # ...
+
+=head1 VERSION
+
+1.172 2019/04/28
 
 =head1 AUTHOR
 
