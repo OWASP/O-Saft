@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.1 19/04/28 01:23:59
+#?      @(#) Makefile.doc 1.2 19/04/28 02:08:00
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.1
+_SID.doc        = 1.2
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -47,12 +47,6 @@ endif
 #________________________________________________________________ variables __|
 
 TEST.doc.hosts  =
-TEST.args       =
-TEST.init       =
-TEST.dir        = .
-   # do not cd; because modules called by EXE.pl will not find their incudes
-TEST.logdir     = ./t/log
-   # needed because of TEST.dir above
 
 EXE.osaft       = ./osaft.pm
 EXE.osaft-dbx   = ./o-saft-dbx.pm
@@ -73,6 +67,12 @@ HELP.test.doc.all   = # no special documentation yet
 
 # remember: testarg0-% executes:
 #       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+
+# redefine TEST.dir and TEST.log, otherwise modules called by EXE.pl will not
+# find their incudes; only done for our targets (otherwise breaks other make
+# targets)
+testarg0-doc%:                  TEST.dir    = .
+testarg0-doc%:                  TEST.logdir = ./t/log
 
 # osaft.pm
 testarg0-doc1-%:                EXE.pl      = $(EXE.osaft)
