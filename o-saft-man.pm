@@ -53,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.282 19/04/28 22:29:21";
+my  $SID_man= "@(#) o-saft-man.pm 1.283 19/04/28 22:56:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.282'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.283'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1039,14 +1039,17 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if (defined $types{$typ}) { # defensive programming
        $sep = $types{$typ}->[1];
     } else {
-       $sep = "=" if ($typ =~ m/(?:^cfg[_-]|[_-]cfg$)/);
-            # the purpose of cfg_* is to print the results in a format so that
-            # they can be used with copy&paste as command line arguments
-            # simply change the separator to =  while other headers are unused
-            # (because no header printed at all)
-       $typ = 'text';
-       print STDERR "**WARNING: 510: unknown table type '$typ'; using 'text' instead.\n";
-            # this is a programming error, hence always printed on STDERR
+       if ($typ =~ m/(?:^cfg[_-]|[_-]cfg$)/) {
+           # the purpose of cfg_* is to print the results in a format so that
+           # they can be used with copy&paste as command line arguments
+           # simply change the separator to =  while other headers are unused
+           # (because no header printed at all)
+           $sep = "=" if ($typ =~ m/(?:^cfg[_-]|[_-]cfg$)/);
+       } else {
+           # this is a programming error, hence always printed on STDERR
+           print STDERR "**WARNING: 510: unknown table type '$typ'; using 'text' instead.\n";
+           return; # avoid uninitialised value; return as no data for $typ is available
+       }
     }
     _man_dbx("man_table($typ) ...");
     _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
@@ -1608,7 +1611,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.282 2019/04/28
+1.283 2019/04/28
 
 =head1 AUTHOR
 
