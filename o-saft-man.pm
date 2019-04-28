@@ -53,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.281 19/04/28 09:18:17";
+my  $SID_man= "@(#) o-saft-man.pm 1.282 19/04/28 22:29:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.281'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.282'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1443,14 +1443,14 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return;
 } # printhelp
 
-sub _main           {
+sub _main_man       {   # needs not to be _main unless used as Perl package
     my $arg = shift;
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/x) {
-        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
+        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a Perl package
         printf("# %s %s\n", __FILE__, $version);
         if (eval {require POD::Perldoc;}) {
             # pod2usage( -verbose => 1 );
@@ -1463,7 +1463,7 @@ sub _main           {
         printhelp($ARGV[0]);
     }
     exit 0;
-} # _main
+} # _main_man
 
 sub o_saft_man_done {};     # dummy to check successful include
 
@@ -1477,7 +1477,7 @@ sub o_saft_man_done {};     # dummy to check successful include
 
 =head1 NAME
 
-o-saft-man.pm - perl module to handle O-Saft's documentation
+o-saft-man.pm - Perl module to handle O-Saft's documentation
 
 
 =head1 DESCRIPTION
@@ -1505,7 +1505,7 @@ see  L<METHODS>  below.
 
 =over 2
 
-=item * require q{o-saft-man.pm}; printhelp($type); # in perl code
+=item * require q{o-saft-man.pm}; printhelp($type); # in Perl code
 
 =item * o-saft-man.pm --help        # on command line will print help
 
@@ -1608,7 +1608,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.281 2019/04/28
+1.282 2019/04/28
 
 =head1 AUTHOR
 
@@ -1621,7 +1621,7 @@ In a perfect world it would be extracted from there (or vice versa).
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main(@ARGV) if (not defined caller);
+_main_man(@ARGV) if (not defined caller);
 
 1;
 
