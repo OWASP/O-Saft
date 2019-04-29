@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.28 19/03/20 23:58:05
+#?      @(#) Makefile.cgi 1.29 19/04/29 23:34:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.28
+_SID.cgi        = 1.29
 
 _MYSELF.cgi     = t/Makefile.cgi
 _MY.includes   += $(_MYSELF.cgi)
@@ -38,8 +38,6 @@ HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
 help.test.cgi:        HELP_TYPE = cgi
 help.test.cgi-v:      HELP_TYPE = cgi
 help.test.cgi-vv:     HELP_TYPE = cgi
-
-TEST.init       =
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -181,6 +179,7 @@ testcmd-cgi--cgi-bad2_%:    _args.cgi   = --cgi=wrong    +quit --exit=BEGIN0
 testcmd-cgi--cgi-bad3_%:    _args.cgi   = --wrongcgi     +quit --exit=BEGIN0
 
 # all tests for good or bad arguments need the same initial options
+testcmd-cgi-%:              TEST.init   =
 _args.cgi   = --cgi +quit --exit=BEGIN0
 testcmd-cgi-%:              EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-bad%:           EXE.pl      = ../$(SRC.cgi)
@@ -253,7 +252,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.28: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.29: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
