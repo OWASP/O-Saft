@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.16 19/04/13 10:59:01
+#?      @(#) Makefile.template 1.17 19/04/30 00:26:43
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.16
+_SID.TEMPL      = 1.17
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -54,8 +54,11 @@ endif
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-TEST.init       =
-TEST.args       =
+testcmd-TEMPL%: TEST.init   =
+testcmd-TEMPL%: TEST.args   =
+                # TEST.init and TEST.args  should be set for the targets herein
+                # only, otherwise it may confuse other targets if this Makefile
+                # is used together with other t/Makefile.*
 
 TEST.TEMPL.args = \
 	-TEMPL-opt   \
