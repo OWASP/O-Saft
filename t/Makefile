@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.56 19/04/28 01:28:57
+#?      @(#) Makefile 1.58 19/04/30 00:48:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.56
+_SID.test       = 1.58
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -157,6 +157,8 @@ HELP.test       = $(_NL)\
 \#   TEST.dir    - directory in which EXE.pl will be executed; default: '$(TEST.dir)/'$(_NL)\
 \#   TEST.logdir - directory where results of EXE.pl will be stored; default: '$(TEST.logdir)/'$(_NL)\
 \#   TEST.rc     - content of RC-file to be used by EXE.pl: '$(TEST.rc)'$(_NL)\
+\#   TEST.target_prefix - prefix of log-filename; see help.test.log-info$(_NL)\
+\#   TEST.log-suffix    - suffix of log-filename; see help.test.log-info$(_NL)\
 \#$(_NL)\
 \# Keep in mind that following files are located in '$(TEST.dir)/':$(_NL)\
 \#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
@@ -626,7 +628,7 @@ endif
 HELP-_test      = ______________________________________ targets for testing _
 HELP-tests      = make all tests
 HELP-test       = alias for tests
-HELP-tests.log  = same as tests but stpre results in '$(TEST.logdir)/'
+HELP-tests.log  = same as tests but store results in '$(TEST.logdir)/'
 HELP-tests.quick    = like tests, but less targets (for development)
 HELP-tests.quick.log= like tests.log, but less targets (for development)
 HELP-help.test.all  = print available individual targets for testing
@@ -635,8 +637,12 @@ tests: TRACE.target = echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
 tests:      $(ALL.tests)
 	@$(TRACE.target)
 
-tests.log:  $(ALL.tests.log)
+tests.log:  $(ALL.tests.log) test.log-compare-hint
 	@$(TRACE.target)
+
+test.tests.log-compare: TEST.target_prefix  = test
+test.tests.log-move:    TEST.target_prefix  = test
+test.tests.log:         TEST.target_prefix  = test
 
 # quick tests for development
 tests.quick:
@@ -692,8 +698,8 @@ HELP.test.log-info      = $(_NL)\
 \#$(_NL)\
 \# to see what the targets actually do, use$(_NL)\
 \# (environment variables may be added as needed, see above):$(_NL)\
-\#   $(MAKE_COMMAND) e-test.log-compare$(_NL)\
-\#   $(MAKE_COMMAND) e-test.log-move$(_NL)\
+\#   $(MAKE_COMMAND) -n test.log-compare$(_NL)\
+\#   $(MAKE_COMMAND) -n test.log-move$(_NL)\
 
 help.test.log-info:
 	@echo "$(HELP.test.log-info)"
