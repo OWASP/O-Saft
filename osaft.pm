@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.04.11',  # official version number of this file
+    OSAFT_VERSION   => '19.04.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.172 19/04/28 20:43:54",
+    SID_osaft   => "@(#) osaft.pm 1.173 19/05/06 23:53:23",
 
 };
 
@@ -2582,16 +2582,18 @@ sub sort_cipher_names   {
     my @latest  ;
     my $cnt_in  = scalar @ciphers;  # number of passed ciphers; see check at end
 
+    _trace("sort_cipher_names(){ $cnt_in ciphers: @ciphers }");
+
     # Algorithm:
     #  1. remove all known @insecure ciphers from given list
     #  2. start building new list with most @strength cipher first
-    #  3. add previously remove @insecure ciphers to new list
+    #  3. add previously removed @insecure ciphers to new list
 
     # define list of RegEx to match openssl cipher suite names
-    # each RegEx could be seen as a  class of ciphers with the same strength
-    # the list defines the strength in descending order, most strength first
-    # NOTE the list may contain pattern, which actually do not match a valid
-    # cipher suite name; doese't matter, but may avoid future adaptions, see
+    # each RegEx could be seen as a  class of ciphers  with the same strength
+    # the list defines the strength in descending order,  most strength first
+    # NOTE: the list may contain pattern, which actually do not match a valid
+    # cipher suite name;  doesn't matter, but may avoid future adaptions, see
     # warning at end also
 
     my @insecure = (
@@ -2611,6 +2613,7 @@ sub sort_cipher_names   {
         qw((?:ECDHE|EECDH).*?256.GCM) ,
         qw((?:ECDHE|EECDH).*?128.GCM) ,
         qw((?:EDH|DHE).*?CHACHA)  ,     # 2. all ephermeral, GCM
+        qw((?:EDH|DHE).*?PSK)     ,
         qw((?:EDH|DHE).*?512.GCM) ,     # .. sorts AES before CAMELLIA
         qw((?:EDH|DHE).*?384.GCM) ,
         qw((?:EDH|DHE).*?256.GCM) ,
@@ -2630,11 +2633,14 @@ sub sort_cipher_names   {
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
         qw(ECDH[_-].*?128) ,
-        qw(AES) ,                       # 5. all AES and specials
-        qw(KRB5) ,
-        qw(SRP) ,
-        qw(PSK) ,
-        qw(GOST) ,
+        qw(AES)     ,                   # 5. all AES and specials
+        qw(KRB5)    ,
+        qw(SRP)     ,
+        qw(PSK)     ,
+        qw(GOST)    ,
+        qw(FZA)     ,
+        qw((?:PSK|RSA).*?CHACHA) ,
+        qw(CHACHA)  ,
         qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
@@ -2671,10 +2677,14 @@ sub sort_cipher_names   {
         # print warning if above algorithm misses ciphers;
         # uses perl's warn() instead of our _warn() to clearly inform the user
         # that the code here needs to be fixed
-        warn STR_WARN . "412: missing ciphers in sorted list: $cnt_out < $cnt_in"; ## no critic qw(ErrorHandling::RequireCarping)
-        #dbx# print "## ".@sorted . " # @ciphers";
+        my @miss;
+        for my $i (0..$#ciphers) {
+            push(@miss, $ciphers[$i]) unless grep {$_ eq $ciphers[$i]} @sorted;
+        }
+        warn STR_WARN . "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
     }
     @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
+    _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
     return @sorted;
 } # sort_cipher_names
 
@@ -2956,7 +2966,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.172 2019/04/28
+1.173 2019/05/06
 
 =head1 AUTHOR
 
