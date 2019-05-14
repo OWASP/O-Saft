@@ -1,0 +1,151 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile        - makefile for testing O-Saft examples
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks for O-Saft's documented examples.
+#?      These are mainly the examples shown with:  o-saft.pl --help=EXAMPLES
+#?
+#?      These tests are not yet added to ALL.tests  because most of them are
+#?      mainly variants of tests done in other Makefiles. The  tests targets
+#?      herein are merely intended to check if the  documented examples will
+#?      work and return the proper results.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see
+#           ../Makefile  Makefile.help  Makefile.template
+#
+#? VERSION
+#?      @(#) Makefile.examples 1.1 19/05/14 23:40:19
+#?
+#? AUTHOR
+#?      19-apr-19 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.examples   = 1.1
+
+_MYSELF.examples= t/Makefile.examples
+_MY.includes   += $(_MYSELF.examples)
+_MY.inc.type   += examples
+
+first-examples-target-is-default: help.test.examples
+
+ALL.help.test  += help.test.examples
+
+HELP-help.test.examples = print targets for testing documented examples
+help.test.examples:     HELP_TYPE = examples
+help.test.examples-v:   HELP_TYPE = examples
+help.test.examples-vv:  HELP_TYPE = examples
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.examples.hosts = localhost
+
+HELP-_examples1     = ______________________________ testing documented examples _
+HELP-test.examples  = test various documented examples
+HELP-test.examples.log   = same as test.examples but store output in '$(TEST.logdir)/'
+
+HELP.examples       = # no special documentation yet
+HELP.test.examples.all   = # no special documentation yet
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+# remember: testarg0-% executes:
+#       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+
+testarg0-sample-%:              TEST.init   = $(TEST.examples.hosts)
+#testarg0-sample-%:              EXE.pl      = ../o-saft.pl
+    # EXE.pl left to default o-saft.pl without path, because this Makefile is
+    # not part of the "tests" target
+
+# TODO: following targets should be generated like:
+#       $(EXE.pl) --help=EXAMPLES | awk '($1=="o-saft.pl"){sub(/some.tld/,"");print}'
+
+testarg0-sample-+cipher:        TEST.args   = +cipher
+testarg0-sample-+info:          TEST.args   = +info
+testarg0-sample-+check:         TEST.args   = +check
+testarg0-sample-+quick:         TEST.args   = +quick
+testarg0-sample-+list:          TEST.args   = +list
+testarg0-sample-+list--v:       TEST.args   = +list --v
+testarg0-sample-+version:       TEST.args   = +version
+testarg0-sample-+version--v:    TEST.args   = +version --v
+testarg0-sample-+help-commands: TEST.args   = +help=commands
+testarg0-sample-+certificate:   TEST.args   = +certificate
+testarg0-sample-+fingerprint:   TEST.args   = +fingerprint
+testarg0-sample-+after+dates:   TEST.args   = +after +dates
+testarg0-sample-+check--c-RC4:  TEST.args   = +check --cipher=RC4
+testarg0-sample-+sni:           TEST.args   = +sni
+testarg0-sample-+sni_check:     TEST.args   = +sni_check
+testarg0-sample-+sni+cn+altname:TEST.args   = +sni +cn +altname
+testarg0-sample-+cipher--ena:   TEST.args   = +cipher --enabled
+testarg0-sample-+cipher--dis:   TEST.args   = +cipher --disabled
+testarg0-sample-+cipher--cipher:TEST.args   = +cipher --cipher=ADH-AES256-SHA
+testarg0-sample-+cipherraw:     TEST.args   = +cipherraw
+testarg0-sample-+cipherall:     TEST.args   = +cipherall
+#testarg0-sample-+cipherall-full:    TEST.args   = +cipherall --range=full
+   # --range=full haengt
+#testarg0-sample-checkAllCiphers:    TEST.args   = checkAllCiphers.pl example.tld --range=full --v
+testarg0-sample-+cipher-dh:         TEST.args   = +cipher-dh
+#testarg0-sample---lib-_foo:         TEST.args   = +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps
+#testarg0-sample---openssl-foo:      TEST.args   = --openssl=/foo/bar-1.42/openssl
+#testarg0-sample---help-cfg-text:    TEST.args   = --help=cfg-text >>.o-saft.pl
+testarg0-sample-+check--cfg-text:   TEST.args   = +check --cfg-text=desc="my special description"
+testarg0-sample-+check--cfg-hint:   TEST.args   = +check --cfg-hint=renegotiation="my special hint text"
+#testarg0-sample-+cn-hosts:          TEST.args   = +cn example.tld some.tld other.tld
+#testarg0-sample-+cn--showhost:      TEST.args   = +cn example.tld some.tld other.tld --showhost --no-header
+testarg0-sample---legacy-quick1:    TEST.args   = --legacy=quick --no-header +info
+testarg0-sample---legacy-quick2:    TEST.args   = --legacy=quick --no-header +check
+testarg0-sample---legacy-quick3:    TEST.args   = --legacy=quick --no-header --trace-key +info
+testarg0-sample---legacy-quick4:    TEST.args   = --legacy=quick --no-header --trace-key +check
+testarg0-sample---legacy-quick5:    TEST.args   = --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
+testarg0-sample-+fingerprint-raw:   TEST.args   = +fingerprint --format=raw
+testarg0-sample---exitcode:         TEST.args   = +check  --exitcode
+testarg0-sample---exitcode-v:       TEST.args   = +check  --exitcode --exitcode-v
+testarg0-sample---exitcode--ignore-out: TEST.args   = +check  --exitcode --ignore-out=ev- --ignore-out=rfc_7525
+testarg0-sample---exitcode-no-prot: TEST.args   = +cipher --exitcode --exitcode-no-prot
+testarg0-sample-+info--no-rc:       TEST.args   = +info --no-rc
+testarg0-sample-+info--trace:       TEST.args   = +info --trace
+testarg0-sample-+info--trace-key:   TEST.args   = +info --trace-key
+testarg0-sample-+info--trace-arg:   TEST.args   = +info --trace-arg
+testarg0-sample-+info--trace-cmd:   TEST.args   = +info --trace-cmd
+testarg0-sample-+info--trace-time:  TEST.args   = +info --trace-time
+testarg0-sample-+info--no-cert:     TEST.args   = +info --no-cert --no-cert --no-cert-text=Value-from-Certificate
+testarg0-sample-+info--no-dns:      TEST.args   = +info --no-dns --no-sni --ignore-no-conn
+testarg0-sample-+info--no-http:     TEST.args   = +info --no-dns --no-sni --no-cert --no-http --no-openssl
+testarg0-sample-+chain_verify:      TEST.args   = +chain_verify +verify +error_verify +chain
+testarg0-sample-+cipher--v--v:      TEST.args   = +cipher --v --v
+testarg0-sample-+cn--trace:         TEST.args   = +cn --trace --trace
+
+test.examples.log-compare:          TEST.target_prefix  = testarg0-examples
+test.examples.log-move:             TEST.target_prefix  = testarg0-examples
+test.examples.log:                  TEST.target_prefix  = testarg0-examples
+
+ALL.testexamples     = $(shell awk -F: '/^testarg0-sample-.*%/{next} /^testarg0-sample-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.examples))
+ALL.test.examples    = $(ALL.testexamples)
+ALL.test.examples.log= $(ALL.test.examples:%=%.log) test.log-compare-hint
+
+test.examples.all:   $(ALL.test.examples)
+test.examples:       test.examples.all
+test.examples.log:   $(ALL.test.examples.log)
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# main Makefile not yet feeded
+#ALL.tests      += $(ALL.test.examples)
+#ALL.tests.log  += $(ALL.test.examples.log)
+
