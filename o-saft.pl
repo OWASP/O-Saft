@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.866 19/04/28 01:54:24",
-    STR_VERSION => "19.04.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.867 19/05/15 01:18:14",
+    STR_VERSION => "19.05.14",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -122,6 +122,7 @@ sub _version_exit   { print STR_VERSION . "\n"; exit 0; }
 #$DB::single=1;          # for debugging; start with: PERL5OPT='-dt' $0
 
 BEGIN {
+    #yeast - yet another SSL tool
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
     sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
@@ -373,7 +374,7 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| read DEBUG-FILE, if any (source for trace and verbose)
 #| -------------------------------------
 my $err = "";
-my @dbx = grep{/--(?:trace|v$|exitcode.?v$|yeast)/} @argv;   # may have --trace=./file
+my @dbx = grep{/--(?:trace|v$|exitcode.?v$|test|yeast)/} @argv;   # may have --trace=./file
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -392,6 +393,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _yeast_exit   {}
     sub _yeast_args   {}
     sub _yeast_data   {}
+    sub _yeast_test   {}
     sub _yeast_ciphers{}
     sub _yeast        {}
     sub _y_ARG        {}
@@ -7357,8 +7359,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
-    if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
-    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
+    if ($arg =~ /^--yeast/)             { _yeast_test('data');    exit 0; } # -"-
+    if ($arg =~ /^--test[_.-]?(.*)/)    { _yeast_test($1);        exit 0; } # debugging / internal testing
+    if ($arg =~ /^--yeast[_.-]?(.*)/)   { _yeast_test($1);        exit 0; } # -"-
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
