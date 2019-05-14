@@ -46,6 +46,8 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_cipher( )
 
+=item _yeast_test( )
+
 =item _yeast( )
 
 =item _y_ARG( ), _y_CMD( ), _yline( )
@@ -106,7 +108,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.71 19/04/27 11:56:08";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.72 19/05/15 01:16:05";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -453,7 +455,7 @@ sub _yeast_data {
             );
     }
 # FIXME: @{$dbx{'cmd-check'}} is incomplete when o-saft-dbx.pm is require'd in
-#        main; some checks above then fail (mainly those those matching
+#        main; some checks above then fail (mainly those matching
 #        $cfg{'regex'}->{'SSLprot'}, hence the dirty additional
 #        || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
 #               
@@ -520,7 +522,24 @@ sub _yeast_prot {
 
 sub _yeast_cipher   {
 # TODO: %ciphers %cipher_names
+    return;
 }
+
+sub _yeast_test {
+    #? dispatcher for internal tests
+    my $arg = shift;
+    _yeast($arg);
+    _yeast_data()       if ('data' eq $arg);
+    _yeast_prot()       if ('prot' eq $arg);
+    _yeast_cipher()     if ('cipher' eq $arg);
+    if ('ciphers' eq $arg) {
+        # FIXME: --test-ciphers is experimental, need to rename _yeast_ciphers()
+        $cfg{'verbose'} = 1;
+        push(@{$cfg{'do'}}, 'cipherraw');
+        _yeast_ciphers();
+    }
+    return;
+} # _yeast_test
 
 sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -542,6 +561,10 @@ sub _main           {
             printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
         }
     }
+    if ($arg =~ m/--yeast[_.-]?(.*)/) {
+        $arg = $1;
+        _yeast_test($arg);
+    }
     exit 0;
 } # _main
 
@@ -551,7 +574,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.71 2019/04/27
+1.72 2019/05/15
 
 =head1 AUTHOR
 
