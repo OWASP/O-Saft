@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.58 19/04/30 00:48:03
+#?      @(#) Makefile 1.59 19/05/14 22:19:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.58
+_SID.test       = 1.59
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -729,14 +729,18 @@ define _test_log-move
 	done
 endef
 
+_test_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
+
 test.log-compare-hint:
 	@echo ""
 	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+	@echo "$(_test_log_hint)"
 
 test.%.log-compare:
 	-$(_test_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
+	@echo "$(_test_log_hint)"
 
 test.%.log-move:
 	$(_test_log-move)
@@ -745,6 +749,7 @@ test.log-compare:
 	-$(_test_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
+	@echo "$(_test_log_hint)"
 
 test.log-move:
 	$(_test_log-move)
