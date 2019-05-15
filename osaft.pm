@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.04.19',  # official version number of this file
+    OSAFT_VERSION   => '19.05.15',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.173 19/05/06 23:53:23",
+    SID_osaft   => "@(#) osaft.pm 1.174 19/05/16 00:21:44",
 
 };
 
@@ -2776,20 +2776,24 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub check_regex         {
-# FIXME: funktioniert hier nochn icht, da %ciphers in o-saft.pl definiert
-    #? apply regex to intended text/list
-        # check regex if cipher supports PFS, uses internal sub and not regex
-        # directly
+sub test_regex_pfs      {
+    #? check regex if cipher supports PFS, uses internal sub and not regex directly
     print "# PFS\tcipher\n";
-    print "#------+--------------------------------------------------------\n";
-    foreach my $cipher (keys %ciphers) {
-print "# $cipher";
-        my $is_pfs = (_ispfs(get_cipher_ssl($cipher), $cipher) == "") ? "yes" : "no";
-        print "$is_pfs\t$cipher\n";
+    print "#------+---------------------------------------\n";
+    foreach my $cipher (sort keys %ciphers) {
+        my $is_pfs = (::_ispfs(get_cipher_ssl($cipher), $cipher) eq "") ? "yes" : "no";
+        print " $is_pfs\t$cipher\n";
     }
-    print "#------+--------------------------------------------------------\n";
-} # check_regex
+    print "#------+---------------------------------------\n";
+    return;
+} # test_regex
+
+sub test_regex          {
+# FIXME: funktioniert hier noch nicht, da %ciphers in o-saft.pl definiert
+    #? apply regex to intended text/list; internal test
+    test_regex_pfs();
+    return;
+} # test_regex
 
 
 #_____________________________________________________________________________
@@ -2938,7 +2942,7 @@ sub _main           {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         _main_help()        if ($arg =~ m/^--?h(?:elp)?$/);
-        check_regex()       if ($arg =~ m/^--regex$/);
+        test_regex()        if ($arg =~ m/^--regex$/);
     }
     exit 0;
 } # _main
@@ -2966,7 +2970,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.173 2019/05/06
+1.174 2019/05/16
 
 =head1 AUTHOR
 
