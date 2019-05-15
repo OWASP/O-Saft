@@ -108,7 +108,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.72 19/05/15 01:16:05";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.73 19/05/16 00:23:44";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -521,6 +521,7 @@ sub _yeast_prot {
 } # _yeast_prot
 
 sub _yeast_cipher   {
+    #? print internal data structures for ciphers
 # TODO: %ciphers %cipher_names
     return;
 }
@@ -538,6 +539,7 @@ sub _yeast_test {
         push(@{$cfg{'do'}}, 'cipherraw');
         _yeast_ciphers();
     }
+    osaft::test_regex() if ('regex' eq $arg);
     return;
 } # _yeast_test
 
@@ -574,7 +576,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.72 2019/05/15
+1.73 2019/05/16
 
 =head1 AUTHOR
 
