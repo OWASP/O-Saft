@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.28 19/04/28 09:49:43
+# SID   @(#) help.txt 1.29 19/05/15 23:28:33
 
 NAME
 
@@ -1535,7 +1535,7 @@ OPTIONS
           Note:  setting empty list or element most likely does not work with
           openssl executable (i.e.  --force-openssl).
 
-    Options for  cipherall and cipherraw  command
+    Options for  +cipherall and +cipherraw  command
 
       --range=RANGE
       --cipherrange=RANGE
@@ -4443,8 +4443,21 @@ TESTING
       --trace
 
           Print debugging messages.
+          For more details, please see  X&Options for tracing and debugging& .
 
-        For more details, please see  X&Options for tracing and debugging& .
+    Internal testing
+
+        Following options and commands are for internal testing. They provide
+        informations about internal data structures and alike. See also tests
+        in t/Makefile* .
+
+      --test-data
+
+          Print overview of all available commands and checks.
+
+      --test-prot
+
+          Print internal data according protocols.
 
 
 EXAMPLES
