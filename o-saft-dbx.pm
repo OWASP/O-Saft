@@ -108,7 +108,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.73 19/05/16 00:23:44";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.74 19/05/16 21:52:32";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -413,6 +413,8 @@ sub _vprintme   {
 } # _vprintme
 
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
+sub __data_head { return sprintf("=%19s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score"); }
+sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub _yeast_data {
     print "
 === _yeast_data: check internal data structure ===
@@ -420,13 +422,14 @@ sub _yeast_data {
   This function prints a simple overview of all available commands and checks.
   The purpose is to show if a proper key is defined in  %data and %checks  for
   each command from  %cfg{'commands'}  and vice versa.
+
 ";
 
     my $old;
     my @yeast = ();     # list of potential internal, private commands
     my $cmd = " ";
-    printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
-    printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    print __data_head();
+    print __data_line();
     $old = "";
     foreach my $key
             (sort {uc($a) cmp uc($b)}
@@ -459,8 +462,8 @@ sub _yeast_data {
 #        $cfg{'regex'}->{'SSLprot'}, hence the dirty additional
 #        || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
 #               
-    printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
-    printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
+    print __data_line();
+    print __data_head();
     print '
     +  command (key) present
     I  command is an internal command or alias
@@ -576,7 +579,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.73 2019/05/16
+1.74 2019/05/16
 
 =head1 AUTHOR
 
