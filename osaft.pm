@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.05.15',  # official version number of this file
+    OSAFT_VERSION   => '19.05.16',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.174 19/05/16 00:21:44",
+    SID_osaft   => "@(#) osaft.pm 1.175 19/05/16 22:00:03",
 
 };
 
@@ -2778,6 +2778,14 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 
 sub test_regex_pfs      {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
+    print "
+=== test_regex_pfs: check RegEx to detect ciphers which support PFS ===
+
+  Uses the internal function  ::_ispfs()  to check  if a given cipher supports
+  PFS. Used RegEx \$cfg{'regex'}->{'PFS'}:
+    $cfg{'regex'}->{'PFS'}
+
+";
     print "# PFS\tcipher\n";
     print "#------+---------------------------------------\n";
     foreach my $cipher (sort keys %ciphers) {
@@ -2970,7 +2978,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.174 2019/05/16
+1.175 2019/05/16
 
 =head1 AUTHOR
 
