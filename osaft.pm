@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.175 19/05/16 22:00:03",
+    SID_osaft   => "@(#) osaft.pm 1.176 19/05/16 23:55:29",
 
 };
 
@@ -2424,7 +2424,7 @@ sub get_cipher_hex      {
 } # get_cipher_hex
 
 sub get_cipher_name     {
-    # check if given cipher name is a known cipher
+    #? check if given cipher name is a known cipher
     # checks in %ciphers if nof found in %cipher_names
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $cipher  = shift;
@@ -2447,7 +2447,7 @@ sub get_cipher_name     {
 } # get_cipher_name
 
 sub get_cipher_owasp    {
-    # return OWASP rating for cipher (see $cfg{regex}->{{OWASP_*}
+    #? return OWASP rating for cipher (see $cfg{regex}->{{OWASP_*}
     my $cipher  = shift;
     my $sec     = "miss";
     # following sequence is important:
@@ -2776,30 +2776,66 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub test_regex_pfs      {
+sub __regex_head    { return sprintf("= %s\t%s\t%s\t%s\n", "PFS", "OWASP", "owasp", "cipher"); }
+sub __regex_line    { return "=------+-------+-------+---------------------------------------\n"; }
+
+sub test_regex_cipher   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
     print "
-=== test_regex_pfs: check RegEx to detect ciphers which support PFS ===
+=== test_regex_cipher: check RegEx for ciphers ===
 
-  Uses the internal function  ::_ispfs()  to check  if a given cipher supports
-  PFS. Used RegEx \$cfg{'regex'}->{'PFS'}:
-    $cfg{'regex'}->{'PFS'}
+  Check RegEx to detect ciphers, which support PFS using the internal function
+  ::_ispfs() .
+    \$cfg{'regex'}->{'PFS'}:      # match ciphers supporting PFS
+      $cfg{'regex'}->{'PFS'}
+
+  Check to which RegEx for OWASP scoring a given cipher matches.
+
+    \$cfg{'regex'}->{'OWASP_NA'}: # unrated in OWASP TLS Cipher Cheat Sheet (2018)
+      $cfg{'regex'}->{'OWASP_NA'}
+    \$cfg{'regex'}->{'OWASP_C'}:  # 1st legacy
+      $cfg{'regex'}->{'OWASP_C'}
+    \$cfg{'regex'}->{'OWASP_B'}:  # 2nd broad compatibility
+      $cfg{'regex'}->{'OWASP_B'}
+    \$cfg{'regex'}->{'OWASP_A'}:  # 3rd best practice
+      $cfg{'regex'}->{'OWASP_A'}
+    \$cfg{'regex'}->{'OWASP_D'}:  # finally brocken ciphers, overwrite previous
+      $cfg{'regex'}->{'OWASP_D'}
 
 ";
-    print "# PFS\tcipher\n";
-    print "#------+---------------------------------------\n";
+    print __regex_head();
+    print __regex_line();
     foreach my $cipher (sort keys %ciphers) {
         my $is_pfs = (::_ispfs(get_cipher_ssl($cipher), $cipher) eq "") ? "yes" : "no";
-        print " $is_pfs\t$cipher\n";
+        my @o = ('', '', '', '', '');
+        # following sequence of check should be the same as in get_cipher_owasp()
+        $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
+        $o[2] = "C"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_C'}/);
+        $o[1] = "B"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_B'}/);
+        $o[0] = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_A'}/);
+        $o[3] = "D"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_D'}/);
+        printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
     }
-    print "#------+---------------------------------------\n";
+    print __regex_line();
+    print __regex_head();
+    print '
+  PFS values:
+    yes   cipher supports PFS
+    no    cipher does not supports PFS
+  OWASP values:
+    x     value A or B or C or D or -?- as returned by get_cipher_owasp()
+    miss  cipher not matched by any RegEx, programming error
+  owasp values:
+    xx    list of all matching OWASP_x RegEx
+
+';
     return;
-} # test_regex
+} # test_regex_cipher
 
 sub test_regex          {
 # FIXME: funktioniert hier noch nicht, da %ciphers in o-saft.pl definiert
     #? apply regex to intended text/list; internal test
-    test_regex_pfs();
+    test_regex_cipher();
     return;
 } # test_regex
 
@@ -2978,7 +3014,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.175 2019/05/16
+1.176 2019/05/16
 
 =head1 AUTHOR
 
