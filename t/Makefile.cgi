@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.29 19/04/29 23:34:50
+#?      @(#) Makefile.cgi 1.30 19/05/22 23:38:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.29
+_SID.cgi        = 1.30
 
 _MYSELF.cgi     = t/Makefile.cgi
 _MY.includes   += $(_MYSELF.cgi)
@@ -110,11 +110,11 @@ test.cgi.badIPv4    = \
 # possible verbatim because they contain : in the name; the : must be escaped
 test.cgi.badIPv6    = \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
-	ff02\:\:1     ff02\:\:fb \
-
-# TODO: ff01::1 ff02::1
-# TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
-#       fc00:21ab:22cd:2323::1 fdff:21ab:22cd:2323::1
+	ff01\:\:1     ff02\:\:1  ff02\:\:fb       64\:abcd\:\: \
+	\:251.1.1.1  \:\:251.1.1.1 \:abcd\:251.1.1.1 \:abcd\:\:251.1.1.1 \
+        abcd\:\:251.1.1.1   abcd\:\:\:251.1.1.1   abcd\:a\:\:251.1.1.1 \
+	fe80\:21ab\:22cd\:2323\:\:1 fec0\:21ab\:22cd\:2323\:\:1 feff\:21ab\:22cd\:2323\:\:1 \
+	fc00\:21ab\:22cd\:2323\:\:1 fdff\:21ab\:22cd\:2323\:\:1 \
 
 HELP.cgi.internal   = "\
 \# test.cgi.badhosts: $(test.cgi.badhosts)$(_NL)\
@@ -127,6 +127,7 @@ test.cgi.goodIPv4   =
 
 test.cgi.goodIPv6   = \
 	2002\:0\:0\:0\:0\:0\:b0b\:b0b \
+	fe00\:21ab\:22cd\:2323\:\:1 \
 
 test.cgi.badIPs     = $(test.cgi.badIPv4)  $(test.cgi.badIPv6)
 test.cgi.goodIPs    = $(test.cgi.goodIPv4) $(test.cgi.goodIPv6)
@@ -252,7 +253,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.29: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.30: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
