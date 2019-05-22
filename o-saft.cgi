@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.29 19/05/22 22:28:58";
+my $SID_cgi = "@(#) o-saft.cgi 1.30 19/05/22 22:46:52";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.29\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.30\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -201,10 +201,27 @@ if ($me =~/\.cgi$/) {
 
                 # following RegEx uses grouping with back reference insted of
                 # (?: ... ) ; this is because  :  is used literally in RegExs
+                # sequence of following RegEx uses more specific RegEx first
 
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
 		# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
+
+		qr/(-(host|url)=((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
+			# common Class B RFC networks for private use
+			# TODO: 100.64.0.0/10 CGN is not really class B
+
+		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
+			# common class C RFC networks for private use
+
+		qr/(-(host|url)=((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
+			# loopback, mulicast
+
+		qr/(-(host|url)=((fe80|fe[c-f][0-9a-f]:)))/i,
+			# IPv6 link local or site local
+
+		qr/(-(host|url)=((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
+			# IPv6 multicast or unique local unicast (RFC6762)
 
 		qr/(-(host|url)=64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
@@ -214,24 +231,8 @@ if ($me =~/\.cgi$/) {
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
                         #NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
-		qr/(-(host|url)=((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
-			# loopback, mulicast
-
-		qr/(-(host|url)=((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
-			# common Class B RFC networks for private use
-			# TODO: 100.64.0.0/10 CGN is not really class B
-
-		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
-			# common class C RFC networks for private use
-
 		qr/(-(host|url)=.*?\.local$)/i,
 			# multicast domain .local (RFC6762)
-
-		qr/(-(host|url)=((fe80|fe[c-f][0-9a-f]:)))/i,
-			# IPv6 link local or site local
-
-		qr/(-(host|url)=((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
-			# IPv6 multicast or unique local unicast (RFC6762)
 
 		qr{(-(host|url)=([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
 			# IPv6
