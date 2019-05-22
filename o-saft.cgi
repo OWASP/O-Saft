@@ -48,7 +48,8 @@ I<OSAFT_CGI_TEST>  is set.
 
 If the environment variable  I<OSAFT_CGI_TEST>  is set, detailed error messages
 are printed.  This is only useful when used on command line, but not within the
-web server.
+web server. In particular, it prints the RegEx matching a dangerous hostname or
+IP.
 
 =head1 EXAMPLE
 
@@ -73,8 +74,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.28 19/03/27 22:42:17";
-my $VERSION = '19.03.19';
+my $SID_cgi = "@(#) o-saft.cgi 1.29 19/05/22 22:28:58";
+my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -159,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.28\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.29\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -195,9 +196,23 @@ if ($me =~/\.cgi$/) {
 		#     240.0.0.0/4     240.0.0.0 - 255.255.255.255 Reserved for future use
 		#     255.255.255.255/32
 
+		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
+		# match IPv6: ([0-9a-f]{0,4}:){1,8}
+
+                # following RegEx uses grouping with back reference insted of
+                # (?: ... ) ; this is because  :  is used literally in RegExs
+
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
 		# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
+
+		qr/(-(host|url)=64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
+			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
+                        # NOTE: would also be matched by next more general RegEx
+
+		qr/(-(host|url)=([0-9a-f]{0,4}:){1,3}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
+			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
+                        #NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
 		qr/(-(host|url)=((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
 			# loopback, mulicast
