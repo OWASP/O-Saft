@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.30 19/05/22 22:46:52";
+my $SID_cgi = "@(#) o-saft.cgi 1.31 19/05/22 23:11:53";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.30\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.31\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -195,6 +195,12 @@ if ($me =~/\.cgi$/) {
 		#       # https://www.iana.org/assignments/multicast-addresses/multicast-addresses.xhtml
 		#     240.0.0.0/4     240.0.0.0 - 255.255.255.255 Reserved for future use
 		#     255.255.255.255/32
+
+		#     fe80:           IPv6 link local
+		#     fe[c-f][0-9a-f]: IPv6 site local
+		#     ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:   IPv6 multicast or unique local unicast (RFC6762)
+		#     64:::IP         IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
+		#     ::::IP          IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
 
 		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
 		# match IPv6: ([0-9a-f]{0,4}:){1,8}
