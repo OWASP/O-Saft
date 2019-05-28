@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.03.19',
+    SSLINFO_VERSION => '19.05.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.225 19/04/12 16:53:46',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.226 19/05/28 18:37:03',
 };
 
 ######################################################## public documentation #
@@ -2543,7 +2543,7 @@ sub do_ssl_open($$$@) {
         # NO Certificate }
 
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port, '');
-            # this should be the forst call to openssl herein
+            # this should be the first call to openssl herein
         my  $eee = $_SSLinfo{'s_client'};
         if ($eee =~ m/.*(?:\*\*ERROR)/) {   # pass errors to caller
             $eee =~ s/.*(\*\*ERROR[^\n]*).*/$1/s;
@@ -2981,7 +2981,9 @@ sub do_openssl($$$$) {
     _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1");
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
-        $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+        $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/); # avoid in access.log: "\n" 400 750 "-" "-"
+        #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
+        $data  = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
             my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
