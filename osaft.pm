@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.176 19/05/16 23:55:29",
+    SID_osaft   => "@(#) osaft.pm 1.177 19/06/12 12:11:46",
 
 };
 
@@ -2832,6 +2832,11 @@ sub test_regex_cipher   {
     return;
 } # test_regex_cipher
 
+sub test_sort_cipher    {
+    #? check sorting cipher according strength
+    # see ../o-saft-dbx.pm  _yeast_sort_ciphers()
+} # test_sort_cipher
+
 sub test_regex          {
 # FIXME: funktioniert hier noch nicht, da %ciphers in o-saft.pl definiert
     #? apply regex to intended text/list; internal test
@@ -3014,7 +3019,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.176 2019/05/16
+1.177 2019/06/12
 
 =head1 AUTHOR
 
