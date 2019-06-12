@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.18 19/06/12 11:09:27
+# SID	@(#) glossary.txt 1.19 19/06/12 11:22:53
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -26,7 +26,7 @@ ALPN	Application Layer Protocol Negotiation
 AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
-ARIA	128-bit Symmetric block cipher
+ARIA	128-bit symmetric block cipher
 ARX	add–rotate–xor
 ASN	Autonomous System Number
 ASN.1	Abstract Syntax Notation number One
@@ -74,7 +74,8 @@ CBC  	Ciplier Block Chaining (sometimes)
 CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
 CCA	chosen-ciphertext attack
-CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
+CCM	CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
+CCM-8	CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
 CCS	Change Cipher Spec (protocol)
 CDH	?  Diffie-Hellman
 CDP	CRL Distribution Points
@@ -175,7 +176,7 @@ EAX 	EAX Mode (block cipher mode)
 EAXprime	alias for EAX Mode
 EBC	Edge Boundery Controller
 EC	Elliptic Curve
-ECB	Electronic Code Book mode
+ECB	Electronic Code Book mode (block cipher mode)
 ECC 	Error Corection Code
 ECC	Elliptic Curve Cryptography
 ECCSI	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption
@@ -249,7 +250,7 @@ GOST	Gossudarstwenny Standard (block cipher)
 GOST 	hash function (used in GOST cipher suite)
 GOST28147-89	block cipher
 GOST3410-2012	signature algorithm
-GOST3411-2012	hash algorith
+GOST3411-2012	hash algorithm
 GOST3412-2015	block cipher
 GOST3413-2015	modes of operation for block ciphers
 GOST3431095	cryptographic algorithm?
