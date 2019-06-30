@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.4 19/06/30 18:45:26
+#?      @(#) Makefile.doc 1.5 19/06/30 19:16:27
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.4
+_SID.doc        = 1.5
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -114,9 +114,54 @@ testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-CHACHA20-POLY1305-
 
 # o-saft-*.pm
 testarg0-doc%:                  TEST.args   = --help
-testarg0-doc5--help:            EXE.pl      = $(EXE.osaft-man)
+#testarg0-doc5--help:            EXE.pl      = $(EXE.osaft-man)
 testarg0-doc6--help:            EXE.pl      = $(EXE.osaft-dbx)
 testarg0-doc7--help:            EXE.pl      = $(EXE.osaft-usr)
+
+HELP-test.doc5      = targets for testing o-saft-man.pm's internal functionality
+# dumm '
+HELP-test.doc5.log  = same as test.doc5 but store output in '$(TEST.logdir)/'
+# tests are functionally the same as testarg0-h--help-* from Makefile.hlp
+testarg0-doc5-%:                EXE.pl      = $(EXE.osaft-man)
+testarg0-doc5-FAQ:              TEST.args   = FAQ
+testarg0-doc5-WHY:              TEST.args   = WHY
+testarg0-doc5-CHECK:            TEST.args   = CHECK
+testarg0-doc5-alias:            TEST.args   = alias
+testarg0-doc5-check:            TEST.args   = check
+testarg0-doc5-cmd:              TEST.args   = cmd
+testarg0-doc5-commands:         TEST.args   = commands
+testarg0-doc5-compliance:       TEST.args   = compliance
+testarg0-doc5-content:          TEST.args   = content
+testarg0-doc5-data:             TEST.args   = data
+testarg0-doc5-glossar:          TEST.args   = glossar
+testarg0-doc5-intern:           TEST.args   = intern
+testarg0-doc5-help:             TEST.args   = help
+testarg0-doc5-hint:             TEST.args   = hint
+testarg0-doc5-legacy:           TEST.args   = legacy
+testarg0-doc5-links:            TEST.args   = links
+testarg0-doc5-opt:              TEST.args   = opt
+testarg0-doc5-options:          TEST.args   = options
+testarg0-doc5-ourstr:           TEST.args   = ourstr
+testarg0-doc5-pattern:          TEST.args   = pattern
+testarg0-doc5-range:            TEST.args   = range
+testarg0-doc5-regex:            TEST.args   = regex
+testarg0-doc5-rfc:              TEST.args   = rfc
+testarg0-doc5-text:             TEST.args   = text
+testarg0-doc5-toc:              TEST.args   = toc
+testarg0-doc5-todo:             TEST.args   = todo
+testarg0-doc5-tools:            TEST.args   = tools
+testarg0-doc5-warning:          TEST.args   = warning
+testarg0-doc5-exit:             TEST.args   = exit
+testarg0-doc5-cfg-check:        TEST.args   = cfg-check
+testarg0-doc5-cfg-data:         TEST.args   = cfg-data
+testarg0-doc5-cfg-hint:         TEST.args   = cfg-hint
+testarg0-doc5-cfg-info:         TEST.args   = cfg-info
+testarg0-doc5-cfg-text:         TEST.args   = cfg-text
+testarg0-doc5-cfg-regex:        TEST.args   = cfg-regex
+testarg0-doc5-gen-wiki:         TEST.args   = gen-wiki
+testarg0-doc5-gen-html:         TEST.args   = gen-html
+testarg0-doc5-gen-cgi:          TEST.args   = gen-cgi
+testarg0-doc5-gen-pod:          TEST.args   = gen-pod
 
 HELP-test.doc6      = targets for testing o-saft-dbx.pm's internal functionality
 # dumm '
@@ -140,6 +185,12 @@ testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaftcipher)
 testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
 testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
 testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
+
+ALL.testdoc5    = $(shell awk -F: '/^testarg0-doc5-.*%/{next} /^testarg0-doc5-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc5   = $(ALL.testdoc5)
+test.doc5:      $(ALL.test.doc5)
+ALL.test.doc5.log=  $(ALL.test.doc5:%=%.log) test.log-compare-hint
+test.doc5.log:  $(ALL.test.doc5.log)
 
 ALL.testdoc6    = $(shell awk -F: '/^testarg0-doc6-.*%/{next} /^testarg0-doc6-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 ALL.test.doc6   = $(ALL.testdoc6)
