@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
     SID         => "@(#) yeast.pl 1.867 19/05/15 01:18:14",
-    STR_VERSION => "19.05.14",          # <== our official version number
+    STR_VERSION => "19.06.14",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -8293,7 +8293,7 @@ if ((_need_cipher() > 0) or (_need_default() > 0)) {
 _yeast_TIME("get}");
 
 _yeast_EXIT("exit=MAIN  - start");
-_yeast_ciphers();
+_yeast_ciphers_list();
 usr_pre_main();
 
 #| main: do the work for all targets
