@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.5 19/06/30 19:16:27
+#?      @(#) Makefile.doc 1.6 19/06/30 20:39:01
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.5
+_SID.doc        = 1.6
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -75,8 +75,13 @@ testarg0-doc%:                  TEST.dir    = .
 testarg0-doc%:                  TEST.logdir = ./t/log
 
 # osaft.pm
+HELP-test.doc1      = targets for testing internal functionality of osaft.pm
+HELP-test.doc1.log  = same as test.doc1 but store output in '$(TEST.logdir)/'
 testarg0-doc1-%:                EXE.pl      = $(EXE.osaft)
-testarg0-doc1-%:                TEST.args   = --help
+testarg0-doc1---help:           TEST.args   = --help
+# osaft.pm's --test-* option require data defined in $(SRC.pl), hence using $(SRC.pl)
+testarg0-doc1--test%:           EXE.pl      = $(SRC.pl)
+testarg0-doc1--test-regex:      TEST.args   = --test-regex
 
 # OSaft/Doc/Data.pm
 testarg0-doc2-%:                EXE.pl      = $(EXE.osaftdata)
@@ -118,8 +123,7 @@ testarg0-doc%:                  TEST.args   = --help
 testarg0-doc6--help:            EXE.pl      = $(EXE.osaft-dbx)
 testarg0-doc7--help:            EXE.pl      = $(EXE.osaft-usr)
 
-HELP-test.doc5      = targets for testing o-saft-man.pm's internal functionality
-# dumm '
+HELP-test.doc5      = targets for testing internal functionality of o-saft-man.pm
 HELP-test.doc5.log  = same as test.doc5 but store output in '$(TEST.logdir)/'
 # tests are functionally the same as testarg0-h--help-* from Makefile.hlp
 testarg0-doc5-%:                EXE.pl      = $(EXE.osaft-man)
@@ -163,8 +167,7 @@ testarg0-doc5-gen-html:         TEST.args   = gen-html
 testarg0-doc5-gen-cgi:          TEST.args   = gen-cgi
 testarg0-doc5-gen-pod:          TEST.args   = gen-pod
 
-HELP-test.doc6      = targets for testing o-saft-dbx.pm's internal functionality
-# dumm '
+HELP-test.doc6      = targets for testing internal functionality of o-saft-dbx.pm
 HELP-test.doc6.log  = same as test.doc6 but store output in '$(TEST.logdir)/'
 # o-saft-dbx.pm's --test-* option require data defined in $(SRC.pl), hence using $(SRC.pl)
 testarg0-doc6-%:                EXE.pl      = $(SRC.pl)
@@ -185,6 +188,12 @@ testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaftcipher)
 testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
 testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
 testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
+
+ALL.testdoc1    = $(shell awk -F: '/^testarg0-doc1-.*%/{next} /^testarg0-doc1-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc1   = $(ALL.testdoc1)
+test.doc1:      $(ALL.test.doc1)
+ALL.test.doc1.log=  $(ALL.test.doc1:%=%.log) test.log-compare-hint
+test.doc1.log:  $(ALL.test.doc1.log)
 
 ALL.testdoc5    = $(shell awk -F: '/^testarg0-doc5-.*%/{next} /^testarg0-doc5-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 ALL.test.doc5   = $(ALL.testdoc5)
