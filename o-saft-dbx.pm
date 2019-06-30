@@ -108,7 +108,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.74 19/05/16 21:52:32";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.75 19/06/30 11:23:19";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -336,6 +336,24 @@ sub _yeast_ciphers  {
     return;
 } # _yeast_ciphers
 
+sub _yeast_ciphers_sorted {
+    #? print ciphers sorted according strength
+    my @sorted;
+    # TODO: sorting as in yeast.pl _sort_results()
+    foreach my $c (sort_cipher_names(keys %ciphers)) {
+        push(@sorted, sprintf("%2s\t%s\t%s\n", get_cipher_owasp($c), get_cipher_sec($c), $c));
+    }
+    print "
+=== _yeast_ciphers_sorted: print ciphers sortedaccording strength ===
+
+= OWASP	openssl	cipher
+=------+-------+----------------------------------------------
+";
+    print foreach sort @sorted;
+    print "=------+-------+----------------------------------------------\n";
+    return;
+} # _yeast_ciphers_sorted
+
 sub _yeast_exit {
     if (0 < $cfg{'trace'}) {
         _yTRAC("cfg'exitcode'", $cfg{'exitcode'});
@@ -533,16 +551,17 @@ sub _yeast_test {
     #? dispatcher for internal tests
     my $arg = shift;
     _yeast($arg);
-    _yeast_data()       if ('data' eq $arg);
-    _yeast_prot()       if ('prot' eq $arg);
-    _yeast_cipher()     if ('cipher' eq $arg);
+    _yeast_data()           if ('data' eq $arg);
+    _yeast_prot()           if ('prot' eq $arg);
+    _yeast_cipher()         if ('cipher' eq $arg);
+    _yeast_ciphers_sorted() if ($arg =~ /^cipher.[_-]?sort/);
     if ('ciphers' eq $arg) {
         # FIXME: --test-ciphers is experimental, need to rename _yeast_ciphers()
         $cfg{'verbose'} = 1;
         push(@{$cfg{'do'}}, 'cipherraw');
         _yeast_ciphers();
     }
-    osaft::test_regex() if ('regex' eq $arg);
+    osaft::test_regex()     if ('regex' eq $arg);
     return;
 } # _yeast_test
 
@@ -579,7 +598,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.74 2019/05/16
+1.75 2019/06/30
 
 =head1 AUTHOR
 
