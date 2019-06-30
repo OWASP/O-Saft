@@ -53,7 +53,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.283 19/04/28 22:56:50";
+my  $SID_man= "@(#) o-saft-man.pm 1.284 19/06/30 18:43:30";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,7 +77,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.283'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.284'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1463,7 +1463,9 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
             printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
         }
     } else {
-        printhelp($ARGV[0]);
+        $arg =  $ARGV[0];
+        $arg =~ s/--(?:help|test)[_.=-]?//; # allow --test-* and --help=*
+        printhelp($arg);
     }
     exit 0;
 } # _main_man
@@ -1513,6 +1515,16 @@ see  L<METHODS>  below.
 =item * o-saft-man.pm --help        # on command line will print help
 
 =item * o-saft-man.pm [<$type>]     # on command line
+
+=back
+
+For compatibility with other programs and modules it also supports:
+
+=over 2
+
+=item * o-saft-man.pm --help=<$type>
+
+=item * o-saft-man.pm --test-<$type>
 
 =back
 
@@ -1611,7 +1623,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.283 2019/04/28
+1.284 2019/06/30
 
 =head1 AUTHOR
 
