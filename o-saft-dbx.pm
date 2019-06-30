@@ -136,7 +136,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.78 19/06/30 13:14:50";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.79 19/06/30 16:22:44";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -600,9 +600,8 @@ sub _yeast_test {
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_data()           if ('data'      eq $arg);
     _yeast_prot()           if ('prot'      eq $arg);
-    _yeast_cipher()         if ('cipher'    eq $arg);
     _yeast_ciphers_sorted() if ($arg =~ /^cipher.[_-]?sort/);
-    if ('ciphers' eq $arg) {
+    if ($arg =~ /^cipher.[_-]?list/) {
         # FIXME: --test-ciphers is experimental
         # _yeast_ciphers_list() relies on some special $cfg{} settings
         $cfg{'verbose'} = 1;
@@ -610,6 +609,7 @@ sub _yeast_test {
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
     }
+    _yeast_ciphers()        if ('ciphers'   eq $arg);
     return;
 } # _yeast_test
 
@@ -617,7 +617,6 @@ sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
     my $arg = shift;
-       $arg = "--help"; # no other options implemented yet
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/) {
@@ -630,12 +629,13 @@ sub _main           {
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
             # may return:  You need to install the perl-doc package to use this program.
             #exec "perldoc $0"; # scary ...
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+            printf("# no POD::Perldoc installed, please try:\n   perldoc $0\n");
         }
     }
-    if ($arg =~ m/--yeast[_.-]?(.*)/) {
-        $arg = $1;
-        _yeast_test($arg);
+    if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
+        $arg = "--test-$1";
+        printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
+        # TODO: _yeast_test($arg);
     }
     exit 0;
 } # _main
@@ -646,7 +646,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.78 2019/06/30
+1.79 2019/06/30
 
 =head1 AUTHOR
 
