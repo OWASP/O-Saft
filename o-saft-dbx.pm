@@ -34,6 +34,12 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =over 4
 
+=item _yeast_ciphers_list( )
+
+=item _yeast_ciphers_sorted( )
+
+=item _yeast_trac( )
+
 =item _yeast_init( )
 
 =item _yeast_exit( )
@@ -43,8 +49,6 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 =item _yeast_data( )
 
 =item _yeast_prot( )
-
-=item _yeast_cipher( )
 
 =item _yeast_test( )
 
@@ -108,7 +112,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.75 19/06/30 11:23:19";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.77 19/06/30 12:34:24";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -138,8 +142,9 @@ sub _yeast      { local $\ = "\n"; print $cfg{'prefix_verbose'} . $_[0]; return;
 sub _y_ARG      { local $\ = "\n"; print $cfg{'prefix_verbose'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
 sub _y_CMD      { local $\ = "\n"; print $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
 sub _yTRAC      { local $\ = "\n"; printf("%s%14s= %s\n",  $cfg{'prefix_verbose'}, $_[0], $_[1]); return; }
-sub _yline      { _yeast("#----------------------------------------------------" . $_[0]); return; }
 sub _y_ARR      { return join(" ", "[", @_, "]"); }
+sub _yline      { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub _ynull      { _yeast("value <<null>> means that internal variable is not defined @_"); return; }
 sub _yeast_trac {}          # forward declaration
 sub _yeast_trac {
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
@@ -171,6 +176,68 @@ sub _yeast_trac {
     return;
 } # _yeast_trac
 
+sub _yeast_ciphers_list   {
+    #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
+    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    _yline(" ciphers {");
+    my $_cnt = scalar @{$cfg{'ciphers'}};
+    my $need = _need_cipher();
+    my $ciphers = "@{$cfg{'ciphers'}}";
+    if (_is_do('cipherraw')) {
+       $need = 1;
+       my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
+       if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
+           # avoid huge (useless output)
+           $_cnt = 0xffffff;
+           $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
+           $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
+       } else {
+           # expand list
+           @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
+              # FIXME: _get_ciphers_range() first arg is the SSL version, which
+              #        is usually unknown here, hence the first is passed
+              #        this my result in a wrong list; but its trace output only
+           $_cnt = scalar @range;
+       }
+       $ciphers = "@range";
+    }
+    _yeast("  _need_cipher= $need");
+    if (0 < $need) {
+        $_cnt = sprintf("%5s", $_cnt);  # format count
+        _yeast("      starttls= " . $cfg{'starttls'});
+        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_is_do('cipherraw')) {
+        _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
+        _yeast("use cipher from openssl= " . $cmd{'extciphers'});
+        _yeast(" $_cnt ciphers= $ciphers");
+    }
+    _yline(" ciphers }");
+    return;
+} # _yeast_ciphers_list
+
+sub _yeast_ciphers_sorted {
+    #? print ciphers sorted according strength
+    my @sorted;
+    # TODO: sorting as in yeast.pl _sort_results()
+    foreach my $c (sort_cipher_names(keys %ciphers)) {
+        push(@sorted, sprintf("%2s\t%s\t%s\n", get_cipher_owasp($c), get_cipher_sec($c), $c));
+    }
+    print "
+=== _yeast_ciphers_sorted: print ciphers sortedaccording strength ===
+
+= OWASP	openssl	cipher
+=------+-------+----------------------------------------------
+";
+    print foreach sort @sorted;
+    print "=------+-------+----------------------------------------------\n";
+    return;
+} # _yeast_ciphers_sorted
+
+sub _yeast_cipher         {
+    #? print internal data structures for ciphers
+# TODO: %ciphers %cipher_names
+    return;
+}
+
 sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
@@ -180,6 +247,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("!!Hint: use --trace=2  to see Net::SSLinfo variables") if (2 > $cfg{'trace'});
     _yeast("!!Hint: use --trace=2  to see external commands")      if (2 > $cfg{'trace'});
     _yeast("!!Hint: use --trace=3  to see full %cfg")              if (3 > $cfg{'trace'});
+    _ynull();
     _yeast("#") if (3 > $cfg{'trace'});
     _yline("");
     _yTRAC("$0", $VERSION);     # $0 is same as $ARG0
@@ -291,68 +359,9 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
     _yline(" user-friendly cfg }");
     _yeast("(more information with: --trace=2  or  --trace=3 )") if (1 > $cfg{'trace'});
-    # $cfg{'ciphers'} may not yet set, print with _yeast_ciphers()
+    # $cfg{'ciphers'} may not yet set, print with _yeast_ciphers_list()
     return;
 } # _yeast_init
-
-sub _yeast_ciphers  {
-    #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
-    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
-    _yline(" ciphers {");
-    my $_cnt = scalar @{$cfg{'ciphers'}};
-    my $need = _need_cipher();
-    my $ciphers = "@{$cfg{'ciphers'}}";
-    if (_is_do('cipherraw')) {
-       $need = 1;
-       my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
-       if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
-           # avoid huge (useless output)
-           $_cnt = 0xffffff;
-           $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
-           $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
-       } else {
-           # expand list
-           @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
-              # FIXME: _get_ciphers_range() first arg is the SSL version, which
-              #        is usually unknown here, hence the first is passed
-              #        this my result in a wrong list; but its trace output only
-           $_cnt = scalar @range;
-       }
-       $ciphers = "@range";
-    }
-    _yeast("  _need_cipher= $need");
-    if (0 < $need) {
-        $_cnt = sprintf("%5s", $_cnt);  # format count
-        _yeast("      starttls= " . $cfg{'starttls'});
-        if (_is_do('cipherraw')) {
-            _yeast("   cipherrange= " . $cfg{'cipherrange'});
-        } else {
-            _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
-            _yeast("use cipher from openssl= " . $cmd{'extciphers'});
-        }
-        _yeast(" $_cnt ciphers= $ciphers");
-    }
-    _yline(" ciphers }");
-    return;
-} # _yeast_ciphers
-
-sub _yeast_ciphers_sorted {
-    #? print ciphers sorted according strength
-    my @sorted;
-    # TODO: sorting as in yeast.pl _sort_results()
-    foreach my $c (sort_cipher_names(keys %ciphers)) {
-        push(@sorted, sprintf("%2s\t%s\t%s\n", get_cipher_owasp($c), get_cipher_sec($c), $c));
-    }
-    print "
-=== _yeast_ciphers_sorted: print ciphers sortedaccording strength ===
-
-= OWASP	openssl	cipher
-=------+-------+----------------------------------------------
-";
-    print foreach sort @sorted;
-    print "=------+-------+----------------------------------------------\n";
-    return;
-} # _yeast_ciphers_sorted
 
 sub _yeast_exit {
     if (0 < $cfg{'trace'}) {
@@ -507,7 +516,10 @@ sub _yeast_prot {
     #? this function is for internal use only
     local $\ = "\n";
     my $ssl = $cfg{'regex'}->{'SSLprot'};
-    print "=== _yeast_prot: internal data according protocols ===\n";
+    print "
+=== _yeast_prot: print internal data structure according protocols ===
+";
+        _ynull("\n");
         _yline(" %cfg {");
         foreach my $key (sort keys %cfg) {
             #printf("%16s= %s\n", $key, $cfg{$key}) if ($key =~ m/$ssl/);
@@ -541,27 +553,23 @@ sub _yeast_prot {
     return;
 } # _yeast_prot
 
-sub _yeast_cipher   {
-    #? print internal data structures for ciphers
-# TODO: %ciphers %cipher_names
-    return;
-}
-
 sub _yeast_test {
-    #? dispatcher for internal tests
+    #? dispatcher for internal tests; option --test-*
     my $arg = shift;
     _yeast($arg);
-    _yeast_data()           if ('data' eq $arg);
-    _yeast_prot()           if ('prot' eq $arg);
-    _yeast_cipher()         if ('cipher' eq $arg);
+    osaft::test_regex()     if ('regex'     eq $arg);
+    _yeast_data()           if ('data'      eq $arg);
+    _yeast_prot()           if ('prot'      eq $arg);
+    _yeast_cipher()         if ('cipher'    eq $arg);
     _yeast_ciphers_sorted() if ($arg =~ /^cipher.[_-]?sort/);
     if ('ciphers' eq $arg) {
-        # FIXME: --test-ciphers is experimental, need to rename _yeast_ciphers()
+        # FIXME: --test-ciphers is experimental
+        # _yeast_ciphers_list() relies on some special $cfg{} settings
         $cfg{'verbose'} = 1;
-        push(@{$cfg{'do'}}, 'cipherraw');
-        _yeast_ciphers();
+        push(@{$cfg{'do'}},      'cipherraw');
+        push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
+        _yeast_ciphers_list();
     }
-    osaft::test_regex()     if ('regex' eq $arg);
     return;
 } # _yeast_test
 
@@ -598,7 +606,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.75 2019/06/30
+1.77 2019/06/30
 
 =head1 AUTHOR
 
