@@ -136,7 +136,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.79 19/06/30 16:22:44";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.80 19/06/30 17:50:23";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -613,7 +613,7 @@ sub _yeast_test {
     return;
 } # _yeast_test
 
-sub _main           {
+sub _main_dbx       {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
     my $arg = shift;
@@ -638,7 +638,7 @@ sub _main           {
         # TODO: _yeast_test($arg);
     }
     exit 0;
-} # _main
+} # _main_dbx
 
 sub o_saft_dbx_done {};     # dummy to check successful include
 
@@ -646,7 +646,7 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.79 2019/06/30
+1.80 2019/06/30
 
 =head1 AUTHOR
 
@@ -659,6 +659,6 @@ sub o_saft_dbx_done {};     # dummy to check successful include
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main(@ARGV) if (not defined caller);
+_main_dbx(@ARGV) if (not defined caller);
 
 1;
