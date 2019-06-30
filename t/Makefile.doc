@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.2 19/04/28 02:08:00
+#?      @(#) Makefile.doc 1.3 19/06/30 17:43:54
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.2
+_SID.doc        = 1.3
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -118,7 +118,21 @@ testarg0-doc5--help:            EXE.pl      = $(EXE.osaft-man)
 testarg0-doc6--help:            EXE.pl      = $(EXE.osaft-dbx)
 testarg0-doc7--help:            EXE.pl      = $(EXE.osaft-usr)
 
+HELP-test.doc6      = targets for testing o-saft-dbx.pm's internal functionality
+# dumm '
+HELP-test.doc6.log  = same as test.doc6 but store output in '$(TEST.logdir)/'
+# o-saft-dbx.pm's --test-* option require data defined in $(SRC.pl), hence using $(SRC.pl)
+#testarg0-doc6-%:                EXE.pl      = $(SRC.pl)
+testarg0-doc6-%:                EXE.pl      = yeast.pl
+testarg0-doc6--test-data:       TEST.args   = --test-data
+testarg0-doc6--test-prot:       TEST.args   = --test-prot
+testarg0-doc6--test-regex:      TEST.args   = --test-regex
+testarg0-doc6--test-ciphers-list:  TEST.args= --test-ciphers-list
+testarg0-doc6--test-ciphers-sort:  TEST.args= --test-ciphers-sort
+
 # perldoc
+HELP-test.doc9      = targets for testing perldoc of files
+HELP-test.doc9.log  = same as test.doc9 but store output in '$(TEST.logdir)/'
 testarg0-doc9-%:                EXE.pl      = perldoc
 testarg0-doc9-o-saft:           TEST.args   = $(SRC.pl)
 testarg0-doc9-osaft:            TEST.args   = $(EXE.osaft)
@@ -127,6 +141,18 @@ testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaftcipher)
 testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
 testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
 testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
+
+ALL.testdoc6    = $(shell awk -F: '/^testarg0-doc6-.*%/{next} /^testarg0-doc6-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc6   = $(ALL.testdoc6)
+test.doc6:      $(ALL.test.doc6)
+ALL.test.doc6.log=  $(ALL.test.doc6:%=%.log) test.log-compare-hint
+test.doc6.log:  $(ALL.test.doc6.log)
+
+ALL.testdoc9    = $(shell awk -F: '/^testarg0-doc9-.*%/{next} /^testarg0-doc9-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc9   = $(ALL.testdoc9)
+test.doc9:      $(ALL.test.doc9)
+ALL.test.doc9.log=  $(ALL.test.doc9:%=%.log) test.log-compare-hint
+test.doc9.log:  $(ALL.test.doc6.log)
 
 test.doc.log-compare:   TEST.target_prefix  = testarg0-doc
 test.doc.log-move:      TEST.target_prefix  = testarg0-doc
