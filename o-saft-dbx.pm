@@ -7,123 +7,6 @@
 ## no critic qw(Documentation::RequirePodSections)
 #  our POD below is fine, perlcritic (severity 2) is too pedantic here.
 
-=pod
-
-=encoding utf8
-
-=head1 NAME
-
-o-saft-dbx.pm - module for tracing o-saft.pl
-
-=head1 SYNOPSIS
-
-=over 2
-
-=item require "o-saft-dbx.pm";
-
-=item o-saft-dbx.pm <L<OPTIONS|OPTIONS>>
-
-=back
-
-=head1 OPTIONS
-
-=over 2
-
-=item --help
-
-=item --test-ciphers-list
-
-=item --test-ciphers-sort
-
-=item --test-data
-
-=item --test-prot
-
-=back
-
-
-=head1 DESCRIPTION
-
-Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl>.
-
-=head2 Functions defined herein
-
-=over 4
-
-=item _yeast_ciphers_list( )
-
-=item _yeast_trac( )
-
-=item _yeast_init( )
-
-=item _yeast_exit( )
-
-=item _yeast_args( )
-
-=item _yeast( )
-
-=item _y_ARG( ), _y_CMD( ), _yline( )
-
-=item _vprintme( )
-
-=item _v_print( ), _v2print( ), _v3print( ), _v4print( )
-
-=item _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
-
-=back
-
-=head2 Functions for internal testing; initiated with option  C<--test-*>
-
-=over 4
-
-=item _yeast_ciphers_list( )
-
-=item _yeast_ciphers_sorted( )
-
-=item _yeast_data( )
-
-=item _yeast_prot( )
-
-=item _yeast_test( )
-
-=back
-
-=head2 Variables which may be used herein
-
-They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
-
-=over 4
-
-=item $VERSION
-
-=item %data
-
-=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, time_absolut, verbose
-
-=item %checks
-
-=item %dbx
-
-=item $time0
-
-=back
-
-Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
-For example:
-
-    sub _yeast_init() {}
-
-=head1 SPECIALS
-
-If you want to do special debugging, you can define proper functions here.
-They don't need to be defined in L<o-saft.pl|o-saft.pl> if they are used only here.
-In that case simply call the function in C<_yeast_init> or C<_yeast_exit>
-they are called at beginning and end of L<o-saft.pl|o-saft.pl>.
-It's just important that  L<o-saft.pl|o-saft.pl>  was called with either the I<--v>
-or any I<--trace*>  option, which then loads this file automatically.
-
-=cut
-
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_do()
@@ -136,7 +19,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.80 19/06/30 17:50:23";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.81 19/06/30 17:59:17";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -642,11 +525,135 @@ sub _main_dbx       {
 
 sub o_saft_dbx_done {};     # dummy to check successful include
 
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
+
 =pod
+
+=encoding utf8
+
+=head1 NAME
+
+o-saft-dbx.pm - module for tracing o-saft.pl
+
+
+=head1 SYNOPSIS
+
+=over 2
+
+=item require "o-saft-dbx.pm";
+
+=item o-saft-dbx.pm <L<OPTIONS|OPTIONS>>
+
+=back
+
+
+=head1 OPTIONS
+
+=over 2
+
+=item --help
+
+=item --test-ciphers-list
+
+=item --test-ciphers-sort
+
+=item --test-data
+
+=item --test-prot
+
+=back
+
+
+=head1 DESCRIPTION
+
+Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl>.
+
+
+=head1 METHODS
+
+=head2 Functions defined herein
+
+=over 4
+
+=item _yeast_ciphers_list( )
+
+=item _yeast_trac( )
+
+=item _yeast_init( )
+
+=item _yeast_exit( )
+
+=item _yeast_args( )
+
+=item _yeast( )
+
+=item _y_ARG( ), _y_CMD( ), _yline( )
+
+=item _vprintme( )
+
+=item _v_print( ), _v2print( ), _v3print( ), _v4print( )
+
+=item _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
+
+=back
+
+=head2 Functions for internal testing; initiated with option  C<--test-*>
+
+=over 4
+
+=item _yeast_ciphers_list( )
+
+=item _yeast_ciphers_sorted( )
+
+=item _yeast_data( )
+
+=item _yeast_prot( )
+
+=item _yeast_test( )
+
+=back
+
+=head2 Variables which may be used herein
+
+They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
+
+=over 4
+
+
+=item $VERSION
+
+=item %data
+
+=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, time_absolut, verbose
+
+=item %checks
+
+=item %dbx
+
+=item $time0
+
+=back
+
+Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
+For example:
+
+    sub _yeast_init() {}
+
+
+=head1 SPECIALS
+
+If you want to do special debugging, you can define proper functions here.
+They don't need to be defined in L<o-saft.pl|o-saft.pl> if they are used only here.
+In that case simply call the function in C<_yeast_init> or C<_yeast_exit>
+they are called at beginning and end of L<o-saft.pl|o-saft.pl>.
+It's just important that  L<o-saft.pl|o-saft.pl>  was called with either the I<--v>
+or any I<--trace*>  option, which then loads this file automatically.
+
 
 =head1 VERSION
 
-1.80 2019/06/30
+1.81 2019/06/30
 
 =head1 AUTHOR
 
