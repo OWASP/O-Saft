@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.177 19/06/12 12:11:46",
+    SID_osaft   => "@(#) osaft.pm 1.178 19/06/30 20:38:07",
 
 };
 
@@ -91,6 +91,12 @@ None of the constants, variables, or methods should be defined in the caller,
 otherwise the calling script must handle warnings properly.
 
 =head1 OPTIONS
+
+=over 4
+
+=item --regex, --test-regex
+
+=back
 
 =head1 DESCRIPTION
 
@@ -2779,10 +2785,10 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 sub __regex_head    { return sprintf("= %s\t%s\t%s\t%s\n", "PFS", "OWASP", "owasp", "cipher"); }
 sub __regex_line    { return "=------+-------+-------+---------------------------------------\n"; }
 
-sub test_regex_cipher   {
+sub test_cipher_regex   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
     print "
-=== test_regex_cipher: check RegEx for ciphers ===
+=== test_cipher_regex: check RegEx for ciphers ===
 
   Check RegEx to detect ciphers, which support PFS using the internal function
   ::_ispfs() .
@@ -2830,17 +2836,24 @@ sub test_regex_cipher   {
 
 ';
     return;
-} # test_regex_cipher
+} # test_cipher_regex
 
-sub test_sort_cipher    {
+sub test_cipher_sort    {
     #? check sorting cipher according strength
-    # see ../o-saft-dbx.pm  _yeast_sort_ciphers()
-} # test_sort_cipher
+    # see ../o-saft-dbx.pm  _yeast_ciphers_sorted()
+} # test_cipher_sort
+
+=pod
+
+=head2 test_regex( )
+
+Internal test function: apply regex to intended text/list.
+
+=cut
 
 sub test_regex          {
 # FIXME: funktioniert hier noch nicht, da %ciphers in o-saft.pl definiert
-    #? apply regex to intended text/list; internal test
-    test_regex_cipher();
+    test_cipher_regex();
     return;
 } # test_regex
 
@@ -2991,7 +3004,11 @@ sub _main           {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         _main_help()        if ($arg =~ m/^--?h(?:elp)?$/);
-        test_regex()        if ($arg =~ m/^--regex$/);
+        if ($arg =~ m/^--(?:test[_.-]?)regex/) {
+            $arg = "--test-regex";
+            printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
+            # TODO: test_regex();
+        }
     }
     exit 0;
 } # _main
@@ -3019,7 +3036,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.177 2019/06/12
+1.178 2019/06/30
 
 =head1 AUTHOR
 
