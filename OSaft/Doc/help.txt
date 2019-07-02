@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.30 19/07/02 13:55:40
+# SID   @(#) help.txt 1.31 19/07/02 15:53:01
 
 NAME
 
@@ -4405,9 +4405,9 @@ TESTING
         development. These tests are implemented in the  ./t/  directory, see
         the 'Makefile.*' there.
 
-        Following options and commands are available to improve testing. They
-        mainly can simulate error conditions or stop execution properly (they
-        are not intended for other use cases):
+        Following options and commands for  $0  are available to improve
+        testing.  They mainly can simulate error conditions or stop execution
+        properly (they are not intended for other use cases):
 
       +quit
 
@@ -4447,9 +4447,9 @@ TESTING
 
     Internal testing
 
-        Following options and commands are for internal testing. They provide
-        informations about internal data structures and alike. See also tests
-        in t/Makefile* .
+        Following options and commands for  $0  are for internal testing.
+        They provide informations about internal data structures and alike.
+        See also tests in t/Makefile* .
 
       --test-data
 
