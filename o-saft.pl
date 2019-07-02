@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.867 19/05/15 01:18:14",
-    STR_VERSION => "19.06.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.868 19/07/02 11:01:42",
+    STR_VERSION => "19.05.14",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -358,6 +358,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'checkprot' => 0,
         'checkdest' => 0,
         'checkhttp' => 0,
+        'checksstp' => 0,
         'checksni'  => 0,
         'checkssl'  => 0,
         'checkalpn' => 0,
@@ -394,7 +395,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _yeast_args   {}
     sub _yeast_data   {}
     sub _yeast_test   {}
-    sub _yeast_ciphers{}
+    sub _yeast_ciphers_list {}
     sub _yeast        {}
     sub _y_ARG        {}
     sub _y_CMD        {}
@@ -813,6 +814,7 @@ my %check_dest = (  ## target (connection) data
     'psk_hint'      => {'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
+    'sstp'          => {'txt' => "Target supports method SSTP_DUPLEX_POST"},
     'ocsp_stapling' => {'txt' => "Target supports OCSP Stapling"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
     'session_lifetime'  =>{ 'txt'=> "Target TLS Session Ticket Lifetime"},
@@ -986,6 +988,7 @@ our %shorttexts = (
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
     'fips'          => "FIPS-140 compliant",
+    'sstp'          => "SSTP_DUPLEX_POST",
 #   'nsab'          => "NSA Suite B compliant",
     'tr_02102+'     => "TR-02102-2 compliant (strict)",
     'tr_02102-'     => "TR-02102-2 compliant (lazy)",
@@ -1425,7 +1428,7 @@ _yeast_TIME("cfg}");
         'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
 #       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
         'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES256-SHA    '=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
+#       'RSA-PSK-AES256-SHA    '=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-CBC-SHA
         'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
 #       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-EDE-CBC-SHA
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 PSK   PSK         0 :)],
@@ -3440,7 +3443,7 @@ sub _can_connect        {
     local $? = 0; local $! = undef;
     my $socket;
     if ($ssl == 1) {    # need different method for connecting with SSL
-        if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quit = $IO::Socket::SSL::debug3; }
+        if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; }
         # simple and fast connect: full cipher list, no handshake,
         #    do not verify the certificate and/or CRL, OCSP, which
         # may result in a connection fail
@@ -3927,7 +3930,7 @@ sub check_certchars($$) {
     my ($host, $port) = @_;
     _y_CMD("check_certchars() ". $cfg{'done'}->{'check_certchars'});
     $cfg{'done'}->{'check_certchars'}++;
-    return if ($cfg{'done'}->{'check_certchars'} > 1);
+    return if (1 < $cfg{'done'}->{'check_certchars'});
     my $value;
     my $txt;
 
@@ -3968,7 +3971,7 @@ sub check_dh($$)    {
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
     $cfg{'done'}->{'check_dh'}++;
-    return if ($cfg{'done'}->{'check_dh'} > 1);
+    return if (1 < $cfg{'done'}->{'check_dh'});
 
     # Logjam check is a bit ugly: DH Parameter may be missing
     # TODO: implement own check for DH parameters instead relying on openssl
@@ -4131,8 +4134,8 @@ sub check_url($$)   {
 
     if ($type eq 'ocsp_uri') {
         _trace2("check_url: ocsp_uri ...");
-        return  _get_text('invalid', "Content-Type: $ctype")   if ($ctype !~ m:application/ocsp-response:i);
-        return  _get_text('invalid', "Content-Length: $ctype") if ($length < 4);
+        return  _get_text('invalid', "Content-Type: $ctype")    if ($ctype !~ m:application/ocsp-response:i);
+        return  _get_text('invalid', "Content-Length: $length") if ($length < 4);
         return ""; # valid
     } # OCSP
 
@@ -4221,7 +4224,7 @@ sub checkalpn       {
     my ($host, $port) = @_;
     _y_CMD("checkalpn() ");
     $cfg{'done'}->{'checkalpn'}++;
-    return if ($cfg{'done'}->{'checkalpn'} > 1);
+    return if (1 < $cfg{'done'}->{'checkalpn'});
     # _trace("trace not necessary, output from check_nextproto() is sufficient");
     if ($cfg{'ssleay'}->{'get_alpn'} > 0) {
         $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
@@ -4242,7 +4245,7 @@ sub checkprefered   {
     my ($host, $port) = @_;     # not yet used
     _y_CMD("checkprefered() " . $cfg{'done'}->{'checkprefered'});
     $cfg{'done'}->{'checkprefered'}++;
-    return if ($cfg{'done'}->{'checkprefered'} > 1);
+    return if (1 < $cfg{'done'}->{'checkprefered'});
     _trace("checkprefered($host, $port){");
     foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
         my $strong = $prot{$ssl}->{'cipher_strong'};
@@ -4317,7 +4320,7 @@ sub checkciphers    {
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
-    return if ($cfg{'done'}->{'checkciphers'} > 1);
+    return if (1 < $cfg{'done'}->{'checkciphers'});
     _trace("checkciphers($host, $port){");
 
     if ($#results < 0) {        # no ciphers found; avoid misleading values
@@ -4390,7 +4393,7 @@ sub checkbleed($$)  {
     my ($host, $port) = @_;
     _y_CMD("checkbleed() ". $cfg{'done'}->{'checkbleed'});
     $cfg{'done'}->{'checkbleed'}++;
-    return if ($cfg{'done'}->{'checkbleed'} > 1);
+    return if (1 < $cfg{'done'}->{'checkbleed'});
     my $bleed = _isbleed($host, $port);
     if ($cfg{'ignorenoreply'} > 0) {
         return if ($bleed =~ m/no reply/);
@@ -4404,7 +4407,7 @@ sub checkdates($$)  {
     my ($host, $port) = @_;
     _y_CMD("checkdates() " . $cfg{'done'}->{'checkdates'});
     $cfg{'done'}->{'checkdates'}++;
-    return if ($cfg{'done'}->{'checkdates'} > 1);
+    return if (1 < $cfg{'done'}->{'checkdates'});
 
     # NOTE: all $data{'valid_*'} are values, not functions
 
@@ -4492,7 +4495,7 @@ sub checkcert($$)   {
     my ($value, $label);
     _y_CMD("checkcert() " . $cfg{'done'}->{'checkcert'});
     $cfg{'done'}->{'checkcert'}++;
-    return if ($cfg{'done'}->{'checkcert'} > 1);
+    return if (1 < $cfg{'done'}->{'checkcert'});
 
     # wildcards (and some sizes)
     _checkwildcard($host, $port);
@@ -4600,7 +4603,7 @@ sub checksni($$)    {
     my ($host, $port) = @_;
     _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
-    return if ($cfg{'done'}->{'checksni'} > 1);
+    return if (1 < $cfg{'done'}->{'checksni'});
 
     my $cn          =    $data{'cn'}->{val}($host, $port);
     my $lc_nosni    = lc($data{'cn_nosni'}->{val});
@@ -4662,7 +4665,7 @@ sub checksizes($$)  {
     my $value;
     _y_CMD("checksizes() " . $cfg{'done'}->{'checksizes'});
     $cfg{'done'}->{'checksizes'}++;
-    return if ($cfg{'done'}->{'checksizes'} > 1);
+    return if (1 < $cfg{'done'}->{'checksizes'});
 
     checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
     $value =  $data{'pem'}->{val}($host);
@@ -4742,7 +4745,7 @@ sub check02102($$)  {
     my ($host, $port) = @_;
     _y_CMD("check02102() " . $cfg{'done'}->{'check02102'});
     $cfg{'done'}->{'check02102'}++;
-    return if ($cfg{'done'}->{'check02102'} > 1);
+    return if (1 < $cfg{'done'}->{'check02102'});
     my $txt = "";
     my $val = "";
 
@@ -4839,7 +4842,7 @@ sub check2818($$)   {
     my ($host, $port) = @_;
     _y_CMD("check2818() " . $cfg{'done'}->{'check2818'});
     $cfg{'done'}->{'check2818'}++;
-    return if ($cfg{'done'}->{'check2818'} > 1);
+    return if (1 < $cfg{'done'}->{'check2818'});
     my $val = $data{'verify_altname'}->{val}($host);
     $checks{'rfc_2818_names'}->{val} = $val if ($val !~ m/matches/); # see Net::SSLinfo.pm
     return;
@@ -4851,7 +4854,7 @@ sub check03116($$)  {
     # BSI TR-03116-4 is similar to BSI TR-02102-2
     _y_CMD("check03116() " . $cfg{'done'}->{'check03116'});
     $cfg{'done'}->{'check03116'}++;
-    return if ($cfg{'done'}->{'check03116'} > 1);
+    return if (1 < $cfg{'done'}->{'check03116'});
     my $txt = "";
 
     # All checks according ciphers already done in checkciphers() and stored
@@ -4946,7 +4949,7 @@ sub check6125($$)   {
     my ($host, $port) = @_;
     _y_CMD("check6125() " . $cfg{'done'}->{'check6125'});
     $cfg{'done'}->{'check6125'}++;
-    return if ($cfg{'done'}->{'check6125'} > 1);
+    return if (1 < $cfg{'done'}->{'check6125'});
 
     my $txt = "";
     my $val = "";
@@ -5036,7 +5039,7 @@ sub check7525($$)   {
     my ($host, $port) = @_;
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
     $cfg{'done'}->{'check7525'}++;
-    return if ($cfg{'done'}->{'check7525'} > 1);
+    return if (1 < $cfg{'done'}->{'check7525'});
     my $val = "";
 
     # All checks according ciphers already done in checkciphers() and stored
@@ -5211,7 +5214,7 @@ sub checkdv($$)     {
     my ($host, $port) = @_;
     _y_CMD("checkdv() "   . $cfg{'done'}->{'checkdv'});
     $cfg{'done'}->{'checkdv'}++;
-    return if ($cfg{'done'}->{'checkdv'} > 1);
+    return if (1 < $cfg{'done'}->{'checkdv'});
 
     # DV certificates must have:
     #    CN= value in either the subject or subjectAltName
@@ -5269,7 +5272,7 @@ sub checkev($$)     {
     my ($host, $port) = @_;
     _y_CMD("checkev() "   . $cfg{'done'}->{'checkev'});
     $cfg{'done'}->{'checkev'}++;
-    return if ($cfg{'done'}->{'checkev'} > 1);
+    return if (1 < $cfg{'done'}->{'checkev'});
 
     # most information must be provided in `subject' field
     # unfortunately the specification is a bit vague which X509  keywords
@@ -5384,7 +5387,7 @@ sub checkroot($$)   {
     #? check if certificate is root CA
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkroot'}++;
-    return if ($cfg{'done'}->{'checkroot'} > 1);
+    return if (1 < $cfg{'done'}->{'checkroot'});
 
     # SEE Note:root-CA
 
@@ -5397,7 +5400,7 @@ sub checkprot($$)   {
     my $ssl;
     _y_CMD("checkprot() " . $cfg{'done'}->{'checkprot'});
     $cfg{'done'}->{'checkprot'}++;
-    return if ($cfg{'done'}->{'checkprot'} > 1);
+    return if (1 < $cfg{'done'}->{'checkprot'});
 
     # check SSL version support
     # NOTE: the check is adapted to the text in $%check_dest{'hassslv2'}->{txt}
@@ -5455,7 +5458,7 @@ sub checkdest($$)   {
     my ($key, $value, $ssl, $cipher);
     _y_CMD("checkdest() " . $cfg{'done'}->{'checkdest'});
     $cfg{'done'}->{'checkdest'}++;
-    return if ($cfg{'done'}->{'checkdest'} > 1);
+    return if (1 < $cfg{'done'}->{'checkdest'});
 
     checksni($host, $port);     # set checks according hostname
     # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
@@ -5535,7 +5538,7 @@ sub checkhttp($$)   {
     my $key = "";
     _y_CMD("checkhttp() " . $cfg{'done'}->{'checkhttp'});
     $cfg{'done'}->{'checkhttp'}++;
-    return if ($cfg{'done'}->{'checkhttp'} > 1);
+    return if (1 < $cfg{'done'}->{'checkhttp'});
 
     # collect informations
     my $notxt = " "; # use a variable to make assignments below more human readable
@@ -5607,13 +5610,208 @@ sub checkhttp($$)   {
     return;
 } # checkhttp
 
+sub _get_sstp_io        {
+    #? get result for SSTP request to host:port (using IO::Socket::SSL-new())
+    my ($host, $port) = @_;
+    my $socket  = undef;
+    my $ulonglong_max = '18446744073709551615';
+    my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
+    #my $url = '/sra_%7bBA195980-CD49-458b-9E23-C84EE0ADCD75%7d/';
+# if ($cfg{'trace'} > 2) {
+$IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; 
+# }
+    $socket = IO::Socket::SSL->new(
+        PeerHost => "$host",
+        PeerPort => "$port",
+        Proto    => "tcp",
+        Type     => SOCK_STREAM,
+        Timeout  => 30, # $cfg{'timeout'}
+        Blocking => 0,
+        SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+        SSL_check_crl   => 0,       # do not check CRL
+        SSL_ocsp_mode   => 0,
+        SSL_startHandshake  => 0,
+# SSL_ca_path => 
+# SSL_ca_file =>
+# 
+        reuse    => 1,
+    ) or do {
+        _dbx("_get_sstp_io: failed");
+        return "<<connection to '$url' failed>>";
+    };
+
+# FIXME: not yet working
+    my $req = << "EoREQ";
+SSTP_DUPLEX_POST $url HTTP/1.1
+Host:$host
+Connection:close
+xContent-Length:$ulonglong_max
+SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}
+
+EoREQ
+
+    print $req;
+    #print $socket $req;
+    print $socket "SSTP_DUPLEX_POST $url HTTP/1.1\r\n\r\n";
+
+    my $buf = <$socket>;
+_dbx "buf: $buf";
+    return $buf;
+} # _get_sstp_io
+
+sub _get_sstp_https     {
+    #? get result for SSTP request to host:port
+    my ($host, $port) = @_;
+    my $ulonglong_max = '18446744073709551615';
+    my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
+    my $length  = "";
+    my $server  = "";
+    my ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url,
+            Net::SSLeay::make_headers(
+                'Host'               => $host,
+                'Connection'         => 'close',
+                'Content-Length'     => $ulonglong_max,
+                'SSTPCORRELATIONID'  => '{deadbeef-cafe-affe-caba-0000000000}',
+            )
+    );
+    _dbx("_get_sstp_https: STATUS: $status");
+    _trace2("_get_sstp_https: STATUS: $status");
+    return if ($status =~ m#^HTTP/... 401 #);    # no SSTP supported
+    if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
+        return "<<connection to '$url' failed>>";
+    }
+    _trace2("_get_sstp_https: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
+    if ($status =~ m#^HTTP/... 200 #) {
+        $server = $headers{(grep{/^Server$/i}            keys %headers)[0] || ""};
+        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
+        if ($length != $ulonglong_max) {
+            return _get_text('invalid', "Content-Length: $length")
+        }
+        return "Server:$server";
+    } else {
+        return "<<unexpected response: $status>>";
+    }
+    return '';
+} # _get_sstp_https
+
+sub _get_sstp_socket    {
+    #? get result for SSTP request to host:port
+    # quick&dirty implementation of Net::SSLinfo::do_ssl_open()
+    my ($host, $port) = @_;
+    my $ulonglong_max = '18446744073709551615';
+    my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
+    my $length  = "";
+    my $server  = "";
+    my $socket  = undef;
+    my $src     = '';   # function (name) where something failed
+    my $err     = '';
+    my $dum     = '';
+    my $method  = "CTX_tlsv1_2_new";
+    my $ctx     = undef;# CTX object to be created
+    my $ssl     = undef;
+    my $req = << "EoREQ";
+SSTP_DUPLEX_POST $url HTTP/1.1
+Host:$host
+Connection:close
+xContent-Length:$ulonglong_max
+SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}
+EoREQ
+    TRY: {
+# FIXME: should use Net::SSLinfo::do_ssl_open()
+        $src = 'socket()';
+                socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!;} and last;
+        $src = 'connect()';
+        $dum=()=connect($socket, sockaddr_in($port, $host)) or do {$err = $!;} and last;
+        # # no critic qw(InputOutput::ProhibitOneArgSelect)
+        select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+        $src = "Net::SSLeay::$method";
+        ($ctx = Net::SSLeay::CTX_tlsv1_2_new()) or last;
+        $src = 'Net::SSLeay::CTX_set_ssl_version(TLSv1_2_method)';
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_2_method()) or do {$err = $!;} and last;
+        my  $options  = &Net::SSLeay::OP_ALL;
+        $src = 'Net::SSLeay::CTX_set_options()';
+            #   Net::SSLeay::CTX_set_options(); # can not fail according description!
+                Net::SSLeay::CTX_set_options($ctx, 0); # reset options
+                Net::SSLeay::CTX_set_options($ctx, $options);
+        $src = 'Net::SSLeay::CTX_set_timeout()';
+        ($dum = Net::SSLeay::CTX_set_timeout($ctx, $cfg{'timeout'})) or do {$err = $!;} and last;
+        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, undef);
+        Net::SSLeay::CTX_set_verify_depth($ctx, 3);
+        $src = 'Net::SSLeay::new()';
+        ($ssl=  Net::SSLeay::new($ctx))                     or do {$err = $!;} and last;
+        $src = 'Net::SSLeay::set_fd()';
+                Net::SSLeay::set_fd($ssl, fileno($socket))  or do {$err = $!;} and last;
+        $src = 'Net::SSLeay::set_tlsext_host_name()';
+                Net::SSLeay::set_tlsext_host_name($ssl, $cfg{'sni_name'})  or do {$err = $!;} and last;
+        my $ret;
+        $src = 'Net::SSLeay::connect() ';
+        $ret =  Net::SSLeay::connect($ssl);
+        if (0 > $ret) {
+            $src .= " failed start with $ctx()"; # i.e. no matching protocol
+            $err  = $!;
+            last;
+        }
+        $src = '';
+    }; # TRY
+    return "<<connection to '$host' failed>>" if ('' ne $src);
+
+# TODO
+#    _dbx("_get_sstp_socket: STATUS: $status");
+#    _trace2("_get_sstp_socket: STATUS: $status");
+#    return if ($status =~ m#^HTTP/... 401 #);    # no SSTP supported
+#    if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
+#        return "<<connection to '$url' failed>>";
+#    }
+#    _trace2("_get_sstp_socket: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
+#    if ($status =~ m#^HTTP/... 200 #) {
+#        $server = $headers{(grep{/^Server$/i}            keys %headers)[0] || ""};
+#        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
+#        if ($length != $ulonglong_max) {
+#            return _get_text('invalid', "Content-Length: $length")
+#        }
+#        return "Server:$server";
+#    } else {
+#        return "<<unexpected response: $status>>";
+#    }
+    return '';
+} # _get_sstp_socket
+
+sub checksstp           {
+    #? check if host:port supports SSTP
+    my ($host, $port) = @_;
+    _y_CMD("checksstp() " . $cfg{'done'}->{'checksstp'});
+    $cfg{'done'}->{'checksstp'}++;
+# TODO: implement SSTP 
+return;
+    return if (1 < $cfg{'done'}->{'checksstp'});
+    return "" if not defined $host;
+
+    # if SSTP supported, we expect something like::
+    #   HTTP/1.1 200 
+    #   Content-Length: 18446744073709551615
+    #   Server: Microsoft-HTTPAPI/2.0
+    #   Date: Mon, 19 May 2019 23:42:42 GMT
+    #   Connection: close
+
+# TODO: SSTP, need to find which _get_sstp-* method to use:
+#       _get_sstp_io() or _get_sstp_https() or _get_sstp_socket()
+    _trace2("checksstp: get_sstp($host, $port)");
+    $checks{'https_sstp'}->{val} = _get_sstp_io($host, $port);
+#print "C $checks{'https_sstp'}->{val} #";
+#exit;
+
+    $checks{'https_sstp'}->{val} = _get_sstp_socket($host, $port);
+    _dbx("return $checks{'https_sstp'}->{val}");
+    return;
+} # checksstp
+
 sub checkssl($$)    {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
     _y_CMD("checkssl() "  . $cfg{'done'}->{'checkssl'});
     $cfg{'done'}->{'checkssl'}++;
-    return if ($cfg{'done'}->{'checkssl'} > 1);
+    return if (1 < $cfg{'done'}->{'checkssl'});
 
     $cfg{'no_cert_txt'} = $text{'na_cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
     if ($cfg{'no_cert'} == 0) {
@@ -8753,6 +8951,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("  need_checkssl ...");
         checkssl(  $host, $port);   _yeast_TIME("  checkssl.");
      }
+        checksstp( $host, $port);   _yeast_TIME("  checksstp.");
 
     _yeast_TIME("prepare}");
     next if _yeast_NEXT("exit=HOST6 - host prepare");
