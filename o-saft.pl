@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.868 19/07/02 11:01:42",
+    SID         => "@(#) yeast.pl 1.869 19/07/02 11:39:02",
     STR_VERSION => "19.05.14",          # <== our official version number
 };
 
@@ -1625,24 +1625,24 @@ _yeast_TIME("cfg}");
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
 
-        'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DSS   DH(512)     0 export)],
-        'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    RSA   DH(512)     0 export)],
+        'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/DSS      0 export)],
+        'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/RSA      0 export)],
 
         # FIXME: all following
-        'DH-DSS-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DSS   DH          0 :)],
-        'DH-RSA-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    RSA   DH          0 :)],
-        'DH-DSS-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DSS   DH          0 :)],
-        'DH-RSA-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   RSA   DH          0 :)],
-        'DH-DSS-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DSS   DH         91 :)],
-        'DH-RSA-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 RSA   DH         91 :)],
-        'DH-DSS-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DSS   DH         91 :)],
-        'DH-RSA-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 RSA   DH         91 :)],
-        'DH-DSS-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DSS   DH         81 :)],
-        'DH-RSA-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   RSA   DH         81 :)],
-        'DH-RSA-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   RSA   DH         91 :)],
-        'DH-RSA-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   RSA   DH         91 :)],
-        'DH-DSS-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DSS   DH         91 :)],
-        'DH-DSS-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DSS   DH         91 :)],
+        'DH-DSS-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/DSS      0 :)],
+        'DH-RSA-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/RSA      0 :)],
+        'DH-DSS-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DH    DH/DSS      0 :)],
+        'DH-RSA-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DH    DH/RSA      0 :)],
+        'DH-DSS-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DH    DH/DSS     91 :)],
+        'DH-RSA-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DH    DH/RSA     91 :)],
+        'DH-DSS-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DH    DH/DSS     91 :)],
+        'DH-RSA-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DH    DH/RSA     91 :)],
+        'DH-DSS-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DH    DH/DSS     81 :)],
+        'DH-RSA-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DH    DH/RSA     81 :)],
+        'DH-RSA-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DH    DH/RSA     91 :)],
+        'DH-RSA-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DH    DH/RSA     91 :)],
+        'DH-DSS-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DH    DH/DSS     91 :)],
+        'DH-DSS-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DH    DH/DSS     91 :)],
         'DHE-PSK-SHA'                   => [qw( weak TLSv12 None   0   SHA1   PSK   DHE         1 :)],
         'RSA-PSK-SHA'                   => [qw( weak TLSv12 None   0   SHA1   PSK   RSA         1 :)],
         'DHE-PSK-RC4-SHA'               => [qw(medium TLSv12 RC4   128 SHA1   PSK   DHE         1 :)],
