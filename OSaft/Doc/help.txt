@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.29 19/05/15 23:28:33
+# SID   @(#) help.txt 1.30 19/07/02 13:55:40
 
 NAME
 
@@ -4458,6 +4458,18 @@ TESTING
       --test-prot
 
           Print internal data according protocols.
+
+      --test-regex
+
+          Print results for applying various texts to defined regex.
+
+      --test-cipher-list
+
+          Print list of hex keys of known ciphers.
+
+      --test-cipher-sorted
+
+          Print list of ciphers sorted according strength.
 
 
 EXAMPLES
