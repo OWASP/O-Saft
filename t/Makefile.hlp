@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.15 19/03/20 23:58:09
+#?      @(#) Makefile.hlp 1.16 19/07/02 13:59:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.15
+_SID.hlp        = 1.16
 
 _MYSELF.hlp     = t/Makefile.hlp
 _MY.includes   += $(_MYSELF.hlp)
@@ -115,8 +115,9 @@ testarg0-h--help-gen-html:      TEST.args  += --help=gen-html
 testarg0-h--help-gen-cgi:       TEST.args  += --help=gen-cgi
 testarg0-h--help-gen-pod:       TEST.args  += --help=gen-pod
 testarg0-h--help-exit:          TEST.args  += --help=exit
-testarg0-h--help--yeast-data:   TEST.args  += --yeast-data
-testarg0-h--help--yeast-prot:   TEST.args  += --yeast-prot
+# following tested in Makefile.doc: --test-*
+#testarg0-h--help--yeast-data:   TEST.args  += --yeast-data
+#testarg0-h--help--yeast-prot:   TEST.args  += --yeast-prot
 
 test.hlp.log-compare:   TEST.target_prefix  = testarg0-h
 test.hlp.log-move:      TEST.target_prefix  = testarg0-h
