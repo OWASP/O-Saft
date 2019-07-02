@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.30 19/04/27 15:47:22";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.31 19/07/02 12:10:36";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -651,12 +651,15 @@ sub sort_cipher_names   {
         qw((?:NULL))    ,               # all NULL
     );
     my @strength = (
+        qw(CECPQ1[_-].*?CHACHA)       ,
+        qw(CECPQ1[_-].*?AES256.GCM)   ,
         qw((?:ECDHE|EECDH).*?CHACHA)  , # 1. all ecliptical curve, ephermeral, GCM
         qw((?:ECDHE|EECDH).*?512.GCM) , # .. sorts -ECDSA before -RSA
         qw((?:ECDHE|EECDH).*?384.GCM) ,
         qw((?:ECDHE|EECDH).*?256.GCM) ,
         qw((?:ECDHE|EECDH).*?128.GCM) ,
         qw((?:EDH|DHE).*?CHACHA)  ,     # 2. all ephermeral, GCM
+        qw((?:EDH|DHE).*?PSK)     ,
         qw((?:EDH|DHE).*?512.GCM) ,     # .. sorts AES before CAMELLIA
         qw((?:EDH|DHE).*?384.GCM) ,
         qw((?:EDH|DHE).*?256.GCM) ,
@@ -676,11 +679,14 @@ sub sort_cipher_names   {
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
         qw(ECDH[_-].*?128) ,
-        qw(AES) ,                       # 5. all AES and specials
-        qw(KRB5) ,
-        qw(SRP) ,
-        qw(PSK) ,
-        qw(GOST) ,
+        qw(AES)     ,                   # 5. all AES and specials
+        qw(KRB5)    ,
+        qw(SRP)     ,
+        qw(PSK)     ,
+        qw(GOST)    ,
+        qw(FZA)     ,
+        qw((?:PSK|RSA).*?CHACHA) ,
+        qw(CHACHA)  ,
         qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
@@ -714,13 +720,14 @@ sub sort_cipher_names   {
     push(@sorted, @latest);                     # add insecure ciphers again
     my $num = scalar @sorted;
     if ($cnt != $num) {
-        # print warning if above algorithm misses ciphers; uses perl's  warn()
-        # instead of our _warn() to clearly inform the user that the code here
-        # needs to be fixed
+        # print warning if above algorithm misses ciphers;
+        #uses perl's  warn() # instead of our _warn() to clearly inform the user
+        # that the code here needs to be fixed
         #warn STR_WARN . ": 412: missing ciphers in sorted list: $num < $cnt";
         warn "**WARNING: 412: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
+    @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
     return @sorted;
 } # sort_cipher_names
 
@@ -1452,7 +1459,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.30 2019/04/27
+1.31 2019/07/02
 
 =head1 AUTHOR
 
