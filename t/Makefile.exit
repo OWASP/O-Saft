@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.14 19/07/03 16:08:39
+#?      @(#) Makefile.exit 1.15 19/07/03 16:14:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.14
+_SID.exit       = 1.15
 
 _MYSELF.exit    = t/Makefile.exit
 _MY.includes   += $(_MYSELF.exit)
@@ -34,7 +34,7 @@ first-exit-target-is-default: help.test.exit
 
 ALL.help.test  += help.test.exit
 
-HELP-help.test.exit = print targets for testing '$(SRC.pl)' --exit= option
+HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 help.test.exit:       HELP_TYPE = exit
 help.test.exit-v:     HELP_TYPE = exit
 help.test.exit-vv:    HELP_TYPE = exit
