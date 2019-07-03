@@ -18,14 +18,14 @@
 #       Naming conventions for targets see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.27 19/04/13 11:57:49
+#?      @(#) Makefile.misc 1.28 19/07/03 16:09:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.27
+_SID.misc       = 1.28
 
 _MYSELF.misc    = t/Makefile.misc
 _MY.includes   += $(_MYSELF.misc)
@@ -35,7 +35,7 @@ first-misc-target-is-default: help.test.misc
 
 ALL.help.test  += help.test.misc
 
-HELP-help.test.misc = print targets for misc. tests and development
+HELP-help.test.misc = targets for misc. tests and development
 help.test.misc:       HELP_TYPE = misc
 help.test.misc-v:     HELP_TYPE = misc
 help.test.misc-vv:    HELP_TYPE = misc
