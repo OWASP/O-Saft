@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.61 19/07/03 12:13:46
+#?      @(#) Makefile 1.62 19/07/03 21:01:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.61
+_SID.test       = 1.62
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -66,7 +66,7 @@ first-test-target-is-default: help.test
 
 ALL.help.test  += help.test
 
-HELP-help.test      = print general testing targets
+HELP-help.test.test = general testing targets
 help.test:            HELP_TYPE = test
 help.test-v:          HELP_TYPE = test
 help.test-vv:         HELP_TYPE = test
@@ -188,10 +188,6 @@ help.test.all:      help.test.test.all
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
-help.test.%:  _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
-	@$(TRACE.target)
-
-#	@echo " # testing '$(HELP-help.test.$*)' :"
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
