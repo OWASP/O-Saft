@@ -18,14 +18,14 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#) Makefile.template 1.17 19/04/30 00:26:43
+#?      @(#) Makefile.template 1.18 19/07/03 16:16:27
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.17
+_SID.TEMPL      = 1.18
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -40,7 +40,7 @@ first-TEMPL-target-is-default: help.test.TEMPL
 
 ALL.help.test  += help.test.TEMPL
 
-HELP-help.test.TEMPL= print targets for testing SOMETHING
+HELP-help.test.TEMPL= targets for testing SOMETHING
                     # defines message for main Makefile's help* targets
 help.test.TEMPL:          HELP_TYPE = TEMPL
 help.test.TEMPL-v:        HELP_TYPE = TEMPL
