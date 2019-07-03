@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.6 19/06/30 20:39:01
+#?      @(#) Makefile.doc 1.7 19/07/03 16:10:57
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.6
+_SID.doc        = 1.7
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -34,7 +34,7 @@ first-doc-target-is-default: help.test.doc
 
 ALL.help.test  += help.test.doc
 
-HELP-help.test.doc  = print targets for testing internal documentation and functionality
+HELP-help.test.doc  = targets for testing internal documentation and functionality
 help.test.doc:        HELP_TYPE = doc
 help.test.doc-v:      HELP_TYPE = doc
 help.test.doc-vv:     HELP_TYPE = doc
