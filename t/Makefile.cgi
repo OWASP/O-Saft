@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.30 19/05/22 23:38:28
+#?      @(#) Makefile.cgi 1.31 19/07/03 16:13:21
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.30
+_SID.cgi        = 1.31
 
 _MYSELF.cgi     = t/Makefile.cgi
 _MY.includes   += $(_MYSELF.cgi)
@@ -34,7 +34,7 @@ first-cgi-target-is-default: help.test.cgi
 
 ALL.help.test  += help.test.cgi
 
-HELP-help.test.cgi  = print targets for testing '$(SRC.cgi)'
+HELP-help.test.cgi  = targets for testing '$(SRC.cgi)'
 help.test.cgi:        HELP_TYPE = cgi
 help.test.cgi-v:      HELP_TYPE = cgi
 help.test.cgi-vv:     HELP_TYPE = cgi
@@ -253,7 +253,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.30: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.31: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
