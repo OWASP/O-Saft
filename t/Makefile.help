@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.62 19/07/03 15:05:43
+#?      @(#) Makefile.help 1.63 19/07/03 15:28:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.62
+_SID.help       = 1.63
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -195,7 +195,7 @@ first-help-target-is-default: help.help
 
 ALL.help.test  += help.test.help
 
-HELP-help.help  = targets to get information/documentation from Makefiles
+HELP-help.test.help = targets to get information/documentation from Makefiles
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -315,6 +315,10 @@ _help.LIST:
 	@$(TRACE.target)
 	@echo "$(_HELP-help.LIST)"
 
+# same as _help.FOOT but unique name, so it can be used together with _help.FOOT
+_help.LINE:
+	@echo "$(HELP_LINE)"
+
 # neet to set own variable name because $($(HELP.$(HELP_TYPE))) does not work
 _help.HELP:  _HELP_HELP = HELP.$(HELP_TYPE)
 _help.HELP:
@@ -362,7 +366,6 @@ HELP-help.test  = print documentation about test targets
 HELP-help.critic= print documentation about perlcritic targets
 #               # HELP-help.critic - also in Makefile.critic (a bit different)
 HELP-help.syntax= print documentation about syntax used in Makefile.*
-HELP-help.test.help = print targets for testing makefile help targets
 HELP-help.makefiles = print documentation about available Makefile.*
 
 HELP.help       = $(_NL)\
@@ -395,7 +398,7 @@ help.doc%:        HELP_HEAD = $(HELP_RULE)
 help.doc.all:     HELP_HEAD = $(HELP_RULE)
 target:           HELP_HEAD = $(HELP_RULE)
 
-help.%: _help.HEAD _help.BODY _help.makefiles _help.FOOT _help.LIST _help.HELP
+help.%: _help.HEAD _help.BODY _help.LINE _help.makefiles _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
 
 #  legacy aliases
@@ -405,7 +408,8 @@ help.syntax:
 	@$(TRACE.target)
 	$(EXE.syntax) $(_MYSELF.help)
 
-help.makefiles: _help.makefiles
+help.makefiles:   HELP_HEAD = $(HELP_INFO)
+help.makefiles:  _help.HEAD _help.makefiles
 	@$(TRACE.target)
 
 .PHONY: help.doc help.syntax
