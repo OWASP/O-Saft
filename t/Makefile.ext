@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.20 19/04/13 11:24:18
+#?      @(#) Makefile.ext 1.21 19/07/03 16:12:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.20
+_SID.ext        = 1.21
 
 _MYSELF.ext     = t/Makefile.ext
 _MY.includes   += $(_MYSELF.ext)
@@ -34,7 +34,7 @@ first-ext-target-is-default: help.test.ext
 
 ALL.help.test  += help.test.ext
 
-HELP-help.test.ext  = print targets for testing '$(SRC.pl)' with external FQDN
+HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 help.test.ext:        HELP_TYPE = ext
 help.test.ext-v:      HELP_TYPE = ext
 help.test.ext-vv:     HELP_TYPE = ext
