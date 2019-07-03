@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.59 19/05/14 22:19:11
+#?      @(#) Makefile 1.61 19/07/03 12:13:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.59
+_SID.test       = 1.61
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -82,6 +82,10 @@ ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines macros if called directly (not from ../Makefile)
 endif
+
+ALL.inc.type   += $(_MY.inc.type)
+# NOTE: this adds all $(_MY.inc.type) from all Makefile.* automatically
+#       as a result, $(ALL.inc.type) contains all types of all included files
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -643,6 +647,8 @@ tests.log:  $(ALL.tests.log) test.log-compare-hint
 test.tests.log-compare: TEST.target_prefix  = test
 test.tests.log-move:    TEST.target_prefix  = test
 test.tests.log:         TEST.target_prefix  = test
+test.log-compare:       TEST.target_prefix  = test
+test.log-move:          TEST.target_prefix  = test
 
 # quick tests for development
 tests.quick:
