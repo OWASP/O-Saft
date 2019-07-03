@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.14 19/04/03 20:27:10
+#?      @(#) Makefile.opt 1.15 19/07/03 16:11:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.14
+_SID.opt        = 1.15
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -36,7 +36,7 @@ first-opt-target-is-default: help.test.opt
 
 ALL.help.test  += help.test.opt
 
-HELP-help.test.opt  = print targets for testing '$(SRC.pl)' options
+HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 help.test.opt:        HELP_TYPE = opt
 help.test.opt-v:      HELP_TYPE = opt
 help.test.opt-vv:     HELP_TYPE = opt
