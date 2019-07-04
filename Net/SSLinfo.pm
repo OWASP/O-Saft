@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.05.19',
+    SSLINFO_VERSION => '19.06.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.226 19/05/28 18:37:03',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.227 19/07/04 09:24:47',
 };
 
 ######################################################## public documentation #
@@ -2258,12 +2258,16 @@ sub do_ssl_open($$$@) {
             # some Net::SSLeay::X509_* methods; hence we always use _ssleay_get
 
         #5a. get internal data
+        # Some values may be overwritten below (see %match_map below).
         $_SSLinfo{'x509'}       = $x509;
         $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx)) if $ctx;
         $_SSLinfo{'SSLversion'} = $_SSLhex{Net::SSLeay::version($ssl)};
             # TODO: Net::SSLeay's documentation also has:
             #    get_version($ssl); get_cipher_version($ssl);
             # but they are not implemented (up to 1.49)
+        $_SSLinfo{'session_protocol'}   = $_SSLinfo{'SSLversion'};
+        $_SSLinfo{'session_starttime'}  = Net::SSLeay::SESSION_get_time($ssl);
+        $_SSLinfo{'session_timeout'}    = Net::SSLeay::SESSION_get_timeout($ssl);
 
         #5b. store actually used ciphers for this connection
         my $i   = 0;
