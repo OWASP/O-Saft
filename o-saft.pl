@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.869 19/07/02 11:39:02",
-    STR_VERSION => "19.05.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.870 19/07/04 23:10:06",
+    STR_VERSION => "19.06.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -808,13 +808,13 @@ my %check_dest = (  ## target (connection) data
     'tr_03116+'     => {'txt' => "Target is strict TR-03116-4 compliant"},
     'tr_03116-'     => {'txt' => "Target is  lazy  TR-03116-4 compliant"},
     'rfc_7525'      => {'txt' => "Target is RFC 7525 compliant"},
+    'sstp'          => {'txt' => "Target does not support method SSTP"},
     'resumption'    => {'txt' => "Target supports Resumption"},
     'renegotiation' => {'txt' => "Target supports Secure Renegotiation"},
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
-    'sstp'          => {'txt' => "Target supports method SSTP_DUPLEX_POST"},
     'ocsp_stapling' => {'txt' => "Target supports OCSP Stapling"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
     'session_lifetime'  =>{ 'txt'=> "Target TLS Session Ticket Lifetime"},
@@ -988,7 +988,7 @@ our %shorttexts = (
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
     'fips'          => "FIPS-140 compliant",
-    'sstp'          => "SSTP_DUPLEX_POST",
+    'sstp'          => "SSTP",
 #   'nsab'          => "NSA Suite B compliant",
     'tr_02102+'     => "TR-02102-2 compliant (strict)",
     'tr_02102-'     => "TR-02102-2 compliant (lazy)",
@@ -5610,181 +5610,28 @@ sub checkhttp($$)   {
     return;
 } # checkhttp
 
-sub _get_sstp_io        {
-    #? get result for SSTP request to host:port (using IO::Socket::SSL-new())
-    my ($host, $port) = @_;
-    my $socket  = undef;
-    my $ulonglong_max = '18446744073709551615';
-    my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
-    #my $url = '/sra_%7bBA195980-CD49-458b-9E23-C84EE0ADCD75%7d/';
-# if ($cfg{'trace'} > 2) {
-$IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; 
-# }
-    $socket = IO::Socket::SSL->new(
-        PeerHost => "$host",
-        PeerPort => "$port",
-        Proto    => "tcp",
-        Type     => SOCK_STREAM,
-        Timeout  => 30, # $cfg{'timeout'}
-        Blocking => 0,
-        SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-        SSL_check_crl   => 0,       # do not check CRL
-        SSL_ocsp_mode   => 0,
-        SSL_startHandshake  => 0,
-# SSL_ca_path => 
-# SSL_ca_file =>
-# 
-        reuse    => 1,
-    ) or do {
-        _dbx("_get_sstp_io: failed");
-        return "<<connection to '$url' failed>>";
-    };
-
-# FIXME: not yet working
-    my $req = << "EoREQ";
-SSTP_DUPLEX_POST $url HTTP/1.1
-Host:$host
-Connection:close
-xContent-Length:$ulonglong_max
-SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}
-
-EoREQ
-
-    print $req;
-    #print $socket $req;
-    print $socket "SSTP_DUPLEX_POST $url HTTP/1.1\r\n\r\n";
-
-    my $buf = <$socket>;
-_dbx "buf: $buf";
-    return $buf;
-} # _get_sstp_io
-
 sub _get_sstp_https     {
-    #? get result for SSTP request to host:port
+    #? get result for SSTP request to host:port; returns '' for success, error otherwise
     my ($host, $port) = @_;
     my $ulonglong_max = '18446744073709551615';
     my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
     my $length  = "";
     my $server  = "";
-    my ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url,
-            Net::SSLeay::make_headers(
-                'Host'               => $host,
-                'Connection'         => 'close',
-                'Content-Length'     => $ulonglong_max,
-                'SSTPCORRELATIONID'  => '{deadbeef-cafe-affe-caba-0000000000}',
-            )
-    );
-    _dbx("_get_sstp_https: STATUS: $status");
-    _trace2("_get_sstp_https: STATUS: $status");
-    return if ($status =~ m#^HTTP/... 401 #);    # no SSTP supported
-    if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
-        return "<<connection to '$url' failed>>";
-    }
-    _trace2("_get_sstp_https: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
-    if ($status =~ m#^HTTP/... 200 #) {
-        $server = $headers{(grep{/^Server$/i}            keys %headers)[0] || ""};
-        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
-        if ($length != $ulonglong_max) {
-            return _get_text('invalid', "Content-Length: $length")
-        }
-        return "Server:$server";
-    } else {
-        return "<<unexpected response: $status>>";
-    }
-    return '';
-} # _get_sstp_https
-
-sub _get_sstp_socket    {
-    #? get result for SSTP request to host:port
-    # quick&dirty implementation of Net::SSLinfo::do_ssl_open()
-    my ($host, $port) = @_;
-    my $ulonglong_max = '18446744073709551615';
-    my $url     = '/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/';
-    my $length  = "";
-    my $server  = "";
-    my $socket  = undef;
-    my $src     = '';   # function (name) where something failed
-    my $err     = '';
-    my $dum     = '';
-    my $method  = "CTX_tlsv1_2_new";
-    my $ctx     = undef;# CTX object to be created
-    my $ssl     = undef;
-    my $req = << "EoREQ";
+    my ($status, %headers);
+    my $request = << "EoREQ";
 SSTP_DUPLEX_POST $url HTTP/1.1
-Host:$host
-Connection:close
-xContent-Length:$ulonglong_max
 SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}
+Content-Length:   $ulonglong_max
+Connection:       close
+Host:             $host
+
 EoREQ
-    TRY: {
-# FIXME: should use Net::SSLinfo::do_ssl_open()
-        $src = 'socket()';
-                socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!;} and last;
-        $src = 'connect()';
-        $dum=()=connect($socket, sockaddr_in($port, $host)) or do {$err = $!;} and last;
-        # # no critic qw(InputOutput::ProhibitOneArgSelect)
-        select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
-        $src = "Net::SSLeay::$method";
-        ($ctx = Net::SSLeay::CTX_tlsv1_2_new()) or last;
-        $src = 'Net::SSLeay::CTX_set_ssl_version(TLSv1_2_method)';
-                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_2_method()) or do {$err = $!;} and last;
-        my  $options  = &Net::SSLeay::OP_ALL;
-        $src = 'Net::SSLeay::CTX_set_options()';
-            #   Net::SSLeay::CTX_set_options(); # can not fail according description!
-                Net::SSLeay::CTX_set_options($ctx, 0); # reset options
-                Net::SSLeay::CTX_set_options($ctx, $options);
-        $src = 'Net::SSLeay::CTX_set_timeout()';
-        ($dum = Net::SSLeay::CTX_set_timeout($ctx, $cfg{'timeout'})) or do {$err = $!;} and last;
-        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, undef);
-        Net::SSLeay::CTX_set_verify_depth($ctx, 3);
-        $src = 'Net::SSLeay::new()';
-        ($ssl=  Net::SSLeay::new($ctx))                     or do {$err = $!;} and last;
-        $src = 'Net::SSLeay::set_fd()';
-                Net::SSLeay::set_fd($ssl, fileno($socket))  or do {$err = $!;} and last;
-        $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $cfg{'sni_name'})  or do {$err = $!;} and last;
-        my $ret;
-        $src = 'Net::SSLeay::connect() ';
-        $ret =  Net::SSLeay::connect($ssl);
-        if (0 > $ret) {
-            $src .= " failed start with $ctx()"; # i.e. no matching protocol
-            $err  = $!;
-            last;
-        }
-        $src = '';
-    }; # TRY
-    return "<<connection to '$host' failed>>" if ('' ne $src);
 
-# TODO
-#    _dbx("_get_sstp_socket: STATUS: $status");
-#    _trace2("_get_sstp_socket: STATUS: $status");
-#    return if ($status =~ m#^HTTP/... 401 #);    # no SSTP supported
-#    if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
-#        return "<<connection to '$url' failed>>";
-#    }
-#    _trace2("_get_sstp_socket: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
-#    if ($status =~ m#^HTTP/... 200 #) {
-#        $server = $headers{(grep{/^Server$/i}            keys %headers)[0] || ""};
-#        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
-#        if ($length != $ulonglong_max) {
-#            return _get_text('invalid', "Content-Length: $length")
-#        }
-#        return "Server:$server";
-#    } else {
-#        return "<<unexpected response: $status>>";
-#    }
-    return '';
-} # _get_sstp_socket
-
-sub checksstp           {
-    #? check if host:port supports SSTP
-    my ($host, $port) = @_;
-    _y_CMD("checksstp() " . $cfg{'done'}->{'checksstp'});
-    $cfg{'done'}->{'checksstp'}++;
-# TODO: implement SSTP 
-return;
-    return if (1 < $cfg{'done'}->{'checksstp'});
-    return "" if not defined $host;
+    #_dbx "_get_sstp_https: request {\n$request#}";
+    $Net::SSLeay::slowly = 1;   # otherwise some server respond with "400 Bad Request"
+    my $dum      = $Net::SSLeay::slowly;    # keeps Perl happy
+    my $response = Net::SSLeay::sslcat($host, $port, $request);
+    _trace2("_get_sstp_https: response {\n$response#}");
 
     # if SSTP supported, we expect something like::
     #   HTTP/1.1 200 
@@ -5793,15 +5640,42 @@ return;
     #   Date: Mon, 19 May 2019 23:42:42 GMT
     #   Connection: close
 
-# TODO: SSTP, need to find which _get_sstp-* method to use:
-#       _get_sstp_io() or _get_sstp_https() or _get_sstp_socket()
-    _trace2("checksstp: get_sstp($host, $port)");
-    $checks{'https_sstp'}->{val} = _get_sstp_io($host, $port);
-#print "C $checks{'https_sstp'}->{val} #";
-#exit;
+    # convert response to hash; only HTTP header lines are expected, so each
+    # line is a key:value pair, except the very first status line
+    $response =~ s#HTTP/1.. #STATUS: #; # first line is status line, add :
+    %headers  = map { split(/:/, $_, 2) } split(/[\r\n]+/, $response);
+    #if (2 <= $cfg{'trace'}) {
+    #    use Data::Dumper;
+    #    print Dumper \%headers;
+    #}
+    _trace2("_get_sstp_https: data: ". join(' = ', %headers));
+    return '401' if ($headers{'STATUS'} =~ m#^\s*401*#); # Microsoft: no SSTP supported
+    return '400' if ($headers{'STATUS'} =~ m#^\s*400*#); # other: no SSTP supported
+        # lazy checks, may also match 4000 etc.
+    if ($headers{'STATUS'} !~ m#^\s*(?:[1234][0-9][0-9]|500)\s*$#) {
+        return "<<connection to '$url' failed>>";
+    }
+    if ($headers{'STATUS'} =~ m#^\s*200\s*$#) {
+        $server = $headers{'Server'};
+        $length = $headers{'Content-Length'};
+        return _get_text('invalid', "Content-Length: $length")  if ($length != $ulonglong_max);
+        return _get_text('invalid', "Server: $server")          if ($server !~ /Microsoft-HTTPAPI/);
+    } else {
+        return "<<unexpected response: $headers{'STATUS'}>>";
+    }
+    return '';
+} # _get_sstp_https
 
-    $checks{'https_sstp'}->{val} = _get_sstp_socket($host, $port);
-    _dbx("return $checks{'https_sstp'}->{val}");
+sub checksstp           {
+    #? check if host:port supports SSTP
+    my ($host, $port) = @_;
+    _y_CMD("checksstp() " . $cfg{'done'}->{'checksstp'});
+    $cfg{'done'}->{'checksstp'}++;
+    return if (1 < $cfg{'done'}->{'checksstp'});
+    return if not defined $host;
+    my $value = _get_sstp_https($host, $port);
+    $checks{'sstp'}->{val} = (0 < length($value)) ? "" : " ";
+    _v_print("checksstp: $value") if length($value);   # reason why not supported
     return;
 } # checksstp
 
@@ -8950,8 +8824,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ...");
         checkssl(  $host, $port);   _yeast_TIME("  checkssl.");
-     }
+    }
+    if (_is_do('sstp')) {   # only check if needed
         checksstp( $host, $port);   _yeast_TIME("  checksstp.");
+    }
 
     _yeast_TIME("prepare}");
     next if _yeast_NEXT("exit=HOST6 - host prepare");
