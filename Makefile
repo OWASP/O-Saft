@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.67 19/05/14 23:44:35
+#?      @(#) Makefile 1.68 19/07/04 08:08:50
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.67
+_SID            = 1.68
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.67
+_INST.text      = generated from Makefile 1.68
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -332,6 +332,7 @@ doc:            HELP_HEAD = $(HELP_RULE)
 doc.all:        HELP_HEAD = $(HELP_RULE)
 
 # define body part of default target
+# TODO: adapt _help_* macros and targets according own naming convention
 _help_also_               = _help_also
 _help_body_               = _help_body_me
 _help_list_               =
@@ -354,10 +355,7 @@ _help_text-v              = \# to see Makefile, where targets are defined, use: 
 
 # If variables, like  $(_HELP.*targets),  contain duplicate target names (which
 # is intended), only one will be executed by  $(MAKE),  hence the 2nd occurance
-# is missing.  The targets  help  and  doc  therefore slightly differ in number
-# of lines of their output.  Known duplicates (3/2019):  help.all  help.critic
-# TODO: To avoid the difference,  $(MAKE)  needs to be executed for each target
-#       instead one  $(MAKE)  with the list of targets.
+# is missing.
 _eval_body_me:
 	@$(MAKE) -s $(_HELP.my_targets)
 	@echo "$(HELP_LINE)"
@@ -374,7 +372,7 @@ _help_body_all:
 
 _help_list:
 	@echo ""
-	@echo "		#_____________________________ targets for information ... _"
+	@echo "		#___________ targets for information about test targets... _"
 	@$(MAKE) $(_HELP.help)
 	@echo "$(HELP_LINE)"
 	@echo "$(_help_text-v)"
@@ -508,8 +506,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.67
-tar:     GREP_EDIT  = 1.67
+GREP_EDIT           = 1.68
+tar:     GREP_EDIT  = 1.68
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
