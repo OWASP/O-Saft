@@ -41,12 +41,12 @@
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
 #? VERSION
-#?      @(#) o-saft_bench.sh 1.19 19/07/04 09:51:55
+#?      @(#) o-saft_bench.sh 1.20 19/07/04 09:55:57
 #? AUTHOR
 #?      07-jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench.sh 1.19 19/07/04 09:51:55"
+  SID="@(#) o-saft_bench.sh 1.20 19/07/04 09:55:57"
 
 
   ich=${0##*/}
@@ -59,7 +59,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.19"; ;;
+	'+VERSION')	echo "1.20"; exit 0; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
