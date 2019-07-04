@@ -1,9 +1,9 @@
 #!/bin/sh
 #?
 #? NAME
-#?      o-saft_bench  - simple time and memory test program for o-saft.pl
+#?      o-saft_bench.sh  - simple time and memory test program for o-saft.pl
 #? SYNOPSYS
-#?      o-saft_bench [target host]
+#?      o-saft_bench.sh [target host]
 #? DESCRIPTION
 #?      Runs  o-saft.pl with most common commands and measures execution and
 #?      memory usage using system's  time  command.
@@ -41,12 +41,12 @@
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
 #? VERSION
-#?      @(#) o-saft_bench 1.17 18/04/20 12:04:54
+#?      @(#) o-saft_bench.sh 1.19 19/07/04 09:51:55
 #? AUTHOR
 #?      07-jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench 1.17 18/04/20 12:04:54"
+  SID="@(#) o-saft_bench.sh 1.19 19/07/04 09:51:55"
 
 
   ich=${0##*/}
@@ -59,7 +59,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.17"; ;;
+	'+VERSION')	echo "1.19"; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
@@ -97,10 +97,12 @@ while read -r cmd ; do
 	txt=`echo "$cmd" | \sed -e "s/ $host/ "'$host/' -e 's/\\\/|/'`
 		# we want a well formatted table, hence the real hostname is
 		# replaced by the fixed string $host
-#echo "$txt #"
+	#dbx# echo "$txt #"
 	#echo -n "o-saft.pl $txt" | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
-	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $yeast $cmd >/dev/null
-	# note: --exit=BEGIN0 is some kind of minimal (perl) resources
+	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $yeast $cmd 2>&1 >/dev/null
+		# NOTE: --exit=BEGIN0 is some kind of minimal (perl) resources
+		# NOTE: time writes on tty, hence redirect to STDOUT, the final
+		#       >/dev/null at end handles output from $yeast, crazy ...
 done << EoT
 	--exit=BEGIN0                \ 
 	+VERSION           --norc    \ 
