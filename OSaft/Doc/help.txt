@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.31 19/07/02 15:53:01
+# SID   @(#) help.txt 1.32 19/07/04 23:27:54
 
 NAME
 
@@ -2385,6 +2385,16 @@ CHECKS
       DH Parameter
 
         Check if target's DH Parameter is less 512 or 2048 bits.
+
+      SSTP
+
+        Check if target supports SSTP by accepting method SSTP_DUPLEX_POST.
+
+        The check does not send other methods (like CONNECT) to verify if the
+        the protocol is fully supported.
+
+        Supporting SSTP is considered insecure, because SSTP allows to tunnel 
+        other, probably insecure, protocols.
 
     Target (server) Certificate
 
