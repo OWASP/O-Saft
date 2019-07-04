@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.66 19/07/04 08:18:28
+#?      @(#) Makefile.help 1.67 19/07/04 08:41:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.66
+_SID.help       = 1.67
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -558,7 +558,7 @@ testcmd-help.doc:               TEST.args  +=
 testcmd-help.doc.all:           TEST.args  +=
 testcmd-help.syntax:            TEST.args  +=
 testcmd-help.makefiles:         TEST.args  +=
-testcmd-help.test.log.info:     TEST.args  +=
+testcmd-help.test.log-info:     TEST.args  +=
 # TODO: following conditions should be automatically set using $(_MY.inc.type)
 testcmd-help.test.help:         TEST.args  +=
 testcmd-help.test.make:         TEST.args  +=
