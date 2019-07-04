@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.62 19/07/03 21:01:51
+#?      @(#) Makefile 1.63 19/07/04 08:15:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.62
+_SID.test       = 1.63
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -168,8 +168,9 @@ HELP.test       = $(_NL)\
 \#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
 \# which are used by EXE.pl or other tools used for the tests.
 
+# following macro contains (huge) list of all available targets
 HELP.test.test.all  = $(_NL)\
-\# individual targets for tests$(_NL)\
+\# summary targets for tests$(_NL)\
 $(ALL.tests)$(_NL)\
 \#$(_NL)\
 \# targets which write results to logfiles$(_NL)\
@@ -185,9 +186,19 @@ help.test.all:      help.test.test.all
 	@$(TRACE.target)
 # convenience to satisfy  help.test.all
 
+# help.test.test would only print the HELP-* texts from herein.
+# All other tests from the individual t/Makefile.* files have their own HELP-*
+# macro their.  help.test.test  should also print hints how to get information
+# about these other targets. Therfore the auxiliary target  _help_list  exists
+# in  Makefile  which we use as dependency here.
+help.test.test:     _help_list
+help.test.test-v:   _help_list
+help.test.test-v-v: _help_list
+
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
+HELP-help.test.*.all        = print available individual targets for tests from Makefile.*
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
@@ -195,6 +206,7 @@ help.test.%.all:
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
+HELP-help.test.*.internal   = show settings for tests from Makefile.*
 help.test.%.internal:
 	@$(TRACE.target)
 	@echo " # TEST.file:       $(TEST.file)"
@@ -672,18 +684,18 @@ ALL.test.test  += tests tests.quick tests.log tests.quick.log
 #_____________________________________________________________________________
 #________________________________________ targets for checking test results __|
 
-HELP-_compare   = ______________________________ targets for comparing tests _
+HELP-_compare   = _________ targets to compare and rename generated logfiles _
 HELP-test.log-compare   = compare logfiles of previous with latest test
 HELP-test.log-move      = rename logfiles of latest test
 HELP-help.test.log-info = print more details about test.log.* targets
 
 HELP.test.log-info      = $(_NL)\
 \#                      $(HELP-_compare)$(_NL)\
-\# targets to compare and rename generated logfiles:$(_NL)\
-\#   test.log-compare   - static rule to compare logfiles$(_NL)\
-\#   test.log-move      - static rule to rename (move) latest logfiles to "standard" logfile$(_NL)\
-\#   test.*.log-compare - pattern rule for test.log-compare$(_NL)\
-\#   test.*.log-move    - pattern rule for test.log-move$(_NL)\
+test.log-compare    \# static rule to compare logfiles$(_NL)\
+test.log-move       \# static rule to rename (move) latest logfiles to "standard" logfile$(_NL)\
+test.*.log-compare  \# pattern rule for test.log-compare$(_NL)\
+test.*.log-move     \# pattern rule for test.log-move$(_NL)\
+$(_NL)\
 \#$(_NL)\
 \# all above targets can be controlled with environment variables:$(_NL)\
 \#   TEST.logdir        - directory where to find logfiles$(_NL)\
