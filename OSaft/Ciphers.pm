@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.31 19/07/02 12:10:36";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.32 19/07/05 15:03:07";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -649,6 +649,7 @@ sub sort_cipher_names   {
         qw((?:MD[2345])),               # all MD
         qw(DH.?(?i:anon)) ,             # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
+        qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV )
     );
     my @strength = (
         qw(CECPQ1[_-].*?CHACHA)       ,
@@ -1459,7 +1460,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.31 2019/07/02
+1.32 2019/07/05
 
 =head1 AUTHOR
 
