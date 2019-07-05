@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.82 19/07/05 08:19:39";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.83 19/07/05 08:30:30";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -360,10 +360,12 @@ sub _vprintme   {
     return;
 } # _vprintme
 
-sub __data_title{ return sprintf("x%19s %s %s %s %s %s %s %s\n", @_); }
+# subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
+sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s\n", @_); }
 sub __data_head { return __data_title("key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score"); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
+sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", @_); }
 
 sub _yeast_data {
     print "
@@ -396,8 +398,8 @@ sub _yeast_data {
         }
         $cmd = "+" if (0 < _is_member($key, \@{$cfg{'commands'}})); # command available as is
         $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/);       # all SSL/TLS commands ar for checks only
-        printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
-            $cmd,
+        print __data_data(
+            $key, $cmd,
             (_is_intern($key) > 0)      ?          "I"  : " ",
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
@@ -655,7 +657,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.82 2019/07/05
+1.83 2019/07/05
 
 =head1 AUTHOR
 
