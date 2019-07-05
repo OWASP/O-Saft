@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.178 19/06/30 20:38:07",
+    SID_osaft   => "@(#) osaft.pm 1.179 19/07/05 08:00:49",
 
 };
 
@@ -2036,7 +2036,7 @@ our %cfg = (
         # RegEx for matching SSL protocol keys in %data and %checks
         'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
 
-        # RegEx for matching SSL protocol keys in %data and %checks
+        # RegEx for matching SSL cipher-suite names
         # First some basic RegEx used later on, either in following RegEx or
         # as $cfg{'regex'}->{...}  itself.
         '_or-'      => '[\+_-]',
@@ -2072,6 +2072,8 @@ our %cfg = (
                        #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
         'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
                        # various variants for aliases to select cipher groups
+
+        # RegEx for matching various strings
         'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
         'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
         'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
@@ -3036,7 +3038,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.178 2019/06/30
+1.179 2019/07/05
 
 =head1 AUTHOR
 
