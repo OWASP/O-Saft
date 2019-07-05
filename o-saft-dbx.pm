@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.81 19/06/30 17:59:17";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.82 19/07/05 08:19:39";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -127,6 +127,7 @@ sub _yeast_ciphers_list   {
         _yeast(" $_cnt ciphers= $ciphers");
     }
     _yline(" ciphers }");
+print "_yeast_ciphers_list\n";
     return;
 } # _yeast_ciphers_list
 
@@ -359,8 +360,9 @@ sub _vprintme   {
     return;
 } # _vprintme
 
+sub __data_title{ return sprintf("x%19s %s %s %s %s %s %s %s\n", @_); }
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
-sub __data_head { return sprintf("=%19s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score"); }
+sub __data_head { return __data_title("key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score"); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 
 sub _yeast_data {
@@ -653,7 +655,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.81 2019/06/30
+1.82 2019/07/05
 
 =head1 AUTHOR
 
