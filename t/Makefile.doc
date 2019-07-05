@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.7 19/07/03 16:10:57
+#?      @(#) Makefile.doc 1.8 19/07/05 09:43:51
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.7
+_SID.doc        = 1.8
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -174,6 +174,7 @@ testarg0-doc6-%:                EXE.pl      = $(SRC.pl)
 testarg0-doc6--test-data:       TEST.args   = --test-data
 testarg0-doc6--test-prot:       TEST.args   = --test-prot
 testarg0-doc6--test-regex:      TEST.args   = --test-regex
+testarg0-doc6--test-ciphers:    TEST.args   = --test-ciphers
 testarg0-doc6--test-ciphers-list:  TEST.args= --test-ciphers-list
 testarg0-doc6--test-ciphers-sort:  TEST.args= --test-ciphers-sort
 
