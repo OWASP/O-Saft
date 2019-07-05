@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.180 19/07/05 08:04:50",
+    SID_osaft   => "@(#) osaft.pm 1.181 19/07/05 15:04:02",
 
 };
 
@@ -2613,6 +2613,7 @@ sub sort_cipher_names   {
         qw((?:MD[2345])),               # all MD
         qw(DH.?(?i:anon)) ,             # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
+        qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
     );
     my @strength = (
         qw(CECPQ1[_-].*?CHACHA)       ,
@@ -3040,7 +3041,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.180 2019/07/05
+1.181 2019/07/05
 
 =head1 AUTHOR
 
