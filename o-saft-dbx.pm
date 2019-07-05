@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.83 19/07/05 08:30:30";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.84 19/07/05 09:40:10";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -127,7 +127,6 @@ sub _yeast_ciphers_list   {
         _yeast(" $_cnt ciphers= $ciphers");
     }
     _yline(" ciphers }");
-print "_yeast_ciphers_list\n";
     return;
 } # _yeast_ciphers_list
 
@@ -149,9 +148,58 @@ sub _yeast_ciphers_sorted {
     return;
 } # _yeast_ciphers_sorted
 
+sub _yeast_ciphers        {
+    print "
+=== _yeast_ciphers: print internal data structure for ciphers ===
+
+  This function prints a simple overview of all available ciphers. The purpose
+  is to show if the internal data structure provides all necessary data.
+  All lines must contain a hex key, 4 stars (*) and the cipher-suite name.
+  No perl or other warnings should be printed.
+
+";
+    my %cnt = (
+       'key'    => 0,
+       'sec'    => 0,
+       'name'   => 0,
+       'const'  => 0,
+       'descr'  => 0,
+    );
+    print __data_title("key", "security", " name  ", "const  ", "descr. ", "  cipher", "", "");
+    print __data_line();
+    foreach my $c (sort keys %ciphers) { # TODO: add "INFO_SCSV"
+        my $key = get_cipher_hex($c);
+           $key = "-" if ($key =~ m/^\s*$/);
+        my $sec = get_cipher_sec($c);
+           $sec = "*" if ($sec =~ m/$cfg{'regex'}->{'security'}/i);
+           $sec = "-" if ($sec =~ m/^\s*$/);
+        my $name= (get_cipher_name($c) =~ m/^\s*$/) ? "-" : "*";
+        my $desc= (get_cipher_desc($c) =~ m/^\s*$/) ? "-" : "*";
+        print __data_data( $key, $sec, $name, "N/A", $desc, $c, "", "");
+        $cnt{'key'}++   if ($key  eq "-");
+        $cnt{'sec'}++   if ($sec  ne "*");
+        $cnt{'name'}++  if ($name ne "*");
+       #$cnt{'cnst'}++  if ($cnst ne "*");
+        $cnt{'desc'}++  if ($desc ne "*");
+    }
+    print __data_line();
+    print __data_title("key", "security", " name  ", "const  ", "descr. ", "  cipher", "", "");
+    print '
+    *    value present
+    -    value missing
+    -?-  security unknown/undefined
+    miss security missing in data structure
+    N/A  (description not yet available, comming soon)
+
+    identified errors: ';
+    printf("%6s=%-2s,", $_, $cnt{$_}) foreach keys %cnt;
+    printf("\n\n");
+    return;
+} # _yeast_ciphers
+
 sub _yeast_cipher         {
     print "
-=== _yeast_ciphers_sorted: print internal data structures for ciphers ===
+=== _yeast_cipher: print internal data structures for cipher ===
 
 ";
 # TODO: %ciphers %cipher_names
@@ -657,7 +705,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.83 2019/07/05
+1.84 2019/07/05
 
 =head1 AUTHOR
 
