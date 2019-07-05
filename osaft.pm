@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.05.16',  # official version number of this file
+    OSAFT_VERSION   => '19.06.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.181 19/07/05 15:04:02",
+    SID_osaft   => "@(#) osaft.pm 1.182 19/07/05 17:06:41",
 
 };
 
@@ -1197,14 +1197,14 @@ our %cipher_names = (
     '0x0300C0A1' => [qw(RSA-AES256-CCM8                 RSA_WITH_AES_256_CCM_8)],       # RFC 6655
     '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM8             DHE_RSA_WITH_AES_128_CCM_8)],   # RFC 6655
     '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM8             DHE_RSA_WITH_AES_256_CCM_8)],   # RFC 6655
-    '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM              PSK_WITH_AES_128_CCM)],         # RFC 6655
-    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM              PSK_WITH_AES_256_CCM)],         # RFC 6655
-    '0x0300C0A6' => [qw(DHE-PSK-RSA-AES128-CCM          DHE_PSK_WITH_AES_128_CCM)],     # RFC 6655
-    '0x0300C0A7' => [qw(DHE-PSK-RSA-AES256-CCM          DHE_PSK_WITH_AES_256_CCM)],     # RFC 6655
-    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8             PSK_WITH_AES_128_CCM_8)],       # RFC 6655
-    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8             PSK_WITH_AES_256_CCM_8)],       # RFC 6655
-    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8         DHE_PSK_WITH_AES_128_CCM_8)],   # RFC 6655
-    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8         DHE_PSK_WITH_AES_256_CCM_8)],   # RFC 6655
+    '0x0300C0A4' => [qw(PSK-AES128-CCM                  PSK_WITH_AES_128_CCM)],         # RFC 6655
+    '0x0300C0A5' => [qw(PSK-AES256-CCM                  PSK_WITH_AES_256_CCM)],         # RFC 6655
+    '0x0300C0A6' => [qw(DHE-PSK-AES128-CCM              DHE_PSK_WITH_AES_128_CCM)],     # RFC 6655
+    '0x0300C0A7' => [qw(DHE-PSK-AES256-CCM              DHE_PSK_WITH_AES_256_CCM)],     # RFC 6655
+    '0x0300C0A8' => [qw(PSK-AES128-CCM8                 PSK_WITH_AES_128_CCM_8)],       # RFC 6655
+    '0x0300C0A9' => [qw(PSK-AES256-CCM8                 PSK_WITH_AES_256_CCM_8)],       # RFC 6655
+    '0x0300C0AA' => [qw(DHE-PSK-AES128-CCM8             DHE_PSK_WITH_AES_128_CCM_8)],   # RFC 6655
+    '0x0300C0AB' => [qw(DHE-PSK-AES256-CCM8             DHE_PSK_WITH_AES_256_CCM_8)],   # RFC 6655
     '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)], # RFC 7251
     '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)], # RFC 7251
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM8           ECDHE_ECDSA_WITH_AES_128_CCM_8)], # RFC 7251
@@ -1228,7 +1228,7 @@ our %cipher_names = (
     '0x0300C041' => [qw(DH-RSA-ARIA256-SHA384           DH_RSA_WITH_ARIA_256_CBC_SHA384)],
     '0x0300C042' => [qw(DHE-DSS-ARIA128-SHA256          DHE_DSS_WITH_ARIA_128_CBC_SHA256)],
     '0x0300C043' => [qw(DHE-DSS-ARIA256-SHA384          DHE_DSS_WITH_ARIA_256_CBC_SHA384)],
-    '0x0300C044' => [qw(DHE-RSA-ARIA256-SHA256          DHE_RSA_WITH_ARIA_256_CBC_SHA256)],
+    '0x0300C044' => [qw(DHE-RSA-ARIA128-SHA256          DHE_RSA_WITH_ARIA_256_CBC_SHA256)],
     '0x0300C045' => [qw(DHE-RSA-ARIA256-SHA384          DHE_RSA_WITH_ARIA_256_CBC_SHA384)],
     '0x0300C046' => [qw(ADH-ARIA128-SHA256              DH_anon_WITH_ARIA_128_CBC_SHA256)],
     '0x0300C047' => [qw(ADH-ARIA256-SHA384              DH_anon_WITH_ARIA_256_CBC_SHA384)],
@@ -1357,6 +1357,7 @@ our %cipher_alias = (
     '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      # openssl 1.0.2
+    '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # -"-
     '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # -"-
@@ -1366,12 +1367,21 @@ our %cipher_alias = (
     '0x0300CC19' => [qw(RSA-PSK-CHACHA20-POLY1305)],   # -"-
 
     '0x0300009B' => [qw(DHanon-SEED-SHA)],
+    '0x0300C044' => [qw(DHE-RSA-ARIA256-SHA256)],      # probably a typo (256 instead 128)
     '0x0300C0A0' => [qw(RSA-AES128-CCM-8)],            # ?? some java
     '0x0300C0A1' => [qw(RSA-AES256-CCM-8)],            # -"-
     '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM-8)],        # -"-
     '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM-8)],        # -"-
+    '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM)],          # probably a typo
+    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM)],          # -"-
+    '0x0300C0A6' => [qw(DHE-PSK-AES128-CCM)],          # -"-
+    '0x0300C0A7' => [qw(DHE-PSK-AES256-CCM)],          # -"-
     '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8)],        # -"-
     '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8)],        # -"-
+#   '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8)],         # -"-
+#   '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8)],         # -"-
+    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8)],     # -"-
+    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8)],     # -"-
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8)],      # -"-
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8)],      # -"-
 
@@ -3041,7 +3051,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.181 2019/07/05
+1.182 2019/07/05
 
 =head1 AUTHOR
 
