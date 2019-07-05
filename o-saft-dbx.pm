@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.85 19/07/05 09:49:16";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.86 19/07/05 14:03:53";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -167,7 +167,7 @@ sub _yeast_ciphers        {
     );
     print __data_title("key", "security", " name  ", "const  ", "descr. ", "  cipher", "", "");
     print __data_line();
-    foreach my $c (sort keys %ciphers, "INFO_SCSV") { # TODO: INFO_SCSV should be part of %ciphers
+    foreach my $c (sort keys %ciphers) {
         my $key = get_cipher_hex($c);
            $key = "-" if ($key =~ m/^\s*$/);
         my $sec = get_cipher_sec($c);
@@ -705,7 +705,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.85 2019/07/05
+1.86 2019/07/05
 
 =head1 AUTHOR
 
