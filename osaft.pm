@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.179 19/07/05 08:00:49",
+    SID_osaft   => "@(#) osaft.pm 1.180 19/07/05 08:04:50",
 
 };
 
@@ -2084,6 +2084,8 @@ our %cfg = (
                        # id-ecPublicKey
         'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
                        # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
+        'security'      => '(?:HIGH|MEDIUM|LOW|WEAK|NONE)',
+                       # well known "security" strings, should be used case-insensitive
         'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
         'isDNS'         => '(?:[a-z0-9.-]+)',
         'isIDN'         => '(?:xn--)',
@@ -3038,7 +3040,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.179 2019/07/05
+1.180 2019/07/05
 
 =head1 AUTHOR
 
