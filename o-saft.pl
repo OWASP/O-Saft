@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.870 19/07/04 23:10:06",
+    SID         => "@(#) yeast.pl 1.871 19/07/05 14:52:40",
     STR_VERSION => "19.06.19",          # <== our official version number
 };
 
@@ -1341,6 +1341,8 @@ _yeast_TIME("cfg}");
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
+        'SCSV'                  => [qw( none fallback -     0 None None  None        0 :)], # just for documentation
+        'INFO_SCSV'             => [qw( none TLSv12   -     0 None None  None        0 :)], # just for documentation
  # FIXME: Perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
         'ADH-AES128-SHA'        => [qw(  weak SSLv3 AES   128 SHA1 None  DH          0 :)],
         'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
@@ -7431,7 +7433,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
-    if ($arg =~ /^--yeast/)             { _yeast_test('data');    exit 0; } # -"-
+    if ($arg =~ /^--yeast/)             { _yeast_test('data');    exit 0; } # same as --test-data # TODO: should become a more general check
     if ($arg =~ /^--test[_.-]?(.*)/)    { _yeast_test($1);        exit 0; } # debugging / internal testing
     if ($arg =~ /^--yeast[_.-]?(.*)/)   { _yeast_test($1);        exit 0; } # -"-
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
