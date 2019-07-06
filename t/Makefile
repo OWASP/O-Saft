@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.63 19/07/04 08:15:16
+#?      @(#) Makefile 1.64 19/07/06 17:48:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.63
+_SID.test       = 1.64
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -727,10 +727,15 @@ TEST.target_logfile = $(TEST.logdir)/testcmd-
 # default suffix for logfiles
 TEST.log-suffix     = -$(_TODAY_)
 
+# if target was test*-compare-v or test*-move-v TRACE.target is not empty
+# so checking this macro if not empty is sufficent to print verbose information
+# NOTE: using shell's test commands inside Makefile is tricky,  must use single
+#       quote not double quote  for test -n '$var'
 define _test_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
 	done
 endef
@@ -739,6 +744,7 @@ define _test_log-move
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    mv $${f}$(TEST.log-suffix) $${f} ; \
 	done
 endef
@@ -751,21 +757,25 @@ test.log-compare-hint:
 	@echo "$(_test_log_hint)"
 
 test.%.log-compare:
+	@$(TRACE.target)
 	-$(_test_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
 	@echo "$(_test_log_hint)"
 
 test.%.log-move:
+	@$(TRACE.target)
 	$(_test_log-move)
 
 test.log-compare:
+	@$(TRACE.target)
 	-$(_test_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
 	@echo "$(_test_log_hint)"
 
 test.log-move:
+	@$(TRACE.target)
 	$(_test_log-move)
 
 
