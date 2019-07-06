@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.182 19/07/05 17:06:41",
+    SID_osaft   => "@(#) osaft.pm 1.183 19/07/06 15:47:43",
 
 };
 
@@ -1063,6 +1063,15 @@ our %cipher_names = (
     '0x0300C02A' => [qw(ECDH-RSA-AES256-SHA384          ECDH_RSA_WITH_AES_256_SHA384)],
     '0x0300C031' => [qw(ECDH-RSA-AES128-GCM-SHA256      ECDH_RSA_WITH_AES_128_GCM_SHA256)],
     '0x0300C032' => [qw(ECDH-RSA-AES256-GCM-SHA384      ECDH_RSA_WITH_AES_256_GCM_SHA384)],
+    '0x0300C033' => [qw(ECDHE-PSK-RC4-SHA               ECDHE_PSK_WITH_RC4_128_SHA)],
+    '0x0300C034' => [qw(ECDHE-PSK-3DES-EDE-CBC-SHA      ECDHE_PSK_WITH_3DES_EDE_CBC_SHA)],
+    '0x0300C035' => [qw(ECDHE-PSK-AES128-CBC-SHA        ECDHE_PSK_WITH_AES_128_CBC_SHA)],
+    '0x0300C036' => [qw(ECDHE-PSK-AES256-CBC-SHA        ECDHE_PSK_WITH_AES_256_CBC_SHA)],
+    '0x0300C037' => [qw(ECDHE-PSK-AES128-CBC-SHA256     ECDHE_PSK_WITH_AES_128_CBC_SHA256)],
+    '0x0300C038' => [qw(ECDHE-PSK-AES256-CBC-SHA384     ECDHE_PSK_WITH_AES_256_CBC_SHA384)],
+    '0x0300C039' => [qw(ECDHE-PSK-NULL-SHA              ECDHE_PSK_WITH_NULL_SHA)],
+    '0x0300C03A' => [qw(ECDHE-PSK-NULL-SHA256           ECDHE_PSK_WITH_NULL_SHA256)],
+    '0x0300C03B' => [qw(ECDHE-PSK-NULL-SHA384           ECDHE_PSK_WITH_NULL_SHA384)],
     '0x03000078' => [qw(ECDH-RSA-CAMELLIA128-SHA256     ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000079' => [qw(ECDH-RSA-CAMELLIA256-SHA384     ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384)],
     '0x0300C00B' => [qw(ECDH-RSA-NULL-SHA               ECDH_RSA_WITH_NULL_SHA)],
@@ -1139,9 +1148,9 @@ our %cipher_names = (
 #    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
 #    https://tools.ietf.org/html/rfc7905
     '0x0300CC12' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],                     # see Note(c)
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],    # -"-
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256-OLD   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],       # -"-
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],    # see Note(c)
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256-OLD   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],       # see Note(c)
     '0x0300CC20' => [qw(RSA-CHACHA20-SHA                RSA_WITH_CHACHA20_SHA)],
     '0x0300CC21' => [qw(ECDHE-RSA-CHACHA20-SHA          ECDHE_RSA_WITH_CHACHA20_SHA)],
     '0x0300CC22' => [qw(ECDHE-ECDSA-CHACHA20-SHA        ECDHE_ECDSA_WITH_CHACHA20_SHA)],
@@ -1170,8 +1179,8 @@ our %cipher_names = (
     '0x03000091' => [qw(DHE-PSK-AES256-SHA              DHE_PSK_WITH_AES_256_CBC_SHA)],
     '0x03000092' => [qw(RSA-PSK-RC4-SHA                 RSA_PSK_WITH_RC4_128_SHA)],
     '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA        RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
-    '0x03000094' => [qw(RSA-PSK-AES128-SHA              RSA_PSK_WITH_AES_128_CBC_SHA)],
-    '0x03000095' => [qw(RSA-PSK-AES256-SHA              RSA_PSK_WITH_AES_256_CBC_SHA)],
+    '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_128_CBC_SHA)],
+    '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],
     '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
     '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
     '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
@@ -1337,34 +1346,35 @@ our %cipher_alias = (
     #!# constant =>     cipher suite name alias        # comment (where found)
     #!#----------+-------------------------------------+--------------------------+
     '0x02030080' => [qw(RC2-MD5)],                     #
-    '0x02040080' => [qw(EXP-RC2-MD5)],                 # from sslaudit.ini
-    '0x03000012' => [qw(EDH-DSS-CBC-SHA)],             # from sslaudit.ini and mozilla
-    '0x0300001D' => [qw(FZA-FZA-CBC-SHA)],
-    '0x03000032' => [qw(EDH-DSS-AES128-SHA)],          # from RSA BSAFE SSL-C
-    '0x0300002C' => [qw(PSK-NULL-SHA)],                # from openssl
-    '0x0300002D' => [qw(DHE-PSK-NULL-SHA)],
-    '0x0300002E' => [qw(RSA-PSK-NULL-SHA)],
-    '0x03000033' => [qw(EDH-RSA-AES128-SHA)],          # -"-
-    '0x03000038' => [qw(EDH-DSS-AES256-SHA)],          # -"-
-    '0x03000039' => [qw(EDH-RSA-AES256-SHA)],          # -"-
-    '0x03000062' => [qw(EXP-DES-56-SHA)],              # -"-
-    '0x03000063' => [qw(EXP-EDH-DSS-DES-56-SHA)],      # -"-
-    '0x03000064' => [qw(EXP-RC4-56-SHA)],              # -"-
+    '0x02040080' => [qw(EXP-RC2-MD5)],                 # sslaudit.ini
+    '0x02080080' => [qw(EXP-RC4-64-MD5)],              #
+    '0x03000012' => [qw(EDH-DSS-CBC-SHA)],             # sslaudit.ini and mozilla
+    '0x0300001D' => [qw(FZA-FZA-CBC-SHA)],             #
+    '0x03000032' => [qw(EDH-DSS-AES128-SHA)],          # RSA BSAFE SSL-C
+    '0x0300002C' => [qw(PSK-NULL-SHA)],                # openssl
+    '0x0300002D' => [qw(DHE-PSK-NULL-SHA)],            #
+    '0x0300002E' => [qw(RSA-PSK-NULL-SHA)],            #
+    '0x03000033' => [qw(EDH-RSA-AES128-SHA)],          # openssl
+    '0x03000038' => [qw(EDH-DSS-AES256-SHA)],          # openssl
+    '0x03000039' => [qw(EDH-RSA-AES256-SHA)],          # openssl
+    '0x03000062' => [qw(EXP-DES-56-SHA)],              # openssl
+    '0x03000063' => [qw(EXP-EDH-DSS-DES-56-SHA)],      # openssl
+    '0x03000064' => [qw(EXP-RC4-56-SHA)],              # openssl
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
 
     # TODO: need to mark following 10 as old ciphers with changed IDs
     '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
-    '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
-    '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      # openssl 1.0.2
+    '0x03000094' => [qw(RSA-PSK-AES128-SHA)],          #
+    '0x03000095' => [qw(RSA-PSK-AES256-SHA)],          #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # -"-
-    '0x0300CC16' => [qw(DHE-PSK-CHACHA20-POLY1305)],   # -"-
-    '0x0300CC17' => [qw(PSK-CHACHA20-POLY1305)],       # -"-
-    '0x0300CC18' => [qw(ECDHE-PSK-CHACHA20-POLY1305)], # -"-
-    '0x0300CC19' => [qw(RSA-PSK-CHACHA20-POLY1305)],   # -"-
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # see Note(c) above
+    '0x0300CC16' => [qw(DHE-PSK-CHACHA20-POLY1305)],   # see Note(c) above
+    '0x0300CC17' => [qw(PSK-CHACHA20-POLY1305)],       # see Note(c) above
+    '0x0300CC18' => [qw(ECDHE-PSK-CHACHA20-POLY1305)], # see Note(c) above
+    '0x0300CC19' => [qw(RSA-PSK-CHACHA20-POLY1305)],   # see Note(c) above
 
     '0x0300009B' => [qw(DHanon-SEED-SHA)],
     '0x0300C044' => [qw(DHE-RSA-ARIA256-SHA256)],      # probably a typo (256 instead 128)
@@ -1373,36 +1383,36 @@ our %cipher_alias = (
     '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM-8)],        # -"-
     '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM-8)],        # -"-
     '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM)],          # probably a typo
-    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM)],          # -"-
-    '0x0300C0A6' => [qw(DHE-PSK-AES128-CCM)],          # -"-
-    '0x0300C0A7' => [qw(DHE-PSK-AES256-CCM)],          # -"-
-    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8)],        # -"-
-    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8)],        # -"-
-#   '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8)],         # -"-
-#   '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8)],         # -"-
-    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8)],     # -"-
-    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8)],     # -"-
-    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8)],      # -"-
-    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8)],      # -"-
+    '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM)],          # probably a typo
+    '0x0300C0A6' => [qw(DHE-PSK-AES128-CCM)],          # probably a typo
+    '0x0300C0A7' => [qw(DHE-PSK-AES256-CCM)],          # probably a typo
+#   '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8)],        # probably a typo
+#   '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8)],        # probably a typo
+    '0x0300C0A8' => [qw(PSK-AES128-CCM-8)],            #
+    '0x0300C0A9' => [qw(PSK-AES256-CCM-8)],            #
+    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8)],     # probably a typo
+    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8)],     # probably a typo
+    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8)],      # probably a typo
+    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8)],      # probably a typo
 
 # following are cipher suite values; alias for them not yet implemented
 #   '0x03000003' => [qw(RSA_WITH_RC4_40_MD5)],
-#   '0x03000004' => [qw(RSA_WITH_RC4_128_MD5)],        # from tlslite
-#   '0x03000005' => [qw(RSA_WITH_RC4_128_SHA)],        # from tlslite
+#   '0x03000004' => [qw(RSA_WITH_RC4_128_MD5)],        # tlslite
+#   '0x03000005' => [qw(RSA_WITH_RC4_128_SHA)],        # tlslite
 #   '0x03000006' => [qw(RSA_WITH_RC2_40_MD5)],
-#   '0x0300000A' => [qw(RSA_WITH_3DES_EDE_CBC_SHA)],   # from tlslite
+#   '0x0300000A' => [qw(RSA_WITH_3DES_EDE_CBC_SHA)],   # tlslite
 #   '0x03000017' => [qw(DH_anon_EXPORT_WITH_RC4_40_MD5)],
 #   '0x03000019' => [qw(DH_anon_EXPORT_WITH_DES40_CBC_SHA)],
 #   '0x0300001A' => [qw(DH_anon_WITH_DES_CBC_SHA)],
 #   '0x0300001B' => [qw(DH_anon_WITH_3DES_EDE_CBC_SHA)],#
-#   '0x0300002F' => [qw(RSA_WITH_AES_128_CBC_SHA)],    # from tlslite
+#   '0x0300002F' => [qw(RSA_WITH_AES_128_CBC_SHA)],    # tlslite
 #   '0x03000033' => [qw(DHE_RSA_WITH_AES_128_CBC_SHA)],
-#   '0x03000034' => [qw(DH_ANON_WITH_AES_128_CBC_SHA)],# from tlslite
-#   '0x03000035' => [qw(RSA_WITH_AES_256_CBC_SHA)],    # from tlslite
+#   '0x03000034' => [qw(DH_ANON_WITH_AES_128_CBC_SHA)],# tlslite
+#   '0x03000035' => [qw(RSA_WITH_AES_256_CBC_SHA)],    # tlslite
 #   '0x03000039' => [qw(DHE_RSA_WITH_AES_256_CBC_SHA)],
-#   '0x0300003A' => [qw(DH_ANON_WITH_AES_256_CBC_SHA)],# from tlslite
-#   '0x0300C0AA' => [qw(PSK_DHE_WITH_AES_128_CCM_8)],  # from openssl
-#   '0x0300C0AB' => [qw(PSK_DHE_WITH_AES_256_CCM_8)],  # from openssl
+#   '0x0300003A' => [qw(DH_ANON_WITH_AES_256_CBC_SHA)],# tlslite
+#   '0x0300C0AA' => [qw(PSK_DHE_WITH_AES_128_CCM_8)],  # openssl
+#   '0x0300C0AB' => [qw(PSK_DHE_WITH_AES_256_CCM_8)],  # openssl
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
@@ -1412,8 +1422,8 @@ our %cipher_old   = (
     #!# constant =>     cipher suite name alias        # comment (where found)
     #!#----------+-------------------------------------+--------------------------+
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)],  # openssl-chacha
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],    # -"-
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# openssl-chacha
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],    # openssl-chacha
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_old
 
@@ -3051,7 +3061,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.182 2019/07/05
+1.183 2019/07/06
 
 =head1 AUTHOR
 
