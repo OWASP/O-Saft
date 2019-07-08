@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.32 19/07/05 15:03:07";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.33 19/07/08 22:06:08";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -771,9 +771,9 @@ sub show_getter {
         show_getter03;
         return;
     }
-    print "# testing: $cipher ...\n";
-    printf("# %20s\t%s\t%s\n", "function(key)", "key", "value");
-    printf("#----------------------+-------+----------------\n");
+    print "= testing: $cipher ...\n";
+    printf("= %20s\t%s\t%s\n", "function(key)", "key", "value");
+    printf("=----------------------+-------+----------------\n");
 #   printf("%-8s %s\t%s\t%s\n", "get_hex",  $cipher, "hex",  get_hex($cipher)  );
     printf("%-8s %s\t%s\t%s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_bits", $cipher, "bits", get_bits($cipher) );
@@ -787,7 +787,7 @@ sub show_getter {
     printf("%-8s %s\t%s\t%s\n", "get_tags", $cipher, "tags", get_tags($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_name", $cipher, "name", get_name($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_desc", $cipher, "desc", get_desc($cipher) );
-    printf("#----------------------+-------+----------------\n");
+    printf("=----------------------+-------+----------------\n");
     return;
 } # show_getter
 
@@ -804,7 +804,7 @@ sub show_desc   {
     #? print textual description for columns %cipher hash
 
     printf("#%s:\n", (caller(0))[3]);
-    print  "\n# %ciphers : example line:\n";
+    print  "\n= %ciphers : example line:\n";
     my $key = 0;
     printf("  '0x00,0x3D' -> [");
     foreach (@{$ciphers_desc{head}}) {
@@ -812,21 +812,21 @@ sub show_desc   {
         $key++;
     }
     printf(" ]\n");
-    print  "\n# %ciphers : tabular description of one (example) line:\n";
-    printf("#-------+------+-----------------------+--------\n");
-    printf("# [%s]\t%5s\t%16s\t%s\n", "nr", "key", "description", "example");
-    printf("#-------+------+-----------------------+--------\n");
+    print  "\n= %ciphers : tabular description of one (example) line:\n";
+    printf("=-------+------+-----------------------+--------\n");
+    printf("= [%s]\t%5s\t%16s\t%s\n", "nr", "key", "description", "example");
+    printf("=-------+------+-----------------------+--------\n");
     $key = 0;
     foreach (@{$ciphers_desc{head}}) {
         printf("  [%s]\t%6s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
             $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x00,0x3D'}[$key]);
         $key++;
     }
-    printf("#-------+------+-----------------------+--------\n");
+    printf("=-------+------+-----------------------+--------\n");
 
-    print  "\n# %ciphers : description of one line as perl code:\n";
-    printf("# varname  %-23s\t# example # description\n", "%ciphers hash");
-    printf("#---------+-----------------------------+---------+---------------\n");
+    print  "\n= %ciphers : description of one line as perl code:\n";
+    printf("= varname  %-23s\t# example # description\n", "%ciphers hash");
+    printf("=---------+-----------------------------+---------+---------------\n");
     $key = 0;
     foreach (@{$ciphers_desc{head}}) {
         printf("  %6s = \$ciphers{'0xBE,0xEF'}[%s];\t# %-7s # %s\n",
@@ -834,103 +834,122 @@ sub show_desc   {
             $ciphers_desc{sample}->{'0x00,0x3D'}[$key], $ciphers_desc{text}[$key]);
         $key++;
     }
-    printf("#---------+-----------------------------+---------+---------------\n");
+    printf("=---------+-----------------------------+---------+---------------\n");
 
-    print  "\n# %ciphers_names : description of one line as perl code:\n";
+    print  "\n= %ciphers_names : description of one line as perl code:\n";
     #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("# varname  %-31s\t  # source of name\n", "%ciphers hash");
-    printf("#---------+---------------------------------------+-----------------\n");
+    printf("= varname  %-31s\t  # source of name\n", "%ciphers hash");
+    printf("=---------+---------------------------------------+-----------------\n");
     $key = 0;
     foreach (qw( iana OpenSSL openssl osaft )) {
         printf("%8s = \$ciphers_names{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
             $key, $_);
         $key++;
     }
-    printf("#---------+---------------------------------------+-----------------\n");
+    printf("=---------+---------------------------------------+-----------------\n");
 
-    print  "\n# %ciphers_const : description of one line as perl code:\n";
+    print  "\n= %ciphers_const : description of one line as perl code:\n";
     #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("# varname  %-31s\t  # source of constant\n", "%ciphers hash");
-    printf("#---------+---------------------------------------+-----------------\n");
+    printf("= varname  %-31s\t  # source of constant\n", "%ciphers hash");
+    printf("=---------+---------------------------------------+-----------------\n");
     $key = 0;
     foreach (qw( iana OpenSSL openssl osaft )) {
         printf("%8s = \$ciphers_const{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
             $key, $_);
         $key++;
     }
-    printf("#---------+---------------------------------------+-----------------\n");
+    printf("=---------+---------------------------------------+-----------------\n");
 
-    print  "\n# \@cipher_results : description of one line in array:\n";
+    print  "\n= \@cipher_results : description of one line in array:\n";
 # currently (12/2015)
-    printf("#------+---------------+-------\n");
-    printf("# %s\t%12s\t%s\n", "ssl", "cipher name", "support");
-    printf("#------+---------------+-------\n");
+    printf("=------+---------------+-------\n");
+    printf("= %s\t%12s\t%s\n", "ssl", "cipher name", "support");
+    printf("=------+---------------+-------\n");
     printf(" %s\t%-12s\t%s\n", "TLSv12", "AES256-SHA256", "yes");
     printf(" %s\t%-12s\t%s\n", "SSLv3", "NULL", "no");
-    printf("#------+---------------+-------\n");
+    printf("=------+---------------+-------\n");
 
-    printf("# in future (01/2016)\n");
-    printf("#------+---------------+-------+-------+-------+-------+-------\n");
-    printf("# %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+    printf("= in future (01/2016)\n");
+    printf("=------+---------------+-------+-------+-------+-------+-------\n");
+    printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
         "ssl", "cipher\t", "pos +cipher", "pos +cipherraw", "dh-bits", "dh-par", "comment");
-    printf("#------+---------------+-------+-------+-------+-------+-------\n");
+    printf("=------+---------------+-------+-------+-------+-------+-------\n");
     printf(" %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
         "TLSv12", "0x00,0x3D", "0", "3", "512", "ec256", "comment");
-    printf("#------+---------------+-------+-------+-------+-------+-------\n");
+    printf("=------+---------------+-------+-------+-------+-------+-------\n");
 
     return;
 } # show_desc
 
 sub show_overview   {
     printf("#%s:\n", (caller(0))[3]);
-    print  <<'EoT';
-= overview if cipher description and name exists in internal data structure
+    print  "
+=== internal data structure for ciphers ===
+=
+= This function prints a simple overview of all available ciphers. The purpose
+= is to show if the internal data structure provides all necessary data.
+=
 =   description of columns:
 =       key         - hex key for cipher suite
-=       cipher desc - cipher suite known in internal data structure
-=       cipher const- cipher suite constant name exists
+=       cipher sec. - cipher suite security is known
 =       cipher name - cipher suite (openssl) name exists
+=       cipher const- cipher suite constant name exists
+=       cipher desc - cipher suite known in internal data structure
+=       cipher alias- other (alias) cipher suite names exist
 =       name # desc - 'yes' if name and description exists
-
-EoT
-    print  "= Note: following columns should have a *\n";
-    print  "=       ciphers_desc, ciphers_const, ciphers_name\n";
-    printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
-    printf("= %13s\t%s\t%s\t%s\t%s\t%s\n",  "",  "ciphers", "ciphers", "ciphers", "ciphers", "name +");
-    printf("= %13s\t%s\t%s\t%s\t%s\t%s\n", "key ", " desc", " const",   " name",   " alias",  " desc");
-    printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
+=   description of values:
+=       *    value present
+=       -    value missing
+=       -?-  security unknown/undefined
+=       miss security missing in data structure
+=
+= No perl or other warnings should be printed.
+= Note: following columns should have a *
+=       security, name, const, desc
+=
+";
+    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
+    printf("= %13s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",  "",   "cipher", "cipher", "cipher", "cipher", "cipher", "name +", "cipher");
+    printf("= %12s %s\t%s\t%s\t%s\t%s\t%s\t%s\n", "key", "security",   " name",   " const",   " desc.", " alias",  " desc.", " suite");
+    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
     my $cnt = 0;
     foreach my $key (sort keys %ciphers) {
          $cnt++;
-         my $both  = "no";
-         my $desc  = " ";
-         my $name  = " ";
-         my $const = " ";
-         my $alias = " ";
+         my $both  = "-";
+         my $sec   = $ciphers{$key}->{'sec'};
+         my $desc  = "-";
+         my $name  = "-";
+         my $const = "-";
+         my $alias = "-";
+         # TODO: compare direct access of %cipher* with results of method get_cipher_*
+         $sec   = "*" if ($sec =~ m/weak|low|medium|high/i); # TODO: $cfg{'regex'}->{'security'}/i);
+         $sec   = "-" if ($sec =~ m/^\s*$/);
+         $desc  = join(" ", %{$ciphers{$key}});
          $desc  = "*" if $ciphers{$key};
          $name  = "*" if $ciphers_names{$key}->{'osaft'};
          $const = "*" if defined $ciphers_const{$key};
          $alias = "*" if defined $ciphers_alias{$key};
-         $both  = "yes" if ('*' eq $desc and '*' eq $name);
-         printf("%14s\t%s\t%s\t%s\t%s\t%s\n", $key, $desc, $const, $name, $alias, $both);
+         $both  = "*" if ('*' eq $desc and '*' eq $name);
+         printf("%14s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key, $sec, $name, $const, $desc, $alias, $both, $ciphers_names{$key}->{'osaft'});
     }
-    printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
+    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
+    printf("= %12s %s\t%s\t%s\t%s\t%s\t%s\t%s\n", "key", "security",   " name",   " const",   " desc.", " alias",  " desc.", " suite");
     printf("= %s ciphers\n", $cnt);
     return;
 }; # show_overview
 
 sub show_const  {
     printf("#%s:\n", (caller(0))[3]);
-    print  <<'EoT';
-= overview of various cipher suite constant names
+    print  "
+=== overview of various cipher suite constant names ===
 =   description of columns:
 =       key         - hex key for cipher suite
 =       iana        - constant of cipher suite as defined by IANA
 =       OpenSSL     - constant of cipher suite used in openssl's *.h files
 =       osaft       - constant of cipher suite used by O-Saft
 =       o=iana o=op - yes if IANA's cipher suite name is same as O-Saft's name
-
-EoT
+=
+";
     printf("=%s+%s+%s+%s+%s-%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
     printf("=%s   osaft = \n", " " x 119);
     printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
@@ -946,19 +965,21 @@ EoT
          printf("%14s\t%-37s\t%-31s\t%-31s\t%s\t%s\n", $key, $const1, $const2, $const3, $o_i, $o_o);
     }
     printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
+    printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
     return;
 }; # show_const
 
 sub show_alias  {
     printf("#%s:\n", (caller(0))[3]);
-    print  <<'EoT';
-= overview of various cipher suite alias names
+    print "
+=== overview of various cipher suite alias names ===
+=
 =   description of columns:
 =       key         - hex key for cipher suite
 =       alias       - alias of cipher suite name
 =       used in     - where alias is used / was found
-
-EoT
+=
+";
     printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
     printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
     foreach my $key (sort keys %ciphers_alias) {
@@ -968,21 +989,23 @@ EoT
     }
     # hex,hex   => [qw( cipher suite name aliases )],# comment (where found)
     printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
+    printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
     return;
 }; # show_const
 
 sub show_names  {
     printf("#%s:\n", (caller(0))[3]);
-    print  <<'EoT';
-= overview of various cipher suite names
+    print "
+=== overview of various cipher suite names ===
+=
 =   description of columns:
 =       key         - hex key for cipher suite
 =       OpenSSL     - cipher suite name used in openssl's *.h files
 =       openssl     - cipher suite name used by openssl executable
 =       osaft       - cipher suite name used by O-Saft
 =       o=o         - yes if openssl's cipher suite name is same as O-Saft's name
-
-EoT
+=
+";
 
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
     printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
@@ -998,6 +1021,7 @@ EoT
                );
     }
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
+    printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
     return;
 }; # show_names
 
@@ -1021,14 +1045,15 @@ EoT
 
 sub show_rfc    {
     printf("#%s:\n", (caller(0))[3]);
-    print  <<'EoT';
-= cipher suite and corresponding RFCs
+    print "
+=== cipher suite and corresponding RFCs ===
+=
 =   description of columns:
 =       key         - hex key for cipher suite
 =       RFC         - RFC numbers, where cipher suite is described
 =       OpenSSL     - cipher suite name as used in openssl
-
-EoT
+=
+";
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
@@ -1042,6 +1067,7 @@ EoT
          # TODO: in 'rfc' können mehrer stehen, durch : getrennt
     }
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
+    printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
     return;
 }; # show_rfc
 
@@ -1460,7 +1486,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.32 2019/07/05
+1.33 2019/07/08
 
 =head1 AUTHOR
 
