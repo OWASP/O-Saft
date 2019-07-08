@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.183 19/07/06 15:47:43",
+    SID_osaft   => "@(#) osaft.pm 1.184 19/07/08 15:12:41",
 
 };
 
@@ -912,7 +912,7 @@ our %ciphers_desc = (   # description of following %ciphers table
 ); # %ciphers_desc
 
 
-our %ciphers = (
+our %ciphers = (        # TODO: define and move to in OSaft/Cipher.pm
     #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
     # hex,hex               => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
     #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -920,7 +920,7 @@ our %ciphers = (
 ); # %ciphers
 
 
-our %cipher_names = (
+our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
 ### Achtung: die hex-Wert sind intern, davon sind nur die letzten 4 oder 6
 ###          Stellen (je nach Protokoll) der eigentliche Wert.
     # NOTE: cipher suite name beginning with "-OLD" usually will never work (i.e.
@@ -956,7 +956,7 @@ our %cipher_names = (
     '0x0300006C' => [qw(ADH-AES128-SHA256               ADH_WITH_AES_128_SHA256)],
     '0x030000A7' => [qw(ADH-AES256-GCM-SHA384           ADH_WITH_AES_256_GCM_SHA384)],
     '0x030000A8' => [qw(PSK-AES128-GCM-SHA256           PSK_WITH_AES_128_GCM_SHA256)],
-    '0x030000A8' => [qw(PSK-AES256-GCM-SHA384           PSK_WITH_AES_256_GCM_SHA384)],
+    '0x030000A9' => [qw(PSK-AES256-GCM-SHA384           PSK_WITH_AES_256_GCM_SHA384)],
     '0x0300003A' => [qw(ADH-AES256-SHA                  ADH_WITH_AES_256_SHA)],
     '0x0300006D' => [qw(ADH-AES256-SHA256               ADH_WITH_AES_256_SHA256)],
     '0x03000046' => [qw(ADH-CAMELLIA128-SHA             ADH_WITH_CAMELLIA_128_CBC_SHA)],
@@ -1178,7 +1178,7 @@ our %cipher_names = (
     '0x03000090' => [qw(DHE-PSK-AES128-SHA              DHE_PSK_WITH_AES_128_CBC_SHA)],
     '0x03000091' => [qw(DHE-PSK-AES256-SHA              DHE_PSK_WITH_AES_256_CBC_SHA)],
     '0x03000092' => [qw(RSA-PSK-RC4-SHA                 RSA_PSK_WITH_RC4_128_SHA)],
-    '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA        RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
+    '0x03000093' => [qw(RSA-PSK-3DES-SHA                RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_128_CBC_SHA)],
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],
     '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
@@ -1283,8 +1283,8 @@ our %cipher_names = (
     '0x0300C06F' => [qw(RSA-PSK-ARIA256-GCM-SHA384      RSA_PSK_WITH_ARIA_256_GCM_SHA384    )],
     '0x0300C070' => [qw(ECDHE-PSK-ARIA128-SHA256        ECDHE_PSK_WITH_ARIA_128_CBC_SHA256  )],
     '0x0300C071' => [qw(ECDHE-PSK-ARIA256-SHA384        ECDHE_PSK_WITH_ARIA_256_CBC_SHA384  )],
-    '0x0300FEE0' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],  # unklar
-    '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],       # unklar,
+    '0x0300FEE0' => [qw(RSA-FIPS-3DES-EDE-SHA-2         RSA_FIPS_WITH_3DES_EDE_CBC_SHA_2)],  # unklar
+    '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA-2          RSA_FIPS_WITH_DES_CBC_SHA_2)],       # unklar,
     '0x0300FEFE' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],       # openssl-chacha
     '0x0300FEFF' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],  # openssl-chacha
 #
@@ -1340,7 +1340,7 @@ our %cipher_names = (
     #   means: we get AES128-GCM-SHA256, AES256-GCM-SHA384 for TLSv1 and TLSv13
 ); # %cipher_names
 
-our %cipher_alias = (
+our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
     # TODO: only one element allowed
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
@@ -1362,9 +1362,10 @@ our %cipher_alias = (
     '0x03000064' => [qw(EXP-RC4-56-SHA)],              # openssl
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
+    '0x0300008B' => [qw(PSK-3DES-SHA)],
 
     # TODO: need to mark following 10 as old ciphers with changed IDs
-    '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
+    '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA)],    # ??
     '0x03000094' => [qw(RSA-PSK-AES128-SHA)],          #
     '0x03000095' => [qw(RSA-PSK-AES256-SHA)],          #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
@@ -1377,6 +1378,7 @@ our %cipher_alias = (
     '0x0300CC19' => [qw(RSA-PSK-CHACHA20-POLY1305)],   # see Note(c) above
 
     '0x0300009B' => [qw(DHanon-SEED-SHA)],
+    '0x0300C033' => [qw(ECDHE-PSK-RC4-128-SHA)],       # ??
     '0x0300C044' => [qw(DHE-RSA-ARIA256-SHA256)],      # probably a typo (256 instead 128)
     '0x0300C0A0' => [qw(RSA-AES128-CCM-8)],            # ?? some java
     '0x0300C0A1' => [qw(RSA-AES256-CCM-8)],            # -"-
@@ -1384,14 +1386,16 @@ our %cipher_alias = (
     '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM-8)],        # -"-
     '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM)],          # probably a typo
     '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM)],          # probably a typo
-    '0x0300C0A6' => [qw(DHE-PSK-AES128-CCM)],          # probably a typo
-    '0x0300C0A7' => [qw(DHE-PSK-AES256-CCM)],          # probably a typo
+    '0x0300C0A6' => [qw(DHE-PSK-RSA-AES128-CCM)],      # probably a typo
+    '0x0300C0A7' => [qw(DHE-PSK-RSA-AES256-CCM)],      # probably a typo
 #   '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8)],        # probably a typo
 #   '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8)],        # probably a typo
     '0x0300C0A8' => [qw(PSK-AES128-CCM-8)],            #
     '0x0300C0A9' => [qw(PSK-AES256-CCM-8)],            #
-    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8)],     # probably a typo
-    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8)],     # probably a typo
+    '0x0300C0AA' => [qw(DHE-PSK-AES128-CCM-8)],        # probably a typo
+    '0x0300C0AB' => [qw(DHE-PSK-AES256-CCM-8)],        # probably a typo
+#   '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8)],     # probably a typo
+#   '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8)],     # probably a typo
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8)],      # probably a typo
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8)],      # probably a typo
 
@@ -1416,7 +1420,7 @@ our %cipher_alias = (
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
-our %cipher_old   = (
+our %cipher_old   = (   # TODO: define and move to in OSaft/Cipher.pm
     # TODO: only one element allowed (not needed in OSaft/Ciphers.pm)
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
@@ -3061,7 +3065,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.183 2019/07/06
+1.184 2019/07/08
 
 =head1 AUTHOR
 
