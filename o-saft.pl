@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.873 19/07/06 16:47:12",
+    SID         => "@(#) yeast.pl 1.874 19/07/08 15:14:24",
     STR_VERSION => "19.06.19",          # <== our official version number
 };
 
@@ -1356,6 +1356,7 @@ _yeast_TIME("cfg}");
         'AECDH-DES-CBC3-SHA'    => [qw(  weak SSLv3 3DES  168 SHA1 None  ECDH        0 :)],
         'AECDH-NULL-SHA'        => [qw(  weak SSLv3 None    0 SHA1 None  ECDH        0 :)],
         'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)], # openssl: MEDIUM
+        'PSK-SHA'               => [qw(  weak SSLv3 None    0 SHA1 RSA   DH          0 :)],
         'AES128-SHA'            => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   RSA        80 :)],
         'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
         'DES-CBC3-MD5'          => [qw(  weak SSLv2 3DES  168 MD5  RSA   RSA         0 :)],
@@ -1413,7 +1414,8 @@ _yeast_TIME("cfg}");
         'EXP-RC2-CBC-MD5'       => [qw(  weak SSLv3 RC2    40 MD5  RSA   RSA(512)    0 export)],
         'EXP-RC4-MD5'           => [qw(  WEAK SSLv2 RC4    40 MD5  RSA   RSA(512)    2 export)],
         'EXP-RC4-MD5'           => [qw(  WEAK SSLv3 RC4    40 MD5  RSA   RSA(512)    2 export)],
-        'EXP-RC4-64-MD5'        => [qw(  weak SSLv3 RC4    64 MD5  DSS   RSA         2 :)], # (from RSA BSAFE SSL-C)
+#       'EXP-RC4-64-MD5'        => [qw(  weak SSLv3 RC4    64 MD5  RSA   RSA         2 :)], # (from RSA BSAFE SSL-C); same as RC4-64-MD5?
+        'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
         'EXP-EDH-DSS-RC4-56-SHA'=> [qw(  WEAK SSLv3 RC4    56 SHA  DSS   DHE         2 :)], # (from RSA BSAFE SSL-C)
         'EXP1024-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 RSA   RSA(1024)   0 export)],
         'EXP1024-DHE-DSS-RC4-SHA'=>[qw(  WEAK SSLv3 RC4    56 SHA1 DSS   DH(1024)    2 export)],
@@ -1423,23 +1425,24 @@ _yeast_TIME("cfg}");
         'EXP1024-RC4-SHA'       => [qw(  WEAK SSLv3 RC4    56 SHA1 RSA   RSA(1024)   2 export)],
         'IDEA-CBC-MD5'          => [qw(  weak SSLv2 IDEA  128 MD5  RSA   RSA         0 :)],
         'IDEA-CBC-SHA'          => [qw(  weak SSLv2 IDEA  128 SHA1 RSA   RSA         0 :)],
-        'NULL'                  => [qw(  weak SSLv2 None    0 -?-  None  -?-         0 :)], # openssl SSLeay testing
+        #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
+        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  NULL        0 :)], # openssl SSLeay testing
+        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  NULL        0 :)], # openssl SSLeay testing
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
-        'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES256-SHA    '=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-CBC-SHA
-        'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
-#       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-EDE-CBC-SHA
+#       'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-SHA
+        'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
+#       'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-SHA
+        'RSA-PSK-AES256-SHA'    => [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-CBC-SHA
+#       'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-SHA
+        'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-EDE-CBC-SHA
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 PSK   PSK         0 :)],
         'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 PSK   PSK         0 :)],
         'PSK-AES256-CBC-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
         'RSA-PSK-RC4-SHA'       => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSAPSK     80 :)],
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA1 PSK   PSK        80 :)],
         'RC2-CBC-MD5'           => [qw(  weak SSLv2 RC2   128 MD5  RSA   RSA         0 :)],
-        'RC2-MD5'               => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        80 :)],
         'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
         'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA         8 :)], #openssl: MEDIUM
         'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA         8 :)], #openssl: MEDIUM
@@ -1460,8 +1463,8 @@ _yeast_TIME("cfg}");
         'GOST-GOST89MAC'        => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
         'GOST-GOST94'           => [qw(  HIGH SSLv3 GOST89 256 GOST94  RSA    RSA  100 :)],
         'GOST-MD5'              => [qw(  weak SSLv3 GOST89 256 MD5     RSA    RSA    0 :)], #openssl: HIGH
-        'GOST2001-NULL-GOST94'  => [qw(  HIGH SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
-        'GOST94-NULL-GOST94'    => [qw(  HIGH SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
+        'GOST2001-NULL-GOST94'  => [qw(  weak SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
+        'GOST94-NULL-GOST94'    => [qw(  weak SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
 
         # from openssl-1.0.1c
@@ -1556,6 +1559,7 @@ _yeast_TIME("cfg}");
         'DHE-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # bugfix for openssl 1.0.2
         'ECDHE-RSA-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # bugfix for openssl 1.0.2
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # bugfix for openssl 1.0.2
+        'DHE-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   DH    1 :)],
         'DHE-RSA-CHACHA20-POLY1305-OLD'       => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # openssl 1.0.2k-dev (patched version)
         'ECDHE-RSA-CHACHA20-POLY1305-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
         'ECDHE-ECDSA-CHACHA20-POLY1305-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
@@ -1574,6 +1578,10 @@ _yeast_TIME("cfg}");
         'ECDHE-PSK-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
         'RSA-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSAPSK      1 :)],
 
+        # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+        'PSK-CHACHA20-POLY1305'         => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
+        'ECDHE-PSK-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
+        'RSA-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
 
         # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
         'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
@@ -1588,18 +1596,18 @@ _yeast_TIME("cfg}");
         'DHE-RSA-AES256-CCM'            => [qw( high TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
         'PSK-AES128-CCM'                => [qw( high TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
         'PSK-AES256-CCM'                => [qw( high TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
-        'RSA-AES128-CCM-8'              => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
-        'RSA-AES256-CCM-8'              => [qw( high TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
-        'DHE-RSA-AES128-CCM-8'          => [qw( high TLSv12 AESCCM 128 AEAD   RSA   DH         91 :)],
-        'DHE-RSA-AES256-CCM-8'          => [qw( high TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
-        'PSK-AES128-CCM-8'              => [qw( high TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
-        'PSK-AES256-CCM-8'              => [qw( high TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
+        'RSA-AES128-CCM8'               => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
+        'RSA-AES256-CCM8'               => [qw( high TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
+        'DHE-RSA-AES128-CCM8'           => [qw( high TLSv12 AESCCM 128 AEAD   RSA   DH         91 :)],
+        'DHE-RSA-AES256-CCM8'           => [qw( high TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
+        'PSK-AES128-CCM8'               => [qw( high TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
+        'PSK-AES256-CCM8'               => [qw( high TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
 
         # from http://tools.ietf.org/html/rfc725
         'ECDHE-RSA-AES128-CCM'          => [qw( high TLSv12 AESCCM 128 AEAD   ECDSA ECDH       91 :)],
         'ECDHE-RSA-AES256-CCM'          => [qw( high TLSv12 AESCCM 256 AEAD   ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES128-CCM-8'        => [qw( high TLSv12 AESCCM 128 AEAD   ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES256-CCM-8'        => [qw( high TLSv12 AESCCM 256 AEAD   ECDSA ECDH       91 :)],
+        'ECDHE-RSA-AES128-CCM8'         => [qw( high TLSv12 AESCCM 128 AEAD   ECDSA ECDH       91 :)],
+        'ECDHE-RSA-AES256-CCM8'         => [qw( high TLSv12 AESCCM 256 AEAD   ECDSA ECDH       91 :)],
 
         # from: http://botan.randombit.net/doxygen/tls__suite__info_8cpp_source.html
         #/ RSA_WITH_AES_128_CCM           (0xC09C, "RSA",   "RSA",  "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
@@ -1638,10 +1646,10 @@ _yeast_TIME("cfg}");
         'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   KEA   FZA        11 :)],
         'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   KEA   FZA        81 :)],
         'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   KEA   FZA        11 :)],
+        'RSA-FIPS-3DES-EDE-SHA-2'       => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
+        'RSA-FIPS-DES-CBC-SHA-2'        => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
+        'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
 
         'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/DSS      0 export)],
         'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/RSA      0 export)],
@@ -1667,10 +1675,16 @@ _yeast_TIME("cfg}");
         'DHE-PSK-3DES-SHA'              => [qw( weak TLSv12 3DES   168 SHA1   PSK   DHE         0 :)],
         'DHE-PSK-AES128-SHA'            => [qw( high TLSv12 AES    128 SHA1   PSK   DHE         1 :)],
         'DHE-PSK-AES256-SHA'            => [qw( high TLSv12 AES    256 SHA1   PSK   DHE         1 :)],
+        'DHE-PSK-AES128-CCM'            => [qw( high TLSv12 AESGCM 128 AEAD   RSA   DHE         1 :)],
+        'DHE-PSK-AES256-CCM'            => [qw( high TLSv12 AESGCM 256 AEAD   RSA   DHE         1 :)],
+        'DHE-PSK-AES128-CCM8'           => [qw( high TLSv12 AESGCM 128 AEAD   RSA   DHE         1 :)],
+        'DHE-PSK-AES256-CCM8'           => [qw( high TLSv12 AESGCM 256 AEAD   RSA   DHE         1 :)],
         'DHE-PSK-AES128-GCM-SHA256'     => [qw( high TLSv12 AESGCM 128 SHA256 PSK   DHE         1 :)],
         'DHE-PSK-AES256-GCM-SHA384'     => [qw( high TLSv12 AESGCM 256 SHA384 PSK   DHE         1 :)],
         'RSA-PSK-AES128-GCM-SHA256'     => [qw( high TLSv12 AESGCM 128 SHA256 PSK   RSA         1 :)],
         'RSA-PSK-AES256-GCM-SHA384'     => [qw( high TLSv12 AESGCM 256 SHA384 PSK   RSA         1 :)],
+        'PSK-AES128-GCM-SHA256'         => [qw( high TLSv12 AESGCM 128 SHA256 PSK   PSK         1 :)],
+        'PSK-AES256-GCM-SHA384'         => [qw( high TLSv12 AESGCM 256 SHA384 PSK   PSK         1 :)],
         'PSK-AES128-SHA256'             => [qw( high TLSv12 AES    128 SHA256 PSK   PSK         1 :)],
         'PSK-AES256-SHA384'             => [qw( high TLSv12 AES    256 SHA384 PSK   PSK         1 :)],
         'PSK-SHA256'                    => [qw( weak TLSv12 None   0   SHA256 PSK   PSK         1 :)],
