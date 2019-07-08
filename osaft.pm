@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.184 19/07/08 15:12:41",
+    SID_osaft   => "@(#) osaft.pm 1.185 19/07/08 22:04:38",
 
 };
 
@@ -2414,13 +2414,14 @@ sub get_cipher_keyx($)  { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^
 sub get_cipher_score($) { my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
 sub get_cipher_tags($)  { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
 sub get_cipher_desc($)  { my $c=shift;
-    # get description for specified cipher from %ciphers
+    # get complete description for specified cipher from %ciphers
+    # look like: TLSv12 AESGCM 128 AEAD None DH 10
     if (not defined $ciphers{$c}) {
        _warn("016: undefined cipher description for '$c'"); # TODO: correct %ciphers
        return STR_UNDEF;
     }
     my @c = @{$ciphers{$c}};
-    shift @c;
+    shift @c;   # remove sec field
     return @c if ((grep{/^$c/} %ciphers)>0);
     return "";
 } # get_cipher_desc
@@ -3065,7 +3066,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.184 2019/07/08
+1.185 2019/07/08
 
 =head1 AUTHOR
 
