@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.186 19/07/08 22:40:33",
+    SID_osaft   => "@(#) osaft.pm 1.187 19/07/09 00:08:41",
 
 };
 
@@ -1179,8 +1179,8 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x03000091' => [qw(DHE-PSK-AES256-SHA              DHE_PSK_WITH_AES_256_CBC_SHA)],
     '0x03000092' => [qw(RSA-PSK-RC4-SHA                 RSA_PSK_WITH_RC4_128_SHA)],
     '0x03000093' => [qw(RSA-PSK-3DES-SHA                RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
-    '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_128_CBC_SHA)],
-    '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],
+    '0x03000094' => [qw(RSA-PSK-AES128-SHA              RSA_PSK_WITH_AES_128_CBC_SHA)],
+    '0x03000095' => [qw(RSA-PSK-AES256-SHA              RSA_PSK_WITH_AES_256_CBC_SHA)],
     '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
     '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
     '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
@@ -1366,8 +1366,8 @@ our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
 
     # TODO: need to mark following 10 as old ciphers with changed IDs
     '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA)],    # ??
-    '0x03000094' => [qw(RSA-PSK-AES128-SHA)],          #
-    '0x03000095' => [qw(RSA-PSK-AES256-SHA)],          #
+    '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      #
+    '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
@@ -3067,7 +3067,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.186 2019/07/08
+1.187 2019/07/09
 
 =head1 AUTHOR
 
