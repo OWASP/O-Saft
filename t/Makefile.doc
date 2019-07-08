@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.8 19/07/05 09:43:51
+#?      @(#) Makefile.doc 1.9 19/07/08 22:10:11
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.8
+_SID.doc        = 1.9
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -195,6 +195,18 @@ ALL.test.doc1   = $(ALL.testdoc1)
 test.doc1:      $(ALL.test.doc1)
 ALL.test.doc1.log=  $(ALL.test.doc1:%=%.log) test.log-compare-hint
 test.doc1.log:  $(ALL.test.doc1.log)
+
+ALL.testdoc2    = $(shell awk -F: '/^testarg0-doc2-.*%/{next} /^testarg0-doc2-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc2   = $(ALL.testdoc2)
+test.doc2:      $(ALL.test.doc2)
+ALL.test.doc2.log=  $(ALL.test.doc2:%=%.log) test.log-compare-hint
+test.doc2.log:  $(ALL.test.doc2.log)
+
+ALL.testdoc3    = $(shell awk -F: '/^testarg0-doc3-.*%/{next} /^testarg0-doc3-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.test.doc3   = $(ALL.testdoc3)
+test.doc3:      $(ALL.test.doc3)
+ALL.test.doc3.log=  $(ALL.test.doc3:%=%.log) test.log-compare-hint
+test.doc3.log:  $(ALL.test.doc3.log)
 
 ALL.testdoc5    = $(shell awk -F: '/^testarg0-doc5-.*%/{next} /^testarg0-doc5-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 ALL.test.doc5   = $(ALL.testdoc5)
