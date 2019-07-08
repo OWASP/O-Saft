@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.87 19/07/08 22:03:02";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.88 19/07/08 22:32:22";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -508,7 +508,7 @@ sub _yeast_data {
 =   -  command (key) used internal for checks only
 =   *  key present
 =      key not present
-=   ?  key in %data present but missing in $cfg{commands}
+=   ?  key in %data present but missing in \$cfg{commands}
 =   !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
 =   .  no score defined in %checks{key}
 =
@@ -518,7 +518,7 @@ sub _yeast_data {
 = Please check following keys, they skipped in table above due to
 =
 ";
-    print "    internal or summary commands:\n        " . join(" ", @yeast);
+    print "= internal or summary commands:\n=      " . join(" ", @yeast);
     print "\n";
     return;
 } # _yeast_data
@@ -746,7 +746,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.87 2019/07/08
+1.88 2019/07/08
 
 =head1 AUTHOR
 
