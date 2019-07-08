@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.185 19/07/08 22:04:38",
+    SID_osaft   => "@(#) osaft.pm 1.186 19/07/08 22:40:33",
 
 };
 
@@ -2819,14 +2819,14 @@ sub test_cipher_regex   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
     print "
 === test_cipher_regex: check RegEx for ciphers ===
-
-  Check RegEx to detect ciphers, which support PFS using the internal function
-  ::_ispfs() .
+=
+= Check RegEx to detect ciphers, which support PFS using the internal function
+= ::_ispfs() .
     \$cfg{'regex'}->{'PFS'}:      # match ciphers supporting PFS
       $cfg{'regex'}->{'PFS'}
-
-  Check to which RegEx for OWASP scoring a given cipher matches.
-
+=
+= Check to which RegEx for OWASP scoring a given cipher matches.
+=
     \$cfg{'regex'}->{'OWASP_NA'}: # unrated in OWASP TLS Cipher Cheat Sheet (2018)
       $cfg{'regex'}->{'OWASP_NA'}
     \$cfg{'regex'}->{'OWASP_C'}:  # 1st legacy
@@ -2837,7 +2837,7 @@ sub test_cipher_regex   {
       $cfg{'regex'}->{'OWASP_A'}
     \$cfg{'regex'}->{'OWASP_D'}:  # finally brocken ciphers, overwrite previous
       $cfg{'regex'}->{'OWASP_D'}
-
+=
 ";
     print __regex_head();
     print __regex_line();
@@ -2854,23 +2854,24 @@ sub test_cipher_regex   {
     }
     print __regex_line();
     print __regex_head();
-    print '
-  PFS values:
-    yes   cipher supports PFS
-    no    cipher does not supports PFS
-  OWASP values:
-    x     value A or B or C or D or -?- as returned by get_cipher_owasp()
-    miss  cipher not matched by any RegEx, programming error
-  owasp values:
-    xx    list of all matching OWASP_x RegEx
+    print "
+= PFS values:
+=   yes   cipher supports PFS
+=   no    cipher does not supports PFS
+= OWASP values:
+=   x     value A or B or C or D or -?- as returned by get_cipher_owasp()
+=   miss  cipher not matched by any RegEx, programming error
+= owasp values:
+=   xx    list of all matching OWASP_x RegEx
 
-';
+";
     return;
 } # test_cipher_regex
 
 sub test_cipher_sort    {
     #? check sorting cipher according strength
     # see ../o-saft-dbx.pm  _yeast_ciphers_sorted()
+    return;
 } # test_cipher_sort
 
 =pod
@@ -3066,7 +3067,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.185 2019/07/08
+1.186 2019/07/08
 
 =head1 AUTHOR
 
