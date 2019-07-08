@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.86 19/07/05 14:03:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.87 19/07/08 22:03:02";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -92,7 +92,7 @@ sub _yeast_trac {
     return;
 } # _yeast_trac
 
-sub _yeast_ciphers_list   {
+sub _yeast_ciphers_list   { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
     #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
@@ -130,11 +130,12 @@ sub _yeast_ciphers_list   {
     return;
 } # _yeast_ciphers_list
 
-sub _yeast_ciphers_sorted {
+sub _yeast_ciphers_sorted { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
     ## no critic qw(CodeLayout::ProhibitHardTabs); TABs are intended
+    printf("#%s:\n", (caller(0))[3]);
     print "
-=== _yeast_ciphers_sorted: print ciphers sorted according strength ===
-
+=== ciphers sorted according strength ===
+=
 = OWASP	openssl	cipher
 =------+-------+----------------------------------------------
 ";
@@ -145,61 +146,97 @@ sub _yeast_ciphers_sorted {
     }
     print foreach sort @sorted;
     print "=------+-------+----------------------------------------------\n";
+    print "= OWASP openssl cipher\n";
     return;
 } # _yeast_ciphers_sorted
 
-sub _yeast_ciphers        {
+sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+    printf("#%s:\n", (caller(0))[3]);
     print "
-=== _yeast_ciphers: print internal data structure for ciphers ===
-
-  This function prints a simple overview of all available ciphers. The purpose
-  is to show if the internal data structure provides all necessary data.
-  All lines must contain a hex key, 4 stars (*) and the cipher-suite name.
-  No perl or other warnings should be printed.
-
+=== internal data structure for ciphers ===
+=
+= This function prints a simple overview of all available ciphers. The purpose
+= is to show if the internal data structure provides all necessary data.
+=
+=   description of columns:
+=       key         - hex key for cipher suite
+=       cipher sec. - cipher suite security is known
+=       cipher name - cipher suite (openssl) name exists
+=       cipher const- cipher suite constant name exists
+=       cipher desc - cipher suite known in internal data structure
+=       cipher alias- other (alias) cipher suite names exist
+=       name # desc - 'yes' if name and description exists
+=   description of values:
+=       *    value present
+=       -    value missing
+=       -?-  security unknown/undefined
+=       miss security missing in data structure
+=
+= No perl or other warnings should be printed.
+= Note: following columns should have a *
+=       security, name, const, desc
+=
 ";
-    my %cnt = (
+    my $cnt = 0;
+    my %err = (
        'key'    => 0,
        'sec'    => 0,
        'name'   => 0,
        'const'  => 0,
        'descr'  => 0,
     );
-    print __data_title("key", "security", " name  ", "const  ", "descr. ", "  cipher", "", "");
+    print __data_title("",    " cipher",  " cipher", "cipher",  " cipher", " cipher", " name +", " cipher");
+    print __data_title("key", "security", " name ",  " const",  "  desc.", "  alias", "  desc.", "  suite");
     print __data_line();
-    foreach my $c (sort keys %ciphers) {
+    # key in %ciphers is the cipher suite name, but we want the ciphers sorted
+    # according their hex constant; perl's sort need a copare funtion
+    my %keys;
+    map { $keys{get_cipher_hex($_)} = $_; } keys %ciphers;
+    foreach my $k (sort {$a cmp $b} keys %keys) {
+        $cnt++;
+        my $c   = $keys{$k};
         my $key = get_cipher_hex($c);
            $key = "-" if ($key =~ m/^\s*$/);
         my $sec = get_cipher_sec($c);
            $sec = "*" if ($sec =~ m/$cfg{'regex'}->{'security'}/i);
            $sec = "-" if ($sec =~ m/^\s*$/);
-        my $name= (get_cipher_name($c) =~ m/^\s*$/) ? "-" : "*";
-        my $desc= (get_cipher_desc($c) =~ m/^\s*$/) ? "-" : "*";
-        print __data_data( $key, $sec, $name, "N/A", $desc, $c, "", "");
-        $cnt{'key'}++   if ($key  eq "-");
-        $cnt{'sec'}++   if ($sec  ne "*");
-        $cnt{'name'}++  if ($name ne "*");
-       #$cnt{'cnst'}++  if ($cnst ne "*");
-        $cnt{'desc'}++  if ($desc ne "*");
+        my $name= (get_cipher_name($c)  =~ m/^\s*$/) ? "-" : "*";
+        my $desc= join(" ", get_cipher_desc($c));
+           $desc= ($desc =~ m/^\s*$/) ? "-" : "*";
+        my $const=(get_cipher_suiteconst($c) =~ m/^\s*$/) ? "*" : "*"; # FIXME: 
+        my $alias= "-"; #get_cipher_suitealias($c); # =~ m/^\s*$/) ? "-" : "*";
+        my $both= "-";
+        $both   = "*" if ('*' eq $desc and '*' eq $name);
+        print __data_data( $key, $sec, $name, $const, $desc, $alias, $both, $c);
+        $err{'key'}++   if ($key  eq "-");
+        $err{'sec'}++   if ($sec  ne "*");
+        $err{'name'}++  if ($name ne "*");
+       #$err{'cnst'}++  if ($cnst ne "*");
+        $err{'desc'}++  if ($desc ne "*");
     }
     print __data_line();
     print __data_title("key", "security", " name  ", "const  ", "descr. ", "  cipher", "", "");
-    print '
-    *    value present
-    -    value missing
-    -?-  security unknown/undefined
-    miss security missing in data structure
-    N/A  (description not yet available, comming soon)
-
-    identified errors: ';
-    printf("%6s=%-2s,", $_, $cnt{$_}) foreach keys %cnt;
+    printf("= %s ciphers\n", $cnt);
+    printf("= identified errors: ");
+    printf("%6s=%-2s,", $_, $err{$_}) foreach keys %err;
     printf("\n\n");
+    return;
+} # _yeast_ciphers_overview
+
+sub _yeast_ciphers        { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== list of ciphers ===
+=
+
+";
     return;
 } # _yeast_ciphers
 
-sub _yeast_cipher         {
+sub _yeast_cipher         { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+    printf("#%s:\n", (caller(0))[3]);
     print "
-=== _yeast_cipher: print internal data structures for cipher ===
+=== print internal data structures for a cipher ===
 
 ";
 # TODO: %ciphers %cipher_names
@@ -416,13 +453,14 @@ sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, 
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", @_); }
 
 sub _yeast_data {
+    printf("#%s:\n", (caller(0))[3]);
     print "
-=== _yeast_data: check internal data structure ===
-
-  This function prints a simple overview of all available commands and checks.
-  The purpose is to show if a proper key is defined in  %data and %checks  for
-  each command from  %cfg{'commands'}  and vice versa.
-
+=== internal data structure for commands ===
+=
+= This function prints a simple overview of all available commands and checks.
+= The purpose is to show if a proper key is defined in  %data and %checks  for
+= each command from  %cfg{'commands'}  and vice versa.
+=
 ";
 
     my $old;
@@ -464,33 +502,35 @@ sub _yeast_data {
 #               
     print __data_line();
     print __data_head();
-    print '
-    +  command (key) present
-    I  command is an internal command or alias
-    -  command (key) used internal for checks only
-    *  key present
-       key not present
-    ?  key in %data present but missing in $cfg{commands}
-    !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
-    .  no score defined in %checks{key}
-
-    A shorttext should be available for each command and all data keys, except:
-        cn_nosni, ext_*, valid_*
-
-    Please check following keys, they skipped in table above due to
-    ';
+    print "
+=   +  command (key) present
+=   I  command is an internal command or alias
+=   -  command (key) used internal for checks only
+=   *  key present
+=      key not present
+=   ?  key in %data present but missing in $cfg{commands}
+=   !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
+=   .  no score defined in %checks{key}
+=
+= A shorttext should be available for each command and all data keys, except:
+=      cn_nosni, ext_*, valid_*
+=
+= Please check following keys, they skipped in table above due to
+=
+";
     print "    internal or summary commands:\n        " . join(" ", @yeast);
     print "\n";
     return;
 } # _yeast_data
 
 sub _yeast_prot {
+    printf("#%s:\n", (caller(0))[3]);
     print "
-=== _yeast_prot: print internal data structure according protocols ===
-
-  This function prints information about SSL/TLS protocols in various internal
-  variables (hashes).
-
+=== internal data structure according protocols ===
+=
+= This function prints information about SSL/TLS protocols in various internal
+= variables (hashes).
+=
 ";
     local $\ = "\n";
     my $ssl = $cfg{'regex'}->{'SSLprot'};
@@ -544,6 +584,7 @@ sub _yeast_test {
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
     }
+    _yeast_ciphers_overview() if ('overview' eq $arg);
     _yeast_ciphers()        if ('ciphers'   eq $arg);
     return;
 } # _yeast_test
@@ -705,7 +746,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.86 2019/07/05
+1.87 2019/07/08
 
 =head1 AUTHOR
 
