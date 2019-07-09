@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.9 19/07/08 22:10:11
+#?      @(#) Makefile.doc 1.10 19/07/10 01:03:00
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.9
+_SID.doc        = 1.10
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -114,8 +114,11 @@ testarg0-doc3-cipher-osaft:     TEST.args   = ciphers=osaft
 testarg0-doc3-cipher-yeast:     TEST.args   = ciphers=yeast
 testarg0-doc3-cipher-openssl:   TEST.args   = ciphers=openssl
 testarg0-doc3-cipher-dumptab:   TEST.args   = ciphers=dumptab
-testarg0-doc3-getter:           TEST.args   = getter=0xCC,0xA9
-testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256
+testarg0-doc3-getter:           TEST.args   = getter=0xC0,0xC2
+testarg0-doc3-hex:              TEST.args   = key=ECDHE-ECDSA-AES256-GCM-SHA384
+testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-AES256-GCM-SHA384
+#testarg0-doc3-getter:           TEST.args   = getter=0xCC,0xA9
+#testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256
 
 # o-saft-*.pm
 testarg0-doc%:                  TEST.args   = --help
@@ -171,6 +174,7 @@ HELP-test.doc6      = targets for testing internal functionality of o-saft-dbx.p
 HELP-test.doc6.log  = same as test.doc6 but store output in '$(TEST.logdir)/'
 # o-saft-dbx.pm's --test-* option require data defined in $(SRC.pl), hence using $(SRC.pl)
 testarg0-doc6-%:                EXE.pl      = $(SRC.pl)
+testarg0-doc6--test-show:       TEST.args   = --test-show
 testarg0-doc6--test-data:       TEST.args   = --test-data
 testarg0-doc6--test-prot:       TEST.args   = --test-prot
 testarg0-doc6--test-regex:      TEST.args   = --test-regex
