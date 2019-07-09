@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.10 19/07/10 01:03:00
+#?      @(#) Makefile.doc 1.11 19/07/10 01:18:56
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.10
+_SID.doc        = 1.11
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -114,7 +114,7 @@ testarg0-doc3-cipher-osaft:     TEST.args   = ciphers=osaft
 testarg0-doc3-cipher-yeast:     TEST.args   = ciphers=yeast
 testarg0-doc3-cipher-openssl:   TEST.args   = ciphers=openssl
 testarg0-doc3-cipher-dumptab:   TEST.args   = ciphers=dumptab
-testarg0-doc3-getter:           TEST.args   = getter=0xC0,0xC2
+testarg0-doc3-getter:           TEST.args   = getter=0xC0,0x2C
 testarg0-doc3-hex:              TEST.args   = key=ECDHE-ECDSA-AES256-GCM-SHA384
 testarg0-doc3-key:              TEST.args   = key=ECDHE-ECDSA-AES256-GCM-SHA384
 #testarg0-doc3-getter:           TEST.args   = getter=0xCC,0xA9
