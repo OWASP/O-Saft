@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.187 19/07/09 00:08:41",
+    SID_osaft   => "@(#) osaft.pm 1.188 19/07/10 00:55:11",
 
 };
 
@@ -272,6 +272,9 @@ our @EXPORT     = qw(
                 set_hint
                 printhint
                 osaft_done
+                tls_const2text
+                tls_key2text
+                tls_text2key
 );
 # insert above in vi with:
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
@@ -2393,7 +2396,39 @@ Get information from internal C<%cipher_names> data structure.
 
 Get information from internal C<%cipher> data structure.
 
+=head2 tls_text2key($text)
+
+=head2 tls_key2text($key)
+
+=head2 tls_const2text($constant_name)
+
 =cut
+
+sub tls_text2key        {
+    #? convert text to internal key: 0x00,0x26 -> 0x03000026
+    my $txt = shift;
+       $txt =~ s/(,|0x)//g;
+    if (4 < length($txt)) {
+       $txt = "0x02$txt";    # SSLv2
+    } else {
+       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
+    }
+    return $txt;
+}
+
+sub tls_key2text        {
+    #? convert internal key to text: 0x03000026 -> 0x00,0x26
+    my $key = shift;
+    if ($key =~ m/^0x0300/) {
+       $key =~ s/0x0300//;      #   03000004 ->     0004
+    } else {
+       $key =~ s/^0x02//;       # 0x02030080 ->   030080
+    }
+       $key =~ s/(..)/,0x$1/g;  #       0001 -> ,0x00,0x04
+       $key =~ s/^,//;          # ,0x00,0x04 ->  0x00,0x04
+       $key =  "     $key" if (10 > length($key));
+    return "$key";
+}
 
 sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
 sub get_cipher_suitename { my $c=shift; return $cipher_names{$c}[0] if (defined $cipher_names{$c}[0]); return ""; }
@@ -3067,7 +3102,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.187 2019/07/09
+1.188 2019/07/10
 
 =head1 AUTHOR
 
