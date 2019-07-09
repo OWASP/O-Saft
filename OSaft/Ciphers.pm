@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.33 19/07/08 22:06:08";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.34 19/07/09 23:49:28";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -225,6 +225,8 @@ our @EXPORT_OK  = qw(
                 %ciphers_alias
                 %ciphers_const
                 @cipher_results
+                text2key
+                key2text
                 get_param
                 get_ssl
                 get_keyx
@@ -455,6 +457,44 @@ sub id2key      {
 
 =pod
 
+=head2 text2key($text)
+
+=head2 key2text($key)
+
+=head2 const2text($constant_name)
+
+=cut
+
+sub text2key    {
+    #? convert text to internal key: 0x00,0x26 -> 0x03000026
+    my $txt = shift;
+       $txt =~ s/(,|0x)//g;
+    if (4 < length($txt)) {
+       $txt = "0x02$txt";    # SSLv2
+    } else {
+       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
+    }
+    return $txt;
+} # text2key
+
+sub key2text    {
+    #? convert internal key to text: 0x03000026 -> 0x00,0x26
+    my $key = shift;
+    if ($key =~ m/^0x0300/) {
+       $key =~ s/0x0300//;      #   03000004 ->     0004
+    } else {
+       $key =~ s/^0x02//;       # 0x02030080 ->   030080
+    }
+       $key =~ s/(..)/,0x$1/g;  #       0001 -> ,0x00,0x04
+       $key =~ s/^,//;          # ,0x00,0x04 ->  0x00,0x04
+       $key =  "     $key" if (10 > length($key));
+    return "$key";
+} # key2text
+
+sub const2text  {  my $c=shift; $c =~ s/_/ /g; return $c; }
+
+=pod
+
 =head2 get_param($cipher, $key)
 
 =head2 get_ssl(  $cipher)
@@ -502,7 +542,7 @@ sub get_param   {
     my ($cipher, $key) = @_;
     return $ciphers{$cipher}->{$key} || '' if (0 < (grep{/^$cipher/i} %ciphers));
     return $STR_UNDEF;
-}; # get_param
+} # get_param
 sub get_ssl     { my $c=shift; return get_param($c, 'ssl');  }
 sub get_keyx    { my $c=shift; return get_param($c, 'keyx'); }
 sub get_auth    { my $c=shift; return get_param($c, 'auth'); }
@@ -1486,7 +1526,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.33 2019/07/08
+1.34 2019/07/09
 
 =head1 AUTHOR
 
