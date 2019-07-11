@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.188 19/07/10 00:55:11",
+    SID_osaft   => "@(#) osaft.pm 1.189 19/07/11 23:38:21",
 
 };
 
@@ -932,10 +932,13 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     #       of the corresponding hex keys, unless the underlaying openssl or libssl
     #       uses these cipher suite names with suffix -OLD too.
     #
+    # TODO: check constants for: NULL NULL-NULL NULL-MD5 *-PSK-SHA
+    #
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name              # cipher suite value
     #!#----------+-------------------------------------+--------------------------+
 #       SSL2 ciphers?                                  # missing SSL_CK_ prefix
+    '0x02000000' => [qw(NULL-MD5                        NULL_WITH_MD5)],
     '0x02010080' => [qw(RC4-MD5                         RC4_128_WITH_MD5)],
     '0x02020080' => [qw(EXP-RC4-MD5                     RC4_128_EXPORT40_WITH_MD5)],
     '0x02030080' => [qw(RC2-CBC-MD5                     RC2_128_CBC_WITH_MD5)],
@@ -1108,7 +1111,6 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x03000020' => [qw(KRB5-RC4-SHA                    KRB5_RC4_128_SHA)],
     '0x0300002B' => [qw(EXP-KRB5-RC4-MD5                KRB5_RC4_40_MD5)],
     '0x03000028' => [qw(EXP-KRB5-RC4-SHA                KRB5_RC4_40_SHA)],
-    '0x02000000' => [qw(NULL-MD5                        NULL_WITH_MD5)],
     '0x03000000' => [qw(NULL-NULL                       NULL_WITH_NULL_NULL)], # O-Saft dummy
     '0x0300008A' => [qw(PSK-RC4-SHA                     PSK_WITH_RC4_128_SHA)],
     '0x0300008B' => [qw(PSK-3DES-EDE-CBC-SHA            PSK_WITH_3DES_EDE_CBC_SHA)],
@@ -3102,7 +3104,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.188 2019/07/10
+1.189 2019/07/11
 
 =head1 AUTHOR
 
