@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.35 19/07/10 00:52:57";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.36 19/07/11 23:41:01";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -1143,11 +1143,11 @@ sub _show_tablehead {
 
     if ($format =~ m/^(?:dump|yeast)/) {
         my $key = "0x00,0x00";  # use first entry to get keys
-        foreach my $val (sort keys %{$ciphers{$key}}) {
-            push(@values, $val);
-        }
-        printf"%12s\t%s\n", $key, join("\t",@values);
-        printf"#%s%s\n", "-" x 14, join("", ("+-------" x ($#values + 1)));
+        #foreach my $val (sort keys %{$ciphers{$key}}) {
+        #    push(@values, $val);
+        #}
+        printf("=%9s\t%9s\t%s\n", "key", "hex", join("\t", qw(ssl keyx auth enc bits mac sec name)));
+        printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
     }
 #   printf("=%14s\t%-39s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 #            "key", "name", "sec", "ssl", "enc", "bit", "mac", "auth", "keyx", "score", "tag" );
@@ -1171,8 +1171,8 @@ sub _show_tablehead {
     return;
 } # _show_tablehead
 
-sub _show_tableline {
-    # print table headline according given format
+sub _show_tabledata {
+    # print table data line according given format
     my ($format, $key) = @_;
     my $name= $ciphers_names{$key}->{'iana'} || '';
     my $ssl = $ciphers{$key}->{'ssl'}   || '';
@@ -1202,23 +1202,36 @@ sub _show_tableline {
                 $key, $name, $ssl, $kx,   $au,   $enc, $bit, $mac,    $tag);
     }
     return;
-} # _show_tableline
+} # _show_tabledata
 
 sub _show_ciphers   {
     # print internal list of ciphers
     my $format = shift;
-    foreach my $key (sort keys %ciphers) {
+    # key in %ciphers is the cipher's hex value, but we want the ciphers sorted
+    # according their hex constant; perl's sort need a compare funtion
+    my $cnt = 0;
+    my %keys;
+    map { $keys{text2key($_)} = $_; } keys %ciphers;
+    foreach my $key (sort keys %keys) {
+        $cnt++;
+        my $hex = $keys{$key};
         my @values;
         if ($format =~ m/^(?:dump|yeast)/) {
-            foreach my $val (sort keys %{$ciphers{$key}}) {
-                push(@values, $ciphers{$key}->{$val});
+            # simple approach, not used because we want a special order
+            #foreach my $col (sort keys %{$ciphers{$key}}) {
+            #    push(@values, $ciphers{$key}->{$col});
+            #}
+            foreach my $col (qw(ssl keyx auth enc bits mac sec)) {
+                push(@values, $ciphers{$hex}->{$col});
             }
-            printf"%12s\t%s\n", $key, join("\t",@values);
+                push(@values, $ciphers_names{$hex}->{'osaft'});
+            $hex =  "     $hex" if (10 > length($hex)); # align right
+            printf"%s\t%s\t%s\n", $key, $hex, join("\t",@values);
             next;
         }
-        _show_tableline($format, $key);
+        _show_tabledata($format, $hex);
     }
-    return;
+    return $cnt;
 } # _show_ciphers
 
 # =pod
@@ -1247,10 +1260,14 @@ sub show_ciphers    {
 
     if ($format !~ m/tab$/) {
         print  <<'EoT';
-= internal lists of ciphers
+=
+= Show a full overview of all available ciphers.
+= Output is similar (order of columns) but not identical to result of
+= 'openssl ciphers -V' command.
+=
 =   description of columns:
-=       key         - hex key for cipher suite
-
+=       key         - internal hex key for cipher suite
+=       hex         - hex key for cipher suite (like opnssl)
 EoT
         my $key = 0;
         foreach (@{$ciphers_desc{head}}) {
@@ -1258,15 +1275,20 @@ EoT
                 $ciphers_desc{text}[$key]);
             $key++;
         }
+        printf("=       name        - OpenSSL suite name\n=\n");
     }
 
     _show_tablehead($format);
-    _show_ciphers($format);
+    my $cnt = _show_ciphers($format);
 
+    if ($format =~ m/^(?:dump|yeast)/) {
+        printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
+    }
     if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
         printf("=%s+%s+%s+%s+%s+%s+%s+%s+%s\n",
                "-" x 14, "-" x 47, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 11 );
     }
+    printf("= %s ciphers\n", $cnt);
     return;
 } # show_ciphers
 
@@ -1558,7 +1580,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.35 2019/07/10
+1.36 2019/07/11
 
 =head1 AUTHOR
 
