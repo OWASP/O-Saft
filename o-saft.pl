@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) %M% %I% %E% %U%",
+    SID         => "@(#) yeast.pl 1.876 19/07/11 23:37:15",
     STR_VERSION => "19.06.19",          # <== our official version number
 };
 
@@ -1356,6 +1356,7 @@ _yeast_TIME("cfg}");
         'AECDH-DES-CBC3-SHA'    => [qw(  weak SSLv3 3DES  168 SHA1 None  ECDH        0 :)],
         'AECDH-NULL-SHA'        => [qw(  weak SSLv3 None    0 SHA1 None  ECDH        0 :)],
         'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)], # openssl: MEDIUM
+        'PSK-SHA256'            => [qw( weak TLSv12 None   0   SHA256 PSK   PSK         1 :)],
         'PSK-SHA'               => [qw(  weak SSLv3 None    0 SHA1 RSA   DH          0 :)],
         'AES128-SHA'            => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   RSA        80 :)],
         'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
@@ -1366,10 +1367,10 @@ _yeast_TIME("cfg}");
         'DES-CBC-SHA'           => [qw(  weak SSLv3 DES    56 SHA1 RSA   RSA         0 :)],
         'DES-CBC-SHA'           => [qw(  weak SSLv2 DES    56 SHA1 RSA   RSA         0 :)],
         'DES-CFB-M1'            => [qw(  weak SSLv2 DES    64 MD5  RSA   RSA        20 :)],
-        'DH-DSS-AES128-SHA'     => [qw(medium -?-   AES   128 SHA1 DSS   DH         81 :)],
-        'DH-DSS-AES256-SHA'     => [qw(medium -?-   AES   256 SHA1 DSS   DH         81 :)],
-        'DH-RSA-AES128-SHA'     => [qw(medium -?-   AES   128 SHA1 RSA   DH         81 :)],
-        'DH-RSA-AES256-SHA'     => [qw(medium -?-   AES   256 SHA1 RSA   DH         81 :)],
+        'DH-DSS-AES128-SHA'     => [qw(medium SSLv3 AES   128 SHA1 DSS   DH         81 :)],
+        'DH-DSS-AES256-SHA'     => [qw(medium SSLv3 AES   256 SHA1 DSS   DH         81 :)],
+        'DH-RSA-AES128-SHA'     => [qw(medium SSLv3 AES   128 SHA1 RSA   DH         81 :)],
+        'DH-RSA-AES256-SHA'     => [qw(medium SSLv3 AES   256 SHA1 RSA   DH         81 :)],
         'DHE-DSS-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 DSS   DH         80 :)],
         'DHE-DSS-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 DSS   DH        100 :)],
         'DHE-DSS-RC4-SHA'       => [qw(  weak SSLv3 RC4   128 SHA1 DSS   DH         20 :)],
@@ -1406,8 +1407,8 @@ _yeast_TIME("cfg}");
         'EDH-RSA-DES-CBC3-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 RSA   DH          0 :)],
         'EDH-RSA-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 RSA   DH          0 :)],
         'EXP-ADH-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    40 SHA1 None  DH(512)     0 export)],
-        'EXP-ADH-RC4-MD5'       => [qw(  weak SSLv3 RC4    40 MD5  None  DH(512)     0 export)],
-        'EXP-DES-CBC-SHA'       => [qw(  weak SSLv3 DES    40 SHA1 RSA   RSA(512)    0 export)],
+        'EXP-ADH-RC4-MD5'       => [qw(  WEAK SSLv3 RC4    40 MD5  None  DH(512)     0 export)],
+        'EXP-DES-CBC-SHA'       => [qw(  WEAK SSLv3 DES    40 SHA1 RSA   RSA(512)    0 export)],
         'EXP-EDH-DSS-DES-CBC-SHA'=>[qw(  weak SSLv3 DES    40 SHA1 DSS   DH(512)     0 export)],
         'EXP-EDH-RSA-DES-CBC-SHA'=>[qw(  weak SSLv3 DES    40 SHA1 RSA   DH(512)     0 export)],
         'EXP-RC2-CBC-MD5'       => [qw(  weak SSLv2 RC2    40 MD5  RSA   RSA(512)    0 export)],
@@ -1424,12 +1425,12 @@ _yeast_TIME("cfg}");
         'EXP1024-RC4-MD5'       => [qw(  WEAK SSLv3 RC4    56 MD5  RSA   RSA(1024)   1 export)],
         'EXP1024-RC4-SHA'       => [qw(  WEAK SSLv3 RC4    56 SHA1 RSA   RSA(1024)   2 export)],
         'IDEA-CBC-MD5'          => [qw(  weak SSLv2 IDEA  128 MD5  RSA   RSA         0 :)],
-        'IDEA-CBC-SHA'          => [qw(  weak SSLv2 IDEA  128 SHA1 RSA   RSA         0 :)],
+        'IDEA-CBC-SHA'          => [qw(  weak SSLv3 IDEA  128 SHA1 RSA   RSA         0 :)],
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
-        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  NULL        0 :)], # openssl SSLeay testing
-        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  NULL        0 :)], # openssl SSLeay testing
+        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  RSA(512)    0 :)], # openssl SSLeay testing
+        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  RSA         0 :)], # openssl SSLeay testing
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
-        'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 export)], # FIXME: same hash key as before
+        'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA         0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
         'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-SHA
 #       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
@@ -1640,12 +1641,12 @@ _yeast_TIME("cfg}");
         'EXP-KRB5-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     40 SHA1   KRB5  KRB5        0 export)],
         'EXP-KRB5-RC2-CBC-MD5'          => [qw(  weak SSLv3 RC2     40 MD5    KRB5  KRB5        0 export)],
         'EXP-KRB5-RC2-CBC-SHA'          => [qw(  weak SSLv3 RC2     40 SHA1   KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC4-MD5'              => [qw(  WEAK SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC4-SHA'              => [qw(  WEAK SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC4-MD5'              => [qw(  weak SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC4-SHA'              => [qw(  weak SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
         # from ssl/s3_lib.c
-        'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   KEA   FZA        11 :)],
-        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   KEA   FZA        81 :)],
-        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   KEA   FZA        11 :)],
+        'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   FZA   FZA        11 :)],
+        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA        81 :)],
+        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   FZA   FZA        11 :)],
         'RSA-FIPS-3DES-EDE-SHA-2'       => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA-2'        => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
