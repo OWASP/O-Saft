@@ -52,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.14 18/10/02 00:33:42
+#?      @(#) o-saft 1.15 19/07/20 12:12:32
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -73,6 +73,8 @@ mode=cli        # cli, cgi, gui
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
 docker_tag=
+
+[ -t 1 ] || mode=gui    # no STDOUT, assuming start from desktop, hence GUI
 
 while [ $# -gt 0 ]; do
     case "$1" in
