@@ -110,7 +110,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.6 19/07/20 16:33:56
+#?      @(#)  1.7 19/07/20 22:59:54
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -193,27 +193,33 @@ while [ $# -gt 0 ]; do
 # uses @INC=
 EoT
 		perl -le 'print "\t" . join "\n\t",@INC'
-		echo ""
-		echo "# required perl modules:"
-		echo -n "	Net::DNS "
-		perl -MNet::DNS -le 'print $Net::DNS::VERSION' \
-		|| echo "**ERROR: Net::DNS missing"
-		echo -n "	Mozilla::CA "
-		perl -MMozilla::CA -le 'print $Mozilla::CA::VERSION' \
-		|| echo "**ERROR: Mozilla::CA missing"
+		#echo ""
 		#echo -n "	libidn.so "
 		# TODO: use find in all paths of perl's @INC and search libidn.so
-		echo ""
 		;;
 	esac
 done
 
 # preconditions (needs to be checked with or without --n)
-[   -e "$BUILD_DIR" ]   && echo "**ERROR: BUILD_DIR=$BUILD_DIR exists; exit"     && exit 2
-[   -e "$OPENSSL_DIR" ] && echo "**ERROR: OPENSSL_DIR=$OPENSSL_DIR exists; exit" && exit 2
-[ ! -e "$SSLEAY_DIR" ]  && echo "**ERROR: SSLEAY_DIR=$SSLEAY_DIR missing; exit"  && exit 2
-[ ! -e "$OSAFT_DIR" ]   && echo "**ERROR: OSAFT_DIR=$OSAFT_DIR missing; exit"    && exit 2
-[ $optn -eq 1 ] && exit 0
+err=0
+echo ""
+echo "# required perl modules:"
+for mod in IO::Socket::SSL Net::DNS Mozilla::CA ; do
+	txt=""
+	echo -n "	$mod "
+	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+	echo "$txt"
+	[ -n "$txt" ] && err=1
+done
+echo ""
+echo "# requred directories:"
+[ ! -e "$OSAFT_DIR" ]   && echo "**ERROR: OSAFT_DIR=$OSAFT_DIR missing; exit"    && err=1
+[   -e "$BUILD_DIR" ]   && echo "**ERROR: BUILD_DIR=$BUILD_DIR exists; exit"     && err=1
+[   -e "$OPENSSL_DIR" ] && echo "**ERROR: OPENSSL_DIR=$OPENSSL_DIR exists; exit" && err=1
+[ ! -e "$SSLEAY_DIR" ]  && echo "**ERROR: SSLEAY_DIR=$SSLEAY_DIR missing; exit"  && err=1
+echo ""
+[ 0 -ne $err ]    && echo "**ERROR: preconditions incomplete; exit" && exit 2
+[ 1 -eq $optn ] && exit 0
 
 # create aliases, so Dockerfile's syntax can be used
 alias   RUN="\cd $dir && "
