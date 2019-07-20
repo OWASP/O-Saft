@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.32 19/07/20 09:34:55";
+my $SID_cgi = "@(#) o-saft.cgi 1.33 19/07/20 11:17:06";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.32\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.33\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -205,10 +205,28 @@ if ($me =~/\.cgi$/) {
 		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
 		# match IPv6: ([0-9a-f]{0,4}:){1,8}
 		# match 1234567890: IP as integer not yet allowed
+		# match IPv4: less than 4 parts for dotted IP
 
-                # following RegEx uses grouping with back reference insted of
-                # (?: ... ) ; this is because  :  is used literally in RegExs
-                # sequence of following RegEx uses more specific RegEx first
+                # TODO: build a map of integer ranges for IPs to be denied:
+                #        10.x.x.x  =  167772161 ..  184549375
+                #       127.x.x.x  = 2130706433 .. 2147483647
+                #       ...
+                #       then check given host againts this map if conversion to
+                #       an integer is succesful.
+                #       It will also work for mixed IPv6-IPv4 IPs like:
+                #         ::ffff:127.0.0.1 which is an alias for ::ffff:7f00:1. 
+                #       This should eliminate some of the restriction (missing)
+                #       of RegEx (see NOTEs below).
+                #       Unfortunately Math::BigInt is required (breaks usage on
+                #       ancient systems).
+
+                # NOTE: according followin RegExs
+                # - grouping with back reference is used insted of  (?: ... )
+                #   this is because  :  is used literally in RegExs
+                # - RegExs are not case sensitive to match FQDN and (hex) IP,
+                #   but this also allows --URL= --HOST= (which is ok)
+                # - sequence of following RegEx is important,  more specific
+                #   ones first
 
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
@@ -238,10 +256,17 @@ if ($me =~/\.cgi$/) {
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
                         # NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
+		qr/(-(host|url)=([0-9]+\.){1,2}[0-9]+$)/i,
+			# incomplete IPv4 like 10.1 (which evaluate to 10.0.0.1)
+                        # NOTE: in general not bad, but needs to be mapped to
+                        #       allowed IPv4 or IPv6 which is not that simple
+                        # FIXME: i.e. valid 192.1 is denied
+
 		qr/(-(host|url)=[0-9]+$)/i,
 			# just a number
                         # NOTE: in general not bad, but needs to be mapped to
                         #       allowed IPv4 or IPv6 which is not that simple
+                        # FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
 
 		qr/(-(host|url)=.*?\.local$)/i,
 			# multicast domain .local (RFC6762)
