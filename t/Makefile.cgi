@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.31 19/07/03 16:13:21
+#?      @(#) Makefile.cgi 1.32 19/07/20 12:30:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.31
+_SID.cgi        = 1.32
 
 _MYSELF.cgi     = t/Makefile.cgi
 _MY.includes   += $(_MYSELF.cgi)
@@ -89,22 +89,23 @@ test.cgi.badhosts   = \
 
 # range from - - - - - - - - - - - - - - - - - - to
 test.cgi.badIPv4    = \
-	0.0.0.1                                  0.0.0.255 \
-	10.0.0.1      10.0.0.255   10.12.34.56   10.255.255.255 \
-	100.64.0.0                               100.64.0.255 \
-	127.0.0.1     127.1.0.1                  127.1.0.255  \
+	0.0.0.1                                  0.0.0.255       \
+	10.0.0.1      10.0.0.255   10.12.34.56   10.255.255.255  \
+	100.64.0.0                               100.64.0.255    \
+	127.0.0.1     127.1.0.1                  127.1.0.255     \
 	127.251.251.1                            127.255.255.255 \
 	169.254.0.1   169.254.1.1                169.254.255.255 \
 	172.16.0.1                               172.19.255.255  \
-	192.0.0.1                                192.0.0.255 \
-	192.0.2.1                                192.0.2.255 \
-	192.88.99.1                              192.88.99.255 \
+	192.0.0.1                                192.0.0.255     \
+	192.0.2.1                                192.0.2.255     \
+	192.88.99.1                              192.88.99.25  5 \
 	192.168.0.1                              192.168.255.255 \
 	198.18.0.1    198.18.0.255  198.18.1.1   198.18.0.1.255  \
 	198.51.100.1                             198.51.100.255  \
-	203.0.13.1                               203.0.13.255 \
+	203.0.13.1                               203.0.13.255    \
 	224.0.0.1     224.0.0.255   239.1.1.255  239.255.255.255 \
 	240.0.0.1     251.251.251.251            255.255.255.255 \
+	127.0.1       127.1         192.1        127001 \
 
 # The IP or hostname becomes part of the target name, hence IPv6 are not
 # possible verbatim because they contain : in the name; the : must be escaped
@@ -253,7 +254,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.31: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.32: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
