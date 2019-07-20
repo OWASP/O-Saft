@@ -103,14 +103,18 @@
 #?              in LDFLAGS to ensure that the special library will be used.
 #
 # HACKER's INFO
-#       This file mainly uses the commands from Dockerfile 1.20. Dockerfile's
+#       This file mainly uses the commands from Dockerfile 1.30. Dockerfile's
 #       syntax, which does not work in a shell, is deactivated with aliases.
+#       This code is scopend with
+#         # Dockerfile 1.30 {
+#         ...
+#         # Dockerfile 1.30 }
 #?
 #? EXAMPLES
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.8 19/07/20 23:48:14
+#?      @(#)  1.9 19/07/21 00:55:11
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -222,14 +226,20 @@ echo "# requred directories:"
 [   -e "$OPENSSL_DIR" ] && echo "**ERROR: OPENSSL_DIR=$OPENSSL_DIR exists; exit" && err=1
 [ ! -e "$SSLEAY_DIR" ]  && echo "**ERROR: SSLEAY_DIR=$SSLEAY_DIR missing; exit"  && err=1
 echo ""
-[ 0 -ne $err ]    && echo "**ERROR: preconditions incomplete; exit" && exit 2
+if [ 0 -ne $err ]; then
+	echo "**ERROR: preconditions incomplete; exit"
+	echo '!!Hint: install packages like:'
+	echo '        perl-net-dns perl-net-libidn perl-mozilla-ca'
+	echo '        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl'
+	exit 2
+fi
 [ 1 -eq $optn ] && exit 0
 
 # create aliases, so Dockerfile's syntax can be used
 alias   RUN="\cd $dir && "
 alias   apk="\echo '#'apk"
 
-# Dockerfile 1.20 {
+# Dockerfile 1.30 {
 
 # Pull, build and install enhanced openssl
 RUN \
@@ -330,7 +340,7 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 	  perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
 	  chmod 666 ./.o-saft.pl
 
-# Dockerfile 1.20 }
+# Dockerfile 1.30 }
 
 echo "# test o-saft.pl ..."
 	$OSAFT_DIR/o-saft.pl +version |egrep -i '(openssl|SSLeay)'
