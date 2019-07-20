@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.31 19/05/22 23:11:53";
+my $SID_cgi = "@(#) o-saft.cgi 1.32 19/07/20 09:34:55";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.31\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.32\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -204,6 +204,7 @@ if ($me =~/\.cgi$/) {
 
 		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
 		# match IPv6: ([0-9a-f]{0,4}:){1,8}
+		# match 1234567890: IP as integer not yet allowed
 
                 # following RegEx uses grouping with back reference insted of
                 # (?: ... ) ; this is because  :  is used literally in RegExs
@@ -235,7 +236,12 @@ if ($me =~/\.cgi$/) {
 
 		qr/(-(host|url)=([0-9a-f]{0,4}:){1,3}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
-                        #NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
+                        # NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
+
+		qr/(-(host|url)=[0-9]+$)/i,
+			# just a number
+                        # NOTE: in general not bad, but needs to be mapped to
+                        #       allowed IPv4 or IPv6 which is not that simple
 
 		qr/(-(host|url)=.*?\.local$)/i,
 			# multicast domain .local (RFC6762)
