@@ -16,7 +16,7 @@
 #?      Installs build in specified directory;  default: /usr/local/openssl .
 #?      Additionally builds perl module Net::SSLeay based on special openssl.
 #?      Net::SSLeay will be installed in  /usr/local/lib .
-#?      Modifies  .o-saft.pl  .
+#?      Modifies  .o-saft.pl  (keeping existing one in  .o-saft.pl-orig).
 #?      This script is intended to be executed in the  installation directory
 #?      of O-Saft.
 #?
@@ -110,7 +110,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#) install_openssl.sh 1.5 18/11/04 09:11:03
+#?      @(#)  1.6 19/07/20 16:33:56
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -132,6 +132,7 @@ OSAFT_VM_DYN_OPENSSL=${OSAFT_VM_DYN_OPENSSL:="--shared"}
 DESCRIPTION="Build special openssl (based on Peter Mosman's openssl)"
 OPENSSL_VERSION=1.0.2-chacha
 
+# set variables used in the code copied from Dockerfile to build openssl
   OSAFT_DIR=${OSAFT_DIR:="."}
 OPENSSL_DIR=${OPENSSL_DIR:=/usr/local/openssl}
  SSLEAY_DIR=${SSLEAY_DIR:=/usr/local/lib}
@@ -153,6 +154,9 @@ while [ $# -gt 0 ]; do
 	  '-n' | '--n')
 		optn=1
 	        try=echo
+	        move_rc=""
+		[ -e $dir/.o-saft.pl ] && move_rc="
+# move existing  $dir/.o-saft.pl to $dir/.o-saft.pl-orig"
 		cat <<EoT
 
 # start build in WORK_DIR=
@@ -178,7 +182,7 @@ while [ $# -gt 0 ]; do
 # install Net-SSLeay in (path from Net-SSLeay's Makefile)
 	/usr/local/lib
 
-# build openssl in (temporary dir) BUILD_DIR=$BUILD_DIR
+# build openssl in (temporary dir) BUILD_DIR=$BUILD_DIR  $move_rc
 # modify  OSAFT_DIR/.o-saft.pl  OSAFT_DIR=$OSAFT_DIR
 # and store in:  $dir/.o-saft.pl
 
@@ -309,10 +313,12 @@ RUN \
 
 echo "# Adapt O-Saft's .o-saft.pl ..."
 	cd    $WORK_DIR				&& \
-	cp    $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	rm   -f ./.o-saft.pl			&& \
-	perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
-	chmod 666 ./.o-saft.pl
+	[ -e  $OSAFT_DIR/.o-saft.pl ]		&& \
+	  mv  $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
+	  cp  $OSAFT_DIR/.o-saft.pl-orig $OSAFT_DIR/.o-saft.pl	&& \
+	  rm  -f ./.o-saft.pl			&& \
+	  perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
+	  chmod 666 ./.o-saft.pl
 
 # Dockerfile 1.20 }
 
