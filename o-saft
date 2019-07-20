@@ -52,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.15 19/07/20 12:12:32
+#?      @(#) o-saft 1.16 19/07/20 12:15:03
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -90,6 +90,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
+        +VERSION)       echo "1.16"; exit 0; ;;
         -list)
             for exe in $contrib/* ; do
                 [ -d "$exe" ] && continue
