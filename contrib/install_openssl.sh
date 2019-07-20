@@ -110,7 +110,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.7 19/07/20 22:59:54
+#?      @(#)  1.8 19/07/20 23:48:14
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -193,9 +193,6 @@ while [ $# -gt 0 ]; do
 # uses @INC=
 EoT
 		perl -le 'print "\t" . join "\n\t",@INC'
-		#echo ""
-		#echo -n "	libidn.so "
-		# TODO: use find in all paths of perl's @INC and search libidn.so
 		;;
 	esac
 done
@@ -211,6 +208,13 @@ for mod in IO::Socket::SSL Net::DNS Mozilla::CA ; do
 	echo "$txt"
 	[ -n "$txt" ] && err=1
 done
+
+echo ""
+echo "# required libraries:"
+txt=`find /lib -name libidn\.\*`
+[ -z "$txt" ] && txt="**ERROR: libidn.so missing" && err=1
+echo "	libidn.so $txt"
+
 echo ""
 echo "# requred directories:"
 [ ! -e "$OSAFT_DIR" ]   && echo "**ERROR: OSAFT_DIR=$OSAFT_DIR missing; exit"    && err=1
