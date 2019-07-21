@@ -56,10 +56,10 @@
 #?      Script needs write access to installation directories (/usr/local and
 #?      /usr/local/lib by default).
 #?      To build openssl, following libraries and include files are needed:
-#?          gmp krb5 lksctp zlib
+#?          gmp krb5 libsctp zlib
 #?      Assumes that ca-certificates are install in /etc/ssl/certs/ .
 #?      Assumes that following Perl modules are installed:
-#?          Net::DNS Mozilla::CA libidn.so
+#?          Module::Build Net::DNS Net::LibIDN1 libidn.so Mozilla::CA
 #?
 #? ENVIRONMENT VARIABLES
 #?      This script knows about following environment variable, which are the
@@ -138,7 +138,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.12 19/07/21 23:48:40
+#?      @(#)  1.13 19/07/22 01:58:58
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -241,7 +241,7 @@ done
 err=0
 echo ""
 echo "# required Perl modules:"
-for mod in IO::Socket::SSL Net::LibIDN Net::DNS Mozilla::CA ; do
+for mod in Module::Build IO::Socket::SSL Net::LibIDN Net::DNS Mozilla::CA ; do
 	txt=""
 	echo -n "	$mod "
 	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
@@ -255,6 +255,21 @@ txt=`find /lib -name libidn\.\*`
 [ -z "$txt" ] && txt="**ERROR: libidn.so missing" && err=1
 echo "	libidn.so $txt"
 
+# FIXME: libidn11-dev also required
+txt=`find /usr -name libidn2-0-dev`
+[ -z "$txt" ] && txt="**ERROR: libidn2-0-dev missing" && err=1
+echo "	libidn2-0-dev $txt"
+
+txt=`find /usr -name libgmp-dev`
+[ -z "$txt" ] && txt="**ERROR: libgmp-dev missing" && err=1
+echo "	libgmp-dev $txt"
+
+txt=`find /usr -name libsctp-dev`
+[ -z "$txt" ] && txt="**ERROR: libsctp-dev missing" && err=1
+echo "	libsctp-dev $txt"
+
+# FIXME: check for libkrb5-dev and libzip-dev missing
+
 echo ""
 echo "# requred directories:"
 [ ! -e "$OSAFT_DIR" ]   && echo "**ERROR: OSAFT_DIR=$OSAFT_DIR missing; exit"    && err=1
@@ -267,16 +282,37 @@ if [ 0 -ne $err ]; then
 	echo '!!Hint: install packages like:'
 	echo '        perl-net-dns perl-net-libidn perl-mozilla-ca'
 	echo '        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl'
+	echo '        libmodule-build-perl'
+	echo '        libgmp-dev libsctp-dev libzip-dev libidn11-dev libidn2-0-dev'
+	echo '# Note  libgmp-dev libsctp-dev libzip-dev  are only necessary for compiling openssl'
 	[ 0 -eq $optm ] && exit 2
 fi
 [ 1 -eq $optn ] && exit 0
 
+# NOTE: Module::Build is a hard requirement and must be installed in the OS
+mod="Module::Build" # hard requirement
+txt=""
+perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+[ -n "$txt" ] && echo "$txt" && exit 2
+
 if [ 1 -eq $optm ]; then
 	err=0
-	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_IDN $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
+	mod="Net::LibIDN"
+	echo ""
+	echo "# install perl modul $mod ..."
+	perl -MCPAN -e "install $mod"   || err=1
+	mod="Net::LibIDN2"
+	echo ""
+	echo "# install perl modul $mod ..."
+	perl -MCPAN -e "install $mod"   || err=1
+	[ 0 -ne $err ] && echo "**ERROR: module »${mod##*/}« installation failed; exit" && exit 2
+
+	err=0
+	# TODO: replace installing from -tgz with installing using CPAN
+	# TODO: IO::Socket::SSL uses Net::SSLeay, so build it after Net::SSLeay (again?)
+	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
 		err=1   # reset if build succeeds
 		tar=perllib.tgz
-		# TODO: Net-LibIDN is in subdirectory and uses non-standard build mechanism
 		# TODO: Mozilla-CA-20180117 is in subdirectory
 		# IO::Socket::SLL's Makefile.PL ask interactivly, grrr
 		echo ""
@@ -287,11 +323,6 @@ if [ 1 -eq $optm ]; then
 		tar   -xzf $tar -C $BUILD_DIR --strip-components=1	&& \
 		cd    $BUILD_DIR					&& \
 		#[ -d Mozilla-CA-20180117 ] && cd Mozilla-CA-20180117	&& \
-		if [ -d Net-LibIDN2-1.00 ]; then cd Net-LibIDN2-1.00;fi	&& \
-		if [ -f Build.PL ]; then \
-			 perl  Build.PL	&& \
-			./Build && ./Build test && ./Build install ; \
-		fi && \
 		[ -f Makefile.PL ] && perl  Makefile.PL --no-online-tests	&& \
 			set -x  && \
 			make    &&   make test  &&  make install	&& \
@@ -299,7 +330,8 @@ if [ 1 -eq $optm ]; then
 		err=0 && \
 		cd    /tmp  &&  rm -rf $tar
 	done
-	[ 0 -ne $err ] && echo "**ERROR: module »${mod##*/}« installation failed; exit" && exit 2
+
+	[ 0 -ne $err ] && echo "**ERROR: module »{mod« installation failed; exit" && exit 2
 fi
 
 # create aliases, so Dockerfile's syntax can be used
