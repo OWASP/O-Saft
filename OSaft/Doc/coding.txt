@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.5 19/04/28 22:11:12
+# SID   @(#) coding.txt 1.6 19/07/21 13:30:26
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -324,20 +324,30 @@ HACKER's INFO
 
       Documentation
 
-        All documentation of code details is  close to the corresponding code
-        lines. Some special comment lines are used, see  X&Comments&  above.
-        Note: comments describe *why* the code is written in some way  (means
-        the logic of the code),  and not  *what* the code does (which is most
-        likely obvious).
+        Documentation for the project consist at least of these parts:
 
-        All documentation for the user is written in plain ASCII text format,
-        see  *.txt  files in  OSaft/Doc/ .
+          u)  documentation for the user
+              SEE Public User Documentation (in o-saft.pl).
+          d)  documentation for development
+              SEE Internal Code Documentation (in o-saft.pl).
+          m)  documentation for testing in development
+              This dcumentation for testing the tools is done in t/Makefile*.
+              There exists  t/Makefile.pod,  which contains the "Annotations"
+              for the make system.  The description of the Makefile's targets
+              is done as target in each Makefile itself.
 
-        All documentation was initially written in perl's POD format. After 2
-        years of development, it seems that POD was not the best decision, as
-        it makes extracting information from documentation complicated, some-
-        times. Using POD is also a huge performance penulty on all platforms.
-        POD  will now be genereated on request using  --help=pod  option.
+        Note that all documentation (user and development) is  actively  used
+        by the program itself and by some additional tools, see for example:
+            o-saft.pl --help=opt
+
+        Initially all user documentation was written in  Perl's POD  format.
+        After two years of development, it was observerd that POD was not the
+        best decision, as it makes extracting information from  documentation
+        complicated, sometimes. Using POD is also a huge  performance penulty
+        on all platforms. Hence  POD  will now be genereated on request using
+        the  --help=pod  option.
+
+        For mor Details  SEE Note:Documentation (in o-saft.pl).
 
 
     Repository
@@ -356,7 +366,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.5 19/04/28 22:11:12";
+            my $SID = "coding.txt 1.6 19/07/21 13:30:26";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
