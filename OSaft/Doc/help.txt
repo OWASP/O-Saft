@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.32 19/07/04 23:27:54
+# SID   @(#) help.txt 1.33 19/07/21 12:11:47
 
 NAME
 
@@ -115,7 +115,7 @@ WHY?
           $0 +hsts_sts example.tld
 
         For more, please see  EXAMPLES  section below.
-        If it should run on systems with old software (perl or perl modules),
+        If it should run on systems with old software (perl or Perl modules),
         please see  DEBUG  section below.
 
 
@@ -131,12 +131,13 @@ SECURITY
         Care should be taken, when additional tools and modules are installed
         as described in  INSTALLATION  below. In particular it is recommended
         to do these installations into directoies  specially prepared for use
-        with $0 . No other tools of your system should use these installations
-        i.e. by accident or because your environment variables point to them.
+        with  $0 . No other tools of your system should use these
+        installations, i.e. by accident or because your environment variables
+        point to them.
 
-        Note that compilation and installation of additional tools  (openssl,
+        Note that compilation and installation of  additional tools (openssl,
         Net::SSLeay, etc.) uses known insecure configurations and features!
-        This is essential to make $0 able to check for such insecurities.
+        This is essential to make  $0  able to check for such insecurities.
 
         It is  highly recommended to do these installations and use the tools
         on a separate testing system.
@@ -146,7 +147,7 @@ SECURITY
 
 CONCEPTS
 
-        The purpose of  O-Saft  is to do the work, not to force the user to
+        The purpose of  O-Saft  is to do the work,  not to force the user  to
         learn a new tool or to install "newer" software first.
         However, the user "should do something" if necessary depending on the
         reported results.
@@ -173,7 +174,7 @@ TECHNICAL INFORMATION
 
     OpenSSL, libssl, libcrypto
 
-        In general the tool uses perl's  Net::SSLeay(1)  module  which itself
+        In general the tool uses Perl's  Net::SSLeay(3pm) module which itself
         is based on libssl and/or libssleay library of the operating system.
         It's possible to use other versions of these libraries, see options:
           * --exe-path=PATH --exe=PATH
@@ -181,7 +182,7 @@ TECHNICAL INFORMATION
           * --envlibvar=NAME
 
         The external  openssl(1)  is called to extract  some information from
-        its output.  The version of openssl can be controlled  with following
+        its output. The version of  openssl  can be controlled with following
         options:
           * --openssl=TOOL
           * --no-openssl
@@ -194,6 +195,8 @@ TECHNICAL INFORMATION
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
         0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
         for 1.0.0 may not provide all informations.
+        Some functionality (checks) of  O-Saft  may be missing or fail,  when
+        openssl versions 1.1.x are used (because functionality was removed).
         LibreSSL is not recommended, because  some functionallity  considered
         insecure, has been removed.
         For more details, please see  INSTALLATION  below.
@@ -202,8 +205,8 @@ TECHNICAL INFORMATION
     Certificates and CA
 
         All checks according the validity of the certificate chain  are based
-        on the root CAs installed on the system. NOTE that Net::SSLeay(1) and
-        openssl(1)  may have their own rules where to find the root CAs.
+        on the root CAs installed on the system.  Note that  Net::SSLeay(3pm)
+        and  openssl(1)  may have their own rules where to find the root CAs.
         Please refer to the documentation on your system for these tools.
         However, there are folloing options to tweak these rules:
           * --ca-file=FILE
@@ -263,7 +266,7 @@ TECHNICAL INFORMATION
         extract  the DH parameters from the  data returned by the server, see
         +cipher-dh  command.
 
-        If you need to run on systems with older perl or perl module versions
+        If you need to run on systems with older perl or Perl module versions
         please refer to the  DEBUG  section for more inofrmation.
 
 
@@ -1073,7 +1076,7 @@ OPTIONS
       --openssl=TOOL
 
           'TOOL'        can be a path to openssl executable; default: openssl
-#         * ssleay:     use installed Net::SSLeay library for perl
+#         * ssleay:     use installed Net::SSLeay library for Perl
 #         * x86_32:     use  ** NOT YET IMPLEMENTED **
 #         * x86_64:     use  ** NOT YET IMPLEMENTED **
 #         * x86Mac:     use  ** NOT YET IMPLEMENTED **
@@ -1089,7 +1092,7 @@ OPTIONS
 
       --openssl-ciphers --force-openssl
 
-          Use openssl to check for supported ciphers;  default: IO::Socket(1)
+          Use openssl to check for supported ciphers; default: IO::Socket(3pm)
 
           This option forces to use  "openssl s_slient -connect CIPHER .." to
           check if a cipher is supported by the remote target. This is useful
@@ -1275,11 +1278,11 @@ OPTIONS
           Do not use *-MD5 ciphers for other protocols than SSLv2.
           This option is only effective with  +cipher  command.
 
-          The purpose is to avoid warnings from  IO::Socket::SSL(1)  like:
+          The purpose is to avoid warnings from  IO::Socket::SSL(3pm)  like:
               Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
-          which occours with some versions of IO::Socket::SSL(1) when a *-MD5
-          ciphers will be used with other protocols than SSLv2.
+          which occours with some versions of  IO::Socket::SSL(3pm)  when a
+          *-MD5  ciphers will be used with other protocols than SSLv2.
 
           Note that these ciphers will be checked for SSLv2 only.
 
@@ -1386,7 +1389,7 @@ OPTIONS
 
       --force-sni
 
-          Do not check if SNI seems to be supported by  Net::SSLeay(1).
+          Do not check if SNI seems to be supported by  Net::SSLeay(3pm).
           Older versions of openssl and its libries do not support SNI or the
           SNI support is implemented buggy. By default it's checked if SNI is
           properly supported. With this option this check can be disabled.
@@ -2304,7 +2307,7 @@ CHECKS
       Lucky13
 
         Check if CBC ciphers are offered.
-        NOTE the recommendation  to be safe against  Lucky13  was to use  RC4
+        Note the recommendation  to be safe against  Lucky13  was to use  RC4
         ciphers. But they are also subject to attacks (see below).  Hence the
         check is only for CBC ciphers.
 
@@ -3030,7 +3033,7 @@ CUSTOMIZATION
 
               $0 ciphers
 
-        NOTE that such configuration options should be used before any --help
+        Note that such configuration options should be used before any --help
         or  --help=*  option, otherwise the changed setting is not visible.
 
     CONFIGURATION FILE
@@ -3071,14 +3074,14 @@ CUSTOMIZATION
         All debugging functionality is defined in  o-saft-dbx.pm , which will
         be searched for using paths available in  '@INC'  variable.
 
-        Syntax in this file is perl code.  For details see  DEBUG  below.
+        Syntax in this file is Perl code.  For details see  DEBUG  below.
 
     USER-FILE
 
         All user functionality is defined in   o-saft-usr.pm ,  which will be
         searched for using paths available in  '@INC'  variable.
 
-        Syntax in this file is perl code.
+        Syntax in this file is Perl code.
 
         All functions defined in   o-saft-usr.pm   are called when the option
         --usr  was given.  The functions are defined as empty stub,  any code
@@ -3258,7 +3261,7 @@ KNOWN PROBLEMS
               (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
 
         occurs if the target refused a connection on port 80.
-        This is considered a bug in  Net::SSLeay(1).
+        This is considered a bug in  Net::SSLeay(3pm).
         Workaround to get rid of this message: use  --no-http  option.
 
     invalid SSL_version specified at ... IO/Socket/SSL.pm
@@ -3610,7 +3613,7 @@ LIMITATIONS
 
 DEPENDENCIES
 
-        All perl modules and all  private moduels and files  will be searched
+        All Perl modules and all  private moduels and files  will be searched
         for using paths  available in the  '@INC'  variable.  '@INC'  will be
         prepended by following paths:
 
@@ -3625,11 +3628,16 @@ DEPENDENCIES
 
     Perl Modules
 
-        * IO::Socket::SSL(1)
-        * IO::Socket::INET(1)
-        * Net::SSLeay(1)
+        * IO::Socket::SSL(3pm)
+        * IO::Socket::INET(3pm)
+        * Net::SSLeay(3pm)
         * Net::SSLinfo
         * Net::SSLhello
+
+        Perl modules loaded and used for some options only:
+
+        * Net::DNS(3pm)
+        * Time::Local(3pm)
 
     Additional files used if requested
 
@@ -3692,6 +3700,8 @@ INSTALLATION
         Simply download the tarball or zip file for your platform, unpack it,
         and install (copy) the binaries into a directory of your choice.
 
+        Note that  Net::SSLeay  needs to be adapted properly then.
+
     Example: Compile OpenSSL
 
         OpenSSL can be used from http://openssl.org/ or, as recommended, from
@@ -3710,6 +3720,8 @@ INSTALLATION
         which will install openssl, libssl.so, libcrypto.so  and some include
         files as well as the include files in  /usr/local/ .
         The shared version of the libraries are necessary for  Net::SSLeay.
+
+        For a more complete build, plese see:  contrib/install_openssl.sh .
 
         OpenSSL.org
         Building openssl from the offical  openssl.org  sources requires some
@@ -3884,7 +3896,7 @@ INSTALLATION
     Stand-alone Executable
 
         Some people asked for a stand-alone executable (mainly for Windows).
-        Even perl is a scripting language there are situations where a stand-
+        Even Perl is a scripting language there are situations where a stand-
         alone executable would be nice, for example if the installed perl and
         its libraries are outdated, or if perl is missing at all.
 
@@ -3958,9 +3970,9 @@ BUILD DOCKER IMAGE
 
 SEE ALSO
 
-        * openssl(1), Net::SSLeay(1), Net::SSLhello, Net::SSLinfo, timeout(1)
+        * openssl(1), Net::SSLeay(3pm), Net::SSLhello, Net::SSLinfo, timeout(1)
         * http://www.openssl.org/docs/apps/ciphers.html
-        * IO::Socket::SSL(1), IO::Socket::INET(1)
+        * IO::Socket::SSL(3pm), IO::Socket::INET(3pm)
         * o-saft, o-saft-docker, o-saft-docker-dev, Dockerfile, docker
 
 
@@ -3971,7 +3983,7 @@ HACKER's INFO
         Automatically detecting the supported SSL versions of the underlaying
         system is a hard job and not always possible. Reasons could be:
 
-        * used perl modules (Socket::SSL, Net::SSLeay) does not handle errors
+        * used Perl modules (Socket::SSL, Net::SSLeay) does not handle errors
           properly. Erros may be:
               invalid SSL_version specified at ... IO/Socket/SSL.pm
               Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm
@@ -3981,7 +3993,7 @@ HACKER's INFO
         * the underlaying libssl does not support the version, which then may
           result in segmentation fault
 
-        * the underlaying libssl is newer than the perl module and the module
+        * the underlaying libssl is newer than the Perl module and the module
           has not been reinstalled. This most often happens with  Net::SSLeay
           This can be detected with (see version numbers for Net::SSLeay):
               $0 +version
@@ -4017,10 +4029,10 @@ HACKER's INFO
     Using private libssl.so and libcrypt.so
 
         For all  cryptographic functionality  the libraries  installed on the
-        system will be used. In particular perl's Net::SSLeay(1)  module, the
+        system will be used. In particular Perl's Net::SSLeay(3pm) module, the
         system's  libssl.so and libcrypt.so  and the  openssl(1)  executable.
 
-        It is possible to provide your own libraries, if the  perl module and
+        It is possible to provide your own libraries, if the  Perl module and
         the executable are  linked using  dynamic shared objects  (aka shared
         library, position independent code).
         The appropriate option is  --lib=PATH.
@@ -4061,7 +4073,7 @@ HACKER's INFO
         openssl subsystem,  influencing both  which executable is called  and
         which shared libraries will be used.
 
-        NOTE that no checks are done if the options are set proper. To verify
+        Note that no checks are done if the options are set proper. To verify
         the settings, following commands may be used:
           $0 --lib=YOUR-PATH --exe=YOUR-EXE +version
           $0 --lib=YOUR-PATH --exe=YOUR-EXE --v +version
@@ -4134,11 +4146,11 @@ HACKER's INFO
               $0 --lib=/tmp/dada +ciphers
 
         This works if  openssl(1)  uses the same shared libraries as
-        Net::SSLeay(1),  which most likely is the case.
+        Net::SSLeay(3pm),  which most likely is the case.
 
         It's tested with Unix/Linux only. It may work on other platforms also
         if they support such an environment variable and the installed
-        Net::SSLeay(1)  and  openssl(1)  are linked using dynamic shared
+        Net::SSLeay(3pm)  and  openssl(1)  are linked using dynamic shared
         objects.
 
         Depending on  compile time settings  and/or  the location of the used
@@ -4173,7 +4185,7 @@ HACKER's INFO
 
         This script can be used as  CGI application. Output is the same as in
         common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
-        the used modules like  Net::SSLeay(1)  will write some debug messages
+        the used modules like Net::SSLeay(3pm) will write some debug messages
         on  STDERR instead  STDOUT.  Therefore multiple  --v  and/or  --trace
         options behave slightly different.
 
@@ -4200,7 +4212,7 @@ HACKER's INFO
     Using user specified code
 
         There are some functions called within the program flow, which can be
-        filled with any perl code.  Empty stubs of the functions are prepared
+        filled with any Perl code.  Empty stubs of the functions are prepared
         in  o-saft-usr.pm.  See also  USER-FILE .
 
 
@@ -4263,7 +4275,7 @@ DEBUG
 
     Using outdated modules
 
-        The tools was designed to work with old perl modules too.  When using
+        The tools was designed to work with old Perl modules too.  When using
         old modules, a proper  '**WARNING:'  will be printed. These warinings
         cannot be switched of using  --no-warning  .
         The warning also informs about the missing functionality or check.
