@@ -86,15 +86,26 @@
 #?              Name of archive file for Net-SSLeay.tgz (during build).
 #?
 #?      Following environment variables can also be used:
+#?          PERL_SRC_IOSOCKET
+#?              URL to IO::Socket::SSL archive.
+#?
+#?          PERL_SRC_NET_IDN
+#?              URL to Net::LibIDN archive.
+#?
+#?          PERL_SRC_NET_DNS
+#?              URL to Net::DNS archive.
+#?
+#?          PERL_SRC_MOZILLA
+#?              URL to Mozilla::CA archive.
 #?
 #?          OSAFT_DIR
 #?              Installation directory of O-Saft, used to find  .o-saft.pl .
 #?
 #?          OPENSSL_DIR
-#?              Full path to installation directory of newly build openssl.
+#?              Full path to installation directory of newly build openssl .
 #?
 #?          SSLEAY_DIR
-#?              Default installation of Net::SSLeay .
+#?              Full path to installation directory of Net::SSLeay .
 #?
 #?          LD_RUN_PATH
 #?              Additional paths for runtime loader, used while linking with:
@@ -114,7 +125,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.9 19/07/21 00:55:11
+#?      @(#)  1.10 19/07/21 09:58:45
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -145,15 +156,26 @@ LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
    WORK_DIR=$dir
 
+# perl modules from cpan (last check 7/2019):
+PERL_SRC_IOSOCKET=${PERL_SRC_IOSOCKET:="https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.066.tar.gz"}
+PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN-0.12.tar.gz"}
+PERL_SRC_NET_DNS=${PERL_SRC_NET_DNS:="https://cpan.metacpan.org/authors/id/N/NL/NLNETLABS/Net-DNS-1.20.tar.gz"}
+PERL_SRC_MOZILLA=${PERL_SRC_MOZILLA:="https://cpan.metacpan.org/authors/id/A/AB/ABH/Mozilla-CA-20180117.tar.gz"}
+# unfortunately metacpan.org does not provide checksums
+
+optm=0
 optn=0
 while [ $# -gt 0 ]; do
 	ich=${0##*/}
 	arg="$1"
 	shift
 	case "$arg" in
-	 '-h' | '--h' | '--help' | '-?')
+	  '-h' | '--h' | '--help' | '-?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
+		;;
+	  '-m' | '--m')
+		optm=1
 		;;
 	  '-n' | '--n')
 		optn=1
@@ -205,7 +227,7 @@ done
 err=0
 echo ""
 echo "# required perl modules:"
-for mod in IO::Socket::SSL Net::DNS Mozilla::CA ; do
+for mod in IO::Socket::SSL Net::LibIDN Net::DNS Mozilla::CA ; do
 	txt=""
 	echo -n "	$mod "
 	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
@@ -231,14 +253,34 @@ if [ 0 -ne $err ]; then
 	echo '!!Hint: install packages like:'
 	echo '        perl-net-dns perl-net-libidn perl-mozilla-ca'
 	echo '        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl'
-	exit 2
+	[ 0 -eq $optm ] && exit 2
 fi
 [ 1 -eq $optn ] && exit 0
+
+if [ 1 -eq $optm ]; then
+	err=0
+	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_IDN $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
+		err=1   # reset if build succeeds
+		tar=perllib.tgz
+		echo ""
+		cd    /tmp
+		echo "# install perl modul ${mod##*/} ..."
+		wget  --quiet --no-check-certificate $mod -O $tar	&& \
+		tar   -xzf $tar -C $BUILD_DIR --strip-components=1	&& \
+		cd    $BUILD_DIR			&& \
+		perl  Makefile.PL --no-online-tests	&& \
+		make  &&  make test  &&  make install	&& \
+		err=0 && \
+		cd    /tmp  &&  rm -rf $tar
+	done
+	[ 0 -ne $err ] && echo "**ERROR: module installation failed; exit" && exit 2
+fi
 
 # create aliases, so Dockerfile's syntax can be used
 alias   RUN="\cd $dir && "
 alias   apk="\echo '#'apk"
 
+# please backport any changes in following "Dockerfile 1.30" scope to Dockerfile
 # Dockerfile 1.30 {
 
 # Pull, build and install enhanced openssl
