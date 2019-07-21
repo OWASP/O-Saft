@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.04.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.15 19/04/27 17:48:56";
+my  $SID_data   = "@(#) Data.pm 1.16 19/07/21 20:47:31";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -336,17 +336,19 @@ Print VERSION version.
 =cut
 
 sub list        {
+    #? print sorted list of available .txt files
+    #  sorted list simplifies tests ...
     my $dir = $0;
        $dir =~ s#[/\\][^/\\]*$##;
-    my $txt =  "";
+    my @txt;
     opendir(DIR, $dir) or return $!;
     while (my $file = readdir(DIR)) {
         next unless (-f "$dir/$file");
         next unless ($file =~ m/\.txt$/);
-        $txt .= "$file\n";
+        push(@txt, $file);
     }
     closedir(DIR);
-    return $txt;
+    return join("\n", sort @txt);
 } # list
 
 sub _main_usage {
@@ -546,7 +548,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.15 2019/04/27
+1.16 2019/07/21
 
 =head1 AUTHOR
 
