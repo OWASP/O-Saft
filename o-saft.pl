@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.876 19/07/11 23:37:15",
+    SID         => "@(#) yeast.pl 1.877 19/07/21 14:09:18",
     STR_VERSION => "19.06.19",          # <== our official version number
 };
 
@@ -1995,7 +1995,7 @@ sub _check_modules      {
     my %expected_versions = (
         'IO::Socket::INET'  => "1.31",
         'IO::Socket::SSL'   => "1.37",
-        'Net::SSLeay'       => "1.49",
+        'Net::SSLeay'       => "1.49",  # 1.46 may also work
         'Net::DNS'          => "0.65",
         'Time::Local'       => "1.23",
         # to simulate various error conditions, simply modify the module name
@@ -2134,12 +2134,12 @@ sub _enable_functions   {
     }
     _trace(" cfg{usenpn}: $cfg{'usenpn'}");
 
-    if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {
+    if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  openssl 1.0.0
         warn STR_WARN, "133: $txt tests for OCSP disabled";
         #_hint("--no-ocsp  can be used to disable this check");
     }
 
-    if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {
+    if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {    # Net::SSLeay < 1.56
         warn STR_WARN, "134: $txt setting curves disabled";
         #_hint("--no-cipher-ecdh  can be used to disable this check");
     }
@@ -8954,10 +8954,18 @@ For details on documentation texts (format, syntax, etc.) from files,  see
 
 =head3 Internal Code Documentation
 
-All internal (program and coding) documentation is usually  POD format  in
-the corresponding files. This documentation is intended for development.
+All comments/documentation/explanation of code details is written close to
+the corresponding code lines.  Note that these comments describe *why* the
+code is written in some way  (means the logic of the code), and not *what*
+the code does (which is most likely obvious).
+Some special syntax for comment lines are used, see  X&Comments&  in
+OSaft/Doc/coding.txt .
 
-For details see following chapter  L<Annotations, Internal Notes> .
+Additional documentation is avaialble in POD format  at end of the files.
+These comments are called  "Annotations"  and refered to using  a sepecial
+syntax, see following chapter  L<Annotations, Internal Notes> .
+These Annotations are used  for descriptions needed at  multiple places in
+the code.
 
 
 =head1 Annotations, Internal Notes
@@ -8965,7 +8973,7 @@ For details see following chapter  L<Annotations, Internal Notes> .
 The annotations here describe  behaviours, observations, and alike,  which
 lead to special program logic. The intention is to have one central place,
 where to do the documentation.
-Up to now --2018-- this is an internal documentation only. It is available
+Up to now --2019-- this is an internal documentation only. It is available
 for the developer with perldoc also.
 
 It is written in POD format, because some tools analyzing the code want to
@@ -9193,6 +9201,8 @@ Each warning has a unique number. The numbers are grouped as follows:
 
 Check for used numbers with:
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
+
+A proper test for the message should be done in t/Makefile.warnings.
 
 
 =head2 Note:ARGV
