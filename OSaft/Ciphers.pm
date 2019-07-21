@@ -44,11 +44,16 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.04.19';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.36 19/07/11 23:41:01";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.37 19/07/21 21:21:22";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
+
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, "./", "./lib", $_path, "/bin");   # SEE Perl:@INC
+}
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1580,7 +1585,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.36 2019/07/11
+1.37 2019/07/21
 
 =head1 AUTHOR
 
