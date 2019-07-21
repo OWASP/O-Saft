@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.42 19/07/03 15:30:02
+#?      @(#)  1.43 19/07/21 10:54:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.42
+_SID.warnings   = 1.43
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -121,6 +121,10 @@ warning-%:          TEST.init   =
 # message with the specific number DDD is extracted.
 # NOTE: in rare cases the target may succedd wrongly,  see description of
 # message-%  pattern rule in t/Makefile.
+#
+# TODO:  the message text assigned to  TEST.args  is mainly a copy of the
+#        the text used in the source code;  should find a way to generate
+#        these assignments (done manually here, which is error-prone)
 warning-000: TEST.args  = --invalid_nr_to_show_failed-status
 warning-002: TEST.args  = TODO: testing openssl returning error, difficult ...
 warning-003: TEST.args  = TODO: testing openssl failed with allocate memory, difficult ...
@@ -195,6 +199,7 @@ warning-111: TEST.args  = --mx --nodns                      +quit
 warning-111: TEST.args  = TODO: testing missing Net/DNS.pm
 warning-112: TEST.args  = +sts_expired                      +quit
 warning-112: TEST.args  = TODO: testing missing Time/Local.pm need by +sts_expired
+#warning-113 .. warning-119: TEST.args  = free
 warning-120: TEST.args  = TODO: testing ancient perl
 warning-121: TEST.args  = TODO: testing ancient module
 warning-122: TEST.args  = TODO: testing ancient Net::SSLeay
@@ -205,12 +210,16 @@ warning-126: TEST.args  = TODO: testing missing ALPN functionality
 warning-127: TEST.args  = TODO: testing Net::SSLeay < 1.56, ALPN disabled
 warning-128: TEST.args  = TODO: testing openssl < 1.0.2, ALPN disabled
 warning-129: TEST.args  = TODO: testing missing NPN functionality
-warning-130: TEST.args  = TODO: testing Net::SSLeay < 1.46, ALPN disabled
+warning-130: TEST.args  = TODO: testing Net::SSLeay < 1.46, NPN disabled
 #warning-131: TEST.args  = free
-warning-132: TEST.args  = TODO: testing openssl < 1.0.1, ALPN disabled
+warning-132: TEST.args  = TODO: testing openssl < 1.0.1, NPN disabled
 warning-133: TEST.args  = TODO: testing Net::SSLeay without OCSP
 warning-134: TEST.args  = TODO: testing Net::SSLeay without EC
 warning-135: TEST.args  = TODO: testing Net::SSLeay < 1.49
+#warning-136: TEST.args  = free
+#warning-137: TEST.args  = free
+#warning-138: TEST.args  = free
+#warning-139: TEST.args  = free
 warning-140: TEST.args  = +cipherraw --dtlsv1               +quit
 warning-141: TEST.args  = +cipherraw --dtlsv9               +quit
 warning-141: TEST.args  = TODO: testing wrong or unsupported SSL protocol
@@ -237,6 +246,7 @@ warning-302: TEST.args  = TODO: testing max connection errors, difficult ...
 warning-303: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v2_new, difficult ...
 warning-304: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v3_new, difficult ...
 warning-305: TEST.args  = TODO: testing connection _usesocket failed, difficult ...
+#warning-306 .. warning-310: TEST.args  = free
 warning-311: TEST.args  = TODO: testing  empty  result from openssl, difficult ...
 warning-312: TEST.args  = TODO: testing strange result from openssl, difficult ...
 warning-312: TEST.args  = TODO: testing unknown result from openssl, difficult ...
@@ -357,7 +367,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.42: $(MAKE) test.warnings.log" > $@
+	@echo "# ”¸êU 1.43: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
