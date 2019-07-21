@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.877 19/07/21 14:09:18",
+    SID         => "@(#) yeast.pl 1.878 19/07/21 21:47:54",
     STR_VERSION => "19.06.19",          # <== our official version number
 };
 
@@ -130,11 +130,7 @@ BEGIN {
 
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC,               # NOTE that / works here even for Windoze
-            "./", "./lib",      # we support some local lib directories
-            $_path,             # user-friendly: add path of myself also
-            "/bin",             # special installation on portable media
-    );
+    unshift(@INC, "./", "./lib", $_path, "/bin");   # SEE Perl:@INC
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
     if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { _version_exit(); }
@@ -9096,6 +9092,26 @@ Perl's `use autouse' is also not possible, as to much functions need to be
 declared for that pragma then.
 Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
+
+
+=head2 Perl:@INC
+
+Perl includes modules with the `use' or `require' statement. Therefore the
+@INC  array is used which contains  a predefined list of directories where
+to search for the files to be included. Following disadvantages are known:
+
+  - the list of directories depends on the system (OS and distribution)
+  - this list must be known before any Perl command is executed
+  - it's tricky to use private directories
+
+Therefore  @INC  needs to be adapted properly in Perl's  BEGIN  scope (see
+next annotation also). The added directories are:
+
+  - ./  ./lib   # we support some local lib directories
+  - $_path      # user-friendly: add path of the calles script also
+  - /bin"       # special installation on portable media
+
+Note that  /  works here even for Windoze.
 
 
 =head2 Perl:BEGIN
