@@ -138,7 +138,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.11 19/07/21 14:27:06
+#?      @(#)  1.12 19/07/21 23:48:40
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -276,23 +276,30 @@ if [ 1 -eq $optm ]; then
 	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_IDN $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
 		err=1   # reset if build succeeds
 		tar=perllib.tgz
-		# FIXME: Net-LibIDN is in subdirectory and uses non-standard build mechanism
+		# TODO: Net-LibIDN is in subdirectory and uses non-standard build mechanism
+		# TODO: Mozilla-CA-20180117 is in subdirectory
 		# IO::Socket::SLL's Makefile.PL ask interactivly, grrr
 		echo ""
 		cd    /tmp
 		echo "# install perl modul ${mod##*/} ..."
 		wget  --quiet --no-check-certificate $mod -O $tar	&& \
+		rm    -rf $BUILD_DIR       && mkdir $BUILD_DIR		&& \
 		tar   -xzf $tar -C $BUILD_DIR --strip-components=1	&& \
-		cd    $BUILD_DIR			&& \
-		[ -d Net-LibIDN2-1.00 ] && cd Net-LibIDN2-1.00 && \
-		[ -f Build.PL ] && perl  Build.PL	&& \
-			./Build && ./Build test && ./Build install	&& \
+		cd    $BUILD_DIR					&& \
+		#[ -d Mozilla-CA-20180117 ] && cd Mozilla-CA-20180117	&& \
+		if [ -d Net-LibIDN2-1.00 ]; then cd Net-LibIDN2-1.00;fi	&& \
+		if [ -f Build.PL ]; then \
+			 perl  Build.PL	&& \
+			./Build && ./Build test && ./Build install ; \
+		fi && \
 		[ -f Makefile.PL ] && perl  Makefile.PL --no-online-tests	&& \
+			set -x  && \
 			make    &&   make test  &&  make install	&& \
+			set +x  && \
 		err=0 && \
 		cd    /tmp  &&  rm -rf $tar
 	done
-	[ 0 -ne $err ] && echo "**ERROR: module installation failed; exit" && exit 2
+	[ 0 -ne $err ] && echo "**ERROR: module »${mod##*/}« installation failed; exit" && exit 2
 fi
 
 # create aliases, so Dockerfile's syntax can be used
