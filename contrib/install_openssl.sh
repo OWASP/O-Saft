@@ -8,13 +8,14 @@
 #?
 #? OPTIONS
 #?      --h - nice option
+#?      --m - install all Perl modules
 #?      --n - do not execute, just show where to install
 #?
 #? DESCRIPTION
 #?      Build special openssl based on Peter Mosman's openssl.  Enables SSLv2
 #?      and SSLv3 and all possible ciphers.
 #?      Installs build in specified directory;  default: /usr/local/openssl .
-#?      Additionally builds perl module Net::SSLeay based on special openssl.
+#?      Additionally builds Perl module Net::SSLeay based on special openssl.
 #?      Net::SSLeay will be installed in  /usr/local/lib .
 #?      Modifies  .o-saft.pl  (keeping existing one in  .o-saft.pl-orig).
 #?      This script is intended to be executed in the  installation directory
@@ -57,7 +58,7 @@
 #?      To build openssl, following libraries and include files are needed:
 #?          gmp krb5 lksctp zlib
 #?      Assumes that ca-certificates are install in /etc/ssl/certs/ .
-#?      Assumes that following perl modules are installed:
+#?      Assumes that following Perl modules are installed:
 #?          Net::DNS Mozilla::CA libidn.so
 #?
 #? ENVIRONMENT VARIABLES
@@ -120,12 +121,24 @@
 #         # Dockerfile 1.30 {
 #         ...
 #         # Dockerfile 1.30 }
+#       Please backport any changes in scope to Dockerfile.
+#
+#       Each Perl modul to be installed may have its own prerequisites. These
+#       are mainly described in the  README  file. This script does not (yet)
+#       check or fullfil these prerequisites.
+#       Known prerequisites (according tools used 7/2019):
+#       * Net::DNS
+#           Digest::HMAC, Digest::MD5, Digest::SHA, File::Spec, MIME::Base64,
+#           Time::Local, Test::More, Digest::BubbleBabble, Net::DNS::SEC,
+#           Net::LibIDN2, IO::Socket, IO::Socket::IP
+#       * IO::Socket::SSL
+#           Net::SSLeay 1.46 or newer
 #?
 #? EXAMPLES
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.10 19/07/21 09:58:45
+#?      @(#)  1.11 19/07/21 14:27:06
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -156,9 +169,10 @@ LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
    WORK_DIR=$dir
 
-# perl modules from cpan (last check 7/2019):
+# Perl modules from cpan (last check 7/2019):
 PERL_SRC_IOSOCKET=${PERL_SRC_IOSOCKET:="https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.066.tar.gz"}
-PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN-0.12.tar.gz"}
+#PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN-0.12.tar.gz"}
+PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN2-1.00.tar.gz"}
 PERL_SRC_NET_DNS=${PERL_SRC_NET_DNS:="https://cpan.metacpan.org/authors/id/N/NL/NLNETLABS/Net-DNS-1.20.tar.gz"}
 PERL_SRC_MOZILLA=${PERL_SRC_MOZILLA:="https://cpan.metacpan.org/authors/id/A/AB/ABH/Mozilla-CA-20180117.tar.gz"}
 # unfortunately metacpan.org does not provide checksums
@@ -226,7 +240,7 @@ done
 # preconditions (needs to be checked with or without --n)
 err=0
 echo ""
-echo "# required perl modules:"
+echo "# required Perl modules:"
 for mod in IO::Socket::SSL Net::LibIDN Net::DNS Mozilla::CA ; do
 	txt=""
 	echo -n "	$mod "
@@ -262,14 +276,19 @@ if [ 1 -eq $optm ]; then
 	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_IDN $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
 		err=1   # reset if build succeeds
 		tar=perllib.tgz
+		# FIXME: Net-LibIDN is in subdirectory and uses non-standard build mechanism
+		# IO::Socket::SLL's Makefile.PL ask interactivly, grrr
 		echo ""
 		cd    /tmp
 		echo "# install perl modul ${mod##*/} ..."
 		wget  --quiet --no-check-certificate $mod -O $tar	&& \
 		tar   -xzf $tar -C $BUILD_DIR --strip-components=1	&& \
 		cd    $BUILD_DIR			&& \
-		perl  Makefile.PL --no-online-tests	&& \
-		make  &&  make test  &&  make install	&& \
+		[ -d Net-LibIDN2-1.00 ] && cd Net-LibIDN2-1.00 && \
+		[ -f Build.PL ] && perl  Build.PL	&& \
+			./Build && ./Build test && ./Build install	&& \
+		[ -f Makefile.PL ] && perl  Makefile.PL --no-online-tests	&& \
+			make    &&   make test  &&  make install	&& \
 		err=0 && \
 		cd    /tmp  &&  rm -rf $tar
 	done
@@ -280,7 +299,6 @@ fi
 alias   RUN="\cd $dir && "
 alias   apk="\echo '#'apk"
 
-# please backport any changes in following "Dockerfile 1.30" scope to Dockerfile
 # Dockerfile 1.30 {
 
 # Pull, build and install enhanced openssl
