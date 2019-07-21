@@ -19,7 +19,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.9 18/05/01 21:51:02
+#?       @(#)  1.10 19/07/21 21:53:12
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -118,21 +118,21 @@ $try \rm -rf $dst
   # osaft.pm without brackets and no package
   f=osaft.pm
   \echo "# { # $f"
-  $try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE })) and not m(package osaft;)' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
   \echo "# } # $f"
   \echo ""
 
   ## TODO: OSaft/Doc/Data.pm
   f=OSaft/Doc/Data.pm
   \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   \echo "} # $f"
   \echo ""
 
   # TODO: o-saft-usr.pm  works, but not yet perfect
   f=o-saft-usr.pm
   \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   #$try \cat $f
   \echo "} # $f"
   \echo ""
@@ -140,28 +140,28 @@ $try \rm -rf $dst
   ## TODO: o-saft-dbx.pm  still with errors
   #f=o-saft-dbx.pm
   #\echo "{ # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f
+  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   #\echo "} # $f"
   #\echo ""
 
   ## TODO: o-saft-man  fails to include properly
   f=o-saft-man.pm
   \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE })) and not m(use osaft;)' $f \
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(use osaft;)' $f \
      | \grep -v  '^use OSaft::Doc::Data'
   \echo "} # $f"
   \echo ""
 
   f=OSaft/error_handler.pm
   \echo "{ # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f
+  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   $try \cat $f
   \echo "} # $f"
   \echo ""
 
   f=Net/SSLinfo.pm
   \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   \echo ""
   \echo 'my $_ssinfo_dum = $Net::SSLinfo::next_protos; # avoid Perl warning: "used only once: possible typo ..."'
   \echo "} # $f"
@@ -171,7 +171,7 @@ $try \rm -rf $dst
 	# Reasons: use of STR_HINT in _hint(); need: no strict 'subs'
   #f=Net/SSLhello.pm
   #\echo "{ # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE {)..m(## PACKAGE }))' $f \
+  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f \
   #   | \egrep -v  '^use (osaft|OSaft::error_handler)'
   #\echo "} # $f"
   #\echo ""
