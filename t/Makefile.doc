@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.11 19/07/10 01:18:56
+#?      @(#) Makefile.doc 1.12 19/07/21 21:44:24
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.11
+_SID.doc        = 1.12
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -228,7 +228,7 @@ ALL.testdoc9    = $(shell awk -F: '/^testarg0-doc9-.*%/{next} /^testarg0-doc9-/{
 ALL.test.doc9   = $(ALL.testdoc9)
 test.doc9:      $(ALL.test.doc9)
 ALL.test.doc9.log=  $(ALL.test.doc9:%=%.log) test.log-compare-hint
-test.doc9.log:  $(ALL.test.doc6.log)
+test.doc9.log:  $(ALL.test.doc9.log)
 
 test.doc.log-compare:   TEST.target_prefix  = testarg0-doc
 test.doc.log-move:      TEST.target_prefix  = testarg0-doc
