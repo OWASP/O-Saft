@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.64 19/07/06 17:48:31
+#?      @(#) Makefile 1.65 19/07/22 02:07:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.64
+_SID.test       = 1.65
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -673,7 +673,7 @@ tests.quick.log:
 test:       tests
 test.log:   tests.log
 	@$(TRACE.target)
-	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $@-compare"
+	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $@-compare"
 
 
 # collect targets in this file
@@ -718,7 +718,16 @@ $(_NL)\
 help.test.log-info:
 	@echo "$(HELP.test.log-info)"
 
-EXE.log-diff        = xxdiff --geometry 1600x1000
+# TODO: need a usable way to change diff program
+EXE.log-diff        = diff
+EXE.log-xxdiff      = xxdiff --geometry 1600x1000
+EXE.log-mgdiff      = mgdiff
+EXE.log-tkdiff      = tkdiff
+EXE.diff            = diff
+EXE.diff            = xxdiff
+EXE.diff            = mgdiff
+EXE.diff            = tkdiff
+EXE.log-diff        = $(EXE.log-tkdiff)
 
 # default prefix, may be redifined per target
 TEST.target_prefix  = testcmd-
@@ -753,7 +762,7 @@ _test_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
 
 test.log-compare-hint:
 	@echo ""
-	@echo "# to show differences with xxdiff, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
 	@echo "$(_test_log_hint)"
 
 test.%.log-compare:
