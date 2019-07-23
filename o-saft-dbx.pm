@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.88 19/07/08 22:32:22";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.90 19/07/24 00:02:29";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -92,7 +92,7 @@ sub _yeast_trac {
     return;
 } # _yeast_trac
 
-sub _yeast_ciphers_list   { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
@@ -130,7 +130,7 @@ sub _yeast_ciphers_list   { # TODO: obsolete when ciphers defined inOSaft/Cipher
     return;
 } # _yeast_ciphers_list
 
-sub _yeast_ciphers_sorted { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     ## no critic qw(CodeLayout::ProhibitHardTabs); TABs are intended
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -150,7 +150,7 @@ sub _yeast_ciphers_sorted { # TODO: obsolete when ciphers defined inOSaft/Cipher
     return;
 } # _yeast_ciphers_sorted
 
-sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure for ciphers ===
@@ -223,7 +223,70 @@ sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined inOSaft/Ciph
     return;
 } # _yeast_ciphers_overview
 
-sub _yeast_ciphers        { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal data structure for ciphers ===
+=
+= This function prints a full overview of all available ciphers.
+= Output is similar (order of columns) but not identical to result of
+= 'openssl ciphers -V' command.
+=
+=   description of columns:
+=       key         - internal hex key for cipher suite
+=       hex         - hex key for cipher suite (like opnssl)
+=       ssl         - SSL/TLS version
+=       keyx        - Key Exchange
+=       auth        - Authentication
+=       enc         - Encryption Algorithm
+=       bits        - Key Size
+=       mac         - MAC Algorithm
+=       sec         - Security
+=       name        - OpenSSL suite name
+=
+";
+    my $cnt = 0;
+    printf("=%9s\t%9s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "name");
+    printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
+    # key in %ciphers is the cipher suite name, but we want the ciphers sorted
+    # according their hex constant; perl's sort need a copare funtion
+    my %keys;
+    map { $keys{get_cipher_hex($_)} = $_; } keys %ciphers;
+    foreach my $k (sort {$a cmp $b} keys %keys) {
+        $cnt++;
+        my $c   = $keys{$k};
+        my $key = get_cipher_hex($c);
+        my $hex = tls_key2text($key);
+        ## $key = tls_text2key($hex);
+        my $ssl = get_cipher_ssl($c);
+        my $sec = get_cipher_sec($c);
+        my $keyx= get_cipher_keyx($c);
+        my $auth= get_cipher_keyx($c);
+        my $enc = get_cipher_enc($c);
+        my $bits= get_cipher_bits($c);
+        my $mac = get_cipher_mac($c);
+        my $name= get_cipher_name($c);
+        my $desc= join(" ", get_cipher_desc($c));
+        my $const=get_cipher_suiteconst($c);
+        my $rfc = "-"; # get_cipher_rfc($c);
+        my $alias= "-"; #get_cipher_suitealias($c); # =~ m/^\s*$/) ? "-" : "*";
+        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+               $key, $hex, $ssl, $keyx, $auth, $enc, $bits, $mac, $sec, $name);
+        $err{'key'}++   if ($key  eq "-");
+        $err{'sec'}++   if ($sec  ne "*");
+        $err{'name'}++  if ($name ne "*");
+        $err{'rfc'}++   if ($rfc  ne "*");
+        $err{'desc'}++  if ($desc ne "*");
+    }
+    printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
+    printf("=%14s\t%15s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "name");
+    printf("= %s ciphers\n", $cnt);
+    return;
+} # _yeast_ciphers_show
+
+sub _yeast_ciphers          { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     printf("#%s:\n", (caller(0))[3]);
     print "
 === list of ciphers ===
@@ -233,7 +296,7 @@ sub _yeast_ciphers        { # TODO: obsolete when ciphers defined inOSaft/Cipher
     return;
 } # _yeast_ciphers
 
-sub _yeast_cipher         { # TODO: obsolete when ciphers defined inOSaft/Cipher.pm
+sub _yeast_cipher           { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     printf("#%s:\n", (caller(0))[3]);
     print "
 === print internal data structures for a cipher ===
@@ -575,6 +638,7 @@ sub _yeast_test {
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_data()           if ('data'      eq $arg);
     _yeast_prot()           if ('prot'      eq $arg);
+    # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
     _yeast_ciphers_sorted() if ($arg =~ /^cipher.[_-]?sort/);
     if ($arg =~ /^cipher.[_-]?list/) {
         # FIXME: --test-ciphers is experimental
@@ -585,6 +649,7 @@ sub _yeast_test {
         _yeast_ciphers_list();
     }
     _yeast_ciphers_overview() if ('overview' eq $arg);
+    _yeast_ciphers_show()   if ('show'      eq $arg);
     _yeast_ciphers()        if ('ciphers'   eq $arg);
     return;
 } # _yeast_test
@@ -592,7 +657,7 @@ sub _yeast_test {
 sub _main_dbx       {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
-    my $arg = shift;
+    my $arg = shift || "--help";
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/) {
@@ -746,7 +811,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.88 2019/07/08
+1.90 2019/07/24
 
 =head1 AUTHOR
 
