@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.04.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.16 19/07/21 20:47:31";
+my  $SID_data   = "@(#) Data.pm 1.17 19/07/24 01:23:10";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -158,7 +158,9 @@ sub get_markup    {
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
         if (not m/^S/ and not m/^ {14,}/) {
-            s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
+            # special markup for tools marked ending with (1), (2), ... (3pm)
+            s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d(?:pm)?\))/L&$1&/g;
+            # special markup for own tools
             s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
         }
         s/  (L&[^&]*&)/ $1/g;
@@ -548,7 +550,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.16 2019/07/21
+1.17 2019/07/24
 
 =head1 AUTHOR
 
