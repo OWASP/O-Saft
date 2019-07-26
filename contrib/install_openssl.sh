@@ -155,7 +155,7 @@
 #?      Build including required Perl modules:
 #?          $0 -m
 #? VERSION
-#?      @(#)  1.15 19/07/26 09:27:45
+#?      @(#)  1.16 19/07/26 09:49:50
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -185,6 +185,15 @@ LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
        PATH=${OPENSSL_DIR}/bin:$PATH
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
    WORK_DIR=$dir
+
+lib_packages="
+	libidn2-0-dev
+	libgmp-dev
+	libzip-dev
+	libsctp-dev
+	libkrb5-dev
+"
+# FIXME: libidn11-dev also required
 
 perl_modules="
 	Module::Build
@@ -262,38 +271,25 @@ echo "# required Perl modules (installed with  -m  option):"
 for mod in $perl_modules ; do
 	txt=""
 	echo -n "	$mod "
-	perl -M$mod -le "print ${mod}::Version" && txt="\tOK" || txt="**ERROR: $mod missing"
+	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+	[ -z "$txt" ] && txt="\tOK" || err=1
 	echo "$txt"
-	[ -n "$txt" ] && err=1
 done
 
 # FIXME: checked package names are basedon debian, and desendents
 echo ""
 echo "# required libraries:"
 txt=`find /lib -name libidn\.\*`
-[ -z "$txt" ] && txt="**ERROR: libidn.so missing"   && err=1
+[ -z "$txt" ] && txt="**ERROR: libidn.so missing"    && err=1
 echo "	libidn.so $txt"
 
-# FIXME: libidn11-dev also required
-txt=`find /usr -name libidn2-0-dev`
-[ -z "$txt" ] && txt="**ERROR: libidn2-0-dev missing" && err=1
-echo "	libidn2-0-dev $txt"
-
-txt=`find /usr -name libgmp-dev`
-[ -z "$txt" ] && txt="**ERROR: libgmp-dev missing"  && err=1
-echo "	libgmp-dev $txt"
-
-txt=`find /usr -name libsctp-dev`
-[ -z "$txt" ] && txt="**ERROR: libsctp-dev missing" && err=1
-echo "	libsctp-dev $txt"
-
-txt=`find /usr -name libkrb5-dev`
-[ -z "$txt" ] && txt="**ERROR: libkrb5-dev missing" && err=1
-echo "	libkrb5-dev $txt"
-
-txt=`find /usr -name libzip-dev`
-[ -z "$txt" ] && txt="**ERROR: libzip-dev missing"  && err=1
-echo "	libzip-dev $txt"
+for lib in $lib_packages ; do
+	ok=1
+	txt=`find /usr -name $lib`
+	[ -z "$txt" ] && txt="**ERROR: $lib missing" && ok=0
+	[ 1 -eq $ok ] && txt="\tOK $txt"
+	echo "	$lib $txt"
+done
 
 echo ""
 echo "# requred directories:"
@@ -305,11 +301,16 @@ echo ""
 if [ 0 -ne $err ]; then
 	echo "**ERROR: preconditions incomplete; exit"
 	echo '!!Hint: install packages like:'
+	echo "        $lib_packages"
 	echo '        perl-net-dns perl-net-libidn perl-mozilla-ca'
 	echo '        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl'
 	echo '        libmodule-build-perl'
-	echo '        libgmp-dev libsctp-dev libzip-dev libidn11-dev libidn2-0-dev'
-	echo '# Note  libgmp-dev libsctp-dev libzip-dev  are only necessary for compiling openssl'
+	echo '        or Perl modules with "perl -MCPAN -e "install ..."'
+	echo "        $perl_modules"
+	echo '# Note  all lib*-dev  are only necessary for compiling openssl and may be'
+	echo '#       removed afterwards.'
+	echo ''
+        # TODO: print only required packages and moduls in Hint above
 fi
 [ 1 -eq $optn ] && exit 0
 [ 0 -ne $err  ] && [ 0 -eq $optm ] && exit 2
