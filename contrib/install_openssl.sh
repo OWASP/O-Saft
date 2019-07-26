@@ -21,6 +21,8 @@
 #?      This script is intended to be executed in the  installation directory
 #?      of O-Saft.
 #?
+#?      Required Perl modules are installed using "perl -MCPAN -e "install ".
+#?
 #?      Finally this script starts  "o-saft.pl +version"  using the installed
 #?      openssl binary and the installed Net::SSLeay.  The output should look
 #?      like (paths may differ):
@@ -87,18 +89,6 @@
 #?              Name of archive file for Net-SSLeay.tgz (during build).
 #?
 #?      Following environment variables can also be used:
-#?          PERL_SRC_IOSOCKET
-#?              URL to IO::Socket::SSL archive.
-#?
-#?          PERL_SRC_NET_IDN
-#?              URL to Net::LibIDN archive.
-#?
-#?          PERL_SRC_NET_DNS
-#?              URL to Net::DNS archive.
-#?
-#?          PERL_SRC_MOZILLA
-#?              URL to Mozilla::CA archive.
-#?
 #?          OSAFT_DIR
 #?              Installation directory of O-Saft, used to find  .o-saft.pl .
 #?
@@ -138,7 +128,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#)  1.13 19/07/22 01:58:58
+#?      @(#)  1.14 19/07/26 08:19:56
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -169,13 +159,14 @@ LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
    WORK_DIR=$dir
 
-# Perl modules from cpan (last check 7/2019):
-PERL_SRC_IOSOCKET=${PERL_SRC_IOSOCKET:="https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.066.tar.gz"}
-#PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN-0.12.tar.gz"}
-PERL_SRC_NET_IDN=${PERL_SRC_NET_IDN:="https://cpan.metacpan.org/authors/id/T/TH/THOR/Net-LibIDN2-1.00.tar.gz"}
-PERL_SRC_NET_DNS=${PERL_SRC_NET_DNS:="https://cpan.metacpan.org/authors/id/N/NL/NLNETLABS/Net-DNS-1.20.tar.gz"}
-PERL_SRC_MOZILLA=${PERL_SRC_MOZILLA:="https://cpan.metacpan.org/authors/id/A/AB/ABH/Mozilla-CA-20180117.tar.gz"}
-# unfortunately metacpan.org does not provide checksums
+perl_modules="
+	Module::Build
+	IO::Socket::SSL
+	Net::LibIDN
+	Net::LibIDN2
+	Net::DNS
+	Mozilla::CA
+"
 
 optm=0
 optn=0
@@ -241,10 +232,10 @@ done
 err=0
 echo ""
 echo "# required Perl modules:"
-for mod in Module::Build IO::Socket::SSL Net::LibIDN Net::DNS Mozilla::CA ; do
+for mod in $perl_modules ; do
 	txt=""
 	echo -n "	$mod "
-	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+	perl -M$mod -le "print ${mod}::Version" && txt="\tOK" || txt="**ERROR: $mod missing"
 	echo "$txt"
 	[ -n "$txt" ] && err=1
 done
@@ -297,41 +288,17 @@ perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
 
 if [ 1 -eq $optm ]; then
 	err=0
-	mod="Net::LibIDN"
-	echo ""
-	echo "# install perl modul $mod ..."
-	perl -MCPAN -e "install $mod"   || err=1
-	mod="Net::LibIDN2"
-	echo ""
-	echo "# install perl modul $mod ..."
-	perl -MCPAN -e "install $mod"   || err=1
-	[ 0 -ne $err ] && echo "**ERROR: module »${mod##*/}« installation failed; exit" && exit 2
-
-	err=0
-	# TODO: replace installing from -tgz with installing using CPAN
-	# TODO: IO::Socket::SSL uses Net::SSLeay, so build it after Net::SSLeay (again?)
-	for mod in $PERL_SRC_IOSOCKET $PERL_SRC_NET_DNS $PERL_SRC_MOZILLA ; do
-		err=1   # reset if build succeeds
-		tar=perllib.tgz
-		# TODO: Mozilla-CA-20180117 is in subdirectory
-		# IO::Socket::SLL's Makefile.PL ask interactivly, grrr
-		echo ""
-		cd    /tmp
-		echo "# install perl modul ${mod##*/} ..."
-		wget  --quiet --no-check-certificate $mod -O $tar	&& \
-		rm    -rf $BUILD_DIR       && mkdir $BUILD_DIR		&& \
-		tar   -xzf $tar -C $BUILD_DIR --strip-components=1	&& \
-		cd    $BUILD_DIR					&& \
-		#[ -d Mozilla-CA-20180117 ] && cd Mozilla-CA-20180117	&& \
-		[ -f Makefile.PL ] && perl  Makefile.PL --no-online-tests	&& \
-			set -x  && \
-			make    &&   make test  &&  make install	&& \
-			set +x  && \
-		err=0 && \
-		cd    /tmp  &&  rm -rf $tar
+	for mod in $perl_modules ; do
+		txt=""
+		[ "Module::Build" = $mod ] && continue
+		echo "# install perl modul $mod ..."
+		perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
+		[ "Net::LibIDN2" != $mod ] && [ -n "$txt" ] && err=1
+		  # Net::LibIDN2 returns error (7/2019):   wrong result: 'idn2'
+		  # TODO: hence ignore errors for now
 	done
-
-	[ 0 -ne $err ] && echo "**ERROR: module »{mod« installation failed; exit" && exit 2
+	perl -MCPAN -e "install $mod"   || err=1
+	[ 0 -ne $err ] && echo "**ERROR: module installation failed; exit" && exit 2
 fi
 
 # create aliases, so Dockerfile's syntax can be used
@@ -442,5 +409,11 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 # Dockerfile 1.30 }
 
 echo "# test o-saft.pl ..."
-	$OSAFT_DIR/o-saft.pl +version |egrep -i '(openssl|SSLeay)'
+	[ -e  $OSAFT_DIR/.o-saft.pl ] || echo "**WARNING: $OSAFT_DIR/.o-saft.pl not found; testing without"
+	o_saft=$OSAFT_DIR/o-saft.pl
+	if [ ! -e  $o_saft ]; then
+		echo "**WARNING: $o_saft missing; trying to find in PATH"
+		o_saft=o-saft.pl
+	fi
+	$o_saft +version |egrep -i '(openssl|SSLeay)'
 
