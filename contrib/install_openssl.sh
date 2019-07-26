@@ -8,20 +8,43 @@
 #?
 #? OPTIONS
 #?      --h - nice option
-#?      --m - install all Perl modules
+#?      --m - install all required Perl modules also
 #?      --n - do not execute, just show where to install
 #?
 #? DESCRIPTION
-#?      Build special openssl based on Peter Mosman's openssl.  Enables SSLv2
-#?      and SSLv3 and all possible ciphers.
-#?      Installs build in specified directory;  default: /usr/local/openssl .
-#?      Additionally builds Perl module Net::SSLeay based on special openssl.
-#?      Net::SSLeay will be installed in  /usr/local/lib .
-#?      Modifies  .o-saft.pl  (keeping existing one in  .o-saft.pl-orig).
+#?      Build special openssl based on  Peter Mosman's openssl.  Additionally
+#?      build Perl module  Net::SSLeay  based on previous build openssl.
+#?      Modifies  ./.o-saft.pl  (keeping existing one in  .o-saft.pl-orig).
+#?
 #?      This script is intended to be executed in the  installation directory
 #?      of O-Saft.
 #?
-#?      Required Perl modules are installed using "perl -MCPAN -e "install ".
+#? WARNING
+#?      Note that  compilation and installation of  openssl  and  Net::SSLeay
+#?      uses known insecure configurations and features! This is essential to
+#?      make  o-saft.pl  able to check for such insecurities.
+#?
+#?      It's highly recommended to do this installation on a separate testing
+#?      system.
+#?
+#?      DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYSTEMS.
+#?
+#? DETAILS
+#?
+#?    openssl
+#?      SSLv2, SSLv3 and all possible ciphers are enabled. All depricated and
+#?      known insecure extensions are enabled.
+#?      Installs build in specified directory;  default: /usr/local/openssl .
+#?
+#?    Net::SSLeay
+#?      Building  Net::SSLeay  is based on previously configured and compiled
+#?      special openssl.
+#?      Installs build in specified directory;  default: /usr/local/lib .
+#?
+#?    Other Perl modules
+#?      Additional Perl modules will be install with option  -m . 
+#?      These Perl modules are installed using "perl -MCPAN -e "install ".
+#?      Installs build in specified directory;  default: /usr/local/share .
 #?
 #?      Finally this script starts  "o-saft.pl +version"  using the installed
 #?      openssl binary and the installed Net::SSLeay.  The output should look
@@ -36,23 +59,23 @@
 #?    = openssl =
 #?        external executable              /usr/local/openssl/bin/openssl
 #?        version of external executable   OpenSSL 1.0.2-chacha (1.0.2k-dev)
+#?        used environment variable (name) LD_LIBRARY_PATH
+#?        environment variable (content)   <<undef>>
+#?        path to shared libraries
 #?        full path to openssl.cnf file    /usr/local/openssl/ssl/openssl.cnf
 #?        common openssl.cnf files         /usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf
+#?        URL where to find CRL file       <<undef>>
 #?        directory with PEM files for CAs /usr/local/openssl/ssl/certs
 #?        common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+#?        number of supported ciphers      201
 #?        openssl supported SSL versions   SSLv2 SSLv3 TLSv1 TLSv11 TLSv12
-#?        Net::SSLeay            1.82     /usr/local/lib/x86_64-linux-gnu/perl/5.20.2/Net/SSLeay.pm
+#?    =   module name            VERSION  found in
+#?    =   ----------------------+--------+------------------------------------------
+#?        IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.24/IO/Socket/INET.pm
+#?        IO::Socket::SSL        2.066    /usr/local/share/perl/5.24.1/IO/Socket/SSL.pm
+#?        Net::DNS               1.2      /usr/local/share/perl/5.24.1/Net/DNS.pm
+#?        Net::SSLeay            1.85     /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #?    -------------------------------------------------------------------------
-#?
-#? WARNING
-#?      Note that  compilation and installation of  openssl  and  Net::SSLeay
-#?      uses known insecure configurations and features! This is essential to
-#?      make  o-saft.pl  able to check for such insecurities.
-#?
-#?      It's highly recommended to do this installation on a separate testing
-#?      system.
-#?
-#?      DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYSTEMS.
 #?
 #? PRECONDITIONS
 #?      Script needs write access to installation directories (/usr/local and
@@ -60,12 +83,14 @@
 #?      To build openssl, following libraries and include files are needed:
 #?          gmp krb5 libsctp zlib
 #?      Assumes that ca-certificates are install in /etc/ssl/certs/ .
-#?      Assumes that following Perl modules are installed:
-#?          Module::Build Net::DNS Net::LibIDN1 libidn.so Mozilla::CA
+#?      Assumes that following Perl module  Module::Build  is installed.
 #?
 #? ENVIRONMENT VARIABLES
 #?      This script knows about following environment variable, which are the
 #?      same as used in the Dockerfile. Use  --n  option to see the defaults.
+#?      These variables can be used to:
+#?        * adapt the sources and their checksums to be used
+#?        * the directory where to find O-Saft
 #?
 #?          OSAFT_VM_SRC_OPENSSL
 #?              URL to fetch openssl.tgz archive.
@@ -127,8 +152,10 @@
 #? EXAMPLES
 #?      Simple build with defaults:
 #?          $0
+#?      Build including required Perl modules:
+#?          $0 -m
 #? VERSION
-#?      @(#)  1.14 19/07/26 08:19:56
+#?      @(#)  1.15 19/07/26 09:27:45
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -221,7 +248,7 @@ while [ $# -gt 0 ]; do
 	${OPENSSL_DIR}/bin:$dir:$PATH
 
 # found perl: `which perl`
-# uses @INC=
+# perl uses @INC=
 EoT
 		perl -le 'print "\t" . join "\n\t",@INC'
 		;;
@@ -231,7 +258,7 @@ done
 # preconditions (needs to be checked with or without --n)
 err=0
 echo ""
-echo "# required Perl modules:"
+echo "# required Perl modules (installed with  -m  option):"
 for mod in $perl_modules ; do
 	txt=""
 	echo -n "	$mod "
@@ -240,10 +267,11 @@ for mod in $perl_modules ; do
 	[ -n "$txt" ] && err=1
 done
 
+# FIXME: checked package names are basedon debian, and desendents
 echo ""
 echo "# required libraries:"
 txt=`find /lib -name libidn\.\*`
-[ -z "$txt" ] && txt="**ERROR: libidn.so missing" && err=1
+[ -z "$txt" ] && txt="**ERROR: libidn.so missing"   && err=1
 echo "	libidn.so $txt"
 
 # FIXME: libidn11-dev also required
@@ -252,14 +280,20 @@ txt=`find /usr -name libidn2-0-dev`
 echo "	libidn2-0-dev $txt"
 
 txt=`find /usr -name libgmp-dev`
-[ -z "$txt" ] && txt="**ERROR: libgmp-dev missing" && err=1
+[ -z "$txt" ] && txt="**ERROR: libgmp-dev missing"  && err=1
 echo "	libgmp-dev $txt"
 
 txt=`find /usr -name libsctp-dev`
 [ -z "$txt" ] && txt="**ERROR: libsctp-dev missing" && err=1
 echo "	libsctp-dev $txt"
 
-# FIXME: check for libkrb5-dev and libzip-dev missing
+txt=`find /usr -name libkrb5-dev`
+[ -z "$txt" ] && txt="**ERROR: libkrb5-dev missing" && err=1
+echo "	libkrb5-dev $txt"
+
+txt=`find /usr -name libzip-dev`
+[ -z "$txt" ] && txt="**ERROR: libzip-dev missing"  && err=1
+echo "	libzip-dev $txt"
 
 echo ""
 echo "# requred directories:"
@@ -276,9 +310,9 @@ if [ 0 -ne $err ]; then
 	echo '        libmodule-build-perl'
 	echo '        libgmp-dev libsctp-dev libzip-dev libidn11-dev libidn2-0-dev'
 	echo '# Note  libgmp-dev libsctp-dev libzip-dev  are only necessary for compiling openssl'
-	[ 0 -eq $optm ] && exit 2
 fi
 [ 1 -eq $optn ] && exit 0
+[ 0 -ne $err  ] && [ 0 -eq $optm ] && exit 2
 
 # NOTE: Module::Build is a hard requirement and must be installed in the OS
 mod="Module::Build" # hard requirement
