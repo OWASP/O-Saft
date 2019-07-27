@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.879 19/07/27 19:07:23",
+    SID         => "@(#) yeast.pl 1.880 19/07/27 19:23:28",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -852,6 +852,7 @@ my %check_size = (  ## length and count data
     'cnt_chaindepth'=> {'txt' => "Certificate Chain Depth count"},  # == 1
     'cnt_ciphers'   => {'txt' => "Total number of offered ciphers"},# <> 0
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
+    'cnt_checks_noo'=> {'txt' => "Total number of check results 'no(<<)'"},
     'cnt_checks_no' => {'txt' => "Total number of check results 'no'"},
     'cnt_checks_yes'=> {'txt' => "Total number of check results 'yes'"},
     'cnt_exitcode'  => {'txt' => "Total number of insecure checks"},# == 0
@@ -1082,6 +1083,7 @@ our %shorttexts = (
     'cnt_chaindepth'=> "Count chain depth",
     'cnt_ciphers'   => "Count ciphers",
     'cnt_totals'    => "Checked ciphers",
+    'cnt_checks_noo'=> "Checks 'no(<<)'",
     'cnt_checks_no' => "Checks 'no'",
     'cnt_checks_yes'=> "Checks 'yes'",
     #------------------+------------------------------------------------------
@@ -5826,8 +5828,9 @@ sub check_exitcode  {
     _v_print(sprintf("%s\t%2s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
     _v_print(sprintf("%s\t%2s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
     _v_print(sprintf("%s\t%2s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
-    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}, $ign_checks));
-    _v_print(sprintf("%s\t%2s", $checks{'cnt_exitcode'}->{txt},  $checks{'cnt_exitcode'}->{val}));
+    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_no'} ->{txt}, $checks{'cnt_checks_no'} ->{val}, $ign_checks));
+    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_noo'}->{txt}, $checks{'cnt_checks_noo'}->{val}, $ign_checks));
+    _v_print(sprintf("%s\t%2s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
     _v_print("$__exitline }");
     $cfg{'verbose'} = $verbose; # restore
     return $checks{'cnt_exitcode'}->{val};
@@ -6606,6 +6609,7 @@ sub printchecks($$$)    {
             # increment counter only here, avoids counting the counter itself
             $checks{'cnt_checks_yes'}->{val}++ if ($value eq "yes");
             $checks{'cnt_checks_no'} ->{val}++ if ($value =~ /^no/);
+            $checks{'cnt_checks_noo'}->{val}++ if ($value =~ /^no\s*\(<</);
             print_check($legacy, $host, $port, $key, $value);
         }
     }
