@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.881 19/07/27 20:36:09",
+    SID         => "@(#) yeast.pl 1.882 19/07/27 20:50:07",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -8919,6 +8919,7 @@ usr_pre_exit();
 _yeast_exit();
 _yeast_EXIT("exit=END   - end");# for symetric reason, rather useless here
 
+$cfg{'exitcode'} += $cfg{'exitcode_v'}; # --exitcode-v
 if ($cfg{'exitcode'} == 0) {
     exit 0;
 } else {
