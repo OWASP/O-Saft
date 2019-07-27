@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.33 19/07/21 12:11:47
+# SID   @(#) help.txt 1.34 19/07/27 21:43:00
 
 NAME
 
@@ -1009,7 +1009,7 @@ OPTIONS
       --exitcode
 
           The exit status code will be greater 0, if any of following applies:
-          * any check returns  'no'
+          * any check returns  'no', except if  'no (<<...>>)'
           * insecure protocols are available
           * insecure ciphers are supported
           * ciphers without PFS are supported (disable with --exitcode-cipher)
@@ -1027,11 +1027,11 @@ OPTIONS
 
       --exitcode-v
 
-          Print information about persormed checks.
+          Print information about performed checks.
 
       --exitcode-quiet
 
-          Do not print status code at end.
+          Do not print status code at end, like '# EXIT 23'.
 
       --exitcode-no-checks
 
@@ -1040,10 +1040,6 @@ OPTIONS
       --exitcode-no-low  --exitcode-no-weak  --exitcode-no-medium
 
           Do not count LOW, WEAK or MEDIUM security ciphers for  --exitcode .
-
-      --exitcode-no-ciphers
-
-          Do not count any ciphers for  --exitcode .
 
       --exitcode-no-ciphers
 
