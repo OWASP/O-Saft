@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.878 19/07/21 21:47:54",
-    STR_VERSION => "19.06.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.879 19/07/27 19:07:23",
+    STR_VERSION => "19.07.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -2500,7 +2500,7 @@ sub _init_openssldir    {
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
     }
-    _trace("_init_openssldir: ca_path=$cfg{'ca_paths'} .");
+    _trace("_init_openssldir: ca_paths=$cfg{'ca_paths'} .");
     return $capath;
 } # _init_openssldir
 
@@ -8195,8 +8195,8 @@ $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
 if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
     $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
-$cfg{'ca_path'} = _init_openssl_ca($cfg{'ca_path'});
-if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
+$cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
+if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
     _warn("060: no PEM fila for CA found; some certificate checks may fail");
 }
 
@@ -9310,12 +9310,12 @@ like:  OPENSSLDIR: "/usr/local/openssl"
 
 Some versions of openssl on windows may return "/usr/local/ssl", or alike,
 which is most likely wrong. As the existance of the returned directoy will
-be checked, this produces an  **WARNING  and unsets the ca_path.  However,
+be checked,  this produces a  **WARNING  and unsets the ca_path.  However,
 the used Perl modules (i.e. Net::SSLeay)  may be compiled with a different
-OPenSSL, and hence use their (compiled-in) private path to the certs.
+OpenSSL, and hence use their (compiled-in) private path to the certs.
 
 Note that the returned OPENSSLDIR is a base-directory where the cert files
-are found in the cert/ sub-directory. This cert/ is hardcoded herein.
+are found in the certs/ sub-directory. This certs/ is hardcoded herein.
 
 
 =head2 Note:OpenSSL s_client
