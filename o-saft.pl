@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.880 19/07/27 19:23:28",
+    SID         => "@(#) yeast.pl 1.881 19/07/27 20:36:09",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -5788,7 +5788,10 @@ sub check_exitcode  {
     my $cnt_nopfs  = 0; # total number ciphers without PFS
     my $verbose    = $cfg{'verbose'};       # save global verbose
     $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
-    $exitcode = $checks{'cnt_checks_no'}->{val} if (0 < $cfg{'exitcode_checks'});
+    if (0 < $cfg{'exitcode_checks'}) {
+        $exitcode  = $checks{'cnt_checks_no'} ->{val};
+        $exitcode -= $checks{'cnt_checks_noo'}->{val};
+    }
 # TODO: $cfg{'exitcode_sizes'}
     my $__tableline = "-------------+---+---+---+---+------+------------";
     my $__exitline  = "---------------------------------------------------- exitcode";
@@ -5825,12 +5828,12 @@ sub check_exitcode  {
     $cnt_prot-- if (0 < $cfg{'TLSv12'});
     $exitcode += $cnt_prot if (0 < $cfg{'exitcode_prot'});
     $checks{'cnt_exitcode'}->{val} = $exitcode;
-    _v_print(sprintf("%s\t%2s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
-    _v_print(sprintf("%s\t%2s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
-    _v_print(sprintf("%s\t%2s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
-    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_no'} ->{txt}, $checks{'cnt_checks_no'} ->{val}, $ign_checks));
-    _v_print(sprintf("%s\t%2s%s", $checks{'cnt_checks_noo'}->{txt}, $checks{'cnt_checks_noo'}->{val}, $ign_checks));
-    _v_print(sprintf("%s\t%2s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
+    _v_print(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
+    _v_print(sprintf("%s\t%5s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
+    _v_print(sprintf("%s\t%5s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
+    _v_print(sprintf("%s\t%5s%s", $checks{'cnt_checks_no'} ->{txt}, $checks{'cnt_checks_no'} ->{val}, $ign_checks));
+    _v_print(sprintf("%s %3s%s",  $checks{'cnt_checks_noo'}->{txt}, "-".$checks{'cnt_checks_noo'}->{val}, $ign_checks));
+    _v_print(sprintf("%s\t%5s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
     _v_print("$__exitline }");
     $cfg{'verbose'} = $verbose; # restore
     return $checks{'cnt_exitcode'}->{val};
@@ -7666,9 +7669,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--ignorenoreply')     { $cfg{'ignorenoreply'} = 1;}
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
     if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
-    if ($arg =~ /^--exitcodequiet/)     { $cfg{'exitcode_quiet'}= 1;} # -"-
+    if ($arg =~ /^--exitcodequiet/)     { $cfg{'exitcode_quiet'}= 1;} #
     if ($arg =~ /^--exitcodesilent/)    { $cfg{'exitcode_quiet'}= 1;} # alias:
-    if ($arg =~ /^--exitcodev/)         { $cfg{'exitcode_v'}    = 1;} # -"-
+    if ($arg =~ /^--exitcodev/)         { $cfg{'exitcode_v'}    = 1;} #
     if ($arg =~ /^--traceexit/)         { $cfg{'exitcode_v'}    = 1;} # alias:
     if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
     if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; } # -"-
