@@ -162,7 +162,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.18 19/07/27 11:22:26
+#?      @(#)  1.20 19/07/27 12:57:50
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -294,16 +294,16 @@ done
 lib=0
 echo ""
 echo "# required libraries:"
-txt=`find /lib -name libidn\.\*`
+txt=`find /usr/lib -name libidn\.\*`
 [ -z "$txt" ] && txt="**ERROR: libidn.so missing"    && miss="$miss libidn,"
 echo "	libidn.so $txt"
 
-for lib in $lib_packages ; do
+for pack in $lib_packages ; do
 	ok=1
-	txt=`find /usr -name $lib`
-	[ -z "$txt" ] && txt="**ERROR: $lib missing" && ok=0 && lib=1
+	txt=`find /usr -name $pack`
+	[ -z "$txt" ] && txt="**ERROR: $pack missing" && ok=0 && lib=1
 	[ 1 -eq $ok ] && txt="\tOK $txt"
-	echo "	$lib $txt"
+	echo "	$pack $txt"
 done
 [ 1 -eq $lib ] && miss="$miss libraries," && err=1
 
@@ -357,8 +357,6 @@ if [ 1 -eq $optm ]; then
 	[ 0 -ne $err ] && echo "**ERROR: module installation failed"
 	# $err no longer used
 fi
-
-echo EXIT; exit
 
 ### install openssl
 echo "### install openssl ..."
