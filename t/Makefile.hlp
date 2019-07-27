@@ -18,15 +18,20 @@
 #       For details please see
 #           ../Makefile  Makefile.help  Makefile.template
 #
+#       To get a list of used (at least documented)  --help*  options, use:
+#           o-saft.pl --help=help
+#       or:
+#           grep help= OSaft/Doc/help.txt
+#
 #? VERSION
-#?      @(#) Makefile.hlp 1.17 19/07/03 16:14:10
+#?      @(#) Makefile.hlp 1.18 19/07/27 22:59:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.17
+_SID.hlp        = 1.18
 
 _MYSELF.hlp     = t/Makefile.hlp
 _MY.includes   += $(_MYSELF.hlp)
@@ -60,6 +65,7 @@ HELP.test.hlp.all   = # no special documentation yet
 
 testarg0-h-%:                   EXE.pl      = ../$(SRC.pl)
 testarg0-h-%:                   TEST.init   = --no-rc --header
+    # --no-rc ensures that a local RC-file does not change the results
 
 # these are kind of help, but do not use --help
 testarg0-h---cmd-VERSION:       TEST.args  += --cmd=VERSION
@@ -79,6 +85,7 @@ testarg0-h-+ciphers-legacy-owasp:   TEST.args  += +ciphers --legacy=owasp
 testarg0-h--help-FAQ:           TEST.args  += --help=FAQ
 testarg0-h--help-WHY:           TEST.args  += --help=WHY
 testarg0-h--help-CHECK:         TEST.args  += --help=CHECK
+testarg0-h--help-security:      TEST.args  += --help=SECURITY
 testarg0-h--help-alias:         TEST.args  += --help=alias
 testarg0-h--help-check:         TEST.args  += --help=check
 testarg0-h--help-cmd:           TEST.args  += --help=cmd
@@ -86,6 +93,8 @@ testarg0-h--help-commands:      TEST.args  += --help=commands
 testarg0-h--help-compliance:    TEST.args  += --help=compliance
 testarg0-h--help-content:       TEST.args  += --help=content
 testarg0-h--help-data:          TEST.args  += --help=data
+testarg0-h--help-examples:      TEST.args  += --help=examples
+testarg0-h--help-exit:          TEST.args  += --help=exit
 testarg0-h--help-glossar:       TEST.args  += --help=glossar
 testarg0-h--help-intern:        TEST.args  += --help=intern
 testarg0-h--help-help:          TEST.args  += --help=help
@@ -96,6 +105,7 @@ testarg0-h--help-opt:           TEST.args  += --help=opt
 testarg0-h--help-options:       TEST.args  += --help=options
 testarg0-h--help-ourstr:        TEST.args  += --help=ourstr
 testarg0-h--help-pattern:       TEST.args  += --help=pattern
+testarg0-h--help-program.code:  TEST.args  += --help=program.code
 testarg0-h--help-range:         TEST.args  += --help=range
 testarg0-h--help-regex:         TEST.args  += --help=regex
 testarg0-h--help-rfc:           TEST.args  += --help=rfc
@@ -104,11 +114,16 @@ testarg0-h--help-toc:           TEST.args  += --help=toc
 testarg0-h--help-todo:          TEST.args  += --help=todo
 testarg0-h--help-tools:         TEST.args  += --help=tools
 testarg0-h--help-warning:       TEST.args  += --help=warning
+#testarg0-h--help-error:        TEST.args  += --help=error     # alias
+#testarg0-h--help-known:        TEST.args  += --help=known     # alias
 testarg0-h--help-cfg-check:     TEST.args  += --help=cfg-check
+testarg0-h--help-cfg-cmd:       TEST.args  += --help=cfg-cmd
 testarg0-h--help-cfg-data:      TEST.args  += --help=cfg-data
 testarg0-h--help-cfg-hint:      TEST.args  += --help=cfg-hint
 testarg0-h--help-cfg-info:      TEST.args  += --help=cfg-info
 testarg0-h--help-cfg-text:      TEST.args  += --help=cfg-text
+testarg0-h--help-cfg-ourstr:    TEST.args  += --help=cfg-ourstr
+testarg0-h--help-cfg-range:     TEST.args  += --help=cfg-range
 testarg0-h--help-cfg-regex:     TEST.args  += --help=cfg-regex
 testarg0-h--help-gen-wiki:      TEST.args  += --help=gen-wiki
 testarg0-h--help-gen-html:      TEST.args  += --help=gen-html
