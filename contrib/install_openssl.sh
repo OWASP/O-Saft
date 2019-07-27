@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.21 19/07/27 18:45:56
+#?      @(#)  1.22 19/07/27 18:47:36
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -463,7 +463,7 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 # Dockerfile 1.30 }
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
-#      not provide its on CA files
+#      not provide its on CA files; expects that /etc/ssl/certs/ exists.
 
 ### test o-saft.pl
 echo "### test o-saft.pl ..."
@@ -473,6 +473,7 @@ if [ ! -e  $o_saft ]; then
 	echo "**WARNING: $o_saft missing; trying to find in PATH"
 	o_saft=o-saft.pl
 fi
-echo "$o_saft +version |egrep -i '(SSL|supported)'"
-$o_saft +version |egrep -i '(SSL|supported|cert)'
+# --no-rc ensures that all internal defaults are shown
+echo "$o_saft +version --no-rc |egrep -i '(SSL|supported)'"
+$o_saft +version --no-rc |egrep -i '(SSL|supported|cert)'
 
