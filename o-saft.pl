@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.882 19/07/27 20:50:07",
+    SID         => "@(#) yeast.pl 1.883 19/07/27 21:06:35",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -5826,6 +5826,7 @@ sub check_exitcode  {
     my $ign_pfs     = (0 < $cfg{'exitcode_pfs'})    ? "" : " (count ignored)";
     _v_print($__tableline);
     $cnt_prot-- if (0 < $cfg{'TLSv12'});
+    $cnt_prot-- if (0 < $cfg{'TLSv13'});
     $exitcode += $cnt_prot if (0 < $cfg{'exitcode_prot'});
     $checks{'cnt_exitcode'}->{val} = $exitcode;
     _v_print(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
