@@ -9,7 +9,7 @@
 #? OPTIONS
 #?      --h - nice option
 #?      --m - install all required Perl modules also
-#?      --n - do not execute, just show where to install
+#?      --n - do not execute, just show preconditions and where to install
 #?
 #? DESCRIPTION
 #?      Build special openssl based on  Peter Mosman's openssl.  Additionally
@@ -42,7 +42,7 @@
 #?      Installs build in specified directory;  default: /usr/local/lib .
 #?
 #?    Other Perl modules
-#?      Additional Perl modules will be install with option  -m . 
+#?      Additional Perl modules will be install with option  --m . 
 #?      These Perl modules are installed using "perl -MCPAN -e "install ".
 #?      Installs build in specified directory;  default: /usr/local/share .
 #?
@@ -77,11 +77,19 @@
 #?        Net::SSLeay            1.85     /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #?    -------------------------------------------------------------------------
 #?
+#?      This script does no cleanup if any building of  Perl modules, openssl
+#?      or  Net::SSLeay fails. Sucessfully build parts are not removed. There
+#?      may be garbage in  BUILD_DIR  and/or the  CPAN  directory.
+#?      Errors when bulding the additional Perl modules are silently ignored.
+#?      Failing to build openssl or Net::SSLeay will exit the script.
+#?
 #? PRECONDITIONS
-#?      Script needs write access to installation directories (/usr/local and
-#?      /usr/local/lib by default).
+#?      The script needs write access to installation directories (/usr/local
+#?      and /usr/local/lib by default).
 #?      To build openssl, following libraries and include files are needed:
 #?          gmp krb5 libsctp zlib
+#?      Hints about missing packages and libraries are given  if started with
+#?      option  --n .
 #?      Assumes that ca-certificates are install in /etc/ssl/certs/ .
 #?      Assumes that following Perl module  Module::Build  is installed.
 #?
@@ -153,9 +161,9 @@
 #?      Simple build with defaults:
 #?          $0
 #?      Build including required Perl modules:
-#?          $0 -m
+#?          $0 --m
 #? VERSION
-#?      @(#)  1.16 19/07/26 09:49:50
+#?      @(#)  1.17 19/07/27 10:53:31
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -226,6 +234,8 @@ while [ $# -gt 0 ]; do
 # move existing  $dir/.o-saft.pl to $dir/.o-saft.pl-orig"
 		cat <<EoT
 
+### Configuration
+
 # start build in WORK_DIR=
 	$dir
 # get openssl from OSAFT_VM_SRC_OPENSSL=
@@ -264,10 +274,13 @@ EoT
 	esac
 done
 
-# preconditions (needs to be checked with or without --n)
+### preconditions (needs to be checked with or without --n)
+miss=""
 err=0
 echo ""
-echo "# required Perl modules (installed with  -m  option):"
+echo "### Preconditions"
+echo ""
+echo "# required Perl modules (installed with  --m  option):"
 for mod in $perl_modules ; do
 	txt=""
 	echo -n "	$mod "
@@ -275,52 +288,71 @@ for mod in $perl_modules ; do
 	[ -z "$txt" ] && txt="\tOK" || err=1
 	echo "$txt"
 done
+if [ 1 -eq $optm ]; then
+	err=0
+	# when --m was given continue even if Perl modules are missing
+else
+	[ 1 -eq $err ] && miss="$miss modules,"
+fi
+# NOTE: Module::Build is a hard requirement and must be installed in the OS
+mod="Module::Build"
+txt=""
+perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+[ -z "$txt" ] && txt="\tOK" || err=5
+echo "\t$mod$txt"
+[ 5 -eq $err ] && miss="$miss Module::Build,"
 
 # FIXME: checked package names are basedon debian, and desendents
+err=0
 echo ""
 echo "# required libraries:"
 txt=`find /lib -name libidn\.\*`
-[ -z "$txt" ] && txt="**ERROR: libidn.so missing"    && err=1
+[ -z "$txt" ] && txt="**ERROR: libidn.so missing"    && miss="$miss libidn,"
 echo "	libidn.so $txt"
 
 for lib in $lib_packages ; do
 	ok=1
 	txt=`find /usr -name $lib`
-	[ -z "$txt" ] && txt="**ERROR: $lib missing" && ok=0
+	[ -z "$txt" ] && txt="**ERROR: $lib missing" && ok=0 && err=1
 	[ 1 -eq $ok ] && txt="\tOK $txt"
 	echo "	$lib $txt"
 done
+[ 1 -eq $err ] && miss="$miss libraries,"
 
 echo ""
-echo "# requred directories:"
-[ ! -e "$OSAFT_DIR" ]   && echo "**ERROR: OSAFT_DIR=$OSAFT_DIR missing; exit"    && err=1
-[   -e "$BUILD_DIR" ]   && echo "**ERROR: BUILD_DIR=$BUILD_DIR exists; exit"     && err=1
-[   -e "$OPENSSL_DIR" ] && echo "**ERROR: OPENSSL_DIR=$OPENSSL_DIR exists; exit" && err=1
-[ ! -e "$SSLEAY_DIR" ]  && echo "**ERROR: SSLEAY_DIR=$SSLEAY_DIR missing; exit"  && err=1
-echo ""
-if [ 0 -ne $err ]; then
-	echo "**ERROR: preconditions incomplete; exit"
-	echo '!!Hint: install packages like:'
-	echo "        $lib_packages"
-	echo '        perl-net-dns perl-net-libidn perl-mozilla-ca'
-	echo '        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl'
-	echo '        libmodule-build-perl'
-	echo '        or Perl modules with "perl -MCPAN -e "install ..."'
-	echo "        $perl_modules"
-	echo '# Note  all lib*-dev  are only necessary for compiling openssl and may be'
-	echo '#       removed afterwards.'
-	echo ''
-        # TODO: print only required packages and moduls in Hint above
-fi
-[ 1 -eq $optn ] && exit 0
-[ 0 -ne $err  ] && [ 0 -eq $optm ] && exit 2
-
-# NOTE: Module::Build is a hard requirement and must be installed in the OS
-mod="Module::Build" # hard requirement
+echo -n "# requred directories:"
 txt=""
-perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
-[ -n "$txt" ] && echo "$txt" && exit 2
+[ ! -e "$OSAFT_DIR" ]   && txt="$txt\n**ERROR: missing: OSAFT_DIR=$OSAFT_DIR"
+[   -e "$BUILD_DIR" ]   && txt="$txt\n**ERROR: exists:  BUILD_DIR=$BUILD_DIR"
+[   -e "$OPENSSL_DIR" ] && txt="$txt\n**ERROR: exists:  OPENSSL_DIR=$OPENSSL_DIR"
+[ ! -e "$SSLEAY_DIR" ]  && txt="$txt\n**ERROR: missing: SSLEAY_DIR=$SSLEAY_DIR"
+[   -n "$txt" ] && miss="$miss directories" && echo $txt.
+echo ""
+if [ -z "$miss" ]; then
+	echo '# OK all preconditions satisfied'
+	[ 1 -eq $optn  ] && exit 0
+else
+	cat <<EoT
 
+!!Hint: install packages like (examples):
+        $lib_packages
+        perl-net-dns perl-net-libidn perl-mozilla-ca
+        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl
+        libmodule-build-perl
+# Note  all lib*-dev  are only necessary for compiling openssl and may be
+#       removed afterwards.
+
+!!Hint: Perl modules may also be installed with "perl -MCPAN -e "install ..."
+        $perl_modules
+**ERROR: preconditions incomplete: $miss; exit
+EoT
+	err=2
+        # TODO: print only required packages and moduls in Hint above
+	exit 2
+fi
+[ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
+
+### install modules (with --m only)
 if [ 1 -eq $optm ]; then
 	err=0
 	for mod in $perl_modules ; do
@@ -328,17 +360,17 @@ if [ 1 -eq $optm ]; then
 		[ "Module::Build" = $mod ] && continue
 		echo "# install perl modul $mod ..."
 		perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
-		[ "Net::LibIDN2" != $mod ] && [ -n "$txt" ] && err=1
-		  # Net::LibIDN2 returns error (7/2019):   wrong result: 'idn2'
-		  # TODO: hence ignore errors for now
+		[ -n "$txt" ] && err=1
+		# FIXME: perl -MCPAN does not return proper error codes; need
+		#        to parse output, grrr
 	done
 	perl -MCPAN -e "install $mod"   || err=1
-	[ 0 -ne $err ] && echo "**ERROR: module installation failed; exit" && exit 2
+	[ 0 -ne $err ] && echo "**ERROR: module installation failed"
 fi
 
-# create aliases, so Dockerfile's syntax can be used
-alias   RUN="\cd $dir && "
-alias   apk="\echo '#'apk"
+### install openssl
+alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
+alias   apk="\echo '#'apk"  #
 
 # Dockerfile 1.30 {
 
@@ -443,6 +475,7 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 
 # Dockerfile 1.30 }
 
+### run o-saftpl
 echo "# test o-saft.pl ..."
 	[ -e  $OSAFT_DIR/.o-saft.pl ] || echo "**WARNING: $OSAFT_DIR/.o-saft.pl not found; testing without"
 	o_saft=$OSAFT_DIR/o-saft.pl
