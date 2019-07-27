@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.883 19/07/27 21:06:35",
+    SID         => "@(#) yeast.pl 1.884 19/07/27 21:18:14",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -5803,6 +5803,7 @@ sub check_exitcode  {
 # TODO: counts protocol even if no cipher was supported, is this insecure?
         $cnt_prot++ if (0 < $cfg{$ssl});
         $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
+        $cnt_pfs   = 0 if (0 >= $prot{$ssl}->{'cnt'});  # useless if there're no ciphers
         $exitcode += $cnt_pfs                if (0 < $cfg{'exitcode_pfs'});
         $cnt_ciph  = 0;
         $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (0 < $cfg{'exitcode_medium'});
