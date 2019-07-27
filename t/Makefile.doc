@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.12 19/07/21 21:44:24
+#?      @(#) Makefile.doc 1.13 19/07/28 01:58:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.12
+_SID.doc        = 1.13
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -194,6 +194,17 @@ testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
 testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
 testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
 
+# TODO: following needs own target or even own Makefile.make
+testarg0-doc9-makefile:         TEST.args   = t/Makefile.pod
+
+# TODO: other tools should go to Makefile.contrib
+testarg0-doc11-%:               EXE.pl      = contrib/bunt.pl
+testarg0-doc11--help:           TEST.args   = --help
+testarg0-doc12-%:               EXE.pl      = contrib/gen_standalone.sh
+testarg0-doc12--help:           TEST.args   = --help
+testarg0-doc13-%:               EXE.pl      = contrib/install_openssl.sh
+testarg0-doc13--help:           TEST.args   = --help
+
 ALL.testdoc1    = $(shell awk -F: '/^testarg0-doc1-.*%/{next} /^testarg0-doc1-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 ALL.test.doc1   = $(ALL.testdoc1)
 test.doc1:      $(ALL.test.doc1)
@@ -235,6 +246,7 @@ test.doc.log-move:      TEST.target_prefix  = testarg0-doc
 test.doc.log:           TEST.target_prefix  = testarg0-doc
 
 ALL.testdoc     = $(shell awk -F: '/^testarg0-doc.-.*%/{next} /^testarg0-doc.-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
+ALL.testdoc    += $(shell awk -F: '/^testarg0-doc..-.*%/{next} /^testarg0-doc..-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 ALL.test.doc    = $(ALL.testdoc)
 ALL.test.doc.log= $(ALL.test.doc:%=%.log) test.log-compare-hint
 
