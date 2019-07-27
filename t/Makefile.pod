@@ -1,28 +1,48 @@
 #! /usr/bin/perldoc 
-#?
-#? NAME
-#?      Makefile.pod    - documentation for Makefiles in POD format
-#?
-#? SYNOPSYS
-#?      Makefile.pod
-#?      perldoc Makefile.pod
-#?
-#? DESCRIPTION
-#?      This file conatains the internal (developer) documentation for all other
-#?      Makefiles.  This is done to keep other Makefiles  as simple as possible,
-#?      and just containing the user documentation.
-#?
-# HACKER's INFO
-#
-#? VERSION
-#?      @(#) Makefile.pod 1.14 19/04/03 20:43:18
-#?
-#? AUTHOR
-#?      18-nov-18 Achim Hoffmann
-#?
-# -----------------------------------------------------------------------------
 
 =pod
+
+=head1 NAME
+
+Makefile.pod    - documentation for Makefiles in POD format
+
+=head1 SYNOPSYS
+
+    Makefile.pod
+    perldoc Makefile.pod
+
+=head1 DESCRIPTION
+
+This file  contains the  internal (developer) documentation  for all other
+Makefiles. This is done to keep other Makefiles as simple as possible, and
+just containing the user documentation.
+
+This documentation consist of following main sections:
+
+=over
+
+=item L</GNU Make>
+
+=item L</O-Saft Terms>
+
+=item L</O-Saft Makefile Syntax>
+
+=item L</O-Saft Makefile Annotations>
+
+=back
+
+The sub-headers in L</O-Saft Makefile Annotations>
+are referenced from all other Makefiles.
+
+=head1 VERSION
+
+@(#) Makefile.pod 1.15 19/07/27 23:58:01
+
+=head1 AUTHOR
+
+18-nov-18 Achim Hoffmann
+
+=head1 GNU Make
 
 =head2 Make:GNU
 
@@ -140,6 +160,14 @@ t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
 When  $(MAKE)  is used in documentation (variables or texts),  make should 
 be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
+
+=head1 O-Saft Terms
+
+
+=head1 O-Saft Makefile Syntax
+
+
+=head1 O-Saft Makefile Annotations
 
 =head2 Make:target name
 
