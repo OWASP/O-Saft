@@ -50,31 +50,27 @@
 #?      openssl binary and the installed Net::SSLeay.  The output should look
 #?      like (paths may differ):
 #?    -------------------------------------------------------------------------
-#?    # test o-saft.pl ...
-#?    **WARNING: 143: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
-#?        Net::SSLeay::
+#?    ### test o-saft.pl ...
 #?           ::OPENSSL_VERSION_NUMBER()    0x100020b0 (268443824)
 #?           ::SSLeay()                    0x100020b0 (268443824)
 #?        Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2k-dev)
 #?    = openssl =
 #?        external executable              /usr/local/openssl/bin/openssl
 #?        version of external executable   OpenSSL 1.0.2-chacha (1.0.2k-dev)
-#?        used environment variable (name) LD_LIBRARY_PATH
-#?        environment variable (content)   <<undef>>
-#?        path to shared libraries
 #?        full path to openssl.cnf file    /usr/local/openssl/ssl/openssl.cnf
 #?        common openssl.cnf files         /usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf
-#?        URL where to find CRL file       <<undef>>
-#?        directory with PEM files for CAs /usr/local/openssl/ssl/certs
+#?        directory with PEM files for CAs /etc/ssl/certs/
+#?        PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
+#?        common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+#?        common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+#?        Net::SSLeay::
+#?        PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
 #?        common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
 #?        number of supported ciphers      201
 #?        openssl supported SSL versions   SSLv2 SSLv3 TLSv1 TLSv11 TLSv12
-#?    =   module name            VERSION  found in
-#?    =   ----------------------+--------+------------------------------------------
-#?        IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.24/IO/Socket/INET.pm
-#?        IO::Socket::SSL        2.066    /usr/local/share/perl/5.24.1/IO/Socket/SSL.pm
-#?        Net::DNS               1.2      /usr/local/share/perl/5.24.1/Net/DNS.pm
-#?        Net::SSLeay            1.85     /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#?        o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+#?        IO::Socket::SSL        2.066    /usr/local/share/perl/5.28.1/IO/Socket/SSL.pm
+#?        Net::SSLeay            1.85     /usr/local/lib/x86_64-linux-gnu/perl/5.28.1/Net/SSLeay.pm
 #?    -------------------------------------------------------------------------
 #?
 #?      This script does no cleanup if any building of  Perl modules, openssl
@@ -162,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.20 19/07/27 12:57:50
+#?      @(#)  1.21 19/07/27 18:45:56
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -466,6 +462,9 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 
 # Dockerfile 1.30 }
 
+# NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
+#      not provide its on CA files
+
 ### test o-saft.pl
 echo "### test o-saft.pl ..."
 [ -e  $OSAFT_DIR/.o-saft.pl ] || echo "**WARNING: $OSAFT_DIR/.o-saft.pl not found; testing without"
@@ -474,5 +473,6 @@ if [ ! -e  $o_saft ]; then
 	echo "**WARNING: $o_saft missing; trying to find in PATH"
 	o_saft=o-saft.pl
 fi
-$o_saft +version |egrep -i '(openssl|SSLeay)'
+echo "$o_saft +version |egrep -i '(SSL|supported)'"
+$o_saft +version |egrep -i '(SSL|supported|cert)'
 
