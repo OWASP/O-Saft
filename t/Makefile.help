@@ -175,14 +175,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.67 19/07/04 08:41:29
+#?      @(#) Makefile.help 1.68 19/07/28 22:33:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.67
+_SID.help       = 1.68
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -329,7 +329,7 @@ _help.HELP:
 # Following target  lists the used (included) t/Makefile.* , each with its
 # description as defined in the file itself in the HELP-help.text.* macro
 _HELP-maketitle = \#__________________________________ purpose of t/Makefile.* _
-_HELP.maketitle = $(ALL.inc.type:%=help-make-%)
+_HELP.maketitle = $(ALL.inc.type:%=help-makefiletitle-%)
 _help.makefiles:
 	@$(TRACE.target)
 	@echo "\n\t\t$(_HELP-maketitle)"
@@ -385,7 +385,7 @@ HELP.help       = $(_NL)\
 \#    $(MAKE_COMMAND) s-MYmacro         $(_NL)\
 \#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
 
-ALL.help       += help.help help.critic help.syntax
+ALL.help       += help.help help.critic help.doc help.syntax help.makefiles
 ALL.help       += $(ALL.help.test)
                 # add all other help.test* targets
 
@@ -401,7 +401,8 @@ target:           HELP_HEAD = $(HELP_RULE)
 help.help: _help.HEAD _help.BODY _help.LINE _help.makefiles _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
 
-# all other help.* donot contain _help.makefiles
+# all other help.* do not contain _help.makefiles
+# i.e.: help.all help.doc.all help.help.all help.help.all-v help.test.* 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
 
@@ -454,7 +455,7 @@ _line:
 
 .PHONY: _notempty _line
 
-help-make-%:
+help-makefiletitle-%:
 	@$(TRACE.target)
 	@$(ECHO) "Makefile.$*$(_TAB)# $(HELP-help.test.$*)"
 
@@ -547,7 +548,7 @@ testcmd-help%:                  EXE.pl      = $(MAKE)
 testcmd-help%:                  TEST.init   =
 
 testcmd-help:                   TEST.args  +=
-#testcmd-doc:                    TEST.args  +=  # TODO: testcmd-doc* not workin as it not matches testcmd-help*
+#testcmd-doc:                    TEST.args  +=  # TODO: testcmd-doc* not working as it does not match testcmd-help*
 #testcmd-doc.all:                TEST.args  +=  # TODO: dito
 #testcmd-doc.all-v:              TEST.args  +=  # TODO: dito
 testcmd-help.help:              TEST.args  +=
