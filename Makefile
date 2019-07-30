@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.68 19/07/04 08:08:50
+#?      @(#) Makefile 1.69 19/07/31 00:50:09
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.68
+_SID            = 1.69
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -308,7 +308,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.68
+_INST.text      = generated from Makefile 1.69
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -474,9 +474,7 @@ $(_RELEASE).rel: Makefile
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
 HELP-_project   = ____________________________________ targets for $(Project) _
-HELP-help       = print overview of common targets (this one)
-HELP-help.all   = print all targets, including test and development targets
-#               # defined in t/Makefile.help also
+HELP-help       = print common targets for O-Saft (this help)
 HELP-doc        = same as help, but evaluates '$(variables)'
 HELP-pl         = generate '$(SRC.pl)' from managed source files
 HELP-cgi        = generate HTML page for use with CGI '$(GEN.cgi.html)'
@@ -495,6 +493,15 @@ HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
 HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) may exist
 
+HELP-_vv1       = ___________ any target may be used with following suffixes _
+HELP--v         = verbose: print target and newer dependencies also
+HELP--vv        = verbose: print target and all dependencies also
+
+HELP-_project2  = __________________ targets to get more help and information _
+HELP-help.all   = print all targets, including test and development targets
+#               # defined in t/Makefile.help also
+HELP-help.help  = print targets to get information/documentation from Makefiles
+
 OPT.single = --s
 
 # alias targets
@@ -506,8 +513,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.68
-tar:     GREP_EDIT  = 1.68
+GREP_EDIT           = 1.69
+tar:     GREP_EDIT  = 1.69
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -647,10 +654,7 @@ $(GEN.tmptgz): $(ALL.src)
 	tar zcf $@ $^
 
 #_____________________________________________________________________________
-
-HELP-_vv1       = ___________ any target may be used with following suffixes _
-HELP--v         = verbose: print target and newer dependencies also
-HELP--vv        = verbose: print target and all dependencies also
+#__________________________________________________________ verbose targets __|
 
 # verbose/trace command
 #       TRACE.target    is the command to be used to print the target's name
