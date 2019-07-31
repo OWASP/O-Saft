@@ -56,7 +56,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.17 19/07/31 09:55:14
+#?      @(#)  1.18 19/07/31 14:30:59
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -72,6 +72,7 @@ dir=${0%/*}
 colour="34m"    # 32 green, 34 blue for colour-blind
 clean=./release_information_only
 force=0
+optx=0
 optn=""
 mode="";        # "", check, clean, dest
 inst=${inst:="INSTALLDIR_INSERTED_BY_MAKE"}
@@ -133,6 +134,7 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	 '-n' | '--n')  optn="--n"; try=echo; ;;
+	 '-x')          optx=1;     ;;
 	  '--check')    mode=check; ;;
 	  '--clean')    mode=clean; ;;
 	  '--install')  mode=dest;  ;; # install in hardcoded path
@@ -146,7 +148,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.17 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.18 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -211,6 +213,7 @@ fi; # openssl mode }
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
 	# do not move contrib/ as all examples expect contrib/ right here    
+	[ 0 -lt "$optx" ] && set -x
 	for f in $files_info $files_ancient $files_develop ; do
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
 		$try \mv "$f" "$clean"
@@ -225,6 +228,7 @@ if [ "$mode" = "dest" ]; then
 		[ "$try" = "echo" ] || exit 2
 	fi
 
+	[ 0 -lt "$optx" ] && set -x
 	echo "# remove old files ..."
 	# TODO: argh, hard-coded list of files ...
 	for f in $files_install ; do
@@ -257,6 +261,7 @@ if [ "$mode" != "check" ]; then
 fi
 
 # all following is check mode
+#[ 0 -lt "$optx" ] && set -x    # - not used here
 
 err=0
 
