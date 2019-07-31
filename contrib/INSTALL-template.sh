@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.19 19/07/31 17:56:04
+#?      @(#)  1.20 19/07/31 23:18:15
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -151,7 +151,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.19 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.20 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -267,10 +267,12 @@ fi
 # all following is check mode
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
+cd $inst
+
 err=0
 
 echo ""
-echo "# check installation"
+echo "# check installation in $inst"
 echo "# (warnings are ok if 'git clone' will be used for development)"
 echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
@@ -319,7 +321,7 @@ fi
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check for installed perl modules"
+echo "# check for installed Perl modules"
 echo "#--------------------------------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL 
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
@@ -354,7 +356,7 @@ exit
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check for important perl modules used by O-Saft"
+echo "# check for important Perl modules used by O-Saft"
 echo "#--------------------------------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 for p in `echo $PATH|tr ':' ' '` ; do
