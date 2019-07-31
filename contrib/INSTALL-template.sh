@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.22 19/08/01 00:18:10
+#?      @(#)  1.23 19/08/01 00:40:13
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -159,7 +159,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.22 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.23 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -228,7 +228,7 @@ if [ "$mode" = "clean" ]; then
 	[ -d "$clean" ] || $try \mkdir "$clean/$f"
 	# do not move contrib/ as all examples expect contrib/ right here    
 	[ 0 -lt "$optx" ] && set -x
-	for f in $files_info $files_ancient $files_develop $files_install_cgi ; do
+	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc ; do
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
 		[ -e "$f" ]        && $try \mv "$f" "$clean"
 	done
@@ -245,7 +245,7 @@ if [ "$mode" = "dest" ]; then
 	[ 0 -lt "$optx" ] && set -x
 	echo "# remove old files ..."
 	# TODO: argh, hard-coded list of files ...
-	for f in $files_install ; do
+	for f in $files_install $files_install_cgi $files_install_doc ; do
 		f="$inst/$f"
 		if [ -e "$f" ]; then
 			$try \rm -f "$f" || exit 3
@@ -255,7 +255,7 @@ if [ "$mode" = "dest" ]; then
 	echo "# installing ..."
 	$try \mkdir -p "$inst/Net"
 	$try \mkdir -p "$inst/OSaft/Doc"
-	for f in $files_install ; do
+	for f in $files_install $files_install_cgi $files_install_doc ; do
 		$try \cp "$f" "$inst/$f"  || exit 4
 	done
 
