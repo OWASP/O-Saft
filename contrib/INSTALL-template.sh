@@ -23,8 +23,8 @@
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
-#?          --openssl   - as calling  contrib/install_openssl.sh   build and
-#?                        install  openssl  and  Net::SSLeay ; this does not
+#?          --openssl   - calls  contrib/install_openssl.sh which builds and
+#?                        installs  openssl  and  Net::SSLeay ; this doesn't
 #?                        support other options and arguments of
 #?                        contrib/install_openssl.sh
 #?
@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.20 19/07/31 23:18:15
+#?      @(#)  1.21 19/07/31 23:53:19
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -151,7 +151,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.20 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.21 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -287,7 +287,7 @@ done
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check for installed O-Saft"
+echo "# check for installed O-Saft in $inst"
 echo "#--------------------------------------------------------------"
 for o in $osaft_exe $osaft_gui ; do
 	for p in `echo $PATH|tr ':' ' '` ; do
@@ -304,7 +304,7 @@ echo ""
 echo "# check for installed O-Saft resource files"
 echo "#--------------------------------------------------------------"
 # currently no version check
-for p in `echo $HOME $PATH|tr ':' ' '` ; do
+for p in `echo $inst $HOME $PATH|tr ':' ' '` ; do
 	rc="$p/.$osaft_exe"
 	if [ -e "$rc" ]; then
 		echo -n "# $rc\t" && echo_yellow "will be used when started in $p only"
@@ -327,7 +327,8 @@ modules="Net::DNS Net::SSLeay IO::Socket::SSL
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
 	echo -n "# testing for $m ...\t"
-	v=`perl -M$m -le 'printf"\t%s",$'$m'::VERSION' 2>/dev/null`
+	# NOTE: -I . used to ensure that local ./Net is found
+	v=`perl -I . -M$m -le 'printf"\t%s",$'$m'::VERSION' 2>/dev/null`
 	if [ -n "$v" ]; then
 		case "$m" in
 		  'IO::Socket::SSL') expect=1.90; ;; # 1.37 and newer work, somehow ...
