@@ -23,12 +23,15 @@
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
-#?          --openssl   - same as calling  contrib/install_openssl.sh
-#?                        (build and install openssl and  Net::SSLeay)
+#?          --openssl   - as calling  contrib/install_openssl.sh   build and
+#?                        install  openssl  and  Net::SSLeay ; this does not
+#?                        support other options and arguments of
+#?                        contrib/install_openssl.sh
 #?
 #? OPTIONS
 #?      --h     got it
 #?      --n     do not execute, just show
+#?      -x      debug using shell's "set -x"
 #?      --force install .o-saft.pl  and  .o-saft.tcl  in  $HOME,  overwrites
 #?              existing ones
 #?      --blind     use blue instead of green coloured texts; default
@@ -56,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.18 19/07/31 14:30:59
+#?      @(#)  1.19 19/07/31 17:56:04
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -148,7 +151,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.18 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.19 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -195,7 +198,8 @@ fi
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
 	[ ! -x "$inst_openssl" ] && echo_red "**ERROR: $inst_openssl does not exist; exit" && exit 2
-	$inst_openssl $optn
+	[ 0 -lt "$optx" ] && set -x
+	$inst_openssl $optn $@
 	status=$?
 	if [ $status -ne 0 ]; then
 		cat << EoT
