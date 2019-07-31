@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.70 19/07/31 10:18:47
+#?      @(#) Makefile 1.71 19/08/01 00:35:24
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.70
+_SID            = 1.71
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -264,6 +264,7 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
+_GEN.doc        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki)
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 inc.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
@@ -306,12 +307,16 @@ EXE.pl          = $(SRC.pl)
 
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
+_INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
+_INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
-_INST.osaft     = $(sort $(ALL.osaft) $(SRC.cgi) $(GEN.cgi.html))
-_INST.text      = generated from Makefile 1.70
+_INST.osaft     = $(sort $(ALL.osaft) $(_INST.osaft_cgi))
+_INST.text      = generated from Makefile 1.71
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
+			-e 's@OSAFT_CGI_INSERTED_BY_MAKE@$(_INST.osaft_cgi)@' \
+			-e 's@OSAFT_DOC_INSERTED_BY_MAKE@$(_INST.osaft_doc)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
 
 # generate f- targets to print HELP text for each target
@@ -513,8 +518,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.70
-tar:     GREP_EDIT  = 1.70
+GREP_EDIT           = 1.71
+tar:     GREP_EDIT  = 1.71
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
