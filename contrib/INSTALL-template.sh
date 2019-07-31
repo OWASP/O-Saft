@@ -56,7 +56,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.16 19/07/31 09:36:53
+#?      @(#)  1.17 19/07/31 09:55:14
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -97,16 +97,20 @@ files_install="
 		"
 # INSERTED_BY_MAKE }
 
+# following lists are hardcoded here, because newer Makefiles may no longer
+# know about them
 files_not_installed="
-		o-saft.cgi contrb/o-saft.php
+		contrib/o-saft.cgi pcontrib/o-saft.php
 		contrib/install_openssl.sh contrib/install_perl_modules.pl
+		contrib/Dockerfile.alpine-3.6 contrib/Dockerfile.wolfssl
+		contrib/gen_standalone.sh
 		"
 
 files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
 		INSTALL-devel.sh .perlcriticrc o-saft_bench
 		"
 
-files_develop="o-saft-docker-dev Dockerfile Makefile t/"
+files_develop="o-saft-docker-dev Dockerfile Makefile t/ contrib/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
 
@@ -142,7 +146,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.16 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.17 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
