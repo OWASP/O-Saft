@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.22 19/07/27 18:47:36
+#?      @(#)  1.23 19/08/01 01:14:30
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -214,6 +214,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
+	  '+VERSION')   echo 1.23 ; exit; ;; # for compatibility
 	  '-h' | '--h' | '--help' | '-?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
