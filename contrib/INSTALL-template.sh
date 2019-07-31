@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.21 19/07/31 23:53:19
+#?      @(#)  1.22 19/08/01 00:18:10
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -98,6 +98,14 @@ files_contrib="
 
 files_install="
 	OSAFT_INSERTED_BY_MAKE
+		"
+
+files_install_cgi="
+	OSAFT_CGI_INSERTED_BY_MAKE
+		"
+
+files_install_doc="
+	OSAFT_DOC_INSERTED_BY_MAKE
 		"
 # INSERTED_BY_MAKE }
 
@@ -151,7 +159,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.21 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.22 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -216,11 +224,13 @@ fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
+	cd $inst
+	[ -d "$clean" ] || $try \mkdir "$clean/$f"
 	# do not move contrib/ as all examples expect contrib/ right here    
 	[ 0 -lt "$optx" ] && set -x
-	for f in $files_info $files_ancient $files_develop ; do
+	for f in $files_info $files_ancient $files_develop $files_install_cgi ; do
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
-		$try \mv "$f" "$clean"
+		[ -e "$f" ]        && $try \mv "$f" "$clean"
 	done
 	exit 0
 fi; # clean mode }
