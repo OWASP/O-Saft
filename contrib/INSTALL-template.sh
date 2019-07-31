@@ -29,9 +29,10 @@
 #? OPTIONS
 #?      --h     got it
 #?      --n     do not execute, just show
-#?      --blind use blue instead of green coloured texts
 #?      --force install .o-saft.pl  and  .o-saft.tcl  in  $HOME,  overwrites
 #?              existing ones
+#?      --blind     use blue instead of green coloured texts; default
+#?      --not-blind use green instead of blue coloured texts
 #?
 #? EXAMPLES
 #?      $0
@@ -55,7 +56,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.14 18/11/04 15:45:10
+#?      @(#)  1.15 19/07/31 09:33:53
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -68,7 +69,7 @@ ich=${0##*/}
 bas=${ich%%.*}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
-colour="32m"    # 32 green, 34 blue for colour-blind
+colour="34m"    # 32 green, 34 blue for colour-blind
 clean=./release_information_only
 force=0
 optn=""
@@ -136,11 +137,12 @@ while [ $# -gt 0 ]; do
 	  '--blind')           colour="34m"; ;;
 	  '--color-blind')     colour="34m"; ;;
 	  '--colour-blind')    colour="34m"; ;;
+	  '--not-blind')       colour="32m"; ;;
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.14 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.15 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
