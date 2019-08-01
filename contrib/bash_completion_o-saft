@@ -1,7 +1,7 @@
 #?/bin/bash
 
 #? NAME
-#?      bash_completion_o-saft  -  bash completion function for o-saft.pl
+#?      bash_completion_o-saft  -  bash completion function for o-saft, o-saft.pl, o-saft.tcl
 #?
 #? DESCRIPTION
 #?      This bash function provides values to be used in bash's completion
@@ -9,7 +9,6 @@
 #?
 #? USAGE
 #?      source bash_completion_o-saft
-#?      complete -F _o-saft o-saft.pl
 #?
 #? SEE ALSO
 #?      bind -p | grep complete
@@ -24,6 +23,7 @@
 _y_cmds=`o-saft.pl --help=commands|awk '/^\+/{print $1}'`
 _y_opts=`o-saft.pl --help=opts    |awk '/^\-/{print $1}'`
 _y_rang=`o-saft.pl --help=range   |awk "/ *'/"'{print "--cipherrange="$1}'`
+_y_gui=`o-saft.tcl --help=opts    |awk '/^[+-]/{print $1}'`
 
 _o-saft()
 {
@@ -35,5 +35,13 @@ _o-saft()
     -*)             COMPREPLY=( $(compgen -W "$_y_opts" -- $curr_arg ) ); ;;
   esac
 }
+
+_o-gui()
+{
+  local curr_arg;
+  curr_arg=${COMP_WORDS[COMP_CWORD]}
+  COMPREPLY=( $(compgen -W "$_y_gui" -- $curr_arg ) )
+}
 complete -F _o-saft o-saft
 complete -F _o-saft o-saft.pl
+complete -F _o-gui  o-saft.tcl
