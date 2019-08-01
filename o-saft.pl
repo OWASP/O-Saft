@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.884 19/07/27 21:18:14",
+    SID         => "@(#) yeast.pl 1.885 19/08/01 10:40:53",
     STR_VERSION => "19.07.19",          # <== our official version number
 };
 
@@ -2416,7 +2416,8 @@ sub _check_openssl      {
     # error messages are printed there.  Hence the checks are done here again
     # to disable all unavailable functionality with a warning.  Finally store
     # result (capability is supported or not) in $cfg{'openssl'} .
-    foreach my $opt (Net::SSLinfo::s_client_get_optionlist()) {
+    foreach my $opt (sort(Net::SSLinfo::s_client_get_optionlist())) {
+        # NOTE: sort() is only to provide identical output for --trace
         # Perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialized
         my $val = Net::SSLinfo::s_client_opt_get($opt);
@@ -8114,10 +8115,20 @@ if (_is_do('list')) {
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (!_is_do('cipher_pfsall')); }
 
-if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
+if (_is_do('version') or ($cfg{'usemx'} > 0))         { $cfg{'need_netdns'}    = 1; }
 if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
+
+# @{$cfg{'do'}} will be filled using internal variables. In this case the
+# order of values is random. This order is well defined when data is read
+# from RC-FILE (--no-rc not given).
+# When the order is random, it differs for each call of this program  and
+# then returns diffrent output, which make internal testing difficult.
+# To avoid randomness , @{$cfg{'do'}} will be sorted if --no-rc is given.
+# _dbx "unsorted: @{$cfg{'do'}}";
+@{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
+# _dbx "  sorted: @{$cfg{'do'}}";
 
 if (2 == @{$cfg{'targets'}}) {
     # exactly one host defined, check if --port was also given
