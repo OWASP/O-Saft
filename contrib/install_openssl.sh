@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.25 19/08/01 08:44:32
+#?      @(#)  1.26 19/08/01 09:19:36
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -219,7 +219,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.25 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.26 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -292,8 +292,11 @@ for mod in $perl_modules ; do
 	echo -n "	$mod "
 	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
 	if [ -z "$txt" ]; then
-		txt="\tOK"
+		# found: print OK followed by directory of used module
+		loc=`perl -M$mod -le 'my $idx='$mod'; $idx=~s#::#/#g; print $INC{"${idx}.pm"}'`
+		txt="\tOK $loc"
 	else
+		# not found: add to modules to be installed
 		install_modules="$install_modules $mod"
 		err=1
 	fi
