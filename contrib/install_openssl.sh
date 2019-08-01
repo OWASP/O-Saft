@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.26 19/08/01 09:19:36
+#?      @(#)  1.27 19/08/01 21:26:11
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -219,7 +219,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.26 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.27 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -494,7 +494,8 @@ if [ ! -e  $o_saft ]; then
 	echo "**WARNING: $o_saft missing; trying to find in PATH"
 	o_saft=o-saft.pl
 fi
-# --no-rc ensures that all internal defaults are shown
-echo "$o_saft +version --no-rc |egrep -i '(SSL|supported)'"
-$o_saft +version --no-rc |egrep -i '(SSL|supported|cert)'
+# call in installation dir without --no-rc to ensure adapted .o-saft.pl is used
+cd $OSAFT_DIR
+echo "$o_saft +version |egrep -i '(SSL|supported)'"
+$o_saft +version |egrep -i '(SSL|supported|cert)'
 
