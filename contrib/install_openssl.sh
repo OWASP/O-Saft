@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.24 19/08/01 08:13:01
+#?      @(#)  1.25 19/08/01 08:44:32
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -207,6 +207,11 @@ perl_modules="
 	Mozilla::CA
 "
 
+# dynamically compute list of Perl modules to be installed
+# NOTE: Net::SSLeay must always be istalled after building special openssl
+install_modules="
+"
+
 optm=0
 optn=0
 while [ $# -gt 0 ]; do
@@ -214,7 +219,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.24 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.25 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -286,7 +291,13 @@ for mod in $perl_modules ; do
 	txt=""
 	echo -n "	$mod "
 	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
-	[ -z "$txt" ] && txt="\tOK" || err=1
+	if [ -z "$txt" ]; then
+		txt="\tOK"
+	else
+		install_modules="$install_modules $mod"
+		err=1
+	fi
+	#[ -z "$txt" ] && txt="\tOK" || err=1
 	echo "$txt"
 done
 [ 1 -eq $err  ] && miss="$miss modules,"
@@ -344,8 +355,9 @@ fi
 
 ### install modules (with --m only)
 if [ 1 -eq $optm ]; then
+	#[ 1 -eq $optf ] && install_modules="$perl_modules"
 	err=0
-	for mod in $perl_modules ; do
+	for mod in $install_modules ; do
 		txt=""
 		[ "Module::Build" = $mod ] && continue
 		    # cannot be installed, -MCPAN does it automatically if needed
