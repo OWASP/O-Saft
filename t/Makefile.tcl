@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.21 19/07/28 10:50:25
+#?      @(#) Makefile.tcl 1.22 19/08/01 23:40:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.21
+_SID.tcl        = 1.22
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -82,16 +82,20 @@ testcmd-tclverb--d6_%:          TEST.args  += --d=6
     #           testcmd-tclverb--v--img, testcmd-tclverb--v--text, testcmd-tclcmd-verb--v-host
 #testcmd-tclverb--trace_%:   TEST.args  += --trace
     # not useful, as there will be no events
-testcmd-tclhelp--help_%:        TEST.args  += --help
-testcmd-tclhelp--help-flow_%:   TEST.args  += --help-flow
-testcmd-tclhelp--help-procs_%:  TEST.args  += --help-procs
-testcmd-tclhelp--help-descr_%:  TEST.args  += --help-descr
-testcmd-tclhelp--help-o-saft_%: TEST.args  += --help-o-saft
 
 # test some warnings
 #testcmd-tclargs-unknown_%: TEST.args  += unknown
 testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
 #testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
+
+# test some development options
+# TODO: should use testarg0* as no host argument is required
+testcmd-tclhelp--help_%:        TEST.args  += --help
+testcmd-tclhelp--help-opts_%:   TEST.args  += --help=opts
+testcmd-tclhelp--help-flow_%:   TEST.args  += --help-flow
+testcmd-tclhelp--help-procs_%:  TEST.args  += --help-procs
+testcmd-tclhelp--help-descr_%:  TEST.args  += --help-descr
+testcmd-tclhelp--help-o-saft_%: TEST.args  += --help-o-saft
 
 test.tcl.log-compare:   TEST.target_prefix  = testcmd-tcl
 test.tcl.log-move:      TEST.target_prefix  = testcmd-tcl
