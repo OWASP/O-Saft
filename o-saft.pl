@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.885 19/08/01 10:40:53",
-    STR_VERSION => "19.07.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.886 19/08/01 14:16:10",
+    STR_VERSION => "19.07.29",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -1293,6 +1293,7 @@ our %cmd = (
 
 #| construct list for special commands: 'cmd-*'
 #| -------------------------------------
+# SEE Note:Testing, sort
 my $old   = "";
 my $regex = join("|", @{$cfg{'versions'}}); # these are data only, not commands
 foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'commands-INT'}}) {
@@ -1316,6 +1317,16 @@ foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info'}},    $key);
 }
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
+
+# SEE Note:Testing, sort
+foreach my $key (qw(commands commands-CMD commands-USR commands-INT)) {
+    @{$cfg{$key}} = sort(@{$cfg{$key}});    # only internal use
+}
+if (0 < _is_argv('(?:--no.?rc)')) {
+    foreach my $key (qw(do cmd-check cmd-info cmd-info--v cmd-quick cmd-vulns)) {
+        @{$cfg{$key}} = sort(@{$cfg{$key}});# may be redefined
+    }
+}
 
 _yeast_TIME("cfg}");
 
@@ -2417,7 +2428,7 @@ sub _check_openssl      {
     # to disable all unavailable functionality with a warning.  Finally store
     # result (capability is supported or not) in $cfg{'openssl'} .
     foreach my $opt (sort(Net::SSLinfo::s_client_get_optionlist())) {
-        # NOTE: sort() is only to provide identical output for --trace
+        # SEE Note:Testing, sort
         # Perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialized
         my $val = Net::SSLinfo::s_client_opt_get($opt);
@@ -8120,12 +8131,7 @@ if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} =
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 
-# @{$cfg{'do'}} will be filled using internal variables. In this case the
-# order of values is random. This order is well defined when data is read
-# from RC-FILE (--no-rc not given).
-# When the order is random, it differs for each call of this program  and
-# then returns diffrent output, which make internal testing difficult.
-# To avoid randomness , @{$cfg{'do'}} will be sorted if --no-rc is given.
+# SEE Note:Testing, sort
 # _dbx "unsorted: @{$cfg{'do'}}";
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
 # _dbx "  sorted: @{$cfg{'do'}}";
@@ -9240,6 +9246,25 @@ Check for used numbers with:
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
 
 A proper test for the message should be done in t/Makefile.warnings.
+
+
+=head2 Note:Testing, sort
+
+When values are assigned to arrays, or values are pushed on arrays in Perl
+the final order in the array is random.
+This results in  different orders  of the values when the array values are
+printed,  means that the order changes for each program call.  Such random
+orders in output makes internal testing difficult.
+Hence we try to sort arrays after defining them.
+Unfortunately there are arrays preset with a special order, these must not
+be sorted. These are most likely the settings read from RC-FILE. For that,
+sorting is not done for data read from RC-FILE. The --no-rc option is used
+to check if the RC-FILE was read.
+
+The data to be sorted is for example:
+    @cfg{do}
+    @cfg{commands}
+    @cfg{commands-*}
 
 
 =head2 Note:ARGV
