@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.06.19',  # official version number of this file
+    OSAFT_VERSION   => '19.07.29',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.189 19/07/11 23:38:21",
+    SID_osaft   => "@(#) osaft.pm 1.190 19/08/01 14:17:12",
 
 };
 
@@ -2988,7 +2988,7 @@ sub _cfg_init   {
 
 sub _cmd_init   {
     #? initialize dynamic settings in %cfg for commands
-    foreach my $key (keys %cfg) {       # well-known "summary" commands
+    foreach my $key (sort keys %cfg) {  # well-known "summary" commands
         push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
     }
     return;
@@ -3104,7 +3104,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.189 2019/07/11
+1.190 2019/08/01
 
 =head1 AUTHOR
 
