@@ -197,7 +197,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#) o-saft-docker-dev 1.6 18/11/09 01:24:58
+#?       @(#)  1.7 19/08/01 16:34:26
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -207,7 +207,7 @@
 try=
 cmd=unknown
 
-VERSION="${OSAFT_VERSION:-17.07.17}"
+VERSION="${OSAFT_VERSION:-19.01.19}"
 registry="${o_saft_docker_name}"; registry="${registry:-owasp/o-saft}"
 image_tag="${o_saft_docker_tag}"; image_tag="${image_tag:-`date +%y.%m.%d`}"
 image_name="${registry}:${image_tag}"
@@ -223,7 +223,7 @@ inst_tcl=0
 instwget=1
 host_del=1
 host_tar=""
-hostdate=`date +%y%m%d11/09/18M%S`
+hostdate=`date +%y%m%d%"H%"M%S`
 apt="apk"
 upd="$apt update"
 apt_add="add"
@@ -242,7 +242,7 @@ dir_openssl="/openssl"
 # sources
 # NOTE: empty checksum must be specified as "-"
 url__o_saft="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-sha__o_saft="a55702d69314b8eda52e921e35b89aef9eef02b14c870b3077fbddf3af91320d"
+sha__o_saft="29d4faa2ed3025ed18d31175e868d6be9312b36ba486c6e5f305afeb34947f68"
 url_openssl="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz"
 sha_openssl="-"
 urliosocket="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz"
@@ -491,7 +491,7 @@ dockerfile ()   {
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.6"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.7"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
@@ -546,7 +546,7 @@ docker_build_file () {
 
 	cat > $_dockerfile_f <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.6" \
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.7" \
 	SOURCE="$_file_f"
 WORKDIR /
 COPY  $_file_f /
