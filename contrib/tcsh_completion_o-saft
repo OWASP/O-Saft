@@ -1,7 +1,7 @@
 #?/bin/tcsh
 
 #? NAME
-#?      $0  -  tcsh completion function for o-saft.pl
+#?      $0  -  tcsh completion function for o-saft, o-saft.pl, o-saft-tcl
 #?
 #? DESCRIPTION
 #?      This tcsh function provides values to be used in tcsh's completion
@@ -9,7 +9,6 @@
 #?
 #? USAGE
 #?      source tcsh_completion_o-saft
-#?      complete o-saft.pl C/+/(+help +version)/
 #?
 #? SEE ALSO
 #?      http://hyperpolyglot.org/unix-shells
@@ -21,9 +20,17 @@
 #?      14-dec-14 Achim Hoffmann
 # ------------------------------------------------------------------------------
 
+complete o-saft \
+	'C@+@`o-saft    --help=commands|awk /^\\+/\{print\ \$1\}`@' \
+	'C@-@`o-saft    --help=opts    |awk /^\\-/\{print\ \$1\}`@' \
+
 complete o-saft.pl \
 	'C@+@`o-saft.pl --help=commands|awk /^\\+/\{print\ \$1\}`@' \
 	'C@-@`o-saft.pl --help=opts    |awk /^\\-/\{print\ \$1\}`@' \
+
+complete o-saft.tcl \
+	'C@+@`o-saft.tcl --help=opts   |awk /^\\+/\{print\ \$1\}`@' \
+	'C@-@`o-saft.tcl --help=opts   |awk /^\\-/\{print\ \$1\}`@' \
 
 # NOTE: Some tcsh's man-pages state that ` (backtick) needs to be esacped in
 #       the substitute part. This seems to be wrong.
