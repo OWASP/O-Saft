@@ -21,7 +21,7 @@
 #?          --install   - copy all necessary files into default directory
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
-#?                        ./release_information_only
+#?                        ./.files_to_be_removed
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
 #?          --openssl   - calls  contrib/install_openssl.sh which builds and
 #?                        installs  openssl  and  Net::SSLeay ; this doesn't
@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.23 19/08/01 00:40:13
+#?      @(#)  1.24 19/08/02 08:37:22
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -73,7 +73,7 @@ bas=${ich%%.*}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 colour="34m"    # 32 green, 34 blue for colour-blind
-clean=./release_information_only
+clean=./.files_to_be_removed
 force=0
 optx=0
 optn=""
@@ -113,9 +113,10 @@ files_install_doc="
 # know about them
 files_not_installed="
 		contrib/o-saft.cgi pcontrib/o-saft.php
-		contrib/install_openssl.sh contrib/install_perl_modules.pl
-		contrib/Dockerfile.alpine-3.6 contrib/Dockerfile.wolfssl
-		contrib/gen_standalone.sh
+		contrib/Dockerfile.alpine-3.6   contrib/Dockerfile.wolfssl
+		contrib/distribution_install.sh contrib/gen_standalone.sh
+		contrib/install_perl_modules.pl contrib/install_openssl.sh
+		contrib/INSTALL-template.sh
 		"
 
 files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
@@ -159,7 +160,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.23 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.24 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -226,7 +227,9 @@ fi; # openssl mode }
 if [ "$mode" = "clean" ]; then
 	cd $inst
 	[ -d "$clean" ] || $try \mkdir "$clean/$f"
-	# do not move contrib/ as all examples expect contrib/ right here    
+	[ -d "$clean" ] || echo_red "**ERROR: $clean does not exist; exit"
+	[ -d "$clean" ] || exit 2
+	# do not move contrib/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
 	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc ; do
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
