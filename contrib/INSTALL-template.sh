@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.24 19/08/02 08:37:22
+#?      @(#)  1.25 19/08/02 17:23:08
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -127,6 +127,12 @@ files_develop="o-saft-docker-dev Dockerfile Makefile t/ contrib/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
 
+# files_install_cgi
+# files_install_doc
+# files_ancient
+# files_develop
+# files_info
+
 # --------------------------------------------- internal functions
 echo_yellow () {
 	echo "\033[1;33m$@\033[0m"
@@ -160,7 +166,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.24 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.25 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -225,13 +231,14 @@ fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
+	[ -n "$optn"  ] && echo cd $inst
 	cd $inst
 	[ -d "$clean" ] || $try \mkdir "$clean/$f"
-	[ -d "$clean" ] || echo_red "**ERROR: $clean does not exist; exit"
-	[ -d "$clean" ] || exit 2
+	[ -d "$clean" ] || $try echo_red "**ERROR: $clean does not exist; exit"
+	[ -d "$clean" ] || $try exit 2
 	# do not move contrib/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
-	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc ; do
+	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed ; do
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
 		[ -e "$f" ]        && $try \mv "$f" "$clean"
 	done
@@ -245,10 +252,11 @@ if [ "$mode" = "dest" ]; then
 		[ "$try" = "echo" ] || exit 2
 	fi
 
+	files="$files_install $files_install_cgi $files_install_doc $files_contrib"
 	[ 0 -lt "$optx" ] && set -x
 	echo "# remove old files ..."
 	# TODO: argh, hard-coded list of files ...
-	for f in $files_install $files_install_cgi $files_install_doc ; do
+	for f in $files ; do
 		f="$inst/$f"
 		if [ -e "$f" ]; then
 			$try \rm -f "$f" || exit 3
@@ -256,9 +264,10 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	echo "# installing ..."
+	$try \mkdir -p "$inst/contrib"
 	$try \mkdir -p "$inst/Net"
 	$try \mkdir -p "$inst/OSaft/Doc"
-	for f in $files_install $files_install_cgi $files_install_doc ; do
+	for f in $files ; do
 		$try \cp "$f" "$inst/$f"  || exit 4
 	done
 
@@ -267,6 +276,7 @@ if [ "$mode" = "dest" ]; then
 		$try \cp contrib/.$osaft_gui "$inst/" || echo_red ".$osaft_gui failed"
 	fi
 
+	echo -n "# consider calling: $0 --clean"
 	echo -n "# installation in $inst "; echo_green "completed."
 	exit 0
 fi; # install mode }
@@ -280,6 +290,7 @@ fi
 # all following is check mode
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
+[ -n "$optn"  ] && echo cd $inst
 cd $inst
 
 err=0
