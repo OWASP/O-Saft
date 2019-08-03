@@ -62,7 +62,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.28 19/08/03 22:24:07
+#?      @(#)  1.29 19/08/04 01:49:50
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -89,7 +89,6 @@ text_old="ancient module found, try installing newer version, at least "
 # INSERTED_BY_MAKE {
 osaft_exe="OSAFT_PL_INSERTED_BY_MAKE"
 osaft_gui="OSAFT_TCL_INSERTED_BY_MAKE"
-# corresponding RC-FILEs do not need their own variable; simply prefix with .
 contrib_dir="CONTRIB_INSERTED_BY_MAKE"
 inst_directory=${inst:="INSTALLDIR_INSERTED_BY_MAKE"}
 
@@ -137,7 +136,8 @@ files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 files_info="CHANGES README o-saft.tgz"
 # HARDCODED }
 
-clean_directory="$inst_directory/.files_to_be_removed"
+osaft_exerc=".$osaft_exe"
+osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
 
 # --------------------------------------------- internal functions
@@ -173,11 +173,12 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.28 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.29 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1"; ;; # directory, last one wins
 	esac
 	shift
 done
+clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 
 # --------------------------------------------- main
 
@@ -285,13 +286,14 @@ if [ "$mode" = "dest" ]; then
 	for f in $files ; do
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
+	$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
+		|| echo_red "**ERROR: generating $osaft_guirc failed"
 
 	if [ $force -eq 1 ]; then
 		echo '# installing RC-FILEs in $HOME ...'
-		$try \cp .$osaft_exe  "$inst_directory/" \
-			|| echo_red ".$osaft_exe  failed"
-		$try \cp $contrib_dir/.$osaft_gui "$inst_directory/" \
-			|| echo_red ".$osaft_gui failed"
+		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
+			$try \cp $f "$HOME/" || echo_red "**ERROR: copying $f failed"
+		done
 	fi
 
 	echo    "# consider calling: $0 --clean $inst_directory"
@@ -349,21 +351,22 @@ echo "#----------------------+---------------------------------------"
 # currently no version check
 cnt=0
 for p in `echo $inst_directory $HOME $PATH|tr ':' ' '` ; do
-	rc="$p/.$osaft_exe"
+	rc="$p/$osaft_exerc"
 	if [ -e "$rc" ]; then
 		cnt=`expr $err + 1`
 		perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "will be used when started in $p only"
 	fi
 done
 [ 0 -eq $cnt ] && echo_yellow "$rc not found"
-rc="$HOME/.$osaft_gui"
+rc="$HOME/$osaft_guirc"
 if [ -e "$rc" ]; then
 	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
 	perl -le 'printf"# %21s\t","'$rc'"' && echo_green  "$v"
-	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "ancient, consider updating from $contrib_dir/.$osaft_gui"
+	txt="ancient"
 else
-	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "missing, consider copying $contrib_dir/.$osaft_gui into your HOME directory: $HOME"
+	txt="missing"
 fi
+perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
 echo "#----------------------+---------------------------------------"
 
 echo ""
@@ -448,6 +451,7 @@ echo ""
 echo "# check for contributed files"
 echo "# (in $inst_directory/$contrib_dir )"
 echo "#--------------+-----------------------------------------------"
+# TODO: $files_not_installed  should not be checked
 for c in $files_contrib ; do
 	c="$inst_directory/$c"
 	if [ -e "$c" ]; then
