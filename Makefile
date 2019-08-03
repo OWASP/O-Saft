@@ -87,14 +87,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.73 19/08/03 20:44:44
+#?      @(#) Makefile 1.74 19/08/03 20:56:58
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.73
+_SID            = 1.74
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -312,13 +312,17 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.73
-EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
-			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
-			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
+_INST.text      = generated from Makefile 1.74
+EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
+			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
+			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
+			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@'         \
+			-e 's@OSAFT_PL_INSERTED_BY_MAKE@$(SRC.pl)@'           \
+			-e 's@OSAFT_GUI_INSERTED_BY_MAKE@$(SRC.tcl)@'         \
 			-e 's@OSAFT_CGI_INSERTED_BY_MAKE@$(_INST.osaft_cgi)@' \
 			-e 's@OSAFT_DOC_INSERTED_BY_MAKE@$(_INST.osaft_doc)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
+                # last substitude is fallback to ensure everything is changed
 
 # generate f- targets to print HELP text for each target
 _HELP.my_targets= $(shell $(EXE.eval) $(MAKEFILE))
@@ -519,8 +523,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.73
-tar:     GREP_EDIT  = 1.73
+GREP_EDIT           = 1.74
+tar:     GREP_EDIT  = 1.74
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
