@@ -47,7 +47,7 @@
 #?
 # HACKER's INFO
 #       This file is generated from INSTALL-template.sh .
-#       The generator (make) inserts some values for internal variables.  In
+#       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
 #       and scopes containing  "INSERTED_BY_MAKE" .
 #
@@ -62,7 +62,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.27 19/08/03 20:39:47
+#?      @(#)  1.28 19/08/03 22:24:07
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -86,13 +86,11 @@ text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
-osaft_exe="o-saft.pl"
-osaft_gui="o-saft.tcl"
-# corresponding RC-FILEs do not need their own variable; simply prefix with .
-
-build_openssl="contrib/install_openssl.sh"
-
 # INSERTED_BY_MAKE {
+osaft_exe="OSAFT_PL_INSERTED_BY_MAKE"
+osaft_gui="OSAFT_TCL_INSERTED_BY_MAKE"
+# corresponding RC-FILEs do not need their own variable; simply prefix with .
+contrib_dir="CONTRIB_INSERTED_BY_MAKE"
 inst_directory=${inst:="INSTALLDIR_INSERTED_BY_MAKE"}
 
 files_contrib="
@@ -112,27 +110,35 @@ files_install_doc="
 		"
 # INSERTED_BY_MAKE }
 
-clean_directory="$inst_directory/.files_to_be_removed"
-
 # HARDCODED {
 # because newer Makefiles may no longer know about them
+
+files_ancient="
+	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
+	INSTALL-devel.sh .perlcriticrc o-saft_bench
+	contrib/.o-saft.tcl
+	"
+
+# first, dirty hack to make tests in development mode possible
+[ "OSAFT_PL_INSERTED_BY_MAKE"  = "$osaft_exe"   ] && osaft_exe=o-saft.pl
+[ "OSAFT_TCL_INSERTED_BY_MAKE" = "$osaft_gui"   ] && osaft_gui=o-saft.tcl
+[ "CONTRIB_INSERTED_BY_MAKE"   = "$contrib_dir" ] && contrib_dir=contrib
+
 files_not_installed="
-		contrib/o-saft.cgi  contrib/o-saft.php
-		contrib/Dockerfile.alpine-3.6   contrib/Dockerfile.wolfssl
-		contrib/distribution_install.sh contrib/gen_standalone.sh
-		contrib/install_perl_modules.pl contrib/install_openssl.sh
-		contrib/INSTALL-template.sh
-		"
+	$contrib_dir/o-saft.cgi  $contrib_dir/o-saft.php
+	$contrib_dir/Dockerfile.alpine-3.6   $contrib_dir/Dockerfile.wolfssl
+	$contrib_dir/distribution_install.sh $contrib_dir/gen_standalone.sh
+	$contrib_dir/install_perl_modules.pl $contrib_dir/install_openssl.sh
+	$contrib_dir/INSTALL-template.sh
+	"
 
-files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
-		INSTALL-devel.sh .perlcriticrc o-saft_bench
-		contrib/.o-saft.tcl
-		"
-
-files_develop="o-saft-docker-dev Dockerfile Makefile t/ contrib/critic.sh"
+files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
 # HARDCODED }
+
+clean_directory="$inst_directory/.files_to_be_removed"
+build_openssl="$contrib_dir/install_openssl.sh"
 
 # --------------------------------------------- internal functions
 echo_yellow () {
@@ -167,7 +173,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.27 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.28 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1"; ;; # directory, last one wins
 	esac
 	shift
@@ -240,7 +246,7 @@ if [ "$mode" = "clean" ]; then
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
 	[ -d "$clean_directory" ] || $try echo_red "**ERROR: $clean_directory does not exist; exit"
 	[ -d "$clean_directory" ] || $try exit 2
-	# do not move contrib/ as all examples are right there
+	# do not move $contrib_dir/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
 	cnt=0
 	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed ; do
@@ -273,7 +279,7 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	echo "# installing ..."
-	$try \mkdir -p "$inst_directory/contrib"
+	$try \mkdir -p "$inst_directory/$contrib_dir"
 	$try \mkdir -p "$inst_directory/Net"
 	$try \mkdir -p "$inst_directory/OSaft/Doc"
 	for f in $files ; do
@@ -282,8 +288,10 @@ if [ "$mode" = "dest" ]; then
 
 	if [ $force -eq 1 ]; then
 		echo '# installing RC-FILEs in $HOME ...'
-		$try \cp .$osaft_exe  "$inst_directory/"        || echo_red ".$osaft_exe  failed"
-		$try \cp contrib/.$osaft_gui "$inst_directory/" || echo_red ".$osaft_gui failed"
+		$try \cp .$osaft_exe  "$inst_directory/" \
+			|| echo_red ".$osaft_exe  failed"
+		$try \cp $contrib_dir/.$osaft_gui "$inst_directory/" \
+			|| echo_red ".$osaft_gui failed"
 	fi
 
 	echo    "# consider calling: $0 --clean $inst_directory"
@@ -352,9 +360,9 @@ rc="$HOME/.$osaft_gui"
 if [ -e "$rc" ]; then
 	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
 	perl -le 'printf"# %21s\t","'$rc'"' && echo_green  "$v"
-	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "ancient, consider updating from contrib/.$osaft_gui"
+	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "ancient, consider updating from $contrib_dir/.$osaft_gui"
 else
-	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "missing, consider copying contrib/.$osaft_gui into your HOME directory: $HOME"
+	perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "missing, consider copying $contrib_dir/.$osaft_gui into your HOME directory: $HOME"
 fi
 echo "#----------------------+---------------------------------------"
 
@@ -438,7 +446,7 @@ echo "#--------------+-----------------------------------------------"
 
 echo ""
 echo "# check for contributed files"
-echo "# (in $inst_directory/contrib )"
+echo "# (in $inst_directory/$contrib_dir )"
 echo "#--------------+-----------------------------------------------"
 for c in $files_contrib ; do
 	c="$inst_directory/$c"
