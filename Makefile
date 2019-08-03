@@ -29,6 +29,20 @@
 #       Note that macro definitions in makefiles must not be sequential!
 #       Use of $$ avoids evaluating $ (the macro).
 #
+#    Version string
+#       This file contains a string with a unique version number. See the value
+#       of the  _SID  variable below.
+#       This string is used several times verbatim.  One might argue that  _SID
+#       should be used for all other usages. But this is explicitly not done to
+#       ensure that  exactly this string (version number) is used and cannot be
+#       overwritten (i.e. with an environment variable) when make is called.
+#       If this file is changed, all occourances of the string must be changed.
+#       Known variables (8/2019) to be changed are:
+#           _SID
+#           _INST.text
+#           GREP_EDIT
+#       When this file is controlled with SCCS, it will be done automatically.
+#
 #    Variable, macro names
 #       General rules for our variable names in this Makefile:
 #           * variable names consist only of characters a-zA-Z0-9_.
@@ -87,14 +101,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.74 19/08/03 20:56:58
+#?      @(#) Makefile 1.75 19/08/03 21:21:54
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.74
+_SID            = 1.75
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -312,7 +326,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.74
+_INST.text      = generated from Makefile 1.75
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -523,8 +537,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.74
-tar:     GREP_EDIT  = 1.74
+GREP_EDIT           = 1.75
+tar:     GREP_EDIT  = 1.75
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
