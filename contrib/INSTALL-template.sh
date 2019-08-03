@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#)  1.26 19/08/03 08:38:44
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -152,12 +152,12 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	 '-n' | '--n')  optn="--n"; try=echo; ;;
-	 '-x')          optx=1;     ;;
-	  '--check')    mode=check; ;;
-	  '--clean')    mode=clean; ;;
-	  '--install')  mode=dest;  ;; # install in hardcoded path
-	  '--openssl')  mode=openssl; ;;
-	  '--force')    force=1;    ;;
+	 '-x')          optx=1;         ;;
+	  '--check')    mode=check;     ;;
+	  '--clean')    mode=clean;     ;;
+	  '--install')  mode=dest;      ;;  # install in hardcoded path
+	  '--openssl')  mode=openssl;   ;;
+	  '--force')    force=1;        ;;
 	  '--blind')           colour="34m"; ;;
 	  '--color-blind')     colour="34m"; ;;
 	  '--colour-blind')    colour="34m"; ;;
@@ -166,8 +166,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo %I% ; exit; ;; # for compatibility to $osaft_exe
-	  *)            mode=dest; inst="$1";  ;;  # last one wins
+	  '+VERSION')   echo 1.26 ; exit; ;; # for compatibility to $osaft_exe
+	  *)            inst="$1";  ;;      # directory, last one wins
 	esac
 	shift
 done
@@ -212,6 +212,7 @@ fi
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
+	echo "# call $inst_openssl"
 	[ ! -x "$inst_openssl" ] && echo_red "**ERROR: $inst_openssl does not exist; exit" && exit 2
 	[ 0 -lt "$optx" ] && set -x
 	$inst_openssl $optn $@
