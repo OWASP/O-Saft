@@ -59,7 +59,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#)  1.25 19/08/02 17:23:08
+#?      @(#) %M% %I% %E% %U%
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -166,7 +166,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.25 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo %I% ; exit; ;; # for compatibility to $osaft_exe
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -231,6 +231,7 @@ fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
+	echo "# cleanup installation in $inst"
 	[ -n "$optn"  ] && echo cd $inst
 	cd $inst
 	[ -d "$clean" ] || $try \mkdir "$clean/$f"
@@ -238,10 +239,13 @@ if [ "$mode" = "clean" ]; then
 	[ -d "$clean" ] || $try exit 2
 	# do not move contrib/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
+	cnt=0
 	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed ; do
+		#dbx echo "$clean/$f"
 		[ -e "$clean/$f" ] && $try \rm -f "$clean/$f"
-		[ -e "$f" ]        && $try \mv "$f" "$clean"
+		[ -e "$f" ]        && $try \mv "$f" "$clean" && cnt=`expr $cnt + 1`
 	done
+	echo -n "# moving $cnt files to $inst/$clean "; echo_green "completed."
 	exit 0
 fi; # clean mode }
 
@@ -287,7 +291,7 @@ if [ "$mode" != "check" ]; then
 	exit 5
 fi
 
-# all following is check mode
+# all following is mode "check"
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
 [ -n "$optn"  ] && echo cd $inst
