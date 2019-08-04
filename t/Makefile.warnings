@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.43 19/07/21 10:54:58
+#?      @(#)  1.44 19/08/04 10:56:07
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.43
+_SID.warnings   = 1.44
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -77,10 +77,10 @@ HELP-test.warnings      = test **WARNING messages of '$(SRC.pl)'
 HELP-test.warnings.log  = test **WARNING messages of '$(SRC.pl)' and compare with previous one
 HELP-message-STR        = test for specific STR in output of '$(SRC.pl)'
 HELP-warning-NR         = test for specific messages number NR in output of '$(SRC.pl)'
-HELP-warnings.info      = get all **WARNING messages from '$(SRC.pl)'
+HELP-warnings-info      = get all **WARNING messages from '$(SRC.pl)'
+HELP-warnings-show.todo     = show not implemented tests for warnings
+HELP-warnings-show.difficult= show tests for warnings which are difficult to implement
 HELP-warnings.gen.template  = generate template Makefile for testing warning messages
-HELP-warnings.show.todo     = show not implemented tests for warnings
-HELP-warnings.show.difficult= show tests for warnings which are difficult to implement
 
 HELP.warnings           = $(_NL)\
 \# Hint: message-STR can test for any string in output, example$(_NL)\
@@ -307,6 +307,22 @@ ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_a
 warning-%: message-%
 	@$(TRACE.target)
 
+_TEST.template  = t/test.warning.Makefile-template
+$(_TEST.template): $(SRC.pl) $(SRC.pm)
+	@echo "# generated template targets to test **WARNING messages" > $@
+	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
+	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
+	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
+	@echo ""                                                       >> $@
+	@$(_extract_warn) $^ \
+	    | $(_gen_warning_target) \
+	    | sort >> $@
+	@-ls -l $@
+
+warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
+# TODO: Makefile dependency does not work, probably need to use $(MAKE)
+.PHONY: warnings.gen.template
+
 # extract all line looking like:
 #       die STR_ERROR, 
 #       warn STR_ERROR, 
@@ -336,30 +352,31 @@ define _gen_warning_target
 		print;'
 endef
 
-warnings.info: $(SRC.pl) $(SRC.pm)
+warnings-info: $(SRC.pl) $(SRC.pm)
 	@$(_extract_warn) $^
 
-_TEST.template  = t/test.warning.Makefile-template
-$(_TEST.template): $(SRC.pl) $(SRC.pm)
-	@echo "# generated template targets to test **WARNING messages" > $@
-	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
-	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
-	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
-	@echo ""                                                       >> $@
-	@$(_extract_warn) $^ \
-	    | $(_gen_warning_target) \
-	    | sort >> $@
-	@-ls -l $@
+warnings-show.todo:
+	grep "^warning..*TODO"      $(_MYSELF.warnings)
 
-warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
-# TODO: Makefile dependency does not work, probably need to use $(MAKE)
-.PHONY: warnings.gen.template
+ALL.test.warnings  += warnings-info warnings-show.difficult warnings-show.todo
 
-warnings.show.todo:
-	grep "^warning..*TODO" $(TEST.dir)/Makefile
+warnings-show.difficult:
+	grep "^warning..*difficult" $(_MYSELF.warnings)
 
-warnings.show.difficult:
-	grep "^warning..*difficult" $(TEST.dir)/Makefile
+warnings-%.log: $(TEST.logdir)
+	@$(TRACE.target)
+	@$(TRACE.target.log)
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1
+	@expr "$(MAKEFLAGS)" : n >/dev/null \
+	    && echo "$(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1
+	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
+	    && rm $@ \
+	    || mv $@ $(_NEW.log)
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
+	@-ls -l  $(TEST.logdir)/warnings-$(*)*
+# TODO: target should be unified with testcmd-%.log
 
 test.warnings.all:  $(ALL.test.warnings)
 test.warnings:      test.warnings.all
@@ -367,7 +384,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# ”¸êU 1.43: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.44: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
