@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.07.29";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.18 19/08/04 15:15:19";
+my  $SID_data   = "@(#) Data.pm 1.19 19/08/04 15:38:11";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -92,8 +92,15 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
+                $path =~ s#^/(OSaft/.*)#$1#;# dirty hack
                 $path =~ s#/[^/\\]*$##; # relative path of this file
             $file = "$path/$file";
+            #dbx# print "file: $file";
+            # dirty hack: some OS return an absolute path for  __FILE__ ; then
+            # $file would not be found because that path is wrong. If the path
+            # begins with  /OSaft , the leading / is simply removed.
+            # NOTE: This behaviour (i.e. older Mac OSX) is considered a bug in
+            #       Perl there.
         }
     }
     #dbx# print "#Data.pm file=$file ";
@@ -562,7 +569,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.18 2019/08/04
+1.19 2019/08/04
 
 =head1 AUTHOR
 
