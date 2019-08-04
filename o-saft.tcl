@@ -397,7 +397,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.218 Summer Edition 2019
+#?      @(#) 1.219 Summer Edition 2019
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -467,10 +467,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.218 19/08/04 15:24:42"
+set cfg(SID)    "@(#) o-saft.tcl 1.219 19/08/04 23:47:10"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.218}
+set cfg(VERSION) {1.219}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1093,7 +1093,7 @@ proc read_images  {theme}   {
            pwarn "$cfg(IMG) not found; using traditional buttons"
        }
     }
-    _dbx 4 " IMG: [array names IMG]"
+    _dbx 4 " IMG    = [array names IMG]"
     return
 }; # read_images
 
@@ -1291,14 +1291,14 @@ proc gui_init     {}    {
         destroy .ttest
         break
     }
-    _dbx 4 " table font: $cfg(tfont)"
+    _dbx 4 " table font = $cfg(tfont)"
 
     # search browser, first matching will be used
     foreach bin " $__native \
             firefox chrome chromium iceweasel konqueror mozilla \
             netscape opera safari webkit htmlview www-browser w3m" {
         set binary [lindex [auto_execok $bin] 0];   # search in $PATH
-        _dbx 4 " browser: $bin $binary"
+        _dbx 4 " browser= $bin $binary"
         if {[string length   $binary]} {
             set prg(BROWSER) $binary
             break
@@ -1325,7 +1325,7 @@ proc notTOC       {str} {
     if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1; };  # skip some special strings
     if {[regexp {^ *$} $str]}               { return 1; };  # skip empty
     if {[regexp {^(HIGH|MDIUM|LOW|WEAK|SSL|DHE|OWASP)} [string trim $str]]} { return 1; };
-    _dbx 4 " no: »$str«";
+    _dbx 4 " no     = »$str«";
     return 0
 }; # notTOC
 
@@ -1370,7 +1370,7 @@ proc theme_init   {theme}   {
     # widget. First build a regex which matches all widget names of buttons.
     set rex [join [array names cfg_buttons] "|"]
     set rex [join [list {\.(} $rex {)$}] ""]
-    _dbx 4 ": regex: $rex"
+    _dbx 4 ": regex = $rex"
     foreach obj [info commands] {
         if {![regexp {^\.}  $obj]}  { continue }
         if {![regexp $rex   $obj]}  { continue }
@@ -1520,7 +1520,7 @@ proc apply_filter_text  {w} {
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         if {$rex eq ""} { continue };   # -"-
-        _dbx 4 " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
+        _dbx 4 " $key : /$rex/ $mod: bg=$bg, fg=$fg, fn=$fn"
         # anf contains start, end corresponding end position of match
         set key [_str2obj [string trim $key]]
         set anf [$w search -all $mod -count end "$rex" 1.0]
@@ -1542,7 +1542,7 @@ proc apply_filter_text  {w} {
             }
             $w tag  raise HELP-$key.l HELP-$key
         }
-        _dbx 4 " $key: $rex F $fg B $bg U $nr font $fn"
+        _dbx 4 " $key: $rex F=$fg B=$bg U=$nr fn=$fn"
         if {$fg ne ""}  { $w tag config HELP-$key -foreground $fg }
         if {$bg ne ""}  { $w tag config HELP-$key -background $bg }
         if {$nr ne "0"} { $w tag config HELP-$key -underline  $nr }
@@ -1590,7 +1590,7 @@ proc apply_filter_table {w} {
             set fn  $f_fn($k)  ;# does not work in tablelist
             if {$key eq ""} { continue };   # invalid or disabled filter rules
             if {$rex eq ""} { continue };   # -"-
-            _dbx 4 " $key : /$rex/ bg->$bg, fg->$fg, fn->$fn"
+            _dbx 4 " $key : /$rex/ bg=$bg, fg=$fg, fn=$fn"
             # finding the pattern in the  table's cells is not as simple as in
             # texts (see apply_filter_text() above), that's why the regex must
             # be applied to the proper column: $col and $matchtxt is needed
@@ -1762,7 +1762,7 @@ proc create_host  {parent}  {
     global cfg hosts myX
     set host  $hosts($hosts(0))
     incr hosts(0)
-    _dbx 4 " host($hosts(0)): $host"
+    _dbx 4 " host($hosts(0))= $host"
     set this $parent.ft$hosts(0)
           frame  $this
     grid [label  $this.lh -text [_get_text host]] \
@@ -1874,7 +1874,7 @@ proc create_table {parent content} {
         # and a value separated by a tab (and additional spaces for formatting)
         # in tabular context, only label and value is required; no tabs, spaces
         if {[regexp {^\s*$} $line]} { continue };# skip empty lines
-        #_dbx 16 " line: $line"
+        #_dbx 16 " line   = $line"
         set nr [format %03d [incr n]]
             # integer must have leading 0, otherwise sorting of tablelist fails
             # no more than 999 lines are expected, may be more with --v --trace
@@ -2841,7 +2841,7 @@ proc search_show  {w mark} {
         # "see" sometimes places text to far on top, so we scroll up one line
         $w yview scroll -1 units
     } else {
-        _dbx 4  " err: $err"
+        _dbx 4  " err    = $err"
     }
     return
 }; # search_show
@@ -2855,7 +2855,7 @@ proc search_mark  {w see} {
     # find complete surounding paragraph, a paragraph is enclosed in  \n\n
     set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
     set box_end [$w search -forward  -regexp {\n\s*\n} $end]
-    _dbx 4 " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
+    _dbx 4 " box_anf= $box_anf\tanf= $anf\tend= $end\tbox_end= $box_end"
     $w tag delete HELP-search-box  $anf
     $w tag add    HELP-search-box "$box_anf + 2 c" "$box_end + 1 c"
     $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [_get_color osaft]
@@ -2915,7 +2915,7 @@ proc search_next  {w direction} {
     # direction: + to search forward, - to search backward
     global search
     _dbx 2 "{$w, $direction}"
-    _dbx 4 " see: $search(see)"
+    _dbx 4 " see    = $search(see)"
     # nextrange, prevrange return a tuple like:        23.32 23.37
     # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
     switch $direction {
@@ -2950,7 +2950,7 @@ proc search_text  {w search_text} {
     # new text to be searched, initialize ...
     set search(last) $search_text
     $w tag delete HELP-search-pos      ;# tag which contains all matches
-    _dbx 4 " mode:            $search(mode)"
+    _dbx 4 " mode           = $search(mode)"
     set regex $search_text
     set words ""       ;# will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
@@ -3007,7 +3007,7 @@ proc search_text  {w search_text} {
         # Note: $words has already leading | hence missing in concatenation
         set regex "(?:$regex$words)"
     }
-    _dbx 4 " regex ($search(mode)):   $regex";
+    _dbx 4 " regex ($search(mode))  = $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
     switch $search(mode) {
         {exact} { set rmode "-exact" }
@@ -3015,7 +3015,7 @@ proc search_text  {w search_text} {
         {fuzzy} -
         {regex} {
             # simply catch compile errors using a similar call as for matching
-            _dbx 4 " regex #$search(mode)#:   $regex";
+            _dbx 4 " regex #$search(mode)#  = $regex";
             set rmode "-regexp"
             set err ""
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
@@ -3026,8 +3026,8 @@ proc search_text  {w search_text} {
             # else { regex OK }
             }
     }
-    _dbx 4 " regex sanatized: $regex";
-    _dbx 4 " regex mode:      $rmode";
+    _dbx 4 " regex sanatized= $regex";
+    _dbx 4 " regex mode     = $rmode";
     # ready to fire ...
     set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
     if {"" eq $anf} {
@@ -3064,7 +3064,7 @@ proc search_text  {w search_text} {
     $w tag config HELP-search-pos -background [_get_color osaft]
     search_mark $w $search(see)
     $w see [lindex $search(see) 0]
-    _dbx 4 " see: $search(see)\tlast: $search(last)"
+    _dbx 4 " see= $search(see)\tlast= $search(last)"
     # show window with all search results (note: $anf contains tuples)
     if {$search(more) < [count_tuples $anf]} {
        search_more $w $search_text $regex
@@ -3096,7 +3096,7 @@ proc search_list  {direction} {
     if {$search(curr) < 0} { set search(curr) [expr $len - 1] }
     if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
     set search(text) [lindex $search(list) $search(curr)]
-    _dbx 4 " curr: $search(curr) of $len, »$search(text)«"
+    _dbx 4 " curr= $search(curr) of $len, »$search(text)«"
     return
 }; # search_list
 
@@ -3132,7 +3132,7 @@ proc osaft_write_rc {} {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.218 19/08/04 15:24:42
+ #?      @(#) .o-saft.tcl generated by 1.219 19/08/04 23:47:10
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3277,7 +3277,7 @@ proc osaft_help   {} {
     putv               " exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help "
     set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] +help } help
     if {5 > [llength [split $help "\n"]]} {
-        _dbx 2 " help=»$help«"
+        _dbx 2 " help = »$help«"
         # exec call failed, probably because  PATH  does not contain . then
         # prg(SAFT) returns an error, most likely just one line, like:
         #   couldn't execute "o-saft.pl": no such file or directory
@@ -3432,7 +3432,7 @@ proc osaft_save   {tbl type nr} {
             }
         }
     }
-    _dbx 4 " file: $name"
+    _dbx 4 " file = $name"
     close $fid
     update_status "saved to $name"
     return
@@ -3535,7 +3535,7 @@ proc osaft_exec   {parent cmd} {
         # dict get $errors --errorinfo   returns same as we have in $results
         # because STDERR was redirected to STDOUT
         # Tcl's exec added  "child process exited abnormally"  to the result
-        _dbx 4 " error: [dict get $errors -errorcode]"
+        _dbx 4 " error  = [dict get $errors -errorcode]"
         set status [lindex [dict get $errors -errorcode] 2]
         set result [regsub {child process exited abnormally$} $result ""]
         # more pedantic check:
@@ -3673,7 +3673,7 @@ foreach f $cfg(files) {
 if {$cfg(TRACE) > 0} { trace_buttons }
 
 ## some verbose output
-putv " hosts: $hosts(0)"
+putv " hosts= $hosts(0)"
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
@@ -3698,42 +3698,42 @@ if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
    #.CFG:      $cfg(.CFG)   # don't print, too much data
 
     puts [regsub -all -lineanchor {^} "
-PRG $argv0  -- $cfg(ICH)
- |  RC:        $cfg(RC)\t$rc
- |  O-Saft:    $prg(SAFT)
- |  INIT:      $prg(INIT)\t$ini
- |  post:      $prg(post)
-ARG argv:      $argv
- |  targets:   $targets
- |  files:     $cfg(files)
-CFG TITLE:     $cfg(TITLE)
- |  debug:     $cfg(DEBUG)
- |  trace:     $cfg(TRACE)
- |  tooltip:   tooltip package\t$tip
- |  bstyle:    $cfg(bstyle)
- |  layout:    $cfg(layout)
- |  BROWSER:   $prg(BROWSER)
- |  PERL:      $prg(PERL)
- |  SAFT:      $prg(SAFT)
-TCL version:   $::tcl_patchLevel
- |  library:   $::tcl_library
- |  platform:  $::tcl_platform(platform)
- |  os:        $::tcl_platform(os)
- |  osVersion: $::tcl_platform(osVersion)
- |  byteOrder: $::tcl_platform(byteOrder)
- |  wordSize:  $::tcl_platform(wordSize)
- |  rcFileName:$::tcl_rcFileName
-Tk  version:   $::tk_patchLevel
- |  library:   $::tk_library
- |  strictMotif: $::tk_strictMotif
-WM  frame:     $wmf
- |  maxsize:   $max
- |  geometry:  [wm geometry   .]
- |  focusmodel:[wm focusmodel .]
- |  system:    [tk windowingsystem]
- |  clipboard: $myX(buffer)
- |  geometry:  $geo
-TAB tabs:      [$cfg(objT) tabs]
+PRG $argv0 -- $cfg(ICH)
+ |  RC        = $cfg(RC)\t$rc
+ |  O-Saft    = $prg(SAFT)
+ |  INIT      = $prg(INIT)\t$ini
+ |  post      = $prg(post)
+ARG argv      = $argv
+ |  targets   = $targets
+ |  files     = $cfg(files)
+CFG TITLE     = $cfg(TITLE)
+ |  debug     = $cfg(DEBUG)
+ |  trace     = $cfg(TRACE)
+ |  tooltip   = tooltip package\t$tip
+ |  bstyle    = $cfg(bstyle)
+ |  layout    = $cfg(layout)
+ |  BROWSER   = $prg(BROWSER)
+ |  PERL      = $prg(PERL)
+ |  SAFT      = $prg(SAFT)
+TCL version   = $::tcl_patchLevel
+ |  library   = $::tcl_library
+ |  platform  = $::tcl_platform(platform)
+ |  os        = $::tcl_platform(os)
+ |  osVersion = $::tcl_platform(osVersion)
+ |  byteOrder = $::tcl_platform(byteOrder)
+ |  wordSize  = $::tcl_platform(wordSize)
+ |  rcFileName= $::tcl_rcFileName
+Tk  version   = $::tk_patchLevel
+ |  library   = $::tk_library
+ |  strictMotif= $::tk_strictMotif
+WM  frame     = $wmf
+ |  maxsize   = $max
+ |  geometry  = [wm geometry   .]
+ |  focusmodel= [wm focusmodel .]
+ |  system    = [tk windowingsystem]
+ |  clipboard = $myX(buffer)
+ |  geometry  = $geo
+TAB tabs      = [$cfg(objT) tabs]
  |
 _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv
     #          [tk windowingsystem] # we believe this a window manager property
