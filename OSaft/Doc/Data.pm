@@ -24,10 +24,21 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "19.04.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.17 19/07/24 01:23:10";
+our $VERSION    = "19.07.29";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.18 19/08/04 15:15:19";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
+
+# TODO: use osaft; # needs proper path
+my $STR_WARN    = "**WARNING: ";
+sub _warn   {
+    my @txt = @_;
+    return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
+    local $\ = "\n";
+    print($STR_WARN, join(" ", @txt));
+    # TODO: in CGI mode warning must be avoided until HTTP header written
+    return;
+}; # _warn
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -76,24 +87,25 @@ sub _get_filehandle {
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
+    #dbx# print "#Data.pm $0, file=$file, ",__FILE__;
     if ("" ne $file) {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
                 $path =~ s#/[^/\\]*$##; # relative path of this file
             $file = "$path/$file";
-            #dbx# print "file: $file";
         }
     }
+    #dbx# print "#Data.pm file=$file ";
     if ("" ne $file and -e $file) {
         ## no critic qw(InputOutput::RequireBriefOpen)
         #  file hadnle needs to be closd by caller
         if (not open($fh, '<:encoding(UTF-8)', $file)) {
-            print "**WARNING: open('$file'): $!";
+            _warn("190: open('$file'): $!");
         }
     } else {
         $fh = __PACKAGE__ . "::DATA";   # same as:  *OSaft::Doc::Data::DATA
-        print "**WARNING: no '$file' found, using '$fh'" if not -e $file;
+        _warn("191: no '$file' found, using '$fh'") if not -e $file;
     }
     #dbx# print "file: $file , FH: *$fh";
     return $fh;
@@ -226,7 +238,7 @@ sub get_text    {
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
-        print "**WARNING: using workaround to print large strings.\n\n";
+        _warn("192: using workaround to print large strings.\n\n");
         print foreach split(//, $txt);  # print character by character :-((
     } else {
         #print $txt;
@@ -550,7 +562,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.17 2019/07/24
+1.18 2019/08/04
 
 =head1 AUTHOR
 
