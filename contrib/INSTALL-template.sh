@@ -34,8 +34,10 @@
 #?      -x      debug using shell's "set -x"
 #?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
 #?              overwrites existing ones
-#?      --blind     use blue instead of green coloured texts; default
-#?      --not-blind use green instead of blue coloured texts
+#?      --no-colour         do not use coloured texts; default
+#?      --colour            use coloured texts (red, yellow, blue|green)
+#?      --colour-blind      same as --colour
+#?      --colour-not-blind  use green instead of blue coloured texts
 #?
 #? EXAMPLES
 #?      $0
@@ -82,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.32 19/08/04 19:24:24
+#?      @(#)  1.33 19/08/04 20:48:13
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -94,14 +96,14 @@ try=''
 ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
-colour="34m"    # 32 green, 34 blue for colour-blind
+colour=""       # 32 green, 34 blue for colour-blind
 force=0
 optx=0
 optn=""
 mode="";        # "", check, clean, dest, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
-	# TODO: check path for each platform
-t="	"   # need a real TAB (0x09) for /bin/echo
+	        # TODO: check path for each platform
+t="	"       # need a real TAB (0x09) for /bin/echo
 
 text_miss="missing, try installing with ";
 text_dev="did you run »$0 --clean«?"
@@ -165,12 +167,15 @@ build_openssl="$contrib_dir/install_openssl.sh"
 # --------------------------------------------- internal functions
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
+	[ -z "$colour" ] && echo "$@" && return
 	\echo "\033[1;33m$@\033[0m"
 }
 echo_green  () {
+	[ -z "$colour" ] && echo "$@" && return
 	\echo "\033[1;$colour$@\033[0m"
 }
 echo_red    () {
+	[ -z "$colour" ] && echo "$@" && return
 	\echo "\033[1;31m$@\033[0m"
 }
 
@@ -181,23 +186,28 @@ while [ $# -gt 0 ]; do
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	 '-n' | '--n')  optn="--n"; try=echo ; ;;
-	 '-x')          optx=1;         ;;
-	  '--check')    mode=check;     ;;
-	  '--clean')    mode=clean;     ;;
-	  '--install')  mode=dest;      ;;  # install in hardcoded path
-	  '--openssl')  mode=openssl;   ;;
-	  '--force')    force=1;        ;;
-	  '--blind')           colour="34m"; ;;
-	  '--color-blind')     colour="34m"; ;;
-	  '--colour-blind')    colour="34m"; ;;
-	  '--not-blind')       colour="32m"; ;;
+	 '-n' | '--n')          optn="--n"; try=echo; ;;
+	 '-x' | '--x')          optx=1;       ;;
+	  '--check')            mode=check;   ;;
+	  '--clean')            mode=clean;   ;;
+	  '--install')          mode=dest;    ;;
+	  '--openssl')          mode=openssl; ;;
+	  '--force')            force=1;      ;;
+          '--no-colour')        colour="";    ;;
+          '--colour')           colour="34m"; ;;
+          '--colour-blind')     colour="34m"; ;;
+          '--colour-not-blind') colour="32m"; ;;
+          '--no-color')         colour="";    ;; # alias
+          '--color')            colour="34m"; ;; # alias
+          '--color-blind')      colour="34m"; ;; # alias
+          '--color-not-blind')  colour="32m"; ;; # alias
+          '---blind')           colour="34m"; ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.32 ; exit;     ;; # for compatibility to $osaft_exe
-	  *)            inst_directory="$1"; ;; # directory, last one wins
+	  '+VERSION')   echo 1.33 ; exit;      ;; # for compatibility to $osaft_exe
+	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
 done
