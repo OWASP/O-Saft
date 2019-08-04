@@ -39,14 +39,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.44 19/08/04 10:56:07
+#?      @(#)  1.45 19/08/04 15:36:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.44
+_SID.warnings   = 1.45
 
 _MYSELF.warnings= t/Makefile.warnings
 _MY.includes   += $(_MYSELF.warnings)
@@ -195,6 +195,8 @@ warning-076: TEST.args  = --cfg_score=dummy=invalid_value   +quit
 warning-080: TEST.args  = TODO: testing Net::SSLeay < 1.49
 warning-081: TEST.args  = TODO: ancient Net::SSLeay Net::SSLeay::VERSION < 1.49, difficult ...
 warning-090: TEST.args  = TODO: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead, difficult ...
+warning-190: TEST.args  = TODO: open(OSaft/Doc/file.txt): failed, difficult ...
+warning-191: TEST.args  = TODO: no  OSaft/Doc/file.txt  found, difficult ...
 warning-111: TEST.args  = --mx --nodns                      +quit
 warning-111: TEST.args  = TODO: testing missing Net/DNS.pm
 warning-112: TEST.args  = +sts_expired                      +quit
@@ -384,7 +386,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "#  1.44: $(MAKE) test.warnings.log" > $@
+	@echo "# €7×u±U 1.45: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
