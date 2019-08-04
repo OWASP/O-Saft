@@ -62,7 +62,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.29 19/08/04 01:49:50
+#?      @(#)  1.30 19/08/04 17:39:30
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -173,7 +173,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.29 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.30 ; exit; ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1"; ;; # directory, last one wins
 	esac
 	shift
@@ -395,7 +395,6 @@ for m in $modules ; do
 		[ "$c" = "green" ] && echo_green "$v $p"
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
-		[ "$c" = "red"   ] && echo E $err
 	else 
 		text_miss="$text_miss 'cpan $m'"
 		echo_red "$text_miss"
