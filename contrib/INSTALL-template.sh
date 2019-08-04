@@ -57,12 +57,32 @@
 #       Environment variable inst can be set to installation directory: This
 #       is usefull for development only, hence not officially documented.
 #
+#    echo vs /bin/echo
+#       echo is a pain, depending on the platform. The shell's built-in echo
+#       does not have the  -n  option, usually. /bin/echo doesn't know about
+#       ANSI escape sequences, usually. \-escaped characters, like  \t , are
+#       another problem, some shells support them, others do not.
+#       I.g. we'd like to use traditional bourne shell, where all behaviours
+#       are well defined. Unfortunately, some platforms seem to be a hostage
+#       of their developers who believe that  their favorite shell has to be
+#       used by all users (linking to /bin/sh to whatever, without informing
+#       the user).
+#       Best effort to get this script working on most platforms was:
+#           * mainly use /bin/echo (aliased to echo, to keep code readable)
+#           * TABs (aka \t aka 0x09) are used verbatim (see $t variable)
+#           * shell's built-in echo used when ANSI escape sequences are used
+#       There's no guarantee that it works flawless on everywhere, currently
+#       (8/2019) it works for BSD, debian (including Mac OSX).
+#       Functionallity of this script is not harmed, if the output with echo
+#       fails  (prints ANSI escapes and/or \-escapes verbatim, and/or prints
+#       -n verbatim, etc.).
+#
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.31 19/08/04 17:40:32
+#?      @(#)  1.32 19/08/04 19:24:24
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -72,7 +92,6 @@
 # --------------------------------------------- internal variables; defaults
 try=''
 ich=${0##*/}
-bas=${ich%%.*}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 colour="34m"    # 32 green, 34 blue for colour-blind
@@ -80,8 +99,11 @@ force=0
 optx=0
 optn=""
 mode="";        # "", check, clean, dest, openssl
+alias echo=/bin/echo    # need special echo which has -n option;
+	# TODO: check path for each platform
+t="	"   # need a real TAB (0x09) for /bin/echo
 
-text_miss="missing, try installing with ";	# 'cpan $m'"
+text_miss="missing, try installing with ";
 text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
@@ -141,14 +163,15 @@ osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
 
 # --------------------------------------------- internal functions
+# for escape sequences, shell's built-in echo must be used
 echo_yellow () {
-	echo "\033[1;33m$@\033[0m"
+	\echo "\033[1;33m$@\033[0m"
 }
 echo_green  () {
-	echo "\033[1;$colour$@\033[0m"
+	\echo "\033[1;$colour$@\033[0m"
 }
 echo_red    () {
-	echo "\033[1;31m$@\033[0m"
+	\echo "\033[1;31m$@\033[0m"
 }
 
 # --------------------------------------------- arguments and options
@@ -158,7 +181,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	 '-n' | '--n')  optn="--n"; try=echo; ;;
+	 '-n' | '--n')  optn="--n"; try=echo ; ;;
 	 '-x')          optx=1;         ;;
 	  '--check')    mode=check;     ;;
 	  '--clean')    mode=clean;     ;;
@@ -173,7 +196,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.31 ; exit; ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.32 ; exit;     ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1"; ;; # directory, last one wins
 	esac
 	shift
@@ -321,10 +344,10 @@ echo "# (warnings are ok if 'git clone' will be used for development)"
 echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
-	[ -e "$f" ] && echo -n "# found $f ...\t" && echo_yellow "$text_alt"
+	[ -e "$f" ] && echo -n "# found $f ...$t" && echo_yellow "$text_alt"
 done
 for f in $files_develop $files_info ; do
-	[ -e "$f" ] && echo -n "# found $f ...\t" && echo_yellow "$text_dev"
+	[ -e "$f" ] && echo -n "# found $f ...$t" && echo_yellow "$text_dev"
 done
 echo "#--------------------------------------------------------------"
 
@@ -412,7 +435,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 	# $osaft_exe provides
 	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
-	echo "# testing $o ...\t"
+	echo "# testing $o ...$t"
 	for m in $modules ; do
 		v=`$o --no-warn +version | awk '($1=="'$m'"){print}'`
 		echo_green "$v"
@@ -423,7 +446,7 @@ echo "#----------------------+---------------------------------------"
 echo ""
 echo "# check for openssl executable in PATH"
 echo "#--------------+-----------------------------------------------"
-echo -n "# openssl:\t"        && echo_green "`which openssl`" "(`openssl version`)"
+echo -n "# openssl:$t"        && echo_green "`which openssl`" "(`openssl version`)"
 # TODO: warning when openssl missing
 # TODO: error when openssl older than 0x01000000 has no SNI
 echo "#--------------+-----------------------------------------------"
@@ -439,7 +462,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		(
 		cd $p
 		openssl=`$o --no-warn +version | awk '/external executable/{print $NF}' | tr '\012' ' '`
-		echo -n "# $o:\t" && echo_green "$openssl"
+		echo -n "# $o:$t" && echo_green "$openssl"
 		)
 	fi
 done
@@ -453,10 +476,10 @@ echo "#--------------+-----------------------------------------------"
 for c in $files_contrib ; do
 	c="$inst_directory/$c"
 	if [ -e "$c" ]; then
-		echo -n "# found  \t" &&
+		echo -n "# found  $t" &&
 		echo_green  "$c"
 	else
-		echo -n "# missing\t" &&
+		echo -n "# missing$t" &&
 		echo_yellow "$c"
 		#err=`expr $err + 1`    # not counted as error
 	fi
@@ -464,7 +487,7 @@ done
 echo "#--------------+-----------------------------------------------"
 
 echo ""
-echo -n "# checks\t"
+echo -n "# checks$t"
 if [ $err -eq 0 ]; then
 	echo_green "passed"
 else
