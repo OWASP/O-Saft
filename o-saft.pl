@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.886 19/08/01 14:16:10",
+    SID         => "@(#) yeast.pl 1.889 19/08/04 21:50:46",
     STR_VERSION => "19.07.29",          # <== our official version number
 };
 
@@ -130,7 +130,11 @@ BEGIN {
 
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, "./", "./lib", $_path, "/bin");   # SEE Perl:@INC
+    #dbx# print "#$_me path=$_path\n";
+    unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");# SEE Perl:@INC
+    if ($_path !~ m#^[.]/*$#) { # . already added
+        unshift(@INC, $_path) if ($_me ne $_path);  # prepend if found via $PATH
+    }
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
     if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { _version_exit(); }
@@ -152,25 +156,16 @@ use osaft;          # get most of our configuration; it's ok to die if missing
 
 our $VERSION= STR_VERSION;
 my  $me     = $cfg{'me'};       # use a short and easy to remember variable name
-my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
-    $mepath = "./" if ($mepath eq $me);
+my  $arg    = "";
+my  @argv   = ();   # all options, including those from RC-FILE
+                    # will be used when ever possible instead of @ARGV
 $cfg{'mename'} = $me;
+
+#dbx# print STDERR "#$me INC=@INC\n";
 
 printf("#$me %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
     # print complete command line if any --trace-* was given, it's intended
     # that it works if unknown --trace-* was given, for example --trace-CLI
-
-# now set @INC
-# NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
-# don't add if $mepath == ./ as it most likely is already part of @INC
-# also note that this setting only applies to `require' but not `use' directives
-unshift(@INC, "$mepath", "$mepath/lib") ;#if ($mepath ne "./");
-#dbx print STDERR "INC: ".join(" ",@INC) . "\n";
-
-my  $arg    = "";
-my  @argv   = ();   # all options, including those from RC-FILE
-                    # will be used when ever possible instead of @ARGV
-# arrays to collect data for debugging, they are global!
 
 #| definitions: forward declarations
 #| -------------------------------------
@@ -9130,12 +9125,13 @@ to search for the files to be included. Following disadvantages are known:
   - the list of directories depends on the system (OS and distribution)
   - this list must be known before any Perl command is executed
   - it's tricky to use private directories
+  - using "-I . lib/" in hashbang line will pre- and append to @INC
 
 Therefore  @INC  needs to be adapted properly in Perl's  BEGIN  scope (see
 next annotation also). The added directories are:
 
+  - $_path      # user-friendly: add path of the called script also
   - ./  ./lib   # we support some local lib directories
-  - $_path      # user-friendly: add path of the calles script also
   - /bin"       # special installation on portable media
 
 Note that  /  works here even for Windoze.
