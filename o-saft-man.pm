@@ -62,7 +62,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.286 19/08/05 21:42:50";
+my  $SID_man= "@(#) o-saft-man.pm 1.287 19/08/05 23:24:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -70,7 +70,8 @@ my  $ich    = (caller(1))[1];           # tricky to get filename of myself when 
     $ich    = "o-saft-man.pm" if (not defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
 my  $version= "$SID_man";               # version of myself
-    $version= _VERSION() if (defined &_VERSION); # or parent's if available
+    $version=~ s:^.{5}::;               # remove leading @(#) as already part of the *.txt files
+    $version=  _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|checkAllCiphers.pl)/;# regex for our tool names
@@ -86,7 +87,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.286'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.287'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1632,7 +1633,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.286 2019/08/05
+1.287 2019/08/05
 
 =head1 AUTHOR
 
