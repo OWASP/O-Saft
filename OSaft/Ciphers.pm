@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.07.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.38 19/08/05 21:51:33";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.39 19/08/05 22:38:35";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -402,6 +402,8 @@ our @cipher_results = [
 #_____________________________________________________________________________
 #______________________________________________________ temporary variables __|
 
+# NOTE: argument to following require statement is the filename without .pm
+
 ###
 ### die Hashes werden hier statisch definiert, können aber dynamisch
 ### aus den Files geladen werden
@@ -416,8 +418,7 @@ my %_ciphers_openssl_all = (
 #   '0x00,0x05'  => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
     #-------------------+----+----+----+----+----+----+----+-------,
 ); # %_ciphers_openssl_all
-eval {require qw{OSaft/_ciphers_openssl_all.pm}; } or 
-    _warn("501: cannot read OSaft/_ciphers_openssl_all.pm");
+eval { require _ciphers_openssl_all; } or _warn("501: cannot read _ciphers_openssl_all.pm");
 
 my %_ciphers_openssl_inc = (
     #? internal list, generated from openssl source
@@ -432,15 +433,13 @@ my %_ciphers_iana = (
 #   '0xC0,0x33'  => [qw( TLS_ECDHE_PSK_WITH_RC4_128_SHA       5489,6347    N )],
     #-------------------+------------------------------------+-------+---------,
 ); # %__ciphers_iana
-eval {require qw{OSaft/_ciphers_iana.pm}; } or
-    _warn("502: cannot read OSaft/_ciphers_iana.pm");
+eval { require _ciphers_iana; }  or _warn("502: cannot read _ciphers_iana.pm");
 
 my %_ciphers_osaft = (
     #? internal list, additions to %_ciphers_openssl
     # /opt/tools/openssl-chacha/bin/openssl ciphers -V ALL:eNULL:LOW:EXP \
 );# %_ciphers_osaft
-eval {require qw{OSaft/_ciphers_osaft.pm}; } or
-    _warn("503: cannot read OSaft/_ciphers_osaft.pm");
+eval { require _ciphers_osaft; } or _warn("503: cannot read _ciphers_osaft.pm");
 
 ######################################################
 sub id2key      {
@@ -1589,7 +1588,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.38 2019/08/05
+1.39 2019/08/05
 
 =head1 AUTHOR
 
