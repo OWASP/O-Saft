@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.13 19/07/28 01:58:23
+#?      @(#) Makefile.doc 1.14 19/08/06 01:00:01
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.13
+_SID.doc        = 1.14
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -46,14 +46,17 @@ endif
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-TEST.doc.hosts  =
+TEST.doc.hosts      =
 
-EXE.osaft       = ./osaft.pm
-EXE.osaft-dbx   = ./o-saft-dbx.pm
-EXE.osaft-man   = ./o-saft-man.pm
-EXE.osaft-usr   = ./o-saft-usr.pm
-EXE.osaftcipher = ./OSaft/Ciphers.pm
-EXE.osaftdata   = ./OSaft/Doc/Data.pm
+EXE.osaft           = ./osaft.pm
+EXE.osaft-dbx       = ./o-saft-dbx.pm
+EXE.osaft-man       = ./o-saft-man.pm
+EXE.osaft-usr       = ./o-saft-usr.pm
+EXE.osaft_cipher    = ./OSaft/Ciphers.pm
+EXE.osaft_doc_data  = ./OSaft/Doc/Data.pm
+EXE.net_sslhello    = ./Net/SSLhello.pm
+EXE.net_sslinfo     = ./Net/SSLinfo.pm
+EXE.osaft-standalone= ./o-saft-standalone.pl
 
 HELP-_doc1          = __________________________ testing internal documentations _
 HELP-test.doc       = test various internal documentation and functionality
@@ -84,7 +87,7 @@ testarg0-doc1--test%:           EXE.pl      = $(SRC.pl)
 testarg0-doc1--test-regex:      TEST.args   = --test-regex
 
 # OSaft/Doc/Data.pm
-testarg0-doc2-%:                EXE.pl      = $(EXE.osaftdata)
+testarg0-doc2-%:                EXE.pl      = $(EXE.osaft_doc_data)
 testarg0-doc2-%:                TEST.args   = help.txt
 testarg0-doc2---help:           TEST.args   =
 testarg0-doc2---help:           TEST.init   = --help
@@ -99,7 +102,7 @@ testarg0-doc2-get-text:         TEST.init   = get-text
 testarg0-doc2-get-as-text:      TEST.init   = get-as-text
 
 # OSaft/Ciphers.pm
-testarg0-doc3-%:                EXE.pl      = $(EXE.osaftcipher)
+testarg0-doc3-%:                EXE.pl      = $(EXE.osaft_cipher)
 testarg0-doc3-%:                TEST.init   =
 testarg0-doc3---help:           TEST.args   = --help
 testarg0-doc3-description:      TEST.args   = description
@@ -188,11 +191,14 @@ HELP-test.doc9.log  = same as test.doc9 but store output in '$(TEST.logdir)/'
 testarg0-doc9-%:                EXE.pl      = perldoc
 testarg0-doc9-o-saft:           TEST.args   = $(SRC.pl)
 testarg0-doc9-osaft:            TEST.args   = $(EXE.osaft)
-testarg0-doc9-osaft-data:       TEST.args   = $(EXE.osaftdata)
-testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaftcipher)
+testarg0-doc9-osaft-data:       TEST.args   = $(EXE.osaft_doc_data)
+testarg0-doc9-osaft-ciphers:    TEST.args   = $(EXE.osaft_cipher)
 testarg0-doc9-osaft-man:        TEST.args   = $(EXE.osaft-man)
 testarg0-doc9-osaft-dbx:        TEST.args   = $(EXE.osaft-dbx)
 testarg0-doc9-osaft-usr:        TEST.args   = $(EXE.osaft-usr)
+testarg0-doc9-netsslhello:      TEST.args   = $(EXE.net_sslhello)
+testarg0-doc9-netsslinfo:       TEST.args   = $(EXE.net_sslinfo)
+testarg0-doc9-osaft-standalone: TEST.args   = $(EXE.osaft-standalone)
 
 # TODO: following needs own target or even own Makefile.make
 testarg0-doc9-makefile:         TEST.args   = t/Makefile.pod
