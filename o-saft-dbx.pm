@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.91 19/08/06 00:29:02";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.92 19/08/06 00:39:11";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -601,7 +601,7 @@ sub _yeast_prot {
     _ynull("\n");
     _yline(" %cfg {");
     foreach my $key (sort keys %cfg) {
-        #printf("%16s= %s\n", $key, $cfg{$key}) if ($key =~ m/$ssl/);
+        # targets is array of arrays, prints ARRAY ref here only
         _yeast_trac(\%cfg, $key) if ($key =~ m/$ssl/);
     }
     _yline(" }");
@@ -812,7 +812,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.91 2019/08/06
+1.92 2019/08/06
 
 =head1 AUTHOR
 
