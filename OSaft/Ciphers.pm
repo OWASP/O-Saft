@@ -44,17 +44,17 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.07.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.39 19/08/05 22:38:35";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.40 19/08/05 22:45:36";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
 
 BEGIN {
-    my $_me   = $0; $_me   =~ s#.*[/\\]##;
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    my $_me   = $0; $_me   =~ s#.*[/\\]##x;
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##x;
     unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin"); # SEE Perl:@INC
-    if ($_path !~ m#^[.]/*$#) { # . already added
+    if ($_path !~ m#^[.]/*$#x) { # . already added
         unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
     }
 }
@@ -78,13 +78,16 @@ BEGIN {
 #       another violation for severity 2.
 
 ## no critic qw(Documentation::RequirePodLinksIncludeText)
-#        severity 2 only
+#     Severity 2 only.
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
-#        We believe it's better readable (severity 2 only)
+#  We believe it's better readable (severity 2 only).
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  There're a lot of expressions here, it's ok to use them without /x flag.
+
+## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
+#  We believe it's better readable.
 
 =pod
 
@@ -1588,7 +1591,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.39 2019/08/05
+1.40 2019/08/05
 
 =head1 AUTHOR
 
