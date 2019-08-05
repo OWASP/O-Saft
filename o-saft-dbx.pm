@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.90 19/07/24 00:02:29";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.91 19/08/06 00:29:02";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -438,17 +438,18 @@ sub _yeast_exit {
         _yTRAC("exit status",   (($cfg{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
     }
     _y_CMD("internal administration ..");
-    _y_CMD("cfg'done'{");
+    _y_CMD('@cfg{done} {');
     foreach my $key (sort keys %{$cfg{'done'}}) {
         # cannot use  _yeast_trac(\%{$cfg{'done'}}, $key);
         # because we want the CMD prefix here
+        my $label = sprintf("  %-10s=", $key);
         if ('arg_cmds' eq $key) {
-            _y_CMD("  $key : [" . join(" ", @{$cfg{'done'}->{$key}}) . "]");
+            _y_CMD("$label\t[" . join(" ", @{$cfg{'done'}->{$key}}) . "]");
         } else {
-            _y_CMD("  $key : " . $cfg{'done'}->{$key});
+            _y_CMD("$label\t" . $cfg{'done'}->{$key});
         }
     }
-    _y_CMD("cfg'done'}");
+    _y_CMD('@cfg{done} }');
     return;
 } # _yeast_exit
 
@@ -811,7 +812,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.90 2019/07/24
+1.91 2019/08/06
 
 =head1 AUTHOR
 
