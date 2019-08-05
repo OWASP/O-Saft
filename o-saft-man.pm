@@ -46,8 +46,12 @@ package main;   # ensure that main:: variables are used
 # NOTE:  Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
 
 BEGIN {
+    my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, "./", "./lib", $_path, "/bin");   # SEE Perl:@INC
+    unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin"); # SEE Perl:@INC
+    if ($_path !~ m#^[.]/*$#) { # . already added
+        unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
+    }
 }
 
 use strict;
@@ -58,7 +62,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.285 19/07/24 00:08:21";
+my  $SID_man= "@(#) o-saft-man.pm 1.286 19/08/05 21:42:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -82,7 +86,7 @@ sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n"
     # options, which is not performant, but fast enough here.
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.285'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{ no strict; my $v = '1.286'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
     # ugly, but avoids global variable or passing as argument
 
 sub _man_file_get   {
@@ -1628,7 +1632,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.285 2019/07/24
+1.286 2019/08/05
 
 =head1 AUTHOR
 
