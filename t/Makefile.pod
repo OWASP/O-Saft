@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.15 19/07/27 23:58:01
+@(#) Makefile.pod 1.16 19/08/07 10:06:27
 
 =head1 AUTHOR
 
@@ -129,6 +129,48 @@ Remember GNU Make's automatic variables:
     $%    - target (archive) member name (rarely used)
 
 Use of $$ avoids evaluating $ .
+
+
+=head2 Make:pattern-specific variables
+
+Processing pattern-specific variables changed in gmake, I guess with 3.81.
+Makefiles in this project rely on the behaviour of  gmake 3.81  and newer,
+which applies all pattern-specific variables from all matching patterns.
+
+If interested in the difference, read on.
+
+Example (pre 3.81):
+
+    VAR = default
+    foo: VAR = foo
+    bar: VAR = bar
+    foo:
+        @echo foo uses    VAR='$(VAR)'
+    bar:
+        @echo bar uses    VAR='$(VAR)'
+    foobar:
+        @echo foobar uses VAR='$(VAR)'
+    other:
+        @echo other uses  VAR='$(VAR)'
+
+
+When calling these targets (foo, bar, foobar, other) the results are:
+
+    foo uses    VAR='foo'
+    bar uses    VAR='bar'
+    foobar uses VAR='foo'
+    other uses  VAR='default'
+
+In contrast, gmake 3.81 and newer return following results:
+
+    foo uses    VAR='default foo'
+    bar uses    VAR='default bar'
+    foobar uses VAR='default foo bar'
+    other uses  VAR='default'
+
+Note that the modern behaviour - applying all pattern-specific variables -
+has a big performance penulty if many such variables are used. This should
+not be the case in our Makefiles.
 
 
 =head2 Make:.SECONDEXPANSION
