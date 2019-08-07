@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.889 19/08/04 21:50:46",
-    STR_VERSION => "19.07.29",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.891 19/08/05 00:05:36",
+    STR_VERSION => "19.07.30",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -133,7 +133,7 @@ BEGIN {
     #dbx# print "#$_me path=$_path\n";
     unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");# SEE Perl:@INC
     if ($_path !~ m#^[.]/*$#) { # . already added
-        unshift(@INC, $_path) if ($_me ne $_path);  # prepend if found via $PATH
+        unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);  # prepend if found via $PATH
     }
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
@@ -2103,7 +2103,7 @@ sub _enable_functions   {
             _hint("--force-openssl can be used to disable this check");
         }
     }
-    _trace(" cfg{usesni}: $cfg{'usesni'}");
+    _trace(" cfg{usesni}    = $cfg{'usesni'}");
 
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
@@ -2120,7 +2120,7 @@ sub _enable_functions   {
             _hint("--no-alpn can be used to disable this check");
         }
     }
-    _trace(" cfg{usealpn}: $cfg{'usealpn'}");
+    _trace(" cfg{usealpn}   = $cfg{'usealpn'}");
 
     if ($cfg{'ssleay'}->{'set_npn'} == 0) {
         # warnings only if NPN functionality required
@@ -2136,7 +2136,7 @@ sub _enable_functions   {
             _hint("--no-npn can be used to disable this check");
         }
     }
-    _trace(" cfg{usenpn}: $cfg{'usenpn'}");
+    _trace(" cfg{usenpn}    = $cfg{'usenpn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  openssl 1.0.0
         warn STR_WARN, "133: $txt tests for OCSP disabled";
@@ -2280,7 +2280,7 @@ sub _check_SSL_methods  {
         # method names do not literally match our version string, hence the
         # cumbersome code below
     }
-    _trace("SSLeay methods: " . join(" ", @list));
+    _trace("SSLeay methods  = " . join(" ", @list));
     foreach my $ssl (@{$cfg{'versions'}}) {
         next if ($cfg{$ssl} == 0);      # don't check what's disabled by option
         if (_is_do('cipherraw')) {      # +cipherraw does not depend on other libraries
@@ -3720,12 +3720,12 @@ sub _get_ciphers_list   {
     _trace("_get_ciphers_list(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default is 'rfc'
-    _trace("cipherpattern= $cfg{'cipherpattern'}, cipherrange= $range");
+    _trace("cipherpattern   = $cfg{'cipherpattern'}, cipherrange= $range");
     my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
        $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
         # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
         # can be specified like: --cipher=NULL:RC4  or  --cipher=NULL --cipher=RC4
-    _trace(" cipher pattern= $pattern");
+    _trace(" cipher pattern = $pattern");
     if ($range eq "rfc") {
         # default cipher range is 'rfc' (see o-saft-lib.pm), then get list of
         # ciphers from Net::SSLinfo
@@ -3744,7 +3744,7 @@ sub _get_ciphers_list   {
             push(@ciphers, get_cipher_suitename($key));
         }
     }
-    _trace(" got ciphers: @ciphers");
+    _trace(" got ciphers    = @ciphers");
     if (@ciphers <= 0) {      # empty list
         _warn("063: given pattern '$pattern' did not return cipher list");
         _y_CMD("  using private cipher list ...");
@@ -3754,7 +3754,7 @@ sub _get_ciphers_list   {
         print "Errors: " . Net::SSLinfo::errors();
         die STR_ERROR, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
-    @ciphers    = grep{!/^\s*$/} @ciphers;   # remove empty names
+    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
     _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
     return @ciphers;
 } # _get_ciphers_list
@@ -3826,7 +3826,7 @@ sub _get_data0          {
                      join(" ", @{$cfg{'ciphers'}}))
        ) {
         _y_CMD("  open with no SNI.");
-        _trace("cn_nosni: method: $Net::SSLinfo::method");
+        _trace("cn_nosni: method= $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
 # TODO:  following needs to be improved, because there are multipe openssl
@@ -4153,12 +4153,12 @@ sub check_url($$)   {
     my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
             Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
     );
-    _trace2("check_url: STATUS: $status");
+    _trace2("check_url: STATUS= $status");
 
     if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
         return "<<connection to '$url' failed>>";
     }
-    _trace2("check_url: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
+    _trace2("check_url: header= #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
     if ($status =~ m#^HTTP/... 200 #) {
         $accept = $headers{(grep{/^Accept-Ranges$/i}     keys %headers)[0] || ""};
         $ctype  = $headers{(grep{/^Content-Type$/i}      keys %headers)[0] || ""};
@@ -4519,11 +4519,11 @@ sub checkdates($$)  {
     }
     $checks{'sts_expired'} ->{val}  = $txt;
 
-    _trace("checkdates: start, now, end: : $start, $now, $end");
-    _trace("checkdates: valid:       " . $checks{'dates'}->{val});
-    _trace("checkdates: valid-years: " . $data{'valid_years'}->{val});
-    _trace("checkdates: valid-month: " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
-    _trace("checkdates: valid-days:  " . $data{'valid_days'}->{val}   . "  = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
+    _trace("checkdates: start, now, end= $start, $now, $end");
+    _trace("checkdates: valid       = " . $checks{'dates'}->{val});
+    _trace("checkdates: valid-years = " . $data{'valid_years'}->{val});
+    _trace("checkdates: valid-month = " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
+    _trace("checkdates: valid-days  = " . $data{'valid_days'}->{val}   . "  = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
     return;
 } # checkdates
 
@@ -5686,7 +5686,7 @@ EoREQ
     #    use Data::Dumper;
     #    print Dumper \%headers;
     #}
-    _trace2("_get_sstp_https: data: ". join(' = ', %headers));
+    _trace2("_get_sstp_https: data= ". join(' = ', %headers));
     return '401' if ($headers{'STATUS'} =~ m#^\s*401*#); # Microsoft: no SSTP supported
     return '400' if ($headers{'STATUS'} =~ m#^\s*400*#); # other: no SSTP supported
         # lazy checks, may also match 4000 etc.
@@ -6415,7 +6415,7 @@ sub printciphers_dh($$$) {
     # currently DH parameters requires openssl, check must be done in caller
     my ($legacy, $host, $port) = @_;
     my $openssl_version = get_openssl_version($cmd{'openssl'});
-    _trace1("printciphers_dh: openssl_version: $openssl_version");
+    _trace1("printciphers_dh: openssl_version= $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes Perl can do this check  # TODO: move this check to _check_openssl()
         _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
@@ -6855,12 +6855,12 @@ sub printciphers        {
     # uses settings from --legacy= and --format= options to select output format
     # implemented in VERSION 14.07.14
 
-    #                                         # output looks like: openssl ciphers
+    #                                           # output looks like: openssl ciphers
     if ((($cfg{'ciphers-v'} + $cfg{'ciphers-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
         # TODO: filter ciphers not supported by openssl
         _trace("printciphers: +ciphers");
-        print join(":", (keys %ciphers));
+        print join(":", (sort keys %ciphers));  # SEE Note:Testing, sort
         return;
     }
 
@@ -8491,7 +8491,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $cfg{'host'}    = $host;
     next if _yeast_NEXT("exit=HOST0 - host $host:$port");
     _y_CMD("host " . ($host||"") . ":$port {");
-    _trace(" host: $host {\n");
+    _trace(" host   = $host {\n");
     # SNI must be set foreach host, but it's always the same name!
     if ($cfg{'usesni'} > 0) {
         if (defined $sniname) {
@@ -8585,7 +8585,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("test connect ...");
     _yeast_TIME("test connect{");# SEE Note:Connection test
     my $connect_ssl = 1;
-    _trace("sni_name " . ($cfg{'sni_name'} || STR_UNDEF));
+    _trace("sni_name= " . ($cfg{'sni_name'} || STR_UNDEF));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
@@ -8743,7 +8743,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_is_do('cipher') or $check > 0) {
         _y_CMD("+cipher");
         _yeast_TIME("cipher{");
-        _trace(" ciphers: @{$cfg{'ciphers'}}");
+        _trace(" ciphers= @{$cfg{'ciphers'}}");
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
@@ -8918,7 +8918,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         Net::SSLinfo::do_ssl_close($host, $port);
       }
     }
-    _trace(" host: $host }\n");
+    _trace(" host   = $host }\n");
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
