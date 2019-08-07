@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.891 19/08/05 00:05:36",
+    SID         => "@(#) yeast.pl 1.892 19/08/07 23:52:19",
     STR_VERSION => "19.07.30",          # <== our official version number
 };
 
@@ -9078,7 +9078,7 @@ Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
 =head2 Perl:perlcritic
 
 perlcritic  is used for general code quality. Our code isn't accademically
-perfect, no is  perlcritic.  Hence we use  perlcritic's pragmas to disable
+perfect, nor is  perlcritic. Hence we use  perlcritic's pragmas to disable
 some checks as needed. This is done in general in perlcritic's config file
 .perlcritic  and selectively in the code using  "## no critic"  pragma.
 All disabled checks are documented, wether in .perlcritic or as pragma.
@@ -9095,6 +9095,16 @@ Following pragmas are used in various files:
 * Documentation::RequirePodSections
 
     Our POD in *pm is fine, perlcritic (severity 2) is too pedantic here.
+
+
+=head2 Perl:BEGIN perlcritic 
+
+perlcritic  cannot handle  BEGIN{}  sections semantically correct. If this
+section is defined before the  `use strict;'  statement, is complains with
+with the error 'TestingAndDebugging::ProhibitNoStrict'.
+
+Therefore any  BEGIN{}  section is defined after  `use strict;',  ugly but
+avoids clumsy  `## no critic'  pragmas.
 
 
 =head2 Perl:import include
@@ -9155,6 +9165,8 @@ the BEGIN section (which is a crazy behaviour of Perl).
 To make the program work as needed,  these limitations  forces to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
+
+Also SEE Perl:BEGIN perlcritic .
 
 
 =head2 Perl:binmode()
