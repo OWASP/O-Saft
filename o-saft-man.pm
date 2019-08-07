@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.288 19/08/07 23:55:56";
+my  $SID_man= "@(#) o-saft-man.pm 1.289 19/08/08 00:38:49";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -81,6 +81,18 @@ local $\    = "";
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
+sub _get_filename   {   # similar to _y_CMD
+# TODO: move to osaft.pm or alike
+    my $src = shift || "o-saft.pl";
+    foreach my $dir (@INC) {    # find the proper file
+        if (-e "$dir/$src") {
+            $src = "$dir/$src";
+            last;
+        }
+    }
+    return $src;
+} # _get_filename
+
 sub _man_dbx        {   # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
@@ -96,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.288'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.289'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -907,7 +919,8 @@ sub _man_cmd_from_source {
     my $txt  = "";
     my $skip = 1;
     my $fh   = undef;
-    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+    if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
+        # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
             # find start of data structure
             # all structure look like:
@@ -946,6 +959,8 @@ sub _man_cmd_from_rcfile {
     my $skip = 1;
     my $fh   = undef;
     if (open($fh, '<:encoding(UTF-8)', $cfg{'RC-FILE'})) {
+        # TODO: need a better method to identify the proper file, RC-FILE is
+        #       wrong when ths file was called directly
         while(<$fh>) {
             if (m/^##[?]\s+([a-zA-Z].*)/) { # looks like:  ##? Some text here ...
                 $skip = 0;
@@ -1197,7 +1212,8 @@ sub man_alias       {
     _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
     my $fh   = undef;
     my $p    = '[._-]'; # regex for separators as used in o-saft.pl
-    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+    if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
+        # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
             next if (not m(# alias:));
             next if (not m|^\s*#?if[^/']*.([^/']+).[^/']+.([^/']+).[^#]*#\s*alias:\s*(.*)?|);
@@ -1360,7 +1376,8 @@ sub src_grep        {
     print "\n";
     _man_head(14, "Option    ", "Description where program terminates");
     my $fh  = undef;
-    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+    if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
+        # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
             next if (m(^\s*#));
             next if (not m(_(?:EXIT|NEXT).*$hlp));
@@ -1643,7 +1660,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.288 2019/08/07
+1.289 2019/08/08
 
 =head1 AUTHOR
 
