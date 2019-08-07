@@ -2,7 +2,7 @@
 ## PACKAGE {
 
 #!#############################################################################
-#!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!#             Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.06.19',
+    SSLINFO_VERSION => '19.07.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.227 19/07/04 09:24:47',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.228 19/08/08 01:27:10',
 };
 
 ######################################################## public documentation #
@@ -1239,7 +1239,7 @@ sub _dump       {
     my $key = shift;
     my $txt = shift;
     my $val = shift;
-    return sprintf("#{ %-12s:%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
+    return sprintf("#{ %-12s=%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
 } # _dump
 
 sub datadump    {
@@ -1253,11 +1253,11 @@ sub datadump    {
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
     $data .= _dump('ciphers', " ", join(' ', @{$_SSLinfo{'ciphers'}}));
-    foreach my $key (keys %_SSLinfo) {
+    foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
         next if ($key =~ m/ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
         $data .= _dump($key, " ", $_SSLinfo{$key});
     }
-    foreach my $key (keys %_SSLinfo) {
+    foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
         next if ($key !~ m/fingerprint_/);
         $data .= _dump($key, " ", $_SSLinfo{$key});
     }
@@ -2076,7 +2076,7 @@ sub do_ssl_new      {
 # TODO: Client-Cert see smtp_tls_cert.pl
 # TODO: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
-##print "#ERR: $!";
+##print "#ERR= $!";
 
             #1d. set certificate verification options
             ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
@@ -2242,7 +2242,7 @@ sub do_ssl_open($$$@) {
         push(@{$_SSLinfo{'errors'}}, @{$_SSLtemp{'errors'}});
         _trace("do_ssl_open: $Net::SSLinfo::method");
 
-#print "### ext: ". Net::SSLeay::get_tlsext_status_type($ssl);
+#print "### ext= ". Net::SSLeay::get_tlsext_status_type($ssl);
 
         # from here on mainly IO::Socket::SSL is used from within Net::SSLeay
         # using Net::SSLeay::trace is most likely same as IO::Socket::SSL::DEBUG
