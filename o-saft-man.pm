@@ -45,7 +45,12 @@ package main;   # ensure that main:: variables are used
 #        Keep severity 2 silent.
 # NOTE:  Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
 
-BEGIN {
+use strict;
+use warnings;
+use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
+# binmode(...); # inherited from parent
+
+BEGIN {     # SEE Perl:BEGIN perlcritic
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
     unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin"); # SEE Perl:@INC
@@ -54,15 +59,10 @@ BEGIN {
     }
 }
 
-use strict;
-use warnings;
-use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
-# binmode(...); # inherited from parent
-
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.287 19/08/05 23:24:08";
+my  $SID_man= "@(#) o-saft-man.pm 1.288 19/08/07 23:55:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -81,14 +81,24 @@ local $\    = "";
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
-sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n") if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)); return; } # similar to _y_CMD
+sub _man_dbx        {   # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
+    my @txt = @_;
+    if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)) {
+        print "#" . $ich . " CMD: " . join(' ', @txt, "\n");
+    }
+    return;
+} # _man_dbx
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{ no strict; my $v = '1.287'; $v = STR_VERSION if (defined STR_VERSION); return $v; } ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
+    no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+    my $v = '1.288'; $v = STR_VERSION if (defined STR_VERSION);
+    return $v;
+} # _man_get_version
 
 sub _man_file_get   {
     #? get filename containing text for specified keyword
@@ -1474,7 +1484,7 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
         }
     } else {
         $arg =  $ARGV[0];
-        $arg =~ s/--(?:help|test)[_.=-]?//; # allow --test-* and --help=*
+        $arg =~ s/--(?:help|test)[_.=-]?//; # allow --test-* and --help=* and simply *
         printhelp($arg);
     }
     exit 0;
@@ -1633,7 +1643,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.287 2019/08/05
+1.288 2019/08/07
 
 =head1 AUTHOR
 
