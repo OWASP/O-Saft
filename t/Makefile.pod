@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.16 19/08/07 10:06:27
+@(#) Makefile.pod 1.17 19/08/11 22:22:53
 
 =head1 AUTHOR
 
@@ -44,7 +44,7 @@ are referenced from all other Makefiles.
 
 =head1 GNU Make
 
-=head2 Make:GNU
+=head2 GNU Make:Terms
 
 Some words about the terms and words used in GNU Make and in this project.
 
@@ -57,7 +57,7 @@ Some words about the terms and words used in GNU Make and in this project.
     * GNU Make refers to the commands executed in a target as  recipe.
 
 
-=head2 Make:include
+=head2 GNU Make:include
 
 GNU Make's include directive doesn't understand macros, the used path must
 be verbatim. To keep make's functionality (targets) maintainable, multiple
@@ -93,7 +93,7 @@ be checked before including, for example (using private _SID.* variable):
     endif
 
 
-=head2 Make:important variables
+=head2 GNU Make:important variables
 
 Remember important variables:
 
@@ -112,7 +112,7 @@ Remember important variables:
 For details use: make help.test.make
 
 
-=head2 Make:automatic variables
+=head2 GNU Make:automatic variables
 
 Note: macro definitions in makefiles must not be sequential!
 
@@ -131,7 +131,7 @@ Remember GNU Make's automatic variables:
 Use of $$ avoids evaluating $ .
 
 
-=head2 Make:pattern-specific variables
+=head2 GNU Make:pattern-specific variables
 
 Processing pattern-specific variables changed in gmake, I guess with 3.81.
 Makefiles in this project rely on the behaviour of  gmake 3.81  and newer,
@@ -173,7 +173,7 @@ has a big performance penulty if many such variables are used. This should
 not be the case in our Makefiles.
 
 
-=head2 Make:.SECONDEXPANSION
+=head2 GNU Make:.SECONDEXPANSION
 
 GNU Make's variables can be used as target, in the rules commands and also
 as dependency. When used as dependency, it must be a file (or directory).
@@ -194,7 +194,7 @@ If the used make does not support  .SECONDEXPANSION: , the targets must be
 rewritten with the real target name instead of the escaped variable.
 
 
-=head2 Make:MAKE vs. MAKE_COMMAND
+=head2 GNU Make:MAKE vs. MAKE_COMMAND
 
 Traditionally $(MAKE) is used for the make command itself. For convenience
 t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
@@ -383,7 +383,7 @@ To use the default setting if no arguments are given, following is used:
 
   @$(eval TEST.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args) ))
 
-=head3 profile.sub_%.log
+=head3 Make:profile.sub_%.log
 
 Rules writing to logfiles cannot be named like  profile.sub.%.log  if they
 should contain additional arguments like  profile.sub.%_+cn.log,  but must
