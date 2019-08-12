@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.17 19/08/08 01:50:19
+#?      @(#) Makefile.doc 1.18 19/08/12 23:08:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.17
+_SID.doc        = 1.18
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -48,11 +48,6 @@ endif
 
 TEST.doc.hosts      =
 
-# All test cases are defined here.  The program to be testet is defined in the
-# EXE.* variables. The arguments to be tested for a program are defined in the
-# corresponding ARGS.* variable. To define a new test case for a program, just
-# add the proper argument to the ARGS.* list.
-
 # need to call program here and not the one found via $PATH
 EXE.o-saft          = ../$(SRC.pl)
 EXE.osaft           = ../osaft.pm
@@ -64,7 +59,6 @@ EXE.osaft-cipher    = ../OSaft/Ciphers.pm
 EXE.osaft-doc-data  = ../OSaft/Doc/Data.pm
 EXE.net-sslhello    = ../Net/SSLhello.pm
 EXE.net-sslinfo     = ../Net/SSLinfo.pm
-# TODO: t/Makefile.pod needs own target or even own Makefile.make
 EXE.t-makefile      = ../t/Makefile.pod
 # TODO: other tools should go to Makefile.contrib
 EXE.contrib-bunt    = ../contrib/bunt.pl
@@ -74,25 +68,22 @@ EXE.contrib-standalone  = ../contrib/gen_standalone.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 
+# no targets are generated for empty variables
 ARGS.o-saft         =
-
 ARGS.osaft          =
 # done with ARGS.osaft-dbx:  --regex --test-regex
 
-ARGS.osaft-doc-data = \
-	version +VERSION    list        print \
-	get     get-markup  get-text    get-as-text \
-
 ARGS.osaft-cipher   = \
-	 description    alias   const   names   rfc     version overview \
-	 ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
-	 getter=0xC0,0x2C \
+	description     alias   const   names   rfc     version overview \
+	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
+	getter=0xC0,0x2C        key=ECDHE-ECDSA-AES256-GCM-SHA384 \
+	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 
-#	 key=ECDHE-ECDSA-AES256-GCM-SHA384
-# getter=0xCC,0xA9   key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256
+ARGS.osaft-doc-data = \
+	version +VERSION        list        print \
+	get     get-markup      get-text    get-as-text \
 
-# same list as testarg0-h--help-* from Makefile.hlp , but may produce slighly
-# different results when call with $(EXE.osaft-man)
+# tests are functionally the same as testarg0-h--help-* from Makefile.hlp
 ARGS.osaft-man      = \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
@@ -105,124 +96,113 @@ ARGS.osaft-dbx      = \
 	--test-show     --test-data         --test-prot --test-regex \
 	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
 
+ARGS.net-sslhello   =
+ARGS.net-sslinfo    =
+ARGS.t-makefile     =
+
+ARGS.contrib-bunt       =
+ARGS.contrib-openssl    =
+ARGS.contrib-standalone =
+
 HELP-_doc1          = __________________________ testing internal documentations _
 HELP-test.doc       = test various internal documentation and functionality
 HELP-test.doc.log   = same as test.doc but store output in '$(TEST.logdir)/'
 
-HELP.doc            = # no special documentation yet
+
+HELP.doc = $(_NL)
 HELP.test.doc.all   = # no special documentation yet
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# remember: testarg0-% executes:
-#       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
-
-# If modules don't set @INC correctly, calling them fails because they can not
-# find their includes, which is a programming error. In this case TEST.dir and
-# TEST.log  needs to be redefined here like:
-# testarg0-doc%:        TEST.dir    = .
-# testarg0-doc%:        TEST.logdir = ./t/log
-
-# All targets (except some special ones) are generated using the lists defined
-# in ARGS.* variables above. Each value in ARGS.* generates its unique target.
-# Each target calls:   $(EXE.pl) $(TEST.init) $(TEST.args)
-# Depending on the list ARGS.*, these variables  are defined seperately  using
-# corresponding pattern rules.
-# Example: o-saft-man.pm  compliance
-#       generates target names from:  $(ARGS.osaft-man)
-#       generated target name :       testarg0-doc5_compliance
-#       stem $*:                      doc9_compliance
-#       extracted stem $(shell ...):  TEST.args = compliance
-#       pattern rule sets:            TEST.init =
-#       summary target:               test.doc5
+# The goal here is to generate all targets from the variables defined above.
+# The target -pattern rule- called finally is (see t/Makefile):
+#       testarg0-%:
+#               cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 #
-# Most tests use only one argument, hence only one of  TEST.init or TEST.args 
-# is required. TEST.init contains the argument for each generated target, and
-# TEST.args is set empty by default.  Both may be redefined as needed for the
-# generated rules (see below).
-testarg0-doc%:        TEST.init = $(shell echo "$*" | awk -F_ '{print $$NF}')
-testarg0-doc%:        TEST.args =
+# Therefore the variables  EXE.pl, TEST.dir, TEST.init and TEST.args must be
+# defined properly for these targets.  In most cases, only one of  TEST.init
+# or  TEST.args is needed. Means that the other can be set empty by default.
+# These variables must be set depending on the target or pattern rule.
+# Abstract example:
+#       testarg0-osaft_%:         EXE.pl    = $(EXE.osaft)
+#       testarg0-osaft_%:         TEST.args = 
+#       testarg0-osaft_some-arg:  TEST.init = some-arg
+#       testarg0-osaft_%:
+# The first three set the required variables,  the last one ensures that the
+# pattern rule  testarg0_%  is called.
+#
+# If a target needs special or additional settings, this is done explicitly.
+#
+# All programs are defined in the variable (list)  ARGS.program .
+# Each of these programs should be called  with the arguments defined in the
+# corresponding  ARGS.* , where  *  is any of the values from  ARGS.program
+# "osaft" is such a program in the example above. With that there is:
+#       EXE.osaft   = osaft.pm
+#       ARGS.osaft  = some-arg
+#
+# Finally all generated targets are added to the variable  ALL.test.doc .
+#
+############################################################
 
-# osaft.pm
+ifndef doc-macros-generated
+    # das ifndef erzwingt die Ausführung der $(foreach ...) unten
 
-# OSaft/Doc/Data.pm
-HELP-test.doc2      = targets for testing internal functionality of $(EXE.osaft-doc-data)
-HELP-test.doc2.log  = same as test.doc1 but store output in '$(TEST.logdir)/'
-ALL.test.doc2       = $(ARGS.osaft-doc-data:%=testarg0-doc2_%)
-ALL.test.doc2.log   = $(ALL.test.doc2:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc2)
-testarg0-doc2_%:      EXE.pl    = $(EXE.osaft-doc-data)
-testarg0-doc2_%:      TEST.args = help.txt
+    # SEE Make:generating help
+    $(foreach arg, $(ARGS.program), $(eval \
+	HELP.doc +=\btest.$(arg)\t\# targets for testing $(EXE.$(arg))\n\
+    ))
+    $(foreach arg, $(ARGS.program), $(eval \
+	HELP.doc +=\btest.$(arg).log\t\# same as test.$(arg) but store output in '$(TEST.logdir)'\n\
+    ))
 
-test.doc2:      $(ALL.test.doc2)
-test.doc2.log:  $(ALL.test.doc2.log)
+    # arguments from ARGS.* used in the target name must not contain =
+    # hence $(subst =,-,$(arg)) is used to replace = by -
 
-# OSaft/Ciphers.pm
-HELP-test.doc3      = targets for testing internal functionality of $(EXE.osaft-cipher)
-HELP-test.doc3.log  = same as test.doc5 but store output in '$(TEST.logdir)/'
-ALL.test.doc3       = $(ARGS.osaft-cipher:%=testarg0-doc3_%)
-ALL.test.doc3.log   = $(ALL.test.doc3:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc3)
-testarg0-doc3_%:      EXE.pl    = $(EXE.osaft-cipher)
+    # variables test.*.all
+    $(foreach prg, $(ARGS.program),\
+      $(foreach arg, $(ARGS.$(prg)),$(eval \
+	ALL.test.$(prg) += testarg0-$(prg)_$(subst =,-,$(arg))\
+      )) \
+    )
 
-test.doc3:      $(ALL.test.doc3)
-test.doc3.log:  $(ALL.test.doc3.log)
+    # TEST.init for testarg0-* targets
+    $(foreach prg, $(ARGS.program),\
+      $(foreach arg, $(ARGS.$(prg)),$(eval \
+	testarg0-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg)\
+      )) \
+    )
+    # EXE.pl and TEST.* variables for testarg0-* targets
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_%:          EXE.pl = $(EXE.$(prg))) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_%:       TEST.args = ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_pod:        EXE.pl = perldoc ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_pod:     TEST.init = $(EXE.$(prg)) ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_--help:  TEST.init = --help ) )
 
-# o-saft-*.pm
-HELP-test.doc5      = targets for testing internal functionality of $(EXE.osaft-man)
-HELP-test.doc5.log  = same as test.doc5 but store output in '$(TEST.logdir)/'
-ALL.test.doc5       = $(ARGS.osaft-man:%=testarg0-doc5_%)
-ALL.test.doc5.log   = $(ALL.test.doc5:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc5)
-testarg0-doc5_%:      EXE.pl    = $(EXE.osaft-man)
+endif
 
-test.doc5:      $(ALL.test.doc5)
-test.doc5.log:  $(ALL.test.doc5.log)
+# OSaft/Doc/Data.pm function needs a file where to read the information
+# it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
+testarg0-osaft-doc-data_%:  TEST.args = help.txt
+testarg0-osaft-dbx_%:          EXE.pl = $(EXE.o-saft)
 
-HELP-test.doc6      = targets for testing internal functionality of $(EXE.o-saft-dbx)
-HELP-test.doc6.log  = same as test.doc6 but store output in '$(TEST.logdir)/'
-# o-saft-dbx.pm's --test-* option require data defined in $(SRC.pl), hence using $(SRC.pl)
-ALL.test.doc6       = $(ARGS.osaft-dbx:%=testarg0-doc6_%)
-ALL.test.doc6.log   = $(ALL.test.doc6:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc6)
-testarg0-doc6_%:      EXE.pl    = ../$(SRC.pl)
+# targets: EXE.* --help
+ALL.test.prog.help  = $(foreach prg, $(ARGS.program), testarg0-$(prg)_--help )
+$(ALL.test.prog.help):
 
-test.doc6:      $(ALL.test.doc6)
-test.doc6.log:  $(ALL.test.doc6.log)
+# targets: EXE.pl = perlpod
+ALL.test.prog.pod   = $(foreach prg, $(ARGS.program), testarg0-$(prg)_pod )
+$(ALL.test.prog.pod):
 
-# The generated target name should not contain EXE., and must not contain any
-# / . Hence $(ARGS.program) does not contain the real value used as argument,
-# but part of the variable name which contains the value. In particular it is
-# the variable name without the EXE. prefix:  osaft  instead of  EXE.osaft .
-# Therfore computing the value for  TEST.init  is different here: it adds the
-# the EXE. prefix and then evaluate the resulting variable.
-# Example: osaft becomes EXE.osaft which evaluates to o-saft-man.pm .
+# generate pattern rules, one foreach EXE.*
+$(foreach prg, $(ARGS.program), testarg0-$(prg)_% ):
+# generate summary rules, one foreach EXE.*
+$(foreach prg, $(ARGS.program), $(eval test.$(prg).all: $(ALL.test.$(prg))) )
 
-# perldoc, generate targets
-HELP-test.doc9      = targets for testing perldoc of files
-HELP-test.doc9.log  = same as test.doc9 but store output in '$(TEST.logdir)/'
-ALL.test.doc9       = $(ARGS.program:%=testarg0-doc9_%)
-ALL.test.doc9.log   = $(ALL.test.doc9:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc9)
-testarg0-doc9_%:      EXE.pl    = perldoc
-testarg0-doc9_%:      TEST.init = $(EXE.$(shell echo "$*" | awk -F_ '{print $$NF}'))
-
-test.doc9:      $(ALL.test.doc9)
-test.doc9.log:  $(ALL.test.doc9.log)
-
-# --help, generate targets
-HELP-test.doc10     = targets for testing  program --help  of files
-HELP-test.doc10.log = same as test.doc10 but store output in '$(TEST.logdir)/'
-ALL.test.doc10      = $(ARGS.program:%=testarg0-doc10_%)
-ALL.test.doc10.log  = $(ALL.test.doc10:%=%.log) test.log-compare-hint
-ALL.test.doc       += $(ALL.test.doc10)
-testarg0-doc10_%:     EXE.pl    = $(EXE.$(shell echo "$*" | awk -F_ '{print $$NF}'))
-testarg0-doc10_%:     TEST.init = --help
-
-test.doc10:     $(ALL.test.doc10)
-test.doc10.log: $(ALL.test.doc10.log)
-
+ALL.test.doc    = $(foreach prg, $(ARGS.program),\
+			$(foreach arg, $(ARGS.$(prg)), testarg0-$(prg)_$(subst =,-,$(arg)))\
+		   )
+ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod)
 ALL.test.doc.log    = $(ALL.test.doc:%=%.log) test.log-compare-hint
 
 test.doc.log-compare:   TEST.target_prefix  = testarg0-doc
@@ -230,9 +210,10 @@ test.doc.log-move:      TEST.target_prefix  = testarg0-doc
 test.doc.log:           TEST.target_prefix  = testarg0-doc
 
 
-test.doc.all:   $(ALL.test.doc)
-test.doc:       test.doc.all
-test.doc.log:   $(ALL.test.doc.log)
+test.doc.all:       $(ALL.test.doc)
+test.doc.all.log:   $(ALL.test.doc.log)
+test.doc.log:       $(ALL.test.doc.log)
+test.doc:           test.doc.all
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
