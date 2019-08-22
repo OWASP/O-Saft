@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.289 19/08/08 00:38:49";
+my  $SID_man= "@(#) o-saft-man.pm 1.290 19/08/22 21:18:10";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.289'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.290'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -320,7 +320,7 @@ function toggle_handler(){
 </head>
 <body>
  <h2 id=title title="" ><span id=txt ></span>
-     <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all\naction and href attributes">Change to osaft: schema</button>
+     <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all&#13;action and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
 EoHTML
@@ -1660,7 +1660,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.289 2019/08/08
+1.290 2019/08/22
 
 =head1 AUTHOR
 
