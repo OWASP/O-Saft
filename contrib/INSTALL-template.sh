@@ -84,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.34 19/08/25 12:19:49
+#?      @(#)  1.35 19/08/25 12:35:54
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -112,8 +112,8 @@ text_old="ancient module found, try installing newer version, at least "
 
 # INSERTED_BY_MAKE {
 osaft_exe="OSAFT_PL_INSERTED_BY_MAKE"
-osaft_gui="OSAFT_TCL_INSERTED_BY_MAKE"
-contrib_dir="CONTRIB_INSERTED_BY_MAKE"
+osaft_gui="OSAFT_GUI_INSERTED_BY_MAKE"
+contrib_dir="CONTRIBDIR_INSERTED_BY_MAKE"
 inst_directory=${inst:="INSTALLDIR_INSERTED_BY_MAKE"}
 
 files_contrib="
@@ -143,9 +143,9 @@ files_ancient="
 	"
 
 # first, dirty hack to make tests in development mode possible
-[ "OSAFT_PL_INSERTED_BY_MAKE"  = "$osaft_exe"   ] && osaft_exe=o-saft.pl
-[ "OSAFT_TCL_INSERTED_BY_MAKE" = "$osaft_gui"   ] && osaft_gui=o-saft.tcl
-[ "CONTRIB_INSERTED_BY_MAKE"   = "$contrib_dir" ] && contrib_dir=contrib
+[ "OSAFT_PL_INSERTED_""BY_MAKE"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
+[ "OSAFT_GUI_INSERTED_""BY_MAKE"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
+[ "CONTRIBDIR_INSERTED_""BY_MAKE" = "$contrib_dir" ]  && contrib_dir=contrib
 
 files_not_installed="
 	$contrib_dir/o-saft.cgi  $contrib_dir/o-saft.php
@@ -206,7 +206,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.34 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.35 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
