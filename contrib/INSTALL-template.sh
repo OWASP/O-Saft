@@ -16,7 +16,7 @@
 #?      This script does nothing except printing some messages unless called
 #?      with an argument. The arguments are:
 #?
-#?          /absolute/path
+#?          /path/to/installation/directory
 #?                      - copy all necessary files into specified directory
 #?          --install   - copy all necessary files into default directory
 #?          --check     - check current installation
@@ -27,7 +27,8 @@
 #?                        installs  openssl  and  Net::SSLeay ; this doesn't
 #?                        support other options and arguments of
 #?                        contrib/install_openssl.sh
-#?          --expected  - show following sample output expected for  --check
+#?          --expected  - show sample output expected for  --check
+#       All Lines starting with #= are the sample output.
 #=
 #=# check installation in /opt/o-saft
 #=# (warnings are ok if 'git clone' will be used for development)
@@ -168,10 +169,10 @@
 #
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
-#?          awk, cat, perl, sed, tr, which
+#?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.43 19/08/25 17:50:44
+#?      @(#)  1.44 19/08/25 18:27:04
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -190,7 +191,7 @@ optn=""
 mode="";        # "", check, clean, dest, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	        # TODO: check path for each platform
-t="	"       # need a real TAB (0x09) for /bin/echo
+tab="	"       # need a real TAB (0x09) for /bin/echo
 
 text_miss="missing, try installing with ";
 text_dev="did you run »$0 --clean«?"
@@ -295,7 +296,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.43 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.44 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -406,7 +407,6 @@ if [ "$mode" = "dest" ]; then
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib"
 	[ 0 -lt "$optx" ] && set -x
 	echo "# remove old files ..."
-	# TODO: argh, hard-coded list of files ...
 	for f in $files ; do
 		f="$inst_directory/$f"
 		if [ -e "$f" ]; then
@@ -456,10 +456,10 @@ echo "# (warnings are ok if 'git clone' will be used for development)"
 echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
-	[ -e "$f" ] && echo -n "# found $f ...$t" && echo_yellow "$text_alt"
+	[ -e "$f" ] && echo -n "# found $f ...$tab" && echo_yellow "$text_alt"
 done
 for f in $files_develop $files_info ; do
-	[ -e "$f" ] && echo -n "# found $f ...$t" && echo_yellow "$text_dev"
+	[ -e "$f" ] && echo -n "# found $f ...$tab" && echo_yellow "$text_dev"
 done
 echo "#--------------------------------------------------------------"
 
@@ -559,7 +559,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
 	# NOTE: output format is slightly different, 'cause **WARNINGS are printed too
-	echo "# testing $o ...$t"
+	echo "# testing $o ...$tab"
 	for m in $modules ; do
 		perl -le "printf'# %21s',$m"
 		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
@@ -580,7 +580,7 @@ echo "# summary of warnings from installed O-Saft (should be empty)"
 echo "#----------------------+---------------------------------------"
 o="$inst_directory/$osaft_exe"
 if [ -e "$o" ]; then
-	echo "# testing $o in $inst_directory ...$t"
+	echo "# testing $o in $inst_directory ...$tab"
 	cd "$inst_directory"
 	w=`$o +version 2>&1 | awk '/WARNING:/{print}'`
 	[ -n "$w" ] && echo_yellow "$w"
@@ -590,7 +590,7 @@ echo "#----------------------+---------------------------------------"
 echo ""
 echo "# check for openssl executable in PATH"
 echo "#--------------+-----------------------------------------------"
-echo -n "# openssl:$t"        && echo_green "`which openssl`" "(`openssl version`)"
+echo -n "# openssl:$tab"    && echo_green "`which openssl`" "(`openssl version`)"
 # TODO: warning when openssl missing
 # TODO: error when openssl older than 0x01000000 has no SNI
 echo "#--------------+-----------------------------------------------"
@@ -606,7 +606,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		(
 		cd "$p" # ensure that $r is used
 		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
-		echo -n "# $o:$t" && echo_green "$openssl"
+		echo -n "# $o:$tab" && echo_green "$openssl"
 		)
 	fi
 done
@@ -624,10 +624,10 @@ for c in $files_contrib ; do
 	[ $skip -eq 1 ] && continue
 	c="$inst_directory/$c"
 	if [ -e "$c" ]; then
-		echo -n "# found  $t" &&
+		echo -n "# found  $tab" &&
 		echo_green  "$c"
 	else
-		echo -n "# missing$t" &&
+		echo -n "# missing$tab" &&
 		echo_yellow "$c"
 		#err=`expr $err + 1`    # not counted as error
 	fi
@@ -635,7 +635,7 @@ done
 echo "#--------------+-----------------------------------------------"
 
 echo ""
-echo -n "# checks$t"
+echo -n "# checks$tab"
 if [ $err -eq 0 ]; then
 	echo_green "passed"
 else
