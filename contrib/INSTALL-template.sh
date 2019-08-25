@@ -69,6 +69,11 @@
 #=#       IO::Socket::SSL 2.044 /usr/share/perl5/IO/Socket/SSL.pm
 #=#----------------------+---------------------------------------
 #=
+#=# summary of warnings from installed O-Saft (should be empty)
+#=#----------------------+---------------------------------------
+#=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
+#=#----------------------+---------------------------------------
+#=
 #=# check for openssl executable in PATH
 #=#--------------+-----------------------------------------------
 #=# openssl:	/usr/bin/openssl (OpenSSL 1.1.0k  28 May 2019)
@@ -162,10 +167,10 @@
 #
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
-#?          awk, cat, perl, tr
+#?          awk, cat, perl, sed, tr, which
 #?
 #? VERSION
-#?      @(#)  1.40 19/08/25 15:43:29
+#?      @(#)  1.41 19/08/25 16:01:52
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -289,7 +294,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.40 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.41 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -439,8 +444,8 @@ fi
 # all following is mode "check"
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
-[ -n "$optn"  ] && echo cd $inst_directory
-cd $inst_directory
+[ -n "$optn"  ] && echo cd "$inst_directory"
+cd "$inst_directory"
 
 err=0
 
@@ -560,6 +565,18 @@ done
 echo "#----------------------+---------------------------------------"
 
 echo ""
+echo "# summary of warnings from installed O-Saft (should be empty)"
+echo "#----------------------+---------------------------------------"
+o="$inst_directory/$osaft_exe"
+if [ -e "$o" ]; then
+	echo "# testing $o in $inst_directory ...$t"
+	cd "$inst_directory"
+	w=`$o +version 2>&1 | awk '/WARNING:/{print}'`
+	[ -n "$w" ] && echo_yellow "$w"
+fi
+echo "#----------------------+---------------------------------------"
+
+echo ""
 echo "# check for openssl executable in PATH"
 echo "#--------------+-----------------------------------------------"
 echo -n "# openssl:$t"        && echo_green "`which openssl`" "(`openssl version`)"
@@ -576,7 +593,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	r="$p/.$osaft_exe"
 	if [ -x "$o" ]; then
 		(
-		cd $p   # ensure that $r is used
+		cd "$p" # ensure that $r is used
 		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
 		echo -n "# $o:$t" && echo_green "$openssl"
 		)
