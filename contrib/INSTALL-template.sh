@@ -54,6 +54,7 @@
 #=#              Net::DNS	     1.2 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.044 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	  1.2300 /usr/share/perl/5.24/Time/Local.pm
 #=#          Net::SSLinfo	19.07.19 Net/SSLinfo.pm
 #=#         Net::SSLhello	18.06.03 Net/SSLhello.pm
 #=#                 osaft	19.07.29 osaft.pm
@@ -170,7 +171,7 @@
 #?          awk, cat, perl, sed, tr, which
 #?
 #? VERSION
-#?      @(#)  1.42 19/08/25 16:12:54
+#?      @(#)  1.43 19/08/25 17:50:44
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -294,7 +295,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.42 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.43 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -528,8 +529,16 @@ for m in $modules ; do
 		  'OSaft::error_handler' | 'osaft') c="green"; ;;
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  'OSaft::Doc::Data' )              c="green"; ;;
-		  *) c=`perl -le "print (($expect > $v) ? 'red' : 'green')"`; ;;
-		# FIXME: compare fails for example with: 1.23 > 1.230
+		  *) c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
+		   # NOTE: need to compare for example: 1.23 > 1.230
+		   # Comparing version strings is tricky,  best method would be
+		   # to use Perl's Version module.  But this script should work
+		   # on limited systems too, hence above cumbersome code: 
+		   # 1. get the version strings on stdin
+		   # 2. convert all number parts of the string to fixed 5-digit
+		   #    format with leading zeros:  1.230 > 00001.000230
+		   # 3. compare converted strings
+		   #    Perl is clever enough to handle 00001.00023.42000  also
 		esac
 		[ "$c" = "green" ] && echo_green "$v $p"
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
