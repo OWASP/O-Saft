@@ -84,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.36 19/08/25 14:45:41
+#?      @(#)  1.37 19/08/25 15:05:35
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -206,7 +206,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.36 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.37 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -451,8 +451,15 @@ for p in `echo $PATH|tr ':' ' '` ; do
 	[ -e "$o" ] || continue
 	echo "# testing $o ...$t"
 	for m in $modules ; do
-		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){print}'`
-		echo_green "$v"
+		perl -le "printf'# %21s',$m"
+		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
+		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){$1="";print}'`
+		if [ -n "$w" ]; then
+			echo_red    "$v"
+			echo_yellow "$w"
+		else
+			echo_green  "$v"
+		fi
 	done
 done
 echo "#----------------------+---------------------------------------"
