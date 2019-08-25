@@ -170,7 +170,7 @@
 #?          awk, cat, perl, sed, tr, which
 #?
 #? VERSION
-#?      @(#)  1.41 19/08/25 16:01:52
+#?      @(#)  1.42 19/08/25 16:12:54
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -294,7 +294,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.41 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.42 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -509,7 +509,7 @@ echo "#----------------------+---------------------------------------"
 echo ""
 echo "# check for installed Perl modules"
 echo "#----------------------+---------------------------------------"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL 
+modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
 	perl -le "printf'# %21s',$m"    # use perl instead of echo for formatting
@@ -521,6 +521,7 @@ for m in $modules ; do
 		  'IO::Socket::SSL') expect=1.90; ;; # 1.37 and newer work, somehow ...
 		  'Net::SSLeay')     expect=1.49; ;; # 1.33 and newer may work
 		  'Net::DNS')        expect=0.80; ;;
+		  'Time::Local')     expect=1.90; ;;
 		esac
 		case "$m" in
 		  'Net::SSLinfo' | 'Net::SSLhello') c="green"; ;;
@@ -528,6 +529,7 @@ for m in $modules ; do
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  'OSaft::Doc::Data' )              c="green"; ;;
 		  *) c=`perl -le "print (($expect > $v) ? 'red' : 'green')"`; ;;
+		# FIXME: compare fails for example with: 1.23 > 1.230
 		esac
 		[ "$c" = "green" ] && echo_green "$v $p"
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
