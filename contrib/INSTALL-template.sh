@@ -84,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.33 19/08/04 20:48:13
+#?      @(#)  1.34 19/08/25 12:19:49
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -206,7 +206,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.33 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.34 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -283,7 +283,8 @@ if [ "$mode" = "clean" ]; then
 	# do not move $contrib_dir/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
 	cnt=0
-	for f in $files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed ; do
+	files="$files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed"
+	for f in $files ; do
 		#dbx echo "$clean_directory/$f"
 		[ -e "$clean_directory/$f" ] && $try \rm  -f  "$clean_directory/$f"
 		f="$inst_directory/$f"
@@ -482,8 +483,12 @@ echo ""
 echo "# check for contributed files"
 echo "# (in $inst_directory/$contrib_dir )"
 echo "#--------------+-----------------------------------------------"
-# TODO: $files_not_installed  should not be checked
 for c in $files_contrib ; do
+	skip=0
+	for f in $files_not_installed $files_develop ; do
+		[ "$f" = "$c" ] && skip=1
+	done
+	[ $skip -eq 1 ] && continue
 	c="$inst_directory/$c"
 	if [ -e "$c" ]; then
 		echo -n "# found  $t" &&
