@@ -84,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.35 19/08/25 12:35:54
+#?      @(#)  1.36 19/08/25 14:45:41
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -206,7 +206,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.35 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.36 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -403,6 +403,9 @@ fi
 perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
 echo "#----------------------+---------------------------------------"
 
+# from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
+# redirected to /dev/null
+
 echo ""
 echo "# check for installed Perl modules"
 echo "#----------------------+---------------------------------------"
@@ -412,7 +415,7 @@ for m in $modules ; do
 	perl -le "printf'# %21s',$m"    # use perl instead of echo for formatting
 	# NOTE: -I . used to ensure that local ./Net is found
 	v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
-	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}'`
+	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 	if [ -n "$v" ]; then
 		case "$m" in
 		  'IO::Socket::SSL') expect=1.90; ;; # 1.37 and newer work, somehow ...
@@ -448,7 +451,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 	[ -e "$o" ] || continue
 	echo "# testing $o ...$t"
 	for m in $modules ; do
-		v=`$o --no-warn +version | awk '($1=="'$m'"){print}'`
+		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){print}'`
 		echo_green "$v"
 	done
 done
@@ -472,7 +475,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 	if [ -x "$o" ]; then
 		(
 		cd $p
-		openssl=`$o --no-warn +version | awk '/external executable/{print $NF}' | tr '\012' ' '`
+		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
 		echo -n "# $o:$t" && echo_green "$openssl"
 		)
 	fi
