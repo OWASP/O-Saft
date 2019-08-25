@@ -84,7 +84,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.37 19/08/25 15:05:35
+#?      @(#)  1.38 19/08/25 15:13:42
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -143,6 +143,7 @@ files_ancient="
 	"
 
 # first, dirty hack to make tests in development mode possible
+# remember the inserted " to avoid substitutions here
 [ "OSAFT_PL_INSERTED_""BY_MAKE"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
 [ "OSAFT_GUI_INSERTED_""BY_MAKE"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
 [ "CONTRIBDIR_INSERTED_""BY_MAKE" = "$contrib_dir" ]  && contrib_dir=contrib
@@ -206,7 +207,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.37 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.38 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -444,11 +445,10 @@ echo ""
 echo "# check for important Perl modules used by installed O-Saft"
 echo "#----------------------+---------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL"
-for p in `echo $PATH|tr ':' ' '` ; do
-	# NOTE: output format is slightly different, 'cause it's printed what
-	# $osaft_exe provides
+for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
+	# NOTE: output format is slightly different, 'cause **WARNINGS are printed too
 	echo "# testing $o ...$t"
 	for m in $modules ; do
 		perl -le "printf'# %21s',$m"
@@ -460,6 +460,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		else
 			echo_green  "$v"
 		fi
+		#err=`expr $err + 1`    # already counted in previous check
 	done
 done
 echo "#----------------------+---------------------------------------"
