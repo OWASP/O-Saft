@@ -27,10 +27,89 @@
 #?                        installs  openssl  and  Net::SSLeay ; this doesn't
 #?                        support other options and arguments of
 #?                        contrib/install_openssl.sh
+#?          --expected  - show following sample output expected for  --check
+#=
+#=# check installation in /opt/o-saft
+#=# (warnings are ok if 'git clone' will be used for development)
+#=#--------------------------------------------------------------
+#=#--------------------------------------------------------------
+#=
+#=# check for installed O-Saft in /opt/o-saft
+#=#----------------------+---------------------------------------
+#=#            ./o-saft.pl	19.08.19
+#=#  /opt/0-saft/o-saft.pl	19.08.19
+#=#           ./o-saft.tcl	1.219
+#=# /opt/0-saft/o-saft.tcl	1.219
+#=#----------------------+---------------------------------------
+#=
+#=# check for installed O-Saft resource files
+#=#----------------------+---------------------------------------
+#=#           ./.o-saft.pl	will be used when started in . only
+#=# /opt/o-saft/.o-saft.pl	will be used when started in /opt/o-saft only
+#=# /home/user/.o-saft.tcl	missing, consider generating: o-saft.tcl --rc > /home/user/.o-saft.tcl
+#=#----------------------+---------------------------------------
+#=
+#=# check for installed Perl modules
+#=#----------------------+---------------------------------------
+#=#              Net::DNS	     1.2 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL	   2.044 /usr/share/perl5/IO/Socket/SSL.pm
+#=#          Net::SSLinfo	19.07.19 Net/SSLinfo.pm
+#=#         Net::SSLhello	18.06.03 Net/SSLhello.pm
+#=#                 osaft	19.07.29 osaft.pm
+#=#  OSaft::error_handler	18.03.18 OSaft/error_handler.pm
+#=#      OSaft::Doc::Data	19.07.29 OSaft/Doc/Data.pm
+#=#----------------------+---------------------------------------
+#=
+#=# check for important Perl modules used by installed O-Saft
+#=#----------------------+---------------------------------------
+#=# testing /opt/o-saft/o-saft.pl ...	
+#=#              Net::DNS 1.2 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay 1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL 2.044 /usr/share/perl5/IO/Socket/SSL.pm
+#=#----------------------+---------------------------------------
+#=
+#=# check for openssl executable in PATH
+#=#--------------+-----------------------------------------------
+#=# openssl:	/usr/bin/openssl (OpenSSL 1.1.0k  28 May 2019)
+#=#--------------+-----------------------------------------------
+#=
+#=# check for openssl executable used by O-Saft
+#=#--------------+-----------------------------------------------
+#=# ./o-saft.pl:	/usr/local/openssl/bin/openssl (1.0.2k-dev) 
+#=# /opt/o-saft/o-saft.pl:	/usr/local/openssl/bin/openssl (1.0.2k-dev) 
+#=#--------------+-----------------------------------------------
+#=
+#=# check for contributed files
+#=# (in /opt/o-saft/contrib )
+#=#--------------+-----------------------------------------------
+#=# found  	/opt/o-saft/contrib/Cert-beautify.awk
+#=# found  	/opt/o-saft/contrib/Cert-beautify.pl
+#=# found  	/opt/o-saft/contrib/HTML-simple.awk
+#=# found  	/opt/o-saft/contrib/HTML-table.awk
+#=# found  	/opt/o-saft/contrib/JSON-array.awk
+#=# found  	/opt/o-saft/contrib/JSON-struct.awk
+#=# found  	/opt/o-saft/contrib/XML-attribute.awk
+#=# found  	/opt/o-saft/contrib/XML-value.awk
+#=# found  	/opt/o-saft/contrib/bash_completion_o-saft
+#=# found  	/opt/o-saft/contrib/bunt.pl
+#=# found  	/opt/o-saft/contrib/bunt.sh
+#=# found  	/opt/o-saft/contrib/cipher_check.sh
+#=# found  	/opt/o-saft/contrib/dash_completion_o-saft
+#=# found  	/opt/o-saft/contrib/filter_examples
+#=# found  	/opt/o-saft/contrib/fish_completion_o-saft
+#=# found  	/opt/o-saft/contrib/lazy_checks.awk
+#=# found  	/opt/o-saft/contrib/tcsh_completion_o-saft
+#=# found  	/opt/o-saft/contrib/usage_examples
+#=# found  	/opt/o-saft/contrib/zap_config.sh
+#=# found  	/opt/o-saft/contrib/zap_config.xml
+#=#--------------+-----------------------------------------------
+#=
+#=# checks	passed
 #?
 #? OPTIONS
 #?      --h     got it
-#?      --n     do not execute, just show
+#?      --n     do not execute, just show (ignored for  --check)
 #?      -x      debug using shell's "set -x"
 #?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
 #?              overwrites existing ones
@@ -46,6 +125,8 @@
 #?      $0 --install
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
+#?      $0 --install /opt/bin/
+#?      $0 --check   /opt/bin/
 #?
 # HACKER's INFO
 #       This file is generated from INSTALL-template.sh .
@@ -84,7 +165,7 @@
 #?          awk, cat, perl, tr
 #?
 #? VERSION
-#?      @(#)  1.38 19/08/25 15:13:42
+#?      @(#)  1.39 19/08/25 15:38:04
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -193,6 +274,7 @@ while [ $# -gt 0 ]; do
 	  '--clean')            mode=clean;   ;;
 	  '--install')          mode=dest;    ;;
 	  '--openssl')          mode=openssl; ;;
+	  '--expected')         mode=expected; ;;
 	  '--force')            force=1;      ;;
           '--no-colour')        colour="";    ;;
           '--colour')           colour="34m"; ;;
@@ -207,7 +289,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.38 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.39 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -239,6 +321,10 @@ if [ -z "$mode" ]; then
 	$0 --check .
 	$0 --check /path/to/installation/directoy
 
+# To get a sample of the expected output for  --check , use:
+
+	$0 --expected
+
 # In a Docker image, this script may only be called like:
 
 	$0 --check
@@ -254,6 +340,14 @@ if [ "$mode" != "check" ]; then
 	    exit 6
 	fi
 fi
+
+# ------------------------ expected mode --------- {
+if [ "$mode" = "expected" ]; then
+	echo "## Expected output (sample) when called like:"
+	echo "##     $0 --check /opt/o-saft"
+	\sed -ne '/^#=/s/#=//p' $0
+	exit 0
+fi; # expected mode }
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
