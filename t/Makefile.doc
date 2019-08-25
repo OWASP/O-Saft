@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.19 19/08/25 21:37:35
+#?      @(#) Makefile.doc 1.20 19/08/25 22:58:19
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.19
+_SID.doc        = 1.20
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -150,12 +150,15 @@ HELP.test.doc.all   = # no special documentation yet
 #
 ############################################################
 
+# FIXME: should use testarg0-doc-* instead of testarg0-*
+# FIXME: test.*.log generate logfiles in . instead of t/log
+
 ifndef doc-macros-generated
     # das ifndef erzwingt die Ausführung der $(foreach ...) unten
 
     # SEE Make:generating help
     $(foreach arg, $(ARGS.program), $(eval \
-	HELP.doc +=\btest.$(arg)\t\# targets for testing $(EXE.$(arg))\n\
+	HELP.doc +=\btest.$(arg).all\t\# targets for testing $(EXE.$(arg))\n\
     ))
     $(foreach arg, $(ARGS.program), $(eval \
 	HELP.doc +=\btest.$(arg).log\t\# same as test.$(arg) but store output in '$(TEST.logdir)'\n\
@@ -164,11 +167,17 @@ ifndef doc-macros-generated
     # arguments from ARGS.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
-    # variables test.*.all
+    # variables test.*.all, test-*.log
     $(foreach prg, $(ARGS.program),\
       $(foreach arg, $(ARGS.$(prg)),$(eval \
 	ALL.test.$(prg) += testarg0-$(prg)_$(subst =,-,$(arg))\
       )) \
+      $(eval \
+	ALL.test.$(prg) += testarg0-$(prg)_--help testarg0-$(prg)_pod\
+      ) \
+      $(eval \
+	ALL.test.$(prg).log += $(ALL.test.$(prg):%=%.log)\
+      ) \
     )
 
     # TEST.init for testarg0-* targets
@@ -178,11 +187,14 @@ ifndef doc-macros-generated
       )) \
     )
     # EXE.pl and TEST.* variables for testarg0-* targets
-    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_%:          EXE.pl = $(EXE.$(prg))) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_%:       EXE.pl    = $(EXE.$(prg))) )
     $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_%:       TEST.args = ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_pod:        EXE.pl = perldoc ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_pod:     EXE.pl    = perldoc ) )
     $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_pod:     TEST.init = $(EXE.$(prg)) ) )
     $(foreach prg, $(ARGS.program), $(eval testarg0-$(prg)_--help:  TEST.init = --help ) )
+    $(foreach prg, $(ARGS.program), $(eval test.$(prg).log-compare: TEST.target_prefix  = testarg0-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.$(prg).log-move:    TEST.target_prefix  = testarg0-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.$(prg).log:         TEST.target_prefix  = testarg0-$(prg) ) )
 
 endif
 
@@ -206,8 +218,11 @@ $(ALL.test.prog.pod):
 $(foreach prg, $(ARGS.program), testarg0-$(prg)_% ):
 # generate summary rules, one foreach EXE.*
 $(foreach prg, $(ARGS.program), $(eval test.$(prg).all: $(ALL.test.$(prg))) )
+$(foreach prg, $(ARGS.program), $(eval test.$(prg).log: $(ALL.test.$(prg).log) test.log-compare-hint) )
 
 # useless generated targets
+testarg0-contrib-openssl_pod:
+	@$(TRACE.target)
 testarg0-install_pod:
 	@$(TRACE.target)
 
@@ -217,9 +232,9 @@ ALL.test.doc    = $(foreach prg, $(ARGS.program),\
 ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod)
 ALL.test.doc.log    = $(ALL.test.doc:%=%.log) test.log-compare-hint
 
-test.doc.log-compare:   TEST.target_prefix  = testarg0-doc
-test.doc.log-move:      TEST.target_prefix  = testarg0-doc
-test.doc.log:           TEST.target_prefix  = testarg0-doc
+test.doc.log-compare:   TEST.target_prefix  = testarg0-
+test.doc.log-move:      TEST.target_prefix  = testarg0-
+test.doc.log:           TEST.target_prefix  = testarg0-
 
 
 test.doc.all:       $(ALL.test.doc)
