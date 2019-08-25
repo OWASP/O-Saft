@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.18 19/08/12 23:08:23
+#?      @(#) Makefile.doc 1.19 19/08/25 21:37:35
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.18
+_SID.doc        = 1.19
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -64,6 +64,7 @@ EXE.t-makefile      = ../t/Makefile.pod
 EXE.contrib-bunt    = ../contrib/bunt.pl
 EXE.contrib-openssl = ../contrib/install_openssl.sh
 EXE.contrib-standalone  = ../contrib/gen_standalone.sh
+EXE.install         = ../INSTALL.sh
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
@@ -99,9 +100,13 @@ ARGS.osaft-dbx      = \
 ARGS.net-sslhello   =
 ARGS.net-sslinfo    =
 ARGS.t-makefile     =
+ARGS.install        =   --install  --clean  --check     --expected
+# NOTE: ensure that EXE.install is called with --n !
+# NOTE: EXE.install --openssl does not work from t directory
+# TODO: EXE.install not completely working as expected
 
 ARGS.contrib-bunt       =
-ARGS.contrib-openssl    =
+ARGS.contrib-openssl    = --n --m
 ARGS.contrib-standalone =
 
 HELP-_doc1          = __________________________ testing internal documentations _
@@ -184,7 +189,10 @@ endif
 # OSaft/Doc/Data.pm function needs a file where to read the information
 # it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
 testarg0-osaft-doc-data_%:  TEST.args = help.txt
-testarg0-osaft-dbx_%:          EXE.pl = $(EXE.o-saft)
+testarg0-osaft-dbx_%:       EXE.pl    = $(EXE.o-saft)
+
+testarg0-contrib-openssl_%: TEST.args = --n
+testarg0-install_%:         TEST.args = --n /tmp/o-saft
 
 # targets: EXE.* --help
 ALL.test.prog.help  = $(foreach prg, $(ARGS.program), testarg0-$(prg)_--help )
@@ -198,6 +206,10 @@ $(ALL.test.prog.pod):
 $(foreach prg, $(ARGS.program), testarg0-$(prg)_% ):
 # generate summary rules, one foreach EXE.*
 $(foreach prg, $(ARGS.program), $(eval test.$(prg).all: $(ALL.test.$(prg))) )
+
+# useless generated targets
+testarg0-install_pod:
+	@$(TRACE.target)
 
 ALL.test.doc    = $(foreach prg, $(ARGS.program),\
 			$(foreach arg, $(ARGS.$(prg)), testarg0-$(prg)_$(subst =,-,$(arg)))\
