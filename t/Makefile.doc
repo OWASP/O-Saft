@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.22 19/08/27 23:01:43
+#?      @(#) Makefile.doc 1.23 19/08/27 23:51:13
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.22
+_SID.doc        = 1.23
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -64,7 +64,8 @@ EXE.t-makefile      = ../t/Makefile.pod
 EXE.contrib-bunt    = ../contrib/bunt.pl
 EXE.contrib-openssl = ../contrib/install_openssl.sh
 EXE.contrib-standalone  = ../contrib/gen_standalone.sh
-EXE.install         = ../INSTALL.sh
+EXE.install-sh      = ../INSTALL.sh
+# NOTE: there is already EXE.install in ../Makefile
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
@@ -100,10 +101,10 @@ ARGS.osaft-dbx      = \
 ARGS.net-sslhello   =
 ARGS.net-sslinfo    =   +VERSION  localhost --test-ssleay --test-methods
 ARGS.t-makefile     =
-ARGS.install        =   --install  --clean  --check     --expected
+ARGS.install-sh     =   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
-# NOTE: EXE.install --openssl does not work from t directory
-# TODO: EXE.install not completely working as expected
+# NOTE: EXE.install-sh --openssl does not work from t directory
+# TODO: EXE.install-sh not completely working as expected
 
 ARGS.contrib-bunt       =
 ARGS.contrib-openssl    = --n --m
@@ -204,7 +205,7 @@ testarg0-osaft-doc-data_%:  TEST.args = help.txt
 testarg0-osaft-dbx_%:       EXE.pl    = $(EXE.o-saft)
 
 testarg0-contrib-openssl_%: TEST.args = --n
-testarg0-install_%:         TEST.args = --n /tmp/o-saft
+testarg0-install-sh_%:      TEST.args = --n /tmp/o-saft
 
 # targets: EXE.* --help
 ALL.test.prog.help  = $(foreach prg, $(ARGS.program), testarg0-$(prg)_--help )
@@ -223,7 +224,7 @@ $(foreach prg, $(ARGS.program), $(eval test.$(prg).log: $(ALL.test.$(prg).log) t
 # useless generated targets
 testarg0-contrib-openssl_pod:
 	@$(TRACE.target)
-testarg0-install_pod:
+testarg0-install-sh_pod:
 	@$(TRACE.target)
 
 ALL.test.doc    = $(foreach prg, $(ARGS.program),\
