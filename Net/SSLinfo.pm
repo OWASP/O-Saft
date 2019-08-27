@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.233 19/08/27 23:07:19',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.234 19/08/27 23:23:57',
 };
 
 ######################################################## public documentation #
@@ -1176,6 +1176,9 @@ sub ssleay_methods  {
 
 sub test_ssleay     {
     #? print availability and information about Net::SSLeay
+    ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
+    #  a here document is not possible here, or at least more cumbersome,
+    #  because Perl code is used inside
     my @list = ssleay_methods();
     my $line = "#------------+------------------+-------------";
     my $data = "# Net::SSLeay{ function           1=available
