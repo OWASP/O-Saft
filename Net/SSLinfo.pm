@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.230 19/08/27 21:51:00',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.231 19/08/27 21:53:25',
 };
 
 ######################################################## public documentation #
@@ -2212,8 +2212,11 @@ sub do_ssl_open($$$@) {
        }
     }
 
-    if (defined $Net::SSLinfo::next_protos) {   # < 1.182
+    {
+      no warnings;  ## no critic (TestingAndDebugging::ProhibitNoStrict)
+      if (defined $Net::SSLinfo::next_protos) { # < 1.182
         warn("**WARNING: 090: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead");
+      }
     }
 
     TRY: {
@@ -3753,7 +3756,7 @@ sub _main           {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         if ($arg =~ /^--?h(?:elp)?$/) { _main_help();       exit 0; }
-        if ($arg =~ /^[+-]?version/i) { print "$VERSION\n"; exit 0; }
+        if ($arg =~ /^[+-]?version/i) { print "$VERSION";   exit 0; }
         do_ssl_open( shift, 443, '');
         print Net::SSLinfo::datadump();
     }
