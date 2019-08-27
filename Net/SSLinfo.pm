@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.228 19/08/08 01:27:10',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.229 19/08/27 21:38:47',
 };
 
 ######################################################## public documentation #
@@ -3727,6 +3727,38 @@ sub error           {
     #return Net::SSLeay::ERR_get_error;
 } # error
 
+sub _main_help      {
+    #? print own help
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval{require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+} # _main_help
+
+sub _main           {
+    #? print own documentation or special required one
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #  see t/.perlcritic for detailed description of "no critic"
+    my @argv = @_;
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
+    if (0 >  $#argv) { _main_help(); exit 0; }
+    if (0 <= $#argv) {
+        local $\="\n";
+        do_ssl_open( shift, 443, '');
+        print Net::SSLinfo::datadump();
+        exit 0;
+    }
+    exit 0;
+} # _main
+
 =pod
 
 =head1 DEENDENCIES
@@ -3747,24 +3779,9 @@ L<Net::SSLeay(1)>
 sub net_sslinfo_done {};        # dummy to check successful include
 ## PACKAGE }
 
-unless (defined caller) {       # print myself or open connection
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (0 <= $#ARGV) {
-        local $\="\n";
-        do_ssl_open( shift, 443, '');
-        print Net::SSLinfo::datadump();
-        exit 0;
-    }
-    if (eval{require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
-    }
-}
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+_main(@ARGV) if (not defined caller);
 
 1;
