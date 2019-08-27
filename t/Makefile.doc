@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.21 19/08/27 22:37:01
+#?      @(#) Makefile.doc 1.22 19/08/27 23:01:43
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.21
+_SID.doc        = 1.22
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -98,7 +98,7 @@ ARGS.osaft-dbx      = \
 	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
 
 ARGS.net-sslhello   =
-ARGS.net-sslinfo    =   +VERSION   --test-ssleay        localhost
+ARGS.net-sslinfo    =   +VERSION  localhost --test-ssleay --test-methods
 ARGS.t-makefile     =
 ARGS.install        =   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
