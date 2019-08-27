@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.07.19',
+    SSLINFO_VERSION => '19.08.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.229 19/08/27 21:38:47',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.230 19/08/27 21:51:00',
 };
 
 ######################################################## public documentation #
@@ -3749,12 +3749,13 @@ sub _main           {
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if (0 >  $#argv) { _main_help(); exit 0; }
-    if (0 <= $#argv) {
-        local $\="\n";
+    local $\="\n";
+    # got arguments, do something special
+    while (my $arg = shift @argv) {
+        if ($arg =~ /^--?h(?:elp)?$/) { _main_help();       exit 0; }
+        if ($arg =~ /^[+-]?version/i) { print "$VERSION\n"; exit 0; }
         do_ssl_open( shift, 443, '');
         print Net::SSLinfo::datadump();
-        exit 0;
     }
     exit 0;
 } # _main
