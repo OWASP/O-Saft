@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.231 19/08/27 21:53:25',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.232 19/08/27 22:40:51',
 };
 
 ######################################################## public documentation #
@@ -65,6 +65,18 @@ use constant {
 ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #  it's the nature of some checks to be complex
 #  a max_mccabe = 40 would be nice, but cannot be set per file
+
+## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
+#  NOTE: See t/.perlcritic
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  because we use /x as needed for human readability
+
+##### critic qw(InputOutput::ProhibitBacktickOperators)
+#  used at commands where we need backticks or qx()
+
+## no critic qw(Variables::ProhibitPackageVars)
+#  using package variables are considered ok in this package, check in future again
 
 =pod
 
@@ -751,7 +763,7 @@ sub _setcommand {
     my $cmd;
     my $opt = "version";
        $opt = "--version" if ($command =~ m/timeout$/);
-    $cmd = qx($command $opt 2>&1);
+    $cmd = qx($command $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
     if (defined $cmd) {
         # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
         chomp $cmd;
@@ -760,7 +772,7 @@ sub _setcommand {
         if ($cmd =~ m#timeout$#) {
             # some timout implementations require -t option, i.e. BusyBox v1.26.2
             # hence we check if it works with -t and add it to $cmd
-            $cmd = "$cmd -t " if (qx($cmd -t 2 pwd 2>&1) !~ m/timeout/);
+            $cmd = "$cmd -t " if (qx($cmd -t 2 pwd 2>&1) !~ m/timeout/);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         _trace("_setcommand: $command = ''");
@@ -793,8 +805,9 @@ sub _traceSSLbitmasks {
     my $txt  = shift; # prefix string as in _trace()
     my $mask = shift;
     # cannot use _trace() 'cause we want our own formatting
-    my $_op_sub;
     _traceset();
+    ## no critic (TestingAndDebugging::ProhibitProlongedStrictureOverride)
+    #  NOTE: perlcritix is too pedantic
     foreach my $op (qw(
             OP_ALL
             OP_MICROSOFT_SESS_ID_BUG
@@ -844,7 +857,7 @@ sub _traceSSLbitmasks {
         no strict;  ## no critic (TestingAndDebugging::ProhibitNoStrict)
             # necessary as we use {"Net::SSLeay::$op"}
         printf("#%s: %-30s ", $txt, $op);
-        ## $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
+        ## my $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
         my $opt;
         my $_ok = eval { $opt = &{"Net::SSLeay::$op"}; };
         if (defined $_ok) {
@@ -1787,7 +1800,7 @@ sub _openssl_MS     {
         close($fh);
         #dbx# print `cat $tmp`;
         $src = 'cmd.exe';
-        ($data =  `cmd.exe /D /S /C $tmp`)  or do {$err = $!} and last;
+        ($data =  `cmd.exe /D /S /C $tmp`)  or do {$err = $!} and last; ## no critic qw(InputOutput::ProhibitBacktickOperators)
         $src = 'unlink';
         unlink  $tmp                        or do {$err = $!} and last;
          $data =~ s#^[^)]*[^\r\n]*.##s;          # remove cmd.exe's output
@@ -1844,7 +1857,7 @@ sub _openssl_x509   {
     }
     _trace("_openssl_x509(openssl $mode).") if (1 < $trace);
     if ($^O !~ m/MSWin32/) {
-        $data = `echo '$pem' | $_openssl $mode 2>&1`;
+        $data = `echo '$pem' | $_openssl $mode 2>&1`; ## no critic qw(InputOutput::ProhibitBacktickOperators)
     } else { # it's sooooo simple, except on Windows :-(
         $data = _openssl_MS($mode, '', '', $pem);
     }
@@ -1927,7 +1940,7 @@ sub s_client_check  {
     if ($^O =~ m/MSWin32/) {
         $_OpenSSL_opt{'data'} = _openssl_MS('s_client -help', '', '', '');  # no host:port
     } else {
-        $_OpenSSL_opt{'data'} = qx($_openssl s_client -help 2>&1);
+        $_OpenSSL_opt{'data'} = qx($_openssl s_client -help 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
     }
     #_trace("data{ $_OpenSSL_opt{'data'} }";
 
@@ -1990,7 +2003,7 @@ This method is thread safe according the limitations described in L<Net::SSLeay>
 Use L<do_ssl_free($ctx,$ssl,$socket)> to free allocated objects.
 =cut
 
-sub do_ssl_new      {
+sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
     my ($host, $port, $sslversions, $cipher, $protos_alpn, $protos_npn, $socket) = @_;
     my $ctx     = undef;
     my $ssl     = undef;
@@ -2213,7 +2226,7 @@ sub do_ssl_open($$$@) {
     }
 
     {
-      no warnings;  ## no critic (TestingAndDebugging::ProhibitNoStrict)
+      no warnings;  ## no critic (TestingAndDebugging::ProhibitNoWarnings)
       if (defined $Net::SSLinfo::next_protos) { # < 1.182
         warn("**WARNING: 090: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead");
       }
@@ -2990,7 +3003,7 @@ sub do_openssl($$$$) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/); # avoid in access.log: "\n" 400 750 "-" "-"
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
-        $data  = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+        $data  = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
             my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
@@ -3004,7 +3017,7 @@ sub do_openssl($$$$) {
             $mode .= ' -CAfile ' . $cafile if ('' ne $cafile);
             $mode .= ' -reconnect'   if (1 == $Net::SSLinfo::use_reconnect);
             $mode .= ' -connect';
-            $data .= `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+            $data .= `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
@@ -3737,7 +3750,7 @@ sub _main_help      {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
-    if (qx(perldoc -V)) {
+    if (qx(perldoc -V)) {  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
