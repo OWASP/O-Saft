@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.232 19/08/27 22:40:51',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.233 19/08/27 23:07:19',
 };
 
 ######################################################## public documentation #
@@ -89,8 +89,12 @@ Net::SSLinfo -- perl extension for SSL connection and certificate data
 =head1 SYNOPSIS
 
     # on command line:
-    Net::SSLinfo.pm            # print help
-    Net::SSLinfo.pm your.tld   # print data from your.tld
+    Net::SSLinfo.pm                 # print help
+    Net::SSLinfo.pm --help          # print help
+    Net::SSLinfo.pm +VERSION        # print version string
+    Net::SSLinfo.pm --test-ssleay   # print information about Net::SSLeay capabilities
+    Net::SSLinfo.pm --test-methods  # print available methods in Net::SSLeay
+    Net::SSLinfo.pm your.tld        # print data from your.tld
 
     # from within perl scripts:
     use Net::SSLinfo;
@@ -506,8 +510,8 @@ use base qw(Exporter);
 our $VERSION   = SSLINFO_VERSION;
 our @EXPORT = qw(
         net_sslinfo_done
+        test_ssleay
         ssleay_methods
-        ssleay_test
         datadump
         s_client_check
         s_client_get_optionlist
@@ -1170,7 +1174,7 @@ sub ssleay_methods  {
     return @list;
 } # ssleay_methods
 
-sub ssleay_test     {
+sub test_ssleay     {
     #? print availability and information about Net::SSLeay
     my @list = ssleay_methods();
     my $line = "#------------+------------------+-------------";
@@ -1246,7 +1250,7 @@ $line
 # Net::SSLeay} call\n";
 
     return $data;
-} # ssleay_test
+} # test_ssleay
 
 sub _dump       {
     my $key = shift;
@@ -3222,10 +3226,10 @@ Get version from certificate.
 Return list of available methods:  Net::SSLeay::*_method and
 Net::SSLeay::CTX_*_new . Most important (newest) method first.
 
-=head2 ssleay_test( )
+=head2 test_ssleay( )
 
 Test availability and print information about Net::SSLeay:
-Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'>
+Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'>
 
 =head2 datadump( )
 
@@ -3765,11 +3769,14 @@ sub _main           {
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
+    if ($#argv < 0) { _main_help(); exit 0; }
     local $\="\n";
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ /^--?h(?:elp)?$/) { _main_help();       exit 0; }
-        if ($arg =~ /^[+-]?version/i) { print "$VERSION";   exit 0; }
+        if ($arg =~ /^--?h(?:elp)?$/)   { _main_help();         exit 0; }
+        if ($arg =~ /^[+-]?version/i)   { print "$VERSION";     exit 0; }
+        if ($arg =~ /^--test.?ssleay/)  { print test_ssleay();  exit 0; }
+        if ($arg =~ /^--test.?methods/) { print join(" ",ssleay_methods()); exit 0; }
         do_ssl_open( shift, 443, '');
         print Net::SSLinfo::datadump();
     }
