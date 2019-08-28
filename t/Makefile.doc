@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.23 19/08/27 23:51:13
+#?      @(#) Makefile.doc 1.24 19/08/29 01:26:22
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.23
+_SID.doc        = 1.24
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -70,8 +70,9 @@ EXE.install-sh      = ../INSTALL.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 
-# no targets are generated for empty variables
-ARGS.o-saft         =
+# no targets are generated for empty ARGS.* variables
+
+ARGS.o-saft         =  +traceSUB
 ARGS.osaft          =
 # done with ARGS.osaft-dbx:  --regex --test-regex
 
