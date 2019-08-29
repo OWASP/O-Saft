@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.893 19/08/29 01:59:48",
+    SID         => "@(#) yeast.pl 1.894 19/08/30 00:09:01",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -3908,6 +3908,73 @@ sub ciphers_scan_prot   {
     return @res;
 } # ciphers_scan_prot
 
+sub ciphers_scan_raw    {
+    #? scan target for ciphers for all protocols
+    # returns @cipher_results
+    my ($host, $port) = @_;
+    my $total   = 0;
+    my $enabled = 0;
+    my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
+    my @results = ();       # new cipher list for every host
+    my $usesni = $Net::SSLhello::usesni;            # store SNI for recovery later
+    foreach my $ssl (@{$cfg{'version'}}) {
+        $_printtitle++;
+        next if ($cfg{$ssl} == 0);
+        if ($usesni >= 1) { # Do not use SNI with SSLv2 and SSLv3
+            # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
+            # they should be the same) because Net::SSLhello functions are
+            # called
+            if ($ssl =~ m/^SSLv/) {
+                # SSLv2 has no SNI; SSLv3 has originally no SNI
+                _warn_nosni("409:", $ssl, $usesni);
+                $Net::SSLhello::usesni = 0;         # do not use SNI for this $ssl
+            } else {
+                $Net::SSLhello::usesni = $usesni;   # restore
+            }
+        }
+        my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
+        my @accepted = ();                          # accepted ciphers
+        $total += scalar @all;
+        printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        if (not _is_do('cipherraw')) {
+            _v_print("cipher range: $cfg{'cipherrange'}");
+            _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
+        }
+        @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
+        if (not _is_do('cipherall')) {
+            _v_print(sprintf("total number of accepted ciphers: %4d",
+                         (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
+            # correct total number if first 2 ciphers are identical
+            # (this indicates cipher order by the server)
+            # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+        }
+        # prepare for printing, list, needed for summary checks
+        my $last_a  = "";    # avoid duplicates
+        foreach my $key (@accepted) {
+            # each entry looks like:  TLSv12  AES128-SHA256  yes
+            next if ($last_a eq $key);
+            push(@results, [$ssl, get_cipher_suitename($key), "yes"]);
+            $last_a = $key;
+        }
+        if (0 < scalar @accepted) {
+            my $cipher = get_cipher_suitename($accepted[0]);
+            # SEE Note:+cipherall
+            $prot{$ssl}->{'cipher_strong'}  = $cipher;
+            $prot{$ssl}->{'default'}        = $cipher;
+        }
+        if (_is_do('cipherall')) {
+            $enabled += printcipherall($legacy, $ssl, $host, $port,
+                ($legacy eq "sslscan")?($_printtitle):0, @accepted);
+            print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
+            next if (scalar @accepted < 1); # defensive programming ..
+            #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+        } else {
+            Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+        }
+    } # $ssl
+    return @results;
+} # ciphers_scan_raw
+
 sub ciphers_scan        {
     #? scan target for ciphers for all protocols
     # writes to @cipher_results
@@ -6497,7 +6564,7 @@ sub printprotocols      {
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
-        my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
+        my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};  # FIXME: fails for +cipherraw
         if ($cfg{'trace'} <= 0) {
            # avoid internal strings, pretty print for humans
            $cipher_strong = "" if (STR_UNDEF eq $cipher_strong);
@@ -8607,68 +8674,15 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         _warn("209: No SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
-        my $total   = 0;
-        my $enabled = 0;
-        my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-        my @results = ();       # new cipher list for every host
-        my $usesni = $Net::SSLhello::usesni;            # store SNI for recovery later
-        foreach my $ssl (@{$cfg{'version'}}) {
-            $_printtitle++;
-            next if ($cfg{$ssl} == 0);
-            if ($usesni >= 1) { # Do not use SNI with SSLv2 and SSLv3
-                # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
-                # they should be the same) because Net::SSLhello functions are
-                # called
-                if ($ssl =~ m/^SSLv/) {
-                    # SSLv2 has no SNI; SSLv3 has originally no SNI
-                    _warn_nosni("409:", $ssl, $usesni);
-                    $Net::SSLhello::usesni = 0;         # do not use SNI for this $ssl
-                } else {
-                    $Net::SSLhello::usesni = $usesni;   # restore
-                }
-            }
-            my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
-            my @accepted = ();                          # accepted ciphers
-            $total += scalar @all;
-            printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
-            if (not _is_do('cipherall')) {
-                _v_print("cipher range: $cfg{'cipherrange'}");
-                _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
-            }
-            @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-            if (not _is_do('cipherall')) {
-                _v_print(sprintf("total number of accepted ciphers: %4d",
-                             (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
-                # correct total number if first 2 ciphers are identical
-                # (this indicates cipher order by the server)
-                # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
-            }
-            if (_is_do('cipherall')) {
-                $enabled += printcipherall($legacy, $ssl, $host, $port,
-                    ($legacy eq "sslscan")?($_printtitle):0, @accepted);
-                print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
-                next if (scalar @accepted < 1); # defensive programming ..
-                # prepare for printing ...
-                my $cipher = get_cipher_suitename($accepted[0]);
-                # SEE Note:+cipherall
-                $prot{$ssl}->{'cipher_strong'}  = $cipher;
-                $prot{$ssl}->{'default'}        = $cipher;
-                my $last_a  = "";    # avoid duplicates
-                foreach my $key (@accepted) {
-                    # each entry looks like:  TLSv12  AES128-SHA256  yes
-                    next if ($last_a eq $key);
-                    push(@results, [$ssl, get_cipher_suitename($key), "yes"]);
-                    $last_a = $key;
-                }
-            } else {
-                Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
-            }
-        } # $ssl
-        if ($_printtitle > 0) {
+        @cipher_results = ();           # new list for every host
+        @cipher_results = ciphers_scan_raw($host, $port);
+        $checks{'cnt_totals'}->{val} = scalar @cipher_results;
+        ###if ($_printtitle > 0) { # TODO: condition disabled when code moved to ciphers_scan_raw()
             # SEE Note:+cipherall
-            checkciphers($host, $port, @results);   # necessary to compute 'out_summary'
+            my $total   = $checks{'cnt_totals'}->{val};
+            checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
             printciphersummary($legacy, $host, $port, $total);
-        }
+        ###}
         _yeast_TIME("cipherraw}");
         next; # FIXME: SEE Note:+cipherall
     } # cipherraw
