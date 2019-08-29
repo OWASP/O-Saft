@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.892 19/08/07 23:52:19",
-    STR_VERSION => "19.07.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.893 19/08/29 01:59:48",
+    STR_VERSION => "19.08.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -155,15 +155,13 @@ use osaft;          # get most of our configuration; it's ok to die if missing
 #________________________________________________________________ variables __|
 
 our $VERSION= STR_VERSION;
-my  $me     = $cfg{'me'};       # use a short and easy to remember variable name
 my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
-$cfg{'mename'} = $me;
 
-#dbx# print STDERR "#$me INC=@INC\n";
+#dbx# print STDERR "#$cfg{'me'} INC=@INC\n";
 
-printf("#$me %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
+printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
     # print complete command line if any --trace-* was given, it's intended
     # that it works if unknown --trace-* was given, for example --trace-CLI
 
@@ -182,7 +180,7 @@ sub _is_member($$); #   "
 #| -------------------------------------
 my  $cgi = 0;
     $cgi = 1 if ((grep{/(?:--cgi-?(?:exec|trace))/i} @ARGV) > 0);
-#if ($me =~/\.cgi$/) { SEE Since VERSION 18.12.18
+#if ($cfg{'me'} =~/\.cgi$/) { SEE Since VERSION 18.12.18
     #die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
 #} # CGI
 
@@ -289,7 +287,7 @@ sub _load_file          {
 #| -------------------------------------
 _yeast_TIME("cfg{");
 _yeast_EXIT("exit=CONF0 - RC-FILE start");
-if (_is_argv('(?:--rc)') > 0) {                 # (re-)compute default RC-File
+if (_is_argv('(?:--rc)') > 0) {                 # (re-)compute default RC-File with full path
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
@@ -438,7 +436,6 @@ usr_pre_init();
 #!# Please see "Program Code" in o-saft-man.pm too.
 #!#
 #!# Here's an overview of the used global variables (mostly defined in o-saft-lib.pm):
-#!#   $me             - the program name or script name with path stripped off
 #!#   %prot           - collected data per protocol (from Net::SSLinfo)
 #!#   %prot_txt       - labes for %prot
 #!#   @cipher_results - where we store the results as:  [SSL, cipher, "yes|no"]
@@ -2285,7 +2282,7 @@ sub _check_SSL_methods  {
         next if ($cfg{$ssl} == 0);      # don't check what's disabled by option
         if (_is_do('cipherraw')) {      # +cipherraw does not depend on other libraries
             if ($ssl eq 'DTLSv1') {
-                _warn("140: SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
+                _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipherraw'; not checked");
                 next;
             }
             push(@{$cfg{'version'}}, $ssl);
@@ -3927,8 +3924,8 @@ sub ciphers_scan        {
         if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
             # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
-               $_me = $cfg{'mename'} . " CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
-               $_me = $cfg{'mename'} . "::"    if ($cfg{'trace'}    > 0);
+               $_me = $cfg{'me'} . " CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
+               $_me = $cfg{'me'} . "::"    if ($cfg{'trace'}    > 0);
             print("#$_me checking $cnt ciphers for $ssl ... ($__openssl)");
         }
         if ($ssl =~ m/^SSLv[23]/) {
@@ -6700,6 +6697,7 @@ sub printversion        {
     print( "=== started in: $ENV{PWD} ===");    # avoid "use Cwd;" or `pwd`
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
+    my $me = $cfg{'me'};
     print( "=== $0 $VERSION ===");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
@@ -7015,7 +7013,7 @@ sub printciphers        {
             print "Supported Ciphers:        ",  $have_cipher;
             print "Unsupported Ciphers:      ",  $miss_cipher;
             print "Testable Ciphers:         ",  scalar(@test);
-            print "Ciphers missing in $me: ",    scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
+            print "Ciphers missing in $cfg{'me'}: ",    scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
             print "Ciphers in alias list:    ",  scalar(keys %cipher_alias); # FIXME: need to count values
         }
     }
@@ -7065,12 +7063,12 @@ sub printusage_exit     {
     local $\ = "\n";
     print STR_USAGE, @txt;
     print "# most common usage:
-  $me +info     your.tld
-  $me +check    your.tld
-  $me +cipher   your.tld
-  $me +cipherall your.tld
+  $cfg{'me'} +info     your.tld
+  $cfg{'me'} +check    your.tld
+  $cfg{'me'} +cipher   your.tld
+  $cfg{'me'} +cipherall your.tld
 # for more help use:
-  $me --help
+  $cfg{'me'} --help
     ";
     exit 2;
 } # printusage_exit
@@ -7982,9 +7980,9 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
-    if ($arg eq '+traceSUB'){
+    if ($arg eq '+traceSUB'){   # TODO: rename +traceSUB to --test-SUB
         # this command is just documentation, no need to care about other options
-        print "# $cfg{'mename'}  list of internal functions:\n";
+        print "# $cfg{'me'}  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);}
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
           ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
@@ -8236,7 +8234,7 @@ _load_modules();
 
 _yeast_TIME("inc}");
 _yeast_TIME("mod{");
-_y_CMD("check $cfg{'mename'} internals ...");
+_y_CMD("check $cfg{'me'} internals ...");
 
 if (! _is_do('cipherraw'))  {   # +cipherraw does not need these checks
 
@@ -8470,7 +8468,7 @@ if ($fail > 0) {
     # print warnings and hints if necessary
     foreach my $cmd (@{$cfg{'do'}}) {
         if (_is_member($cmd, \@{$cfg{'commands-HINT'}}) > 0) {
-            _hint("+$cmd : please see  '$me --help=CHECKS'  for more information");
+            _hint("+$cmd : please see  '$cfg{'me'} --help=CHECKS'  for more information");
         }
     }
 }
