@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.896 19/08/30 18:35:24",
+    SID         => "@(#) yeast.pl 1.897 19/08/30 18:51:15",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -2509,7 +2509,7 @@ sub _init_openssldir    {
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
     }
-    _trace("_init_openssldir: ca_paths=$cfg{'ca_paths'} .");
+    _trace("_init_openssldir: ca_paths=@{$cfg{'ca_paths'}} .");
     return $capath;
 } # _init_openssldir
 
