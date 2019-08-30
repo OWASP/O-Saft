@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.895 19/08/30 09:12:18",
+    SID         => "@(#) yeast.pl 1.896 19/08/30 15:29:23",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -87,10 +87,14 @@ sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
     my @txt = @_;
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
-    my $now = time() - ($time0 || 0);
-       $now = time() if _is_argv('(?:--time.*absolut)');
     if (_is_argv('(?:--trace.?(?:time|cmd))') > 0) {
-        printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime($now))[2,1,0], @txt);
+        if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
+            printf("#$me HH:MM:SS (OSAFT_MAKE exists) CMD: %s\n", @txt);
+        } else {
+            my $now = time() - ($time0 || 0);
+               $now = time() if _is_argv('(?:--time.*absolut)');
+            printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime($now))[2,1,0], @txt);
+        }
     }
     return;
 } # _yeast_TIME
