@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.14 19/03/18 11:29:04
+#?      @(#) Makefile.inc 1.16 19/08/30 15:02:13
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.14
+_SID.inc        = 1.16
 
 _MYSELF.inc     = t/Makefile.inc
 _MY.includes   += $(_MYSELF.inc)
@@ -104,6 +104,10 @@ endif
 
 ifndef MAKEFLAGS
     MAKEFLAGS   = --no-builtin-variables --no-builtin-rules --no-print-directory
+endif
+
+ifndef OSAFT_MAKE
+    export OSAFT_MAKE = avoid writing unique date and time string
 endif
 
 ifndef ECHO
