@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.93 19/08/30 14:22:59";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.94 19/08/30 14:33:04";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -512,7 +512,7 @@ sub _vprintme   {
         # it would always make a difference,  hence a dummy text is written if
         # if our special environment variable exits. This environment variable
         # should be set in Makefiles.
-        _yeast("$0 dd.mm.yyyy HH:MM:SS");
+        _yeast("$0 dd.mm.yyyy HH:MM:SS (O-SAFT_MAKE exists)");
     } else {
         _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
     }
@@ -822,7 +822,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.93 2019/08/30
+1.94 2019/08/30
 
 =head1 AUTHOR
 
