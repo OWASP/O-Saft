@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.894 19/08/30 00:09:01",
+    SID         => "@(#) yeast.pl 1.895 19/08/30 09:12:18",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -3910,12 +3910,12 @@ sub ciphers_scan_prot   {
 
 sub ciphers_scan_raw    {
     #? scan target for ciphers for all protocols
-    # returns @cipher_results
+    # returns array with accepted ciphers
     my ($host, $port) = @_;
     my $total   = 0;
     my $enabled = 0;
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-    my @results = ();       # new cipher list for every host
+    my @results = ();       # cipher list to be returned
     my $usesni = $Net::SSLhello::usesni;            # store SNI for recovery later
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
@@ -3978,6 +3978,7 @@ sub ciphers_scan_raw    {
 sub ciphers_scan        {
     #? scan target for ciphers for all protocols
     # writes to @cipher_results
+    # returns array with accepted ciphers
     my ($host, $port) = @_;
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
 # Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
@@ -3985,6 +3986,7 @@ sub ciphers_scan        {
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
     my $cnt = scalar(@{$cfg{'ciphers'}});
+    my @results = ();       # cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'usesni'};
@@ -4020,11 +4022,11 @@ sub ciphers_scan        {
             # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
             # but discarted by Perl::Critic, hence the less readable foreach
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-            push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
+            push(@results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
         }
         $cfg{'usesni'} = $usesni;
-    }
-    return;
+    } # $ssl
+    return @results;
 } # ciphers_scan
 
 sub check_certchars($$) {
@@ -8741,11 +8743,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
         _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
         @cipher_results = ();           # new list for every host
-        $checks{'cnt_totals'}->{val} = 0;
-        #dbx# _dbx "ciphers:", @{$cfg{'ciphers'}};
-        ciphers_scan($host, $port);
+        @cipher_results = ciphers_scan($host, $port);
         $checks{'cnt_totals'}->{val} = scalar @cipher_results;
-        #dbx @cipher_results = ();      # simulate "no ciphers found"
         checkciphers($host, $port, @cipher_results); # necessary to compute 'out_summary'
         _yeast_TIME("need_cipher}");
      }
