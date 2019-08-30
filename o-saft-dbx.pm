@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.92 19/08/06 00:39:11";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.93 19/08/30 14:22:59";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -501,11 +501,21 @@ sub _trace_     { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace
 sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (0 < $cfg{'traceCMD'}); return; }
 
 sub _vprintme   {
+    #? write own version, command line arguments and date and time
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
     _yeast("$0 " . $VERSION);
     _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
-    _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
+    if (defined $ENV{'O-SAFT_MAKE'}) {
+        # Writing date and time is a unique string for each call. If called by
+        # make and logged to a file which will be compared with previous file,
+        # it would always make a difference,  hence a dummy text is written if
+        # if our special environment variable exits. This environment variable
+        # should be set in Makefiles.
+        _yeast("$0 dd.mm.yyyy HH:MM:SS");
+    } else {
+        _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
+    }
     return;
 } # _vprintme
 
@@ -812,7 +822,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.92 2019/08/06
+1.93 2019/08/30
 
 =head1 AUTHOR
 
