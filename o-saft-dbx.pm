@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.94 19/08/30 14:33:04";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.95 19/08/30 15:10:25";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -506,13 +506,8 @@ sub _vprintme   {
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
     _yeast("$0 " . $VERSION);
     _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
-    if (defined $ENV{'O-SAFT_MAKE'}) {
-        # Writing date and time is a unique string for each call. If called by
-        # make and logged to a file which will be compared with previous file,
-        # it would always make a difference,  hence a dummy text is written if
-        # if our special environment variable exits. This environment variable
-        # should be set in Makefiles.
-        _yeast("$0 dd.mm.yyyy HH:MM:SS (O-SAFT_MAKE exists)");
+    if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
+        _yeast("$0 dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
     } else {
         _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
     }
@@ -822,7 +817,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.94 2019/08/30
+1.95 2019/08/30
 
 =head1 AUTHOR
 
