@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.25 19/09/01 09:46:05
+#?      @(#) Makefile.doc 1.26 19/09/01 11:41:35
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.25
+_SID.doc        = 1.26
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -71,7 +71,11 @@ EXE.install-sh      = ../INSTALL.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 
-ARGS.sources        = EXE.o-saft-tcl EXE.o-saft EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo 
+ARGS.sources        = EXE.o-saft EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-tcl
+# NOTE: contains only source files with potentionally marked control flow. This
+# is for sure in  EXE.o-saft and EXE.o-saft-tcl.  To avoid the target returning
+# "failed", it must be ensured that the last file returns something, that's why
+# EXE.o-saft-tcl is the last in the list (see t*_flow target below)
 
 # source files to be performed
 ALL.doc.perl.src    = $(SRC.pl) $(ALL.pm)
@@ -237,6 +241,14 @@ testarg0-contrib-openssl_pod:
 	@$(TRACE.target)
 testarg0-install-sh_pod:
 	@$(TRACE.target)
+
+# extract from our source (information for developers)
+testarg0-grep_sub:
+	@$(TRACE.target)
+	$(foreach prg, $(ARGS.sources), echo "# grep ^sub $($(prg)) ..."; cd $(TEST.dir)&&grep ^sub $($(prg)); )
+testarg0-grep_flow:
+	@$(TRACE.target)
+	@$(foreach prg, $(ARGS.sources), echo "# egrep '^\s*#[|]' $($(prg)) ..."; cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
 
 ALL.test.doc    = $(foreach prg, $(ARGS.program),\
 			$(foreach arg, $(ARGS.$(prg)), testarg0-$(prg)_$(subst =,-,$(arg)))\
