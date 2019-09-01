@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.70 19/09/01 20:10:17
+#?      @(#) Makefile 1.71 19/09/01 23:56:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.70
+_SID.test       = 1.71
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -635,7 +635,11 @@ ifeq (,$(_SID.tcl))
     -include t/Makefile.tcl
 endif
 
-ifeq (,$(_SID.doc))
+ifeq (,$(_SID.etc))
+    -include t/Makefile.etc
+endif
+
+ifeq (,$(_SID.dev))
     -include t/Makefile.dev
 endif
 
@@ -645,6 +649,10 @@ endif
 
 ifeq (,$(_SID.critic))
     -include t/Makefile.critic
+endif
+
+ifeq (,$(_SID.makefiles))
+    -include t/Makefile.makefiles
 endif
 
 #_____________________________________________________________________________
