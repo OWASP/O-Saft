@@ -1,0 +1,273 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile        - makefile for testing O-Saft internal documentation
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks for O-Saft internal documentation.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see
+#           ../Makefile  Makefile.help  Makefile.template
+#
+#? VERSION
+#?      @(#) Makefile.dev 1.1 19/09/01 18:12:53
+#?
+#? AUTHOR
+#?      19-apr-19 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.dev        = 1.1
+
+_MYSELF.dev     = t/Makefile.dev
+_MY.includes   += $(_MYSELF.dev)
+_MY.inc.type   += dev
+
+first-dev-target-is-default: help.test.dev
+
+ALL.help.test  += help.test.dev
+
+HELP-help.test.dev  = targets for testing internal documentation and functionality
+help.test.dev:        HELP_TYPE = dev
+help.test.dev-v:      HELP_TYPE = dev
+help.test.dev-vv:     HELP_TYPE = dev
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.dev.hosts      =
+
+# need to call program here and not the one found via $PATH
+EXE.o-saft-tcl      = ../$(SRC.tcl)
+EXE.o-saft          = ../$(SRC.pl)
+EXE.osaft           = ../osaft.pm
+EXE.osaft-standalone = ../o-saft-standalone.pl
+EXE.osaft-dbx       = ../o-saft-dbx.pm
+EXE.osaft-man       = ../o-saft-man.pm
+EXE.osaft-usr       = ../o-saft-usr.pm
+EXE.osaft-cipher    = ../OSaft/Ciphers.pm
+EXE.osaft-doc-data  = ../OSaft/Doc/Data.pm
+EXE.net-sslhello    = ../Net/SSLhello.pm
+EXE.net-sslinfo     = ../Net/SSLinfo.pm
+EXE.t-makefile      = ../t/Makefile.pod
+# TODO: other tools should go to Makefile.contrib
+EXE.contrib-bunt    = ../contrib/bunt.pl
+EXE.contrib-openssl = ../contrib/install_openssl.sh
+EXE.contrib-standalone  = ../contrib/gen_standalone.sh
+EXE.install-sh      = ../INSTALL.sh
+# NOTE: there is already EXE.install in ../Makefile
+
+# generate list of programs as variable (all EXE.* above with EXE. removed)
+ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.dev))
+
+ARGS.sources        = EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft
+# NOTE: contains only source files with potentionally marked control flow. This
+# is for sure in  EXE.o-saft and EXE.o-saft-tcl.  To avoid the target returning
+# "failed", it must be ensured that the last file returns something, that's why
+# EXE.o-saft  is the last in the list (see t*_flow target below)
+
+
+# no targets are generated for empty ARGS.* variables
+
+ARGS.o-saft-tcl     = --help=opts --test-o-saft
+ARGS.o-saft         =  +traceSUB
+ARGS.osaft          =
+# done with ARGS.osaft-dbx:  --regex --test-regex
+
+ARGS.osaft-cipher   = \
+	description     alias   const   names   rfc     version overview \
+	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
+	getter=0xC0,0x2C        key=ECDHE-ECDSA-AES256-GCM-SHA384 \
+	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
+
+ARGS.osaft-doc-data = \
+	version +VERSION        list        print \
+	get     get-markup      get-text    get-as-text \
+
+# tests are functionally the same as testarg0-h--help-* from Makefile.hlp
+ARGS.osaft-man      = \
+	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
+	content data    glossar intern  help    hint    legacy   links      \
+	opt     options ourstr  pattern range   regex   rfc      text       \
+	toc     todo    tools   warning exit        \
+	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
+	gen-wiki    gen-html    gen-cgi     gen-pod \
+
+ARGS.osaft-dbx      = \
+	--test-show     --test-data         --test-prot --test-regex \
+	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
+
+ARGS.net-sslhello   =
+ARGS.net-sslinfo    =   +VERSION  localhost --test-ssleay --test-methods
+ARGS.t-makefile     =
+ARGS.install-sh     =   --install  --clean  --check     --expected
+# NOTE: ensure that EXE.install is called with --n !
+# NOTE: EXE.install-sh --openssl does not work from t directory
+# TODO: EXE.install-sh not completely working as expected
+
+ARGS.contrib-bunt       =
+ARGS.contrib-openssl    = --n --m
+ARGS.contrib-standalone =
+
+HELP-_dev1          = __________________________ testing internal documentations _
+HELP-test.dev       = test various internal documentation and functionality
+HELP-test.dev.log   = same as test.dev but store output in '$(TEST.logdir)/'
+
+
+HELP.dev = $(_NL)
+HELP.test.dev.all   = # no special documentation yet
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+# The goal here is to generate all targets from the variables defined above.
+# The target -pattern rule- called finally is (see t/Makefile):
+#       testarg0-dev-%:
+#               cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+#
+# Therefore the variables  EXE.pl, TEST.dir, TEST.init and TEST.args must be
+# defined properly for these targets.  In most cases, only one of  TEST.init
+# or  TEST.args is needed. Means that the other can be set empty by default.
+# These variables must be set depending on the target or pattern rule.
+# Abstract example:
+#       testarg0-dev-osaft_%:         EXE.pl    = $(EXE.osaft)
+#       testarg0-dev-osaft_%:         TEST.args = 
+#       testarg0-dev-osaft_some-arg:  TEST.init = some-arg
+#       testarg0-dev-osaft_%:
+# The first three set the required variables,  the last one ensures that the
+# pattern rule  testarg0-dev_%  is called.
+#
+# If a target needs special or additional settings, this is done explicitly.
+#
+# All programs are defined in the variable (list)  ARGS.program .
+# Each of these programs should be called  with the arguments defined in the
+# corresponding  ARGS.* , where  *  is any of the values from  ARGS.program
+# "osaft" is such a program in the example above. With that there is:
+#       EXE.osaft   = osaft.pm
+#       ARGS.osaft  = some-arg
+#
+# Finally all generated targets are added to the variable  ALL.test.dev .
+#
+############################################################
+
+# FIXME: test.*.log generate logfiles in . instead of t/log
+
+ifndef dev-macros-generated
+    # das ifndef erzwingt die Ausführung der $(foreach ...) unten
+
+    # SEE Make:generating help
+    $(foreach arg, $(ARGS.program), $(eval \
+	   HELP.dev +=test.dev.$(arg).all\t\# targets for testing $(EXE.$(arg))\n\
+    ))
+    $(eval HELP.dev +=test.dev.help.all\t\# targets for testing --help option\n)
+    $(eval HELP.dev +=test.dev.pod.all\t\# targets for testing perldoc generation\n)
+    $(foreach arg, $(ARGS.program), $(eval \
+	   HELP.dev +=test.$(arg).log\t\# same as test.$(arg) but store output in '$(TEST.logdir)'\n\
+    ))
+    $(eval HELP.dev +=test.dev.help.log\t\# same as test.dev.help.all but store output in '$(TEST.logdir)'\n)
+    $(eval HELP.dev +=test.dev.pod.log\t\# same as test.dev.pod.all but store output in '$(TEST.logdir)'\n)
+
+    # arguments from ARGS.* used in the target name must not contain =
+    # hence $(subst =,-,$(arg)) is used to replace = by -
+
+    # variables test.*.all, test-*.log
+    $(foreach prg, $(ARGS.program),\
+      $(foreach arg, $(ARGS.$(prg)),\
+        $(eval ALL.test.dev.$(prg)     += testarg0-dev-$(prg)_$(subst =,-,$(arg)) )) \
+      $(eval   ALL.test.dev.$(prg)     += testarg0-dev-$(prg)_--help testarg0-dev-$(prg)_pod ) \
+      $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log) ) \
+    )
+
+    # TEST.init for testarg0-dev-* targets
+    $(foreach prg, $(ARGS.program),\
+      $(foreach arg, $(ARGS.$(prg)),$(eval testarg0-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
+      $(foreach arg, $(ARGS.$(prg)),$(eval ALL.test.dev += testarg0-dev-$(prg)_$(subst =,-,$(arg)) )) \
+    )
+    # EXE.pl and TEST.* variables for testarg0-dev-* targets
+    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_%:   TEST.args = ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_pod: EXE.pl    = perldoc ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_--help:  TEST.init = --help ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg0-dev-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg0-dev-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg0-dev-$(prg) ) )
+
+endif
+
+# OSaft/Doc/Data.pm function needs a file where to read the information
+# it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
+testarg0-dev-osaft-doc-data_%:  TEST.args = help.txt
+testarg0-dev-osaft-dbx_%:       EXE.pl    = $(EXE.o-saft)
+
+testarg0-dev-contrib-openssl_%: TEST.args = --n
+testarg0-dev-install-sh_%:      TEST.args = --n /tmp/o-saft
+
+# targets: EXE.* --help
+ALL.test.dev.help   = $(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_--help )
+test.dev.help.all:  $(ALL.test.dev.help)
+
+# targets: EXE.pl = perlpod
+ALL.test.dev.pod    = $(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_pod )
+test.dev.pod.all:   $(ALL.test.dev.pod)
+
+# generate pattern rules, one foreach EXE.*
+$(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_% ):
+# generate summary rules, one foreach EXE.*
+$(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
+$(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
+
+# useless generated targets
+testarg0-dev-contrib-openssl_pod:
+	@$(TRACE.target)
+testarg0-dev-install-sh_pod:
+	@$(TRACE.target)
+
+# extract from our source (information for developers)
+# TODO: need to generate individual targets
+testarg0-dev-grep_sub:
+	@$(TRACE.target)
+	$(foreach prg, $(ARGS.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
+testarg0-dev-grep_desc:
+	@$(TRACE.target)
+	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
+testarg0-dev-grep_flow:
+	@$(TRACE.target)
+	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
+# TODO: above $(foreach ...) requires a ; at ends, which may fail on Windows
+
+ALL.test.dev.grep   = testarg0-dev-grep_sub testarg0-dev-grep_desc testarg0-dev-grep_flow
+test.dev.grep.all:  $(ALL.test.dev.grep)
+.PHONY: $(ALL.test.grep)
+
+ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep)
+ALL.test.dev.log    = $(ALL.test.dev:%=%.log) test.log-compare-hint
+
+test.dev.log-compare:   TEST.target_prefix  = testarg0-dev-
+test.dev.log-move:      TEST.target_prefix  = testarg0-dev-
+test.dev.log:           TEST.target_prefix  = testarg0-dev-
+
+
+test.dev.all:       $(ALL.test.dev)
+test.dev.all.log:   $(ALL.test.dev.log)
+test.dev.log:       $(ALL.test.dev.log)
+test.dev:           test.dev.all
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.test.dev)
+ALL.tests.log  += $(ALL.test.dev.log)
+
