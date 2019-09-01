@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.24 19/08/29 01:26:22
+#?      @(#) Makefile.doc 1.25 19/09/01 09:46:05
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.24
+_SID.doc        = 1.25
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -49,6 +49,7 @@ endif
 TEST.doc.hosts      =
 
 # need to call program here and not the one found via $PATH
+EXE.o-saft-tcl      = ../$(SRC.tcl)
 EXE.o-saft          = ../$(SRC.pl)
 EXE.osaft           = ../osaft.pm
 EXE.osaft-standalone = ../o-saft-standalone.pl
@@ -70,8 +71,17 @@ EXE.install-sh      = ../INSTALL.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 
+ARGS.sources        = EXE.o-saft-tcl EXE.o-saft EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo 
+
+# source files to be performed
+ALL.doc.perl.src    = $(SRC.pl) $(ALL.pm)
+ALL.doc.perl.exe    = $(ALL.doc.perl.src:%=../%)
+ALL.doc.perl.prg    = $(subst .,-, $(subst /,-, $(ALL.doc.perl.src) ) )
+
+
 # no targets are generated for empty ARGS.* variables
 
+ARGS.o-saft-tcl     =
 ARGS.o-saft         =  +traceSUB
 ARGS.osaft          =
 # done with ARGS.osaft-dbx:  --regex --test-regex
@@ -231,7 +241,7 @@ testarg0-install-sh_pod:
 ALL.test.doc    = $(foreach prg, $(ARGS.program),\
 			$(foreach arg, $(ARGS.$(prg)), testarg0-$(prg)_$(subst =,-,$(arg)))\
 		   )
-ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod)
+ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod) testarg0-grep_sub
 ALL.test.doc.log    = $(ALL.test.doc:%=%.log) test.log-compare-hint
 
 test.doc.log-compare:   TEST.target_prefix  = testarg0-
