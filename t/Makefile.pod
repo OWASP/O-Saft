@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.19 19/08/30 15:08:36
+@(#) Makefile.pod 1.20 19/09/01 19:53:02
 
 =head1 AUTHOR
 
@@ -89,8 +89,10 @@ GNU Make also cannot manage recursive includes of the same file. This must
 be checked before including, for example (using private _SID.* variable):
 
     ifeq (,$(_SID.test))
-        include t/Makefile
+        -include t/Makefile
     endif
+
+Missing the required file is silently ignored using  -include  directive.
 
 
 =head2 GNU Make:important variables
