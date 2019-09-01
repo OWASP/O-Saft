@@ -138,11 +138,13 @@
 #.                  include t/Makefile.exit
 #.                  include t/Makefile.opt
 #.                  include t/Makefile.ext
-#.                  include t/Makefile.cgi
 #.                  include t/Makefile.hlp
+#.                  include t/Makefile.cgi
 #.                  include t/Makefile.tcl
+#.                  include t/Makefile.dev
 #.                  include t/Makefile.misc
 #.                  include t/Makefile.critic
+#.                  include t/Makefile.makefiles
 #.
 #.      To get a list of all makefiles, use:
 #.          make s-_MY.includes
@@ -175,14 +177,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.68 19/07/28 22:33:05
+#?      @(#) Makefile.help 1.69 19/09/01 19:50:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.68
+_SID.help       = 1.69
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
