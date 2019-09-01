@@ -177,14 +177,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.69 19/09/01 19:50:04
+#?      @(#) Makefile.help 1.70 19/09/01 23:11:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.69
+_SID.help       = 1.70
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -328,16 +328,7 @@ _help.HELP:
 	@echo "$($(_HELP_HELP))"
 	@echo "$(_HELP-help.make)"
 
-# Following target  lists the used (included) t/Makefile.* , each with its
-# description as defined in the file itself in the HELP-help.text.* macro
-_HELP-maketitle = \#__________________________________ purpose of t/Makefile.* _
-_HELP.maketitle = $(ALL.inc.type:%=help-makefiletitle-%)
-_help.makefiles:
-	@$(TRACE.target)
-	@echo "\n\t\t$(_HELP-maketitle)"
-	@$(MAKE) -s $(_HELP.maketitle)
-
-.PHONY: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP _help.makefiles
+.PHONY: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
@@ -368,7 +359,8 @@ HELP-help.test  = print documentation about test targets
 HELP-help.critic= print documentation about perlcritic targets
 #               # HELP-help.critic - also in Makefile.critic (a bit different)
 HELP-help.syntax= print documentation about syntax used in Makefile.*
-HELP-help.makefiles = print documentation about available Makefile.*
+HELP-help.makefiles.doc = print documentation about available Makefile.*
+#               # HELP-help.makefiles.doc - also in Makefile.makefiles
 
 HELP.help       = $(_NL)\
 \# To see in which Makefile* the listed targets are defined, use following:$(_NL)\
@@ -387,7 +379,7 @@ HELP.help       = $(_NL)\
 \#    $(MAKE_COMMAND) s-MYmacro         $(_NL)\
 \#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
 
-ALL.help       += help.help help.critic help.doc help.syntax help.makefiles
+ALL.help       += help.help help.critic help.doc help.syntax
 ALL.help       += $(ALL.help.test)
                 # add all other help.test* targets
 
@@ -400,11 +392,6 @@ help.doc%:        HELP_HEAD = $(HELP_RULE)
 help.doc.all:     HELP_HEAD = $(HELP_RULE)
 target:           HELP_HEAD = $(HELP_RULE)
 
-help.help: _help.HEAD _help.BODY _help.LINE _help.makefiles _help.FOOT _help.LIST _help.HELP
-	@$(TRACE.target)
-
-# all other help.* do not contain _help.makefiles
-# i.e.: help.all help.doc.all help.help.all help.help.all-v help.test.* 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
 
@@ -414,10 +401,6 @@ help.doc: help.help
 help.syntax:
 	@$(TRACE.target)
 	$(EXE.syntax) $(_MYSELF.help)
-
-help.makefiles:   HELP_HEAD = $(HELP_INFO)
-help.makefiles:  _help.HEAD _help.makefiles
-	@$(TRACE.target)
 
 .PHONY: help.doc help.syntax
 
@@ -560,7 +543,6 @@ testcmd-help.help.all-v:        TEST.args  +=
 testcmd-help.doc:               TEST.args  +=
 testcmd-help.doc.all:           TEST.args  +=
 testcmd-help.syntax:            TEST.args  +=
-testcmd-help.makefiles:         TEST.args  +=
 testcmd-help.test.log-info:     TEST.args  +=
 # TODO: following conditions should be automatically set using $(_MY.inc.type)
 testcmd-help.test.help:         TEST.args  +=
