@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.29 19/09/01 13:29:27
+#?      @(#) Makefile.doc 1.30 19/09/01 13:53:22
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.29
+_SID.doc        = 1.30
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -85,7 +85,7 @@ ALL.doc.perl.prg    = $(subst .,-, $(subst /,-, $(ALL.doc.perl.src) ) )
 
 # no targets are generated for empty ARGS.* variables
 
-ARGS.o-saft-tcl     =
+ARGS.o-saft-tcl     = --help=opts --test-o-saft
 ARGS.o-saft         =  +traceSUB
 ARGS.osaft          =
 # done with ARGS.osaft-dbx:  --regex --test-regex
