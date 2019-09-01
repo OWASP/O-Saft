@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.23 19/08/26 12:23:07
+#?      @(#) Makefile.tcl 1.24 19/09/01 13:32:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.23
+_SID.tcl        = 1.24
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -87,15 +87,6 @@ testcmd-tclverb--d6_%:          TEST.args  += --d=6
 #testcmd-tclargs-unknown_%: TEST.args  += unknown
 testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
 #testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
-
-# test some development options
-# TODO: should use testarg0* as no host argument is required
-testcmd-tclhelp--help_%:        TEST.args  += --help
-testcmd-tclhelp--help-opts_%:   TEST.args  += --help=opts
-testcmd-tclhelp--test-flow_%:   TEST.args  += --test-flow
-testcmd-tclhelp--test-procs_%:  TEST.args  += --test-procs
-testcmd-tclhelp--test-descr_%:  TEST.args  += --test-descr
-testcmd-tclhelp--test-o-saft_%: TEST.args  += --test-o-saft
 
 test.tcl.log-compare:   TEST.target_prefix  = testcmd-tcl
 test.tcl.log-move:      TEST.target_prefix  = testcmd-tcl
