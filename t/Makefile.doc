@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.28 19/09/01 12:30:44
+#?      @(#) Makefile.doc 1.29 19/09/01 13:29:27
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.28
+_SID.doc        = 1.29
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -71,11 +71,11 @@ EXE.install-sh      = ../INSTALL.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.doc))
 
-ARGS.sources        = EXE.o-saft EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-tcl
+ARGS.sources        = EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft and EXE.o-saft-tcl.  To avoid the target returning
 # "failed", it must be ensured that the last file returns something, that's why
-# EXE.o-saft-tcl is the last in the list (see t*_flow target below)
+# EXE.o-saft  is the last in the list (see t*_flow target below)
 
 # source files to be performed
 ALL.doc.perl.src    = $(SRC.pl) $(ALL.pm)
