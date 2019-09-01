@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.69 19/09/01 19:57:19
+#?      @(#) Makefile 1.70 19/09/01 20:10:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.69
+_SID.test       = 1.70
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -260,6 +260,7 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.opt)      = $(_SID.opt)'
 	@echo '# $$(_SID.pod)      = $(_SID.pod)'
 	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
+	@echo '# $$(_SID.template) = $(_SID.template)'
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
@@ -313,8 +314,15 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# $$(.SHELLFLAGS)   = $(.SHELLFLAGS)'
 	@echo '# $$(.SUFFIXES)     = $(.SUFFIXES)'
 	@echo '# $$(.FEATURES)     = $(.FEATURES)'
-	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+	@echo '# $$(.VARIABLES)    = $(words $(.VARIABLES)) variables'
+	@echo '#                    huge list .VARIABLES not shown (includes own names),'
+	@echo '#                    use: make help.test.makevars'
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
+
+help.test.makevars:
+	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+
+.PHONY: help.test.makevars
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
