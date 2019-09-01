@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.24 19/09/01 13:32:57
+#?      @(#) Makefile.tcl 1.25 19/09/01 14:30:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.24
+_SID.tcl        = 1.25
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -61,36 +61,38 @@ HELP.test.tcl.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testcmd-tcl%:                   EXE.pl      = ../o-saft.tcl
-testcmd-tcl%:                   TEST.init   = +quit
+testcmd-tcl%:               EXE.pl      = ../o-saft.tcl
+testcmd-tcl%:               TEST.init   = +quit
     # ensure that o-saft.tcl exits and does not build the GUI
 
-testcmd-tclverb+VERSION_%:      TEST.args  += +VERSION
-testcmd-tclverb--version_%:     TEST.args  += --version
-testcmd-tclverb--rc_%:          TEST.args  += --rc
-testcmd-tclverb--v--load_%:     TEST.args  += --v --load=Makefile
-#               returns: TAB tabs: .... .note.oX1XX1
-testcmd-tclverb--d_%:           TEST.args  += --d
-testcmd-tclverb--v_%:           TEST.args  += --v
-testcmd-tclverb--v--img_%:      TEST.args  += --v --img
-testcmd-tclverb--v--text_%:     TEST.args  += --v --text
-testcmd-tclverb--v-host_%:      TEST.args  += --v host1 host2
-testcmd-tclverb--d2_%:          TEST.args  += --d=2
-testcmd-tclverb--d6_%:          TEST.args  += --d=6
-#testcmd-tclverb--v--load_%: TEST.args  += --v --load=/tmp/some-file
-    # TODO:  compare results of testcmd-tclverb--v with
-    #           testcmd-tclverb--v--img, testcmd-tclverb--v--text, testcmd-tclcmd-verb--v-host
-#testcmd-tclverb--trace_%:   TEST.args  += --trace
-    # not useful, as there will be no events
+testcmd-tcl+VERSION_%:      TEST.args  += +VERSION
+testcmd-tcl--version_%:     TEST.args  += --version
+testcmd-tcl--rc_%:          TEST.args  += --rc
+testcmd-tcl--v--load_%:     TEST.args  += --v --load=Makefile
+#               returns: different count and TAB tabs: .... .note.oX3XXMake
+testcmd-tcl--d_%:           TEST.args  += --d
+testcmd-tcl--d2_%:          TEST.args  += --d=2
+testcmd-tcl--d6_%:          TEST.args  += --d=6
+testcmd-tcl--trace_%:       TEST.args  += --trace
+testcmd-tcl--gui_%:         TEST.args  += --gui
+testcmd-tcl--v_%:           TEST.args  += --v
+testcmd-tcl--v--img_%:      TEST.args  += --v --img
+testcmd-tcl--v--text_%:     TEST.args  += --v --text
+testcmd-tcl--v-host_%:      TEST.args  += --v host1 host2
+testcmd-tcl--v-host-host_%: TEST.args  += --v host1 host2 host3 host4 host5
+# TODO:  test with docker
+#testcmd-tcl--docker%:       TEST.args  += --docker
+#testcmd-tcl--id%:           TEST.args  += --id=docker-ID
+#testcmd-tcl--tag%:          TEST.args  += --id=docker-Tag
 
 # test some warnings
-#testcmd-tclargs-unknown_%: TEST.args  += unknown
-testcmd-tclargs--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
-#testcmd-tclargs--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
+testcmd-tcl--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
+testcmd-tcl--unknown_%: TEST.args  += --unknown
+#testcmd-tcl--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
-test.tcl.log-compare:   TEST.target_prefix  = testcmd-tcl
-test.tcl.log-move:      TEST.target_prefix  = testcmd-tcl
-test.tcl.log:           TEST.target_prefix  = testcmd-tcl
+test.tcl.log-compare:       TEST.target_prefix  = testcmd-tcl
+test.tcl.log-move:          TEST.target_prefix  = testcmd-tcl
+test.tcl.log:               TEST.target_prefix  = testcmd-tcl
 
 # SEE Make:target matching
 ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl%/{next} /^testcmd-tcl/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
@@ -100,11 +102,6 @@ ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 test.tcl.all:   $(ALL.test.tcl)
 test.tcl:       test.tcl.all
 test.tcl.log:   $(ALL.test.tcl.log) test.log-compare-hint
-
-test.tcl-%:     test.tcl.internal test.tcl.all
-	@$(EXE.dummy)
-
-.PHONY: test.tcl.log
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
