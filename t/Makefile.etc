@@ -1,15 +1,13 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile    - makefile for tests with O-Saft and legacy tools
+#?      Makefile    - makefile for tests with O-Saft and other tools
 #?
 #? SYNOPSYS
 #?      make -f Makefile.etc ....
 #?
 #? DESCRIPTION
 #?      Various tests, formerly implemented in individual scripts.
-#?      This Makefile is not included in O-Saft's make system, hence it must
-#?      be called using make's  -f  option, see  SYNOPSYS  above.
 #?
 #? LIMITATIONS
 #?      Requires GNU Make > 2.0.
@@ -19,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.etc 1.2 19/09/01 23:16:37
+#?      @(#) Makefile.etc 1.3 19/09/01 23:54:51
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.etc        = 1.2
+_SID.etc        = 1.3
 
 _MYSELF.etc     = t/Makefile.etc
 _MY.includes   += $(_MYSELF.etc)
@@ -63,51 +61,51 @@ endif
 HELP-_etc1          = ________________________________________________ testing ... _
 HELP-test.etc       = various legacy tests
 HELP-test.etc.log   = same as test.etc but store output in '$(TEST.logdir)/'
-HELP-testcmd-sslscan1.8     = test with sslscan version 1.8
-HELP-testcmd-sslscan1.11    = test with sslscan version 1.11.9
-HELP-testcmd-osaft_*        = test with o-saft.pl +cipher*
-HELP-test-cipher.all        = test all tools with cipher tests
-HELP-test-cipher.all.log    = same as HELP-test-cipher.all but store output in '$(TEST.logdir)/'
+HELP-testcmd-etc-sslscan1.8     = test with sslscan version 1.8
+HELP-testcmd-etc-sslscan1.11    = test with sslscan version 1.11.9
+HELP-testcmd-etc-osaft_*        = test with o-saft.pl +cipher*
+HELP-test.etc-cipher.all        = test all tools with cipher tests
+HELP-test.etc-cipher.all.log    = same as HELP-test-cipher.all but store output in '$(TEST.logdir)/'
 
 HELP.etc            = # no general documentation yet
 
 HELP.test.etc.all   = # no special documentation yet
 
-TEST.init  = demo
+TEST.init  = localhost
 TEST.hosts = $(TEST.init)
 
-# testcmd-sslscan* are defined as static targets, similar to testcmd-% , they
+# testcmd-etc-sslscan* are defined as static targets, similar to testcmd-% , they
 # can be used in the corresponding *.log target (pattern rule) automatically
 
-testcmd-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
-testcmd-sslscan1.8:  TEST.args = --no-failed
-testcmd-sslscan1.8:
+testcmd-etc-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
+testcmd-etc-sslscan1.8:  TEST.args = --no-failed
+testcmd-etc-sslscan1.8:
 	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
-testcmd-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
-testcmd-sslscan1.11:
+testcmd-etc-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
+testcmd-etc-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
+testcmd-etc-sslscan1.11:
 	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-testssl.sh:  EXE.pl    = testssl.sh
-testcmd-testssl.sh:  TEST.args = -e --color 0
-testcmd-testssl.sh: 
+testcmd-etc-testssl.sh:  EXE.pl    = testssl.sh
+testcmd-etc-testssl.sh:  TEST.args = -e --color 0
+testcmd-etc-testssl.sh: 
 	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 # use testcmd-% pattern rule for all o-saft.pl +cipher tests
-testcmd-osaft_%:     TEST.args = --enabled --header --no-hint
-testcmd-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
+testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint
+testcmd-etc-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
     # tricky illegal option to enforce another (second) command with +cipher
 
-osaft-CMDS          = +cipher +cipherraw
+_etc-osaft-CMDS     = +cipher +cipherraw
 
-ALL.test-cipher     = \
-	testcmd-sslscan1.8 \
-	testcmd-sslscan1.11 \
-	testcmd-testssl.sh \
-	testcmd-osaft_--legacy-owasp \
-	$(osaft-CMDS:%=testcmd-osaft_%) 
-ALL.test-cipher.log = $(ALL.test-cipher:%=%.log)
+ALL.test.etc-cipher = \
+	testcmd-etc-sslscan1.8 \
+	testcmd-etc-sslscan1.11 \
+	testcmd-etc-testssl.sh \
+	testcmd-etc-osaft_--legacy-owasp \
+	$(_etc-osaft-CMDS:%=testcmd-etc-osaft_%) 
+ALL.test.etc-cipher.log = $(ALL.test.etc-cipher:%=%.log)
 
 # TODO: targets for following:
 # common test wih openssl:
@@ -133,17 +131,17 @@ _CIPHERS     = DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM
 #    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host
 #    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host
 
-test-cipher.all:     $(ALL.test-cipher)
-test-cipher.all.log: $(ALL.test-cipher.log)
+test.etc-cipher.all:     $(ALL.test.etc-cipher)
+test.etc-cipher.all.log: $(ALL.test.etc-cipher.log)
 
-ALL.test.etc        = $(ALL.test-cipher)
-ALL.test.etc.log    = $(ALL.test-cipher.log)
+ALL.test.etc       += $(ALL.test.etc-cipher)
+ALL.test.etc.log   += $(ALL.test.etc-cipher.log)
 
-test-cipher.all.log-compare:  TEST.target_prefix = testcmd-
-test-cipher.all.log-move:     TEST.target_prefix = testcmd-
-test-cipher.all.log-compare:  test.log-compare
-test-cipher.all.log-move:     test.log-move
-    # TODO: test-cipher.all.log-compare not automatically shown in test-cipher.all
+test.etc-cipher.all.log-compare:  TEST.target_prefix = testcmd-etc
+test.etc-cipher.all.log-move:     TEST.target_prefix = testcmd-etc
+test.etc-cipher.all.log-compare:  test.log-compare
+test.etc-cipher.all.log-move:     test.log-move
+    # TODO: test.etc-cipher.all.log-compare not automatically shown in test.etc-cipher.all
 
 testetc-%: message-%
 	@$(EXE.dummy)
@@ -151,10 +149,11 @@ testetc-%: message-%
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-test.etc.log-compare:   TEST.target_prefix  = testcmd-cgi
-test.etc.log-move:      TEST.target_prefix  = testcmd-cgi
+test.etc.log-compare:   TEST.target_prefix  = testcmd-etc
+test.etc.log-move:      TEST.target_prefix  = testcmd-etc
 
-test.etc:       $(ALL.test.etc)
+test.etc.all:   $(ALL.test.etc)
+test.etc:       test.etc.all
 test.etc.log:   $(ALL.test.etc.log)
 
 #_____________________________________________________________________________
