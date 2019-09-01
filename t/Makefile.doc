@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.doc 1.27 19/09/01 12:22:27
+#?      @(#) Makefile.doc 1.28 19/09/01 12:30:44
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.doc        = 1.27
+_SID.doc        = 1.28
 
 _MYSELF.doc     = t/Makefile.doc
 _MY.includes   += $(_MYSELF.doc)
@@ -245,18 +245,22 @@ testarg0-install-sh_pod:
 # extract from our source (information for developers)
 testarg0-grep_sub:
 	@$(TRACE.target)
-	$(foreach prg, $(ARGS.sources), echo "# grep ^sub $($(prg)) ..."; cd $(TEST.dir)&&grep ^sub $($(prg)); )
+	$(foreach prg, $(ARGS.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
 testarg0-grep_desc:
 	@$(TRACE.target)
-	@$(foreach prg, $(ARGS.sources), echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..."; cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
+	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
 testarg0-grep_flow:
 	@$(TRACE.target)
-	@$(foreach prg, $(ARGS.sources), echo "# egrep '^\s*#[|]' $($(prg)) ..."; cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
+	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
+# TODO: above $(foreach ...) requires a ; at ends, which may fails on Windows
+
+.PHONY: testarg0-grep_sub testarg0-grep_desc testarg0-grep_flow
 
 ALL.test.doc    = $(foreach prg, $(ARGS.program),\
 			$(foreach arg, $(ARGS.$(prg)), testarg0-$(prg)_$(subst =,-,$(arg)))\
 		   )
-ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod) testarg0-grep_sub
+ALL.test.doc   += $(ALL.test.prog.help) $(ALL.test.prog.pod)
+ALL.test.doc   += testarg0-grep_sub testarg0-grep_desc testarg0-grep_flow
 ALL.test.doc.log    = $(ALL.test.doc:%=%.log) test.log-compare-hint
 
 test.doc.log-compare:   TEST.target_prefix  = testarg0-
