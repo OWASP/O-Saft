@@ -22,24 +22,24 @@
 #       * individual, special targets have the prefix  _test (exceptions exist)
 #
 #    Special variables specific for each t/Makefile*
-#       _SID.TYPE       - version number
-#       _MYSELF.TYPE    - name of current file
+#       _SID.myTYPE     - version number
+#       _MYSELF.myTYPE  - name of current file
 #       _MY.includes    - list of Makefiles
-#       _MY.inc.type    - type of tests (should be suffix of Makefile's name)
+#       _MY.inc.type    - list of types (should be suffix of Makefile's name)
 #       ALL.help.test   - list of documentation (help) texts
-#       HELP.TYPE       - documentation (help) text for the corresponding file
-#       HELP.TYPE.all   - list of all targets for the corresponding file
-#       HELP.TYPE.internal  - some more documentation (help) text
-#           where  TYPE  is the suffix of the Makefile's filename
+#       HELP.myTYPE     - documentation (help) text for the corresponding file
+#       HELP.myTYPE.all - list of all targets for the corresponding file
+#       HELP.myTYPE.internal  - some more documentation (help) text
+#           where  myTYPE  above is the suffix of the Makefile's filename
 #
 #    Each t/Makefile* may also redefine following variables
 #       HELP_TYPE       - suffix (and type) of Makefile*
 #       HELP_HEAD       - descriptive header line, set to HELP_NAME, HELP_RULE 
 #
 #    Special targets for documentation (help) in t/Makefile*
-#       help.test.%     - print individual documentation using $(HELP.TYPE)
-#       help.test.%.all - print all targets using $(HELP.TYPE.all)
-#       help.test.%.internal - print details using $(HELP.TYPE.internal)
+#       help.test.%     - print individual documentation using $(HELP.myTYPE)
+#       help.test.%.all - print all targets using $(HELP.myTYPE.all)
+#       help.test.%.internal - print details using $(HELP.myTYPE.internal)
 #           where  %  is the suffix of the Makefile's filename
 #
 #       TODO:
@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.71 19/09/01 23:56:30
+#?      @(#) Makefile 1.72 19/09/02 23:02:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.71
+_SID.test       = 1.72
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -82,10 +82,6 @@ ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines macros if called directly (not from ../Makefile)
 endif
-
-ALL.inc.type   += $(_MY.inc.type)
-# NOTE: this adds all $(_MY.inc.type) from all Makefile.* automatically
-#       as a result, $(ALL.inc.type) contains all types of all included files
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
