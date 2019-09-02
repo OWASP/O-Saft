@@ -177,14 +177,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.70 19/09/01 23:11:03
+#?      @(#) Makefile.help 1.71 19/09/02 22:54:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.70
+_SID.help       = 1.71
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -521,56 +521,6 @@ HELP-_help4     = _____________________________________ testing help targets _
 HELP-test.help      = test help* targets of our Makefiles
 HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
 HELP-test.help.log-compare  = compare results of test.help.log (if any)
-
-# testcmd-% pattern rule uses the stem as argument to the executed command
-# this is all we need, hence all other arguments must be set empty
-# help target itself is special as defined in global Makefile only
-testcmd-help:                   EXE.pl      = $(MAKE)
-testcmd-help:                   TEST.dir    = .
-#testcmd-help:                   TEST.init   =
-
-testcmd-help%:                  EXE.pl      = $(MAKE)
-testcmd-help%:                  TEST.init   =
-
-testcmd-help:                   TEST.args  +=
-#testcmd-doc:                    TEST.args  +=  # TODO: testcmd-doc* not working as it does not match testcmd-help*
-#testcmd-doc.all:                TEST.args  +=  # TODO: dito
-#testcmd-doc.all-v:              TEST.args  +=  # TODO: dito
-testcmd-help.help:              TEST.args  +=
-testcmd-help.all:               TEST.args  +=
-testcmd-help.help.all:          TEST.args  +=
-testcmd-help.help.all-v:        TEST.args  +=
-testcmd-help.doc:               TEST.args  +=
-testcmd-help.doc.all:           TEST.args  +=
-testcmd-help.syntax:            TEST.args  +=
-testcmd-help.test.log-info:     TEST.args  +=
-# TODO: following conditions should be automatically set using $(_MY.inc.type)
-testcmd-help.test.help:         TEST.args  +=
-testcmd-help.test.make:         TEST.args  +=
-#testcmd-help.critic:            TEST.args  +=  # not used as it is the same as testcmd-help.test.critic
-testcmd-help.test:              TEST.args  +=
-testcmd-help.test.cgi:          TEST.args  +=
-testcmd-help.test.cmds:         TEST.args  +=
-testcmd-help.test.opt:          TEST.args  +=
-testcmd-help.test.ext:          TEST.args  +=
-testcmd-help.test.exit:         TEST.args  +=
-testcmd-help.test.hlp:          TEST.args  +=
-testcmd-help.test.misc:         TEST.args  +=
-testcmd-help.test.tcl:          TEST.args  +=
-testcmd-help.test.critic:       TEST.args  +=
-testcmd-help.test.warnings:     TEST.args  +=
-testcmd-help.test.all:          TEST.args  +=
-testcmd-help.test.cgi.all:      TEST.args  +=
-testcmd-help.test.cmds.all:     TEST.args  +=
-testcmd-help.test.doc.all:      TEST.args  +=
-testcmd-help.test.opt.all:      TEST.args  +=
-testcmd-help.test.ext.all:      TEST.args  +=
-testcmd-help.test.exit.all:     TEST.args  +=
-testcmd-help.test.hlp.all:      TEST.args  +=
-testcmd-help.test.misc.all:     TEST.args  +=
-testcmd-help.test.tcl.all:      TEST.args  +=
-testcmd-help.test.critic.all:   TEST.args  +=
-testcmd-help.test.warnings.all: TEST.args  +=
 
 test.help.log-compare:  TEST.target_prefix  = testcmd-help
 test.help.log-move:     TEST.target_prefix  = testcmd-help
