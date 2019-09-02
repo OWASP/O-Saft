@@ -17,7 +17,7 @@
 #?       Requires GNU Make > 2.0.
 #?       Requires GNU sed for generating (target) INSTALL.sh.
 #?
-# TODO: move complete documentation to Makefile.help
+# TODO: move complete documentation to Makefile.help or Makefile.pod
 # HACKER's INFO
 #       This  Makefile  uses mainly  make's built-in variables (aka macros) and
 #       targets. None of them are disabled explicitly. Therefore some behaviour
@@ -87,7 +87,6 @@
 #           ALL.test    - list of all sources used for testing the project
 #           ALL.tests   - list of all targets for testing
 #           ALL.includes - dynamically generated list of all included makefiles
-#           ALL.inc.type - list of all types of included makefiles
 #           ALL.Makefiles - static list of all source makefiles of the project
 #
 #       In general no quotes are used around texts in variables. Though, it is
@@ -101,14 +100,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.75 19/08/03 21:21:54
+#?      @(#) Makefile 1.76 19/09/02 23:07:58
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.75
+_SID            = 1.76
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -326,7 +325,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.75
+_INST.text      = generated from Makefile 1.76
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -537,8 +536,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.75
-tar:     GREP_EDIT  = 1.75
+GREP_EDIT           = 1.76
+tar:     GREP_EDIT  = 1.76
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
