@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.1 19/09/02 23:09:01
+#?      @(#)  1.2 19/09/03 19:09:43
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.make       = 1.1
+_SID.make       = 1.2
 
 _MYSELF.make    = t/Makefile.makefiles
 _MY.includes   += $(_MYSELF.make)
@@ -79,13 +79,13 @@ ALL.help       += help.makefiles.doc
 # TODO: help.makefiles exist in t/Makefile.help and Makefile.makefiles
 # TODO: explain test.make uses "make help", while test.hlp uses "o-saft.pl --help"
 
-ALL.test.makefiles     += $(ARGS.helpmake:%=testarg0-makefiles-%)
+ALL.test.makefiles     += $(ARGS.helpmake:%=testarg-makefiles-%)
 ALL.test.makefiles.log += $(ALL.test.makefiles:%=%.log)
 
-testarg0-makefiles%:    EXE.pl      = $(MAKE)
-testarg0-makefiles%:    TEST.init   =
+testarg-makefiles%:     EXE.pl      = $(MAKE)
+testarg-makefiles%:     TEST.init   =
 
-$(foreach arg, $(ARGS.helpmake), $(eval testarg0-makefiles-$(arg): TEST.args = $(arg)) )
+$(foreach arg, $(ARGS.helpmake), $(eval testarg-makefiles-$(arg): TEST.args = $(arg)) )
 
 test.makefiles.all:    $(ALL.test.makefiles)
 test.makefiles:        test.makefiles.all
