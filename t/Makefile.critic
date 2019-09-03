@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.15 19/07/03 16:10:13
+#?      @(#) Makefile.critic 1.16 19/09/03 23:02:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.15
+_SID.critic     = 1.16
 
 _MYSELF.critic  = t/Makefile.critic
 _MY.includes   += $(_MYSELF.critic)
@@ -64,11 +64,11 @@ ALL.critic      = $(SRC.pl) $(ALL.pm) $(GEN.pod)
 # $(CHK.pl)
 
 # using perlcritic's --verbose options without ( and ) ; see: man perlcritic
-_CRITIC.verb8   = [%p] %m at line %l, column %c.  Severity: %s\n
-_CRITIC.verb10  = %m at line %l, column %c.\n  %p Severity: %s\n%d\n
+_CRITIC.verb8   = '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
+_CRITIC.verb10  = '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
 # same options, but output prefixed with filename
-_CRITIC.verb8o  = --verbose '%f: $(_CRITIC.verb8)'
-_CRITIC.verb10o = --verbose '%f: $(_CRITIC.verb10)'
+_CRITIC.verb8o  = --verbose $(_CRITIC.verb8)
+_CRITIC.verb10o = --verbose $(_CRITIC.verb10)
 
 CRITIC.opt      = $(_CRITIC.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
@@ -141,23 +141,14 @@ perlcritic-%: $(CRITIC.dir)
 # "make -s critic ..."
 critic: $(CRITIC.dir)
 	@$(TRACE.target)
-	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
-	@-cd $(CRITIC.dir) && \
-	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
-
-cf: $(CRITIC.dir)
-	@$(TRACE.target)
-	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
-	@-cd $(CRITIC.dir) && \
-	  echo perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
+	-cd $(CRITIC.dir) && perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
 
 # Same target as above but piped to filter for pretty printing.
 # Because the filter is a pipe, we loose the coloured output from perlcritic
+# FIXME: gawk in critic-pretty does not work properly after 19.01.19
 critic-pretty: $(CRITIC.dir)
 	@$(TRACE.target)
-	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
-	@-cd $(CRITIC.dir) && \
-	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt) \
+	-cd $(CRITIC.dir) && perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt) \
 	  | awk '\
     { gsub(/\.$$/,"");  C=" remove trailing . (for --statistics-only)"; }\
     /OK$$/{ $$2=$$1; $$1="OK\t"; $$3=""; C=" toggle $1 and $2"; ok=1; } \
@@ -175,53 +166,32 @@ critic-pretty: $(CRITIC.dir)
 '
 # TODO: above gawk needs to detect errors and then print "failed  filename"
 
-critic-5:       CRITIC.severity = -5
-critic-5p:      CRITIC.severity = -5
-critic-5p:                           CRITIC.pretty = -pretty
-critic-4:       CRITIC.severity = -4
-critic-4p:      CRITIC.severity = -4
-critic-4p:                           CRITIC.pretty = -pretty
-critic-3:       CRITIC.severity = -3
-critic-3p:      CRITIC.severity = -3
-critic-3p:                           CRITIC.pretty = -pretty
-critic-2:       CRITIC.severity = -2
-critic-2p:      CRITIC.severity = -2
-critic-2p:                           CRITIC.pretty = -pretty
-critic-count:                        CRITIC.opt    = -count
-critic-countp:                       CRITIC.pretty = -pretty
-critic-stat:                         CRITIC.opt    = --statistics-only
-critic-statp:                        CRITIC.opt    = --statistics-only
-critic-statp:                        CRITIC.pretty = -pretty
-critic-stat-4:                       CRITIC.opt    = --statistics-only
-critic-stat-4:  CRITIC.severity = -4
-critic-stat-3:                       CRITIC.opt    = --statistics-only
-critic-stat-3:  CRITIC.severity = -3
+critic-5  critic-5p c5-%  c5v-%:                CRITIC.severity = -5
+critic-4  critic-4p c4-%  c4v-%:                CRITIC.severity = -4
+critic-3  critic-3p c3-%  c3v-%:                CRITIC.severity = -3
+critic-2  critic-2p c2-%  c2v-%:                CRITIC.severity = -2
+critic-2p critic-3p critic-4p critic-5p:        CRITIC.pretty   = -pretty
+critic-count:   CRITIC.opt = -count
+critic-stat:    CRITIC.opt = --statistics-only
+critic-stat-4:  CRITIC.opt = --statistics-only
+critic-stat-4:                                  CRITIC.severity = -4
+critic-stat-3:  CRITIC.opt = --statistics-only
+critic-stat-3:                                  CRITIC.severity = -3
+#critic-countp critic-statp critic-stat-4p: # do not make sense
 
 ALL.test.critic = critic-5 critic-4 critic-3 critic-2 \
 		  critic-count critic-stat critic-stat-4 critic-stat-3
 
-critic-%:
-	$(MAKE) $(MFLAGS) -s critic$(CRITIC.pretty) CRITIC.severity=$(CRITIC.severity) CRITIC.opt=$(CRITIC.opt)
+$(ALL.test.critic): critic
+criticp critic-5p critic-4p critic-3p critic-2p: critic-pretty
 
-c5-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5
-c4-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4
-c3-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3
+c5-% c4-% c3-% c2-%:
+	@$(TRACE.target)
+	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity)
 
-c5v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5 CRITIC.opt="$(_CRITIC.verb10o)"
-c4v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4 CRITIC.opt="--verbose $(_CRITIC.verb10o)"
-c3v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3 CRITIC.opt="--verbose $(_CRITIC.verb10o)"
-# following targets required because they are not catched by critic-%; reason yet unknown
-critic-5:       critic
-critic-4:       critic
-critic-3:       critic
-critic-2:       critic
-criticp:        critic-pretty
+c5v-% c4v-% c3v-% c2v-%:
+	@$(TRACE.target)
+	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity) CRITIC.opt="$(_CRITIC.verb10o)"
 
 $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt:
 	@$(TRACE.target)
@@ -240,6 +210,9 @@ critic345.log:
 	@$(MAKE) $(MFLAGS) -s critic345
 
 .PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345 critic345.log
+
+test.critic.all:  $(ALL.test.critic)
+test.critic:      test.critic.all
 
 #_____________________________________________________________________________ 
 #_____________________________________________________________________ test __|
