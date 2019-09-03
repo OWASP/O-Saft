@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.16 19/09/03 23:02:32
+#?      @(#) Makefile.critic 1.17 19/09/04 00:07:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.16
+_SID.critic     = 1.17
 
 _MYSELF.critic  = t/Makefile.critic
 _MY.includes   += $(_MYSELF.critic)
@@ -125,13 +125,8 @@ HELP.test.critic.all= # no special documentation yet
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
 
-$(CRITIC.dir):
-	echo C && exit 1
-	@$(TRACE.target)
-	@mkdir -p $(CRITIC.dir)
-
 perlcritic-%: $(CRITIC.dir)
-	@mkdir    $@
+	@mkdir -p $@
 
 # All targets use $(ALL.critic) as list of sources, which must be set as
 # environment or on command line
@@ -193,7 +188,7 @@ c5v-% c4v-% c3v-% c2v-%:
 	@$(TRACE.target)
 	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity) CRITIC.opt="$(_CRITIC.verb10o)"
 
-$(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt:
+$(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt: $(CRITIC.dir)/perlcritic-$(_TODAY_)
 	@$(TRACE.target)
 	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
 	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-count  >> $@
