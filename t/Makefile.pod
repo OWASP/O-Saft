@@ -36,13 +36,19 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.20 19/09/01 19:53:02
+@(#) Makefile.pod 1.21 19/09/04 00:32:03
 
 =head1 AUTHOR
 
 18-nov-18 Achim Hoffmann
 
+
 =head1 GNU Make
+
+Internal testing of all functionality of the project  is done using  make,
+in paticular  GNU Make. In contrast to traditional make, GNU Make has more
+features and behaves slightly different to traditional make.  This section
+describes some GNU Make's behaviours used in the project.
 
 =head2 GNU Make:Terms
 
@@ -210,8 +216,18 @@ be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 =head1 O-Saft Makefile Syntax
 
+This section describes the syntax and other conventions used in general in
+all makefiles.  NOTE: this description is independent of any functionality
+of the project, it just describes the used "coding syntax" in makefiles.
+
 
 =head1 O-Saft Makefile Annotations
+
+As in the source code of the project,  some descriptions in makefiles also
+need to be available on more than one place.  Such texts can be referenced
+to using the "SEE <Annotation>" syntax in the makefiles. These annotations
+are described here, one sub-section for each.
+
 
 =head2 Make:target name
 
