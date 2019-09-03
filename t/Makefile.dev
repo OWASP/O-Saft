@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.dev 1.1 19/09/01 18:12:53
+#?      @(#) Makefile.dev 1.2 19/09/03 19:09:19
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.dev        = 1.1
+_SID.dev        = 1.2
 
 _MYSELF.dev     = t/Makefile.dev
 _MY.includes   += $(_MYSELF.dev)
@@ -95,7 +95,7 @@ ARGS.osaft-doc-data = \
 	version +VERSION        list        print \
 	get     get-markup      get-text    get-as-text \
 
-# tests are functionally the same as testarg0-h--help-* from Makefile.hlp
+# tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
 ARGS.osaft-man      = \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
@@ -133,7 +133,7 @@ HELP.test.dev.all   = # no special documentation yet
 
 # The goal here is to generate all targets from the variables defined above.
 # The target -pattern rule- called finally is (see t/Makefile):
-#       testarg0-dev-%:
+#       testarg-dev-%:
 #               cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 #
 # Therefore the variables  EXE.pl, TEST.dir, TEST.init and TEST.args must be
@@ -141,12 +141,12 @@ HELP.test.dev.all   = # no special documentation yet
 # or  TEST.args is needed. Means that the other can be set empty by default.
 # These variables must be set depending on the target or pattern rule.
 # Abstract example:
-#       testarg0-dev-osaft_%:         EXE.pl    = $(EXE.osaft)
-#       testarg0-dev-osaft_%:         TEST.args = 
-#       testarg0-dev-osaft_some-arg:  TEST.init = some-arg
-#       testarg0-dev-osaft_%:
+#       testarg-dev-osaft_%:         EXE.pl    = $(EXE.osaft)
+#       testarg-dev-osaft_%:         TEST.args = 
+#       testarg-dev-osaft_some-arg:  TEST.init = some-arg
+#       testarg-dev-osaft_%:
 # The first three set the required variables,  the last one ensures that the
-# pattern rule  testarg0-dev_%  is called.
+# pattern rule  testarg-dev_%  is called.
 #
 # If a target needs special or additional settings, this is done explicitly.
 #
@@ -184,79 +184,79 @@ ifndef dev-macros-generated
     # variables test.*.all, test-*.log
     $(foreach prg, $(ARGS.program),\
       $(foreach arg, $(ARGS.$(prg)),\
-        $(eval ALL.test.dev.$(prg)     += testarg0-dev-$(prg)_$(subst =,-,$(arg)) )) \
-      $(eval   ALL.test.dev.$(prg)     += testarg0-dev-$(prg)_--help testarg0-dev-$(prg)_pod ) \
+        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
+      $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod ) \
       $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log) ) \
     )
 
-    # TEST.init for testarg0-dev-* targets
+    # TEST.init for testarg-dev-* targets
     $(foreach prg, $(ARGS.program),\
-      $(foreach arg, $(ARGS.$(prg)),$(eval testarg0-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
-      $(foreach arg, $(ARGS.$(prg)),$(eval ALL.test.dev += testarg0-dev-$(prg)_$(subst =,-,$(arg)) )) \
+      $(foreach arg, $(ARGS.$(prg)),$(eval testarg-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
+      $(foreach arg, $(ARGS.$(prg)),$(eval ALL.test.dev += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
     )
-    # EXE.pl and TEST.* variables for testarg0-dev-* targets
-    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
-    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_pod: EXE.pl    = perldoc ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg0-dev-$(prg)_--help:  TEST.init = --help ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg0-dev-$(prg) ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg0-dev-$(prg) ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg0-dev-$(prg) ) )
+    # EXE.pl and TEST.* variables for testarg-dev-* targets
+    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
+    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
+    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg) ) )
 
 endif
 
 # OSaft/Doc/Data.pm function needs a file where to read the information
 # it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
-testarg0-dev-osaft-doc-data_%:  TEST.args = help.txt
-testarg0-dev-osaft-dbx_%:       EXE.pl    = $(EXE.o-saft)
+testarg-dev-osaft-doc-data_%:   TEST.args = help.txt
+testarg-dev-osaft-dbx_%:        EXE.pl    = $(EXE.o-saft)
 
-testarg0-dev-contrib-openssl_%: TEST.args = --n
-testarg0-dev-install-sh_%:      TEST.args = --n /tmp/o-saft
+testarg-dev-contrib-openssl_%:  TEST.args = --n
+testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
 
 # targets: EXE.* --help
-ALL.test.dev.help   = $(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_--help )
+ALL.test.dev.help   = $(foreach prg, $(ARGS.program), testarg-dev-$(prg)_--help )
 test.dev.help.all:  $(ALL.test.dev.help)
 
 # targets: EXE.pl = perlpod
-ALL.test.dev.pod    = $(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_pod )
+ALL.test.dev.pod    = $(foreach prg, $(ARGS.program), testarg-dev-$(prg)_pod )
 test.dev.pod.all:   $(ALL.test.dev.pod)
 
 # generate pattern rules, one foreach EXE.*
-$(foreach prg, $(ARGS.program), testarg0-dev-$(prg)_% ):
+$(foreach prg, $(ARGS.program), testarg-dev-$(prg)_% ):
 # generate summary rules, one foreach EXE.*
 $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
 $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
 
 # useless generated targets
-testarg0-dev-contrib-openssl_pod:
+testarg-dev-contrib-openssl_pod:
 	@$(TRACE.target)
-testarg0-dev-install-sh_pod:
+testarg-dev-install-sh_pod:
 	@$(TRACE.target)
 
 # extract from our source (information for developers)
 # TODO: need to generate individual targets
-testarg0-dev-grep_sub:
+testarg-dev-grep_sub:
 	@$(TRACE.target)
 	$(foreach prg, $(ARGS.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
-testarg0-dev-grep_desc:
+testarg-dev-grep_desc:
 	@$(TRACE.target)
 	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
-testarg0-dev-grep_flow:
+testarg-dev-grep_flow:
 	@$(TRACE.target)
 	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
 # TODO: above $(foreach ...) requires a ; at ends, which may fail on Windows
 
-ALL.test.dev.grep   = testarg0-dev-grep_sub testarg0-dev-grep_desc testarg0-dev-grep_flow
+ALL.test.dev.grep   = testarg-dev-grep_sub testarg-dev-grep_desc testarg-dev-grep_flow
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
 ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log) test.log-compare-hint
 
-test.dev.log-compare:   TEST.target_prefix  = testarg0-dev-
-test.dev.log-move:      TEST.target_prefix  = testarg0-dev-
-test.dev.log:           TEST.target_prefix  = testarg0-dev-
+test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
+test.dev.log-move:      TEST.target_prefix  = testarg-dev-
+test.dev.log:           TEST.target_prefix  = testarg-dev-
 
 
 test.dev.all:       $(ALL.test.dev)
