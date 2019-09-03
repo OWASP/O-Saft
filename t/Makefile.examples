@@ -23,14 +23,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.examples 1.1 19/05/14 23:40:19
+#?      @(#)  1.2 19/09/03 19:09:53
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.examples   = 1.1
+_SID.examples   = 1.2
 
 _MYSELF.examples= t/Makefile.examples
 _MY.includes   += $(_MYSELF.examples)
@@ -64,77 +64,77 @@ HELP.test.examples.all   = # no special documentation yet
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# remember: testarg0-% executes:
+# remember: testarg-% executes:
 #       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
-testarg0-sample-%:              TEST.init   = $(TEST.examples.hosts)
-#testarg0-sample-%:              EXE.pl      = ../o-saft.pl
+testarg-example-%:              TEST.init   = $(TEST.examples.hosts)
+#testarg-example-%:              EXE.pl      = ../o-saft.pl
     # EXE.pl left to default o-saft.pl without path, because this Makefile is
     # not part of the "tests" target
 
 # TODO: following targets should be generated like:
 #       $(EXE.pl) --help=EXAMPLES | awk '($1=="o-saft.pl"){sub(/some.tld/,"");print}'
 
-testarg0-sample-+cipher:        TEST.args   = +cipher
-testarg0-sample-+info:          TEST.args   = +info
-testarg0-sample-+check:         TEST.args   = +check
-testarg0-sample-+quick:         TEST.args   = +quick
-testarg0-sample-+list:          TEST.args   = +list
-testarg0-sample-+list--v:       TEST.args   = +list --v
-testarg0-sample-+version:       TEST.args   = +version
-testarg0-sample-+version--v:    TEST.args   = +version --v
-testarg0-sample-+help-commands: TEST.args   = +help=commands
-testarg0-sample-+certificate:   TEST.args   = +certificate
-testarg0-sample-+fingerprint:   TEST.args   = +fingerprint
-testarg0-sample-+after+dates:   TEST.args   = +after +dates
-testarg0-sample-+check--c-RC4:  TEST.args   = +check --cipher=RC4
-testarg0-sample-+sni:           TEST.args   = +sni
-testarg0-sample-+sni_check:     TEST.args   = +sni_check
-testarg0-sample-+sni+cn+altname:TEST.args   = +sni +cn +altname
-testarg0-sample-+cipher--ena:   TEST.args   = +cipher --enabled
-testarg0-sample-+cipher--dis:   TEST.args   = +cipher --disabled
-testarg0-sample-+cipher--cipher:TEST.args   = +cipher --cipher=ADH-AES256-SHA
-testarg0-sample-+cipherraw:     TEST.args   = +cipherraw
-testarg0-sample-+cipherall:     TEST.args   = +cipherall
-#testarg0-sample-+cipherall-full:    TEST.args   = +cipherall --range=full
+testarg-example-+cipher:        TEST.args   = +cipher
+testarg-example-+info:          TEST.args   = +info
+testarg-example-+check:         TEST.args   = +check
+testarg-example-+quick:         TEST.args   = +quick
+testarg-example-+list:          TEST.args   = +list
+testarg-example-+list--v:       TEST.args   = +list --v
+testarg-example-+version:       TEST.args   = +version
+testarg-example-+version--v:    TEST.args   = +version --v
+testarg-example-+help-commands: TEST.args   = +help=commands
+testarg-example-+certificate:   TEST.args   = +certificate
+testarg-example-+fingerprint:   TEST.args   = +fingerprint
+testarg-example-+after+dates:   TEST.args   = +after +dates
+testarg-example-+check--c-RC4:  TEST.args   = +check --cipher=RC4
+testarg-example-+sni:           TEST.args   = +sni
+testarg-example-+sni_check:     TEST.args   = +sni_check
+testarg-example-+sni+cn+altname:TEST.args   = +sni +cn +altname
+testarg-example-+cipher--ena:   TEST.args   = +cipher --enabled
+testarg-example-+cipher--dis:   TEST.args   = +cipher --disabled
+testarg-example-+cipher--cipher:TEST.args   = +cipher --cipher=ADH-AES256-SHA
+testarg-example-+cipherraw:     TEST.args   = +cipherraw
+testarg-example-+cipherall:     TEST.args   = +cipherall
+#testarg-example-+cipherall-full:    TEST.args   = +cipherall --range=full
    # --range=full haengt
-#testarg0-sample-checkAllCiphers:    TEST.args   = checkAllCiphers.pl example.tld --range=full --v
-testarg0-sample-+cipher-dh:         TEST.args   = +cipher-dh
-#testarg0-sample---lib-_foo:         TEST.args   = +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps
-#testarg0-sample---openssl-foo:      TEST.args   = --openssl=/foo/bar-1.42/openssl
-#testarg0-sample---help-cfg-text:    TEST.args   = --help=cfg-text >>.o-saft.pl
-testarg0-sample-+check--cfg-text:   TEST.args   = +check --cfg-text=desc="my special description"
-testarg0-sample-+check--cfg-hint:   TEST.args   = +check --cfg-hint=renegotiation="my special hint text"
-#testarg0-sample-+cn-hosts:          TEST.args   = +cn example.tld some.tld other.tld
-#testarg0-sample-+cn--showhost:      TEST.args   = +cn example.tld some.tld other.tld --showhost --no-header
-testarg0-sample---legacy-quick1:    TEST.args   = --legacy=quick --no-header +info
-testarg0-sample---legacy-quick2:    TEST.args   = --legacy=quick --no-header +check
-testarg0-sample---legacy-quick3:    TEST.args   = --legacy=quick --no-header --trace-key +info
-testarg0-sample---legacy-quick4:    TEST.args   = --legacy=quick --no-header --trace-key +check
-testarg0-sample---legacy-quick5:    TEST.args   = --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
-testarg0-sample-+fingerprint-raw:   TEST.args   = +fingerprint --format=raw
-testarg0-sample---exitcode:         TEST.args   = +check  --exitcode
-testarg0-sample---exitcode-v:       TEST.args   = +check  --exitcode --exitcode-v
-testarg0-sample---exitcode--ignore-out: TEST.args   = +check  --exitcode --ignore-out=ev- --ignore-out=rfc_7525
-testarg0-sample---exitcode-no-prot: TEST.args   = +cipher --exitcode --exitcode-no-prot
-testarg0-sample-+info--no-rc:       TEST.args   = +info --no-rc
-testarg0-sample-+info--trace:       TEST.args   = +info --trace
-testarg0-sample-+info--trace-key:   TEST.args   = +info --trace-key
-testarg0-sample-+info--trace-arg:   TEST.args   = +info --trace-arg
-testarg0-sample-+info--trace-cmd:   TEST.args   = +info --trace-cmd
-testarg0-sample-+info--trace-time:  TEST.args   = +info --trace-time
-testarg0-sample-+info--no-cert:     TEST.args   = +info --no-cert --no-cert --no-cert-text=Value-from-Certificate
-testarg0-sample-+info--no-dns:      TEST.args   = +info --no-dns --no-sni --ignore-no-conn
-testarg0-sample-+info--no-http:     TEST.args   = +info --no-dns --no-sni --no-cert --no-http --no-openssl
-testarg0-sample-+chain_verify:      TEST.args   = +chain_verify +verify +error_verify +chain
-testarg0-sample-+cipher--v--v:      TEST.args   = +cipher --v --v
-testarg0-sample-+cn--trace:         TEST.args   = +cn --trace --trace
+#testarg-example-checkAllCiphers:    TEST.args   = checkAllCiphers.pl example.tld --range=full --v
+testarg-example-+cipher-dh:         TEST.args   = +cipher-dh
+#testarg-example---lib-_foo:         TEST.args   = +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps
+#testarg-example---openssl-foo:      TEST.args   = --openssl=/foo/bar-1.42/openssl
+#testarg-example---help-cfg-text:    TEST.args   = --help=cfg-text >>.o-saft.pl
+testarg-example-+check--cfg-text:   TEST.args   = +check --cfg-text=desc="my special description"
+testarg-example-+check--cfg-hint:   TEST.args   = +check --cfg-hint=renegotiation="my special hint text"
+#testarg-example-+cn-hosts:          TEST.args   = +cn example.tld some.tld other.tld
+#testarg-example-+cn--showhost:      TEST.args   = +cn example.tld some.tld other.tld --showhost --no-header
+testarg-example---legacy-quick1:    TEST.args   = --legacy=quick --no-header +info
+testarg-example---legacy-quick2:    TEST.args   = --legacy=quick --no-header +check
+testarg-example---legacy-quick3:    TEST.args   = --legacy=quick --no-header --trace-key +info
+testarg-example---legacy-quick4:    TEST.args   = --legacy=quick --no-header --trace-key +check
+testarg-example---legacy-quick5:    TEST.args   = --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
+testarg-example-+fingerprint-raw:   TEST.args   = +fingerprint --format=raw
+testarg-example---exitcode:         TEST.args   = +check  --exitcode
+testarg-example---exitcode-v:       TEST.args   = +check  --exitcode --exitcode-v
+testarg-example---exitcode--ignore-out: TEST.args   = +check  --exitcode --ignore-out=ev- --ignore-out=rfc_7525
+testarg-example---exitcode-no-prot: TEST.args   = +cipher --exitcode --exitcode-no-prot
+testarg-example-+info--no-rc:       TEST.args   = +info --no-rc
+testarg-example-+info--trace:       TEST.args   = +info --trace
+testarg-example-+info--trace-key:   TEST.args   = +info --trace-key
+testarg-example-+info--trace-arg:   TEST.args   = +info --trace-arg
+testarg-example-+info--trace-cmd:   TEST.args   = +info --trace-cmd
+testarg-example-+info--trace-time:  TEST.args   = +info --trace-time
+testarg-example-+info--no-cert:     TEST.args   = +info --no-cert --no-cert --no-cert-text=Value-from-Certificate
+testarg-example-+info--no-dns:      TEST.args   = +info --no-dns --no-sni --ignore-no-conn
+testarg-example-+info--no-http:     TEST.args   = +info --no-dns --no-sni --no-cert --no-http --no-openssl
+testarg-example-+chain_verify:      TEST.args   = +chain_verify +verify +error_verify +chain
+testarg-example-+cipher--v--v:      TEST.args   = +cipher --v --v
+testarg-example-+cn--trace:         TEST.args   = +cn --trace --trace
 
-test.examples.log-compare:          TEST.target_prefix  = testarg0-examples
-test.examples.log-move:             TEST.target_prefix  = testarg0-examples
-test.examples.log:                  TEST.target_prefix  = testarg0-examples
+test.examples.log-compare:          TEST.target_prefix  = testarg-examples
+test.examples.log-move:             TEST.target_prefix  = testarg-examples
+test.examples.log:                  TEST.target_prefix  = testarg-examples
 
-ALL.testexamples     = $(shell awk -F: '/^testarg0-sample-.*%/{next} /^testarg0-sample-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.examples))
+ALL.testexamples     = $(shell awk -F: '/^testarg-example-.*%/{next} /^testarg-example-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.examples))
 ALL.test.examples    = $(ALL.testexamples)
 ALL.test.examples.log= $(ALL.test.examples:%=%.log) test.log-compare-hint
 
