@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.72 19/09/02 23:02:26
+#?      @(#) Makefile 1.73 19/09/03 19:09:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.72
+_SID.test       = 1.73
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -326,7 +326,7 @@ help.test.makevars:
 # FIXME: missing public (not internal) documentation for pattern rules:
 #       message-%:
 #       no.message-%:
-#       testarg0-%:
+#       testarg-%:
 #       testcmd-%
 #       test.all-%:
 
@@ -429,25 +429,25 @@ no.message-%:
 	@rm -f $(_TMP.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
-testarg0-%:
+testarg-%:
 	@$(TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
 # SEE Make:--dry-run
 # following pattern rule should be unified with testcmd-%.log
-testarg0-%.log: $(TEST.logdir)
+testarg-%.log: $(TEST.logdir)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
-	@$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
+	@$(MAKE) $(MFLAGS) -s testarg-$* > $@ 2>&1
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testarg0-$* > $@ 2>&1
+	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testarg-$* > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
-	@-ls -l  $(TEST.logdir)/testarg0-$(*)*
+	@-ls -l  $(TEST.logdir)/testarg-$(*)*
 # TODO: target should fail if there is a diff
 
 
