@@ -37,7 +37,7 @@
 #       and print some information even if installed incompletely.
 
 ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-#  NOTE: see .perlcritic for detailed description of "no critic"
+#  NOTE: SEE Perl:binmode()
 
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
 #  NOTE: Perl::Critic seems to be buggy as it does not honor the  allow  option
@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.897 19/08/30 18:51:15",
+    SID         => "@(#) yeast.pl 1.898 19/09/03 21:45:25",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -9192,9 +9192,9 @@ Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
 
 The tool here roughly destingushes two types of I/O:
 
-    1. writeing texts to the user using STDOUT and STDERR channels
+    1. writeng texts to the user using STDOUT and STDERR channels
        note that it never reads, except from command line, hence no STDIN
-    2. reading and writing to network sockets, which is done underneath
+    2. writing and reading to network sockets, which is done underneath
 
 We assume that the  I/O socket (2. above)  is handled properly by the used
 modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
@@ -9214,10 +9214,11 @@ The I/O layers need to be set in the main script only, all modules inherit
 the settings from there. However, modules need to use the proper binmode()
 call itself, if they are called from command line.
 Unfortunatelly Perl::Critic  complains that  ':encoding(UTF-8)'  should be
-used, hence  InputOutput::RequireEncodingWithUTF8Layer  must be used.
+used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
 Note that we use STDOUT and STDERR  and not the pseudo layer ':std' or the
 -S flag/option, because they also contain STDIN.
+
 
 =head2 Perl:map()
 
