@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.15 19/07/03 16:11:33
+#?      @(#) Makefile.opt 1.16 19/09/03 19:09:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.15
+_SID.opt        = 1.16
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -57,101 +57,101 @@ HELP-test.opt.log   = same as test.opt but store output in t/testcmd-CMD.log
 
 HELP.opt            = $(_NL)\
 \# Examples:$(_NL)\
-\#    make testarg0-stdformat-crlf$(_NL)\
-\#    make testarg0-stdformat-raw
+\#    make testarg-stdformat-crlf$(_NL)\
+\#    make testarg-stdformat-raw
 
 HELP.test.opt.all   = # no special documentation yet
 
 # SEE EXE.pl:--trace-CLI 
 
-testopt-alias%:                 EXE.pl      = ../$(SRC.pl)
-testopt-alias%:                 TEST.init   = --trace-CLI --traceARG --v +quit
+testopt-alias%:             EXE.pl      = ../$(SRC.pl)
+testopt-alias%:             TEST.init   = --trace-CLI --traceARG --v +quit
 
-# The part right of the  _  in the target name testarg0-alias*  is the pattern
+# The part right of the  _  in the target name testarg-alias*  is the pattern
 # to be searched for in the output of $(EXE.pl).  As this might contain chars
 # not allowed in make's target names, . (dot) are used (i.e. for = or space).
 
-testopt-alias_enabled..1:       TEST.args  += --exit=MAIN  -b
-testopt-alias_enabled..2:       TEST.args  += --exit=MAIN  -b
-testopt-alias_ca_path..x:       TEST.args  += --exit=MAIN  -c x
+testopt-alias_enabled..1:   TEST.args  += --exit=MAIN  -b
+testopt-alias_enabled..2:   TEST.args  += --exit=MAIN  -b
+testopt-alias_ca_path..x:   TEST.args  += --exit=MAIN  -c x
 
 # folgende noch in passende Makefile verschieben
-testopt-alias_HOST0:            TEST.init   =
-#testarg0-alias_HOST0:           TEST.args  += --exit=HOST0 +cn demo demo:42 egal --port 23 localhost
-testopt-alias_HOST0:            TEST.args  += --exit=HOST0 +cn ::1 ::244
+testopt-alias_HOST0:        TEST.init   =
+#testarg-alias_HOST0:        TEST.args  += --exit=HOST0 +cn demo demo:42 egal --port 23 localhost
+testopt-alias_HOST0:        TEST.args  += --exit=HOST0 +cn ::1 ::244
 
 # yeast.pl --exit=HOST0 +cn demo demo:42 egal --port 23 localhost ::1/erkannt_aber_falsch "[::266]" --port=22 "[::244]:32/egal" ::1:333/x/ambigious_port_falsch
 
 testopt-alias_%: message-%
 	@echo ""
 
-testarg0-stdformat-%:           EXE.pl      = ../$(SRC.pl)
-testarg0-stdformat-%:           TEST.init   = --trace-CLI --no-rc --help=pod
+testarg-stdformat-%:        EXE.pl      = ../$(SRC.pl)
+testarg-stdformat-%:        TEST.init   = --trace-CLI --no-rc --help=pod
 
-testarg0-stdformat-crlf:        TEST.args  += --stdformat=crlf
-testarg0-stdformat-raw:         TEST.args  += --stdformat=raw
-testarg0-stdformat-unix:        TEST.args  += --stdformat=unix
-testarg0-stdformat-utf8:        TEST.args  += --stdformat=utf8
-testarg0-stdformat-UTF8:        TEST.args  += --stdformat=UTF-8
-testarg0-stdformat-UTF-8: testarg0-stdformat-UTF8
+testarg-stdformat-crlf:     TEST.args  += --stdformat=crlf
+testarg-stdformat-raw:      TEST.args  += --stdformat=raw
+testarg-stdformat-unix:     TEST.args  += --stdformat=unix
+testarg-stdformat-utf8:     TEST.args  += --stdformat=utf8
+testarg-stdformat-UTF8:     TEST.args  += --stdformat=UTF-8
+testarg-stdformat-UTF-8: testarg-stdformat-UTF8
 
 # TODO: vialid options to be tested here
-#stdarg0-opt-001:                TEST.args  += --sslv3 --ssl-v3 --sslv3 -.sslv3 -_sslv3 --ssl3 --ssl3
-#stdarg0-opt-001:                TEST.args  += --no-sslv2 --no-ssl-v2 --nosslv2 --no.sslv2 --no_sslv2 --no-ssl2 --nossl2
-#stdarg0-opt-001:                TEST.args  += --no-sslv3 --no-ssl-v3 --nosslv3 --no.sslv3 --no_sslv3 --no-ssl3 --nossl3
-#stdarg0-opt-101:                TEST.args  += --short
-#stdarg0-opt-102:                TEST.args  += --short-txt
-#stdarg0-opt-103:                TEST.args  += --shorttext
-#stdarg0-opt-104:                TEST.args  += --separator SEP
-#stdarg0-opt-105:                TEST.args  += --sep=SEP
-#stdarg0-opt-106:                TEST.args  += --nocerttext='no text'
-#stdarg0-opt-107:                TEST.args  += --nocerttxt  'no text'
-#stdarg0-opt-108:                TEST.args  += --no-dns-mx
-#stdarg0-opt-109:                TEST.args  += --nodns-mx
-#stdarg0-opt-110:                TEST.args  += --no-mx
-#stdarg0-opt-111:                TEST.args  += --dns-mx
-#stdarg0-opt-112:                TEST.args  += --no-http
-#stdarg0-opt-113:                TEST.args  += --nohttp
-#stdarg0-opt-114:                TEST.args  += --http
-#stdarg0-opt-115:                TEST.args  += --enabled
-#stdarg0-opt-115:                TEST.args  += --timeout=23
-#stdarg0-opt-117:                TEST.args  += -timeout 23
+#stdarg-opt-001:             TEST.args  += --sslv3 --ssl-v3 --sslv3 -.sslv3 -_sslv3 --ssl3 --ssl3
+#stdarg-opt-001:             TEST.args  += --no-sslv2 --no-ssl-v2 --nosslv2 --no.sslv2 --no_sslv2 --no-ssl2 --nossl2
+#stdarg-opt-001:             TEST.args  += --no-sslv3 --no-ssl-v3 --nosslv3 --no.sslv3 --no_sslv3 --no-ssl3 --nossl3
+#stdarg-opt-101:             TEST.args  += --short
+#stdarg-opt-102:             TEST.args  += --short-txt
+#stdarg-opt-103:             TEST.args  += --shorttext
+#stdarg-opt-104:             TEST.args  += --separator SEP
+#stdarg-opt-105:             TEST.args  += --sep=SEP
+#stdarg-opt-106:             TEST.args  += --nocerttext='no text'
+#stdarg-opt-107:             TEST.args  += --nocerttxt  'no text'
+#stdarg-opt-108:             TEST.args  += --no-dns-mx
+#stdarg-opt-109:             TEST.args  += --nodns-mx
+#stdarg-opt-110:             TEST.args  += --no-mx
+#stdarg-opt-111:             TEST.args  += --dns-mx
+#stdarg-opt-112:             TEST.args  += --no-http
+#stdarg-opt-113:             TEST.args  += --nohttp
+#stdarg-opt-114:             TEST.args  += --http
+#stdarg-opt-115:             TEST.args  += --enabled
+#stdarg-opt-115:             TEST.args  += --timeout=23
+#stdarg-opt-117:             TEST.args  += -timeout 23
 
-#stdarg0-opt-118:                TEST.args  += --traceKEY
-#stdarg0-opt-119:                TEST.args  += --traceKEY --showhost
+#stdarg-opt-118:             TEST.args  += --traceKEY
+#stdarg-opt-119:             TEST.args  += --traceKEY --showhost
 
 # TODO: valid hosts and host options to be tested here
-#stdarg0-opt-201:                TEST.args  += --host=a.b
-#stdarg0-opt-202:                TEST.args  += --host a.b
-#stdarg0-opt-203:                TEST.args  += --h a.b
-#stdarg0-opt-204:                TEST.args  += --port=42
-#stdarg0-opt-205:                TEST.args  += --port 42
-#stdarg0-opt-206:                TEST.args  += --p 42
-#stdarg0-opt-207:                TEST.args  += a.b
-#stdarg0-opt-208:                TEST.args  += a-b
-#stdarg0-opt-209:                TEST.args  += a.b:42
-#stdarg0-opt-210:                TEST.args  += https://a.b:333/path
-#stdarg0-opt-211:                TEST.args  += https://a.b:333/path?key=val
-#stdarg0-opt-212:                TEST.args  += https://user:pass@a.b:333/path
+#stdarg-opt-201:             TEST.args  += --host=a.b
+#stdarg-opt-202:             TEST.args  += --host a.b
+#stdarg-opt-203:             TEST.args  += --h a.b
+#stdarg-opt-204:             TEST.args  += --port=42
+#stdarg-opt-205:             TEST.args  += --port 42
+#stdarg-opt-206:             TEST.args  += --p 42
+#stdarg-opt-207:             TEST.args  += a.b
+#stdarg-opt-208:             TEST.args  += a-b
+#stdarg-opt-209:             TEST.args  += a.b:42
+#stdarg-opt-210:             TEST.args  += https://a.b:333/path
+#stdarg-opt-211:             TEST.args  += https://a.b:333/path?key=val
+#stdarg-opt-212:             TEST.args  += https://user:pass@a.b:333/path
 
 # TODO: invalid options to be tested here
-#stdarg0-opt-501:                TEST.args  += --no-sslv
-#stdarg0-opt-502:                TEST.args  += --no-sslv1
-#stdarg0-opt-503:                TEST.args  += -no-sslv1
-#stdarg0-opt-504:                TEST.args  += --un=knwon
-#stdarg0-opt-505:                TEST.args  += +unknown-command
-#stdarg0-opt-506:                TEST.args  += +--quit
-#stdarg0-opt-507:                TEST.args  += +quit-
-#stdarg0-opt-508:                TEST.args  += +hsts-sts
+#stdarg-opt-501:             TEST.args  += --no-sslv
+#stdarg-opt-502:             TEST.args  += --no-sslv1
+#stdarg-opt-503:             TEST.args  += -no-sslv1
+#stdarg-opt-504:             TEST.args  += --un=knwon
+#stdarg-opt-505:             TEST.args  += +unknown-command
+#stdarg-opt-506:             TEST.args  += +--quit
+#stdarg-opt-507:             TEST.args  += +quit-
+#stdarg-opt-508:             TEST.args  += +hsts-sts
 
-test.opt.log-compare:   TEST.target_prefix  = testarg0-std
-test.opt.log-move:      TEST.target_prefix  = testarg0-std
-test.opt.log:           TEST.target_prefix  = testarg0-std
+test.opt.log-compare:   TEST.target_prefix  = testarg-std
+test.opt.log-move:      TEST.target_prefix  = testarg-std
+test.opt.log:           TEST.target_prefix  = testarg-std
 # TODO: testopt-* missing
 
 # note: no sort because we want the sequence as defined above
-ALL.testalias       = $(shell awk -F: '/^testarg0-alias_[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
-ALL.teststdformat   = $(shell awk -F: '/^testarg0-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.testalias       = $(shell awk -F: '/^testarg-alias_[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.teststdformat   = $(shell awk -F: '/^testarg-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
 ALL.test.stdformat  = $(ALL.teststdformat)
 ALL.testopt    += $(ALL.testalias)
 ALL.testopt    += $(ALL.teststdformat)
