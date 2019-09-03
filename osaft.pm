@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.07.29',  # official version number of this file
+    OSAFT_VERSION   => '19.08.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,9 +25,13 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.190 19/08/01 14:17:12",
+    SID_osaft   => "@(#) osaft.pm 1.191 19/09/03 21:40:11",
 
 };
+
+## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+#  SEE Perl:binmode() (in o-saft.pl)
+
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -3047,7 +3051,7 @@ sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy pe
 sub osaft_sleep {
     #? wrapper for IO::select
     my $wait = shift;
-    select(undef, undef, undef, $wait);
+    select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
     return;
 } # osaft_sleep
 
@@ -3104,7 +3108,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.190 2019/08/01
+1.191 2019/09/03
 
 =head1 AUTHOR
 
