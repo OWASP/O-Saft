@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.898 19/09/03 21:45:25",
+    SID         => "@(#) yeast.pl 1.899 19/09/05 23:02:18",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -5750,6 +5750,7 @@ EoREQ
     # convert response to hash; only HTTP header lines are expected, so each
     # line is a key:value pair, except the very first status line
     $response =~ s#HTTP/1.. #STATUS: #; # first line is status line, add :
+    $response =~ s#(?:\r\n\r\n|\n\n|\r\r).*$##ms;   # remove HTTP body
     %headers  = map { split(/:/, $_, 2) } split(/[\r\n]+/, $response);
     #if (2 <= $cfg{'trace'}) {
     #    use Data::Dumper;
