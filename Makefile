@@ -100,14 +100,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.76 19/09/02 23:07:58
+#?      @(#) Makefile 1.77 19/09/05 23:36:51
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.76
+_SID            = 1.77
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -285,7 +285,7 @@ inc.Makefiles   = \
 		  Makefile.opt     Makefile.cmds  Makefile.ext   Makefile.exit \
 		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
 		  Makefile.critic  Makefile.etc   Makefile.template \
-		  Makefile.doc     Makefile.FQDN  Makefile.examples
+		  Makefile.dev     Makefile.FQDN  Makefile.examples
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
@@ -325,7 +325,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.76
+_INST.text      = generated from Makefile 1.77
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -536,8 +536,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.76
-tar:     GREP_EDIT  = 1.76
+GREP_EDIT           = 1.77
+tar:     GREP_EDIT  = 1.77
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
