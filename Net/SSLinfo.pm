@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.08.19',
+    SSLINFO_VERSION => '19.09.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.234 19/08/27 23:23:57',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.235 19/09/05 23:26:05',
 };
 
 ######################################################## public documentation #
@@ -3698,6 +3698,7 @@ sub verify_altname  {
     _trace("verify_altname: $cname");
     foreach my $alt (split(/ /, $cname)) {
         # list of strings like: DNS:some.tld DNS:other.tld email:who@some.tld
+        # $alt may contain  (  or  {  , see escape $rex below
         next if ($alt =~ m/^\s*$/);
         my ($type, $name) = split(/:/, $alt);
 #dbx# print "#ALT# $alt: ($type, $name)";
@@ -3708,7 +3709,8 @@ sub verify_altname  {
             $host = lc($host);
             $rex  = lc($rex);
         }
-        $rex =~ s/[.]/\\./g;
+        $rex =~ s/[.]/\\./g;        # escape meta characters
+        $rex =~ s/([({[])/\\$1/g;   # escape meta characters
         if ($name =~ m/[*]/) {
             $rex =~ s/(\*)/[^.]*/;
         }
