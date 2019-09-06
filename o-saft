@@ -15,6 +15,8 @@
 #?
 #? OPTIONS
 #?      -h      got it
+#?      -help=* grep for *  in 'o-saft.pl --help'
+# TODO: should also grep in --help=commads and some other programs
 #?      -list   list available programs in ./contrib/ directory
 #?      -cli    start o-saft.pl  with remaining arguments; this is the default
 #?      -cgi    start o-saft.cgi with remaining arguments
@@ -52,7 +54,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.16 19/07/20 12:15:03
+#?      @(#) o-saft 1.17 19/09/07 00:26:42
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -69,6 +71,8 @@ dok=$dir/$ich-docker
 contrib=$dir/contrib
 try=
 post="cat"      # default, avoids special handling if -post= missing
+post_args=
+    # aguments passed to post command, mainly used for -help=
 mode=cli        # cli, cgi, gui
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
@@ -90,7 +94,13 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.16"; exit 0; ;;
+        +VERSION)       echo "1.17"; exit 0; ;;
+        -help=*)
+            help="`expr "$1" ':' '-help=\(.*\)'`"
+            args="--help"
+            post=egrep
+            post_args="--color -i -C 3 $help"
+            ;;
         -list)
             for exe in $contrib/* ; do
                 [ -d "$exe" ] && continue
@@ -138,9 +148,9 @@ fi
 case "$mode" in
     cgi) $try $cgi --cgi $* | $post  ; ;;
     gui) $try $gui --post="$post" $* ; ;;
-    *)   echo "$prg $docker_id $docker_tag $* | $post"
+    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args"
          [ -n "$try" ] && exit 0
-               $prg $docker_id $docker_tag $* | $post 
+               $prg $docker_id $docker_tag $* $args | $post $post_args
          ;;
 esac
 exit 0
