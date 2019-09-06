@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.07.29";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.19 19/08/04 15:38:11";
+my  $SID_data   = "@(#) Data.pm 1.20 19/09/06 23:36:10";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -146,7 +146,7 @@ sub get_markup    {
     my @txt;
     my $fh      = _get_filehandle($file);
     # Preformat plain text with markup for further simple substitutions. We
-    # use a modified (& instead of < >) POD markup as it is easy to parse.
+    # use a modified  &  instead of < >  POD markup as it is easy to parse.
     # &  was choosen because it rarely appears in texts and  is not  a meta
     # character in any of the supported  output formats (text, wiki, html),
     # and also causes no problems inside regex.
@@ -169,8 +169,10 @@ sub get_markup    {
         s/^( {11})([^ ].*)/=item * $1$2/;# list item
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
         s/^( {18})([^ ].*)/S&$1$2&/;    # exactly 18
-        if (not m/^(?:=|S&|\s+\$0)/) {  # no markup in example lines and already marked lines
-            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # markup commands and options
+        if (not m/^(?:=|S&|\s+\$0)/) {  # more markup, ...
+            # but not in example lines and already marked lines
+            s#(\s)+(a-zA-Z[^ ]+)(\s+)#$1'$2'$3#g;   # markup literal character class as code
+            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # our commands and options
                 # TODO: fails for something like:  --opt=foo="bar"
                 # TODO: above substitute fails for something like:  --opt --opt
                 #        hence same substitute again (should be sufficent then)
@@ -458,7 +460,14 @@ References to text or cite.
 
 =item 'text in single quotes'
 
-References to verbatim text elswhere or constant string in description.
+References to verbatim text elsewhere or constant string in description.
+
+It is difficult to markup character classes like  a-zA-Z-  this way (using
+quotes), because any character may be part of the class, including quotes or
+those used for markup. For Example will  a-zA-Z-  look like  C<a-zA-Z->  in
+POD format. Hence character classes are defined literally without markup to
+avoid confusion. However, it is assumed (when our generating documentation)
+that strings (words) beginning with <a-zA-Z  are character classes.
 
 =item '* list item
 
@@ -569,7 +578,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.19 2019/08/04
+1.20 2019/09/06
 
 =head1 AUTHOR
 
