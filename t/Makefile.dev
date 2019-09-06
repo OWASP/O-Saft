@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.dev 1.3 19/09/07 00:31:52
+#?      @(#) Makefile.dev 1.4 19/09/07 00:43:15
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.dev        = 1.3
+_SID.dev        = 1.4
 
 _MYSELF.dev     = t/Makefile.dev
 _MY.includes   += $(_MYSELF.dev)
@@ -51,6 +51,7 @@ TEST.dev.hosts      =
 # need to call program here and not the one found via $PATH
 EXE.o-saft-tcl      = ../$(SRC.tcl)
 EXE.o-saft-pl       = ../$(SRC.pl)
+EXE.o-saft-sh       = ../$(SRC.sh)
 EXE.osaft           = ../osaft.pm
 EXE.osaft-standalone = ../o-saft-standalone.pl
 EXE.osaft-dbx       = ../o-saft-dbx.pm
@@ -82,6 +83,7 @@ ARGS.sources        = EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.o
 
 ARGS.o-saft-tcl     = --help=opts --test-o-saft
 ARGS.o-saft-pl      =  +traceSUB
+ARGS.o-saft-sh      =  -h -list -help=rc -help=sni
 ARGS.osaft          =
 # done with ARGS.osaft-dbx:  --regex --test-regex
 
