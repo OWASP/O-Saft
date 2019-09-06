@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.07.29";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.20 19/09/06 23:36:10";
+my  $SID_data   = "@(#) Data.pm 1.21 19/09/06 23:49:44";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -509,15 +509,15 @@ links to sub-sections if the title is not written in all upper case.
 
 =back
 
-All head lines for sections (see TITLE above) must be preceeded by 2 empty
+All head lines for sections (see TITLE above) must be preceded by 2 empty
 lines. All head lines for commands and options should contain just this command
-or option, aliases should be written in their own line (to avoid confusion
-in some other parsers, like Tcl).
+or option. Aliases for commands or options should be written in their own line
+(to avoid confusion in some other parsers, like Tcl).
 
 List items should be followed by an empty line.
 
 Texts in section headers should not contain any quote characters.  I.g. no
-other markup is used. Even Lines starting with  '#' as first character are
+other markup is used. Even lines starting with  '#'  as first character are
 usually not treated as comment line but verbatim text.
 
 =head2 Special markups
@@ -578,7 +578,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.20 2019/09/06
+1.21 2019/09/06
 
 =head1 AUTHOR
 
