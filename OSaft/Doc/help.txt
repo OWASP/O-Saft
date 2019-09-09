@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.34 19/07/27 21:43:00
+# SID   @(#) help.txt 1.35 19/09/09 21:42:02
 
 NAME
 
@@ -2390,7 +2390,7 @@ CHECKS
         Check if target supports SSTP by accepting method SSTP_DUPLEX_POST.
 
         The check does not send other methods (like CONNECT) to verify if the
-        the protocol is fully supported.
+        protocol is fully supported.
 
         Supporting SSTP is considered insecure, because SSTP allows to tunnel 
         other, probably insecure, protocols.
@@ -2446,10 +2446,11 @@ CHECKS
 
         Certificates public key encryption algorithm is well known.
 
-      Public Key Modulus size
-
-        Some (historic) SSL implementations are subject to buffer overflow if
-#bad#         the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
+# TODO: test missing; check not yet implemented
+#      Public Key Modulus size
+#
+#        Some (historic) SSL implementations are subject to buffer overflow if
+#        the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
 
       Public Key Modulus Exponent size
 
@@ -2462,7 +2463,7 @@ CHECKS
         exponenents larger than 65536.
 # if > 65536 then all clients usisng MS-SSL-stack will fail to connect
 
-        If ecliptive curves are used, the result for these checks is always
+        If ecliptic curves are used, the result for these checks is always
         'no (<<N/A ...)'.
 
       Sizes and Lengths of Certificate Settings
@@ -2556,7 +2557,7 @@ CHECKS
           * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
           * +modulus_size_oldssl - Public Key Modulus <16385 bits
 
-        For some details of these cjecks, please see the description above at
+        For some details of these checks, please see the description above at
           Public Key Modulus Exponent size
 
         The recommendations for  DH parameters (RSA and ecliptice curve)  are
