@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.899 19/09/05 23:02:18",
+    SID         => "@(#) yeast.pl 1.900 19/09/09 16:48:17",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -586,7 +586,9 @@ our %data   = (         # connection and certificate details
     'alpns'         => {'val' => sub { return $info{'alpns'};                    }, 'txt' => "Target's supported ALPNs"},
     'npns'          => {'val' => sub { return $info{'npns'};                     }, 'txt' => "Target's supported  NPNs"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
+    'public_key_len'=> {'val' => sub { Net::SSLinfo::public_key_len($_[0], $_[1])}, 'txt' => "Target's Server public key length"}, # value reported by openssl s_client -debug ...
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
+    'session_id_ctx'=> {'val' => sub { Net::SSLinfo::session_id_ctx($_[0], $_[1])}, 'txt' => "Target's Session-ID-ctx"},
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
@@ -637,7 +639,7 @@ our %data   = (         # connection and certificate details
     'valid_host'    => {'val' =>  0, 'txt' => "dummy used for printing DNS stuff"},
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|next_protocols|
-# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout|session_starttime|session_startdate
+# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|public_key_len|session_id|session_id_ctx|session_protocol|session_ticket|session_lifetime|session_timeout|session_starttime|session_startdate
 
 # add keys from %prot to %data,
 foreach my $ssl (keys %prot) {
@@ -1032,7 +1034,9 @@ our %shorttexts = (
     'ocsp_this_update'  => "OCSP Response This Update",
     'srp'               => "SRP Username",
     'master_key'        => "Master-Key",
+    'public_key_len'    => "Server public key length",
     'session_id'        => "Session-ID",
+    'session_id_ctx'    => "Session-ID-ctx",
     'session_protocol'  => "Selected SSL Protocol",
     'session_ticket'    => "TLS Session Ticket",
     'session_lifetime'  => "TLS Session Ticket Lifetime",
