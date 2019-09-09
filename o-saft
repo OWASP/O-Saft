@@ -57,7 +57,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.18 19/09/09 12:29:20
+#?      @(#) o-saft 1.19 19/09/09 12:43:39
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -71,6 +71,12 @@ gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
 dok=$dir/$ich-docker
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
+    # then check (below) if tools exists, if not, remove path ans rely on $PATH
+[ ! -x "$prg" ] && prg=$ich.pl
+[ ! -x "$gui" ] && gui=$ich.tcl
+[ ! -x "$cgi" ] && cgi=$ich.cgi
+[ ! -x "$dok" ] && dok=$ich-docker
+
 contrib=$dir/contrib
 try=
 post="cat"      # default, avoids special handling if -post= missing
@@ -102,7 +108,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.18"; exit 0; ;;
+        +VERSION)       echo "1.19"; exit 0; ;;
         -help=*)
             help="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
