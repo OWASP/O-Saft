@@ -34,6 +34,9 @@
 #?      $0  must be install in the same directory as the tools it will call
 #?          $0.pl  $0.cgi  $0.tcl
 #?
+#?      Automatic detection of GUI mode fails, if the starter in the desktop's
+#?      panel (or whatever functionality is used) uses a terminal.
+#?
 #? EXAMPLES
 #?          $0 +cmd --option target
 #?          $0 -post='bunt.pl'      ' +cmd --option target
@@ -54,7 +57,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.17 19/09/07 00:26:42
+#?      @(#) o-saft 1.18 19/09/09 12:29:20
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -78,7 +81,12 @@ docker=0        # cli or gui mode; cannot use $mode because it is needed for doc
 docker_id=
 docker_tag=
 
-[ -t 1 ] || mode=gui    # no STDOUT, assuming start from desktop, hence GUI
+#dbx# echo "#################" >> /tmp/t.o-saft.log
+#dbx# [ -t 0 ] &&echo 0 STDIN  >> /tmp/t.o-saft.log
+#dbx# [ -t 1 ] &&echo 1 STDOUT >> /tmp/t.o-saft.log
+#dbx# [ -t 2 ] &&echo 2 STDERR >> /tmp/t.o-saft.log
+
+[ -t 0 ] || mode=gui    # no STDIN, assuming start from desktop, hence GUI
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -94,7 +102,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.17"; exit 0; ;;
+        +VERSION)       echo "1.18"; exit 0; ;;
         -help=*)
             help="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
