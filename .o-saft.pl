@@ -28,13 +28,13 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.96 19/07/04 23:36:14
+#?      @(#) .o-saft.pl 1.97 19/09/09 16:47:09
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID.rc  = 1.96; # our own SID required for Makefile and some tools
+SID.rc  = 1.97; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -55,7 +55,7 @@ SID.rc  = 1.96; # our own SID required for Makefile and some tools
 ###
 --ca-path=/etc/ssl/certs/
 --ca-file=/etc/ssl/certs/ca-certificates.crt
-#--ca-depth=4
+--ca-depth=4
 
 ###
 ### disable cipher checks
@@ -199,7 +199,7 @@ SID.rc  = 1.96; # our own SID required for Makefile and some tools
 ###
 ### redefine command +info
 ###
---cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols dh_parameter master_key session_id session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins pkp_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols public_key_len dh_parameter master_key session_id session_id_ctx session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins pkp_pins info
 # useless for +info ('cause aliases): issuer issuer_hash
 # included in +info to be printed with --v :
 #      certificate sigdump pubkey extensions ext_*
