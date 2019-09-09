@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.900 19/09/09 16:48:17",
+    SID         => "@(#) yeast.pl 1.901 19/09/09 21:38:38",
     STR_VERSION => "19.08.19",          # <== our official version number
 };
 
@@ -4824,11 +4824,12 @@ sub checksizes($$)  {
                     $checks{'modulus_exp_oldssl'}->{val}= $text{'na'};
                 }
             }
-            $value = $data{'modulus'}->{val}($host);    # value are hex digits
+            $value = $data{'modulus'}->{val}($host);    # value consist of hex digits
             if ($value eq '<<openssl>>') {
                 $checks{'modulus_size_oldssl'}->{val}   = $text{'na_openssl'};
             } else {
-                $checks{'modulus_size_oldssl'}->{val}   = length($value) * 4 if ((length($value) * 4) > 16384);
+                $value = length($value) * 4;
+                $checks{'modulus_size_oldssl'}->{val}   = $value if ($value > 16384);
             }
         }
         $value = $data{'serial_int'}->{val}($host);
