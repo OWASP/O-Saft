@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.96 19/09/02 00:50:48";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.97 19/09/09 23:33:14";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -530,6 +530,16 @@ sub _yeast_data {
 = The purpose is to show if a proper key is defined in  %data and %checks  for
 = each command from  %cfg{'commands'}  and vice versa.
 =
+=   column      description
+=  ------------+--------------------------------------------------
+=   key         key in %cfg{'commands'}
+=   command     key (see above) available as command: +key
+=   intern      internal command only, not avaialable as +key
+=   short       desciption of command available as short text
+=   data        command returns data (part of +info)
+=   checks      command returns check (part of +check)
+=   cmd-ch.     command listed in ...
+=  ------------+--------------------------------------------------
 ";
 
     my $old;
@@ -552,15 +562,16 @@ sub _yeast_data {
             next;
         }
         $cmd = "+" if (0 < _is_member($key, \@{$cfg{'commands'}})); # command available as is
-        $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/);       # all SSL/TLS commands ar for checks only
-        print __data_data(
+        $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/i);      # all SSL/TLS commands ar for checks only
+#print "# ($key =~ /$cfg{'regex'}->{'SSLprot'}/)\n";
+        print __data_data(  #__/--- check value -------\    true : false  # column
             $key, $cmd,
-            (_is_intern($key) > 0)      ?          "I"  : " ",
-            (defined $data{$key})       ? __data( $key) : " ",
-            (defined $shorttexts{$key}) ?          "*"  : " ",
-            (defined $checks{$key})     ?          "*"  : " ",
+            (_is_intern($key) > 0)                      ?   "I"  : " ",   # intern
+            (defined $data{$key})                ? __data( $key) : " ",   # data
+            (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
+            (defined $checks{$key})                     ?   "*"  : " ",   # checks
             ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
-            || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)) ? "*"  : "!",
+            || ($key =~ /$cfg{'regex'}->{'SSLprot'}/i)) ?   "*"  : "!",   # cmd-ch.
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
@@ -573,8 +584,8 @@ sub _yeast_data {
     print __data_head();
     print "
 =   +  command (key) present
-=   I  command is an internal command or alias
-=   -  command (key) used internal for checks only
+=   I  command is an internal command or alias (ok in column 'intern')
+=   -  command (key) used internal for checks only (ok in column 'command')
 =   *  key present
 =      key not present
 =   ?  key in %data present but missing in \$cfg{commands}
@@ -583,8 +594,6 @@ sub _yeast_data {
 =
 = A shorttext should be available for each command and all data keys, except:
 =      cn_nosni, ext_*, valid_*
-=
-= Please check following keys, they skipped in table above due to
 =
 ";
     print "= internal or summary commands:\n=      " . join(" ", @yeast);
@@ -817,7 +826,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.96 2019/09/02
+1.97 2019/09/09
 
 =head1 AUTHOR
 
