@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.97 19/09/09 23:33:14";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.98 19/09/09 23:55:36";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -517,7 +517,7 @@ sub _vprintme   {
 # subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s\n", @_); }
-sub __data_head { return __data_title("key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score"); }
+sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", " score"); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", @_); }
 
@@ -534,12 +534,13 @@ sub _yeast_data {
 =  ------------+--------------------------------------------------
 =   key         key in %cfg{'commands'}
 =   command     key (see above) available as command: +key
-=   intern      internal command only, not avaialable as +key
-=   short       desciption of command available as short text
-=   data        command returns data (part of +info)
-=   checks      command returns check (part of +check)
+=   data        command returns %data  (part of +info)
+=   checks      command returns %check (part of +check)
 =   cmd-ch.     command listed in ...
+=   short       desciption of command available as short text
+=   intern      internal command only, not avaialable as +key
 =  ------------+--------------------------------------------------
+=
 ";
 
     my $old;
@@ -562,16 +563,15 @@ sub _yeast_data {
             next;
         }
         $cmd = "+" if (0 < _is_member($key, \@{$cfg{'commands'}})); # command available as is
-        $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/i);      # all SSL/TLS commands ar for checks only
-#print "# ($key =~ /$cfg{'regex'}->{'SSLprot'}/)\n";
+        $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/i);      # all SSL/TLS commands are for checks only
         print __data_data(  #__/--- check value -------\    true : false  # column
             $key, $cmd,
-            (_is_intern($key) > 0)                      ?   "I"  : " ",   # intern
             (defined $data{$key})                ? __data( $key) : " ",   # data
-            (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
             (defined $checks{$key})                     ?   "*"  : " ",   # checks
             ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
             || ($key =~ /$cfg{'regex'}->{'SSLprot'}/i)) ?   "*"  : "!",   # cmd-ch.
+            (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
+            (_is_intern($key) > 0)                      ?   "I"  : " ",   # intern
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
@@ -826,7 +826,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.97 2019/09/09
+1.98 2019/09/09
 
 =head1 AUTHOR
 
