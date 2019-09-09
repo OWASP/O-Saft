@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.235 19/09/05 23:26:05',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.236 19/09/09 15:50:54',
 };
 
 ######################################################## public documentation #
@@ -2702,11 +2702,13 @@ sub do_ssl_open($$$@) {
         foreach my $key (keys %match_map) {
             my $regex = $match_map{$key};
             $d = $data;
-            $d =~ s/.*?$regex\s*([^\n]*)\n.*/$1/si;
+            $d =~ s/.*?$regex[ \t]*([^\n\r]*)\n.*/$1/si;
+            _trace("do_ssl_open: match key: $key\t= $regex");
             if ($data =~ m/$regex/) {
-                $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
+                $_SSLinfo{$key} = $d;
                 $_SSLinfo{$key} = $regex if ($key eq 'no_alpn');
                     # no_alpn: single line, has no value: No ALPN negotiated
+                _trace("do_ssl_open: match value: $key\t= $_SSLinfo{$key}");
             }
         }
             # from s_client:
