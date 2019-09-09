@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.33 19/09/09 20:37:33
+#?      @(#) Makefile.cmds 1.34 19/09/09 22:42:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.33
+_SID.cmds       = 1.34
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -89,7 +89,10 @@ HELP.test.cmds.all  = # no special documentation yet
 # for the keys, the option  --no-out= is used (alias for  --ignore-output=).
 # but keeps the command line shorter).
 # The  ignored keys are tested with the target  testcmd-c+ignored-keys_
-_ignore-output-keys = master_key session_id session_id_ctx session_ticket sts_expired
+_ignore-output-keys = master_key \
+		      session_id session_id_ctx \
+		      session_startdate session_starttime \
+		      session_ticket sts_expired
 _ignore-output      = $(_ignore-output-keys:%=--no-out=%)
 _ignore-output-cmds = $(_ignore-output-keys:%=+%)
 
