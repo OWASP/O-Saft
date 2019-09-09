@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.236 19/09/09 15:50:54',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.238 19/09/09 16:22:33',
 };
 
 ######################################################## public documentation #
@@ -622,11 +622,12 @@ our @EXPORT = qw(
         no_alpn
         next_protocol
         krb5
+        master_key
         psk_hint
         psk_identity
-        srp
-        master_key
+        public_key_len
         session_id
+        session_id_ctx
         session_startdate
         session_starttime
         session_lifetime
@@ -634,6 +635,7 @@ our @EXPORT = qw(
         session_ticket_hint
         session_timeout
         session_protocol
+        srp
         renegotiation
         resumption
         dh_parameter
@@ -1088,7 +1090,9 @@ my %_SSLinfo= ( # our internal data structure
     'psk_identity'      => "",  # PSK identity
     'srp'               => "",  # SRP username
     'master_key'        => "",  # Master-Key
+    'public_key_len'    => "",  # Server public key
     'session_id'        => "",  # Session-ID
+    'session_id_ctx'    => "",  # Session-ID-ctx
     'session_startdate' => "",  # TLS session start time (human readable)
     'session_starttime' => "",  # TLS session start time (seconds EPOCH)
     'session_lifetime'  => "",  # TLS session ticket lifetime hint
@@ -2588,7 +2592,11 @@ sub do_ssl_open($$$@) {
             #    Server Temp Key: DH, 2048 bits
             #    Server Temp Key: ECDH, P-256, 256 bits
 
+            # from s_client (openssl 1.1.x and newer):
+            #  Server public key is 2048 bit
+
             # from s_client:
+            #  SSL-Session:
             #  SSL-Session:
             #    Protocol  : TLSv1
             #    Cipher    : ECDHE-RSA-RC4-SHA
@@ -2618,10 +2626,12 @@ sub do_ssl_open($$$@) {
             #    00a0 - 4c d4 72 33                                       L.r3
             #
             #    Start Time: 1435254245
+            #    Extended master secret: yes
         my %match_map = (
             # %_SSLinfo key       string to match in s_client output
             #-------------------+-----------------------------------
             'session_id'       => "Session-ID:",
+            'session_id_ctx'   => "Session-ID-ctx:",
             'master_key'       => "Master-Key:",
             'krb5'             => "Krb5 Principal:",
             'psk_identity'     => "PSK identity:",
@@ -2644,6 +2654,8 @@ sub do_ssl_open($$$@) {
             'dh_parameter'     => "Server Temp Key:",
             #'ocsp_response_data' => "OCSP response:",
                 # this is a multiline value, must be handled special, see below
+            #'public_key_len'   => "Server public key",
+                # this line has no  :  hence must be handled special, see below
         );
         my $d    = '';
         my $data = $_SSLinfo{'text'};
@@ -2778,6 +2790,9 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'ocsp_response'}  = $d;
         }
         $_SSLinfo{'ocsp_response_data'} = $d; # complete string, both cases above
+
+        $d = $data; $d =~ s/.*?Server public key is *([^\n\r]*)[\n\r].*/$1/si;
+        $_SSLinfo{'public_key_len'} = $d if ($data =~ m/Server public key is /);
 
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
         if ($data =~ m/TLS session ticket:/) {
@@ -3291,6 +3306,18 @@ Get target's SRP username.
 
 Get target's Master-Key.
 
+=head2 public_key_len
+
+Get target's Server public key length.
+
+=head2 session_id
+
+Get target's TLS Session-ID.
+
+=head2 session_id_ctx
+
+Get target's TLS Session-ID-ctx.
+
 =head2 session_protocol
 
 Get target's announced SSL protocols.
@@ -3616,7 +3643,9 @@ sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
 sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
 sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
 sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
+sub public_key_len  { return _SSLinfo_get('public_key_len',   $_[0], $_[1]); }
 sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
+sub session_id_ctx  { return _SSLinfo_get('session_id_ctx',   $_[0], $_[1]); }
 sub session_startdate{return _SSLinfo_get('session_startdate',$_[0], $_[1]); }
 sub session_starttime{return _SSLinfo_get('session_starttime',$_[0], $_[1]); }
 sub session_lifetime{ return _SSLinfo_get('session_lifetime', $_[0], $_[1]); }
