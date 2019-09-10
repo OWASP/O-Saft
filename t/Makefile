@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.73 19/09/03 19:09:34
+#?      @(#) Makefile 1.74 19/09/10 15:19:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.73
+_SID.test       = 1.74
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -316,7 +316,8 @@ help.test.make: test.file-1 test,file-2 test_file-3
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
 
 help.test.makevars:
-	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+	@echo '# $$(.VARIABLES)    = '
+	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort
 
 .PHONY: help.test.makevars
 
