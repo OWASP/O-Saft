@@ -17,16 +17,20 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #    Naming conventions for t/Makefile*
-#       * macro names have the prefix  TEST.
+#       * macro names have the prefix  TEST  and  HELP .
 #       * target names for public use have the prefix  test.
 #       * individual, special targets have the prefix  _test (exceptions exist)
 #
-#    Special variables specific for each t/Makefile*
+#    Summary variables extended in each t/Makefile*
+#       ALL.includes    - list of Makefiles
+#       ALL.inc.type    - list of types (should be suffix of Makefile's name)
+#       ALL.help.tests  - list of documentation (help) texts
+#       ALL.tests       - list of targets for testing
+#       ALL.tests.log   - list of targets for testing writing to logfile
+#
+#    Variables specific for each t/Makefile*
 #       _SID.myTYPE     - version number
 #       _MYSELF.myTYPE  - name of current file
-#       _MY.includes    - list of Makefiles
-#       _MY.inc.type    - list of types (should be suffix of Makefile's name)
-#       ALL.help.tests  - list of documentation (help) texts
 #       HELP.myTYPE     - documentation (help) text for the corresponding file
 #       HELP.myTYPE.all - list of all targets for the corresponding file
 #       HELP.myTYPE.internal  - some more documentation (help) text
@@ -48,18 +52,18 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.75 19/09/10 21:20:14
+#?      @(#) Makefile 1.76 19/09/10 22:13:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.75
+_SID.test       = 1.76
 
 _MYSELF.test    = t/Makefile
-_MY.includes   += $(_MYSELF.test)
-_MY.inc.type   += test
+ALL.includes   += $(_MYSELF.test)
+ALL.inc.type   += test
                 # this is the parent makefile in the directory
 
 first-test-target-is-default: help.test
@@ -175,7 +179,7 @@ $(ALL.tests)$(_NL)\
 $(ALL.tests.log)$(_NL)\
 \#$(_NL)\
 \# for more target and details, following targets can be used$(_NL)\
-$(foreach target,$(_MY.inc.type),t-$(target))$(_NL)
+$(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
 
 HELP.test.test  = $(HELP.test)
 HELP.test.all   = $(HELP.test.test.all)
@@ -215,8 +219,8 @@ help.test.%.internal:
 	@echo $(HELP.$*.internal)
 	@echo " # -------------------------------------------------------------"
 
-help-test-all       = $(foreach type,$(_MY.inc.type), help.test.$(type).all)
-help-test-internal  = $(foreach type,$(_MY.inc.type), help.test.$(type).internal)
+help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
+help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
 help.test.targets:
 	@$(MAKE) -s $(help-test-all) $(help-test-internal)
 
@@ -260,13 +264,13 @@ help.test.make: test.file-1 test,file-2 test_file-3
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
+	@echo '# $$(ALL.includes) = $(ALL.includes)'
+	@echo '# $$(ALL.inc.type) = $(ALL.inc.type)'
 	@echo '# $$(TEST.dir)      = $(TEST.dir)'
 	@echo '# $$(TEST.logdir)   = $(TEST.logdir)'
 	@echo '# $$(TEST.host)     = $(TEST.host)'
 	@echo '# $$(TEST.hosts)    = $(TEST.hosts)'
 	@echo '# $$(ALL.Makefiles) = $(ALL.Makefiles)'
-	@echo '# $$(_MY.includes)  = $(_MY.includes)'
-	@echo '# $$(_MY.inc.type)  = $(_MY.inc.type)'
 	@echo '# show some make variables:'
 	@echo '# $$@    = $@ #'
 	@echo '# $$<    = $< #'
