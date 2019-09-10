@@ -24,18 +24,18 @@
 #           grep help= OSaft/Doc/help.txt
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.20 19/09/10 21:25:54
+#?      @(#) Makefile.hlp 1.21 19/09/10 22:24:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.20
+_SID.hlp        = 1.21
 
 _MYSELF.hlp     = t/Makefile.hlp
-_MY.includes   += $(_MYSELF.hlp)
-_MY.inc.type   += hlp
+ALL.includes   += $(_MYSELF.hlp)
+ALL.inc.type   += hlp
 
 first-hlp-target-is-default: help.test.hlp
 
