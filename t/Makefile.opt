@@ -19,14 +19,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.opt 1.16 19/09/03 19:09:26
+#?      @(#) Makefile.opt 1.17 19/09/10 09:46:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.16
+_SID.opt        = 1.17
 
 _MYSELF.opt     = t/Makefile.opt
 _MY.includes   += $(_MYSELF.opt)
@@ -52,48 +52,42 @@ endif
 
 
 HELP-_opt1          = __________________________________________ testing options _
-HELP-test.opt       = test various alias options
+HELP-test.alias     = test various alias options
+HELP-test.stdformat = test various --stdformat= options
+HELP-test.opt       = test all options and alias options
 HELP-test.opt.log   = same as test.opt but store output in t/testcmd-CMD.log
 
 HELP.opt            = $(_NL)\
 \# Examples:$(_NL)\
-\#    make testarg-stdformat-crlf$(_NL)\
-\#    make testarg-stdformat-raw
+\#    make testarg-opt-alias-ipv6$(_NL)\
+\#    make testarg-opt-stdformat-crlf$(_NL)\
+\#    make testarg-opt-stdformat-raw
 
 HELP.test.opt.all   = # no special documentation yet
 
 # SEE EXE.pl:--trace-CLI 
 
-testopt-alias%:             EXE.pl      = ../$(SRC.pl)
-testopt-alias%:             TEST.init   = --trace-CLI --traceARG --v +quit
-
-# The part right of the  _  in the target name testarg-alias*  is the pattern
-# to be searched for in the output of $(EXE.pl).  As this might contain chars
-# not allowed in make's target names, . (dot) are used (i.e. for = or space).
-
-testopt-alias_enabled..1:   TEST.args  += --exit=MAIN  -b
-testopt-alias_enabled..2:   TEST.args  += --exit=MAIN  -b
-testopt-alias_ca_path..x:   TEST.args  += --exit=MAIN  -c x
+testarg-opt-alias-%:            EXE.pl      = ../$(SRC.pl)
+testarg-opt-alias-%:            TEST.init   = --trace-CLI --traceARG --v +quit
+testarg-opt-alias-enabled..1:   TEST.args  += --exit=MAIN  -b
+#testarg-opt-alias-enabled..2:   TEST.args  += --exit=MAIN  -b
+testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c x
 
 # folgende noch in passende Makefile verschieben
-testopt-alias_HOST0:        TEST.init   =
-#testarg-alias_HOST0:        TEST.args  += --exit=HOST0 +cn demo demo:42 egal --port 23 localhost
-testopt-alias_HOST0:        TEST.args  += --exit=HOST0 +cn ::1 ::244
+testarg-opt-alias-HOST0%:       TEST.init   = --exit=HOST0 +cn
+testarg-opt-alias-HOST0-ipv6:   TEST.args  += ::1 ::244
+testarg-opt-alias-HOST0-many:   TEST.args  += demo demo:42 egal --port 23 localhost
 
 # yeast.pl --exit=HOST0 +cn demo demo:42 egal --port 23 localhost ::1/erkannt_aber_falsch "[::266]" --port=22 "[::244]:32/egal" ::1:333/x/ambigious_port_falsch
 
-testopt-alias_%: message-%
-	@echo ""
-
-testarg-stdformat-%:        EXE.pl      = ../$(SRC.pl)
-testarg-stdformat-%:        TEST.init   = --trace-CLI --no-rc --help=pod
-
-testarg-stdformat-crlf:     TEST.args  += --stdformat=crlf
-testarg-stdformat-raw:      TEST.args  += --stdformat=raw
-testarg-stdformat-unix:     TEST.args  += --stdformat=unix
-testarg-stdformat-utf8:     TEST.args  += --stdformat=utf8
-testarg-stdformat-UTF8:     TEST.args  += --stdformat=UTF-8
-testarg-stdformat-UTF-8: testarg-stdformat-UTF8
+testarg-opt-stdformat-%:    EXE.pl      = ../$(SRC.pl)
+testarg-opt-stdformat-%:    TEST.init   = --trace-CLI --no-rc --help=pod
+testarg-opt-stdformat-crlf: TEST.args  += --stdformat=crlf
+testarg-opt-stdformat-raw:  TEST.args  += --stdformat=raw
+testarg-opt-stdformat-unix: TEST.args  += --stdformat=unix
+testarg-opt-stdformat-utf8: TEST.args  += --stdformat=utf8
+testarg-opt-stdformat-UTF8: TEST.args  += --stdformat=UTF-8
+testarg-opt-stdformat-UTF-8: testarg-opt-stdformat-UTF8
 
 # TODO: vialid options to be tested here
 #stdarg-opt-001:             TEST.args  += --sslv3 --ssl-v3 --sslv3 -.sslv3 -_sslv3 --ssl3 --ssl3
@@ -144,19 +138,22 @@ testarg-stdformat-UTF-8: testarg-stdformat-UTF8
 #stdarg-opt-507:             TEST.args  += +quit-
 #stdarg-opt-508:             TEST.args  += +hsts-sts
 
-test.opt.log-compare:   TEST.target_prefix  = testarg-std
-test.opt.log-move:      TEST.target_prefix  = testarg-std
-test.opt.log:           TEST.target_prefix  = testarg-std
-# TODO: testopt-* missing
+test.opt.log-compare:   TEST.target_prefix  = testarg-opt
+test.opt.log-move:      TEST.target_prefix  = testarg-opt
+test.opt.log:           TEST.target_prefix  = testarg-opt
 
 # note: no sort because we want the sequence as defined above
-ALL.testalias       = $(shell awk -F: '/^testarg-alias_[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
-ALL.teststdformat   = $(shell awk -F: '/^testarg-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
-ALL.test.stdformat  = $(ALL.teststdformat)
-ALL.testopt    += $(ALL.testalias)
-ALL.testopt    += $(ALL.teststdformat)
+ALL.test.alias      = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-alias-[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.test.stdformat  = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.test.alias.log  = $(ALL.test.salias:%=%.log)
+ALL.test.stdformat.log  = $(ALL.test.stdformat:%=%.log)
+ALL.testopt        += $(ALL.test.alias)
+ALL.testopt        += $(ALL.test.stdformat)
 
-test.stdformat  = $(ALL.teststdformat)
+test.alias:     $(ALL.test.alias)
+test.stdformat: $(ALL.test.stdformat)
+test.alias.log: $(ALL.test.alias.log)
+test.stdformat.log: $(ALL.test.stdformat.log)
 
 #ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testopt:%=%$(host)))
 
@@ -168,8 +165,6 @@ ALL.test.opt.log= $(ALL.testopt:%=%.log)
 test.opt:         $(ALL.test.opt)
 test.opt.log:     $(ALL.test.opt.log) test.log-compare-hint
 test.opt-%:       test.opt.internal test.opt
-
-.PHONY: test.stdformat
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
