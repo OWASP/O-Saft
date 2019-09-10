@@ -17,18 +17,18 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.etc 1.4 19/09/10 21:34:36
+#?      @(#) Makefile.etc 1.5 19/09/10 22:19:38
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.etc        = 1.4
+_SID.etc        = 1.5
 
 _MYSELF.etc     = t/Makefile.etc
-_MY.includes   += $(_MYSELF.etc)
-_MY.inc.type   += etc
+ALL.includes   += $(_MYSELF.etc)
+ALL.inc.type   += etc
 
 first-etc-target-is-default: help.test.etc
 
