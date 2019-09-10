@@ -148,7 +148,7 @@
 #.                  include t/Makefile.makefiles
 #.
 #.      To get a list of all makefiles, use:
-#.          make s-_MY.includes
+#.          make s-ALL.includes
 #.
 #.      Each of the t/Makefile.*  includes  t/Makefile. This allows to use each
 #.      Makefile.*  on its own, like:
@@ -178,18 +178,18 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.73 19/09/10 21:22:20
+#?      @(#) Makefile.help 1.74 19/09/10 22:24:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.73
+_SID.help       = 1.74
 
 _MYSELF.help    = t/Makefile.help
-_MY.includes   += $(_MYSELF.help)
-_MY.inc.type   += help
+ALL.includes   += $(_MYSELF.help)
+ALL.inc.type   += help
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
