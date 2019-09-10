@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.17 19/09/04 00:07:17
+#?      @(#) Makefile.critic 1.18 19/09/10 21:31:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.17
+_SID.critic     = 1.18
 
 _MYSELF.critic  = t/Makefile.critic
 _MY.includes   += $(_MYSELF.critic)
@@ -36,7 +36,7 @@ _MY.inc.type   += critic
 
 first-critic-target-is-default: help.test.critic
 
-ALL.help.test  += help.test.critic
+ALL.help.tests += help.test.critic
 
 HELP-help.test.critic   = targets for using perlcritic
 help.critic:              HELP_TYPE = critic
