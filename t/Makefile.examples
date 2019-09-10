@@ -23,18 +23,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.3 19/09/10 21:40:06
+#?      @(#)  1.4 19/09/10 22:20:46
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.examples   = 1.3
+_SID.examples   = 1.4
 
 _MYSELF.examples= t/Makefile.examples
-_MY.includes   += $(_MYSELF.examples)
-_MY.inc.type   += examples
+ALL.includes   += $(_MYSELF.examples)
+ALL.inc.type   += examples
 
 first-examples-target-is-default: help.test.examples
 
