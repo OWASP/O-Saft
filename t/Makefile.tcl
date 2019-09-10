@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.25 19/09/01 14:30:34
+#?      @(#) Makefile.tcl 1.26 19/09/10 21:44:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.25
+_SID.tcl        = 1.26
 
 _MYSELF.tcl     = t/Makefile.tcl
 _MY.includes   += $(_MYSELF.tcl)
@@ -32,7 +32,7 @@ _MY.inc.type   += tcl
 
 first-tcl-target-is-default: help.test.tcl
 
-ALL.help.test  += help.test.tcl
+ALL.help.tests += help.test.tcl
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 help.test.tcl:        HELP_TYPE = tcl
