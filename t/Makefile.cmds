@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.34 19/09/09 22:42:48
+#?      @(#) Makefile.cmds 1.35 19/09/10 21:30:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.34
+_SID.cmds       = 1.35
 
 _MYSELF.cmds    = t/Makefile.cmds
 _MY.includes   += $(_MYSELF.cmds)
@@ -32,7 +32,7 @@ _MY.inc.type   += cmds
 
 first-cmds-target-is-default: help.test.cmds
 
-ALL.help.test  += help.test.cmds
+ALL.help.tests += help.test.cmds
 
 HELP-help.test.cmds = targets for testing '$(SRC.pl)' commands and options
 help.test.cmds:       HELP_TYPE = cmds
