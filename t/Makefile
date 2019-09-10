@@ -26,7 +26,7 @@
 #       _MYSELF.myTYPE  - name of current file
 #       _MY.includes    - list of Makefiles
 #       _MY.inc.type    - list of types (should be suffix of Makefile's name)
-#       ALL.help.test   - list of documentation (help) texts
+#       ALL.help.tests  - list of documentation (help) texts
 #       HELP.myTYPE     - documentation (help) text for the corresponding file
 #       HELP.myTYPE.all - list of all targets for the corresponding file
 #       HELP.myTYPE.internal  - some more documentation (help) text
@@ -48,14 +48,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.74 19/09/10 15:19:11
+#?      @(#) Makefile 1.75 19/09/10 21:20:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.74
+_SID.test       = 1.75
 
 _MYSELF.test    = t/Makefile
 _MY.includes   += $(_MYSELF.test)
@@ -64,7 +64,7 @@ _MY.inc.type   += test
 
 first-test-target-is-default: help.test
 
-ALL.help.test  += help.test
+ALL.help.tests += help.test
 
 HELP-help.test.test = general testing targets
 help.test:            HELP_TYPE = test
