@@ -84,9 +84,11 @@
 #       Notes about some special variables:
 #           ALL.src     - list of all sources to be distributed
 #           ALL.tgz     - same as ALL.src but all sources prefixed with O-Saft/
-#           ALL.test    - list of all sources used for testing the project
+#           ALL.tst     - list of all sources used for testing the project
+#                         (ALL.tst instead of ALL.test used  to avoid conflicts
+#                          with ALL.tests)
 #           ALL.tests   - list of all targets for testing
-#           ALL.includes - dynamically generated list of all included makefiles
+#           ALL.includes - dynamically generated list of all included Makefiles
 #           ALL.Makefiles - static list of all source makefiles of the project
 #
 #       In general no quotes are used around texts in variables. Though, it is
@@ -100,14 +102,14 @@
 #       t/Makefile.pod . "SEE Make:some text"  is used to reference to it.
 #
 #? VERSION
-#?      @(#) Makefile 1.77 19/09/05 23:36:51
+#?      @(#) Makefile 1.78 19/09/10 22:03:33
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.77
+_SID            = 1.78
                 # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -222,7 +224,6 @@ SRC.contrib     = \
 		  $(CONTRIB.post:%=$(CONTRIB.dir)/%) \
 		  $(CONTRIB.misc:%=$(CONTRIB.dir)/%) \
 		  $(CONTRIB.zap:%=$(CONTRIB.dir)/%)
-ALL.contrib     = $(SRC.contrib)
 
 # test files
 TEST.dir        = t
@@ -235,7 +236,6 @@ CRITIC.rc       = .perlcriticrc
 SRC.test        = \
                   $(TEST.do:%=$(TEST.dir)/%) \
                   $(CRITIC.rc:%=$(TEST.dir)/%)
-ALL.test        = $(SRC.test)
 
 # documentation files
 DOC.dir         = docs
@@ -260,7 +260,6 @@ WEB.src         = \
 		  O-Saft_vulnsGUI.png \
 		  O-Saft_CLI__faked.txt
 SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
-ALL.doc         = $(SRC.doc) $(SRC.web)
 
 # generated files
 TMP.dir         = /tmp/$(Project)
@@ -290,8 +289,9 @@ inc.Makefiles   = \
 ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
-ALL.test        = $(SRC.test)
+ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
+ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
 ALL.src         = \
@@ -303,7 +303,7 @@ ALL.src         = \
 		  $(SRC.doc) \
 		  $(ALL.gen) \
 		  $(ALL.Makefiles) \
-		  $(ALL.test) \
+		  $(ALL.tst) \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
 
@@ -325,7 +325,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.77
+_INST.text      = generated from Makefile 1.78
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -536,8 +536,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.77
-tar:     GREP_EDIT  = 1.77
+GREP_EDIT           = 1.78
+tar:     GREP_EDIT  = 1.78
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
