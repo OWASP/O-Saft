@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.2 19/09/03 19:09:43
+#?      @(#)  1.3 19/09/10 19:42:29
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.make       = 1.2
+_SID.make       = 1.3
 
 _MYSELF.make    = t/Makefile.makefiles
 _MY.includes   += $(_MYSELF.make)
-_my.inc.type   += makefiles
+_MY.inc.type   += makefiles
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -68,7 +68,7 @@ ARGS.helpmake   = help              help.all            help.help.all-v \
 		  help.makefiles.doc
 # Makeile-specific help.test.* targets
 # pod and template are missing in $(_MY.inc.type) because they are not included
-ARGS.makefiles  = $(ALL.inc.type) pod template
+ARGS.makefiles  = $(_MY.inc.type) pod template
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%)
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%.all)
 
