@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.exit 1.16 19/09/10 21:38:12
+#?      @(#) Makefile.exit 1.17 19/09/10 22:20:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.16
+_SID.exit       = 1.17
 
 _MYSELF.exit    = t/Makefile.exit
-_MY.includes   += $(_MYSELF.exit)
-_MY.inc.type   += exit
+ALL.includes   += $(_MYSELF.exit)
+ALL.inc.type   += exit
 
 first-exit-target-is-default: help.test.exit
 
