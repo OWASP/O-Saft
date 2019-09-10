@@ -18,21 +18,21 @@
 #           ../Makefile  Makefile.help
 #
 #? VERSION
-#?      @(#)  1.19 19/09/10 21:45:07
+#?      @(#)  1.20 19/09/10 22:24:55
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.19
+_SID.TEMPL      = 1.20
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
                 # gets the file of the initial call "make" command
-_MY.includes   += $(_MYSELF.TEMPL)
+ALL.includes   += $(_MYSELF.TEMPL)
                 # add ourself to list of all included makefiles
-_MY.inc.type   += TEMPL
+ALL.inc.type   += TEMPL
                 # add our type to list of all included types
 
 first-TEMPL-target-is-default: help.test.TEMPL
