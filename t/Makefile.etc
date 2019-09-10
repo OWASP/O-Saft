@@ -17,14 +17,14 @@
 #           Makefile  ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.etc 1.3 19/09/01 23:54:51
+#?      @(#) Makefile.etc 1.4 19/09/10 21:34:36
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.etc        = 1.3
+_SID.etc        = 1.4
 
 _MYSELF.etc     = t/Makefile.etc
 _MY.includes   += $(_MYSELF.etc)
@@ -32,7 +32,7 @@ _MY.inc.type   += etc
 
 first-etc-target-is-default: help.test.etc
 
-ALL.help.test  += help.test.etc
+ALL.help.tests += help.test.etc
 
 HELP-help.test.etc      = targets for testing ciphers with various tools
 help.test.etc:          HELP_TYPE   = etc
