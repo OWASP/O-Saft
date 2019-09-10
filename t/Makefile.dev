@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.dev 1.5 19/09/10 21:33:26
+#?      @(#) Makefile.dev 1.6 19/09/10 22:19:17
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.dev        = 1.5
+_SID.dev        = 1.6
 
 _MYSELF.dev     = t/Makefile.dev
-_MY.includes   += $(_MYSELF.dev)
-_MY.inc.type   += dev
+ALL.includes   += $(_MYSELF.dev)
+ALL.inc.type   += dev
 
 first-dev-target-is-default: help.test.dev
 
