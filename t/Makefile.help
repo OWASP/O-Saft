@@ -36,9 +36,9 @@
 #.      The terms  target,  target rule  or simply  rule  are used, when make's
 #.      rules are meant (a rule consist of dependencies and recipes).
 #.      The term  host  or  hostname  is used for a system (wether it is a FQDN
-#.      or an IP) to be tested with $(EXE.pl).
-#.      The term  argument(s)  is used, when (command line) arguments for to be
-#.      passed to $(EXE.pl) are meant.
+#.      or an IP) to be tested with any of the projects tools, i.e $(EXE.pl) .
+#.      The term  argument(s)  is used when (command line) arguments or options
+#.      to be passed to the tools are meant.
 #.      The terms  macro  and variable  are used interchangeable.
 #.
 #.      Note that the O-Saft's documentation uses  target  for the system to be
@@ -110,10 +110,10 @@
 #.      in all other makefiles too (as they include this one).
 #.
 #.   Naming conventions for targets:
-#.          _tst_name    - internal target, not iintended for public use
-#.          tst.name     - public available targets use  .  (dot) as separator
-#.          tst-name     - internal and pattern rule targets use  -  (dash) as
-#.                          separator
+#.          _tst_name    - internal target, not intended for public use
+#.          tst.name     - public available targets use  .  (dot)  as separator
+#.          tst-name     - internal and pattern rule targets use  -  (dash)  as
+#.                         separator
 #.          tst.name_arg - some pattern rule targets use  _  to pass parameters
 #.          tst.name.log - same as  test.name  but store results in logfile
 #.          tst%ext      - pattern rule used instead of explicit target rule to
@@ -141,6 +141,7 @@
 #.                  include t/Makefile.hlp
 #.                  include t/Makefile.cgi
 #.                  include t/Makefile.tcl
+#.                  include t/Makefile.etc
 #.                  include t/Makefile.dev
 #.                  include t/Makefile.misc
 #.                  include t/Makefile.critic
@@ -150,13 +151,13 @@
 #.          make s-_MY.includes
 #.
 #.      Each of the t/Makefile.*  includes  t/Makefile. This allows to use each
-#.      Makefile.* on its own, like:
+#.      Makefile.*  on its own, like:
 #.          make -f t/Makefile.exit
 #.          cd t && make -f Makefile.exit
 #.
 #.      The default target in each makefile simply prints a brief help.
 #.
-#.      Most included t/Makefiles.* contain very limited comments.  For general
+#.      Most included t/Makefiles.*  contain very limited comments. For general
 #.      details of their functionality, see t/Makefile.template t/Makefile.pod.
 #.
 #.   Quick Hints
@@ -165,7 +166,7 @@
 #.      readable (for humans) information  in contrast to the sometimes cryptic
 #.      syntax of makefiles can do. This is done in  Makefile.help , see:
 #.          make -f t/Makefile.help
-#.      To get brief (mainly technical) information about a makefile, use:
+#.      To get brief (mainly technical) information about a Makefile, use:
 #.          make -f t/Makefile.cgi
 #.          make -f t/Makefile.cgi targets.me
 #.          make -f t/Makefile.cgi macros.me
@@ -177,14 +178,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.71 19/09/02 22:54:04
+#?      @(#) Makefile.help 1.72 19/09/10 20:38:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.71
+_SID.help       = 1.72
 
 _MYSELF.help    = t/Makefile.help
 _MY.includes   += $(_MYSELF.help)
@@ -210,7 +211,7 @@ T               = $$""(_NL)
 
 # internal help
 # default dummy  HELP_TYPE  to avoid errors; results in wrong output
-# however, its for development and testing only; help*-v  may give hints
+# however, it is for development and testing only; help*-v  may give hints
 HELP_TYPE       = help
 # some often uses formatting strings
 HELP_INFO       = \# Name          | Description/Content
