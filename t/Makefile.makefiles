@@ -17,18 +17,18 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.4 19/09/10 21:41:32
+#?      @(#)  1.5 19/09/10 22:25:24
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.make       = 1.4
+_SID.make       = 1.5
 
 _MYSELF.make    = t/Makefile.makefiles
-_MY.includes   += $(_MYSELF.make)
-_MY.inc.type   += makefiles
+ALL.includes   += $(_MYSELF.make)
+ALL.inc.type   += makefiles
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -52,7 +52,7 @@ HELP-test.makefiles.log-compare  = compare results of test.makefiles.log (if any
 # Following target  lists the used (included) t/Makefile.* , each with its
 # description as defined in the file itself in the HELP-help.text.* macro
 _HELP-maketitle = \#__________________________________ purpose of t/Makefile.* _
-_HELP.maketitle = $(_MY.inc.type:%=help-makefiletitle-%)
+_HELP.maketitle = $(ALL.inc.type:%=help-makefiletitle-%)
 _help.makefiles.doc:
 	@$(TRACE.target)
 	@echo "\n\t\t$(_HELP-maketitle)"
@@ -67,8 +67,8 @@ ARGS.helpmake   = help              help.all            help.help.all-v \
 		  help.test.make    help.test.makevars  help.test.log-info  \
 		  help.makefiles.doc
 # Makeile-specific help.test.* targets
-# pod and template are missing in $(_MY.inc.type) because they are not included
-ARGS.makefiles  = $(_MY.inc.type) pod template
+# pod and template are missing in $(ALL.inc.type) because they are not included
+ARGS.makefiles  = $(ALL.inc.type) pod template
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%)
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%.all)
 
