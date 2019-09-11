@@ -17,47 +17,47 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.6 19/09/11 09:00:01
+#?      @(#) Makefile.make 1.7 19/09/11 23:27:31
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.makefiles  = 1.6
+_SID.make       = 1.7
 
-_MYSELF.makefiles = t/Makefile.makefiles
-ALL.includes   += $(_MYSELF.makefiles)
-ALL.inc.type   += makefiles
+_MYSELF.make    = t/Makefile.make
+ALL.includes   += $(_MYSELF.make)
+ALL.inc.type   += make
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-make-target-is-default: help.test.makefiles
+first-make-target-is-default: help.test.make
 
-ALL.help.tests += help.test.makefiles
-help.test.makefiles:    HELP_TYPE = makefiles
-help.test.makefiles-v:  HELP_TYPE = makefiles
+ALL.help.tests += help.test.make
+help.test.make:     HELP_TYPE = make
+help.test.make-v:   HELP_TYPE = make
 
 
-HELP-help.test.makefiles = targets for testing Makefile (help*) targets
+HELP-help.test.make = targets for testing Makefile (help*) targets
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
 HELP-_makefile1 = _____________________________________ testing help targets _
-HELP-help.makefiles.doc  = print documentation about available Makefile.*
-HELP-test.makefiles      = test help* targets of our Makefiles
-HELP-test.makefiles.log  = same as test.makefiles but store output in '$(TEST.logdir)/'
-HELP-test.makefiles.log-compare  = compare results of test.makefiles.log (if any)
+HELP-help.make.doc  = print documentation about available Makefile.*
+HELP-test.make      = test help* targets of our Makefiles
+HELP-test.make.log  = same as test.make but store output in '$(TEST.logdir)/'
+HELP-test.make.log-compare  = compare results of test.make.log (if any)
 
-HELP.makefiles  = $(_NL)\
-\# Note that  test.makefiles  uses "make help.test.*" to show each Makefile's$(_NL)\
+HELP.make       = $(_NL)\
+\# Note that  test.make  uses "make help.test.*" to show each Makefile's$(_NL)\
 \# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(_NL)\
 \# (user-)documentation of "o-saft.pl"$(_NL)\
 
-HELP.test.makefiles.all  = # no special documentation yet
+HELP.test.make.all  = # no special documentation yet
 
 # Following target lists the used (included)  t/Makefile.* , each with its
 # description as defined in the file itself in the  HELP-help.text.* macro
@@ -74,7 +74,7 @@ help.makefiles.doc:  _help.HEAD _help.makefiles.doc
 # special/indivisual help.* targets in Makefiles
 ARGS.helpmake   = help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.syntax \
-		  help.test.make    help.test.makevars  help.test.log-info  \
+		  help.test.internal help.test.makevars help.test.log-info  \
 		  help.makefiles.doc
 # Makeile-specific help.test.* targets
 # pod and template are missing in $(ALL.inc.type) because they are not included
@@ -87,25 +87,25 @@ ALL.help       += help.makefiles.doc
 
 # TODO: help.test.help, help.help  may exist twice
 
-ALL.test.makefiles     += $(ARGS.helpmake:%=testarg-makefiles-%)
-ALL.test.makefiles.log += $(ALL.test.makefiles:%=%.log)
+ALL.test.make      += $(ARGS.helpmake:%=testarg-make-%)
+ALL.test.make.log  += $(ALL.test.make:%=%.log)
 
-testarg-makefiles%:     EXE.pl      = $(MAKE)
-testarg-makefiles%:     TEST.init   =
+testarg-make%:      EXE.pl      = $(MAKE)
+testarg-make%:      TEST.init   =
 
-$(foreach arg, $(ARGS.helpmake), $(eval testarg-makefiles-$(arg): TEST.args = $(arg)) )
+$(foreach arg, $(ARGS.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 
-test.makefiles.all:    $(ALL.test.makefiles)
-test.makefiles:        test.makefiles.all
-test.makefiles.log:    $(ALL.test.makefiles.log) test.log-compare-hint
+test.make.all:      $(ALL.test.make)
+test.make:          test.make.all
+test.make.log:      $(ALL.test.make.log) test.log-compare-hint
 
-test.makefiles.log-compare:  TEST.target_prefix  = testcmd-make
-test.makefiles.log-move:     TEST.target_prefix  = testcmd-make
-test.makefiles.log:          TEST.target_prefix  = testcmd-make
+test.make.log-compare:  TEST.target_prefix  = testcmd-make
+test.make.log-move:     TEST.target_prefix  = testcmd-make
+test.make.log:          TEST.target_prefix  = testcmd-make
 
-.PHONY: test.makefiles.log
+.PHONY: test.make.log
 
 # feed main Makefile
-ALL.tests          += $(ALL.test.makefiles)
-ALL.tests.log      += $(ALL.test.makefiles.log)
+ALL.tests          += $(ALL.test.make)
+ALL.tests.log      += $(ALL.test.make.log)
 
