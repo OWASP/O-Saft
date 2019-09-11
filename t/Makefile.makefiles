@@ -17,25 +17,28 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#)  1.5 19/09/10 22:25:24
+#?      @(#)  1.6 19/09/11 09:00:01
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.make       = 1.5
+_SID.makefiles  = 1.6
 
-_MYSELF.make    = t/Makefile.makefiles
-ALL.includes   += $(_MYSELF.make)
+_MYSELF.makefiles = t/Makefile.makefiles
+ALL.includes   += $(_MYSELF.makefiles)
 ALL.inc.type   += makefiles
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-make-target-is-default: help.makefiles
+first-make-target-is-default: help.test.makefiles
 
 ALL.help.tests += help.test.makefiles
+help.test.makefiles:    HELP_TYPE = makefiles
+help.test.makefiles-v:  HELP_TYPE = makefiles
+
 
 HELP-help.test.makefiles = targets for testing Makefile (help*) targets
 
@@ -44,13 +47,20 @@ ifeq (,$(_SID.test))
 endif
 
 HELP-_makefile1 = _____________________________________ testing help targets _
-HELP-help.makefiles = print documentation about available Makefile.*
+HELP-help.makefiles.doc  = print documentation about available Makefile.*
 HELP-test.makefiles      = test help* targets of our Makefiles
 HELP-test.makefiles.log  = same as test.makefiles but store output in '$(TEST.logdir)/'
 HELP-test.makefiles.log-compare  = compare results of test.makefiles.log (if any)
 
-# Following target  lists the used (included) t/Makefile.* , each with its
-# description as defined in the file itself in the HELP-help.text.* macro
+HELP.makefiles  = $(_NL)\
+\# Note that  test.makefiles  uses "make help.test.*" to show each Makefile's$(_NL)\
+\# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(_NL)\
+\# (user-)documentation of "o-saft.pl"$(_NL)\
+
+HELP.test.makefiles.all  = # no special documentation yet
+
+# Following target lists the used (included)  t/Makefile.* , each with its
+# description as defined in the file itself in the  HELP-help.text.* macro
 _HELP-maketitle = \#__________________________________ purpose of t/Makefile.* _
 _HELP.maketitle = $(ALL.inc.type:%=help-makefiletitle-%)
 _help.makefiles.doc:
@@ -76,8 +86,6 @@ ALL.help       += help.makefiles.doc
 # contribution to Makefile.help
 
 # TODO: help.test.help, help.help  may exist twice
-# TODO: help.makefiles exist in t/Makefile.help and Makefile.makefiles
-# TODO: explain test.make uses "make help", while test.hlp uses "o-saft.pl --help"
 
 ALL.test.makefiles     += $(ARGS.helpmake:%=testarg-makefiles-%)
 ALL.test.makefiles.log += $(ALL.test.makefiles:%=%.log)
