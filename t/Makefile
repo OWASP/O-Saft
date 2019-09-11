@@ -52,14 +52,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.78 19/09/11 23:07:10
+#?      @(#) Makefile 1.79 19/09/11 23:27:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.78
+_SID.test       = 1.79
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -235,6 +235,7 @@ HELP-help.test.internal = print GNU Make's internals and global project settings
 # NOTE: $(_SID*) variables indicate if a sub-makefile was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
 #      the targets executes and not when the Makefile is read.
+# TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
 test.file-1:
 test,file-2:
 test_file-3:
@@ -247,7 +248,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.test)     = $(_SID.test)'
 	@echo '# $$(_SID.critic)   = $(_SID.critic)'
 	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
-	@echo '# $$(_SID.makefiles)= $(_SID.makefiles)'
+	@echo '# $$(_SID.make)     = $(_SID.make)'
 	@echo '# $$(_SID.exit)     = $(_SID.exit)'
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
 	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
@@ -652,8 +653,8 @@ ifeq (,$(_SID.critic))
     -include t/Makefile.critic
 endif
 
-ifeq (,$(_SID.makefiles))
-    -include t/Makefile.makefiles
+ifeq (,$(_SID.make))
+    -include t/Makefile.make
 endif
 
 #_____________________________________________________________________________
