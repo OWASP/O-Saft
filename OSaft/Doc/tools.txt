@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.5 18/11/06 00:13:04
+# SID   @(#) tools.txt 1.6 19/09/11 23:46:35
 
 NAME
 
@@ -77,7 +77,7 @@ TOOLS
 
     CLI
         o-saft.pl  is the main tool, see  CONCEPTS  above.  It will be called
-        by all other tools.
+        by most other tools.
 
     General Wrapper
         o-saft  is the general wrapper.  It calls  o-saft.pl  with all passed
@@ -137,13 +137,16 @@ TOOLS
 
           contrib/cipher_check.sh
 
-        In legacy systems, or when resoources are limited,  a special vesrion
+        In legacy systems,  or when resources are limited,  a special version
         o-saft-standalone.pl  can be used.  It is a single Perl script, which
         contains most functionality. This script can be generated with:
         
           make o-saft-standalone.pl
 
     Installation
+        INSTALL.sh  can be used to install anything in its own directory.  It
+        can also be used to check and cleanup the installation.
+
           INSTALL.sh
           contrib/install_openssl.sh
           contrib/install_perl_modules.pl
