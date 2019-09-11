@@ -52,14 +52,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.76 19/09/10 22:13:48
+#?      @(#) Makefile 1.77 19/09/11 22:43:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.76
+_SID.test       = 1.77
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -204,7 +204,7 @@ HELP-help.test.*.all        = print available individual targets for tests from 
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
-	@echo $(ALL.test.$*)
+	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
