@@ -5,7 +5,7 @@
 #?
 #? DESCRIPTION
 #?      This file contains simple examples to use  O-Saft  from  ZAP's context
-#?       menu  "External Program".
+#?       menu  "Run Application".
 #?
 #? USAGE
 #?      Unfortunately ZAP has no method to  "include"  these settings. So they
@@ -13,8 +13,8 @@
 #?      $HOME/.ZAP/config.xml  or  your  working directory.
 #?      Copy all  <app>..</app>  scopes into the  <apps>  scope there.
 #?
-#?      Settings then may be edited in ZAP  "Tools -> Options"  see "Programs"
-#?      there.
+#?      ZAP's  "Tools -> Options"  dialog can also be used to add and edit the
+#?      "Applications"  manually.
 #?
 #? NOTE
 #?      All programs, like o-saft.pl and o-saft.tcl, must be found by the PATH
