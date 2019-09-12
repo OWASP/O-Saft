@@ -13,6 +13,9 @@
 #?      $HOME/.ZAP/config.xml  or  your  working directory.
 #?      Copy all  <app>..</app>  scopes into the  <apps>  scope there.
 #?
+#?      Settings then may be edited in ZAP  "Tools -> Options"  see "Programs"
+#?      there.
+#?
 #? NOTE
 #?      All programs, like o-saft.pl and o-saft.tcl, must be found by the PATH
 #?      environment variable, or they must be specified with a full path here.
