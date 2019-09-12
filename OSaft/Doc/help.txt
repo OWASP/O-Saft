@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.35 19/09/09 21:42:02
+# SID   @(#) help.txt 1.36 19/09/12 22:35:46
 
 NAME
 
@@ -73,6 +73,12 @@ QUICKSTART
 
         * Show just one section, for example SECURITY, from help
           $0 --help=SECURITY
+
+        * Show all  --help=*  commands
+          $0 --help=HELP
+
+        * Search for text in O-Saft's help and show with context
+          o-saft -help=your-text
 
         * Start the simple GUI
           o-saft.tcl 
