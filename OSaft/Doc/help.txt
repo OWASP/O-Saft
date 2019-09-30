@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.38 19/09/30 23:25:42
+# SID   @(#) help.txt 1.39 19/09/30 23:31:46
 
 NAME
 
@@ -4715,6 +4715,11 @@ DOCUMENTATION
         This is simply avaiable with:
 
           o-saft -help="some text"
+
+        In the GUI a more sophisticate search is implemented, see the  "Help"
+        window there:
+
+          o-saft.tcl
 
     Developer Documentation
 
