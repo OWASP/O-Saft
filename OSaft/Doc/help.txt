@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.36 19/09/12 22:35:46
+# SID   @(#) help.txt 1.37 19/09/30 22:30:11
 
 NAME
 
@@ -4692,6 +4692,42 @@ nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
 #end --v
 
 
+DOCUMENTATION
+
+    User Documentation
+
+        Documentation is mainly intented for the user, which is provided with
+
+          $0 --help
+
+        But it may be difficult to find the proper information there.  To get
+        more selective documentations, the  --help=*  options can be used. To
+        get an overview which  --help=*  options are available, use:
+
+          $0 --help=HELP
+
+        This only provides the complete user documentation, or the well known
+        parts specified by the keyword, (HELP in example above).  To find any
+        text with some lines of context, following could be used:
+
+          $0 --help | egrep -i -C 3 'some text'
+
+        This is simply avaiable with:
+
+          o-saft -help='some text'
+
+    Developer Documentation
+
+        Documentation for developers is provided in various ways. Information
+        for developers can be found found in:
+
+        * the files itself
+
+        * with:  $0 --help=HELP
+
+        * using:  make 
+
+
 ATTRIBUTION
 
         Based on ideas (in alphabetical order) of:
@@ -4789,16 +4825,16 @@ TODO
              or:  chcp 65001
              or:  reg add hklm\system\currentcontrolset\control\nls\codepage -v oemcp -d 65001
           ** perl
-             perl 5.10.x from PortableApps does not work, cause it misses
+             perl 5.10.x from PortableApps does not work, because it misses
              IO/Socket/SSL.pm, however, checkAllCiphers.pl works.
-             perl from older PortableApps/xampp (i.e. 1.7.x) does not work, cause
-             IO/Socket/SSL.pm is too old (1.37).
+             perl from older PortableApps/xampp (i.e. 1.7.x) does not work,
+             because IO/Socket/SSL.pm is too old (1.37).
           ** Windows
              on Windows print of strings > 32k does not work.
              Ugly workaround using --v implemented in o-saft-man.pm only.
 
         * internal
-          ** move all configuration and code for commans line arguments to Arg.pm
+          ** move all configuration and code for command line arguments to Arg.pm
           ** use qr() for defining regex, see $cfg{'regex'}
           ** print_line() has ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
