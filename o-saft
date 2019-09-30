@@ -57,7 +57,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.19 19/09/09 12:43:39
+#?      @(#) o-saft 1.20 19/09/30 21:53:03
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -82,6 +82,8 @@ try=
 post="cat"      # default, avoids special handling if -post= missing
 post_args=
     # aguments passed to post command, mainly used for -help=
+such=
+    # text to be searched for passed to post command, mainly used for -help=
 mode=cli        # cli, cgi, gui
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
@@ -108,12 +110,12 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.19"; exit 0; ;;
+        +VERSION)       echo "1.20"; exit 0; ;;
         -help=*)
-            help="`expr "$1" ':' '-help=\(.*\)'`"
+            such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
             post=egrep
-            post_args="--color -i -C 3 $help"
+            post_args="--color -i -C 3 "
             ;;
         -list)
             for exe in $contrib/* ; do
@@ -162,9 +164,9 @@ fi
 case "$mode" in
     cgi) $try $cgi --cgi $* | $post  ; ;;
     gui) $try $gui --post="$post" $* ; ;;
-    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args"
+    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args '$such'"
          [ -n "$try" ] && exit 0
-               $prg $docker_id $docker_tag $* $args | $post $post_args
+               $prg $docker_id $docker_tag $* $args | $post $post_args "$such"
          ;;
 esac
 exit 0
