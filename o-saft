@@ -57,7 +57,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.20 19/09/30 21:53:03
+#?      @(#) o-saft 1.21 19/09/30 23:05:39
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -110,7 +110,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.20"; exit 0; ;;
+        +VERSION)       echo "1.21"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -164,9 +164,15 @@ fi
 case "$mode" in
     cgi) $try $cgi --cgi $* | $post  ; ;;
     gui) $try $gui --post="$post" $* ; ;;
-    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args '$such'"
+    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args  $such"
          [ -n "$try" ] && exit 0
+         # some shell behave strange when quotes are needed (for $such here)
+         # hence different command lines are needed wether $such is empty or not
+         if [ -n "$such" ]; then
                $prg $docker_id $docker_tag $* $args | $post $post_args "$such"
+         else
+               $prg $docker_id $docker_tag $* $args | $post $post_args
+         fi
          ;;
 esac
 exit 0
