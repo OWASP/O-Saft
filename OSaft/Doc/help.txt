@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.37 19/09/30 22:30:11
+# SID   @(#) help.txt 1.38 19/09/30 23:25:42
 
 NAME
 
@@ -4710,11 +4710,11 @@ DOCUMENTATION
         parts specified by the keyword, (HELP in example above).  To find any
         text with some lines of context, following could be used:
 
-          $0 --help | egrep -i -C 3 'some text'
+          $0 --help | egrep -i -C 3 "some text"
 
         This is simply avaiable with:
 
-          o-saft -help='some text'
+          o-saft -help="some text"
 
     Developer Documentation
 
