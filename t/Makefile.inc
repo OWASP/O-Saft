@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.17 19/09/10 22:39:42
+#?      @(#) Makefile.inc 1.18 19/10/02 21:54:19
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.17
+_SID.inc        = 1.18
 
 _MYSELF.inc     = t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -107,7 +107,7 @@ ifndef MAKEFLAGS
 endif
 
 ifndef OSAFT_MAKE
-    export OSAFT_MAKE = avoid writing unique date and time string
+    export OSAFT_MAKE = avoid writing random data (like date and time string)
 endif
 
 ifndef ECHO
