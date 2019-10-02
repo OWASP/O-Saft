@@ -52,14 +52,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.79 19/09/11 23:27:50
+#?      @(#) Makefile 1.80 19/10/02 21:52:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.79
+_SID.test       = 1.80
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -116,7 +116,7 @@ TEST.logdir     = $(TEST.dir)/log
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
 
-export OSAFT_MAKE   = avoid writing unique date and time string
+export OSAFT_MAKE   = avoid writing random data (like date and time string)
 
 OPT.grep        = -q
     # grep (mainly used in message-% target) should not report matching lines
