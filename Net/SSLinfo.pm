@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.238 19/09/09 16:22:33',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.239 19/10/03 10:25:51',
 };
 
 ######################################################## public documentation #
@@ -1123,6 +1123,11 @@ my %_SSLinfo= ( # our internal data structure
     #-------------+-------------+---------------------------------------------
 ); # %_SSLinfo
 
+#  $_SSLinfo_random # SEE Make:OSAFT_MAKE (in Makefile.pod)
+my $_SSLinfo_random = qr/ctx|master_key|session_(?:startdate|starttime|ticket)|ssl|x509/; # handled special
+my $_SSLinfo_random_text = '<<value not printed (OSAFT_MAKE exists)>>';
+    # same string as STR_MAKEVAL from osaft.pm
+
 sub _SSLinfo_reset  {
     #? reset internal data structure%_SSLinfo ; for internal use only
     foreach my $key (keys %_SSLinfo) { $_SSLinfo{$key} = ''; }
@@ -1279,6 +1284,14 @@ sub datadump    {
     $data .= _dump('ciphers', " ", join(' ', @{$_SSLinfo{'ciphers'}}));
     foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
         next if ($key =~ m/ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
+        if ($key =~ m/$_SSLinfo_random/) {  # handled special
+            if (defined $ENV{'OSAFT_MAKE'}) {
+                # SEE Make:OSAFT_MAKE (in Makefile.pod)
+                # ugly hack here, but simplifies testing with make; however, this code is for debugging only
+                $data .= _dump($key, " ", $_SSLinfo_random_text);
+                next;
+            }
+        }
         $data .= _dump($key, " ", $_SSLinfo{$key});
     }
     foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
