@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.98 19/09/09 23:55:36";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.99 19/10/03 09:54:43";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -363,7 +363,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 # FIXME: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
-                    if ("openssl" eq $key) {
+                    if ($key =~ m/openssl/) {
                         _yTRAC($k, _y_ARR(@{$cfg{$key}{$k}}));
                     } else {
                         _yTRAC($k, $cfg{$key}{$k});
@@ -371,7 +371,11 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 };
                 _yeast("# - - - - HASH: $key }");
             } else {
-                _yeast_trac(\%cfg, $key);
+                if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
+                    _yTRAC($key, _y_ARR(@{$cfg{$key}}));
+                } else {
+                    _yeast_trac(\%cfg, $key);
+                }
             }
         }
         _yline(" %cfg }");
@@ -826,7 +830,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.98 2019/09/09
+1.99 2019/10/03
 
 =head1 AUTHOR
 
