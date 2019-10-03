@@ -52,14 +52,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.80 19/10/02 21:52:57
+#?      @(#) Makefile 1.81 19/10/03 23:17:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.80
+_SID.test       = 1.81
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -251,7 +251,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.make)     = $(_SID.make)'
 	@echo '# $$(_SID.exit)     = $(_SID.exit)'
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
-	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
+	@echo '# $$(_SID.cmd)      = $(_SID.cmd)'
 	@echo '# $$(_SID.dev)      = $(_SID.dev)'
 	@echo '# $$(_SID.etc)      = $(_SID.etc)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
@@ -609,8 +609,8 @@ ifeq (,$(_SID.warnings))
     -include t/Makefile.warnings
 endif
 
-ifeq (,$(_SID.cmds))
-    -include t/Makefile.cmds
+ifeq (,$(_SID.cmd))
+    -include t/Makefile.cmd
 endif
 
 ifeq (,$(_SID.exit))
@@ -690,7 +690,7 @@ tests.quick:
 tests.quick.log:
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmds.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
+	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmd.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
 
 # aliases for convenience
 test:       tests
