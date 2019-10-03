@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.99 19/10/03 09:54:43";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.100 19/10/03 11:07:23";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -372,7 +372,9 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 _yeast("# - - - - HASH: $key }");
             } else {
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
-                    _yTRAC($key, _y_ARR(@{$cfg{$key}}));
+                    foreach my $k (sort keys @{$cfg{$key}}) {
+                        _yTRAC($key . "[$k]", _y_ARR(@{$cfg{$key}[$k]}));
+                    }
                 } else {
                     _yeast_trac(\%cfg, $key);
                 }
@@ -830,7 +832,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.99 2019/10/03
+1.100 2019/10/03
 
 =head1 AUTHOR
 
