@@ -134,7 +134,7 @@
 #.                  include t/Makefile.help
 #.                  include t/Makefile.inc
 #.                  include t/Makefile.warnings
-#.                  include t/Makefile.cmds
+#.                  include t/Makefile.cmd
 #.                  include t/Makefile.exit
 #.                  include t/Makefile.opt
 #.                  include t/Makefile.ext
@@ -178,14 +178,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.74 19/09/10 22:24:12
+#?      @(#) Makefile.help 1.75 19/10/03 23:22:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.74
+_SID.help       = 1.75
 
 _MYSELF.help    = t/Makefile.help
 ALL.includes   += $(_MYSELF.help)
