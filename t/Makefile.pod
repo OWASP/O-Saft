@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.21 19/09/04 00:32:03
+@(#) Makefile.pod 1.22 19/10/03 10:44:58
 
 =head1 AUTHOR
 
@@ -454,11 +454,19 @@ This is done using (see above):
 
 =head2 Make:OSAFT_MAKE
 
-Writing date and time is a unique string for each call.  If called by make
-and logged to a file which will be compared with a previous file, it would
-always make a difference.  Hence a dummy constant text is written for such
-unique strings if our special environment variable OSAFT_MAKE exits.
+Some data printed by the tools are  random,  means that they are different
+for each call of the tool, for example date and time.
+If these tools are called by make and the results are written to a logfile
+which will be compared with a previous logfile, these files always differ.
+To avoid this difference (because of random text) a dummy constant text is
+written if our special environment variable  OSAFT_MAKE  exits.
 This environment variable should be set in Makefiles.
+
+A generic text is available as  STR_MAKEVAL  (see osaft.pm). In some cases
+(i.e. for date and time) the string is prepared individually. This effects
+mainly strings printed in debugging or trace mode.
+To avoid dependencies to be fulfilled at runtime, STR_MAKEVAL  is not used
+in all tools but hardcoded there again. This may/should change in future.
 
 
 =head2 Make:generating help
