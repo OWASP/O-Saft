@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.08.19',  # official version number of this file
+    OSAFT_VERSION   => '19.09.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -25,7 +25,8 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    SID_osaft   => "@(#) osaft.pm 1.191 19/09/03 21:40:11",
+    STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
+    SID_osaft   => "@(#) osaft.pm 1.192 19/10/03 10:26:48",
 
 };
 
@@ -3108,7 +3109,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.191 2019/09/03
+1.192 2019/10/03
 
 =head1 AUTHOR
 
