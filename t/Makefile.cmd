@@ -17,51 +17,51 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.36 19/09/10 22:18:17
+#?      @(#) Makefile.cmd 1.37 19/10/03 23:18:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds       = 1.36
+_SID.cmd        = 1.37
 
-_MYSELF.cmds    = t/Makefile.cmds
-ALL.includes   += $(_MYSELF.cmds)
-ALL.inc.type   += cmds
+_MYSELF.cmd     = t/Makefile.cmd
+ALL.includes   += $(_MYSELF.cmd)
+ALL.inc.type   += cmd
 
-first-cmds-target-is-default: help.test.cmds
+first-cmd-target-is-default: help.test.cmd
 
-ALL.help.tests += help.test.cmds
+ALL.help.tests += help.test.cmd
 
-HELP-help.test.cmds = targets for testing '$(SRC.pl)' commands and options
-help.test.cmds:       HELP_TYPE = cmds
-help.test.cmds-v:     HELP_TYPE = cmds
-help.test.cmds-vv:    HELP_TYPE = cmds
+HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
+help.test.cmd:        HELP_TYPE = cmd
+help.test.cmd-v:      HELP_TYPE = cmd
+help.test.cmd-vv:     HELP_TYPE = cmd
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
-TEST.cmds.hosts     = localhost
+TEST.cmd.hosts      = localhost
 ifdef TEST.hosts
-    TEST.cmds.hosts = $(TEST.hosts)
+    TEST.cmd.hosts  = $(TEST.hosts)
 endif
 
 
-HELP-_cmds1         = _________________________________________ testing commands _
-HELP-test.pattern-* = test group of commands with '$(TEST.cmds.hosts)'
-HELP-testcmd-*      = test commands with '$(TEST.cmds.hosts)'
+HELP-_cmd1          = _________________________________________ testing commands _
+HELP-test.pattern-* = test group of commands with '$(TEST.cmd.hosts)'
+HELP-testcmd-*      = test commands with '$(TEST.cmd.hosts)'
 HELP-testcmd-*.log  = same as testcmd-* but store output in '$(TEST.logdir)/'
-HELP-test.cmds.all  = test all commands with '$(TEST.cmds.hosts)'
-HELP-test.cmds.log  = same as test.cmds.all but store output in '$(TEST.logdir)/'
-HELP-_cmds2         = ________________________________ testing a special command _
-HELP-testrun-CMD    = test specific command CMD with '$(TEST.cmds.hosts)'
+HELP-test.cmd.all   = test all commands with '$(TEST.cmd.hosts)'
+HELP-test.cmd.log   = same as test.cmd.all but store output in '$(TEST.logdir)/'
+HELP-_cmd2          = ________________________________ testing a special command _
+HELP-testrun-CMD    = test specific command CMD with '$(TEST.cmd.hosts)'
 HELP-testrun-CMD.log = same as testrun-CMD but store output in '$(TEST.logdir)/'
-HELP-_cmds3         = __________________________________________ special targets _
+HELP-_cmd3          = __________________________________________ special targets _
 HELP-testcmd-c+ignored-keys = special target using commands which return random values
 
-HELP.cmds           = $(_NL)\
+HELP.cmd            = $(_NL)\
 \# Targets can be executed individually, or a group of targets can be executed$(_NL)\
 \# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
 \# Examples to execute individual targets:$(_NL)\
@@ -81,7 +81,7 @@ HELP.cmds           = $(_NL)\
 \#$(_NL)\
 \# Some of the examples above use  localhost  as hostname by default.
 
-HELP.test.cmds.all  = # no special documentation yet
+HELP.test.cmd.all   = # no special documentation yet
 
 # Some values of keys are different by nature for each call of  o-saft.pl .
 # These keys (commands) should be ignored for all  +info and +check  targets
@@ -94,7 +94,7 @@ _ignore-output-keys = master_key \
 		      session_startdate session_starttime \
 		      session_ticket sts_expired
 _ignore-output      = $(_ignore-output-keys:%=--no-out=%)
-_ignore-output-cmds = $(_ignore-output-keys:%=+%)
+_ignore-output-cmd  = $(_ignore-output-keys:%=+%)
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -102,7 +102,7 @@ _ignore-output-cmds = $(_ignore-output-keys:%=+%)
 testcmd-c%:                     EXE.pl      = ../$(SRC.pl)
 testcmd-c%:                     TEST.init   = --trace-CLI --header
 
-testcmd-c+ignored-keys_%:       TEST.args  += $(_ignore-output-cmds)
+testcmd-c+ignored-keys_%:       TEST.args  += $(_ignore-output-cmd)
 testcmd-c+info-_%:              TEST.args  += +info               $(_ignore-output) 
 testcmd-c+info--trace-cmd_%:    TEST.args  += +info  --trace-cmd  $(_ignore-output) 
 testcmd-c+info--trace-key_%:    TEST.args  += +info  --trace-key  $(_ignore-output) 
@@ -158,19 +158,19 @@ testcmd-c_summ-+hsts_%:         TEST.args  += +hsts  --ignore-output=sts_expired
 testcmd-c_summ-+sts_%:          TEST.args  += +sts   --ignore-output=sts_expired
     # +sts_expired may return current timestamp, hence output ignored to avoid diffs
 
-test.cmds.log-compare:  TEST.target_prefix  = testcmd-c
-test.cmds.log-move:     TEST.target_prefix  = testcmd-c
-test.cmds.log:          TEST.target_prefix  = testcmd-c
+test.cmd.log-compare:   TEST.target_prefix  = testcmd-c
+test.cmd.log-move:      TEST.target_prefix  = testcmd-c
+test.cmd.log:           TEST.target_prefix  = testcmd-c
 
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
-ALL.testcmds    = $(shell awk -F% '($$1 ~ /^testcmd-c./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmds))
-ALL.test.cmds   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcmds:%=%$(host)))
-ALL.test.cmds.log  += $(ALL.test.cmds:%=%.log)
+ALL.testcmd     = $(shell awk -F% '($$1 ~ /^testcmd-c./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
+ALL.test.cmd    = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
+ALL.test.cmd.log  += $(ALL.test.cmd:%=%.log)
 
-test.cmds.all:  $(ALL.test.cmds)
-test.cmds:      test.cmds.all
-test.cmds.log:  $(ALL.test.cmds.log) test.log-compare-hint
+test.cmd.all:   $(ALL.test.cmd)
+test.cmd:       test.cmd.all
+test.cmd.log:   $(ALL.test.cmd.log) test.log-compare-hint
 
 # For calling various targets together and other examples,
 # see  test.pattern-%  pattern rule
@@ -180,7 +180,7 @@ test.cmds.log:  $(ALL.test.cmds.log) test.log-compare-hint
 # the pattern rule (problem in GNU Make), this restricts the usage to pattern
 # starting with  + , unfortunately.
 # EXE.pl  and  TEST.init  will be inherited from  testcmd-c% .
-testrun-+%:     TEST.args  += $(TEST.cmds.hosts)
+testrun-+%:     TEST.args  += $(TEST.cmd.hosts)
 testrun-%: testcmd-%
 	@$(TRACE.target)
 
@@ -195,6 +195,6 @@ testrun-%: testcmd-%
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(ALL.test.cmds)
-ALL.tests.log  += $(ALL.test.cmds.log)
+ALL.tests      += $(ALL.test.cmd)
+ALL.tests.log  += $(ALL.test.cmd.log)
 
