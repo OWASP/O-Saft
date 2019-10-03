@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.901 19/09/09 21:38:38",
-    STR_VERSION => "19.08.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.902 19/10/03 11:46:23",
+    STR_VERSION => "19.09.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -1318,11 +1318,12 @@ foreach my $key (keys %data) {
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
 # SEE Note:Testing, sort
-foreach my $key (qw(commands commands-CMD commands-USR commands-INT)) {
+foreach my $key (qw(commands commands-CMD commands-USR commands-INT cmd-info--v)) {
+    # TODO: need to test if sorting of cmd-info--v should not be done for --no-rc
     @{$cfg{$key}} = sort(@{$cfg{$key}});    # only internal use
 }
 if (0 < _is_argv('(?:--no.?rc)')) {
-    foreach my $key (qw(do cmd-check cmd-info cmd-info--v cmd-quick cmd-vulns)) {
+    foreach my $key (qw(do cmd-check cmd-info cmd-quick cmd-vulns)) {
         @{$cfg{$key}} = sort(@{$cfg{$key}});# may be redefined
     }
 }
