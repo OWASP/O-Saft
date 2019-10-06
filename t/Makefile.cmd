@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmd 1.38 19/10/06 20:52:36
+#?      @(#) Makefile.cmd 1.39 19/10/06 21:12:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmd        = 1.38
+_SID.cmd        = 1.39
 
 _MYSELF.cmd     = t/Makefile.cmd
 ALL.includes   += $(_MYSELF.cmd)
@@ -132,31 +132,30 @@ testcmd-cmd+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cmd+ciphercheck_%:      TEST.args  += +ciphercheck
 testcmd-cmd+cipher--nossltls_%: TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
-testcmd-cmd_vuln-+BEAST_%:      TEST.args  += +BEAST
-testcmd-cmd_vuln-+CRIME_%:      TEST.args  += +CRIME
-testcmd-cmd_vuln-+DROWN_%:      TEST.args  += +DROWN
-testcmd-cmd_vuln-+FREAK_%:      TEST.args  += +FREAK
-testcmd-cmd_vuln-+POODLE_%:     TEST.args  += +POODLE
-testcmd-cmd_vuln-+logjam_%:     TEST.args  += +logjam
-testcmd-cmd_vuln-+lucky13_%:    TEST.args  += +lucky13
-testcmd-cmd_vuln-+Sloth_%:      TEST.args  += +Sloth
-testcmd-cmd_vuln-+Sweet32_%:    TEST.args  += +Sweet32
-testcmd-cmd_summ-+bsi_%:        TEST.args  += +bsi
-testcmd-cmd_summ-+TR-02102+_%:  TEST.args  += +TR-02102+
-testcmd-cmd_summ-+EV_%:         TEST.args  += +EV
-testcmd-cmd_summ-+quick_%:      TEST.args  += +quick --trace-arg
-testcmd-cmd_summ-+ocsp_%:       TEST.args  += +ocsp
-testcmd-cmd_summ-+preload_%:    TEST.args  += +preload
-testcmd-cmd_summ-+protocols_%:  TEST.args  += +protocols
-testcmd-cmd_summ-+fingerprints_%: TEST.args  += +fingerprints
-testcmd-cmd_summ-+sizes_%:      TEST.args  += +sizes
-testcmd-cmd_summ-+pfs_%:        TEST.args  += +pfs
-testcmd-cmd_summ-+sni_%:        TEST.args  += +sni
-testcmd-cmd_summ-+vulns_%:      TEST.args  += +vulns
-testcmd-cmd_summ-+http_%:       TEST.args  += +http  --ignore-output=sts_expired
-testcmd-cmd_summ-+hsts_%:       TEST.args  += +hsts  --ignore-output=sts_expired
-testcmd-cmd_summ-+sts_%:        TEST.args  += +sts   --ignore-output=sts_expired
-    # +sts_expired may return current timestamp, hence output ignored to avoid diffs
+testcmd-cmd_vuln+BEAST_%:       TEST.args  += +BEAST
+testcmd-cmd_vuln+CRIME_%:       TEST.args  += +CRIME
+testcmd-cmd_vuln+DROWN_%:       TEST.args  += +DROWN
+testcmd-cmd_vuln+FREAK_%:       TEST.args  += +FREAK
+testcmd-cmd_vuln+POODLE_%:      TEST.args  += +POODLE
+testcmd-cmd_vuln+logjam_%:      TEST.args  += +logjam
+testcmd-cmd_vuln+lucky13_%:     TEST.args  += +lucky13
+testcmd-cmd_vuln+Sloth_%:       TEST.args  += +Sloth
+testcmd-cmd_vuln+Sweet32_%:     TEST.args  += +Sweet32
+testcmd-cmd_summ+bsi_%:         TEST.args  += +bsi
+testcmd-cmd_summ+TR-02102+_%:   TEST.args  += +TR-02102+
+testcmd-cmd_summ+EV_%:          TEST.args  += +EV
+testcmd-cmd_summ+quick_%:       TEST.args  += +quick --trace-arg
+testcmd-cmd_summ+ocsp_%:        TEST.args  += +ocsp
+testcmd-cmd_summ+preload_%:     TEST.args  += +preload
+testcmd-cmd_summ+protocols_%:   TEST.args  += +protocols
+testcmd-cmd_summ+fingerprints_%: TEST.args += +fingerprints
+testcmd-cmd_summ+sizes_%:       TEST.args  += +sizes
+testcmd-cmd_summ+pfs_%:         TEST.args  += +pfs
+testcmd-cmd_summ+sni_%:         TEST.args  += +sni
+testcmd-cmd_summ+vulns_%:       TEST.args  += +vulns
+testcmd-cmd_summ+http_%:        TEST.args  += +http
+testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts
+testcmd-cmd_summ+sts_%:         TEST.args  += +sts
 
 test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
 test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
