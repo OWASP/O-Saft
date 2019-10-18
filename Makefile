@@ -7,7 +7,6 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Traditional Makefile to perform common tasks for O-Saft project.
 #?      For help about the targets herein, please see:
 #?
 #?          make
@@ -15,18 +14,18 @@
 #?
 #?      For detailled documentation how GNU Make, its syntax and conventions as
 #?      well as some special syntax of macros and targets is used here,  please
-#?      refer to  Makefile.pod .
-#?      SEE Make:some text"  is used to reference to it.
+#?      refer to  Makefile.pod , for example by using "perldoc Makefile.pod".
+#?      The term  "SEE Make:some text"  is used to reference to it.
 #?
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) Makefile 1.81 19/10/19 00:12:26
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = %I%
+_SID            = 1.81
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -247,7 +246,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from %M% %I%
+_INST.text      = generated from Makefile 1.81
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -458,8 +457,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = %I%
-tar:     GREP_EDIT  = %I%
+GREP_EDIT           = 1.81
+tar:     GREP_EDIT  = 1.81
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
