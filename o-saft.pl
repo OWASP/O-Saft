@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.902 19/10/03 11:46:23",
+    SID         => "@(#) yeast.pl 1.903 19/10/19 19:59:34",
     STR_VERSION => "19.09.19",          # <== our official version number
 };
 
@@ -1846,6 +1846,7 @@ our %text = (
     'desc_check'    => "Check Result (yes is considered good)",
     'desc_info'     => "Value",
     'desc_score'    => "Score (max value 100)",
+    'anon_text'     => "<<anonymised>>",    # SEE Note:anon-out
 
     # texts used for legacy mode; DO NOT CHANGE!
     'legacy' => {      #----------------+------------------------+---------------------
@@ -7283,6 +7284,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'ANON_OUT') { $cfg{'regex'}->{'anon_output'} = qr($arg);$typ = 'HOST'; }
         if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}    = $arg;$typ = 'HOST'; }
@@ -7689,6 +7691,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--fileciphers')       { $typ = 'FILE_CIPHERS';    }
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
+    if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           }
     if ($arg eq  '--proxyport')         { $typ = 'PPORT';           }
@@ -9365,6 +9368,32 @@ All data collections and checks are still done, just output of results are
 omitted. Technically these commands are not removed from cfg{do}, but just
 skipped in printdata() and printchecks(),  which makes implementation much
 easier.
+
+
+=head2 Note:anon-out
+
+Some texts in output, mainly in warning or verbose messages,  may disclose
+internal information. This may happen if the tool is executed in CGI mode.
+To avoid such information disclosure,  a pattern is used to match texts to
+be anonymised in output.
+The use, hence definition, of this pattern is intended in CGI mode and can
+there be done in the RC-FILE. Therefore it is also necessary that the tool
+has an corresponding command line option:  --anon-output .
+The pattern is stored in %cfg.  The correspondig string  for anonymisation
+(replacement) is defined in %text.
+
+Note that the corresponding variable names (in %cfg and %text) should also
+be part of the pattern to avoid its disclosure with --v or --trace option.
+
+Known (9/2019) variables and texts with potential information disclosure:
+
+    ENV{PWD}
+    $me
+    cfg{me}
+    cfg{RC-ARGV}
+    cfg{RC-FILE}
+    cfg{regex}->{anon_output}
+    cmd{openssl}
 
 
 =head2 Note:OpenSSL Version
