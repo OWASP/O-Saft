@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.100 19/10/03 11:07:23";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.101 19/10/19 19:57:57";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -352,14 +352,25 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yTRAC("verbose", $cfg{'verbose'});
     _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
     _yTRAC("time_absolut", $cfg{'time_absolut'});
-    # more detailed trace first
-    if (1 < $cfg{'trace'}) {
-        _yline(" %cmd {");
+    _yTRAC("dbx{file}", "[ " . join(", ", @{$dbx{'file'}}) . " ]");
+    
+    _yline(" %cmd {");
+    if (2 > $cfg{'trace'}) {    # user friendly informations
+        _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
+        _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
+        _yeast("     envlibvar= $cmd{'envlibvar'}");
+        _yeast("       timeout= $cmd{'timeout'}");
+        _yeast("       openssl= $cmd{'openssl'}");
+    } else {    # full information
         foreach my $key (sort keys %cmd) { _yeast_trac(\%cmd, $key); }
-        _yline(" %cmd }");
+    }
+    _yeast("   use_openssl= $cmd{'extopenssl'}");   # user friendly always
+    _yeast("use cipher from openssl= $cmd{'extciphers'}");  # dito.
+    _yline(" %cmd }");
+    if (1 < $cfg{'trace'}) {    # full information
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
-            if ($key =~ m/(hints|openssl|ssleay)$/) { # sslerror|sslhello|data
+            if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex)$/) { # |data
                 # FIXME: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
@@ -381,19 +392,10 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             }
         }
         _yline(" %cfg }");
+        return;
     }
-    # now user friendly informations
+    # else  user friendly informations
     my $sni_name = $cfg{'sni_name'} || "<<undef>>"; # default is Perl's undef
-    _yline(" cmd {");
-    _yeast("# " . join(", ", @{$dbx{'file'}}));
-    _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
-    _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
-    _yeast("     envlibvar= $cmd{'envlibvar'}");
-    _yeast("  cmd->timeout= $cmd{'timeout'}");
-    _yeast("  cmd->openssl= $cmd{'openssl'}");
-    _yeast("   use_openssl= $cmd{'extopenssl'}");
-    _yeast("use cipher from openssl= $cmd{'extciphers'}");
-    _yline(" cmd }");
     _yline(" user-friendly cfg {");
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
     _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
@@ -832,7 +834,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.100 2019/10/03
+1.101 2019/10/19
 
 =head1 AUTHOR
 
