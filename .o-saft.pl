@@ -11,6 +11,7 @@
 #?      Empty lines are ignored.
 #?      Lines starting with  #  are ignored (comment lines).
 #?      Each other line will be passed as one single argument or option.
+#?      The string right to the leftmost  =  character is used verbatim.
 #?      Note that all values for  --cfg-cmd=  are all lower case letters.
 #? NEW COMMANDS
 #?      New commands may be defined herein using  --cfg_cmd=  .
@@ -28,13 +29,13 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.98 19/09/09 22:30:32
+#?      @(#) .o-saft.pl 1.99 19/10/19 10:08:15
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID.rc  = 1.98; # our own SID required for Makefile and some tools
+_SID.rc = 1.99; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -113,9 +114,6 @@ SID.rc  = 1.98; # our own SID required for Makefile and some tools
 
 # https_body contains the HTML page, not important
 --ignore-output=https_body
-
-# temporary disbaled until proper implementation (04/2017)
-# ...
 
 ###
 ### define new command +preload
