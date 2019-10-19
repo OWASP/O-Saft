@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.192 19/10/03 10:26:48",
+    SID_osaft   => "@(#) osaft.pm 1.193 19/10/19 18:26:35",
 
 };
 
@@ -1844,13 +1844,14 @@ our %cfg = (
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
-    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only
                         qw(certificate extensions pem pubkey sigdump text
                          chain chain_verify ocsp_response_data)
                        ],
-                    # need-* lists used to improve performance and warning messages
+    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
+
+   # need-* lists used to improve performance and warning messages
     'need-sslv3'    => [        # commands which need SSLv3 protocol
                         qw(check cipher cipher_dh cipher_strong cipher_selected
                          cipher_weak protocols hassslv3 beast freak poodle
@@ -2066,6 +2067,10 @@ our %cfg = (
                        # these options may have no value
                        # i.e.  --cmd=   ; this may occour in CGI mode
         'std-format'    => '^(?:unix|raw|crlf|utf8|win32|perlio)$', # match keys for --std-format
+
+        # RegEx for matching strings to anonymise in output 
+        'anon_output'   => '',  # pattern for strings to be anonymised in output
+                       # SEE Note:anon-out
 
         # RegEx for matching SSL protocol keys in %data and %checks
         'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
@@ -3109,7 +3114,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.192 2019/10/03
+1.193 2019/10/19
 
 =head1 AUTHOR
 
