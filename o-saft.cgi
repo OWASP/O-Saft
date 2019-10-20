@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.34 19/10/20 22:09:34";
+my $SID_cgi = "@(#) o-saft.cgi 1.35 19/10/20 22:37:55";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.34\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.35\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -314,7 +314,6 @@ if ($me =~/\.cgi$/) {
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft-handler.log";
-	print "exec $osaft, @argv #\n";
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
