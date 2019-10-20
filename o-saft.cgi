@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.33 19/07/20 11:17:06";
+my $SID_cgi = "@(#) o-saft.cgi 1.34 19/10/20 22:09:34";
 my $VERSION = '19.05.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -85,8 +85,8 @@ local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 my $osaft   = "$mepath/o-saft.pl";
 #  $osaft   = '/bin/o-saft/o-saft.pl';          # <== adapt as needed
 my $openssl = '/usr/local/openssl/bin/openssl'; # <== adapt as needed
-        # NOTE tainted perl (-T) will complain if the path given in $osaft
-        #      or  $openssl  is writable; it also must be an absolute path
+	# NOTE tainted perl (-T) will complain if the path given in $osaft
+	#      or  $openssl  is writable; it also must be an absolute path
 ##############################################################################
 
 my @argv    = @ARGV;
@@ -134,16 +134,16 @@ if ($me =~/\.cgi$/) {
 	#   check if target is suspicious host or net, die if so
 	#   then split data at & to get our options and arguments
 	#   ready we go with the existing code :)
-        # NOTE: in true CGI-mode, QUERY_STRING just contains the form fields,
-        #       when used with our own  osaft:  schema, it also contains the
-        #       the schema and path, i.e.  osaft:///o-saft.cgi?
-        # NOTE: for debugging using system() writing to a file is better than
-        #       using perl's print().
-        my $cgi = 0;
-        my $typ = 'plain';
+	# NOTE: in true CGI-mode, QUERY_STRING just contains the form fields,
+	#       when used with our own  osaft:  schema, it also contains the
+	#       the schema and path, i.e.  osaft:///o-saft.cgi?
+	# NOTE: for debugging using system() writing to a file is better than
+	#       using perl's print().
+	my $cgi = 0;
+	my $typ = 'plain';
 	my $qs  = '';
 	$qs  = $ENV{'QUERY_STRING'} if (defined $ENV{'QUERY_STRING'});
-        #dbx# system "echo  '$qs #' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  '$qs #' >> /tmp/osaft-handler.log";
 	$qs  =~ s/^"?(.*?)"?$/$1/;      # remove enclosing " (windows problem)
 	$qs  =~ s#^o-?saft://##g;       # remove schema if any (used in o-saft.cgi.html)
 	$qs  =~ s#^[^?]*\?##g;          # remove path left of ? if any (used in o-saft.cgi.html)
@@ -151,7 +151,7 @@ if ($me =~/\.cgi$/) {
 	$qs  =~ s/(?:%([0-9a-f]{2,2}))/pack("H2", $1)/egi;  # url-decode once
 	undef @argv;
 	push(@argv, split(/[&?]/, $qs));
-        #dbx# system "echo  '@argv :' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  '@argv :' >> /tmp/osaft-handler.log";
 
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
@@ -160,21 +160,40 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.33\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.34\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
 	}
-	foreach my $dangerous (         # check for suspicious characters and targets
+
+	# ignore (remove) potential dangerous commands and options
+	my $ignore = qr/
+		^--(?:
+		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version) # illegal commands
+		     |(?:cmd|url)=--(?:trace|--v)   # illegal options given as URL
+		     |trace|v                       # options with to verbose output
+		     |ca.?(?:file|path)|rc=         # may be used to enumerate paths
+		)/xi;
+	#dbx# system "echo  '#argv: @argv #' >> /tmp/osaft-handler.log";
+	my @save_argv;
+	foreach my $arg (@argv) {
+		next if ($arg =~ m#$ignore#);
+		push(@save_argv, $arg);
+	}
+	@argv = @save_argv;
+	#dbx# system "echo  '#argv: @argv #' >> /tmp/osaft-handler.log";
+
+	# check for suspicious characters and targets, die if any
+	foreach my $dangerous (
 		#dbx# print "#dbx: $dangerous # $qs\n";
 		qr/[^a-zA-Z0-9,.:_&\!\/=\+-]/i,
 			# dangerous characters anywhere
 			# above whitelist for allowed characters!
-        		# FIXME: this blocks also valid IPv6 in URL because of [ and/or ]
+			# FIXME: this blocks also valid IPv6 in URL because of [ and/or ]
 
-		qr/(cmd=list|--(env|exe|lib|call|openssl))/i,
+		qr/--(?:env|exe|lib|call|openssl)/i,
 			# dangerous commands and options
 
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
@@ -207,26 +226,26 @@ if ($me =~/\.cgi$/) {
 		# match 1234567890: IP as integer not yet allowed
 		# match IPv4: less than 4 parts for dotted IP
 
-                # TODO: build a map of integer ranges for IPs to be denied:
-                #        10.x.x.x  =  167772161 ..  184549375
-                #       127.x.x.x  = 2130706433 .. 2147483647
-                #       ...
-                #       then check given host againts this map if conversion to
-                #       an integer is succesful.
-                #       It will also work for mixed IPv6-IPv4 IPs like:
-                #         ::ffff:127.0.0.1 which is an alias for ::ffff:7f00:1. 
-                #       This should eliminate some of the restriction (missing)
-                #       of RegEx (see NOTEs below).
-                #       Unfortunately Math::BigInt is required (breaks usage on
-                #       ancient systems).
+		# TODO: build a map of integer ranges for IPs to be denied:
+		#        10.x.x.x  =  167772161 ..  184549375
+		#       127.x.x.x  = 2130706433 .. 2147483647
+		#       ...
+		#       then check given host againts this map if conversion to
+		#       an integer is succesful.
+		#       It will also work for mixed IPv6-IPv4 IPs like:
+		#         ::ffff:127.0.0.1 which is an alias for ::ffff:7f00:1. 
+		#       This should eliminate some of the restriction (missing)
+		#       of RegEx (see NOTEs below).
+		#       Unfortunately Math::BigInt is required (breaks usage on
+		#       ancient systems).
 
-                # NOTE: according followin RegExs
-                # - grouping with back reference is used insted of  (?: ... )
-                #   this is because  :  is used literally in RegExs
-                # - RegExs are not case sensitive to match FQDN and (hex) IP,
-                #   but this also allows --URL= --HOST= (which is ok)
-                # - sequence of following RegEx is important,  more specific
-                #   ones first
+		# NOTE: according followin RegExs
+		# - grouping with back reference is used insted of  (?: ... )
+		#   this is because  :  is used literally in RegExs
+		# - RegExs are not case sensitive to match FQDN and (hex) IP,
+		#   but this also allows --URL= --HOST= (which is ok)
+		# - sequence of following RegEx is important,  more specific
+		#   ones first
 
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
@@ -250,40 +269,40 @@ if ($me =~/\.cgi$/) {
 
 		qr/(-(host|url)=64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
-                        # NOTE: would also be matched by next more general RegEx
+			# NOTE: would also be matched by next more general RegEx
 
 		qr/(-(host|url)=([0-9a-f]{0,4}:){1,3}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
-                        # NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
+			# NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
 		qr/(-(host|url)=([0-9]+\.){1,2}[0-9]+$)/i,
 			# incomplete IPv4 like 10.1 (which evaluate to 10.0.0.1)
-                        # NOTE: in general not bad, but needs to be mapped to
-                        #       allowed IPv4 or IPv6 which is not that simple
-                        # FIXME: i.e. valid 192.1 is denied
+			# NOTE: in general not bad, but needs to be mapped to
+			#       allowed IPv4 or IPv6 which is not that simple
+			# FIXME: i.e. valid 192.1 is denied
 
 		qr/(-(host|url)=[0-9]+$)/i,
 			# just a number
-                        # NOTE: in general not bad, but needs to be mapped to
-                        #       allowed IPv4 or IPv6 which is not that simple
-                        # FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
+			# NOTE: in general not bad, but needs to be mapped to
+			#       allowed IPv4 or IPv6 which is not that simple
+			# FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
 
 		qr/(-(host|url)=.*?\.local$)/i,
 			# multicast domain .local (RFC6762)
 
 		qr{(-(host|url)=([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
 			# IPv6
-                	# NOTE: final ] not escaped, it's a literal character here!
-                	# FIXME: blocks any IPv6
+			# NOTE: final ] not escaped, it's a literal character here!
+			# FIXME: blocks any IPv6
 			# TODO:  IPv6 still experimental
-                	# possible formats to be blocked:
-                	#     ftp://[::ffff:7f00:1]/path
-                	#         //[::ffff:7f00:1]/path
-                	#           [::ffff:7f00:1]/path
-                	#            ::ffff:7f00:1/path    # illegal, but possible
-                	#   HTTPS://[::ffff:7f00:1]:80/path
-                	#     any:[::ffff:7f00:1]/path     # also matched
-                	# FIXME: also blocks FQDN:port like   cafe:4711/path
+			# possible formats to be blocked:
+			#     ftp://[::ffff:7f00:1]/path
+			#         //[::ffff:7f00:1]/path
+			#           [::ffff:7f00:1]/path
+			#            ::ffff:7f00:1/path    # illegal, but possible
+			#   HTTPS://[::ffff:7f00:1]:80/path
+			#     any:[::ffff:7f00:1]/path     # also matched
+			# FIXME: also blocks FQDN:port like   cafe:4711/path
 
 		) {
 		#dbx# print "#dbx: $dangerous # $qs\n";
@@ -293,8 +312,9 @@ if ($me =~/\.cgi$/) {
 
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
-        local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
-        #dbx# system "$osaft @argv >> /tmp/osaft-handler.log";
+	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
+	#dbx# system "$osaft @argv >> /tmp/osaft-handler.log";
+	print "exec $osaft, @argv #\n";
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
