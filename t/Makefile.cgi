@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.36 19/10/21 18:42:53
+#?      @(#) Makefile.cgi 1.37 19/10/22 00:01:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.36
+_SID.cgi        = 1.37
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -181,7 +181,7 @@ testcmd-cgi--cgi-bad2_%:    _args.cgi   = --cgi=wrong    +quit --exit=BEGIN0
 testcmd-cgi--cgi-bad3_%:    _args.cgi   = --wrongcgi     +quit --exit=BEGIN0
 
 # all tests for good or bad arguments need the same initial options
-# FIXME: TEST.init not set if called with -f Makefile.cgi
+# FIXME: TEST.init set explizitely in pattern rule below
 test.cgi:                   TEST.init   =
 test.cgi-%:                 TEST.init   =
 testcmd-cgi-%:              TEST.init   =
@@ -242,13 +242,13 @@ test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
 testcmd-cgi-%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
 
 # TODO: following target prints "#o-saft.pl..."
 testcmd-cgi-good%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS) -i    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS) -i    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
 
 # alias for simple usage
 test.cgi-%: testcmd-cgi-bad_%
@@ -274,7 +274,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.36: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.37: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
