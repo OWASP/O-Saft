@@ -17,14 +17,14 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.35 19/09/10 22:15:54
+#?      @(#) Makefile.cgi 1.36 19/10/21 18:42:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.35
+_SID.cgi        = 1.36
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -43,7 +43,7 @@ ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
-TEST.cgi.hosts      = localhost
+TEST.cgi.hosts      =
 ifdef TEST.hosts
     TEST.cgi.hosts  = $(TEST.hosts)
 endif
@@ -198,6 +198,23 @@ testcmd-cgi-opt--exe_%:     _args.cgi  += --exe=not-allowed
 testcmd-cgi-opt--lib_%:     _args.cgi  += --lib=not-allowed
 testcmd-cgi-opt--cal_%:     _args.cgi  += --call=not-allowed
 testcmd-cgi-opt--ssl_%:     _args.cgi  += --openssl=not-allowed
+testcmd-cgi-opt--libversion_%: _args.cgi  += --cmd=libversion
+testcmd-cgi-opt--version_%: _args.cgi  += --cmd=+version
+testcmd-cgi-opt--cmd-list_%:_args.cgi  += --cmd=+list
+testcmd-cgi-opt--cmd-dump_%:_args.cgi  += --cmd=+dump
+testcmd-cgi-opt--url-dump_%:_args.cgi  += --url=+dump
+testcmd-cgi-opt--trace_%:   _args.cgi  += --trace
+testcmd-cgi-opt--traceA_%:  _args.cgi  += --traceARG
+testcmd-cgi-opt--cmd--trace_%: _args.cgi  += --cmd=--trace
+testcmd-cgi-opt--url--trace_%: _args.cgi  += --url=--trace
+testcmd-cgi-opt--v_%:       _args.cgi  += --v
+testcmd-cgi-opt--cmd--v%:   _args.cgi  += --cmd=--v
+testcmd-cgi-opt--url--v%:   _args.cgi  += --url=--v
+testcmd-cgi-opt--ca-file_%: _args.cgi  += --ca-file=not-allowed
+testcmd-cgi-opt--ca-path_%: _args.cgi  += --ca-path=not-allowed
+testcmd-cgi-opt--ca-files_%:_args.cgi  += --ca-files=not-allowed
+testcmd-cgi-opt--ca-paths_%:_args.cgi  += --ca-paths=not-allowed
+testcmd-cgi-opt--rc_%:      _args.cgi  += --rc=not-allowed
 testcmd-cgi-chr-langle_%:   _args.cgi  += '--bad-char=_<_'
 testcmd-cgi-chr-rangle_%:   _args.cgi  += '--bad-char=_>_'
 testcmd-cgi-chr-semikolon_%:_args.cgi  += '--bad-char=_;_'
@@ -257,7 +274,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.35: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.36: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
