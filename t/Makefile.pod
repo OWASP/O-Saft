@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.23 19/10/18 23:47:12
+@(#) Makefile.pod 1.24 19/10/25 00:29:38
 
 =head1 AUTHOR
 
@@ -224,8 +224,8 @@ be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 =head1 O-Saft Makefile Limitations
 
-Requires GNU Make > 2.0.
-Requires GNU sed for generating (target) INSTALL.sh.
+    Requires GNU Make > 2.0.
+    Requires GNU sed for generating (target) INSTALL.sh.
 
 
 =head1 O-Saft Makefile Syntax
@@ -248,16 +248,16 @@ option, for example::
     make -f t/Makefile
 
 Therefor each Makefile includes  t/Makefile  depending on existence of the
-_SID.test  .
+_SID.test  variable.
 
 
 =head2 O-Saft Makefile Variable and Target Names
 
-General rules for our variable names in Makefiles are:
+General rules for our variable and target names in Makefiles are:
 
-    * variable and target names consist only of characters a-zA-Z0-9_.
-    * variable and target names start with upper case letters or _
-    * variable and target names starting _ are intended for internal use
+    * names consist only of characters a-zA-Z0-9_.
+    * names start with upper case letters or _
+    * names starting _ are intended for internal use
 
 
 =head2 O-Saft Makefile Variable Values
@@ -272,9 +272,9 @@ variables in the text (mainly in target actions).
 Each Makefile defines its own unique SID as variable with a version number
 as value.  This SID is used  several times verbatim.  One might argue that
 the variable  _SID  or  _SID.*  should be used instead for all usages. But
-it is used verbatime to ensure that exactly this string is used and cannot
+it is used verbatim to ensure  that exactly this string is used and cannot
 be overwritten (i.e. with an environment variable) when make is called. 
-If a Makefile is changed, all occourances of the string must be changed.
+If a Makefile is changed, all occurrences of the string must be changed.
 
 The value of the  _SID* variables should be managed by the version control
 system.
