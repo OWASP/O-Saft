@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.904 19/10/22 13:19:45",
-    STR_VERSION => "19.10.09",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.905 19/10/24 21:44:25",
+    STR_VERSION => "19.10.11",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -5759,6 +5759,7 @@ EoREQ
     $response =~ s#HTTP/1.. #STATUS: #; # first line is status line, add :
     $response =~ s#(?:\r\n\r\n|\n\n|\r\r).*$##ms;   # remove HTTP body
     _trace2("_get_sstp_https: response= #{\n$response\n#}");
+    return "<<empty response>>" if ($response =~ m/^\s*-1/);    # somthing wrong
     %headers  = map { split(/:/, $_, 2) } split(/[\r\n]+/, $response);
     # FIXME: map() fails if any header contains [\r\n] (split over more than one line)
     # use elaborated trace with --trace=3 because some servers return strange results
@@ -5766,7 +5767,6 @@ EoREQ
     foreach my $key (keys %headers) {
         _trace2("_get_sstp_https: headers: $key=$headers{$key}");
     }
-    return "<<empty response>>" if (0 > (keys %headers));
     return '401' if ($headers{'STATUS'} =~ m#^\s*401*#); # Microsoft: no SSTP supported
     return '400' if ($headers{'STATUS'} =~ m#^\s*400*#); # other: no SSTP supported
         # lazy checks, may also match 4000 etc.
