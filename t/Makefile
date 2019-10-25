@@ -52,14 +52,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.81 19/10/03 23:17:23
+#?      @(#) Makefile 1.82 19/10/25 22:45:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.81
+_SID.test       = 1.82
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -172,11 +172,14 @@ HELP.test       = $(_NL)\
 
 # following macro contains (huge) list of all available targets
 HELP.test.test.all  = $(_NL)\
-\# summary targets for tests$(_NL)\
+\# $(words $(ALL.tests)) targets for tests:$(_NL)\
 $(ALL.tests)$(_NL)\
 \#$(_NL)\
-\# targets which write results to logfiles$(_NL)\
+\# $(words $(ALL.tests.log)) targets which write results to logfiles:$(_NL)\
 $(ALL.tests.log)$(_NL)\
+\#$(_NL)\
+\# summary targets for tests:$(_NL)\
+$(ALL.help.tests:help.%=%)$(_NL)\
 \#$(_NL)\
 \# for more target and details, following targets can be used$(_NL)\
 $(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
