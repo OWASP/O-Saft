@@ -86,6 +86,20 @@ o-saft.pl some.tld +check | contrib/bunt.pl | ansi2html > some.tld_check.html
 
 ###############################################################################
 ###
+### Beautify output
+###
+
+# Replace values  yes  and  no  by character symbols.
+
+o-saft.pl some.tld +check | contrib/symbol.pl
+
+# Just print data from certificate
+
+o-saft.pl some.tld +info  | contrib/Cert-beautify.pl
+
+
+###############################################################################
+###
 ### Generating a list with all possible commands
 ###
 
