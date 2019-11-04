@@ -1,47 +1,36 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile    - makefile for tests with O-Saft and other tools
-#?
-#? SYNOPSYS
-#?      make -f Makefile.etc ....
-#?
 #? DESCRIPTION
-#?      Various tests, formerly implemented in individual scripts.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.etc
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           Makefile  ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.etc 1.5 19/09/10 22:19:38
+#?      @(#) Makefile.etc 1.6 19/11/04 23:55:57
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.etc        = 1.5
+HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_MYSELF.etc     = t/Makefile.etc
-ALL.includes   += $(_MYSELF.etc)
-ALL.inc.type   += etc
+_SID.etc            = 1.6
 
-first-etc-target-is-default: help.test.etc
-
-ALL.help.tests += help.test.etc
-
-HELP-help.test.etc      = targets for testing ciphers with various tools
-help.test.etc:          HELP_TYPE   = etc
-help.test.etc-v:        HELP_TYPE   = etc
-help.test.etc-vv:       HELP_TYPE   = etc
+_MYSELF.etc         = t/Makefile.etc
+ALL.includes       += $(_MYSELF.etc)
+ALL.inc.type       += etc
+ALL.help.tests     += help.test.etc
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
+
+first-etc-target-is-default: help.test.etc
+
+help.test.etc:          HELP_TYPE   = etc
+help.test.etc-v:        HELP_TYPE   = etc
+help.test.etc-vv:       HELP_TYPE   = etc
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
