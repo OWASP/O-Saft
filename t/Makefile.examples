@@ -1,53 +1,36 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing O-Saft examples
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft's documented examples.
-#?      These are mainly the examples shown with:  o-saft.pl --help=EXAMPLES
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.examples
 #?
-#?      These tests are not yet added to ALL.tests  because most of them are
-#?      mainly variants of tests done in other Makefiles. The  tests targets
-#?      herein are merely intended to check if the  documented examples will
-#?      work and return the proper results.
-#?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#)  1.4 19/09/10 22:20:46
+#?      @(#)  1.5 19/11/05 00:04:07
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.examples   = 1.4
-
-_MYSELF.examples= t/Makefile.examples
-ALL.includes   += $(_MYSELF.examples)
-ALL.inc.type   += examples
-
-first-examples-target-is-default: help.test.examples
-
-ALL.help.tests += help.test.examples
-
 HELP-help.test.examples = print targets for testing documented examples
-help.test.examples:     HELP_TYPE = examples
-help.test.examples-v:   HELP_TYPE = examples
-help.test.examples-vv:  HELP_TYPE = examples
+
+_SID.examples       = 1.5
+
+_MYSELF.examples    = t/Makefile.examples
+ALL.includes       += $(_MYSELF.examples)
+ALL.inc.type       += examples
+ALL.help.tests     += help.test.examples
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
+
+first-examples-target-is-default: help.test.examples
+
+help.test.examples:     HELP_TYPE = examples
+help.test.examples-v:   HELP_TYPE = examples
+help.test.examples-vv:  HELP_TYPE = examples
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -63,6 +46,12 @@ HELP.test.examples.all   = # no special documentation yet
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
+
+# These tests are not yet added to  ALL.tests  because most  of them are mainly
+# variants of tests done in other Makefiles. The test targets herein are merely
+# intended to check if the  documented examples will work and return the proper
+# results.
+# Following are mainly the examples shown with:  o-saft.pl --help=EXAMPLES
 
 # remember: testarg-% executes:
 #       cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
