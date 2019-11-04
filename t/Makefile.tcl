@@ -1,43 +1,26 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing o-saft.tcl
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile containing general testing o-saft.tcl .
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.tcl
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template 
-#
 #? VERSION
-#?      @(#) Makefile.tcl 1.27 19/09/10 22:21:48
+#?      @(#) Makefile.tcl 1.28 19/11/04 23:30:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.27
-
-_MYSELF.tcl     = t/Makefile.tcl
-ALL.includes   += $(_MYSELF.tcl)
-ALL.inc.type   += tcl
-
-first-tcl-target-is-default: help.test.tcl
-
-ALL.help.tests += help.test.tcl
-
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
-help.test.tcl:        HELP_TYPE = tcl
-help.test.tcl-v:      HELP_TYPE = tcl
-help.test.tcl-vv:     HELP_TYPE = tcl
+
+_SID.tcl            = 1.28
+
+_MYSELF.tcl         = t/Makefile.tcl
+ALL.includes       += $(_MYSELF.tcl)
+ALL.inc.type       += tcl
+ALL.help.tests     += help.test.tcl
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -48,6 +31,11 @@ ifdef TEST.hosts
     TEST.tcl.hosts  = $(TEST.hosts)
 endif
 
+first-tcl-target-is-default: help.test.tcl
+
+help.test.tcl:        HELP_TYPE = tcl
+help.test.tcl-v:      HELP_TYPE = tcl
+help.test.tcl-vv:     HELP_TYPE = tcl
 
 HELP-_tcl1          = _________________________________________ testing GUI tool _
 HELP-test.tcl       = test functionality of '$(SRC.tcl)'
