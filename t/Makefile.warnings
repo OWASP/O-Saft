@@ -16,7 +16,7 @@
 #?
 # HACKER's INFO
 #       For details please see
-#           ../Makefile  ../Makefile.help  Makefile.template 
+#           ../Makefile  Makefile  ../Makefile.help  Makefile.pod
 #
 #    How target rules in this Makefile (should) work:
 #       The pattern rule  message-%  from  ./Makefile  is used to check for a
@@ -39,35 +39,35 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.47 19/09/10 22:23:09
+#?      @(#)  1.48 19/11/05 00:27:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.47
-
-_MYSELF.warnings= t/Makefile.warnings
-ALL.includes   += $(_MYSELF.warnings)
-ALL.inc.type   += warnings
-
-first-warn-target-is-default: help.test.warnings
-
-ALL.help.tests += help.test.warnings
-
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
-help.test.warnings:       HELP_TYPE = warnings
-help.test.warnings-v:     HELP_TYPE = warnings
-help.test.warnings-vv:    HELP_TYPE = warnings
+
+_SID.warnings       = 1.48
+
+_MYSELF.warnings    = t/Makefile.warnings
+ALL.includes       += $(_MYSELF.warnings)
+ALL.inc.type       += warnings
+ALL.help.tests     += help.test.warnings
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
 ifndef TEST.host
-    TEST.host   = localhost
+    TEST.host       = localhost
 endif
+
+first-warn-target-is-default: help.test.warnings
+
+help.test.warnings:       HELP_TYPE = warnings
+help.test.warnings-v:     HELP_TYPE = warnings
+help.test.warnings-vv:    HELP_TYPE = warnings
 
 #_____________________________________________________________________________
 #_________________________________________________________ testing warnings __|
@@ -386,7 +386,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# /NƒV 1.47: $(MAKE) test.warnings.log" > $@
+	@echo "# PEµ»eU 1.48: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
