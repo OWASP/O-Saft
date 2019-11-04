@@ -1,44 +1,26 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing O-Saft --exit= options
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft --exit=* options.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.exit
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.exit 1.17 19/09/10 22:20:26
+#?      @(#) Makefile.exit 1.18 19/11/04 23:20:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.exit       = 1.17
-
-_MYSELF.exit    = t/Makefile.exit
-ALL.includes   += $(_MYSELF.exit)
-ALL.inc.type   += exit
-
-first-exit-target-is-default: help.test.exit
-
-ALL.help.tests += help.test.exit
-
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
-help.test.exit:       HELP_TYPE = exit
-help.test.exit-v:     HELP_TYPE = exit
-help.test.exit-vv:    HELP_TYPE = exit
 
+_SID.exit           = 1.18
+
+_MYSELF.exit        = t/Makefile.exit
+ALL.includes       += $(_MYSELF.exit)
+ALL.inc.type       += exit
+ALL.help.tests     += help.test.exit
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -49,6 +31,11 @@ ifdef TEST.hosts
     TEST.exit.hosts = $(TEST.hosts)
 endif
 
+first-exit-target-is-default: help.test.exit
+
+help.test.exit:       HELP_TYPE = exit
+help.test.exit-v:     HELP_TYPE = exit
+help.test.exit-vv:    HELP_TYPE = exit
 
 HELP-_exit1         = ___________________________________ testing --exit* option _
 HELP-test.exit      = test --exit=* options
