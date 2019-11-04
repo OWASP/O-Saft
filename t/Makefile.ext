@@ -1,43 +1,26 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile    - makefile for testing O-Saft with external FQDN
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft project.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.ext
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.ext 1.23 19/09/10 22:20:05
+#?      @(#) Makefile.ext 1.24 19/11/04 23:16:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.23
-
-_MYSELF.ext     = t/Makefile.ext
-ALL.includes   += $(_MYSELF.ext)
-ALL.inc.type   += ext
-
-first-ext-target-is-default: help.test.ext
-
-ALL.help.tests += help.test.ext
-
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
-help.test.ext:        HELP_TYPE = ext
-help.test.ext-v:      HELP_TYPE = ext
-help.test.ext-vv:     HELP_TYPE = ext
+
+_SID.ext            = 1.24
+
+_MYSELF.ext         = t/Makefile.ext
+ALL.includes       += $(_MYSELF.ext)
+ALL.inc.type       += ext
+ALL.help.tests     += help.test.ext
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -50,6 +33,12 @@ ifdef TEST.hosts
 else
     TEST.ext.hosts  = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
 endif
+
+first-ext-target-is-default: help.test.ext
+
+help.test.ext:        HELP_TYPE = ext
+help.test.ext-v:      HELP_TYPE = ext
+help.test.ext-vv:     HELP_TYPE = ext
 
 
 HELP-_ext1              = ______________________________ testing with external hosts _
