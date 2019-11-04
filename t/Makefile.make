@@ -1,50 +1,36 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile    - makefile for testing Makefiles
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile testing targets in all Makefiles (mainly  help*  targets).
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.make
 #?
-#? LIMITATIONS
-#?       Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#    For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.make 1.7 19/09/11 23:27:31
+#?      @(#) Makefile.make 1.8 19/11/05 00:15:05
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.make       = 1.7
+HELP-help.test.make = targets for testing Makefile help* targets
 
-_MYSELF.make    = t/Makefile.make
-ALL.includes   += $(_MYSELF.make)
-ALL.inc.type   += make
+_SID.make           = 1.8
 
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
-.SUFFIXES:
-
-first-make-target-is-default: help.test.make
-
-ALL.help.tests += help.test.make
-help.test.make:     HELP_TYPE = make
-help.test.make-v:   HELP_TYPE = make
-
-
-HELP-help.test.make = targets for testing Makefile (help*) targets
+_MYSELF.make        = t/Makefile.make
+ALL.includes       += $(_MYSELF.make)
+ALL.inc.type       += make
+ALL.help.tests     += help.test.make
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
+
+first-make-target-is-default: help.test.make
+
+help.test.make:     HELP_TYPE = make
+help.test.make-v:   HELP_TYPE = make
+help.test.make-vv:  HELP_TYPE = make
 
 HELP-_makefile1 = _____________________________________ testing help targets _
 HELP-help.make.doc  = print documentation about available Makefile.*
