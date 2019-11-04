@@ -16,16 +16,19 @@
 #?      well as some special syntax of macros and targets is used here,  please
 #?      refer to  Makefile.pod , for example by using  "perldoc Makefile.pod" .
 #?      The term  "SEE Make:some text"  is used to reference to Makefile.pod .
+#
+# HACKER's INFO
+#       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.82 19/11/04 22:07:17
+#?      @(#) Makefile 1.83 19/11/04 22:31:57
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.82
+_SID            = 1.83
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -214,7 +217,9 @@ ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
+ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.inst)
+#               # $(GEN.tags) added in t/Makefile.misc
+#               # $(GEN.wiki) not part of ALL.gen as realy used
 ALL.src         = \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
@@ -246,7 +251,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.82
+_INST.text      = generated from Makefile 1.83
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -439,6 +444,9 @@ HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
 HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) may exist
+HELP-o-saft.rel = generate '$(GEN.rel)'
+#               # HELP-o-saft.rel hardcoded, grrr
+
 
 HELP-_vv1       = ___________ any target may be used with following suffixes _
 HELP--v         = verbose: print target and newer dependencies also
@@ -460,8 +468,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.82
-tar:     GREP_EDIT  = 1.82
+GREP_EDIT           = 1.83
+tar:     GREP_EDIT  = 1.83
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -523,6 +531,9 @@ clean.docker: docker.rm
 # avoid matching implicit rule help% in some of following targets
 $(OSD.dir)/help.txt: 
 	@$(TRACE.target)
+
+#_____________________________________________________________________________
+#_______________________________________________ targets for generated files__|
 
 # targets for generation
 $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
