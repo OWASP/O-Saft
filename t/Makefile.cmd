@@ -1,43 +1,26 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing O-Saft commands and options
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for o-saft.pl .
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.cmd
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For more details please see
-#           ../Makefile  Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.cmd 1.39 19/10/06 21:12:17
+#?      @(#) Makefile.cmd 1.40 19/11/04 23:08:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmd        = 1.39
-
-_MYSELF.cmd     = t/Makefile.cmd
-ALL.includes   += $(_MYSELF.cmd)
-ALL.inc.type   += cmd
-
-first-cmd-target-is-default: help.test.cmd
-
-ALL.help.tests += help.test.cmd
-
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
-help.test.cmd:        HELP_TYPE = cmd
-help.test.cmd-v:      HELP_TYPE = cmd
-help.test.cmd-vv:     HELP_TYPE = cmd
+
+_SID.cmd            = 1.40
+
+_MYSELF.cmd         = t/Makefile.cmd
+ALL.includes       += $(_MYSELF.cmd)
+ALL.inc.type       += cmd
+ALL.help.tests     += help.test.cmd
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -48,6 +31,11 @@ ifdef TEST.hosts
     TEST.cmd.hosts  = $(TEST.hosts)
 endif
 
+first-cmd-target-is-default: help.test.cmd
+
+help.test.cmd:        HELP_TYPE = cmd
+help.test.cmd-v:      HELP_TYPE = cmd
+help.test.cmd-vv:     HELP_TYPE = cmd
 
 HELP-_cmd1          = _________________________________________ testing commands _
 HELP-test.pattern-* = test group of commands with '$(TEST.cmd.hosts)'
