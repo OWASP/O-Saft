@@ -7,10 +7,9 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile containing general testing targets for O-Saft project.
-#?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
+#?      For more details please see
+#?          ../Makefile  Makefile.help  Makefile.pod
+#?      make help.test
 #?
 # HACKER's INFO
 #       For details please see
@@ -52,25 +51,31 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.82 19/10/25 22:45:48
+#?      @(#) Makefile 1.83 19/11/05 00:43:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.82
+HELP-help.test.test = general testing targets
 
-_MYSELF.test    = t/Makefile
-ALL.includes   += $(_MYSELF.test)
-ALL.inc.type   += test
-                # this is the parent makefile in the directory
+_SID.test           = 1.83
+
+_MYSELF.test        = t/Makefile
+ALL.includes       += $(_MYSELF.test)
+ALL.inc.type       += test
+ALL.help.tests     += help.test
+
+export OSAFT_MAKE   = avoid writing random data (like date and time string)
+
+ifndef ALL.Makefiles
+    -include t/Makefile.inc
+    # defines macros if called directly (not from ../Makefile)
+endif
 
 first-test-target-is-default: help.test
 
-ALL.help.tests += help.test
-
-HELP-help.test.test = general testing targets
 help.test:            HELP_TYPE = test
 help.test-v:          HELP_TYPE = test
 help.test-vv:         HELP_TYPE = test
@@ -81,11 +86,6 @@ help.test.test-vv:    HELP_TYPE = test
 help.test.test.all:   HELP_TYPE = test
 help.test:            HELP_HEAD = $(HELP_RULE)
 help.test.%:          HELP_HEAD = $(HELP_RULE)
-
-ifndef ALL.Makefiles
-    -include t/Makefile.inc
-    # defines macros if called directly (not from ../Makefile)
-endif
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -115,8 +115,6 @@ TEST.logdir     = $(TEST.dir)/log
 # ALL.tests =
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
-
-export OSAFT_MAKE   = avoid writing random data (like date and time string)
 
 OPT.grep        = -q
     # grep (mainly used in message-% target) should not report matching lines
