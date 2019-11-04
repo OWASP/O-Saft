@@ -2,44 +2,27 @@
 #?
 # TODO: initial version, needs to be completed
 ##############################################################################
-#? NAME
-#?      Makefile        - makefile for testing O-Saft options
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft project.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.opt
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.opt 1.19 19/09/10 22:21:27
+#?      @(#) Makefile.opt 1.20 19/11/04 23:13:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.opt        = 1.19
-
-_MYSELF.opt     = t/Makefile.opt
-ALL.includes   += $(_MYSELF.opt)
-ALL.inc.type   += opt
-
-first-opt-target-is-default: help.test.opt
-
-ALL.help.tests += help.test.opt
-
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
-help.test.opt:        HELP_TYPE = opt
-help.test.opt-v:      HELP_TYPE = opt
-help.test.opt-vv:     HELP_TYPE = opt
+
+_SID.opt            = 1.20
+
+_MYSELF.opt         = t/Makefile.opt
+ALL.includes       += $(_MYSELF.opt)
+ALL.inc.type       += opt
+ALL.help.tests     += help.test.opt
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -49,6 +32,12 @@ TEST.opt.hosts      = localhost
 ifdef TEST.hosts
     TEST.opt.hosts  = $(TEST.hosts)
 endif
+
+first-opt-target-is-default: help.test.opt
+
+help.test.opt:        HELP_TYPE = opt
+help.test.opt-v:      HELP_TYPE = opt
+help.test.opt-vv:     HELP_TYPE = opt
 
 
 HELP-_opt1          = __________________________________________ testing options _
