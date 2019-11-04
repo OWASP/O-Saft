@@ -1,48 +1,36 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for various O-Saft tests and development
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile containing general testing targets for O-Saft project.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.misc
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see Makefile.help .
-#
 #? VERSION
-#?      @(#) Makefile.misc 1.30 19/09/10 22:22:29
+#?      @(#) Makefile.misc 1.31 19/11/05 00:45:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.30
-
-_MYSELF.misc    = t/Makefile.misc
-ALL.includes   += $(_MYSELF.misc)
-ALL.inc.type   += misc
-
-first-misc-target-is-default: help.test.misc
-
-ALL.help.tests += help.test.misc
-
 HELP-help.test.misc = targets for misc. tests and development
-help.test.misc:       HELP_TYPE = misc
-help.test.misc-v:     HELP_TYPE = misc
-help.test.misc-vv:    HELP_TYPE = misc
+
+_SID.misc           = 1.31
+
+_MYSELF.misc        = t/Makefile.misc
+ALL.includes       += $(_MYSELF.misc)
+ALL.inc.type       += misc
+ALL.help.tests     += help.test.misc
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
+
+first-misc-target-is-default: help.test.misc
+
+help.test.misc:       HELP_TYPE = misc
+help.test.misc-v:     HELP_TYPE = misc
+help.test.misc-vv:    HELP_TYPE = misc
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -140,6 +128,9 @@ HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calli
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
+
+ALL.gen        += $(GEN.tags)
+#               # just because GEN.tags is defined in main Makefile
 
 ALL.test.misc  += $(GEN.tags)
 ALL.test.misc  += profile.sub.entry profile.sub.exit profile.sub.args nytprof.html dprof.out
