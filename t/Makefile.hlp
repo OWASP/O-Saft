@@ -1,50 +1,30 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing O-Saft --help options
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft project.
-#?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.hlp
 #?
 # HACKER's INFO
 #       To avoid naming conflicts with  Makefile.help this file must be named
 #       Makefile.hlp .
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
-#       To get a list of used (at least documented)  --help*  options, use:
-#           o-saft.pl --help=help
-#       or:
-#           grep help= OSaft/Doc/help.txt
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.21 19/09/10 22:24:35
+#?      @(#) Makefile.hlp 1.22 19/11/05 00:08:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.hlp        = 1.21
-
-_MYSELF.hlp     = t/Makefile.hlp
-ALL.includes   += $(_MYSELF.hlp)
-ALL.inc.type   += hlp
-
-first-hlp-target-is-default: help.test.hlp
-
-ALL.help.tests += help.test.hlp
-
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
-help.test.hlp:        HELP_TYPE = hlp
-help.test.hlp-v:      HELP_TYPE = hlp
-help.test.hlp-vv:     HELP_TYPE = hlp
+
+_SID.hlp            = 1.22
+
+_MYSELF.hlp         = t/Makefile.hlp
+ALL.includes       += $(_MYSELF.hlp)
+ALL.inc.type       += hlp
+ALL.help.tests     += help.test.hlp
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -55,6 +35,11 @@ ifdef TEST.hosts
     TEST.hlp.hosts = $(TEST.hosts)
 endif
 
+first-hlp-target-is-default: help.test.hlp
+
+help.test.hlp:        HELP_TYPE = hlp
+help.test.hlp-v:      HELP_TYPE = hlp
+help.test.hlp-vv:     HELP_TYPE = hlp
 
 HELP-_hlp1          = ___________________________________ testing --help options _
 HELP-test.hlp       = test  help  commands and options of '$(SRC.pl)'
@@ -66,6 +51,11 @@ HELP.test.hlp.all   = # no special documentation yet
 testarg-hlp-%:                  EXE.pl      = ../$(SRC.pl)
 testarg-hlp-%:                  TEST.init   = --no-rc --header
     # --no-rc ensures that a local RC-file does not change the results
+
+# To get a list of used (at least documented)  --help*  options, use:
+#   o-saft.pl --help=help
+# or:
+#   grep help= OSaft/Doc/help.txt
 
 # these are kind of help, but do not use --help
 testarg-hlp---cmd-VERSION:      TEST.args  += --cmd=VERSION
