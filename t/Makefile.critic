@@ -1,44 +1,33 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for performing perlcritic in project
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks with perlcritic
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.critic
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see Makefile.help .
-#
-#       TODO:
-#          * complete with tests from t/test-o-saft.cgi.sh
-#
 #? VERSION
-#?      @(#) Makefile.critic 1.19 19/09/10 22:18:43
+#?      @(#) Makefile.critic 1.20 19/11/04 23:40:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.19
+HELP-help.test.critic = targets for using perlcritic
 
-_MYSELF.critic  = t/Makefile.critic
-ALL.includes   += $(_MYSELF.critic)
-ALL.inc.type   += critic
+_SID.critic         = 1.20
+
+_MYSELF.critic      = t/Makefile.critic
+ALL.includes       += $(_MYSELF.critic)
+ALL.inc.type       += critic
+ALL.help.tests     += help.test.critic
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
 
 first-critic-target-is-default: help.test.critic
 
-ALL.help.tests += help.test.critic
-
-HELP-help.test.critic   = targets for using perlcritic
 help.critic:              HELP_TYPE = critic
 help.critic-v:            HELP_TYPE = critic
 help.critic-vv:           HELP_TYPE = critic
@@ -46,10 +35,6 @@ help.test.critic:         HELP_TYPE = critic
 help.test.critic-v:       HELP_TYPE = critic
 help.test.critic-vv:      HELP_TYPE = critic
     # not really for testing, hence we have 'critic' and 'test.critic'
-
-ifeq (,$(_SID.test))
-    -include t/Makefile
-endif
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -79,7 +64,7 @@ critic.help: help.test.critic
 criticdoc:   help.test.critic
 
 #_____________________________________________________________________________
-#__________________________________________________ targets for testing cgi __|
+#___________________________________________ targets for calling perlcritic __|
 
 HELP-_critic0       = _________________________________ targets for code quality _
 HELP-critic         = check files with perlcritic
@@ -161,10 +146,10 @@ critic-pretty: $(CRITIC.dir)
 '
 # TODO: above gawk needs to detect errors and then print "failed  filename"
 
-critic-5  critic-5p c5-%  c5v-%:                CRITIC.severity = -5
-critic-4  critic-4p c4-%  c4v-%:                CRITIC.severity = -4
-critic-3  critic-3p c3-%  c3v-%:                CRITIC.severity = -3
-critic-2  critic-2p c2-%  c2v-%:                CRITIC.severity = -2
+critic-5  critic-5p  c5-%  c5v-%:               CRITIC.severity = -5
+critic-4  critic-4p  c4-%  c4v-%:               CRITIC.severity = -4
+critic-3  critic-3p  c3-%  c3v-%:               CRITIC.severity = -3
+critic-2  critic-2p  c2-%  c2v-%:               CRITIC.severity = -2
 critic-2p critic-3p critic-4p critic-5p:        CRITIC.pretty   = -pretty
 critic-count:   CRITIC.opt = -count
 critic-stat:    CRITIC.opt = --statistics-only
