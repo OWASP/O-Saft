@@ -1,31 +1,25 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - template makefile for testing ...
-#?
-#? SYNOPSYS
-#?      To be used as template for new targets in Makefile.SUFFIX.
-#?      This file itself is not used (included) in t/Makefile.
-#?
 #? DESCRIPTION
-#?      Template Makefile containing targets for testing SOMETHING.
-#?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.TEMPL
 #?
 # HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help
-#
+#       This file itself is not used (included) in t/Makefile.
+# 
 #? VERSION
-#?      @(#)  1.20 19/09/10 22:24:55
+#?      @(#)  1.21 19/11/05 00:33:33
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TEMPL      = 1.20
+HELP-help.test.TEMPL = targets for testing SOMETHING
+                # Makefile with template for new targets in Makefile.TEMPL
+
+_SID.TEMPL      = 1.21
 
 _MYSELF.TEMPL   = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -34,22 +28,19 @@ ALL.includes   += $(_MYSELF.TEMPL)
                 # add ourself to list of all included makefiles
 ALL.inc.type   += TEMPL
                 # add our type to list of all included types
-
-first-TEMPL-target-is-default: help.test.TEMPL
-    # otherwise the first target from other included files would be used
-
 ALL.help.tests += help.test.TEMPL
-
-HELP-help.test.TEMPL= targets for testing SOMETHING
-                    # defines message for main Makefile's help* targets
-help.test.TEMPL:          HELP_TYPE = TEMPL
-help.test.TEMPL-v:        HELP_TYPE = TEMPL
-help.test.TEMPL-vv:       HELP_TYPE = TEMPL
 
 ifeq (,$(_SID.test))
     -include t/Makefile
     # get general macros for testing from master makefile
 endif
+
+first-TEMPL-target-is-default: help.test.TEMPL
+    # otherwise the first target from other included files would be used
+
+help.test.TEMPL:          HELP_TYPE = TEMPL
+help.test.TEMPL-v:        HELP_TYPE = TEMPL
+help.test.TEMPL-vv:       HELP_TYPE = TEMPL
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
