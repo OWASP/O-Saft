@@ -1,54 +1,43 @@
 #! /usr/bin/make -rRf
 #?
-#? NAME
-#?      Makefile        - makefile for testing O-Saft internal documentation
-#?
-#? SYNOPSYS
-#?      make [options] [target] [...]
-#?
 #? DESCRIPTION
-#?      Makefile to perform testing tasks for O-Saft internal documentation.
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.dev
 #?
-#? LIMITATIONS
-#?      Requires GNU Make > 2.0.
-#?
-# HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #? VERSION
-#?      @(#) Makefile.dev 1.6 19/09/10 22:19:17
+#?      @(#) Makefile.dev 1.7 19/11/04 23:46:36
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.dev        = 1.6
-
-_MYSELF.dev     = t/Makefile.dev
-ALL.includes   += $(_MYSELF.dev)
-ALL.inc.type   += dev
-
-first-dev-target-is-default: help.test.dev
-
-ALL.help.tests += help.test.dev
-
 HELP-help.test.dev  = targets for testing internal documentation and functionality
-help.test.dev:        HELP_TYPE = dev
-help.test.dev-v:      HELP_TYPE = dev
-help.test.dev-vv:     HELP_TYPE = dev
+
+_SID.dev            = 1.7
+
+_MYSELF.dev         = t/Makefile.dev
+ALL.includes       += $(_MYSELF.dev)
+ALL.inc.type       += dev
+ALL.help.tests     += help.test.dev
 
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
+
+first-dev-target-is-default: help.test.dev
+
+help.test.dev:        HELP_TYPE = dev
+help.test.dev-v:      HELP_TYPE = dev
+help.test.dev-vv:     HELP_TYPE = dev
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 TEST.dev.hosts      =
 
-# need to call program here and not the one found via $PATH
+# need to call program in this directory and not the one found via $PATH
 EXE.o-saft-tcl      = ../$(SRC.tcl)
 EXE.o-saft-pl       = ../$(SRC.pl)
 EXE.o-saft-sh       = ../$(SRC.sh)
