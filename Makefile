@@ -14,18 +14,18 @@
 #?
 #?      For detailled documentation how GNU Make, its syntax and conventions as
 #?      well as some special syntax of macros and targets is used here,  please
-#?      refer to  Makefile.pod , for example by using "perldoc Makefile.pod".
-#?      The term  "SEE Make:some text"  is used to reference to it.
+#?      refer to  Makefile.pod , for example by using  "perldoc Makefile.pod" .
+#?      The term  "SEE Make:some text"  is used to reference to Makefile.pod .
 #?
 #? VERSION
-#?      @(#) Makefile 1.81 19/10/19 00:12:26
+#?      @(#) Makefile 1.82 19/11/04 22:07:17
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.81
+_SID            = 1.82
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -37,11 +37,6 @@ ALL.includes   := Makefile
                 # must be  :=  to avoid overwrite after includes
                 # each $(TEST.dir)/Makefile* will add itself to ALL.includes
 
-MAKEFLAGS       = --no-builtin-variables --no-builtin-rules
-.SUFFIXES:
-
-first-target-is-default: help
-
 MAKEFILE        = Makefile
                 # define variable for myself,  this allows to use  some targets
                 # within other makefiles
@@ -49,8 +44,13 @@ MAKEFILE        = Makefile
                 # and  Makefile  is used when exactly this file is meant.
                 # $(ALL.Makefiles) is used, when all Makefiles are needed.
 
+MAKEFLAGS       = --no-builtin-variables --no-builtin-rules
+.SUFFIXES:
+
 .DEFAULT:
 	@echo "**ERROR: unknown target '$(MAKECMDGOALS)'"
+
+first-target-is-default: help
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -119,7 +119,7 @@ CONTRIB.post.awk= \
 		  JSON-array.awk JSON-struct.awk \
 		  XML-attribute.awk XML-value.awk \
 		  lazy_checks.awk
-CONTRIB.post    = bunt.pl bunt.sh
+CONTRIB.post    = bunt.pl bunt.sh symbol.pl
 CONTRIB.misc    = \
 		  cipher_check.sh \
 		  critic.sh \
@@ -246,7 +246,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.81
+_INST.text      = generated from Makefile 1.82
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -293,6 +293,9 @@ help.all%:    _help_body_ = _help_body_all
 help.all%:    _help_list_ = _help_list
 %.all-v:     _help_text-v =
 _help_text-v              = \# to see Makefile, where targets are defined, use: $(MAKE_COMMAND) $(MAKECMDGOALS)-v
+
+#_____________________________________________________________________________
+#_________________________________________________________ internal targets __|
 
 # SEE Make:.SECONDEXPANSION
 .SECONDEXPANSION:
@@ -457,8 +460,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.81
-tar:     GREP_EDIT  = 1.81
+GREP_EDIT           = 1.82
+tar:     GREP_EDIT  = 1.82
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
