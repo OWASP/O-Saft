@@ -32,7 +32,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.10 17/06/25 20:33:25
+#?      @(#) bunt.pl 1.11 19/11/05 01:13:59
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -334,9 +334,9 @@ while (my $line = <STDIN>) {
 			print "$_";
 			next;
 		};
-		s/([[a-zA-Z0-9.-]+:[0-9]{1,5})/cyan($1);/ie && print && next; # leading host:port
-		s/(#\[(?:[^\]]*)])/ cyan(  $1);/ie && print && next;          # leading #[key]:
-		s/^([^:]+:)/italic $1; /e if ($italic == 1);                  # any other word:
+		s/^([[a-zA-Z0-9.-]+:[0-9]{1,5})/cyan($1);/ie;   # leading host:port
+		s/(#\[(?:[^\]]*)])/ cyan(  $1);/ie;             # leading #[key]:
+		s/^([^:]+:)/italic $1; /e if ($italic == 1);    # any other word:
 		s/(yes\s*$)/         green( $1);/ie && print && next;
 		s/(no\s*$)/          brown( $1);/ie && print && next;
 		s/(no\s+\(.*\))/     yellow($1);/ie && print && next;
