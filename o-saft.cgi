@@ -74,8 +74,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.35 19/10/20 22:37:55";
-my $VERSION = '19.05.19';
+my $SID_cgi = "@(#) o-saft.cgi 1.36 19/11/05 23:35:05";
+my $VERSION = '19.10.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -160,7 +160,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.35\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.36\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -244,16 +244,16 @@ if ($me =~/\.cgi$/) {
 		#   this is because  :  is used literally in RegExs
 		# - RegExs are not case sensitive to match FQDN and (hex) IP,
 		#   but this also allows --URL= --HOST= (which is ok)
-		# - sequence of following RegEx is important,  more specific
+		# - sequence of following RegExs is important,  more specific
 		#   ones first
 
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
-		# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
+			# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
 
 		qr/(-(host|url)=((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
 			# common Class B RFC networks for private use
-			# TODO: 100.64.0.0/10 CGN is not really class B
+			# TODO: to pedantic: 100.64.0.0/10 CGN is not really class B
 
 		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
