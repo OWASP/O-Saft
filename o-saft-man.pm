@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.292 19/11/07 23:58:44";
+my  $SID_man= "@(#) o-saft-man.pm 1.293 19/11/08 00:40:40";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.292'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.293'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -294,11 +294,8 @@ function toggle_handler(){
  .h             {margin-left:     1em;border:0px solid #fff;}
  .l             {margin-left:     2em;}
  .r             {float:right;}
- .b, div[class=h] > a, input[type=submit]{
-    margin:0.1em;padding:0px 0.5em 0px 0.5em;
-    text-decoration:none; font-weight:bold; color:#000;
-    border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;
-    background:linear-gradient(#fff, #ddd);}
+ .b, div[class=h] > a, input[type=submit] {
+                 margin:        0.1em;padding:0px 0.5em 0px 0.5em; text-decoration:none; font-weight:bold; color:#000; border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666; background:linear-gradient(#fff, #ddd);}
  a[class="b r"]:hover, div[class=h] > a:hover {background:linear-gradient(#ddd, #fff);}
  p > a[class="b"] {margin-left: -2em; }
  p > a[class="b"]:hover {background:linear-gradient(#ddd, #fff);}
@@ -376,14 +373,14 @@ sub _man_form_head  {
     #? print start of CGI form
     my $cgi_bin = shift;
     printf(" <div class=h ><b>Help:</b>\n");
-    printf("  %s\n", _man_help_button($cgi_bin, "--help",         '', "open window with complete help"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=command", '', "open window with help for commands"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  '', "open window with help for checks"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=example", '', "open window with examples"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=opt",     '', "open window with help for options"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     '', "open window with FAQs"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    '', "open window with the glossar"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    '', "open window with help for ToDO"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=command", 'b', "open window with help for commands"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  'b', "open window with help for checks"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=example", 'b', "open window with examples"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=opt",     'b', "open window with help for options"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     'b', "open window with FAQs"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    'b', "open window with the glossar"));
+    printf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    'b', "open window with help for ToDO"));
     print << "EoHTML";
  </div>
  <form id="o-saft" action="$cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
@@ -1666,7 +1663,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.292 2019/11/07
+1.293 2019/11/08
 
 =head1 AUTHOR
 
