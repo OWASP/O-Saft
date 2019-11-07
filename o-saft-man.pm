@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.290 19/08/22 21:18:10";
+my  $SID_man= "@(#) o-saft-man.pm 1.291 19/11/07 23:48:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.290'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.291'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -155,6 +155,7 @@ function osaft_title(txt, ver){
 }
 
 function osaft_buttons(){
+// generated buttons for most common commands in <table id="osaft_buttons">
         var buttons = ['+quick', '+check', '+cipher', '+cipherall', '+info', '+protocols', '+vulns' ];
         var table   = $('osaft_buttons');
         for (var b in buttons) {
@@ -197,7 +198,7 @@ function osaft_commands(){
 }
 function osaft_options(){
 /* get help texts from generated HTML for options and add it to option
- * checkbox of cgi-GUI (actually add it to the parents title tag)
+ * checkbox of cgi-GUI (actually add it to the parent's title tag)
  * existing  tag of text paragraph containing help text has  id=h--OPT
  * generated tag of quick checkbox containing help text has  id=q--OPT
  */
@@ -279,6 +280,7 @@ function osaft_handler(from,to){
         return false;
 }
 function toggle_handler(){
+// toggle display of "schema" button
         if (/^file:/.test(location.protocol)===true) { return; }
         toggle_display(d("schema"));
         return;
@@ -328,22 +330,22 @@ EoHTML
     return;
 } # _man_html_head
 
-sub _man_html_note  {
+sub _man_html_warn  {
     #? print "Note" text box for CGI usage; only visible with fragment #Note
-    _man_dbx("_man_html_note() ...");
+    _man_dbx("_man_html_warn() ...");
     print << 'EoHTML';
  <style>
   /* message box "Note", if necessary */
-  .m            {opacity:0; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:rgba(0,0,0,0.8); top:0; right:0; bottom:0; left:0; z-index:9; }
-  .m:target     {opacity:1; pointer-events:auto; }
+  .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:rgba(0,0,0,0.9); top:0; right:0; bottom:0; left:0; z-index:9; }
   .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:#fff; background:linear-gradient(#fff, #226); }
+  .m > div > a  {opacity:1; pointer-events:auto; }
   .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:#226; color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 1px 3px #5bb; }
   .m > div > a:hover  {background: #5bb; }
   .m > div > h3       {margin:-0.8em; border-bottom:1px solid black; margin-bottom:1em; }
   .m > div > h3:before{content:"\00a0\00a0\00a0" }
  </style>
- <div id="Note" class="m"> <div>
-  <a href="" title="I understand">X</a>
+ <div id="warn" class="m"> <div>
+  <a  id="seen" href="" onclick="toggle_display(d('warn'));return false;" title="I understand">X</a>
   <h3>O-Saft as CGI </h3>
   <p>This is a sample implementation to show O-Saft's functionality.</p>
   <p>It is not intended to be used for regular tests of foreign servers.</p>
@@ -351,7 +353,7 @@ sub _man_html_note  {
  </div> </div>
 EoHTML
     return;
-} # _man_html_note
+} # _man_html_warn
 
 sub _man_help_button{
     #? return href tag for a help button
@@ -404,7 +406,7 @@ EoHTML
         # Above HTML contains <div class=n> which contains checkboxes for some
         # options. These checkboxes are added in following  foreach loop.
         # Above HTML contains  <table id="osaft_buttons">  which contains the
-        # quick buttons for some commands. These quick  buttons shoud get the
+        # quick buttons for some commands. These quick buttons should get the
         # description from the later generated help text in this page,  hence
         # the buttons are not generated here but using  JavaScript at runtime
         # so that the corresponding help text  can be derived from the (HTML)
@@ -475,7 +477,7 @@ sub _man_html_foot  {
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span style="display:none">&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
+ <hr><p><span style="display:none">&copy; sic[&#x2713;]sec GmbH, 2012 - 2019</span></p>
  <script>
   osaft_title("$title", "$vers");
  </script>
@@ -1307,7 +1309,7 @@ sub man_cgi         {
     _man_form_head(  $cgi_bin);
     _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     _man_form_foot(  $cgi_bin);
-    _man_html_note();   # not exactly the place in HTML for this <div>, but syntactically ok
+    _man_html_warn();   # not exactly the place in HTML for this <div>, but syntactically ok
     _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
     return;
@@ -1660,7 +1662,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.290 2019/08/22
+1.291 2019/11/07
 
 =head1 AUTHOR
 
@@ -1840,7 +1842,7 @@ When generating the HTML page (wether plain HTML or CGI), each description
 text for commands and options is placed in a paragraph ('<p>' tag),  which
 has an 'id' attribute set to the name of the command or option.  This name
 is prefixed with the letter 'h'. Example: the description of the '+cipher'
-command is placed in following paragraph: <p id='h+cipher'> ... </p>.
+command is placed in a paragraph like: <p id='h+cipher'> ... </p>.
 These paragraphs are generated in  '_man_html()'.
 
 This allows to extract the desciption text after generating the page using
