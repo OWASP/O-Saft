@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.295 19/11/08 16:34:02";
+my  $SID_man= "@(#) o-saft-man.pm 1.296 19/11/08 17:00:35";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.295'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.296'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -387,7 +387,8 @@ sub _man_form_head  {
     #? print start of CGI form
     my $cgi_bin = shift;
     printf(" <div class=h ><b>Help:</b>\n");
-    printf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help"));
+    printf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
+    printf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help (plain text)"));
     printf("  %s\n", _man_help_button($cgi_bin, "--help=command", 'b', "open window with help for commands"));
     printf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  'b', "open window with help for checks"));
     printf("  %s\n", _man_help_button($cgi_bin, "--help=example", 'b', "open window with examples"));
@@ -1695,7 +1696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.295 2019/11/08
+1.296 2019/11/08
 
 =head1 AUTHOR
 
