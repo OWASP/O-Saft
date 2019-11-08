@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.294 19/11/08 16:07:27";
+my  $SID_man= "@(#) o-saft-man.pm 1.295 19/11/08 16:34:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.294'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.295'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -598,10 +598,10 @@ sub _man_html       {
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $skip= 0;
-    my $c = 0;
-    my $h = 0;
-    my $a = "";      # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
-    my $p = "";      # for closing p Tag
+    my $c   = 0;
+    my $h   = 0;
+    my $a   = "";    # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
+    my $p   = "";    # for closing p Tag
     _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
         # NOTE: sequence of following m// and s/// is important
@@ -612,7 +612,11 @@ sub _man_html       {
         next if (0 == $h);                          # ignore "out of scope"
         if (0 < $skip) { $skip--; next; }           # skip some texts
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
-        m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
+        m/^=head1 (.*)/   && do {
+                    printf("$p\n<h1>%s %s </h1>\n", _man_html_ankor($1),$1);
+                    $p="";
+                    next;
+                };
         m/^=head2 (.*)/   && do {
                     my $x=$1;
                     if ($x =~ m/Discrete commands to test/) {
@@ -629,7 +633,9 @@ sub _man_html       {
         m/^=head3 (.*)/   && do {
                     # commands and options expected with =head3 only
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    print _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
+                    if ('cgi' eq $key) {
+                        print _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
+                    }
                     print _man_html_ankor($a) . "\n";
                     printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
@@ -637,9 +643,17 @@ sub _man_html       {
         m/Discrete commands,/ && do { $skip=2; next; }; # skip next 3 lines; SEE Help:Syntax
         # encode special markup
         m/(--help=[A-Za-z0-9_.-]+)/ && do {         # add button for own help (must be first in sequence)
-                    print _man_help_button($url, $1, "b r", "open window with special help");
+                    if ('cgi' eq $key) {
+                        print _man_help_button($url, $1, "b r", "open window with special help");
+                    }
                 };
-        m/^\s*S&([^&]*)&/ && do { my $v=$1; $v=~s!<<!&lt;&lt;!g; print "<div class=c >$v</div>\n"; next; }; # code or example line
+        m/^\s*S&([^&]*)&/ && do {
+                    # code or example line
+                    my $v=$1;
+                    $v=~s!<<!&lt;&lt;!g;
+                    print "<div class=c >$v</div>\n";
+                    next
+                };
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
         s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
@@ -674,6 +688,7 @@ sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     printf("=%s+%s\n", '-'x  $len1, '-'x60);
     return;
 } # _man_head
+
 sub _man_foot       {
     #? print table footer line (dashes)
     my $len1 = shift;   # expected length of first (left) string
@@ -681,6 +696,7 @@ sub _man_foot       {
     printf("=%s+%s\n", '-'x $len1, '-'x60);
     return;
 } # _man_foot
+
 sub _man_opt        {
     #? print line in  "KEY - VALUE"  format
     my @args = @_;
@@ -689,6 +705,7 @@ sub _man_opt        {
     printf("%${len}s%s%s\n", @args);
     return;
 } # _man_opt
+
 sub _man_cfg        {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
@@ -1678,7 +1695,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.294 2019/11/08
+1.295 2019/11/08
 
 =head1 AUTHOR
 
