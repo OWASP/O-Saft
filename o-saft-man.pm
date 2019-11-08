@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.293 19/11/08 00:40:40";
+my  $SID_man= "@(#) o-saft-man.pm 1.294 19/11/08 16:07:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.293'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.294'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -278,6 +278,20 @@ function osaft_handler(from,to){
             }
         }
         return false;
+}
+function osaft_disable_help(){
+// disable help-buttons
+        return;  // -- NOT YET WORKING --
+        var arr = document.getElementsByTagName('a');
+        for (var p=0; p<arr.length; p++) {
+            if (arr[p].className==="b") {
+                arr[p].setAttribute('disabled', true);  // not working
+                arr[p].setAttribute('display', 'none'); // not working
+                //arr[p].disabled = true;  // not working
+                //alert(arr[p].href+" "+arr[p].display);
+            }
+        }
+        return;
 }
 function schema_is_file(){
         if (/^file:/.test(location.protocol)===true) { return true; }
@@ -481,6 +495,7 @@ sub _man_html_foot  {
  <hr><p><span style="display:none">&copy; sic[&#x2713;]sec GmbH, 2012 - 2019</span></p>
  <script>
   osaft_title("$title", "$vers");
+  if (schema_is_file()===true) { osaft_disable_help(); }
  </script>
 </body></html>
 EoHTML
@@ -1663,7 +1678,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.293 2019/11/08
+1.294 2019/11/08
 
 =head1 AUTHOR
 
