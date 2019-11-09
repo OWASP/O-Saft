@@ -25,7 +25,7 @@
 #?      injections.
 #?
 #? VERSION
-#?      @(#) o-saft.php 1.2 18/09/30 23:28:13
+#?      @(#) o-saft.php 1.3 19/11/09 01:04:20
 #?
 #? AUTHOR
 #?      17-feb-17 Achim Hoffmann
@@ -34,7 +34,7 @@
 header('Content-Type: text/plain');
 $qs = "";
 if (isset($_SERVER['QUERY_STRING'])) {
-    $qs = join(' ', split('&', $_SERVER['QUERY_STRING']));
+    $qs = join(' ', preg_split('/&/', $_SERVER['QUERY_STRING']));
 }
 $qs = preg_replace('/[;&`>!|$<]/', '', $qs, -1);# remove dangerous characters
 #dbx# echo("/cgi-bin/o-saft.pl --cgi $qs \n");
