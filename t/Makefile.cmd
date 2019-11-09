@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.41 19/11/09 19:43:18
+#?      @(#) Makefile.cmd 1.42 19/11/09 21:31:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd := targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.41
+_SID.cmd           := 1.42
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -71,18 +71,14 @@ HELP.cmd            = $(_NL)\
 
 HELP.test.cmd.all   = # no special documentation yet
 
-# Some values of keys are different by nature for each call of  o-saft.pl .
-# These keys (commands) should be ignored for all  +info and +check  targets
-# to avoid diffs when testing (i.e. with  *.log  targets).  To ignore output
-# for the keys, the option  --no-out= is used (alias for  --ignore-output=).
-# but keeps the command line shorter).
-# The  ignored keys are tested with the target  testcmd-cmd+ignored-keys_
+# SEE Make:--ignore-output
 _ignore-output-keys := master_key \
 		      session_id session_id_ctx \
 		      session_startdate session_starttime \
 		      session_ticket sts_expired
 _ignore-output     := $(_ignore-output-keys:%=--no-out=%)
 _ignore-output-cmd := $(_ignore-output-keys:%=+%)
+# The  ignored keys are tested with the target  testcmd-cmd+ignored-keys_ .
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -91,18 +87,18 @@ testcmd-cmd%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cmd%:                   TEST.init   = --trace-CLI --header
 
 testcmd-cmd+ignored-keys_%:     TEST.args  += $(_ignore-output-cmd)
-testcmd-cmd+info-_%:            TEST.args  += +info               $(_ignore-output) 
-testcmd-cmd+info--trace-cmd_%:  TEST.args  += +info  --trace-cmd  $(_ignore-output) 
-testcmd-cmd+info--trace-key_%:  TEST.args  += +info  --trace-key  $(_ignore-output) 
-testcmd-cmd+info--trace-time_%: TEST.args  += +info  --trace-time $(_ignore-output) 
+testcmd-cmd+info-_%:            TEST.args  += +info               $(_ignore-output)
+testcmd-cmd+info--trace-cmd_%:  TEST.args  += +info  --trace-cmd  $(_ignore-output)
+testcmd-cmd+info--trace-key_%:  TEST.args  += +info  --trace-key  $(_ignore-output)
+testcmd-cmd+info--trace-time_%: TEST.args  += +info  --trace-time $(_ignore-output)
 testcmd-cmd+info--trace-key-norc_%: TEST.args  += +info   --trace-key --norc $(_ignore-output)
 testcmd-cmd+check_%:            TEST.args  += +check              $(_ignore-output)
-testcmd-cmd+check--nossltls_%:  TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(_ignore-output) 
+testcmd-cmd+check--nossltls_%:  TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(_ignore-output)
     #    simulates a server not responding to ciphers
-testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(_ignore-output) 
-testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(_ignore-output) 
-testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(_ignore-output) 
-testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(_ignore-output) 
+testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(_ignore-output)
+testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(_ignore-output)
+testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(_ignore-output)
+testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(_ignore-output)
 testcmd-cmd+cipher-_%:                TEST.args  += +cipher
 testcmd-cmd+cipher--legacy-owasp_%:   TEST.args  += +cipher --legacy=owasp
 testcmd-cmd+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
@@ -141,10 +137,9 @@ testcmd-cmd_summ+sizes_%:       TEST.args  += +sizes
 testcmd-cmd_summ+pfs_%:         TEST.args  += +pfs
 testcmd-cmd_summ+sni_%:         TEST.args  += +sni
 testcmd-cmd_summ+vulns_%:       TEST.args  += +vulns
-testcmd-cmd_summ+http_%:        TEST.args  += +http  --no-out=sts_expired
-testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  --no-out=sts_expired
-testcmd-cmd_summ+sts_%:         TEST.args  += +sts   --no-out=sts_expired
-    # --no-out=sts_expired  to avoid diffs when testing
+testcmd-cmd_summ+http_%:        TEST.args  += +http  $(_ignore-output)
+testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  $(_ignore-output)
+testcmd-cmd_summ+sts_%:         TEST.args  += +sts   $(_ignore-output)
 
 test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
 test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
