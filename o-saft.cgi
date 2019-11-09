@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.36 19/11/05 23:35:05";
+my $SID_cgi = "@(#) o-saft.cgi 1.37 19/11/09 01:54:33";
 my $VERSION = '19.10.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -108,10 +108,6 @@ sub _warn_and_exit  {
 	print "";
 	exit 0;
 } # _warn_and_exit
-
-if ($ENV{'OSAFT_CGI_TEST'}) {
-	print "**WARNNG: test mode: die with detailed messages on errors\n";
-}
 
 if (not $ENV{'QUERY_STRING'}) {
 	print "**WARNNG: test mode: restart using args as value in QUERY_STRING\n";
@@ -160,9 +156,13 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.36\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.37\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
+
+	if (defined $ENV{'OSAFT_CGI_TEST'}) {
+		print "**WARNNG: test mode: die with detailed messages on errors\n";
+	}
 
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
