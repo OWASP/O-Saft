@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.83 19/11/04 22:31:57
+#?      @(#) Makefile 1.84 19/11/09 12:06:31
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.83
+_SID            = 1.84
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -103,6 +103,7 @@ SRC.pl          = $(Project).pl
 SRC.tcl         = $(Project).tcl
 SRC.gui         = $(Project).tcl $(Project)-img.tcl
 SRC.cgi         = $(Project).cgi
+SRC.php         = $(Project).php
 SRC.docker      = \
 		  $(Project)-docker \
 		  $(Project)-docker-dev \
@@ -131,8 +132,7 @@ CONTRIB.misc    = \
 		  install_openssl.sh \
 		  install_perl_modules.pl \
 		  INSTALL-template.sh \
-		  Dockerfile.alpine-3.6 \
-		  o-saft.php
+		  Dockerfile.alpine-3.6
 
 CONTRIB.zap     = zap_config.sh zap_config.xml
 # some file should get the $(Project) suffix, which is appended later
@@ -211,8 +211,8 @@ inc.Makefiles   = \
 		  Makefile.dev     Makefile.FQDN  Makefile.examples
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
-ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
-ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
+ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
+ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
@@ -251,7 +251,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.83
+_INST.text      = generated from Makefile 1.84
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -468,8 +468,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.83
-tar:     GREP_EDIT  = 1.83
+GREP_EDIT           = 1.84
+tar:     GREP_EDIT  = 1.84
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
