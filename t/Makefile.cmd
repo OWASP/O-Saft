@@ -6,18 +6,18 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.40 19/11/04 23:08:24
+#?      @(#) Makefile.cmd 1.41 19/11/09 19:43:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
+HELP-help.test.cmd := targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd            = 1.40
+_SID.cmd           := 1.41
 
-_MYSELF.cmd         = t/Makefile.cmd
+_MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
 ALL.inc.type       += cmd
 ALL.help.tests     += help.test.cmd
@@ -77,12 +77,12 @@ HELP.test.cmd.all   = # no special documentation yet
 # for the keys, the option  --no-out= is used (alias for  --ignore-output=).
 # but keeps the command line shorter).
 # The  ignored keys are tested with the target  testcmd-cmd+ignored-keys_
-_ignore-output-keys = master_key \
+_ignore-output-keys := master_key \
 		      session_id session_id_ctx \
 		      session_startdate session_starttime \
 		      session_ticket sts_expired
-_ignore-output      = $(_ignore-output-keys:%=--no-out=%)
-_ignore-output-cmd  = $(_ignore-output-keys:%=+%)
+_ignore-output     := $(_ignore-output-keys:%=--no-out=%)
+_ignore-output-cmd := $(_ignore-output-keys:%=+%)
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -141,9 +141,10 @@ testcmd-cmd_summ+sizes_%:       TEST.args  += +sizes
 testcmd-cmd_summ+pfs_%:         TEST.args  += +pfs
 testcmd-cmd_summ+sni_%:         TEST.args  += +sni
 testcmd-cmd_summ+vulns_%:       TEST.args  += +vulns
-testcmd-cmd_summ+http_%:        TEST.args  += +http
-testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts
-testcmd-cmd_summ+sts_%:         TEST.args  += +sts
+testcmd-cmd_summ+http_%:        TEST.args  += +http  --no-out=sts_expired
+testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  --no-out=sts_expired
+testcmd-cmd_summ+sts_%:         TEST.args  += +sts   --no-out=sts_expired
+    # --no-out=sts_expired  to avoid diffs when testing
 
 test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
 test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
