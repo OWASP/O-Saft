@@ -6,16 +6,16 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.42 19/11/09 21:31:58
+#?      @(#) Makefile.cmd 1.43 19/11/10 00:32:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-HELP-help.test.cmd := targets for testing '$(SRC.pl)' commands and options
+HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.42
+_SID.cmd           := 1.43
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
