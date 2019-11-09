@@ -29,13 +29,13 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.99 19/10/19 10:08:15
+#?      @(#) .o-saft.pl 1.100 19/11/09 21:43:26
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.rc = 1.99; # our own SID required for Makefile and some tools
+_SID.rc = 1.100; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -114,6 +114,14 @@ _SID.rc = 1.99; # our own SID required for Makefile and some tools
 
 # https_body contains the HTML page, not important
 --ignore-output=https_body
+
+###
+### anonymise strings in output
+###
+# Pattern for strings to be anonymised in output,  mainly used in CGI mode to
+# avoid information disclosure.
+# Note that the pattern should contain the internal variable names also.
+#--anon_output=(anon_output|anon_text)
 
 ###
 ### define new command +preload
