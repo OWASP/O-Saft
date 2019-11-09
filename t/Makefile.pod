@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.24 19/10/25 00:29:38
+@(#) Makefile.pod 1.25 19/11/09 20:38:08
 
 =head1 AUTHOR
 
@@ -69,6 +69,12 @@ Some words about the terms and words used in GNU Make and in this project.
     * macro definitions in makefiles must not be sequential!
     * $$ avoids evaluating $ (the macro) when reading the makefile, but it
       is evaluated when the corresponding target is executed..
+    * defined using   =  deferred  definition; macro expanded when used
+    * defined using  :=  immediate definition; macro expanded when defined
+    * defined using ::=  immediate definition; macro expanded when defined
+
+Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
+:=  is used.
 
 
 =head2 GNU Make:include
@@ -130,7 +136,7 @@ For details use: make help.test.make
 
 =head2 GNU Make:automatic variables
 
-Note: macro definitions in makefiles must not be sequential!
+Note that macro definitions in makefiles must not be sequential!
 
 Remember GNU Make's automatic variables:
 
