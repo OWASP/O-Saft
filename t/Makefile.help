@@ -178,7 +178,7 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.77 19/11/09 16:29:46
+#?      @(#) Makefile.help 1.78 19/11/09 18:19:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -187,9 +187,9 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help           = 1.77
+_SID.help          := 1.78
 
-_MYSELF.help        = t/Makefile.help
+_MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
 ALL.inc.type       += help
 ALL.help.tests     += help.test.help
@@ -206,10 +206,10 @@ help.test.help-v:     HELP_TYPE = help
 #________________________________________________________________ variables __|
 
 # internal variables
-_TAB            = \\011
-_NL             = \\012
-_CR             = \\015
-T               = $$""(_NL)
+_TAB           := \\011
+_NL            := \\012
+_CR            := \\015
+T              := $$""(_NL)
 # define _SP containing a single space (tricky as _empty is empty)
 _empty         :=
 _SP            := $(_empty) $(_empty)
@@ -219,10 +219,10 @@ _SP            := $(_empty) $(_empty)
 # however, it is for development and testing only; help*-v  may give hints
 HELP_TYPE       = help
 # some often uses formatting strings
-HELP_INFO       = \# Name          | Description/Content
-HELP_NAME       = \# Macro/Variable| Value
-HELP_RULE       = \# Target        | Description
-HELP_LINE       = \#---------------+--------------------------------------------------------------
+HELP_INFO      := \# Name          | Description/Content
+HELP_NAME      := \# Macro/Variable| Value
+HELP_RULE      := \# Target        | Description
+HELP_LINE      := \#---------------+--------------------------------------------------------------
 HELP_HEAD       = $(HELP_NAME)
 HELP_HEADER     = $(HELP_LINE)\012$(HELP_HEAD)\012$(HELP_LINE)
 HELP_USAGE      = **USAGE:  $(MAKE_COMMAND) $($@) '$($@)=your-query'
@@ -237,8 +237,7 @@ help.inc: HELP_HEAD = $(HELP_RULE)
 
 # define scripts as variables, for better human readability
 # for details about the commands, please see  Syntax  above for matching macro
-# and target names, and
-# SEE Make:target matching
+# and target names, and   SEE Make:target matching
 # script variables defined in t/Makefile:
 #     _AWK_macro_by_line    - extract macro  names
 #     _AWK_target_by_line   - extract target names
@@ -250,15 +249,17 @@ help.inc: HELP_HEAD = $(HELP_RULE)
 #                             HELP-_* print as is
 #                             HELP-*  extract target name and print with text
 #     _AWK_gen_eval_target  - print f-* and _f-* target name from HELP-* macro
-_AWK_HELP_by_line   = /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
-                      /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
-                                sub(/HELP-/,"",key); gsub(/ /,"",key);    \
-                                tab="\t"; if(length(key)<8){tab="\t\t";}  \
-                                printf("%s%s\# %s\n",key,tab,txt);         \
+#     _AWK_gen_print_file   - print
+#                             NOTE: FILENAME there is an awk variable
+_AWK_HELP_by_line   := /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
+                       /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
+                                 sub(/HELP-/,"",key); gsub(/ /,"",key);    \
+                                 tab="\t"; if(length(key)<8){tab="\t\t";}  \
+                                 printf("%s%s\# %s\n",key,tab,txt);         \
                               }
-_AWK_gen_eval_target= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
-_AWK_gen_print_file = (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
-%-v: _AWK_print_file= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
+_AWK_gen_eval_target:= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
+_AWK_gen_print_file := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
+%-v: _AWK_print_file:= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
@@ -273,10 +274,10 @@ EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
 EXE.targets     = awk       '$(_AWK_print_file)$(_AWK_target_by_line)'
-EXE.syntax      = sed -n -e 's/^\#\.//p'
+EXE.syntax     := sed -n -e 's/^\#\.//p'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
-EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
+EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
 # NOTE: all EXE.* macros above cannot be shown using echo, eval or show target
 #       they all may return errors like: /bin/sh: 1: Syntax error:...
@@ -476,6 +477,7 @@ eval:
 	@$(TRACE.target)
 	@$(ECHO) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
 
+# FIXME: echo fails if the content of the variable contains braces or semicolon
 echo:
 	@$(TRACE.target)
 	@$(ECHO) '$($($@))'
