@@ -6,18 +6,18 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.39 19/11/04 23:27:58
+#?      @(#) Makefile.cgi 1.40 19/11/09 23:12:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
+HELP-help.test.cgi := targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi            = 1.39
+_SID.cgi           := 1.40
 
-_MYSELF.cgi         = t/Makefile.cgi
+_MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
 ALL.inc.type       += cgi
 ALL.help.tests     += help.test.cgi
@@ -66,12 +66,12 @@ HELP.cgi                = $(_NL)\
 \# Hint: use  test.pattern-cgi-  instead of  test.pattern-cgi , as the$(_NL)\
 \#       patttern  cgi  may match other targets too.
 
-test.cgi.badhosts   = \
+test.cgi.badhosts  := \
 	hostname.ok.to.show.failed-status \
 	localhost     any.local
 
 # range from - - - - - - - - - - - - - - - - - - to
-test.cgi.badIPv4    = \
+test.cgi.badIPv4   := \
 	0.0.0.1                                  0.0.0.255       \
 	10.0.0.1      10.0.0.255   10.12.34.56   10.255.255.255  \
 	100.64.0.0                               100.64.0.255    \
@@ -92,7 +92,7 @@ test.cgi.badIPv4    = \
 
 # the IP or hostname becomes part of the target name, hence IPv6 are not
 # possible verbatim because they contain : in the name; the : must be escaped
-test.cgi.badIPv6    = \
+test.cgi.badIPv6   := \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
 	ff01\:\:1     ff02\:\:1  ff02\:\:fb       64\:abcd\:\: \
 	\:251.1.1.1  \:\:251.1.1.1 \:abcd\:251.1.1.1 \:abcd\:\:251.1.1.1 \
@@ -107,18 +107,18 @@ HELP.cgi.internal   = "\
 "
 
 # TODO: *goodIP*  not yet ready
-test.cgi.goodIPv4   =
+test.cgi.goodIPv4  :=
 
-test.cgi.goodIPv6   = \
+test.cgi.goodIPv6  := \
 	2002\:0\:0\:0\:0\:0\:b0b\:b0b \
 	fe00\:21ab\:22cd\:2323\:\:1 \
 
-test.cgi.badIPs     = $(test.cgi.badIPv4)  $(test.cgi.badIPv6)
-test.cgi.goodIPs    = $(test.cgi.goodIPv4) $(test.cgi.goodIPv6)
+test.cgi.badIPs    := $(test.cgi.badIPv4)  $(test.cgi.badIPv6)
+test.cgi.goodIPs   := $(test.cgi.goodIPv4) $(test.cgi.goodIPv6)
 
-ALL.cgi.badhosts    = $(test.cgi.badhosts:%=testcmd-cgi-bad_%)
-ALL.cgi.badIPs      = $(test.cgi.badIPs:%=testcmd-cgi-bad_%)
-ALL.cgi.goodIPs     = $(test.cgi.goodIPs:%=testcmd-cgi-good_%)
+ALL.cgi.badhosts   := $(test.cgi.badhosts:%=testcmd-cgi-bad_%)
+ALL.cgi.badIPs     := $(test.cgi.badIPs:%=testcmd-cgi-bad_%)
+ALL.cgi.goodIPs    := $(test.cgi.goodIPs:%=testcmd-cgi-good_%)
 
 HELP.test.cgi.all   = $(_NL)\
 \# targets for testing bad hosts:$(_NL)\
@@ -174,7 +174,7 @@ testcmd-cgi-bad%:           EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-good%:          EXE.pl      = ../$(SRC.cgi)
 
 #testcmd-cgi-opt--opt_%:     _args.cgi  += --opt=ok.to.show.failed-status
-ARGS.cgi-opt    = \
+ARGS.cgi-opt   := \
 	--cmd=list         --cmd=+list --cmd=+dump     --url=+dump       \
 	--traceARG         --trace     --cmd=--trace   --url=--trace     \
 	                   --v         --cmd=--v       --url=--v         \
@@ -252,7 +252,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.39: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.40: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
@@ -265,7 +265,7 @@ test.cgi.log: $(_TEST.CGI.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.CGI.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
-ALL.tests.cgi.log  += $(test.cgi.log)
+ALL.test.cgi.log   += $(test.cgi.log)
 
 ifndef ALL.Makefiles
 # NOTE: needed if called with -f Makefile.cgi
