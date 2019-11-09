@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.25 19/11/09 20:38:08
+@(#) Makefile.pod 1.26 19/11/09 21:21:36
 
 =head1 AUTHOR
 
@@ -441,6 +441,24 @@ variable's value, $(_NL) is used for that.
 
 GNU Make'  define  directive, which would avoid the use of  $(_NL), is not
 used to set variables. May change in future ...
+
+
+=head2 Make:--ignore-output
+
+Some values of keys are different by nature for each call of  o-saft.pl .
+To avoid diffs when testing with  *.log  targets, output of such keys must
+be ignored for  all targets with  +info ,  +check  or any other  combining
+commands (like  +hsts). Output such keys can be ignored using  o-saft.pl's
+option  --ignore-output=  (alias  --no-out=). Alias  --no-out=  is used to
+keep the command line shorter.
+
+The macro  _ignore-output ,which is based on _ignore-output-keys) contains
+these keys (commands).  This macro should be used whenever such a command
+is tested.
+
+Unfortunatelly this results in untested commands,  those defined in  macro
+_ignore-output-keys . To test these commands also, a special target should
+exist.
 
 
 =head2 Make:--dry-run
