@@ -74,7 +74,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.37 19/11/09 01:54:33";
+my $SID_cgi = "@(#) o-saft.cgi 1.38 19/11/10 00:12:51";
 my $VERSION = '19.10.19';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -156,7 +156,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.37\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.38\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -186,6 +186,7 @@ if ($me =~/\.cgi$/) {
 	#dbx# system "echo  '#argv: @argv #' >> /tmp/osaft-handler.log";
 
 	# check for suspicious characters and targets, die if any
+	my $key = '--(?:host|url)=';
 	foreach my $dangerous (
 		#dbx# print "#dbx: $dangerous # $qs\n";
 		qr/[^a-zA-Z0-9,.:_&\!\/=\+-]/i,
@@ -241,56 +242,59 @@ if ($me =~/\.cgi$/) {
 
 		# NOTE: according followin RegExs
 		# - grouping with back reference is used insted of  (?: ... )
-		#   this is because  :  is used literally in RegExs
+		#   sometimes, this is because  :  is used literally in RegExs
 		# - RegExs are not case sensitive to match FQDN and (hex) IP,
 		#   but this also allows --URL= --HOST= (which is ok)
 		# - sequence of following RegExs is important,  more specific
 		#   ones first
+		# - the leeading option like --host= is optional as the word to
+		#   be checked may be passed without key, something like:
+		#   --cgi&--host=good.FQDN&localhost&--enabled=
 
-		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
+		qr/(?:(?:$key)?(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
 			# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
 
-		qr/(-(host|url)=((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
+		qr/(?:(?:$key)?((ffff:)?(100\.64|169.254|172\.(1[6-9]|2\d|3[01])|192\.168|198\.18)\.[\d]+.[\d]+))/i,
 			# common Class B RFC networks for private use
 			# TODO: to pedantic: 100.64.0.0/10 CGN is not really class B
 
-		qr/(-(host|url)=((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
+		qr/(?:(?:$key)?((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
 
-		qr/(-(host|url)=((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
+		qr/(?:(?:$key)?((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
 			# loopback, mulicast
 
-		qr/(-(host|url)=((fe80|fe[c-f][0-9a-f]:)))/i,
+		qr/(?:(?:$key)?((fe80|fe[c-f][0-9a-f]:)))/i,
 			# IPv6 link local or site local
 
-		qr/(-(host|url)=((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
+		qr/(?:(?:$key)?((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
 			# IPv6 multicast or unique local unicast (RFC6762)
 
-		qr/(-(host|url)=64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
+		qr/(?:(?:$key)?64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
 			# NOTE: would also be matched by next more general RegEx
 
-		qr/(-(host|url)=([0-9a-f]{0,4}:){1,3}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
+		qr/(?:(?:$key)?([0-9a-f]{0,4}:){1,3}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
 			# NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
-		qr/(-(host|url)=([0-9]+\.){1,2}[0-9]+$)/i,
+		qr/(?:(?:$key)?([0-9]+\.){1,2}[0-9]+$)/i,
 			# incomplete IPv4 like 10.1 (which evaluate to 10.0.0.1)
 			# NOTE: in general not bad, but needs to be mapped to
 			#       allowed IPv4 or IPv6 which is not that simple
 			# FIXME: i.e. valid 192.1 is denied
 
-		qr/(-(host|url)=[0-9]+$)/i,
+		qr/(?:(?:$key)?[0-9]+$)/i,
 			# just a number
 			# NOTE: in general not bad, but needs to be mapped to
 			#       allowed IPv4 or IPv6 which is not that simple
 			# FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
 
-		qr/(-(host|url)=.*?\.local$)/i,
+		qr/(?:(?:$key)?.*?\.local$)/i,
 			# multicast domain .local (RFC6762)
 
-		qr{(-(host|url)=([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
+		qr{(?:(?:$key)?([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
 			# IPv6
 			# NOTE: final ] not escaped, it's a literal character here!
 			# FIXME: blocks any IPv6
@@ -305,7 +309,7 @@ if ($me =~/\.cgi$/) {
 			# FIXME: also blocks FQDN:port like   cafe:4711/path
 
 		) {
-		#dbx# print "#dbx: $dangerous # $qs\n";
+		#dbx# print "#dbx: $qs =~ m#$dangerous#\n";
 		_warn_and_exit "$dangerous" if ($qs =~ m#$dangerous#);
 	}
 	#dbx# print "\nQS: $qs\n";
