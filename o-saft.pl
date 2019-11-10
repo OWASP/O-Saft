@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.905 19/10/24 21:44:25",
-    STR_VERSION => "19.10.11",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.906 19/11/11 00:06:25",
+    STR_VERSION => "19.10.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -131,9 +131,10 @@ BEGIN {
     sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
     # SEE Perl:BEGIN , Therefore this scope is used for --help=* options only.
 
-    my $_me   = $0; $_me   =~ s#.*[/\\]##;
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    #dbx# print "#$_me path=$_path\n";
+    my $_me   = $0;        $_me   =~ s#.*[/\\]##;
+    my $_path = $0;        $_path =~ s#[/\\][^/\\]*$##;
+    my $_root = $ENV{PWD}; $_root =~ s#[/\\][^/\\]*$##; # should return parent dir
+    #dbx# print "#$_me path=$_path\n# PWD=$ENV{PWD}\n# root=$_root\n";
     unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");# SEE Perl:@INC
     if ($_path !~ m#^[.]/*$#) { # . already added
         unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);  # prepend if found via $PATH
