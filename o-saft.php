@@ -21,7 +21,7 @@
 #?      to $_SERVER['SCRIPT_FILENAME'].
 #?
 #? VERSION
-#?      @(#) o-saft.php 1.6 19/11/10 21:14:22
+#?      @(#) o-saft.php 1.7 19/11/10 21:56:59
 #?
 #? AUTHOR
 #?      17-feb-17 Achim Hoffmann
@@ -51,7 +51,8 @@ if (empty($_SERVER['QUERY_STRING'])) {
 
 $cgi  = get_exe($path['dirname'], 'o-saft.cgi', $dirs);
 $path = pathinfo($cgi);     # need to start in directory so that .o-saft.pl is used
-$call = join(' ', ['cd', $path['dirname'], ';', join(DIRECTORY_SEPARATOR, '.', $path['basename'] ]));
+$cgi  = join(DIRECTORY_SEPARATOR, ['.', $path['basename'] ]); # redefine to ./o-saft.cgi
+$call = join(' ', ['cd', $path['dirname'], ';', $cgi]);
 passthru("$call", $err);
 exit(0);
 
