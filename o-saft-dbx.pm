@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.101 19/10/19 19:57:57";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.102 19/11/11 21:33:33";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -406,7 +406,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         printf("%s%14s= [ ", $cfg{'prefix_verbose'}, "targets");
         foreach my $target (@{$cfg{'targets'}}) {
             next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s:%s ", @{$target}[2..3]); # the perlish way
+            printf("%s:%s%s ", @{$target}[2..3,6]);
+               # the perlish way instead of get_target_{host,port,path}
         }
         printf("]\n");
     } else { # complete array
@@ -834,7 +835,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.101 2019/10/19
+1.102 2019/11/11
 
 =head1 AUTHOR
 
