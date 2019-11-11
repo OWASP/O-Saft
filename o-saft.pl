@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.906 19/11/11 00:06:25",
+    SID         => "@(#) yeast.pl 1.907 19/11/11 12:40:23",
     STR_VERSION => "19.10.19",          # <== our official version number
 };
 
@@ -8124,7 +8124,13 @@ while ($#argv >= 0) {
         next;
     }
 
+    _y_ARG("host?    $arg");
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
+        if ($arg !~ m/^[a-zA-Z0-9.-]+/){
+            # TODO: lazy check for valid hostname, needs to be improved
+            _warn("042: invalid host argument '$arg'; ignored");
+            next;   # can safely reloop here, as we are at end of while
+        }
         my ($prot, $host, $port, $auth, $path) = _get_target($cfg{port}, $arg);
         if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/)){
             _warn("042: invalid host-like argument '$arg'; ignored");
@@ -8132,7 +8138,7 @@ while ($#argv >= 0) {
         } else {
             my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
             my $proxy = 0; # TODO: target parameter for proxy not yet supported
-            _y_ARG("host=    $host:$port");
+            _y_ARG("host=    $host:$port,  auth=$auth,  path=$path");
             _yeast("host: $host:$port") if ($cfg{'trace'} > 0);
             # if perlish programming
             # push(@{$cfg{'targets'}}, [$idx, $prot, $host, $port, $auth, $proxy, $path, $arg]);
