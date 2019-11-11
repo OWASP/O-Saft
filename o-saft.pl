@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.912 19/11/11 23:04:33",
+    SID         => "@(#) yeast.pl 1.913 19/11/11 23:27:00",
     STR_VERSION => "19.10.23",          # <== our official version number
 };
 
@@ -2740,7 +2740,6 @@ sub _cfg_set($$)        {
             if (_is_member("cmd-$key", \@{$cfg{'commands-CMD'}}) == 0) {
                 # needed more checks, as these commands are defined as cmd-*
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
-_dbx "USR: $key";
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
                     _warn("043: command '+$key' specified by user") if _is_v_trace();
