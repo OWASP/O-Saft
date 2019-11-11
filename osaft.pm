@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.09.19',  # official version number of this file
+    OSAFT_VERSION   => '19.10.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.193 19/10/19 18:26:35",
+    SID_osaft   => "@(#) osaft.pm 1.194 19/11/11 13:56:00",
 
 };
 
@@ -1523,7 +1523,8 @@ our %cfg = (
                                 # 3: test with and without SNI mode (used with +cipherraw only)
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
-    'usehttp'       => 1,       # 1: make HTTP request
+    'usehttps'      => 1,       # 1: make HTTPS request
+    'usehttp'       => 1,       # 1: make HTTP  request
     'usealpn'       => 1,       # 0: do not use -alpn option for openssl
     'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
     'protos_next'   =>          # all names known for ALPN or NPN
@@ -1937,7 +1938,7 @@ our %cfg = (
     'mx_domains'    => [],      # list of mx-domain:port to be processed
     'hosts'         => [],      # list of targets (host:port) to be processed
                                 # since 18.07.18 used in checkAllCiphers.pl only
-    'targets'       => [],      # list of targets (host:port) to be processed
+    'targets'       => [],      # list of targets (host:port, prot, path, etc.) to be processed
                                 # anon. list, each element is array, see @target_defaults below
     'port'          => 443,     # port for currently scanned target
     'host'          => "",      # currently scanned target
@@ -3114,7 +3115,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.193 2019/10/19
+1.194 2019/11/11
 
 =head1 AUTHOR
 
