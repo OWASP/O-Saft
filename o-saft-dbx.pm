@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.102 19/11/11 21:33:33";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.103 19/11/11 23:57:12";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -496,6 +496,14 @@ sub _yeast_args {
     return;
 } # _yeast_args
 
+sub _yeast_rcfile {
+    #? print content read from RC-FILE ## NOT YET USED ##
+    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    _yline(" RC-FILE {");
+    _yline(" RC-FILE }");
+    return;
+} # _yeast_rcfile {
+
 sub _v_print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (0 < $cfg{'verbose'}); return; }
 sub _v2print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (1 < $cfg{'verbose'}); return; }
 sub _v3print    { local $\ = "\n"; print $cfg{'prefix_verbose'} . join(" ", @_) if (2 < $cfg{'verbose'}); return; }
@@ -835,7 +843,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.102 2019/11/11
+1.103 2019/11/11
 
 =head1 AUTHOR
 
