@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.911 19/11/11 22:32:06",
-    STR_VERSION => "19.10.22",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.912 19/11/11 23:04:33",
+    STR_VERSION => "19.10.23",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -316,7 +316,24 @@ if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
-        print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if _is_v_trace();
+        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot used here
+        if (_is_v_trace()) {
+            my @cfgs;
+            print "#$cfg{'me'}  $cfg{'RC-FILE'}\n";
+            print "#$cfg{'me'}: !!Hint: use --trace  to see complete settings\n";
+            print "#$cfg{'me'}: #------------------------------------------------- RC-FILE {\n";
+            foreach my $val (@rc_argv) {
+                #print join("\n  ", "", @rc_argv);
+                $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
+                print "#$cfg{'me'}:      $val\n";
+                if ($val =~ m/--cfg[^=]*=[^=]*/) {
+                    $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
+                    push(@cfgs, $val);
+                }
+            }
+            print "#$cfg{'me'}: added/modified= @cfgs\n";
+            print "#$cfg{'me'}: #------------------------------------------------- RC-FILE }\n";
+        }
     } else {
         _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_v_trace();
     }
@@ -2723,6 +2740,7 @@ sub _cfg_set($$)        {
             if (_is_member("cmd-$key", \@{$cfg{'commands-CMD'}}) == 0) {
                 # needed more checks, as these commands are defined as cmd-*
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
+_dbx "USR: $key";
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
                     _warn("043: command '+$key' specified by user") if _is_v_trace();
