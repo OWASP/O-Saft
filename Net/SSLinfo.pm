@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.242 19/11/11 14:24:58',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.243 19/11/11 17:48:12',
 };
 
 ######################################################## public documentation #
@@ -747,8 +747,6 @@ my $dumm_4   = $Net::SSLinfo::proxyuser;
 my $dumm_5   = $Net::SSLinfo::proxyauth;
 my $dumm_6   = $Net::SSLinfo::ca_crl;
 my $dumm_7   = $Net::SSLinfo::use_nextprot;
-my $dumm_8   = $Net::SSLinfo::use_https;
-my $dumm_9   = $Net::SSLinfo::target_url;
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
@@ -2408,13 +2406,15 @@ sub do_ssl_open($$$@) {
          # Net::SSLeay::set_tlsext_status_type($ssl, Net::SSLeay::TLSEXT_STATUSTYPE_ocsp());
 
         #5e. get data related to HTTP(S)
-        if (0 < $Net::SSLinfo::use_http) {
+        $Net::SSLinfo::target_url =~ s:^\s*$:/:;# set to / if empty
+        if (0 < $Net::SSLinfo::use_https) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
             # TODO: test with a browser User-Agent
             my $ua = "User-Agent: Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0";
             my $response = '';
-            my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
+            my $request  = "GET $Net::SSLinfo::target_url HTTP/1.1\r\n";
+               $request .= "Host: $host\r\nConnection: close\r\n\r\n";
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or do {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
@@ -2467,13 +2467,18 @@ sub do_ssl_open($$$@) {
 #    X-Firefox-Spdy: h2             (seen at policy.mta-sts.google.com 9/2016)
 #           X-Firefox-Spdy  most likely returned only for proper User-Agent
             _trace("do_ssl_open HTTPS }");
+        }
+        if (0 < $Net::SSLinfo::use_http) {
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
             my %headers;
+            my $response = '';
+            my $request  = '';
             $src = 'Net::SSLeay::get_http()';
-            ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
-                 Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
-                 # TODO: test with a browser User-Agent
-                 # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
+            ($response, $_SSLinfo{'http_status'}, %headers) =
+                Net::SSLeay::get_http($host, 80, $Net::SSLinfo::target_url,
+                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+                  # TODO: test with a browser User-Agent
+                  # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
                 );
             # NOTE that get_http() returns all keys in %headers capitalized
             my $headers = "";   # for trace only
