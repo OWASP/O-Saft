@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.907 19/11/11 12:40:23",
-    STR_VERSION => "19.10.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.908 19/11/11 12:47:23",
+    STR_VERSION => "19.10.20",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -7186,7 +7186,8 @@ sub _get_target         {
        $prot  = "https" if ($prot eq "");
        $prot  =~ s#:##g;                # strip :
     my $auth  =  ""; # TODO
-    my $path  =  ""; # TODO
+    my $path  =  $arg;
+       $path  =~ s#^.*?/#/#;            # get /path/and?more
     my $port  =  "";
     my $host  =  $arg;
        $host  =~ s#^\s*(?:[a-z][A-Z0-9]*:)?//##i;   # strip schema (protocol), if any
