@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.296 19/11/08 17:00:35";
+my  $SID_man= "@(#) o-saft-man.pm 1.297 19/11/11 16:27:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.296'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.297'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -820,10 +820,10 @@ sub _man_pod_text   {
         };
         $code = 0;
         s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
-        s:X&([^&]*)&:L</$1>:g;          # markup references inside help
-        s:L&([^&]*)&:L<$1|$1>:g;        # markup other references
+        s:(^|\s)X&([^&]*)&:$1L</$2>:g;    # markup references inside help
+        s:(^|\s)L&([^&]*)&:$1L<$2|$2>:g;  # markup other references
         #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
-        s:I&([^&]*)&:I<$1>:g;           # markup commands and options
+        s:(^|\s)I&([^&]*)&:$1I<$2>:g;     # markup commands and options
         s/^([A-Z., -]+)$/B<$1>/;        # bold
         s/^(=item)\s+(.*)/$1 $2/;       # squeeze spaces
         my $line = $_;
@@ -1696,7 +1696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.296 2019/11/08
+1.297 2019/11/11
 
 =head1 AUTHOR
 
