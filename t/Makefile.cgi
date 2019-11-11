@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.41 19/11/10 00:33:52
+#?      @(#) Makefile.cgi 1.42 19/11/11 13:51:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.41
+_SID.cgi           := 1.42
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -218,26 +218,39 @@ testcmd-cgi-chr-hash_any.FQDN:     _args.cgi  += '--bad-char=_\#_'
 
 ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 
+testarg-cgi-%:              EXE.pl      = ../$(SRC.cgi)
+testarg-cgi-%:              TEST.init   = --cgi +quit --exit=BEGIN0
+testarg-cgi-host-host.ok:          _args.cgi  += hostname.ok.to.show.failed-status
+testarg-cgi-host-localhost:        _args.cgi  += localhost
+testarg-cgi-host-ffff:             _args.cgi  += ffff
+# TODO: add more of the invalid host from $test.cgi.badIPv4 and $test.cgi.badIPv6
+
+ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
+
 test.cgi.log-compare:   TEST.target_prefix  = testcmd-cgi
 test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
     # TEST.target_prefix not yet used
 
+testarg-cgi-%:
+	@$(TRACE.target)
+	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi)"
+
 testcmd-cgi-%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
 
 # TODO: following target prints "#o-saft.pl..."
 testcmd-cgi-good%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS) -i    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS)    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
 
 # alias for simple usage
 test.cgi-%: testcmd-cgi-bad_%
 	@echo ""
 
-ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs)
+ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
 test.cgi.badIPs:   $(ALL.cgi.badIPs)
@@ -252,7 +265,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.41: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.42: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
