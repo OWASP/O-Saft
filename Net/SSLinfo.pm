@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.10.19',
+    SSLINFO_VERSION => '19.10.23',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.243 19/11/11 17:48:12',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.244 19/11/11 23:36:29',
 };
 
 ######################################################## public documentation #
@@ -323,6 +323,10 @@ Will be set to the Net::SSLeay::*_method used to in do_ssl_open().
 Use content of this file instead opening connection with openssl.
 Used for debugging.  Note: there are no checks if the content of this file
 matches the other parameters, in particular the host and port.
+
+=item $Net::SSLinfo::verbose
+
+print some some verbose messages
 
 =back
 
@@ -734,6 +738,7 @@ $Net::SSLinfo::ca_depth = undef;# depth of peer certificate verification verific
 $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
+$Net::SSLinfo::verbose     = 0; # 1: print some verbose messages
 $Net::SSLinfo::linux_debug = 0; # passed to Net::SSLeay::linux_debug
 $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
 
@@ -766,6 +771,8 @@ sub _traceset   {
 }
 
 sub _trace      { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' .  $txt if (0 < $trace); return; }
+
+sub _verbose    { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' .  $txt if (0 < $Net::SSLinfo::verbose); return; }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = '';              # dangerous if aliased or wrong one found
