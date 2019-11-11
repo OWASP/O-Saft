@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.43 19/11/10 00:32:52
+#?      @(#) Makefile.cmd 1.44 19/11/12 00:56:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.43
+_SID.cmd           := 1.44
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -141,6 +141,10 @@ testcmd-cmd_summ+http_%:        TEST.args  += +http  $(_ignore-output)
 testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  $(_ignore-output)
 testcmd-cmd_summ+sts_%:         TEST.args  += +sts   $(_ignore-output)
 
+testarg-cmd-host_url+cn:        TEST.args  += --v +cn
+testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
+    # target to test hostname with url (path)
+
 test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
 test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
 test.cmd.log:           TEST.target_prefix  = testcmd-cmd
@@ -149,6 +153,7 @@ test.cmd.log:           TEST.target_prefix  = testcmd-cmd
 # NOTE: no sort because we want the sequence of target definitions above.
 ALL.testcmd     = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
 ALL.test.cmd    = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
+ALL.test.cmd   += testarg-host_url+cn
 ALL.test.cmd.log  += $(ALL.test.cmd:%=%.log)
 
 test.cmd.all:   $(ALL.test.cmd)
