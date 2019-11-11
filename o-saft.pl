@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.913 19/11/11 23:27:00",
+    SID         => "@(#) yeast.pl 1.914 19/11/11 23:53:18",
     STR_VERSION => "19.10.23",          # <== our official version number
 };
 
@@ -8404,6 +8404,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     if ($cfg{'traceME'} < 1) {
         $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
     }
+    $Net::SSLinfo::verbose          = $cfg{'verbose'};
     $Net::SSLinfo::linux_debug      = $cfg{'linux_debug'};
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
