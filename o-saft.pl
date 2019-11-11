@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.909 19/11/11 14:00:13",
-    STR_VERSION => "19.10.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.911 19/11/11 22:32:06",
+    STR_VERSION => "19.10.22",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -8391,9 +8391,6 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
-    $Net::SSLinfo::sni_name         = $cfg{'sni_name'}; # NOTE: may be undef
-    $Net::SSLinfo::use_https        = $cfg{'usehttps'};
-    $Net::SSLinfo::use_http         = $cfg{'usehttp'};
     $Net::SSLinfo::use_SNI          = $cfg{'usesni'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
     $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
@@ -8422,6 +8419,11 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::file_sclient     = $cfg{'data'}->{'file_sclient'};
     $Net::SSLinfo::file_pem         = $cfg{'data'}->{'file_pem'};
     $Net::SSLinfo::method           = "";
+    # following are just defaults, will be redefined for each target below
+    $Net::SSLinfo::sni_name         = $cfg{'sni_name'}; # NOTE: may be undef
+    $Net::SSLinfo::use_http         = $cfg{'usehttp'};
+    $Net::SSLinfo::use_https        = $cfg{'usehttps'};
+    $Net::SSLinfo::target_url       = "/";
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http         = 0; # if only +cipher given don't use http 'cause it may cause erros
@@ -8551,7 +8553,7 @@ foreach my $cmd (@{$cfg{'ignore-out'}}) {
 }
 if ($fail > 0) {
     _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
-    if ($cfg{'verbose'} >  0) {
+    if (0 < $cfg{'verbose'}) {
         _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
         _warn("068:  given:  +"    . join(" +", @{$cfg{'do'}}));
     } else {
@@ -8588,7 +8590,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host   = $host {\n");
     # SNI must be set foreach host, but it's always the same name!
-    if ($cfg{'usesni'} > 0) {
+    if (0 < $cfg{'usesni'}) {
         if (defined $sniname) {
             if ($host ne $cfg{'sni_name'}) {
                 _warn("069: hostname not equal SNI name; checks are done with '$host'");
@@ -8601,8 +8603,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $Net::SSLhello::sni_name= $host;
         }
     }
-    $Net::SSLinfo::use_https = $cfg{'usehttps'};# reset
-    $Net::SSLinfo::use_http  = $cfg{'usehttp'}; # reset
+    $Net::SSLinfo::use_https    = $cfg{'usehttps'}; # reset
+    $Net::SSLinfo::use_http     = $cfg{'usehttp'};  # reset
+    $Net::SSLinfo::target_url   = get_target_path($idx);
+    $Net::SSLinfo::target_url   =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
     printheader(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
 
@@ -8612,7 +8616,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
     $fail = "";
-    if ($cfg{'proxyhost'} ne "") {
+    if ("" ne $cfg{'proxyhost'}) {
         # if a proxy is used, DNS might not work at all, or be done by the
         # proxy (which even may return other results than the local client)
         # so we set corresponding values to a warning
