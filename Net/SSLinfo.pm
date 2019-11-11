@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.09.19',
+    SSLINFO_VERSION => '19.10.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.239 19/10/03 10:25:51',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.242 19/11/11 14:24:58',
 };
 
 ######################################################## public documentation #
@@ -204,6 +204,10 @@ Password for proxy authentication (Basic or Digest Auth); default: ''.
 
 Authentication string used for proxy; default: ''.
 
+=item Net::SSLinfo::target_url
+
+URL to be used when makeing HTTP/HTTPS connection (to get HTTP data).
+
 =item $Net::SSLinfo::socket
 
 Socket to be used for connection.  This must be a file descriptor and
@@ -265,6 +269,10 @@ supports SNI; default: ""
 If set to "1", make a simple  HTTP request on the open  SSL connection and
 parse the response for additional SSL/TLS related information (for example
 Strict-Transport-Security header); default: 1
+
+=item $Net::SSLinfo::use_https
+
+If set to "1", make a simple  HTTPS  request on the open  SSL connection.
 
 =item $Net::SSLinfo::use_alpn
 
@@ -690,7 +698,8 @@ $Net::SSLinfo::sclient_opt = '';# option for openssl s_client command
 $Net::SSLinfo::file_sclient= '';# file to read "open s_client" data from
 $Net::SSLinfo::sni_name    = '';# use this as hostname for SNI
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target; 0: do not use SNI; string: use this as hostname for SNI
-$Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
+$Net::SSLinfo::use_https   = 1; # 1 make HTTPS request and retrive additional data
+$Net::SSLinfo::use_http    = 1; # 1 make HTTP  request and retrive additional data
 $Net::SSLinfo::use_alpn    = 1; # 1 to set ALPN option using $Net::SSLinfo::protos_alpn
 $Net::SSLinfo::use_npn     = 1; # 1 to set NPN option using $Net::SSLinfo::protos_npn
 $Net::SSLinfo::protos_alpn = $_protos;
@@ -702,6 +711,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
+$Net::SSLinfo::target_url  = '/'; # URL to use when connecting with get_http(s)
 $Net::SSLinfo::ignore_handshake = 0; # 1 treat "failed handshake" as error
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::starttls    = '';# use STARTTLS if not empty
@@ -737,6 +747,8 @@ my $dumm_4   = $Net::SSLinfo::proxyuser;
 my $dumm_5   = $Net::SSLinfo::proxyauth;
 my $dumm_6   = $Net::SSLinfo::ca_crl;
 my $dumm_7   = $Net::SSLinfo::use_nextprot;
+my $dumm_8   = $Net::SSLinfo::use_https;
+my $dumm_9   = $Net::SSLinfo::target_url;
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
@@ -2408,6 +2420,7 @@ sub do_ssl_open($$$@) {
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
             #dbx# $Net::SSLeay::trace     = 2;
             $src = 'Net::SSLeay::write()';
+#print "#dbx $request\n";
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
             $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
