@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.908 19/11/11 12:47:23",
-    STR_VERSION => "19.10.20",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.909 19/11/11 14:00:13",
+    STR_VERSION => "19.10.21",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -4133,7 +4133,7 @@ sub check_url($$)   {
     #? request given URL and check if it is a valid CRL or OCSP site
     #? returns result of check; empty string if anything OK
     my ($uri, $type) = @_;      # type is 'ext_crl' or 'ocsp_uri'
-    _y_CMD("check_url() ". $cfg{'done'}->{'check_url'});
+   _y_CMD("check_url() ". $cfg{'done'}->{'check_url'});
     $cfg{'done'}->{'check_url'}++;
     _trace("check_url($uri, $type)");
 
@@ -7822,6 +7822,8 @@ while ($#argv >= 0) {
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
+    if ($arg eq  '--https')             { $cfg{'usehttps'}++;       }
+    if ($arg eq  '--nohttps')           { $cfg{'usehttps'}  = 0;    }
     if ($arg eq  '--norc')              {                           } # simply ignore
     if ($arg eq  '--sslerror')          { $cfg{'ssl_error'} = 1;    }
     if ($arg eq  '--nosslerror')        { $cfg{'ssl_error'} = 0;    }
@@ -8182,6 +8184,7 @@ if (('owasp' eq $legacy) and (0 <= _need_cipher())) {
 if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
+    $cfg{'usehttps'}    = 0;
     $cfg{'usehttp'}     = 0;
     $cfg{'usedns'}      = 0;
 }
@@ -8389,6 +8392,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
     $Net::SSLinfo::sni_name         = $cfg{'sni_name'}; # NOTE: may be undef
+    $Net::SSLinfo::use_https        = $cfg{'usehttps'};
     $Net::SSLinfo::use_http         = $cfg{'usehttp'};
     $Net::SSLinfo::use_SNI          = $cfg{'usesni'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
@@ -8597,7 +8601,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $Net::SSLhello::sni_name= $host;
         }
     }
-    $Net::SSLinfo::use_http = $cfg{'usehttp'};  # reset
+    $Net::SSLinfo::use_https = $cfg{'usehttps'};# reset
+    $Net::SSLinfo::use_http  = $cfg{'usehttp'}; # reset
     _resetchecks();
     printheader(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
 
