@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "19.07.29";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.21 19/09/06 23:49:44";
+our $VERSION    = "19.10.19";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.22 19/11/11 16:32:00";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -179,7 +179,7 @@ sub get_markup    {
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
         if (not m/^S/ and not m/^ {14,}/) {
-            # special markup for tools marked ending with (1), (2), ... (3pm)
+            # special markup for tools, tool name ending with (1), ... (3pm)
             s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d(?:pm)?\))/L&$1&/g;
             # special markup for own tools
             s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
@@ -578,7 +578,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.21 2019/09/06
+1.22 2019/11/11
 
 =head1 AUTHOR
 
