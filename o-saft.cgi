@@ -74,8 +74,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.39 19/11/12 09:28:23";
-my $VERSION = '19.10.22';
+my $SID_cgi = "@(#) o-saft.cgi 1.40 19/11/12 09:30:11";
+my $VERSION = '19.10.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -156,10 +156,13 @@ if ($me =~/\.cgi$/) {
 	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
-	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.39\r\n";
-	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
-	print "\r\n";
+## $header = ($qs =~ m/--cgi-header/;
+	if (0 < $header) {
+		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.40\r\n";
+		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
+		print "\r\n";
+	}
 
 	if (defined $ENV{'OSAFT_CGI_TEST'}) {
 		print "**WARNNG: test mode: die with detailed messages on errors\n";
