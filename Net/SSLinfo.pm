@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.244 19/11/11 23:36:29',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.245 19/11/12 12:54:45',
 };
 
 ######################################################## public documentation #
@@ -2244,6 +2244,8 @@ sub do_ssl_open($$$@) {
     #) if (0 < $trace);
     # TODO: no real value for _traceSSLbitmasks() 
 
+    $Net::SSLinfo::target_url =~ s:^\s*$:/:;# set to / if empty
+    _verbose("do_ssl_open " . ($host||'') . ":" . ($port||'') . $Net::SSLinfo::target_url );
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
     if ($cipher =~ m/^\s*$/) {
         $cipher = $_SSLinfo{'cipherlist'};
@@ -2413,7 +2415,6 @@ sub do_ssl_open($$$@) {
          # Net::SSLeay::set_tlsext_status_type($ssl, Net::SSLeay::TLSEXT_STATUSTYPE_ocsp());
 
         #5e. get data related to HTTP(S)
-        $Net::SSLinfo::target_url =~ s:^\s*$:/:;# set to / if empty
         if (0 < $Net::SSLinfo::use_https) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
@@ -3060,7 +3061,9 @@ sub do_openssl($$$$) {
         $mode .= ' -connect'     if  ($mode !~ m/-connect/);
     }
     $host = $port = '' if ($mode =~ m/^-?(ciphers)/);   # TODO: may be scary
-    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1");
+    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1"); 
+    _verbose("$_timeout $_openssl $mode $host:$port");
+        # TODO: both, _trace and _verbose, may produce useless trailing : 
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/); # avoid in access.log: "\n" 400 750 "-" "-"
