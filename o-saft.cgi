@@ -84,7 +84,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.42 19/11/12 11:07:13";
+my $SID_cgi = "@(#) o-saft.cgi 1.43 19/11/12 11:14:48";
 my $VERSION = '19.10.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -163,15 +163,12 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # argument required for some more checks
 	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
-	if ($qs =~ m/--format=html/) {
-	   $typ = 'html';
-	   push(@argv, "--format=html");
-        }
+	$typ    = 'html' if ($qs =~ m/--format=html/); # --format=html already in @argv
 	$header = 1 if (0 < (grep{/--cgi.?header/}     $qs));
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.42\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.43\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -334,6 +331,7 @@ if ($me =~/\.cgi$/) {
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
+	print "$osaft @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); ## no critic qw(ErrorHandling::RequireCarping)
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
