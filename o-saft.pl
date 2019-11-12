@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.916 19/11/12 23:44:42",
+    SID         => "@(#) yeast.pl 1.917 19/11/13 00:07:08",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -158,7 +158,7 @@ use osaft;          # get most of our configuration; it's ok to die if missing
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-our $VERSION= STR_VERSION;
+our $mainsid= STR_VERSION;
 my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
@@ -6800,7 +6800,7 @@ sub printversion        {
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     my $me = $cfg{'me'};
-    print( "=== $0 $VERSION ===");
+    print( "=== $0 $mainsid ===");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
@@ -6971,7 +6971,7 @@ sub printciphers        {
     my ($hex,  $ssl,  $tag,  $bit,  $aut,  $enc,  $key,  $mac);
         $hex = $ssl = $tag = $bit = $aut = $enc = $key = $mac = "";
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
-    _v_print("database version: $VERSION");
+    _v_print("database version: $mainsid");
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out_header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'ciphers-v'} , -V=$cfg{'ciphers-V'}");
     my $have_cipher = 0;
