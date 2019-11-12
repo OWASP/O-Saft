@@ -19,7 +19,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.10 19/07/21 21:53:12
+#?       @(#)  1.11 19/11/12 23:54:14
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -100,7 +100,9 @@ $try \rm -rf $dst
 #
 # 5. add rest of o-saft.pl
 #
-# 6. add separator line for POD
+# 6. patch "standalone specials"
+#
+# 7. add separator line for POD
 
 (
   # 1.
@@ -181,9 +183,14 @@ $try \rm -rf $dst
   $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
      | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
+# 6.
 ) \
   | $try \perl -pe '/^=head1 (NAME|Annotation)/ && do{print "=head1 "."_"x77 ."\n\n";};' \
+  | $try \sed  -e  's/#\s*OSAFT_STANDALONE\s*//' \
 > $dst
+
+# 7.
+##TODO:
 
 $try \chmod 555 $dst
 [ $info -eq 0 ] && exit
