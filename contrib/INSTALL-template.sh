@@ -172,7 +172,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.45 19/11/12 22:30:00
+#?      @(#)  1.46 19/11/12 22:44:37
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -298,7 +298,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.45 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.46 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -423,8 +423,12 @@ if [ "$mode" = "dest" ]; then
 	for f in $files ; do
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
-	$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
+	if [ -z "$try" ]; then
+		$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
 		|| echo_red "**ERROR: generating $osaft_guirc failed"
+	else
+		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
+	fi
 
 	if [ $force -eq 1 ]; then
 		echo '# installing RC-FILEs in $HOME ...'
