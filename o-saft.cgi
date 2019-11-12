@@ -13,14 +13,22 @@
 
 o-saft.cgi  - wrapper script to start o-saft.pl as CGI script
 
-=head1 DESCRIPTIONS
+=head1 DESCRIPTION
 
 Calls ./o-saft.pl if first parameter is  I<--cgi>.
-Returns results as:  Content-type: text/plain;charset=utf-8
-If parameter  I<--format=html>  is given returns results as:
- Content-type: text/html;charset=utf-8
 
-Does some lazy checks according parameters and exits if found:
+The result is prefixed with proper HTTP headers.  These headers can be omitted
+with the parameter  I<--cgi-no-header> .
+
+The default HTTP header "Content-type:"is set to:
+
+  Content-type: text/plain;charset=utf-8
+
+If parameter  I<--format=html>  is given it will be set to
+
+  Content-type: text/html;charset=utf-8
+
+Some lazy checks according parameters are done, exits if following is found:
 
 =over 4
 
@@ -41,8 +49,6 @@ localhost, (0|10|127|169|172|192|224|240|255).X.X.X *.local
 =back
 
 Exits silently if any above error is detected.
-Exits with verbose error message for detected errors, if environment variable
-I<OSAFT_CGI_TEST>  is set.
 
 =head1 DEBUG
 
@@ -51,11 +57,15 @@ are printed.  This is only useful when used on command line, but not within the
 web server. In particular, it prints the RegEx matching a dangerous hostname or
 IP.
 
+The detailed error message is for testing only  and not intended to be used and
+seen when run as a CGI script in a web server. As it is not possible to set the
+environment variable by the client (browser), the code should be safe.
+
 =head1 EXAMPLE
 
 Call as CGI from command line:
 
-  env "QUERY_STRING=--cgi&--host=demo.tld&--cmd=cn"   o-saft.cgi
+  env QUERY_STRING='--cgi&--host=demo.tld&--cmd=cn'  o-saft.cgi
 
 For testing only, call from command line:
 
@@ -74,12 +84,12 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.40 19/11/12 09:30:11";
+my $SID_cgi = "@(#) o-saft.cgi 1.41 19/11/12 11:01:07";
 my $VERSION = '19.10.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
-my $header  = 0;
+my $header  = 1;
 local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 
 ##############################################################################
@@ -100,10 +110,7 @@ sub _warn_and_exit  {
 	#
 	# This function should print an empty string and exit with status 0 in
 	# production environments.
-	# Above detailed error message is for testing only and not intended to
-	# be used and seen when run as a CGI script in a web server.
-	# As the client (browser) is not able to set the environment variable,
-	# the code should be safe.
+	# Printing above detailed error message is safe, see POD above.
 	#
 	# ####################################################################
 	print "";
@@ -156,10 +163,11 @@ if ($me =~/\.cgi$/) {
 	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
-## $header = ($qs =~ m/--cgi-header/;
+	$header = 1 if (0 < (grep{/--cgi.?header/}     $qs));
+	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.40\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.41\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
