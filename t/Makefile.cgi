@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.42 19/11/11 13:51:22
+#?      @(#) Makefile.cgi 1.43 19/11/12 13:14:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.42
+_SID.cgi           := 1.43
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -227,6 +227,14 @@ testarg-cgi-host-ffff:             _args.cgi  += ffff
 
 ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 
+# check HTTP header options, produces USAGE
+testarg-cgi_with%:                 EXE.pl      = ../$(SRC.cgi)
+testarg-cgi_with%:                 TEST.init   =
+testarg-cgi_with-header:           TEST.args  += --cgi --with_HTTP_header --cgi-header
+testarg-cgi_without-header:        TEST.args  += --cgi --with_HTTP_header --cgi-no-header
+
+ALL.cgi.header  = testarg-cgi_with-header testarg-cgi_without-header
+
 test.cgi.log-compare:   TEST.target_prefix  = testcmd-cgi
 test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
     # TEST.target_prefix not yet used
@@ -250,7 +258,7 @@ testcmd-cgi-good%:
 test.cgi-%: testcmd-cgi-bad_%
 	@echo ""
 
-ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg)
+ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg) $(ALL.cgi.header)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
 test.cgi.badIPs:   $(ALL.cgi.badIPs)
@@ -265,11 +273,11 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.42: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.43: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
-test.cgi.log: $(_TEST.CGI.log)
+test.cgi.log: $(_TEST.CGI.log) $(ALL.cgi.header:%=%.log)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.CGI.log) \
