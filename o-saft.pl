@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.914 19/11/11 23:53:18",
-    STR_VERSION => "19.10.23",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.915 19/11/12 17:00:58",
+    STR_VERSION => "19.10.24",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6819,6 +6819,7 @@ sub printversion        {
       # TODO: print "   *SSL version mismatch" if Net::SSLeay::SSLeay_version() ne Net::SSLinfo::do_openssl('version','','','');
     }
 
+    $Net::SSLinfo::verbose = 0; # do not set here; will not be used later
     print "= openssl =";
     print "    external executable              " . (($cmd{'openssl'} eq "") ? "<<executable not found>>" : $cmd{'openssl'});
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
