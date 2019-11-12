@@ -19,7 +19,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.11 19/11/12 23:54:14
+#?       @(#)  1.12 19/11/13 00:38:32
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -205,11 +205,6 @@ cat << EoDescription
 		+cipherall
 		+cipher-dh
 	* Options
-		--help
-		--help=*
-		--v
-		--trace
-		--trace-*
 		--exit*
 		--starttls
 	Use of any of these commands or options will result in Perl compile
@@ -219,9 +214,9 @@ cat << EoDescription
 		Subroutine XXXX redefined at ...
 		"our" variable XXXX redeclared at ...
 
-	However, --help and --help=* will work if following files
+	Note that  --help and --help=*  will only work if following files
+	exist or are located in the same directory as  $dst :
 	$osaft_doc
-	are located in the same directory as  $dst .
 
 	"perldoc $dst"  contains all POD of all included (module) files
 	in unsorted order.
