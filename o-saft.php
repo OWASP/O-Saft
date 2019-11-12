@@ -21,7 +21,7 @@
 #?      to $_SERVER['SCRIPT_FILENAME'].
 #?
 #? VERSION
-#?      @(#) o-saft.php 1.8 19/11/10 22:12:09
+#?      @(#) o-saft.php 1.9 19/11/12 11:26:46
 #?
 #? AUTHOR
 #?      17-feb-17 Achim Hoffmann
@@ -49,6 +49,7 @@ if (empty($_SERVER['QUERY_STRING'])) {
     exit(2);
 }
 
+$_SERVER['QUERY_STRING'] .= "&--cgi-no-header";     # HTTP headers are most likely done by PHP module itself, hence disable in CGI
 putenv("QUERY_STRING=".$_SERVER['QUERY_STRING']);   # ensure setting, in case of missing
 $cgi  = get_exe($path['dirname'], 'o-saft.cgi', $dirs);
 $path = pathinfo($cgi);     # need to start in directory so that .o-saft.pl is used
