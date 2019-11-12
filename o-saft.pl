@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.915 19/11/12 17:00:58",
-    STR_VERSION => "19.10.24",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.916 19/11/12 23:44:42",
+    STR_VERSION => "19.10.25",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -427,6 +427,7 @@ if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
     $err = _load_file("o-saft-usr.pm", "user file");
     if ($err ne "") {
         # continue without warning, it's already printed in "=== reading: " line
+        # OSAFT_STANDALONE no warnings 'redefine'; # avoid: "Subroutine ... redefined"
         sub usr_version     { return ""; }; # dummy stub, see o-saft-usr.pm
         sub usr_pre_init    {}; #  "
         sub usr_pre_file    {}; #  "
