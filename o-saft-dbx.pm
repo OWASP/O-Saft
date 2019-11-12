@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.103 19/11/11 23:57:12";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.104 19/11/13 00:10:03";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -319,7 +319,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _ynull();
     _yeast("#") if (3 > $cfg{'trace'});
     _yline("");
-    _yTRAC("$0", $VERSION);     # $0 is same as $ARG0
+    _yTRAC("$0", $mainsid);     # $0 is same as $ARG0
     _yTRAC("_yeast_init::SID", $SID_dbx) if (2 > $cfg{'trace'});
     _yTRAC("::osaft",  $osaft::VERSION);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
@@ -521,7 +521,7 @@ sub _vprintme   {
     #? write own version, command line arguments and date and time
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
-    _yeast("$0 " . $VERSION);
+    _yeast("$0 " . $mainsid);
     _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
         _yeast("$0 dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
@@ -693,7 +693,7 @@ sub _main_dbx       {
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/) {
-        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
+        # printf("# %s %s\n", __PACKAGE__, $mainsid);  # FIXME: if it is a perl package
         printf("# %s %s\n", __FILE__, $SID_dbx);
         if (eval {require POD::Perldoc;}) {
             # pod2usage( -verbose => 1 )
@@ -811,7 +811,7 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 =over 4
 
 
-=item $VERSION
+=item $mainsid
 
 =item %data
 
@@ -843,7 +843,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.103 2019/11/11
+1.104 2019/11/13
 
 =head1 AUTHOR
 
