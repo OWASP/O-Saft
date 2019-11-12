@@ -74,11 +74,12 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.38 19/11/10 00:12:51";
-my $VERSION = '19.10.19';
+my $SID_cgi = "@(#) o-saft.cgi 1.39 19/11/12 09:28:23";
+my $VERSION = '19.10.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
+my $header  = 0;
 local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 
 ##############################################################################
@@ -124,22 +125,22 @@ if (not $ENV{'QUERY_STRING'}) {
 
 if ($me =~/\.cgi$/) {
 	# CGI mode is pretty simple:
-	#   use QUERY_STRING and POST data and URL-decode once
-	#   check if data contains suspicious characters, die if so
+	#   * URL-decode QUERY_STRING and POST data and once
+	#   * check if data contains suspicious characters, die if so
 	#       NOTE that % is suspicious as we decode only once
-	#   check if target is suspicious host or net, die if so
-	#   then split data at & to get our options and arguments
-	#   ready we go with the existing code :)
+	#   * check if target is suspicious host or net, die if so
+	#   * then split data at & to get our options and arguments
+	#   * ready we go by calling $osaft
 	# NOTE: in true CGI-mode, QUERY_STRING just contains the form fields,
 	#       when used with our own  osaft:  schema, it also contains the
 	#       the schema and path, i.e.  osaft:///o-saft.cgi?
 	# NOTE: for debugging using system() writing to a file is better than
-	#       using perl's print().
+	#       using perl's print() as it may break the HTTP response.
 	my $cgi = 0;
 	my $typ = 'plain';
 	my $qs  = '';
 	$qs  = $ENV{'QUERY_STRING'} if (defined $ENV{'QUERY_STRING'});
-	#dbx# system "echo  '$qs #' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  'QS=$qs #'   >> /tmp/osaft.cgi.log";
 	$qs  =~ s/^"?(.*?)"?$/$1/;      # remove enclosing " (windows problem)
 	$qs  =~ s#^o-?saft://##g;       # remove schema if any (used in o-saft.cgi.html)
 	$qs  =~ s#^[^?]*\?##g;          # remove path left of ? if any (used in o-saft.cgi.html)
@@ -147,7 +148,7 @@ if ($me =~/\.cgi$/) {
 	$qs  =~ s/(?:%([0-9a-f]{2,2}))/pack("H2", $1)/egi;  # url-decode once
 	undef @argv;
 	push(@argv, split(/[&?]/, $qs));
-	#dbx# system "echo  '@argv :' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
@@ -156,7 +157,7 @@ if ($me =~/\.cgi$/) {
 
 	$typ = 'html' if ($qs =~ m/--format=html/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.38\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.39\r\n";
 	print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 	print "\r\n";
 
@@ -176,14 +177,14 @@ if ($me =~/\.cgi$/) {
 		     |trace|v                       # options with to verbose output
 		     |ca.?(?:file|path)|rc=         # may be used to enumerate paths
 		)/xi;
-	#dbx# system "echo  '#argv: @argv #' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 	my @save_argv;
 	foreach my $arg (@argv) {
 		next if ($arg =~ m#$ignore#);
 		push(@save_argv, $arg);
 	}
 	@argv = @save_argv;
-	#dbx# system "echo  '#argv: @argv #' >> /tmp/osaft-handler.log";
+	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 
 	# check for suspicious characters and targets, die if any
 	my $key = '--(?:host|url)=';
@@ -317,7 +318,7 @@ if ($me =~/\.cgi$/) {
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
-	#dbx# system "$osaft @argv >> /tmp/osaft-handler.log";
+	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
