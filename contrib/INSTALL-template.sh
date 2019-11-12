@@ -172,7 +172,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.44 19/08/25 18:27:04
+#?      @(#)  1.45 19/11/12 22:30:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -227,7 +227,7 @@ files_install_doc="
 files_ancient="
 	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
 	INSTALL-devel.sh .perlcriticrc o-saft_bench
-	contrib/.o-saft.tcl
+	contrib/.o-saft.tcl contrib/o-saft.cgi contrib_dir/o-saft.php
 	"
 
 # first, dirty hack to make tests in development mode possible
@@ -236,6 +236,8 @@ files_ancient="
 [ "OSAFT_GUI_INSERTED_""BY_MAKE"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
 [ "CONTRIBDIR_INSERTED_""BY_MAKE" = "$contrib_dir" ]  && contrib_dir=contrib
 
+# some files "not to be installed" are ancient, they are kept here in
+# $files_not_installed to ensure that outdated content is also handled
 files_not_installed="
 	$contrib_dir/o-saft.cgi  $contrib_dir/o-saft.php
 	$contrib_dir/Dockerfile.alpine-3.6   $contrib_dir/Dockerfile.wolfssl
@@ -296,7 +298,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.44 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.45 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
