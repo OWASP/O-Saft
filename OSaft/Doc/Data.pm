@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.10.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.22 19/11/11 16:32:00";
+my  $SID_data   = "@(#) Data.pm 1.23 19/11/13 00:24:40";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -92,6 +92,7 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
+                # OSAFT_STANDALONE $path = "OSaft/Doc/"; # dirty hack for standalone
                 $path =~ s#^/(OSaft/.*)#$1#;# dirty hack
                 $path =~ s#/[^/\\]*$##; # relative path of this file
             $file = "$path/$file";
@@ -578,7 +579,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.22 2019/11/11
+1.23 2019/11/13
 
 =head1 AUTHOR
 
