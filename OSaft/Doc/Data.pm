@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "19.10.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.23 19/11/13 00:24:40";
+our $VERSION    = "19.11.19";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.25 19/11/13 13:50:13";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -92,16 +92,17 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
-                # OSAFT_STANDALONE $path = "OSaft/Doc/"; # dirty hack for standalone
-                $path =~ s#^/(OSaft/.*)#$1#;# dirty hack
-                $path =~ s#/[^/\\]*$##; # relative path of this file
+                $path =~ s#^/(OSaft/.*)#$1#;# own module drectory
+                $path =~ s#/[^/\\]*$##;     # relative path of this file
+                # Dirty hack: some OS return an absolute path for  __FILE__ ;
+                # then $file would not be found because that path is wrong. If
+                # the path begins with /OSaft the leading / is simply removed.
+                # NOTE: This behaviour (on older Mac OSX) is considered a bug
+                #       in Perl there.
             $file = "$path/$file";
-            #dbx# print "file: $file";
-            # dirty hack: some OS return an absolute path for  __FILE__ ; then
-            # $file would not be found because that path is wrong. If the path
-            # begins with  /OSaft , the leading / is simply removed.
-            # NOTE: This behaviour (i.e. older Mac OSX) is considered a bug in
-            #       Perl there.
+            # following two line are for gen_standalone.sh (used with make)
+            # OSAFT_STANDALONE $file =~ s#^\.\./##; # remove leading ../
+            # OSAFT_STANDALONE $file =  "../OSaft/Doc/$file"; # use this one
         }
     }
     #dbx# print "#Data.pm file=$file ";
@@ -579,7 +580,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.23 2019/11/13
+1.25 2019/11/13
 
 =head1 AUTHOR
 
