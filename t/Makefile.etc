@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.6 19/11/04 23:55:57
+#?      @(#) Makefile.etc 1.7 19/11/14 00:10:21
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc            = 1.6
+_SID.etc           := 1.7
 
-_MYSELF.etc         = t/Makefile.etc
+_MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
 ALL.inc.type       += etc
 ALL.help.tests     += help.test.etc
@@ -35,9 +35,9 @@ help.test.etc-vv:       HELP_TYPE   = etc
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-EXE.pl          = ../o-saft.pl
-TEST.init       =
-TEST.args       =
+EXE.pl         := ../o-saft.pl
+TEST.init      :=
+TEST.args      :=
 
 TEST.etc.hosts  =
 ifdef TEST.hosts
@@ -86,7 +86,7 @@ testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint
 testcmd-etc-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
     # tricky illegal option to enforce another (second) command with +cipher
 
-_etc-osaft-CMDS     = +cipher +cipherraw
+_etc-osaft-CMDS    := +cipher +cipherraw
 
 ALL.test.etc-cipher = \
 	testcmd-etc-sslscan1.8 \
@@ -104,7 +104,7 @@ ALL.test.etc-cipher.log = $(ALL.test.etc-cipher:%=%.log)
 #      All programs need to return same list of ciphers.
 #      Result with or without SNI may be different.
 #
-_CIPHERS     = DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM-SHA256
+_CIPHERS    := DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM-SHA256
 #_CIPHER_LIST = $(shell $(_CIPHERS) :)
 #_CIPHER_REGEX= $(shell $(_CIPHERS) |)
 #  without SSI:
