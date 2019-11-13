@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.22 19/11/05 00:08:42
+#?      @(#) Makefile.hlp 1.23 19/11/14 00:15:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,9 +19,9 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp            = 1.22
+_SID.hlp           := 1.23
 
-_MYSELF.hlp         = t/Makefile.hlp
+_MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
 ALL.inc.type       += hlp
 ALL.help.tests     += help.test.hlp
