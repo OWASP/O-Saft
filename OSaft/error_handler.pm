@@ -83,7 +83,7 @@ use Exporter qw(import);
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # the version number of this package
-    OERR_VERSION                                => '18.03.18',
+    OERR_VERSION                                => '19.11.19',
 
     # error types (general)
     OERR_NO_ERROR                               =>     1,   # no error
@@ -213,7 +213,7 @@ sub version {
 #? or are not defined no input variables needed
 #? if the optional variable 'hash_ref' is used, the referenced hash is used instead of the $err_hash
 
-sub _compile_err_str {
+sub _compile_err_str {  ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my ($arg_ref) = @_;                         # $arg_ref is optional, internal function: no $class!
 
     unless (defined ($arg_ref) && ($arg_ref)) { # use \$err_hash if $arg_ref is not defined (default)
