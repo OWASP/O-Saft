@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.297 19/11/11 16:27:44";
+my  $SID_man= "@(#) o-saft-man.pm 1.298 19/11/13 14:19:03";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.297'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.298'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -592,17 +592,17 @@ sub _man_html_cmds  {
     return $txt;
 } # _man_html_cmds
 
-sub _man_html       {
+sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print text in HTML format
-    my $key = shift; # cgi or html
-    my $url = shift; # URL
-    my $anf = shift; # pattern where to start extraction
-    my $end = shift; # pattern where to stop extraction
+    my $key = shift;    # cgi or html
+    my $url = shift;    # URL
+    my $anf = shift;    # pattern where to start extraction
+    my $end = shift;    # pattern where to stop extraction
     my $skip= 0;
     my $c   = 0;
     my $h   = 0;
-    my $a   = "";    # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
-    my $p   = "";    # for closing p Tag
+    my $a   = "";       # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
+    my $p   = "";       # for closing p Tag
     _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
         # NOTE: sequence of following m// and s/// is important
@@ -1696,7 +1696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.297 2019/11/11
+1.298 2019/11/13
 
 =head1 AUTHOR
 
