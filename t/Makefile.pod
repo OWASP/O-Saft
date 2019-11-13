@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Makefile.pod    - documentation for Makefiles in POD format
+Makefile.pod    - documentation for project's Makefiles in POD format
 
 =head1 SYNOPSYS
 
@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.26 19/11/09 21:21:36
+@(#) Makefile.pod 1.27 19/11/13 23:20:56
 
 =head1 AUTHOR
 
@@ -48,30 +48,38 @@ are referenced from all other Makefiles.
 Internal testing of all functionality of the project  is done using  make,
 in paticular  GNU Make. In contrast to traditional make, GNU Make has more
 features and behaves slightly different to traditional make.  This section
-describes some GNU Make's behaviours used in the project.
+describes some GNU Make behaviours used in the project.
 
 =head2 GNU Make:Terms
 
 Some words about the terms and words used in GNU Make and in this project.
 
-    * macro  is a synonym for  variable  in Makefiles.
-    * GNU Make uses  prerequisites  when targets depend on something, here
-      we use dependencies.
-    * GNU Make distinguishes the terms:  explicit rules,  implicit rules,
-      static pattern rules. For simplicity  target  is used when  explicit
-      rules  are meant and  pattern rule  is used for  static pattern rule
-    * GNU Make refers to the commands executed in a target as  recipe.
+* macro  is a synonym for  variable  in Makefiles.
+
+* GNU Make uses  prerequisites  when targets depend on something, here the
+  term dependencies is used.
+
+* GNU Make distinguishes the terms:   explicit rules,  implicit rules  and
+  static pattern rules. For simplicity target is used when  explicit rules
+  are meant and  pattern rule  is used for  static pattern rule
+
+* GNU Make refers to the commands executed in a target as  recipe.
 
 
 =head2 GNU Make:macros
 
-    * macro  is a synonym for  variable  in Makefiles.
-    * macro definitions in makefiles must not be sequential!
-    * $$ avoids evaluating $ (the macro) when reading the makefile, but it
-      is evaluated when the corresponding target is executed..
-    * defined using   =  deferred  definition; macro expanded when used
-    * defined using  :=  immediate definition; macro expanded when defined
-    * defined using ::=  immediate definition; macro expanded when defined
+* macro  is a synonym for  variable  in Makefiles.
+
+* macro definitions in makefiles must not be sequential!
+
+* $$ avoids evaluating  $ (the macro) when reading the makefile, but it is
+  evaluated when the corresponding target is executed.
+
+* Definition using   =  deferred  definition; macro expanded when used
+
+* Definition using  :=  immediate definition; macro expanded when defined
+
+* Definition using ::=  immediate definition; macro expanded when defined
 
 Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 :=  is used.
@@ -79,19 +87,20 @@ Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 
 =head2 GNU Make:include
 
-GNU Make's include directive doesn't understand macros, the used path must
-be verbatim. To keep make's functionality (targets) maintainable, multiple
-files are used.  They are all named  Makefile  or  Makefile.SUFFIX,  where
-the  SUFFIX  describes the content, somehow. I.g. it should be possible to
-use each of these makefiles by its own, like:
+GNU Make's include directive  doesn't understand  variables, the used path
+must be verbatim. Multiple Makefiles are used to keep make's functionality
+(targets) maintainable. They are all named  Makefile  or  Makefile.SUFFIX,
+where  SUFFIX  describes the content, somehow.  I.g. it should be possible
+to use each of these makefiles by its own, like:
 
     make -f Makefile.SUFFIX target
 
 GNU Make's include functionality, in particular when including files  sub-
 directories, is difficult to use. Hence following trick is used:
 
-    * sub-directories contains a symbolic link to . (itself)
-    * Makefiles always include other files with relative paths
+* sub-directories contains a symbolic link to . (itself)
+
+* Makefiles always include other files with relative paths
 
 Example:
 
@@ -136,7 +145,7 @@ For details use: make help.test.make
 
 =head2 GNU Make:automatic variables
 
-Note that macro definitions in makefiles must not be sequential!
+Note that variable definitions in makefiles must not be sequential!
 
 Remember GNU Make's automatic variables:
 
@@ -230,8 +239,11 @@ be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 =head1 O-Saft Makefile Limitations
 
-    Requires GNU Make > 2.0.
-    Requires GNU sed for generating (target) INSTALL.sh.
+* Requires GNU Make > 2.0.
+
+* Requires GNU awk (gawk)
+
+* Requires GNU sed for generating (target) INSTALL.sh.
 
 
 =head1 O-Saft Makefile Syntax
@@ -247,7 +259,7 @@ on the local make configuration. SEE  Make:automatic variables  also.
 
 =head2 O-Saft Makefile Includes
 
-It is possible to use each Makefile independently by using GNU Make's  -f
+It is possible to use each  Makefile independently by using GNU Make's  -f
 option, for example::
 
     make -f Makefile.help
@@ -261,9 +273,11 @@ _SID.test  variable.
 
 General rules for our variable and target names in Makefiles are:
 
-    * names consist only of characters a-zA-Z0-9_.
-    * names start with upper case letters or _
-    * names starting _ are intended for internal use
+* names consist only of characters a-zA-Z0-9_.
+
+* names start with upper case letters or _
+
+* names starting _ are intended for internal use
 
 
 =head2 O-Saft Makefile Variable Values
@@ -367,7 +381,7 @@ A  unique name prefix  for targets and pattern rules should be used in all
 Makefile.* to distinguish similar names. It also allows to use the pattern
 rule  test.pattern-%  to execute a group of similar targets.
 
-Following macros should then be set only for these targets, like:
+Following variable should then be set only for these targets, like:
 
     testcmd-TEMPL%:     EXE.pl      = ../program-for.TEMPL
     testcmd-TEMPL%:     TEST.init   = +quit
@@ -452,13 +466,13 @@ commands (like  +hsts). Output such keys can be ignored using  o-saft.pl's
 option  --ignore-output=  (alias  --no-out=). Alias  --no-out=  is used to
 keep the command line shorter.
 
-The macro  _ignore-output ,which is based on _ignore-output-keys) contains
-these keys (commands).  This macro should be used whenever such a command
-is tested.
+The variable  _ignore-output  (computed from _ignore-output-keys) contains
+these keys (commands). This variable should be used whenever such commands
+are tested.
 
-Unfortunatelly this results in untested commands,  those defined in  macro
-_ignore-output-keys . To test these commands also, a special target should
-exist.
+Unfortunatelly this  results in  untested commands,  those defined  in the
+variable  _ignore-output-keys . An additional target  should exist to test
+these commands also.
 
 
 =head2 Make:--dry-run
@@ -528,7 +542,7 @@ with that of perldebug. Following options are not helpful:
 It should be simply possible to extend the  pattern rules  with additional
 arguments. For example:  profile.sub.args   and  profile.sub.args_+cn .
 These arguments are extracted in the  pattern rule  itself. This avoids to
-define additional conditional rules for each pattern rule to set the macro
+define more  conditional rules  for each  pattern rule to set the variable
 $(TEST.args)  with the arguments.
 
 The simplest way to split the arguments would be:
@@ -567,9 +581,10 @@ This is actually a shortcut for calling:
 
 The conditional rules split the additional arguments as follows:
 
-  * split the rule's automatic variable  $*  by _
-  * ignore the first value of the splitted arguments as it is part of the
-    target name
+* split the rule's automatic variable  $*  by  _
+
+* the first value of a splitted argument is ignored,  as it is part of the
+  target name
 
 =head3 Example for splitting: profile.sub.args_+cn_--noheader
 
@@ -583,15 +598,20 @@ This is done using (see above):
 
 =head3 Limitations
 
-  * arguments with  _  itself cannot be used
-  * when target names with or without additional arguments are used,  GNU
-    Make's syntax requires separate conditional rules, hence there're:
+* arguments with  _  itself cannot be used
+
+* when  target names  with or without additional arguments are used,  GNU
+  Make's syntax requires separate conditional rules, hence there're:
+
         profile.sub.args:
         profile.sub.args_%:
-  * miss-spelled targets fall back to the corresponding  basic conditional
-    rules; for example  profile.sub.args-+cn  calls  profile.sub.args
-  * if called from within  $(TEST.dir),  $(DEV.pl)  should be set on make
-    call like:
+
+* miss-spelled  targets  fall back to the corresponding  basic conditional
+  rules; for example  profile.sub.args-+cn  calls  profile.sub.args
+
+* if called from within  $(TEST.dir),  $(DEV.pl)  should be set on make
+  call like:
+
        make profile.sub.args-+cn DEV.pl=../yeast.pl
 
 
@@ -615,19 +635,19 @@ in all tools but hardcoded there again. This may/should change in future.
 =head2 Make:generating help
 
 Text to be printed for the  help*  targets are mainly hardcoded in various
-HELP-*  macros, which will be extracted from the corresponding makefile as
-needed. The advantage of this method is, that the texts are printed in the
-sequence they are defined in the makefile. The disadvantage is, that other
-external tools are necessary.
+HELP-*  variables, which will be extracted from the corresponding makefile
+as needed.  The advantage of this method is, that the texts are printed in
+the sequence they are defined in the Makefile.  The disadvantage is,  that
+other external tools are necessary.
 
-In some makefiles the help texts can be generated dynamically using make's
+In some Makefiles the help texts can be generated dynamically using make's
 internal functions like $(foreach ...) .  It can generate  HELP-*  macros,
 which then can be accessed from within make but not be extracted. Example:
 
     $(foreach arg,$(ARGS.program),$(eval  \
         HELP-test.$(arg) = targets for testing something) )
 
-Therefore, the  HELP.doc  macro is used,  to which the texts will be added
+the  HELP.doc  variable is used therefore.  The texts will be  added to it
 dynamically, example:
 
     $(foreach arg, $(ARGS.program), $(eval \
@@ -656,15 +676,22 @@ Some of the variables are set conditionally for targets and pattern rules.
 If things go wrong, or results are unexpected, following steps may help to
 narrow down the problem source:
 
-  * use same target with  -v  appended:  test-v  instead of  test
-    the executed target would then be printed; see  Makefile  for examples
-    and how to set the  TRACE.target  variable; please not that for  *.log
-    targets  TRACE.target.log  can also be used
-  * use -n option for make
-  * get list of targets, for example:  make e-ALL.test.cgi  to get list of
-    executed targets for  test.cgi
-  * get list of all targets (and variables), which match the specified one
-    for example:  make t-test.cgi  to get list of
-  * use -d option for make
+* use same target with  -v  appended:  test-v  instead of  test
+  the executed target would then be printed; see Makefile for examples and
+  how to set the  TRACE.target  variable; please not that for  *.log
+  targets  TRACE.target.log  can also be used
+
+* use -n option for make
+
+* get list of targets, for example executed targets for  test.cgi :
+
+    make e-ALL.test.cgi
+
+* get list of all targets (and variables),  which match the specified one;
+  for example to get list of  test.cgi  targets:
+
+    make t-test.cgi 
+
+* use -d option for make
 
 =cut
