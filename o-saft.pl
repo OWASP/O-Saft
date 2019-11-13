@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.917 19/11/13 00:07:08",
+    SID         => "@(#) yeast.pl 1.918 19/11/13 14:09:36",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -5892,7 +5892,7 @@ sub check_exitcode  {
     my $cnt_ciphs  = 0; # total number of insecure ciphers
     my $cnt_pfs    = 0; # number ciphers without PFS per protocol
     my $cnt_nopfs  = 0; # total number ciphers without PFS
-    my $verbose    = $cfg{'verbose'};       # save global verbose
+    my $old_verbose= $cfg{'verbose'};       # save global verbose
     $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
     if (0 < $cfg{'exitcode_checks'}) {
         $exitcode  = $checks{'cnt_checks_no'} ->{val};
@@ -5943,7 +5943,7 @@ sub check_exitcode  {
     _v_print(sprintf("%s %3s%s",  $checks{'cnt_checks_noo'}->{txt}, "-".$checks{'cnt_checks_noo'}->{val}, $ign_checks));
     _v_print(sprintf("%s\t%5s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
     _v_print("$__exitline }");
-    $cfg{'verbose'} = $verbose; # restore
+    $cfg{'verbose'} = $old_verbose; # restore
     return $checks{'cnt_exitcode'}->{val};
 } # check_exitcode
 
