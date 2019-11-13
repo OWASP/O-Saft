@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.7 19/11/04 23:46:36
+#?      @(#) Makefile.dev 1.8 19/11/14 00:07:58
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev            = 1.7
+_SID.dev           := 1.8
 
-_MYSELF.dev         = t/Makefile.dev
+_MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
 ALL.inc.type       += dev
 ALL.help.tests     += help.test.dev
@@ -38,30 +38,30 @@ help.test.dev-vv:     HELP_TYPE = dev
 TEST.dev.hosts      =
 
 # need to call program in this directory and not the one found via $PATH
-EXE.o-saft-tcl      = ../$(SRC.tcl)
-EXE.o-saft-pl       = ../$(SRC.pl)
-EXE.o-saft-sh       = ../$(SRC.sh)
-EXE.osaft           = ../osaft.pm
-EXE.osaft-standalone = ../o-saft-standalone.pl
-EXE.osaft-dbx       = ../o-saft-dbx.pm
-EXE.osaft-man       = ../o-saft-man.pm
-EXE.osaft-usr       = ../o-saft-usr.pm
-EXE.osaft-cipher    = ../OSaft/Ciphers.pm
-EXE.osaft-doc-data  = ../OSaft/Doc/Data.pm
-EXE.net-sslhello    = ../Net/SSLhello.pm
-EXE.net-sslinfo     = ../Net/SSLinfo.pm
-EXE.t-makefile      = ../t/Makefile.pod
+EXE.o-saft-tcl     := ../$(SRC.tcl)
+EXE.o-saft-pl      := ../$(SRC.pl)
+EXE.o-saft-sh      := ../$(SRC.sh)
+EXE.osaft          := ../osaft.pm
+EXE.osaft-standalone   := ../o-saft-standalone.pl
+EXE.osaft-dbx      := ../o-saft-dbx.pm
+EXE.osaft-man      := ../o-saft-man.pm
+EXE.osaft-usr      := ../o-saft-usr.pm
+EXE.osaft-cipher   := ../OSaft/Ciphers.pm
+EXE.osaft-doc-data := ../OSaft/Doc/Data.pm
+EXE.net-sslhello   := ../Net/SSLhello.pm
+EXE.net-sslinfo    := ../Net/SSLinfo.pm
+EXE.t-makefile     := ../t/Makefile.pod
 # TODO: other tools should go to Makefile.contrib
-EXE.contrib-bunt    = ../contrib/bunt.pl
+EXE.contrib-bunt   := ../contrib/bunt.pl
 EXE.contrib-openssl = ../contrib/install_openssl.sh
-EXE.contrib-standalone  = ../contrib/gen_standalone.sh
-EXE.install-sh      = ../INSTALL.sh
+EXE.contrib-standalone := ../contrib/gen_standalone.sh
+EXE.install-sh     := ../INSTALL.sh
 # NOTE: there is already EXE.install in ../Makefile
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.dev))
 
-ARGS.sources        = EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
+ARGS.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something,
@@ -70,24 +70,24 @@ ARGS.sources        = EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.o
 
 # no targets are generated for empty ARGS.* variables
 
-ARGS.o-saft-tcl     = --help=opts --test-o-saft
-ARGS.o-saft-pl      =  +traceSUB
-ARGS.o-saft-sh      =  -h -list -help=rc -help=sni
-ARGS.osaft          =
+ARGS.o-saft-tcl    := --help=opts --test-o-saft
+ARGS.o-saft-pl     :=  +traceSUB
+ARGS.o-saft-sh     :=  -h -list -help=rc -help=sni
+ARGS.osaft         :=
 # done with ARGS.osaft-dbx:  --regex --test-regex
 
-ARGS.osaft-cipher   = \
+ARGS.osaft-cipher  := \
 	description     alias   const   names   rfc     version overview \
 	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
 	getter=0xC0,0x2C        key=ECDHE-ECDSA-AES256-GCM-SHA384 \
 	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 
-ARGS.osaft-doc-data = \
+ARGS.osaft-doc-data := \
 	version +VERSION        list        print \
 	get     get-markup      get-text    get-as-text \
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
-ARGS.osaft-man      = \
+ARGS.osaft-man     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
@@ -95,21 +95,21 @@ ARGS.osaft-man      = \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod \
 
-ARGS.osaft-dbx      = \
+ARGS.osaft-dbx     := \
 	--test-show     --test-data         --test-prot --test-regex \
 	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
 
-ARGS.net-sslhello   =
-ARGS.net-sslinfo    =   +VERSION  localhost --test-ssleay --test-methods
-ARGS.t-makefile     =
-ARGS.install-sh     =   --install  --clean  --check     --expected
+ARGS.net-sslhello  :=
+ARGS.net-sslinfo   :=   +VERSION  localhost --test-ssleay --test-methods
+ARGS.t-makefile    :=
+ARGS.install-sh    :=   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
 
-ARGS.contrib-bunt       =
-ARGS.contrib-openssl    = --n --m
-ARGS.contrib-standalone =
+ARGS.contrib-bunt      :=
+ARGS.contrib-openssl   := --n --m
+ARGS.contrib-standalone:=
 
 HELP-_dev1          = __________________________ testing internal documentations _
 HELP-test.dev       = test various internal documentation and functionality
