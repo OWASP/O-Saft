@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.20 19/11/04 23:40:01
+#?      @(#) Makefile.critic 1.21 19/11/13 23:56:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic         = 1.20
+_SID.critic        := 1.21
 
-_MYSELF.critic      = t/Makefile.critic
+_MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
 ALL.inc.type       += critic
 ALL.help.tests     += help.test.critic
@@ -39,23 +39,23 @@ help.test.critic-vv:      HELP_TYPE = critic
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-CRITIC.dir      = $(TEST.dir)
-CRITIC.rc       = .perlcriticrc
-CRITIC.severity = -5
-CRITIC.opt      =
-CRITIC.pretty   =
+CRITIC.dir          = $(TEST.dir)
+CRITIC.rc          := .perlcriticrc
+CRITIC.severity    := -5
+CRITIC.opt         :=
+CRITIC.pretty      :=
 
-ALL.critic      = $(SRC.pl) $(ALL.pm) $(GEN.pod)
+ALL.critic          = $(SRC.pl) $(ALL.pm) $(GEN.pod)
 # $(CHK.pl)
 
 # using perlcritic's --verbose options without ( and ) ; see: man perlcritic
-_CRITIC.verb8   = '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
-_CRITIC.verb10  = '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
+_CRITIC.verb8      := '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
+_CRITIC.verb10     := '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
 # same options, but output prefixed with filename
-_CRITIC.verb8o  = --verbose $(_CRITIC.verb8)
-_CRITIC.verb10o = --verbose $(_CRITIC.verb10)
+_CRITIC.verb8o     := --verbose $(_CRITIC.verb8)
+_CRITIC.verb10o    := --verbose $(_CRITIC.verb10)
 
-CRITIC.opt      = $(_CRITIC.verb8o)
+CRITIC.opt          = $(_CRITIC.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
 
 # some aliases
