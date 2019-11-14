@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#)  1.21 19/11/05 00:33:33
+#?      @(#)  1.22 19/11/14 20:42:49
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,9 +19,9 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL      = 1.21
+_SID.TEMPL     := 1.22
 
-_MYSELF.TEMPL   = t/Makefile.template
+_MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
                 # gets the file of the initial call "make" command
 ALL.includes   += $(_MYSELF.TEMPL)
