@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 1.20 19/11/04 23:13:11
+#?      @(#) Makefile.opt 1.21 19/11/14 20:27:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,9 +17,9 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-_SID.opt            = 1.20
+_SID.opt           := 1.21
 
-_MYSELF.opt         = t/Makefile.opt
+_MYSELF.opt        := t/Makefile.opt
 ALL.includes       += $(_MYSELF.opt)
 ALL.inc.type       += opt
 ALL.help.tests     += help.test.opt
