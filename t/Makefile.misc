@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.32 19/11/14 20:18:52
+#?      @(#) Makefile.misc 1.33 19/11/14 22:12:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.32
+_SID.misc          := 1.33
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -206,44 +206,53 @@ ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
 
 test.misc.all:    test.misc $(ALL.test.profile)
 
-HELP-code.quality  := search for various common coding mistakes, see make e-ALL.test.quality
+HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
 # following checks based on http://perldoc.perl.org/perldiag.html
-# TODO: all targets fail if checks returns nothing
+# NOTE: all qa.* targets never fail, they are just informational
+#       therefore if egrep fails, "echo OK" is used to avoid failure
 ALL.qa          = $(ALL.pm) $(SRC.pl)
 qa.double_dref:
 	@echo "#make: check depricated double dereferencing ..."
-	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)
+	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)   || echo "OK"
+	@echo ""
 qa.defined_arr:
 	@echo "#make: check depricated defined(@array) ..."
-	@-egrep -H 'defined[( ]*@' $(ALL.qa)
+	@-egrep -H 'defined[( ]*@' $(ALL.qa)    || echo "OK"
+	@echo ""
 qa.defined_hash:
 	@echo "#make: check depricated defined(%hash) ..."
-	@-egrep -H 'defined[( ]*%' $(ALL.qa)
+	@-egrep -H 'defined[( ]*%' $(ALL.qa)    || echo "OK"
+	@echo ""
 qa.defined_warnings:
 	@echo "#make: check duplicate error and warning numbers ..."
 	@$(MAKE_COMMAND) warnings.info | sort -k 2 \
 	| awk '{nr=$$2;sub(/:/,"",nr);if(nr==last){print warn;print;}last=nr;warn=$$0}'
+	@echo ""
 
 qa.misspelled_regex:
 	@echo "#make: check misspelled grouping in RegEx ..."
-	@-egrep -H '\(:\?'         $(ALL.qa)
+	@-egrep -H '\(:\?'         $(ALL.qa)    || echo "OK"
+	@echo ""
 qa.misspelled_critic:
 	@echo "#make: check misspelled use of ## no critic ..."
-	@-egrep -H ' # no critic'  $(ALL.qa)
+	@-egrep -H ' # no critic'  $(ALL.qa)    || echo "OK"
+	@echo ""
 
 # some simple checks for Makefiles
 qa.makefile_HELP:
 	@echo "#make: check HELP- macro definitions in Makefiles ..."
-	@-awk '/^HELP-/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
+	@-awk '/^HELP-/{print $$1"\t"FILENAME}' $(ALL.Makefiles)    | sort
 	@echo ""
 	@echo "#make: check duplicate HELP- macro definitions in Makefiles ..."
-	@-awk '/^HELP-/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
+	@-awk '/^HELP-/{print $$1}' $(ALL.Makefiles)                | sort | uniq -d
+	@echo ""
 qa.makefile_help:
 	@echo "#make: check help target definitions in Makefiles ..."
-	@-awk '/^help/{print $$1"\t"FILENAME}' $(ALL.Makefiles) | sort
+	@-awk '/^help/{print $$1"\t"FILENAME}' $(ALL.Makefiles)     | sort
 	@echo ""
 	@echo "#make: check duplicate help target definitions in Makefiles ..."
-	@-awk '($$3=="="){next}/^help/{print $$1}' $(ALL.Makefiles) | sort | uniq -d 
+	@-awk '($$3=="="){next}/^help/{print $$1}' $(ALL.Makefiles) | sort | uniq -d
+	@echo ""
 #       # duplicate checks for targets need to avoid collecting the conditional
 #       # targets which just define macros, hence $3=="=" 
 ALL.test.quality    = \
