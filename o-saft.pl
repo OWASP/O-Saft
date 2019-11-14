@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.918 19/11/13 14:09:36",
+    SID         => "@(#) yeast.pl 1.919 19/11/15 00:16:52",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -2384,7 +2384,7 @@ sub _enable_sclient     {
     # SEE Note:OpenSSL s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
-    my $txt = $cfg{'openssl'}->{$opt}[1] || STR_UNDEF; # my be undefined
+    my $txt = $cfg{'openssl'}->{$opt}[1] || STR_UNDEF; # may be undefined
     my $val = $cfg{'openssl'}->{$opt}[0];# 1 if supported
     if ($val == 0) {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
@@ -4039,7 +4039,7 @@ sub ciphers_scan        {
         }
         my $__verbose   = $cfg{'verbose'};
             # $cfg{'v_cipher'}  should only print cipher checks verbosely,
-            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence wee need to save
+            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence we need to save
             # the current value and reset after calling ciphers_scan_prot()
         $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
         my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
