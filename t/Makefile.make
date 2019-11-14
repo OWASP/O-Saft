@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.8 19/11/05 00:15:05
+#?      @(#) Makefile.make 1.9 19/11/14 20:37:34
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make           = 1.8
+_SID.make          := 1.9
 
-_MYSELF.make        = t/Makefile.make
+_MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
 ALL.inc.type       += make
 ALL.help.tests     += help.test.make
@@ -58,7 +58,7 @@ help.makefiles.doc:  _help.HEAD _help.makefiles.doc
 	@$(TRACE.target)
 
 # special/indivisual help.* targets in Makefiles
-ARGS.helpmake   = help              help.all            help.help.all-v \
+ARGS.helpmake  := help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.syntax \
 		  help.test.internal help.test.makevars help.test.log-info  \
 		  help.makefiles.doc
