@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.9 19/11/14 20:37:34
+#?      @(#) Makefile.make 1.10 19/11/14 23:50:40
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.9
+_SID.make          := 1.10
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -43,6 +43,8 @@ HELP.make       = $(_NL)\
 \# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(_NL)\
 \# (user-)documentation of "o-saft.pl"$(_NL)\
 
+# dumm '
+
 HELP.test.make.all  = # no special documentation yet
 
 # Following target lists the used (included)  t/Makefile.* , each with its
@@ -57,6 +59,8 @@ help.makefiles.doc:   HELP_HEAD = $(HELP_INFO)
 help.makefiles.doc:  _help.HEAD _help.makefiles.doc
 	@$(TRACE.target)
 
+HELP-testarg-make-help.test*  = test help.test.* targets of Makefiles
+HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
 # special/indivisual help.* targets in Makefiles
 ARGS.helpmake  := help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.syntax \
@@ -68,18 +72,23 @@ ARGS.makefiles  = $(ALL.inc.type) pod template
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%)
 ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%.all)
 
+# Makeile-specific ALL.test.* variables
+ARGS.testmake  += $(ARGS.makefiles:%=s-ALL.test.%)
+
 ALL.help       += help.makefiles.doc
 # contribution to Makefile.help
 
 # TODO: help.test.help, help.help  may exist twice
 
 ALL.test.make      += $(ARGS.helpmake:%=testarg-make-%)
+ALL.test.make      += $(ARGS.testmake:%=testarg-make-%)
 ALL.test.make.log  += $(ALL.test.make:%=%.log)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
 
 $(foreach arg, $(ARGS.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
+$(foreach arg, $(ARGS.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 
 test.make.all:      $(ALL.test.make)
 test.make:          test.make.all
