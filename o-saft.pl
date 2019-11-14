@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.919 19/11/15 00:16:52",
+    SID         => "@(#) yeast.pl 1.920 19/11/15 00:31:23",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -1299,12 +1299,14 @@ my %info_gnutls = ( # NOT YET USED
 our %cmd = (
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
     'openssl'       => "openssl",   # OpenSSL
+    'openssl3'      => "openssl",   # OpenSSL which supports TLSv1.3
     'libs'          => [],      # where to find libssl.so and libcrypto.so
     'path'          => [],      # where to find openssl executable
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
+    'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
 );
@@ -6822,9 +6824,11 @@ sub printversion        {
 
     $Net::SSLinfo::verbose = 0; # do not set here; will not be used later
     print "= openssl =";
-    print "    external executable              " . (($cmd{'openssl'} eq "") ? "<<executable not found>>" : $cmd{'openssl'});
+    print "    external executable              " . (($cmd{'openssl'} eq "")  ? "<<executable not found>>" : $cmd{'openssl'});
+    print "    external executable (TLSv1.3)    " . (($cmd{'openssl3'} eq "") ? "<<executable not found>>" : $cmd{'openssl3'});
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
     print "    used environment variable (name) " . $cmd{'envlibvar'};
+   #print "    used environment variable 3(name)" . $cmd{'envlibvar3'};
     print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || STR_UNDEF);
     print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
     if (scalar @{$cmd{'libs'}} > 0) {
@@ -7280,14 +7284,16 @@ while ($#argv >= 0) {
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
         #  +---------+----------+------------------------------+--------------------
-        if ($typ eq 'CFG-CIPHER') { _cfg_set_cipher($typ, $arg);$typ = 'HOST'; }
-        if ($typ eq 'CFG-INIT') { _cfg_set_init($typ, $arg);    $typ = 'HOST'; }
+        if ($typ eq 'CFG_CIPHER') { _cfg_set_cipher($typ, $arg);$typ = 'HOST'; }
+        if ($typ eq 'CFG_INIT') { _cfg_set_init($typ, $arg);    $typ = 'HOST'; }
         if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
         if ($typ eq 'VERBOSE')  { $cfg{'verbose'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'LD_ENV')   { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'LD_ENV3')  { $cmd{'envlibvar3'}= $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'OPENSSL3') { $cmd{'openssl3'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
         if ($typ eq 'SSLFIPS')  { $cfg{'openssl_fips'}  = $arg; $typ = 'HOST'; }
         if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
@@ -7742,6 +7748,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--(fips|ism|pci)$/i)  {}
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
+    if ($arg eq  '--openssl3')          { $typ = 'OPENSSL3';        }
     if ($arg =~  '--opensslco?nf')      { $typ = 'SSLCNF';          }
     if ($arg eq  '--opensslfips')       { $typ = 'SSLFIPS';         }
     if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}= 1;    }
@@ -7880,11 +7887,12 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
     if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
-    if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
+    if ($arg eq  '--envlibvar')         { $typ = 'LD_ENV';          }
+    if ($arg eq  '--envlibvar3')        { $typ = 'LD_ENV3';         }
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
-    if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG-CIPHER';      }
-    if ($arg =~ /^--cfginit$/)          { $typ = 'CFG-INIT';        }
+    if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG_CIPHER';      }
+    if ($arg =~ /^--cfginit$/)          { $typ = 'CFG_INIT';        }
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
