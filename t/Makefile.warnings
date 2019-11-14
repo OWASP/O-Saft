@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.48 19/11/05 00:27:08
+#?      @(#)  1.49 19/11/14 20:34:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,9 +48,9 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings       = 1.48
+_SID.warnings      := 1.49
 
-_MYSELF.warnings    = t/Makefile.warnings
+_MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
 ALL.inc.type       += warnings
 ALL.help.tests     += help.test.warnings
@@ -386,7 +386,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# PEµ»eU 1.48: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.49: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
