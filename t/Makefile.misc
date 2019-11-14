@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.33 19/11/14 22:12:57
+#?      @(#) Makefile.misc 1.34 19/11/14 22:27:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.33
+_SID.misc          := 1.34
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -264,7 +264,21 @@ ALL.test.quality    = \
 		qa.misspelled_critic \
 		qa.makefile_HELP \
 		qa.makefile_help
-code.quality:     $(ALL.test.quality)
+test.quality:     $(ALL.test.quality)
+
+_TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(_TODAY_)
+$(_TEST.quality.log):
+	@echo "# Makefile.misc 1.34: $(MAKE) test.quality.log" > $@
+	@$(MAKE) -i test.quality >> $@ 2>&1
+test.quality.log: $(_TEST.quality.log)
+	@$(TRACE.target)
+	@$(TRACE.target.log)
+	@diff $(TEST.logdir)/$@ $(_TEST.quality.log) \
+	    && rm $(_TEST.quality.log) \
+	    || mv $(_TEST.quality.log) $(TEST.logdir)/$@
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.quality.log) $(TEST.logdir)/$@
+	@ls -l  $(TEST.logdir)/$@*
+# TODO: same target as test.warnings.log
 
 #ALL.test.misc  += $(ALL.test.quality)
 
@@ -273,5 +287,5 @@ code.quality:     $(ALL.test.quality)
 
 # feed main Makefile
 ALL.tests      += $(ALL.test.misc)
-ALL.tests.log  += test.bench.log
+ALL.tests.log  += test.bench.log test.quality.log
 
