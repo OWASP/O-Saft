@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.28 19/11/04 23:30:59
+#?      @(#) Makefile.tcl 1.29 19/11/14 20:28:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl            = 1.28
+_SID.tcl           := 1.29
 
-_MYSELF.tcl         = t/Makefile.tcl
+_MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
 ALL.inc.type       += tcl
 ALL.help.tests     += help.test.tcl
