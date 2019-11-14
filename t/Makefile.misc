@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.31 19/11/05 00:45:33
+#?      @(#) Makefile.misc 1.32 19/11/14 20:18:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,9 +15,9 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc           = 1.31
+_SID.misc          := 1.32
 
-_MYSELF.misc        = t/Makefile.misc
+_MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
 ALL.inc.type       += misc
 ALL.help.tests     += help.test.misc
@@ -35,17 +35,15 @@ help.test.misc-vv:    HELP_TYPE = misc
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-#TEST.args       =
-    # is special in this makefile; do not overwrite TEST.args in other files
 # internal used tools and files (paths hardcoded!)
-EXE.bench       = t/o-saft_bench.sh
-EXE.test.bunt   = t/test-bunt.pl.txt
-_args.misc      = +quit
-BENCH.times     = $(EXE.bench).times
-BENCH.host      = $(TEST.host)
+EXE.bench          := t/o-saft_bench.sh
+EXE.test.bunt      := t/test-bunt.pl.txt
+_args.misc         := +quit
+BENCH.times        := $(EXE.bench).times
+BENCH.host         := $(TEST.host)
 
-OPT.cloc        =
-EXE.cloc        = cloc $(OPT.cloc)
+OPT.cloc           :=
+EXE.cloc           := cloc $(OPT.cloc)
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -88,7 +86,7 @@ test.docker:
 	$(EXE.docker) +version
 	$(EXE.docker) usage
 
-ALL.test.misc   = test.bench test.bunt test.docker
+ALL.test.misc  := test.bench test.bunt test.docker
     # explicit list of targets in this makefile
 test.misc:        $(ALL.test.misc)
 
@@ -143,7 +141,7 @@ ALL.test.misc  += profile.sub.entry profile.sub.exit profile.sub.args nytprof.ht
 
 _PROFILE.profile.log= $(TEST.logdir)/profile.sub.log
 
-PROFILE.host        = localhost
+PROFILE.host       := localhost
 profile.sub.entry:      PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.entry_%:    PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.exit:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
@@ -174,6 +172,7 @@ profile.sub%:
 #     make profile.sub.args  | sed -e 's/ in  /+/' -e 's/out / -/' -e 's/ from .*\//\t/'
 # better use dprof.out below
 
+# requires perl module Devel/NYTProf or package, for example libdevel-nytprof-perl
 _nytprof.log    = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_nytprof.log)
 	@$(TRACE.target)
@@ -186,6 +185,7 @@ nytprof.html: $(_nytprof.log)
 	@echo "# inspect with: firefox $(TEST.dir)/nytprof/index.html"
 nytprof: nytprof.html
 
+# requires perl module Devel/DProf or package, for example libdevel-dprof-perl
 _dprof.log      = $(TEST.logdir)/dprof.out
 $(_dprof.log):
 	@$(TRACE.target)
@@ -206,7 +206,7 @@ ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
 
 test.misc.all:    test.misc $(ALL.test.profile)
 
-HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
+HELP-code.quality  := search for various common coding mistakes, see make e-ALL.test.quality
 # following checks based on http://perldoc.perl.org/perldiag.html
 # TODO: all targets fail if checks returns nothing
 ALL.qa          = $(ALL.pm) $(SRC.pl)
