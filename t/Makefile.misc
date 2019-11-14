@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.34 19/11/14 22:27:02
+#?      @(#) Makefile.misc 1.35 19/11/14 23:24:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.34
+_SID.misc          := 1.35
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -78,17 +78,16 @@ test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
-# TODO: simple test, needs to be improved and checked
+ALL.test.misc      := test.bench test.bunt test.docker
+ALL.test.misc.log  := test.bench.log
+
+# TODO: simple test, needs to be improved and checked; not part of ALL.* and *.all
 test.docker:
 	@$(TRACE.target)
 	docker image ls owasp/o-saft
 	$(EXE.docker) +VERSION
 	$(EXE.docker) +version
 	$(EXE.docker) usage
-
-ALL.test.misc  := test.bench test.bunt test.docker
-    # explicit list of targets in this makefile
-test.misc:        $(ALL.test.misc)
 
 .PHONY: test.bench test.bench.log test.bunt test.docker
 
@@ -113,6 +112,11 @@ cloc.file:  OPT.cloc    += --by-file
 cloc.lang:  OPT.cloc    += --by-file-by-lang
 cloc:       cloc.stat
 
+ALL.test.cloc  := cloc.stat cloc.file cloc.lang
+ALL.test.misc  += $(ALL.test.cloc)
+test.cloc:        $(ALL.test.cloc)
+# TODO: test.cloc.log  must be special at it compares generated tags files
+
 .PHONY: cloc
 
 HELP-_dev1          = __________________________________ targets for development _
@@ -131,7 +135,6 @@ ALL.gen        += $(GEN.tags)
 #               # just because GEN.tags is defined in main Makefile
 
 ALL.test.misc  += $(GEN.tags)
-ALL.test.misc  += profile.sub.entry profile.sub.exit profile.sub.args nytprof.html dprof.out
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
@@ -186,7 +189,7 @@ nytprof.html: $(_nytprof.log)
 nytprof: nytprof.html
 
 # requires perl module Devel/DProf or package, for example libdevel-dprof-perl
-_dprof.log      = $(TEST.logdir)/dprof.out
+_dprof.log          = $(TEST.logdir)/dprof.out
 $(_dprof.log):
 	@$(TRACE.target)
 	@env PERL_DPROF_OUT_FILE_NAME=$(_dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
@@ -200,11 +203,15 @@ dprof.out: $(_dprof.log)
 .PHONY: $(_dprof.log)
 
 # TODO: define summary macro for all profile targets
-ALL.test.profile= profile.sub.entry profile.sub.exit profile.sub.args \
-	nytprof.out nytprof.html dprof.out \
-	code.quality
-
-test.misc.all:    test.misc $(ALL.test.profile)
+ALL.test.profile   := \
+	profile.sub.entry \
+	profile.sub.exit \
+	profile.sub.args \
+	nytprof.out \
+	nytprof.html \
+	dprof.out
+ALL.test.misc  += $(ALL.test.profile)
+test.profile:     $(ALL.test.profile)
 
 HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
 # following checks based on http://perldoc.perl.org/perldiag.html
@@ -255,7 +262,7 @@ qa.makefile_help:
 	@echo ""
 #       # duplicate checks for targets need to avoid collecting the conditional
 #       # targets which just define macros, hence $3=="=" 
-ALL.test.quality    = \
+ALL.test.quality   := \
 		qa.double_dref \
 		qa.defined_arr \
 		qa.defined_hash \
@@ -264,11 +271,12 @@ ALL.test.quality    = \
 		qa.misspelled_critic \
 		qa.makefile_HELP \
 		qa.makefile_help
+ALL.test.misc  += $(ALL.test.quality)
 test.quality:     $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(_TODAY_)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.34: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.35: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -279,6 +287,12 @@ test.quality.log: $(_TEST.quality.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.quality.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
+ALL.test.misc.log  += test.quality.log
+
+test.misc.all:    $(ALL.test.misc)
+test.misc:        test.bench test.bunt $(ALL.test.cloc) $(ALL.test.quality)
+    # NOTE: test.misc does not call $(ALL.test.misc) because it is too noisy
+test.misc.log:    $(ALL.test.misc.log)
 
 #ALL.test.misc  += $(ALL.test.quality)
 
