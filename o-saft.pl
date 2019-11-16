@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.920 19/11/15 00:31:23",
+    SID         => "@(#) yeast.pl 1.921 19/11/17 00:05:55",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -9030,17 +9030,20 @@ public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 =head1 Documentation
 
 Documentation distinguishes between the  L<Public User Documentation>  and
-L<Internal Code Documentation>.
+L<Internal Code Documentation>  and  L<Internal Makefile Documentation>.
 
 =head3 Public User Documentation
 
 All public user documentation is available in plain text format. It can be
 accessed programatially with the --help option and various variants of it.
-All plain text files are located in  ./OSaft/Doc/ .  They are designed for
-human radability and simple editing.
+All plain text are designed for human radability and simple editing, see:
 
-For details on documentation texts (format, syntax, etc.) from files,  see
-./OSaft/Doc/Data.pm  and  o-saft-man.pm .
+    ./OSaft/Doc/*.txt
+
+For details on documentation texts (format, syntax, etc.) from files, see:
+
+    ./OSaft/Doc/Data.pm
+    ./o-saft-man.pm
 
 =head3 Internal Code Documentation
 
@@ -9049,38 +9052,103 @@ the corresponding code lines.  Note that these comments describe *why* the
 code is written in some way  (means the logic of the code), and not *what*
 the code does (which is most likely obvious).
 Some special syntax for comment lines are used, see  X&Comments&  in
-OSaft/Doc/coding.txt .
+
+    OSaft/Doc/coding.txt .
 
 Additional documentation is avaialble in POD format  at end of the files.
 These comments are called  "Annotations"  and refered to using  a sepecial
 syntax, see following chapter  L<Annotations, Internal Notes> .
 These Annotations are used  for descriptions needed at  multiple places in
-the code.
+the code. For example see:
+
+    perldoc o-saft.pl
+
+=head3 Internal Makefile Documentation
+
+Documentation of the make system is mainly done in POD format in:
+
+    perldoc t/Makefile.pod
+
+It contains the general documentation as well as the Annotations used from
+within the Makefile*.
+
+=head3 Terminology
+
+General notes about terms and words used in all documentations,  no matter
+if user or development documentation.
+
+=over
+
+=item  Perl
+
+Is used when the programming language in general is meant.
+
+=item  perl
+
+Is used when the program perl (or perl.exe) is meant.
+
+=item  Perl::Critic
+
+Is used when the functionality of the  Perl::Critic module, or any program
+using it (such as perlcritic), is meant.
+
+=item  perlcritic
+
+Is used when the program  perlcritic  is meant.
+
+=item  Makefile
+
+Is used when  a particular file is meant (usually the file itself in which
+the term is used).  The term Makefile* is used when any of our  Makefile.*
+is means.
+
+=item  makefile(s)
+
+Is used when files to be used as  input for make in general are meant.
+
+=item variable, macro
+
+In documentations for makefiles, for example GNU Make, the terms macro and
+variable are used interchangeable.  In our documentation the term variable
+is prefered.
+
+=item target
+
+Is used in O-Saft's documentation for the host target to be tested. And it
+is also used in makefiles where it means the recipe to be executed.
+
+=item arguments
+
+Is used for arguments to the tools, like o-saft.pl, and is meant as option
+or command for this tool, pleas also see  COMMANDS  and  OPTIONS  in
+
+    o-saft.pl  --help"
+
+=back
 
 
 =head1 Annotations, Internal Notes
 
-The annotations here describe  behaviours, observations, and alike,  which
-lead to special program logic. The intention is to have one central place,
-where to do the documentation.
+The annotations from here on describe behaviours, observations, and alike,
+which lead to special program logic.  The intention is to have one central
+place where to do the documentation.
 Up to now --2019-- this is an internal documentation only. It is available
-for the developer with perldoc also.
+for the developer also with:
+
+    perldoc o-saft.pl
 
 It is written in POD format, because some tools analyzing the code want to
 "see" comments and documentation. We feed them. For more information about
 that, please see "woodoo" in o-saft-man.pm .
-Note that POD's =head2 syntax is used. It marks a single annotation, which
-will be referenced in the code with the  "SEE <Annotation>"  syntax.
-All following text is supposed to be read by humans!
 
-The term  Perl  is used when the programming language in general is meant.
+=head3 Annotation Syntax
 
-The term  perl  is used when the program perl (or perl.exe) is meant.
+Each single annotation is headed using POD's =head2 syntax.  All following
+text is supposed to be read by humans!
 
-The term  Perl::Critic  is used when the functionality of the Perl::Critic
-module, or any program using it (such as perlcritic), is meant.
+It then will be referenced in the code with the "SEE <Annotation>" syntax.
 
-The term   perlcritic   is used when the program perlcritic is meant.
+I.g. no other markup is used, except POD'S =head3 and  L <..> markup.
 
 
 =head2 Note:Documentation
@@ -9099,7 +9167,7 @@ replaced by  ./OSaft/Doc/Data.pm and the afore mentioned plain text files.
 Reading plain text from external files instead of  Perl's DATA also avoids
 sophisticated computation of the correct file and DATA handle, for example
 when  ./OSaft/Doc/*.pm  is imported in  Perl's BEGIN section,  please also
-SEE Perl:BEGIN  below.
+SEE L<Perl:BEGIN> below.
 
 =head3 Since VERSION 17.07.17
 
@@ -9135,7 +9203,7 @@ In particular following problems occoured with POD:
 
 Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
 
-    equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm     
+* equal source code, lines or kBytes:
 
       Description              POD ASCII           %    File
     -------------------------+----+-------------+------+----------
@@ -9152,8 +9220,14 @@ Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
 perlcritic  is used for general code quality. Our code isn't accademically
 perfect, nor is  perlcritic. Hence we use  perlcritic's pragmas to disable
 some checks as needed. This is done in general in perlcritic's config file
-.perlcritic  and selectively in the code using  "## no critic"  pragma.
-All disabled checks are documented, wether in .perlcritic or as pragma.
+
+    t/.perlcritic
+
+and selectively in the code using the pragma:
+
+    ## no critic ...
+
+All disabled checks are documented, wether in t/.perlcritic or as pragma.
 
 Following pragmas are used in various files:
 
@@ -9238,7 +9312,7 @@ To make the program work as needed,  these limitations  forces to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
 
-Also SEE Perl:BEGIN perlcritic .
+Also SEE L<Perl:BEGIN perlcritic>.
 
 
 =head2 Perl:binmode()
@@ -9306,7 +9380,7 @@ like (which then keep Perl::Critic happy too):
 I.g. Perl's warn() is not used, but our private _warn(). Using _warn() can
 supressed messages with the  --no-warning  option.  However, some warnings
 should never be supressed, hence warn() is used in rare cases.
-Each warning should have a unique number, SEE Perl:Message Numbers .
+Each warning should have a unique number, SEE L<Perl:Message Numbers>.
 See also  CONCEPTS  (if it exists in our help texts).
 
 
@@ -9586,7 +9660,7 @@ example (ouput from openssl):
 
 =head2 Note:Selected Cipher
 
-SEE Note:term default cipher.
+SEE L<Note:term default cipher>.
 
 'cipher_selected' returns the cipher as used in our data structure (like
  DHE-DES-CBC), this is the one selected if the client provided a list
@@ -9601,7 +9675,7 @@ example Net::SSLeay:
 To avoid long timouts, a quick connection check to the target is done.  At
 least the connection to the SSL port must succeed.  If not, all checks are
 skipped. If just the connection to port 80 fails, just the HTTP checks are
-disabled. Also SEE Note:--ssl-error .
+disabled. Also L<SEE Note:--ssl-error>.
 
 The initial connection check just opens the port and does nothing. This is
 done because  some methods, i.e.  Net::SSLeay::get_http(),  do not support
@@ -9801,7 +9875,7 @@ uses "default" as part of variable or function names.
 
 =head2 Note:+cipherall
 
-SEE Note:term default cipher.
+SEE L<Note:term default cipher>.
 
 In October 2017 (VERSION 17.09.17), the +cipherall command is no longer an
 alias for +cipherraw. It is now using the the same technique as +cipherraw
