@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.6 19/07/21 13:30:26
+# SID   @(#) coding.txt 1.7 19/11/17 00:07:17
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -135,7 +135,7 @@ HACKER's INFO
         the code,  the conditions are written with the constant  LHS  and the 
         variable  RHS, for example:   if (0 < $var) { print "$var > 0"; }
         This works with constants (integers, strings) and variables only, but
-        not when matching RegEx (probably with perl 6.x).
+        not when matching RegEx (probably with Perl 6.x).
 
       Comments
 
@@ -143,13 +143,13 @@ HACKER's INFO
 
           # TODO:       Parts not working perfect, needs to be changed.
           # FIXME:      Program code known to be buggy, needs to be fixed.
-          # NOTE:       Special brief descriptions
+          # NOTE:       Special brief descriptions.
           #!#           Comments not to be removed in compressed code.
           #?            Description of sub.
           #|            Code sections (documents program flow).
           ##            Comments used by third-party programs  (for example:
                         contrib/gen_standalone.sh, perlcritic).
-          # func        name of sub behind the closing bracket of sub
+          # sub-name    Name of sub behind the closing bracket of the sub.
 
         Comments usually precede the code line(s) or are placed at end of the
         code line which they belong too. If the comments are placed after the
@@ -366,7 +366,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.6 19/07/21 13:30:26";
+            my $SID = "coding.txt 1.7 19/11/17 00:07:17";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
