@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.10 19/11/14 23:50:40
+#?      @(#) Makefile.make 1.11 19/11/16 16:39:08
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.10
+_SID.make          := 1.11
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -62,33 +62,33 @@ help.makefiles.doc:  _help.HEAD _help.makefiles.doc
 HELP-testarg-make-help.test*  = test help.test.* targets of Makefiles
 HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
 # special/indivisual help.* targets in Makefiles
-ARGS.helpmake  := help              help.all            help.help.all-v \
+LIST.helpmake  := help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.syntax \
 		  help.test.internal help.test.makevars help.test.log-info  \
 		  help.makefiles.doc
-# Makeile-specific help.test.* targets
+# Makefile-specific help.test.* targets
 # pod and template are missing in $(ALL.inc.type) because they are not included
-ARGS.makefiles  = $(ALL.inc.type) pod template
-ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%)
-ARGS.helpmake  += $(ARGS.makefiles:%=help.test.%.all)
+LIST.makefiles  = $(ALL.inc.type) pod template
+LIST.helpmake  += $(LIST.makefiles:%=help.test.%)
+LIST.helpmake  += $(LIST.makefiles:%=help.test.%.all)
 
 # Makeile-specific ALL.test.* variables
-ARGS.testmake  += $(ARGS.makefiles:%=s-ALL.test.%)
+LIST.testmake  += $(LIST.makefiles:%=s-ALL.test.%)
 
 ALL.help       += help.makefiles.doc
 # contribution to Makefile.help
 
 # TODO: help.test.help, help.help  may exist twice
 
-ALL.test.make      += $(ARGS.helpmake:%=testarg-make-%)
-ALL.test.make      += $(ARGS.testmake:%=testarg-make-%)
+ALL.test.make      += $(LIST.helpmake:%=testarg-make-%)
+ALL.test.make      += $(LIST.testmake:%=testarg-make-%)
 ALL.test.make.log  += $(ALL.test.make:%=%.log)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
 
-$(foreach arg, $(ARGS.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
-$(foreach arg, $(ARGS.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
+$(foreach arg, $(LIST.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
+$(foreach arg, $(LIST.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 
 test.make.all:      $(ALL.test.make)
 test.make:          test.make.all
