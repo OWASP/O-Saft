@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.8 19/11/14 00:07:58
+#?      @(#) Makefile.dev 1.9 19/11/16 16:35:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.8
+_SID.dev           := 1.9
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -59,35 +59,35 @@ EXE.install-sh     := ../INSTALL.sh
 # NOTE: there is already EXE.install in ../Makefile
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
-ARGS.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.dev))
+LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.dev))
 
-ARGS.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
+LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something,
 # that's why  EXE.o-saft  is the last in the list (see t*_flow target below)
 
 
-# no targets are generated for empty ARGS.* variables
+# no targets are generated for empty LIST.* variables
 
-ARGS.o-saft-tcl    := --help=opts --test-o-saft
-ARGS.o-saft-pl     :=  +traceSUB
-ARGS.o-saft-sh     :=  -h -list -help=rc -help=sni
-ARGS.osaft         :=
-# done with ARGS.osaft-dbx:  --regex --test-regex
+LIST.o-saft-tcl    := --help=opts --test-o-saft
+LIST.o-saft-pl     :=  +traceSUB
+LIST.o-saft-sh     :=  -h -list -help=rc -help=sni
+LIST.osaft         :=
+# done with LIST.osaft-dbx:  --regex --test-regex
 
-ARGS.osaft-cipher  := \
+LIST.osaft-cipher  := \
 	description     alias   const   names   rfc     version overview \
 	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
 	getter=0xC0,0x2C        key=ECDHE-ECDSA-AES256-GCM-SHA384 \
 	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 
-ARGS.osaft-doc-data := \
+LIST.osaft-doc-data := \
 	version +VERSION        list        print \
 	get     get-markup      get-text    get-as-text \
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
-ARGS.osaft-man     := \
+LIST.osaft-man     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
@@ -95,21 +95,21 @@ ARGS.osaft-man     := \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod \
 
-ARGS.osaft-dbx     := \
+LIST.osaft-dbx     := \
 	--test-show     --test-data         --test-prot --test-regex \
 	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
 
-ARGS.net-sslhello  :=
-ARGS.net-sslinfo   :=   +VERSION  localhost --test-ssleay --test-methods
-ARGS.t-makefile    :=
-ARGS.install-sh    :=   --install  --clean  --check     --expected
+LIST.net-sslhello  :=
+LIST.net-sslinfo   :=   +VERSION  localhost --test-ssleay --test-methods
+LIST.t-makefile    :=
+LIST.install-sh    :=   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
 
-ARGS.contrib-bunt      :=
-ARGS.contrib-openssl   := --n --m
-ARGS.contrib-standalone:=
+LIST.contrib-bunt      :=
+LIST.contrib-openssl   := --n --m
+LIST.contrib-standalone:=
 
 HELP-_dev1          = __________________________ testing internal documentations _
 HELP-test.dev       = test various internal documentation and functionality
@@ -141,12 +141,12 @@ HELP.test.dev.all   = # no special documentation yet
 #
 # If a target needs special or additional settings, this is done explicitly.
 #
-# All programs are defined in the variable (list)  ARGS.program .
+# All programs are defined in the variable (list)  LIST.program .
 # Each of these programs should be called  with the arguments defined in the
-# corresponding  ARGS.* , where  *  is any of the values from  ARGS.program
+# corresponding  LIST.* , where  *  is any of the values from  LIST.program
 # "osaft" is such a program in the example above. With that there is:
 #       EXE.osaft   = osaft.pm
-#       ARGS.osaft  = some-arg
+#       LIST.osaft  = some-arg
 #
 # Finally all generated targets are added to the variable  ALL.test.dev .
 #
@@ -158,42 +158,42 @@ ifndef dev-macros-generated
     # das ifndef erzwingt die Ausführung der $(foreach ...) unten
 
     # SEE Make:generating help
-    $(foreach arg, $(ARGS.program), $(eval \
-	   HELP.dev +=test.dev.$(arg).all\t\# targets for testing $(EXE.$(arg))\n\
+    $(foreach prg, $(LIST.program), $(eval \
+	   HELP.dev +=test.dev.$(prg).all\t\# targets for testing $(EXE.$(prg))\n\
     ))
     $(eval HELP.dev +=test.dev.help.all\t\# targets for testing --help option\n)
     $(eval HELP.dev +=test.dev.pod.all\t\# targets for testing perldoc generation\n)
-    $(foreach arg, $(ARGS.program), $(eval \
-	   HELP.dev +=test.$(arg).log\t\# same as test.$(arg) but store output in '$(TEST.logdir)'\n\
+    $(foreach prg, $(LIST.program), $(eval \
+	   HELP.dev +=test.$(prg).log\t\# same as test.$(prg) but store output in '$(TEST.logdir)'\n\
     ))
     $(eval HELP.dev +=test.dev.help.log\t\# same as test.dev.help.all but store output in '$(TEST.logdir)'\n)
     $(eval HELP.dev +=test.dev.pod.log\t\# same as test.dev.pod.all but store output in '$(TEST.logdir)'\n)
 
-    # arguments from ARGS.* used in the target name must not contain =
+    # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
     # variables test.*.all, test-*.log
-    $(foreach prg, $(ARGS.program),\
-      $(foreach arg, $(ARGS.$(prg)),\
+    $(foreach prg, $(LIST.program),\
+      $(foreach arg, $(LIST.$(prg)),\
         $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
       $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod ) \
       $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log) ) \
     )
 
     # TEST.init for testarg-dev-* targets
-    $(foreach prg, $(ARGS.program),\
-      $(foreach arg, $(ARGS.$(prg)),$(eval testarg-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
-      $(foreach arg, $(ARGS.$(prg)),$(eval ALL.test.dev += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
+    $(foreach prg, $(LIST.program),\
+      $(foreach arg, $(LIST.$(prg)),$(eval testarg-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
+      $(foreach arg, $(LIST.$(prg)),$(eval ALL.test.dev += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
     )
     # EXE.pl and TEST.* variables for testarg-dev-* targets
-    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
-    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
-    $(foreach prg, $(ARGS.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg) ) )
-    $(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg) ) )
 
 endif
 
@@ -206,18 +206,18 @@ testarg-dev-contrib-openssl_%:  TEST.args = --n
 testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
 
 # targets: EXE.* --help
-ALL.test.dev.help   = $(foreach prg, $(ARGS.program), testarg-dev-$(prg)_--help )
+ALL.test.dev.help   = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_--help )
 test.dev.help.all:  $(ALL.test.dev.help)
 
 # targets: EXE.pl = perlpod
-ALL.test.dev.pod    = $(foreach prg, $(ARGS.program), testarg-dev-$(prg)_pod )
+ALL.test.dev.pod    = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_pod )
 test.dev.pod.all:   $(ALL.test.dev.pod)
 
 # generate pattern rules, one foreach EXE.*
-$(foreach prg, $(ARGS.program), testarg-dev-$(prg)_% ):
+$(foreach prg, $(LIST.program), testarg-dev-$(prg)_% ):
 # generate summary rules, one foreach EXE.*
-$(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
-$(foreach prg, $(ARGS.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
+$(foreach prg, $(LIST.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
+$(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
 
 # useless generated targets
 testarg-dev-contrib-openssl_pod:
@@ -229,13 +229,13 @@ testarg-dev-install-sh_pod:
 # TODO: need to generate individual targets
 testarg-dev-grep_sub:
 	@$(TRACE.target)
-	$(foreach prg, $(ARGS.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
+	$(foreach prg, $(LIST.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
 testarg-dev-grep_desc:
 	@$(TRACE.target)
-	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
 testarg-dev-grep_flow:
 	@$(TRACE.target)
-	@$(foreach prg, $(ARGS.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
 # TODO: above $(foreach ...) requires a ; at ends, which may fail on Windows
 
 ALL.test.dev.grep   = testarg-dev-grep_sub testarg-dev-grep_desc testarg-dev-grep_flow
