@@ -14,10 +14,12 @@ Makefile.pod    - documentation for project's Makefiles in POD format
 =head1 DESCRIPTION
 
 This file  contains the  internal (developer) documentation  for all other
-Makefiles. This is done to keep other Makefiles as simple as possible, and
+Makefile*. This is done to keep other makefiles as simple as possible, and
 just containing the user (developer) documentation.
 
-This documentation consist of following main sections:
+Please also  SEE Documentation  in o-saft.pl .
+
+This documentation here consist of following main sections:
 
 =over
 
@@ -31,12 +33,12 @@ This documentation consist of following main sections:
 
 =back
 
-The sub-headers in L</O-Saft Makefile Annotations>
-are referenced from all other Makefiles.
+The sub-headers in L</O-Saft Makefile Annotations> are referenced from all
+other makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.28 19/11/16 02:37:31
+@(#) Makefile.pod 1.29 19/11/16 13:09:47
 
 =head1 AUTHOR
 
@@ -54,7 +56,7 @@ describes some GNU Make behaviours used in the project.
 
 Some words about the terms and words used in GNU Make and in this project.
 
-* macro  is a synonym for  variable  in Makefiles.
+* macro  is a synonym for  variable  in makefiles.
 
 * GNU Make uses  prerequisites  when targets depend on something, here the
   term dependencies is used.
@@ -68,7 +70,7 @@ Some words about the terms and words used in GNU Make and in this project.
 
 =head2 GNU Make:macros
 
-* macro  is a synonym for  variable  in Makefiles.
+* macro  is a synonym for  variable  in makefiles.
 
 * macro definitions in makefiles must not be sequential!
 
@@ -88,7 +90,7 @@ Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 =head2 GNU Make:include
 
 GNU Make's include directive  doesn't understand  variables, the used path
-must be verbatim. Multiple Makefiles are used to keep make's functionality
+must be verbatim. Multiple makefiles are used to keep make's functionality
 (targets) maintainable. They are all named  Makefile  or  Makefile.SUFFIX,
 where  SUFFIX  describes the content, somehow.  I.g. it should be possible
 to use each of these makefiles by its own, like:
@@ -100,7 +102,7 @@ directories, is difficult to use. Hence following trick is used:
 
 * sub-directories contains a symbolic link to . (itself)
 
-* Makefiles always include other files with relative paths
+* Makefile*  always include other files with relative paths
 
 Example:
 
@@ -138,7 +140,7 @@ Remember important variables:
     $(MAKECMDGOALS) - name of the target to be satisfied
     $(MAKEFILE)     - name of the target to be satisfied
     $(MAKEFILES)    - environment variable containing makefiles to be read
-    $(MAKEFILE_LIST)- inclueded Makefiles in oder they have been read
+    $(MAKEFILE_LIST)- inclueded Makefiles in the order they have been read
 
 For details use: make help.test.make
 
@@ -201,7 +203,7 @@ In contrast, gmake 3.81 and newer return following results:
 
 Note that the modern behaviour - applying all pattern-specific variables -
 has a big performance penulty if many such variables are used. This should
-not be the case in our Makefiles.
+not be the case in our Makefile* .
 
 
 =head2 GNU Make:.SECONDEXPANSION
@@ -249,29 +251,29 @@ be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 =head1 O-Saft Makefile Syntax
 
 This section describes the syntax and other conventions used in general in
-all makefiles.  NOTE: this description is independent of any functionality
+all Makefile* . NOTE: this description is independent of any functionality
 of the project, it just describes the used "coding syntax" in makefiles.
 
-Makefiles  use mainly  GNU Make's built-in variables (macros) and targets.
+Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
 None of them are disabled explicitly.  Therefore some behaviour may depend
 on the local make configuration. SEE  Make:automatic variables  also.
 
 
 =head2 O-Saft Makefile Includes
 
-It is possible to use each  Makefile independently by using GNU Make's  -f
+It is possible to use each Makefile* independently by using GNU Make's  -f
 option, for example::
 
     make -f Makefile.help
     make -f t/Makefile
 
-Therefor each Makefile includes  t/Makefile  depending on existence of the
-_SID.test  variable.
+Therefore each Makefile* includes  t/Makefile  depending on existence of
+the  _SID.test  variable.
 
 
 =head2 O-Saft Makefile Variable and Target Names
 
-General rules for our variable and target names in Makefiles are:
+General rules for our variable and target names in Makefile* are:
 
 * names consist only of characters a-zA-Z0-9_.
 
@@ -302,15 +304,15 @@ system.
 
 =head2 O-Saft Makefile Variable, Macro names
 
-Following internal variables in each Makefile are used:
+Following internal variables in each Makefile* are used:
 
     _SID        - version in project's Makefile
-    _SID.*      - version in included makefiles
-    _MYSELF.*   - path of the Makefile itself (in included makefiles)
+    _SID.*      - version in included Makefile*
+    _MYSELF.*   - path of the Makefile itself (in included Makefile*)
 
 The  _SID*  variables are used to check if sub-makefiles were included.
 
-Following general (global) variables are set in each Makefile:
+Following general (global) variables are set in each Makefile*:
 
     ALL.includes
     ALL.inc.type
@@ -356,13 +358,13 @@ Notes about some special variables:
                   (ALL.tst instead of ALL.test used  to avoid conflicts
                    with ALL.tests)
     ALL.tests   - list of all targets for testing
-    ALL.includes - dynamically generated list of all included Makefiles
-    ALL.Makefiles - static list of all source makefiles of the project
+    ALL.includes - dynamically generated list of all included Makefile*
+    ALL.Makefiles - static list of all source Makefile* of the project
 
 
 =head1 O-Saft Makefile Annotations
 
-As in the source code of the project,  some descriptions in makefiles also
+As in the source code of the project,  some descriptions in Makefile* also
 need to be available on more than one place.  Such texts can be referenced
 to using the "SEE <Annotation>" syntax in the makefiles. These annotations
 are described here, one sub-section for each.
@@ -428,7 +430,7 @@ in a make variable also.
 
 =head2 Make:variables and quotes
 
-Values of variables in makefiles follow some strange rules:
+Values of variables in GNU Make's makefiles follow some strange rules:
 
 * anything right of leftmost # character is a comment and ignored
 
@@ -466,8 +468,8 @@ used to set variables. May change in future ...
 If defines containg lists of commands are used to be executed in a target,
 following rules need to be observed:
 
-* using shell's test commands inside Makefile is tricky,  as single quotes
-  instead of double quote must be used  for test -n '$var'
+* using shell's test commands inside  GNU Make's makefiles  is tricky,  as
+  single quotes instead of double quote must be used  for test -n '$var' .
 
 
 =head2 Make:--ignore-output
@@ -636,7 +638,7 @@ If these tools are called by make and the results are written to a logfile
 which will be compared with a previous logfile, these files always differ.
 To avoid this difference (because of random text) a dummy constant text is
 written if our special environment variable  OSAFT_MAKE  exits.
-This environment variable should be set in Makefiles.
+This environment variable should be set in Makefile*.
 
 A generic text is available as  STR_MAKEVAL  (see osaft.pm). In some cases
 (i.e. for date and time) the string is prepared individually. This effects
@@ -648,12 +650,12 @@ in all tools but hardcoded there again. This may/should change in future.
 =head2 Make:generating help
 
 Text to be printed for the  help*  targets are mainly hardcoded in various
-HELP-*  variables, which will be extracted from the corresponding makefile
+HELP-*  variables which will be extracted from the corresponding Makefile*
 as needed.  The advantage of this method is, that the texts are printed in
-the sequence they are defined in the Makefile.  The disadvantage is,  that
+the sequence they are defined in the Makefile* . The disadvantage is, that
 other external tools are necessary.
 
-In some Makefiles the help texts can be generated dynamically using make's
+In some Makefile* the help texts can be generated dynamically using make's
 internal functions like $(foreach ...) .  It can generate  HELP-*  macros,
 which then can be accessed from within make but not be extracted. Example:
 
@@ -666,7 +668,7 @@ dynamically, example:
     $(foreach arg, $(ARGS.program), $(eval \
         HELP.doc +=\btest.$(arg)\t\# targets for testing something)\n )
 
-Unfortunately this adds additional leading spaces to each generated line.
+Unfortunately, this adds additional leading spaces to each generated line.
 
 
 =head2 EXE.pl:--trace-CLI
