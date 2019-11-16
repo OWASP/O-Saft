@@ -36,7 +36,7 @@ are referenced from all other Makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.27 19/11/13 23:20:56
+@(#) Makefile.pod 1.28 19/11/16 02:37:31
 
 =head1 AUTHOR
 
@@ -396,7 +396,7 @@ is used:
         $(_MYSELF.some-type))
 
 (where  target-  is an example target name, and _AWK_print_arr_END  is the
-awk code to print the defined array  arr[].
+awk code to print the defined array  arr[]).
 
 Target names may occour as following constructs:
 
@@ -430,12 +430,16 @@ in a make variable also.
 
 Values of variables in makefiles follow some strange rules:
 
-  * anything right of leftmost # character is a comment and ignored
-  * anything right of leftmost = character is part of the value
-  * single quotes, double quotes and \ character have no special meaning
-  * single quotes, double quotes and \ become meta characters depending on
-    how the variable is used, in particular used with or without quotes
-  * newlines in a variable are not preserved when the variable is used
+* anything right of leftmost # character is a comment and ignored
+
+* anything right of leftmost = character is part of the value
+
+* single quotes, double quotes and \ character have no special meaning
+
+* single quotes, double quotes and \ become meta characters depending on
+  how the variable is used, in particular used with or without quotes
+
+* newlines in a variable are not preserved when the variable is used
 
 For most common usage of variables, these rules are less important. But if
 the variable contains descriptive texts, some care needs to be taken. This
@@ -447,14 +451,23 @@ more accurate using quotes.
 
 It is more a personal preference if quotes for variable definitions should
 be used or not. The decision here is to not use quotes for definition, but
-use (double) quotes for variales usage.  This also has the benefit, that a
-variable is identifiable as "descriptive text" when used.
+use (double) quotes for variable's usage.  This also has the benefit, that
+a variable is identifiable as "descriptive text" when used.
 
 Keep in mind, that newlines to be printed must be explicitly  written in a
 variable's value, $(_NL) is used for that.
 
-GNU Make'  define  directive, which would avoid the use of  $(_NL), is not
+GNU Make's define  directive, which would avoid the use of  $(_NL), is not
 used to set variables. May change in future ...
+
+
+=head2 Make:defines with commands (recipes)
+
+If defines containg lists of commands are used to be executed in a target,
+following rules need to be observed:
+
+* using shell's test commands inside Makefile is tricky,  as single quotes
+  instead of double quote must be used  for test -n '$var'
 
 
 =head2 Make:--ignore-output
