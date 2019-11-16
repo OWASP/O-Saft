@@ -14,7 +14,7 @@ Makefile.pod    - documentation for project's Makefiles in POD format
 =head1 DESCRIPTION
 
 This file  contains the  internal (developer) documentation  for all other
-Makefile*. This is done to keep other makefiles as simple as possible, and
+Makefile*. This is done to keep other Makefile* as simple as possible, and
 just containing the user (developer) documentation.
 
 Please also  SEE Documentation  in o-saft.pl .
@@ -23,34 +23,310 @@ This documentation here consist of following main sections:
 
 =over
 
-=item L</GNU Make>
-
 =item L</O-Saft Terms>
+
+Most important for users (developers) is how the Makefile* work in general
+and how macros (variables) and targets are used.
 
 =item L</O-Saft Makefile Syntax>
 
+To make  maintenance and usage  of the make system  more simple (for human
+users and developers),  some conventions for naming and syntax are used in
+the Makefile* . This is described in this section.
+
+=item L</GNU Make>
+
+This section describes some GNU Make behaviours in general, and those used
+in this project.
+
 =item L</O-Saft Makefile Annotations>
+
+The sub-headers in this in section are referenced from other Makefile* .
 
 =back
 
-The sub-headers in L</O-Saft Makefile Annotations> are referenced from all
-other makefiles.
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.29 19/11/16 13:09:47
+@(#) Makefile.pod 1.30 19/11/17 00:04:57
 
 =head1 AUTHOR
 
 18-nov-18 Achim Hoffmann
 
 
+=head1 O-Saft Terms
+
+Please also  SEE Documentation  in o-saft.pl .
+
+
+=head1 O-Saft Makefile Limitations
+
+* Requires GNU Make > 2.0.
+
+* Requires GNU awk (gawk)
+
+* Requires GNU sed (for generating target  INSTALL.sh ).
+
+
+=head1 O-Saft Makefile*
+
+The purpose of the targets in the Makefile* --the make system-- is testing
+O-Saft functionality, code quality, and performance.
+The Makefile* are located in the  $(TEST.dir)  directory (usually ./t ).
+
+The default target in each Makefile* simply prints a brief help.
+
+Most included t/Makefiles.*  contain very limited comments. The details of
+their functionality is mainly described herein.
+
+
+=head1 O-Saft Makefile Syntax
+
+This section describes the syntax and other conventions used in general in
+all Makefile* . NOTE: this description is independent of any functionality
+of the project, it just describes the used "coding syntax" in Makefile*.
+
+Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
+None of them are disabled explicitly.  Therefore some behaviour may depend
+on the local make configuration. SEE  Make:automatic variables  also.
+
+
+=head2 O-Saft Makefile Includes
+
+All testing functionality is grouped in individual Makefile*. They are all
+included by the main Makefile and organised as follows:
+
+    Makefile
+        include t/Makefile
+            include t/Makefile.help
+            include t/Makefile.inc
+            include t/Makefile.warnings
+            include t/Makefile.cmd
+            include t/Makefile.exit
+            include t/Makefile.opt
+            include t/Makefile.ext
+            include t/Makefile.hlp
+            include t/Makefile.cgi
+            include t/Makefile.tcl
+            include t/Makefile.etc
+            include t/Makefile.dev
+            include t/Makefile.php
+            include t/Makefile.misc
+            include t/Makefile.critic
+            include t/Makefile.make
+
+To get a list of all included Makefile* use:
+
+    make s-ALL.includes
+
+It is possible to use each Makefile* independently by using GNU Make's  -f
+option, for example::
+
+    make -f Makefile.help
+    make -f t/Makefile
+    cd t && make -f Makefile.exit
+
+Therefore each  Makefile*  includes  t/Makefile  depending on existence of
+the  _SID.test  variable.
+
+
+=head2 O-Saft Makefile Variable and Target Names
+
+General rules for our variable and target names in Makefile* are:
+
+* names consist only of characters a-zA-Z0-9_.-
+
+* names start with upper case letters or _
+
+* names starting with _ are intended for internal use
+
+* names use well defined prefixes which are separated by  "."  or  "-"
+
+* names may use variable suffixes which are separated by "_"
+
+* target names only use lowercase characters and . and - and _
+
+* variable names start with uppercase characters or _
+
+Examples:
+
+   EXE.list         = awk
+   HELP_INFO       := \# Name
+   _HELP-_cgi0      = ______________________________ targets testing cgi _
+   HELP-testarg-cgi-host_some.tld   = test all testarr-cgi targets
+   ALL.inc.type    += cgi
+   ALL.help.tests  += help.test.cgi
+
+   testarg-cgi-host_some.tld    TEST.args  += --cgi
+   testarg-cgi-host_localhost:  TEST.args  += --cgi
+   testarg-cgi-host_:
+           @$(TRACE.target)
+           @do something $(TEST.args) $*
+
+   ALL.test.cgi    += testarg-cgi-host_some.tld testarg-cgi-host_localhost
+   ALL.tests       += $(ALL.test.cgi)
+
+   test.cgi:          $(ALL.test.cgi)
+
+
+
+=head2 O-Saft Makefile Variable Values
+
+In general no quotes  around texts in variables  are used.  However, it is
+sometimes necessary to use quotes to enforce the proper evaluation of used
+variables in the text (mainly in target actions).
+
+It is prefered that the complete definition, name=value, fits in one line,
+hoever, huge definitions are splited in multiple lines  for better (human)
+readability.
+
+
+=head2 O-Saft:Makefile Version String
+
+Each Makefile defines its own unique SID as variable with a version number
+as value.  This SID is used  several times verbatim.  One might argue that
+the variable  _SID  or  _SID.*  should be used instead for all usages. But
+it is used verbatim to ensure  that exactly this string is used and cannot
+be overwritten (i.e. with an environment variable) when make is called. 
+If a Makefile is changed, all occurrences of the string must be changed.
+
+The value of the _SID.* variables should be managed by the version control
+system.
+
+
+=head2 O-Saft Makefile Variable, Macro names
+
+Following internal variables in each Makefile* are used:
+
+    _SID        - version in project's Makefile
+    _SID.*      - version in included Makefile*
+    _MYSELF.*   - path of the Makefile itself (in included Makefile*)
+
+The  _SID.*  variables are used to check if sub-makefiles were included.
+
+Following general (global) variables are set in each Makefile*:
+
+    ALL.includes
+    ALL.inc.type
+    ALL.help.tests
+    ALL.tests
+    ALL.tests.log
+
+More variables and targets are defined in following included files:
+
+    t/Makefile
+    t/Makefile.help
+    t/Makefile.inc
+
+Where  t/Makefile  may include more files.
+
+
+=head2 O-Saft Makefile Variables
+
+Following names are used, which potentially conflict with make itself:
+
+    ECHO        - echo command
+    MAKE        - make command
+    MAKEFILE    - Makefile (i.g. myself, but may be redifined)
+
+Following name prefixes are used for variables:
+
+    SRC         - defines a source file
+    GEN         - defines a generated file
+    EXE         - defines tools to be used
+    ALL         - defines summary variables
+    LIST        - defines lists of something
+    TEST        - something related to the t/ directory
+    CONTRIB     - something related to the contrib/ directory
+    CRITIC      - something related to percritic targets
+    HELP        - defines texts to be used in  help  and  doc  targets
+    _           - names of internal (helper) variables (they are not
+                  intended to be overwritten on command line)
+
+Notes about some special variables:
+
+    ALL.src         - list of all sources to be distributed
+    ALL.tgz         - same as ALL.src but all sources prefixed with O-Saft/
+    ALL.tst         - list of all sources used for testing the project
+                      (ALL.tst instead of ALL.test used to avoid conflicts
+                      with ALL.tests)
+    ALL.test.TYP    - list of all targets from Makefile.TYP
+    ALL.tests       - list of all targets for testing
+    ALL.includes    - dynamically generated list of all included Makefile*
+    ALL.Makefiles   - static list of all source Makefile* of the project
+
+
+=head2 O-Saft Makefile Targets
+
+Naming conventions for targets:
+
+    _test_name      - internal target, not intended for public use
+    test.name       - public available targets use  .  (dot)  as separator
+    test-name       - internal and pattern rule targets use  -  (dash)  as
+                      separator
+    test.name_arg   - some pattern rule targets use  _  to pass arguments
+    test.name.log   - same as  test.name  but store results in logfile
+    test%ext        - pattern rule used instead of explicit target rule to
+                      allow spelling variants, like tst.ext or tst-ext
+    testarg-name%   - pattern rule which finally uses testarg-% target
+    testcmd-name_%  - pattern rule which finally uses testcmd-% target
+
+Targets in the makefiles are grouped, usually. Each group should be headed
+by the help texts for the targets using  HELP-  variables (see below).
+
+
+=head2 O-Saft Makefile HELP Texts
+
+For extracting  information from the Makefile*,  i.e variables and targets
+and their definitions, following special naming syntax is used:
+
+* All texts for documentation are stored in variables prefixed  HELP-
+
+* Anything following the prefix  HELP-  is the name of an existing target.
+  Example:   HELP-doc  contains the description of the target  doc
+
+* Variable names with prefix  HELP-_  are treated as header texts, usually
+  heading a group of targets.
+  Example:   HELP-_help = ____ targets for help about Makefile _
+
+* The variable with the prefix  HELP. for example  HELP.help,  is used for
+  additional documentation; as the variable often contains multiline texts
+  each line must be terminated with  $(_NL)\  which will be evaluated when
+  the variable is used. It is good practice to start each line with  \# .
+
+All variable names used for help texts use  - (dash)  instead of  . (dot).
+This simplifies matching the names, as the dash is not a meta character in
+RegEx and so must not be escaped. The  HELP.typ  variable is special as it
+uses . as separator). It defines the help text for Makefile.typ itself and
+must not be matched when extracting the other  HELP-*  variables.
+
+Example:
+
+    HELP-_cgi0      = _______________________________ some targets _
+    HELP-help       = print overview of all targets
+    HELP-doc        = same as help, but evaluates macros
+    HELP.typ        = $(_NL)\
+    \# same addition text with more than one line $(_NL)\
+    \# other line
+
+These  variables (above) are used by the  help  and  doc  target.  Each of
+these lines is printed as follows:
+
+             #_______________________________ some targets _
+    help     # print overview of all targets
+    doc      # same as help, but evaluates variables
+
+    # same addition text with more than one line
+    # other line
+
+
+
 =head1 GNU Make
 
 Internal testing of all functionality of the project  is done using  make,
 in paticular  GNU Make. In contrast to traditional make, GNU Make has more
-features and behaves slightly different to traditional make.  This section
-describes some GNU Make behaviours used in the project.
+features and behaves slightly different to traditional make.
 
 =head2 GNU Make:Terms
 
@@ -93,7 +369,7 @@ GNU Make's include directive  doesn't understand  variables, the used path
 must be verbatim. Multiple makefiles are used to keep make's functionality
 (targets) maintainable. They are all named  Makefile  or  Makefile.SUFFIX,
 where  SUFFIX  describes the content, somehow.  I.g. it should be possible
-to use each of these makefiles by its own, like:
+to use each of these Makefile* by its own, like:
 
     make -f Makefile.SUFFIX target
 
@@ -236,138 +512,12 @@ When  $(MAKE)  is used in documentation (variables or texts),  make should
 be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 
-=head1 O-Saft Terms
-
-
-=head1 O-Saft Makefile Limitations
-
-* Requires GNU Make > 2.0.
-
-* Requires GNU awk (gawk)
-
-* Requires GNU sed for generating (target) INSTALL.sh.
-
-
-=head1 O-Saft Makefile Syntax
-
-This section describes the syntax and other conventions used in general in
-all Makefile* . NOTE: this description is independent of any functionality
-of the project, it just describes the used "coding syntax" in makefiles.
-
-Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
-None of them are disabled explicitly.  Therefore some behaviour may depend
-on the local make configuration. SEE  Make:automatic variables  also.
-
-
-=head2 O-Saft Makefile Includes
-
-It is possible to use each Makefile* independently by using GNU Make's  -f
-option, for example::
-
-    make -f Makefile.help
-    make -f t/Makefile
-
-Therefore each Makefile* includes  t/Makefile  depending on existence of
-the  _SID.test  variable.
-
-
-=head2 O-Saft Makefile Variable and Target Names
-
-General rules for our variable and target names in Makefile* are:
-
-* names consist only of characters a-zA-Z0-9_.
-
-* names start with upper case letters or _
-
-* names starting _ are intended for internal use
-
-
-=head2 O-Saft Makefile Variable Values
-
-In general no quotes  around texts in variables  are used.  However, it is
-sometimes necessary to use quotes to enforce the proper evaluation of used
-variables in the text (mainly in target actions).
-
-
-=head2 O-Saft:Makefile Version String
-
-Each Makefile defines its own unique SID as variable with a version number
-as value.  This SID is used  several times verbatim.  One might argue that
-the variable  _SID  or  _SID.*  should be used instead for all usages. But
-it is used verbatim to ensure  that exactly this string is used and cannot
-be overwritten (i.e. with an environment variable) when make is called. 
-If a Makefile is changed, all occurrences of the string must be changed.
-
-The value of the  _SID* variables should be managed by the version control
-system.
-
-
-=head2 O-Saft Makefile Variable, Macro names
-
-Following internal variables in each Makefile* are used:
-
-    _SID        - version in project's Makefile
-    _SID.*      - version in included Makefile*
-    _MYSELF.*   - path of the Makefile itself (in included Makefile*)
-
-The  _SID*  variables are used to check if sub-makefiles were included.
-
-Following general (global) variables are set in each Makefile*:
-
-    ALL.includes
-    ALL.inc.type
-    ALL.help.tests
-    ALL.tests
-    ALL.tests.log
-
-More variables and targets are defined in following included files:
-
-    t/Makefile
-    t/Makefile.help
-    t/Makefile.inc
-
-Where  t/Makefile  may include more files.
-
-
-=head2 O-Saft Makefile Variables
-
-Following names are used, which potentially conflict with make itself:
-
-    ECHO        - echo command
-    MAKE        - make command
-    MAKEFILE    - Makefile (i.g. myself, but may be redifined)
-
-Following name prefixes are used for variables:
-
-    SRC         - defines a source file
-    GEN         - defines a genarted file
-    EXE         - defines a tools to be used
-    ALL         - defines summary variables
-    TEST        - something related to the t/ directory
-    CONTRIB     - something related to the contrib/ directory
-    CRITIC      - something related to percritic targets
-    HELP        - defines texts to be used in  help  and  doc  targets
-    _           - names of internal (helper) variables (they are not
-                  intended to be overwritten on command line)
-
-Notes about some special variables:
-
-    ALL.src     - list of all sources to be distributed
-    ALL.tgz     - same as ALL.src but all sources prefixed with O-Saft/
-    ALL.tst     - list of all sources used for testing the project
-                  (ALL.tst instead of ALL.test used  to avoid conflicts
-                   with ALL.tests)
-    ALL.tests   - list of all targets for testing
-    ALL.includes - dynamically generated list of all included Makefile*
-    ALL.Makefiles - static list of all source Makefile* of the project
-
-
 =head1 O-Saft Makefile Annotations
 
 As in the source code of the project,  some descriptions in Makefile* also
 need to be available on more than one place.  Such texts can be referenced
-to using the "SEE <Annotation>" syntax in the makefiles. These annotations
-are described here, one sub-section for each.
+to using the "SEE <Annotation>" syntax in the Makefile*. These annotations
+are described here, this file, one sub-section for each annotation.
 
 
 =head2 Make:target name
@@ -659,13 +809,13 @@ In some Makefile* the help texts can be generated dynamically using make's
 internal functions like $(foreach ...) .  It can generate  HELP-*  macros,
 which then can be accessed from within make but not be extracted. Example:
 
-    $(foreach arg,$(ARGS.program),$(eval  \
+    $(foreach arg,$(LIST.program),$(eval  \
         HELP-test.$(arg) = targets for testing something) )
 
 the  HELP.doc  variable is used therefore.  The texts will be  added to it
 dynamically, example:
 
-    $(foreach arg, $(ARGS.program), $(eval \
+    $(foreach arg, $(LIST.program), $(eval \
         HELP.doc +=\btest.$(arg)\t\# targets for testing something)\n )
 
 Unfortunately, this adds additional leading spaces to each generated line.
