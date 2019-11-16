@@ -7,8 +7,8 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile with help targets for O-Saft project.  It also describes the
-#?      (special) syntax used in all Makefiles of the project.
+#?      Makefile with help targets for O-Saft project.
+#?      For detiled descriptions please see  t/Makefile.pod .
 #?
 #? EXAMPLES
 #?          make help.doc
@@ -22,77 +22,19 @@
 #?          make targets
 #?          make targets.me
 #?
-#? LIMITATIONS
-#?       Requires GNU Make > 2.0.
-#?
 # HACKER's INFO
 #    Description used for target  help.syntax  .
 #.
-#.   Terms used for description of makefiles
-#.      The term  makefile(s)  is used, when files to be used as input for make
-#       in general are meant.
-#.      The term  Makefile  is used, when  a particular file  is meant (usually
-#.      the file itself in which the term is used).
-#.      The terms  target,  target rule  or simply  rule  are used, when make's
-#.      rules are meant (a rule consist of dependencies and recipes).
-#.      The term  host  or  hostname  is used for a system (wether it is a FQDN
-#.      or an IP) to be tested with any of the projects tools, i.e $(EXE.pl) .
-#.      The term  argument(s)  is used when (command line) arguments or options
-#.      to be passed to the tools are meant.
-#.      The terms  macro  and variable  are used interchangeable.
-#.
-#.      Note that the O-Saft's documentation uses  target  for the system to be
-#.      tested.
-#.      Also:  arguments  are  commands and options  in O-Saft's documentation.
-#.
 #.   Syntax used in all makefiles
-#.      For extracting information from the Makefiles, i.e macros/variables and
-#.      targets and their definitions, following special syntax is used:
-#.          * All texts for documentation (help) are stored in variables.
-#.          * All these variables are named with the prefix  HELP- .
-#.          * Anything following the prefix is the name of an existing target,
-#.            example:   HELP-doc  contains the description of the target  doc
-#.          * Variable names with prefix  HELP-_  are treated as header texts,
-#.            example:   HELP-_help = ____ targets for help about Makefile _
-#.          * The variable with the prefix  HELP. for example  HELP.help, con-
-#.            tains additional documentation; as the variable usually contains
-#.            multiline texts, each line must be terminated by  $(_NL)\  which
-#.            will be evaluated when the variable is used. It is good practice
-#-            to start each line with  \# .
-#.          * The value of a variable needs not to be quoted.  However, quotes
-#.            may or may not be needed when the value is evaluated.
-#.
-#.      Targets in the makefiles are grouped.  Each group is headed by the help
-#.      texts for the targets.  The first line of this group should be a header
-#.      text describing the group. Example:
-#.          HELP-_group     = _______________________________ some targets _
-#.          HELP-help       = print overview of all targets
-#.          HELP-doc        = same as help, but evaluates macros
-#.      These variables are used by the  help  and  doc  target.  Each of these
-#.      lines is printed as follows (from example above):
-#.                   #_______________________________ some targets _
-#.          help     # print overview of all targets
-#.          doc      # same as help, but evaluates variables
 #.
 #.      To extract and format the texts, the targets use external tools, mainly
 #.      awk,  sed  and  tr.  Each tool including its command line arguments  is
 #.      defined as variable, see corresponding  EXE.*  variables.
 #.
-#.      All variable names used for help texts use - (dash) instead of . (dot).
-#.      This simplifies matching the names, as the dash is not a meta character
-#.      in RegEx and so must not be escaped.
-#.      Exception is the  HELP.something  variable, which defines the help text
-#.      for the corresponding Makefile itself (it must not be matched).
-#.
 #.      Unfortunately some of the macros use variables of the makefile,  like
 #.      $(T), while other macros must use the TAB character verbatim,  which is
 #.      difficult to identify by human eyes.
 #.
-#.      The main difference between the target  help  and  doc  is, that  help
-#.      uses external tools to extract the information from the makefile, while
-#.      doc  uses  make's functionality to display the same information,  which
-#.      also evaluates variables used in the targets. Both targets use the same
-#.      text.
 #.      The  EXE.*  macros used by these targets take care for the formatting.
 #.      They rely on the above conventions for variable names.
 #.
@@ -108,57 +50,6 @@
 #.      These targets search in  all makefiles, they use  $(MAKEFILE_LIST)  and
 #.      and not our own  $(ALL.Makefiles).  This way the targets work, somehow,
 #.      in all other makefiles too (as they include this one).
-#.
-#.   Naming conventions for targets:
-#.          _tst_name    - internal target, not intended for public use
-#.          tst.name     - public available targets use  .  (dot)  as separator
-#.          tst-name     - internal and pattern rule targets use  -  (dash)  as
-#.                         separator
-#.          tst.name_arg - some pattern rule targets use  _  to pass parameters
-#.          tst.name.log - same as  test.name  but store results in logfile
-#.          tst%ext      - pattern rule used instead of explicit target rule to
-#.                         allow spelling variants, like tst.ext or tst-ext
-#.
-#.   Makefiles and Includes
-#.      SEE Make:include
-#.
-#.   Makefiles
-#.      All targets of the Makefiles --the make system-- are for testing O-Saft
-#.      functionality, code quality, and performance.
-#.      All testing functionality is grouped in individual makefiles. All these
-#.      makefiles reside in the $(TEST.dir) directory (usually ./t ).  The main
-#.      Makefile simply includes all other files. The includes are organised as
-#.      follows:
-#.          Makefile
-#.              include t/Makefile
-#.                  include t/Makefile.help
-#.                  include t/Makefile.inc
-#.                  include t/Makefile.warnings
-#.                  include t/Makefile.cmd
-#.                  include t/Makefile.exit
-#.                  include t/Makefile.opt
-#.                  include t/Makefile.ext
-#.                  include t/Makefile.hlp
-#.                  include t/Makefile.cgi
-#.                  include t/Makefile.tcl
-#.                  include t/Makefile.etc
-#.                  include t/Makefile.dev
-#.                  include t/Makefile.misc
-#.                  include t/Makefile.critic
-#.                  include t/Makefile.makefiles
-#.
-#.      To get a list of all makefiles, use:
-#.          make s-ALL.includes
-#.
-#.      Each of the t/Makefile.*  includes  t/Makefile. This allows to use each
-#.      Makefile.*  on its own, like:
-#.          make -f t/Makefile.exit
-#.          cd t && make -f Makefile.exit
-#.
-#.      The default target in each makefile simply prints a brief help.
-#.
-#.      Most included t/Makefiles.*  contain very limited comments. For general
-#.      details of their functionality, see t/Makefile.template t/Makefile.pod.
 #.
 #.   Quick Hints
 #.      There are a bunch of targets which provide information about the macros
@@ -178,7 +69,7 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.78 19/11/09 18:19:11
+#?      @(#) Makefile.help 1.79 19/11/17 00:03:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -187,7 +78,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.78
+_SID.help          := 1.79
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -401,6 +292,11 @@ target:           HELP_HEAD = $(HELP_RULE)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
+
+# The main difference between the targets  help and doc  is, that help  uses
+# external tools to extract the information from the Makefile,  while target
+# doc  uses make's functionality to display the same information, which als0
+# evaluates variables used in the targets. Both targets use the same text.
 
 # legacy aliases
 help.doc: help.help
