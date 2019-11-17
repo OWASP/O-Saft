@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.85 19/11/17 10:22:12
+#?      @(#) Makefile 1.86 19/11/17 10:48:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.85
+_SID.test          := 1.86
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -131,7 +131,7 @@ endif
 TRACE.target.log=
     #  example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
-_TODAY_        := $(shell date +%Y""%m%d)
+TEST.today     := $(shell date +%Y""%m%d)
     # current date in ISO format
 
 # define script or parts of it as variables, for better human readability
@@ -445,7 +445,7 @@ testarg-%:
 testarg-%.log: $(TEST.logdir)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@$(MAKE) $(MFLAGS) -s testarg-$* > $@ 2>&1
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
 	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* > $@ 2>&1" \
@@ -540,7 +540,7 @@ _FORCE:
 testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
 	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1" \
 	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
@@ -756,7 +756,7 @@ TEST.target_prefix  = testcmd-
 TEST.target_logfile = $(TEST.logdir)/testcmd-
 
 # default suffix for logfiles
-TEST.log-suffix     = -$(_TODAY_)
+TEST.log-suffix     = -$(TEST.today)
 
 # if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
 # checking this variable if not empty is sufficent to print verbose information
