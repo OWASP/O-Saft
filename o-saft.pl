@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.921 19/11/17 00:05:55",
+    SID         => "@(#) yeast.pl 1.922 19/11/17 22:47:23",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -6239,6 +6239,7 @@ sub print_cipherline($$$$$$) {
     my $bit   = get_cipher_bits($cipher);
     my $sec   = get_cipher_sec($cipher);
        $sec   = get_cipher_owasp($cipher) if ('owasp' eq $legacy);
+       $sec   = "-" if (('no' eq $support) and ('owasp' eq $legacy));
     my $desc  =  join(" ", get_cipher_desc($cipher));
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
     # first our own formats
@@ -6420,7 +6421,7 @@ sub _sort_results       {
     foreach my $line (sort @tmp_arr) {
         #_dbx $line;
         my @arr = split(" ", $line);
-        push(@results, [$arr[4], $arr[3], $arr[5]]);#  convert back to original result
+        push(@results, [$arr[4], $arr[3], $arr[5]]);#  convert back to original result: [ssl cipher yes-or-no]
     }
     return @results;
 } # _sort_results
@@ -6438,6 +6439,7 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
     my $total   = 0;
     local    $\ = "\n";
     foreach my $c (@results) {
+        # @{$c}: ssl cipher yes-or-no
         next if  (${$c}[0] ne $ssl);
         $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
@@ -8202,12 +8204,6 @@ if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
 }
 $verbose = $cfg{'verbose'};
 $legacy  = $cfg{'legacy'};
-if (('owasp' eq $legacy) and (0 <= _need_cipher())) {
-    # --legacy=owasp does not print the "supported" columns, hence all
-    # supported=no results must be skipped (cannot be distinguished)
-    $cfg{'disabled'}    = 0;
-    $cfg{'enabled'}     = 1;
-}
 if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
