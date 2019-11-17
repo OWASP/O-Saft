@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.21 19/11/13 23:56:12
+#?      @(#) Makefile.critic 1.22 19/11/17 10:59:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.21
+_SID.critic        := 1.22
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -173,7 +173,11 @@ c5v-% c4v-% c3v-% c2v-%:
 	@$(TRACE.target)
 	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity) CRITIC.opt="$(_CRITIC.verb10o)"
 
-$(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt: $(CRITIC.dir)/perlcritic-$(_TODAY_)
+_TEST.critic-3.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-3.txt
+_TEST.critic-4.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-4.txt
+_TEST.critic-5.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-5.txt
+
+$(CRITIC.dir)/perlcritic-$(TEST.today)/severity%.txt: $(CRITIC.dir)/perlcritic-$(TEST.today)
 	@$(TRACE.target)
 	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
 	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-count  >> $@
@@ -182,11 +186,11 @@ $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity%.txt: $(CRITIC.dir)/perlcritic-$(_T
 	@(echo "" && echo "" && echo "## Fehler ...")          >> $@
 	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic CRITIC.opt= >> $@
 
-critic345: $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-5.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-4.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-3.txt
+critic345: $(_TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
 
 # TODO: dirty hack target critic345.log 
 critic345.log:
-	@rm $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-5.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-4.txt $(CRITIC.dir)/perlcritic-$(_TODAY_)/severity-3.txt
+	@rm _TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
 	@$(MAKE) $(MFLAGS) -s critic345
 
 .PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345 critic345.log
