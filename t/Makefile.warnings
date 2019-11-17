@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.51 19/11/17 11:00:19
+#?      @(#)  1.52 19/11/17 11:07:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.51
+_SID.warnings      := 1.52
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -100,7 +100,7 @@ HELP.test.warnings.all  = \
 # SEE Make:target name prefix
 
 # testing warning messages
-_TMP.rc         = /tmp/o-saft.tmprc
+TEST.warning.rc    := /tmp/o-saft.tmprc
 
 test.warnings%:     EXE.pl      = ../$(SRC.pl)
 warning-%:          EXE.pl      = ../$(SRC.pl)
@@ -150,7 +150,7 @@ warning-023: TEST.args  = --legacy=key                      +quit
 #warning-040: TEST.args  = free
 warning-041: TEST.args  = s_client                          +quit
 warning-042: TEST.args  = +cn --port=' ' unknown-host       +quit
-warning-043: TEST.args  = --rc=$(_TMP.rc) --v               +quit
+warning-043: TEST.args  = --rc=$(TEST.warning.rc) --v       +quit
 warning-043:                                     TEST.rc = --cfg_cmd=new_command=quit
 warning-044: TEST.args  = +zlib +lzo +open_pgp +fallback    +quit
 warning-045: TEST.args  = any-host --port 45                +quit
@@ -160,7 +160,7 @@ warning-048: TEST.args  = +check +cn                        any-host
 warning-049: TEST.args  = +unknown_command                  +quit
 warning-050: TEST.args  = +cn --port=                       +quit
 warning-051: TEST.args  = --label=unknown                   +quit
-warning-052: TEST.args  = --rc=$(_TMP.rc)
+warning-052: TEST.args  = --rc=$(TEST.warning.rc)
 warning-052:                                     TEST.rc = "--option=-with_trailing_spaces   "
 warning-053: TEST.args  = --capath='/path with spaces'      +quit
 warning-054: TEST.args  = --legacy=unknown_legacy           +quit
@@ -180,14 +180,14 @@ warning-067: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-068: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-069: TEST.args  = --sniname=wrong +cn               $(TEST.host)
 warning-070: TEST.args  = TODO: testing configuration file cannot be opened
-#warning-070: TEST.args  = --cfg_cmd=$(_TMP.rc)              +quit
-#warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
+#warning-070: TEST.args  = --cfg_cmd=$(TEST.warning.rc)      +quit
+#warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(TEST.warning.rc)
 warning-071: TEST.args  = --cfg_unknown=dummy=dummy         +quit
 warning-070: TEST.args  = TODO: configuration files are not read in CGI mode, difficult ...
-#warning-072: TEST.args  = --cfg_cmd=$(_TMP.rc) --cgi        +quit
+#warning-072: TEST.args  = --cfg_cmd=$(TEST.warning.rc) --cgi +quit
 #warning-072:                                     TEST.rc = --cfg_cmd=new_command=not_allowed_with--cgi
 warning-073: TEST.args  = --cfg_cmd=invalid_default_command=default +quit
-#?# warning-074: TEST.args  = --rc=$(_TMP.rc)                +quit
+#?# warning-074: TEST.args  = --rc=$(TEST.warning.rc)        +quit
 #?# warning-074:                                     TEST.rc = "--cfg_cmd=dummy=cn unknown_command"
 warning-074: TEST.args  = --cfg_cmd=dummy=unknown_command   +quit
 warning-075: TEST.args  = --cfg-init=ca_path=force-message  +quit
@@ -386,7 +386,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_WARNING.log):
-	@echo "# @qŠøøU 1.51: $(MAKE) test.warnings.log" > $@
+	@echo "# 0‘ÃŽV 1.52: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
