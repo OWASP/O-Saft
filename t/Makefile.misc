@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.38 19/11/17 11:21:13
+#?      @(#) Makefile.misc 1.39 19/11/17 13:13:21
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.38
+_SID.misc          := 1.39
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -38,12 +38,12 @@ help.test.misc-vv:    HELP_TYPE = misc
 # internal used tools and files (paths hardcoded!)
 EXE.bench          := t/o-saft_bench.sh
 EXE.test.bunt      := t/test-bunt.pl.txt
-_args.misc         := +quit
-BENCH.times        := $(EXE.bench).times
-BENCH.host         := $(TEST.host)
+TEST.args.misc     := +quit
+TEST.bench.times   := $(EXE.bench).times
+TEST.bench.host    := $(TEST.host)
 
-OPT.cloc           :=
-EXE.cloc           := cloc $(OPT.cloc)
+TEST.opt.cloc      :=
+EXE.cloc           := cloc $(TEST.opt.cloc)
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -54,7 +54,7 @@ endif
 
 HELP-_misc1         = ____________________________________________ testing misc. _
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
-HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(BENCH.times)'
+HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
 HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
 HELP-test.docker    = test docker image
 
@@ -67,12 +67,12 @@ HELP.test.misc.all  = # no special documentation yet
 bench: test.bench
 test.bench:
 	@$(TRACE.target)
-	$(EXE.bench) $(BENCH.host)
-	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(BENCH.times)'"
+	$(EXE.bench) $(TEST.bench.host)
+	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(TEST.bench.times)'"
 test.bench.log:
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
+	$(EXE.bench) $(TEST.bench.host) >> $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
@@ -99,17 +99,17 @@ HELP-cloc       = count lines of code of all source files; summary output
 HELP-cloc.file  = count lines of code of all source files; output by file
 HELP-cloc.lang  = same as cloc.file and cloc
 # NOTE: also possible usage:
-#       make cloc OPT.cloc=--3
-#       make cloc OPT.cloc=--csv
-#       make cloc OPT.cloc=--xml
+#       make cloc TEST.opt.cloc=--3
+#       make cloc TEST.opt.cloc=--csv
+#       make cloc TEST.opt.cloc=--xml
 # NOTE: --quiet suppresses count of files also, hence not used by default
 cloc%:
 	@$(TRACE.target)
 	@$(EXE.cloc) $(sort $(ALL.src))
 
-cloc.stat:  OPT.cloc    +=
-cloc.file:  OPT.cloc    += --by-file
-cloc.lang:  OPT.cloc    += --by-file-by-lang
+cloc.stat:  TEST.opt.cloc  +=
+cloc.file:  TEST.opt.cloc  += --by-file
+cloc.lang:  TEST.opt.cloc  += --by-file-by-lang
 cloc:       cloc.stat
 
 ALL.test.cloc  := cloc.stat cloc.file cloc.lang
@@ -166,7 +166,7 @@ profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinf
 profile.sub%:
 	@$(TRACE.target)
 	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
-	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(_args.misc) ))
+	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args.misc) ))
 	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(TEST.profile.host) $(my.args) 2>&1 
 
 # TODO: 
@@ -179,7 +179,7 @@ profile.sub%:
 _TEST.nytprof.log   = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_TEST.nytprof.log)
 	@$(TRACE.target)
-	@perl -d:NYTProf $(DEV.pl) $(TEST.profile.host) $(_args.misc)
+	@perl -d:NYTProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
@@ -192,7 +192,7 @@ nytprof: nytprof.html
 _TEST.dprof.log     = $(TEST.logdir)/dprof.out
 $(_TEST.dprof.log):
 	@$(TRACE.target)
-	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(_args.misc)
+	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@dprofpp    $(_TEST.dprof.log)
 	@echo ""
 	@echo "# show calling tree: dprofpp -t $(_TEST.dprof.log)"
@@ -276,7 +276,7 @@ test.quality:     $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.38: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.39: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
