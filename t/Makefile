@@ -16,7 +16,7 @@
 #           ../Makefile  Makefile.help  Makefile.template
 #
 #    Naming conventions for t/Makefile*
-#       * macro names have the prefix  TEST  and  HELP .
+#       * variable names have the prefix  TEST  and  HELP .
 #       * target names for public use have the prefix  test.
 #       * individual, special targets have the prefix  _test (exceptions exist)
 #
@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.83 19/11/05 00:43:29
+#?      @(#) Makefile 1.85 19/11/17 10:22:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,18 +60,18 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test           = 1.83
+_SID.test          := 1.85
 
-_MYSELF.test        = t/Makefile
+_MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
 ALL.inc.type       += test
 ALL.help.tests     += help.test
 
-export OSAFT_MAKE   = avoid writing random data (like date and time string)
+export OSAFT_MAKE  := avoid writing random data (like date and time string)
 
 ifndef ALL.Makefiles
     -include t/Makefile.inc
-    # defines macros if called directly (not from ../Makefile)
+    # defines variables if called directly (not from ../Makefile)
 endif
 
 first-test-target-is-default: help.test
@@ -94,14 +94,14 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 _n := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 
 # test tools (part of distribution)
-TEST.dir        = t
+TEST.dir       := t
 TEST.logdir     = $(TEST.dir)/log
 
 # following may be redefined in included t/Makefiles*
-# TEST.init       = --header
-# TEST.args       =
+#TEST.init      := --header
+#TEST.args      :=
 
-# macro for list of hostnames needs to be unique in each Makefile*
+# variable for list of hostnames needs to be unique in each Makefile*
 # otherwise some targets in other Makefile* get confused
 #TEST.host       = localhost
 #TEST.hosts      =
@@ -116,9 +116,9 @@ TEST.logdir     = $(TEST.dir)/log
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
 
-OPT.grep        = -q
+OPT.grep       := -q
     # grep (mainly used in message-% target) should not report matching lines
-    # macro can be reset or redifined for more verbose output
+    # variable can be reset or redifined for more verbose output
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -131,23 +131,23 @@ endif
 TRACE.target.log=
     #  example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
-_TODAY_         = $(shell date +%Y""%m%d)
+_TODAY_        := $(shell date +%Y""%m%d)
     # current date in ISO format
 
 # define script or parts of it as variables, for better human readability
 # SEE Make:target matching
-#     _AWK_macro_by_line    - extract all macro  names
+#     _AWK_macro_by_line    - extract all variable names
 #     _AWK_target_by_line   - extract all target names
 #     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
 #     _AWK_print_arr_END    - print collected data from arr[]
 #     _AWK_print_file       - either print separator line or the filename
-TEST.target_prefix  =   [a-zA-Z][_a-zA-Z.]
+TEST.target_prefix :=   [a-zA-Z][_a-zA-Z.]
    # matching target names not starting with _
-_AWK_macro_by_line  = /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
-_AWK_target_by_line = /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
+_AWK_macro_by_line := /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
+_AWK_target_by_line:= /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_target_to_arr  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
-_AWK_print_arr_END  = END{for(idx in arr){print idx}}
-_AWK_print_file     = (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
+_AWK_print_arr_END := END{for(idx in arr){print idx}}
+_AWK_print_file    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 
 
 HELP.test       = $(_NL)\
@@ -168,7 +168,7 @@ HELP.test       = $(_NL)\
 \#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
 \# which are used by EXE.pl or other tools used for the tests.
 
-# following macro contains (huge) list of all available targets
+# following variable contains (huge) list of all available targets
 HELP.test.test.all  = $(_NL)\
 \# $(words $(ALL.tests)) targets for tests:$(_NL)\
 $(ALL.tests)$(_NL)\
@@ -190,10 +190,10 @@ help.test.all:      help.test.test.all
 # convenience to satisfy  help.test.all
 
 # help.test.test would only print the HELP-* texts from herein.
-# All other tests from the individual t/Makefile.* files have their own HELP-*
-# macro their.  help.test.test  should also print hints how to get information
-# about these other targets. Therfore the auxiliary target  _help_list  exists
-# in  Makefile  which we use as dependency here.
+# All other tests from the individual t/Makefile.*  files have their own HELP-*
+# variable their. help.test.test should also print hints how to get information
+# about these other targets. Therefore the auxiliary target  _help_list  exists
+# in  Makefile  which is used as dependency here.
 help.test.test:     _help_list
 help.test.test-v:   _help_list
 help.test.test-v-v: _help_list
@@ -220,10 +220,10 @@ help.test.%.internal:
 	@echo $(HELP.$*.internal)
 	@echo " # -------------------------------------------------------------"
 
-help-test-all       = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
-help-test-internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
+ALL.help.tests.all      = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
+ALL.help.test.internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
 help.test.targets:
-	@$(MAKE) -s $(help-test-all) $(help-test-internal)
+	@$(MAKE) -s $(ALL.help.tests.all $(ALL.help.test.internal)
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
@@ -235,7 +235,7 @@ HELP-help.test.internal = print GNU Make's internals and global project settings
 # internal information (nothing related to $(Project))
 # NOTE: $(_SID*) variables indicate if a sub-makefile was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
-#      the targets executes and not when the Makefile is read.
+#       the targets executes and not when the Makefile is read.
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
 test.file-1:
 test,file-2:
@@ -460,13 +460,13 @@ testarg-%.log: $(TEST.logdir)
 
 # The goal for test targets is to perform (test) all commands with all hosts.
 # The hostnames are provided in a simple list: $(TEST.hosts) .
-# The commands couldn't be provided in a make macro all together, because each
-# command may consist of space separated words like: "+info --header".
-# Hence each command is defined in the macro  TEST.args, which will be set for
-# an individual target, for example: testcmd-001 . We have one target for each
-# specific test case, which actually is a list of commands and options for the
-# tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above) is just
-# a number to make each target unique.
+# The commands could not be provided in a make variable all together,  because
+# each command may consist of space separated words like:  "+info --header".
+# Hence each command is defined in the variable  TEST.args,  which will be set
+# for an individual target, for example:  testcmd-001 .There is one target for
+# each specific test case,  which actually is a list of  commands and  options
+# for the tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above)
+# is just a number to make each target unique.
 # To feed the hostname to that target,  the target is defined as  pattern rule
 # testcmd-001_% , which means that the hostname can be passed like:
 #       testcmd-001_host.some.tld
@@ -687,7 +687,7 @@ tests.quick:
 	@$(MAKE) $(MFLAGS) -s tests     ALL.test.ext= ALL.test.misc= ALL.test.critic=
 #tests.quick.log:
 #	@$(MAKE) $(MFLAGS) -s tests.log ALL.test.ext= ALL.test.misc ALL.test.critic=
-# FIXME: tests.quick.log not yet working; need to use macro in each Makefile.*
+# FIXME: tests.quick.log not yet working; need to use variable in each Makefile.*
 tests.quick.log:
 	@$(TRACE.target)
 	@$(TRACE.target.log)
@@ -743,14 +743,12 @@ help.test.log-info:
 	@echo "$(HELP.test.log-info)"
 
 # TODO: need a usable way to change diff program
-EXE.log-diff        = diff
-EXE.log-xxdiff      = xxdiff --geometry 1600x1000
-EXE.log-mgdiff      = mgdiff
-EXE.log-tkdiff      = tkdiff
-EXE.diff            = diff
-EXE.diff            = xxdiff
-EXE.diff            = mgdiff
-EXE.diff            = tkdiff
+EXE.log-diff       := diff
+EXE.log-xxdiff     := xxdiff --geometry 1600x1000
+EXE.log-mgdiff     := mgdiff
+EXE.log-tkdiff     := tkdiff
+EXE.diffs          := diff xxdiff mgdiff tkdiff
+EXE.diff           := tkdiff
 EXE.log-diff        = $(EXE.log-tkdiff)
 
 # default prefix, may be redifined per target
@@ -760,10 +758,9 @@ TEST.target_logfile = $(TEST.logdir)/testcmd-
 # default suffix for logfiles
 TEST.log-suffix     = -$(_TODAY_)
 
-# if target was test*-compare-v or test*-move-v TRACE.target is not empty
-# so checking this macro if not empty is sufficent to print verbose information
-# NOTE: using shell's test commands inside Makefile is tricky,  must use single
-#       quote not double quote  for test -n '$var'
+# if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
+# checking this variable if not empty is sufficent to print verbose information
+# SEE Make:defines with commands
 define _test_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
@@ -813,4 +810,5 @@ test.log-move:
 
 
 ALL.tests      += # nothing added here!
+ALL.tests.log  += # nothing added here!
 
