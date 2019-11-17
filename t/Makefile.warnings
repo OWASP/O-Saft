@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.49 19/11/14 20:34:54
+#?      @(#)  1.50 19/11/17 10:31:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.49
+_SID.warnings      := 1.50
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -316,8 +316,8 @@ $(_TEST.template): $(SRC.pl) $(SRC.pm)
 	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
 	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
 	@echo ""                                                       >> $@
-	@$(_extract_warn) $^ \
-	    | $(_gen_warning_target) \
+	@$(_CMD_extract_warn) $^ \
+	    | $(_CMD_gen_warning-target) \
 	    | sort >> $@
 	@-ls -l $@
 
@@ -333,7 +333,7 @@ warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
 #       warn "**WARNING:
 #       _warn("
 # replacing die|warn bei **WARNING; finally remove anything behind closing ")
-define _extract_warn
+define _CMD_extract_warn
 	perl -nle '\
 		m/^\s*warn\s+=/ && do {next};\
 		m/^\s*(?:die|_?warn|print STR_[EW])/ && do {\
@@ -347,7 +347,7 @@ define _extract_warn
 endef
 # TODO: warn and die not detected, if they do not appear as first word in line
 
-define _gen_warning_target
+define _CMD_gen_warning-target
 	perl -nle '\
 		s/^..(?:ERROR|WARNING): /warning-/;\
 		s/:/: TEST.args  = TODO:/;\
@@ -355,7 +355,7 @@ define _gen_warning_target
 endef
 
 warnings-info: $(SRC.pl) $(SRC.pm)
-	@$(_extract_warn) $^
+	@$(_CMD_extract_warn) $^
 
 warnings-show.todo:
 	grep "^warning..*TODO"      $(_MYSELF.warnings)
@@ -386,7 +386,7 @@ test.warnings:      test.warnings.all
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "#  1.49: $(MAKE) test.warnings.log" > $@
+	@echo "# P!%ã»U 1.50: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
