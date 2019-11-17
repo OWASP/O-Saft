@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.53 19/11/17 11:58:21
+#?      @(#)  1.54 19/11/17 13:37:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.53
+_SID.warnings      := 1.54
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -383,10 +383,10 @@ warnings-%.log: $(TEST.logdir)
 test.warnings.all:  $(ALL.test.warnings)
 test.warnings:      test.warnings.all
 
-# $(_WARNING.log) calls "make -s" to avoid printing of executed commands
-_WARNING.log    = $(TEST.logdir)/test.warnings.log-$(TEST.today)
-$(_WARNING.log):
-	@echo "#  Ñ&ó)V 1.53: $(MAKE) test.warnings.log" > $@
+# $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
+_TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
+$(_TEST.warning.log):
+	@echo "#  ‘#öÅU 1.54: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -396,13 +396,13 @@ $(_WARNING.log):
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 # FIXME: following target should have $(SRC.pl) as dependency,  but that fails
 #        if make is called from within ./t/ directory; hence no dependency
-test.warnings.log: $(_WARNING.log)
+test.warnings.log: $(_TEST.warning.log)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	@diff $(TEST.logdir)/$@ $(_WARNING.log) \
-	    && rm $(_WARNING.log) \
-	    || mv $(_WARNING.log) $(TEST.logdir)/$@
-	@-test -f $(TEST.logdir)/$@  ||  mv $(_WARNING.log) $(TEST.logdir)/$@
+	@diff $(TEST.logdir)/$@ $(_TEST.warning.log) \
+	    && rm $(_TEST.warning.log) \
+	    || mv $(_TEST.warning.log) $(TEST.logdir)/$@
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.warning.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.cgi.log
 
