@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.90 19/11/17 11:59:51
+#?      @(#) Makefile 1.91 19/11/17 13:23:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.90
+_SID.test          := 1.91
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -116,12 +116,12 @@ TEST.logdir     = $(TEST.dir)/log
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
 
-OPT.grep       := -q
+TEST.opt.grep       := -q
     # grep (mainly used in message-% target) should not report matching lines
     # variable can be reset or redifined for more verbose output
 
-ifndef CONTRIB.dir
-    CONTRIB.dir = contrib
+ifndef TEST.contrib.dir
+    TEST.contrib.dir = contrib
 endif
 
 # Tracing just the log-targets is special. Using  $(TRACE.target)  is not an
@@ -417,9 +417,9 @@ message-%:
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* " ; \
+	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* " ; \
 	    echo "$(TEST.rc)" > $(TEST.tmp.rc) ; \
-	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* ; \
 	    _status=$$? ; \
 	    rm -f $(TEST.tmp.rc) ; \
 	    exit $$_status ; \
