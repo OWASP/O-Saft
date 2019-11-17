@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.36 19/11/17 10:42:48
+#?      @(#) Makefile.misc 1.37 19/11/17 10:49:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.36
+_SID.misc          := 1.37
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -274,9 +274,9 @@ ALL.test.quality   := \
 ALL.test.misc  += $(ALL.test.quality)
 test.quality:     $(ALL.test.quality)
 
-_TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(_TODAY_)
+_TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.36: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.37: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
