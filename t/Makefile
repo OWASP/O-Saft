@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.87 19/11/17 11:11:47
+#?      @(#) Makefile 1.88 19/11/17 11:15:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.87
+_SID.test          := 1.88
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -762,7 +762,7 @@ TEST.log-suffix     = -$(TEST.today)
 # if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
 # checking this variable if not empty is sufficent to print verbose information
 # SEE Make:defines with commands
-define _test_log-compare
+define _CMD_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
@@ -771,7 +771,7 @@ define _test_log-compare
 	done
 endef
 
-define _test_log-move
+define _CMD_log-move
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
@@ -780,34 +780,34 @@ define _test_log-move
 	done
 endef
 
-_test_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
+_HELP_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
 
 test.log-compare-hint:
 	@echo ""
 	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-	@echo "$(_test_log_hint)"
+	@echo "$(_HELP_log_hint)"
 
 test.%.log-compare:
 	@$(TRACE.target)
-	-$(_test_log-compare)
+	-$(_CMD_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
-	@echo "$(_test_log_hint)"
+	@echo "$(_HELP_log_hint)"
 
 test.%.log-move:
 	@$(TRACE.target)
-	$(_test_log-move)
+	$(_CMD_log-move)
 
 test.log-compare:
 	@$(TRACE.target)
-	-$(_test_log-compare)
+	-$(_CMD_log-compare)
 	@echo ""
 	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
-	@echo "$(_test_log_hint)"
+	@echo "$(_HELP_log_hint)"
 
 test.log-move:
 	@$(TRACE.target)
-	$(_test_log-move)
+	$(_CMD_log-move)
 
 
 ALL.tests      += # nothing added here!
