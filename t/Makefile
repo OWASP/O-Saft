@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.86 19/11/17 10:48:25
+#?      @(#) Makefile 1.87 19/11/17 11:11:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.86
+_SID.test          := 1.87
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -384,8 +384,9 @@ $(TEST.logdir):
 # succeeds also, as the pattern is found in the output. Example:
 #       make message-unintended TEST.args="host-unintended +cn"
 #
-# NOTE: even  _TMP.rc  is generated for each call,  it will only be used when
-# requested with the  --rc=$(_TMP.rc)  option.
+# NOTE: even  _TEST.rc  is generated for each call, it will only be used when
+# requested with the  --rc=$(_TEST.rc)  option.
+# FIXME: setting TEST.rc and _TEST.rc got lost somewhere (10/2019)
 #
 # NOTE: if  TEST.args  contains special characters,  syntax errors may occour
 # when used in the shell. Quoting  TEST.args  is not possible because then it
@@ -418,22 +419,22 @@ message-%:
 	    echo "$@:    $(TEST.args)"; \
 	else \
 	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* " ; \
-	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
+	    echo "$(TEST.rc)" > $(_TEST.rc) ; \
 	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* ; \
 	    _status=$$? ; \
-	    rm -f $(_TMP.rc) ; \
+	    rm -f $(_TEST.rc) ; \
 	    exit $$_status ; \
 	fi
 # following removed from above, too noicy:
-#            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ;
+#            echo "echo '$(TEST.rc)' > $(_TEST.rc)" ;
 
 # target succeeds if message is missing
 # TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
 	@$(TRACE.target)
-	@echo "$(TEST.rc)" > $(_TMP.rc)
+	@echo "$(TEST.rc)" > $(_TEST.rc)
 	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
-	@rm -f $(_TMP.rc)
+	@rm -f $(_TEST.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg-%:
