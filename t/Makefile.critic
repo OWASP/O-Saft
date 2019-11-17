@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.22 19/11/17 10:59:30
+#?      @(#) Makefile.critic 1.23 19/11/17 13:34:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.22
+_SID.critic        := 1.23
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -39,23 +39,23 @@ help.test.critic-vv:      HELP_TYPE = critic
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-CRITIC.dir          = $(TEST.dir)
-CRITIC.rc          := .perlcriticrc
-CRITIC.severity    := -5
-CRITIC.opt         :=
-CRITIC.pretty      :=
+TEST.critic.dir         = $(TEST.dir)
+TEST.critic.rc         := .perlcriticrc
+TEST.critic.severity   := -5
+TEST.critic.opt        :=
+TEST.critic.pretty     :=
 
-ALL.critic          = $(SRC.pl) $(ALL.pm) $(GEN.pod)
+ALL.critic              = $(SRC.pl) $(ALL.pm) $(GEN.pod)
 # $(CHK.pl)
 
 # using perlcritic's --verbose options without ( and ) ; see: man perlcritic
-_CRITIC.verb8      := '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
-_CRITIC.verb10     := '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
+_TEST.c.verb8      := '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
+_TEST.c.verb10     := '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
 # same options, but output prefixed with filename
-_CRITIC.verb8o     := --verbose $(_CRITIC.verb8)
-_CRITIC.verb10o    := --verbose $(_CRITIC.verb10)
+_TEST.c.verb8o     := --verbose $(_TEST.c.verb8)
+_TEST.c.verb10o    := --verbose $(_TEST.c.verb10)
 
-CRITIC.opt          = $(_CRITIC.verb8o)
+TEST.critic.opt     = $(_TEST.c.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
 
 # some aliases
@@ -101,8 +101,8 @@ HELP.critic         = $(_NL)\
 \# because verbose does not make sense here.$(_NL)\
 \#$(_NL)\
 \# Note about perlcritic used here:$(_NL)\
-\#   * perlcritic is executed in directory '$(CRITIC.dir)'$(_NL)\
-\#   * perlcritic uses '$(CRITIC.dir)/$(CRITIC.rc)'$(_NL)\
+\#   * perlcritic is executed in directory '$(TEST.critic.dir)'$(_NL)\
+\#   * perlcritic uses '$(TEST.critic.dir)/$(TEST.critic.rc)'$(_NL)\
 \# See also '$(CONTRIB.dir)/critic.sh'
 
 HELP.test.critic.all= # no special documentation yet
@@ -110,7 +110,7 @@ HELP.test.critic.all= # no special documentation yet
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
 
-perlcritic-%: $(CRITIC.dir)
+perlcritic-%: $(TEST.critic.dir)
 	@mkdir -p $@
 
 # All targets use $(ALL.critic) as list of sources, which must be set as
@@ -119,16 +119,16 @@ perlcritic-%: $(CRITIC.dir)
 
 # target prints command with echo so that it is also shown when called with
 # "make -s critic ..."
-critic: $(CRITIC.dir)
+critic: $(TEST.critic.dir)
 	@$(TRACE.target)
-	-cd $(CRITIC.dir) && perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
+	-cd $(TEST.critic.dir) && perlcritic $(ALL.critic:%=../%) $(TEST.critic.severity) $(TEST.critic.opt)
 
 # Same target as above but piped to filter for pretty printing.
 # Because the filter is a pipe, we loose the coloured output from perlcritic
 # FIXME: gawk in critic-pretty does not work properly after 19.01.19
-critic-pretty: $(CRITIC.dir)
+critic-pretty: $(TEST.critic.dir)
 	@$(TRACE.target)
-	-cd $(CRITIC.dir) && perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt) \
+	-cd $(TEST.critic.dir) && perlcritic $(ALL.critic:%=../%) $(TEST.critic.severity) $(TEST.critic.opt) \
 	  | awk '\
     { gsub(/\.$$/,"");  C=" remove trailing . (for --statistics-only)"; }\
     /OK$$/{ $$2=$$1; $$1="OK\t"; $$3=""; C=" toggle $1 and $2"; ok=1; } \
@@ -146,17 +146,17 @@ critic-pretty: $(CRITIC.dir)
 '
 # TODO: above gawk needs to detect errors and then print "failed  filename"
 
-critic-5  critic-5p  c5-%  c5v-%:               CRITIC.severity = -5
-critic-4  critic-4p  c4-%  c4v-%:               CRITIC.severity = -4
-critic-3  critic-3p  c3-%  c3v-%:               CRITIC.severity = -3
-critic-2  critic-2p  c2-%  c2v-%:               CRITIC.severity = -2
-critic-2p critic-3p critic-4p critic-5p:        CRITIC.pretty   = -pretty
-critic-count:   CRITIC.opt = -count
-critic-stat:    CRITIC.opt = --statistics-only
-critic-stat-4:  CRITIC.opt = --statistics-only
-critic-stat-4:                                  CRITIC.severity = -4
-critic-stat-3:  CRITIC.opt = --statistics-only
-critic-stat-3:                                  CRITIC.severity = -3
+critic-5  critic-5p  c5-%  c5v-%:               TEST.critic.severity = -5
+critic-4  critic-4p  c4-%  c4v-%:               TEST.critic.severity = -4
+critic-3  critic-3p  c3-%  c3v-%:               TEST.critic.severity = -3
+critic-2  critic-2p  c2-%  c2v-%:               TEST.critic.severity = -2
+critic-2p critic-3p critic-4p critic-5p:        TEST.critic.pretty   = -pretty
+critic-count:   TEST.critic.opt = -count
+critic-stat:    TEST.critic.opt = --statistics-only
+critic-stat-4:  TEST.critic.opt = --statistics-only
+critic-stat-4:                                  TEST.critic.severity = -4
+critic-stat-3:  TEST.critic.opt = --statistics-only
+critic-stat-3:                                  TEST.critic.severity = -3
 #critic-countp critic-statp critic-stat-4p: # do not make sense
 
 ALL.test.critic = critic-5 critic-4 critic-3 critic-2 \
@@ -167,24 +167,24 @@ criticp critic-5p critic-4p critic-3p critic-2p: critic-pretty
 
 c5-% c4-% c3-% c2-%:
 	@$(TRACE.target)
-	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity)
+	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity)
 
 c5v-% c4v-% c3v-% c2v-%:
 	@$(TRACE.target)
-	@$(MAKE) -s ALL.critic=$* critic CRITIC.severity=$(CRITIC.severity) CRITIC.opt="$(_CRITIC.verb10o)"
+	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity) TEST.critic.opt="$(_TEST.c.verb10o)"
 
-_TEST.critic-3.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-3.txt
-_TEST.critic-4.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-4.txt
-_TEST.critic-5.txt  = $(CRITIC.dir)/perlcritic-$(TEST.today)/severity-5.txt
+_TEST.critic-3.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-3.txt
+_TEST.critic-4.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-4.txt
+_TEST.critic-5.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-5.txt
 
-$(CRITIC.dir)/perlcritic-$(TEST.today)/severity%.txt: $(CRITIC.dir)/perlcritic-$(TEST.today)
+$(TEST.critic.dir)/perlcritic-$(TEST.today)/severity%.txt: $(TEST.critic.dir)/perlcritic-$(TEST.today)
 	@$(TRACE.target)
 	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
-	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-count  >> $@
+	@$(MAKE) $(MFLAGS) -s TEST.critic.severity=$* critic-count  >> $@
 	@(echo "" && echo "" && echo "## Statistik ...")       >> $@
-	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic-stat   >> $@
+	@$(MAKE) $(MFLAGS) -s TEST.critic.severity=$* critic-stat   >> $@
 	@(echo "" && echo "" && echo "## Fehler ...")          >> $@
-	@$(MAKE) $(MFLAGS) -s CRITIC.severity=$* critic CRITIC.opt= >> $@
+	@$(MAKE) $(MFLAGS) -s TEST.critic.severity=$* critic TEST.critic.opt= >> $@
 
 critic345: $(_TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
 
