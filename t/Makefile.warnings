@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.50 19/11/17 10:31:36
+#?      @(#)  1.51 19/11/17 11:00:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.50
+_SID.warnings      := 1.51
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -368,7 +368,7 @@ warnings-show.difficult:
 warnings-%.log: $(TEST.logdir)
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@$(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
 	    && echo "$(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1" \
@@ -384,9 +384,9 @@ test.warnings.all:  $(ALL.test.warnings)
 test.warnings:      test.warnings.all
 
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
-_WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
+_WARNING.log    = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_WARNING.log):
-	@echo "# P!%ã»U 1.50: $(MAKE) test.warnings.log" > $@
+	@echo "# @qŠøøU 1.51: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
