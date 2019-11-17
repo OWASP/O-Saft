@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.37 19/11/17 10:49:31
+#?      @(#) Makefile.misc 1.38 19/11/17 11:21:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.37
+_SID.misc          := 1.38
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -142,9 +142,9 @@ ALL.test.misc  += $(GEN.tags)
 # SEE Make:profile.sub*_%
 # SEE Make:profile.sub% target rule
 
-_PROFILE.profile.log= $(TEST.logdir)/profile.sub.log
+_TEST.profile.log   = $(TEST.logdir)/profile.sub.log
 
-PROFILE.host       := localhost
+TEST.profile.host  := localhost
 profile.sub.entry:      PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.entry_%:    PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1'
 profile.sub.exit:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2'
@@ -153,8 +153,8 @@ profile.sub.args:       PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
 profile.sub.args_%:     PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15'
 
 # pattern rules can contain one % only, hence following sequence for _lineinfo is mandatory
-profile.sub.%:          _lineinfo   = LineInfo=$(_PROFILE.profile.log)
-profile.sub.%.log:      _lineinfo   = LineInfo=$(_PROFILE.profile.log)
+profile.sub.%:          _lineinfo   = LineInfo=$(_TEST.profile.log)
+profile.sub.%.log:      _lineinfo   = LineInfo=$(_TEST.profile.log)
 
 profile.sub.entry.log:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=1  $(_lineinfo)'
 profile.sub.exit.log:   PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinfo)'
@@ -167,7 +167,7 @@ profile.sub%:
 	@$(TRACE.target)
 	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
 	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(_args.misc) ))
-	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(PROFILE.host) $(my.args) 2>&1 
+	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(TEST.profile.host) $(my.args) 2>&1 
 
 # TODO: 
 #     make profile.sub.entry | sed -e 's/ entering //'
@@ -179,7 +179,7 @@ profile.sub%:
 _TEST.nytprof.log   = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_TEST.nytprof.log)
 	@$(TRACE.target)
-	@perl -d:NYTProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
+	@perl -d:NYTProf $(DEV.pl) $(TEST.profile.host) $(_args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
@@ -192,7 +192,7 @@ nytprof: nytprof.html
 _TEST.dprof.log     = $(TEST.logdir)/dprof.out
 $(_TEST.dprof.log):
 	@$(TRACE.target)
-	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(PROFILE.host) $(_args.misc)
+	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(_args.misc)
 	@dprofpp    $(_TEST.dprof.log)
 	@echo ""
 	@echo "# show calling tree: dprofpp -t $(_TEST.dprof.log)"
@@ -276,7 +276,7 @@ test.quality:     $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.37: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.38: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
