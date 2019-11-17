@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.7 19/11/14 00:10:21
+#?      @(#) Makefile.etc 1.8 19/11/17 10:26:45
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.7
+_SID.etc           := 1.8
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -86,14 +86,14 @@ testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint
 testcmd-etc-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
     # tricky illegal option to enforce another (second) command with +cipher
 
-_etc-osaft-CMDS    := +cipher +cipherraw
+LIST.etc-osaft-CMDS    := +cipher +cipherraw
 
 ALL.test.etc-cipher = \
 	testcmd-etc-sslscan1.8 \
 	testcmd-etc-sslscan1.11 \
 	testcmd-etc-testssl.sh \
 	testcmd-etc-osaft_--legacy-owasp \
-	$(_etc-osaft-CMDS:%=testcmd-etc-osaft_%) 
+	$(LIST.etc-osaft-CMDS:%=testcmd-etc-osaft_%) 
 ALL.test.etc-cipher.log = $(ALL.test.etc-cipher:%=%.log)
 
 # TODO: targets for following:
