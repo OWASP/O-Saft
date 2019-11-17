@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.19 19/11/14 00:12:06
+#?      @(#) Makefile.exit 1.20 19/11/17 10:50:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.19
+_SID.exit          := 1.20
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -81,7 +81,7 @@ ALL.test.exit   = $(shell awk -F: '/^testmsg-exit-%/{next} /^testmsg-exit/{arr[$
 testmsg-exit-%: message-%
 	@$(TRACE.target)
 
-_TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(_TODAY_)
+_TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(TEST.today)
 
 test.exit.log-compare:  TEST.target_prefix  = test.exit
 test.exit.log-move:     TEST.target_prefix  = test.exit
