@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.30 19/11/17 00:04:57
+@(#) Makefile.pod 1.31 19/11/17 11:29:42
 
 =head1 AUTHOR
 
@@ -58,6 +58,30 @@ The sub-headers in this in section are referenced from other Makefile* .
 =head1 O-Saft Terms
 
 Please also  SEE Documentation  in o-saft.pl .
+
+
+=head1 O-Saft Makefile Quick Overview
+
+All Makefile* provide a set of targets using a well defined naming convention.
+
+Following examples provide help (documentation) for the available targets:
+
+    make
+    make help
+    make help.test
+    make help.test.tcl
+    make help.test.tcl.all
+
+To just get the list of all targets following can be used (example):
+
+    make e-ALL.test.tcl
+    make s-ALL.test.tcl
+
+Calling targets:
+
+    make test.tcl
+    make test.tcl.log
+    make testcmd-tcl--v-host_localhost
 
 
 =head1 O-Saft Makefile Limitations
@@ -169,6 +193,23 @@ Examples:
 
    test.cgi:          $(ALL.test.cgi)
 
+=head3 Used Pattern for Names
+
+Most targets and variables are named with one of following prefixes:
+
+   ALL
+   GEN
+   HELP
+   SRC
+   TEST
+   _CMD_
+   _HELP
+   _TEST
+   _SID
+   help
+   test
+
+The main Makefile is an exception, because it uses commonly used names.
 
 
 =head2 O-Saft Makefile Variable Values
