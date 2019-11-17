@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.44 19/11/12 00:56:14
+#?      @(#) Makefile.cmd 1.45 19/11/17 10:39:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.44
+_SID.cmd           := 1.45
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -72,12 +72,12 @@ HELP.cmd            = $(_NL)\
 HELP.test.cmd.all   = # no special documentation yet
 
 # SEE Make:--ignore-output
-_ignore-output-keys := master_key \
-		      session_id session_id_ctx \
-		      session_startdate session_starttime \
-		      session_ticket sts_expired
-_ignore-output     := $(_ignore-output-keys:%=--no-out=%)
-_ignore-output-cmd := $(_ignore-output-keys:%=+%)
+LIST.ignore-output-keys := master_key \
+			   session_id session_id_ctx \
+			   session_startdate session_starttime \
+			   session_ticket sts_expired
+LIST.no-out.opt    := $(LIST.ignore-output-keys:%=--no-out=%)
+LIST.ignore.cmd    := $(LIST.ignore-output-keys:%=+%)
 # The  ignored keys are tested with the target  testcmd-cmd+ignored-keys_ .
 
 # SEE Make:target name
@@ -86,19 +86,19 @@ _ignore-output-cmd := $(_ignore-output-keys:%=+%)
 testcmd-cmd%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cmd%:                   TEST.init   = --trace-CLI --header
 
-testcmd-cmd+ignored-keys_%:     TEST.args  += $(_ignore-output-cmd)
-testcmd-cmd+info-_%:            TEST.args  += +info               $(_ignore-output)
-testcmd-cmd+info--trace-cmd_%:  TEST.args  += +info  --trace-cmd  $(_ignore-output)
-testcmd-cmd+info--trace-key_%:  TEST.args  += +info  --trace-key  $(_ignore-output)
-testcmd-cmd+info--trace-time_%: TEST.args  += +info  --trace-time $(_ignore-output)
-testcmd-cmd+info--trace-key-norc_%: TEST.args  += +info   --trace-key --norc $(_ignore-output)
-testcmd-cmd+check_%:            TEST.args  += +check              $(_ignore-output)
-testcmd-cmd+check--nossltls_%:  TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(_ignore-output)
+testcmd-cmd+ignored-keys_%:     TEST.args  += $(LIST.ignore.cmd)
+testcmd-cmd+info-_%:            TEST.args  += +info               $(LIST.no-out.opt)
+testcmd-cmd+info--trace-cmd_%:  TEST.args  += +info  --trace-cmd  $(LIST.no-out.opt)
+testcmd-cmd+info--trace-key_%:  TEST.args  += +info  --trace-key  $(LIST.no-out.opt)
+testcmd-cmd+info--trace-time_%: TEST.args  += +info  --trace-time $(LIST.no-out.opt)
+testcmd-cmd+info--trace-key-norc_%: TEST.args  += +info   --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd+check_%:            TEST.args  += +check              $(LIST.no-out.opt)
+testcmd-cmd+check--nossltls_%:  TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
-testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(_ignore-output)
-testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(_ignore-output)
-testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(_ignore-output)
-testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(_ignore-output)
+testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(LIST.no-out.opt)
+testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(LIST.no-out.opt)
+testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(LIST.no-out.opt)
+testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd+cipher-_%:                TEST.args  += +cipher
 testcmd-cmd+cipher--legacy-owasp_%:   TEST.args  += +cipher --legacy=owasp
 testcmd-cmd+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
@@ -137,9 +137,9 @@ testcmd-cmd_summ+sizes_%:       TEST.args  += +sizes
 testcmd-cmd_summ+pfs_%:         TEST.args  += +pfs
 testcmd-cmd_summ+sni_%:         TEST.args  += +sni
 testcmd-cmd_summ+vulns_%:       TEST.args  += +vulns
-testcmd-cmd_summ+http_%:        TEST.args  += +http  $(_ignore-output)
-testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  $(_ignore-output)
-testcmd-cmd_summ+sts_%:         TEST.args  += +sts   $(_ignore-output)
+testcmd-cmd_summ+http_%:        TEST.args  += +http  $(LIST.no-out.opt)
+testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  $(LIST.no-out.opt)
+testcmd-cmd_summ+sts_%:         TEST.args  += +sts   $(LIST.no-out.opt)
 
 testarg-cmd-host_url+cn:        TEST.args  += --v +cn
 testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
@@ -151,10 +151,10 @@ test.cmd.log:           TEST.target_prefix  = testcmd-cmd
 
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
-ALL.testcmd     = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
-ALL.test.cmd    = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
-ALL.test.cmd   += testarg-host_url+cn
-ALL.test.cmd.log  += $(ALL.test.cmd:%=%.log)
+ALL.testcmd         = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
+ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
+ALL.test.cmd       += testarg-host_url+cn
+ALL.test.cmd.log   += $(ALL.test.cmd:%=%.log)
 
 test.cmd.all:   $(ALL.test.cmd)
 test.cmd:       test.cmd.all
