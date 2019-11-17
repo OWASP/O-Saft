@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.88 19/11/17 11:15:34
+#?      @(#) Makefile 1.90 19/11/17 11:59:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.88
+_SID.test          := 1.90
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -384,9 +384,8 @@ $(TEST.logdir):
 # succeeds also, as the pattern is found in the output. Example:
 #       make message-unintended TEST.args="host-unintended +cn"
 #
-# NOTE: even  _TEST.rc  is generated for each call, it will only be used when
-# requested with the  --rc=$(_TEST.rc)  option.
-# FIXME: setting TEST.rc and _TEST.rc got lost somewhere (10/2019)
+# NOTE: even  TEST.tmp.rc  is generated  for each call,  it will only be used
+# when requested with the  --rc=some.rc  option.
 #
 # NOTE: if  TEST.args  contains special characters,  syntax errors may occour
 # when used in the shell. Quoting  TEST.args  is not possible because then it
@@ -419,22 +418,22 @@ message-%:
 	    echo "$@:    $(TEST.args)"; \
 	else \
 	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* " ; \
-	    echo "$(TEST.rc)" > $(_TEST.rc) ; \
+	    echo "$(TEST.rc)" > $(TEST.tmp.rc) ; \
 	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(OPT.grep) $* ; \
 	    _status=$$? ; \
-	    rm -f $(_TEST.rc) ; \
+	    rm -f $(TEST.tmp.rc) ; \
 	    exit $$_status ; \
 	fi
 # following removed from above, too noicy:
-#            echo "echo '$(TEST.rc)' > $(_TEST.rc)" ;
+#            echo "echo '$(TEST.rc)' > $(TEST.tmp.rc)" ;
 
 # target succeeds if message is missing
 # TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
 	@$(TRACE.target)
-	@echo "$(TEST.rc)" > $(_TEST.rc)
+	@echo "$(TEST.rc)" > $(TEST.tmp.rc)
 	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
-	@rm -f $(_TEST.rc)
+	@rm -f $(TEST.tmp.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg-%:
