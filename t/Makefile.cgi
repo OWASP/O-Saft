@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.44 19/11/16 16:26:10
+#?      @(#) Makefile.cgi 1.45 19/11/17 10:51:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.44
+_SID.cgi           := 1.45
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -270,10 +270,10 @@ test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 test.cgi.all:      $(ALL.test.cgi)
 test.cgi:          $(ALL.test.cgi)
 
-_TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
+_TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.44: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.45: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
