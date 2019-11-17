@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.91 19/11/17 13:23:42
+#?      @(#) Makefile 1.92 19/11/17 13:33:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.91
+_SID.test          := 1.92
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -116,12 +116,12 @@ TEST.logdir     = $(TEST.dir)/log
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
 
-TEST.opt.grep       := -q
+TEST.opt.grep      := -q
     # grep (mainly used in message-% target) should not report matching lines
     # variable can be reset or redifined for more verbose output
 
-ifndef TEST.contrib.dir
-    TEST.contrib.dir = contrib
+ifndef CONTRIB.dir
+    CONTRIB.dir     = contrib
 endif
 
 # Tracing just the log-targets is special. Using  $(TRACE.target)  is not an
