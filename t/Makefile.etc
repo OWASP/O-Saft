@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.8 19/11/17 10:26:45
+#?      @(#) Makefile.etc 1.9 19/11/17 13:18:11
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.8
+_SID.etc           := 1.9
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -104,21 +104,21 @@ ALL.test.etc-cipher.log = $(ALL.test.etc-cipher:%=%.log)
 #      All programs need to return same list of ciphers.
 #      Result with or without SNI may be different.
 #
-_CIPHERS    := DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM-SHA256
-#_CIPHER_LIST = $(shell $(_CIPHERS) :)
-#_CIPHER_REGEX= $(shell $(_CIPHERS) |)
+LIST.ciphers   := DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-GCM-SHA256
+#_LIST.ciphers   = $(shell $(LIST.ciphers) :)
+#_LIST.c-regex   = $(shell $(LIST.ciphers) |)
 #  without SSI:
-#    sslscan --tlsall --sni-name="x"  $host  |egrep "($(_CIPHER_REGEX))"
-#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host --nosni
-#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host --nosni --force-openssl
-#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host --nosni
-#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host --nosni --force-openssl
-# ALL.test-openssl = $(_CIPHERS:%=%testcmd-openssl_%))
+#    sslscan --tlsall --sni-name="x"  $host  |egrep "($(_LIST.c-regex))"
+#    o-saft.pl --tracecmd         --cipher=$(_LIST.ciphers) +cipher    $host --nosni
+#    o-saft.pl --tracecmd         --cipher=$(_LIST.ciphers) +cipher    $host --nosni --force-openssl
+#    o-saft.pl --tracecmd --trace --cipher=$(_LIST.ciphers) +cipher    $host --nosni
+#    o-saft.pl --tracecmd --trace --cipher=$(_LIST.ciphers) +cipher    $host --nosni --force-openssl
+# ALL.test-openssl = $(LIST.ciphers:%=%testcmd-openssl_%))
 #
 #  with SSI:
-#    sslscan --tlsall                 $host  |egrep "($(_CIPHER_REGEX))"
-#    o-saft.pl --tracecmd         --cipher=$(_CIPHER_LIST) +cipher    $host
-#    o-saft.pl --tracecmd --trace --cipher=$(_CIPHER_LIST) +cipher    $host
+#    sslscan --tlsall                 $host  |egrep "($(_LIST.c-regex))"
+#    o-saft.pl --tracecmd         --cipher=$(_LIST.ciphers) +cipher    $host
+#    o-saft.pl --tracecmd --trace --cipher=$(_LIST.ciphers) +cipher    $host
 
 test.etc-cipher.all:     $(ALL.test.etc-cipher)
 test.etc-cipher.all.log: $(ALL.test.etc-cipher.log)
