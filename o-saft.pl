@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.922 19/11/17 22:47:23",
+    SID         => "@(#) yeast.pl 1.923 19/11/18 23:52:11",
     STR_VERSION => "19.10.25",          # <== our official version number
 };
 
@@ -3880,7 +3880,7 @@ sub _get_data0          {
 } # _get_data0
 
 sub ciphers_scan_prot   {
-    #? test target if given ciphers are accepted, returns array of accepted ciphers
+    #? test target if given ciphers are accepted, returns array with accepted ciphers
     #? scans for ciphers with given protocol only
     my ($ssl, $host, $port, $arr) = @_;
     my @ciphers = @{$arr};      # ciphers to be checked
@@ -3946,7 +3946,10 @@ sub ciphers_scan_raw    {
     my $enabled = 0;
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
     my @results = ();       # cipher list to be returned
-    my $usesni = $Net::SSLhello::usesni;            # store SNI for recovery later
+    my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
+    my $typ     = "raw";    # used for --trace only
+       $typ     = "all" if (_is_do('cipherall'));
+    _y_CMD("  use SSLhello +cipher$typ ...");
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
         next if ($cfg{$ssl} == 0);
@@ -3964,6 +3967,7 @@ sub ciphers_scan_raw    {
         }
         my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
         my @accepted = ();                          # accepted ciphers
+        _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
         printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
         if (not _is_do('cipherraw')) {
@@ -4007,7 +4011,6 @@ sub ciphers_scan_raw    {
 
 sub ciphers_scan        {
     #? scan target for ciphers for all protocols
-    # writes to @cipher_results
     # returns array with accepted ciphers
     my ($host, $port) = @_;
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
@@ -4023,9 +4026,9 @@ sub ciphers_scan        {
         if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
             # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
-               $_me = $cfg{'me'} . " CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
-               $_me = $cfg{'me'} . "::"    if ($cfg{'trace'}    > 0);
-            print("#$_me checking $cnt ciphers for $ssl ... ($__openssl)");
+               $_me = $cfg{'me'} . "   CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
+               $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
+            print("#$_me     checking $cnt ciphers for $ssl ... ($__openssl)");
         }
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
