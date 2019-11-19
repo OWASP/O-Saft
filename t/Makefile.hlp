@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.23 19/11/14 00:15:26
+#?      @(#) Makefile.hlp 1.24 19/11/19 22:00:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.23
+_SID.hlp           := 1.24
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -49,7 +49,7 @@ HELP.hlp            = # no special documentation yet
 HELP.test.hlp.all   = # no special documentation yet
 
 testarg-hlp-%:                  EXE.pl      = ../$(SRC.pl)
-testarg-hlp-%:                  TEST.init   = --no-rc --header
+testarg-hlp-%:                  TEST.init   = --header --no-rc
     # --no-rc ensures that a local RC-file does not change the results
 
 # To get a list of used (at least documented)  --help*  options, use:
@@ -65,6 +65,9 @@ testarg-hlp-+version:           TEST.args  += +version
 testarg-hlp-+version--usr:      TEST.args  += +version --v --usr
 testarg-hlp---v+version:        TEST.args  += --v +version
 testarg-hlp---v+help:           TEST.args  += --v +help
+
+# all other commands with --trace-CLI
+testarg-hlp-+cipher%:           TEST.init  += --trace-CLI
 testarg-hlp-+ciphers:                TEST.args  += +ciphers --V
 testarg-hlp-+ciphers-legacy-full:    TEST.args  += +ciphers --legacy=full
 testarg-hlp-+ciphers-legacy-openssl: TEST.args  += +ciphers --legacy=openssl
@@ -72,6 +75,7 @@ testarg-hlp-+ciphers-legacy-owasp:   TEST.args  += +ciphers --legacy=owasp
     # TODO: --legacy=owasp may change in future
 
 # --help
+testarg-hlp--help%:             TEST.init  += --trace-CLI
 testarg-hlp--help-FAQ:          TEST.args  += --help=FAQ
 testarg-hlp--help-WHY:          TEST.args  += --help=WHY
 testarg-hlp--help-CHECK:        TEST.args  += --help=CHECK
@@ -128,7 +132,7 @@ test.hlp.log-compare:   TEST.target_prefix  = testarg-hlp
 test.hlp.log-move:      TEST.target_prefix  = testarg-hlp
 test.hlp.log:           TEST.target_prefix  = testarg-hlp
 
-ALL.testhlp     = $(shell awk -F: '/^testarg-hlp-%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
+ALL.testhlp     = $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
 ALL.test.hlp    = $(ALL.testhlp)
 ALL.test.hlp.log= $(ALL.test.hlp:%=%.log) test.log-compare-hint
 
