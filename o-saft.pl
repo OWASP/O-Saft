@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.923 19/11/18 23:52:11",
-    STR_VERSION => "19.10.25",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.924 19/11/19 20:59:55",
+    STR_VERSION => "19.10.26",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -1852,7 +1852,7 @@ our %text = (
     'out_scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
     'out_checks'    => "\n=== Performed Checks ===",
     'out_list'      => "=== List @@ Ciphers ===",
-    'out_summary'   => "=== Ciphers: Summary @@ ==",
+    'out_summary'   => "=== Ciphers: Summary @@ ===",
     # hostname texts
     'host_name'     => "Given hostname",
     'host_IP'       => "IP for given hostname",
@@ -8291,7 +8291,7 @@ usr_pre_exec();
 #| -------------------------------------
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
-if ($cfg{'exec'} == 0)  {
+if (0 == $cfg{'exec'})  {
     # as all shared libraries used by Perl modules are already loaded when
     # this program executes, we need to set PATH and LD_LIBRARY_PATH before
     # being called
@@ -8341,7 +8341,7 @@ if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
     _warn("060: no PEM fila for CA found; some certificate checks may fail");
 }
 
-if ($info > 0) {                # +info does not do anything with ciphers
+if (0 < $info) {                # +info does not do anything with ciphers
     # main purpose is to avoid missing "*PN" warnings in following _checks_*()
     $cmd{'extciphers'}  = 0;
     $cfg{'usealpn'}     = 0;
@@ -8517,7 +8517,7 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with 
 }
 _yeast_init();  # call in printquit() also!
 
-if ($#{$cfg{'do'}} < 0) {
+if (0 > $#{$cfg{'do'}}) {
     _yeast_exit();
     printusage_exit("no command given");
 }
@@ -8526,17 +8526,14 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
-# TODO: move this code-block up behind call of _check_SSL_methods();
-#       needs exhausting tests with previous non-connecting commands
-#       needs also proper tests what Net::SSLinfo::cipher_* returns,
-#       see _get_ciphers_list()
-_yeast_TIME("get{");
-if ((_need_cipher() > 0) or (_need_default() > 0)) {
-    _y_CMD("  get cipher list ...");
-    @{$cfg{'ciphers'}} = _get_ciphers_list();
-
-} # _need_cipher or _need_default
-_yeast_TIME("get}");
+if (not _is_do('cipherraw')) {  # is also +cipherall
+    _yeast_TIME("get{");
+    if ((_need_cipher() > 0) or (_need_default() > 0)) {
+        _y_CMD("  get cipher list ...");
+        @{$cfg{'ciphers'}} = _get_ciphers_list();
+    } # _need_cipher or _need_default
+    _yeast_TIME("get}");
+}
 
 _yeast_EXIT("exit=MAIN  - start");
 _yeast_ciphers_list();
@@ -8554,12 +8551,12 @@ if (_is_do('cipher')) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
 }
-if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+if ((0 < $info)  and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
     # see printchecks() call below
     _warn("047: additional commands in conjunction with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
 }
-if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+if ((0 < $check) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +check does not allow additional commands of type "info"
     foreach my $key (@{$cfg{'done'}->{'arg_cmds'}}) {
         if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
