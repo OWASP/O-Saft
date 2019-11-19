@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.11 19/11/16 16:39:08
+#?      @(#) Makefile.make 1.12 19/11/20 00:08:17
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.11
+_SID.make          := 1.12
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -86,6 +86,9 @@ ALL.test.make.log  += $(ALL.test.make:%=%.log)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
+testarg-make%:      TRACE.target= echo "\#$(EXE.pl) $(TEST.init) $(TEST.args)"
+    # targets should print the command, the TRACE.target variable is misused
+    # for that (assuming that all target use $(TRACE.target) ).
 
 $(foreach arg, $(LIST.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 $(foreach arg, $(LIST.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
