@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.20 19/11/17 10:50:46
+#?      @(#) Makefile.exit 1.21 19/11/19 23:18:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.20
+_SID.exit          := 1.21
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -51,7 +51,7 @@ HELP.test.exit.all  = # no special documentation yet
 # using prefix testmsg- to avoid conflict with pattern rule testcmd-%
 
 testmsg-exit-%:         EXE.pl      = ../$(SRC.pl)
-testmsg-exit-%:         TEST.init   = +cn $(TEST.host)
+testmsg-exit-%:         TEST.init   = --trace-CLI +cn $(TEST.host)
 
 testmsg-exit-000:       TEST.args  += --exit=invalid_label_to_show_failed-status
 testmsg-exit-BEGIN0:    TEST.args  += --exit=BEGIN0
@@ -94,7 +94,7 @@ $(_TEST.exit.log):
 
 # not yet needed: test.log-compare-hint
 # TODO: diff not yet working proper
-test.exit.log: $(_TEST.exit.log)
+test.exit.log: $(_TEST.exit.log) 
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.exit.log) \
@@ -102,6 +102,7 @@ test.exit.log: $(_TEST.exit.log)
 	    || mv $(_TEST.exit.log) $(TEST.logdir)/$@
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.exit.log) $(TEST.logdir)/$@
 	@ls -l    $(TEST.logdir)/$@*
+	@-$(_CMD_log-compare-hint)
 # TODO: same target as test.warnings.log
 
 ALL.test.exit.log   = test.exit.log
