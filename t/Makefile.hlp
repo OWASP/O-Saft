@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.24 19/11/19 22:00:51
+#?      @(#) Makefile.hlp 1.25 19/11/20 07:21:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.24
+_SID.hlp           := 1.25
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -59,12 +59,13 @@ testarg-hlp-%:                  TEST.init   = --header --no-rc
 
 # these are kind of help, but do not use --help
 testarg-hlp---cmd-VERSION:      TEST.args  += --cmd=VERSION
+testarg-hlp---cmd-version:      TEST.args  += --cmd=version
 testarg-hlp-+VERSION:           TEST.args  += +VERSION
-testarg-hlp-+help:              TEST.args  += +help=command
 testarg-hlp-+version:           TEST.args  += +version
-testarg-hlp-+version--usr:      TEST.args  += +version --v --usr
+testarg-hlp-+version--v--usr:   TEST.args  += +version --v --usr
 testarg-hlp---v+version:        TEST.args  += --v +version
 testarg-hlp---v+help:           TEST.args  += --v +help
+testarg-hlp-+help:              TEST.args  += +help
 
 # all other commands with --trace-CLI
 testarg-hlp-+cipher%:           TEST.init  += --trace-CLI
@@ -75,58 +76,58 @@ testarg-hlp-+ciphers-legacy-owasp:   TEST.args  += +ciphers --legacy=owasp
     # TODO: --legacy=owasp may change in future
 
 # --help
-testarg-hlp--help%:             TEST.init  += --trace-CLI
-testarg-hlp--help-FAQ:          TEST.args  += --help=FAQ
-testarg-hlp--help-WHY:          TEST.args  += --help=WHY
-testarg-hlp--help-CHECK:        TEST.args  += --help=CHECK
-testarg-hlp--help-security:     TEST.args  += --help=SECURITY
-testarg-hlp--help-alias:        TEST.args  += --help=alias
-testarg-hlp--help-check:        TEST.args  += --help=check
-testarg-hlp--help-cmd:          TEST.args  += --help=cmd
-testarg-hlp--help-commands:     TEST.args  += --help=commands
-testarg-hlp--help-compliance:   TEST.args  += --help=compliance
-testarg-hlp--help-content:      TEST.args  += --help=content
-testarg-hlp--help-data:         TEST.args  += --help=data
-testarg-hlp--help-examples:     TEST.args  += --help=examples
-testarg-hlp--help-exit:         TEST.args  += --help=exit
-testarg-hlp--help-glossar:      TEST.args  += --help=glossar
-testarg-hlp--help-intern:       TEST.args  += --help=intern
-testarg-hlp--help-help:         TEST.args  += --help=help
-testarg-hlp--help-hint:         TEST.args  += --help=hint
-testarg-hlp--help-legacy:       TEST.args  += --help=legacy
-testarg-hlp--help-links:        TEST.args  += --help=links
-testarg-hlp--help-opt:          TEST.args  += --help=opt
-testarg-hlp--help-options:      TEST.args  += --help=options
-testarg-hlp--help-ourstr:       TEST.args  += --help=ourstr
-testarg-hlp--help-pattern:      TEST.args  += --help=pattern
-testarg-hlp--help-program.code: TEST.args  += --help=program.code
-testarg-hlp--help-range:        TEST.args  += --help=range
-testarg-hlp--help-regex:        TEST.args  += --help=regex
-testarg-hlp--help-rfc:          TEST.args  += --help=rfc
-testarg-hlp--help-text:         TEST.args  += --help=text
-testarg-hlp--help-toc:          TEST.args  += --help=toc
-testarg-hlp--help-todo:         TEST.args  += --help=todo
-testarg-hlp--help-tools:        TEST.args  += --help=tools
-testarg-hlp--help-warning:      TEST.args  += --help=warning
-#testarg-hlp--help-error:       TEST.args  += --help=error     # alias
-#testarg-hlp--help-known:       TEST.args  += --help=known     # alias
-testarg-hlp--help-cfg-check:    TEST.args  += --help=cfg-check
-testarg-hlp--help-cfg-cmd:      TEST.args  += --help=cfg-cmd
-testarg-hlp--help-cfg-data:     TEST.args  += --help=cfg-data
-testarg-hlp--help-cfg-hint:     TEST.args  += --help=cfg-hint
-testarg-hlp--help-cfg-info:     TEST.args  += --help=cfg-info
-testarg-hlp--help-cfg-text:     TEST.args  += --help=cfg-text
-testarg-hlp--help-cfg-ourstr:   TEST.args  += --help=cfg-ourstr
-testarg-hlp--help-cfg-range:    TEST.args  += --help=cfg-range
-testarg-hlp--help-cfg-regex:    TEST.args  += --help=cfg-regex
-testarg-hlp--help-gen-wiki:     TEST.args  += --help=gen-wiki
-testarg-hlp--help-gen-html:     TEST.args  += --help=gen-html
-testarg-hlp--help-gen-cgi:      TEST.args  += --help=gen-cgi
-testarg-hlp--help-gen-pod:      TEST.args  += --help=gen-pod
-testarg-hlp--help-exit:         TEST.args  += --help=exit
+testarg-hlp---help%:            TEST.init  += --trace-CLI
+testarg-hlp---help-FAQ:         TEST.args  += --help=FAQ
+testarg-hlp---help-WHY:         TEST.args  += --help=WHY
+testarg-hlp---help-CHECK:       TEST.args  += --help=CHECK
+testarg-hlp---help-security:    TEST.args  += --help=SECURITY
+testarg-hlp---help-alias:       TEST.args  += --help=alias
+testarg-hlp---help-check:       TEST.args  += --help=check
+testarg-hlp---help-cmd:         TEST.args  += --help=cmd
+testarg-hlp---help-commands:    TEST.args  += --help=commands
+testarg-hlp---help-compliance:  TEST.args  += --help=compliance
+testarg-hlp---help-content:     TEST.args  += --help=content
+testarg-hlp---help-data:        TEST.args  += --help=data
+testarg-hlp---help-examples:    TEST.args  += --help=examples
+testarg-hlp---help-exit:        TEST.args  += --help=exit
+testarg-hlp---help-glossar:     TEST.args  += --help=glossar
+testarg-hlp---help-intern:      TEST.args  += --help=intern
+testarg-hlp---help-help:        TEST.args  += --help=help
+testarg-hlp---help-hint:        TEST.args  += --help=hint
+testarg-hlp---help-legacy:      TEST.args  += --help=legacy
+testarg-hlp---help-links:       TEST.args  += --help=links
+testarg-hlp---help-opt:         TEST.args  += --help=opt
+testarg-hlp---help-options:     TEST.args  += --help=options
+testarg-hlp---help-ourstr:      TEST.args  += --help=ourstr
+testarg-hlp---help-pattern:     TEST.args  += --help=pattern
+testarg-hlp---help-program.code: TEST.args += --help=program.code
+testarg-hlp---help-range:       TEST.args  += --help=range
+testarg-hlp---help-regex:       TEST.args  += --help=regex
+testarg-hlp---help-rfc:         TEST.args  += --help=rfc
+testarg-hlp---help-text:        TEST.args  += --help=text
+testarg-hlp---help-toc:         TEST.args  += --help=toc
+testarg-hlp---help-todo:        TEST.args  += --help=todo
+testarg-hlp---help-tools:       TEST.args  += --help=tools
+testarg-hlp---help-warning:     TEST.args  += --help=warning
+#testarg-hlp---help-error:      TEST.args  += --help=error     # alias
+#testarg-hlp---help-known:      TEST.args  += --help=known     # alias
+testarg-hlp---help-cfg-check:   TEST.args  += --help=cfg-check
+testarg-hlp---help-cfg-cmd:     TEST.args  += --help=cfg-cmd
+testarg-hlp---help-cfg-data:    TEST.args  += --help=cfg-data
+testarg-hlp---help-cfg-hint:    TEST.args  += --help=cfg-hint
+testarg-hlp---help-cfg-info:    TEST.args  += --help=cfg-info
+testarg-hlp---help-cfg-text:    TEST.args  += --help=cfg-text
+testarg-hlp---help-cfg-ourstr:  TEST.args  += --help=cfg-ourstr
+testarg-hlp---help-cfg-range:   TEST.args  += --help=cfg-range
+testarg-hlp---help-cfg-regex:   TEST.args  += --help=cfg-regex
+testarg-hlp---help-gen-wiki:    TEST.args  += --help=gen-wiki
+testarg-hlp---help-gen-html:    TEST.args  += --help=gen-html
+testarg-hlp---help-gen-cgi:     TEST.args  += --help=gen-cgi
+testarg-hlp---help-gen-pod:     TEST.args  += --help=gen-pod
+testarg-hlp---help-exit:        TEST.args  += --help=exit
 # following tested in Makefile.doc: --test-*
-#testarg-hlp--help--yeast-data:  TEST.args  += --yeast-data
-#testarg-hlp--help--yeast-prot:  TEST.args  += --yeast-prot
+#testarg-hlp---help--yeast-data: TEST.args  += --yeast-data
+#testarg-hlp---help--yeast-prot: TEST.args  += --yeast-prot
 
 test.hlp.log-compare:   TEST.target_prefix  = testarg-hlp
 test.hlp.log-move:      TEST.target_prefix  = testarg-hlp
