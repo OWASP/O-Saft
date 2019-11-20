@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.12 19/11/20 00:08:17
+#?      @(#) Makefile.make 1.13 19/11/21 00:03:27
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.12
+_SID.make          := 1.13
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -68,6 +68,7 @@ LIST.helpmake  := help              help.all            help.help.all-v \
 		  help.makefiles.doc
 # Makefile-specific help.test.* targets
 # pod and template are missing in $(ALL.inc.type) because they are not included
+# help.test.%.all  is rarely used
 LIST.makefiles  = $(ALL.inc.type) pod template
 LIST.helpmake  += $(LIST.makefiles:%=help.test.%)
 LIST.helpmake  += $(LIST.makefiles:%=help.test.%.all)
@@ -89,21 +90,14 @@ testarg-make%:      TEST.init   =
 testarg-make%:      TRACE.target= echo "\#$(EXE.pl) $(TEST.init) $(TEST.args)"
     # targets should print the command, the TRACE.target variable is misused
     # for that (assuming that all target use $(TRACE.target) ).
+    # FIXME: prints  #make  at end, which is wrong
 
 $(foreach arg, $(LIST.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 $(foreach arg, $(LIST.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 
-test.make.all:      $(ALL.test.make)
-test.make:          test.make.all
+test.make.log-compare:  TEST.target_prefix  = testarg-make
+test.make.log-move:     TEST.target_prefix  = testarg-make
+test.make.log:          TEST.target_prefix  = testarg-make
+
+test.make:          $(ALL.test.make)
 test.make.log:      $(ALL.test.make.log) test.log-compare-hint
-
-test.make.log-compare:  TEST.target_prefix  = testcmd-make
-test.make.log-move:     TEST.target_prefix  = testcmd-make
-test.make.log:          TEST.target_prefix  = testcmd-make
-
-.PHONY: test.make.log
-
-# feed main Makefile
-ALL.tests          += $(ALL.test.make)
-ALL.tests.log      += $(ALL.test.make.log)
-
