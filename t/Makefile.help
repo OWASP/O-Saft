@@ -69,7 +69,7 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.79 19/11/17 00:03:25
+#?      @(#) Makefile.help 1.80 19/11/21 00:03:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -78,7 +78,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.79
+_SID.help          := 1.80
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -421,28 +421,20 @@ t-%:
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
 
-HELP-_help4     = _____________________________________ testing help targets _
-HELP-test.help      = test help* targets of our Makefiles
-HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
-HELP-test.help.log-compare  = compare results of test.help.log (if any)
+# NOT YET IMPLEMENTED/USED
+# HELP-_help4     = _____________________________________ testing help targets _
+# HELP-test.help      = test help* targets of our Makefiles
+# HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
+# HELP-test.help.log-compare  = compare results of test.help.log (if any)
+
+ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
+ALL.test.help       = $(ALL.testhelp)
+ALL.test.help.log   = $(ALL.test.help:%=%.log)
 
 test.help.log-compare:  TEST.target_prefix  = testcmd-help
 test.help.log-move:     TEST.target_prefix  = testcmd-help
 test.help.log:          TEST.target_prefix  = testcmd-help
 
-ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
-#                   # awk collect target herein (duplicates are ignored)
-ALL.test.help       = $(ALL.testhelp)
-ALL.test.help.log   = $(ALL.test.help:%=%.log)
-
 # TODO: explain test.help uses "make help", while test.hlp uses "o-saft.pl --help"
-test.help.all:    $(ALL.test.help)
-test.help:        test.help.all
-test.help.log:    $(ALL.test.help.log) test.log-compare-hint
-
-.PHONY: test.help.log
-
-# feed main Makefile
-ALL.tests          += $(ALL.test.help)
-ALL.tests.log      += $(ALL.test.help.log)
-
+test.help:          $(ALL.test.help)
+test.help.log:      $(ALL.test.help.log) test.log-compare-hint
