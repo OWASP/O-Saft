@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.54 19/11/17 13:37:56
+#?      @(#)  1.55 19/11/21 00:03:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.54
+_SID.warnings      := 1.55
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -303,7 +303,6 @@ warning-521: EXE.pl     = ../OSaft/Ciphers.pm
 warning-522: TEST.args  = TODO: testing duplicate openssl key, difficult ...
 warning-522: EXE.pl     = ../OSaft/Ciphers.pm
 
-#ALL.testwarnings   = # same as ALL.test.warnings
 ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.warnings))
 
 warning-%: message-%
@@ -380,13 +379,10 @@ warnings-%.log: $(TEST.logdir)
 	@-ls -l  $(TEST.logdir)/warnings-$(*)*
 # TODO: target should be unified with testcmd-%.log
 
-test.warnings.all:  $(ALL.test.warnings)
-test.warnings:      test.warnings.all
-
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "#  ‘#öÅU 1.54: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.55: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -406,11 +402,6 @@ test.warnings.log: $(_TEST.warning.log)
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.cgi.log
 
-.PHONY: test.warnings.log
+ALL.test.warnings.log   = test.warnings.log
 
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.warnings)
-ALL.tests.log  += test.warnings.log
+test.warnings:      $(ALL.test.warnings)
