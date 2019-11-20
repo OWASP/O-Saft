@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.92 19/11/17 13:33:30
+#?      @(#) Makefile 1.94 19/11/19 23:55:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.92
+_SID.test          := 1.94
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -761,6 +761,9 @@ TEST.log-suffix     = -$(TEST.today)
 # if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
 # checking this variable if not empty is sufficent to print verbose information
 # SEE Make:defines with commands
+
+_HELP_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
+
 define _CMD_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
@@ -768,6 +771,12 @@ define _CMD_log-compare
 	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
 	done
+endef
+
+define _CMD_log-compare-hint
+	echo ""
+	echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+	echo "$(_HELP_log_hint)"
 endef
 
 define _CMD_log-move
@@ -779,19 +788,21 @@ define _CMD_log-move
 	done
 endef
 
-_HELP_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
+define _CMD_log-move-hint
+	$(eval _stub := ".")
+	[ "$*" = "" ] && $(eval _stub := "$*.")
+	echo ""
+	echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$(_stub)log-move"
+	echo "$(_HELP_log_hint)"
+endef
 
 test.log-compare-hint:
-	@echo ""
-	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-	@echo "$(_HELP_log_hint)"
+	@-$(_CMD_log-compare-hint)
 
 test.%.log-compare:
 	@$(TRACE.target)
-	-$(_CMD_log-compare)
-	@echo ""
-	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$*.log-move"
-	@echo "$(_HELP_log_hint)"
+	@-$(_CMD_log-compare)
+	@-$(_CMD_log-move-hint)
 
 test.%.log-move:
 	@$(TRACE.target)
@@ -799,10 +810,8 @@ test.%.log-move:
 
 test.log-compare:
 	@$(TRACE.target)
-	-$(_CMD_log-compare)
-	@echo ""
-	@echo "# to move new files to .log , use: $(MAKE_COMMAND) test.log-move"
-	@echo "$(_HELP_log_hint)"
+	@-$(_CMD_log-compare)
+	@-$(_CMD_log-move-hint)
 
 test.log-move:
 	@$(TRACE.target)
