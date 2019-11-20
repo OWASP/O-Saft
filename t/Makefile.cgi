@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.45 19/11/17 10:51:44
+#?      @(#) Makefile.cgi 1.46 19/11/21 00:03:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.45
+_SID.cgi           := 1.46
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -41,8 +41,8 @@ help.test.cgi-v:      HELP_TYPE = cgi
 help.test.cgi-vv:     HELP_TYPE = cgi
 
 HELP-_cgi0              = _____________________________________________ testing .cgi _
-HELP-test.cgi.all       = test all bad IPs, hostnames and options for '$(SRC.cgi)'
-HELP-test.cgi.log       = same as test.cgi.all but store output in '$(TEST.logdir)/'
+HELP-test.cgi           = test all bad IPs, hostnames and options for '$(SRC.cgi)'
+HELP-test.cgi.log       = same as test.cgi but store output in '$(TEST.logdir)/'
 HELP-test.cgi.badhosts  = test that some hostnames are ignored in '$(SRC.cgi)'
 HELP-test.cgi.badIPs    = test that some IPs are ignored in '$(SRC.cgi)'
 HELP-test.cgi.badall    = test all bad and good IPs and hostnames
@@ -258,7 +258,7 @@ testcmd-cgi-good%:
 test.cgi-%: testcmd-cgi-bad_%
 	@echo ""
 
-ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg) $(ALL.cgi.header)
+ALL.test.cgi        = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg) $(ALL.cgi.header)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
 test.cgi.badIPs:   $(ALL.cgi.badIPs)
@@ -267,13 +267,10 @@ test.cgi.badopt:   $(ALL.cgi.badopt)
 test.cgi.badchr:   $(ALL.cgi.badchr)
 test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 
-test.cgi.all:      $(ALL.test.cgi)
-test.cgi:          $(ALL.test.cgi)
-
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.45: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.46: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
@@ -286,7 +283,7 @@ test.cgi.log: $(_TEST.cgi.log) $(ALL.cgi.header:%=%.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.cgi.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
-ALL.test.cgi.log   += $(test.cgi.log)
+ALL.test.cgi.log   += test.cgi.log
 
 ifndef ALL.Makefiles
 # NOTE: needed if called with -f Makefile.cgi
@@ -301,9 +298,4 @@ ifndef ALL.Makefiles
 	@$(EXE.dummy)
 endif
 
-#_____________________________________________________________________________ 
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.cgi)
-ALL.tests.log  += $(ALL.test.cgi.log)
+test.cgi:           $(ALL.test.cgi)
