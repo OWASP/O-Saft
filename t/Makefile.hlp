@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.25 19/11/20 07:21:29
+#?      @(#) Makefile.hlp 1.26 19/11/20 10:23:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.25
+_SID.hlp           := 1.26
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -65,7 +65,7 @@ testarg-hlp-+version:           TEST.args  += +version
 testarg-hlp-+version--v--usr:   TEST.args  += +version --v --usr
 testarg-hlp---v+version:        TEST.args  += --v +version
 testarg-hlp---v+help:           TEST.args  += --v +help
-testarg-hlp-+help:              TEST.args  += +help
+testarg-hlp-+help-commands:     TEST.args  += +help=commands
 
 # all other commands with --trace-CLI
 testarg-hlp-+cipher%:           TEST.init  += --trace-CLI
