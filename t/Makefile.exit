@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.21 19/11/19 23:18:39
+#?      @(#) Makefile.exit 1.22 19/11/21 00:03:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.21
+_SID.exit          := 1.22
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -75,18 +75,12 @@ testmsg-exit-HOST8:     TEST.args  += --exit=HOST8
 testmsg-exit-HOST9:     TEST.args  += --exit=HOST9
 testmsg-exit-END:       TEST.args  += --exit=END
 
-#ALL.testexit   = same as ALL.test.exit
-ALL.test.exit   = $(shell awk -F: '/^testmsg-exit-%/{next} /^testmsg-exit/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.exit))
+ALL.test.exit       = $(shell awk -F: '/^testmsg-exit-%/{next} /^testmsg-exit/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.exit))
 
 testmsg-exit-%: message-%
 	@$(TRACE.target)
 
 _TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(TEST.today)
-
-test.exit.log-compare:  TEST.target_prefix  = test.exit
-test.exit.log-move:     TEST.target_prefix  = test.exit
-test.exit.log:          TEST.target_logfile = $(_TEST.exit.log)
-    # see _TEST.exit.log below
 
 $(_TEST.exit.log):
 	@echo "# $(_MYSELF.exit) $(_SID.exit): $(MAKE) test.exit.log" > $@
@@ -107,12 +101,9 @@ test.exit.log: $(_TEST.exit.log)
 
 ALL.test.exit.log   = test.exit.log
 
-test.exit.all:  $(ALL.test.exit)
-test.exit:      test.exit.all
+test.exit.log-compare:  TEST.target_prefix  = test.exit
+test.exit.log-move:     TEST.target_prefix  = test.exit
 
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-ALL.tests      += $(ALL.test.exit)
-ALL.tests.log  += $(ALL.test.exit.log)
-
+test.exit:          $(ALL.test.exit)
+test.exit.log:      $(ALL.test.exit.log)
+    # test.log-compare-hinz not yet used because we only have one .log file
