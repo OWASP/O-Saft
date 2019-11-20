@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.9 19/11/17 13:18:11
+#?      @(#) Makefile.etc 1.10 19/11/20 12:07:51
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.9
+_SID.etc           := 1.10
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -61,7 +61,7 @@ HELP.etc            = # no general documentation yet
 HELP.test.etc.all   = # no special documentation yet
 
 TEST.init  = localhost
-TEST.hosts = $(TEST.init)
+TEST.hosts = localhost
 
 # testcmd-etc-sslscan* are defined as static targets, similar to testcmd-% , they
 # can be used in the corresponding *.log target (pattern rule) automatically
@@ -69,21 +69,21 @@ TEST.hosts = $(TEST.init)
 testcmd-etc-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
 testcmd-etc-sslscan1.8:  TEST.args = --no-failed
 testcmd-etc-sslscan1.8:
-	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 testcmd-etc-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
 testcmd-etc-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
 testcmd-etc-sslscan1.11:
-	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 testcmd-etc-testssl.sh:  EXE.pl    = testssl.sh
 testcmd-etc-testssl.sh:  TEST.args = -e --color 0
 testcmd-etc-testssl.sh: 
-	@cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 # use testcmd-% pattern rule for all o-saft.pl +cipher tests
-testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint
-testcmd-etc-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp
+testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint $(TEST.hosts)
+testcmd-etc-osaft_--legacy-owasp: TEST.args = +cipher --enabled --header --legacy=owasp $(TEST.hosts)
     # tricky illegal option to enforce another (second) command with +cipher
 
 LIST.etc-osaft-CMDS    := +cipher +cipherraw
