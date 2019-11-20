@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 1.22 19/11/19 22:11:17
+#?      @(#) Makefile.opt 1.23 19/11/21 00:03:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-_SID.opt           := 1.22
+_SID.opt           := 1.23
 
 _MYSELF.opt        := t/Makefile.opt
 ALL.includes       += $(_MYSELF.opt)
@@ -127,10 +127,6 @@ testarg-opt-stdformat-UTF-8: testarg-opt-stdformat-UTF8
 #stdarg-opt-507:             TEST.args  += +quit-
 #stdarg-opt-508:             TEST.args  += +hsts-sts
 
-test.opt.log-compare:   TEST.target_prefix  = testarg-opt
-test.opt.log-move:      TEST.target_prefix  = testarg-opt
-test.opt.log:           TEST.target_prefix  = testarg-opt
-
 # note: no sort because we want the sequence as defined above
 ALL.test.alias      = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-alias-[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
 ALL.test.stdformat  = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
@@ -144,21 +140,16 @@ test.stdformat: $(ALL.test.stdformat)
 test.alias.log: $(ALL.test.alias.log)
 test.stdformat.log: $(ALL.test.stdformat.log)
 
-#ALL.test.opt    = $(foreach host,$(TEST.opt.hosts),$(ALL.testopt:%=%$(host)))
+test.opt-%:       test.opt.internal test.opt
 
-ALL.test.opt    = $(ALL.testopt)
-ALL.test.opt.log= $(ALL.testopt:%=%.log)
+ALL.test.opt        = $(ALL.testopt)
+ALL.test.opt.log    = $(ALL.testopt:%=%.log)
+
+test.opt.log-compare:   TEST.target_prefix  = testarg-opt
+test.opt.log-move:      TEST.target_prefix  = testarg-opt
+test.opt.log:           TEST.target_prefix  = testarg-opt
 
 # TODO: use target _no-hosts
 # for debugging add test.opt.internal to the target's dependencies
-test.opt:         $(ALL.test.opt)
-test.opt.log:     $(ALL.test.opt.log) test.log-compare-hint
-test.opt-%:       test.opt.internal test.opt
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.opt)
-ALL.tests.log  += $(ALL.test.opt.log)
-
+test.opt:           $(ALL.test.opt)
+test.opt.log:       $(ALL.test.opt.log) test.log-compare-hint
