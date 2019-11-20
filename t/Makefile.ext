@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 1.25 19/11/14 19:22:56
+#?      @(#) Makefile.ext 1.26 19/11/21 00:03:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 1.25
+_SID.ext           := 1.26
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
@@ -89,36 +89,32 @@ testcmd-e070_%: TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +
 testcmd-e071_%: TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
 testcmd-e081_%: TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
 
+ALL.testext         = $(shell awk -F_ '/^testcmd-e[0-9]/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.ext))
+ALL.by_host         = $(foreach host,$(TEST.ext.hosts),$(ALL.testext:%=%_$(host)))
+ALL.by_command      = $(foreach cmd,$(ALL.testext),$(TEST.ext.hosts:%=$(cmd)_%))
+ALL.ext.host        = $(ALL.by_host)
+ALL.ext.host.log    = $(ALL.by_host:%=%.log)
+
+# don't set ALL.test.ext and ALL.test.ext.log to avid useless make calls
+_ALL.test.ext       = $(ALL.by_host)
+_ALL.test.ext.log   = $(ALL.test.ext:%=%.log)
+
+# TODO: use target _no-hosts
+test.ext.command:   $(ALL.by_command)
+test.ext.host:      $(ALL.by_host)
+test.ext.host.log:  $(ALL.ext.host.log)
+
+test.ext.host-%:    test.ext.internal test.ext.host
+
+ALL.ext.quick       = testcmd-e000_ testcmd-e001_ testcmd-e021_ testcmd-e066_
+test.ext.host.quick:     $(foreach host,$(TEST.ext.hosts),$(ALL.ext.quick:%=%_$(host)))
+
+.PHONY: test.ext.host test.ext.command test.ext.host.log
+
 test.ext.log-compare:   TEST.target_prefix  = testcmd-e
 test.ext.log-move:      TEST.target_prefix  = testcmd-e
 test.ext.log:           TEST.target_prefix  = testcmd-e
 
-ALL.testext     = $(shell awk -F_ '/^testcmd-e[0-9]/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.ext))
-ALL.by_host     = $(foreach host,$(TEST.ext.hosts),$(ALL.testext:%=%_$(host)))
-ALL.by_command  = $(foreach cmd,$(ALL.testext),$(TEST.ext.hosts:%=$(cmd)_%))
-ALL.test.ext    = $(ALL.by_host)
-
-ALL.ext.host    = $(ALL.by_host)
-ALL.ext.host.log= $(ALL.by_host:%=%.log)
-
-# TODO: use target _no-hosts
-test.ext.host:      $(ALL.by_host)
-test.ext.command:   $(ALL.by_command)
-test.ext:           test.ext.host
-test.ext.host.log:  $(ALL.ext.host.log)
-test.ext.log:       test.ext.host.log test.log-compare-hint
-
-test.ext.host-%:    test.ext.internal test.ext.host
-
-ALL.ext.quick   = testcmd-e000_ testcmd-e001_ testcmd-e021_ testcmd-e066_
-test.ext.host.quick:     $(foreach host,$(TEST.ext.hosts),$(ALL.ext.quick:%=%_$(host)))
-
-.PHONY: test.ext.host test.ext.command test.ext.host.log test.ext.log
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.ext)
-ALL.tests.log  += test.ext.log
-
+test.ext:           $(ALL.test.ext)
+test.ext.log:       $(ALL.test.ext.log)
+    # test.log-compare-hint not yet used
