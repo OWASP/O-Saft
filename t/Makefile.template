@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#)  1.22 19/11/14 20:42:49
+#?      @(#)  1.23 19/11/21 00:03:29
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 1.22
+_SID.TEMPL     := 1.23
 
 _MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -111,7 +111,7 @@ testcmd-TEMPL%:     TEST.init   = +quit
 testcmd-TEMPL001_%: TEST.args  += +VERSION
 testcmd-TEMPL002_%: TEST.args  += --help
 
-ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
+ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
                 # dynamically generate list of all  testcmd_TEMPLDDD  targets
 
 ## Variant-1 }
@@ -124,11 +124,7 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
-test.TEMPL.log-compare:  TEST.target_prefix  = testcmd-TEMPL
-test.TEMPL.log-move:     TEST.target_prefix  = testcmd-TEMPL
-test.TEMPL.log:          TEST.target_prefix  = testcmd-TEMPL
-
-ALL.testTEMPL   = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
+ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.TEMPL))
 
 # pattern rule to map to testcmd-%
 testTEMPL-%:  testcmd-%
@@ -136,27 +132,20 @@ testTEMPL-%:  testcmd-%
 
 ## Variant-2 }
 
-ALL.test.TEMPL  = $(foreach host,$(TEST.TEMPL.hosts),$(ALL.testTEMPL:%=%$(host)))
-ALL.test.TEMPL.log= $(ALL.test.TEMPL:%=%.log)
+ALL.test.TEMPL      = $(foreach host,$(TEST.TEMPL.hosts),$(ALL.testTEMPL:%=%$(host)))
+ALL.test.TEMPL.log  = $(ALL.test.TEMPL:%=%.log)
                 # generate list of all targets
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-test.TEMPL.all: $(ALL.test.TEMPL)
-test.TEMPL:     test.TEMPL.all
-test.TEMPL.log: $(ALL.test.TEMPL.log) test.log-compare-hint
-
 # more verbose target: test.TEMPL-v and test.TEMPL-vv
 test.TEMPL-%:   test.TEMPL.internal test.TEMPL
 	@$(EXE.dummy)
 
-.PHONY: test.TEMPL.log
+test.TEMPL.log-compare:  TEST.target_prefix  = testcmd-TEMPL
+test.TEMPL.log-move:     TEST.target_prefix  = testcmd-TEMPL
+test.TEMPL.log:          TEST.target_prefix  = testcmd-TEMPL
 
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.TEMPL)
-ALL.tests.log  += $(ALL.test.TEMPL.log)
-
+test.TEMPL:         $(ALL.test.TEMPL)
+test.TEMPL.log:     $(ALL.test.TEMPL.log) test.log-compare-hint
