@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.39 19/11/17 13:13:21
+#?      @(#) Makefile.misc 1.40 19/11/21 00:03:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.39
+_SID.misc          := 1.40
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -78,8 +78,9 @@ test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
-ALL.test.misc      := test.bench test.bunt test.docker
-ALL.test.misc.log  := test.bench.log
+ALL.testmisc       := test.bench test.bunt test.docker
+ALL.testmisc.log   := test.bench.log
+ALL.test.misc.log  += test.bench.log
 
 # TODO: simple test, needs to be improved and checked; not part of ALL.* and *.all
 test.docker:
@@ -113,7 +114,7 @@ cloc.lang:  TEST.opt.cloc  += --by-file-by-lang
 cloc:       cloc.stat
 
 ALL.test.cloc  := cloc.stat cloc.file cloc.lang
-ALL.test.misc  += $(ALL.test.cloc)
+ALL.testmisc   += $(ALL.test.cloc)
 test.cloc:        $(ALL.test.cloc)
 # TODO: test.cloc.log  must be special at it compares generated tags files
 
@@ -134,7 +135,7 @@ $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles
 ALL.gen        += $(GEN.tags)
 #               # just because GEN.tags is defined in main Makefile
 
-ALL.test.misc  += $(GEN.tags)
+ALL.testmisc   += $(GEN.tags)
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
@@ -210,7 +211,7 @@ ALL.test.profile   := \
 	nytprof.out \
 	nytprof.html \
 	dprof.out
-ALL.test.misc  += $(ALL.test.profile)
+ALL.testmisc   += $(ALL.test.profile)
 test.profile:     $(ALL.test.profile)
 
 HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
@@ -271,12 +272,12 @@ ALL.test.quality   := \
 		qa.misspelled_critic \
 		qa.makefile_HELP \
 		qa.makefile_help
-ALL.test.misc  += $(ALL.test.quality)
-test.quality:     $(ALL.test.quality)
+ALL.testmisc       += $(ALL.test.quality)
+test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.39: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.40: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -287,19 +288,12 @@ test.quality.log: $(_TEST.quality.log)
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.quality.log) $(TEST.logdir)/$@
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
+
+ALL.test.misc      += test.bench test.bunt $(ALL.test.cloc) $(ALL.test.quality) $(GEN.tags)
 ALL.test.misc.log  += test.quality.log
+    # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
 
-test.misc.all:    $(ALL.test.misc)
-test.misc:        test.bench test.bunt $(ALL.test.cloc) $(ALL.test.quality)
-    # NOTE: test.misc does not call $(ALL.test.misc) because it is too noisy
-test.misc.log:    $(ALL.test.misc.log)
-
-#ALL.test.misc  += $(ALL.test.quality)
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.misc)
-ALL.tests.log  += test.bench.log test.quality.log
-
+test.misc.all:      $(ALL.testmisc)
+test.misc:          $(ALL.test.misc)
+test.misc.log:      $(ALL.test.misc.log)
+    # test.log-compare-hint does not make sense here
