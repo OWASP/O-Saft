@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.9 19/11/16 16:35:23
+#?      @(#) Makefile.dev 1.10 19/11/21 00:03:22
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.9
+_SID.dev           := 1.10
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -172,7 +172,7 @@ ifndef dev-macros-generated
     # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
-    # variables test.*.all, test-*.log
+    # variables ALL:test.*.all, ALL:test.*.log
     $(foreach prg, $(LIST.program),\
       $(foreach arg, $(LIST.$(prg)),\
         $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
@@ -243,22 +243,11 @@ test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
 ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep)
-ALL.test.dev.log    = $(ALL.test.dev:%=%.log) test.log-compare-hint
+ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
 test.dev.log-move:      TEST.target_prefix  = testarg-dev-
 test.dev.log:           TEST.target_prefix  = testarg-dev-
 
-
-test.dev.all:       $(ALL.test.dev)
-test.dev.all.log:   $(ALL.test.dev.log)
-test.dev.log:       $(ALL.test.dev.log)
-test.dev:           test.dev.all
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.dev)
-ALL.tests.log  += $(ALL.test.dev.log)
-
+test.dev:           $(ALL.test.dev)
+test.dev.log:       $(ALL.test.dev.log) test.log-compare-hint
