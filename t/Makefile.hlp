@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.26 19/11/20 10:23:19
+#?      @(#) Makefile.hlp 1.27 19/11/21 00:03:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.26
+_SID.hlp           := 1.27
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -129,24 +129,13 @@ testarg-hlp---help-exit:        TEST.args  += --help=exit
 #testarg-hlp---help--yeast-data: TEST.args  += --yeast-data
 #testarg-hlp---help--yeast-prot: TEST.args  += --yeast-prot
 
+ALL.testhlp         = $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
+ALL.test.hlp        = $(ALL.testhlp)
+ALL.test.hlp.log    = $(ALL.test.hlp:%=%.log)
+
 test.hlp.log-compare:   TEST.target_prefix  = testarg-hlp
 test.hlp.log-move:      TEST.target_prefix  = testarg-hlp
 test.hlp.log:           TEST.target_prefix  = testarg-hlp
 
-ALL.testhlp     = $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
-ALL.test.hlp    = $(ALL.testhlp)
-ALL.test.hlp.log= $(ALL.test.hlp:%=%.log) test.log-compare-hint
-
-test.hlp.all:   $(ALL.test.hlp)
-test.hlp:       test.hlp.all
-test.hlp.log:   $(ALL.test.hlp.log)
-
-.PHONY: test.hlp.log
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.hlp)
-ALL.tests.log  += $(ALL.test.hlp.log)
-
+test.hlp:           $(ALL.test.hlp)
+test.hlp.log:       $(ALL.test.hlp.log) test.log-compare-hint
