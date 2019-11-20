@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.23 19/11/17 13:34:34
+#?      @(#) Makefile.critic 1.24 19/11/21 00:03:21
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.23
+_SID.critic        := 1.24
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -159,8 +159,8 @@ critic-stat-3:  TEST.critic.opt = --statistics-only
 critic-stat-3:                                  TEST.critic.severity = -3
 #critic-countp critic-statp critic-stat-4p: # do not make sense
 
-ALL.test.critic = critic-5 critic-4 critic-3 critic-2 \
-		  critic-count critic-stat critic-stat-4 critic-stat-3
+ALL.test.critic     = critic-5 critic-4 critic-3 critic-2 \
+		      critic-count critic-stat critic-stat-4 critic-stat-3
 
 $(ALL.test.critic): critic
 criticp critic-5p critic-4p critic-3p critic-2p: critic-pretty
@@ -190,17 +190,11 @@ critic345: $(_TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
 
 # TODO: dirty hack target critic345.log 
 critic345.log:
-	@rm _TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
+	@rm -f $(_TEST.critic-3.txt) $(_TEST.critic-4.txt) $(_TEST.critic-5.txt)
 	@$(MAKE) $(MFLAGS) -s critic345
 
-.PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345 critic345.log
+ALL.test.critic.log = critic345.log
 
-test.critic.all:  $(ALL.test.critic)
-test.critic:      test.critic.all
-
-#_____________________________________________________________________________ 
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.critic)
-#ALL.tests.log  +=
+test.critic:        $(ALL.test.critic)
+test.critic.log:    $(ALL.test.critic.log)
+    # test.log-compare-hint does not make sence here
