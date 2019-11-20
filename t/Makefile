@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.94 19/11/19 23:55:43
+#?      @(#) Makefile 1.96 19/11/20 11:34:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.94
+_SID.test          := 1.96
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -789,10 +789,10 @@ define _CMD_log-move
 endef
 
 define _CMD_log-move-hint
-	$(eval _stub := ".")
-	[ "$*" = "" ] && $(eval _stub := "$*.")
-	echo ""
-	echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$(_stub)log-move"
+	_stub="log" && \
+	[ -n "$*" ] && _stub="$*.log" ; \
+	echo ""     && \
+	echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$$_stub-move"
 	echo "$(_HELP_log_hint)"
 endef
 
