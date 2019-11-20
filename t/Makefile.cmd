@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.45 19/11/17 10:39:06
+#?      @(#) Makefile.cmd 1.47 19/11/20 10:28:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.45
+_SID.cmd           := 1.47
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -109,6 +109,15 @@ testcmd-cmd+cipher--cipher-curves_%:  TEST.args  += +cipher --cipher-curves
 #TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=,
 #TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=, --cipher-npns=,,
 #TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=, --cipher-npns=ecdh_x448
+testcmd-cmd+cipherall--legacy-owasp_%:     TEST.args  += +cipherall --legacy=owasp
+testcmd-cmd+cipherall--range-ecc_%:   TEST.args  += +cipherall --range=ecc
+testcmd-cmd+cipherall--range-rfc_%:   TEST.args  += +cipherall --range=rfc
+testcmd-cmd+cipherall--range-long_%:  TEST.args  += +cipherall --range=long
+testcmd-cmd+cipherall--range-SSLv2_%: TEST.args  += +cipherall --range=SSLv2
+testcmd-cmd+cipherall--range-TLSv12_%: TEST.args += +cipherall --range=TLSv12
+testcmd-cmd+cipherall--range-shifted_%: TEST.args += +cipherall --range=shifted
+#testcmd-cmd+cipherall--range-safe_%:  TEST.args  += +cipherall --range=safe
+    # --range=safe  disabled, because it takes a long time
 testcmd-cmd+cipherall_%:        TEST.args  += +cipherall
 testcmd-cmd+cipherraw_%:        TEST.args  += +cipherraw
 testcmd-cmd+cipher-dh_%:        TEST.args  += +cipher-dh
