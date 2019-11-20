@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.47 19/11/20 10:28:37
+#?      @(#) Makefile.cmd 1.48 19/11/21 00:03:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.47
+_SID.cmd           := 1.48
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -41,8 +41,8 @@ HELP-_cmd1          = _________________________________________ testing commands
 HELP-test.pattern-* = test group of commands with '$(TEST.cmd.hosts)'
 HELP-testcmd-*      = test commands with '$(TEST.cmd.hosts)'
 HELP-testcmd-*.log  = same as testcmd-* but store output in '$(TEST.logdir)/'
-HELP-test.cmd.all   = test all commands with '$(TEST.cmd.hosts)'
-HELP-test.cmd.log   = same as test.cmd.all but store output in '$(TEST.logdir)/'
+HELP-test.cmd       = test all commands with '$(TEST.cmd.hosts)'
+HELP-test.cmd.log   = same as test.cmd but store output in '$(TEST.logdir)/'
 HELP-_cmd2          = ________________________________ testing a special command _
 HELP-testrun-CMD    = test specific command CMD with '$(TEST.cmd.hosts)'
 HELP-testrun-CMD.log = same as testrun-CMD but store output in '$(TEST.logdir)/'
@@ -154,20 +154,12 @@ testarg-cmd-host_url+cn:        TEST.args  += --v +cn
 testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
     # target to test hostname with url (path)
 
-test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
-test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
-test.cmd.log:           TEST.target_prefix  = testcmd-cmd
-
 # SEE Make:target matching
 # NOTE: no sort because we want the sequence of target definitions above.
 ALL.testcmd         = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
 ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
 ALL.test.cmd       += testarg-host_url+cn
 ALL.test.cmd.log   += $(ALL.test.cmd:%=%.log)
-
-test.cmd.all:   $(ALL.test.cmd)
-test.cmd:       test.cmd.all
-test.cmd.log:   $(ALL.test.cmd.log) test.log-compare-hint
 
 # For calling various targets together and other examples,
 # see  test.pattern-%  pattern rule
@@ -188,10 +180,9 @@ testrun-%: testcmd-%
 
 # TODO: use target _no-hosts
 
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
+test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
+test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
+test.cmd.log:           TEST.target_prefix  = testcmd-cmd
 
-# feed main Makefile
-ALL.tests      += $(ALL.test.cmd)
-ALL.tests.log  += $(ALL.test.cmd.log)
-
+test.cmd:           $(ALL.test.cmd)
+test.cmd.log:       $(ALL.test.cmd.log) test.log-compare-hint
