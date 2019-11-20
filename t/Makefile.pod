@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.31 19/11/17 11:29:42
+@(#) Makefile.pod 1.32 19/11/20 09:18:45
 
 =head1 AUTHOR
 
@@ -383,6 +383,8 @@ Some words about the terms and words used in GNU Make and in this project.
   are meant and  pattern rule  is used for  static pattern rule
 
 * GNU Make refers to the commands executed in a target as  recipe.
+
+* GNU Make refers sometimes to targets as  goals (i.e. .DEFAULT_GOAL).
 
 
 =head2 GNU Make:macros
