@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.96 19/11/20 11:34:19
+#?      @(#) Makefile 1.97 19/11/21 00:04:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.96
+_SID.test          := 1.97
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -675,6 +675,7 @@ tests:      $(ALL.tests)
 
 tests.log:  $(ALL.tests.log) test.log-compare-hint
 	@$(TRACE.target)
+	@$(MAKE) $(MFLAGS) -s $(ALL.tests.log)
 
 test.tests.log-compare: TEST.target_prefix  = test
 test.tests.log-move:    TEST.target_prefix  = test
@@ -700,10 +701,10 @@ test.log:   tests.log
 	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $@-compare"
 
 
-# collect targets in this file
-ALL.test.test  += tests tests.quick tests.log tests.quick.log
+# collect targets in this file, should not be added to ALL.tests
+ALL.test.self  += tests tests.quick tests.log tests.quick.log
 
-.PHONY: test tests
+.PHONY: test tests test.log tests.log
 
 #_____________________________________________________________________________
 #________________________________________ targets for checking test results __|
@@ -817,7 +818,15 @@ test.log-move:
 	@$(TRACE.target)
 	$(_CMD_log-move)
 
+#_____________________________________________________________________________
+#________________________________________________ collected ALL.* variables __|
 
-ALL.tests      += # nothing added here!
-ALL.tests.log  += # nothing added here!
+ALL.tests      :=
+ALL.tests.log  :=
+
+# add all tests from included files to ALL.tests += ALL.test.$INCLUDE
+ifndef ALL-macros-generated
+    $(foreach inc, $(ALL.inc.type), $(eval  ALL.tests      += $(ALL.test.$(inc))) )
+    $(foreach inc, $(ALL.inc.type), $(eval  ALL.tests.log  += $(ALL.test.$(inc).log)) )
+endif
 
