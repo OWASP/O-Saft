@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.29 19/11/14 20:28:36
+#?      @(#) Makefile.tcl 1.30 19/11/21 00:03:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.29
+_SID.tcl           := 1.30
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -75,26 +75,17 @@ testcmd-tcl--v-host-host_%: TEST.args  += --v host1 host2 host3 host4 host5
 
 # test some warnings
 testcmd-tcl--v-host1-host2_%:   TEST.args  += --v host1 host2 host3 host4 host5 host6 
-testcmd-tcl--unknown_%: TEST.args  += --unknown
-#testcmd-tcl--v--load-bad_%:     TEST.args  += --load=/tmp/bad  # file with large value > 5000
+testcmd-tcl--unknown_%:     TEST.args  += --unknown
+#testcmd-tcl--v--load-bad_%: TEST.args  += --load=/tmp/bad  # file with large value > 5000
+
+# SEE Make:target matching
+ALL.testtcl         = $(shell awk -F% '/^testcmd-tcl%/{next} /^testcmd-tcl/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
+ALL.test.tcl        = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
+ALL.test.tcl.log    = $(ALL.test.tcl:%=%.log)
 
 test.tcl.log-compare:       TEST.target_prefix  = testcmd-tcl
 test.tcl.log-move:          TEST.target_prefix  = testcmd-tcl
 test.tcl.log:               TEST.target_prefix  = testcmd-tcl
 
-# SEE Make:target matching
-ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl%/{next} /^testcmd-tcl/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
-ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
-ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
-
-test.tcl.all:   $(ALL.test.tcl)
-test.tcl:       test.tcl.all
-test.tcl.log:   $(ALL.test.tcl.log) test.log-compare-hint
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(ALL.test.tcl)
-ALL.tests.log  += $(ALL.test.tcl.log)
-
+test.tcl:           $(ALL.test.tcl)
+test.tcl.log:       $(ALL.test.tcl.log) test.log-compare-hint
