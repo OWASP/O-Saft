@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.10 19/11/20 12:07:51
+#?      @(#) Makefile.etc 1.11 19/11/21 00:03:23
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.10
+_SID.etc           := 1.11
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -65,21 +65,22 @@ TEST.hosts = localhost
 
 # testcmd-etc-sslscan* are defined as static targets, similar to testcmd-% , they
 # can be used in the corresponding *.log target (pattern rule) automatically
+# errors in these targets are ignored (because the too may be missing)
 
 testcmd-etc-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
 testcmd-etc-sslscan1.8:  TEST.args = --no-failed
 testcmd-etc-sslscan1.8:
-	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 testcmd-etc-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
 testcmd-etc-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
 testcmd-etc-sslscan1.11:
-	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 testcmd-etc-testssl.sh:  EXE.pl    = testssl.sh
 testcmd-etc-testssl.sh:  TEST.args = -e --color 0
 testcmd-etc-testssl.sh: 
-	cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
 # use testcmd-% pattern rule for all o-saft.pl +cipher tests
 testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint $(TEST.hosts)
@@ -120,35 +121,12 @@ LIST.ciphers   := DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-
 #    o-saft.pl --tracecmd         --cipher=$(_LIST.ciphers) +cipher    $host
 #    o-saft.pl --tracecmd --trace --cipher=$(_LIST.ciphers) +cipher    $host
 
-test.etc-cipher.all:     $(ALL.test.etc-cipher)
-test.etc-cipher.all.log: $(ALL.test.etc-cipher.log)
-
 ALL.test.etc       += $(ALL.test.etc-cipher)
 ALL.test.etc.log   += $(ALL.test.etc-cipher.log)
 
-test.etc-cipher.all.log-compare:  TEST.target_prefix = testcmd-etc
-test.etc-cipher.all.log-move:     TEST.target_prefix = testcmd-etc
-test.etc-cipher.all.log-compare:  test.log-compare
-test.etc-cipher.all.log-move:     test.log-move
-    # TODO: test.etc-cipher.all.log-compare not automatically shown in test.etc-cipher.all
-
-testetc-%: message-%
-	@$(EXE.dummy)
-
-#_____________________________________________________________________________
-#______________________________________________________ targets for testing __|
-
 test.etc.log-compare:   TEST.target_prefix  = testcmd-etc
 test.etc.log-move:      TEST.target_prefix  = testcmd-etc
+test.etc.log:           TEST.target_prefix  = testcmd-etc
 
-test.etc.all:   $(ALL.test.etc)
-test.etc:       test.etc.all
-test.etc.log:   $(ALL.test.etc.log)
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ test __|
-
-# feed main Makefile
-ALL.tests      += $(All.test.etc)
-ALL.tests.log  += $(ALL.test-osaft.log)
-
+test.etc:           $(ALL.test.etc)
+test.etc.log:       $(ALL.test.etc.log) test.log-compare-hint
