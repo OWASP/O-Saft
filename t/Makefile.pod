@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.32 19/11/20 09:18:45
+@(#) Makefile.pod 1.33 19/11/22 23:47:03
 
 =head1 AUTHOR
 
@@ -189,7 +189,6 @@ Examples:
            @do something $(TEST.args) $*
 
    ALL.test.cgi    += testarg-cgi-host_some.tld testarg-cgi-host_localhost
-   ALL.tests       += $(ALL.test.cgi)
 
    test.cgi:          $(ALL.test.cgi)
 
@@ -209,7 +208,8 @@ Most targets and variables are named with one of following prefixes:
    help
    test
 
-The main Makefile is an exception, because it uses commonly used names.
+The main Makefile is an exception, because it uses commonly used names for
+targets.
 
 
 =head2 O-Saft Makefile Variable Values
@@ -251,8 +251,6 @@ Following general (global) variables are set in each Makefile*:
     ALL.includes
     ALL.inc.type
     ALL.help.tests
-    ALL.tests
-    ALL.tests.log
 
 More variables and targets are defined in following included files:
 
@@ -292,10 +290,14 @@ Notes about some special variables:
     ALL.tst         - list of all sources used for testing the project
                       (ALL.tst instead of ALL.test used to avoid conflicts
                       with ALL.tests)
-    ALL.test.TYP    - list of all targets from Makefile.TYP
-    ALL.tests       - list of all targets for testing
     ALL.includes    - dynamically generated list of all included Makefile*
     ALL.Makefiles   - static list of all source Makefile* of the project
+    ALL.test.TYP    - list of all targets from Makefile.TYP
+    ALL.tests       - list of all targets for testing
+    ALL.tests.log   - list of all targets for tests writing to logfiles
+
+The variables  ALL.tests  and  ALL.tests.log  are generated in  t/Nakefile
+from the corresponding  ALL.test.TYP  in each  t/Makefile.TYP .
 
 
 =head2 O-Saft Makefile Targets
@@ -313,7 +315,7 @@ Naming conventions for targets:
     testarg-name%   - pattern rule which finally uses testarg-% target
     testcmd-name_%  - pattern rule which finally uses testcmd-% target
 
-Targets in the makefiles are grouped, usually. Each group should be headed
+Targets in the Makefile* are grouped, usually. Each group should be headed
 by the help texts for the targets using  HELP-  variables (see below).
 
 
