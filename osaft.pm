@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.195 19/11/23 23:18:37",
+    SID_osaft   => "@(#) osaft.pm 1.196 19/11/23 23:48:05",
 
 };
 
@@ -1771,18 +1771,18 @@ our %cfg = (
    # config. key        list      description
    #------------------+---------+----------------------------------------------
     'do'            => [],      # commands to be performed
-    'commands'      => [],      # contains all commands from %data, %checks and commands-INT
+    'commands'      => [],      # contains all commands from %data, %checks and commands_int
                                 # will be constructed in main, see: construct list for special commands
-    'commands-CMD'  => [],      # contains all cmd-* commands from below
-    'commands-USR'  => [],      # contains all commands defined by user with
+    'commands_cmd'  => [],      # contains all cmd-* commands from below
+    'commands_usr'  => [],      # contains all commands defined by user with
                                 # option --cfg-cmd=* ; see _cfg_set()
-    'commands-EXP'  => [        # experimental commands
+    'commands_exp'  => [        # experimental commands
                         qw(sloth),
                        ],
-    'commands-NOTYET'=>[        # commands and checks NOT YET IMPLEMENTED
+    'commands_notyet'=>[        # commands and checks NOT YET IMPLEMENTED
                         qw(zlib lzo open_pgp fallback closure order sgc scsv time),
                        ],
-    'commands-INT'  => [        # add internal commands
+    'commands_int'  => [        # add internal commands
                                 # these have no key in %data or %checks
                         qw(
                          check cipher dump check_sni exec help info info--v http
@@ -1794,7 +1794,7 @@ our %cfg = (
                                 # keys not used as command
                         qw(cn_nosni valid_years valid_months valid_days valid_host)
                        ],
-    'commands-HINT' => [        # checks which are NOT YET fully implemented
+    'commands_hint' => [        # checks which are NOT YET fully implemented
                                 # these are mainly all commands for compliance
                                 # see also: cmd-bsi
                         qw(rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-)
@@ -1826,7 +1826,7 @@ our %cfg = (
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev_chars)], # commands for +ev
     'cmd-bsi'       => [        # commands for +bsi
-                                # see also: commands-HINT
+                                # see also: commands_hint
                         qw(after dates crl cipher_rc4 renegotiation
                            tr_02102+ tr_02102- tr_03116+ tr_03116-
                        )],
@@ -2044,7 +2044,7 @@ our %cfg = (
                         simple full compact quick owasp)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
-    'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
+    'usr_args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
    #------------------+---------+----------------------------------------------
     'data'  => {       # data provided (mainly used for testing and debugging)
         'file_sclient'  => "",  # file containing data from "openssl s_client "
@@ -2061,11 +2061,11 @@ our %cfg = (
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
         'cmd-cfg'   => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
-        'commands-INT'  => '^(?:cn_nosni|valid_(?:year|month|day|host)s?)', # internal data only, no command
-        'opt-empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
+        'commands_int'  => '^(?:cn_nosni|valid_(?:year|month|day|host)s?)', # internal data only, no command
+        'opt_empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
                        # these options may have no value
                        # i.e.  --cmd=   ; this may occour in CGI mode
-        'std-format'    => '^(?:unix|raw|crlf|utf8|win32|perlio)$', # match keys for --std-format
+        'std_format'    => '^(?:unix|raw|crlf|utf8|win32|perlio)$', # match keys for --std-format
 
         # RegEx for matching strings to anonymise in output 
         'anon_output'   => '',  # pattern for strings to be anonymised in output
@@ -2998,7 +2998,7 @@ sub _cfg_init   {
 sub _cmd_init   {
     #? initialize dynamic settings in %cfg for commands
     foreach my $key (sort keys %cfg) {  # well-known "summary" commands
-        push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
+        push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
     }
     return;
 } # _cmd_init
@@ -3113,7 +3113,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.195 2019/11/23
+1.196 2019/11/23
 
 =head1 AUTHOR
 
