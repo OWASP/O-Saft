@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.926 19/11/23 23:49:12",
+    SID         => "@(#) yeast.pl 1.927 19/11/24 00:23:06",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -7018,7 +7018,7 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "openssl") {  # output looks like: openssl ciphers -[v|V]
         foreach my $c (sort keys %ciphers) {
-            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'opt-V'} > 0)
+            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'opt-V'} > 0);
             $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
             $bit =  get_cipher_bits($c); $bit =  "($bit)" if ($bit ne ""); # avoid single :
             $tag =  get_cipher_tags($c); $tag =~ s/^\s*:\s*$//;            # avoid single :
