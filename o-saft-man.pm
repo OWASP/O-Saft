@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.298 19/11/13 14:19:03";
+my  $SID_man= "@(#) o-saft-man.pm 1.299 19/11/23 23:48:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.298'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.299'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -734,12 +734,12 @@ sub _man_pod_item   {
 } # _man_pod_item
 
 sub _man_usr_value  {
-    #? return value of argument $_[0] from @{$cfg{'usr-args'}}
-    # expecting something like  usr-action=/some.cgi  in $cfg{'usr-args'}
+    #? return value of argument $_[0] from @{$cfg{'usr_args'}}
+    # expecting something like  usr-action=/some.cgi  in $cfg{'usr_args'}
     my $key =  shift;
        $key =~ s/^(?:--|\+)//;  # strip leading chars
     my @arg =  '';              # key, value # Note: value is anything right to leftmost = 
-    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
+    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); # does not allow multiple $key in 'usr_args'
     return $arg[1];
 } # _man_usr_value
 
@@ -1399,7 +1399,7 @@ sub man_help        {
     if ($label =~ m/^todo/i)    {
         print "\n  NOT YET IMPLEMENTED\n";
         foreach my $label (sort keys %checks) {
-            next if (0 >= _is_member($label, \@{$cfg{'commands-NOTYET'}}));
+            next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
             print "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
     }
@@ -1696,7 +1696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.298 2019/11/13
+1.299 2019/11/23
 
 =head1 AUTHOR
 
