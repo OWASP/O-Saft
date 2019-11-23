@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.10.19',  # official version number of this file
+    OSAFT_VERSION   => '19.11.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.194 19/11/11 13:56:00",
+    SID_osaft   => "@(#) osaft.pm 1.195 19/11/23 23:18:37",
 
 };
 
@@ -1758,8 +1758,6 @@ our %cfg = (
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
     'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
-    'ciphers-v'     => 0,       # as: openssl ciphers -v
-    'ciphers-V'     => 0,       # as: openssl ciphers -V
 
    # following keys for commands, nameing scheme:
    #     do         - the list off all commands to be performed
@@ -3115,7 +3113,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.194 2019/11/11
+1.195 2019/11/23
 
 =head1 AUTHOR
 
