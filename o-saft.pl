@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.924 19/11/19 20:59:55",
-    STR_VERSION => "19.10.26",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.925 19/11/23 23:20:03",
+    STR_VERSION => "19.11.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6966,7 +6966,7 @@ sub printciphers        {
     # implemented in VERSION 14.07.14
 
     #                                           # output looks like: openssl ciphers
-    if ((($cfg{'ciphers-v'} + $cfg{'ciphers-V'}) <= 0)
+    if ((($cfg{'opt-v'} + $cfg{'opt-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
         # TODO: filter ciphers not supported by openssl
         _trace("printciphers: +ciphers");
@@ -6982,7 +6982,7 @@ sub printciphers        {
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
     _v_print("database version: $mainsid");
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out_header'}");
-    _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'ciphers-v'} , -V=$cfg{'ciphers-V'}");
+    _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
     my $have_cipher = 0;
     my $miss_cipher = 0;
     my $ciphers     = "";
@@ -7018,7 +7018,7 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "openssl") {  # output looks like: openssl ciphers -[v|V]
         foreach my $c (sort keys %ciphers) {
-            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'ciphers-V'} > 0); # -V
+            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'opt-V'} > 0)
             $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
             $bit =  get_cipher_bits($c); $bit =  "($bit)" if ($bit ne ""); # avoid single :
             $tag =  get_cipher_tags($c); $tag =~ s/^\s*:\s*$//;            # avoid single :
@@ -7682,8 +7682,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--showkeys?/i)        { $arg = '--traceKEY';      } # alias:
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # alias:
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
-#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # alias: ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
-    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # .....: ssl-cert-check; will be out_header, see below
     if ($arg eq  '--forceopenssl')      { $arg = '--opensslciphers';    } # alias:
     if ($arg eq  '--cipheropenssl')     { $arg = '--opensslciphers';    } # alias:
     if ($arg eq  '--sclient')           { $arg = '--opensslsclient';    } # alias:
@@ -7745,8 +7743,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttlsphase4$/i)  { $typ = 'STARTTLSP4';      }
     if ($arg =~ /^--starttlsphase5$/i)  { $typ = 'STARTTLSP5';      }
     # options form other programs for compatibility
-    if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, sets ciphers-v, see below
-    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, sets ciphers-V, see below
+#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # NOTE: not supported
+#   if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, # TODO not supported
+    if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, ssl-cert-check
+    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, ssl-cert-check
     if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # for lazy people, not documented
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^--checks?$/)          { $typ = 'DO';              } # tls-check.pl
@@ -8218,8 +8218,6 @@ if (_is_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
     #$cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
-    $cfg{'ciphers-v'}   = $cfg{'opt-v'};
-    $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
     $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
@@ -8235,8 +8233,6 @@ if (_is_do('cipherall')) {
 if (_is_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
     $cfg{'out_header'}  = 1 if ((grep{/--no.?header/} @argv) <= 0);
-    $cfg{'ciphers-v'}   = $cfg{'opt-v'};
-    $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (!_is_do('cipher_pfsall')); }
