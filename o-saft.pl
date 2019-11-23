@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.925 19/11/23 23:20:03",
+    SID         => "@(#) yeast.pl 1.926 19/11/23 23:49:12",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -1316,7 +1316,7 @@ our %cmd = (
 # SEE Note:Testing, sort
 my $old   = "";
 my $regex = join("|", @{$cfg{'versions'}}); # these are data only, not commands
-foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'commands-INT'}}) {
+foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'commands_int'}}) {
     next if ($key eq $old);     # unique
     $old  = $key;
     push(@{$cfg{'commands'}},  $key) if ($key !~ m/^(?:$regex)/);
@@ -1339,7 +1339,7 @@ foreach my $key (keys %data) {
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
 # SEE Note:Testing, sort
-foreach my $key (qw(commands commands-CMD commands-USR commands-INT cmd-info--v)) {
+foreach my $key (qw(commands commands_cmd commands_usr commands_int cmd-info--v)) {
     # TODO: need to test if sorting of cmd-info--v should not be done for --no-rc
     @{$cfg{$key}} = sort(@{$cfg{$key}});    # only internal use
 }
@@ -2732,19 +2732,19 @@ sub _cfg_set($$)        {
         }
         # check if it is a known command, otherwise add it and print warning
         if ((_is_member($key, \@{$cfg{'commands'}})
-           + _is_member($key, \@{$cfg{'commands-CMD'}})
-           + _is_member($key, \@{$cfg{'commands-INT'}})
+           + _is_member($key, \@{$cfg{'commands_cmd'}})
+           + _is_member($key, \@{$cfg{'commands_int'}})
             ) < 1) {
             # NOTE: new commands are added only if they are not yet defined,
             # wether as internal, as summary or as (previously defined) user
             # command. The new command must also consists only of  a-z0-9_.-
             # charchters.  If any of these conditions fail, the command will
             # be ignored silently.
-            if (_is_member("cmd-$key", \@{$cfg{'commands-CMD'}}) == 0) {
+            if (_is_member("cmd-$key", \@{$cfg{'commands_cmd'}}) == 0) {
                 # needed more checks, as these commands are defined as cmd-*
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
-                    push(@{$cfg{'commands-USR'}}, $key);
+                    push(@{$cfg{'commands_usr'}}, $key);
                     _warn("043: command '+$key' specified by user") if _is_v_trace();
                 }
             }
@@ -3065,7 +3065,7 @@ sub _need_checkprot()   { return _need_this('need-checkprot');  };
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
 sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
-sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'commands-INT'}}); }
+sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
 sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
@@ -3859,7 +3859,7 @@ sub _get_data0          {
 # TODO:  following needs to be improved, because there are multipe openssl
         # calls which may produce unexpected results (10/2015) {
         foreach my $key (keys %data) { # copy to %data0
-            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
+            next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
             $data0{$key}->{val} = $data{$key}->{val}($host, $port);
         }
 # }
@@ -6668,17 +6668,17 @@ sub printdata($$$)      {
                    $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
     }
     foreach my $key (@{$cfg{'do'}}) {
-        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}})  > 0);
+        next if (_is_member( $key, \@{$cfg{'commands_notyet'}})  > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})       > 0);
         next if (_is_hashkey($key, \%data) < 1);
         next if ($key eq 'cipher_selected');# value is special, done above
         if ($cfg{'experimental'} == 0) {
-            next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
+            next if (_is_member( $key, \@{$cfg{'commands_exp'}}) > 0);
         }
         # special handling vor +info--v
         if (_is_do('info--v') > 0) {
             next if ($key eq 'info--v');
-            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
+            next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
         } else {
             next if (_is_intern( $key) > 0);
         }
@@ -6711,13 +6711,13 @@ sub printchecks($$$)    {
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
-        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
+        next if (_is_member( $key, \@{$cfg{'commands_notyet'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
         if ($cfg{'experimental'} == 0) {
-            next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
+            next if (_is_member( $key, \@{$cfg{'commands_exp'}}) > 0);
         }
         $value = _setvalue($checks{$key}->{val});
         _y_CMD("(%checks) +" . $key);
@@ -7360,7 +7360,7 @@ while ($#argv >= 0) {
             $typ = 'HOST';
         }
         if ($typ eq 'STD_FORMAT') {
-            if ($arg =~ /$cfg{'regex'}->{'std-format'}/) {
+            if ($arg =~ /$cfg{'regex'}->{'std_format'}/) {
                 _set_binmode($arg);
             } else {
                 _set_binmode(":encoding($arg)") if ($arg =~ /^[a-zA-Z0-9_.-]+$/);
@@ -7526,7 +7526,7 @@ while ($#argv >= 0) {
     if ($arg =~ m/^-[^=]*=$/) {
         # SEE Note:Option in CGI mode
         # only options in RegEx are ignored if the value is empty
-        if ($arg =~ /$cfg{'regex'}->{'opt-empty'}/) {
+        if ($arg =~ /$cfg{'regex'}->{'opt_empty'}/) {
             _warn("050: option with empty argument '$arg'; option ignored") if ($cgi == 0);
             next;
         }
@@ -7551,10 +7551,10 @@ while ($#argv >= 0) {
     next if ($arg =~ /^-post=(.*)/);
 
     # all options starting with  --usr or --user  are not handled herein
-    # push them on $cfg{'usr-args'} so they can be accessd in o-saft-*.pm
+    # push them on $cfg{'usr_args'} so they can be accessd in o-saft-*.pm
     if ($arg =~ /^--use?r/) {
         $arg =~ s/^(?:--|\+)//; # strip leading chars
-        push(@{$cfg{'usr-args'}}, $arg);
+        push(@{$cfg{'usr_args'}}, $arg);
         next;
     }
 
@@ -8138,9 +8138,9 @@ while ($#argv >= 0) {
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
         if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
         if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
-        if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
+        if (_is_member($val, \@{$cfg{'commands_usr'}}) == 1) {
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
-        if (_is_member($val, \@{$cfg{'commands-NOTYET'}}) > 0) {
+        if (_is_member($val, \@{$cfg{'commands_notyet'}}) > 0) {
             _warn("044: command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
@@ -8586,7 +8586,7 @@ if ($fail > 0) {
 } else {
     # print warnings and hints if necessary
     foreach my $cmd (@{$cfg{'do'}}) {
-        if (_is_member($cmd, \@{$cfg{'commands-HINT'}}) > 0) {
+        if (_is_member($cmd, \@{$cfg{'commands_hint'}}) > 0) {
             _hint("+$cmd : please see  '$cfg{'me'} --help=CHECKS'  for more information");
         }
     }
