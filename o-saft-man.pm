@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.299 19/11/23 23:48:44";
+my  $SID_man= "@(#) o-saft-man.pm 1.300 19/11/24 00:20:11";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.299'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.300'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1132,9 +1132,9 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
 
     if ($typ eq 'intern') {
-        # first list command with all internal commands-*
+        # first list command with all internal commands_*
         foreach my $key (sort keys %cfg) {
-            next if ($key !~ m/^commands-(?:.*)/);
+            next if ($key !~ m/^commands_(?:.*)/);
             _man_opt($key, $sep, "+" . join(' +', @{$cfg{$key}}));
         }
         foreach my $key (sort keys %cfg) {
@@ -1696,7 +1696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.299 2019/11/23
+1.300 2019/11/24
 
 =head1 AUTHOR
 
