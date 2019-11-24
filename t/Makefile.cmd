@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.48 19/11/21 00:03:13
+#?      @(#) Makefile.cmd 1.49 19/11/24 22:54:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.48
+_SID.cmd           := 1.49
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -54,18 +54,13 @@ HELP.cmd            = $(_NL)\
 \# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
 \# Examples to execute individual targets:$(_NL)\
 \#    $(MAKE_COMMAND) testcmd-cmd+info_localhost$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cmd+cipher--cipher-alpn_localhost$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cmd_vuln+BEAST_localhost$(_NL)\
 \#    $(MAKE_COMMAND) testrun-+cn$(_NL)\
 \# Examples to execute group of similar targets:$(_NL)\
 \#    $(MAKE_COMMAND) test.pattern-+info$(_NL)\
 \#    $(MAKE_COMMAND) test.pattern-+check$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+cipher$(_NL)\
 \#    $(MAKE_COMMAND) test.pattern-+summ$(_NL)\
 \#    $(MAKE_COMMAND) test.pattern-+vuln$(_NL)\
-\# All following examples are the same:$(_NL)\
-\#    $(MAKE_COMMAND) testrun-+cipher TEST.init='--header --enabled'$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-+cipher TEST.init='--header --enabled localhost'$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-+cipher TEST.args='--header --enabled localhost'$(_NL)\
 \#$(_NL)\
 \# Some of the examples above use  localhost  as hostname by default.
 
@@ -99,32 +94,6 @@ testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(LIST.no-out.
 testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(LIST.no-out.opt)
 testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(LIST.no-out.opt)
 testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd+cipher-_%:                TEST.args  += +cipher
-testcmd-cmd+cipher--legacy-owasp_%:   TEST.args  += +cipher --legacy=owasp
-testcmd-cmd+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
-testcmd-cmd+cipher--cipher-openssl_%: TEST.args  += +cipher --cipher-openssl
-testcmd-cmd+cipher--cipher-alpn_%:    TEST.args  += +cipher --cipher-alpn
-testcmd-cmd+cipher--cipher-npn_%:     TEST.args  += +cipher --cipher-npn
-testcmd-cmd+cipher--cipher-curves_%:  TEST.args  += +cipher --cipher-curves
-#TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=,
-#TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=, --cipher-npns=,,
-#TODO: testcmd-cmd+cipher--cipher-npns-%:  TEST.args  += +cipher --cipher-npns=, --cipher-npns=ecdh_x448
-testcmd-cmd+cipherall--legacy-owasp_%:     TEST.args  += +cipherall --legacy=owasp
-testcmd-cmd+cipherall--range-ecc_%:   TEST.args  += +cipherall --range=ecc
-testcmd-cmd+cipherall--range-rfc_%:   TEST.args  += +cipherall --range=rfc
-testcmd-cmd+cipherall--range-long_%:  TEST.args  += +cipherall --range=long
-testcmd-cmd+cipherall--range-SSLv2_%: TEST.args  += +cipherall --range=SSLv2
-testcmd-cmd+cipherall--range-TLSv12_%: TEST.args += +cipherall --range=TLSv12
-testcmd-cmd+cipherall--range-shifted_%: TEST.args += +cipherall --range=shifted
-#testcmd-cmd+cipherall--range-safe_%:  TEST.args  += +cipherall --range=safe
-    # --range=safe  disabled, because it takes a long time
-testcmd-cmd+cipherall_%:        TEST.args  += +cipherall
-testcmd-cmd+cipherraw_%:        TEST.args  += +cipherraw
-testcmd-cmd+cipher-dh_%:        TEST.args  += +cipher-dh
-testcmd-cmd+cipher-default_%:   TEST.args  += +cipher-default
-testcmd-cmd+ciphercheck_%:      TEST.args  += +ciphercheck
-testcmd-cmd+cipher--nossltls_%: TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
-    #    simulates a server not responding to ciphers
 testcmd-cmd_vuln+BEAST_%:       TEST.args  += +BEAST
 testcmd-cmd_vuln+CRIME_%:       TEST.args  += +CRIME
 testcmd-cmd_vuln+DROWN_%:       TEST.args  += +DROWN
@@ -176,7 +145,6 @@ testrun-%: testcmd-%
 # TODO: implement following
 #     $(MAKE_COMMAND) testrun-+cn\ --traceCMD
 #     $(MAKE_COMMAND) testrun-'+cn --traceCMD'
-#     $(MAKE_COMMAND) testrun-'+cipher --enabled'
 
 # TODO: use target _no-hosts
 
