@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.97 19/11/21 00:04:57
+#?      @(#) Makefile 1.98 19/11/24 20:50:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.97
+_SID.test          := 1.98
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -262,6 +262,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.opt)      = $(_SID.opt)'
 	@echo '# $$(_SID.pod)      = $(_SID.pod)'
 	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
+	@echo '# $$(_SID.legacy)   = $(_SID.legacy)'
 	@echo '# $$(_SID.template) = $(_SID.template)'
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
@@ -652,6 +653,10 @@ endif
 
 ifeq (,$(_SID.critic))
     -include t/Makefile.critic
+endif
+
+ifeq (,$(_SID.legacy))
+    -include t/Makefile.legacy
 endif
 
 ifeq (,$(_SID.make))
