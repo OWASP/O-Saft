@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.41 19/11/24 10:20:25
+# SID   @(#) help.txt 1.42 19/11/24 10:21:50
 
 NAME
 
@@ -1555,7 +1555,7 @@ OPTIONS
       --cipherrange=RANGE
 
           Specify range of cipher constants to be tested by  +cipherall.
-          Following RANGEs are supported:
+          Following 'RANGE's are supported:
           * 'rfc'               all ciphers defined in various RFCs
           * 'shifted'           'rfc', shifted by 64 bytes to the right
           * 'long'              like 'rfc' but more lazy list of constants
