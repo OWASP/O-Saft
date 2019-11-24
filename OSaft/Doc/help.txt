@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.40 19/11/24 10:15:45
+# SID   @(#) help.txt 1.41 19/11/24 10:20:25
 
 NAME
 
@@ -1237,7 +1237,7 @@ OPTIONS
 
       --ciphermode=MODE
 
-          Following MODEs are supported:
+          Following 'MODE's are supported:
           * 'intern'    scan for ciphers using internal method; (default)
           * 'openssl'   scan for ciphers using external openssl executable
           * 'ssleay'    scan for ciphers using  IO::Socket  and  Net::SSLeay
@@ -1246,7 +1246,7 @@ OPTIONS
 
       --cipher=CIPHER
 
-          * 'CIPHER'    can be any string accepeted by openssl or following:
+          'CIPHER' can be any string accepeted by openssl or following:
           * 'yeast'     use all ciphers from list defined herein, see  +list
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
