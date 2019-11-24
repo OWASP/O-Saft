@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.39 19/09/30 23:31:46
+# SID   @(#) help.txt 1.40 19/11/24 10:15:45
 
 NAME
 
@@ -1234,6 +1234,15 @@ OPTIONS
           Option used with  +ciphers  command only.
 
     Options for SSL connection to target
+
+      --ciphermode=MODE
+
+          Following MODEs are supported:
+          * 'intern'    scan for ciphers using internal method; (default)
+          * 'openssl'   scan for ciphers using external openssl executable
+          * 'ssleay'    scan for ciphers using  IO::Socket  and  Net::SSLeay
+          * 'dump'      same as 'intern' but print  all cipher informations,
+                        usefull when postprocessed by contrib/* tools
 
       --cipher=CIPHER
 
