@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.42 19/11/24 10:21:50
+# SID   @(#) help.txt 1.43 19/11/24 10:24:26
 
 NAME
 
@@ -726,7 +726,7 @@ COMMANDS
           allow to contain one '*'.
           The command  +wildcard  checks if the given hostname does not match
           any name specified in the certificate's "subjectAltname". This check
-          is usefull  if the certificate and the configuration must comply to
+          is useful  if the certificate and the configuration  must comply to
           RFC 6125 or EV certificates.
 
 
@@ -1242,11 +1242,11 @@ OPTIONS
           * 'openssl'   scan for ciphers using external openssl executable
           * 'ssleay'    scan for ciphers using  IO::Socket  and  Net::SSLeay
           * 'dump'      same as 'intern' but print  all cipher informations,
-                        usefull when postprocessed by contrib/* tools
+                        useful when postprocessed by contrib/* tools
 
       --cipher=CIPHER
 
-          'CIPHER' can be any string accepeted by openssl or following:
+          'CIPHER' can be any string accepted by openssl or following:
           * 'yeast'     use all ciphers from list defined herein, see  +list
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
