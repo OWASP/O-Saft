@@ -1,0 +1,120 @@
+#! /usr/bin/make -rRf
+#?
+#? DESCRIPTION
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.cipher
+#?
+#? VERSION
+#?      @(#) Makefile.cipher 1.1 19/11/24 22:45:52
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
+
+_SID.cipher        := 1.1
+
+_MYSELF.cipher     := t/Makefile.cipher
+ALL.includes       += $(_MYSELF.cipher)
+ALL.inc.type       += cipher
+ALL.help.tests     += help.test.cipher
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+TEST.cipher.hosts      = localhost
+ifdef TEST.hosts
+    TEST.cipher.hosts  = $(TEST.hosts)
+endif
+
+first-cipher-target-is-default: help.test.cipher
+
+help.test.cipher:        HELP_TYPE = cipher
+help.test.cipher-v:      HELP_TYPE = cipher
+help.test.cipher-vv:     HELP_TYPE = cipher
+
+HELP-_cipher1          = _________________________________________ testing commands _
+HELP-test.cipher       = test all commands with '$(TEST.cipher.hosts)'
+HELP-test.cipher.log   = same as test.cipher but store output in '$(TEST.logdir)/'
+HELP-_cipher2          = ________________________________ testing a special command _
+
+HELP.cipher         = $(_NL)\
+\# Targets can be executed individually, or a group of targets can be executed$(_NL)\
+\# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
+\# Examples to execute individual targets:$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-cipher+cipher--cipher-alpn_localhost$(_NL)\
+\# Examples to execute group of similar targets:$(_NL)\
+\#    $(MAKE_COMMAND) test.pattern-+cipher$(_NL)\
+\# All following examples are the same:$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-+cipher TEST.init='--header --enabled localhost'$(_NL)\
+\#    $(MAKE_COMMAND) testcmd-+cipher TEST.args='--header --enabled localhost'$(_NL)\
+\#$(_NL)\
+\# Some of the examples above use  localhost  as hostname by default.
+
+HELP.test.cipher.all   = # no special documentation yet
+
+# SEE Make:target name
+# SEE Make:target name prefix
+
+_TEST.cipher       := testcmd-cipher+cipher
+_TEST.cipherall    := testcmd-cipher+cipherall
+
+LIST.cipher        := dummy-no-arg  \
+	legacy=owasp  force-openssl \
+	cipher-alpn   cipher-npn    cipher-openssl  cipher-curves
+#TODO: TEST.args  += --cipher-npns=,
+#TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
+#TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
+
+LIST.cipherall     := dummy-no-arg  \
+	legacy=owasp  range=ecc     range=rfc       range=long \
+	range=SSLv2   range=TLSv12  range=shifted
+# --range=safe  disabled, because it takes a long time
+
+ifndef cipher-macros-generated
+    $(foreach arg, $(LIST.cipher),\
+	$(eval $(_TEST.cipher)-$(subst =,-,$(arg))_%:  TEST.args = --$(arg) ) \
+	$(eval ALL.testcipher  += $(_TEST.cipher)-$(subst =,-,$(arg))_ ) \
+    )
+endif
+
+testcmd-cipher%:                EXE.pl      = ../$(SRC.pl)
+testcmd-cipher+cipher-%:        TEST.init   = --trace-CLI --header +cipher
+testcmd-cipher+cipher_%:            TEST.args  +=
+testcmd-cipher+cipher--nossltls_%:  TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+    #    simulates a server not responding to ciphers
+ALL.testcipher += testcmd-cipher+cipher--nossltls_
+
+ifndef cipherall-macros-generated
+    $(foreach arg, $(LIST.cipherall),\
+	$(eval $(_TEST.cipherall)-$(subst =,-,$(arg))_%:  TEST.args = --$(arg) ) \
+	$(eval ALL.testcipherall  += $(_TEST.cipherall)-$(subst =,-,$(arg))_ ) \
+    )
+endif
+
+testcmd-cipher+cipherall-%:     TEST.init   = --trace-CLI --header +cipherall
+testcmd-cipher+cipherall_%:         TEST.args  +=
+
+# some more individual tests
+testcmd-cipher-+cipher%:        TEST.init   = --trace-CLI --header
+testcmd-cipher-+cipherraw_%:        TEST.args  += +cipherraw
+testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
+testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
+testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
+ALL.testciphermisc     = testcmd-cipher-+cipherraw_ testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+ciphercheck_
+
+ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
+ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipherall:%=%$(host)))
+ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
+ALL.test.cipher.log   += $(ALL.test.cipher:%=%.log)
+
+test.cipher.log-compare:   TEST.target_prefix  = testcmd-cipher
+test.cipher.log-move:      TEST.target_prefix  = testcmd-cipher
+test.cipher.log:           TEST.target_prefix  = testcmd-cipher
+
+test.cipher:           $(ALL.test.cipher)
+test.cipher.log:       $(ALL.test.cipher.log) test.log-compare-hint
