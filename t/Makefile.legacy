@@ -1,0 +1,76 @@
+#! /usr/bin/make -rRf
+#?
+#? DESCRIPTION
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.legacy
+#?
+#? VERSION
+#?      @(#) Makefile.legacy 1.1 19/11/24 20:42:32
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
+
+_SID.legacy        := 1.1
+
+_MYSELF.legacy     := t/Makefile.legacy
+ALL.includes       += $(_MYSELF.legacy)
+ALL.inc.type       += legacy
+ALL.help.tests     += help.test.legacy
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+TEST.legacy.hosts   = localhost
+ifdef TEST.hosts
+    TEST.legacy.hosts  = $(TEST.hosts)
+endif
+
+first-legacy-target-is-default: help.test.legacy
+
+help.test.legacy:   HELP_TYPE = legacy
+help.test.legacy-v: HELP_TYPE = legacy
+help.test.legacy-vv:HELP_TYPE = legacy
+
+HELP-_legacy1       = _________________________________________ testing commands _
+HELP-test.legacy        = test all commands with '$(TEST.legacy.hosts)'
+HELP-test.legacy.log    = same as test.legacy but store output in '$(TEST.logdir)/'
+
+HELP.legacy             = # not yet used
+HELP.test.legacy.all    = # no special documentation yet
+
+_TEST.legacy       := testarg-legacy+cipher--legacy
+LIST.legacy        := \
+	cnark   openssl   sslaudit  sslcipher   ssldiagnos  sslscan \
+	ssltest ssltest-g sslyze testsslserver  thcsslcheck \
+	compact full      simple    owasp
+
+# SEE Make:target name
+# SEE Make:target name prefix
+
+testcmd-legacy+cipher%:     EXE.pl      = ../$(SRC.pl)
+testcmd-legacy+cipher%:     TEST.init   = --trace-CLI --header +cipher
+
+ifndef legacy-macros-generated
+    $(foreach arg, $(LIST.legacy),\
+	$(eval $(_TEST.legacy)-$(arg)_%:        TEST.args = --legacy-$(arg) )\
+	$(eval $(_TEST.legacy)-$(arg)--norc_%:  TEST.args = --legacy-$(arg) --norc )\
+	$(eval ALL.testlegacy  += $(_TEST.legacy)-$(arg)_ )       \
+	$(eval ALL.testlegacy  += $(_TEST.legacy)-$(arg)--norc_ ) \
+    )
+endif
+
+ALL.test.legacy     = $(foreach host,$(TEST.legacy.hosts),$(ALL.testlegacy:%=%$(host)))
+ALL.test.legacy.log += $(ALL.test.legacy:%=%.log)
+
+test.legacy.log-compare:    TEST.target_prefix  = testcmd-legacy
+test.legacy.log-move:       TEST.target_prefix  = testcmd-legacy
+test.legacy.log:            TEST.target_prefix  = testcmd-legacy
+
+test.legacy:        $(ALL.test.legacy)
+test.legacy.log:    $(ALL.test.legacy.log) test.log-compare-hint
