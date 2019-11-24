@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.98 19/11/24 20:50:06
+#?      @(#) Makefile 1.99 19/11/24 22:48:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.98
+_SID.test          := 1.99
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -249,6 +249,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.test)     = $(_SID.test)'
 	@echo '# $$(_SID.critic)   = $(_SID.critic)'
 	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
+	@echo '# $$(_SID.cipher)   = $(_SID.cipher)'
 	@echo '# $$(_SID.make)     = $(_SID.make)'
 	@echo '# $$(_SID.exit)     = $(_SID.exit)'
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
@@ -609,6 +610,10 @@ endif
 
 ifeq (,$(_SID.warnings))
     -include t/Makefile.warnings
+endif
+
+ifeq (,$(_SID.cipher))
+    -include t/Makefile.cipher
 endif
 
 ifeq (,$(_SID.cmd))
