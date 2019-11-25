@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.44 19/11/25 22:21:41
+# SID   @(#) help.txt 1.45 19/11/25 23:28:10
 
 NAME
 
@@ -188,7 +188,7 @@ TECHNICAL INFORMATION
         +cipher-openssl only.
         The changed commands and options will be described soon ...
 
-    Version < 19.11.19
+    Version before 19.11.19
 
         Up to version 19.11.19 the default behaviour for the  +cipher command
         was to use libssl. The commands  +cipherall  and  +cipherraw  did not
