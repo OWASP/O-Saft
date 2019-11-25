@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.43 19/11/24 10:24:26
+# SID   @(#) help.txt 1.44 19/11/25 22:21:41
 
 NAME
 
@@ -178,6 +178,22 @@ TECHNICAL INFORMATION
         data returned by underlaying (used) libraries and the information
         computed directly.
 
+    Version 19.11.19 and later
+
+        Starting with version 19.11.19 the  +cipher  command does not use any
+        external library. Checking for ciphers is done using plain Perl code.
+        Only collected other SSL/TLS related inofrmation requires an external
+        library, in general libssl.
+        The description about OpenSSL and libssl below  applys to the command
+        +cipher-openssl only.
+        The changed commands and options will be described soon ...
+
+    Version < 19.11.19
+
+        Up to version 19.11.19 the default behaviour for the  +cipher command
+        was to use libssl. The commands  +cipherall  and  +cipherraw  did not
+        use any other library as described below.
+
     OpenSSL, libssl, libcrypto
 
         In general the tool uses Perl's  Net::SSLeay(3pm) module which itself
@@ -192,11 +208,10 @@ TECHNICAL INFORMATION
         options:
           * --openssl=TOOL
           * --no-openssl
-          * --force-openssl
+          * --openssl-ciphers  --force-openssl
           * --exe-path=PATH --exe=PATH
-
-        Above applies to all commands except  +cipherall and +cipherraw which
-        uses no other libraries.
+          * --openssl-cnf=PATH
+          * --openssl-s_client --s_client
 
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
         0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
