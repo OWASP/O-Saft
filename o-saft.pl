@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.927 19/11/24 00:23:06",
+    SID         => "@(#) yeast.pl 1.930 19/12/01 19:24:09",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -210,7 +210,6 @@ sub _warn_and_exit      {
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
     my @txt = @_;
-    local $\ = "\n";
     if (_is_argv('(?:--experimental)') > 0) {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
@@ -226,7 +225,7 @@ sub _hint   {
     # don't print if --no-hint given
     my @txt = @_;
     return if _is_argv('(?:--no.?hint)');
-    local $\ = "\n"; print(STR_HINT, join(" ", @txt));
+    printf(STR_HINT . "%s\n", join(" ", @txt));
     return;
 } # _hint
 
@@ -1907,6 +1906,9 @@ our %text = (
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
+        'cipher'    => "+cipher : functionality changed, please see '$cfg{me} --help=TECHNIC'",
+        'cipherall' => "+cipherall : functionality changed, please see '$cfg{me} --help=TECHNIC'",
+        'cipherraw' => "+cipherraw : functionality changed, please see '$cfg{me} --help=TECHNIC'",
     },
 
     'mnemonic'      => { # NOT YET USED
@@ -6473,7 +6475,7 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
         $last_r = $key;
         $unique++;
     }
-    print_cipherruler() if ($legacy eq 'simple');
+    print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
     printfooter($legacy);
     return $unique;
 } # printcipherall
@@ -7417,17 +7419,24 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'FORMAT')   {
             $arg = 'esc' if ($arg =~ m#^[/\\]x$#);      # \x and /x are the same
-            if (1 == (grep{/^$arg$/} @{$cfg{'formats'}})) {
+            if (1 == (grep{/^$arg$/}  @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
                 _warn("055: option with unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CRANGE')   {
-            if (1 == (grep{/^$arg$/} keys %{$cfg{'cipherranges'}})) {
+            if (1 == (grep{/^$arg$/i} keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
                 _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            }
+        }
+        if ($typ eq 'CMODE')   {
+            if (1 == (grep{/^$arg$/i} @{$cfg{'ciphermodes'}})) {
+                $cfg{'ciphermode'} = $arg;
+            } else {
+                _warn("057: option with unknown cipher mode '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CURVES')   {
@@ -7842,6 +7851,7 @@ while ($#argv >= 0) {
     # options for +cipher
     if ($arg eq   '-cipher')            { $typ = 'CIPHER';          } # openssl
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
+    if ($arg eq  '--ciphermode')        { $typ = 'CMODE';           }
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
     if ($arg =~ /^--ciphercurves?/)     { $typ = 'CURVES';          }
     if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
@@ -8213,6 +8223,7 @@ if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     $cfg{'usehttps'}    = 0;
     $cfg{'usehttp'}     = 0;
     $cfg{'usedns'}      = 0;
+    #_hint($cfg{'hints'}->{'cipher'});
 }
 if (_is_do('ciphers')) {
     # +ciphers command is special:
@@ -9411,7 +9422,7 @@ to check if the RC-FILE was read.
 The data to be sorted is for example:
     @cfg{do}
     @cfg{commands}
-    @cfg{commands-*}
+    @cfg{commands_*}
 
 
 =head2 Note:ARGV
@@ -9888,6 +9899,23 @@ same data structre for the results. Then the program flow should be like:
    checkciphers()
    printciphers()
    printciphersummary()
+
+
+=head2 Note:+cipher
+
+Starting with VERSION 19.11.19,  the commands  +cipherall  and  +cipherraw
+was replaced by  +cipher  and  +cipher-dump, the previous command  +cipher
+was replaced by  +cipher-openssl. When using any of these commands, a hint
+will be written. 
+
+With this version the output format for cipher results was also changed.
+It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
+OWASP. The column "supported" will no t be printed, because only supported
+ciphers are listed now. This makes the options  --enabled  and  --disabled
+also obsolete.
+
+Note that the description in L<Note:+cipherall> uses the commands names as
+used in VESRIONs before 19.11.19.
 
 
 =head2 Note:hints
