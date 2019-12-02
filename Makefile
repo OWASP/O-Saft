@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.88 19/11/21 09:14:54
+#?      @(#) Makefile 1.89 19/12/03 00:04:07
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.88
+_SID            = 1.89
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -191,6 +191,7 @@ GEN.html        = $(Project).html
 GEN.cgi.html    = $(Project).cgi.html
 GEN.text        = $(Project).txt
 GEN.wiki        = $(Project).wiki
+GEN.man         = $(Project).1
 GEN.pod         = $(Project).pod
 GEN.src         = $(Project)-standalone.pl
 GEN.inst        = INSTALL.sh
@@ -201,7 +202,7 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
-_GEN.doc        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki)
+_GEN.doc        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 SRC.exe         = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 inc.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
@@ -217,7 +218,7 @@ ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.inst)
+ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst)
 #               # $(GEN.tags) added in t/Makefile.misc
 #               # $(GEN.wiki) not part of ALL.gen as realy used
 ALL.src         = \
@@ -248,10 +249,10 @@ EXE.pl          = $(SRC.pl)
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
 _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
-_INST.osaft_doc = $(sort $(GEN.pod) $(GEN.html))
+_INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.88
+_INST.text      = generated from Makefile 1.89
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -436,6 +437,7 @@ HELP-help       = print common targets for O-Saft (this help)
 HELP-doc        = same as help, but evaluates '$(variables)'
 HELP-pl         = generate '$(SRC.pl)' from managed source files
 HELP-cgi        = generate HTML page for use with CGI '$(GEN.cgi.html)'
+HELP-man        = generate MAN format help '$(GEN.man)'
 HELP-pod        = generate POD format help '$(GEN.pod)'
 HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
@@ -468,14 +470,15 @@ OPT.single = --s
 # alias targets
 pl:     $(SRC.pl)
 cgi:    $(GEN.cgi.html)
+man:    $(GEN.man)
 pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.88
-tar:     GREP_EDIT  = 1.88
+GREP_EDIT           = 1.89
+tar:     GREP_EDIT  = 1.89
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -522,7 +525,7 @@ docker.push:
 	@$(TRACE.target)
 	docker push owasp/o-saft:latest
 
-.PHONY: pl cgi pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
+.PHONY: pl cgi man pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
 
 clean.tmp:
@@ -555,6 +558,10 @@ $(SRC.pl): $(DEV.pl)
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 	@$(TRACE.target)
 	$(EXE.single) $(OPT.single)
+
+$(GEN.man):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+	@$(TRACE.target)
+	$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
 
 $(GEN.pod):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TRACE.target)
