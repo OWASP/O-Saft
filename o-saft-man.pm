@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.300 19/11/24 00:20:11";
+my  $SID_man= "@(#) o-saft-man.pm 1.301 19/12/02 22:45:32";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.300'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.301'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1303,13 +1303,22 @@ sub man_toc         {
 
 sub man_pod         {
     #? print complete POD page for o-saft.pl --help=gen-pod
-    #? recommended usage see at end of this sub
     _man_dbx("man_pod() ...");
     _man_pod_head();
     _man_pod_text();
     _man_pod_foot();
     return;
 } # man_pod
+
+sub man_man         {
+    #? print complete MAN page for o-saft.pl --help=gen-man
+    # executable  pod2man is used instead of Pod::Man, mainly because Pod::Man
+    # can only read from STDIN or a file, but input here for Pod::Man may come
+    # from variables; 
+    _man_dbx("man_man() ...");
+    exec("pod2man --name=o-saft.pl --center='OWASP - SSL advanced forensic tool' --utf8 o-saft.pod" );
+    return;
+} # man_man
 
 sub man_html        {
     #? print complete HTML page for o-saft.pl --help=gen-html
@@ -1461,6 +1470,8 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
     man_pod(),                  return if ($hlp =~ /^(gen-)?pod$/i);
+    man_man(),                  return if ($hlp =~ /^(gen-)?man$/i);
+    man_man(),                  return if ($hlp =~ /^(gen-)?[nt]roff$/i);
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
@@ -1567,6 +1578,8 @@ in various formats. Supported formats are:
 
 =item * POD
 
+=item * *roff (man page)
+
 =item * HTML
 
 =item * mediawiki
@@ -1614,6 +1627,8 @@ on the $type parameter, which is a literal string, as follows:
 =over 2
 
 =item * pod     -> all documentation in POD format
+
+=item * man     -> all documentation in MAN (nroff) format
 
 =item * html    -> all documentation in HTML format
 
@@ -1696,7 +1711,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.300 2019/11/24
+1.301 2019/12/02
 
 =head1 AUTHOR
 
