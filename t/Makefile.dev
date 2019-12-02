@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.10 19/11/21 00:03:22
+#?      @(#) Makefile.dev 1.11 19/12/02 23:29:36
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.10
+_SID.dev           := 1.11
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -93,7 +93,7 @@ LIST.osaft-man     := \
 	opt     options ourstr  pattern range   regex   rfc      text       \
 	toc     todo    tools   warning exit        \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
-	gen-wiki    gen-html    gen-cgi     gen-pod \
+	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
 
 LIST.osaft-dbx     := \
 	--test-show     --test-data         --test-prot --test-regex \
