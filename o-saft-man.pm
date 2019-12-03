@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.301 19/12/02 22:45:32";
+my  $SID_man= "@(#) o-saft-man.pm 1.303 19/12/03 10:38:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.301'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.303'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -820,10 +820,10 @@ sub _man_pod_text   {
         };
         $code = 0;
         s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
-        s:(^|\s)X&([^&]*)&:$1L</$2>:g;    # markup references inside help
-        s:(^|\s)L&([^&]*)&:$1L<$2|$2>:g;  # markup other references
-        #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
-        s:(^|\s)I&([^&]*)&:$1I<$2>:g;     # markup commands and options
+        s:(^|\s)X&([^&]*)&:$1L</$2>:g;  # markup references inside help
+        s:(^|\s)L&([^&]*)&:$1L<$2|$2>:g;# markup other references
+        #s:L<[^(]*(\([^\)]*\)\>).*:>:g; # POD does not like section in link
+        s:(^|\s)I&([^&]*)&:$1I<$2>:g;   # markup commands and options
         s/^([A-Z., -]+)$/B<$1>/;        # bold
         s/^(=item)\s+(.*)/$1 $2/;       # squeeze spaces
         my $line = $_;
@@ -1316,8 +1316,11 @@ sub man_man         {
     # can only read from STDIN or a file, but input here for Pod::Man may come
     # from variables; 
     _man_dbx("man_man() ...");
-    exec("pod2man --name=o-saft.pl --center='OWASP - SSL advanced forensic tool' --utf8 o-saft.pod" );
-    return;
+    my $pod = "o-saft.pod";         # TODO: dirty hack to find proper .pod file
+       $pod = "docs/o-saft.pod"     if (! -e $pod);
+       $pod = "../docs/o-saft.pod"  if (! -e $pod);
+    exec("pod2man --name=o-saft.pl --center='OWASP - SSL advanced forensic tool' --utf8 $pod" );
+    # return;
 } # man_man
 
 sub man_html        {
@@ -1596,11 +1599,11 @@ see  L<METHODS>  below.
 
 =over 2
 
-=item * require q{o-saft-man.pm}; printhelp($type); # in Perl code
+=item * require q{o-saft-man.pm}; printhelp($format); # in Perl code
 
 =item * o-saft-man.pm --help        # on command line will print help
 
-=item * o-saft-man.pm [<$type>]     # on command line
+=item * o-saft-man.pm [<$format>]   # on command line
 
 =back
 
@@ -1608,9 +1611,9 @@ For compatibility with other programs and modules it also supports:
 
 =over 2
 
-=item * o-saft-man.pm --help=<$type>
+=item * o-saft-man.pm --help=<$format>
 
-=item * o-saft-man.pm --test-<$type>
+=item * o-saft-man.pm --test-<$format>
 
 =back
 
@@ -1619,10 +1622,10 @@ For compatibility with other programs and modules it also supports:
 
 =over 2
 
-=item * printhelp($type)
+=item * printhelp($format)
 
 Public method for  all functionality.  The generated output format depends
-on the $type parameter, which is a literal string, as follows:
+on the $format parameter, which is a literal string, as follows:
 
 =over 2
 
@@ -1711,7 +1714,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.301 2019/12/02
+1.303 2019/12/03
 
 =head1 AUTHOR
 
