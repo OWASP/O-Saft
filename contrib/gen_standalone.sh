@@ -16,18 +16,19 @@
 #?
 #? DESCRIPTION
 #?       Generate script, which contains (all) modules for O-Saft.
+#?       Prints on STDOUT if no [output-file] was specified.
 #?
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.13 19/12/03 08:11:09
+#?       @(#)  1.14 19/12/03 08:31:08
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-dst=o-saft-standalone.pl
+dst=/dev/stdout # default STDOUT
 src=o-saft.pl
 try=
 sid=1
@@ -80,11 +81,15 @@ if [ $sid -eq 1 ]; then
 fi
 
 if [ $info -eq 1 ]; then
-	\echo "# generate $dst ..."
+	if [ "/dev/stdout" = "$dst" ]; then
+		\echo "# generate standalone.pl ..."
+	else
+		\echo "# generate $dst ..."
+	fi
 	\echo ""
 fi
 
-$try \rm -rf $dst
+[ "/dev/stdout" != "$dst" ] && $try \rm -rf $dst
 
 [ "$try" = "echo" ] && dst=/dev/stdout
 
@@ -194,10 +199,10 @@ $try \rm -rf $dst
 # 7.
 ##TODO:
 
-$try \chmod 555 $dst
+[ "/dev/stdout" != "$dst" ] && $try \chmod 555 $dst
 [ $info -eq 0 ] && exit
 
-$try \ls    -la $dst
+[ "/dev/stdout" != "$dst" ] && $try \ls    -la $dst
 \echo "# $dst generated"
 
 cat << EoDescription
