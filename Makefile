@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.90 19/12/03 07:09:36
+#?      @(#) Makefile 1.91 19/12/03 07:17:28
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.90
+_SID            = 1.91
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -187,13 +187,13 @@ SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
 
 # generated files
 TMP.dir         = /tmp/$(Project)
-GEN.html        = $(Project).html
-GEN.cgi.html    = $(Project).cgi.html
-GEN.text        = $(Project).txt
-GEN.wiki        = $(Project).wiki
-GEN.man         = $(Project).1
-GEN.pod         = $(Project).pod
-GEN.src         = $(Project)-standalone.pl
+GEN.html        = $(DOC.dir)/$(Project).html
+GEN.cgi.html    = $(DOC.dir)/$(Project).cgi.html
+GEN.text        = $(DOC.dir)/$(Project).txt
+GEN.wiki        = $(DOC.dir)/$(Project).wiki
+GEN.man         = $(DOC.dir)/$(Project).1
+GEN.pod         = $(DOC.dir)/$(Project).pod
+GEN.src         = $(CONTRIB.dir)/$(Project)-standalone.pl
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
 GEN.rel         = $(Project).rel
@@ -252,7 +252,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.90
+_INST.text      = generated from Makefile 1.91
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -477,8 +477,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.90
-tar:     GREP_EDIT  = 1.90
+GREP_EDIT           = 1.91
+tar:     GREP_EDIT  = 1.91
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
