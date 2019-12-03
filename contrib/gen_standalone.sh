@@ -5,6 +5,7 @@
 #?
 #? SYNOPSIS
 #?       $0
+#?       $0 [OPTIONS] [output-file]
 #?
 #? OPTIONS
 #?       --h     got it
@@ -19,7 +20,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.12 19/11/13 00:38:32
+#?       @(#)  1.13 19/12/03 08:11:09
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -43,6 +44,7 @@ while [ $# -gt 0 ]; do
 	 '-t' | '--t') sid=0   ; ;;
 	 '-s' | '--s') info=0  ; ;;
 	 '-v' | '--v') set -x  ; ;;
+	 *)            dst="$1"; ;;
 	esac
 	shift
 done
