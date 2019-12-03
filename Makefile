@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.96 19/12/03 09:45:53
+#?      @(#) Makefile 1.97 19/12/03 09:52:19
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.96
+_SID            = 1.97
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -202,7 +202,7 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
-_GEN.doc        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
+GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 SRC.exe         = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 inc.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
@@ -219,6 +219,8 @@ ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst)
+ALL.docs        = $(SRC.doc) $(GEN.docs)
+    # NOTE: ALL.docs is are the files for user documentation, ALL.doc are SRC-files
 #               # $(GEN.tags) added in t/Makefile.misc
 #               # $(GEN.wiki) not part of ALL.gen as rarly used
 ALL.src         = \
@@ -252,7 +254,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.96
+_INST.text      = generated from Makefile 1.97
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -476,8 +478,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.96
-tar:     GREP_EDIT  = 1.96
+GREP_EDIT           = 1.97
+tar:     GREP_EDIT  = 1.97
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
