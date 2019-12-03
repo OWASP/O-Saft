@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.11 19/12/02 23:29:36
+#?      @(#) Makefile.dev 1.12 19/12/03 07:24:18
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.11
+_SID.dev           := 1.12
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -42,7 +42,7 @@ EXE.o-saft-tcl     := ../$(SRC.tcl)
 EXE.o-saft-pl      := ../$(SRC.pl)
 EXE.o-saft-sh      := ../$(SRC.sh)
 EXE.osaft          := ../osaft.pm
-EXE.osaft-standalone   := ../o-saft-standalone.pl
+EXE.osaft-standalone   := ../$(GEN.src)
 EXE.osaft-dbx      := ../o-saft-dbx.pm
 EXE.osaft-man      := ../o-saft-man.pm
 EXE.osaft-usr      := ../o-saft-usr.pm
@@ -50,11 +50,11 @@ EXE.osaft-cipher   := ../OSaft/Ciphers.pm
 EXE.osaft-doc-data := ../OSaft/Doc/Data.pm
 EXE.net-sslhello   := ../Net/SSLhello.pm
 EXE.net-sslinfo    := ../Net/SSLinfo.pm
-EXE.t-makefile     := ../t/Makefile.pod
+EXE.t-makefile     := ../$(TEST.dir)/Makefile.pod
 # TODO: other tools should go to Makefile.contrib
-EXE.contrib-bunt   := ../contrib/bunt.pl
-EXE.contrib-openssl = ../contrib/install_openssl.sh
-EXE.contrib-standalone := ../contrib/gen_standalone.sh
+EXE.contrib-bunt   := ../$(CONTRIB.dir)/bunt.pl
+EXE.contrib-openssl = ../$(CONTRIB.dir)/install_openssl.sh
+EXE.contrib-standalone := ../$(CONTRIB.dir)/gen_standalone.sh
 EXE.install-sh     := ../INSTALL.sh
 # NOTE: there is already EXE.install in ../Makefile
 
@@ -123,7 +123,7 @@ HELP.test.dev.all   = # no special documentation yet
 #______________________________________________________ targets for testing __|
 
 # The goal here is to generate all targets from the variables defined above.
-# The target -pattern rule- called finally is (see t/Makefile):
+# The target -pattern rule- called finally is (see $(TEST.dir)/Makefile):
 #       testarg-dev-%:
 #               cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 #
@@ -152,7 +152,7 @@ HELP.test.dev.all   = # no special documentation yet
 #
 ############################################################
 
-# FIXME: test.*.log generate logfiles in . instead of t/log
+# FIXME: test.*.log generate logfiles in . instead of $(TEST.dir)/log
 
 ifndef dev-macros-generated
     # das ifndef erzwingt die Ausführung der $(foreach ...) unten
