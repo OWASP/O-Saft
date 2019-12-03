@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.91 19/12/03 07:17:28
+#?      @(#) Makefile 1.92 19/12/03 08:12:08
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.91
+_SID            = 1.92
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -220,7 +220,7 @@ ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst)
 #               # $(GEN.tags) added in t/Makefile.misc
-#               # $(GEN.wiki) not part of ALL.gen as realy used
+#               # $(GEN.wiki) not part of ALL.gen as rarly used
 ALL.src         = \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
@@ -252,7 +252,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.91
+_INST.text      = generated from Makefile 1.92
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -348,7 +348,7 @@ help.all-v help.all-vv: help.all
 
 HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
-HELP-clean      = remove all generated files '$(ALL.gen)'
+HELP-clean      = remove all generated files '$(ALL.gen) $(GEN.wiki) $(GEN.tags)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
 HELP-install    = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) must exist
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
@@ -359,9 +359,7 @@ $(INSTALL.dir):
 
 all:    help
 
-clean:
-	@$(TRACE.target)
-	-rm -r --interactive=never $(ALL.gen)
+clean:  clean.tmp clean.tar clean.gen
 clear:  clean
 
 # target calls installed $(SRC.pl) to test general functionality
@@ -448,9 +446,10 @@ HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
-HELP-cleantar   = remove '$(GEN.tgz)'
-HELP-cleantmp   = remove '$(TMP.dir)'
-HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
+HELP-clean.tmp  = remove '$(TMP.dir)'
+HELP-clean.tar  = remove '$(GEN.tgz)'
+HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)'
+HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
 HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) may exist
 HELP-o-saft.rel = generate '$(GEN.rel)'
 #               # HELP-o-saft.rel hardcoded, grrr
@@ -477,11 +476,12 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.91
-tar:     GREP_EDIT  = 1.91
+GREP_EDIT           = 1.92
+tar:     GREP_EDIT  = 1.92
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
+cleangen:   clean.gen
 cleantar:   clean.tar
 cleantgz:   clean.tar
 cleantmp:   clean.tmp
@@ -528,6 +528,9 @@ docker.push:
 .PHONY: pl cgi man pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
 
+clean.gen:
+	@$(TRACE.target)
+	rm -rf $(ALL.gen) $(GEN.wiki) $(GEN.inst) $(GEN.tags)
 clean.tmp:
 	@$(TRACE.target)
 	rm -rf $(TMP.dir)
