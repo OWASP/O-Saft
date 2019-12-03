@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.95 19/12/03 08:38:08
+#?      @(#) Makefile 1.96 19/12/03 09:45:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.95
+_SID            = 1.96
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -168,20 +168,20 @@ SRC.doc         = $(DOC.src:%=$(DOC.dir)/%)
 WEB.dir         = docs/img
 WEB.src         = \
 		  img.css \
-		  O-Saft_cipherCLI.png \
-		  O-Saft_cmd_GUI.png \
-		  O-Saft_optGUI.png \
-		  O-Saft_altnameCLI.png \
-		  O-Saft_filterGUI.png \
-		  O-Saft_protGUI.png \
-		  O-Saft_altnameGUI.png \
-		  O-Saft_cmd_GUI-0.png \
-		  O-Saft_helpGUI-0.png \
-		  O-Saft_vulnsCLI.png \
-		  O-Saft_checkGUI.png \
-		  O-Saft_cmd_GUI--docker.png \
-		  O-Saft_helpGUI-1.png \
-		  O-Saft_vulnsGUI.png \
+		  O-Saft_CLI-cipher.png \
+		  O-Saft_CLI-altname.png \
+		  O-Saft_GUI-altname.png \
+		  O-Saft_GUI-check.png \
+		  O-Saft_GUI-cmd--docker.png \
+		  O-Saft_GUI-cmd.png \
+		  O-Saft_GUI-cmd-0.png \
+		  O-Saft_GUI-filter.png \
+		  O-Saft_GUI-help-0.png \
+		  O-Saft_GUI-help-1.png \
+		  O-Saft_GUI-opt.png \
+		  O-Saft_GUI-prot.png \
+		  O-Saft_GUI-vulns.png \
+		  O-Saft_CLI-vulns.png \
 		  O-Saft_CLI__faked.txt
 SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
 
@@ -252,7 +252,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.95
+_INST.text      = generated from Makefile 1.96
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -476,8 +476,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.95
-tar:     GREP_EDIT  = 1.95
+GREP_EDIT           = 1.96
+tar:     GREP_EDIT  = 1.96
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
