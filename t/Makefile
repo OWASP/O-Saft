@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.99 19/11/24 22:48:54
+#?      @(#) Makefile 1.100 19/12/03 09:21:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.99
+_SID.test          := 1.100
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -296,8 +296,6 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKE_VERSION)  = $(MAKE_VERSION)'
 	@echo '# $$(MAKE_HOST)     = $(MAKE_HOST)'
 	@echo '# $$(MAKE_RESTARTS) = $(MAKE_RESTARTS)'
-	@echo '# $$(MAKE_TERMOUT)  = $(MAKE_TERMOUT)'
-	@echo '# $$(MAKE_TERMERR)  = $(MAKE_TERMERR)'
 	@echo '# $$(MFLAGS)        = $(MFLAGS)'
 	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
 	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
@@ -321,6 +319,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(.VARIABLES)    = $(words $(.VARIABLES)) variables'
 	@echo '#                    huge list .VARIABLES not shown (includes own names),'
 	@echo '#                    use: make help.test.makevars'
+# not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
 
 help.test.makevars:
