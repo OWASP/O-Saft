@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.105 19/11/24 00:21:52";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.106 19/12/04 22:47:53";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -306,6 +306,33 @@ sub _yeast_cipher           { # TODO: obsolete when ciphers defined in OSaft/Cip
     return;
 }
 
+sub _yeast_targets          {
+    my $trace   = shift;
+    my $prefix  = shift;
+    my @targets = @_;
+    printf("#%s:\n", (caller(0))[3]);
+    #print " === print internal data structures for a targets === ";
+    if (0 == $trace) { # simple list
+        printf("%s%14s= [ ", $prefix, "targets");
+        foreach my $target (@targets) {
+            next if (0 == @{$target}[0]);       # first entry conatins default settings
+            printf("%s:%s%s ", @{$target}[2..3,6]);
+               # the perlish way instead of get_target_{host,port,path}
+        }
+        printf("]\n");
+    } else {
+        printf("%s%14s targets = [\n", $prefix, "# - - - -ARRAY");
+        printf("%s#  Index %6s %24s : %5s %10s %5s %-16s %s\n",
+                $prefix, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
+        foreach my $target (@targets) {
+            #next if (0 == @{$target}[0]);       # first entry conatins default settings
+            printf("%s   [%3s] %6s %24s : %5s %10s %5s %-16s %s\n", $prefix, @{$target}[0,1..7]);
+        }
+        printf("%s%14s ]\n", $prefix, "# - - - -ARRAY");
+    }
+    return;
+} # _yeast_targets
+
 sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
@@ -402,23 +429,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $cfg{'port'} (last specified)");
-    if (0 == $cfg{'trace'}) { # simple list
-        printf("%s%14s= [ ", $cfg{'prefix_verbose'}, "targets");
-        foreach my $target (@{$cfg{'targets'}}) {
-            next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s:%s%s ", @{$target}[2..3,6]);
-               # the perlish way instead of get_target_{host,port,path}
-        }
-        printf("]\n");
-    } else { # complete array
-        printf("%s%14s targets = [\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
-        printf("%s#  Index %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
-        foreach my $target (@{$cfg{'targets'}}) {
-            next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s   [%3s] %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'prefix_verbose'}, @{$target}[0,1..7]);
-        }
-        printf("%s%14s ]\n", $cfg{'prefix_verbose'}, "# - - - -ARRAY");
-    }
+    _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
         printf("%s%14s= %s\n", $cfg{'prefix_verbose'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
@@ -843,7 +854,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.105 2019/11/24
+1.106 2019/12/04
 
 =head1 AUTHOR
 
