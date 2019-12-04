@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.99 19/12/04 22:55:24
+#?      @(#) Makefile 1.100 19/12/04 23:44:55
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.99
+_SID            = 1.100
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -254,7 +254,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.99
+_INST.text      = generated from Makefile 1.100
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -466,8 +466,6 @@ HELP-help.all   = print all targets, including test and development targets
 #               # defined in t/Makefile.help also
 HELP-help.help  = print targets to get information/documentation from Makefiles
 
-OPT.single = --s
-
 # alias targets
 pl:     $(SRC.pl)
 cgi:    $(GEN.cgi.html)
@@ -478,8 +476,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.99
-tar:     GREP_EDIT  = 1.99
+GREP_EDIT           = 1.100
+tar:     GREP_EDIT  = 1.100
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -492,11 +490,7 @@ cleartgz:   clean.tar
 cleartmp:   clean.tmp
 clear.all:  clean.tar clean
 clean.all:  clean.tar clean
-tgz:    tar
-tar:    OPT.single =
-tgz:    OPT.single =
-tmptar: OPT.single =
-tmptgz: OPT.single =
+tgz:        tar
 gen.all:    $(ALL.gen)
 
 # docker target uses project's own script to build and remove the image
@@ -564,7 +558,7 @@ $(SRC.pl): $(DEV.pl)
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 	@$(TRACE.target)
 	@rm -rf $@
-	$(EXE.single) $(OPT.single)                    > $@
+	$(EXE.single) --s                              > $@
 	@chmod 555 $@
 
 $(GEN.man):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt) $(GEN.pod)
