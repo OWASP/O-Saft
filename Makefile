@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.98 19/12/03 10:40:06
+#?      @(#) Makefile 1.99 19/12/04 22:55:24
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.98
+_SID            = 1.99
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -254,7 +254,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.98
+_INST.text      = generated from Makefile 1.99
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -478,8 +478,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.98
-tar:     GREP_EDIT  = 1.98
+GREP_EDIT           = 1.99
+tar:     GREP_EDIT  = 1.99
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -532,7 +532,7 @@ docker.push:
 
 clean.gen:
 	@$(TRACE.target)
-	rm -rf $(ALL.gen) $(GEN.wiki) $(GEN.inst) $(GEN.tags)
+	rm -rf $(ALL.gen) $(GEN.wiki) $(GEN.inst)
 clean.tmp:
 	@$(TRACE.target)
 	rm -rf $(TMP.dir)
@@ -624,11 +624,11 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 # would generate the tarball there also, hence the tarball is specified as full
 # path with $(PWD).
 # The directory prefix in the tarball is the current directory, aka $(PWD) .
-$(GEN.tgz): $(ALL.src)
+$(GEN.tgz): $(ALL.src) $(GEN.tags)
 	@$(TRACE.target)
 	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
 
-$(GEN.tmptgz): $(ALL.src)
+$(GEN.tmptgz): $(ALL.src) $(GEN.tags)
 	@$(TRACE.target)
 	tar zcf $@ $^
 
