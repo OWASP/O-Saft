@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.198 19/12/04 14:51:03",
+    SID_osaft   => "@(#) osaft.pm 1.199 19/12/04 20:20:47",
 
 };
 
@@ -223,6 +223,7 @@ our @EXPORT     = qw(
                 %tls_extensions
                 %tls_curve_types
                 %tls_curves
+                @target_defaults
                 %data_oid
                 %dbx
                 %cfg
@@ -1942,7 +1943,7 @@ our %cfg = (
                                 # to be processed;  anon. list, each element is
                                 # array; first element contains defaults (see
                                 # @target_defaults below)
-    'port'          => 443,     # port for currently scanned target
+    'port'          => undef,   # port for currently scanned target
     'host'          => "",      # currently scanned target
     'ip'            => "",      # currently scanned target's IP (machine readable format)
     'IP'            => "",      # currently scanned target's IP (human readable, doted octet)
@@ -3119,7 +3120,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.198 2019/12/04
+1.199 2019/12/04
 
 =head1 AUTHOR
 
