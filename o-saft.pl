@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.930 19/12/01 19:24:09",
+    SID         => "@(#) yeast.pl 1.932 19/12/04 22:33:16",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -154,6 +154,8 @@ our $osaft_standalone = 0;      # SEE Note:Stand-alone
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
 use osaft;          # get most of our configuration; it's ok to die if missing
+
+#_yeast_targets("osaft-init", @{$cfg{'targets'}});
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -8176,7 +8178,9 @@ while ($#argv >= 0) {
             _warn("042: invalid host argument '$arg'; ignored");
             next;   # can safely reloop here, as we are at end of while
         }
-        my ($prot, $host, $port, $auth, $path) = _get_target($cfg{port}, $arg);
+        #    use previously defined port || default port
+        my $default_port = ($cfg{'port'} || $target_defaults[0]->[3]);
+        my ($prot, $host, $port, $auth, $path) = _get_target($default_port, $arg);
         if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/)){
             _warn("042: invalid host-like argument '$arg'; ignored");
             # TODO: occours i.e with --port=' ' but not with --host=' '
@@ -8223,7 +8227,7 @@ if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     $cfg{'usehttps'}    = 0;
     $cfg{'usehttp'}     = 0;
     $cfg{'usedns'}      = 0;
-    #_hint($cfg{'hints'}->{'cipher'});
+    _hint($cfg{'hints'}->{'cipher'});
 }
 if (_is_do('ciphers')) {
     # +ciphers command is special:
@@ -8259,15 +8263,15 @@ $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 # _dbx "  sorted: @{$cfg{'do'}}";
 
 if (2 == @{$cfg{'targets'}}) {
-    # exactly one host defined, check if --port was also given
-    # latest given port can be found in  $cfg{'port'}, if it differs from
-    # the port used in the target list, redefine port for the host there,
-    # assuming that "--port 123 host" was meant instead "host --port 123"
+    # Exactly one host defined, check if --port was also given after --host .
+    # Assuming that  "--port 123 host"  was meant instead  "host --port 123".
+    # Latest given port can be found in  $cfg{'port'}. If it differs from the
+    # port stored in the list @{$cfg{'targets'}}, redefine port for the host.
     # NOTE: the documentation always recommends to use --port first.
     my $host = get_target_host(1);
     my $port = get_target_port(1);
-    if ($port != $cfg{'port'}) {
-        _warn("045: --port used after host argument; using '$host:$cfg{'port'}'");
+    if (defined $cfg{'port'}) {
+        _warn("045: --port used with single host argument; using '$host:$cfg{'port'}'");
         set_target_port(1, $cfg{'port'});
     }
 }
@@ -8299,15 +8303,15 @@ usr_pre_exec();
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if (0 == $cfg{'exec'})  {
-    # as all shared libraries used by Perl modules are already loaded when
-    # this program executes, we need to set PATH and LD_LIBRARY_PATH before
-    # being called
-    # so we call ourself with proper set environment variables again
+    # As all shared libraries used by Perl modules are already loaded when this
+    # program executes, PATH and LD_LIBRARY_PATH need to be set before the tool
+    # is called. Hence call myself with proper set environment variables again.
     # NOTE: --exe points to the directoy with the openssl executable
     # while --lib points to the directoy with the libraries
-    # sometimes, when building new libraries or openssl, the libraries and the
-    # executable are located in the same directoy, so we add the directoy given
-    # with --lib to the PATH environment variable too, which should not harm
+    # Sometimes, when building new libraries or openssl,  the libraries and the
+    # executable are located in the same directoy, therefore the directoy given
+    # with  --lib will be added to the PATH environment variable too, it should
+    # not harm.
     if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) { # any of these is used
         _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
         #ENV{OPENSSL} no need to set again if already done when called
@@ -8608,7 +8612,6 @@ _yeast_TIME("hosts{");
 
 # run the appropriate SSL tests for each host (ugly code down here):
 $sniname  = $cfg{'sni_name'};           # safe value;  NOTE: may be undef!
-$port     = ($cfg{'port'}||"");         # defensive programming ..
 my $idx   = 0;
 foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if (0 == @{$target}[0]);       # first entry contains default settings
