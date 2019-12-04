@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.11.19',  # official version number of this file
+    OSAFT_VERSION   => '19.12.19',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.197 19/11/24 08:46:34",
+    SID_osaft   => "@(#) osaft.pm 1.198 19/12/04 14:51:03",
 
 };
 
@@ -1938,8 +1938,10 @@ our %cfg = (
     'mx_domains'    => [],      # list of mx-domain:port to be processed
     'hosts'         => [],      # list of targets (host:port) to be processed
                                 # since 18.07.18 used in checkAllCiphers.pl only
-    'targets'       => [],      # list of targets (host:port, prot, path, etc.) to be processed
-                                # anon. list, each element is array, see @target_defaults below
+    'targets'       => [],      # list of targets (host:port, prot, path, etc.)
+                                # to be processed;  anon. list, each element is
+                                # array; first element contains defaults (see
+                                # @target_defaults below)
     'port'          => 443,     # port for currently scanned target
     'host'          => "",      # currently scanned target
     'ip'            => "",      # currently scanned target's IP (machine readable format)
@@ -2359,7 +2361,8 @@ our %target_desc = (
 ); # %target_desc
 
 #                       Nr, Prot., Host, Port, Auth, Proxy, Path, orig., run-time ...
-our @target_defaults = [ 0, "https", "", "443",  "",  0,    "",   "",    0, 0, 0, 0, ];
+our @target_defaults = [ 0, "https", "", "443",  "",  0,    "", "<<defaults>>", 0, 0, 0, 0, ];
+   # <<defaults>> just for documentation when printed with --v, --trace, etc.
 
 our %dbx = (    # save hardcoded settings (command lists, texts), and debugging data
                 # used in o-saft-dbx.pm only
@@ -3025,6 +3028,7 @@ sub _osaft_init {
     $cfg{'ARGV'}    = [@ARGV];
     $cfg{'prefix_trace'}    = "#${me}::";
     $cfg{'prefix_verbose'}  = "#${me}: ";
+
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallize dynamic data in %cfg
     _cmd_init();        # initallize dynamic commands in %cfg
@@ -3115,7 +3119,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.197 2019/11/24
+1.198 2019/12/04
 
 =head1 AUTHOR
 
