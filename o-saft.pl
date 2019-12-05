@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.932 19/12/04 22:33:16",
+    SID         => "@(#) yeast.pl 1.934 19/12/05 07:49:18",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -155,8 +155,6 @@ our $osaft_standalone = 0;      # SEE Note:Stand-alone
 
 use osaft;          # get most of our configuration; it's ok to die if missing
 
-#_yeast_targets("osaft-init", @{$cfg{'targets'}});
-
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
@@ -190,11 +188,23 @@ my  $cgi = 0;
     #die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
 #} # CGI
 
+#_____________________________________________________________________________
+#_________________________________________________________________ funtions __|
+
 #| definitions: debug and tracing
 #| -------------------------------------
 # functions and variables used very early in main
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
 sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
+sub _hint   {
+    #? print hint message if wanted
+    # don't print if --no-hint given
+    # check must be done on ARGV, because $cfg{'out_hint_info'} may not yet set
+    my @txt = @_;
+    return if _is_argv('(?:--no.?hint)');
+    printf(STR_HINT . "%s\n", join(" ", @txt));
+    return;
+} # _hint
 sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
     # don't print if ($cfg{'warning'} <= 0);
@@ -221,15 +231,6 @@ sub _warn_and_exit      {
     }
     return;
 } # _warn_and_exit
-
-sub _hint   {
-    #? print hint message if wanted
-    # don't print if --no-hint given
-    my @txt = @_;
-    return if _is_argv('(?:--no.?hint)');
-    printf(STR_HINT . "%s\n", join(" ", @txt));
-    return;
-} # _hint
 
 sub _warn_nosni         {
     #? print warning and hint message if SNI is not supported by SSL
@@ -1895,7 +1896,7 @@ our %text = (
         #                -?- means "not implemented"
         # all other text used in headers titles, etc. are defined in the
         # corresponding print functions:
-        #     printtitle, print_cipherhead, printfooter, print_cipherprefered, print_ciphertotals
+        #     print_title, print_cipherhead, print_footer, print_cipherprefered, print_ciphertotals
     },
     # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
@@ -1960,13 +1961,13 @@ usr_pre_file();
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _isnummber          {
+sub _is_nummber         {
     # return 1 if given parameter is a number; return 0 otherwise
     my $val = shift;
     return 0 if not defined $val;
     return 0 if $val eq '';
     return ($val ^ $val) ? 0 : 1
-} # _isnummber
+} # _is_nummber
 
 use IO::Socket::INET;
 sub _load_modules       {
@@ -2049,7 +2050,7 @@ sub _check_modules      {
         #   undef   - version module was not available or didn't define VERSION
         #   string  - even "0.42" cannot be compared to integer, bad luck ...
         #   integer - that's the usual and expected value
-    if (_isnummber($version::VERSION) == 1) {
+    if (1 ==_is_nummber($version::VERSION)) {
         $have_version = 0 if ($version::VERSION < 0.77);
             # veriosn module too old, use natural number compare
     } else {
@@ -2627,11 +2628,11 @@ sub _resetchecks        {
     return;
 } # _resetchecks
 
-sub _prot_cipher($$)    { my @txt = @_; return " " . join(":", @txt); }
+sub _prot_cipher        { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
     # (mainly used to concatenate SSL Version and cipher suite name)
 
-sub _getscore($$$)      {
+sub _getscore           {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
     my $value   = shift || "";
@@ -2644,7 +2645,7 @@ sub _getscore($$$)      {
 } # _getscore
 
 sub _cfg_set($$);       # avoid: main::_cfg_set() called too early to check prototype at ...
-sub _cfg_set_from_file($$) {
+sub _cfg_set_from_file  {
     # read values to be set in configuration from file
     my $typ = shift;    # type of config value to be set
     my $fil = shift;    # filename
@@ -2799,7 +2800,7 @@ sub _cfg_set_init       {
     return;
 } # _cfg_set_init
 
-sub _cfg_set_cipher($$) {
+sub _cfg_set_cipher     {
     # set value for security of cipher in configuration %ciphers
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
@@ -3055,23 +3056,23 @@ sub _need_this($)       {
        $is  =~ s/\+/\\+/g;      # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 } # _need_this
-sub _need_cipher()      { return _need_this('need-cipher');     };
-sub _need_default()     { return _need_this('need-default');    };
-sub _need_checkssl()    { return _need_this('need-checkssl');   };
-sub _need_checkalpn()   { return _need_this('need-checkalpn');  };
-sub _need_checkbleed()  { return _need_this('need-checkbleed'); };
-sub _need_checkchr()    { return _need_this('need-checkchr');   };
-sub _need_checkdest()   { return _need_this('need-checkdest');  };
-sub _need_check_dh()    { return _need_this('need-check_dh');   };
-sub _need_checkhttp()   { return _need_this('need-checkhttp');  };
-sub _need_checkprot()   { return _need_this('need-checkprot');  };
+sub _need_cipher()      { return _need_this('need-cipher');     }
+sub _need_default()     { return _need_this('need-default');    }
+sub _need_checkssl()    { return _need_this('need-checkssl');   }
+sub _need_checkalpn()   { return _need_this('need-checkalpn');  }
+sub _need_checkbleed()  { return _need_this('need-checkbleed'); }
+sub _need_checkchr()    { return _need_this('need-checkchr');   }
+sub _need_checkdest()   { return _need_this('need-checkdest');  }
+sub _need_check_dh()    { return _need_this('need-check_dh');   }
+sub _need_checkhttp()   { return _need_this('need-checkhttp');  }
+sub _need_checkprot()   { return _need_this('need-checkprot');  }
     # returns >0 if any  of the given commands is listed in $cfg{need-*}
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
-sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
+sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
 sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
 sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
-sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
+sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if any of the given string is listed in $cfg{*}
 
 
@@ -3506,48 +3507,6 @@ sub _checkwildcard($$)  {
     return;
 } # _checkwildcard
 
-sub _can_connect        {
-    # return 1 if host:port can be connected; 0 otherwise
-    my ($host, $port, $sni, $timeout, $ssl) = @_;
-    local $? = 0; local $! = undef;
-    my $socket;
-    if ($ssl == 1) {    # need different method for connecting with SSL
-        if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; }
-        # simple and fast connect: full cipher list, no handshake,
-        #    do not verify the certificate and/or CRL, OCSP, which
-        # may result in a connection fail
-        # SNI is not necessary, as we just want to know if the server responds
-        #    however, SNI may be necessary in future ...
-        # NOTE: $sni may be undef
-        $socket = IO::Socket::SSL->new(
-            PeerAddr        => $host,
-            PeerPort        => $port,
-            Proto           => "tcp",
-            Timeout         => $timeout,
-           #SSL_hostname    => $sni,
-            SSL_version     => "SSLv23",
-            SSL_cipher_list => "ALL:NULL:eNULL:aNULL:LOW:EXP",
-            SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-            SSL_check_crl   => 0,       # do not check CRL
-            SSL_ocsp_mode   => 0,       # TODO: is 0 the roccect value to disable this check?
-            SSL_startHandshake  => 0,
-        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
-    } else {
-        $socket = IO::Socket::INET->new(
-            PeerAddr        => $host,
-            PeerPort        => $port,
-            Proto           => "tcp",
-            Timeout         => $timeout,
-        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); }; # IO::Socket::INET::errstr();
-    }
-    if (defined $socket) {
-        close($socket);
-        return 1;
-    }
-    _warn("324: failed to connect target $host:$port : '$!'");
-    return 0;
-} # _can_connect
-
 sub _usesocket($$$$)    {
     # return protocol and cipher accepted by SSL connection
     # should return the target's prefered cipher if none are given in $ciphers
@@ -3728,6 +3687,91 @@ sub _useopenssl($$$$)   {
 
     return "", "", "";
 } # _useopenssl
+
+sub _can_connect        {
+    # return 1 if host:port can be connected; 0 otherwise
+    my ($host, $port, $sni, $timeout, $ssl) = @_;
+    local $? = 0; local $! = undef;
+    my $socket;
+    if ($ssl == 1) {    # need different method for connecting with SSL
+        if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; }
+        # simple and fast connect: full cipher list, no handshake,
+        #    do not verify the certificate and/or CRL, OCSP, which
+        # may result in a connection fail
+        # SNI is not necessary, as we just want to know if the server responds
+        #    however, SNI may be necessary in future ...
+        # NOTE: $sni may be undef
+        $socket = IO::Socket::SSL->new(
+            PeerAddr        => $host,
+            PeerPort        => $port,
+            Proto           => "tcp",
+            Timeout         => $timeout,
+           #SSL_hostname    => $sni,
+            SSL_version     => "SSLv23",
+            SSL_cipher_list => "ALL:NULL:eNULL:aNULL:LOW:EXP",
+            SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+            SSL_check_crl   => 0,       # do not check CRL
+            SSL_ocsp_mode   => 0,       # TODO: is 0 the roccect value to disable this check?
+            SSL_startHandshake  => 0,
+        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
+    } else {
+        $socket = IO::Socket::INET->new(
+            PeerAddr        => $host,
+            PeerPort        => $port,
+            Proto           => "tcp",
+            Timeout         => $timeout,
+        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); }; # IO::Socket::INET::errstr();
+    }
+    if (defined $socket) {
+        close($socket);
+        return 1;
+    }
+    _warn("324: failed to connect target $host:$port : '$!'");
+    return 0;
+} # _can_connect
+
+sub _get_target         {
+    # check argument and return array: protocol, host, port, auth
+    # allow host, host:port, URL with IPv4, IPv6, FQDN
+    #   http://user:pass@f.q.d.n:42/aa*foo=bar:23/
+    #    ftp://username:password@hostname/
+    #   http://f.q.d.n:42/aa*foo=bar:23/
+    #    ftp://f.q.d.n:42/aa*foo=bar:23
+    #   ftp:42/no-fqdn:42/aa*foo=bar:23
+    #   dpsmtp://authentication@mail:25/queryParameters
+    #   //abc/def    
+    #   abc://def    # scary
+    #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
+    #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
+    #   cafe::999/aa*foo=bar:23/  # invalid, but works
+    # NOTE: following regex allow hostnames containing @, _ and many more ...
+    my $last  =  shift; # default port if not specified
+    my $arg   =  shift;
+
+    # TODO:  ugly and just simple cases, not very perlish code ...
+    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#);    # defensive programming
+    return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
+    # something complicated, analyze ...
+    my $prot  =  $arg;
+       $prot  =~ s#^\s*([a-z][A-Z0-9]*:)?//.*#$1#i; # get schema (protocol), if any
+       # TODO: inherit previous schema if not found
+       $prot  = "https" if ($prot eq $arg);         # check before stripping :
+       $prot  = "https" if ($prot eq "");
+       $prot  =~ s#:##g;                # strip :
+    my $auth  =  ""; # TODO
+    my $path  =  $arg;
+       $path  =~ s#^.*?/#/#;            # get /path/and?more
+    my $port  =  "";
+    my $host  =  $arg;
+       $host  =~ s#^\s*(?:[a-z][A-Z0-9]*:)?//##i;   # strip schema (protocol), if any
+       $host  =~ s#^(?:[^@]+@)?##i;     # strip user:pass, if any
+       $host  =~ s#/.*$##;              # strip /path/and?more
+    ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
+    $port  =  $last if not defined $port;
+    _y_ARG("arg=$arg => prot=$prot, host=$host, port=$port");
+    #return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
+    return ($prot, $host, $port, $auth, $path);
+} # _get_target
 
 sub _get_ciphers_range  {
     #? retrun array of cipher-suite hex values for given range
@@ -3973,7 +4017,7 @@ sub ciphers_scan_raw    {
         my @accepted = ();                          # accepted ciphers
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
-        printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
         if (not _is_do('cipherraw')) {
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
@@ -5752,7 +5796,7 @@ sub checkhttp($$)   {
     return;
 } # checkhttp
 
-sub _get_sstp_https     {
+sub _get_sstp_https {
     #? get result for SSTP request to host:port; returns '' for success, error otherwise
     my ($host, $port) = @_;
     my $ulonglong_max = '18446744073709551615';
@@ -5812,7 +5856,7 @@ EoREQ
     return '';
 } # _get_sstp_https
 
-sub checksstp           {
+sub checksstp       {
     #? check if host:port supports SSTP
     my ($host, $port) = @_;
     _y_CMD("checksstp() " . $cfg{'done'}->{'checksstp'});
@@ -6040,28 +6084,28 @@ sub printdump       {
     return;
 } # printdump
 
-sub printruler      { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
+sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
 
-sub printheader     {
+sub print_header    {
     #? print title line and table haeder line if second argument given
     my ($txt, $desc, $rest, $header) = @_;
     return if (0 >= $header);
     print $txt;
     return if ($desc =~ m/^ *$/); # title only if no more arguments
     printf("= %-37s %s\n", $text{'desc'}, $desc);
-    printruler();
+    print_ruler();
     return;
-} # printheader
+} # print_header
 
-sub printfooter     {
+sub print_footer    {
     #? print footer line according given legacy format
     my $legacy  = shift;
     if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
     # all others are empty, no need to do anything
     return;
-} # printfooter
+} # print_footer
 
-sub printtitle      {
+sub print_title     {
     #? print title according given legacy format
     my ($legacy, $ssl, $host, $port, $header) = @_;
     local    $\ = "\n";
@@ -6087,12 +6131,12 @@ sub printtitle      {
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy eq 'compact')   { print "=== Checking $ssl Ciphers ..."; }
-    if ($legacy eq 'quick')     { printheader($txt, "", "", $header); }
-    if ($legacy eq 'owasp')     { printheader($txt, "", "", $header); }
-    if ($legacy eq 'simple')    { printheader($txt, "", "", $header); }
-    if ($legacy eq 'full')      { printheader($txt, "", "", $header); }
+    if ($legacy eq 'quick')     { print_header($txt, "", "", $header); }
+    if ($legacy eq 'owasp')     { print_header($txt, "", "", $header); }
+    if ($legacy eq 'simple')    { print_header($txt, "", "", $header); }
+    if ($legacy eq 'full')      { print_header($txt, "", "", $header); }
     return;
-} # printtitle
+} # print_title
 
 sub print_line($$$$$$)  {
     #? print label and value separated by separator
@@ -6352,7 +6396,7 @@ sub print_ciphertotals($$$$) {
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {
-        printheader(_get_text('out_summary', $ssl), "", $cfg{'out_header'});
+        print_header(_get_text('out_summary', $ssl), "", $cfg{'out_header'});
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
@@ -6362,7 +6406,7 @@ sub print_ciphertotals($$$$) {
     return;
 } # print_ciphertotals
 
-sub _is_print           {
+sub _is_print_cipher    {
     #? return 1 if parameter indicate printing
     my $enabled = shift;
     my $print_disabled = shift;
@@ -6371,9 +6415,9 @@ sub _is_print           {
     return 1 if ($print_disabled && ($enabled eq 'no' ));
     return 1 if ($print_enabled  && ($enabled eq 'yes'));
     return 0;
-} # _is_print
+} # _is_print_cipher
 
-sub _sort_results       {
+sub _sort_cipher_results {
     #? sort @results array according security of ciphers, most secure first
     my @unsorted= @_;   # each line is array: ssl, cipher, yes-or-no
     my @results;
@@ -6431,10 +6475,10 @@ sub _sort_results       {
         push(@results, [$arr[4], $arr[3], $arr[5]]);#  convert back to original result: [ssl cipher yes-or-no]
     }
     return @results;
-} # _sort_results
+} # _sort_cipher_results
 
 #  NOTE: Perl::Critic's violation for next 2 subs are false positives
-sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _print_cipher_results       { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
     my $legacy  = shift;
     my $ssl     = shift;
@@ -6450,11 +6494,11 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
         next if  (${$c}[0] ne $ssl);
         $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
-        $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
+        $print = _is_print_cipher(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
         print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
     }
     return $total;
-} # _print_results
+} # _print_cipher_results
 
 sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results from Net::SSLhello::checkSSLciphers()
@@ -6478,7 +6522,7 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
         $unique++;
     }
     print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
-    printfooter($legacy);
+    print_footer($legacy);
     return $unique;
 } # printcipherall
 
@@ -6495,9 +6539,9 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherprefered($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
-    @results = _sort_results(@results); # sorting has no impact on severity
+    @results = _sort_cipher_results(@results); # sorting has no impact on severity
     if ($legacy ne 'sslyze') {
-        $total = _print_results($legacy, $ssl, $host, $port, "", @results);
+        $total = _print_cipher_results($legacy, $ssl, $host, $port, "", @results);
             # NOTE: $checks{'cnt_totals'}->{val}  is the number of all checked
             #       ciphers for all protocols, here only the number of ciphers
             #       for the protocol $ssl should be printed
@@ -6508,19 +6552,19 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
         print_cipherprefered($legacy, $ssl, $host, $port);
         if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Accepted Cipher Suites:";
-            $total = _print_results($legacy, $ssl, $host, $port, "yes", @results);
+            $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", @results);
         }
         if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Rejected Cipher Suites:";
-            $total = _print_results($legacy, $ssl, $host, $port, "no", @results);
+            $total = _print_cipher_results($legacy, $ssl, $host, $port, "no", @results);
         }
     }
     #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
-    printfooter($legacy);
+    print_footer($legacy);
     return;
 } # printciphercheck
 
-sub printciphers_dh($$$) {
+sub printciphers_dh     {
     #? print ciphers and DH parameter from target (available with openssl only)
     # currently DH parameters requires openssl, check must be done in caller
     my ($legacy, $host, $port) = @_;
@@ -6533,7 +6577,7 @@ sub printciphers_dh($$$) {
             # SEE Note:Stand-alone
     }
     foreach my $ssl (@{$cfg{'version'}}) {
-        printtitle($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
         print_cipherhead( 'cipher_dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
             #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
@@ -6648,7 +6692,7 @@ sub printciphersummary  {
     #? print summary of cipher check (+cipher, +cipherall, +cipherraw)
     my ($legacy, $host, $port, $total) = @_;
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {   # but only our formats
-        printheader("\n" . _get_text('out_summary', ""), "", "", $cfg{'out_header'});
+        print_header("\n" . _get_text('out_summary', ""), "", "", $cfg{'out_header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
@@ -6664,7 +6708,7 @@ sub printdata($$$)      {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    printheader($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out_header'});
+    print_header($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out_header'});
     _trace_cmd('%data');
     if (_is_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
@@ -6710,7 +6754,7 @@ sub printchecks($$$)    {
     my ($legacy, $host, $port) = @_;
     my $value = "";
     local $\ = "\n";
-    printheader($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
+    print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
     _trace_cmd(' printchecks: %checks');
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
@@ -6992,8 +7036,8 @@ sub printciphers        {
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_openssl() if ($cfg{'verbose'} > 0);
 
-    printheader(_get_text('out_list', $0), "", "", $cfg{'out_header'});
-    # all following headers printed directly instead of using printheader()
+    print_header(_get_text('out_list', $0), "", "", $cfg{'out_header'});
+    # all following headers printed directly instead of using print_header()
 
     if ($cfg{'legacy'} eq "ssltest") {  # output looks like: ssltest --list
         _warn("861: not all ciphers listed");
@@ -7150,19 +7194,19 @@ sub printscores         {
             + $scores{'check_http'}->{val}
             + $scores{'check_size'}->{val}
             ) / 5 ) + 0.5);
-    printheader($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out_header'});
+    print_header($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out_header'});
     _trace_cmd('%scores');
     foreach my $key (sort keys %scores) {
         next if ($key !~ m/^check_/);   # print totals only
         print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
     }
     print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
-    printruler();
+    print_ruler();
     if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
         _y_CMD("verbose score table");
         print "\n";
         printtable('score');
-        printruler();
+        print_ruler();
     }
     return;
 } # printscores
@@ -7189,52 +7233,10 @@ sub printusage_exit     {
     exit 2;
 } # printusage_exit
 
-sub _get_target         {
-    #? check argument and return array: protocol, host, port, auth
-    # allow host, host:port, URL with IPv4, IPv6, FQDN
-    #   http://user:pass@f.q.d.n:42/aa*foo=bar:23/
-    #    ftp://username:password@hostname/
-    #   http://f.q.d.n:42/aa*foo=bar:23/
-    #    ftp://f.q.d.n:42/aa*foo=bar:23
-    #   ftp:42/no-fqdn:42/aa*foo=bar:23
-    #   dpsmtp://authentication@mail:25/queryParameters
-    #   //abc/def    
-    #   abc://def    # scary
-    #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
-    #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
-    #   cafe::999/aa*foo=bar:23/  # invalid, but works
-    # NOTE: following regex allow hostnames containing @, _ and many more ...
-    my $last  =  shift; # default port if not specified
-    my $arg   =  shift;
-
-    # TODO:  ugly and just simple cases, not very perlish code ...
-    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#);    # defensive programming
-    return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
-    # something complicated, analyze ...
-    my $prot  =  $arg;
-       $prot  =~ s#^\s*([a-z][A-Z0-9]*:)?//.*#$1#i; # get schema (protocol), if any
-       # TODO: inherit previous schema if not found
-       $prot  = "https" if ($prot eq $arg);         # check before stripping :
-       $prot  = "https" if ($prot eq "");
-       $prot  =~ s#:##g;                # strip :
-    my $auth  =  ""; # TODO
-    my $path  =  $arg;
-       $path  =~ s#^.*?/#/#;            # get /path/and?more
-    my $port  =  "";
-    my $host  =  $arg;
-       $host  =~ s#^\s*(?:[a-z][A-Z0-9]*:)?//##i;   # strip schema (protocol), if any
-       $host  =~ s#^(?:[^@]+@)?##i;     # strip user:pass, if any
-       $host  =~ s#/.*$##;              # strip /path/and?more
-    ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
-    $port  =  $last if not defined $port;
-    _y_ARG("arg=$arg => prot=$prot, host=$host, port=$port");
-    #return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
-    return ($prot, $host, $port, $auth, $path);
-} # _get_target
-
-# end sub
-
 usr_pre_args();
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 #| scan options and arguments
 #| -------------------------------------
@@ -7290,67 +7292,67 @@ while ($#argv >= 0) {
         # programming: for better readability  "if($typ eq CONST)"  is used
         #              instead of recommended  "if(CONST eq $typ)"  below
         #  $typ = '????'; # expected next argument
-        #  +---------+----------+------------------------------+--------------------
-        #   argument to process   what to do                    expect next argument
-        #  +---------+----------+------------------------------+--------------------
-        if ($typ eq 'CFG_CIPHER') { _cfg_set_cipher($typ, $arg);$typ = 'HOST'; }
-        if ($typ eq 'CFG_INIT') { _cfg_set_init($typ, $arg);    $typ = 'HOST'; }
-        if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
+        #  +---------+--------------+------------------------------------------
+        #   argument to process   what to do
+        #  +---------+--------------+------------------------------------------
+        if ($typ eq 'CFG_CIPHER')   { _cfg_set_cipher($typ, $arg);  }
+        if ($typ eq 'CFG_INIT')     { _cfg_set_init($typ, $arg);    }
+        if ($typ =~ m/^CFG/)        { _cfg_set($typ, $arg);         }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
-        if ($typ eq 'VERBOSE')  { $cfg{'verbose'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'LD_ENV')   { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'LD_ENV3')  { $cmd{'envlibvar3'}= $arg;     $typ = 'HOST'; }
-        if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'OPENSSL3') { $cmd{'openssl3'}  = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
-        if ($typ eq 'SSLFIPS')  { $cfg{'openssl_fips'}  = $arg; $typ = 'HOST'; }
-        if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
-        if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);        $typ = 'HOST'; }
-        if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
-        if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
-        if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; }
-        if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; }
-        if ($typ eq 'OPT')      { $cfg{'sclient_opt'}.=" $arg"; $typ = 'HOST'; }
-        if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'}= $arg;    $typ = 'HOST'; }
-        if ($typ eq 'CAFILE')   { $cfg{'ca_file'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'CAPATH')   { $cfg{'ca_path'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'LD_ENV')       { $cmd{'envlibvar'}   = $arg;   }
+        if ($typ eq 'LD_ENV3')      { $cmd{'envlibvar3'}  = $arg;   }
+        if ($typ eq 'OPENSSL')      { $cmd{'openssl'}     = $arg;   }
+        if ($typ eq 'OPENSSL3')     { $cmd{'openssl3'}    = $arg;   }
+        if ($typ eq 'SSLCNF')       { $cfg{'openssl_cnf'} = $arg;   }
+        if ($typ eq 'SSLFIPS')      { $cfg{'openssl_fips'}= $arg;   }
+        if ($typ eq 'VERBOSE')      { $cfg{'verbose'}     = $arg;   }
+        if ($typ eq 'DO')           { push(@{$cfg{'do'}}, $arg);    } # treat as command,
+        if ($typ eq 'NO_OUT')       { push(@{$cfg{'ignore-out'}}, $arg);}
+        if ($typ eq 'EXE')          { push(@{$cmd{'path'}}, $arg);  }
+        if ($typ eq 'LIB')          { push(@{$cmd{'libs'}}, $arg);  }
+        if ($typ eq 'CALL')         { push(@{$cmd{'call'}}, $arg);  }
+        if ($typ eq 'SEP')          { $text{'separator'}  = $arg;   }
+        if ($typ eq 'OPT')          { $cfg{'sclient_opt'}.= " $arg";}
+        if ($typ eq 'TIMEOUT')      { $cfg{'timeout'}     = $arg;   }
+        if ($typ eq 'CTXT')         { $cfg{'no_cert_txt'} = $arg;   }
+        if ($typ eq 'CAFILE')       { $cfg{'ca_file'}     = $arg;   }
+        if ($typ eq 'CAPATH')       { $cfg{'ca_path'}     = $arg;   }
+        if ($typ eq 'CADEPTH')      { $cfg{'ca_depth'}    = $arg;   }
         # TODO: use cfg{'targets'} for proxy*
-        if ($typ eq 'PPORT')    { $cfg{'proxyport'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'ANON_OUT') { $cfg{'regex'}->{'anon_output'} = qr($arg);$typ = 'HOST'; }
-        if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'} = $arg;$typ = 'HOST'; }
-        if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'} = $arg;$typ = 'HOST'; }
-        if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}    = $arg;$typ = 'HOST'; }
-        if ($typ eq 'FILE_PEM')     { $cfg{'data'}->{'file_pem'}     = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLRETRY')     { $cfg{'sslhello'}->{'retry'}    = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLTOUT')      { $cfg{'sslhello'}->{'timeout'}  = $arg;$typ = 'HOST'; }
-        if ($typ eq 'MAXCIPHER')    { $cfg{'sslhello'}->{'maxciphers'}=$arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLERROR_MAX') { $cfg{'sslerror'}->{'max'}      = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLERROR_TOT') { $cfg{'sslerror'}->{'total'}    = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLERROR_DLY') { $cfg{'sslerror'}->{'delay'}    = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}  = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'} = $arg;$typ = 'HOST'; }
-        if ($typ eq 'CONNECT_DLY')  { $cfg{'connect_delay'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLS')     { $cfg{'starttls'}          = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'TLSDELAY')     { $cfg{'starttls_delay'}    = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SLOWDELAY')    { $cfg{'slow_server_delay'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE1')   { $cfg{'starttls_error'}[1] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE2')   { $cfg{'starttls_error'}[2] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE3')   { $cfg{'starttls_error'}[3] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP1')   { $cfg{'starttls_phase'}[1] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP2')   { $cfg{'starttls_phase'}[2] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP3')   { $cfg{'starttls_phase'}[3] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP4')   { $cfg{'starttls_phase'}[4] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5] = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'PORT')         { $cfg{'port'}              = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'PPORT')        { $cfg{'proxyport'}   = $arg;   }
+        if ($typ eq 'PUSER')        { $cfg{'proxyuser'}   = $arg;   }
+        if ($typ eq 'PPASS')        { $cfg{'proxypass'}   = $arg;   }
+        if ($typ eq 'PAUTH')        { $cfg{'proxyauth'}   = $arg;   }
+        if ($typ eq 'SNINAME')      { $cfg{'sni_name'}    = $arg;   }
+        if ($typ eq 'ANON_OUT')     { $cfg{'regex'}->{'anon_output'}  = qr($arg); }
+        if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'}  = $arg; }
+        if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'}  = $arg; }
+        if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}     = $arg; }
+        if ($typ eq 'FILE_PEM')     { $cfg{'data'}->{'file_pem'}      = $arg; }
+        if ($typ eq 'SSLRETRY')     { $cfg{'sslhello'}->{'retry'}     = $arg; }
+        if ($typ eq 'SSLTOUT')      { $cfg{'sslhello'}->{'timeout'}   = $arg; }
+        if ($typ eq 'MAXCIPHER')    { $cfg{'sslhello'}->{'maxciphers'}= $arg; }
+        if ($typ eq 'SSLERROR_MAX') { $cfg{'sslerror'}->{'max'}       = $arg; }
+        if ($typ eq 'SSLERROR_TOT') { $cfg{'sslerror'}->{'total'}     = $arg; }
+        if ($typ eq 'SSLERROR_DLY') { $cfg{'sslerror'}->{'delay'}     = $arg; }
+        if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}   = $arg; }
+        if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'}  = $arg; }
+        if ($typ eq 'CONNECT_DLY')  { $cfg{'connect_delay'}           = $arg; }
+        if ($typ eq 'STARTTLS')     { $cfg{'starttls'}                = $arg; }
+        if ($typ eq 'TLSDELAY')     { $cfg{'starttls_delay'}          = $arg; }
+        if ($typ eq 'SLOWDELAY')    { $cfg{'slow_server_delay'}       = $arg; }
+        if ($typ eq 'STARTTLSE1')   { $cfg{'starttls_error'}[1]       = $arg; }
+        if ($typ eq 'STARTTLSE2')   { $cfg{'starttls_error'}[2]       = $arg; }
+        if ($typ eq 'STARTTLSE3')   { $cfg{'starttls_error'}[3]       = $arg; }
+        if ($typ eq 'STARTTLSP1')   { $cfg{'starttls_phase'}[1]       = $arg; }
+        if ($typ eq 'STARTTLSP2')   { $cfg{'starttls_phase'}[2]       = $arg; }
+        if ($typ eq 'STARTTLSP3')   { $cfg{'starttls_phase'}[3]       = $arg; }
+        if ($typ eq 'STARTTLSP4')   { $cfg{'starttls_phase'}[4]       = $arg; }
+        if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5]       = $arg; }
+        if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
-            #  ------+----------+------------------------------+--------------------
+        #  +---------+--------------+------------------------------------------
         if ($typ eq 'CIPHER')   {
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
@@ -7361,7 +7363,6 @@ while ($#argv >= 0) {
                 }
             }
             push(@{$cfg{'cipher'}}, $arg) if ($arg !~ m/^\s*$/);
-            $typ = 'HOST';
         }
         if ($typ eq 'STD_FORMAT') {
             if ($arg =~ /$cfg{'regex'}->{'std_format'}/) {
@@ -7383,7 +7384,6 @@ while ($#argv >= 0) {
             if ($arg =~ /^dtlsv?1[-_.]?1$/i)  { $cfg{'DTLSv11'} = 1; }
             if ($arg =~ /^dtlsv?1[-_.]?2$/i)  { $cfg{'DTLSv12'} = 1; }
             if ($arg =~ /^dtlsv?1[-_.]?3$/i)  { $cfg{'DTLSv13'} = 1; }
-            $typ = 'HOST';
         }
         if ($typ eq 'PHOST')    {
             # TODO: use cfg{'targets'} for proxy
@@ -7401,7 +7401,6 @@ while ($#argv >= 0) {
                 $cfg{'proxyport'} = $2;
             # else port must be given by --proxyport
             }
-            $typ = 'HOST';
         }
         # following ($arg !~ /^\s*$/) check avoids warnings in CGI mode
         if ($typ eq 'LABEL')   {
@@ -8212,6 +8211,9 @@ while ($#argv >= 0) {
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
+#| prepare %cfg according options
+#| -------------------------------------
+
 local $\ = "\n";
 
 # TODO: use cfg{'targets'} for proxy
@@ -8550,7 +8552,7 @@ _yeast_EXIT("exit=MAIN  - start");
 _yeast_ciphers_list();
 usr_pre_main();
 
-#| main: do the work for all targets
+#| do the work for all targets
 #| -------------------------------------
 
 # defensive, user-friendly programming
@@ -8576,7 +8578,7 @@ if ((0 < $check) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     }
 }
 
-#| main: perform commands for all hosts
+#| perform commands for all hosts
 #| -------------------------------------
 
 usr_pre_host();
@@ -8642,7 +8644,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $Net::SSLinfo::target_url   = get_target_path($idx);
     $Net::SSLinfo::target_url   =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
-    printheader(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
+    print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
 
     _yeast_TIME("DNS{");
 
@@ -8701,14 +8703,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_is_do('host') or (($info + $check + $cmdsni) > 0)) {
         _y_CMD("+info || +check || +sni*");
         if ($legacy =~ /(full|compact|simple|owasp)/) {
-            printruler();
+            print_ruler();
             print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
             print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
                 print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
                 print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
             }
-            printruler();
+            print_ruler();
         }
     }
 
@@ -8834,7 +8836,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
                     # need a header when more than one protocol is checked
                     $header = 1;
                 }
-                printtitle($legacy, $ssl, $host, $port, $header);
+                print_title($legacy, $ssl, $host, $port, $header);
             }
             # TODO: need to simplify above conditions
             printciphercheck($legacy, $ssl, $host, $port,
