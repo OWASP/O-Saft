@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.934 19/12/05 07:49:18",
+    SID         => "@(#) yeast.pl 1.935 19/12/05 08:59:02",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -79,6 +79,7 @@ sub _set_binmode    {
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
 sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:ARGV
+    # return 1 if value in command line arguments @ARGV
 sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace$)/} @ARGV); }  # case-sensitive! SEE Note:ARGV
     # need to check @ARGV directly as this is called before any options are parsed
 
@@ -174,6 +175,7 @@ printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI
 sub __SSLinfo($$$);
 sub _is_intern($);  # Perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$); #   "
+    #
 
 #| README if any
 #| -------------------------------------
@@ -195,7 +197,9 @@ my  $cgi = 0;
 #| -------------------------------------
 # functions and variables used very early in main
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
+    # print line for debugging
 sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
+    # print line for debugging
 sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
@@ -3078,9 +3082,9 @@ sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call
 
 #| definitions: check functions
 #| -------------------------------------
-sub _setvalue($){ my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
+sub _setvalue   { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
-sub _isbeast($$){
+sub _isbeast    {
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return ""      if ($ssl    !~ /(?:SSL|TLSv1$)/); # TLSv11 or later are not vulnerable to BEAST
@@ -3088,7 +3092,7 @@ sub _isbeast($$){
     return "";
 } # _isbeast
 ### _isbreach($)        { return "NOT YET IMPLEMEMNTED"; }
-sub _isbreach($){
+sub _isbreach   {
     # return 'yes' if vulnerable to BREACH
     return "";
 # TODO: checks
@@ -3110,45 +3114,46 @@ sub _iscrime    {
     #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
     return $ret;
 } # _iscrime
-sub _islucky($) { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
+sub _istime     { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
+    # return given cipher if vulnerable to TIME attack, empty string otherwise
+sub _islucky    { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
     # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
-sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
-sub _isfreak($$){
+sub _isfreak    {
     # return given cipher if vulnerable to FREAK attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _isfreak
-sub _islogjam($$) {
+sub _islogjam   {
     # return given cipher if vulnerable to logjam attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
     return "";
 } # _islogjam
-sub _isrobot($$){
+sub _isrobot    {
     # return given cipher if vulnerable to ROBOT attack, empty string otherwise
     my ($ssl, $cipher) = @_;
    #return ""      if ($cipher =~ /$cfg{'regex'}->{'notROBOT'}/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'ROBOT'}/);
     return "";
 } # _isrobot
-sub _issloth($$){
+sub _issloth    {
     # return given cipher if vulnerable to SLOTH attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
     return "";
 } # _issloth
-sub _issweet($$){
+sub _issweet    {
     # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
     return "";
 } # _issweet
-sub _ispfs($$)  { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  ""  : $c; }
+sub _ispfs      { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  ""  : $c; }
     # return given cipher if it does not support forward secret connections (PFS)
-sub _isrc4($)   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
+sub _isrc4      { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
     # return given cipher if it is RC4
 sub _istr02102          {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
@@ -6085,6 +6090,7 @@ sub printdump       {
 } # printdump
 
 sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
+    #? print header ruler line
 
 sub print_header    {
     #? print title line and table haeder line if second argument given
@@ -6259,9 +6265,10 @@ sub print_size($$$$)    {
     return;
 } # print_size
 
-sub print_cipherruler_dh{ print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); return; }
+sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); return; }
+    #? print header ruler line for ciphers with DH parameters
 sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); return; }
-    #? print header ruler line
+    #? print header ruler line for ciphers
 sub print_cipherhead($) {
     #? print header line according given legacy format
     my $legacy  = shift;
@@ -7219,6 +7226,7 @@ sub printopenssl        {
 } # printopenssl
 
 sub printusage_exit     {
+    #? print simple usage
     my @txt = @_;
     local $\ = "\n";
     print STR_USAGE, @txt;
