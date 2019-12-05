@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.937 19/12/05 11:19:14",
+    SID         => "@(#) yeast.pl 1.938 19/12/05 22:54:33",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -3773,7 +3773,7 @@ sub _get_target         {
        $host  =~ s#/.*$##;              # strip /path/and?more
     ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
     $port  =  $last if not defined $port;
-    _y_ARG("arg=$arg => prot=$prot, host=$host, port=$port");
+    _y_ARG("  target arg=$arg => prot=$prot, host=$host, port=$port");
     #return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
@@ -7541,6 +7541,7 @@ while ($#argv >= 0) {
 
     next if ($arg =~ /^\s*$/);  # ignore empty arguments
 
+    _y_ARG("arg_val? $arg");
     # remove trailing = for all options
     # such options are incorrectly used, or are passed in in CGI mode
     # NOTE: this means that we cannot have empty strings as value
@@ -7555,6 +7556,7 @@ while ($#argv >= 0) {
     }
 
     # first handle some old syntax for backward compatibility
+    _y_ARG("opt_old? $arg");
     if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/) {
         $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
         _warn("022: old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
@@ -7573,6 +7575,7 @@ while ($#argv >= 0) {
 
     # all options starting with  --usr or --user  are not handled herein
     # push them on $cfg{'usr_args'} so they can be accessd in o-saft-*.pm
+    _y_ARG("opt_usr? $arg");
     if ($arg =~ /^--use?r/) {
         $arg =~ s/^(?:--|\+)//; # strip leading chars
         push(@{$cfg{'usr_args'}}, $arg);
@@ -7580,6 +7583,7 @@ while ($#argv >= 0) {
     }
 
     # all options starting with  --h or --help or +help  are not handled herein
+    _y_ARG("opt_--h? $arg");
     if ($arg =~ /^(?:--|\+)h(?:elp)?$/)          { $arg = "--help=NAME"; }# --h  or --help
     if ($arg =~ /^\+(abbr|abk|glossar|todo)$/i)  { $arg = "--help=$1"; }  # for historic reason
     # get matching string right of =
@@ -7600,6 +7604,7 @@ while ($#argv >= 0) {
     }
 
     #{ handle some specials
+    _y_ARG("optmisc? $arg");
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
@@ -7995,7 +8000,7 @@ while ($#argv >= 0) {
     #!#+---------+----------------------+---------------------------+-------------
     if ($arg =~ /^\+targets?$/)         { $arg = '+host';           } # alias: print host and DNS information
     if ($arg =~ /^\+host$p/)            { $arg = '+host';           } # alias: until indiidual +host-* commands available
-    # protocol commands
+    # check protocol commands
     if ($arg eq  '+check')              { $check  = 1;              }
     if ($arg eq  '+info')               { $info   = 1;              } # needed 'cause +info and ..
     if ($arg eq  '+quick')              { $quick  = 1;              } # .. +quick convert to list of commands
@@ -8008,7 +8013,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+prots')              { $arg = '+protocols';      } # alias:
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';          } # alias:
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';         } # alias:
-    # cipher commands
+    # check cipher commands
     if ($arg =~ /^\+ciphers?$p?adh/i)   { $arg = '+cipher_adh';     } # alias:
     if ($arg =~ /^\+ciphers?$p?cbc/i)   { $arg = '+cipher_cbc';     } # alias:
     if ($arg =~ /^\+ciphers?$p?des/i)   { $arg = '+cipher_des';     } # alias:
@@ -8134,14 +8139,13 @@ while ($#argv >= 0) {
     }
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
-        _y_ARG("command= $val");
+        _y_ARG("command+ $val");
         next if ($val =~ m/^\+\s*$/);   # ignore empty commands; for CGI mode
         next if ($val =~ m/^\s*$/);     # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {       # +exec is special
             $cfg{'exec'} = 1;
             next;
         }
-        #_dbx("command= $val");          # convert all +CMD to lower case
         $val = lc($val);                # be greedy to allow +BEAST, +CRIME, etc.
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'sizes')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}});   next; }
@@ -8161,11 +8165,13 @@ while ($#argv >= 0) {
         if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
         if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
         if (_is_member($val, \@{$cfg{'commands_usr'}}) == 1) {
+            _y_ARG("cmdsusr= $val");
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
         if (_is_member($val, \@{$cfg{'commands_notyet'}}) > 0) {
             _warn("044: command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
+            _y_ARG("command= $val");
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
             _warn("049: command '$val' unknown; command ignored");
@@ -8216,6 +8222,8 @@ while ($#argv >= 0) {
             set_target_error($idx, 0);
             # endif
         }
+    } else {
+        _y_ARG("ignore=  $typ $arg");   # should never happen
     }
 
 } # while options and arguments
