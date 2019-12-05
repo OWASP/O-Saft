@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.935 19/12/05 08:59:02",
+    SID         => "@(#) yeast.pl 1.936 19/12/05 10:07:58",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -6275,7 +6275,8 @@ sub print_cipherhead($) {
     return if ($cfg{'out_header'} <= 0);
     if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
     if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
-    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
+    #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); } # old version
+    if ($legacy eq 'ssltest-g') { printf("Status(Compliant,Non-compliant,Disabled);Hostname:Port;SSL-Protocol;Cipher-Name;Cipher-Description\n"); }
     if ($legacy eq 'simple')    { printf("=   %-34s%s\t%s\n", $text{'cipher'}, $text{'support'}, $text{'security'});
                                   print_cipherruler(); }
     if ($legacy eq 'owasp')     { printf("=   %-34s\t%s\n", $text{'cipher'}, $text{'security'});
@@ -6376,7 +6377,8 @@ sub print_cipherline($$$$$$) {
         printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
     }
         # compliant;host:port;protocol;cipher;description
-    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
+    #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
+    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s;%s\n", 'C', $host . ":" . $port, $ssl, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
     return;
 } # print_cipherline
@@ -8237,7 +8239,7 @@ if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     $cfg{'usehttps'}    = 0;
     $cfg{'usehttp'}     = 0;
     $cfg{'usedns'}      = 0;
-    _hint($cfg{'hints'}->{'cipher'});
+    #_hint($cfg{'hints'}->{'cipher'});
 }
 if (_is_do('ciphers')) {
     # +ciphers command is special:
