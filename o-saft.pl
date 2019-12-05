@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.936 19/12/05 10:07:58",
+    SID         => "@(#) yeast.pl 1.937 19/12/05 11:19:14",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -6458,6 +6458,7 @@ sub _sort_cipher_results {
         #       # A 20 HIGH ECDHE-RSA-AES128-GCM-SHA256 TLSv12 yes
         my $weight = 50; # default if nothing below matches
         $weight  = 19 if ($cipher =~ /^ECDHE/i);
+        $weight  = 25 if ($cipher =~ /^ECDHE.ECDS/i);
         $weight  = 29 if ($cipher =~ /^(?:DHE|EDH)/i);
         $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
         $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
