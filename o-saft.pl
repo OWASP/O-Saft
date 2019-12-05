@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.938 19/12/05 22:54:33",
+    SID         => "@(#) yeast.pl 1.939 19/12/05 23:28:54",
     STR_VERSION => "19.11.19",          # <== our official version number
 };
 
@@ -9729,7 +9729,7 @@ is sufficent for these checks.
 
 More descriptions are in the section  LIMITATIONS  of the man page, see
 
-   "Connection Problems"  there.
+    "Connection Problems"  there.
 
 
 =head2 Note:%prot
@@ -9836,9 +9836,9 @@ Some texts from: http://www.zytrax.com/tech/survival/ssl.html
 The term Certificate Authority is defined as being an entity which signs
 certificates in which the following are true:
 
- * the issuer and subject fields are the same,
- * the KeyUsage field has keyCertSign set
- * and/or the basicConstraints field has the cA attribute set TRUE.
+   * the issuer and subject fields are the same,
+   * the KeyUsage field has keyCertSign set
+   * and/or the basicConstraints field has the cA attribute set TRUE.
 
 Typically, in chained certificates the root CA certificate is the topmost
 in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
@@ -9878,15 +9878,15 @@ Multi-host certificates (a.k.a wildcard certificates)
 
 EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
 certificates are distinguished by the presence of the CertificatePolicies
-extension containg a registered OID in the policyIdentifier field.
-see checkev() above
+extension containing a registered OID in the policyIdentifier field.  See
+checkev() above:
 
-  RFC 3280
-   4.2.1.10  Basic Constraints
-     X509v3 Basic Constraints:
-         cA:FALSE
-         pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
-  RFC 4158
+    RFC 3280
+     4.2.1.10  Basic Constraints
+       X509v3 Basic Constraints:
+           cA:FALSE
+           pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
+    RFC 4158
 
 
 =head2 Note:term default cipher
@@ -9919,18 +9919,27 @@ this is not yet implemented completely.
 The problem should finally be solved when  +cipher and +cipherraw  use the
 same data structre for the results. Then the program flow should be like:
 
-   ciphers_scan()
-   checkciphers()
-   printciphers()
-   printciphersummary()
+    ciphers_scan()
+    checkciphers()
+    printciphers()
+    printciphersummary()
 
 
 =head2 Note:+cipher
 
-Starting with VERSION 19.11.19,  the commands  +cipherall  and  +cipherraw
-was replaced by  +cipher  and  +cipher-dump, the previous command  +cipher
-was replaced by  +cipher-openssl. When using any of these commands, a hint
-will be written. 
+Starting with VERSION 19.11.19, only the command  +cipher  is supported.
+When using any of the old commands, a hint will be written. 
+The commands  +cipherall  and  +cipherraw  are silently "converted" to the
+new syntax, see following mapping:
+
+    VERSION < 19.11.19           VERSION > 19.11.19
+    ----------------------------+-------------------------------
+    +cipher                      +cipher --ciphermode=ssleay
+    +cipher --force-openssl      +cipher --ciphermode=openssl
+    +cipherall                   +cipher
+    +cipherraw                   +cipher --ciphermode=intern
+    ----------------------------+-------------------------------
+
 
 With this version the output format for cipher results was also changed.
 It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
@@ -9951,7 +9960,7 @@ in %cfg in the code, or set using command line options at startup.
 The hash %{$cfg{'hints'}} contains all these texts.  A definition may look
 like:
 
-   $cfg{hints}->{KEY} = 'new text';
+    $cfg{hints}->{KEY} = 'new text';
 
 KEY can be any string. If KEY (without leading +) is a known valid command
 the message is printed automatically with the commands output (see below).
@@ -9959,24 +9968,24 @@ The text may contain formatting characters like \t and \n.
 
 All predefined (hardcoded) hints can be listed with:
 
-   --help=hint
+    --help=hint
 
 To set new hints, following option can be used:
 
-   --cfg_hint=KEY="some text\nin 2 lines"
+    --cfg_hint=KEY="some text\nin 2 lines"
 
 Automatic printing works as follows:
 
-   print_check()  and  print_data() will automatically print hint texts if
-   defined for the corresponding command.
+    print_check() and print_data()  will automatically print hint texts if
+    defined for the corresponding command.
 
 They can be printed immediately (without being specified in  $cfg{hints} :
 
-   printhint('your-key'),
+    printhint('your-key'),
 
 It is not recommended to use:
 
-   print STR_HINT, "my text";
+    print STR_HINT, "my text";
 
 
 =cut
