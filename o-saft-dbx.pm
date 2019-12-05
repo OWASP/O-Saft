@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.107 19/12/05 07:54:35";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.108 19/12/05 07:56:19";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -310,7 +310,6 @@ sub _yeast_targets          {
     my $trace   = shift;
     my $prefix  = shift;
     my @targets = @_;
-    printf("#%s:\n", (caller(0))[3]);
     #print " === print internal data structures for a targets === ";
     if (0 == $trace) { # simple list
         printf("%s%14s= [ ", $prefix, "targets");
@@ -855,7 +854,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.107 2019/12/05
+1.108 2019/12/05
 
 =head1 AUTHOR
 
