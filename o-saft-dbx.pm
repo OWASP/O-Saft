@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.106 19/12/04 22:47:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.107 19/12/05 07:54:35";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -423,12 +423,13 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     # else  user friendly informations
     my $sni_name = $cfg{'sni_name'} || "<<undef>>"; # default is Perl's undef
+    my $port     = $cfg{'port'} || "<<undef>>";     # default is Perl's undef
     _yline(" user-friendly cfg {");
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
     _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
-    _yeast("  default port= $cfg{'port'} (last specified)");
+    _yeast("  default port= $port (last specified)");
     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
         printf("%s%14s= %s\n", $cfg{'prefix_verbose'}, $key, $cfg{$key});
@@ -854,7 +855,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.106 2019/12/04
+1.107 2019/12/05
 
 =head1 AUTHOR
 
