@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.199 19/12/04 20:20:47",
+    SID_osaft   => "@(#) osaft.pm 1.200 19/12/05 11:17:51",
 
 };
 
@@ -2147,7 +2147,7 @@ our %cfg = (
         'OWASP_B'   => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
         'OWASP_C'   => '^(?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]',
         'OWASP_D'   => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
-        'OWASP_NA'  => '(?:ARIA|CAMELLIA|GOST|IDEA|SEED|CECPQ)',
+        'OWASP_NA'  => '(?:ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ)',
         # TODO: need exception, i.e. TLSv1 and TLSv11
         'notOWASP_A'=> '^(?:TLSv11?)',
         'notOWASP_B'=> '',
@@ -2686,9 +2686,9 @@ sub sort_cipher_names   {
     my @insecure = (
         qw((?:RC[24]))  ,               # all RC2 and RC4
         qw((?:CBC|DES)) ,               # all CBC, DES, 3DES
-        qw((?:DSS))     ,               # all DSS
+        qw((?:DSA|DSS)) ,               # all DSA, DSS
         qw((?:MD[2345])),               # all MD
-        qw(DH.?(?i:anon)) ,             # Anon needs to be caseless
+        qw(DH.?(?i:anon)),              # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
         qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
     );
@@ -3120,7 +3120,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.199 2019/12/04
+1.200 2019/12/05
 
 =head1 AUTHOR
 
