@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.1 19/11/24 20:42:32
+#?      @(#) Makefile.legacy 1.2 19/12/05 09:18:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.1
+_SID.legacy        := 1.2
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -53,8 +53,8 @@ LIST.legacy        := \
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testcmd-legacy+cipher%:     EXE.pl      = ../$(SRC.pl)
-testcmd-legacy+cipher%:     TEST.init   = --trace-CLI --header +cipher
+testarg-legacy+cipher%:     EXE.pl      = ../$(SRC.pl)
+testarg-legacy+cipher%:     TEST.init   = --trace-CLI --header +cipher
 
 ifndef legacy-macros-generated
     $(foreach arg, $(LIST.legacy),\
@@ -68,9 +68,9 @@ endif
 ALL.test.legacy     = $(foreach host,$(TEST.legacy.hosts),$(ALL.testlegacy:%=%$(host)))
 ALL.test.legacy.log += $(ALL.test.legacy:%=%.log)
 
-test.legacy.log-compare:    TEST.target_prefix  = testcmd-legacy
-test.legacy.log-move:       TEST.target_prefix  = testcmd-legacy
-test.legacy.log:            TEST.target_prefix  = testcmd-legacy
+test.legacy.log-compare:    TEST.target_prefix  = testarg-legacy
+test.legacy.log-move:       TEST.target_prefix  = testarg-legacy
+test.legacy.log:            TEST.target_prefix  = testarg-legacy
 
 test.legacy:        $(ALL.test.legacy)
 test.legacy.log:    $(ALL.test.legacy.log) test.log-compare-hint
