@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.200 19/12/05 11:17:51",
+    SID_osaft   => "@(#) osaft.pm 1.201 19/12/06 10:16:16",
 
 };
 
@@ -1521,7 +1521,7 @@ our %cfg = (
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
                                 # 1: make connection with SNI set (can be empty string)
-                                # 3: test with and without SNI mode (used with +cipherraw only)
+                                # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttps'      => 1,       # 1: make HTTPS request
@@ -1790,7 +1790,7 @@ our %cfg = (
                         qw(
                          check cipher dump check_sni exec help info info--v http
                          quick list libversion sizes s_client version quit
-                         sigkey bsi ev cipherall cipherraw cipher_dh cipher_default
+                         sigkey bsi ev cipher_dh cipher_default
                         ),
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
@@ -1870,7 +1870,7 @@ our %cfg = (
                        )],
                                 # TODO: need simple check for protocols
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher cipherall cipher_default
+                        qw(check cipher cipher_default
                            cipher_pfs cipher_order cipher_strong cipher_selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
@@ -3120,7 +3120,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.200 2019/12/05
+1.201 2019/12/06
 
 =head1 AUTHOR
 
