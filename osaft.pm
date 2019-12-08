@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.201 19/12/06 10:16:16",
+    SID_osaft   => "@(#) osaft.pm 1.202 19/12/08 21:10:36",
 
 };
 
@@ -1788,9 +1788,10 @@ our %cfg = (
     'commands_int'  => [        # add internal commands
                                 # these have no key in %data or %checks
                         qw(
-                         check cipher dump check_sni exec help info info--v http
-                         quick list libversion sizes s_client version quit
-                         sigkey bsi ev cipher_dh cipher_default
+                         cipher cipher_intern cipher_openssl cipher_ssleay
+                         cipher_dump   cipher_dh cipher_default
+                         bsi check check_sni dump ev exec help info info--v http
+                         quick list libversion sigkey sizes s_client version quit
                         ),
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
@@ -3120,7 +3121,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.201 2019/12/06
+1.202 2019/12/08
 
 =head1 AUTHOR
 
