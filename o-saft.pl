@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.942 19/12/08 12:04:34",
+    SID         => "@(#) yeast.pl 1.943 19/12/08 12:23:51",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -8174,6 +8174,7 @@ while ($#argv >= 0) {
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
             _warn("049: command '$val' unknown; command ignored");
+            _hint($cfg{'hints'}->{'cipher'}) if ($val =~ m/^cipher(?:all|raw)/);
         }
         next;
     }
@@ -9925,17 +9926,6 @@ same data structre for the results. Then the program flow should be like:
 
 Starting with VERSION 19.11.19, only the command  +cipher  is supported.
 When using any of the old commands, a hint will be written. 
-The commands  +cipherall  and  +cipherraw  are silently "converted" to the
-new syntax, see following mapping:
-
-    VERSION < 19.11.19           VERSION > 19.11.19
-    ----------------------------+-------------------------------
-    +cipher                      +cipher --ciphermode=ssleay
-    +cipher --force-openssl      +cipher --ciphermode=openssl
-    +cipherall                   +cipher
-    +cipherraw                   +cipher --ciphermode=intern
-    ----------------------------+-------------------------------
-
 
 With this version the output format for cipher results was also changed.
 It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
@@ -9945,6 +9935,9 @@ also obsolete.
 
 Note that the description in L<Note:+cipherall> uses the commands names as
 used in VESRIONs before 19.11.19.
+
+More information, which is also important for users,  can be found in user
+documentation  OSaft/Doc/help.txt  section "Version 19.11.19 and later".
 
 
 =head2 Note:hints
