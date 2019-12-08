@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.944 19/12/08 20:16:31",
+    SID         => "@(#) yeast.pl 1.945 19/12/08 21:55:10",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -1039,8 +1039,8 @@ our %shorttexts = (
     'pkp_pins'      => "Public Key Pins",
     'selfsigned'    => "Validity (signature)",
     'chain'         => "Certificate chain",
-    'chain_verify'  => "CA Chain trace",
     'verify'        => "Chain verified",
+    'chain_verify'  => "CA Chain trace",
     'error_verify'  => "CA Chain error",
     'error_depth'   => "CA Chain error in level",
     'nonprint'      => "No non-printables",
@@ -7323,8 +7323,8 @@ while ($#argv >= 0) {
         if ($typ eq 'LD_ENV3')      { $cmd{'envlibvar3'}  = $arg;   }
         if ($typ eq 'OPENSSL')      { $cmd{'openssl'}     = $arg;   }
         if ($typ eq 'OPENSSL3')     { $cmd{'openssl3'}    = $arg;   }
-        if ($typ eq 'SSLCNF')       { $cfg{'openssl_cnf'} = $arg;   }
-        if ($typ eq 'SSLFIPS')      { $cfg{'openssl_fips'}= $arg;   }
+        if ($typ eq 'OPENSSL_CNF')  { $cfg{'openssl_cnf'} = $arg;   }
+        if ($typ eq 'OPENSSL_FIPS') { $cfg{'openssl_fips'}= $arg;   }
         if ($typ eq 'VERBOSE')      { $cfg{'verbose'}     = $arg;   }
         if ($typ eq 'DO')           { push(@{$cfg{'do'}}, $arg);    } # treat as command,
         if ($typ eq 'NO_OUT')       { push(@{$cfg{'ignore-out'}}, $arg);}
@@ -7334,33 +7334,33 @@ while ($#argv >= 0) {
         if ($typ eq 'SEP')          { $text{'separator'}  = $arg;   }
         if ($typ eq 'OPT')          { $cfg{'sclient_opt'}.= " $arg";}
         if ($typ eq 'TIMEOUT')      { $cfg{'timeout'}     = $arg;   }
-        if ($typ eq 'CTXT')         { $cfg{'no_cert_txt'} = $arg;   }
-        if ($typ eq 'CAFILE')       { $cfg{'ca_file'}     = $arg;   }
-        if ($typ eq 'CAPATH')       { $cfg{'ca_path'}     = $arg;   }
-        if ($typ eq 'CADEPTH')      { $cfg{'ca_depth'}    = $arg;   }
+        if ($typ eq 'CERT_TEXT')    { $cfg{'no_cert_txt'} = $arg;   }
+        if ($typ eq 'CA_FILE')      { $cfg{'ca_file'}     = $arg;   }
+        if ($typ eq 'CA_PATH')      { $cfg{'ca_path'}     = $arg;   }
+        if ($typ eq 'CA_DEPTH')     { $cfg{'ca_depth'}    = $arg;   }
         # TODO: use cfg{'targets'} for proxy*
-        if ($typ eq 'PPORT')        { $cfg{'proxyport'}   = $arg;   }
-        if ($typ eq 'PUSER')        { $cfg{'proxyuser'}   = $arg;   }
-        if ($typ eq 'PPASS')        { $cfg{'proxypass'}   = $arg;   }
-        if ($typ eq 'PAUTH')        { $cfg{'proxyauth'}   = $arg;   }
+        if ($typ eq 'PROXY_PORT')   { $cfg{'proxyport'}   = $arg;   }
+        if ($typ eq 'PROXY_USER')   { $cfg{'proxyuser'}   = $arg;   }
+        if ($typ eq 'PROXY_PASS')   { $cfg{'proxypass'}   = $arg;   }
+        if ($typ eq 'PROXY_AUTH')   { $cfg{'proxyauth'}   = $arg;   }
         if ($typ eq 'SNINAME')      { $cfg{'sni_name'}    = $arg;   }
         if ($typ eq 'ANON_OUT')     { $cfg{'regex'}->{'anon_output'}  = qr($arg); }
         if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'}  = $arg; }
         if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'}  = $arg; }
         if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}     = $arg; }
         if ($typ eq 'FILE_PEM')     { $cfg{'data'}->{'file_pem'}      = $arg; }
-        if ($typ eq 'SSLRETRY')     { $cfg{'sslhello'}->{'retry'}     = $arg; }
-        if ($typ eq 'SSLTOUT')      { $cfg{'sslhello'}->{'timeout'}   = $arg; }
-        if ($typ eq 'MAXCIPHER')    { $cfg{'sslhello'}->{'maxciphers'}= $arg; }
+        if ($typ eq 'SSLHELLO_RETRY'){$cfg{'sslhello'}->{'retry'}     = $arg; }
+        if ($typ eq 'SSLHELLO_TOUT'){ $cfg{'sslhello'}->{'timeout'}   = $arg; }
+        if ($typ eq 'SSLHELLO_MAXC'){ $cfg{'sslhello'}->{'maxciphers'}= $arg; }
         if ($typ eq 'SSLERROR_MAX') { $cfg{'sslerror'}->{'max'}       = $arg; }
         if ($typ eq 'SSLERROR_TOT') { $cfg{'sslerror'}->{'total'}     = $arg; }
         if ($typ eq 'SSLERROR_DLY') { $cfg{'sslerror'}->{'delay'}     = $arg; }
         if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}   = $arg; }
         if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'}  = $arg; }
-        if ($typ eq 'CONNECT_DLY')  { $cfg{'connect_delay'}           = $arg; }
+        if ($typ eq 'CONNECT_DELAY'){ $cfg{'connect_delay'}           = $arg; }
         if ($typ eq 'STARTTLS')     { $cfg{'starttls'}                = $arg; }
-        if ($typ eq 'TLSDELAY')     { $cfg{'starttls_delay'}          = $arg; }
-        if ($typ eq 'SLOWDELAY')    { $cfg{'slow_server_delay'}       = $arg; }
+        if ($typ eq 'TLS_DELAY')    { $cfg{'starttls_delay'}          = $arg; }
+        if ($typ eq 'SLOW_DELAY')   { $cfg{'slow_server_delay'}       = $arg; }
         if ($typ eq 'STARTTLSE1')   { $cfg{'starttls_error'}[1]       = $arg; }
         if ($typ eq 'STARTTLSE2')   { $cfg{'starttls_error'}[2]       = $arg; }
         if ($typ eq 'STARTTLSE3')   { $cfg{'starttls_error'}[3]       = $arg; }
@@ -7372,7 +7372,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
         #  +---------+--------------+------------------------------------------
-        if ($typ eq 'CIPHER')   {
+        if ($typ eq 'CIPHER_ITEM')  {
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
@@ -7404,7 +7404,7 @@ while ($#argv >= 0) {
             if ($arg =~ /^dtlsv?1[-_.]?2$/i)  { $cfg{'DTLSv12'} = 1; }
             if ($arg =~ /^dtlsv?1[-_.]?3$/i)  { $cfg{'DTLSv13'} = 1; }
         }
-        if ($typ eq 'PHOST')    {
+        if ($typ eq 'PROXY_HOST')    {
             # TODO: use cfg{'targets'} for proxy
             # allow   user:pass@f.q.d.n:42
             $cfg{'proxyhost'} = $arg;
@@ -7445,21 +7445,21 @@ while ($#argv >= 0) {
                 _warn("055: option with unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
-        if ($typ eq 'CRANGE')   {
+        if ($typ eq 'CIPHER_RANGE') {
             if (1 == (grep{/^$arg$/i} keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
                 _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
-        if ($typ eq 'CMODE')   {
+        if ($typ eq 'CIPHER_MODE')  {
             if (1 == (grep{/^$arg$/i} @{$cfg{'ciphermodes'}})) {
                 $cfg{'ciphermode'} = $arg;
             } else {
                 _warn("057: option with unknown cipher mode '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
-        if ($typ eq 'CURVES')   {
+        if ($typ eq 'CIPHER_CURVES') {
             $cfg{'ciphercurves'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
             if ($arg =~ /^[,:]$/) {
                 $cfg{'ciphercurves'} = [];
@@ -7760,14 +7760,14 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
     # proxy options
-    if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           }
-    if ($arg eq  '--proxyport')         { $typ = 'PPORT';           }
-    if ($arg eq  '--proxyuser')         { $typ = 'PUSER';           }
-    if ($arg eq  '--proxypass')         { $typ = 'PPASS';           }
-    if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
+    if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
+    if ($arg eq  '--proxyport')         { $typ = 'PROXY_PORT';      }
+    if ($arg eq  '--proxyuser')         { $typ = 'PROXY_USER';      }
+    if ($arg eq  '--proxypass')         { $typ = 'PROXY_PASS';      }
+    if ($arg eq  '--proxyauth')         { $typ = 'PROXY_AUTH';      }
     if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
-    if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLSDELAY';        }
-    if ($arg =~ /^--slowserverdelay$/i) { $typ = 'SLOWDELAY';       }
+    if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLS_DELAY';       }
+    if ($arg =~ /^--slowserverdelay$/i) { $typ = 'SLOW_DELAY';      }
     if ($arg =~ /^--starttlserror1$/i)  { $typ = 'STARTTLSE1';      }
     if ($arg =~ /^--starttlserror2$/i)  { $typ = 'STARTTLSE2';      }
     if ($arg =~ /^--starttlserror3$/i)  { $typ = 'STARTTLSE3';      }
@@ -7788,8 +7788,8 @@ while ($#argv >= 0) {
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
     if ($arg eq  '--openssl3')          { $typ = 'OPENSSL3';        }
-    if ($arg =~  '--opensslco?nf')      { $typ = 'SSLCNF';          }
-    if ($arg eq  '--opensslfips')       { $typ = 'SSLFIPS';         }
+    if ($arg =~  '--opensslco?nf')      { $typ = 'OPENSSL_CNF';     }
+    if ($arg eq  '--opensslfips')       { $typ = 'OPENSSL_FIPS';    }
     if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}= 1;    }
     if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
     if ($arg eq  '--opensslciphers')    { $cmd{'extciphers'}= 1;    }
@@ -7874,11 +7874,11 @@ while ($#argv >= 0) {
     if ($arg =~ /^--noudp/i)            { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     if ($arg =~ /^--udp/i)              { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     # options for +cipher
-    if ($arg eq   '-cipher')            { $typ = 'CIPHER';          } # openssl
-    if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
-    if ($arg eq  '--ciphermode')        { $typ = 'CMODE';           }
-    if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
-    if ($arg =~ /^--ciphercurves?/)     { $typ = 'CURVES';          }
+    if ($arg eq   '-cipher')            { $typ = 'CIPHER_ITEM';     } # openssl
+    if ($arg eq  '--cipher')            { $typ = 'CIPHER_ITEM';     }
+    if ($arg eq  '--ciphermode')        { $typ = 'CIPHER_MODE';     }
+    if ($arg eq  '--cipherrange')       { $typ = 'CIPHER_RANGE';    }
+    if ($arg =~ /^--ciphercurves?/)     { $typ = 'CIPHER_CURVES';          }
     if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
     if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPN';      }
     if ($arg eq  '--nociphermd5')       { $cfg{'cipher_md5'}= 0;    }
@@ -7940,7 +7940,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'label'} = 'short';  } # ancient sinc 19.01.14
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
-    if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
+    if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CERT_TEXT';       }
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
     if ($arg =~ /^--sslerrormax/i)      { $typ = 'SSLERROR_MAX';    }
     if ($arg =~ /^--sslerrortotal/i)    { $typ = 'SSLERROR_TOT';    }
@@ -7948,15 +7948,15 @@ while ($#argv >= 0) {
     if ($arg =~ /^--sslerrordelay/i)    { $typ = 'SSLERROR_DLY';    }
     if ($arg =~ /^--sslerrortimeout/i)  { $typ = 'SSLERROR_TOUT';   }
     if ($arg =~ /^--sslerrorperprot/i)  { $typ = 'SSLERROR_PROT';   }
-    if ($arg =~ /^--connectdelay/i)     { $typ = 'CONNECT_DLY';     }
+    if ($arg =~ /^--connectdelay/i)     { $typ = 'CONNECT_DELAY';   }
     if ($arg eq  '--socketreuse')       { $cfg{'socket_reuse'}  = 1;}
     if ($arg eq  '--nosocketreuse')     { $cfg{'socket_reuse'}  = 0;}
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
-    if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
-    if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
-    if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
+    if ($arg eq  '--sslretry')          { $typ = 'SSLHELLO_RETRY';  }
+    if ($arg eq  '--ssltimeout')        { $typ = 'SSLHELLO_TOUT';   }
+    if ($arg eq  '--sslmaxciphers')     { $typ = 'SSLHELLO_MAXC';   }
     if ($arg eq  '--usesignaturealg')   { $cfg{'sslhello'}->{'usesignaturealg'} = 1; }
     if ($arg eq  '--nousesignaturealg') { $cfg{'sslhello'}->{'usesignaturealg'} = 0; }
     if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
@@ -7970,9 +7970,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
     if ($arg eq  '--nosslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
     #!#--------+------------------------+---------------------------+----------
-    if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
-    if ($arg =~ /^--cafile$/i)          { $typ = 'CAFILE';          }
-    if ($arg =~ /^--capath$/i)          { $typ = 'CAPATH';          }
+    if ($arg =~ /^--cadepth$/i)         { $typ = 'CA_DEPTH';        } # some tools use CAdepth
+    if ($arg =~ /^--cafile$/i)          { $typ = 'CA_FILE';         }
+    if ($arg =~ /^--capath$/i)          { $typ = 'CA_PATH';         }
     if ($arg =~ /^--stdformat/i)        { $typ = 'STD_FORMAT';      }
     if ($arg =~ /^--winCR/i)            { _set_binmode(":crlf:utf8"); } # historic alias
     # ignored options
