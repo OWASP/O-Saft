@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.943 19/12/08 12:23:51",
+    SID         => "@(#) yeast.pl 1.944 19/12/08 20:16:31",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -4019,7 +4019,10 @@ sub ciphers_scan_raw    {
         my @accepted = ();                          # accepted ciphers
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
-        print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        if (_is_do('cipher') or _is_do('check')) {
+            # FIXME: move to calling place
+            print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        }
         if ('intern' eq $cfg{'ciphermode'}) {
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
@@ -4046,14 +4049,17 @@ sub ciphers_scan_raw    {
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
         }
-        if ('intern' eq $cfg{'ciphermode'}) {
-            $enabled += printcipherall($legacy, $ssl, $host, $port,
-                ($legacy eq "sslscan")?($_printtitle):0, @accepted);
-            print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
-            next if (scalar @accepted < 1); # defensive programming ..
-            #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
-        } else {
-            Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+        # FIXME: move rest of code (print*()) to calling place
+        if (_is_do('cipher') or _is_do('check')) {
+            if ('intern' eq $cfg{'ciphermode'}) {
+                $enabled += printcipherall($legacy, $ssl, $host, $port,
+                    ($legacy eq "sslscan")?($_printtitle):0, @accepted);
+                print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
+                next if (scalar @accepted < 1); # defensive programming ..
+                #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+            } else {
+                Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+            }
         }
     } # $ssl
     return @results;
@@ -8755,7 +8761,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
     }
 
-    if ($cfg{'ciphermode'} =~ m/(?:intern|dump)/) {
+    if (_need_cipher() > 0) {
+      if ($cfg{'ciphermode'} =~ m/(?:intern|dump)/) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=intern{");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
@@ -8768,11 +8775,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # SEE Note:+cipherall
             my $total   = $checks{'cnt_totals'}->{val};
             checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
+            if (_is_do('cipher')) {
             printciphersummary($legacy, $host, $port, $total);
+            }
         ###}
         _yeast_TIME("ciphermode=intern}");
-        next if (0 >= $check);
-    } # ciphermode=intern
+        next if (_is_do('cipher'));
+      } # ciphermode=intern
+    } # need cipher
     next if _yeast_NEXT("exit=HOST2 - host ciphermode=intern");
 
     if (_is_do('fallback_protocol')) {
