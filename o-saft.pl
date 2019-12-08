@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.940 19/12/06 00:37:44",
+    SID         => "@(#) yeast.pl 1.942 19/12/08 12:04:34",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -2006,16 +2006,12 @@ sub _load_modules       {
 
     return if ($osaft_standalone > 0);  # SEE Note:Stand-alone
 
-    if (_is_do('cipher') or _is_do('version')
-        or ($cfg{'starttls'})
-        or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
-       ) {
-        # FIXME: not working for ciphermode=openssl|ssleay
-        $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
-        if ($txt ne "") {
-            die  STR_ERROR, "010: $txt"  if (not _is_do('version'));
-            warn STR_ERROR, "010: $txt";# no reason to die for +version
-        }
+    $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+    if ($txt ne "") {
+        die  STR_ERROR, "010: $txt"  if (not _is_do('version'));
+        warn STR_ERROR, "010: $txt";# no reason to die for +version
+    }
+    if ($cfg{'starttls'}) {
         $cfg{'usehttp'} = 0;            # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
@@ -4093,7 +4089,7 @@ sub ciphers_scan        {
                 # in above warning, even then if  SSLv3 is not needed for the
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
-                # NOTE: appplys to --ciphermode=intern only
+                # NOTE: applys to --ciphermode=intern only
             }
             $cfg{'usesni'} = 0; # do not use SNI for this $ssl
         }
@@ -6928,16 +6924,8 @@ sub printversion        {
             }
         }
     }
-    my @ciphers= Net::SSLinfo::cipher_openssl();# openssl ciphers ALL:aNULL:eNULL
-    my $cnt    = 0;
-       $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
-    print "    number of supported ciphers      " . $cnt;
-    print "    list of supported ciphers        " . join(" ", @ciphers) if ($cfg{'verbose'} > 0);
-    print "    openssl supported SSL versions   " . join(" ", @{$cfg{'version'}});
-    print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
-    printversionmismatch();
 
-    print "= $me +cipher --ciphermode=ssleay =";
+    print "= $me =";
     print "    list of supported elliptic curves " . join(" ", @{$cfg{'ciphercurves'}});
     print "    list of supported ALPN, NPN      " . join(" ", $cfg{'protos_next'});
     if ($cfg{'verbose'} > 0) {
@@ -6945,8 +6933,21 @@ sub printversion        {
         print "    list of supported NPN        " . join(" ", @{$cfg{'protos_npn'}});
     }
 
+    print "= $me +cipher --ciphermode=openssl or --ciphermode=ssleay =";
+    my @ciphers= Net::SSLinfo::cipher_openssl();# openssl ciphers ALL:aNULL:eNULL
+    my $cnt    = 0;
+       $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
+    print "    number of supported ciphers      " . $cnt;
+    print "    list of supported ciphers        " . join(" ", @ciphers) if (0 < $cfg{'verbose'});
+    _hint("use  '--v'  to get list of ciphers") if (0 == $cfg{'verbose'});
+    print "    openssl supported SSL versions   " . join(" ", @{$cfg{'version'}});
+    print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
+    printversionmismatch();
+
     print "= $me +cipher --ciphermode=intern =";
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
+    my @cnt = (eval($cfg{'cipherranges'}->{'rfc'}));
+    print "    number of supported ciphers      " . scalar @cnt;
     print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
     if ($cfg{'verbose'} > 0) {
         # these lists are for special purpose, so with --v only
@@ -8769,7 +8770,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             printciphersummary($legacy, $host, $port, $total);
         ###}
         _yeast_TIME("ciphermode=intern}");
-        next; # FIXME: SEE Note:+cipherall
+        next if (0 >= $check);
     } # ciphermode=intern
     next if _yeast_NEXT("exit=HOST2 - host ciphermode=intern");
 
@@ -8834,7 +8835,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
-    if (($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/) or (0 < $check)) {
+    if (($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=ssleay{");
         _trace(" ciphers= @{$cfg{'ciphers'}}");
