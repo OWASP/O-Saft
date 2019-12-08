@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.945 19/12/08 21:55:10",
+    SID         => "@(#) yeast.pl 1.946 19/12/09 00:23:57",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -8770,7 +8770,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # above warning is most likely a programming error herein
         @cipher_results = ();           # new list for every host
         @cipher_results = ciphers_scan_raw($host, $port);
-        $checks{'cnt_totals'}->{val} = scalar @cipher_results;
+        $checks{'cnt_totals'}->{val} = scalar @cipher_results;  # FIXME: this is the number of enabled ciphers!
+        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+            $checks{'cnt_totals'}->{val} += _get_ciphers_range($ssl, $cfg{'cipherrange'});
+        }
         ###if ($_printtitle > 0) { # TODO: condition disabled when code moved to ciphers_scan_raw()
             # SEE Note:+cipherall
             my $total   = $checks{'cnt_totals'}->{val};
@@ -8832,7 +8835,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         goto CLOSE_SSL; # next HOSTS
     }
 
-    if (_need_cipher() > 0) {
+    if ((0 < _need_cipher()) and ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
         _yeast_TIME("need_cipher{");
         _y_CMD("  need_cipher ...");
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
@@ -8846,7 +8849,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
-    if (($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
+    if ((0 < $check or 0 < _is_do('cipher')) and ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=ssleay{");
         _trace(" ciphers= @{$cfg{'ciphers'}}");
