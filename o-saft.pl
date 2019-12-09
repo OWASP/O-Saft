@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.946 19/12/09 00:23:57",
+    SID         => "@(#) yeast.pl 1.947 19/12/09 10:13:18",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -8382,6 +8382,18 @@ if (0 < $info) {                # +info does not do anything with ciphers
     $cfg{'usenpn'}      = 0;
 }
 
+#| set proper cipher command depending on --ciphermode option (default: intern)
+#| -------------------------------------
+# SEE Note:+cipher
+if ((0 < _need_cipher()) or (_need_default() > 0)) {
+    foreach my $mode (qw(dump intern openssl ssleay)) {
+        if ($mode eq $cfg{'ciphermode'}) {
+            my $do = 'cipher_' . $mode;
+            push(@{$cfg{'do'}}, $do) if (0 == _is_do($do)); # only if not yet set
+        }
+    }
+}
+
 _yeast_TIME("inc{");
 
 #| import common and private modules
@@ -9951,6 +9963,9 @@ used in VESRIONs before 19.11.19.
 
 More information, which is also important for users,  can be found in user
 documentation  OSaft/Doc/help.txt  section "Version 19.11.19 and later".
+
+Internally, the commands  cipher_intern, cipher_openssl, cipher_ssleay and
+cipher_dump are used; the command cipher still remains in $cfg{do}.
 
 
 =head2 Note:hints
