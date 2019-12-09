@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.947 19/12/09 10:13:18",
+    SID         => "@(#) yeast.pl 1.948 19/12/09 11:09:47",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -2308,7 +2308,7 @@ sub _check_SSL_methods  {
     my $typ;
     my @list;
     _y_CMD("  check supported SSL versions ...");
-    if ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/) {
+    if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
         @list = Net::SSLinfo::ssleay_methods();
         # method names do not literally match our version string, hence the
         # cumbersome code below
@@ -2316,7 +2316,7 @@ sub _check_SSL_methods  {
     _trace("SSLeay methods  = " . join(" ", @list));
     foreach my $ssl (@{$cfg{'versions'}}) {
         next if ($cfg{$ssl} == 0);      # don't check what's disabled by option
-        if ('intern' eq $cfg{'ciphermode'}) {   # internal method does not depend on other libraries
+        if (_is_do('cipher_intern')) {  # internal method does not depend on other libraries
             if ($ssl eq 'DTLSv1') {
                 _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipher'; not checked");
                 next;
@@ -3998,7 +3998,7 @@ sub ciphers_scan_raw    {
     my @results = ();       # cipher list to be returned
     my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
     my $typ     = "raw";    # used for --trace only
-       $typ     = "all" if ('intern' eq $cfg{'ciphermode'});
+       $typ     = "all" if (_is_do('cipher_intern'));
     _y_CMD("  use SSLhello +cipher$typ ...");
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
@@ -4023,12 +4023,12 @@ sub ciphers_scan_raw    {
             # FIXME: move to calling place
             print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
         }
-        if ('intern' eq $cfg{'ciphermode'}) {
+        if (_is_do('cipher_intern')) {
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
         }
         @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-        if ('dump' eq $cfg{'ciphermode'}) {
+        if (_is_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d",
                          (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
             # correct total number if first 2 ciphers are identical
@@ -4051,7 +4051,7 @@ sub ciphers_scan_raw    {
         }
         # FIXME: move rest of code (print*()) to calling place
         if (_is_do('cipher') or _is_do('check')) {
-            if ('intern' eq $cfg{'ciphermode'}) {
+            if (_is_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
                 print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
@@ -4095,7 +4095,7 @@ sub ciphers_scan        {
                 # in above warning, even then if  SSLv3 is not needed for the
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
-                # NOTE: applys to --ciphermode=intern only
+                # NOTE: applys to --ciphermode=openssl|ssleay only
             }
             $cfg{'usesni'} = 0; # do not use SNI for this $ssl
         }
@@ -8404,7 +8404,7 @@ _yeast_TIME("inc}");
 _yeast_TIME("mod{");
 _y_CMD("check $cfg{'me'} internals ...");
 
-if ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/) {
+if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
     # --ciphermode=intern does not need these checks
 
 #| check for required module versions
@@ -8569,11 +8569,13 @@ if (0 > $#{$cfg{'do'}}) {
     printusage_exit("no command given");
 }
 
+_y_ARG("commands=@{$cfg{'do'}}");
+
 usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
-if ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/) {
+if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
     _yeast_TIME("get{");
     if ((_need_cipher() > 0) or (_need_default() > 0)) {
         _y_CMD("  get cipher list ...");
@@ -8593,7 +8595,7 @@ usr_pre_main();
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
 printusage_exit("no target hosts given") if ($#{$cfg{'targets'}} <= 0); # does not make any sense
-if ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/) {
+if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
@@ -8773,8 +8775,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
     }
 
-    if (_need_cipher() > 0) {
-      if ($cfg{'ciphermode'} =~ m/(?:intern|dump)/) {
+    if (_is_do('cipher_intern') or _is_do('cipher_dump')) { # implies _need_cipher()
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=intern{");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
@@ -8790,14 +8791,11 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # SEE Note:+cipherall
             my $total   = $checks{'cnt_totals'}->{val};
             checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
-            if (_is_do('cipher')) {
             printciphersummary($legacy, $host, $port, $total);
-            }
         ###}
         _yeast_TIME("ciphermode=intern}");
         next if (_is_do('cipher'));
-      } # ciphermode=intern
-    } # need cipher
+    } # ciphermode=intern
     next if _yeast_NEXT("exit=HOST2 - host ciphermode=intern");
 
     if (_is_do('fallback_protocol')) {
@@ -8847,7 +8845,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         goto CLOSE_SSL; # next HOSTS
     }
 
-    if ((0 < _need_cipher()) and ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
+    if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {  # implies _need_cipher()
         _yeast_TIME("need_cipher{");
         _y_CMD("  need_cipher ...");
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
@@ -8861,7 +8859,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
-    if ((0 < $check or 0 < _is_do('cipher')) and ($cfg{'ciphermode'} =~ m/(?:openssl|ssleay)/)) {
+    if ((0 < $check or _is_do('cipher')) and (_is_do('cipher_openssl') or _is_do('cipher_ssleay'))) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=ssleay{");
         _trace(" ciphers= @{$cfg{'ciphers'}}");
