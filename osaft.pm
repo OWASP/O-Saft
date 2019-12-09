@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.202 19/12/08 21:10:36",
+    SID_osaft   => "@(#) osaft.pm 1.203 19/12/09 11:10:46",
 
 };
 
@@ -1666,7 +1666,10 @@ our %cfg = (
         # TODO: list with 'key exchange': kRSA, kDHr, kDHd, kDH, kEDH, kECDHr, kECDHe, kECDH, kEECDH
     }, # cipherpatterns
     'ciphermode'    => 'intern',# cipher scan mode, any of 'ciphermodes'
-    'ciphermodes'   => [qw(dump intern openssl ssleay)],      # modes how to scan for ciphers
+    'ciphermodes'   => [qw(dump intern openssl ssleay)],
+                    # modes how to scan for ciphers;
+                    # NOTE: for each mode a corresponding cipher_* command must 
+                    #       exist in commands_int
     'ciphers'       => [],      # contains all ciphers to be tested
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
@@ -3121,7 +3124,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.202 2019/12/08
+1.203 2019/12/09
 
 =head1 AUTHOR
 
