@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.948 19/12/09 11:09:47",
+    SID         => "@(#) yeast.pl 1.950 19/12/10 22:03:25",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -2351,6 +2351,7 @@ sub _check_SSL_methods  {
             $cfg{$ssl} = 1;
             next;
         }
+        next if (0 == _is_do('cipher'));
         # Check for high-level API functions, like SSLv2_method, also possible
         # would be    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
         # and similar calls.
@@ -8421,15 +8422,13 @@ if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
 #| check for proper openssl support
 #| -------------------------------------
     _check_openssl();
+}; # --ciphermode=openssl
 
 #| check for supported SSL versions
 #| -------------------------------------
-    #initialize $cfg{'version'} and all $cfg{ssl}
+    # initialize $cfg{'version'} and all $cfg{ssl}
     _check_SSL_methods() if ((_need_cipher() > 0) or (_need_default() > 0) or _is_do('version'));
-
-} else {
-    _check_SSL_methods();   # function is oversized for --ciphermode=intern but does the work
-}; # --ciphermode=openssl
+        # function is oversized for --ciphermode=intern but does the work
 
 _yeast_TIME("mod}");
 _yeast_TIME("ini{");
