@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.950 19/12/10 22:03:25",
+    SID         => "@(#) yeast.pl 1.951 19/12/10 22:07:32",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -8790,7 +8790,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # SEE Note:+cipherall
             my $total   = $checks{'cnt_totals'}->{val};
             checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
-            printciphersummary($legacy, $host, $port, $total);
+            printciphersummary($legacy, $host, $port, $total) if (_is_do('cipher'));
         ###}
         _yeast_TIME("ciphermode=intern}");
         next if (_is_do('cipher'));
