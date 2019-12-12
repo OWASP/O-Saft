@@ -6,7 +6,7 @@
 #?      make help.test.examples
 #?
 #? VERSION
-#?      @(#)  1.6 19/11/14 20:48:03
+#?      @(#)  1.7 19/12/12 23:40:38
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.examples = print targets for testing documented examples
 
-_SID.examples      := 1.6
+_SID.examples      := 1.7
 
 _MYSELF.examples   := t/Makefile.examples
 ALL.includes       += $(_MYSELF.examples)
@@ -83,10 +83,6 @@ testarg-example-+sni+cn+altname:TEST.args   = +sni +cn +altname
 testarg-example-+cipher--ena:   TEST.args   = +cipher --enabled
 testarg-example-+cipher--dis:   TEST.args   = +cipher --disabled
 testarg-example-+cipher--cipher:TEST.args   = +cipher --cipher=ADH-AES256-SHA
-testarg-example-+cipherraw:     TEST.args   = +cipherraw
-testarg-example-+cipherall:     TEST.args   = +cipherall
-#testarg-example-+cipherall-full:    TEST.args   = +cipherall --range=full
-   # --range=full haengt
 #testarg-example-checkAllCiphers:    TEST.args   = checkAllCiphers.pl example.tld --range=full --v
 testarg-example-+cipher-dh:         TEST.args   = +cipher-dh
 #testarg-example---lib-_foo:         TEST.args   = +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps
