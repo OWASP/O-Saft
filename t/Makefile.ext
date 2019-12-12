@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 1.26 19/11/21 00:03:25
+#?      @(#) Makefile.ext 1.27 19/12/12 23:41:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 1.26
+_SID.ext           := 1.27
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
@@ -78,8 +78,6 @@ testcmd-e010_%: TEST.args  += +check
 testcmd-e011_%: TEST.args  += +check --enabled
 testcmd-e015_%: TEST.args  += +check-sni
 testcmd-e020_%: TEST.args  += +cipher
-testcmd-e021_%: TEST.args  += +cipherall
-testcmd-e022_%: TEST.args  += +cipherraw
 testcmd-e023_%: TEST.args  += +cipher-dh
 testcmd-e024_%: TEST.args  += +cipher-default
 testcmd-e030_%: TEST.args  += +protocols
