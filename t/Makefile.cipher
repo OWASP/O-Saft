@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.1 19/11/24 22:45:52
+#?      @(#) Makefile.cipher 1.2 19/12/12 23:35:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.1
+_SID.cipher        := 1.2
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -61,19 +61,16 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name prefix
 
 _TEST.cipher       := testcmd-cipher+cipher
-_TEST.cipherall    := testcmd-cipher+cipherall
 
 LIST.cipher        := dummy-no-arg  \
 	legacy=owasp  force-openssl \
-	cipher-alpn   cipher-npn    cipher-openssl  cipher-curves
+	cipher-alpn   cipher-npn    cipher-openssl  cipher-curves \
+	range=ecc     range=rfc     range=long \
+	range=SSLv2   range=TLSv12  range=shifted
+# --range=safe  disabled, because it takes a long time
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
-
-LIST.cipherall     := dummy-no-arg  \
-	legacy=owasp  range=ecc     range=rfc       range=long \
-	range=SSLv2   range=TLSv12  range=shifted
-# --range=safe  disabled, because it takes a long time
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.cipher),\
@@ -89,26 +86,14 @@ testcmd-cipher+cipher--nossltls_%:  TEST.args  += --nosslv2 --nosslv3 --notlsv1 
     #    simulates a server not responding to ciphers
 ALL.testcipher += testcmd-cipher+cipher--nossltls_
 
-ifndef cipherall-macros-generated
-    $(foreach arg, $(LIST.cipherall),\
-	$(eval $(_TEST.cipherall)-$(subst =,-,$(arg))_%:  TEST.args = --$(arg) ) \
-	$(eval ALL.testcipherall  += $(_TEST.cipherall)-$(subst =,-,$(arg))_ ) \
-    )
-endif
-
-testcmd-cipher+cipherall-%:     TEST.init   = --trace-CLI --header +cipherall
-testcmd-cipher+cipherall_%:         TEST.args  +=
-
 # some more individual tests
 testcmd-cipher-+cipher%:        TEST.init   = --trace-CLI --header
-testcmd-cipher-+cipherraw_%:        TEST.args  += +cipherraw
 testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
-ALL.testciphermisc     = testcmd-cipher-+cipherraw_ testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+ciphercheck_
+ALL.testciphermisc     = testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+ciphercheck_
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
-ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipherall:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
 ALL.test.cipher.log   += $(ALL.test.cipher:%=%.log)
 
