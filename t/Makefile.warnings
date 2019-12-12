@@ -39,7 +39,7 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#)  1.55 19/11/21 00:03:30
+#?      @(#)  1.57 19/12/12 23:45:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -48,7 +48,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.55
+_SID.warnings      := 1.57
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -166,7 +166,7 @@ warning-053: TEST.args  = --capath='/path with spaces'      +quit
 warning-054: TEST.args  = --legacy=unknown_legacy           +quit
 warning-055: TEST.args  = --format=unknown_format           +quit
 warning-056: TEST.args  = --range=unknown_range             +quit
-#warning-057: TEST.args  = free
+warning-057: TEST.args  = --cipher-mode=unknown             +quit
 warning-058: TEST.args  = --ca-path=unknown                 +quit
 warning-059: TEST.args  = --ca-path=unknown                 +quit
 warning-060: TEST.args  = --ca-paths=unknown --cfg-init=ca_files=unknown +quit
@@ -261,8 +261,8 @@ warning-325: TEST.args  = TODO: testing connection failed, HTTP disabled, diffic
 warning-331: TEST.args  = TODO: testing _isccs: failed to connect, difficult ...
 warning-332: TEST.args  = TODO: testing _isccs: no reply, difficult ...
 warning-408: TEST.args  = --no-openssl  +cipher-dh --exit=HOST2 $(TEST.host)
-warning-409: TEST.args  = --sslv2 --sni +cipherall --exit=HOST4 $(TEST.host)
-warning-410: TEST.args  = --sslv2 --sni +cipher    --exit=HOST4 $(TEST.host)
+warning-409: TEST.args  = --sslv2 --sni +cipher    --exit=HOST4 $(TEST.host)
+warning-410: TEST.args  = --sslv2 --sni +cipher --ciphermode=openssl --exit=HOST4 $(TEST.host)
 warning-411: TEST.args  = TODO: testing checked cipher does not match returned cipher, difficult ...
 warning-412: TEST.args  = TODO: testing missing ciphers in sorted list, difficult ...
 warning-451: TEST.args  = TODO: testing function obsolete, please use cipher_openssl, difficult ...
@@ -382,7 +382,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "#  1.55: $(MAKE) test.warnings.log" > $@
+	@echo "#  ‘ÕÊMV 1.57: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
