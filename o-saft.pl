@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.951 19/12/10 22:07:32",
+    SID         => "@(#) yeast.pl 1.953 19/12/14 16:44:48",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -83,7 +83,10 @@ sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:A
 sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace$)/} @ARGV); }  # case-sensitive! SEE Note:ARGV
     # need to check @ARGV directly as this is called before any options are parsed
 
+# SEE Make:OSAFT_MAKE (in Makefile.pod)
 our $time0  = time();
+    $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
+    # normalize to even seconds, allows small time diffs
 sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
     my @txt = @_;
@@ -91,6 +94,7 @@ sub _yeast_TIME(@)  {
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     my $now = time();
        $now = time() - ($time0 || 0) if not _is_argv('(?:--time.*absolut)');
+       $now += ($now % 2) if (defined $ENV{'OSAFT_MAKE'});
        $now = sprintf("%02s:%02s:%02s", (localtime($now))[2,1,0]);
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
        $now = "HH:MM:SS (OSAFT_MAKE exists)" if (not $time0);# time0 unset or 0
@@ -635,7 +639,7 @@ our %data   = (         # connection and certificate details
     'https_location'=> {'val' => sub { Net::SSLinfo::https_location($_[0], $_[1])}, 'txt' => "HTTPS Location header"},
     'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS Refresh header"},
     'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS Error alerts"},
-    'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public Key Pins"},
+    'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public-Key-Pins"},
     'https_body'    => {'val' => sub { Net::SSLinfo::https_body(    $_[0], $_[1])}, 'txt' => "HTTPS Body"},
     'https_sts'     => {'val' => sub { Net::SSLinfo::https_sts(     $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
     'hsts_httpequiv'=> {'val' => sub { Net::SSLinfo::hsts_httpequiv($_[0], $_[1])}, 'txt' => "HTTPS STS in http-equiv"},
@@ -907,7 +911,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'hsts_samehost' => {'txt' => "Target redirects HTTP to HTTPS same host"},
     'hsts_ip'       => {'txt' => "Target does not send STS header for IP"},
     'hsts_httpequiv'=> {'txt' => "Target does not send STS in meta tag"},
-    'pkp_pins'      => {'txt' => "Target sends Public Key Pins header"},
+    'https_pins'    => {'txt' => "Target sends Public-Key-Pins header"},
     #------------------+-----------------------------------------------------
 ); # %check_http
 
@@ -1036,7 +1040,7 @@ our %shorttexts = (
     'hsts_fqdn'     => "Redirects to same host",
     'hsts_is301'    => "Redirects with 301",
     'hsts_is30x'    => "Redirects not with 30x",
-    'pkp_pins'      => "Public Key Pins",
+    'https_pins'    => "Public-Key-Pins",
     'selfsigned'    => "Validity (signature)",
     'chain'         => "Certificate chain",
     'verify'        => "Chain verified",
@@ -1170,7 +1174,7 @@ our %shorttexts = (
     'https_location'=> "HTTPS Location header",
     'https_alerts'  => "HTTPS Error alerts",
     'https_refresh' => "HTTPS Refresh header",
-    'https_pins'    => "HTTPS Public Key Pins",
+    'https_pins'    => "HTTPS Public-Key-Pins",
     'https_sts'     => "HTTPS STS header",
     'hsts_maxage'   => "HTTPS STS MaxAge",
     'hsts_subdom'   => "HTTPS STS sub-domains",
@@ -5752,12 +5756,12 @@ sub checkhttp($$)   {
         _hint("consider testing with option '--proto-alpn=,' also")   if ($https_body =~ /bad client magic byte string/);
     }
 
-    $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
-    $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
+    $checks{'hsts_is301'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
+    $checks{'hsts_is30x'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
     # sequence important: first check if redirect to https, then check if empty
-    $checks{'http_https'}->{val} = $http_location if ($http_location !~ m/^\s*https:/);
-    $checks{'http_https'}->{val} = $notxt if ($http_location =~ m/^\s*$/);
+    $checks{'http_https'}   ->{val} = $http_location if ($http_location !~ m/^\s*https:/);
+    $checks{'http_https'}   ->{val} = $notxt if ($http_location =~ m/^\s*$/);
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne "");
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
@@ -5778,17 +5782,23 @@ sub checkhttp($$)   {
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);        # computes check{'sts_expired'}
+_dbx "data=\t".$data{'https_sts'}->{val}($host);
+_dbx "notxt=\t$notxt";
+_dbx "host=\t$host";
+_dbx "fqdn=\t$fqdn";
+_dbx "hsts_fqdn=\t$hsts_fqdn";
+_dbx "hsts_equiv=\t$hsts_equiv";
     } else {
         foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
-            $checks{$key}->{val}    = $text{'na_STS'};
+            $checks{$key}   ->{val} = $text{'na_STS'};
         }
         foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
-            $checks{$key}->{val}    = $text{'na_STS'};
+            $checks{$key}   ->{val} = $text{'na_STS'};
         }
     }
 # TODO: invalid certs are not allowed for HSTS
-    $checks{'hsts_fqdn'}->{val} = $text{'na'} if ($http_location eq "");  # useless if no redirect
-    $checks{'pkp_pins'} ->{val} = $notxt if ($data{'https_pins'}->{val}($host) eq "");
+    $checks{'hsts_fqdn'}    ->{val} = $text{'na'} if ($http_location eq "");  # useless if no redirect
+    $checks{'https_pins'}   ->{val} = $notxt      if ($data{'https_pins'}->{val}($host) eq "");
 # TODO: pins= ==> fingerprint des Zertifikats
 
     $notxt = $text{'na_STS'};
@@ -6024,7 +6034,7 @@ sub scoring         {
     foreach my $key (sort keys %checks) {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
-        next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+        next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|https_pins|psk_|rootcert|srp|zlib)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
           # FIXME: not yet scored
         next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
@@ -8092,7 +8102,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+rfc$p?6125$p?names/i){$arg = '+rfc_6125_names'; } # alias:
     if ($arg =~ /^\+rfc$p?6797$/i)      { $arg = '+hsts';           } # alias:
     if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
-    # do not match +fingerprints  in next line as it may be in .o-saft.pl
+        # do not match +fingerprints  in next line as it may be in .o-saft.pl
     if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
     if ($arg =~ /^\+fingerprint$p?sha$/i)             { $arg = '+fingerprint_sha1'; } # alais:
     if ($arg =~ /^\+subject$p?altnames?/i)            { $arg = '+altname';          } # alias:
@@ -8120,6 +8130,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+check$p?sni$/)      { $arg = '+check_sni';      }
     if ($arg =~ /^\+ext$p?aia$/i)       { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
     if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
+    if ($arg =~ /^\+hpkp$/i)            { $arg = '+https_pins';     } # alias:
+    if ($arg =~ /^\+pkp$p?pins$/i)      { $arg = '+https_pins';     } # alias: +pkp_pins before 19.12.19
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
