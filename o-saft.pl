@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.953 19/12/14 16:44:48",
+    SID         => "@(#) yeast.pl 1.954 19/12/14 16:51:14",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -5782,12 +5782,6 @@ sub checkhttp($$)   {
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);        # computes check{'sts_expired'}
-_dbx "data=\t".$data{'https_sts'}->{val}($host);
-_dbx "notxt=\t$notxt";
-_dbx "host=\t$host";
-_dbx "fqdn=\t$fqdn";
-_dbx "hsts_fqdn=\t$hsts_fqdn";
-_dbx "hsts_equiv=\t$hsts_equiv";
     } else {
         foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
             $checks{$key}   ->{val} = $text{'na_STS'};
