@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.203 19/12/09 11:10:46",
+    SID_osaft   => "@(#) osaft.pm 1.204 19/12/14 16:38:04",
 
 };
 
@@ -1901,7 +1901,7 @@ our %cfg = (
                          krb5 psk_hint psk_identity srp heartbeat ocsp_stapling
                          cipher_selected cipher_pfs ccs crime
                        )],
-    'need-checkhttp'=> [qw(pkp_pins)],  # commands which need checkhttp(); more will be added in _init
+    'need-checkhttp'=> [qw(https_pins)],# commands which need checkhttp(); more will be added in _init
     'need-checkprot'=> [        # commands which need checkprot(), should be same as in 'cmd-prots'
                         qw(
                          sslversion
@@ -3124,7 +3124,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.203 2019/12/09
+1.204 2019/12/14
 
 =head1 AUTHOR
 
