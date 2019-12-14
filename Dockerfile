@@ -11,6 +11,7 @@
 #?              Base image to be used for this build. Tested images are:
 #?                  (2017) alpine:3.6  alpine:edge  debian:stretch-slim  debian
 #?                  (2018) alpine:3.8  debian
+#?                  (2019) alpine:3.10
 #?
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
@@ -154,7 +155,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.29 19/01/20 23:25:44" \
+	SID="@(#) Dockerfile 1.31 19/12/14 14:40:53" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -171,14 +172,24 @@ WORKDIR	$WORK_DIR
 
 RUN \
 	#== Install required packages, development tools and libs
-	#apk update && \   # no update neded and not wanted
+	#apk update && \   # no update needed and not wanted
 	apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
 		gcc make musl-dev linux-headers \
 		krb5-dev zlib-dev perl perl-readonly perl-dev \
 		ca-certificates			&& \
 		# perl-io-socket-ssl perl-net-ssleay
 	\
+	#== Workaround for docker/alpine (bug or race condition)
+	#   in some alpine versions, resolving a hostname fails, see
+	#   https://forums.docker.com/t/resolved-service-name-resolution-broken-on-alpine-and-docker-1-11-1-cs1/19307/23
+	#   as workaround we try to prefetch the name resolution;
+	#   however, it is not bullet proof either ...
+	workaround_alpine_bug() { \
+	    for host in github.com codeload.github.com cpan.metacpan.org search.cpan.org cpan.metacpan.org ; do \
+	        echo -n "resolving $host ... " && ping -c 1 $host > /dev/null && echo SUCCESS || echo FAILDED ; \
+	    done; } && \
 	#== Pull, build and install enhanced openssl
+	workaround_alpine_bug			&& \
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
@@ -243,6 +254,7 @@ RUN \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
 	\
 	#== Pull, build and install Net::SSLeay
+	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
@@ -267,6 +279,7 @@ RUN \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
 	#== Pull, build and install IO::Socket::SSL
+	workaround_alpine_bug			&& \
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SOCKET -O $OSAFT_VM_TAR_SOCKET && \
 	# check sha256 if there is one
@@ -276,11 +289,13 @@ RUN \
 	tar   -xzf $OSAFT_VM_TAR_SOCKET -C $BUILD_DIR --strip-components=1	&& \
 	cd    $BUILD_DIR			&& \
 	echo "n" | perl Makefile.PL INC=-I$OPENSSL_DIR/include	&& \
-	make && make test && make install	&& \
+	make && make -i test && make install	&& \
+		# make test sometimes fails (see Workaround above), hence -i
 	cd    $WORK_DIR				&& \
 	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
 	\
 	#== Pull and install O-Saft
+	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $OSAFT_DIR			&& \
 	adduser -D -h ${OSAFT_DIR} osaft	&& \
