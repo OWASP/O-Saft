@@ -121,7 +121,7 @@
 #?      so don't forget to tag at least one image with this name.
 #?
 
-ARG     OSAFT_VM_FROM=alpine:3.8
+ARG     OSAFT_VM_FROM=alpine:3.10
 
 FROM    $OSAFT_VM_FROM
 MAINTAINER Achim <achim@owasp.org>
@@ -155,7 +155,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.31 19/12/14 14:40:53" \
+	SID="@(#) Dockerfile 1.32 19/12/14 14:42:20" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
