@@ -11,7 +11,7 @@
 #?              Base image to be used for this build. Tested images are:
 #?                  (2017) alpine:3.6  alpine:edge  debian:stretch-slim  debian
 #?                  (2018) alpine:3.8  debian
-#?                  (2019) alpine:3.10
+#?                  (2019) alpine:3.10 debian:10.2-slim
 #?
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
@@ -155,7 +155,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.32 19/12/14 14:42:20" \
+	SID="@(#) Dockerfile 1.33 19/12/14 21:54:05" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -297,7 +297,7 @@ RUN \
 	#== Pull and install O-Saft
 	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
-	mkdir -p $OSAFT_DIR			&& \
+	mkdir -p ${OSAFT_DIR}			&& \
 	adduser -D -h ${OSAFT_DIR} osaft	&& \
 	\
 	wget --no-check-certificate $OSAFT_VM_SRC_OSAFT -O $OSAFT_VM_TAR_OSAFT	&& \
@@ -306,21 +306,21 @@ RUN \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
 	\
 	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
-	# handle master directory from github, mv to $OSAFT_DIR
+	# handle master directory from github, mv to ${OSAFT_DIR}
 	# checks fail sometimes, hence in a sub-shell
 	(\
-	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           $OSAFT_DIR/ ; \
-	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  $OSAFT_DIR/ ; \
+	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           ${OSAFT_DIR}/ ; \
+	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  ${OSAFT_DIR}/ ; \
 	  [ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/ 	; \
 	  exit 0 ; \
 	) && \
-	chown -R root:root   $OSAFT_DIR		&& \
-	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
-	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
-	cp       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl && \
-	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
-	rm    -f $OSAFT_VM_TAR_OSAFT 		&& \
+	chown -R root:root   ${OSAFT_DIR}		&& \
+	chown -R osaft:osaft ${OSAFT_DIR}/contrib	&& \
+	chown    osaft:osaft ${OSAFT_DIR}/.o-saft.pl	&& \
+	cp       ${OSAFT_DIR}/.o-saft.pl ${OSAFT_DIR}/.o-saft.pl-orig	&& \
+	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" ${OSAFT_DIR}/.o-saft.pl && \
+	chmod 666 ${OSAFT_DIR}/.o-saft.pl		&& \
+	rm    -f $OSAFT_VM_TAR_OSAFT 			&& \
 	\
 	#== Cleanup
 	apk del --purge gcc make musl-dev linux-headers perl-dev
