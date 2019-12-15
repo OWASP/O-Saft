@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 1.1 19/12/15 13:30:22
+#?      @(#) Makefile.docker 1.2 19/12/15 16:30:21
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(Project)-docker
 
-_SID.docker        := 1.1
+_SID.docker        := 1.2
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -37,7 +37,7 @@ help.test.docker:       HELP_TYPE   = docker
 help.test.docker-v:     HELP_TYPE   = docker
 help.test.docker-vv:    HELP_TYPE   = docker
 
-HELP-_docker1       = ____________________________________________ testing docker _
+HELP-_docker1       = ________________ testing o-saft-docker and o-saft in docker_
 HELP-test.docker    = test functionality of '$(EXE.docker)'
 HELP-test.docker.log = same as test.docker but store output in '$(TEST.logdir)/'
 
