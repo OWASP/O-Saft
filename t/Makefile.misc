@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.40 19/11/21 00:03:28
+#?      @(#) Makefile.misc 1.41 19/12/15 12:59:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.40
+_SID.misc          := 1.41
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -56,7 +56,6 @@ HELP-_misc1         = ____________________________________________ testing misc.
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
 HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
-HELP-test.docker    = test docker image
 
 HELP.misc           = $(_NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
@@ -78,19 +77,11 @@ test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
-ALL.testmisc       := test.bench test.bunt test.docker
+ALL.testmisc       := test.bench test.bunt
 ALL.testmisc.log   := test.bench.log
 ALL.test.misc.log  += test.bench.log
 
-# TODO: simple test, needs to be improved and checked; not part of ALL.* and *.all
-test.docker:
-	@$(TRACE.target)
-	docker image ls owasp/o-saft
-	$(EXE.docker) +VERSION
-	$(EXE.docker) +version
-	$(EXE.docker) usage
-
-.PHONY: test.bench test.bench.log test.bunt test.docker
+.PHONY: test.bench test.bench.log test.bunt
 
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
@@ -277,7 +268,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.40: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.41: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
