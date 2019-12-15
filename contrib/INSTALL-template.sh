@@ -116,6 +116,7 @@
 #?
 #? OPTIONS
 #?      --h     got it
+#       --help  got it
 #?      --n     do not execute, just show (ignored for  --check)
 #?      -x      debug using shell's "set -x"
 #?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
@@ -147,6 +148,8 @@
 #       Environment variable inst can be set to installation directory: This
 #       is usefull for development only, hence not officially documented.
 #
+#       Silently accepts the options  -n  or  -h  or  --x  also.
+#
 #    echo vs /bin/echo
 #       echo is a pain, depending on the platform. The shell's built-in echo
 #       does not have the  -n  option, usually. /bin/echo doesn't know about
@@ -172,7 +175,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.46 19/11/12 22:44:37
+#?      @(#)  1.47 19/12/15 10:51:44
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -273,7 +276,7 @@ echo_red    () {
 # --------------------------------------------- arguments and options
 while [ $# -gt 0 ]; do
 	case "$1" in
-	 '-h' | '--h' | '--help')
+	 '-h' | '--h' | '--help' | '-?')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
@@ -298,7 +301,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.46 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.47 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
