@@ -21,7 +21,8 @@
 #?       $0 [options and commands of o-saft.pl]
 #?
 #? OPTIONS
-#?       -help   got it
+#?       -h      got it
+#        -help   got it
 #?       -n      do not execute, just show what would be done
 #?       -v      be a bit verbose
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
@@ -222,8 +223,8 @@
 #          Most likely an update of the host's docker package will fix it.
 #?
 #? LIMITATIONS
-#?       The options  -n  -v  -id=ID  and  -help  must be specified  leftmost
-#?       if they should apply for this script.
+#?       The options  -n  -v  -id=ID  and  -h  must be specified  leftmost if
+#?       they should apply for this script.
 #?       These options can only be passed to  o-saft.pl  in the Docker image,
 #?       if they are preceeded by the  --  parameter.
 #?       Unknown parameters to this script will be treated as arguments to be
@@ -258,14 +259,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.41 18/11/09 01:14:13
+#?       @(#) o-saft-docker 1.42 19/12/15 10:59:09
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-VERSION="${OSAFT_VERSION:-18.11.18}"
+VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
@@ -555,6 +556,7 @@ my_help ()      {
 # first check for options
 while [ $# -gt 0 ]; do
 	case "$1" in
+	  '-h' | '-?' | '-help')  my_help;  exit 0; ;;
 	  '-n')     try=echo; ;;
 	  '-v')     set -x  ; ;;
 	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
@@ -562,7 +564,6 @@ while [ $# -gt 0 ]; do
 	            ;;
 	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
 	  -OSAFT_VERSION=*)     OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
-	  '-help')  my_help;    exit 0; ;;
 	  *)        break;  ;;
 	esac
 	shift
