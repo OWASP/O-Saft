@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.100 19/12/04 23:44:55
+#?      @(#) Makefile 1.101 19/12/15 13:33:14
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.100
+_SID            = 1.101
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -208,8 +208,8 @@ inc.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
 		  Makefile.opt     Makefile.cmd   Makefile.ext   Makefile.exit \
 		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
-		  Makefile.critic  Makefile.etc   Makefile.template \
-		  Makefile.dev     Makefile.FQDN  Makefile.examples
+		  Makefile.critic  Makefile.dev   Makefile.etc   Makefile.template \
+		  Makefile.docker  Makefile.FQDN  Makefile.examples
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(inc.Makefiles:%=$(TEST.dir)/%)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
@@ -254,7 +254,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.100
+_INST.text      = generated from Makefile 1.101
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -476,8 +476,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.100
-tar:     GREP_EDIT  = 1.100
+GREP_EDIT           = 1.101
+tar:     GREP_EDIT  = 1.101
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
