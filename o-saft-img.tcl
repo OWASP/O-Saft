@@ -5,7 +5,7 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.7 16/12/16 13:06:03
+#?      @(#) o-saft-img.tcl 1.8 19/12/15 08:47:01
 #? AUTHOR
 #? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -615,5 +615,44 @@ set IMG(stdout) [image create photo -data {
   V7hYeI+6SicxCXqypyUza2Ua1kGaQK49Q8s3pS/w08orVJY4qKtoQU4wMOrNFGauGERKmoT6LdUT
   n1rScfFiA5D8yLNPvqp0MspZID/SJBHSGalKpI0FToLqPfR0qAMYJgkhqMdaAKwFdBGG+r/UAczv
   Q90PkhD+rzGFmFHAR0AO0DeCcP+lbgLFwBoZZxXA3wYF/RAYZ2W5AAAAAElFTkSuQmCC
+}];
+
+# docker_status_99x29_magenta.png
+set IMG(docker_status) [image create photo -data {
+  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
 }];
 
