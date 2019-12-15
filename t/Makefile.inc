@@ -12,16 +12,16 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.18 19/10/02 21:54:19
+#?      @(#) Makefile.inc 1.20 19/12/15 12:52:02
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.18
+_SID.inc       := 1.20
 
-_MYSELF.inc     = t/Makefile.inc
+_MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
 ALL.inc.type   += inc
 
@@ -38,23 +38,23 @@ HELP.inc        = $(_NL)\
 \# assignments are used. $(_NL)\
 
 ifndef Project
-    Project     = o-saft
+    Project    := o-saft
 endif
 
 ifndef ProjectName
-    ProjectName = O-Saft
+    ProjectName := O-Saft
 endif
 
 ifndef TEST.host
-    TEST.host   = localhost
+    TEST.host  := localhost
 endif
 
 ifndef TEST.init
-    TEST.init   = --header
+    TEST.init  := --header
 endif
 
 ifndef TEST.dir
-    TEST.dir    = t
+    TEST.dir   := t
 endif
 
 ifndef TEST.logdir
@@ -66,19 +66,19 @@ ifndef TMP.dir
 endif
 
 ifndef SRC.pl
-    SRC.pl      = o-saft.pl
+    SRC.pl     := o-saft.pl
 endif
 
 ifndef SRC.cgi
-    SRC.cgi     = o-saft.cgi
+    SRC.cgi    := o-saft.cgi
 endif
 
 ifndef SRC.tcl
-    SRC.tcl     = o-saft.tcl
+    SRC.tcl    := o-saft.tcl
 endif
 
 ifndef DEV.pl
-    DEV.pl      = yeast.pl
+    DEV.pl     := yeast.pl
 endif
 
 ifndef MAKEFILE
@@ -103,39 +103,43 @@ ifndef MAKE
 endif
 
 ifndef MAKEFLAGS
-    MAKEFLAGS   = --no-builtin-variables --no-builtin-rules --no-print-directory
+    MAKEFLAGS  := --no-builtin-variables --no-builtin-rules --no-print-directory
 endif
 
 ifndef OSAFT_MAKE
-    export OSAFT_MAKE = avoid writing random data (like date and time string)
+    export OSAFT_MAKE := avoid writing random data (like date and time string)
 endif
 
 ifndef ECHO
-    ECHO        = /bin/echo -e
+    ECHO       := /bin/echo -e
 endif
 
 ifndef EXE.pl
-    EXE.pl      = o-saft.pl
+    EXE.pl     := o-saft.pl
 endif
 
 ifndef EXE.tcl
-    EXE.tcl     = o-saft.tcl
+    EXE.tcl    := o-saft.tcl
+endif
+
+ifndef EXE.docker
+    EXE.docker := o-saft-docker
 endif
 
 ifndef EXE.dummy
-    EXE.dummy   = /bin/echo -n ""
+    EXE.dummy  := /bin/echo -n ""
 endif
 
 ifndef TAB
-    TAB         = \\011
+    TAB        := \\011
 endif
 
 ifndef _NL
-    _NL         = \\012
+    _NL        := \\012
 endif
 
 ifndef _CR
-    _CR         = \\015
+    _CR        := \\015
 endif
 
 # also set pseudo macro .SUFFIXES empty (in the hope, it's never needed)
