@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.14 19/12/15 10:36:56
+#?      @(#) Makefile.dev 1.15 19/12/15 11:15:51
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.14
+_SID.dev           := 1.15
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -66,15 +66,15 @@ LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_p
 LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
-# turning "failed", it must be ensured that the last file returns something,
-# that's why  EXE.o-saft  is the last in the list (see t*_flow target below)
+# turning "failed", it must be ensured that the last file returns something, so
+# EXE.o-saft-pl  is the last in the list (see t*_flow target below)
 
 
 # no targets are generated for empty LIST.* variables
 
 LIST.o-saft-tcl    := --help=opts --test-o-saft
 LIST.o-saft-pl     :=  +traceSUB
-LIST.o-saft-sh     :=  -h -list -help=rc -help=sni
+LIST.o-saft-sh     :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
 LIST.osaft         :=
@@ -154,12 +154,16 @@ HELP.test.dev.all   = # no special documentation yet
 #
 # Finally all generated targets are added to the variable  ALL.test.dev .
 #
-############################################################
-
-# FIXME: test.*.log generate logfiles in . instead of $(TEST.dir)/log
+# Automatically generated targets for each program are:
+#       testarg-dev-<program>--help
+#       testarg-dev-<program>_pod
+# Note that not all programs in  LIST.program  support  --help  or have POD,
+# this then results in different or empty output, for example o-saft-docker.
+# Some of them are explicitly disabled, see "useless generated" below.
+#
 
 ifndef dev-macros-generated
-    # das ifndef erzwingt die Ausführung der $(foreach ...) unten
+    # ifndef enforces execution of $(foreach ...) below
 
     # SEE Make:generating help
     $(foreach prg, $(LIST.program), $(eval \
@@ -228,7 +232,11 @@ $(foreach prg, $(LIST.program), testarg-dev-$(prg)_% ):
 $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
 $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
 
-# useless generated targets
+# useless generated targets (as these are shell not perl programs)
+testarg-dev-o-saft-sh_pod:
+	@$(TRACE.target)
+testarg-dev-o-saft-docker_pod:
+	@$(TRACE.target)
 testarg-dev-contrib-openssl_pod:
 	@$(TRACE.target)
 testarg-dev-install-sh_pod:
