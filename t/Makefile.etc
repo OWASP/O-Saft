@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.11 19/11/21 00:03:23
+#?      @(#) Makefile.etc 1.12 19/12/15 16:26:08
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.11
+_SID.etc           := 1.12
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -26,28 +26,18 @@ ifeq (,$(_SID.test))
     -include t/Makefile
 endif
 
-first-etc-target-is-default: help.test.etc
-
-help.test.etc:          HELP_TYPE   = etc
-help.test.etc-v:        HELP_TYPE   = etc
-help.test.etc-vv:       HELP_TYPE   = etc
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
-
-EXE.pl         := ../o-saft.pl
-TEST.init      :=
-TEST.args      :=
-
-TEST.etc.hosts  =
+TEST.etc.hosts      = localhost
 ifdef TEST.hosts
     TEST.etc.hosts  = $(TEST.hosts)
 endif
 
-#_____________________________________________________________________________
-#______________________________________________________________ testing ... __|
+first-etc-target-is-default: help.test.etc
 
-HELP-_etc1          = ________________________________________________ testing ... _
+help.test.etc:        HELP_TYPE = etc
+help.test.etc-v:      HELP_TYPE = etc
+help.test.etc-vv:     HELP_TYPE = etc
+
+HELP-_etc1          = ______________________________________________ testing ... _
 HELP-test.etc       = various legacy tests
 HELP-test.etc.log   = same as test.etc but store output in '$(TEST.logdir)/'
 HELP-testcmd-etc-sslscan1.8     = test with sslscan version 1.8
@@ -57,15 +47,16 @@ HELP-test.etc-cipher.all        = test all tools with cipher tests
 HELP-test.etc-cipher.all.log    = same as HELP-test-cipher.all but store output in '$(TEST.logdir)/'
 
 HELP.etc            = # no general documentation yet
-
 HELP.test.etc.all   = # no special documentation yet
 
-TEST.init  = localhost
-TEST.hosts = localhost
+EXE.pl             := ../o-saft.pl
+TEST.init          :=
+TEST.args          :=
+TEST.hosts          = $(TEST.etc.hosts)
 
 # testcmd-etc-sslscan* are defined as static targets, similar to testcmd-% , they
 # can be used in the corresponding *.log target (pattern rule) automatically
-# errors in these targets are ignored (because the too may be missing)
+# errors in these targets are ignored (because they may be missing too)
 
 testcmd-etc-sslscan1.8:  EXE.pl    = /usr/bin/sslscan
 testcmd-etc-sslscan1.8:  TEST.args = --no-failed
