@@ -15,6 +15,7 @@
 #?
 #? OPTIONS
 #?      -h      got it
+#       -help   got it
 #?      -help=* grep for *  in 'o-saft.pl --help'
 # TODO: should also grep in --help=commads and some other programs
 #?      -list   list available programs in ./contrib/ directory
@@ -57,7 +58,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.21 19/09/30 23:05:39
+#?      @(#) o-saft 1.22 19/12/15 10:20:08
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -98,7 +99,7 @@ docker_tag=
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        -h  | '-?')
+        -help | -h  | '-?')
             \sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
             \cat <<EoT
  NOTE
@@ -110,7 +111,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.21"; exit 0; ;;
+        +VERSION)       echo "1.22"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
