@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.304 19/12/16 21:59:44";
+my  $SID_man= "@(#) o-saft-man.pm 1.305 19/12/16 22:25:57";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.304'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.305'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -317,7 +317,8 @@ function toggle_handler(){
  .q             {border:0px solid white;}
  p              {margin-left:     2em;margin-top:0;}
  td             {                     padding-left:    1em;}
- h2, h3, h4, h5 {margin-bottom: 0.2em;}
+ h2             {margin:       -0.3em;margin-bottom: 0.5em;height:1.5em;padding:1em;background:linear-gradient(black,white);color:white;border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0; }
+ h3, h4, h5     {margin-bottom: 0.2em;}
  body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
  body > h4      {margin-left:     1em;}
  b              {margin-left:     1em;} /* for discrete commands */
@@ -327,6 +328,7 @@ function toggle_handler(){
  div[class=n]   {                                    border:0px solid white;}
  form           {                     padding:1em;}
  span           {margin-bottom:   2em;font-size:120%;border:1px solid green;}
+ h2 > span      {                                    border:0px solid white;}
  label[class=i] {margin-right:    1em;min-width:8em; border:1px solid white;display:inline-block;}
  label[class=i]:hover    {background-color:lightgray;border-bottom:1px solid green;}
  input          {margin-right:  0.5em;}
@@ -1726,7 +1728,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.304 2019/12/16
+1.305 2019/12/16
 
 =head1 AUTHOR
 
