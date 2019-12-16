@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.303 19/12/03 10:38:56";
+my  $SID_man= "@(#) o-saft-man.pm 1.304 19/12/16 21:59:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.303'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.304'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -328,11 +328,22 @@ function toggle_handler(){
  form           {                     padding:1em;}
  span           {margin-bottom:   2em;font-size:120%;border:1px solid green;}
  label[class=i] {margin-right:    1em;min-width:8em; border:1px solid white;display:inline-block;}
- label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green;}
+ label[class=i]:hover    {background-color:lightgray;border-bottom:1px solid green;}
  input          {margin-right:  0.5em;}
  input[type=submit]      {background:linear-gradient(gold, #ff0);min-width:8em;text-align:left;}
  input[type=submit]:hover{background:linear-gradient(#ff0, gold);}
  fieldset > p   {margin:           0px;padding:0.5em;background-color:#ffa;}
+ /* dirty hack for mobile-friendly A tag's title= attribute;
+  * placed left bound below tag; browser's title still visible
+  * does not work for BUTTON and INPUT tags
+  */
+ [title]        {position:  relative; }
+ a[class=b][title]:hover:after, a[class='b r'][title]:hover:after {
+    content: attr(title);
+    position:absolute; z-index:99; top:100%; left:-1em;
+    border: 2px solid darkgrey; border-radius:2px;
+    background-color:rgba(0,0,0,0.8); color:white;
+    font-weight:normal; padding:0.3em; }
 </style>
 </head>
 <body>
@@ -352,7 +363,8 @@ sub _man_html_warn  {
  <style>
   /* message box "Note", if necessary */
   .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:rgba(0,0,0,0.9); top:0; right:0; bottom:0; left:0; z-index:9; }
-  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:#fff; background:linear-gradient(#fff, #226); }
+  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:#fff; background:linear-gradient(#fff, #226); font-size:150%; }
+  .m > div > p  {font-size:120%; }
   .m > div > a  {opacity:1; pointer-events:auto; }
   .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:#226; color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 1px 3px #5bb; }
   .m > div > a:hover  {background: #5bb; }
@@ -1714,7 +1726,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.303 2019/12/03
+1.304 2019/12/16
 
 =head1 AUTHOR
 
