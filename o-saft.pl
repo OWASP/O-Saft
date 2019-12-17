@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.954 19/12/14 16:51:14",
+    SID         => "@(#) yeast.pl 1.955 19/12/14 17:39:58",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -639,7 +639,7 @@ our %data   = (         # connection and certificate details
     'https_location'=> {'val' => sub { Net::SSLinfo::https_location($_[0], $_[1])}, 'txt' => "HTTPS Location header"},
     'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS Refresh header"},
     'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS Error alerts"},
-    'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public-Key-Pins"},
+    'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public-Key-Pins header"},
     'https_body'    => {'val' => sub { Net::SSLinfo::https_body(    $_[0], $_[1])}, 'txt' => "HTTPS Body"},
     'https_sts'     => {'val' => sub { Net::SSLinfo::https_sts(     $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
     'hsts_httpequiv'=> {'val' => sub { Net::SSLinfo::hsts_httpequiv($_[0], $_[1])}, 'txt' => "HTTPS STS in http-equiv"},
@@ -1174,7 +1174,7 @@ our %shorttexts = (
     'https_location'=> "HTTPS Location header",
     'https_alerts'  => "HTTPS Error alerts",
     'https_refresh' => "HTTPS Refresh header",
-    'https_pins'    => "HTTPS Public-Key-Pins",
+    'https_pins'    => "HTTPS Public-Key-Pins header",
     'https_sts'     => "HTTPS STS header",
     'hsts_maxage'   => "HTTPS STS MaxAge",
     'hsts_subdom'   => "HTTPS STS sub-domains",
