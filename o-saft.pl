@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.955 19/12/14 17:39:58",
+    SID         => "@(#) yeast.pl 1.956 19/12/26 12:52:11",
     STR_VERSION => "19.12.19",          # <== our official version number
 };
 
@@ -2339,10 +2339,10 @@ sub _check_SSL_methods  {
         # protocols is not checked dynamically when building Net::SSLeay.
         # Net::SSLeay's config script simply relies on the definitions found in
         # the specified include files of the underlaying  SSL library (which is
-        # is openssl usually).
+        # openssl usually).
         # Unfortunately,  there are situations where the assumptions at compile
         # time do not match the conditions at runtime. Then  Net::SSLeay  bails
-        # out with error like:
+        # out with an error like:
         #   Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
         # which means that  Net::SSLeay  was build without support for SSLv2.
         # To avoid bothering users with such messages (see above), or even more
@@ -8392,9 +8392,10 @@ if (0 < $info) {                # +info does not do anything with ciphers
 #| set proper cipher command depending on --ciphermode option (default: intern)
 #| -------------------------------------
 # SEE Note:+cipher
-if ((0 < _need_cipher()) or (_need_default() > 0)) {
+if ((0 < _need_cipher()) or (0 < _need_default())) {
     foreach my $mode (qw(dump intern openssl ssleay)) {
         if ($mode eq $cfg{'ciphermode'}) {
+            # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
             my $do = 'cipher_' . $mode;
             push(@{$cfg{'do'}}, $do) if (0 == _is_do($do)); # only if not yet set
         }
@@ -8430,6 +8431,10 @@ if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
     _check_openssl();
 }; # --ciphermode=openssl
 
+#_dbx "do: @{$cfg{'do'}}";
+#_dbx "need-default: @{$cfg{'need-default'}}";
+#_dbx "_check_SSL_methods(): " . _need_cipher() . " : " . _need_default() . " : ver? "._is_do('version');
+#exit;
 #| check for supported SSL versions
 #| -------------------------------------
     # initialize $cfg{'version'} and all $cfg{ssl}
