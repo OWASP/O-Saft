@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.204 19/12/14 16:38:04",
+    SID_osaft   => "@(#) osaft.pm 1.205 19/12/26 12:55:45",
 
 };
 
@@ -1668,8 +1668,8 @@ our %cfg = (
     'ciphermode'    => 'intern',# cipher scan mode, any of 'ciphermodes'
     'ciphermodes'   => [qw(dump intern openssl ssleay)],
                     # modes how to scan for ciphers;
-                    # NOTE: for each mode a corresponding cipher_* command must 
-                    #       exist in commands_int
+                    # NOTE: commands_int must contain the commands cipher_dump
+                    #       cipher_intern, cipher_openssl and cipher_ssleay
     'ciphers'       => [],      # contains all ciphers to be tested
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
@@ -1783,10 +1783,11 @@ our %cfg = (
     'commands_usr'  => [],      # contains all commands defined by user with
                                 # option --cfg-cmd=* ; see _cfg_set()
     'commands_exp'  => [        # experimental commands
-                        qw(sloth),
                        ],
     'commands_notyet'=>[        # commands and checks NOT YET IMPLEMENTED
-                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
+                        qw(zlib lzo open_pgp fallback closure sgc scsv time
+                           cps_valid cipher_order cipher_weak
+                        ),
                        ],
     'commands_int'  => [        # add internal commands
                                 # these have no key in %data or %checks
@@ -1864,7 +1865,8 @@ our %cfg = (
                          tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
                        )],
     'need-cipher'   => [        # commands which need +cipher
-                        qw(check cipher cipher_dh cipher_strong cipher_weak
+                        qw(check cipher cipher_dh  cipher_strong cipher_weak
+                         cipher_dump cipher_intern cipher_ssleay cipher_openssl
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
                          cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
                          beast crime time breach drown freak logjam
@@ -1875,7 +1877,8 @@ our %cfg = (
                                 # TODO: need simple check for protocols
     'need-default'  => [        # commands which need selected cipher
                         qw(check cipher cipher_default
-                           cipher_pfs cipher_order cipher_strong cipher_selected),
+                         cipher_dump cipher_intern cipher_ssleay cipher_openssl
+                         cipher_pfs  cipher_order  cipher_strong cipher_selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
@@ -3124,7 +3127,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.204 2019/12/14
+1.205 2019/12/26
 
 =head1 AUTHOR
 
