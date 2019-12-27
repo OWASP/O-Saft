@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.15 19/12/15 11:15:51
+#?      @(#) Makefile.dev 1.16 19/12/27 16:43:24
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.15
+_SID.dev           := 1.16
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -115,10 +115,15 @@ LIST.contrib-bunt      :=
 LIST.contrib-openssl   := --n --m
 LIST.contrib-standalone:=
 
+# command and checks NOT YET IMPLEMENTED are hardcoded here,
+# should be the same commands_notyet in osaft.pm
+LIST.o-saft.notyet := \
+	+closure    +cipher_order   +cipher_weak    +cps_valid  +fallback \
+	+open_pgp   +lzo    +sgc    +scsv   +time   +zlib   \
+
 HELP-_dev1          = __________________________ testing internal documentations _
 HELP-test.dev       = test various internal documentation and functionality
 HELP-test.dev.log   = same as test.dev but store output in '$(TEST.logdir)/'
-
 
 HELP.dev = $(_NL)
 HELP.test.dev.all   = # no special documentation yet
@@ -259,7 +264,15 @@ ALL.test.dev.grep   = testarg-dev-grep_sub testarg-dev-grep_desc testarg-dev-gre
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
-ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep)
+# some special targets
+testarg-dev-o-saft_notyet:  TEST.dev.hosts  = localhost
+testarg-dev-o-saft_notyet:
+	@$(TRACE.target)
+	@cd $(TEST.dir) && $(EXE.pl) --norc --header $(TEST.dev.hosts) $(LIST.o-saft.notyet)
+
+ALL.test.dev.misc   = testarg-dev-o-saft_notyet
+
+ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep) $(ALL.test.dev.misc)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
