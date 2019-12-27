@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.16 19/12/27 16:43:24
+#?      @(#) Makefile.dev 1.17 19/12/27 16:50:58
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.16
+_SID.dev           := 1.17
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -63,6 +63,7 @@ EXE.install-sh     := ../INSTALL.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.dev))
 
+# list of variables containing source files (executables)
 LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
@@ -246,6 +247,13 @@ testarg-dev-contrib-openssl_pod:
 	@$(TRACE.target)
 testarg-dev-install-sh_pod:
 	@$(TRACE.target)
+
+HELP-_dev2          = _____________________________________ some special targets _
+HELP-testarg-dev-grep_sub   = list perl function definitons from '$(LIST.sources)'
+HELP-testarg-dev-grep_desc  = same as HELP-testarg-dev-grep_sub but with description
+HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
+HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
+HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
 
 # extract from our source (information for developers)
 # TODO: need to generate individual targets
