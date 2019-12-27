@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.41 19/12/15 12:59:47
+#?      @(#) Makefile.misc 1.42 19/12/27 18:01:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.41
+_SID.misc          := 1.42
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -112,6 +112,7 @@ test.cloc:        $(ALL.test.cloc)
 .PHONY: cloc
 
 HELP-_dev1          = __________________________________ targets for development _
+HELP-test.norc      = special target testing with/without -norc option
 HELP-tags           = generate tags file for vi(m)
 HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
 HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
@@ -127,6 +128,30 @@ ALL.gen        += $(GEN.tags)
 #               # just because GEN.tags is defined in main Makefile
 
 ALL.testmisc   += $(GEN.tags)
+
+# check if result of +check and +info is identical with and without --no-rc
+# commands LIST.norc.no-out.keys are ignored as they always differ
+TEST.norc.host := localhost
+_TEST.norc.dir  = $(TEST.logdir)/test.norc
+LIST.norc.no-out.keys   := master_key \
+                           session_id session_id_ctx \
+                           session_startdate session_starttime session_ticket \
+                           sts_expired \
+                           http_body https_body pem text
+LIST.norc.no-out.opt    := $(LIST.norc.no-out.keys:%=--no-out=%)
+LIST.norc.opts          := --header --traceKEY
+test.norc%:
+	@$(TRACE.target)
+	@$(eval _cmd = $(shell echo $* | sed -e 's/.log//'))
+	@$(eval _log = $(_TEST.norc.dir)-$(_cmd))
+	@$(eval _ext = log-$(TEST.today))
+	@$(DEV.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts)         | sort > $(_log).$(_ext)
+	@$(DEV.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts) --no-rc | sort > $(_log)--no-rc.$(_ext)
+	@-diff $(_log).$(_ext) $(_log)--no-rc.$(_ext) || exit 0
+	@rm    $(_log).$(_ext) $(_log)--no-rc.$(_ext)
+
+ALL.testmisc   += test.norc+info test.norc+check
+# TODO: test.norc%.log  NOT YET IMPLEMENTED
 
 # TODO: Profiling should go to Makefile.profile or alike
 # SEE Make:Profiling
@@ -268,7 +293,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.41: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.42: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -280,7 +305,7 @@ test.quality.log: $(_TEST.quality.log)
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
 
-ALL.test.misc      += test.bench test.bunt $(ALL.test.cloc) $(ALL.test.quality) $(GEN.tags)
+ALL.test.misc      += test.bench test.bunt test.norc $(ALL.test.cloc) $(ALL.test.quality) $(GEN.tags)
 ALL.test.misc.log  += test.quality.log
     # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
 
