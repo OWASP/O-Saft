@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.247 19/12/28 15:11:15',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.248 19/12/28 15:19:42',
 };
 
 ######################################################## public documentation #
@@ -1212,9 +1212,11 @@ sub test_sslmap    {
     my $line = "#---------------+--------+-------------";
     my $data = "$line\n# _SSLmap{ key    SSLeay  bitmask\n$line\n";
     foreach my $_ssl (sort keys %_SSLmap) {
-        $data  .= sprintf("#%14s\t= 0x%04X  0x%08x\n", $_ssl, $_SSLmap{$_ssl}[0], ($_SSLmap{$_ssl}[1] || "<<undef>>"));
+        my $mask = sprintf("0x%08x", $_SSLmap{$_ssl}[1]);
+           $mask = "<<undef>>" if not defined $_SSLmap{$_ssl}[1];
+        $data  .= sprintf("#%14s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
     }
-    $data .= "$line\n";
+    $data .= "$line";
     return $data;
 } # test_sslmap
 
