@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.19 19/12/28 21:43:33
+#?      @(#) Makefile.dev 1.20 19/12/28 22:48:18
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.19
+_SID.dev           := 1.20
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -74,7 +74,7 @@ LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.o
 # no targets are generated for empty LIST.* variables
 
 LIST.o-saft-tcl    := --help=opts --test-o-saft
-LIST.o-saft-pl     :=  +traceSUB
+LIST.o-saft-pl     :=  
 LIST.o-saft-sh     :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
@@ -103,6 +103,8 @@ LIST.osaft-man     := \
 LIST.osaft-dbx     := \
 	--test-data     --test-prot         --test-regex        --test-sub  \
 	--test-ciphers  --test-ciphers-list --test-ciphers-show --test-ciphers-sort \
+# o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl
+LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
 LIST.net-sslhello  :=
 LIST.net-sslinfo   :=   +VERSION  localhost --test-methods --test-sslmap --test-ssleay
