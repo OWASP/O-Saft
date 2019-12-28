@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.10.30',
+    SSLINFO_VERSION => '19.11.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.246 19/12/28 14:29:19',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.247 19/12/28 15:11:15',
 };
 
 ######################################################## public documentation #
@@ -912,6 +912,8 @@ my %_OpenSSL_opt = (    # openssl capabilities
     #--------------+------------
     # key (=option) supported=1
     #--------------+------------
+    '-CAfile'       => 0,
+    '-CApath'       => 0,
     '-alpn'         => 0,
     '-npn'          => 0, # same as -nextprotoneg
     '-nextprotoneg' => 0,
@@ -941,17 +943,15 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-state'        => 0,
     '-status'       => 0,
     '-strict'       => 0,
-    '-client_sigalgs'           => 0,
     '-nbio_test'    => 0,
-    '-record_padding'           => 0,
     '-tlsextdebug'  => 0,
+    '-client_sigalgs'           => 0,
+    '-record_padding'           => 0,
     '-no_renegotiation'         => 0,
     '-legacyrenegotiation'      => 0,
     '-legacy_renegotiation'     => 0,
     '-legacy_server_connect'    => 0,
     '-no_legacy_server_connect' => 0,
-    '-CAfile'       => 0,
-    '-CApath'       => 0,
     #--------------+------------
     # options in server mode
     #--------------+------------
@@ -1206,6 +1206,17 @@ sub test_sclient    {
     #? return openssl s_client availabilities (options for s_client)
     return s_client_get_optionlist();
 } # test_sclient
+
+sub test_sslmap    {
+    #? return internal data structure %_SSLmap
+    my $line = "#---------------+--------+-------------";
+    my $data = "$line\n# _SSLmap{ key    SSLeay  bitmask\n$line\n";
+    foreach my $_ssl (sort keys %_SSLmap) {
+        $data  .= sprintf("#%14s\t= 0x%04X  0x%08x\n", $_ssl, $_SSLmap{$_ssl}[0], ($_SSLmap{$_ssl}[1] || "<<undef>>"));
+    }
+    $data .= "$line\n";
+    return $data;
+} # test_sslmap
 
 sub test_ssleay     {
     #? return availability and information about Net::SSLeay
@@ -3860,6 +3871,7 @@ sub _main           {
         if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
         if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
         if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
+        if ($arg =~ /^--test.?sslmap/)      { print test_sslmap();  }
         if ($arg =~ /^--test.?sc_?lient/)   { print join(" ",test_sclient());   }
         if ($arg =~ /^--test.?methods/)     { print join(" ",ssleay_methods()); }
         if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
