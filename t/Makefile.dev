@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.18 19/12/28 15:20:28
+#?      @(#) Makefile.dev 1.19 19/12/28 21:43:33
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.18
+_SID.dev           := 1.19
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -96,13 +96,13 @@ LIST.osaft-man     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
-	toc     todo    tools   warning exit        \
+	toc     todo    tools   warning exit    \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
 
 LIST.osaft-dbx     := \
-	--test-show     --test-data         --test-prot --test-regex \
-	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
+	--test-data     --test-prot         --test-regex        --test-sub  \
+	--test-ciphers  --test-ciphers-list --test-ciphers-show --test-ciphers-sort \
 
 LIST.net-sslhello  :=
 LIST.net-sslinfo   :=   +VERSION  localhost --test-methods --test-sslmap --test-ssleay
