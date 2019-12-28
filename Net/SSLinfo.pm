@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.10.23',
+    SSLINFO_VERSION => '19.10.30',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.245 19/11/12 12:54:45',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.246 19/12/28 14:29:19',
 };
 
 ######################################################## public documentation #
@@ -92,6 +92,7 @@ Net::SSLinfo -- perl extension for SSL connection and certificate data
     Net::SSLinfo.pm                 # print help
     Net::SSLinfo.pm --help          # print help
     Net::SSLinfo.pm +VERSION        # print version string
+    Net::SSLinfo.pm --test-openssl  # print information about openssl capabilities
     Net::SSLinfo.pm --test-ssleay   # print information about Net::SSLeay capabilities
     Net::SSLinfo.pm --test-methods  # print available methods in Net::SSLeay
     Net::SSLinfo.pm your.tld        # print data from your.tld
@@ -522,6 +523,7 @@ use base qw(Exporter);
 our $VERSION   = SSLINFO_VERSION;
 our @EXPORT = qw(
         net_sslinfo_done
+        test_sclient
         test_ssleay
         ssleay_methods
         datadump
@@ -1200,8 +1202,13 @@ sub ssleay_methods  {
     return @list;
 } # ssleay_methods
 
+sub test_sclient    {
+    #? return openssl s_client availabilities (options for s_client)
+    return s_client_get_optionlist();
+} # test_sclient
+
 sub test_ssleay     {
-    #? print availability and information about Net::SSLeay
+    #? return availability and information about Net::SSLeay
     ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
     #  a here document is not possible here, or at least more cumbersome,
     #  because Perl code is used inside
@@ -3848,12 +3855,15 @@ sub _main           {
     binmode(STDERR, ":unix:utf8");
     if ($#argv < 0) { _main_help(); exit 0; }
     local $\="\n";
-    # got arguments, do something special
+    # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ /^--?h(?:elp)?$/)   { _main_help();         exit 0; }
-        if ($arg =~ /^[+-]?version/i)   { print "$VERSION";     exit 0; }
-        if ($arg =~ /^--test.?ssleay/)  { print test_ssleay();  exit 0; }
-        if ($arg =~ /^--test.?methods/) { print join(" ",ssleay_methods()); exit 0; }
+        if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
+        if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
+        if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
+        if ($arg =~ /^--test.?sc_?lient/)   { print join(" ",test_sclient());   }
+        if ($arg =~ /^--test.?methods/)     { print join(" ",ssleay_methods()); }
+        if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
+        # treat remaining args as hostname to test
         do_ssl_open( shift, 443, '');
         print Net::SSLinfo::datadump();
     }
