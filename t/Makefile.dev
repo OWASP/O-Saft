@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.17 19/12/27 16:50:58
+#?      @(#) Makefile.dev 1.18 19/12/28 15:20:28
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.17
+_SID.dev           := 1.18
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -105,7 +105,7 @@ LIST.osaft-dbx     := \
 	--test-ciphers  --test-ciphers-list --test-ciphers-sort      \
 
 LIST.net-sslhello  :=
-LIST.net-sslinfo   :=   +VERSION  localhost --test-ssleay --test-methods
+LIST.net-sslinfo   :=   +VERSION  localhost --test-methods --test-sslmap --test-ssleay
 LIST.t-makefile    :=
 LIST.install-sh    :=   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
