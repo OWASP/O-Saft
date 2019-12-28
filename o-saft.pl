@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.957 19/12/28 15:49:45",
-    STR_VERSION => "19.12.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.958 19/12/28 21:51:02",
+    STR_VERSION => "19.12.20",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -6802,7 +6802,7 @@ sub printquit           {
     #? print internal data
     # call this function with:
     #    $0 `\
-    #      gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}' o-saft-man.pm\
+    #      gawk '/--(help|trace-sub)/{next}/--h$/{next}/($2~/^-/){$1="";print}' o-saft-man.pm\
     #      |tr ' ' '\012' \
     #      |sort -u \
     #      |egrep '^(--|\+)' \
@@ -7713,7 +7713,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias: ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # alias: ssldiagnose.exe
     if ($arg =~ /^--showkeys?/i)        { $arg = '--traceKEY';      } # alias:
-    if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # alias:
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
     if ($arg eq  '--forceopenssl')      { $arg = '--opensslciphers';    } # alias:
     if ($arg eq  '--cipheropenssl')     { $arg = '--opensslciphers';    } # alias:
@@ -8134,15 +8133,6 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
-    if ($arg eq '+traceSUB'){   # TODO: rename +traceSUB to --test-SUB
-        # this command is just documentation, no need to care about other options
-        print "# $cfg{'me'}  list of internal functions:\n";
-        my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);}
-          ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
-          ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
-        exec 'perl', '-lane', "$perlprog", $0;
-        exit 0;
-    }
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
         _y_ARG("command+ $val");
