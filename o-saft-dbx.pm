@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.109 19/12/28 21:19:39";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.110 19/12/28 21:41:21";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -698,8 +698,13 @@ sub _yeast_test {
     _yeast_data()           if ('data'      eq $arg);
     _yeast_prot()           if ('prot'      eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
-    _yeast_ciphers_sorted() if ($arg =~ /^cipher.[_-]?sort/);
-    if ($arg =~ /^cipher.[_-]?list/) {
+    _yeast_ciphers()        if ('ciphers'   eq $arg);
+    $arg =~ s/^ciphers?[._-]?//;    # allow --test-* and --test-cipher-*
+    _yeast_ciphers_sorted() if ('sort'      eq $arg);
+    _yeast_ciphers_show()   if ('show'      eq $arg);
+    _yeast_ciphers_overview() if ('overview' eq $arg);
+   #_yeast_ciphers_list()    if ('list'     eq $arg);
+    if ('list'     eq $arg) {
         # FIXME: --test-ciphers is experimental
         # _yeast_ciphers_list() relies on some special $cfg{} settings
         $cfg{'verbose'} = 1;
@@ -707,9 +712,6 @@ sub _yeast_test {
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
     }
-    _yeast_ciphers_overview() if ('overview' eq $arg);
-    _yeast_ciphers_show()   if ('show'      eq $arg);
-    _yeast_ciphers()        if ('ciphers'   eq $arg);
     return;
 } # _yeast_test
 
@@ -773,7 +775,13 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =item --test-ciphers-list
 
+=item --test-ciphers-show
+
 =item --test-ciphers-sort
+
+=item --test-ciphers-overview
+
+=item --test-regex
 
 =item --test-data
 
@@ -874,7 +882,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.109 2019/12/28
+1.110 2019/12/28
 
 =head1 AUTHOR
 
