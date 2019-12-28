@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.249 19/12/28 22:06:41',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.250 19/12/28 22:49:49',
 };
 
 ######################################################## public documentation #
@@ -524,6 +524,7 @@ our $VERSION   = SSLINFO_VERSION;
 our @EXPORT = qw(
         net_sslinfo_done
         test_sclient
+        test_sslmap
         test_ssleay
         ssleay_methods
         datadump
