@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.110 19/12/28 21:41:21";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.111 19/12/29 08:47:41";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -54,43 +54,51 @@ sub _yTIME      {
        $now = time() if (1 == $cfg{'time_absolut'});# $time0 defined in main
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
-sub _yeast      { local $\ = "\n"; print $cfg{'prefix_verbose'} . $_[0]; return; }
-sub _y_ARG      { local $\ = "\n"; print $cfg{'prefix_verbose'} . " ARG: " . join(" ", @_) if (0 < $cfg{'traceARG'}); return; }
-sub _y_CMD      { local $\ = "\n"; print $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_) if (0 < $cfg{'traceCMD'}); return; }
-sub _yTRAC      { local $\ = "\n"; printf("%s%14s= %s\n",  $cfg{'prefix_verbose'}, $_[0], $_[1]); return; }
-sub _y_ARR      { return join(" ", "[", @_, "]"); }
-sub _yline      { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub __yeast     { return $cfg{'prefix_verbose'} . $_[0]; }
+sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_); }
+sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_); }
+sub __line      { return "#----------------------------------------------------" . $_[0]; }
+sub ___ARR      { return join(" ", "[", @_, "]"); }
+sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);  }
+sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (0 < $cfg{'traceARG'}); return; }
+sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (0 < $cfg{'traceCMD'}); return; }
+sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
+sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
+sub _yline      { _yeast(__line($_[0]));                return; }
 sub _ynull      { _yeast("value <<null>> means that internal variable is not defined @_"); return; }
-sub _yeast_trac {}          # forward declaration
-sub _yeast_trac {
-    #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
+sub __trac      {}          # forward declaration
+sub __trac      {
+    #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
     my $ref  = shift;   # must be a hash reference
     my $key  = shift;
+    my $data = "";
     if (not defined $ref->{$key}) {
         # undef is special, avoid perl warnings
-        _yTRAC($key, "<<null>>");
-        return;
+        return __TRAC($key, "<<null>>");
     }
     SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
-        /^$/    && do { _yTRAC($key, $ref->{$key}); last SWITCH; }; ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-        /CODE/  && do { _yTRAC($key, "<<code>>");   last SWITCH; };
-        /SCALAR/&& do { _yTRAC($key, $ref->{$key}); last SWITCH; };
-        /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$ref->{$key}})); last SWITCH; };
+        /^$/    && do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
+        /CODE/  && do { $data .= __TRAC($key, "<<code>>");   last SWITCH; };
+        /SCALAR/&& do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
+        /ARRAY/ && do { $data .= __TRAC($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});      # print hashes for full trace only
-                        _yeast("# - - - - HASH: $key = {");
+                        $data .= __yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$ref->{$key}}) {
-                            #_yeast_trac($ref, ${$ref->{$key}}{$k}); # FIXME:
-                            _yTRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: fast ok
+                            #__trac($ref, ${$ref->{$key}}{$k}); # FIXME:
+                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: fast ok
                         };
-                        _yeast("# - - - - HASH: $key }");
+                        $data .= __yeast("# - - - - HASH: $key }");
                         last SWITCH;
                     };
         # DEFAULT
-                        _yeast(STR_WARN . " user defined type '$_' skipped");
+                        $data .= __yeast(STR_WARN . " user defined type '$_' skipped");
     } # SWITCH
 
-    return;
-} # _yeast_trac
+    return $data;
+} # __trac
+
+sub _yeast_trac { local $\ = "\n"; print __trac(@_); return; }
+    #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
 
 sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
@@ -131,12 +139,11 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
 } # _yeast_ciphers_list
 
 sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    ## no critic qw(CodeLayout::ProhibitHardTabs); TABs are intended
     printf("#%s:\n", (caller(0))[3]);
     print "
 === ciphers sorted according strength ===
 =
-= OWASP	openssl	cipher
+= OWASP openssl cipher
 =------+-------+----------------------------------------------
 ";
     my @sorted;
@@ -382,8 +389,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     
     _yline(" %cmd {");
     if (2 > $cfg{'trace'}) {    # user friendly informations
-        _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
-        _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
+        _yeast("          path= " . ___ARR(@{$cmd{'path'}}));
+        _yeast("          libs= " . ___ARR(@{$cmd{'libs'}}));
         _yeast("     envlibvar= $cmd{'envlibvar'}");
         _yeast("       timeout= $cmd{'timeout'}");
         _yeast("       openssl= $cmd{'openssl'}");
@@ -401,7 +408,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
                     if ($key =~ m/openssl/) {
-                        _yTRAC($k, _y_ARR(@{$cfg{$key}{$k}}));
+                        _yTRAC($k, ___ARR(@{$cfg{$key}{$k}}));
                     } else {
                         _yTRAC($k, $cfg{$key}{$k});
                     };
@@ -410,7 +417,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             } else {
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
                     foreach my $k (sort keys @{$cfg{$key}}) {
-                        _yTRAC($key . "[$k]", _y_ARR(@{$cfg{$key}[$k]}));
+                        _yTRAC($key . "[$k]", ___ARR(@{$cfg{$key}[$k]}));
                     }
                 } else {
                     _yeast_trac(\%cfg, $key);
@@ -435,17 +442,17 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
            # cannot use _yeast() 'cause of pretty printing
     }
     foreach my $key (qw(starttls_phase starttls_error)) {
-        _yeast(      "$key= " . _y_ARR(@{$cfg{$key}}));
+        _yeast(      "$key= " . ___ARR(@{$cfg{$key}}));
     }
-    _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
+    _yeast("   SSL version= " . ___ARR(@{$cfg{'version'}}));
     printf("%s%14s= %s", $cfg{'prefix_verbose'}, "SSL versions", "[ ");
-    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});   ## no critic qw(ControlStructures::ProhibitPostfixControls)
+    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
     printf("]\n");
     _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
-    _yeast(" ignore output= " . _y_ARR(@{$cfg{'ignore-out'}}));
-    _yeast(" user commands= " . _y_ARR(@{$cfg{'commands_usr'}}));
-    _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
-    _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
+    _yeast(" ignore output= " . ___ARR(@{$cfg{'ignore-out'}}));
+    _yeast(" user commands= " . ___ARR(@{$cfg{'commands_usr'}}));
+    _yeast("given commands= " . ___ARR(@{$cfg{'done'}->{'arg_cmds'}}));
+    _yeast("      commands= " . ___ARR(@{$cfg{'do'}}));
     _yline(" user-friendly cfg }");
     _yeast("(more information with: --trace=2  or  --trace=3 )") if (1 > $cfg{'trace'});
     # $cfg{'ciphers'} may not yet set, print with _yeast_ciphers_list()
@@ -479,7 +486,7 @@ sub _yeast_args {
     _yline(" ARGV {");
     _y_ARG("# summary of all arguments and options from command line");
     _y_ARG("       called program ARG0= " . $cfg{'ARG0'});
-    _y_ARG("     passed arguments ARGV= " . _y_ARR(@{$cfg{'ARGV'}}));
+    _y_ARG("     passed arguments ARGV= " . ___ARR(@{$cfg{'ARGV'}}));
     _y_ARG("                   RC-FILE= " . $cfg{'RC-FILE'});
     _y_ARG("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
     if (0 >= $cfg{'verbose'}) {
@@ -487,7 +494,7 @@ sub _yeast_args {
     _y_ARG("      !!Hint:  use --v --v to see the processed RC-ARGV");
                   # NOTE: ($cfg{'trace'} does not work here
     }
-    _y_ARG("      from RC-FILE RC-ARGV= " . _y_ARR(@{$cfg{'RC-ARGV'}})) if (0 < $cfg{'verbose'});
+    _y_ARG("      from RC-FILE RC-ARGV= " . ___ARR(@{$cfg{'RC-ARGV'}})) if (0 < $cfg{'verbose'});
     my $txt = "[ ";
     foreach my $target (@{$cfg{'targets'}}) {
         next if (0 == @{$target}[0]);   # first entry conatins default settings
@@ -497,10 +504,10 @@ sub _yeast_args {
     _y_ARG("         collected targets= " . $txt);
     if (1 < $cfg{'verbose'}) {
     _y_ARG(" #--v { processed files, arguments and options");
-    _y_ARG("    read files and modules= ". _y_ARR(@{$dbx{file}}));
-    _y_ARG("processed  exec  arguments= ". _y_ARR(@{$dbx{exe}}));
-    _y_ARG("processed normal arguments= ". _y_ARR(@{$dbx{argv}}));
-    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @{$dbx{cfg}}));
+    _y_ARG("    read files and modules= ". ___ARR(@{$dbx{file}}));
+    _y_ARG("processed  exec  arguments= ". ___ARR(@{$dbx{exe}}));
+    _y_ARG("processed normal arguments= ". ___ARR(@{$dbx{argv}}));
+    _y_ARG("processed config arguments= ". ___ARR(map{"`".$_."'"} @{$dbx{cfg}}));
     _y_ARG(" #--v }");
     }
     _yline(" ARGV }");
@@ -548,6 +555,25 @@ sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s\n", @_); }
 sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", " score"); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", @_); }
+
+# subs for fomated maps
+sub __prot_option   {
+    my $data;
+    foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
+        $data .= __trac(\%{$cfg{'openssl_option_map'}}, $key) . "\n";
+    }
+    chomp  $data;   # remove last \n
+    return $data;
+} # __prot_option
+
+sub __prot_version  {
+    my $data;
+    foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
+        $data .= __yeast(sprintf("%14s= ", $key) . sprintf("0x%04x (%d)", ${$cfg{'openssl_version_map'}}{$key}, ${$cfg{'openssl_version_map'}}{$key})) . "\n";
+    }
+    chomp  $data;   # remove last \n
+    return $data;
+} # __prot_version
 
 sub _yeast_data {
     printf("#%s:\n", (caller(0))[3]);
@@ -648,14 +674,10 @@ sub _yeast_prot {
     }
     _yline(" }");
     _yline(" %cfg{openssl_option_map} {");
-    foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
-        _yeast_trac(\%{$cfg{'openssl_option_map'}}, $key);
-    }
+    print __prot_option();
     _yline(" }");
     _yline(" %cfg{openssl_version_map} {");
-    foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
-        _yeast(sprintf("%14s= ", $key) . sprintf("0x%04x (%d)", ${$cfg{'openssl_version_map'}}{$key}, ${$cfg{'openssl_version_map'}}{$key}));
-    }
+    print __prot_version();
     _yline(" }");
     # %check_conn and %check_dest are temporary and should be inside %checks
     _yline(" %checks {");
@@ -882,7 +904,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.110 2019/12/28
+1.111 2019/12/29
 
 =head1 AUTHOR
 
