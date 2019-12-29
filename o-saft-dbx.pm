@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.113 19/12/29 20:09:10";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.114 19/12/29 20:56:08";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -65,7 +65,7 @@ sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (0 < $cfg{'traceCMD'}); r
 sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
 sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
 sub _yline      { _yeast(__line($_[0]));                return; }
-sub _ynull      { _yeast("value <<null>> means that internal variable is not defined @_"); return; }
+sub _ynull      { _yeast("value <<undef>> means that internal variable is not defined @_"); return; }
 sub __trac      {}          # forward declaration
 sub __trac      {
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
@@ -74,7 +74,7 @@ sub __trac      {
     my $data = "";
     if (not defined $ref->{$key}) {
         # undef is special, avoid perl warnings
-        return __TRAC($key, "<<null>>");
+        return __TRAC($key, "<<undef>>");
     }
     SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
         /^$/    && do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
@@ -926,7 +926,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.113 2019/12/29
+1.114 2019/12/29
 
 =head1 AUTHOR
 
