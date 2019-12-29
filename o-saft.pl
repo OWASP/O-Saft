@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.959 19/12/29 20:06:08",
-    STR_VERSION => "19.12.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.960 19/12/29 21:19:08",
+    STR_VERSION => "19.12.22",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -771,7 +771,7 @@ my %check_cert = (  ## certificate data
 my %check_conn = (  ## connection data
     # collected and checked connection data
     #------------------+-----------------------------------------------------
-    'ip'            => {'txt' => "IP for given hostname "},
+#   'ip'            => {'txt' => "IP for given hostname "}, # 12/2019: no check implemented
     'reversehost'   => {'txt' => "Given hostname is same as reverse resolved hostname"},
     'hostname'      => {'txt' => "Connected hostname equals certificate's Subject"},
     'beast'         => {'txt' => "Connection is safe against BEAST attack (any cipher)"},
@@ -5660,7 +5660,8 @@ sub checkdest($$)   {
     # if --proxyhost was used; hence no need to check for proxyhost again
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
     $checks{'reversehost'}->{val}   = $text{'na_dns'}   if ($cfg{'usedns'} <= 0);
-    $checks{'ip'}->{val}            = $cfg{'IP'};
+    #$checks{'ip'}->{val}            = $cfg{'IP'}; # 12/2019: disabled
+    # 12/2019: only relevant when target was IP, then $cfg{'ip'} must be identical to $cfg{'IP'}
 
     # SEE Note:Selected Protocol
     # get selected cipher and store in %checks, also check for PFS
@@ -8549,13 +8550,13 @@ _yeast_TIME("ini}");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
-# SEE Note:--test-*
-if ($test !~ m/^\s*$/)    { $test =~ s/^[+-]-?test[._-]?//; _yeast_test($test); exit 0; } # internal testing
-if (_is_do('list'))       { printciphers(); exit 0; }
-if (_is_do('ciphers'))    { printciphers(); exit 0; }
-if (_is_do('version'))    { printversion(); exit 0; }
-if (_is_do('libversion')) { printopenssl(); exit 0; }
-if (_is_do('quit'))       { printquit();    exit 0; } # internal test command
+$test =~ s/^[+-]-?test[._-]?//; # remove --test or +test prefix; ignores --test itself below
+if ($test !~ m/^\s*$/)    { _yeast_test($test); exit 0; } # SEE Note:--test-*
+if (_is_do('list'))       { printciphers();     exit 0; }
+if (_is_do('ciphers'))    { printciphers();     exit 0; }
+if (_is_do('version'))    { printversion();     exit 0; }
+if (_is_do('libversion')) { printopenssl();     exit 0; }
+if (_is_do('quit'))       { printquit();        exit 0; } # internal test command
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
