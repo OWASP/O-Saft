@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.205 19/12/26 12:55:45",
+    SID_osaft   => "@(#) osaft.pm 1.206 19/12/28 22:46:19",
 
 };
 
@@ -1965,56 +1965,61 @@ our %cfg = (
                                 #       bottleneck, obviously
                                 #  see 'sslerror' settings and options also
     'openssl'  =>   {  # configurations for various openssl functionality
-       #'openssl'   => "",      # if set, full path of openssl executable
-                                # same data structure as in Net::SSLinfo
-                                # not all values used yet
+                       # same data structure as Net::SSLinfo's %_OpenSSL_opt
+                       # not all values used yet
         #--------------+--------+---------------------------------------------
         # key (=option) supported=1    warning message if option is missing
         #--------------+--------+---------------------------------------------
-        '-alpn'         => [ 1,   "checks with ALPN disabled"],
-        '-npn'          => [ 1,   "checks with NPN  disabled"],
-        '-nextprotoneg' => [ 1,   "checks with NPN  disabled"], # alias for -npn
-        '-reconnect'    => [ 1,   "checks with openssl reconnect disabled"],
-        '-fallback_scsv'=> [ 1,   "checks for TLS_FALLBACK_SCSV wrong"],
-        '-comp'         => [ 1,   "<<NOT YET USED>>"],
-        '-no_comp'      => [ 1,   "<<NOT YET USED>>"],
-        '-no_tlsext'    => [ 1,   "<<NOT YET USED>>"],
-        '-no_ticket'    => [ 1,   "<<NOT YET USED>>"],
-        '-serverinfo'   => [ 1,   "checks without TLS extension disabled"],
-        '-servername'   => [ 1,   "checks with TLS extension SNI disabled"],
-        '-serverpref'   => [ 1,   "<<NOT YET USED>>"],
-        '-showcerts'    => [ 1,   "<<NOT YET USED>>"],
-        '-curves'       => [ 1,   "using -curves disabled"],
-        '-debug'        => [ 1,   "<<NOT YET USED>>"],
-        '-bugs'         => [ 1,   "<<NOT YET USED>>"],
-        '-key'          => [ 1,   "<<NOT YET USED>>"],
-        '-msg'          => [ 1,   "using -msg disabled, DH paramaters missing or wrong"],
-        '-nbio'         => [ 1,   "<<NOT YET USED>>"],
-        '-psk'          => [ 1,   "PSK  missing or wrong"],
-        '-psk_identity' => [ 1,   "PSK identity missing or wrong"],
-        '-pause'        => [ 1,   "<<NOT YET USED>>"],
-        '-prexit'       => [ 1,   "<<NOT YET USED>>"],
-        '-proxy'        => [ 1,   "<<NOT YET USED>>"],
-        '-quiet'        => [ 1,   "<<NOT YET USED>>"],
-        '-sigalgs'      => [ 1,   "<<NOT YET USED>>"],
-        '-state'        => [ 1,   "<<NOT YET USED>>"],
-        '-status'       => [ 1,   "<<NOT YET USED>>"],
-        '-strict'       => [ 1,   "<<NOT YET USED>>"],
-        '-client_sigalgs' => [ 1, "<<NOT YET USED>>"],
-        '-tlsextdebug'    => [ 1, "TLS extension missing or wrong"],
-        '-record_padding'       => [ 1, "<<NOT YET USED>>"],
-        '-no_renegotiation'     => [ 1, "<<NOT YET USED>>"],
-        '-legacyrenegotiation'  => [ 1, "<<NOT YET USED>>"],
-        '-legacy_renegotiation' => [ 1, "<<NOT YET USED>>"],
-        '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"],
-        '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"],
-        '-nbio_test'    => [ 1,   "<<NOT YET USED>>"],
-        '-CAfile'       => [ 1,   "using -CAfile disabled"],
-        '-CApath'       => [ 1,   "using -CApath disabled"],
+        '-CAfile'       => [ 1, "using -CAfile disabled"        ],
+        '-CApath'       => [ 1, "using -CApath disabled"        ],
+        '-alpn'         => [ 1, "checks with ALPN disabled"     ],
+        '-npn'          => [ 1, "checks with NPN  disabled"     ],
+        '-nextprotoneg' => [ 1, "checks with NPN  disabled"     ], # alias for -npn
+        '-reconnect'    => [ 1, "checks with openssl reconnect disabled"],
+        '-fallback_scsv'=> [ 1, "checks for TLS_FALLBACK_SCSV wrong"],
+        '-comp'         => [ 1, "<<NOT YET USED>>"              ],
+        '-no_comp'      => [ 1, "<<NOT YET USED>>"              ],
+        '-no_tlsext'    => [ 1, "<<NOT YET USED>>"              ],
+        '-no_ticket'    => [ 1, "<<NOT YET USED>>"              ],
+        '-serverinfo'   => [ 1, "checks without TLS extension disabled"],
+        '-servername'   => [ 1, "checks with TLS extension SNI disabled"],
+        '-serverpref'   => [ 1, "<<NOT YET USED>>"              ],
+        '-showcerts'    => [ 1, "<<NOT YET USED>>"              ],
+        '-curves'       => [ 1, "using -curves disabled"        ],
+        '-debug'        => [ 1, "<<NOT YET USED>>"              ],
+        '-bugs'         => [ 1, "<<NOT YET USED>>"              ],
+        '-key'          => [ 1, "<<NOT YET USED>>"              ],
+        '-msg'          => [ 1, "using -msg disabled, DH paramaters missing or wrong"],
+        '-nbio'         => [ 1, "<<NOT YET USED>>"              ],
+        '-psk'          => [ 1, "PSK  missing or wrong"         ],
+        '-psk_identity' => [ 1, "PSK identity missing or wrong" ],
+        '-pause'        => [ 1, "<<NOT YET USED>>"              ],
+        '-prexit'       => [ 1, "<<NOT YET USED>>"              ],
+        '-proxy'        => [ 1, "<<NOT YET USED>>"              ],
+        '-quiet'        => [ 1, "<<NOT YET USED>>"              ],
+        '-sigalgs'      => [ 1, "<<NOT YET USED>>"              ],
+        '-state'        => [ 1, "<<NOT YET USED>>"              ],
+        '-status'       => [ 1, "<<NOT YET USED>>"              ],
+        '-strict'       => [ 1, "<<NOT YET USED>>"              ],
+        '-nbio_test'    => [ 1, "<<NOT YET USED>>"              ],
+        '-tlsextdebug'  => [ 1, "TLS extension missing or wrong"],
+        '-client_sigalgs'       => [ 1, "<<NOT YET USED>>"      ],
+        '-record_padding'       => [ 1, "<<NOT YET USED>>"      ],
+        '-no_renegotiation'     => [ 1, "<<NOT YET USED>>"      ],
+        '-legacyrenegotiation'  => [ 1, "<<NOT YET USED>>"      ],
+        '-legacy_renegotiation' => [ 1, "<<NOT YET USED>>"      ],
+        '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"  ],
+        '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"  ],
         #--------------+--------+---------------------------------------------
     },
+    'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
+        # will be initialized from %prot
+     },
+    'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
+        # will be initialized from %prot
+     },
     'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
-                                # 1: if available (see _check_functions()) is default
+                                # 1: if available is default (see _check_functions())
         'openssl'   => 1,       # OPENSSL_VERSION_NUMBER()
         'get_alpn'  => 1,       # P_alpn_selected available()
         'get_npn'   => 1,       # P_next_proto_negotiated()
@@ -2336,12 +2341,6 @@ our %cfg = (
            sha384WithRSAEncryption sha512WithRSAEncryption
         )
     ],
-    'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
-        # will be initialized from %prot
-     },
-    'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
-        # will be initialized from %prot
-     },
     'done'      => {},          # defined in caller
    #------------------+---------+----------------------------------------------
 ); # %cfg
@@ -3127,7 +3126,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.205 2019/12/26
+1.206 2019/12/28
 
 =head1 AUTHOR
 
