@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.206 19/12/28 22:46:19",
+    SID_osaft   => "@(#) osaft.pm 1.207 19/12/29 20:07:31",
 
 };
 
@@ -2870,11 +2870,12 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub __regex_head    { return sprintf("= %s\t%s\t%s\t%s\n", "PFS", "OWASP", "owasp", "cipher"); }
-sub __regex_line    { return "=------+-------+-------+---------------------------------------\n"; }
+sub __regex_head    { return sprintf("= %s\t%s\t%s\t%s", "PFS", "OWASP", "owasp", "cipher"); }
+sub __regex_line    { return "=------+-------+-------+---------------------------------------"; }
 
 sub test_cipher_regex   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
+    local $\ = "\n";
     print "
 === test_cipher_regex: check RegEx for ciphers ===
 =
@@ -2921,7 +2922,6 @@ sub test_cipher_regex   {
 =   miss  cipher not matched by any RegEx, programming error
 = owasp values:
 =   xx    list of all matching OWASP_x RegEx
-
 ";
     return;
 } # test_cipher_regex
@@ -3126,7 +3126,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.206 2019/12/28
+1.207 2019/12/29
 
 =head1 AUTHOR
 
