@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.112 19/12/29 09:27:50";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.113 19/12/29 20:09:10";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -140,21 +140,21 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
 } # _yeast_ciphers_list
 
 sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
+    local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
 === ciphers sorted according strength ===
 =
 = OWASP openssl cipher
-=------+-------+----------------------------------------------
-";
+=------+-------+----------------------------------------------";
     my @sorted;
     # TODO: sorting as in yeast.pl _sort_results()
     foreach my $c (sort_cipher_names(keys %ciphers)) {
-        push(@sorted, sprintf("%2s\t%s\t%s\n", get_cipher_owasp($c), get_cipher_sec($c), $c));
+        push(@sorted, sprintf("%2s\t%s\t%s", get_cipher_owasp($c), get_cipher_sec($c), $c));
     }
     print foreach sort @sorted;
-    print "=------+-------+----------------------------------------------\n";
-    print "= OWASP openssl cipher\n";
+    print "=------+-------+----------------------------------------------";
+    print "= OWASP openssl cipher";
     return;
 } # _yeast_ciphers_sorted
 
@@ -232,6 +232,7 @@ sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cip
 } # _yeast_ciphers_overview
 
 sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
+    local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure for ciphers ===
@@ -251,8 +252,7 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
 =       mac         - MAC Algorithm
 =       sec         - Security
 =       name        - OpenSSL suite name
-=
-";
+=";
     my $cnt = 0;
     printf("=%9s\t%9s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
            "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "name");
@@ -295,11 +295,11 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
 } # _yeast_ciphers_show
 
 sub _yeast_ciphers          { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
+    local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
 === list of ciphers ===
 =
-
 ";
     return;
 } # _yeast_ciphers
@@ -552,10 +552,10 @@ sub _vprintme   {
 
 # subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
-sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s\n", @_); }
+sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s", @_); }
 sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", " score"); }
-sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s\n", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
-sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", @_); }
+sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
+sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 
 # subs for fomated maps
 sub __prot_option   {
@@ -570,13 +570,17 @@ sub __prot_option   {
 sub __prot_version  {
     my $data;
     foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
-        $data .= __yeast(sprintf("%14s= ", $key) . sprintf("0x%04x (%d)", ${$cfg{'openssl_version_map'}}{$key}, ${$cfg{'openssl_version_map'}}{$key})) . "\n";
+        $data .= __yeast(sprintf("%14s= ", $key) . sprintf("0x%04X 0x%08x",
+                                 ${$cfg{'openssl_version_map'}}{$key},
+                                 ${$cfg{'openssl_version_map'}}{$key})
+                        ) . "\n";
     }
     chomp  $data;   # remove last \n
     return $data;
 } # __prot_version
 
 sub _yeast_data {
+    local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure for commands ===
@@ -595,8 +599,7 @@ sub _yeast_data {
 =   short       desciption of command available as short text
 =   intern      internal command only, not avaialable as +key
 =  ------------+--------------------------------------------------
-=
-";
+=";
 
     my $old;
     my @yeast = ();     # list of potential internal, private commands
@@ -650,11 +653,26 @@ sub _yeast_data {
 = A shorttext should be available for each command and all data keys, except:
 =      cn_nosni, ext_*, valid_*
 =
-";
-    print "= internal or summary commands:\n=      " . join(" ", @yeast);
-    print "\n";
+= internal or summary commands:
+=      " . join(" ", @yeast) . "\n";
     return;
 } # _yeast_data
+
+sub _yeast_maps {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal data structure %cfg{openssl}, %cfg{ssleay} ===
+";
+    local $\ = "\n";
+    my $data = Net::SSLinfo::test_sslmap();
+       $data =~ s/^#/#$cfg{'me'}/smg;
+    print $data;
+    _yline(" %cfg{openssl_option_map} {");
+    print __prot_option();
+    _yline(" %cfg{openssl_version_map} {");
+    print __prot_version();
+    return;
+} # _yeast_maps
 
 sub _yeast_prot {
     printf("#%s:\n", (caller(0))[3]);
@@ -698,17 +716,19 @@ sub _yeast_prot {
 } # _yeast_prot
 
 sub _yeast_grep {
+    local $\ = "\n";
+    my $_line = "=-------------------------------+------------------------------------------";
     printf("#%s:\n", (caller(0))[3]);
     print "
 === list of internal functions in $cfg{'me'} ===
 
-= function                      | description
-=-------------------------------+------------------------------------------
-";
+= function name                 | description
+$_line";
     my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);}
       ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
       ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
     system('perl', '-lane', "$perlprog", $0);   # quick&dirty
+    print $_line;
     return;
 } # _yeast_grep
 
@@ -719,6 +739,7 @@ sub _yeast_test {
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_grep()           if ('sub'       eq $arg);
     _yeast_data()           if ('data'      eq $arg);
+    _yeast_maps()           if ('maps'      eq $arg);
     _yeast_prot()           if ('prot'      eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
     _yeast_ciphers()        if ('ciphers'   eq $arg);
@@ -905,7 +926,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.112 2019/12/29
+1.113 2019/12/29
 
 =head1 AUTHOR
 
