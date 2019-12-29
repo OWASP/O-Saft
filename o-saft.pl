@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.958 19/12/28 21:51:02",
-    STR_VERSION => "19.12.20",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.959 19/12/29 20:06:08",
+    STR_VERSION => "19.12.21",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -509,6 +509,7 @@ my $legacy  = "";       # the legacy mode used in main
 my $verbose = 0;        # verbose mode used in main
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
+my $test    = "";       # set to argument if --test* or +test* was used
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
@@ -7623,10 +7624,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
-    if ($arg =~ /^--yeast/)             { _yeast_test('data');    exit 0; } # same as --test-data # TODO: should become a more general check
-    if ($arg =~ /^--test[_.-]?(.*)/)    { _yeast_test($1);        exit 0; } # debugging / internal testing
-    if ($arg =~ /^--yeast[_.-]?(.*)/)   { _yeast_test($1);        exit 0; } # -"-
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
+    if ($arg =~ /^--yeast/)             { $arg = '--test-data';           } # TODO: should become a more general check
+    if ($arg =~ /^--yeast[_.-]?(.*)/)   { $arg = "--test-$1";             } # -"-
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
@@ -7757,6 +7757,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
+    if ($arg =~ /^--test/)              { $test = $arg;             } # SEE Note:--test-*
+    if ($arg =~ /^[+]test/)             { $test = $arg;             } # SEE Note:--test-*
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
     if ($arg eq  '--proxyport')         { $typ = 'PROXY_PORT';      }
@@ -8547,6 +8549,8 @@ _yeast_TIME("ini}");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
+# SEE Note:--test-*
+if ($test !~ m/^\s*$/)    { $test =~ s/^[+-]-?test[._-]?//; _yeast_test($test); exit 0; } # internal testing
 if (_is_do('list'))       { printciphers(); exit 0; }
 if (_is_do('ciphers'))    { printciphers(); exit 0; }
 if (_is_do('version'))    { printversion(); exit 0; }
@@ -10120,6 +10124,20 @@ documentation  OSaft/Doc/help.txt  section "Version 19.11.19 and later".
 
 Internally, the commands  cipher_intern, cipher_openssl, cipher_ssleay and
 cipher_dump are used; the command cipher still remains in $cfg{do}.
+
+
+=head2 Note:--test-*
+
+The options  --test-*  are used for testing, showing internal information.
+Actually these are commands, hence the form  +test-*  is also supported.
+All these commands do not perform any checks on the specified targets, but
+exit right before the checks start. It is the same behaviour as the  +quit
+command.
+
+Starting with VERSION 19.12.21, only the options  --test-*  
+Until VERSION 19.12.21, only the options  --test-*  where supported. Using
+these options exited the program. This behaviour resulted in incomplete or
+misleading informations.
 
 
 =head2 Note:hints
