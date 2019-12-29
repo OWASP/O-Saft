@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.111 19/12/29 08:47:41";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.112 19/12/29 09:27:50";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -85,7 +85,7 @@ sub __trac      {
                         $data .= __yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$ref->{$key}}) {
                             #__trac($ref, ${$ref->{$key}}{$k}); # FIXME:
-                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: fast ok
+                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: output needs to be improved
                         };
                         $data .= __yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -97,8 +97,9 @@ sub __trac      {
     return $data;
 } # __trac
 
-sub _yeast_trac { local $\ = "\n"; print __trac(@_); return; }
+sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*$/); return; }
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
+    #  avoids printing of empty lines
 
 sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
@@ -904,7 +905,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.111 2019/12/29
+1.112 2019/12/29
 
 =head1 AUTHOR
 
