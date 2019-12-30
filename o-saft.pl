@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.960 19/12/29 21:19:08",
+    SID         => "@(#) yeast.pl 1.961 19/12/30 21:55:39",
     STR_VERSION => "19.12.22",          # <== our official version number
 };
 
@@ -5692,7 +5692,10 @@ sub checkdest($$)   {
     check_dh($host,$port);      # Logjam vulnerability
     #$checks{'ccs'}->{val}   = _isccs($host, $port);
     $checks{'ccs'}->{val}   = "<<NOT YET IMPLEMENTED>>";
-    $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host), $data{'next_protocols'}->{val}($host));
+    $key    = 'compression';
+    $value  = $data{$key}->{val}($host);
+    $checks{$key}->{val}    = ($value =~ m/$cfg{'regex'}->{'nocompression'}/) ? "" : $value;
+    $checks{'crime'}->{val} = _iscrime($value, $data{'next_protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
@@ -5711,6 +5714,7 @@ sub checkdest($$)   {
         # if supported we have a value
         # TODO: see ZLIB also (seems to be wrong currently)
     }
+
     # time on server differs more tnan +/- 5 seconds?
     my $currenttime = time();
     $key    = 'session_starttime';
