@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.114 19/12/29 20:56:08";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.115 19/12/31 00:52:01";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -163,8 +163,8 @@ sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cip
     print "
 === internal data structure for ciphers ===
 =
-= This function prints a simple overview of all available ciphers. The purpose
-= is to show if the internal data structure provides all necessary data.
+= Print a simple overview of all available ciphers.  The purpose is to show if
+= the internal data structure provides all necessary data for a cipher suite.
 =
 =   description of columns:
 =       key         - hex key for cipher suite
@@ -237,9 +237,8 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
     print "
 === internal data structure for ciphers ===
 =
-= This function prints a full overview of all available ciphers.
-= Output is similar (order of columns) but not identical to result of
-= 'openssl ciphers -V' command.
+= Print a full overview of all available ciphers.  Output is similar (order of
+= columns) but not identical to result of  'openssl ciphers -V'  command.
 =
 =   description of columns:
 =       key         - internal hex key for cipher suite
@@ -579,13 +578,13 @@ sub __prot_version  {
     return $data;
 } # __prot_version
 
-sub _yeast_data {
+sub _yeast_test_data    {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
-=== internal data structure for commands ===
+=== internal data structure for commands %data and %checks ===
 =
-= This function prints a simple overview of all available commands and checks.
+= Print a simple overview of all available commands for  +info  and  +check.
 = The purpose is to show if a proper key is defined in  %data and %checks  for
 = each command from  %cfg{'commands'}  and vice versa.
 =
@@ -640,7 +639,7 @@ sub _yeast_data {
 #               
     print __data_line();
     print __data_head();
-    print "
+    print "=
 =   +  command (key) present
 =   I  command is an internal command or alias (ok in column 'intern')
 =   -  command (key) used internal for checks only (ok in column 'command')
@@ -656,12 +655,15 @@ sub _yeast_data {
 = internal or summary commands:
 =      " . join(" ", @yeast) . "\n";
     return;
-} # _yeast_data
+} # _yeast_test_data
 
-sub _yeast_maps {
+sub _yeast_test_maps    {
     printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure %cfg{openssl}, %cfg{ssleay} ===
+=
+= Print internal mappings for openssl functionality (mainly options).
+=
 ";
     local $\ = "\n";
     my $data = Net::SSLinfo::test_sslmap();
@@ -672,15 +674,14 @@ sub _yeast_maps {
     _yline(" %cfg{openssl_version_map} {");
     print __prot_version();
     return;
-} # _yeast_maps
+} # _yeast_test_maps
 
-sub _yeast_prot {
+sub _yeast_test_prot    {
     printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure according protocols ===
 =
-= This function prints information about SSL/TLS protocols in various internal
-= variables (hashes).
+= Print information about SSL/TLS protocols in various internal variables.
 =
 ";
     local $\ = "\n";
@@ -713,9 +714,9 @@ sub _yeast_prot {
     if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
     }
     return;
-} # _yeast_prot
+} # _yeast_test_prot
 
-sub _yeast_grep {
+sub _yeast_test_grep    {
     local $\ = "\n";
     my $_line = "=-------------------------------+------------------------------------------";
     printf("#%s:\n", (caller(0))[3]);
@@ -730,17 +731,17 @@ $_line";
     system('perl', '-lane', "$perlprog", $0);   # quick&dirty
     print $_line;
     return;
-} # _yeast_grep
+} # _yeast_test_grep
 
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;
     _yeast($arg);
     osaft::test_regex()     if ('regex'     eq $arg);
-    _yeast_grep()           if ('sub'       eq $arg);
-    _yeast_data()           if ('data'      eq $arg);
-    _yeast_maps()           if ('maps'      eq $arg);
-    _yeast_prot()           if ('prot'      eq $arg);
+    _yeast_test_grep()      if ('sub'       eq $arg);
+    _yeast_test_data()      if ('data'      eq $arg);
+    _yeast_test_maps()      if ('maps'      eq $arg);
+    _yeast_test_prot()      if ('prot'      eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
     _yeast_ciphers()        if ('ciphers'   eq $arg);
     $arg =~ s/^ciphers?[._-]?//;    # allow --test-* and --test-cipher-*
@@ -877,11 +878,13 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_ciphers_sorted( )
 
-=item _yeast_data( )
+=item _yeast_test_data( )
 
-=item _yeast_prot( )
+=item _yeast_test_maps( )
 
-=item _yeast_grep( )
+=item _yeast_test_prot( )
+
+=item _yeast_test_grep( )
 
 =item _yeast_test( )
 
@@ -926,7 +929,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.114 2019/12/29
+1.115 2019/12/31
 
 =head1 AUTHOR
 
