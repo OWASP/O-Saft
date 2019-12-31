@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.43 19/12/31 10:57:48
+#?      @(#) Makefile.misc 1.44 19/12/31 12:02:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.43
+_SID.misc          := 1.44
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -294,7 +294,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.43: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.44: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -323,12 +323,27 @@ test.misc.todo.log:       $(ALL.test.misc.todo.log)
 	@$(TRACE.target)
 .PHONY: $(ALL.test.misc.log)
 
+HELP-test.misc.subs = print all subs from '$(SRC.pl)'
+_PERL.subs   = sub p{printf("%-24s\t%s\n",@_);} \
+		($$F[0]=~/^\#/)&&do{$$_=~s/^\s*\#\??/-/;p($$s,$$_)if($$s ne "");$$s="";}; \
+		($$F[0] eq "sub")&&do{p($$s,"")if($$s ne "");$$s=$$F[1];}
+    # NOTE: $$ and \# in perl code is contribution to Makefile
+testarg-misc_subs:
+	@echo "#make: print all subs  in $(SRC.pl) ..."
+	@echo ""
+	@echo "# function name                 | description"
+	@echo "#-------------------------------+------------------------------------------"
+	@-perl -lane '$(_PERL.subs)' $(SRC.pl)
+	@echo "#-------------------------------+------------------------------------------"
+	@echo ""
+
 ALL.test.misc      += test.bench test.bunt test.norc \
 			$(ALL.test.cloc) \
 			$(ALL.test.quality) \
+			testarg-misc_subs \
 			$(ALL.test.misc.todo) \
 			$(GEN.tags)
-ALL.test.misc.log  += test.quality.log $(ALL.test.misc.todo.log)
+ALL.test.misc.log  += test.quality.log $(ALL.test.misc.todo.log) testarg-misc_subs.log
     # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
 
 test.misc.all:      $(ALL.testmisc)
