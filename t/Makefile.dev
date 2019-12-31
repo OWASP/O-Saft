@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.23 19/12/31 12:04:22
+#?      @(#) Makefile.dev 1.24 19/12/31 16:31:38
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.23
+_SID.dev           := 1.24
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -103,7 +103,7 @@ LIST.osaft-man     := \
 LIST.osaft-dbx     := \
 	--test-data     --test-init --test-maps --test-prot --test-regex    \
 	--test-ciphers  --test-ciphers-list --test-ciphers-show --test-ciphers-sort \
-# o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl
+# o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
 LIST.net-sslhello  :=
@@ -250,9 +250,12 @@ testarg-dev-contrib-openssl_pod:
 testarg-dev-install-sh_pod:
 	@$(TRACE.target)
 
+#_____________________________________________________________________________
+#______________________________________________ special targets for testing __|
+
 HELP-_dev2          = _____________________________________ some special targets _
 HELP-testarg-dev-grep_sub   = list perl function definitons from '$(LIST.sources)'
-HELP-testarg-dev-grep_desc  = same as HELP-testarg-dev-grep_sub but with description
+HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_sub but with description
 HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
 HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
