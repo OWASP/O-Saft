@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.115 19/12/31 00:52:01";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.116 19/12/31 02:46:05";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -89,7 +89,7 @@ sub __trac      {
                         };
                         $data .= __yeast("# - - - - HASH: $key }");
                         last SWITCH;
-                    };
+                      };
         # DEFAULT
                         $data .= __yeast(STR_WARN . " user defined type '$_' skipped");
     } # SWITCH
@@ -657,6 +657,53 @@ sub _yeast_test_data    {
     return;
 } # _yeast_test_data
 
+sub __INIT      { return sprintf("%s%20s\t= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);  }
+sub _yeast_test_init    {
+    local $\ = "\n";
+    use Data::Dumper;
+    $Data::Dumper::Deparse=1;
+    my $line = "#--------------------+-------------------------------------------";
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal data structure for commands %data and %checks ===
+=
+= Print initialized data structure  %data and %checks  after all  command line
+= options have been applied.
+=
+";
+#ah not ok: use Sub::Identify ':all';
+    _yline(" %data {");
+    print __yeast("#                key | value (function code)");
+    print __yeast($line);
+    foreach my $key (sort keys %data) {
+        # use Dumper() to get code, returns something like:
+        #     $VAR1 = sub {
+        #                 use warnings;
+        #                 use strict;
+        #                 Net::SSLinfo::version($_[0], $_[1]);
+        #             };
+        # we only want the code line, hence remove the others
+        my $code = Dumper($data{$key}->{val});
+        $code =~ s/^\$VAR.*//;
+        $code =~ s/(?:};)?\s*$//g;
+        $code =~ s/use\s*(?:strict|warnings);//g;
+        $code =~ s/\n//g;
+        $code =~ s/^\s*//g;
+        print __INIT($key, $code);
+    }
+    print __yeast($line);
+    _yline(" }");
+    _yline(" %checks {");
+    print __yeast("#                key | value");
+    print __yeast($line);
+    foreach my $key (sort keys %checks) {
+        print __INIT($key, $checks{$key}->{val});
+    }
+    print __yeast($line);
+    _yline(" }");
+    return;
+} # _yeast_test_init
+
 sub _yeast_test_maps    {
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -740,6 +787,7 @@ sub _yeast_test {
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_grep()      if ('sub'       eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
+    _yeast_test_init()      if ('init'      eq $arg);
     _yeast_test_maps()      if ('maps'      eq $arg);
     _yeast_test_prot()      if ('prot'      eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
@@ -878,7 +926,13 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_ciphers_sorted( )
 
+=item _yeast_ciphers_show( )
+
+=item _yeast_ciphers_overview( )
+
 =item _yeast_test_data( )
+
+=item _yeast_test_init( )
 
 =item _yeast_test_maps( )
 
@@ -929,7 +983,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.115 2019/12/31
+1.116 2019/12/31
 
 =head1 AUTHOR
 
