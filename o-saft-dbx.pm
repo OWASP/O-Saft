@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.116 19/12/31 02:46:05";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.117 19/12/31 10:07:37";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -55,14 +55,16 @@ sub _yTIME      {
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
 sub __yeast     { return $cfg{'prefix_verbose'} . $_[0]; }
-sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_); }
-sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_); }
+sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_);  }
+sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_);  }
 sub __line      { return "#----------------------------------------------------" . $_[0]; }
 sub ___ARR      { return join(" ", "[", @_, "]"); }
-sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);  }
-sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (0 < $cfg{'traceARG'}); return; }
-sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (0 < $cfg{'traceCMD'}); return; }
+sub __INIT      { return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
+sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
+sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (0 < $cfg{'traceARG'}); return;  }
+sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (0 < $cfg{'traceCMD'}); return;  }
 sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
+sub _yINIT      { local $\ = "\n"; print __INIT(@_);    return; }
 sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
 sub _yline      { _yeast(__line($_[0]));                return; }
 sub _ynull      { _yeast("value <<undef>> means that internal variable is not defined @_"); return; }
@@ -343,6 +345,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    local $\ = "\n";
     my $arg = " (does not exist)";
     ## no critic qw(Variables::ProhibitPackageVars); they are intended here
     if (-f $cfg{'RC-FILE'}) { $arg = " (exists)"; }
@@ -438,14 +441,13 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("  default port= $port (last specified)");
     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
-        printf("%s%14s= %s\n", $cfg{'prefix_verbose'}, $key, $cfg{$key});
-           # cannot use _yeast() 'cause of pretty printing
+        _yTRAC($key, $cfg{$key});
     }
     foreach my $key (qw(starttls_phase starttls_error)) {
         _yeast(      "$key= " . ___ARR(@{$cfg{$key}}));
     }
     _yeast("   SSL version= " . ___ARR(@{$cfg{'version'}}));
-    printf("%s%14s= %s", $cfg{'prefix_verbose'}, "SSL versions", "[ ");
+    printf("%s",__TRAC("SSL versions", "[ "));  # no \n !
     printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
     printf("]\n");
     _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
@@ -657,11 +659,9 @@ sub _yeast_test_data    {
     return;
 } # _yeast_test_data
 
-sub __INIT      { return sprintf("%s%20s\t= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);  }
 sub _yeast_test_init    {
     local $\ = "\n";
-    use Data::Dumper;
-    $Data::Dumper::Deparse=1;
+    local $Data::Dumper::Deparse=1; # parse code, see man Data::Dumper
     my $line = "#--------------------+-------------------------------------------";
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -983,7 +983,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.116 2019/12/31
+1.117 2019/12/31
 
 =head1 AUTHOR
 
