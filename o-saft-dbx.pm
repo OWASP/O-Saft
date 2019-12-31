@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.117 19/12/31 10:07:37";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.118 19/12/31 12:05:49";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -763,29 +763,11 @@ sub _yeast_test_prot    {
     return;
 } # _yeast_test_prot
 
-sub _yeast_test_grep    {
-    local $\ = "\n";
-    my $_line = "=-------------------------------+------------------------------------------";
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== list of internal functions in $cfg{'me'} ===
-
-= function name                 | description
-$_line";
-    my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);}
-      ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
-      ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
-    system('perl', '-lane', "$perlprog", $0);   # quick&dirty
-    print $_line;
-    return;
-} # _yeast_test_grep
-
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;
     _yeast($arg);
     osaft::test_regex()     if ('regex'     eq $arg);
-    _yeast_test_grep()      if ('sub'       eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
     _yeast_test_init()      if ('init'      eq $arg);
     _yeast_test_maps()      if ('maps'      eq $arg);
@@ -938,8 +920,6 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_test_prot( )
 
-=item _yeast_test_grep( )
-
 =item _yeast_test( )
 
 =back
@@ -983,7 +963,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.117 2019/12/31
+1.118 2019/12/31
 
 =head1 AUTHOR
 
