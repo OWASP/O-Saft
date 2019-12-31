@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.42 19/12/27 18:01:37
+#?      @(#) Makefile.misc 1.43 19/12/31 10:57:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.42
+_SID.misc          := 1.43
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -59,7 +59,7 @@ HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
 
 HELP.misc           = $(_NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
-\# errorneous. The target  code.quality  is not part of '\$$(ALL.test.misc)'.
+\# errorneous. The target  test.quality  is not part of '\$$(ALL.test.misc)'.
 
 HELP.test.misc.all  = # no special documentation yet
 
@@ -230,11 +230,12 @@ ALL.test.profile   := \
 ALL.testmisc   += $(ALL.test.profile)
 test.profile:     $(ALL.test.profile)
 
-HELP-code.quality   = search for various common coding mistakes, see make e-ALL.test.quality
+ALL.qa          = $(ALL.pm) $(SRC.pl)
+
+HELP-test.quality   = search for various common coding mistakes, see make e-ALL.test.quality
 # following checks based on http://perldoc.perl.org/perldiag.html
 # NOTE: all qa.* targets never fail, they are just informational
 #       therefore if egrep fails, "echo OK" is used to avoid failure
-ALL.qa          = $(ALL.pm) $(SRC.pl)
 qa.double_dref:
 	@echo "#make: check depricated double dereferencing ..."
 	@-egrep -H '\$$$$[^$$)]'    $(ALL.qa)   || echo "OK"
@@ -293,7 +294,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.42: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.43: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -305,8 +306,29 @@ test.quality.log: $(_TEST.quality.log)
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
 
-ALL.test.misc      += test.bench test.bunt test.norc $(ALL.test.cloc) $(ALL.test.quality) $(GEN.tags)
-ALL.test.misc.log  += test.quality.log
+HELP-test.misc.todo = search for 'FIXME' and 'TODO' comments in '$(ALL.qa)'
+testarg-misc_FIXME:
+	@echo "#make: search for '# FIXME' in code ..."
+	@-grep '# FIXME'            $(ALL.qa)
+	@echo ""
+testarg-misc_TODO:
+	@echo "#make: search for '# TODO' in code ..."
+	@-grep '# TODO'             $(ALL.qa)
+	@echo ""
+ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO
+ALL.test.misc.todo.log := $(ALL.test.misc.todo:%=%.log)
+ALL.testmisc           += $(ALL.test.misc.todo)
+test.misc.todo:           $(ALL.test.misc.todo)
+test.misc.todo.log:       $(ALL.test.misc.todo.log)
+	@$(TRACE.target)
+.PHONY: $(ALL.test.misc.log)
+
+ALL.test.misc      += test.bench test.bunt test.norc \
+			$(ALL.test.cloc) \
+			$(ALL.test.quality) \
+			$(ALL.test.misc.todo) \
+			$(GEN.tags)
+ALL.test.misc.log  += test.quality.log $(ALL.test.misc.todo.log)
     # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
 
 test.misc.all:      $(ALL.testmisc)
