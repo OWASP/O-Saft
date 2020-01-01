@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.963 20/01/01 14:34:37",
+    SID         => "@(#) yeast.pl 1.964 20/01/01 15:02:22",
     STR_VERSION => "19.12.23",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2246,7 +2246,7 @@ sub _check_functions    {
 
     _y_CMD("  check if Net::SSLeay is usable ...");
     if ($version_ssleay  < 1.49) {
-        warn STR_WARN, "135: $txt < 1.49; may throw warnings and/or results may be missing;";
+        warn STR_WARN, "135: Net::SSLeay $version_ssleay < 1.49; may throw warnings and/or results may be missing;";
     } else {
         _v2print "$text_ssleay (OK)\tyes";
     }
