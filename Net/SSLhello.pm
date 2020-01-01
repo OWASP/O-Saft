@@ -51,7 +51,7 @@ use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     SSLHELLO_VERSION=> '18.06.03',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.31 18/07/03 09:16:19',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.32 20/01/01 12:36:47',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -1201,7 +1201,7 @@ sub printParameters {
 ### ---------------------------------------------------------------------------------------------------------
 ### Aufruf mit printCipherStringArray ($cfg{'legacy'}, $host, $port, "TLS1.2 0x0303", $cfg{'usesni'}, @acceptedCipherArray);
 sub printCipherStringArray ($$$$$@) {
-    #? FIXME: <<description missing>>
+    #? <<description missing>> # FIXME:
     # @cipherArray: string representation of the cipher octetts, fe.g. 0x0300000A
     # The first two ciphers are identical, if the server has a preferred order
     #
@@ -3660,7 +3660,7 @@ sub compileAlertRecord ($$$$;$$) {
 
 ############################
 sub _compileClientHelloExtensions ($$$$@) {
-    #? FIXME: <<description missing>>
+    #? <<description missing>> # FIXME:
     my ($record_version, $version, $ciphers, $host, %clientHello) = @_;
     #my $record_version    = shift || "";
     #my $version    = shift || "";
@@ -3966,7 +3966,7 @@ sub parseServerKeyExchange($$$) {
 
 
 sub parseHandshakeRecord ($$$$$$$;$) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
     my $host        = shift || ""; # for warn- and trace messages
     my $port        = shift || ""; # for warn- and trace messages
@@ -4319,7 +4319,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
 
 
 sub parseServerHello ($$$;$) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, dass das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
     my $host            = shift || "";  # for carp- and trace messages
     my $port            = shift || "";  # for carp- and trace messages
@@ -4500,7 +4500,7 @@ sub parseServerHello ($$$;$) {
 
 
 sub parseSSL2_ServerHello ($$$;$) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, das den Rest des Server-Hello-Pakets enthält
     my $host            = shift || "";  # for warn- and trace messages
     my $port            = shift || "";  # for warn- and trace messages
@@ -4596,11 +4596,18 @@ sub parseSSL2_ServerHello ($$$;$) {
     return ($serverHello{'cipher_spec'});
 } # parseSSL2_ServerHello
 
+=pod
+
+=head2 parseTLS_ServerHello( )
+
+# FIXME: missing
+
+=cut
+
 
 sub parseTLS_ServerHello {
     #? parse and get data from a ServerHello message that has been received via SSLv3 or TLS
     #? according RFC6101 (SSL3), RFC2246 (TLS1), RFC4346 (TLS1.1), RFC5246 (TLS1.2) and draft-ietf-tls-tls13 (TLS1.3)
-    #? FIXME: <<POD missing>>
     #? Variableis:
     #? $host and $port:   used for error and trave messages
     #? $buffer:           unparsed data of the ServerHello
@@ -4752,7 +4759,7 @@ sub parseTLS_ServerHello {
 
 
 sub parseTLS_Extension {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, das die Extension-Bytes enthält
     my $buffer = shift || "";
     my $len    = shift || 0;
@@ -4804,7 +4811,7 @@ sub _chomp_r { # chomp \r\n
 }
 
 sub hexCodedString {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
@@ -4821,7 +4828,7 @@ sub hexCodedString {
 
 
 sub hexCodedCipher {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
     my $codedString= shift || "";
     my $prefix= shift; # set an optional prefix after '\n'
@@ -4837,7 +4844,7 @@ sub hexCodedCipher {
 
 
 sub hexCodedSSL2Cipher {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
@@ -4852,7 +4859,7 @@ sub hexCodedSSL2Cipher {
 }
 
 sub hexCodedTLSCipher {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
@@ -4868,7 +4875,7 @@ sub hexCodedTLSCipher {
 
 
 sub compileSSL2CipherArray ($) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     my $cipherList  = shift || "";
     my $protocolCipher="";
     my $firstByte   = "";
@@ -4904,7 +4911,7 @@ sub compileSSL2CipherArray ($) {
 
 
 sub compileTLSCipherArray ($) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     my $cipherList  = shift || "";
     my $protocolCipher = "";
     my $firstByte   = "";
@@ -4935,7 +4942,7 @@ sub compileTLSCipherArray ($) {
 
 
 sub printSSL2CipherList ($) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     my $cipherList  = shift || "";
     my $protocolCipher = "";
     my $firstByte   = "";
@@ -4971,7 +4978,7 @@ sub printSSL2CipherList ($) {
 
 
 sub printTLSCipherList ($) {
-    #? FIXME: <<description missing>> <<POD missing>>
+    #? <<description missing>> <<POD missing>> # FIXME:
     my $cipherList  = shift || "";
     my $protocolCipher = "";
 
