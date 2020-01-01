@@ -69,9 +69,9 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '19.12.19',
+    SSLHELLO_VERSION=> '19.12.20',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.35 20/01/01 17:56:55',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.36 20/01/01 18:08:51',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -5026,13 +5026,8 @@ sub printTLSCipherList ($) {
     return;
 } # printTLSCipherList
 
-sub _main {
-    my @argv = @_;
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
-    local $\="\n";
+sub _main_help  {
+    #? print own help
     # if ($#argv < 0) { _main_help(); exit 0; }
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if (eval {require POD::Perldoc;}) {
@@ -5042,6 +5037,24 @@ sub _main {
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    return;
+} # _main_help
+
+sub _main       {
+    my @argv = @_;
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #  SEE Perl:binmode()
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
+    local $\="\n";
+    if ($#argv < 0) { _main_help(); exit 0; }
+    # got arguments, do something special; any -option or +command exits
+    while (my $arg = shift @argv) {
+        if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
+        if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
+        if ($arg =~ /^--test.?init/)        { printParameters();    }
+        if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
     }
     exit 0;
 } # _main
