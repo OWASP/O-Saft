@@ -52,6 +52,9 @@
 
 package Net::SSLhello;
 
+use strict;
+use warnings;
+
 BEGIN {
     # section required only when called as: Net/SSLhello.pm or ./SSLhello.pm
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
@@ -65,12 +68,10 @@ BEGIN {
     }
 }
 
-use strict;
-use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '19.11.19',
+    SSLHELLO_VERSION=> '19.12.19',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.34 20/01/01 17:46:47',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.35 20/01/01 17:56:55',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -5025,6 +5026,26 @@ sub printTLSCipherList ($) {
     return;
 } # printTLSCipherList
 
+sub _main {
+    my @argv = @_;
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #  SEE Perl:binmode()
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
+    local $\="\n";
+    # if ($#argv < 0) { _main_help(); exit 0; }
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exec( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        # may return:  You need to install the perl-doc package to use this program.
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+} # _main
+
 
 =pod
 
@@ -5055,18 +5076,6 @@ L<IO::Socket(1)>
 sub net_sslhello_done() {};     # dummy to check successful include
 ## PACKAGE }
 
-unless (defined caller) {       # print myself or open connection
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
-    }
-}
+_main(@ARGV) if (not defined caller);
 
 1;
