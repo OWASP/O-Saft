@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.24 19/12/31 16:31:38
+#?      @(#) Makefile.dev 1.26 20/01/01 17:26:03
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.24
+_SID.dev           := 1.26
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -127,9 +127,15 @@ LIST.o-saft.notyet := \
 HELP-_dev1          = __________________________ testing internal documentations _
 HELP-test.dev       = test various internal documentation and functionality
 HELP-test.dev.log   = same as test.dev but store output in '$(TEST.logdir)/'
+HELP-test.dev.EXE_pod    = print POD of EXE using:    perldoc EXE
+HELP-test.dev.EXE_--help = print documentation, using: EXE --help
+HELP-test.dev.help.all   = print all test.dev.EXE_--help
+HELP-test.dev.pod.all    = print all test.dev.EXE_pod
+HELP-test.dev.help.log   = same as test.dev.help.all but store output in '$(TEST.logdir)/'
+HELP-test.dev.pod.log    = same as test.dev.help.all but store output in '$(TEST.logdir)/'
 
-HELP.dev = $(_NL)
-HELP.test.dev.all   = # no special documentation yet
+_HELP-_dev2         = ______________ summary targets for internal documentations _
+HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
@@ -179,11 +185,10 @@ ifndef dev-macros-generated
     ))
     $(eval HELP.dev +=test.dev.help.all\t\# targets for testing --help option\n)
     $(eval HELP.dev +=test.dev.pod.all\t\# targets for testing perldoc generation\n)
+    $(eval HELP.dev +=\t\t\#____________ same as above, but store output in '$(TEST.logdir)' _\n)
     $(foreach prg, $(LIST.program), $(eval \
-	   HELP.dev +=test.$(prg).log\t\# same as test.$(prg) but store output in '$(TEST.logdir)'\n\
+	   HELP.dev +=test.$(prg)_ARG.log\t\# see test.$(prg)_ARG but ...\n\
     ))
-    $(eval HELP.dev +=test.dev.help.log\t\# same as test.dev.help.all but store output in '$(TEST.logdir)'\n)
-    $(eval HELP.dev +=test.dev.pod.log\t\# same as test.dev.pod.all but store output in '$(TEST.logdir)'\n)
 
     # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
@@ -229,10 +234,12 @@ testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
 # targets: EXE.* --help
 ALL.test.dev.help   = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_--help )
 test.dev.help.all:  $(ALL.test.dev.help)
+test.dev.help.log:  $(ALL.test.dev.help:%=%.log)
 
 # targets: EXE.pl = perlpod
 ALL.test.dev.pod    = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_pod )
 test.dev.pod.all:   $(ALL.test.dev.pod)
+test.dev.pod.log:   $(ALL.test.dev.pod:%=%.log)
 
 # generate pattern rules, one foreach EXE.*
 $(foreach prg, $(LIST.program), testarg-dev-$(prg)_% ):
@@ -253,16 +260,18 @@ testarg-dev-install-sh_pod:
 #_____________________________________________________________________________
 #______________________________________________ special targets for testing __|
 
-HELP-_dev2          = _____________________________________ some special targets _
-HELP-testarg-dev-grep_sub   = list perl function definitons from '$(LIST.sources)'
-HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_sub but with description
+HELP-_dev3          = _____________________________________ some special targets _
+HELP-testarg-dev-grep_subs  = list perl function definitons from '$(LIST.sources)'
+HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_subs but with description
 HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
-HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
+HELP-testarg-dev-grep_sub   = list all subs from '$(SRC.pl)'
 HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
+HELP-test.dev.grep.sub      = alias for testarg-dev-grep_sub:
+HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 
 # extract from our source (information for developers)
 # TODO: need to generate individual targets
-testarg-dev-grep_sub:
+testarg-dev-grep_subs:
 	@$(TRACE.target)
 	$(foreach prg, $(LIST.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
 testarg-dev-grep_desc:
@@ -273,7 +282,23 @@ testarg-dev-grep_flow:
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
 # TODO: above $(foreach ...) requires a ; at ends, which may fail on Windows
 
-ALL.test.dev.grep   = testarg-dev-grep_sub testarg-dev-grep_desc testarg-dev-grep_flow
+# function definitons more beautified for $(SRC.pl)
+_PERL.subs   = sub p{printf("%-24s\t%s\n",@_);} \
+		($$F[0]=~/^\#/)&&do{$$_=~s/^\s*\#\??/-/;p($$s,$$_)if($$s ne "");$$s="";}; \
+		($$F[0] eq "sub")&&do{p($$s,"")if($$s ne "");$$s=$$F[1];}
+    # NOTE: $$ and \# in perl code is contribution to Makefile
+testarg-dev-grep_sub:
+	@echo "#make: print all subs  in $(SRC.pl) ..."
+	@echo ""
+	@echo "# function name                 | description"
+	@echo "#-------------------------------+------------------------------------------"
+	@-perl -lane '$(_PERL.subs)' $(SRC.pl)
+	@echo "#-------------------------------+------------------------------------------"
+	@echo ""
+test.dev.grep.sub: testarg-dev-grep_sub
+
+ALL.test.dev.grep   = testarg-dev-grep_subs testarg-dev-grep_desc \
+	testarg-dev-grep_flow testarg-dev-grep_sub
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
