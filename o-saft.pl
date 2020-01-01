@@ -65,9 +65,10 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.961 19/12/30 21:55:39",
-    STR_VERSION => "19.12.22",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.963 20/01/01 14:34:37",
+    STR_VERSION => "19.12.23",          # <== our official version number
 };
+use autouse 'Data::Dumper' => qw(Dumper);
 
 sub _set_binmode    {
     # SEE Perl:binmode()
@@ -1982,28 +1983,28 @@ use IO::Socket::INET;
 sub _load_modules       {
     # load required modules
     # SEE Perl:import include
-    my $txt = "";
+    my $err = "";
     if (1 > 0) { # TODO: experimental code
-        $txt = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "005: $txt" if ($txt ne "");
+        $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+        warn STR_ERROR, "005: $err" if ("" ne $err);
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup:
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
-        #$txt = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "006: $txt" if ($txt ne "");
+        #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
+        #warn STR_ERROR, "006: $err" if ("" ne $err);
     }
-    if ($cfg{'need_netdns'} > 0) {
-        $txt = _load_file("Net/DNS.pm", "Net module");
-        if ($txt ne "") {
-            warn STR_ERROR, "007: $txt";
+    if (0 < $cfg{'need_netdns'}) {
+        $err = _load_file("Net/DNS.pm", "Net module");
+        if ("" ne $err) {
+            warn STR_ERROR, "007: $err";
             _warn("111: option --mx disabled");
             $cfg{'usemx'} = 0;
         }
     }
-    if ($cfg{'need_timelocal'} > 0) {
-        $txt = _load_file("Time/Local.pm", "Time module");
-        if ($txt ne "") {
-            warn STR_ERROR, "008: $txt";
+    if (0 < $cfg{'need_timelocal'}) {
+        $err = _load_file("Time/Local.pm", "Time module");
+        if ("" ne $err) {
+            warn STR_ERROR, "008: $err";
             _warn("112: value for +sts_expired not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
@@ -2011,19 +2012,19 @@ sub _load_modules       {
 
     return if ($osaft_standalone > 0);  # SEE Note:Stand-alone
 
-    $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
-    if ($txt ne "") {
-        die  STR_ERROR, "010: $txt"  if (not _is_do('version'));
-        warn STR_ERROR, "010: $txt";# no reason to die for +version
+    $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+    if ("" ne $err) {
+        die  STR_ERROR, "010: $err"  if (not _is_do('version'));
+        warn STR_ERROR, "010: $err";# no reason to die for +version
     }
     if ($cfg{'starttls'}) {
         $cfg{'usehttp'} = 0;            # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
-    $txt = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
-    if ($txt ne "") {
-        die  STR_ERROR, "011: $txt"  if (not _is_do('version'));
-        warn STR_ERROR, "011: $txt";    # no reason to die for +version
+    $err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
+    if ("" ne $err) {
+        die  STR_ERROR, "011: $err"  if (not _is_do('version'));
+        warn STR_ERROR, "011: $err";    # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -8231,6 +8232,7 @@ while ($#argv >= 0) {
     }
 
 } # while options and arguments
+$test =~ s/^[+-]-?test[._-]?//; # remove --test or +test prefix; ignores --test itself below
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
@@ -8403,24 +8405,23 @@ _yeast_TIME("inc}");
 _yeast_TIME("mod{");
 _y_CMD("check $cfg{'me'} internals ...");
 
-if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
-    # --ciphermode=intern does not need these checks
+my $do_checks = _is_do('cipher_openssl') + _is_do('cipher_ssleay');
 
 #| check for required module versions
 #| -------------------------------------
+_check_modules()    if (0 < $do_checks);
+    # --ciphermode=intern does not need these checks
     # check done after loading our own modules because they may require
     # other common Perl modules too; we may have detailed warnings before
-    _check_modules();
 
 #| check for required functionality
 #| -------------------------------------
+_check_functions()  if (0 < $do_checks + _is_do('cipher') + _need_checkprot());
     # more detailed checks on version numbers with proper warning messages
-    _check_functions()   if (not _is_do('cipher')); # "if" to improve performance
 
 #| check for proper openssl support
 #| -------------------------------------
-    _check_openssl();
-}; # --ciphermode=openssl
+_check_openssl()    if (0 < $do_checks);
 
 #_dbx "do: @{$cfg{'do'}}";
 #_dbx "need-default: @{$cfg{'need-default'}}";
@@ -8428,9 +8429,9 @@ if (_is_do('cipher_openssl') or _is_do('cipher_ssleay')) {
 #exit;
 #| check for supported SSL versions
 #| -------------------------------------
+_check_SSL_methods() if (0 < _need_cipher() + _need_default() + _is_do('version'));
     # initialize $cfg{'version'} and all $cfg{ssl}
-    _check_SSL_methods() if ((_need_cipher() > 0) or (_need_default() > 0) or _is_do('version'));
-        # function is oversized for --ciphermode=intern but does the work
+    # function is oversized for --ciphermode=intern but does the work
 
 _yeast_TIME("mod}");
 _yeast_TIME("ini{");
@@ -8554,7 +8555,6 @@ _yeast_TIME("ini}");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
-$test =~ s/^[+-]-?test[._-]?//; # remove --test or +test prefix; ignores --test itself below
 if ($test !~ m/^\s*$/)    { _yeast_test($test); exit 0; } # SEE Note:--test-*
 if (_is_do('list'))       { printciphers();     exit 0; }
 if (_is_do('ciphers'))    { printciphers();     exit 0; }
