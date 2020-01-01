@@ -69,9 +69,9 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '19.12.20',
+    SSLHELLO_VERSION=> '19.12.21',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.36 20/01/01 18:08:51',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.37 20/01/01 18:45:45',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -1168,53 +1168,58 @@ my %SSL2_CIPHER_STRINGS = (
   '0x030000FF'=> [qw(EMPTY_RENEGOTIATION_INFO_SCSV            SCSV-RENEG)],
 );
 
+#_____________________________________________________________________________
+#__________________________________________________ help and test functions __|
 
-#############################################################################################
-############################################################################################
 sub version { # version of SSLhello
     #? prints the official version number of SSLhello (yy-mm-dd)
 
     local $\ = ""; # no auto '\n' at the end of the line
     print "NET::SSLhello        ($VERSION)\n";
     return;
-}
+} # version
 
+sub __print { return sprintf("%s%s\n", "#SSLHello: ", @_); }
+sub _yprint { return __print(sprintf("%21s=%s", $_[0], $_[1])); }
 sub printParameters {
     #? prints the global parameters
     #
     local $\ = ""; # no auto '\n' at the end of the line
+    my $line = "#--------------------+-------------------------------------------";
     print ("#O-Saft::Net::SSLhello::Parameters:\n");
-    print ("#SSLHello:                 retry=$Net::SSLhello::retry\n")              if (defined($Net::SSLhello::retry));
-    print ("#SSLHello:               timeout=$Net::SSLhello::timeout\n")            if (defined($Net::SSLhello::timeout));
-    print ("#SSLHello:         connect_delay=$Net::SSLhello::connect_delay\n")      if (defined($Net::SSLhello::connect_delay));
-    print ("#SSLHello:                 trace=$Net::SSLhello::trace\n")              if (defined($Net::SSLhello::trace));
-    print ("#SSLHello:             traceTIME=$Net::SSLhello::traceTIME\n")          if (defined($Net::SSLhello::traceTIME));
-    print ("#SSLHello:              usereneg=$Net::SSLhello::usereneg\n")           if (defined($Net::SSLhello::usereneg));
-    print ("#SSLHello:          double_reneg=$Net::SSLhello::double_reneg\n")       if (defined($Net::SSLhello::double_reneg));
-    print ("#SSLHello:                usesni=$Net::SSLhello::usesni\n")             if (defined($Net::SSLhello::usesni));
-    print ("#SSLHello:          use_sni_name=$Net::SSLhello::use_sni_name\n")       if (defined($Net::SSLhello::use_sni_name));
-    print ("#SSLHello:              sni_name=$Net::SSLhello::sni_name\n")           if (defined($Net::SSLhello::sni_name));
-    print ("#SSLHello:     use_signature_alg=$Net::SSLhello::use_signature_alg\n")  if (defined($Net::SSLhello::use_signature_alg));
-    print ("#SSLHello:                useecc=$Net::SSLhello::useecc\n")             if (defined($Net::SSLhello::useecc));
-    print ("#SSLHello:            useecpoint=$Net::SSLhello::useecpoint\n")         if (defined($Net::SSLhello::useecpoint));
-    print ("#SSLHello:              starttls=$Net::SSLhello::starttls\n")           if (defined($Net::SSLhello::starttls));
-    print ("#SSLHello:          starttlsType=$Net::SSLhello::starttlsType\n")       if (defined($Net::SSLhello::starttlsType));
+    print __print($line);
+    print _yprint("retry",           $Net::SSLhello::retry)           if (defined($Net::SSLhello::retry));
+    print _yprint("timeout",         $Net::SSLhello::timeout)         if (defined($Net::SSLhello::timeout));
+    print _yprint("timeout",         $Net::SSLhello::timeout)         if (defined($Net::SSLhello::timeout));
+    print _yprint("connect_delay",   $Net::SSLhello::connect_delay)   if (defined($Net::SSLhello::connect_delay));
+    print _yprint("trace",           $Net::SSLhello::trace)           if (defined($Net::SSLhello::trace));
+    print _yprint("traceTIME",       $Net::SSLhello::traceTIME)       if (defined($Net::SSLhello::traceTIME));
+    print _yprint("usereneg",        $Net::SSLhello::usereneg)        if (defined($Net::SSLhello::usereneg));
+    print _yprint("double_reneg",    $Net::SSLhello::double_reneg)    if (defined($Net::SSLhello::double_reneg));
+    print _yprint("usesni",          $Net::SSLhello::usesni)          if (defined($Net::SSLhello::usesni));
+    print _yprint("use_sni_name",    $Net::SSLhello::use_sni_name)    if (defined($Net::SSLhello::use_sni_name));
+    print _yprint("sni_name",        $Net::SSLhello::sni_name)        if (defined($Net::SSLhello::sni_name));
+    print _yprint("use_signature_alg", $Net::SSLhello::use_signature_alg)  if (defined($Net::SSLhello::use_signature_alg));
+    print _yprint("useecc",          $Net::SSLhello::useecc)          if (defined($Net::SSLhello::useecc));
+    print _yprint("useecpoint",      $Net::SSLhello::useecpoint)      if (defined($Net::SSLhello::useecpoint));
+    print _yprint("starttls",        $Net::SSLhello::starttls)        if (defined($Net::SSLhello::starttls));
+    print _yprint("starttlsType",    $Net::SSLhello::starttlsType)    if (defined($Net::SSLhello::starttlsType));
     for my $i (1..5) {
-        print ("#SSLHello: starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+        print _yprint("starttlsPhaseArray[$i]", $Net::SSLhello::starttlsPhaseArray[$i])   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
     }
     for my $i (6..8) {
-        print ("#SSLHello: starttlsErrorArray[".($i-5)."]=$Net::SSLhello::starttlsPhaseArray[$i] = starttlsPhaseArray[$i] (internally)\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+        print _yprint("starttlsErrorArray[".($i-5)."]", $Net::SSLhello::starttlsPhaseArray[$i] . " = starttlsPhaseArray[$i] (internally)")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
     }
-    print ("#SSLHello:         starttlsDelay=$Net::SSLhello::starttlsDelay\n")      if (defined($Net::SSLhello::starttlsDelay));
-    print ("#SSLHello:       slowServerDelay=$Net::SSLhello::slowServerDelay\n")    if (defined($Net::SSLhello::slowServerDelay));
-    print ("#SSLHello:          experimental=$Net::SSLhello::experimental\n")       if (defined($Net::SSLhello::experimental));
-    print ("#SSLHello:             proxyhost=$Net::SSLhello::proxyhost\n")          if (defined($Net::SSLhello::proxyhost));
-    print ("#SSLHello:             proxyport=$Net::SSLhello::proxyport\n")          if (defined($Net::SSLhello::proxyport));
-    print ("#SSLHello:           max_ciphers=$Net::SSLhello::max_ciphers\n")        if (defined($Net::SSLhello::max_ciphers));
-    print ("#SSLHello:       max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n")    if (defined($Net::SSLhello::max_sslHelloLen));
-    print ("#------------------------------------------------------------------------------------------\n");
+    print _yprint("starttlsDelay",   $Net::SSLhello::starttlsDelay)   if (defined($Net::SSLhello::starttlsDelay));
+    print _yprint("slowServerDelay", $Net::SSLhello::slowServerDelay) if (defined($Net::SSLhello::slowServerDelay));
+    print _yprint("experimental",    $Net::SSLhello::experimental)    if (defined($Net::SSLhello::experimental));
+    print _yprint("proxyhost",       $Net::SSLhello::proxyhost)       if (defined($Net::SSLhello::proxyhost));
+    print _yprint("proxyport",       $Net::SSLhello::proxyport)       if (defined($Net::SSLhello::proxyport));
+    print _yprint("max_ciphers",     $Net::SSLhello::max_ciphers)     if (defined($Net::SSLhello::max_ciphers));
+    print _yprint("max_sslHelloLen", $Net::SSLhello::max_sslHelloLen) if (defined($Net::SSLhello::max_sslHelloLen));
+    print __print($line);
     return;
-}
+} # printParameters
 
 ### --------------------------------------------------------------------------------------------------------- ###
 ### compile packets functions
@@ -5026,6 +5031,9 @@ sub printTLSCipherList ($) {
     return;
 } # printTLSCipherList
 
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
+
 sub _main_help  {
     #? print own help
     # if ($#argv < 0) { _main_help(); exit 0; }
@@ -5088,6 +5096,10 @@ L<IO::Socket(1)>
 
 sub net_sslhello_done() {};     # dummy to check successful include
 ## PACKAGE }
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
 
 _main(@ARGV) if (not defined caller);
 
