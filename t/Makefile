@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.101 19/12/15 13:35:39
+#?      @(#) Makefile 1.102 20/01/01 12:27:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.101
+_SID.test          := 1.102
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -712,7 +712,8 @@ tests.quick.log:
 test:       tests
 test.log:   tests.log
 	@$(TRACE.target)
-	@echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $@-compare"
+	@echo "# to show differences with $(EXE.diff), use:"
+	@echo "    $(MAKE_COMMAND) $@-compare"
 
 
 # collect targets in this file, should not be added to ALL.tests
@@ -777,8 +778,6 @@ TEST.log-suffix     = -$(TEST.today)
 # checking this variable if not empty is sufficent to print verbose information
 # SEE Make:defines with commands
 
-_HELP_log_hint  = \# see also: $(MAKE_COMMAND) help.test.log-info
-
 define _CMD_log-compare
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
@@ -790,8 +789,11 @@ endef
 
 define _CMD_log-compare-hint
 	echo ""
-	echo "# to show differences with $(EXE.diff), use: $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-	echo "$(_HELP_log_hint)"
+	echo "# for informations and to show differences with $(EXE.diff), use:"
+	echo "    $(MAKE_COMMAND) help.test.log-info"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare-v"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
 define _CMD_log-move
@@ -803,12 +805,16 @@ define _CMD_log-move
 	done
 endef
 
+# FIXME: does not set _stub properly if $* is set
 define _CMD_log-move-hint
-	_stub="log" && \
-	[ -n "$*" ] && _stub="$*.log" ; \
-	echo ""     && \
-	echo "# to move new files to .log , use: $(MAKE_COMMAND) test.$$_stub-move"
-	echo "$(_HELP_log_hint)"
+	_stub="log"
+	$(eval _stub="log")
+	$(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
+	echo ""
+	echo "# for informations and to move new files to .log , use:"
+	echo "    $(MAKE_COMMAND) help.test.log-info"
+	echo "    $(MAKE_COMMAND) test.$(_stub)-move"
+	echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
 test.log-compare-hint:
