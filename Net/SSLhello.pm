@@ -52,12 +52,25 @@
 
 package Net::SSLhello;
 
+BEGIN {
+    # section required only when called as: Net/SSLhello.pm or ./SSLhello.pm
+    my $_me   = $0; $_me   =~ s#.*[/\\]##;
+    if ("SSLhello.pm" eq $_me) {
+        my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+        unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");
+        if ($_path !~ m#^[.]/*$#) { # . already added
+            unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
+        }
+        unshift(@INC, "../") if ($0 =~ m#^(?:[.]/)?SSLhello.pm#); # call in Net/
+    }
+}
+
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.06.03',
+    SSLHELLO_VERSION=> '19.11.19',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.33 20/01/01 12:54:26',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.34 20/01/01 17:46:47',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -5026,6 +5039,8 @@ See DESCRIPTION above.
 =head1 DEENDENCIES
 
 L<IO::Socket(1)>
+L<IO::Socket::INET(1)>
+L<OSaft::error_handler>
 
 =head1 SEE ALSO
 
