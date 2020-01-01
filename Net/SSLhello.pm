@@ -41,8 +41,14 @@
 #         hints.
 
 ## no critic qw(Variables::ProhibitPackageVars)
-#  NOTE: we have a couple of global variables, but do not want to write them in
-#        all CAPS (as it would be required by Perl::Critic)
+#  NOTE:  we have a couple of global variables, but do not want to write them
+#         in all CAPS (as it would be required by Perl::Critic)
+
+## no critic qw(Subroutines::ProhibitExcessComplexity ControlStructures::ProhibitDeepNests Subroutines::ProhibitManyArgs)
+#  yes, parts of this is is complex
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  because we use /x as needed for human readability
 
 package Net::SSLhello;
 
@@ -51,7 +57,7 @@ use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     SSLHELLO_VERSION=> '18.06.03',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.32 20/01/01 12:36:47',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.33 20/01/01 12:54:26',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -5040,7 +5046,7 @@ unless (defined caller) {       # print myself or open connection
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
-    if (qx(perldoc -V)) {
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
