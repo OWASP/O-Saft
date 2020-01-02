@@ -11,7 +11,6 @@
 #?
 #? EXAMPLES
 #?          make help.doc
-#?          make help.syntax
 #?          make macro macro=MAKEFILE
 #?          make m-MAKEFILE
 #?          make echo  echo=MAKEFILE
@@ -22,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.81 20/01/02 01:07:46
+#?      @(#) Makefile.help 1.82 20/01/02 11:23:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -31,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.81
+_SID.help          := 1.82
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -122,7 +121,6 @@ EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
 EXE.targets     = awk       '$(_AWK_print_file)$(_AWK_target_by_line)'
-EXE.syntax     := sed -n -e 's/^\#\.//p'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
@@ -213,7 +211,6 @@ HELP-help.all   = print all targets, including test and development targets
 HELP-help.test  = print documentation about test targets
 HELP-help.critic= print documentation about perlcritic targets
 #               # HELP-help.critic - also in Makefile.critic (a bit different)
-HELP-help.syntax= print documentation about syntax used in Makefile.*
 HELP-help.makefiles.doc = print documentation about available Makefile.*
 #               # HELP-help.makefiles.doc - also in Makefile.makefiles
 
@@ -234,7 +231,7 @@ HELP.help       = $(_NL)\
 \#    $(MAKE_COMMAND) s-MYmacro         $(_NL)\
 \#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
 
-ALL.help       += help.help help.critic help.doc help.syntax
+ALL.help       += help.help help.critic help.doc
 ALL.help       += $(ALL.help.tests)
                 # add all other help.test* targets
 
@@ -258,11 +255,7 @@ help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 # legacy aliases
 help.doc: help.help
 
-help.syntax:
-	@$(TRACE.target)
-	$(EXE.syntax) $(_MYSELF.help)
-
-.PHONY: help.doc help.syntax
+.PHONY: help.doc
 
 
 # Following  file%  targets are used for doc.all target only, they are just a
