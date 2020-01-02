@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -138,7 +138,7 @@ For example:
 
 =head1 VERSION
 
-1.24 2019/04/27
+1.25 2020/01/02
 
 =head1 AUTHOR
 
@@ -149,7 +149,7 @@ For example:
 use strict;
 use warnings;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.24 19/04/27 12:19:56";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.25 20/01/02 01:43:22";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
