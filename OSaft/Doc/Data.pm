@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "19.11.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.25 19/11/13 13:50:13";
+our $VERSION    = "19.12.19";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.26 20/01/02 01:48:24";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -580,7 +580,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.25 2019/11/13
+1.26 2020/01/02
 
 =head1 AUTHOR
 
