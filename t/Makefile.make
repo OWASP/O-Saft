@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.13 19/11/21 00:03:27
+#?      @(#) Makefile.make 1.14 20/01/02 11:29:05
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.13
+_SID.make          := 1.14
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -38,7 +38,7 @@ HELP-test.make      = test help* targets of our Makefiles
 HELP-test.make.log  = same as test.make but store output in '$(TEST.logdir)/'
 HELP-test.make.log-compare  = compare results of test.make.log (if any)
 
-HELP.make       = $(_NL)\
+HELP.make           = $(_NL)\
 \# Note that  test.make  uses "make help.test.*" to show each Makefile's$(_NL)\
 \# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(_NL)\
 \# (user-)documentation of "o-saft.pl"$(_NL)\
@@ -63,9 +63,8 @@ HELP-testarg-make-help.test*  = test help.test.* targets of Makefiles
 HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
 # special/indivisual help.* targets in Makefiles
 LIST.helpmake  := help              help.all            help.help.all-v \
-		  help.doc          help.doc.all        help.syntax \
-		  help.test.internal help.test.makevars help.test.log-info  \
-		  help.makefiles.doc
+		  help.doc          help.doc.all        help.makefiles.doc \
+		  help.test.internal help.test.makevars help.test.log-info
 # Makefile-specific help.test.* targets
 # pod and template are missing in $(ALL.inc.type) because they are not included
 # help.test.%.all  is rarely used
