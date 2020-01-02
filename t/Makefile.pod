@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.33 19/11/22 23:47:03
+@(#) Makefile.pod 1.34 20/01/02 01:25:19
 
 =head1 AUTHOR
 
@@ -64,7 +64,8 @@ Please also  SEE Documentation  in o-saft.pl .
 
 All Makefile* provide a set of targets using a well defined naming convention.
 
-Following examples provide help (documentation) for the available targets:
+Examples (for makefile.tcl)  which provide help (documentation)  for available
+targets:
 
     make
     make help
@@ -72,7 +73,7 @@ Following examples provide help (documentation) for the available targets:
     make help.test.tcl
     make help.test.tcl.all
 
-To just get the list of all targets following can be used (example):
+To just get the list of all targets, following can be used:
 
     make e-ALL.test.tcl
     make s-ALL.test.tcl
@@ -84,6 +85,42 @@ Calling targets:
     make testcmd-tcl--v-host_localhost
 
 
+A common set of variables and targets is provided in all Makefile*. If the
+makefile is named  Makefile.Ext , following variables exit:
+
+    HELP.test.Ext
+    TEST.Ext.hosts
+    ALL.test.Ext
+    ALL.test.Ext.log
+
+and following targets exist:
+
+    help.test.Ext
+    test.Ext
+    test.Ext.log
+
+
+=head2 O-Saft Makefile Example Usage
+
+To show readable (for humans) information about variables and targets from
+a Makefile* itself, see
+
+    make -f t/Makefile.help
+
+To get brief (mainly technical) information about the Makefile, use:
+
+    make -f t/Makefile.cgi
+    make -f t/Makefile.cgi helpt.test.cgi
+    make                   helpt.test.cgi
+    make -f t/Makefile.cgi targets.me
+    make -f t/Makefile.cgi macros.me
+    make -f t/Makefile.cgi s-ALL.test.cgi
+    make -f t/Makefile.cgi p-LIST.cgi.badIP
+    make -f t/Makefile.cgi m-LIST.cgi.badIPv6
+    make -f t/Makefile.cgi e-LIST.cgi.badIPv6
+    make -f t/Makefile.cgi s-LIST.cgi.badIPv6
+
+
 =head1 O-Saft Makefile Limitations
 
 * Requires GNU Make > 2.0.
@@ -91,6 +128,11 @@ Calling targets:
 * Requires GNU awk (gawk)
 
 * Requires GNU sed (for generating target  INSTALL.sh ).
+
+*  Unfortunately some of the macros use variables of the makefile,  like
+   $(T), while other macros must use the TAB character verbatim,  which is
+   difficult to identify by human eyes.
+
 
 
 =head1 O-Saft Makefile*
@@ -102,7 +144,7 @@ The Makefile* are located in the  $(TEST.dir)  directory (usually ./t ).
 The default target in each Makefile* simply prints a brief help.
 
 Most included t/Makefiles.*  contain very limited comments. The details of
-their functionality is mainly described herein.
+their functionality is mainly described in this documentation here.
 
 
 =head1 O-Saft Makefile Syntax
@@ -114,6 +156,15 @@ of the project, it just describes the used "coding syntax" in Makefile*.
 Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
 None of them are disabled explicitly.  Therefore some behaviour may depend
 on the local make configuration. SEE  Make:automatic variables  also.
+
+
+=head2 O-Saft Makefile General
+
+To extract and format the texts, the targets use GNU Make's functionality
+like  $(eval ...), $(foreach ...) and $(shell).
+External tools like  awk, sed  and  tr  must be used  when information or
+text are to be extracted form other Makefile*.  Each tool and its command
+arguments are defined as variable, see corresponding  EXE.*  variables.
 
 
 =head2 O-Saft Makefile Includes
@@ -240,9 +291,9 @@ system.
 
 Following internal variables in each Makefile* are used:
 
-    _SID        - version in project's Makefile
-    _SID.*      - version in included Makefile*
-    _MYSELF.*   - path of the Makefile itself (in included Makefile*)
+    _SID            - version in project's Makefile
+    _SID.*          - version in included Makefile*
+    _MYSELF.*       - path of the Makefile itself (in included Makefile*)
 
 The  _SID.*  variables are used to check if sub-makefiles were included.
 
@@ -265,23 +316,23 @@ Where  t/Makefile  may include more files.
 
 Following names are used, which potentially conflict with make itself:
 
-    ECHO        - echo command
-    MAKE        - make command
-    MAKEFILE    - Makefile (i.g. myself, but may be redifined)
+    ECHO            - echo command
+    MAKE            - make command
+    MAKEFILE        - Makefile (i.g. myself, but may be redifined)
 
 Following name prefixes are used for variables:
 
-    SRC         - defines a source file
-    GEN         - defines a generated file
-    EXE         - defines tools to be used
-    ALL         - defines summary variables
-    LIST        - defines lists of something
-    TEST        - something related to the t/ directory
-    CONTRIB     - something related to the contrib/ directory
-    CRITIC      - something related to percritic targets
-    HELP        - defines texts to be used in  help  and  doc  targets
-    _           - names of internal (helper) variables (they are not
-                  intended to be overwritten on command line)
+    SRC             - defines a source file
+    GEN             - defines a generated file
+    EXE             - defines tools to be used
+    ALL             - defines summary variables
+    LIST            - defines lists of something
+    TEST            - something related to the t/ directory
+    CONTRIB         - something related to the contrib/ directory
+    CRITIC          - something related to percritic targets
+    HELP            - defines texts to be used in  help  and  doc  targets
+    _               - names of internal (helper) variables (they are not
+                      intended to be overwritten on command line)
 
 Notes about some special variables:
 
