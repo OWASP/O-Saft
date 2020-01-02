@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #!#############################################################################
-#!#             Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!#             Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.964 20/01/01 15:02:22",
+    SID         => "@(#) yeast.pl 1.965 20/01/02 01:40:05",
     STR_VERSION => "19.12.23",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9113,6 +9113,7 @@ the code. For example see:
 
     perldoc o-saft.pl
 
+
 =head3 Internal Makefile Documentation
 
 Documentation of the make system is mainly done in POD format in:
@@ -9170,11 +9171,18 @@ is also used in makefiles where it means the recipe to be executed.
 =item arguments
 
 Is used for arguments to the tools, like o-saft.pl, and is meant as option
-or command for this tool, pleas also see  COMMANDS  and  OPTIONS  in
+or command for this tool, please see also  COMMANDS  and  OPTIONS  in
 
-    o-saft.pl  --help"
+    o-saft.pl  --help
 
 =back
+
+
+=head1 Testing (Development)
+
+See  L<Documentation>  above and  L<Note:--test-*>  below and
+
+    o-saft.pl  --help=testing
 
 
 =head1 Annotations, Internal Notes
@@ -9182,7 +9190,7 @@ or command for this tool, pleas also see  COMMANDS  and  OPTIONS  in
 The annotations from here on describe behaviours, observations, and alike,
 which lead to special program logic.  The intention is to have one central
 place where to do the documentation.
-Up to now --2019-- this is an internal documentation only. It is available
+Up to now --2020-- this is an internal documentation only. It is available
 for the developer also with:
 
     perldoc o-saft.pl
@@ -9199,6 +9207,8 @@ text is supposed to be read by humans!
 It then will be referenced in the code with the "SEE <Annotation>" syntax.
 
 I.g. no other markup is used, except POD'S =head3 and  L <..> markup.
+
+All following text from hereon are Annotations.
 
 
 =head2 Note:Documentation
@@ -9557,7 +9567,7 @@ The pattern is stored in %cfg.  The correspondig string  for anonymisation
 Note that the corresponding variable names (in %cfg and %text) should also
 be part of the pattern to avoid its disclosure with --v or --trace option.
 
-Known (9/2019) variables and texts with potential information disclosure:
+Known (9/2020) variables and texts with potential information disclosure:
 
     ENV{PWD}
     $me
@@ -10147,7 +10157,7 @@ misleading informations.
 
 =head2 Note:hints
 
-oThe output may contain  !!Hint  messages, see for --help=output  details.
+The output may contain  !!Hint  messages, see  --help=output  for details.
 
 The texts used for hint messages can be hardcoded in %cfg, set dynamically
 in %cfg in the code, or set using command line options at startup.
