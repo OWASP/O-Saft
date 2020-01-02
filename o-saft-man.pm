@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.306 20/01/02 01:41:47";
+my  $SID_man= "@(#) o-saft-man.pm 1.307 20/01/02 22:22:53";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.306'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.307'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -866,11 +866,11 @@ Generated with:
 
 EoHelp
     print "=cut\n\n";           # SEE POD:Syntax
-    _man_doc_pod('abbr', "-");  # this is for woodoo, see below
-    _man_doc_pod('rfc',  "-");  # this is for woodoo, see below
+    _man_doc_pod('abbr', "-");  # this is for voodoo, see below
+    _man_doc_pod('rfc',  "-");  # this is for voodoo, see below
     print <<'EoHelp';
 
-# begin woodoo
+# begin voodoo
 
 # Some documentation is plain text, which is  DATA  in Perl sources. As such,
 # it  is  not detected as source,  not as comment,  and  not as documentation
@@ -891,7 +891,7 @@ EoHelp
 # results in a wise manner. Measuring quality is more than just automatically
 # generated statistics!
 
-# end woodoo
+# end voodoo
 
 EoHelp
     return;
@@ -1728,7 +1728,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.306 2020/01/02
+1.307 2020/01/02
 
 =head1 AUTHOR
 
