@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.119 20/01/02 01:42:36";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.121 20/01/02 22:48:49";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -58,7 +58,7 @@ sub __yeast     { return $cfg{'prefix_verbose'} . $_[0]; }
 sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_);  }
 sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_);  }
 sub __line      { return "#----------------------------------------------------" . $_[0]; }
-sub ___ARR      { return join(" ", "[", @_, "]"); }
+sub ___ARR      { return join(" ", "[", sort(@_), "]"); }
 sub __INIT      { return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
 sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
 sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (0 < $cfg{'traceARG'}); return;  }
@@ -692,7 +692,7 @@ sub _yeast_test_init    {
         print __INIT($key, $code);
     }
     print __yeast($line);
-    _yline(" }");
+    _yline(" %data }");
     _yline(" %checks {");
     print __yeast("#                key | value");
     print __yeast($line);
@@ -700,7 +700,7 @@ sub _yeast_test_init    {
         print __INIT($key, $checks{$key}->{val});
     }
     print __yeast($line);
-    _yline(" }");
+    _yline(" %checks }");
     return;
 } # _yeast_test_init
 
@@ -963,7 +963,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.119 2020/01/02
+1.121 2020/01/02
 
 =head1 AUTHOR
 
