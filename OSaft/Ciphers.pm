@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 =pod
@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.07.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.40 19/08/05 22:45:36";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.41 20/01/02 01:47:09";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1591,7 +1591,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.40 2019/08/05
+1.41 2020/01/02
 
 =head1 AUTHOR
 
