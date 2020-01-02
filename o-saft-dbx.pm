@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2019 Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2020 Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.118 19/12/31 12:05:49";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.119 20/01/02 01:42:36";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -963,7 +963,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.118 2019/12/31
+1.119 2020/01/02
 
 =head1 AUTHOR
 
