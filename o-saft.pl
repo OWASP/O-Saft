@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.965 20/01/02 01:40:05",
+    SID         => "@(#) yeast.pl 1.966 20/01/02 12:03:04",
     STR_VERSION => "19.12.23",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9079,6 +9079,14 @@ public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 
 =head1 Documentation
 
+This is the documentation for development!
+
+For user documentation please use:
+
+    o-sat.pl --help
+
+=head3 Documentation General
+
 Documentation distinguishes between the  L<Public User Documentation>  and
 L<Internal Code Documentation>  and  L<Internal Makefile Documentation>.
 
@@ -9101,7 +9109,7 @@ All comments/documentation/explanation of code details is written close to
 the corresponding code lines.  Note that these comments describe *why* the
 code is written in some way  (means the logic of the code), and not *what*
 the code does (which is most likely obvious).
-Some special syntax for comment lines are used, see  X&Comments&  in
+Some special syntax for comment lines are used, see  "Comments" section in
 
     OSaft/Doc/coding.txt .
 
@@ -9204,11 +9212,12 @@ that, please see "woodoo" in o-saft-man.pm .
 Each single annotation is headed using POD's =head2 syntax.  All following
 text is supposed to be read by humans!
 
-It then will be referenced in the code with the "SEE <Annotation>" syntax.
+It then will be referenced in the code with the "SEE <Annotation>" syntax,
+where  "<Annotation>"  is the text right of the  =head2  keyword.
 
 I.g. no other markup is used, except POD'S =head3 and  L <..> markup.
 
-All following text from hereon are Annotations.
+All following texts from hereon are Annotations.
 
 
 =head2 Note:Documentation
