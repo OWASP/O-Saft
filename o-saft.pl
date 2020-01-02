@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.966 20/01/02 12:03:04",
+    SID         => "@(#) yeast.pl 1.967 20/01/02 22:24:29",
     STR_VERSION => "19.12.23",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9205,7 +9205,7 @@ for the developer also with:
 
 It is written in POD format, because some tools analyzing the code want to
 "see" comments and documentation. We feed them. For more information about
-that, please see "woodoo" in o-saft-man.pm .
+that, please see "voodoo" in o-saft-man.pm .
 
 =head3 Annotation Syntax
 
