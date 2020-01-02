@@ -7,8 +7,7 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile with help targets for O-Saft project.
-#?      For detiled descriptions please see  t/Makefile.pod .
+#?      For detailed descriptions please see  t/Makefile.pod .
 #?
 #? EXAMPLES
 #?          make help.doc
@@ -22,54 +21,8 @@
 #?          make targets
 #?          make targets.me
 #?
-# HACKER's INFO
-#    Description used for target  help.syntax  .
-#.
-#.   Syntax used in all makefiles
-#.
-#.      To extract and format the texts, the targets use external tools, mainly
-#.      awk,  sed  and  tr.  Each tool including its command line arguments  is
-#.      defined as variable, see corresponding  EXE.*  variables.
-#.
-#.      Unfortunately some of the macros use variables of the makefile,  like
-#.      $(T), while other macros must use the TAB character verbatim,  which is
-#.      difficult to identify by human eyes.
-#.
-#.      The  EXE.*  macros used by these targets take care for the formatting.
-#.      They rely on the above conventions for variable names.
-#.
-#.      Additional to the help targets described above, there are targets which
-#.      show information about variables and targets:
-#.           list, echo, show, macro, pmacro, target
-#.      These targets show the information,  which is passed in a variable with
-#.      the same name as the target itself. Example:
-#.          make macro macro=MAKEFILE
-#.      To simplify such command lines, a special pattern rule exists  for each
-#.      of these targets. Example:
-#.          make m-MAKEFILE
-#.      These targets search in  all makefiles, they use  $(MAKEFILE_LIST)  and
-#.      and not our own  $(ALL.Makefiles).  This way the targets work, somehow,
-#.      in all other makefiles too (as they include this one).
-#.
-#.   Quick Hints
-#.      There are a bunch of targets which provide information about the macros
-#.      and targets from the Makefiles itself.  They are mainly meant to show a
-#.      readable (for humans) information  in contrast to the sometimes cryptic
-#.      syntax of makefiles can do. This is done in  Makefile.help , see:
-#.          make -f t/Makefile.help
-#.      To get brief (mainly technical) information about a Makefile, use:
-#.          make -f t/Makefile.cgi
-#.          make -f t/Makefile.cgi targets.me
-#.          make -f t/Makefile.cgi macros.me
-#.          make -f t/Makefile.cgi s-ALL.test.cgi
-#.          ...
-#.
-#.   Special Syntax (here in this file)
-#.      To extract the syntax documentation, all the lines start with  #. , see
-#.      EXE.syntax  also.
-#.
 #? VERSION
-#?      @(#) Makefile.help 1.80 19/11/21 00:03:25
+#?      @(#) Makefile.help 1.81 20/01/02 01:07:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -78,7 +31,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.80
+_SID.help          := 1.81
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -126,16 +79,16 @@ doc.all-v:HELP_F_TARGET = _file-v
 help.inc: HELP_TYPE = inc
 help.inc: HELP_HEAD = $(HELP_RULE)
 
-# define scripts as variables, for better human readability
-# for details about the commands, please see  Syntax  above for matching macro
-# and target names, and   SEE Make:target matching
-# script variables defined in t/Makefile:
+# Define scripts as variables, for better human readability. For details about
+# the commands for matching macro and target names, please see in Makefile.pod
+# "O-Saft Makefile Syntax"  and  "Make:target matching".
+# Script variables defined in t/Makefile:
 #     _AWK_macro_by_line    - extract macro  names
 #     _AWK_target_by_line   - extract target names
 #     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
 #     _AWK_print_arr_END    - print collected data from arr[]
 #     _AWK_print_file       - either print seperator line or the filename
-# defined below:
+# Script variables defined below:
 #     _AWK_HELP_by_line     - extract HELP- macro names for documentation, the
 #                             HELP-_* print as is
 #                             HELP-*  extract target name and print with text
@@ -152,9 +105,13 @@ _AWK_gen_eval_target:= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");pr
 _AWK_gen_print_file := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
 %-v: _AWK_print_file:= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
 
-# tools used to gather information from herein
-# take care! real TABS are inside the sed commands
-# prefer awk where possible, as sed matches last occurrence of a pattern
+# Tools used to gather information from Makefile*,  take care! real  TABS  are
+# inside the sed commands.
+# I.g. awk should be prefered where possible and feasible, as sed matches last
+# occurrence of a pattern.
+
+# Above script variables and following tool variables rely on  the conventions
+# (variable names, etc.) as defined in Makefile.pod  "O-Saft Makefile Syntax".
 EXE.eval        = awk -F=   '$(_AWK_gen_print_file)$(_AWK_gen_eval_target)'
 EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
 EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
@@ -231,7 +188,7 @@ _help.HELP:
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
 
-# line printed with help should work copy&paste, hence some summy definitions
+# line printed with help should work copy&paste, hence some dummy definitions
 MYmacro         = dummy macro/variable used in examples
 MYtarget: MYVAR = dummy target macro used in examples
 MYtarget: dummy_dependency
@@ -293,10 +250,10 @@ target:           HELP_HEAD = $(HELP_RULE)
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
 	@$(TRACE.target)
 
-# The main difference between the targets  help and doc  is, that help  uses
-# external tools to extract the information from the Makefile,  while target
-# doc  uses make's functionality to display the same information, which als0
-# evaluates variables used in the targets. Both targets use the same text.
+# The main difference between the targets  help  and  doc  is, that help  uses
+# external tools to extract the information from Makefile*,  while target  doc
+# uses make's functionality to display the same information and also evaluates
+# variables used in the targets. Both targets use the same text.
 
 # legacy aliases
 help.doc: help.help
@@ -372,6 +329,18 @@ rules%me: targets.me
 eval:
 	@$(TRACE.target)
 	@$(ECHO) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
+
+# Following targets are used to show information about variables and targets:
+#       echo, eval, macro, pmacro, show, target
+# The targets get the name of the macro, variable or target in a variable with
+# the same name as the target itself. Example:
+#       make macro macro=MAKEFILE
+# To simplify command lines, a pattern rule exists for each of these targets.
+# Example:
+#       make m-MAKEFILE
+# These targets search in all makefiles, using  $(MAKEFILE_LIST),  and not our
+# own  $(ALL.Makefiles). This way the targets work in all other makefiles too,
+# somehow, (if they include this one).
 
 # FIXME: echo fails if the content of the variable contains braces or semicolon
 echo:
