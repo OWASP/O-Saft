@@ -7,7 +7,7 @@
 
 ## PACKAGE {
 
-#!# Copyright (c) 2019, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package osaft;
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.207 19/12/29 20:07:31",
+    SID_osaft   => "@(#) osaft.pm 1.208 20/01/02 01:44:03",
 
 };
 
@@ -3126,7 +3126,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.207 2019/12/29
+1.208 2020/01/02
 
 =head1 AUTHOR
 
