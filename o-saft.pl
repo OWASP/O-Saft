@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.969 20/01/03 19:29:59",
+    SID         => "@(#) yeast.pl 1.971 20/01/03 21:46:13",
     STR_VERSION => "19.12.24",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2602,6 +2602,7 @@ sub _initchecks_val     {
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
     }
+return;
     if (1 > $cfg{'usedns'}) {
         $notxt = $text{'na_dns'};
         $checks{'reversehost'}  ->{val} = $notxt;
@@ -3201,8 +3202,8 @@ sub _issweet    {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
     return "";
 } # _issweet
-sub _ispfs      { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  ""  : $c; }
-    # return given cipher if it does not support forward secret connections (PFS)
+sub _ispfs      { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  $c  : ""; }
+    # return given cipher if it supports forward secret connections (PFS)
 sub _isrc4      { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
     # return given cipher if it is RC4
 sub _istr02102          {
@@ -4109,7 +4110,7 @@ sub ciphers_scan_raw    {
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
                 print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
                 next if (scalar @accepted < 1); # defensive programming ..
-                #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+                #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _ispfs($ssl, $c));  # add PFS cipher
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
             }
@@ -4543,7 +4544,7 @@ sub checkcipher($$) {
     $checks{'robot'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isrobot($ssl, $c));
     $checks{'sloth'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
     $checks{'sweet32'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _issweet($ssl, $c));
-    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _ispfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++      if ($risk =~ /-\?-/);   # private marker
     $prot{$ssl}->{'WEAK'}++     if ($risk =~ /WEAK/i);
@@ -5723,7 +5724,7 @@ sub checkdest($$)   {
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
     my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     if ($#prot == 0) {          # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
+        $checks{'cipher_pfs'}->{val}= $cipher if ("" eq _ispfs($ssl, $cipher));
     } else {
         _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
     }
@@ -8881,7 +8882,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # FIXME: there are 3 connections above, but only one is counted
             last if (_is_ssl_error($anf, time(), "$ssl: abort getting prefered cipher") > 0);
             my $cipher  = $prot{$ssl}->{'cipher_strong'};
-            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _ispfs($ssl, $cipher));
             ##if (_is_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
             ##    # +cipher_selected command given, but no other commands; ready
             ##    print_cipherprefered($legacy, $ssl, $host, $port); # need to check if $ssl available first
