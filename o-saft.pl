@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.967 20/01/02 22:24:29",
-    STR_VERSION => "19.12.23",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.969 20/01/03 19:29:59",
+    STR_VERSION => "19.12.24",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -690,7 +690,7 @@ our %checks = (
     # 'typ' is any of certificate, connection, destination, https, sizes
     # both will be set in sub _init_all(), please see below
 
-    # the default value means "check = ok/yes", otherwise: "check =failed/no"
+    # the default "" value means "check = ok/yes", otherwise: "check =failed/no"
 
 ); # %checks
 
@@ -2589,7 +2589,8 @@ sub _initchecks_score   {
 
 sub _initchecks_val     {
     # set all default check values here
-    $checks{$_}->{val}   = "" foreach (keys %checks);
+    my $notxt = "";
+    $checks{$_}->{val}   = $notxt foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
     $checks{'sts_maxage0d'}->{val}  =        1;
     $checks{'sts_maxage1d'}->{val}  =    86400; # day
@@ -2597,10 +2598,61 @@ sub _initchecks_val     {
     $checks{'sts_maxage1y'}->{val}  = 31536000; # year
     $checks{'sts_maxagexy'}->{val}  = 99999999;
     $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
-    foreach (keys %checks) {
-        $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
-        $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
+    foreach my $key (keys %checks) {
+        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
+        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
     }
+    if (1 > $cfg{'usedns'}) {
+        $notxt = $text{'na_dns'};
+        $checks{'reversehost'}  ->{val} = $notxt;
+    }
+    if (1 > $cfg{'usehttp'}) {
+        $notxt = _get_text('disabled', "--no-http");
+        $checks{'crl_valid'} ->{val} = $notxt;
+        $checks{'ocsp_valid'}->{val} = $notxt;
+        foreach my $key (keys %checks) {
+            $checks{$key}->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
+        }
+    }
+    if (1 > $cfg{'no_cert'}) {
+        $notxt = $text{'na_cert'};
+        $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
+        foreach my $key (keys %checks) {   # anything related to certs
+            $checks{$key}->{val} = $notxt if (_is_member($key, \@{$cfg{'check_cert'}}));
+        }
+        foreach my $key (qw(hostname certfqdn tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_6125_names rfc_2818_names)) {
+            $checks{$key}->{val} = $notxt;
+        }
+    }
+    if (1 > $cfg{'SSLv2'}) {
+        $notxt = _get_text('disabled', "--no-SSLv2");
+        $checks{'hassslv2'}     ->{val} = $notxt;
+        $checks{'drown'}        ->{val} = $notxt;
+    }
+    if (1 > $cfg{'SSLv2'}) {
+        $notxt = _get_text('disabled', "--no-SSLv3");
+        $checks{'hassslv3'}     ->{val} = $notxt;
+        $checks{'poodle'}       ->{val} = $notxt;
+    }
+    if (1 > $cmd{'extopenssl'}) {
+        $notxt = $text{'na_openssl'};
+        foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
+            $checks{$key}->{val} = $notxt;
+        }
+    }
+    # if $data{'https_sts'}->{val}($host) is empty {
+        $notxt = $text{'na_STS'};
+        foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
+            $checks{$key}       ->{val} = $notxt;
+        }
+        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
+            $checks{$key}       ->{val} = $notxt;
+        }
+        $notxt = $text{'na_http'}   if (1 > $cfg{'usehttp'});
+        foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
+            $checks{$key}       ->{val} = $notxt;
+        }
+    # }
     return;
 } # _initchecks_val
 
@@ -4543,7 +4595,7 @@ sub checkciphers    {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $cipher);
-            $checks{'logjam'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
+            $checks{'logjam'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $cipher));
         }
         $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
