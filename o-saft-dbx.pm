@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.121 20/01/02 22:48:49";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.122 20/01/03 01:42:40";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -672,10 +672,18 @@ sub _yeast_test_init    {
 =
 ";
 #ah not ok: use Sub::Identify ':all';
+    _yline(" %cfg {");  # only data which influences initialisations
+    print __yeast("#                key | value");
+    print __yeast($line);
+    foreach my $key (qw(usedns usehttp usehttps usesni usealpn usenpn uselwp no_cert use_extdebug)) {
+        print __INIT($key, $cfg{$key});
+    }
+    print __yeast($line);
+    _yline(" %cfg }");
     _yline(" %data {");
     print __yeast("#                key | value (function code)");
     print __yeast($line);
-    foreach my $key (sort keys %data) {
+    foreach my $key (sort keys %data) { # ugly and slow code
         # use Dumper() to get code, returns something like:
         #     $VAR1 = sub {
         #                 use warnings;
@@ -963,7 +971,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.121 2020/01/02
+1.122 2020/01/03
 
 =head1 AUTHOR
 
