@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.971 20/01/03 21:46:13",
-    STR_VERSION => "19.12.24",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.972 20/01/04 00:23:14",
+    STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -4608,7 +4608,9 @@ sub checkciphers    {
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
+    my $cnt_pfs = 0;
     foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
+        $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
         # TR-02102-2, see 3.2.3
@@ -4625,12 +4627,10 @@ sub checkciphers    {
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
     $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
-    if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'ciphers_pfs'})) {
-        $checks{'cipher_pfsall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'ciphers_pfs'}});
-    } else {
-        $checks{'cipher_pfsall'}->{val} = $text{'na'};
-    }
     #$checks{'cipher_pfs'}->{val} # done in checkdest()
+
+    $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
+    $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'});
     _trace("checkciphers() }");
     return;
 } # checkciphers
@@ -5723,8 +5723,8 @@ sub checkdest($$)   {
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
     my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
-    if ($#prot == 0) {          # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}= $cipher if ("" eq _ispfs($ssl, $cipher));
+    if (1 > $#prot) {           # found exactly one matching protocol
+        $checks{'cipher_pfs'}->{val}= ("" eq _ispfs($ssl, $cipher)) ? $cipher : "";;
     } else {
         _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
     }
