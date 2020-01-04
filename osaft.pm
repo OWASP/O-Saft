@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.208 20/01/02 01:44:03",
+    SID_osaft   => "@(#) osaft.pm 1.209 20/01/04 10:38:10",
 
 };
 
@@ -2901,7 +2901,7 @@ sub test_cipher_regex   {
     print __regex_head();
     print __regex_line();
     foreach my $cipher (sort keys %ciphers) {
-        my $is_pfs = (::_ispfs(get_cipher_ssl($cipher), $cipher) eq "") ? "yes" : "no";
+        my $is_pfs = (::_ispfs(get_cipher_ssl($cipher), $cipher) eq "") ? "no" : "yes";
         my @o = ('', '', '', '', '');
         # following sequence of check should be the same as in get_cipher_owasp()
         $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
@@ -3126,7 +3126,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.208 2020/01/02
+1.209 2020/01/04
 
 =head1 AUTHOR
 
