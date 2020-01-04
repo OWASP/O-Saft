@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.123 20/01/03 01:52:34";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.124 20/01/04 12:08:40";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -667,7 +667,7 @@ sub _yeast_test_init    {
     print "
 === internal data structure for commands %data and %checks ===
 =
-= Print initialized data structure  %data and %checks  after all  command line
+= Print initialised data structure  %data and %checks  after all  command line
 = options have been applied.
 =
 ";
@@ -972,7 +972,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.123 2020/01/03
+1.124 2020/01/04
 
 =head1 AUTHOR
 
