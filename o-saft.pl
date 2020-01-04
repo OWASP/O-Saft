@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.973 20/01/04 10:20:59",
+    SID         => "@(#) yeast.pl 1.974 20/01/04 12:32:40",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -87,7 +87,7 @@ sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace$)/} @ARGV); }  # c
 # SEE Make:OSAFT_MAKE (in Makefile.pod)
 our $time0  = time();
     $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
-    # normalize to even seconds, allows small time diffs
+    # normalise to even seconds, allows small time diffs
 sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
     my @txt = @_;
@@ -105,7 +105,7 @@ sub _yeast_TIME(@)  {
 } # _yeast_TIME
 sub _yeast_EXIT($)  {
     # exit if parameter matches given argument in @ARGV
-    my $txt =  shift;   # example: INIT0 - initialization start
+    my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
     if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
@@ -116,7 +116,7 @@ sub _yeast_EXIT($)  {
 } # _yeast_EXIT
 sub _yeast_NEXT($)  {
     # return 1 if parameter matches given argument in @ARGV; 0 otherwise
-    my $txt =  shift;   # example: INIT0 - initialization start
+    my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
     if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
@@ -153,7 +153,7 @@ BEGIN {
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
 } # BEGIN
 _yeast_TIME("BEGIN}");          # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
-_yeast_EXIT("exit=INIT0 - initialization start");
+_yeast_EXIT("exit=INIT0 - initialisation start");
 
 our $osaft_standalone = 0;      # SEE Note:Stand-alone
 
@@ -459,7 +459,7 @@ if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
 
 usr_pre_init();
 
-#| initialize defaults
+#| initialise defaults
 #| -------------------------------------
 #!# set defaults
 #!# -------------------------------------
@@ -1967,7 +1967,7 @@ if (defined $ENV{'LIBPATH'}) {
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
-_yeast_EXIT("exit=INIT1 - initialization end");
+_yeast_EXIT("exit=INIT1 - initialisation end");
 usr_pre_file();
 
 #| definitions: internal functions
@@ -2460,7 +2460,7 @@ sub _check_openssl      {
     foreach my $opt (sort(Net::SSLinfo::s_client_get_optionlist())) {
         # SEE Note:Testing, sort
         # Perl warning  "Use of uninitialized value in ..."  here indicates
-        # that cfg{openssl} is not properly initialized
+        # that cfg{openssl} is not properly initialised
         my $val = Net::SSLinfo::s_client_opt_get($opt);
            $val = 0 if ($val eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
         # _dbx "$opt $val";
@@ -2505,7 +2505,7 @@ sub _init_openssldir    {
     return "" if ($cmd{'openssl'} eq "");       # defensive programming
     my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
     chomp $dir;
-        # if qx() above failed, we get: Use of uninitialized value $dir in ...
+        # if qx() above failed, we get: "Use of uninitialized value $dir in ..."
     my $status  = $?;
     my $error   = $!;
     my $capath  = "";
@@ -2669,7 +2669,7 @@ sub _init_all           {
         # options, hence the call must be done after reading arguments
     return;
 } # _init_all
-_init_all();   # initialize defaults in %checks (score, val)
+_init_all();   # initialise defaults in %checks (score, val)
 
 sub _resetchecks        {
     # reset values
@@ -4194,7 +4194,7 @@ sub check_certchars($$) {
     # valid characters (probably only relevant for DV and EV)
     #_dbx "EV: keys: " . join(" ", @{$cfg{'need-checkchr'}} . "extensions";
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
-    # not checked explicitely: CN, O, U (should already be part of others, like subject)
+    # not checked explicitly: CN, O, U (should already be part of others, like subject)
     foreach my $label (@{$cfg{'need-checkchr'}}, qw(extensions)) {
         $value =  $data{$label}->{val}($host);
         $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
@@ -6807,7 +6807,7 @@ sub printdata($$$)      {
         my $value = $data{$key}->{val}($host);
         if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0) {
             # for +info print multiline data only if --v given
-            # if command given explizitely, i.e. +text, print
+            # if command given explicitly, i.e. +text, print
             if ((_is_do('info') > 0) and (0 >= $cfg{'verbose'})) {
                 _hint("multiline data '+$key' for '+info' printed with --v only");
                 next;
@@ -7155,7 +7155,7 @@ sub printciphers        {
             if ($sep eq " ") {
                 # spaces are the default separator in openssl's output
                 # spaces are the default separator for --legacy=openssl too if
-                # not explicitely specified with  --sep=
+                # not explicitly specified with  --sep=
                 # if we use spaces, additonal formatting needs to be spaces too
                 $ssl = sprintf("%-5s", $ssl);
                 $aut = sprintf("%-4s", $aut);
@@ -7691,25 +7691,25 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
-    # normalize options with arguments:  --opt=name --> --opt name
+    # normalise options with arguments:  --opt=name --> --opt name
     if ($arg =~ m/(^-[^=]*)=(.*)/) {
         $arg = $1;
         unshift(@argv, $2);
         #_dbx("push to ARGV $2");
     } # $arg now contains option only, no argument
 
-    # normalize option strings:
+    # normalise option strings:
     #    --opt-name     --> --optname
     #    --opt_name     --> --optname
     #    --opt.name     --> --optname
     $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g if ($arg =~ /^-/);
-    #_dbx("normalized= $arg");
+    #_dbx("normalised= $arg");
 
     # Following checks use exact matches with 'eq' or RegEx matches with '=~'
 
     _y_ARG("option?  $arg");
     #{ OPTIONS
-    #  NOTE: that strings miss - and _ characters (see normalization above)
+    #  NOTE: that strings miss - and _ characters (see normalisation above)
     #!# You may read the lines as table with columns like: SEE Note:alias
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check         alias for ...               # used by ...
@@ -8483,7 +8483,7 @@ _check_openssl()    if (0 < $do_checks);
 #| check for supported SSL versions
 #| -------------------------------------
 _check_SSL_methods() if (0 < _need_cipher() + _need_default() + _is_do('version'));
-    # initialize $cfg{'version'} and all $cfg{ssl}
+    # initialise $cfg{'version'} and all $cfg{ssl}
     # function is oversized for --ciphermode=intern but does the work
 
 _yeast_TIME("mod}");
@@ -8496,7 +8496,7 @@ $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # s
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'}; # safe setting; may be undef
-if ($cfg{'usehttp'} == 0)   {           # was explizitely set with --no-http 'cause default is 1
+if ($cfg{'usehttp'} == 0)   {           # was explicitly set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
@@ -9457,7 +9457,7 @@ modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
     binmode(STDERR, ":unix:utf8");
 
 As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
-humans. Only these channels are handled explicitely. The idea is, that all
+humans. Only these channels are handled explicitly.  The idea is, that all
 texts consist of printable characters only, probably in various languages.
 Hence UTF-8 is used as default characters set. The channels are configured
 to expect UTF-8 characters.
@@ -9546,7 +9546,7 @@ The data to be sorted is for example:
 
 =head2 Note:ARGV
 
-Command line arguments are read after some other internal initializations.
+Command line arguments are read after some other internal initialisations.
 Unfortunately sometimes options need to be checked before argument parsing
 is completed. Therfore somthing like '(grep{/--trace)/} @ARGV)' is needed.
 These check are implemented as simple functions and return grep's result.
