@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#)  1.23 19/11/21 00:03:29
+#?      @(#)  1.24 20/01/04 12:01:05
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 1.23
+_SID.TEMPL     := 1.24
 
 _MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -100,7 +100,7 @@ HELP.test.TEMPL.all = # no special documentation yet
 # of them must be used: all from "Variant-1" or all from "Variant-2" !
 
 ## Variant-1 {
-# initialize variables for our targets
+# initialise variables for targets
 testcmd-TEMPL%:     EXE.pl      = ../program-for.TEMPL
                     # program to perform the tests
 testcmd-TEMPL%:     TEST.init   = +quit
