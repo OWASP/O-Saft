@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.307 20/01/02 22:22:53";
+my  $SID_man= "@(#) o-saft-man.pm 1.308 20/01/04 12:06:43";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.307'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.308'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1099,7 +1099,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
-       $typ =~ s/^cipher(pattern|range)/$1/;# normalize: cipherrange and range are possible
+       $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
@@ -1299,7 +1299,7 @@ EoHelp
 
 sub man_toc         {
     #? print help table of contents
-    my $typ     = lc(shift) || "";      # || to avoid uninitialized value
+    my $typ     = lc(shift) || "";      # || to avoid uninitialised value
     _man_dbx("man_toc() ..");
     foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
         next if ($txt !~ m/^=head/);
@@ -1392,7 +1392,7 @@ sub man_wiki        {
 
 sub man_help        {
     #? print complete user documentation for o-saft.pl as plain text (man-style)
-    my $label   = lc(shift) || "";      # || to avoid uninitialized value
+    my $label   = lc(shift) || "";      # || to avoid uninitialised value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
@@ -1728,7 +1728,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.307 2020/01/02
+1.308 2020/01/04
 
 =head1 AUTHOR
 
@@ -1757,7 +1757,7 @@ For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 
 =head2 Perlcritic:LocalVars
 
-Perl::Critic  complains that the variable $a should be localized in of the
+Perl::Critic  complains that the variable $a should be localised in of the
 code, this is wrong,  because it is exactly the purpose to find this value
 (other settings) in other lines.
 Hence  "no critic Variables::RequireLocalizedPunctuationVars"  needs to be
