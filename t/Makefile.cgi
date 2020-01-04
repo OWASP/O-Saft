@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.46 19/11/21 00:03:01
+#?      @(#) Makefile.cgi 1.47 20/01/04 17:31:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.46
+_SID.cgi           := 1.47
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -155,25 +155,25 @@ $(ALL.cgi.goodIPs)$(_NL)\
 # are passed as arguments to the recursive MAKE call.
 # "make -i" is used to ensure that all tests are performed.
 
-# testing usage of --cgi  option; means that _args.cgi must be set explicitly
+# testing usage of --cgi  option; means that _TEST.cgi must be set explicitly
 # test fails, if it reports something containing  exit=BEGIN0
-testcmd-cgi--cgi_%:         _args.cgi   = --cgi --ok.to.show.failed-status +quit --exit=BEGIN0
-testcmd-cgi--cgi-miss_%:    _args.cgi   = --missing--cgi +quit --exit=BEGIN0
-testcmd-cgi--cgi-bad1_%:    _args.cgi   = --cgiwrong     +quit --exit=BEGIN0
-testcmd-cgi--cgi-bad2_%:    _args.cgi   = --cgi=wrong    +quit --exit=BEGIN0
-testcmd-cgi--cgi-bad3_%:    _args.cgi   = --wrongcgi     +quit --exit=BEGIN0
+testcmd-cgi--cgi_%:         _TEST.cgi   = --cgi --ok.to.show.failed-status +quit --exit=BEGIN0
+testcmd-cgi--cgi-miss_%:    _TEST.cgi   = --missing--cgi +quit --exit=BEGIN0
+testcmd-cgi--cgi-bad1_%:    _TEST.cgi   = --cgiwrong     +quit --exit=BEGIN0
+testcmd-cgi--cgi-bad2_%:    _TEST.cgi   = --cgi=wrong    +quit --exit=BEGIN0
+testcmd-cgi--cgi-bad3_%:    _TEST.cgi   = --wrongcgi     +quit --exit=BEGIN0
 
 # All tests for good or bad arguments need the same initial options
 # FIXME: TEST.init set explizitely in pattern rule below
 test.cgi:                   TEST.init   =
 test.cgi-%:                 TEST.init   =
 testcmd-cgi-%:              TEST.init   =
-_args.cgi   = --cgi +quit --exit=BEGIN0
+_TEST.cgi   = --cgi +quit --exit=BEGIN0
 testcmd-cgi-%:              EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-bad%:           EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-good%:          EXE.pl      = ../$(SRC.cgi)
 
-#testcmd-cgi-opt--opt_%:     _args.cgi  += --opt=ok.to.show.failed-status
+#testcmd-cgi-opt--opt_%:     _TEST.cgi  += --opt=ok.to.show.failed-status
 LIST.cgi-opt   := \
 	--cmd=list         --cmd=+list --cmd=+dump     --url=+dump       \
 	--traceARG         --trace     --cmd=--trace   --url=--trace     \
@@ -186,7 +186,7 @@ LIST.cgi-opt   := \
 ifndef cgi-targets-generated
     # ifndef enforces execution of $(foreach ...) below
     $(foreach arg, $(LIST.cgi-opt), $(eval \
-	testcmd-cgi-opt-$(subst =,-,$(arg))_any.FQDN:  _args.cgi += $(arg) \
+	testcmd-cgi-opt-$(subst =,-,$(arg))_any.FQDN:  _TEST.cgi += $(arg) \
     ))
     $(foreach arg, $(LIST.cgi-opt), $(eval \
 	ALL.cgi.badopt += testcmd-cgi-opt-$(subst =,-,$(arg))_any.FQDN \
@@ -196,33 +196,33 @@ endif
 # targets for bad characters are written literally because it is difficult
 # to replace the character in the generated target name
 # the bad characters are enclosed in _ and _ for better readability
-testcmd-cgi-chr-langle_any.FQDN:   _args.cgi  += '--bad-char=_<_'
-testcmd-cgi-chr-rangle_any.FQDN:   _args.cgi  += '--bad-char=_>_'
-testcmd-cgi-chr-semikolon_any.FQDN:_args.cgi  += '--bad-char=_;_'
-testcmd-cgi-chr-tilde_any.FQDN:    _args.cgi  += '--bad-char=_~_'
-testcmd-cgi-chr-question_any.FQDN: _args.cgi  += '--bad-char=_?_'
-#testcmd-cgi-chr-dollar_any.FQDN:  _args.cgi  += '--bad-char=_\$$_'
-testcmd-cgi-chr-percent_any.FQDN:  _args.cgi  += '--bad-char=_%_'
-testcmd-cgi-chr-dqoute_any.FQDN:   _args.cgi  += '--bad-char=_\"_'
-testcmd-cgi-chr-back_any.FQDN:     _args.cgi  += '--bad-char=_\`_'
-testcmd-cgi-chr-star_any.FQDN:     _args.cgi  += '--bad-char=_*_'
-testcmd-cgi-chr-lbrac_any.FQDN:    _args.cgi  += '--bad-char=_(_'
-testcmd-cgi-chr-rbrac_any.FQDN:    _args.cgi  += '--bad-char=_)_'
-testcmd-cgi-chr-lsquare_any.FQDN:  _args.cgi  += '--bad-char=_[_'
-testcmd-cgi-chr-rsquare_any.FQDN:  _args.cgi  += '--bad-char=_]_'
-testcmd-cgi-chr-lcurl_any.FQDN:    _args.cgi  += '--bad-char=_{_'
-testcmd-cgi-chr-rcurl_any.FQDN:    _args.cgi  += '--bad-char=_}_'
-testcmd-cgi-chr-caret_any.FQDN:    _args.cgi  += '--bad-char=_^_'
-testcmd-cgi-chr-bar_any.FQDN:      _args.cgi  += '--bad-char=_|_'
-testcmd-cgi-chr-hash_any.FQDN:     _args.cgi  += '--bad-char=_\#_'
+testcmd-cgi-chr-langle_any.FQDN:   _TEST.cgi  += '--bad-char=_<_'
+testcmd-cgi-chr-rangle_any.FQDN:   _TEST.cgi  += '--bad-char=_>_'
+testcmd-cgi-chr-semikolon_any.FQDN:_TEST.cgi  += '--bad-char=_;_'
+testcmd-cgi-chr-tilde_any.FQDN:    _TEST.cgi  += '--bad-char=_~_'
+testcmd-cgi-chr-question_any.FQDN: _TEST.cgi  += '--bad-char=_?_'
+#testcmd-cgi-chr-dollar_any.FQDN:  _TEST.cgi  += '--bad-char=_\$$_'
+testcmd-cgi-chr-percent_any.FQDN:  _TEST.cgi  += '--bad-char=_%_'
+testcmd-cgi-chr-dqoute_any.FQDN:   _TEST.cgi  += '--bad-char=_\"_'
+testcmd-cgi-chr-back_any.FQDN:     _TEST.cgi  += '--bad-char=_\`_'
+testcmd-cgi-chr-star_any.FQDN:     _TEST.cgi  += '--bad-char=_*_'
+testcmd-cgi-chr-lbrac_any.FQDN:    _TEST.cgi  += '--bad-char=_(_'
+testcmd-cgi-chr-rbrac_any.FQDN:    _TEST.cgi  += '--bad-char=_)_'
+testcmd-cgi-chr-lsquare_any.FQDN:  _TEST.cgi  += '--bad-char=_[_'
+testcmd-cgi-chr-rsquare_any.FQDN:  _TEST.cgi  += '--bad-char=_]_'
+testcmd-cgi-chr-lcurl_any.FQDN:    _TEST.cgi  += '--bad-char=_{_'
+testcmd-cgi-chr-rcurl_any.FQDN:    _TEST.cgi  += '--bad-char=_}_'
+testcmd-cgi-chr-caret_any.FQDN:    _TEST.cgi  += '--bad-char=_^_'
+testcmd-cgi-chr-bar_any.FQDN:      _TEST.cgi  += '--bad-char=_|_'
+testcmd-cgi-chr-hash_any.FQDN:     _TEST.cgi  += '--bad-char=_\#_'
 
 ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 
 testarg-cgi-%:              EXE.pl      = ../$(SRC.cgi)
 testarg-cgi-%:              TEST.init   = --cgi +quit --exit=BEGIN0
-testarg-cgi-host-host.ok:          _args.cgi  += hostname.ok.to.show.failed-status
-testarg-cgi-host-localhost:        _args.cgi  += localhost
-testarg-cgi-host-ffff:             _args.cgi  += ffff
+testarg-cgi-host-host.ok:          _TEST.cgi  += hostname.ok.to.show.failed-status
+testarg-cgi-host-localhost:        _TEST.cgi  += localhost
+testarg-cgi-host-ffff:             _TEST.cgi  += ffff
 # TODO: add more of the invalid host from $LIST.cgi.badIPv4 and $LIST.cgi.badIPv6
 
 ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
@@ -241,18 +241,18 @@ test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
 
 testarg-cgi-%:
 	@$(TRACE.target)
-	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi)"
+	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_TEST.cgi)"
 
 testcmd-cgi-%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_TEST.cgi) --host=$(_host)"
 
 # TODO: following target prints "#o-saft.pl..."
 testcmd-cgi-good%:
 	@$(TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
-	@$(MAKE) $(MFLAGS)    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_args.cgi) --host=$(_host)"
+	@$(MAKE) $(MFLAGS)    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init= TEST.args="$(_TEST.cgi) --host=$(_host)"
 
 # alias for simple usage
 test.cgi-%: testcmd-cgi-bad_%
@@ -270,7 +270,7 @@ test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.46: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.47: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
