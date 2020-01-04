@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "19.12.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.26 20/01/02 01:48:24";
+my  $SID_data   = "@(#) Data.pm 1.27 20/01/04 12:21:00";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -223,7 +223,7 @@ sub get_text    {
     #? print program's help
 # NOTE: NOT YET READY, not yet used
     my $file    = shift;
-    my $label   = shift || "";  # || to avoid uninitialized value
+    my $label   = shift || "";  # || to avoid "Use of uninitialized value"
        $label   = lc($label);
     my $anf     = uc($label);
     my $end     = "[A-Z]";
@@ -580,7 +580,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.26 2020/01/02
+1.27 2020/01/04
 
 =head1 AUTHOR
 
