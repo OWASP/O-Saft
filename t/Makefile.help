@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.82 20/01/02 11:23:17
+#?      @(#) Makefile.help 1.83 20/01/04 12:56:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.82
+_SID.help          := 1.83
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -53,9 +53,9 @@ _TAB           := \\011
 _NL            := \\012
 _CR            := \\015
 T              := $$""(_NL)
-# define _SP containing a single space (tricky as _empty is empty)
-_empty         :=
-_SP            := $(_empty) $(_empty)
+# define _SP containing a single space (tricky as _TEST.empty is empty)
+_TEST.empty    :=
+_SP            := $(_TEST.empty) $(_TEST.empty)
 
 # internal help
 # default dummy  HELP_TYPE  to avoid errors; results in wrong output
