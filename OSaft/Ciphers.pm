@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '19.07.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.41 20/01/02 01:47:09";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.42 20/01/04 12:13:39";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -144,7 +144,7 @@ suite constant) are defined in additional data structures C<%ciphers_const> and
 C<%ciphers_names>.
 
 Each cipher suite is defined as a perl array (,see above) and will be converted
-to a perl hash at initialization like:
+to a perl hash at initialisation like:
 
     '0x00,0x3D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
 
@@ -1304,14 +1304,14 @@ EoT
 } # show_ciphers
 
 #_____________________________________________________________________________
-#___________________________________________________ initialization methods __|
+#___________________________________________________ initialisation methods __|
 
 our @_keys;
 
 sub _ciphers_init_iana  {
     my @keys;
 
-    vprint "initialize from IANA tls-parameters.txt ...";
+    vprint "initialise from IANA tls-parameters.txt ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
         if (grep{/^$key$/} @keys) {
             _warn("521: duplicate IANA key: »$key«");
@@ -1335,7 +1335,7 @@ sub _ciphers_init_iana  {
 } # _ciphers_init_iana
 
 sub _ciphers_init_osaft {
-    vprint "initialize from OSaft settings ...";
+    vprint "initialise from OSaft settings ...";
     foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
         if (grep{/^$key$/} @_keys) {
             v2print("  found O-Saft key: »$key«");
@@ -1381,7 +1381,7 @@ sub _ciphers_init_osaft {
 } # _ciphers_init_osaft
 
 sub _ciphers_init_openssl   {
-    vprint "initialize data from »openssl ciphers -V« ...";
+    vprint "initialise data from »openssl ciphers -V« ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
         if (grep{/^$key$/} @_keys) {
             _warn("522: duplicate openssl key: »$key«");
@@ -1404,7 +1404,7 @@ sub _ciphers_init_openssl   {
 } # _ciphers_init_openssl
 
 sub _ciphers_init   {
-    #? additional initializations for data structures
+    #? additional initialisations for data structures
 
     # scan options, must be ckecked here also because this function will be
     # called before _main()
@@ -1495,7 +1495,7 @@ sub _main           {
 
 sub cipher_done {};         # dummy to check successful include
 
-# complete initializations
+# complete initialisations
 _ciphers_init();
 
 #_____________________________________________________________________________
@@ -1591,7 +1591,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.41 2020/01/02
+1.42 2020/01/04
 
 =head1 AUTHOR
 
