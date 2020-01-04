@@ -22,7 +22,7 @@
 #!# Permits anyone the right to use and modify the software without limitations
 #!# as long as proper  credits are given  and the original  and modified source
 #!# code are included. Requires  that the final product, software derivate from
-#!# the original  source or any  software  utilizing a GPL  component, such  as
+#!# the original  source or any  software  utilising a GPL  component, such  as
 #!# this, is also licensed under the same GPL license.
 #!#############################################################################
 
@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.251 20/01/02 01:45:55',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.252 20/01/04 12:11:27',
 };
 
 ######################################################## public documentation #
@@ -516,7 +516,7 @@ follow the rules describend above.
 
 =cut
 
-############################################################## initialization #
+############################################################## initialisation #
 
 use Exporter qw(import);
 use base qw(Exporter);
@@ -791,7 +791,7 @@ sub _setcommand {
        $opt = "--version" if ($command =~ m/timeout$/);
     $cmd = qx($command $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
     if (defined $cmd) {
-        # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
+        # chomp() and _trace() here only to avoid "Use of uninitialised value $cmd ..."
         chomp $cmd;
         _trace("_setcommand: $command = $cmd");
         $cmd = "$command";
@@ -812,7 +812,7 @@ sub _setcommand {
 } # _setcommand
 
 sub _setcmd     {
-    #? check for external commands and initialize if necessary
+    #? check for external commands and initialise if necessary
     # set global variabales $_openssl and $_timeout
     return if (defined $_timeout);  # lazy check
     $_openssl   = _setcommand($Net::SSLinfo::openssl);
@@ -908,7 +908,7 @@ my %_OpenSSL_opt = (    # openssl capabilities
     # not expected, not usefull, hence it is thread save.
     # NOTE:  some options are present in different spellings because different
     #        openssl version use different spellings, grrr.
-    'done'          => 0, # set to 1 if initialized
+    'done'          => 0, # set to 1 if initialised
     'data'          => '',# contains output from "openssl s_client -help"
     #--------------+------------
     # key (=option) supported=1
@@ -1496,7 +1496,7 @@ sub _ssleay_socket  {
                # $Net::SSLinfo::proxyport was already checked in main
             #1a. no proxy and not starttls
             # $host and $port may be undefined, hence the ugly setting of $src
-            # to avoid Perl's "Use of uninitialized value $host in concatenation ... "
+            # to avoid Perl's "Use of uninitialised value $host in concatenation ... "
             # _check_host() and _check_port() woll work poper with undef values
             $src = '_check_host(' . ($host||'') . ')'; if (not defined _check_host($host)) { $err = $!; last; }
             $src = '_check_port(' . ($port||'') . ')'; if (not defined _check_port($port)) { $err = $!; last; }
@@ -2022,7 +2022,7 @@ sub _OpenSSL_opt_get{
     my $key = shift;
     _traceset();
     if (0 <= $_OpenSSL_opt{'done'}) {
-        # initilize %_OpenSSL_opt
+        # initilise %_OpenSSL_opt
         if (not defined s_client_check()) {
             _trace("_OpenSSL_opt_get('$key') undef");
             return SSLINFO_HASH;
@@ -2086,8 +2086,8 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
     TRY: {
 
         # TRY_PROTOCOL: {
-        # Open TCP connection and innitilize SSL connection.
-        # This nitialization is done with Net::SSLeay's CTX_*_new and *_method
+        # Open TCP connection and innitilise SSL connection.
+        # This nitialisation is done with Net::SSLeay's CTX_*_new and *_method
         # methods (i.e. CTX_tlsv1_2_new and TLSv1_2_method).
         # Remember the concepts: work with ancient (perl, openssl) installations
         # Hence we try all known methods, starting with the most modern first.
@@ -2253,7 +2253,7 @@ sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = '' if (not defined $cipher);  # cipher parameter is optional
     #$port   = _check_port($port);
-        # TODO: port may be empty for some calls; results in "... uninitialized
+        # TODO: port may be empty for some calls; results in "... uninitialised
         #       value $port ..."; need to check if call can provide a port
         #       mainly happens if called with --ignore-no-connect
     _traceset();
@@ -2281,7 +2281,7 @@ sub do_ssl_open($$$@) {
     my $src;            # function (name) where something failed
     my $err     = '';   # error string, if any, from sub-system $src
 
-    # initialize %_OpenSSL_opt
+    # initialise %_OpenSSL_opt
     $src = 's_client_check';
     if (0 < $Net::SSLinfo::use_openssl) {
         if (not defined s_client_check()) {
@@ -2509,7 +2509,7 @@ sub do_ssl_open($$$@) {
                   # TODO: test with a browser User-Agent
                   # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
                 );
-            # NOTE that get_http() returns all keys in %headers capitalized
+            # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
             foreach  my $h (keys %headers) { $headers .= "$h: $headers{$h}\n"; }
             _trace("request #{\n$host:$port\n$request"); _trace("request #}");
@@ -2528,7 +2528,7 @@ sub do_ssl_open($$$@) {
 		# The error is printed by Net/SSLeay, and cannot be omitted.
                 #
                 # Following error ocours (Net::SSLeay 1.58) when _http() failed:
-                # Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1291.
+                # Use of uninitialised value $headers in split at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1291.
 
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
@@ -2553,7 +2553,7 @@ sub do_ssl_open($$$@) {
                     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: check HTTP gateway");
                 #} else { Net::SSLeay::get_http() most likely returns status 900
                 }
-                $response = ''; # avoid uninitialized value later
+                $response = ''; # avoid uninitialised value later
             }
             _trace("do_ssl_open HTTP }");
         }
