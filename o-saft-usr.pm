@@ -49,16 +49,16 @@ prefix like:
 
 =item usr_pre_init( )
 
-At beginning, right before initializing internal data.
+At beginning, right before initialising internal data.
 
 =item usr_pre_file( )
 
-At beginning, right after initializing internal data.
+At beginning, right after initialising internal data.
 
 =item usr_pre_args( )
 
 Right before reading command line arguments.  All internal structures
-and variables are initialized, all external files are read (except
+and variables are initialised, all external files are read (except
 configuration files specified witj  I<--cfg_*=>  option.
 
 =item usr_pre_exec( )
@@ -138,7 +138,7 @@ For example:
 
 =head1 VERSION
 
-1.25 2020/01/02
+1.26 2020/01/04
 
 =head1 AUTHOR
 
@@ -149,7 +149,7 @@ For example:
 use strict;
 use warnings;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.25 20/01/02 01:43:22";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.26 20/01/04 12:07:51";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
