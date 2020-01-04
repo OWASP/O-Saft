@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.209 20/01/04 10:38:10",
+    SID_osaft   => "@(#) osaft.pm 1.210 20/01/04 12:04:05",
 
 };
 
@@ -1470,14 +1470,14 @@ our %cfg = (
     'mename'        => "O-Saft ", # my name pretty printed
     'need_netdns'   => 0,       # used for better error message handling only
     'need_timelocal'=> 0,       # -"-
-    # following initialized in _osaft_init()
+    # following initialised in _osaft_init()
     'me'            => "",
     'ARG0'          => "",
     'ARGV'          => [],      # arguments passed on command line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
     'RC-FILE'       => "",      # our RC-FILE, search in pwd only!
     # following should be in %text, but as %cfg is available everywhere,
-    # it's better defined here and initialized in _osaft_init()
+    # it's better defined here and initialised in _osaft_init()
     'prefix_trace'  => "",      # prefix string used in trace   messages
     'prefix_verbose'=> "",      # prefix string used in verbose messages
 
@@ -2013,10 +2013,10 @@ our %cfg = (
         #--------------+--------+---------------------------------------------
     },
     'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
-        # will be initialized from %prot
+        # will be initialised from %prot
      },
     'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
-        # will be initialized from %prot
+        # will be initialised from %prot
      },
     'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
                                 # 1: if available is default (see _check_functions())
@@ -2951,7 +2951,7 @@ sub test_regex          {
 #_________________________________________________________ internal methods __|
 
 sub _prot_init_value    {
-    #? initialize default values in %prot
+    #? initialise default values in %prot
     foreach my $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}            = 0;
         $prot{$ssl}->{'-?-'}            = 0;
@@ -2976,14 +2976,14 @@ sub _prot_init_value    {
 } # _prot_init_value
 
 sub _cfg_init   {
-    # initialize targets with entry containing defaults
+    # initialise targets with entry containing defaults
     push(@{$cfg{'targets'}}, @target_defaults);
-    #? initialize dynamic settings in %cfg, copy data from %prot
+    #? initialise dynamic settings in %cfg, copy data from %prot
     $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
     $cfg{'protos_alpn'} = [split(/,/, $cfg{'protos_next'})];
     $cfg{'protos_npn'}  = [split(/,/, $cfg{'protos_next'})];
-    # initialize alternate protocols and curves for cipher checks
+    # initialise alternate protocols and curves for cipher checks
     $cfg{'cipher_alpns'}= [split(/,/, $cfg{'protos_next'})];
     $cfg{'cipher_npns'} = [split(/,/, $cfg{'protos_next'})];
     $cfg{'ciphercurves'}= [
@@ -3008,7 +3008,7 @@ sub _cfg_init   {
 } # _cfg_init
 
 sub _cmd_init   {
-    #? initialize dynamic settings in %cfg for commands
+    #? initialise dynamic settings in %cfg for commands
     foreach my $key (sort keys %cfg) {  # well-known "summary" commands
         push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
     }
@@ -3016,7 +3016,7 @@ sub _cmd_init   {
 } # _cmd_init
 
 sub _dbx_init   {
-    #? initialize settings for debugging
+    #? initialise settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
     $dbx{'cmd-http'}  = $cfg{'cmd-http'};
     $dbx{'cmd-info'}  = $cfg{'cmd-info'};
@@ -3026,7 +3026,7 @@ sub _dbx_init   {
 } # _dbx_init
 
 sub _osaft_init {
-    #? additional generic initializations for data structures
+    #? additional generic initialisations for data structures
     my $me =  $0;       # done here to instead of package's "main" to avoid
        $me =~ s#.*[/\\]##;  # multiple variable definitions of $me
     $cfg{'me'}      = $me;
@@ -3036,10 +3036,10 @@ sub _osaft_init {
     $cfg{'prefix_trace'}    = "#${me}::";
     $cfg{'prefix_verbose'}  = "#${me}: ";
 
-    _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
-    _cfg_init();        # initallize dynamic data in %cfg
-    _cmd_init();        # initallize dynamic commands in %cfg
-    _dbx_init();        # initallize debugging data in %dbx
+    _prot_init_value(); # initallise WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
+    _cfg_init();        # initallise dynamic data in %cfg
+    _cmd_init();        # initallise dynamic commands in %cfg
+    _dbx_init();        # initallise debugging data in %dbx
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
@@ -3105,7 +3105,7 @@ sub _main           {
 
 sub osaft_done  {};         # dummy to check successful include
 
-_osaft_init();          # complete initializations
+_osaft_init();          # complete initialisations
 
 ## PACKAGE }
 
@@ -3126,7 +3126,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.209 2020/01/04
+1.210 2020/01/04
 
 =head1 AUTHOR
 
