@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.104 20/01/04 10:05:45
+#?      @(#) Makefile 1.105 20/01/04 12:51:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.104
+_SID.test          := 1.105
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -91,7 +91,7 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 #________________________________________________________________ variables __|
 
 # store -n (dry-run) option in own variable
-_n := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
+TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 
 # test tools (part of distribution)
 TEST.dir       := t
