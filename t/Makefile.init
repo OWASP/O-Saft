@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 1.1 20/01/03 02:00:25
+#?      @(#) Makefile.init 1.2 20/01/04 08:34:32
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-_SID.init          := 1.1
+_SID.init          := 1.2
 
 _MYSELF.init       := t/Makefile.init
 ALL.includes       += $(_MYSELF.init)
@@ -48,41 +48,49 @@ testarg-init-%:     TEST.init   :=  any-host --no-rc --test-init
 testarg-init-001:   TEST.args   :=
 testarg-init-002:   TEST.args   := +info
 testarg-init-003:   TEST.args   := +check
-testarg-init-004:   TEST.args   := +protocols
-testarg-init-005:   TEST.args   := +vulns
-testarg-init-006:   TEST.args   := +cn
-testarg-init-007:   TEST.args   := +cert
-#testarg-init-008:   TEST.args   :=
-#testarg-init-009:   TEST.args   :=
+testarg-init-004:   TEST.args   := +ciphers
+testarg-init-005:   TEST.args   := +checkciphers
+testarg-init-006:   TEST.args   := +protocols
+testarg-init-007:   TEST.args   := +vulns
+testarg-init-008:   TEST.args   := +cn
+testarg-init-009:   TEST.args   := +cert
 #testarg-init-010:   TEST.args   :=
 #testarg-init-011:   TEST.args   :=
-testarg-init-012:   TEST.args   := +info      --no-dns --no-http --no-sni
-testarg-init-013:   TEST.args   := +check     --no-dns --no-http --no-sni
-testarg-init-014:   TEST.args   := +protocols --no-dns --no-http --no-sni
-testarg-init-015:   TEST.args   := +vulns     --no-dns --no-http --no-sni
-testarg-init-016:   TEST.args   := +cn        --no-dns --no-http --no-sni
-testarg-init-017:   TEST.args   := +cert      --no-dns --no-http --no-sni
+testarg-init-012:   TEST.args   := +info        --no-dns --no-http --no-sni
+testarg-init-013:   TEST.args   := +check       --no-dns --no-http --no-sni
+testarg-init-014:   TEST.args   := +ciphers     --no-dns --no-http --no-sni
+testarg-init-015:   TEST.args   := +ciphercheck --no-dns --no-http --no-sni
+testarg-init-016:   TEST.args   := +protocols   --no-dns --no-http --no-sni
+testarg-init-017:   TEST.args   := +vulns       --no-dns --no-http --no-sni
+testarg-init-018:   TEST.args   := +cn          --no-dns --no-http --no-sni
+testarg-init-019:   TEST.args   := +cert        --no-dns --no-http --no-sni
 
-testarg-init-022:   TEST.args   := +info      --no-npn --no-alpn
-testarg-init-023:   TEST.args   := +check     --no-npn --no-alpn
-testarg-init-024:   TEST.args   := +protocols --no-npn --no-alpn
-testarg-init-025:   TEST.args   := +vulns     --no-npn --no-alpn
-testarg-init-026:   TEST.args   := +cn        --no-npn --no-alpn
-testarg-init-027:   TEST.args   := +cert      --no-npn --no-alpn
+testarg-init-022:   TEST.args   := +info        --no-npn --no-alpn
+testarg-init-023:   TEST.args   := +check       --no-npn --no-alpn
+testarg-init-024:   TEST.args   := +ciphers     --no-npn --no-alpn
+testarg-init-025:   TEST.args   := +ciphercheck --no-npn --no-alpn
+testarg-init-026:   TEST.args   := +protocols   --no-npn --no-alpn
+testarg-init-027:   TEST.args   := +vulns       --no-npn --no-alpn
+testarg-init-028:   TEST.args   := +cn          --no-npn --no-alpn
+testarg-init-029:   TEST.args   := +cert        --no-npn --no-alpn
 
-testarg-init-032:   TEST.args   := +info      --no-cert --no-tlsextdebug
-testarg-init-033:   TEST.args   := +check     --no-cert --no-tlsextdebug
-testarg-init-034:   TEST.args   := +protocols --no-cert --no-tlsextdebug
-testarg-init-035:   TEST.args   := +vulns     --no-cert --no-tlsextdebug
-testarg-init-036:   TEST.args   := +cn        --no-cert --no-tlsextdebug
-testarg-init-037:   TEST.args   := +cert      --no-cert --no-tlsextdebug
+testarg-init-032:   TEST.args   := +info        --no-cert --no-tlsextdebug
+testarg-init-033:   TEST.args   := +check       --no-cert --no-tlsextdebug
+testarg-init-034:   TEST.args   := +ciphers     --no-cert --no-tlsextdebug
+testarg-init-035:   TEST.args   := +ciphercheck --no-cert --no-tlsextdebug
+testarg-init-036:   TEST.args   := +protocols   --no-cert --no-tlsextdebug
+testarg-init-037:   TEST.args   := +vulns       --no-cert --no-tlsextdebug
+testarg-init-038:   TEST.args   := +cn          --no-cert --no-tlsextdebug
+testarg-init-039:   TEST.args   := +cert        --no-cert --no-tlsextdebug
 
-testarg-init-092:   TEST.args   := +info      --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-093:   TEST.args   := +check     --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-094:   TEST.args   := +protocols --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-095:   TEST.args   := +vulns     --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-096:   TEST.args   := +cn        --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-097:   TEST.args   := +cert      --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-092:   TEST.args   := +info        --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-093:   TEST.args   := +check       --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-094:   TEST.args   := +ciphers     --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-095:   TEST.args   := +ciphercheck --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-096:   TEST.args   := +protocols   --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-097:   TEST.args   := +vulns       --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-098:   TEST.args   := +cn          --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+testarg-init-099:   TEST.args   := +cert        --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
 
 ALL.test.init   = $(shell awk -F: '/^testarg-init-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.init))
 ALL.test.init.log   = $(ALL.test.init:%=%.log)
