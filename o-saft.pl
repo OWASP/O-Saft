@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.972 20/01/04 00:23:14",
+    SID         => "@(#) yeast.pl 1.973 20/01/04 10:20:59",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1828,12 +1828,13 @@ our %text = (
     'need_cipher'   => "<<check possible in conjunction with +cipher only>>",
     'na'            => "<<N/A>>",
     'na_STS'        => "<<N/A as STS not set>>",
+    'na_sni'        => "<<N/A as --no-sni in use>>",
     'na_dns'        => "<<N/A as --no-dns in use>>",
     'na_cert'       => "<<N/A as --no-cert in use>>",
     'na_http'       => "<<N/A as --no-http in use>>",
     'na_tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
     'na_nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
-    'na_reconnect'  => "<<N/A as --na_reconnect in use>>",
+    'na_reconnect'  => "<<N/A as --no_reconnect in use>>",
     'na_openssl'    => "<<N/A as --no-openssl in use>>",
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'disabled_protocol' => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
@@ -2590,7 +2591,12 @@ sub _initchecks_score   {
 sub _initchecks_val     {
     # set all default check values here
     my $notxt = "";
+    #my $notxt = $text{'undef'}; # TODO: default should be 'undef'
     $checks{$_}->{val}   = $notxt foreach (keys %checks);
+    foreach my $key (keys %checks) {
+        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
+        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
+    }
     # some special values %checks{'sts_maxage*'}
     $checks{'sts_maxage0d'}->{val}  =        1;
     $checks{'sts_maxage1d'}->{val}  =    86400; # day
@@ -2598,19 +2604,14 @@ sub _initchecks_val     {
     $checks{'sts_maxage1y'}->{val}  = 31536000; # year
     $checks{'sts_maxagexy'}->{val}  = 99999999;
     $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
-    foreach my $key (keys %checks) {
-        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
-        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
-    }
 return;
     if (1 > $cfg{'usedns'}) {
-        $notxt = $text{'na_dns'};
-        $checks{'reversehost'}  ->{val} = $notxt;
+        $checks{'reversehost'}  ->{val} = $text{'na_dns'};
     }
     if (1 > $cfg{'usehttp'}) {
         $notxt = _get_text('disabled', "--no-http");
-        $checks{'crl_valid'} ->{val} = $notxt;
-        $checks{'ocsp_valid'}->{val} = $notxt;
+        $checks{'crl_valid'}    ->{val} = $notxt;
+        $checks{'ocsp_valid'}   ->{val} = $notxt;
         foreach my $key (keys %checks) {
             $checks{$key}->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
@@ -2636,9 +2637,8 @@ return;
         $checks{'poodle'}       ->{val} = $notxt;
     }
     if (1 > $cmd{'extopenssl'}) {
-        $notxt = $text{'na_openssl'};
         foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
-            $checks{$key}->{val} = $notxt;
+            $checks{$key}       ->{val} = $text{'na_openssl'};
         }
     }
     # if $data{'https_sts'}->{val}($host) is empty {
