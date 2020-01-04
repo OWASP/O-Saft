@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.7 19/11/17 00:07:17
+# SID   @(#) coding.txt 1.8 20/01/04 12:17:06
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -270,7 +270,7 @@ HACKER's INFO
       Abstract program flow
           check special options and command (+exec, +cgi, --envlibvar)
           read RC-FILE, DEBUG-FILE and USER-FILE if necessary
-          initialize internal data structure
+          initialise internal data structure
           scan options and arguments
           perform commands without connection to target
           loop over all specified targets
@@ -366,7 +366,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.7 19/11/17 00:07:17";
+            my $SID = "coding.txt 1.8 20/01/04 12:17:06";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
