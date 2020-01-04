@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.83 20/01/04 12:56:23
+#?      @(#) Makefile.help 1.84 20/01/04 13:04:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.83
+_SID.help          := 1.84
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -261,13 +261,13 @@ help.doc: help.help
 # Following  file%  targets are used for doc.all target only, they are just a
 # dirty hack so that output of target help.all and doc.all are similar.
 # NOTE: quick&dirty as  $(TEST.dir)  is hardcoded as t/ in the target names.
-_FILE_LINE  = \#-------------------------------------------------------------
+_HELP_LINE := \#-------------------------------------------------------------
 _filet/%: _file-egal
 	@echo ""
-	@echo "\t\t$(_FILE_LINE)"
+	@echo "\t\t$(_HELP_LINE)"
 _file%:
 	@echo ""
-	@echo "\t\t$(_FILE_LINE)"
+	@echo "\t\t$(_HELP_LINE)"
 _file-vt/%:
 	@echo ""
 	@echo "\t\t# ---------- t/$* ..."
