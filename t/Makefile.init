@@ -6,16 +6,16 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 1.2 20/01/04 08:34:32
+#?      @(#) Makefile.init 1.3 20/01/04 09:54:04
 #?
 #? AUTHOR
-#?      19-apr-19 Achim Hoffmann
+#?      19-dez-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-_SID.init          := 1.2
+_SID.init          := 1.3
 
 _MYSELF.init       := t/Makefile.init
 ALL.includes       += $(_MYSELF.init)
@@ -40,60 +40,56 @@ HELP-test.init      = test various initialisations of '$(EXE.pl)'
 HELP-test.init.log  = same as test.init but store output in '$(TEST.logdir)/'
 HELP-testarg-init-D = individual target(s) for testing
 
-# options to be tested: --no-dns --no-http --no-sni --no-npn --no-alpn --no-openssl --no-tcp --no-cert --no-tlsextdebug --no-SSL
+LIST.init.cmds     := \
+	+info   +ciphers   +check  +checkciphers   +protocols  +vulns  +cert +cn
 
-testarg-init-%:     EXE.pl      := $(SRC.pl)
-testarg-init-%:     TEST.init   :=  any-host --no-rc --test-init
+LIST.init.opt0     :=
+LIST.init.opt1     := --no-http  --no-dns --no-sni
+LIST.init.opt2     := --no-alpn  --no-npn 
+LIST.init.opt3     := --no-cert  --no-tlsextdebug
+LIST.init.opt4     := --no-sslv2 --no-sslv3
+LIST.init.opt5     := $(LIST.init.opt4) --no-tlsv1 --no-tlsv11
+LIST.init.opt6     := $(LIST.init.opt5) --no-tlsv12
+LIST.init.opt7     := $(LIST.init.opt6) --no-tlsv13
 
-testarg-init-001:   TEST.args   :=
-testarg-init-002:   TEST.args   := +info
-testarg-init-003:   TEST.args   := +check
-testarg-init-004:   TEST.args   := +ciphers
-testarg-init-005:   TEST.args   := +checkciphers
-testarg-init-006:   TEST.args   := +protocols
-testarg-init-007:   TEST.args   := +vulns
-testarg-init-008:   TEST.args   := +cn
-testarg-init-009:   TEST.args   := +cert
-#testarg-init-010:   TEST.args   :=
-#testarg-init-011:   TEST.args   :=
-testarg-init-012:   TEST.args   := +info        --no-dns --no-http --no-sni
-testarg-init-013:   TEST.args   := +check       --no-dns --no-http --no-sni
-testarg-init-014:   TEST.args   := +ciphers     --no-dns --no-http --no-sni
-testarg-init-015:   TEST.args   := +ciphercheck --no-dns --no-http --no-sni
-testarg-init-016:   TEST.args   := +protocols   --no-dns --no-http --no-sni
-testarg-init-017:   TEST.args   := +vulns       --no-dns --no-http --no-sni
-testarg-init-018:   TEST.args   := +cn          --no-dns --no-http --no-sni
-testarg-init-019:   TEST.args   := +cert        --no-dns --no-http --no-sni
+LIST.init.opts     := opt0 opt1 opt2 opt3 opt4 opt5 opt6 opt7
+    # only extensions, not the full variable name, so they can be used directly
+    # when generating target names (see below)
 
-testarg-init-022:   TEST.args   := +info        --no-npn --no-alpn
-testarg-init-023:   TEST.args   := +check       --no-npn --no-alpn
-testarg-init-024:   TEST.args   := +ciphers     --no-npn --no-alpn
-testarg-init-025:   TEST.args   := +ciphercheck --no-npn --no-alpn
-testarg-init-026:   TEST.args   := +protocols   --no-npn --no-alpn
-testarg-init-027:   TEST.args   := +vulns       --no-npn --no-alpn
-testarg-init-028:   TEST.args   := +cn          --no-npn --no-alpn
-testarg-init-029:   TEST.args   := +cert        --no-npn --no-alpn
+# TODO: options to be tested: --no-openssl --no-tcp
 
-testarg-init-032:   TEST.args   := +info        --no-cert --no-tlsextdebug
-testarg-init-033:   TEST.args   := +check       --no-cert --no-tlsextdebug
-testarg-init-034:   TEST.args   := +ciphers     --no-cert --no-tlsextdebug
-testarg-init-035:   TEST.args   := +ciphercheck --no-cert --no-tlsextdebug
-testarg-init-036:   TEST.args   := +protocols   --no-cert --no-tlsextdebug
-testarg-init-037:   TEST.args   := +vulns       --no-cert --no-tlsextdebug
-testarg-init-038:   TEST.args   := +cn          --no-cert --no-tlsextdebug
-testarg-init-039:   TEST.args   := +cert        --no-cert --no-tlsextdebug
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
 
-testarg-init-092:   TEST.args   := +info        --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-093:   TEST.args   := +check       --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-094:   TEST.args   := +ciphers     --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-095:   TEST.args   := +ciphercheck --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-096:   TEST.args   := +protocols   --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-097:   TEST.args   := +vulns       --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-098:   TEST.args   := +cn          --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
-testarg-init-099:   TEST.args   := +cert        --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12
+# The goal here is to generate all targets from the variables defined above.
+# Each command in $(LIST.init.cmds) should be called with each set of options
+# $(LIST.init.opt*).
+# The generated targets look like:
+#       testarg-init-+CMD-optD: TEST.args := +CMD $(optD)
+# where +CMD is the command from $(LIST.init.cmds) and D is the number of the
+# variable LIST.init.opt* and $(optD) the content of $(LIST.init.optD.
+# Example:
+#       testarg-init-+info-opt0: TEST.args := +info
+#       testarg-init-+cert-opt1: TEST.args := +cert --no-dns --no-http
+#
+# Finally the pattern rule  testarg-init-%   calls the generated target.
+# Use:
+#       make test.init -n
+# to see how all generated targets look like.
 
-ALL.test.init   = $(shell awk -F: '/^testarg-init-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.init))
+ifndef init-generated
+    $(foreach cmd, $(LIST.init.cmds),\
+      $(foreach opt, $(LIST.init.opts),\
+        $(eval testarg-init-$(cmd)-$(opt): TEST.args := $(cmd) $(LIST.init.$(opt)) ) \
+        $(eval ALL.test.init   += testarg-init-$(cmd)-$(opt) ) \
+      ) \
+    )
+endif
+
 ALL.test.init.log   = $(ALL.test.init:%=%.log)
+
+testarg-init-%:         EXE.pl      := $(SRC.pl)
+testarg-init-%:         TEST.init   :=  any-host --no-rc --test-init
 
 test.init.log-compare:  TEST.target_prefix  = testarg-init-
 test.init.log-move:     TEST.target_prefix  = testarg-init-
