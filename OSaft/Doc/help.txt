@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.45 19/11/25 23:28:10
+# SID   @(#) help.txt 1.47 20/01/06 00:07:26
 
 NAME
 
@@ -81,7 +81,7 @@ QUICKSTART
           o-saft -help=your-text
 
         * Start the simple GUI
-          o-saft.tcl 
+          o-saft.tcl
 # above o-saft.tcl  must have trailing space, otherwise markup fails
 
         * Start the simple GUI which uses $0 in a Docker image
@@ -164,9 +164,9 @@ CONCEPTS
         interpretation, if the result is "good" or "bad", to the user.
         Background:  it is not always possible to rate a result as  "good" or
         "bad" or "insecure" or whatever. That's why  O-Saft  can not give the
-        "the best" or a "proper" recomendation. In practice it depends on the
-        context what a recomendation, or countermeasure should be. That's why
-        all results are marked  'yes'  or  'no'  if considered "questionable"
+        "the best" or a "proper"  recommendation.  In practice it  depends on
+        the context what a recommendation or countermeasure should be. That's
+        why results are marked  'yes'  or  'no'  if considered "questionable"
         or "not good" (for example according other checks).
 
         ... more comming soon ...
@@ -182,11 +182,30 @@ TECHNICAL INFORMATION
 
         Starting with version 19.11.19 the  +cipher  command does not use any
         external library. Checking for ciphers is done using plain Perl code.
-        Only collected other SSL/TLS related inofrmation requires an external
+        Only other collected SSL/TLS related information requires an external
         library, in general libssl.
-        The description about OpenSSL and libssl below  applys to the command
-        +cipher-openssl only.
-        The changed commands and options will be described soon ...
+        The description about OpenSSL and libssl below applies only if any of
+        the options  --ciphermode=openssl  or  --ciphermode=ssleay  are given
+        with the  +cipher  command.
+
+        Therefore following commands and options changed:
+          * +cipher     uses internal method
+          * +cipherall  command obsolete, automatically changed to  +cipher
+          * +cipherraw  command obsolete, automatically chnaged to  +cipher
+          * --openssl-ciphers  --force-openssl  changed to  --ciphermode=openssl
+          * --openssl=TOOL  TOOL only used for  +cipher --ciphermode=openssl
+          * --legacy=owasp  option obsolete
+
+        The commands  +cipherall  and  +cipherraw  are "converted" to the new
+        syntax, as follows:
+
+            VERSION < 19.11.19           VERSION > 19.11.19
+            ----------------------------+-------------------------------
+            +cipher                      +cipher --ciphermode=ssleay
+            +cipher --force-openssl      +cipher --ciphermode=openssl
+            +cipherall                   +cipher
+            +cipherraw                   +cipher --ciphermode=intern
+            ----------------------------+-------------------------------
 
     Version before 19.11.19
 
@@ -288,7 +307,7 @@ TECHNICAL INFORMATION
         +cipher-dh  command.
 
         If you need to run on systems with older perl or Perl module versions
-        please refer to the  DEBUG  section for more inofrmation.
+        please refer to the  DEBUG  section for more information.
 
 
 RESULTS
@@ -1682,7 +1701,7 @@ OPTIONS
 
           Defines the format of the descriptive text (label) for  +check  and
           +info  command.
-          
+
           Following 'TYPE's are supported:
 
       --label=long
@@ -2126,12 +2145,6 @@ OPTIONS
 
           Print debugging messages for modules only, but not $0 itself.
 
-      --trace-sub
-      +traceSUB
-
-          Print formatted list of internal functions with their description.
-          Not to be intended in conjunction with any target check.
-
       --hint
 
           Print hint messages (!!Hint:).
@@ -2422,7 +2435,7 @@ CHECKS
         The check does not send other methods (like CONNECT) to verify if the
         protocol is fully supported.
 
-        Supporting SSTP is considered insecure, because SSTP allows to tunnel 
+        Supporting SSTP is considered insecure, because SSTP allows to tunnel
         other, probably insecure, protocols.
 
     Target (server) Certificate
@@ -4443,16 +4456,50 @@ DEBUG
 
 TESTING
 
-        When talking about "testing the tool", functional tests are meant. So
-        this section describes "developer" rather than "user" options.
+        What is "testing"?
+        This tool itself is for testing something,  so it needs to be explain
+        what testing here is about. Following testing types are distinguished
+        and then described:
 
-        Testing the tool is a challenging task. Beside the oddities described
-        elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
-        and errors which may occour during runtime.
+        * User testing
+        * Functional testing
+        * Developer (internal) testing
+
+        All descriptions below, except  "User testing", are only intended for
+        development.
+
+    User testing
+
+        During normal use of the tool, "testing" is only required for hunting
+        problems with the connected target. Following options for tracing and
+        verbosity can be used for that:
+
+      --v
+
+          Print more information about checks.
+
+      --trace
+
+          Print debugging messages.
+          For more details, please see  X&Options for tracing and debugging& .
+
+    Functional testing
+
+        This section describes "developer" rather than "user" testing.
+
+        Functional testing mainly means testing the functionality of the tool
+        itself, for example: do the commands and options work as described in
+        the documentation:  $0 --help
 
         Makefiles are used for testing  functionality and code quality during
         development. These tests are implemented in the  ./t/  directory, see
-        the 'Makefile.*' there.
+        all 'Makefile.*' there, start with 'Makefile.pod'.
+
+    Developer (internal) testing
+
+        Testing SSL/TLS  is a challenging task. Beside the oddities described
+        elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
+        and errors which may occour during runtime.
 
         Following options and commands for  $0  are available to improve
         testing.  They mainly can simulate error conditions or stop execution
@@ -4474,7 +4521,7 @@ TESTING
           With this option values in the internal  %cfg  hash can be set:
 
               $cfg{KEY} = VALUE
-          
+
           Only (perl) scalars or arrays can be set. The type will be detected
           automatically.
 
@@ -4485,28 +4532,26 @@ TESTING
           or the text used as prefix triggerd by the  --trace  option:
               $0 --cfg-init=prefix_trace="#TRACE: "
 
-      --v
-
-          Print more information about checks.
-
-      --trace
-
-          Print debugging messages.
-          For more details, please see  X&Options for tracing and debugging& .
-
-    Internal testing
-
-        Following options and commands for  $0  are for internal testing.
-        They provide informations about internal data structures and alike.
-        See also tests in t/Makefile* .
+        The options which provide informations about internal data structures
+        and alike described below, behave like the command  +quit  and do not
+        perform any checks on the target(s).
 
       --test-data
 
           Print overview of all available commands and checks.
 
+      --test-maps
+
+          Print internal data strucures '%cfg{openssl}', '%cfg{ssleay}'.
+
       --test-prot
 
           Print internal data according protocols.
+
+      --test-sub
+
+          Print formatted list of internal functions with their description.
+          Not to be intended in conjunction with any target check.
 
       --test-regex
 
@@ -4516,9 +4561,31 @@ TESTING
 
           Print list of hex keys of known ciphers.
 
+      --test-cipher-show
+
+          Print complete list of ciphers.
+
       --test-cipher-sorted
 
           Print list of ciphers sorted according strength.
+
+      --test-init
+
+          Print parts of the data structure  %cfg. In contrast to the options
+          described above,  --test-init  exits straight before performing the
+          specified commands on the target.  Therefore it prints the settings
+          in  %cfg  containing all applied commands and options.
+
+        See 't/Makefile.*' how to use these tests.
+
+    Testing results
+
+        Finally there should be tests, which prove that the results of  $0
+        are really what they should be. A test target is necessary therefore,
+        which produces reliable results.
+        However, some of the implemented tests in 't/Makefile.*' (see section
+        "Functional testing" above) already work properly. This test coverage
+        needs to be improved ...
 
 
 EXAMPLES
@@ -4754,7 +4821,7 @@ DOCUMENTATION
 
         * with:  $0 --help=HELP
 
-        * using:  make 
+        * using:  make
 
 
 ATTRIBUTION
@@ -4800,7 +4867,6 @@ TODO
           ** support: PCT protocol
           ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
           ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
-          ** check dynamic HTTP Public Key Pinning (HPKP)
 
         * missing checks
           ** SSL_honor_cipher_order => 1
