@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.105 20/01/04 12:51:14
+#?      @(#) Makefile 1.106 20/01/05 12:33:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.105
+_SID.test          := 1.106
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -270,8 +270,8 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
-	@echo '# $$(ALL.includes) = $(ALL.includes)'
-	@echo '# $$(ALL.inc.type) = $(ALL.inc.type)'
+	@echo '# $$(ALL.includes)  = $(ALL.includes)'
+	@echo '# $$(ALL.inc.type)  = $(ALL.inc.type)'
 	@echo '# $$(TEST.dir)      = $(TEST.dir)'
 	@echo '# $$(TEST.logdir)   = $(TEST.logdir)'
 	@echo '# $$(TEST.host)     = $(TEST.host)'
