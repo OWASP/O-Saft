@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.974 20/01/04 12:32:40",
+    SID         => "@(#) yeast.pl 1.975 20/01/06 02:00:20",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -461,53 +461,12 @@ usr_pre_init();
 
 #| initialise defaults
 #| -------------------------------------
-#!# set defaults
-#!# -------------------------------------
-#!# To make (programmer's) life simple, we try to avoid complex data structure,
-#!# which are error-prone, by using a couple of global variables.
-#!# As there are no plans to run this tool in threaded mode, this should be ok.
-#!# Please see "Program Code" in o-saft-man.pm too.
-#!#
-#!# Here's an overview of the used global variables (mostly defined in o-saft-lib.pm):
-#!#   %prot           - collected data per protocol (from Net::SSLinfo)
-#!#   %prot_txt       - labes for %prot
-#!#   @cipher_results - where we store the results as:  [SSL, cipher, "yes|no"]
-#!#   %data           - labels and correspondig value (from Net::SSLinfo)
-#!#   %checks         - collected and checked certificate data
-#!#                     collected and checked target (connection) data
-#!#                     collected and checked connection data
-#!#                     collected and checked length and count data
-#!#                     HTTP vs. HTTPS checks
-#!#   %shorttexts     - same as %checks, but short texts
-#!#   %data_oid       - map known OIDs to human readable description
-#!#   %info           - like $data, but for data not retrived from Net::SSLinfo
-#!#   %cmd            - configuration for external commands
-#!#   %cfg            - configuration for commands and options herein
-#!#   %text           - configuration for message texts
-#!#   %scores         - scoring values
-#!#   %ciphers_desc   - description of %ciphers data structure
-#!#   %ciphers        - our ciphers
-#!#   %cipher_names   - (hash)map of cipher constant-names to names
-#!#   %cipher_alias   - (hash)map of cipher aliases (used in other programs)
-#!#
-#!# All %check_*  contain a default 'score' value of 10, see --cfg-score
-#!# option how to change that.
-
-# NOTE: all keys in data and check_* must be unique 'cause of shorttexts!!
-# NOTE: all keys in check_* and checks  must be in lower case letters!!
-#       'cause generic conversion of +commands to keys
-#       exception are the keys related to protocol, i.e. SSLV3, TLSv11
-
-#
-# Note according perlish programming style:
-#     references to $arr->{'val') are most often simplified as $arr->{val)
-#     same applies to 'txt', 'typ' and 'score'
 
 # some temporary variables used in main
 my $host    = "";       # the host currently processed in main
 my $port    = "";       # the port currently used in main
 my $legacy  = "";       # the legacy mode used in main
-my $verbose = 0;        # verbose mode used in main
+my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
 my $test    = "";       # set to argument if --test* or +test* was used
@@ -517,6 +476,7 @@ my $quick   = 0;        # set to 1 if +quick was used
 my $cmdsni  = 0;        # set to 1 if +sni  or +sni_check was used
 my $sniname = undef;    # will be set to $cfg{'sni_name'} as this changes for each host
 
+# SEE Note:Data Structures
 our %info   = (         # same as %data with values only; keys are identical to %data
     'alpn'          => "",
     'npn'           => "",
@@ -3795,9 +3755,9 @@ sub _get_target         {
     #    ftp://f.q.d.n:42/aa*foo=bar:23
     #   ftp:42/no-fqdn:42/aa*foo=bar:23
     #   dpsmtp://authentication@mail:25/queryParameters
-    #   //abc/def    
+    #   //abc/def
     #   abc://def    # scary
-    #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
+    #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/
     #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
     #   cafe::999/aa*foo=bar:23/  # invalid, but works
     # NOTE: following regex allow hostnames containing @, _ and many more ...
@@ -4142,7 +4102,6 @@ sub ciphers_scan        {
         }
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
-            
             if (_is_do('cipher') or $cfg{'verbose'} > 0) {
                 _warn_nosni("410:", $ssl, $cfg{'usesni'});
                 # ciphers are collected for various checks, this would result
@@ -4903,7 +4862,7 @@ sub _base2  {
     #   log(2)   = 0.693147180559945;
     #   1/log(2) = 1.44269504088896;
     #   v * 1.44 = v + (v / 100 * 44);
-    return ($value + ($value/100*44)); 
+    return ($value + ($value/100*44));
 } # _base2
 
 sub checksizes($$)  {
@@ -5888,7 +5847,7 @@ EoREQ
     _trace2("_get_sstp_https: response {\n$response#}");
 
     # if SSTP supported, we expect something like::
-    #   HTTP/1.1 200 
+    #   HTTP/1.1 200
     #   Content-Length: 18446744073709551615
     #   Server: Microsoft-HTTPAPI/2.0
     #   Date: Mon, 19 May 2019 23:42:42 GMT
@@ -6047,7 +6006,7 @@ sub check_exitcode  {
     }
     # print overview of calculated exitcodes;
     # for better human readability, counts disabled by --exitcode-no-* options
-    # are marked as "ignored" 
+    # are marked as "ignored"
     my $ign_ciphs   = (0 < ($cfg{'exitcode_low'} + $cfg{'exitcode_weak'} + $cfg{'exitcode_medium'}))   ? "" : " (count ignored)";
     my $ign_checks  = (0 < $cfg{'exitcode_checks'}) ? "" : " (count ignored)";
     my $ign_prot    = (0 < $cfg{'exitcode_prot'})   ? "" : " (count ignored)";
@@ -9123,7 +9082,7 @@ exit 2; # main; code never reached
 
 __END__
 __DATA__
-public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm 
+public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 
 =pod
 
@@ -9293,7 +9252,7 @@ SEE L<Perl:BEGIN> below.
 
 =head3 Since VERSION 17.07.17
 
-All documentation from variables, i.e.  %man_text, moved to separate files 
+All documentation from variables, i.e.  %man_text, moved to separate files
 in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
 format in the  __DATA__ section of each file. The overhead compared to the
 %man_text  variable is just the Perl module file with its  POD texts.  The
@@ -9365,7 +9324,7 @@ Following pragmas are used in various files:
     Our POD in *pm is fine, perlcritic (severity 2) is too pedantic here.
 
 
-=head2 Perl:BEGIN perlcritic 
+=head2 Perl:BEGIN perlcritic
 
 perlcritic  cannot handle  BEGIN{}  sections semantically correct. If this
 section is defined before the  `use strict;'  statement, is complains with
@@ -9525,6 +9484,82 @@ Check for used numbers with:
 A proper test for the message should be done in t/Makefile.warnings.
 
 
+=head2 Note:Data Structures
+
+To make (programmer's) life simple,  complex data structures are avoided.
+Global variables are used (mostly defined in osaft.pm). This should be ok,
+as there are no plans to run this tool in threaded mode.
+Please see OSaft/Doc/coding.txt also.
+
+Here's an overview of the used global variables:
+Data structures with (mainly) static data:
+
+    %cmd            - configuration for external commands (like openssl)
+    %text           - configuration for message texts
+    %ciphers        - definition of our cipher suites
+    %shorttexts     - short texts (labels) for %data and %checks
+    %prot_txt       - labels for %prot
+
+Data structures with runtime data:
+
+    %cfg            - configuration for commands and options herein
+    %data           - labels and correspondig value (from Net::SSLinfo)
+    %checks         - collected and checked certificate data
+                      collected and checked target (connection) data
+                      collected and checked connection data
+                      collected and checked length and count data
+    %info           - like %data, but for data which could not be retrieved
+                      from Net::SSLinfo like HTTP vs. HTTPS checks
+    %prot           - collected data per protocol (from Net::SSLinfo)
+    @cipher_results - collected results as:  [SSL, cipher, "yes|no"]
+
+NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts .
+NOTE: all keys in %checks  must be in lower case letters,  because generic
+conversion of +commands to keys. The keys related to protocol, i.e. SSLv3,
+TLSv11, etc. are mixed case.
+
+Note according perlish programming style:
+    references to $arr->{'val') are most often simplified as $arr->{val) ,
+    same applies to 'txt' and 'typ'.
+
+=head3 Initialisation
+
+Most data structures are statically initalised. Some, mainly %checks, will
+be initilised programmatically. The values in  %checks  must be initilised
+also before the check result will be assigned. This default initialisation
+could be:
+
+    yes     - (empty string)
+    no      - (any string)
+    undef   - fixed string
+
+Each method has its pros and cons. This has been changed, see below.
+
+=head3 Initialisation since VERSION 19.12.25
+
+All values in %check are set to  "<<undef>", which means neither 'yes' nor
+'no'. The advantage is that missing checks are reported as:
+
+    no (<<undef>>)
+
+and hence are easily identified. This also allows to use different default
+strings, for example disabled or missing checks, for example:
+
+    no (<<N/A as STS not set>>)
+
+The disadvantage is that all checks must assign the value  'yes'  or 'no'.
+
+The default initialisation is done after processing all arguments from the
+command line and the RC-FILE.
+
+=head3 Initialisation before VERSION 19.12.25
+
+All values in %check were set to  ""  which means 'yes'. The advantage was
+a very simple default assignment and only failed checks are assigned.  The
+disadvantage was that missing checks, due to programming errors,  were re-
+ported as 'yes'.
+
+
 =head2 Note:Testing, sort
 
 When values are assigned to arrays, or values are pushed on arrays in Perl
@@ -9539,6 +9574,7 @@ sorting is not done for data read from RC-FILE. The --no-rc option is used
 to check if the RC-FILE was read.
 
 The data to be sorted is for example:
+
     @cfg{do}
     @cfg{commands}
     @cfg{commands_*}
@@ -9893,7 +9929,7 @@ Example of (1.l.0l) openssl s_client --help
  -xcert infile              cert for Extended certificates
  -xchain infile             chain for Extended certificates
  -xchain_build              build certificate chain for the extended certificates
- -xcertform PEM|DER         format of Extended certificate (PEM or DER) PEM default 
+ -xcertform PEM|DER         format of Extended certificate (PEM or DER) PEM default
  -xkeyform PEM|DER          format of Extended certificate's key (PEM or DER) PEM default
  -tls1                      Just use TLSv1
  -tls1_1                    Just use TLSv1.1
@@ -10185,7 +10221,7 @@ same data structre for the results. Then the program flow should be like:
 =head2 Note:+cipher
 
 Starting with VERSION 19.11.19, only the command  +cipher  is supported.
-When using any of the old commands, a hint will be written. 
+When using any of the old commands, a hint will be written.
 
 With this version the output format for cipher results was also changed.
 It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
