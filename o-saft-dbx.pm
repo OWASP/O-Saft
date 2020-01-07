@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.124 20/01/04 12:08:40";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.125 20/01/07 23:59:58";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -676,7 +676,7 @@ sub _yeast_test_init    {
     print __yeast("#                key | value");
     print __yeast($line);
     print __INIT("ARGV", ___ARR(@{$cfg{'ARGV'}}));
-    foreach my $key (qw(usedns usehttp usehttps usesni usealpn usenpn uselwp no_cert use_extdebug)) {
+    foreach my $key (qw(usedns usehttp usehttps usesni usealpn usenpn uselwp usecert use_extdebug)) {
         print __INIT($key, $cfg{$key});
     }
     print __yeast($line);
@@ -972,7 +972,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.124 2020/01/04
+1.125 2020/01/07
 
 =head1 AUTHOR
 
