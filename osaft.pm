@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.212 20/01/07 21:38:23",
+    SID_osaft   => "@(#) osaft.pm 1.213 20/01/08 00:09:52",
 
 };
 
@@ -1951,7 +1951,7 @@ our %cfg = (
     'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-    'no_comp'       => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+    'use_no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
     'usecert'       => 1,       # 0: do not get data from certificate
     'use' =>    {      # configurations to use or do some specials
         'dns'       => 1,       # 1: make DNS reverse lookup
@@ -1963,7 +1963,7 @@ our %cfg = (
         'npn'       => 1,       # 0: do not use -nextprotoneg option for openssl
         'reconnect' => 1,       # 0: do not use -reconnect option for openssl
         'extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-        'comp'      => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+        'no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
         'cert'      => 0,       # 0: get data from certificate; 1, 2, do not get data
     },
 
@@ -3163,7 +3163,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.212 2020/01/07
+1.213 2020/01/08
 
 =head1 AUTHOR
 
