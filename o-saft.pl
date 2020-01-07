@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.978 20/01/08 00:08:41",
+    SID         => "@(#) yeast.pl 1.979 20/01/08 00:12:57",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1800,6 +1800,7 @@ our %text = (
     'disabled_protocol' => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'disabled_test' => "tests with/for @@ disabled",  # not yet used
     'miss_cipher'   => "<<N/A as no ciphers found>>",
+    'miss_protocol' => "<<N/A as no protocol found>>"
     'miss_RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss_ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
