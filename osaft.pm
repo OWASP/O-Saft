@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.210 20/01/04 12:04:05",
+    SID_osaft   => "@(#) osaft.pm 1.212 20/01/07 21:38:23",
 
 };
 
@@ -1496,7 +1496,6 @@ our %cfg = (
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'v_cipher'      => 0,       # used for --v-cipher
-    'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
     'proxyauth'     => "",      # authentication string used for proxy
@@ -1512,22 +1511,13 @@ our %cfg = (
     'connect_delay' => 0,       # time to wait in seconds for starting next cipher check
     'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
                                 # 1: reuse existing sockets, even if SSL connect failed
-    'enabled'       => 0,       # 1: only print enabled ciphers
-    'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
     'experimental'  => 0,       # 1: use experimental functionality
     'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
-    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
                                 # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
-    'usedns'        => 1,       # 1: make DNS reverse lookup
-    'usemx'         => 0,       # 1: make MX-Record DNS lookup
-    'usehttps'      => 1,       # 1: make HTTPS request
-    'usehttp'       => 1,       # 1: make HTTP  request
-    'usealpn'       => 1,       # 0: do not use -alpn option for openssl
-    'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
     'protos_next'   =>          # all names known for ALPN or NPN
                        'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
                                 # even Net::SSLeay functions most likely use an
@@ -1536,17 +1526,13 @@ our %cfg = (
                                 # NOTE: must not contain any white spaces!
     'protos_alpn'   => [],      # initially same as cfg{protos_next}, see _cfg_init()
     'protos_npn'    => [],      # "-"
-    'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
-    'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
-    'no_comp'       => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
     'sni_name'      => undef,   # if set, name to be used for connection with SNI
                                 # must be set to $host if undef and 'usesni'=1 (see above)
                                 # all other strings are used verbatim, even empty one
     'use_sni_name'  => 0,       # 0: use hostname; 1: use name provided by --sni-name
                                 # used by Net::SSLhello only
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
-    'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
     'ca_depth'      => undef,   # depth of peer certificate verification verification
     'ca_crl'        => undef,   # URL where to find CRL file
@@ -1563,6 +1549,7 @@ our %cfg = (
     'openssl_fips'  => undef,   # NOT YET USED
     'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
     'exitcode'      => 0,       # 1: exit with status code if any check is "no"
+                                #    see also 'out'->'exitcode'
     'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
     'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
     'exitcode_medium'   => 1,   # 0: do not count MEDIUM ciphers for --exitcode
@@ -1572,7 +1559,6 @@ our %cfg = (
     'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
     'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
     'exitcode_quiet'=> 0,       # 1: do not print "EXIT status" message
-    'exitcode_v'    => 0,       # 1: print verbose checks for exit status
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'ignorenoreply' => 1,       # 1: treat "no reply" as heartbeat not enabled
     'label'         => 'long',  # fomat of labels
@@ -1856,7 +1842,6 @@ our %cfg = (
                         qw(certificate extensions pem pubkey sigdump text
                          chain chain_verify ocsp_response_data)
                        ],
-    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
 
    # need-* lists used to improve performance and warning messages
     'need-sslv3'    => [        # commands which need SSLv3 protocol
@@ -1928,6 +1913,59 @@ our %cfg = (
                          master_key session_id session_ticket
                        )],      # fingerprint is special, see _ishexdata()
    #------------------+---------+----------------------------------------------
+
+    'enabled'       => 0,       # 1: only print enabled ciphers
+    'disabled'      => 0,       # 1: only print disabled ciphers
+    'exitcode_v'    => 0,       # 1: print verbose checks for exit status
+    'showhost'      => 0,       # 1: prefix printed line with hostname
+    'warning'       => 1,       # 1: print warnings; 0: don't print warnings
+    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
+   # option key        default   description
+   #------------------+---------+----------------------------------------------
+    'out' =>    {      # configurations for data to be printed
+        'disabled'  => 1,       # 1: print disabled ciphers
+        'enabled'   => 1,       # 1: print enabled ciphers
+        'exitcode'  => 0,       # 1: print verbose checks for exit status
+        'header'    => 0,       # 1: print header lines in output
+        'hostname'  => 0,       # 1: print hostname (target) as prefix for each line
+        'hint_cipher'   => 1,   # 1: print hints for +cipher command
+        'hint_check'=> 1,       # 1: print hints for +check commands
+        'hint_info' => 1,       # 1: print hints for +info commands
+        'hint'      => 1,       # 1: print hints for +cipher +check +info
+        'key'       => 0,       # 1: print internal variable names for %data and %checks (was traceKEY)
+        'traceARG'  => 0,       # 1: (trace) print argument processing
+        'traceCMD'  => 0,       # 1: (trace) print command processing
+        'traceTIME' => 0,       # 1: (trace) print additiona time for benchmarking
+        'time_absolut'  => 0,   # 1: (trace) --traceTIME uses absolut timstamps
+        'warning'   => 1,       # 1: print warnings
+        'score'     => 0,       # 1: print scoring
+        'ignore'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
+    },
+
+    'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usemx'         => 0,       # 1: make MX-Record DNS lookup
+    'usehttps'      => 1,       # 1: make HTTPS request
+    'usehttp'       => 1,       # 1: make HTTP  request
+    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
+    'usealpn'       => 1,       # 0: do not use -alpn option for openssl
+    'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
+    'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
+    'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'no_comp'       => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+    'usecert'       => 1,       # 0: do not get data from certificate
+    'use' =>    {      # configurations to use or do some specials
+        'dns'       => 1,       # 1: make DNS reverse lookup
+        'mx'        => 0,       # 1: make MX-Record DNS lookup
+        'https'     => 1,       # 1: make HTTPS request
+        'http'      => 1,       # 1: make HTTP  request
+        'lwp'       => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
+        'alpn'      => 1,       # 0: do not use -alpn option for openssl
+        'npn'       => 1,       # 0: do not use -nextprotoneg option for openssl
+        'reconnect' => 1,       # 0: do not use -reconnect option for openssl
+        'extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+        'comp'      => 0,       # 1: use OP_NO_COMPRESSION for connetion in Net::SSLeay
+        'cert'      => 0,       # 0: get data from certificate; 1, 2, do not get data
+    },
 
    # option key        default   description
    #------------------+---------+----------------------------------------------
@@ -2060,7 +2098,6 @@ our %cfg = (
                         ssltest-g sslyze testsslserver thcsslcheck openssl
                         simple full compact quick owasp)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
-    'showhost'      => 0,       # 1: prefix printed line with hostname
     'usr_args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
    #------------------+---------+----------------------------------------------
     'data'  => {       # data provided (mainly used for testing and debugging)
@@ -3126,7 +3163,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.210 2020/01/04
+1.212 2020/01/07
 
 =head1 AUTHOR
 
