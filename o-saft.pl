@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.976 20/01/06 12:56:18",
+    SID         => "@(#) yeast.pl 1.977 20/01/07 22:05:14",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2576,7 +2576,7 @@ return;
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
-    if (1 > $cfg{'no_cert'}) {
+    if (1 > $cfg{'usecert'}) {
         $notxt = $text{'na_cert'};
         $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
         foreach my $key (keys %checks) {   # anything related to certs
@@ -4826,7 +4826,7 @@ sub checksni($$)    {
             $checks{'sni'}->{val}   = $data{'cn_nosni'}->{val};
         }
     }
-    if ($cfg{'no_cert'} != 0) {
+    if (1 > $cfg{'usecert'}) {
         $checks{'certfqdn'}->{val}  = $cfg{'no_cert_txt'};
         $checks{'hostname'}->{val}  = $cfg{'no_cert_txt'};
         return;
@@ -4874,7 +4874,7 @@ sub checksizes($$)  {
     $cfg{'done'}->{'checksizes'}++;
     return if (1 < $cfg{'done'}->{'checksizes'});
 
-    checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
+    checkcert($host, $port) if (0 < $cfg{'usecert'}); # in case we missed it before
     $value =  $data{'pem'}->{val}($host);
     $checks{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
@@ -5906,7 +5906,7 @@ sub checkssl($$)    {
     return if (1 < $cfg{'done'}->{'checkssl'});
 
     $cfg{'no_cert_txt'} = $text{'na_cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
-    if ($cfg{'no_cert'} == 0) {
+    if (0 < $cfg{'usecert'}) {
         # all checks based on certificate can't be done if there was no cert, obviously
         checkcert( $host, $port);       # SNI, wildcards and certificate
         checkdates($host, $port);       # check certificate dates (since, until, exired)
@@ -5942,7 +5942,7 @@ sub checkssl($$)    {
         $checks{'rfc_2818_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
-    if ($cfg{'usehttp'} == 1) {
+    if (0 < $cfg{'usehttp'}) {
         checkhttp( $host, $port);
     } else {
         $cfg{'done'}->{'checkhttp'}++;
@@ -5957,7 +5957,7 @@ sub checkssl($$)    {
 
 # TODO: folgende Checks implementieren
     foreach my $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
-# TODO: nicht sinnvoll wenn $cfg{'no_cert'} > 0
+# TODO: nicht sinnvoll wenn 1 > $cfg{'usecert'}
     }
 
     return;
@@ -6789,7 +6789,7 @@ sub printchecks($$$)    {
     local $\ = "\n";
     print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
     _trace_cmd(' printchecks: %checks');
-    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
+    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (1 > $cfg{'usecert'});
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}) > 0);
@@ -6803,7 +6803,7 @@ sub printchecks($$$)    {
         $value = _setvalue($checks{$key}->{val});
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) {   # sizes are special
-            print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
+            print_size($legacy, $host, $port, $key) if (0 < $cfg{'usecert'});
         } else {
             # increment counter only here, avoids counting the counter itself
             $checks{'cnt_checks_yes'}->{val}++ if ($value eq "yes");
@@ -7840,7 +7840,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
     if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 3;    }
     if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 3;    }
-    if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
+    if ($arg eq  '--nocert')            { $cfg{'usecert'}   = 0;    }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
     if ($arg eq  '--noignorenoreply')   { $cfg{'ignorenoreply'} = 0;}
@@ -8492,7 +8492,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
     $Net::SSLinfo::no_compression   = $cfg{'no_comp'};
-    $Net::SSLinfo::no_cert          = $cfg{'no_cert'};
+    $Net::SSLinfo::no_cert          = (($cfg{'usecert'} == 0) ? 1 : 0);
     $Net::SSLinfo::no_cert_txt      = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case      = $cfg{'ignorecase'};
     $Net::SSLinfo::ca_crl           = $cfg{'ca_crl'};
