@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.977 20/01/07 22:05:14",
+    SID         => "@(#) yeast.pl 1.978 20/01/08 00:08:41",
     STR_VERSION => "19.12.25",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7823,8 +7823,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
     if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   }  # alias:
     if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; }  # alias:
-    if ($arg =~ /^--sslcompression$/)   { $cfg{'no_comp'}   = 0;    } # openssl s_client -comp
-    if ($arg =~ /^--nosslcompression$/) { $cfg{'no_comp'}   = 1;    } # openssl s_client -no_comp
+    if ($arg =~ /^--sslcompression$/)   { $cfg{'use_no_comp'}   = 0;} # openssl s_client -comp
+    if ($arg =~ /^--nosslcompression$/) { $cfg{'use_no_comp'}   = 1;} # openssl s_client -no_comp
     if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
     if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
     if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
@@ -8491,7 +8491,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::slowly           = $cfg{'slowly'};
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
-    $Net::SSLinfo::no_compression   = $cfg{'no_comp'};
+    $Net::SSLinfo::no_compression   = $cfg{'use_no_comp'};
     $Net::SSLinfo::no_cert          = (($cfg{'usecert'} == 0) ? 1 : 0);
     $Net::SSLinfo::no_cert_txt      = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case      = $cfg{'ignorecase'};
