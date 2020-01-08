@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.214 20/01/08 02:14:43",
+    SID_osaft   => "@(#) osaft.pm 1.215 20/01/08 22:52:06",
 
 };
 
@@ -1938,28 +1938,13 @@ our %cfg = (
         'ignore'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
     },
 
-    'usedns'        => 1,       # 1: make DNS reverse lookup
-    'usemx'         => 0,       # 1: make MX-Record DNS lookup
-    'usehttps'      => 1,       # 1: make HTTPS request
-    'usehttp'       => 1,       # 1: make HTTP  request
-    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
-    'usealpn'       => 1,       # 0: do not use -alpn option for openssl
-    'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
-    'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
-    'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-    'use_no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
-    'usecert'       => 1,       # 0: do not get data from certificate
-    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-    'usesni'        => 1,       # 0: do not make connection in SNI mode;
-                                # 1: make connection with SNI set (can be empty string)
-                                # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
     'use' =>    {      # configurations to use or do some specials
         'dns'       => 1,       # 1: make DNS reverse lookup
         'mx'        => 0,       # 1: make MX-Record DNS lookup
         'https'     => 1,       # 1: make HTTPS request
         'http'      => 1,       # 1: make HTTP  request
         'forcesni'  => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-        'sni'       => 1,       # 0: do not make connection in SNI mode;
+        'sni'       => 1,       # 0: do not make connection in SNI mode
                                 # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
         'lwp'       => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
@@ -1968,7 +1953,7 @@ our %cfg = (
         'reconnect' => 1,       # 0: do not use -reconnect option for openssl
         'extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
         'no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
-        'cert'      => 0,       # 0: get data from certificate; 1, 2, do not get data
+        'cert'      => 1,       # 0: do not get data from certificate
     },
 
    # option key        default   description
@@ -3167,7 +3152,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.214 2020/01/08
+1.215 2020/01/08
 
 =head1 AUTHOR
 
