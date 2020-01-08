@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.981 20/01/08 08:36:14",
+    SID         => "@(#) yeast.pl 1.983 20/01/08 21:45:01",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2092,8 +2092,8 @@ sub _enable_functions   {
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
-        if(($cfg{'usesni'} > 0) and ($cmd{'extciphers'} == 0)) {
-            $cfg{'usesni'} = 0;
+        if((_is_use('sni')) and ($cmd{'extciphers'} == 0)) {
+            $cfg{'use'}->{'sni'} = 0;
             my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
             if ($version_iosocket < 1.90) {
                 warn STR_WARN, "124: ancient version IO::Socket::SSL $version_iosocket < 1.90; $txt_buggysni";
@@ -2104,7 +2104,7 @@ sub _enable_functions   {
             _hint("--force-openssl can be used to disable this check");
         }
     }
-    _trace(" cfg{usesni}    = $cfg{'usesni'}");
+    _trace("cfg{use}->{sni} = $cfg{'use'}->{'sni'}");
 
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
@@ -2376,8 +2376,8 @@ sub _enable_sclient     {
             _warn("146: openssl -tlsextdebug not supported; following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
         # switch $opt {
-        $cfg{'use_reconnect'} = $val  if ($opt eq '-reconnect');
-        $cfg{'use_extdebug'}  = $val  if ($opt eq '-tlsextdebug');
+        $cfg{'use'}->{'reconnect'}  = $val  if ($opt eq '-reconnect');
+        $cfg{'use'}->{'extdebug'}   = $val  if ($opt eq '-tlsextdebug');
         $cfg{'usealpn'}       = $val  if ($opt eq '-alpn');
         $cfg{'usenpn'}        = $val  if ($opt eq '-npn');
         $cfg{'sni'}           = $val  if ($opt eq '-servername');
@@ -2596,7 +2596,7 @@ sub _initchecks_val     {
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
-    if (1 > $cfg{'usecert'}) {
+    if (not _is_use('cert')) {
         $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
         foreach my $key (keys %check_cert) {    # anything related to certs
             $checks{$key}   ->{val} = $text{'na_cert'} if (_is_hashkey($key, \%check_cert));
@@ -2621,15 +2621,13 @@ sub _initchecks_val     {
         $checks{'hastls13'} ->{val} = _get_text('disabled', "--no-TLSv13") if (1 > $cfg{'TLSv13'});
         $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (1 > $cfg{'usealpn'});
         $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (1 > $cfg{'usenpn'} );
-        $checks{'sni'}      ->{val} = $text{'na_sni'} if (1 > $cfg{'usesni'});
-        $checks{'certfqdn'} ->{val} = $text{'na_sni'} if (1 > $cfg{'usesni'});
+        $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _is_use('sni'));
+        $checks{'certfqdn'} ->{val} = $text{'na_sni'}           if (not _is_use('sni'));
+        $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'}   if (not _is_use('extdebug'));
     if (1 > $cmd{'extopenssl'}) {
         foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
             $checks{$key}   ->{val} = $text{'na_openssl'};
         }
-    }
-    if (1 > $cfg{'use_extdebug'}) {
-        $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'};
     }
     return;
 } # _initchecks_val
@@ -3559,7 +3557,7 @@ sub _usesocket($$$$)    {
     #       $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
-    my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
+    my $sni     = (not _is_use('sni')) ? "" : $host;
     my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
     my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
         # --no-alpn or --no-npn is same as --cipher-alpn=, or --cipher-npn=,
@@ -3672,10 +3670,10 @@ sub _useopenssl($$$$)   {
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = ($cfg{'usesni'}  < 1) ? "" : "-servername $host";
+    my $sni  = (not _is_use('sni'))  ? "" : "-servername $host";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     my $curves  = "-curves " . join(":", $cfg{'ciphercurves'}); # TODO: add to command below
-    _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
+    _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here ; dumm }
     $ssl = ($cfg{'openssl_option_map'}->{$ssl} || '');  # set empty if no protocol given
     my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers ", $host, $port, '');
 # TODO: hier -alpn $protos_alpn und -nextprotoneg $protos_npn übergeben
@@ -3966,7 +3964,7 @@ sub _get_data0          {
         _warn("206: $_") foreach Net::SSLinfo::errors();
     }
     Net::SSLinfo::do_ssl_close($host, $port);
-    $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
+    $Net::SSLinfo::use_SNI  = $cfg{'use'}->{'sni'};
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     return;
 } # _get_data0
@@ -4120,7 +4118,7 @@ sub ciphers_scan        {
     my @results = ();       # cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
-        my $usesni  = $cfg{'usesni'};
+        my $usesni  = $cfg{'use'}->{'sni'};
         if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
             # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
@@ -4131,14 +4129,14 @@ sub ciphers_scan        {
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
             if (_is_do('cipher') or $cfg{'verbose'} > 0) {
-                _warn_nosni("410:", $ssl, $cfg{'usesni'});
+                _warn_nosni("410:", $ssl, $cfg{'use'}->{'sni'});
                 # ciphers are collected for various checks, this would result
                 # in above warning, even then if  SSLv3 is not needed for the
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
                 # NOTE: applys to --ciphermode=openssl|ssleay only
             }
-            $cfg{'usesni'} = 0; # do not use SNI for this $ssl
+            $cfg{'use'}->{'sni'} = 0; # do not use SNI for this $ssl
         }
         my $__verbose   = $cfg{'verbose'};
             # $cfg{'v_cipher'}  should only print cipher checks verbosely,
@@ -4155,7 +4153,7 @@ sub ciphers_scan        {
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             push(@results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
         }
-        $cfg{'usesni'} = $usesni;
+        $cfg{'use'}->{'sni'} = $usesni;
     } # $ssl
     return @results;
 } # ciphers_scan
@@ -4866,14 +4864,14 @@ sub checksni($$)    {
     my $rex_cn      =    $cn;
        $rex_cn      =~ s/[*][.]/(?:.*\\.)?/g;   # convert DNS wildcard to Perl regex
 
-    if ($cfg{'usesni'} == 1) {  # useless check for --no-sni
+    if (_is_use('sni')) {  # useless check for --no-sni
         if ($lc_host eq $lc_nosni) {
             $checks{'sni'}->{val}   = "";
         } else {
             $checks{'sni'}->{val}   = $data{'cn_nosni'}->{val};
         }
     }
-    if (1 > $cfg{'usecert'}) {
+    if (not _is_use('cert')) {
         $checks{'certfqdn'}->{val}  = $cfg{'no_cert_txt'};
         $checks{'hostname'}->{val}  = $cfg{'no_cert_txt'};
         return;
@@ -4921,7 +4919,7 @@ sub checksizes($$)  {
     $cfg{'done'}->{'checksizes'}++;
     return if (1 < $cfg{'done'}->{'checksizes'});
 
-    checkcert($host, $port) if (0 < $cfg{'usecert'}); # in case we missed it before
+    checkcert($host, $port) if (_is_use('cert')); # in case we missed it before
     $value =  $data{'pem'}->{val}($host);
     $checks{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
@@ -5956,7 +5954,7 @@ sub checkssl($$)    {
     return if (1 < $cfg{'done'}->{'checkssl'});
 
     $cfg{'no_cert_txt'} = $text{'na_cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
-    if (0 < $cfg{'usecert'}) {
+    if (_is_use('cert')) {
         # all checks based on certificate can't be done if there was no cert, obviously
         checkcert( $host, $port);       # SNI, wildcards and certificate
         checkdates($host, $port);       # check certificate dates (since, until, exired)
@@ -6007,7 +6005,7 @@ sub checkssl($$)    {
 
 # TODO: folgende Checks implementieren
     foreach my $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
-# TODO: nicht sinnvoll wenn 1 > $cfg{'usecert'}
+# TODO: nicht sinnvoll wenn not _is_use('cert')
     }
 
     return;
@@ -6839,7 +6837,7 @@ sub printchecks($$$)    {
     local $\ = "\n";
     print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
     _trace_cmd(' printchecks: %checks');
-    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (1 > $cfg{'usecert'});
+    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _is_use('cert'));
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}) > 0);
@@ -6853,7 +6851,7 @@ sub printchecks($$$)    {
         $value = _setvalue($checks{$key}->{val});
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) {   # sizes are special
-            print_size($legacy, $host, $port, $key) if (0 < $cfg{'usecert'});
+            print_size($legacy, $host, $port, $key) if (_is_use('cert'));
         } else {
             # increment counter only here, avoids counting the counter itself
             $checks{'cnt_checks_yes'}->{val}++ if ($value eq "yes");
@@ -7873,24 +7871,24 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
     if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   }  # alias:
     if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; }  # alias:
-    if ($arg =~ /^--sslcompression$/)   { $cfg{'use_no_comp'}   = 0;} # openssl s_client -comp
-    if ($arg =~ /^--nosslcompression$/) { $cfg{'use_no_comp'}   = 1;} # openssl s_client -no_comp
-    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
-    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
-    if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
-    if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'} = 0;}
+    if ($arg =~ /^--sslcompression$/)   { $cfg{'use'}->{'no_comp'}   = 0;} # openssl s_client -comp
+    if ($arg =~ /^--nosslcompression$/) { $cfg{'use'}->{'no_comp'}   = 1;} # openssl s_client -no_comp
+    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use'}->{'extdebug'}  = 1;}
+    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use'}->{'extdebug'}  = 0;}
+    if ($arg =~ /^--?reconnect$/)       { $cfg{'use'}->{'reconnect'} = 1;}
+    if ($arg =~ /^--noreconnect$/)      { $cfg{'use'}->{'reconnect'} = 0;}
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # various options
-    if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
+    if ($arg eq  '--forcesni')          { $cfg{'use'}->{'forcesni'}  = 1;}
     if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'sslerror'}->{'ignore_no_conn'}  = 1;}
     if ($arg =~ /^--ignorehandshake/)   { $cfg{'sslerror'}->{'ignore_handshake'}= 1;}
     if ($arg =~ /^--noignorehandshake/) { $cfg{'sslerror'}->{'ignore_handshake'}= 0;}
-    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
-    if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
-    if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
-    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 3;    }
-    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 3;    }
-    if ($arg eq  '--nocert')            { $cfg{'usecert'}   = 0;    }
+    if ($arg eq  '--lwp')               { $cfg{'use'}->{'lwp'}  = 1;    }
+    if ($arg eq  '--sni')               { $cfg{'use'}->{'sni'}  = 1;}
+    if ($arg eq  '--nosni')             { $cfg{'use'}->{'sni'}  = 0;}
+    if ($arg eq  '--snitoggle')         { $cfg{'use'}->{'sni'}  = 3;}
+    if ($arg eq  '--togglesni')         { $cfg{'use'}->{'sni'}  = 3;}
+    if ($arg eq  '--nocert')            { $cfg{'use'}->{'cert'} = 0;}
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
     if ($arg eq  '--noignorenoreply')   { $cfg{'ignorenoreply'} = 0;}
@@ -7947,7 +7945,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--cipher')            { $typ = 'CIPHER_ITEM';     }
     if ($arg eq  '--ciphermode')        { $typ = 'CIPHER_MODE';     }
     if ($arg eq  '--cipherrange')       { $typ = 'CIPHER_RANGE';    }
-    if ($arg =~ /^--ciphercurves?/)     { $typ = 'CIPHER_CURVES';          }
+    if ($arg =~ /^--ciphercurves?/)     { $typ = 'CIPHER_CURVES';   }
     if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
     if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPN';      }
     if ($arg eq  '--nociphermd5')       { $cfg{'cipher_md5'}= 0;    }
@@ -7987,7 +7985,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--noheaders?$/)       { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg =~ /^--showhosts?/i)       { $cfg{'showhost'}++;       }
-    if ($arg eq  '--nosniname')         { $cfg{'usesni'}    = 0;    } # 0: don't use SNI, different than empty string
+    if ($arg eq  '--nosniname')         { $cfg{'use'}->{'sni'}  = 0;} # 0: don't use SNI, different than empty string
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      } # some people type --protoalpns
@@ -8530,19 +8528,19 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
-    $Net::SSLinfo::use_SNI          = $cfg{'usesni'};
+    $Net::SSLinfo::use_SNI          = $cfg{'use'}->{'sni'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
     $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
     $Net::SSLinfo::protos_alpn      = (join(",", @{$cfg{'protos_alpn'}}));
     $Net::SSLinfo::protos_npn       = (join(",", @{$cfg{'protos_npn'}}));
-    $Net::SSLinfo::use_extdebug     = $cfg{'use_extdebug'};
-    $Net::SSLinfo::use_reconnect    = $cfg{'use_reconnect'};
+    $Net::SSLinfo::use_extdebug     = $cfg{'use'}->{'extdebug'};
+    $Net::SSLinfo::use_reconnect    = $cfg{'use'}->{'reconnect'};
     $Net::SSLinfo::socket_reuse     = $cfg{'socket_reuse'};
     $Net::SSLinfo::slowly           = $cfg{'slowly'};
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
-    $Net::SSLinfo::no_compression   = $cfg{'use_no_comp'};
-    $Net::SSLinfo::no_cert          = (($cfg{'usecert'} == 0) ? 1 : 0);
+    $Net::SSLinfo::no_compression   = $cfg{'use'}->{'no_comp'};
+    $Net::SSLinfo::no_cert          = ((_is_use('cert')) ? 0 : 1);
     $Net::SSLinfo::no_cert_txt      = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case      = $cfg{'ignorecase'};
     $Net::SSLinfo::ca_crl           = $cfg{'ca_crl'};
@@ -8578,7 +8576,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
     $Net::SSLhello::experimental    = $cfg{'experimental'};
     $Net::SSLhello::usemx           = $cfg{'usemx'};
-    $Net::SSLhello::usesni          = $cfg{'usesni'};
+    $Net::SSLhello::usesni          = $cfg{'use'}->{'sni'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
@@ -8730,7 +8728,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host   = $host {\n");
     # SNI must be set foreach host, but it's always the same name!
-    if (0 < $cfg{'usesni'}) {
+    if (_is_use('sni')) {
         if (defined $sniname) {
             if ($host ne $cfg{'sni_name'}) {
                 _warn("069: hostname not equal SNI name; checks are done with '$host'");
