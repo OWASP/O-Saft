@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.126 20/01/08 02:20:27";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.127 20/01/08 22:08:18";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -437,7 +437,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
     _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-    _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
+    _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'use'}->{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $port (last specified)");
     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
     _yeast("     use->http= $cfg{'use'}->{'http'}");
@@ -974,7 +974,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.126 2020/01/08
+1.127 2020/01/08
 
 =head1 AUTHOR
 
