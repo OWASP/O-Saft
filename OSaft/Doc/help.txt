@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.48 20/01/06 09:23:31
+# SID   @(#) help.txt 1.49 20/01/08 22:05:41
 
 NAME
 
@@ -4336,10 +4336,12 @@ DEBUG
                   Net::SSLeay::
                   ::OPENSSL_VERSION_NUMBER()       0x268443744
                   ::SSLeay()                       0x268443744
+                  ::SSLEAY_DIR                     OPENSSLDIR: "/usr/local/openssl/ssl"
                   Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
               = openssl =
-                  version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
                   external executable              /opt/openssl-chacha/bin/openssl
+                  external executable (TLSv1.3)    openssl
+                  version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
                   used environment variable (name) LD_LIBRARY_PATH
                   environment variable (content)   <<undef>>
                   path to shared libraries
@@ -4353,14 +4355,24 @@ DEBUG
                   PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
                   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
                   .                                 /System/Library/OpenSSL
+                     existing path to CA PEM files /etc/ssl/certs
                   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-                  number of supported ciphers      177
+                     existing PEM file for CA      /etc/ssl/certs/ca-certificates.crt
+                  number of supported ciphers      201
                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
                   .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
               = o-saft.pl +cipherall =
+                  number of supported ciphers      1280
                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                   .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                  long list of ciphers             0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF
+                  huge list of ciphers             0x03000000 .. 0x0300FFFF
+                  safe list of ciphers             0x03000000 .. 0x032FFFFF
+                  full list of ciphers             0x03000000 .. 0x03FFFFFF
+                  C0xx list, range C0xx..C0FF      0x0300C000 .. 0x0300C0FF
+                  CCxx list, range CCxx..CCFF      0x0300C000 .. 0x0300C0FF
+                  ECC list, ephermeral ciphers     0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF
               = Required (and used) Modules =
                   @INC                 ./ ./lib . /bin /usr/share/perl5 \
                   .                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
@@ -4369,13 +4381,14 @@ DEBUG
               =   module name            VERSION  found in
               =   ----------------------+--------+------------------------------------------
                   IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
-                  IO::Socket::SSL        2.002    /usr/share/perl5/IO/Socket/SSL.pm
+                  IO::Socket::SSL        2.044    /usr/share/perl5/IO/Socket/SSL.pm
+                  Time::Local            1.2300   /usr/share/perl/5.24/Time/Local.pm
                   Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
                   Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
-                  Net::SSLinfo           16.06.01 Net/SSLinfo.pm
-                  Net::SSLhello          16.05.16 Net/SSLhello.pm
+                  Net::SSLinfo           19.12.21 Net/SSLinfo.pm
+                  Net::SSLhello          19.12.21 Net/SSLhello.pm
                   Ciphers
-                  osaft                  16.05.10 osaft.pm
+                  osaft                  19.12.26 osaft.pm
 
         Following example shows the result with warnings (line nr. may vary):
 
