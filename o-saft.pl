@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.980 20/01/08 01:06:08",
+    SID         => "@(#) yeast.pl 1.981 20/01/08 08:36:14",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1980,7 +1980,7 @@ sub _load_modules       {
         warn STR_ERROR, "010: $err";# no reason to die for +version
     }
     if ($cfg{'starttls'}) {
-        $cfg{'usehttp'} = 0;            # makes no sense for starttls
+        $cfg{'use'}->{'http'} = 0;      # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
     $err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
@@ -2589,7 +2589,7 @@ sub _initchecks_val     {
     if (1 > $cfg{'usedns'}) {
         $checks{'reversehost'}  ->{val} = $text{'na_dns'};
     }
-    if (1 > $cfg{'usehttp'}) {
+    if (not _is_use('http')) {
         $checks{'crl_valid'}    ->{val} = _get_text('disabled', "--no-http");
         $checks{'ocsp_valid'}   ->{val} = _get_text('disabled', "--no-http");
         foreach my $key (keys %checks) {
@@ -3114,6 +3114,9 @@ sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'comm
 sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if any of the given string is listed in $cfg{*}
+sub _is_out($)          { my  $is=shift;    return $cfg{'out'}->{$is};  }
+sub _is_use($)          { my  $is=shift;    return $cfg{'use'}->{$is};  }
+    # returns value of the given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 
 
 #| definitions: check functions
@@ -4757,7 +4760,7 @@ sub checkcert($$)   {
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
 
-    if ($cfg{'usehttp'} > 0) {
+    if (_is_use('http')) {
         # at least 'ext_crl' may contain more than one URL
         $checks{'crl_valid'}->{val} = "";
         $value = $data{'ext_crl'}->{val}($host);
@@ -5857,7 +5860,7 @@ sub checkhttp($$)   {
 # TODO: pins= ==> fingerprint des Zertifikats
 
     $notxt = $text{'na_STS'};
-    $notxt = $text{'na_http'} if ($cfg{'usehttp'} < 1);
+    $notxt = $text{'na_http'} if (not _is_use('http'));
     # NOTE: following sequence is important!
     foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
@@ -5989,7 +5992,7 @@ sub checkssl($$)    {
         $checks{'rfc_2818_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
-    if (0 < $cfg{'usehttp'}) {
+    if (_is_use('http')) {
         checkhttp( $host, $port);
     } else {
         $cfg{'done'}->{'checkhttp'}++;
@@ -7952,10 +7955,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
     # our options
-    if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
-    if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
-    if ($arg eq  '--https')             { $cfg{'usehttps'}++;       }
-    if ($arg eq  '--nohttps')           { $cfg{'usehttps'}  = 0;    }
+    if ($arg eq  '--http')              { $cfg{'use'}->{'http'}++;  }
+    if ($arg eq  '--nohttp')            { $cfg{'use'}->{'http'} = 0;}
+    if ($arg eq  '--https')             { $cfg{'use'}->{'https'}++; }
+    if ($arg eq  '--nohttps')           { $cfg{'use'}->{'https'}= 0;}
     if ($arg eq  '--norc')              {                           } # simply ignore
     if ($arg eq  '--sslerror')          { $cfg{'ssl_error'} = 1;    }
     if ($arg eq  '--nosslerror')        { $cfg{'ssl_error'} = 0;    }
@@ -8311,8 +8314,8 @@ $legacy  = $cfg{'legacy'};
 if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
-    $cfg{'usehttps'}    = 0;
-    $cfg{'usehttp'}     = 0;
+    $cfg{'use'}->{'https'}  = 0;
+    $cfg{'use'}->{'http'}   = 0;
     $cfg{'usedns'}      = 0;
     _hint($cfg{'hints'}->{'cipher'});
 }
@@ -8503,7 +8506,7 @@ $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # s
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'}; # safe setting; may be undef
-if ($cfg{'usehttp'} == 0)   {           # was explicitly set with --no-http 'cause default is 1
+if (not _is_use('http')) {              # was explicitly set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
@@ -8557,8 +8560,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::method           = "";
     # following are just defaults, will be redefined for each target below
     $Net::SSLinfo::sni_name         = $cfg{'sni_name'}; # NOTE: may be undef
-    $Net::SSLinfo::use_http         = $cfg{'usehttp'};
-    $Net::SSLinfo::use_https        = $cfg{'usehttps'};
+    $Net::SSLinfo::use_http         = $cfg{'use'}->{'http'};
+    $Net::SSLinfo::use_https        = $cfg{'use'}->{'https'};
     $Net::SSLinfo::target_url       = "/";
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
@@ -8740,8 +8743,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $Net::SSLhello::sni_name= $host;
         }
     }
-    $Net::SSLinfo::use_https    = $cfg{'usehttps'}; # reset
-    $Net::SSLinfo::use_http     = $cfg{'usehttp'};  # reset
+    $Net::SSLinfo::use_https    = $cfg{'use'}->{'https'}; # reset
+    $Net::SSLinfo::use_http     = $cfg{'use'}->{'http'};  # reset
     $Net::SSLinfo::target_url   = get_target_path($idx);
     $Net::SSLinfo::target_url   =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
