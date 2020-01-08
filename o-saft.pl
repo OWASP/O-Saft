@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.985 20/01/08 22:26:44",
+    SID         => "@(#) yeast.pl 1.986 20/01/08 22:48:51",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2109,8 +2109,8 @@ sub _enable_functions   {
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
         # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
-        if ($cfg{'usealpn'} > 0) {
-            $cfg{'usealpn'} = 0;
+        if (_is_use('alpn')) {
+            $cfg{'use'}->{'alpn'} = 0;
             warn STR_WARN, "126: $txt tests with/for ALPN disabled";
             if ($version_ssleay   < 1.56) {  # is also < 1.46
                 warn STR_WARN, "127: $txs < 1.56"   if ($cfg{'verbose'} > 1);
@@ -2121,12 +2121,12 @@ sub _enable_functions   {
             _hint("--no-alpn can be used to disable this check");
         }
     }
-    _trace(" cfg{usealpn}   = $cfg{'usealpn'}");
+    _trace("cfg{use}->{alpn}= $cfg{'use'}->{'alpn'}");
 
     if ($cfg{'ssleay'}->{'set_npn'} == 0) {
         # warnings only if NPN functionality required
-        if ($cfg{'usenpn'}  > 0) {
-            $cfg{'usenpn'}  = 0;
+        if (_is_use('npn')) {
+            $cfg{'use'}->{'npn'}  = 0;
             warn STR_WARN, "129: $txt tests with/for NPN disabled";
             if ($version_ssleay   < 1.46) {
                 warn STR_WARN, "130: $txs < 1.46"   if ($cfg{'verbose'} > 1);
@@ -2137,7 +2137,7 @@ sub _enable_functions   {
             _hint("--no-npn can be used to disable this check");
         }
     }
-    _trace(" cfg{usenpn}    = $cfg{'usenpn'}");
+    _trace("cfg{use}->{npn} = $cfg{'use'}->{'npn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  openssl 1.0.0
         warn STR_WARN, "133: $txt tests for OCSP disabled";
@@ -2378,8 +2378,8 @@ sub _enable_sclient     {
         # switch $opt {
         $cfg{'use'}->{'reconnect'}  = $val  if ($opt eq '-reconnect');
         $cfg{'use'}->{'extdebug'}   = $val  if ($opt eq '-tlsextdebug');
-        $cfg{'usealpn'}       = $val  if ($opt eq '-alpn');
-        $cfg{'usenpn'}        = $val  if ($opt eq '-npn');
+        $cfg{'use'}->{'alpn'}       = $val  if ($opt eq '-alpn');
+        $cfg{'use'}->{'npn'}        = $val  if ($opt eq '-npn');
         $cfg{'sni'}           = $val  if ($opt eq '-servername');
         $cfg{'ca_file'}       = undef if ($opt =~ /^-CAfile/i);
         $cfg{'ca_path'}       = undef if ($opt =~ /^-CApath/i);
@@ -2619,8 +2619,8 @@ sub _initchecks_val     {
         $checks{'hastls11'} ->{val} = _get_text('disabled', "--no-TLSv11") if (1 > $cfg{'TLSv11'});
         $checks{'hastls12'} ->{val} = _get_text('disabled', "--no-TLSv12") if (1 > $cfg{'TLSv12'});
         $checks{'hastls13'} ->{val} = _get_text('disabled', "--no-TLSv13") if (1 > $cfg{'TLSv13'});
-        $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (1 > $cfg{'usealpn'});
-        $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (1 > $cfg{'usenpn'} );
+        $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (not _is_use('alpn'));
+        $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (not _is_use('npn'));
         $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _is_use('sni'));
         $checks{'certfqdn'} ->{val} = $text{'na_sni'}           if (not _is_use('sni'));
         $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'}   if (not _is_use('extdebug'));
@@ -3557,9 +3557,9 @@ sub _usesocket($$$$)    {
     #       $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
-    my $sni     = (not _is_use('sni')) ? "" : $host;
-    my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
-    my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
+    my $sni     = (not _is_use('sni'))  ? "" : $host;
+    my $npns    = (not _is_use('npn'))  ? [] : $cfg{'cipher_npns'};
+    my $alpns   = (not _is_use('alpn')) ? [] : $cfg{'cipher_alpns'};
         # --no-alpn or --no-npn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
@@ -7863,12 +7863,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--noopensslciphers')  { $cmd{'extciphers'}= 0;    }
     if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
     if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
-    if ($arg eq  '--alpn')              { $cfg{'usealpn'}   = 1;    }
-    if ($arg eq  '--noalpn')            { $cfg{'usealpn'}   = 0;    }
-    if ($arg eq  '--npn')               { $cfg{'usenpn'}    = 1;    }
-    if ($arg eq  '--nonpn')             { $cfg{'usenpn'}    = 0;    }
-    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'usenpn'}    = 1;    } # openssl
-    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
+    if ($arg eq  '--alpn')              { $cfg{'use'}->{'alpn'} = 1;}
+    if ($arg eq  '--noalpn')            { $cfg{'use'}->{'alpn'} = 0;}
+    if ($arg eq  '--npn')               { $cfg{'use'}->{'npn'}  = 1;}
+    if ($arg eq  '--nonpn')             { $cfg{'use'}->{'npn'}  = 0;}
+    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use'}->{'npn'}  = 1;} # openssl
+    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use'}->{'npn'}  = 0;}
     if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   }  # alias:
     if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; }  # alias:
     if ($arg =~ /^--sslcompression$/)   { $cfg{'use'}->{'no_comp'}   = 0;} # openssl s_client -comp
@@ -8438,9 +8438,9 @@ if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
 
 if (0 < $info) {                # +info does not do anything with ciphers
     # main purpose is to avoid missing "*PN" warnings in following _checks_*()
-    $cmd{'extciphers'}  = 0;
-    $cfg{'usealpn'}     = 0;
-    $cfg{'usenpn'}      = 0;
+    $cmd{'extciphers'}      = 0;
+    $cfg{'use'}->{'alpn'}   = 0;
+    $cfg{'use'}->{'npn'}    = 0;
 }
 
 #| set proper cipher command depending on --ciphermode option (default: intern)
@@ -8529,8 +8529,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
     $Net::SSLinfo::use_SNI          = $cfg{'use'}->{'sni'};
-    $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
-    $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
+    $Net::SSLinfo::use_alpn         = $cfg{'use'}->{'alpn'};
+    $Net::SSLinfo::use_npn          = $cfg{'use'}->{'npn'};
     $Net::SSLinfo::protos_alpn      = (join(",", @{$cfg{'protos_alpn'}}));
     $Net::SSLinfo::protos_npn       = (join(",", @{$cfg{'protos_npn'}}));
     $Net::SSLinfo::use_extdebug     = $cfg{'use'}->{'extdebug'};
