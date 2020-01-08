@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.986 20/01/08 22:48:51",
+    SID         => "@(#) yeast.pl 1.987 20/01/08 23:54:01",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9618,7 +9618,10 @@ the final order in the array is random.
 This results in  different orders  of the values when the array values are
 printed,  means that the order changes for each program call.  Such random
 orders in output makes internal testing difficult.
-Hence we try to sort arrays after defining them.
+Hence, arrays are sorted (after defining them) when they are used. It is a
+small perfomance penulty in production because the 'sort' is only required
+while testing. Using a pragma like in C would be nice ...
+
 Unfortunately there are arrays preset with a special order, these must not
 be sorted. These are most likely the settings read from RC-FILE. For that,
 sorting is not done for data read from RC-FILE. The --no-rc option is used
