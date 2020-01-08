@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.12.19',  # official version number of this file
+    OSAFT_VERSION   => '19.12.26',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.213 20/01/08 00:09:52",
+    SID_osaft   => "@(#) osaft.pm 1.214 20/01/08 02:14:43",
 
 };
 
@@ -1514,10 +1514,6 @@ our %cfg = (
     'nolocal'       => 0,
     'experimental'  => 0,       # 1: use experimental functionality
     'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
-    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-    'usesni'        => 1,       # 0: do not make connection in SNI mode;
-                                # 1: make connection with SNI set (can be empty string)
-                                # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
     'protos_next'   =>          # all names known for ALPN or NPN
                        'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
                                 # even Net::SSLeay functions most likely use an
@@ -1953,11 +1949,19 @@ our %cfg = (
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'use_no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
     'usecert'       => 1,       # 0: do not get data from certificate
+    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
+    'usesni'        => 1,       # 0: do not make connection in SNI mode;
+                                # 1: make connection with SNI set (can be empty string)
+                                # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
     'use' =>    {      # configurations to use or do some specials
         'dns'       => 1,       # 1: make DNS reverse lookup
         'mx'        => 0,       # 1: make MX-Record DNS lookup
         'https'     => 1,       # 1: make HTTPS request
         'http'      => 1,       # 1: make HTTP  request
+        'forcesni'  => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
+        'sni'       => 1,       # 0: do not make connection in SNI mode;
+                                # 1: make connection with SNI set (can be empty string)
+                                # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
         'lwp'       => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
         'alpn'      => 1,       # 0: do not use -alpn option for openssl
         'npn'       => 1,       # 0: do not use -nextprotoneg option for openssl
@@ -3163,7 +3167,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.213 2020/01/08
+1.214 2020/01/08
 
 =head1 AUTHOR
 
