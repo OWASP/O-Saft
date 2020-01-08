@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.979 20/01/08 00:12:57",
-    STR_VERSION => "19.12.25",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.980 20/01/08 01:06:08",
+    STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -1800,7 +1800,7 @@ our %text = (
     'disabled_protocol' => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'disabled_test' => "tests with/for @@ disabled",  # not yet used
     'miss_cipher'   => "<<N/A as no ciphers found>>",
-    'miss_protocol' => "<<N/A as no protocol found>>"
+    'miss_protocol' => "<<N/A as no protocol found>>",
     'miss_RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss_ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
@@ -2554,6 +2554,12 @@ sub _initchecks_val     {
     my $notxt = "";
     #my $notxt = $text{'undef'}; # TODO: default should be 'undef'
     $checks{$_}->{val}   = $notxt foreach (keys %checks);
+#### temporär, bis alle so gesetzt sind {
+   $checks{'heartbeat'}->{val}  = $text{'undef'};
+   foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
+   $checks{$key}->{val}  = $text{'undef'};
+   }
+#### temporär }
     foreach my $key (keys %checks) {
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
@@ -2565,26 +2571,38 @@ sub _initchecks_val     {
     $checks{'sts_maxage1y'}->{val}  = 31536000; # year
     $checks{'sts_maxagexy'}->{val}  = 99999999;
     $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
-return;
+    # if $data{'https_sts'}->{val}($host) is empty {
+        foreach my $key (qw(sts_maxage sts_expired sts_preload sts_subdom hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
+            $checks{$key}       ->{val} = $text{'na_STS'};
+        }
+        # following can not be set here, because they contain integers, see above
+        #foreach my $key (qw(sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
+        #    $checks{$key}       ->{val} = $text{'na_STS'};
+        #}
+        #foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
+        #    $checks{$key}       ->{val} = $text{'na_STS'};
+        #}
+    # }
+    foreach my $key (@{$cfg{'cmd-vulns'}}) {
+        $checks{$key}           ->{val} = $text{'undef'};  # may be refined below
+    }
     if (1 > $cfg{'usedns'}) {
         $checks{'reversehost'}  ->{val} = $text{'na_dns'};
     }
     if (1 > $cfg{'usehttp'}) {
-        $notxt = _get_text('disabled', "--no-http");
-        $checks{'crl_valid'}    ->{val} = $notxt;
-        $checks{'ocsp_valid'}   ->{val} = $notxt;
+        $checks{'crl_valid'}    ->{val} = _get_text('disabled', "--no-http");
+        $checks{'ocsp_valid'}   ->{val} = _get_text('disabled', "--no-http");
         foreach my $key (keys %checks) {
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
     if (1 > $cfg{'usecert'}) {
-        $notxt = $text{'na_cert'};
         $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
-        foreach my $key (keys %checks) {   # anything related to certs
-            $checks{$key}   ->{val} = $notxt if (_is_member($key, \@{$cfg{'check_cert'}}));
+        foreach my $key (keys %check_cert) {    # anything related to certs
+            $checks{$key}   ->{val} = $text{'na_cert'} if (_is_hashkey($key, \%check_cert));
         }
         foreach my $key (qw(hostname certfqdn tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_6125_names rfc_2818_names)) {
-            $checks{$key}   ->{val} = $notxt;
+            $checks{$key}   ->{val} = $text{'na_cert'};
         }
     }
     if (1 > $cfg{'SSLv2'}) {
@@ -2592,29 +2610,27 @@ return;
         $checks{'hassslv2'} ->{val} = $notxt;
         $checks{'drown'}    ->{val} = $notxt;
     }
-    if (1 > $cfg{'SSLv2'}) {
+    if (1 > $cfg{'SSLv3'}) {
         $notxt = _get_text('disabled', "--no-SSLv3");
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = $notxt;
     }
+        $checks{'hastls10'} ->{val} = _get_text('disabled', "--no-TLSv1")  if (1 > $cfg{'TLSv1'}) ;
+        $checks{'hastls11'} ->{val} = _get_text('disabled', "--no-TLSv11") if (1 > $cfg{'TLSv11'});
+        $checks{'hastls12'} ->{val} = _get_text('disabled', "--no-TLSv12") if (1 > $cfg{'TLSv12'});
+        $checks{'hastls13'} ->{val} = _get_text('disabled', "--no-TLSv13") if (1 > $cfg{'TLSv13'});
+        $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (1 > $cfg{'usealpn'});
+        $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (1 > $cfg{'usenpn'} );
+        $checks{'sni'}      ->{val} = $text{'na_sni'} if (1 > $cfg{'usesni'});
+        $checks{'certfqdn'} ->{val} = $text{'na_sni'} if (1 > $cfg{'usesni'});
     if (1 > $cmd{'extopenssl'}) {
         foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
             $checks{$key}   ->{val} = $text{'na_openssl'};
         }
     }
-    # if $data{'https_sts'}->{val}($host) is empty {
-        $notxt = $text{'na_STS'};
-        foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
-            $checks{$key}   ->{val} = $notxt;
-        }
-        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
-            $checks{$key}   ->{val} = $notxt;
-        }
-        $notxt = $text{'na_http'}   if (1 > $cfg{'usehttp'});
-        foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
-            $checks{$key}   ->{val} = $notxt;
-        }
-    # }
+    if (1 > $cfg{'use_extdebug'}) {
+        $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'};
+    }
     return;
 } # _initchecks_val
 
@@ -2630,7 +2646,7 @@ sub _init_all           {
         # options, hence the call must be done after reading arguments
     return;
 } # _init_all
-_init_all();   # initialise defaults in %checks (score, val)
+_init_all();   # initialise defaults in %checks (score, val); parts be done again later
 
 sub _resetchecks        {
     # reset values
@@ -2646,7 +2662,15 @@ sub _resetchecks        {
 
 sub _prot_cipher        { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
-    # (mainly used to concatenate SSL Version and cipher suite name)
+
+sub _prot_cipher_or_empty {
+    # return string consisting of given parameters separated by : and prefixed with a space
+    # returns "" if any parameter is empty
+    my $p1 = shift;
+    my $p2 = shift;
+    return "" if (("" eq $p1) or ("" eq $p2));
+    return _prot_cipher($p1, $p2);
+} # _prot_cipher_or_empty
 
 sub _getscore           {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
@@ -4458,10 +4482,10 @@ sub checkprefered   {
     foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
         my $strong = $prot{$ssl}->{'cipher_strong'};
         my $weak   = $prot{$ssl}->{'cipher_weak'};
-        my $txt = "$strong,$weak";
-        $checks{'cipher_strong'}->{val} .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # FIXME: assumtion wrong if only one cipher accepted
-        $checks{'cipher_order'}->{val}  .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # NOT YET USED
-        $checks{'cipher_weak'}->{val}   .= _prot_cipher($ssl, $txt) if ($weak eq $strong);  # remember: eq !
+        my $txt = ($weak ne $strong) ? _prot_cipher($ssl, "$strong,$weak") : "";
+        $checks{'cipher_strong'}->{val} .= $txt;  # FIXME: assumtion wrong if only one cipher accepted
+        $checks{'cipher_order'}->{val}  .= $txt;  # NOT YET USED
+        $checks{'cipher_weak'} ->{val}  .= $txt;  # remember: eq !
         # FIXME: assumtion wrong if target returns always strongest cipher; meanwhile print hint
         if ($weak eq $strong) {
             $cfg{'hints'}->{'cipher_weak'} = 'check if "weak" cipher was returned may be misleading if the strongest cipher is returned always';
@@ -4488,22 +4512,22 @@ sub checkcipher($$) {
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}      ->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}      ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _ispci( $ssl, $c));
-    $checks{'fips'}     ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-    $checks{'rfc_7525'} ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
-    $checks{'tr_02102+'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _istr02102_strict($ssl, $c));
-    $checks{'tr_02102-'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _istr02102_lazy(  $ssl, $c));
-    $checks{'tr_03116+'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
-    $checks{'tr_03116-'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy(  $ssl, $c));
+    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _ispci(    $ssl, $c));
+    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _isfips(   $ssl, $c));
+    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _isrfc7525($ssl, $c));
+    $checks{'tr_02102+'}->{val}    .= _prot_cipher_or_empty($ssl, _istr02102_strict($ssl, $c));
+    $checks{'tr_02102-'}->{val}    .= _prot_cipher_or_empty($ssl, _istr02102_lazy(  $ssl, $c));
+    $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _istr03116_strict($ssl, $c));
+    $checks{'tr_03116-'}->{val}    .= _prot_cipher_or_empty($ssl, _istr03116_lazy(  $ssl, $c));
     # check attacks
     $checks{'rc4'}      ->{val}     = $checks{'cipher_rc4'}->{val}; # these are the same checks
-    $checks{'beast'}    ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
-    $checks{'breach'}   ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
-    $checks{'freak'}    ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
-    $checks{'lucky13'}  ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
-    $checks{'robot'}    ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isrobot($ssl, $c));
-    $checks{'sloth'}    ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
-    $checks{'sweet32'}  ->{val}    .= _prot_cipher($ssl, $c) if ("" ne _issweet($ssl, $c));
+    $checks{'beast'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isbeast($ssl, $c));
+    $checks{'breach'}   ->{val}    .= _prot_cipher_or_empty($ssl, _isbreach($c));
+    $checks{'freak'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isfreak($ssl, $c));
+    $checks{'lucky13'}  ->{val}    .= _prot_cipher_or_empty($ssl, _islucky($c));
+    $checks{'robot'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isrobot($ssl, $c));
+    $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _issloth($ssl, $c));
+    $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _issweet($ssl, $c));
     push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _ispfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
@@ -4521,6 +4545,20 @@ sub checkcipher($$) {
     return;
 } # checkcipher
 
+sub _checkcipher_init  {
+    # initialise $check{...}-{val} with empty string, because the will be
+    # extended per $ssl (protocol)
+    foreach my $key (qw(
+        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
+        cipher_edh ciphers_pfs cipher_pfsall
+        beast breach freak logjam lucky13 rc4 robot sloth sweet32
+        ism pci fips rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-
+    )) {
+        $checks{$key}->{val} = "";
+    }
+    return;
+} # _checkcipher_init
+
 sub checkciphers    {
     #? test target if given ciphers are accepted, results stored in global %checks
     # checks are done with information from @cipher_results
@@ -4531,8 +4569,13 @@ sub checkciphers    {
     return if (1 < $cfg{'done'}->{'checkciphers'});
     _trace("checkciphers($host, $port){");
 
+    _checkcipher_init();        # values are set to <<undefined>>, initialise with ""
     if ($#results < 0) {        # no ciphers found; avoid misleading values
         foreach my $key (@{$cfg{'need-cipher'}}) {
+            if ($key =~ m/(drown|poodle|has(?:ssl|tls))/) {
+                # keep "disabled ..." message if corresponding -no-SSL option was used
+                next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
+            }
             $checks{$key}->{val} = _get_text('miss_cipher', "");
         }
         foreach my $ssl (@{$cfg{'version'}}) {  # check all SSL versions
@@ -4556,7 +4599,7 @@ sub checkciphers    {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $cipher);
-            $checks{'logjam'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $cipher));
+            $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _islogjam($ssl, $cipher));
         }
         $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
@@ -4587,7 +4630,7 @@ sub checkciphers    {
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
     $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
-    #$checks{'cipher_pfs'}->{val} # done in checkdest()
+    # TODO: $checks{'cipher_pfs'}->{val} = (1 > $cnt_pfs) ? " " : "";
 
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'});
@@ -5610,40 +5653,37 @@ sub checkprot($$)   {
     _y_CMD("checkprot() " . $cfg{'done'}->{'checkprot'});
     $cfg{'done'}->{'checkprot'}++;
     return if (1 < $cfg{'done'}->{'checkprot'});
+    # remember: check is 'yes' for empty value ""
 
-    # check SSL version support
-    # NOTE: the check is adapted to the text in $%check_dest{'hassslv2'}->{txt}
-    $checks{'hassslv2'}->{val}      = " " if ($prot{'SSLv2'}->{'cnt'}  >  0);
-    $checks{'hassslv3'}->{val}      = " " if ($prot{'SSLv3'}->{'cnt'}  >  0);
-    $checks{'hastls10'}->{val}      = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
-    $checks{'hastls11'}->{val}      = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
-    $checks{'hastls12'}->{val}      = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
-    $checks{'hastls13'}->{val}      = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
     # SSLv2 and SSLv3 are special:
     #   The protocol may supported by the target, but no ciphers offered. Only
     #   if at least one ciphers is supported, vulnerabilities may there, hence
     #   check if amount of ciphers > 0.
-    if ($cfg{'SSLv2'} == 0) {
-        $checks{'hassslv2'}->{val}  = _get_text('disabled', "--no-SSLv2");
-        $checks{'drown'}->{val}     = _get_text('disabled', "--no-SSLv2");
-    } else {
-        if ($prot{'SSLv2'}->{'cnt'} > 0) {
-            $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
+    if (0 < $cfg{'SSLv2'}) {
+        my $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
+        $checks{'hassslv2'} ->{val} = (1 == $cfg{'nullssl2'}) ? $notxt : "";
             # SSLv2 enabled, but no ciphers is ok (aka 'yes') for --nullssl2
-            $checks{'drown'}->{val}     = " ";  # SSLv2 there, then potentially vulnerable to DROWN
-        }
+        $checks{'drown'}    ->{val} = $notxt;  # SSLv2 there, then potentially vulnerable to DROWN
     }
-    if ($cfg{'SSLv3'} == 0) {
-        $checks{'hassslv3'}->{val}  = _get_text('disabled', "--no-SSLv3");
-        $checks{'poodle'}  ->{val}  = _get_text('disabled', "--no-SSLv3");
-    } else {    # SSLv3 enabled, check if there are ciphers
+    if (0 < $cfg{'SSLv3'}) {
+        my $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
+        $checks{'hassslv3'} ->{val} = $notxt;
+        $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
         # FIXME: should uses $cfg{'regex'}->{'POODLE'}, hence check in checkcipher() would be better
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
-        # FIXME: OSaft/Doc/help.txt ok noe, but needs to be fixed too
-        if ($prot{'SSLv3'}->{'cnt'} > 0) {
-            $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3 and ciphers
-            $checks{'poodle'}  ->{val}  = "SSLv3";
-        }
+        # FIXME: OSaft/Doc/help.txt ok now, but needs to be fixed too
+    }
+    if (0 < $cfg{'TLSv1'}) {
+        $checks{'hastls10'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
+    }
+    if (0 < $cfg{'TLSv11'}) {
+        $checks{'hastls11'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
+    }
+    if (0 < $cfg{'TLSv12'}) {
+        $checks{'hastls12'}->{val}  = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
+    }
+    if (0 < $cfg{'TLSv13'}) {
+        $checks{'hastls13'}->{val}  = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
     }
 
     # check ALPN and NPN support
@@ -5652,11 +5692,9 @@ sub checkprot($$)   {
     $key    = 'alpns';
     $value  = $data{$key}->{val}($host, $port);
     $checks{'hasalpn'}->{val}   = " " if ($value eq "");
-    #$checks{'hasalpn'}->{val}   = _get_text('disabled', "--no-alpn") if ($cfg{'usealpn'} < 1);
     $key    = 'npns';
     $value  = $data{$key}->{val}($host, $port);
     $checks{'hasnpn'}->{val}    = " " if ($value eq "");
-    #$checks{'hasnpn'}->{val}    = _get_text('disabled', "--no-npn")  if ($cfg{'usenpn'}  < 1);
     return;
 } # checkprot
 
@@ -5665,10 +5703,11 @@ sub checkdest($$)   {
     #? check anything related to target and connection
     my ($host, $port) = @_;
     my $ciphers = shift;
-    my ($key, $value, $ssl, $cipher);
+    my ($key, $value, $ssl, $cipher, $cnt);
     _y_CMD("checkdest() " . $cfg{'done'}->{'checkdest'});
     $cfg{'done'}->{'checkdest'}++;
     return if (1 < $cfg{'done'}->{'checkdest'});
+    # remember: check is 'yes' for empty value ""
 
     checksni($host, $port);     # set checks according hostname
     # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
@@ -5683,11 +5722,17 @@ sub checkdest($$)   {
     $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
+    $cnt    = 0;
+    $cnt   += $prot{$_}->{'cnt'} foreach (@{$cfg{'version'}}); # count ciphers
     my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
-    if (1 > $#prot) {           # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}= ("" eq _ispfs($ssl, $cipher)) ? $cipher : "";;
+    if (1 > $cnt) {             # no protocol with ciphers found
+            $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
     } else {
-        _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
+        if (1 > $#prot) {       # found exactly one matching protocol
+            $checks{'cipher_pfs'}->{val}= ("" eq _ispfs($ssl, $cipher)) ? $cipher : "";
+        } else {
+            _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
+        }
     }
 
     # PFS is scary if the TLS session ticket is not random
@@ -5712,8 +5757,9 @@ sub checkdest($$)   {
     $checks{$key}->{val}        = ($value =~ m/$cfg{'regex'}->{'nocompression'}/) ? "" : $value;
     $checks{'crime'}->{val}     = _iscrime($value, $data{'next_protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
+        next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
-        $checks{$key}->{val}    = " " if ($value eq "");
+        $checks{$key}->{val}    = ($value eq "") ? " " : "";
     }
     #     Secure Renegotiation IS NOT supported
     $value = $data{'renegotiation'}->{val}($host);
@@ -5723,8 +5769,9 @@ sub checkdest($$)   {
 
     # check target specials
     foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) { # master_key session_id: see %check_dest above also
+        next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
-        $checks{$key}->{val}    = " "    if ($value eq "");
+        $checks{$key}->{val}    = ($value eq "") ? " " : "";
         $checks{$key}->{val}    = "None" if ($value =~ m/^\s*None\s*$/i);
         # if supported we have a value
         # TODO: see ZLIB also (seems to be wrong currently)
@@ -5738,12 +5785,12 @@ sub checkdest($$)   {
     $checks{$key}->{val} = "$value > $currenttime" if ($value > ($currenttime + 5));
 
     foreach my $key (qw(heartbeat)) {   # these are good if there is no value
+        next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $checks{$key}->{val}    = $data{$key}->{val}($host);
-        $checks{$key}->{val}    = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
+        $checks{$key}->{val}    = "" if ($checks{$key}->{val} =~ m/^\s*$/);
     }
-    $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'} if ($cfg{'use_extdebug'} < 1);
     $value = $data{'ocsp_response'}->{val}($host);
-    $checks{'ocsp_stapling'}->{val} = $value if ($value =~ /.*no\s*response.*/i);
+    $checks{'ocsp_stapling'}->{val} = ($value =~ /.*no\s*response.*/i) ? $value : "";
     return;
 } # checkdest
 
@@ -5754,14 +5801,16 @@ sub checkhttp($$)   {
     _y_CMD("checkhttp() " . $cfg{'done'}->{'checkhttp'});
     $cfg{'done'}->{'checkhttp'}++;
     return if (1 < $cfg{'done'}->{'checkhttp'});
+    # remember: check is 'yes' for empty value ""
 
     # collect informations
     my $notxt = " "; # use a variable to make assignments below more human readable
     my $https_body    = $data{'https_body'}    ->{val}($host) || "";
     my $http_sts      = $data{'http_sts'}      ->{val}($host) || ""; # value may be undefined, avoid Perl error
-    my $http_location = $data{'http_location'} ->{val}($host) || ""; #  "
+    my $http_location = $data{'http_location'} ->{val}($host) || ""; #
+    my $hsts_equiv    = $data{'hsts_httpequiv'}->{val}($host) || ""; #
     my $hsts_maxage   = $data{'hsts_maxage'}   ->{val}($host);       # 0 is valid here, hence || does not work
-       $hsts_maxage   = -1 if ($data{'hsts_maxage'}->{val}($host) =~ m/^\s*$/);
+       $hsts_maxage   = -1 if ($hsts_maxage =~ m/^\s*$/);
     my $hsts_fqdn     = $http_location;
        $hsts_fqdn     =~ s|^(?:https:)?//([^/]*)|$1|i;  # get FQDN even without https:
        $hsts_fqdn     =~ s|/.*$||;                      # remove trailing path
@@ -5775,38 +5824,35 @@ sub checkhttp($$)   {
     $checks{'hsts_is30x'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
     # sequence important: first check if redirect to https, then check if empty
-    $checks{'http_https'}   ->{val} = $http_location if ($http_location !~ m/^\s*https:/);
-    $checks{'http_https'}   ->{val} = $notxt if ($http_location =~ m/^\s*$/);
-    $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne "");
+    $checks{'http_https'}   ->{val} = ($http_location !~ m/^\s*https:/) ? $http_location : "";
+    $checks{'http_https'}   ->{val} = $notxt if ($http_location =~ m/^\s*$/); # if missing
+    $checks{'hsts_redirect'}->{val} = $http_sts;  # 'yes' if empty
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
-        $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
-        $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
-        $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
+        $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host);# 'yes' if empty
+        $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host);# 'yes' if empty
+        $checks{'hsts_ip'}      ->{val} = ($host =~ m/\d+\.\d+\.\d+\.\d+/) ? $host : ""; # RFC6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
         $checks{'hsts_samehost'}->{val} = $hsts_fqdn   if ($fqdn ne $host);
-        $checks{'hsts_sts'}     ->{val} = $notxt       if ($data{'https_sts'}   ->{val}($host) eq "");
-        $checks{'sts_subdom'}   ->{val} = $notxt       if ($data{'hsts_subdom'} ->{val}($host) eq "");
-        $checks{'sts_preload'}  ->{val} = $notxt       if ($data{'hsts_preload'}->{val}($host) eq "");
-        $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
-        $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
-        $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
-        $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< ".$checks{'sts_maxage18'}->{val};
+        $checks{'hsts_sts'}     ->{val} = ($data{'https_sts'}   ->{val}($host) ne "") ? "" : $notxt;
+        $checks{'sts_subdom'}   ->{val} = ($data{'hsts_subdom'} ->{val}($host) ne "") ? "" : $notxt;
+        $checks{'sts_preload'}  ->{val} = ($data{'hsts_preload'}->{val}($host) ne "") ? "" : $notxt;
+        $checks{'sts_maxage'}   ->{val} = (($hsts_maxage < $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage > 1)) ? "" : $hsts_maxage;
+        $checks{'sts_maxage'}   ->{val}.= ($checks{'sts_maxage'}->{val} eq "" ) ? "" : " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" ; # pretty print
+        $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< $checks{'sts_maxagexy'}->{val}";
+        $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< $checks{'sts_maxage18'}->{val}";
         $checks{'sts_maxage0d'} ->{val} = ($hsts_maxage == 0) ? "0" : "";
-        my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
-        $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
+        $checks{'hsts_httpequiv'}->{val} = $hsts_equiv; # RFC6797 requirement; 'yes' if empty
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);        # computes check{'sts_expired'}
     } else {
-        foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
-            $checks{$key}   ->{val} = $text{'na_STS'};
-        }
-        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
+        # sts_maxage* are integers, must be set here to N/A
+        foreach my $key (qw(sts_maxage00 sts_maxage0d sts_maxagexy sts_maxage18 sts_maxage1d sts_maxage1m sts_maxage1y )) {
             $checks{$key}   ->{val} = $text{'na_STS'};
         }
     }
-# TODO: invalid certs are not allowed for HSTS
     $checks{'hsts_fqdn'}    ->{val} = $text{'na'} if ($http_location eq "");  # useless without redirect
+# TODO: invalid certs are not allowed for HSTS
     $checks{'https_pins'}   ->{val} = $notxt      if ($data{'https_pins'}->{val}($host) eq "");
 # TODO: pins= ==> fingerprint des Zertifikats
 
@@ -8564,6 +8610,8 @@ if ($cfg{'label'} eq 'short') {     # reconfigure texts
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
+_initchecks_val();  # initialise default values in %checks again depending on given options
+
 _yeast_TIME("ini}");
 
 #| first all commands which do not make a connection
@@ -9537,7 +9585,7 @@ could be:
 
 Each method has its pros and cons. This has been changed, see below.
 
-=head3 Initialisation since VERSION 19.12.25
+=head3 Initialisation since VERSION 19.12.26
 
 All values in %check are set to  "<<undef>", which means neither 'yes' nor
 'no'. The advantage is that missing checks are reported as:
@@ -9554,7 +9602,7 @@ The disadvantage is that all checks must assign the value  'yes'  or 'no'.
 The default initialisation is done after processing all arguments from the
 command line and the RC-FILE.
 
-=head3 Initialisation before VERSION 19.12.25
+=head3 Initialisation before VERSION 19.12.26
 
 All values in %check were set to  ""  which means 'yes'. The advantage was
 a very simple default assignment and only failed checks are assigned.  The
