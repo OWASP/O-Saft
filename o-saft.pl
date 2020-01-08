@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.983 20/01/08 21:45:01",
+    SID         => "@(#) yeast.pl 1.985 20/01/08 22:26:44",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1960,7 +1960,7 @@ sub _load_modules       {
         if ("" ne $err) {
             warn STR_ERROR, "007: $err";
             _warn("111: option --mx disabled");
-            $cfg{'usemx'} = 0;
+            $cfg{'use'}->{'mx'} = 0;
         }
     }
     if (0 < $cfg{'need_timelocal'}) {
@@ -2586,7 +2586,7 @@ sub _initchecks_val     {
     foreach my $key (@{$cfg{'cmd-vulns'}}) {
         $checks{$key}           ->{val} = $text{'undef'};  # may be refined below
     }
-    if (1 > $cfg{'usedns'}) {
+    if (not _is_use('dns')) {
         $checks{'reversehost'}  ->{val} = $text{'na_dns'};
     }
     if (not _is_use('http')) {
@@ -5714,7 +5714,7 @@ sub checkdest($$)   {
     # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
     # if --proxyhost was used; hence no need to check for proxyhost again
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
-    $checks{'reversehost'}->{val}   = $text{'na_dns'}   if ($cfg{'usedns'} <= 0);
+    $checks{'reversehost'}->{val}   = $text{'na_dns'}   if (not _is_use('dns'));
     #$checks{'ip'}->{val}            = $cfg{'IP'}; # 12/2019: disabled
     # 12/2019: only relevant when target was IP, then $cfg{'ip'} must be identical to $cfg{'IP'}
 
@@ -7964,8 +7964,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    }
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    }
     if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    }
-    if ($arg eq  '--nodns')             { $cfg{'usedns'}    = 0;    }
-    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1;    }
+    if ($arg eq  '--nodns')             { $cfg{'use'}->{'dns'}  = 0;}
+    if ($arg eq  '--dns')               { $cfg{'use'}->{'dns'}  = 1;}
     if ($arg eq  '--noenabled')         { $cfg{'enabled'}   = 0;    }
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
@@ -8019,8 +8019,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--socketreuse')       { $cfg{'socket_reuse'}  = 1;}
     if ($arg eq  '--nosocketreuse')     { $cfg{'socket_reuse'}  = 0;}
     # options for Net::SSLhello
-    if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
-    if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
+    if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'use'}->{'mx'}   = 0;}
+    if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'use'}->{'mx'}   = 1;}
     if ($arg eq  '--sslretry')          { $typ = 'SSLHELLO_RETRY';  }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLHELLO_TOUT';   }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'SSLHELLO_MAXC';   }
@@ -8314,7 +8314,7 @@ if ((_is_do('cipher'))   and (0 == $#{$cfg{'do'}})) {
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'use'}->{'https'}  = 0;
     $cfg{'use'}->{'http'}   = 0;
-    $cfg{'usedns'}      = 0;
+    $cfg{'use'}->{'dns'}    = 0;
     _hint($cfg{'hints'}->{'cipher'});
 }
 if (_is_do('ciphers')) {
@@ -8336,7 +8336,7 @@ if (_is_do('list')) {
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (!_is_do('cipher_pfsall')); }
 
-if (_is_do('version') or ($cfg{'usemx'} > 0))         { $cfg{'need_netdns'}    = 1; }
+if (_is_do('version') or (_is_use('mx')))             { $cfg{'need_netdns'}    = 1; }
 if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
@@ -8575,7 +8575,7 @@ if (defined $Net::SSLhello::VERSION) {
     }
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
     $Net::SSLhello::experimental    = $cfg{'experimental'};
-    $Net::SSLhello::usemx           = $cfg{'usemx'};
+    $Net::SSLhello::usemx           = $cfg{'use'}->{'mx'};
     $Net::SSLhello::usesni          = $cfg{'use'}->{'sni'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
@@ -8780,7 +8780,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         # fails also, which produces more Perl warnings later.
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
-        if ($cfg{'usedns'} == 1) {      # following settings only with --dns
+        if (_is_use('dns')) {       # following settings only with --dns
             _y_CMD("test DNS (disable with --no-dns) ...");
            _yeast_TIME("test DNS{");
            local $? = 0; local $! = undef;
@@ -8808,7 +8808,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             print_ruler();
             print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
             print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
-            if ($cfg{'usedns'} == 1) {
+            if (_is_use('dns')) {
                 print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
                 print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
             }
