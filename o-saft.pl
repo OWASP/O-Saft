@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.987 20/01/08 23:54:01",
+    SID         => "@(#) yeast.pl 1.988 20/01/09 00:09:46",
     STR_VERSION => "19.12.26",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2605,12 +2605,12 @@ sub _initchecks_val     {
             $checks{$key}   ->{val} = $text{'na_cert'};
         }
     }
-    if (1 > $cfg{'SSLv2'}) {
+    if (not _is_ssl('SSLv2')) {
         $notxt = _get_text('disabled', "--no-SSLv2");
         $checks{'hassslv2'} ->{val} = $notxt;
         $checks{'drown'}    ->{val} = $notxt;
     }
-    if (1 > $cfg{'SSLv3'}) {
+    if (not _is_ssl('SSLv3')) {
         $notxt = _get_text('disabled', "--no-SSLv3");
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = $notxt;
@@ -3112,9 +3112,11 @@ sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'comm
 sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if any of the given string is listed in $cfg{*}
+sub _is_ssl($)          { my  $is=shift;    return $cfg{$is};   }
+    # returns >0 if specified key (protocol) is set $cfg{*}
 sub _is_out($)          { my  $is=shift;    return $cfg{'out'}->{$is};  }
 sub _is_use($)          { my  $is=shift;    return $cfg{'use'}->{$is};  }
-    # returns value of the given key in $cfg{*}->{key}; which is 0 or 1 (usually)
+    # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 
 
 #| definitions: check functions
@@ -5660,13 +5662,13 @@ sub checkprot($$)   {
     #   The protocol may supported by the target, but no ciphers offered. Only
     #   if at least one ciphers is supported, vulnerabilities may there, hence
     #   check if amount of ciphers > 0.
-    if (0 < $cfg{'SSLv2'}) {
+    if (_is_ssl('SSLv2')) {
         my $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
         $checks{'hassslv2'} ->{val} = (1 == $cfg{'nullssl2'}) ? $notxt : "";
             # SSLv2 enabled, but no ciphers is ok (aka 'yes') for --nullssl2
         $checks{'drown'}    ->{val} = $notxt;  # SSLv2 there, then potentially vulnerable to DROWN
     }
-    if (0 < $cfg{'SSLv3'}) {
+    if (_is_ssl('SSLv3')) {
         my $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
@@ -5674,16 +5676,16 @@ sub checkprot($$)   {
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
         # FIXME: OSaft/Doc/help.txt ok now, but needs to be fixed too
     }
-    if (0 < $cfg{'TLSv1'}) {
+    if (_is_ssl('TLSv1')) {
         $checks{'hastls10'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
     }
-    if (0 < $cfg{'TLSv11'}) {
+    if (_is_ssl('TLSv11')) {
         $checks{'hastls11'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
     }
-    if (0 < $cfg{'TLSv12'}) {
+    if (_is_ssl('TLSv12')) {
         $checks{'hastls12'}->{val}  = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
     }
-    if (0 < $cfg{'TLSv13'}) {
+    if (_is_ssl('TLSv13')) {
         $checks{'hastls13'}->{val}  = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
     }
 
