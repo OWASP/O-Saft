@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.125 20/01/07 23:59:58";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.126 20/01/08 02:20:27";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -400,13 +400,13 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     } else {    # full information
         foreach my $key (sort keys %cmd) { _yeast_trac(\%cmd, $key); }
     }
-    _yeast("   use_openssl= $cmd{'extopenssl'}");   # user friendly always
+    _yeast("    extopenssl= $cmd{'extopenssl'}");   # user friendly always
     _yeast("use cipher from openssl= $cmd{'extciphers'}");  # dito.
     _yline(" %cmd }");
     if (1 < $cfg{'trace'}) {    # full information
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
-            if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex)$/) { # |data
+            if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
                 # FIXME: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
@@ -440,7 +440,9 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $port (last specified)");
     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
-    foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
+    _yeast("     use->http= $cfg{'use'}->{'http'}");
+    _yeast("    use->https= $cfg{'use'}->{'https'}");
+    foreach my $key (qw(out_header format legacy showhost usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
         _yTRAC($key, $cfg{$key});
     }
     foreach my $key (qw(starttls_phase starttls_error)) {
@@ -676,8 +678,8 @@ sub _yeast_test_init    {
     print __yeast("#                key | value");
     print __yeast($line);
     print __INIT("ARGV", ___ARR(@{$cfg{'ARGV'}}));
-    foreach my $key (qw(usedns usehttp usehttps usesni usealpn usenpn uselwp usecert use_extdebug)) {
-        print __INIT($key, $cfg{$key});
+    foreach my $key (sort keys %{$cfg{'use'}}) {
+        print __INIT('use->'.$key, $cfg{'use'}{$key});
     }
     print __yeast($line);
     _yline(" %cfg }");
@@ -972,7 +974,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.125 2020/01/07
+1.126 2020/01/08
 
 =head1 AUTHOR
 
