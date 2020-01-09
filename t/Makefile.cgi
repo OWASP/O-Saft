@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.49 20/01/09 13:15:01
+#?      @(#) Makefile.cgi 1.50 20/01/09 16:12:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.49
+_SID.cgi           := 1.50
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -113,7 +113,7 @@ LIST.cgi.goodIPv4  :=
 LIST.cgi.goodIPv6  := \
 	ffff \
 	2002\:0\:0\:0\:0\:0\:b0b\:b0b \
-	fe00\:21ab\:22cd\:2323\:\:1 \
+	fe00\:21ab\:22cd\:2323\:\:1
 
 LIST.cgi.badIPs    := $(LIST.cgi.badIPv4)  $(LIST.cgi.badIPv6)
 LIST.cgi.goodIPs   := $(LIST.cgi.goodIPv4) $(LIST.cgi.goodIPv6)
@@ -178,26 +178,38 @@ test.cgi-%:                 TEST.init   =
 testcmd-cgi-%:              TEST.init   =
 testcmd-cgi-%:              EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-bad%:           EXE.pl      = ../$(SRC.cgi)
-testcmd-cgi-good%:          EXE.pl      = $(SRC.cgi)
+testcmd-cgi-good%:          EXE.pl      = ../$(SRC.cgi)
 
 #testcmd-cgi-opt---opt_%:    _TEST.cgi  += --opt=ok.to.show.failed-status
-# arguments silently ignored by $(SRC.cgi)
-LIST.cgi-opt   := \
+# arguments silently ignored by $(SRC.cgi), hence it will not die;
+# target succeeds if $(SRC.cgi) returns exit=BEGIN0 0; hence testcmd-cgi-good-
+LIST.cgi-opt-ignore := \
 	--cmd=list         --cmd=+list --cmd=+dump     --url=+dump       \
 	--traceARG         --trace     --cmd=--trace   --url=--trace     \
 	                   --v         --cmd=--v       --url=--v         \
-	--env=not-allowed  --ca-file=not-allowed  --ca-path=not-allowed  \
-	--exe=not-allowed  --ca-files=not-allowed --ca-paths=not-allowed \
-	--lib=not-allowed  --call=not-allowed     --openssl=not-allowed  \
-	--cmd=libversion   --cmd=+version         --rc=not-allowed
+	--cmd=+version     --ca-file=not-allowed  --ca-path=not-allowed  \
+	--cmd=libversion   --ca-files=not-allowed --ca-paths=not-allowed \
+	--rc=not-allowed
+
+# arguments checked by $(SRC.cgi), hence it will die;
+# target succeeds if $(SRC.cgi) does not returns exit=BEGIN0
+LIST.cgi-opt-die    := \
+	--env=not-allowed  --exe=not-allowed      --lib=not-allowed  \
+	--call=not-allowed --openssl=not-allowed 
 
 ifndef cgi-targets-generated
     # ifndef enforces execution of $(foreach ...) below
-    $(foreach arg, $(LIST.cgi-opt), $(eval \
-	testcmd-cgi-opt-$(subst =,-,$(arg))_any.FQDN:  _TEST.cgi += $(arg) \
+    $(foreach arg, $(LIST.cgi-opt-ignore), $(eval \
+	testcmd-cgi-good-$(subst =,-,$(arg))_any.FQDN:  _TEST.cgi += $(arg) \
     ))
-    $(foreach arg, $(LIST.cgi-opt), $(eval \
-	ALL.cgi.badopt += testcmd-cgi-opt-$(subst =,-,$(arg))_any.FQDN \
+    $(foreach arg, $(LIST.cgi-opt-ignore), $(eval \
+	ALL.cgi.badopt += testcmd-cgi-good-$(subst =,-,$(arg))_any.FQDN \
+    ))
+    $(foreach arg, $(LIST.cgi-opt-die), $(eval \
+	testcmd-cgi-$(subst =,-,$(arg))_any.FQDN:  _TEST.cgi += $(arg) \
+    ))
+    $(foreach arg, $(LIST.cgi-opt-die), $(eval \
+	ALL.cgi.badopt += testcmd-cgi-$(subst =,-,$(arg))_any.FQDN \
     ))
 endif
 
@@ -209,7 +221,7 @@ testcmd-cgi-chr-rangle_any.FQDN:   _TEST.cgi  += '--bad-char=_>_'
 testcmd-cgi-chr-semikolon_any.FQDN:_TEST.cgi  += '--bad-char=_;_'
 testcmd-cgi-chr-tilde_any.FQDN:    _TEST.cgi  += '--bad-char=_~_'
 testcmd-cgi-chr-question_any.FQDN: _TEST.cgi  += '--bad-char=_?_'
-#testcmd-cgi-chr-dollar_any.FQDN:  _TEST.cgi  += '--bad-char=_\$$_'
+#testcmd-cgi-chr-dollar_any.FQDN:   _TEST.cgi  += '--bad-char=_\$$_'
 testcmd-cgi-chr-percent_any.FQDN:  _TEST.cgi  += '--bad-char=_%_'
 testcmd-cgi-chr-dqoute_any.FQDN:   _TEST.cgi  += '--bad-char=_\"_'
 testcmd-cgi-chr-back_any.FQDN:     _TEST.cgi  += '--bad-char=_\`_'
@@ -269,6 +281,7 @@ test.cgi-%: testcmd-cgi-bad_%
 ALL.test.cgi    = \
 	$(ALL.cgi.goodhosts) \
 	$(ALL.cgi.goodIPs) \
+	$(ALL.cgi.badopt) \
 	$(ALL.cgi.badchr) \
 	$(ALL.cgi.badhosts) \
 	$(ALL.cgi.badIPs) \
@@ -286,7 +299,7 @@ test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.49: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.50: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
