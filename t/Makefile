@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.106 20/01/05 12:33:41
+#?      @(#) Makefile 1.107 20/01/09 15:24:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.106
+_SID.test          := 1.107
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -420,8 +420,8 @@ message-%:
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* " ; \
 	    echo "$(TEST.rc)" > $(TEST.tmp.rc) ; \
+	    echo "cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* " ; \
 	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* ; \
 	    _status=$$? ; \
 	    rm -f $(TEST.tmp.rc) ; \
@@ -435,7 +435,7 @@ message-%:
 no.message-%:
 	@$(TRACE.target)
 	@echo "$(TEST.rc)" > $(TEST.tmp.rc)
-	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
+	cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(TEST.tmp.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
