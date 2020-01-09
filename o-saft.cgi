@@ -84,7 +84,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.46 20/01/09 18:15:38";
+my $SID_cgi = "@(#) o-saft.cgi 1.47 20/01/09 18:44:55";
 my $VERSION = '19.12.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -168,7 +168,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.46\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.47\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -280,10 +280,15 @@ if ($me =~/\.cgi$/) {
 		#   --cgi&--host=good.FQDN&localhost&--enabled=
 		#   IPv4 matching is lazy with [0-9]+
 
+		qr/(?:&(localhost|10|127|224(.[0-9]){1,3}|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
+			# first match bare hostname argument without --host=
+			# this avoids false positive matches in more lazy RegEx
+			# FIXME: probably necessary for all following RegEx
+
 		qr/(?:(?:$key)?((10|127|224).([0-9]{1,3}.)?[0-9]+))/i,
 			# abbreviated IPv4: 127.1 127.41.1 10.0.1 224.1
 
-		qr/(?:(?:$key)?(localhost|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
+		qr/(?:(?:$key)(localhost|::1|ffff::1|(ffff:)?7f00:1)(&|$))/i,
 			# localhost
 			# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
 
