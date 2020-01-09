@@ -84,8 +84,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.44 20/01/09 12:06:18";
-my $VERSION = '19.10.23';
+my $SID_cgi = "@(#) o-saft.cgi 1.45 20/01/09 17:50:26";
+my $VERSION = '19.12.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -168,7 +168,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.44\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.45\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -192,6 +192,7 @@ if ($me =~/\.cgi$/) {
 	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 	my @save_argv;
 	foreach my $arg (@argv) {
+		#dbx# print "#dbx: $arg # sielently ignored\n" if ($arg =~ m#$ignore#);
 		next if ($arg =~ m#$ignore#);
 		push(@save_argv, $arg);
 	}
@@ -247,6 +248,7 @@ if ($me =~/\.cgi$/) {
 		#     ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:   IPv6 multicast or unique local unicast (RFC6762)
 		#     64:::IP         IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
 		#     ::::IP          IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
+		#     127.1  127.0.1  IPv4 abbreviated
 
 		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
 		# match IPv6: ([0-9a-f]{0,4}:){1,8}
@@ -276,8 +278,12 @@ if ($me =~/\.cgi$/) {
 		# - the leeading option like --host= is optional as the word to
 		#   be checked may be passed without key, something like:
 		#   --cgi&--host=good.FQDN&localhost&--enabled=
+		#   IPv4 matching is lazy with [0-9]+
 
-		qr/(?:(?:$key)?(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
+		qr/(?:(?:$key)?((10|127|224).([0-9]{1,3}.)?[0-9]+))/i,
+			# abbreviated IPv4: 127.1 127.41.1 10.0.1 224.1
+
+		qr/(?:(?:$key)?(localhost|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
 			# localhost
 			# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
 
@@ -297,7 +303,10 @@ if ($me =~/\.cgi$/) {
 		qr/(?:(?:$key)?((ff0[0-9a-f]|f[c-d][0-9a-f][0-9a-f]:)))/i,
 			# IPv6 multicast or unique local unicast (RFC6762)
 
-		qr/(?:(?:$key)?64:([0-9a-f]{0,4}:){1,2}((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
+		qr/(?:(?:$key)?64:([0-9a-f]{1,4}:){1,2}:(&|$))/i,
+			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::
+
+		qr/(?:(?:$key)?64:([0-9a-f]{1,4}:){1,2}:((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})/i,
 			# any IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
 			# NOTE: would also be matched by next more general RegEx
 
@@ -317,7 +326,7 @@ if ($me =~/\.cgi$/) {
 			#       allowed IPv4 or IPv6 which is not that simple
 			# FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
 
-		qr/(?:(?:$key)?.*?\.local$)/i,
+		qr/(?:(?:$key)?.*?\.local(&|$))/i,
 			# multicast domain .local (RFC6762)
 
 		qr{(?:(?:$key)?([a-z0-9:]+)?(//)?\[?([a-f0-9:]+)])}i,
