@@ -84,8 +84,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.45 20/01/09 17:50:26";
-my $VERSION = '19.12.23';
+my $SID_cgi = "@(#) o-saft.cgi 1.46 20/01/09 18:15:38";
+my $VERSION = '19.12.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -168,7 +168,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.45\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.46\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -314,17 +314,14 @@ if ($me =~/\.cgi$/) {
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
 			# NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
-		qr/(?:(?:$key)?([0-9]+\.){1,2}[0-9]+$)/i,
-			# incomplete IPv4 like 10.1 (which evaluate to 10.0.0.1)
-			# NOTE: in general not bad, but needs to be mapped to
-			#       allowed IPv4 or IPv6 which is not that simple
-			# FIXME: i.e. valid 192.1 is denied
-
-		qr/(?:(?:$key)?[0-9]+$)/i,
-			# just a number
+		qr/(?:(?:$key)[0-9]+(&|$))/i,
+			# just --host=11111
 			# NOTE: in general not bad, but needs to be mapped to
 			#       allowed IPv4 or IPv6 which is not that simple
 			# FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
+
+#		qr/(?:(?:$key)?[0-9]+(&|$))/i,   # just a number without --host
+			# check disabled because it woud match: some&--opt=42&
 
 		qr/(?:(?:$key)?.*?\.local(&|$))/i,
 			# multicast domain .local (RFC6762)
