@@ -84,7 +84,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.43 19/11/12 11:14:48";
+my $SID_cgi = "@(#) o-saft.cgi 1.44 20/01/09 12:06:18";
 my $VERSION = '19.10.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -168,7 +168,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.43\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.44\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -199,7 +199,20 @@ if ($me =~/\.cgi$/) {
 	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 
 	# check for suspicious characters and targets, die if any
-	my $key = '--(?:host|url)=';
+        #   Matches against  QUERY_STRING  (in $qs), which still contains the
+        #   usual separator & . The first parameter in $qs must be --cgi, all
+        #   others must be prefixed with & . Hence most pattern start with  &
+        #   to avoid matches inside a valid parameter, for example:
+        #       --cgi&--host=a42&--cmd=cn       # ok
+        #       --cgi&--host=42&--cmd=cn        # bad
+        #       --cgi&--cmd=cn&--host=42        # bad
+        #       --cgi&--cmd=cn&=42              # bad
+        #       --cgi&--cmd=cn&--other-opt=42   # ok
+        # FIXME: last example will be detected as malicious and dies, this is
+        #       a false positive, bug here
+        # NOTE: technically & may be a ? too, it is not really RFC compliant,
+        #       but possible. Someone may sends malicious data.
+	my $key = '&--(?:host|url)=';
 	foreach my $dangerous (
 		#dbx# print "#dbx: $dangerous # $qs\n";
 		qr/[^a-zA-Z0-9,.:_&\!\/=\+-]/i,
@@ -207,7 +220,7 @@ if ($me =~/\.cgi$/) {
 			# above whitelist for allowed characters!
 			# FIXME: this blocks also valid IPv6 in URL because of [ and/or ]
 
-		qr/--(?:env|exe|lib|call|openssl)/i,
+		qr/&--(?:env|exe|lib|call|openssl)/i,
 			# dangerous commands and options
 
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
