@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.4 19/12/05 10:21:49
+#?      @(#) Makefile.legacy 1.5 20/01/09 09:28:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.4
+_SID.legacy        := 1.5
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -44,7 +44,7 @@ HELP-test.legacy.log    = same as test.legacy but store output in '$(TEST.logdir
 HELP.legacy             = # not yet used
 HELP.test.legacy.all    = # no special documentation yet
 
-_TEST.legacy       := testarg-legacy+cipher--legacy
+_TEST.legacy       := testarg-legacy-+cipher--legacy
 LIST.legacy        := \
 	cnark   openssl   sslaudit  sslcipher   ssldiagnos  sslscan \
 	ssltest ssltest-g sslyze testsslserver  thcsslcheck \
@@ -53,8 +53,8 @@ LIST.legacy        := \
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testarg-legacy+cipher%:     EXE.pl      = ../$(SRC.pl)
-testarg-legacy+cipher%:     TEST.init   = --trace-CLI --header --enabled +cipher $(TEST.legacy.hosts)
+testarg-legacy-+cipher%:    EXE.pl      = ../$(SRC.pl)
+testarg-legacy-+cipher%:    TEST.init   = --trace-CLI --header --enabled +cipher $(TEST.legacy.hosts)
 
 ifndef legacy-macros-generated
     $(foreach arg, $(LIST.legacy),\
@@ -68,9 +68,9 @@ endif
 ALL.test.legacy     = $(foreach host,$(TEST.legacy.hosts),$(ALL.testlegacy:%=%$(host)))
 ALL.test.legacy.log += $(ALL.test.legacy:%=%.log)
 
-test.legacy.log-compare:    TEST.target_prefix  = testarg-legacy
-test.legacy.log-move:       TEST.target_prefix  = testarg-legacy
-test.legacy.log:            TEST.target_prefix  = testarg-legacy
+test.legacy.log-compare:    TEST.target_prefix  = testarg-legacy-
+test.legacy.log-move:       TEST.target_prefix  = testarg-legacy-
+test.legacy.log:            TEST.target_prefix  = testarg-legacy-
 
 test.legacy:        $(ALL.test.legacy)
 test.legacy.log:    $(ALL.test.legacy.log) test.log-compare-hint
