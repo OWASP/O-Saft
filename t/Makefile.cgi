@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.48 20/01/09 10:04:53
+#?      @(#) Makefile.cgi 1.49 20/01/09 13:15:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.48
+_SID.cgi           := 1.49
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -67,8 +67,8 @@ HELP.cgi                = $(_NL)\
 \#       patttern  cgi  may match other targets too.
 
 LIST.cgi.badhosts  := \
-	hostname.ok.to.show.failed-status \
 	localhost     any.local
+#	hostname.ok.to.show.failed-status 
 
 # range from - - - - - - - - - - - - - - - - - - to
 LIST.cgi.badIPv4   := \
@@ -107,15 +107,18 @@ HELP.cgi.internal   = "\
 "
 
 # TODO: *goodIP*  not yet ready
+LIST.cgi.goodhosts := localhost.ok
 LIST.cgi.goodIPv4  :=
 
 LIST.cgi.goodIPv6  := \
+	ffff \
 	2002\:0\:0\:0\:0\:0\:b0b\:b0b \
 	fe00\:21ab\:22cd\:2323\:\:1 \
 
 LIST.cgi.badIPs    := $(LIST.cgi.badIPv4)  $(LIST.cgi.badIPv6)
 LIST.cgi.goodIPs   := $(LIST.cgi.goodIPv4) $(LIST.cgi.goodIPv6)
 
+ALL.cgi.goodhosts  := $(LIST.cgi.goodhosts:%=testcmd-cgi-good_%)
 ALL.cgi.badhosts   := $(LIST.cgi.badhosts:%=testcmd-cgi-bad_%)
 ALL.cgi.badIPs     := $(LIST.cgi.badIPs:%=testcmd-cgi-bad_%)
 ALL.cgi.goodIPs    := $(LIST.cgi.goodIPs:%=testcmd-cgi-good_%)
@@ -157,12 +160,16 @@ $(ALL.cgi.goodIPs)$(_NL)\
 
 # testing usage of --cgi  option; means that  _TEST.cgi must be set explicitly
 # test fails, if it reports something containing  exit=BEGIN0
-_TEST.cgi   = --cgi +quit --exit=BEGIN0
-testcmd-cgi---cgi_%:        _TEST.cgi   = --cgi --ok.to.show.failed-status +quit --exit=BEGIN0
-testcmd-cgi---cgi-miss_%:   _TEST.cgi   = --missing--cgi +quit --exit=BEGIN0
-testcmd-cgi---cgi-bad1_%:   _TEST.cgi   = --cgiwrong     +quit --exit=BEGIN0
-testcmd-cgi---cgi-bad2_%:   _TEST.cgi   = --cgi=wrong    +quit --exit=BEGIN0
-testcmd-cgi---cgi-bad3_%:   _TEST.cgi   = --wrongcgi     +quit --exit=BEGIN0
+# NOTE: --exit=BEGIN0 must not be the last argument, because it triggers buggy
+#       check in o-saft.cgi (at least up to version 1.44)
+_TEST.cgi   = --cgi --exit=BEGIN0 +quit
+#testarg-cgi---cgi_ok:       _TEST.cgi   = --cgi --ok.to.show.failed-status --exit=BEGIN0 +quit
+testarg-cgi---cgi-miss:     _TEST.cgi   = --missing--cgi --exit=BEGIN0 +quit
+testarg-cgi---cgi-bad1:     _TEST.cgi   = --cgiwrong     --exit=BEGIN0 +quit
+testarg-cgi---cgi-bad2:     _TEST.cgi   = --cgi=wrong    --exit=BEGIN0 +quit
+testarg-cgi---cgi-bad3:     _TEST.cgi   = --wrongcgi     --exit=BEGIN0 +quit
+
+ALL.cgi.badcgi  = testarg-cgi---cgi-miss testarg-cgi---cgi-bad1 testarg-cgi---cgi-bad2 testarg-cgi---cgi-bad3
 
 # All tests for good or bad arguments need the same initial options
 # FIXME: TEST.init set explizitely in pattern rule below
@@ -171,9 +178,10 @@ test.cgi-%:                 TEST.init   =
 testcmd-cgi-%:              TEST.init   =
 testcmd-cgi-%:              EXE.pl      = ../$(SRC.cgi)
 testcmd-cgi-bad%:           EXE.pl      = ../$(SRC.cgi)
-testcmd-cgi-good%:          EXE.pl      = ../$(SRC.cgi)
+testcmd-cgi-good%:          EXE.pl      = $(SRC.cgi)
 
 #testcmd-cgi-opt---opt_%:    _TEST.cgi  += --opt=ok.to.show.failed-status
+# arguments silently ignored by $(SRC.cgi)
 LIST.cgi-opt   := \
 	--cmd=list         --cmd=+list --cmd=+dump     --url=+dump       \
 	--traceARG         --trace     --cmd=--trace   --url=--trace     \
@@ -219,21 +227,19 @@ testcmd-cgi-chr-hash_any.FQDN:     _TEST.cgi  += '--bad-char=_\#_'
 ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 
 testarg-cgi-%:              EXE.pl      = ../$(SRC.cgi)
-testarg-cgi-%:              TEST.init   = --cgi +quit --exit=BEGIN0
-testarg-cgi-host-host.ok:   _TEST.cgi  += hostname.ok.to.show.failed-status
+testarg-cgi-%:              TEST.init   = --cgi --exit=BEGIN0 +quit
 testarg-cgi-host-localhost: _TEST.cgi  += localhost
-testarg-cgi-host-ffff:      _TEST.cgi  += ffff
 # TODO: add more of the invalid host from $LIST.cgi.badIPv4 and $LIST.cgi.badIPv6
 
 ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cgi))
 
-# check HTTP header options, produces USAGE
+# check HTTP header options
 # NOTE: target name is testarg-cgi_ instead of testarg-cgi- because it should
 #       not match pattern rule testarg-cgi-%
 testarg-cgi_with%:          EXE.pl      = ../$(SRC.cgi)
 testarg-cgi_with%:          TEST.init   =
-testarg-cgi_with-header:    TEST.args  += --cgi --with_HTTP_header --cgi-header
-testarg-cgi_without-header: TEST.args  += --cgi --with_HTTP_header --cgi-no-header
+testarg-cgi_with-header:    TEST.args  += --cgi --exit=ARGS --with_HTTP_header --cgi-header
+testarg-cgi_without-header: TEST.args  += --cgi --exit=ARGS --with_HTTP_header --cgi-no-header
 
 ALL.cgi.header  = testarg-cgi_with-header testarg-cgi_without-header
 
@@ -260,7 +266,15 @@ testcmd-cgi-good%:
 test.cgi-%: testcmd-cgi-bad_%
 	@echo ""
 
-ALL.test.cgi        = $(ALL.cgi.badopt) $(ALL.cgi.badchr) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs) $(ALL.cgi.badarg) $(ALL.cgi.header)
+ALL.test.cgi    = \
+	$(ALL.cgi.goodhosts) \
+	$(ALL.cgi.goodIPs) \
+	$(ALL.cgi.badchr) \
+	$(ALL.cgi.badhosts) \
+	$(ALL.cgi.badIPs) \
+	$(ALL.cgi.badarg) \
+	$(ALL.cgi.badcgi) \
+	$(ALL.cgi.header)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
 test.cgi.badIPs:   $(ALL.cgi.badIPs)
@@ -272,7 +286,7 @@ test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.48: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.49: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
