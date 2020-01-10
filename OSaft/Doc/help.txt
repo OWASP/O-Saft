@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.49 20/01/08 22:05:41
+# SID   @(#) help.txt 1.50 20/01/10 20:57:03
 
 NAME
 
@@ -1334,15 +1334,6 @@ OPTIONS
 #
 #         IO::Socket::SSL->new() does not return a proper error
 #         see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list()  call
-#
-#     --local
-#
-#         It does not make much sense trying a connection with a cipher which
-#         is  not supported  by the local SSL implementation. Hence these are
-#         silently ignored by default.
-#         With this option we try to use such ciphers also.
-#
-#         Option reserved for future use ...
 #
 
       --sslv2
