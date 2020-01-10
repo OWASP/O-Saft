@@ -9,8 +9,8 @@
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
-#       _is_do()
-#       _is_intern()
+#       _iscfg_do()
+#       _iscfg_intern()
 #       _is_member()
 #       _need_cipher()
 #       _get_ciphers_range()
@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.128 20/01/08 22:53:48";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.129 20/01/10 14:26:53";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -110,7 +110,7 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
     my $ciphers = "@{$cfg{'ciphers'}}";
-    if (_is_do('cipherraw')) {
+    if (_iscfg_do('cipherraw')) {
        $need = 1;
        my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
        if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
@@ -132,7 +132,7 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
     if (0 < $need) {
         $_cnt = sprintf("%5s", $_cnt);  # format count
         _yeast("      starttls= " . $cfg{'starttls'});
-        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_is_do('cipherraw')) {
+        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_iscfg_do('cipherraw')) {
         _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
         _yeast("use cipher from openssl= " . $cmd{'extciphers'});
         _yeast(" $_cnt ciphers= $ciphers");
@@ -357,9 +357,19 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yline("");
     _yTRAC("$0", $mainsid);     # $0 is same as $ARG0
     _yTRAC("_yeast_init::SID", $SID_dbx) if (2 > $cfg{'trace'});
+    # official VERSIONs, not those of the current files !
     _yTRAC("::osaft",  $osaft::VERSION);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
+    # quick info first
+    _yTRAC("RC-FILE", $cfg{'RC-FILE'} . $arg);
+    _yTRAC("--rc",    ((grep{/(?:--rc)$/i}     @ARGV) > 0)? 1 : 0);
+    _yTRAC("--no-rc", ((grep{/(?:--no.?rc)$/i} @ARGV) > 0)? 1 : 0);
+    _yTRAC("verbose", $cfg{'verbose'});
+    _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
+    _yTRAC("time_absolut", $cfg{'time_absolut'});
+    _yTRAC("dbx{file}", "[ " . join(", ", @{$dbx{'file'}}) . " ]");
+
     if (1 < $cfg{'trace'}) {
         _yline(" Net::SSLinfo {");
         _yTRAC("::trace",         $Net::SSLinfo::trace);
@@ -382,14 +392,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
         _yline(" Net::SSLinfo }");
     }
-    _yTRAC("RC-FILE", $cfg{'RC-FILE'} . $arg);
-    _yTRAC("--rc",    ((grep{/(?:--rc)$/i}     @ARGV) > 0)? 1 : 0);
-    _yTRAC("--no-rc", ((grep{/(?:--no.?rc)$/i} @ARGV) > 0)? 1 : 0);
-    _yTRAC("verbose", $cfg{'verbose'});
-    _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
-    _yTRAC("time_absolut", $cfg{'time_absolut'});
-    _yTRAC("dbx{file}", "[ " . join(", ", @{$dbx{'file'}}) . " ]");
-    
+
     _yline(" %cmd {");
     if (2 > $cfg{'trace'}) {    # user friendly informations
         _yeast("          path= " . ___ARR(@{$cmd{'path'}}));
@@ -403,6 +406,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("    extopenssl= $cmd{'extopenssl'}");   # user friendly always
     _yeast("use cipher from openssl= $cmd{'extciphers'}");  # dito.
     _yline(" %cmd }");
+
     if (1 < $cfg{'trace'}) {    # full information
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
@@ -413,15 +417,14 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                     if ($key =~ m/openssl/) {
                         _yTRAC($k, ___ARR(@{$cfg{$key}{$k}}));
                     } else {
-                        _yTRAC($k, $cfg{$key}{$k});
+                        #_yTRAC($k, $cfg{$key}{$k});
+                        _yeast_trac($cfg{$key}, $k);
                     };
                 };
                 _yeast("# - - - - HASH: $key }");
             } else {
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
-                    foreach my $k (sort keys @{$cfg{$key}}) {
-                        _yTRAC($key . "[$k]", ___ARR(@{$cfg{$key}[$k]}));
-                    }
+                    _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
                 } else {
                     _yeast_trac(\%cfg, $key);
                 }
@@ -632,7 +635,7 @@ sub _yeast_test_data    {
             ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
             || ($key =~ /$cfg{'regex'}->{'SSLprot'}/i)) ?   "*"  : "!",   # cmd-ch.
             (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
-            (_is_intern($key) > 0)                      ?   "I"  : " ",   # intern
+            (_iscfg_intern($key))                       ?   "I"  : " ",   # intern
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
@@ -974,7 +977,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.128 2020/01/08
+1.129 2020/01/10
 
 =head1 AUTHOR
 
