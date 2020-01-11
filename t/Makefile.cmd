@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.50 20/01/11 09:23:08
+#?      @(#) Makefile.cmd 1.51 20/01/11 14:09:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.50
+_SID.cmd           := 1.51
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -73,84 +73,79 @@ LIST.ignore-output-keys := master_key \
 			   session_ticket sts_expired
 LIST.no-out.opt    := $(LIST.ignore-output-keys:%=--no-out=%)
 LIST.ignore.cmd    := $(LIST.ignore-output-keys:%=+%)
-# The  ignored keys are tested with the target  testcmd-cmd+ignored-keys_ .
+    # The  ignored keys are tested with the target  testcmd-cmd-+ignored-keys_ .
+LIST.cmd.withtrace := +info  +check
+LIST.cmd.cmd       := $(LIST.cmd.withtrace) +quick +vulns +http +hsts +sts
+LIST.cmd.vulns     := +BEAST +CRIME +DROWN +FREAK +POODLE +logjam +lucky13 +Sloth +Sweet32
+LIST.cmd.summ      := +bsi  +EV +TR-02102+ +ocsp  +preload +protocols +fingerprints +sizes +pfs +sni
+LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime
+    # --trace* options used instead --trace-*; make nicer targets names
+
+_TEST.cmd          := testcmd-cmd
 
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testcmd-cmd%:                   EXE.pl      = ../$(SRC.pl)
-testcmd-cmd%:                   TEST.init   = --trace-CLI --header
+ifndef cmd-targets-generated
+    # target foreach command
+    $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summ),\
+	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))_%:  TEST.args += $(cmd) ) \
+	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))_ ) \
+    )
+    # targets without --trace* options
+    $(foreach cmd, $(LIST.cmd.withtrace),\
+	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_%:  TEST.args += $(cmd) $(LIST.no-out.opt) ) \
+	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_ ) \
+      $(foreach opt, $(LIST.cmd.trace-opt),\
+	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))$(opt)_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
+	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))$(opt)_ ) \
+      ) \
+    )
+endif
 
-testcmd-cmd-+ignored-keys_%:    TEST.args  += $(LIST.ignore.cmd)
-testcmd-cmd-+info-_%:           TEST.args  += +info               $(LIST.no-out.opt)
-testcmd-cmd-+info--tracecmd_%:  TEST.args  += +info  --trace-cmd  $(LIST.no-out.opt)
-testcmd-cmd-+info--tracekey_%:  TEST.args  += +info  --trace-key  $(LIST.no-out.opt)
-testcmd-cmd-+info--tracetime_%: TEST.args  += +info  --trace-time $(LIST.no-out.opt)
-testcmd-cmd-+info--tracekey-norc_%: TEST.args += +info --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check_%:           TEST.args  += +check              $(LIST.no-out.opt)
-testcmd-cmd-+check--nossltls_%: TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
-    #    simulates a server not responding to ciphers
-testcmd-cmd-+check--tracekey_%:     TEST.args  += +check --trace-key  $(LIST.no-out.opt)
-testcmd-cmd-+check--tracetime_%:    TEST.args  += +check --trace-time $(LIST.no-out.opt)
-testcmd-cmd-+check--tracenorc_%:    TEST.args  += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
+# TODO: need generic target which comares results of initial command
+#       with same command and more options, example:
+#           testcmd-cmd-+info_localhost testcmd-cmd-+info--noout_localhost
+
+testcmd-cmd-%:                  EXE.pl      = ../$(SRC.pl)
+testcmd-cmd-%:                  TEST.init   = --trace-CLI --header
+
+testcmd-cmd-+ignored-keys_%:         TEST.args += $(LIST.ignore.cmd)
+testcmd-cmd-+info--tracekey-norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd_vuln+BEAST_%:       TEST.args  += +BEAST
-testcmd-cmd_vuln+CRIME_%:       TEST.args  += +CRIME
-testcmd-cmd_vuln+DROWN_%:       TEST.args  += +DROWN
-testcmd-cmd_vuln+FREAK_%:       TEST.args  += +FREAK
-testcmd-cmd_vuln+POODLE_%:      TEST.args  += +POODLE
-testcmd-cmd_vuln+logjam_%:      TEST.args  += +logjam
-testcmd-cmd_vuln+lucky13_%:     TEST.args  += +lucky13
-testcmd-cmd_vuln+Sloth_%:       TEST.args  += +Sloth
-testcmd-cmd_vuln+Sweet32_%:     TEST.args  += +Sweet32
-testcmd-cmd_summ+bsi_%:         TEST.args  += +bsi
-testcmd-cmd_summ+TR-02102+_%:   TEST.args  += +TR-02102+
-testcmd-cmd_summ+EV_%:          TEST.args  += +EV
-testcmd-cmd_summ+quick_%:       TEST.args  += +quick --trace-arg
-testcmd-cmd_summ+ocsp_%:        TEST.args  += +ocsp
-testcmd-cmd_summ+preload_%:     TEST.args  += +preload
-testcmd-cmd_summ+protocols_%:   TEST.args  += +protocols
-testcmd-cmd_summ+fingerprints_%: TEST.args += +fingerprints
-testcmd-cmd_summ+sizes_%:       TEST.args  += +sizes
-testcmd-cmd_summ+pfs_%:         TEST.args  += +pfs
-testcmd-cmd_summ+sni_%:         TEST.args  += +sni
-testcmd-cmd_summ+vulns_%:       TEST.args  += +vulns
-testcmd-cmd_summ+http_%:        TEST.args  += +http  $(LIST.no-out.opt)
-testcmd-cmd_summ+hsts_%:        TEST.args  += +hsts  $(LIST.no-out.opt)
-testcmd-cmd_summ+sts_%:         TEST.args  += +sts   $(LIST.no-out.opt)
+testcmd-cmd-+check--trace-norc_%:    TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
+testcmd-cmd-+quick--tracearg_%:      TEST.args += +quick --trace-arg
+testcmd-cmd-+check--nossltls_%:      TEST.args += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
+    #    simulates a server not responding to ciphers
+
+ALL.testcmd    += \
+	testcmd-cmd-+ignored-keys_ \
+	testcmd-cmd-+info--tracekey-norc_ \
+	testcmd-cmd-+check--tracekey-norc_ \
+	testcmd-cmd-+check--trace-norc_ \
+	testcmd-cmd-+quick--tracearg_ \
+	testcmd-cmd-+check--nossltls_
 
 testarg-cmd-host_url+cn:        TEST.args  += --v +cn
 testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
-    # target to test hostname with url (path)
+    # target to test hostname with url (path) # TODO: add to ALL.testcmd
 
-# SEE Make:target matching
-# NOTE: no sort because we want the sequence of target definitions above.
-ALL.testcmd         = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
 ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
 ALL.test.cmd       += testarg-cmd-host_url+cn
 ALL.test.cmd.log   += $(ALL.test.cmd:%=%.log)
 
-# For calling various targets together and other examples,
-# see  test.pattern-%  pattern rule
-
 # testrun target to allow something like:  testrun-+my-fancy-command
-# NOTE: testrun-+%  and not  testrun+%  is used to avoid double definition of
-# the pattern rule (problem in GNU Make), this restricts the usage to pattern
-# starting with  + , unfortunately.
-# EXE.pl  and  TEST.init  will be inherited from  testcmd-cmd% .
-testrun-+%:     TEST.args  += $(TEST.cmd.hosts)
-testrun-%: testcmd-%
+testrun-%:  EXE.pl      = ../$(SRC.pl)
+testrun-%:  TEST.init   = --trace-CLI
+testrun-%:  TEST.args  += $(TEST.cmd.hosts)
+testrun-%:
 	@$(TRACE.target)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $* $(TEST.args)
 
-# TODO: implement following
-#     $(MAKE_COMMAND) testrun-+cn\ --traceCMD
-#     $(MAKE_COMMAND) testrun-'+cn --traceCMD'
 
-# TODO: use target _no-hosts
-
-test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd
-test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd
-test.cmd.log:           TEST.target_prefix  = testcmd-cmd
+test.cmd.log-compare:   TEST.target_prefix  = testcmd-cmd-
+test.cmd.log-move:      TEST.target_prefix  = testcmd-cmd-
+test.cmd.log:           TEST.target_prefix  = testcmd-cmd-
 
 test.cmd:           $(ALL.test.cmd)
 test.cmd.log:       $(ALL.test.cmd.log) test.log-compare-hint
