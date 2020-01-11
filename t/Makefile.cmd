@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.49 19/11/24 22:54:22
+#?      @(#) Makefile.cmd 1.50 20/01/11 09:23:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.49
+_SID.cmd           := 1.50
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -81,19 +81,19 @@ LIST.ignore.cmd    := $(LIST.ignore-output-keys:%=+%)
 testcmd-cmd%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cmd%:                   TEST.init   = --trace-CLI --header
 
-testcmd-cmd+ignored-keys_%:     TEST.args  += $(LIST.ignore.cmd)
-testcmd-cmd+info-_%:            TEST.args  += +info               $(LIST.no-out.opt)
-testcmd-cmd+info--trace-cmd_%:  TEST.args  += +info  --trace-cmd  $(LIST.no-out.opt)
-testcmd-cmd+info--trace-key_%:  TEST.args  += +info  --trace-key  $(LIST.no-out.opt)
-testcmd-cmd+info--trace-time_%: TEST.args  += +info  --trace-time $(LIST.no-out.opt)
-testcmd-cmd+info--trace-key-norc_%: TEST.args  += +info   --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd+check_%:            TEST.args  += +check              $(LIST.no-out.opt)
-testcmd-cmd+check--nossltls_%:  TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
+testcmd-cmd-+ignored-keys_%:    TEST.args  += $(LIST.ignore.cmd)
+testcmd-cmd-+info-_%:           TEST.args  += +info               $(LIST.no-out.opt)
+testcmd-cmd-+info--tracecmd_%:  TEST.args  += +info  --trace-cmd  $(LIST.no-out.opt)
+testcmd-cmd-+info--tracekey_%:  TEST.args  += +info  --trace-key  $(LIST.no-out.opt)
+testcmd-cmd-+info--tracetime_%: TEST.args  += +info  --trace-time $(LIST.no-out.opt)
+testcmd-cmd-+info--tracekey-norc_%: TEST.args += +info --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd-+check_%:           TEST.args  += +check              $(LIST.no-out.opt)
+testcmd-cmd-+check--nossltls_%: TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
-testcmd-cmd+check--trace-key_%: TEST.args  += +check --trace-key  $(LIST.no-out.opt)
-testcmd-cmd+check--trace-time_%:    TEST.args  += +check --trace-time $(LIST.no-out.opt)
-testcmd-cmd+check--trace-norc_%:    TEST.args  += +check --trace-cmd --trace-time --trace=2 --norc $(LIST.no-out.opt)
-testcmd-cmd+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd-+check--tracekey_%:     TEST.args  += +check --trace-key  $(LIST.no-out.opt)
+testcmd-cmd-+check--tracetime_%:    TEST.args  += +check --trace-time $(LIST.no-out.opt)
+testcmd-cmd-+check--tracenorc_%:    TEST.args  += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
+testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd_vuln+BEAST_%:       TEST.args  += +BEAST
 testcmd-cmd_vuln+CRIME_%:       TEST.args  += +CRIME
 testcmd-cmd_vuln+DROWN_%:       TEST.args  += +DROWN
@@ -127,7 +127,7 @@ testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
 # NOTE: no sort because we want the sequence of target definitions above.
 ALL.testcmd         = $(shell awk -F% '($$1 ~ /^testcmd-cmd./){arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.cmd))
 ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
-ALL.test.cmd       += testarg-host_url+cn
+ALL.test.cmd       += testarg-cmd-host_url+cn
 ALL.test.cmd.log   += $(ALL.test.cmd:%=%.log)
 
 # For calling various targets together and other examples,
