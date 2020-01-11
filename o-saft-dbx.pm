@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.129 20/01/10 14:26:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.130 20/01/11 01:59:27";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -445,7 +445,9 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
     _yeast("     use->http= $cfg{'use'}->{'http'}");
     _yeast("    use->https= $cfg{'use'}->{'https'}");
-    foreach my $key (qw(out_header format legacy showhost starttls starttls_delay slow_server_delay cipherrange)) {
+    _yeast(" out->hostname= $cfg{'out'}->{'hostname'}");
+    _yeast("   out->header= $cfg{'out'}->{'header'}");
+    foreach my $key (qw(format legacy starttls starttls_delay slow_server_delay cipherrange)) {
         _yTRAC($key, $cfg{$key});
     }
     foreach my $key (qw(starttls_phase starttls_error)) {
@@ -455,7 +457,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     printf("%s",__TRAC("SSL versions", "[ "));  # no \n !
     printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
     printf("]\n");
-    _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
+    _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'use'}->{'ssl_lazy'}");
     _yeast(" ignore output= " . ___ARR(@{$cfg{'ignore-out'}}));
     _yeast(" user commands= " . ___ARR(@{$cfg{'commands_usr'}}));
     _yeast("given commands= " . ___ARR(@{$cfg{'done'}->{'arg_cmds'}}));
@@ -468,8 +470,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 sub _yeast_exit {
     if (0 < $cfg{'trace'}) {
-        _yTRAC("cfg'exitcode'", $cfg{'exitcode'});
-        _yTRAC("exit status",   (($cfg{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
+        _yTRAC("cfg'exitcode'", $cfg{'use'}->{'exitcode'});
+        _yTRAC("exit status",   (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
     }
     _y_CMD("internal administration ..");
     _y_CMD('@cfg{done} {');
@@ -681,9 +683,11 @@ sub _yeast_test_init    {
     print __yeast("#                key | value");
     print __yeast($line);
     print __INIT("ARGV", ___ARR(@{$cfg{'ARGV'}}));
+    _yline(" %cfg{use} {");
     foreach my $key (sort keys %{$cfg{'use'}}) {
-        print __INIT('use->'.$key, $cfg{'use'}{$key});
+        print __INIT($key, $cfg{'use'}{$key});
     }
+    _yline(" %cfg{use} }");
     print __yeast($line);
     _yline(" %cfg }");
     _yline(" %data {");
@@ -977,7 +981,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.129 2020/01/10
+1.130 2020/01/11
 
 =head1 AUTHOR
 
