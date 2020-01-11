@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.989 20/01/10 14:25:29",
-    STR_VERSION => "19.12.26",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.990 20/01/11 01:58:45",
+    STR_VERSION => "19.12.27",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -207,7 +207,7 @@ sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
 sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
-    # check must be done on ARGV, because $cfg{'out_hint_info'} may not yet set
+    # check must be done on ARGV, because $cfg{'out'}->{'hint_info'} may not yet set
     my @txt = @_;
     return if _is_argv('(?:--no.?hint)');
     printf(STR_HINT . "%s\n", join(" ", @txt));
@@ -215,9 +215,9 @@ sub _hint   {
 } # _hint
 sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
-    # don't print if ($cfg{'warning'} <= 0);
+    # don't print if (not _iscfg_out('warning'));
     my @txt = @_;
-    return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $cfg{'warning'}
+    return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $cfg{use}{warning}
     local $\ = "\n";
     print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -257,7 +257,7 @@ sub _print_read         {
     #? will only be written if --v or --warn or --trace is given and  --cgi-exec
     #? or  --no-header   are not given
     # $cgi is not (yet) available, hence we use @ARGV to check for options
-    # $cfg{'out_header'} is also not yet properly set, see LIMITATIONS also
+    # $cfg{'out'}->{'header'} is also not yet properly set, see LIMITATIONS also
     my ($fil, @txt) = @_;
     # TODO: quick&ugly check when to write "reading" depending on given --trace* options
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}    @ARGV));# --cgi-exec or --cgi-trace
@@ -1958,11 +1958,17 @@ sub _iscfg_intern($)    { my  $is=shift;    return _is_member($is, \@{$cfg{'comm
 sub _iscfg_hexdata($)   { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _iscfg_call($)      { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if the given string is listed in $cfg{*}
+sub _iscfg($)           { my  $is=shift;    return $cfg{$is};   }
 sub _iscfg_ssl($)       { my  $is=shift;    return $cfg{$is};   }
     # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
 sub _iscfg_out($)       { my  $is=shift;    return $cfg{'out'}->{$is};  }
 sub _iscfg_use($)       { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
+sub _iscfg_verbose()    { return $cfg{'verbose'}; }
+
+sub _setcfg_out($$)     { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
+sub _setcfg_use($$)     { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
+    # set value for given key in $cfg{*}->{key}
 
 #| definitions: internal functions
 #| -------------------------------------
@@ -2347,7 +2353,7 @@ sub _check_SSL_methods  {
         # methods.  Sometimes, for whatever reason,  the user may know that the
         # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
         # which simply disables the check.
-        if ($cfg{'ssl_lazy'}>0) {
+        if (_iscfg_use('ssl_lazy')) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
@@ -2729,7 +2735,7 @@ sub _cfg_set_from_file  {
     #       to use an  if-condition
     if (open($fh, '<:encoding(UTF-8)', $fil)) {
         push(@{$dbx{file}}, $fil);
-        _print_read("$fil", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
+        _print_read("$fil", "USER-FILE configuration file") if (_iscfg_out('header'));
         while ($line = <$fh>) {
             #
             # format of each line in file must be:
@@ -3514,7 +3520,7 @@ sub _is_ssl_error($$$)  {
     return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
     $cfg{'done'}->{'ssl_errors'}++;     # total counter
     $cfg{'done'}->{'ssl_failed'}++;     # local counter
-    return 0 if ($cfg{'ssl_error'} <= 0);# no action required
+    return 0 if (not _iscfg_use('ssl_error'));# no action required
     if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
         _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
         _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
@@ -4065,7 +4071,7 @@ sub ciphers_scan_raw    {
         $total += scalar @all;
         if (_iscfg_do('cipher') or _iscfg_do('check')) {
             # FIXME: move to calling place
-            print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
+            print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         }
         if (_iscfg_do('cipher_intern')) {
             _v_print("cipher range: $cfg{'cipherrange'}");
@@ -5666,7 +5672,7 @@ sub checkprot($$)   {
     #   check if amount of ciphers > 0.
     if (_iscfg_ssl('SSLv2')) {
         my $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
-        $checks{'hassslv2'} ->{val} = (1 == $cfg{'nullssl2'}) ? $notxt : "";
+        $checks{'hassslv2'} ->{val} = (_iscfg_use('nullssl2')) ? $notxt : "";
             # SSLv2 enabled, but no ciphers is ok (aka 'yes') for --nullssl2
         $checks{'drown'}    ->{val} = $notxt;  # SSLv2 there, then potentially vulnerable to DROWN
     }
@@ -6026,8 +6032,8 @@ sub check_exitcode  {
     my $cnt_pfs    = 0; # number ciphers without PFS per protocol
     my $cnt_nopfs  = 0; # total number ciphers without PFS
     my $old_verbose= $cfg{'verbose'};       # save global verbose
-    $cfg{'verbose'} += $cfg{'exitcode_v'};  # --v and/or --exitcode-v
-    if (0 < $cfg{'exitcode_checks'}) {
+    $cfg{'verbose'} += $cfg{'out'}->{'exitcode'};  # --v and/or --exitcode-v
+    if (_iscfg_out('exitcode_checks')) {
         $exitcode  = $checks{'cnt_checks_no'} ->{val};
         $exitcode -= $checks{'cnt_checks_noo'}->{val};
     }
@@ -6043,11 +6049,11 @@ sub check_exitcode  {
         $cnt_prot++ if (0 < $cfg{$ssl});
         $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
         $cnt_pfs   = 0 if (0 >= $prot{$ssl}->{'cnt'});  # useless if there're no ciphers
-        $exitcode += $cnt_pfs                if (0 < $cfg{'exitcode_pfs'});
+        $exitcode += $cnt_pfs                if (_iscfg_out('exitcode_pfs'));
         $cnt_ciph  = 0;
-        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (0 < $cfg{'exitcode_medium'});
-        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (0 < $cfg{'exitcode_weak'});
-        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (0 < $cfg{'exitcode_low'});
+        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (_iscfg_out('exitcode_medium'));
+        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (_iscfg_out('exitcode_weak'));
+        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (_iscfg_out('exitcode_low'));
         $exitcode += $cnt_ciph;
         _v_print(sprintf("%-7s\t%3s %3s %3s %3s %3s\t%s", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
@@ -6060,14 +6066,15 @@ sub check_exitcode  {
     # print overview of calculated exitcodes;
     # for better human readability, counts disabled by --exitcode-no-* options
     # are marked as "ignored"
-    my $ign_ciphs   = (0 < ($cfg{'exitcode_low'} + $cfg{'exitcode_weak'} + $cfg{'exitcode_medium'}))   ? "" : " (count ignored)";
-    my $ign_checks  = (0 < $cfg{'exitcode_checks'}) ? "" : " (count ignored)";
-    my $ign_prot    = (0 < $cfg{'exitcode_prot'})   ? "" : " (count ignored)";
-    my $ign_pfs     = (0 < $cfg{'exitcode_pfs'})    ? "" : " (count ignored)";
+    #my $ign_ciphs   = (0 < ($cfg{'out'}->{'exitcode_low'} + $cfg{'out'}->{'exitcode_weak'} + $cfg{'out'}->{'exitcode_medium'}))   ? "" : " (count ignored)";
+    my $ign_ciphs   = (_iscfg_out('exitcode_low') or _iscfg_out('exitcode_weak') or _iscfg_out('exitcode_medium'))   ? "" : " (count ignored)";
+    my $ign_checks  = (_iscfg_out('exitcode_checks')) ? "" : " (count ignored)";
+    my $ign_prot    = (_iscfg_out('exitcode_prot'))   ? "" : " (count ignored)";
+    my $ign_pfs     = (_iscfg_out('exitcode_pfs'))    ? "" : " (count ignored)";
     _v_print($__tableline);
     $cnt_prot-- if (0 < $cfg{'TLSv12'});
     $cnt_prot-- if (0 < $cfg{'TLSv13'});
-    $exitcode += $cnt_prot if (0 < $cfg{'exitcode_prot'});
+    $exitcode += $cnt_prot if (_iscfg_out('exitcode_prot'));
     $checks{'cnt_exitcode'}->{val} = $exitcode;
     _v_print(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
     _v_print(sprintf("%s\t%5s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
@@ -6164,7 +6171,7 @@ sub printdump       {
     return;
 } # printdump
 
-sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
+sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if (_iscfg_out('header')); return; }
     #? print header ruler line
 
 sub print_header    {
@@ -6229,7 +6236,7 @@ sub print_line($$$$$$)  {
     #       host:port:#[key]:label: \tvalue
     # legacy=_cipher is special: does not print label and value
     my  $label  = "";
-        $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if ($cfg{'showhost'} > 0);
+        $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if (_iscfg_out('hostname'));
     if ($legacy eq '_cipher') {
         printf("%s#[%s]%s", $label, $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
         return;
@@ -6315,7 +6322,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if ($cfg{'out_hint_info'} > 0);     # SEE Note:hints
+    printhint($key) if (_iscfg_out('hint_info'));   # SEE Note:hints
     return;
 } # print_data
 
@@ -6326,7 +6333,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if ($cfg{'out_hint_check'} > 0);    # SEE Note:hints
+    printhint($key) if (_iscfg_out('hint_check'));  # SEE Note:hints
     return;
 } # print_check
 
@@ -6340,14 +6347,14 @@ sub print_size($$$$)    {
     return;
 } # print_size
 
-sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); return; }
+sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if (_iscfg_out('header')); return; }
     #? print header ruler line for ciphers with DH parameters
-sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); return; }
+sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if (_iscfg_out('header')); return; }
     #? print header ruler line for ciphers
 sub print_cipherhead($) {
     #? print header line according given legacy format
     my $legacy  = shift;
-    return if ($cfg{'out_header'} <= 0);
+    return if (not _iscfg_out('header'));
     if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
     if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
     #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); } # old version
@@ -6480,7 +6487,7 @@ sub print_ciphertotals($$$$) {
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {
-        print_header(_get_text('out_summary', $ssl), "", $cfg{'out_header'});
+        print_header(_get_text('out_summary', $ssl), "", $cfg{'out'}->{'header'});
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
@@ -6579,7 +6586,7 @@ sub _print_cipher_results       { ## no critic qw(Subroutines::RequireArgUnpacki
         next if  (${$c}[0] ne $ssl);
         $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
-        $print = _is_print_cipher(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
+        $print = _is_print_cipher(${$c}[2], $cfg{'out'}->{'disabled'}, $cfg{'out'}->{'enabled'});
         print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
     }
     return $total;
@@ -6635,11 +6642,11 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
     } else {
         print "\n  * $ssl Cipher Suites :";
         print_cipherprefered($legacy, $ssl, $host, $port);
-        if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+        if (_iscfg_out('enabled')  or (_iscfg_out('disabled') == _iscfg_out('enabled'))) {
             print "\n      Accepted Cipher Suites:";
             $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", @results);
         }
-        if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+        if (_iscfg_out('disabled') or (_iscfg_out('disabled') == _iscfg_out('enabled'))) {
             print "\n      Rejected Cipher Suites:";
             $total = _print_cipher_results($legacy, $ssl, $host, $port, "no", @results);
         }
@@ -6662,7 +6669,7 @@ sub printciphers_dh     {
             # SEE Note:Stand-alone
     }
     foreach my $ssl (@{$cfg{'version'}}) {
-        print_title($legacy, $ssl, $host, $port, $cfg{'out_header'});
+        print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         print_cipherhead( 'cipher_dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
             #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
@@ -6695,7 +6702,7 @@ sub printcipherprefered {
     #? print table with prefered/selected (default) cipher per protocol
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    if ($cfg{'out_header'}>0) {
+    if (_iscfg_out('header')) {
         printf("= prot.\t%-31s%s\n", "prefered cipher (strong first)", "prefered cipher (weak first)");
         printf("=------+------------------------------+-------------------------------\n");
     }
@@ -6708,7 +6715,7 @@ sub printcipherprefered {
                 $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_weak'},
         );
     }
-    if ($cfg{'out_header'}>0) {
+    if (_iscfg_out('header')) {
         printf("=------+------------------------------+-------------------------------\n");
     }
     print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
@@ -6721,7 +6728,7 @@ sub printprotocols      {
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    if ($cfg{'out_header'}>0) {
+    if (_iscfg_out('header')) {
         if ('owasp' eq $legacy) {
             printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
             printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot prefered-strong-cipher PFS-cipher));
@@ -6767,7 +6774,7 @@ sub printprotocols      {
         }
         # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
-    if ($cfg{'out_header'}>0) {
+    if (_iscfg_out('header')) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     return;
@@ -6777,7 +6784,7 @@ sub printciphersummary  {
     #? print summary of cipher check +cipher
     my ($legacy, $host, $port, $total) = @_;
     if ($legacy =~ /(full|compact|simple|owasp|quick)/) {   # but only our formats
-        print_header("\n" . _get_text('out_summary', ""), "", "", $cfg{'out_header'});
+        print_header("\n" . _get_text('out_summary', ""), "", "", $cfg{'out'}->{'header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
@@ -6793,7 +6800,7 @@ sub printdata($$$)      {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    print_header($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out_header'});
+    print_header($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out'}->{'header'});
     _trace_cmd('%data');
     if (_iscfg_do('cipher_selected')) {     # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
@@ -6805,7 +6812,7 @@ sub printdata($$$)      {
         next if (_is_member( $key, \@{$cfg{'ignore-out'}}));
         next if (not _is_hashkey($key, \%data));
         next if ($key eq 'cipher_selected');# value is special, done above
-        if ($cfg{'experimental'} == 0) {
+        if (not _iscfg_use('experimental')) {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
         # special handling vor +info--v
@@ -6839,7 +6846,7 @@ sub printchecks($$$)    {
     my ($legacy, $host, $port) = @_;
     my $value = "";
     local $\ = "\n";
-    print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out_header'});
+    print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out'}->{'header'});
     _trace_cmd(' printchecks: %checks');
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _iscfg_use('cert'));
     foreach my $key (@{$cfg{'do'}}) {
@@ -6849,7 +6856,7 @@ sub printchecks($$$)    {
         next if (not _is_hashkey($key, \%checks));
         next if (_iscfg_intern( $key));# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        if ($cfg{'experimental'} == 0) {
+        if (not _iscfg_use('experimental')) {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
         $value = _setvalue($checks{$key}->{val});
@@ -7119,14 +7126,14 @@ sub printciphers        {
         $hex = $ssl = $tag = $bit = $aut = $enc = $key = $mac = "";
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
     _v_print("database version: $mainsid");
-    _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out_header'}");
+    _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
     my $have_cipher = 0;
     my $miss_cipher = 0;
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_openssl() if ($cfg{'verbose'} > 0);
 
-    print_header(_get_text('out_list', $0), "", "", $cfg{'out_header'});
+    print_header(_get_text('out_list', $0), "", "", $cfg{'out'}->{'header'});
     # all following headers printed directly instead of using print_header()
 
     if ($cfg{'legacy'} eq "ssltest") {  # output looks like: ssltest --list
@@ -7190,7 +7197,7 @@ sub printciphers        {
            $hh = "O-Saft";
            $hl = "-------+";
         }
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("= %s\t%s\t%s\n", "OWASP", $hh, "cipher");
             printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
         }
@@ -7201,7 +7208,7 @@ sub printciphers        {
                $sec_osaft = "" if (0 >= $cfg{'verbose'});
             printf("  %s\t%s\t%s\n", $sec_owasp, $sec_osaft,  $c);
         }
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
         }
         return;
@@ -7209,14 +7216,14 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "simple") {   # this format like for +list up to VERSION 14.07.14
         $sep = "\t";
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
         foreach my $c (sort keys %ciphers) {
             printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
         }
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
         return;
@@ -7224,7 +7231,7 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "full") {     # internal format with leading hex number
         $sep = $text{'separator'};
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("= Constant$sep%s%-20s${sep}Aliases\n",   "Cipher", join($sep, @{$ciphers_desc{'text'}}));
             printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
@@ -7245,7 +7252,7 @@ sub printciphers        {
             $hex = sprintf("%s$sep", ($hex || "    -?-"));
             printf("%s %s%-30s$sep%s$sep%s\n", $can, $hex, $c, join($sep, @{$ciphers{$c}}), $alias);
         }
-        if (0 < $cfg{'out_header'}) {
+        if (_iscfg_out('header')) {
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
         }
         if (0 < $cfg{'verbose'}) {
@@ -7284,7 +7291,7 @@ sub printscores         {
             + $scores{'check_http'}->{val}
             + $scores{'check_size'}->{val}
             ) / 5 ) + 0.5);
-    print_header($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out_header'});
+    print_header($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out'}->{'header'});
     _trace_cmd('%scores');
     foreach my $key (sort keys %scores) {
         next if ($key !~ m/^check_/);   # print totals only
@@ -7806,8 +7813,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ciphers?-?v$/)      { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--ciphers?--?v$/)     { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--v-?ciphers?$/)      { $cfg{'v_cipher'}++;       }
-    if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
-    if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
+    if ($arg =~ /^--warnings?$/)        { _setcfg_out('warning', 1);}
+    if ($arg =~ /^--nowarnings?$/)      { _setcfg_out('warning', 0);}
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias:
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
@@ -7819,10 +7826,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
     if ($arg =~ /^--timeabsolute?/i)    { $cfg{'time_absolut'} = 1; }
     if ($arg eq  '--timerelative')      { $cfg{'time_absolut'} = 0; }
-    if ($arg eq  '--linuxdebug')        { $cfg{'--linux_debug'}++;  }
+    if ($arg eq  '--linuxdebug')        { $cfg{'linux_debug'}++;    }
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
-    if ($arg =~ /^--exp(?:erimental)?$/){ $cfg{'experimental'} = 1; }
-    if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
+    if ($arg =~ /^--exp(?:erimental)?$/){ _setcfg_use('experimental', 1); }
+    if ($arg =~ /^--noexp(erimental)?$/){ _setcfg_use('experimental', 0); }
     if ($arg eq  '--filesclient')       { $typ = 'FILE_SCLIENT';    }
     if ($arg eq  '--fileciphers')       { $typ = 'FILE_CIPHERS';    }
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
@@ -7849,7 +7856,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttlsphase5$/i)  { $typ = 'STARTTLSP5';      }
     # options form other programs for compatibility
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # NOTE: not supported
-#   if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, # TODO not supported
+#   if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out->header, # TODO not supported
     if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, ssl-cert-check
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, ssl-cert-check
     if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # for lazy people, not documented
@@ -7867,54 +7874,54 @@ while ($#argv >= 0) {
     if ($arg eq  '--noopensslciphers')  { $cmd{'extciphers'}= 0;    }
     if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
     if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
-    if ($arg eq  '--alpn')              { $cfg{'use'}->{'alpn'} = 1;}
-    if ($arg eq  '--noalpn')            { $cfg{'use'}->{'alpn'} = 0;}
-    if ($arg eq  '--npn')               { $cfg{'use'}->{'npn'}  = 1;}
-    if ($arg eq  '--nonpn')             { $cfg{'use'}->{'npn'}  = 0;}
-    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use'}->{'npn'}  = 1;} # openssl
-    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use'}->{'npn'}  = 0;}
-    if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   }  # alias:
-    if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; }  # alias:
-    if ($arg =~ /^--sslcompression$/)   { $cfg{'use'}->{'no_comp'}   = 0;} # openssl s_client -comp
-    if ($arg =~ /^--nosslcompression$/) { $cfg{'use'}->{'no_comp'}   = 1;} # openssl s_client -no_comp
-    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use'}->{'extdebug'}  = 1;}
-    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use'}->{'extdebug'}  = 0;}
-    if ($arg =~ /^--?reconnect$/)       { $cfg{'use'}->{'reconnect'} = 1;}
-    if ($arg =~ /^--noreconnect$/)      { $cfg{'use'}->{'reconnect'} = 0;}
+    if ($arg eq  '--alpn')              { _setcfg_use('alpn',   1); }
+    if ($arg eq  '--noalpn')            { _setcfg_use('alpn',   0); }
+    if ($arg eq  '--npn')               { _setcfg_use('npn',    1); }
+    if ($arg eq  '--nonpn')             { _setcfg_use('npn',    0); }
+    if ($arg =~ /^--?nextprotoneg$/)    { _setcfg_use('npn',    1); } # openssl
+    if ($arg =~ /^--nonextprotoneg/)    { _setcfg_use('npn',    0); }
+    if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   } # alias:
+    if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; } # alias:
+    if ($arg =~ /^--sslcompression$/)   { _setcfg_use('no_comp',    0); } # openssl s_client -comp
+    if ($arg =~ /^--nosslcompression$/) { _setcfg_use('no_comp',    1); } # openssl s_client -no_comp
+    if ($arg =~ /^--?tlsextdebug$/)     { _setcfg_use('extdebug',   1); }
+    if ($arg =~ /^--notlsextdebug/)     { _setcfg_use('extdebug',   0); }
+    if ($arg =~ /^--?reconnect$/)       { _setcfg_use('reconnect',  1); }
+    if ($arg =~ /^--noreconnect$/)      { _setcfg_use('reconnect',  0); }
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # various options
-    if ($arg eq  '--forcesni')          { $cfg{'use'}->{'forcesni'}  = 1;}
+    if ($arg eq  '--forcesni')          { _setcfg_use('forcesni',   1); }
     if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'sslerror'}->{'ignore_no_conn'}  = 1;}
     if ($arg =~ /^--ignorehandshake/)   { $cfg{'sslerror'}->{'ignore_handshake'}= 1;}
     if ($arg =~ /^--noignorehandshake/) { $cfg{'sslerror'}->{'ignore_handshake'}= 0;}
-    if ($arg eq  '--lwp')               { $cfg{'use'}->{'lwp'}  = 1;    }
-    if ($arg eq  '--sni')               { $cfg{'use'}->{'sni'}  = 1;}
-    if ($arg eq  '--nosni')             { $cfg{'use'}->{'sni'}  = 0;}
-    if ($arg eq  '--snitoggle')         { $cfg{'use'}->{'sni'}  = 3;}
-    if ($arg eq  '--togglesni')         { $cfg{'use'}->{'sni'}  = 3;}
-    if ($arg eq  '--nocert')            { $cfg{'use'}->{'cert'} = 0;}
-    if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
-    if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
+    if ($arg eq  '--lwp')               { _setcfg_use('lwp',    1); }
+    if ($arg eq  '--sni')               { _setcfg_use('sni',    1); }
+    if ($arg eq  '--nosni')             { _setcfg_use('sni',    0); }
+    if ($arg eq  '--snitoggle')         { _setcfg_use('sni',    3); }
+    if ($arg eq  '--togglesni')         { _setcfg_use('sni',    3); }
+    if ($arg eq  '--nocert')            { _setcfg_use('cert',   0); }
+    if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}    = 0;}
+    if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}    = 1;}
     if ($arg eq  '--noignorenoreply')   { $cfg{'ignorenoreply'} = 0;}
     if ($arg eq  '--ignorenoreply')     { $cfg{'ignorenoreply'} = 1;}
-    if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
-    if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
-    if ($arg =~ /^--exitcodequiet/)     { $cfg{'exitcode_quiet'}= 1;} #
-    if ($arg =~ /^--exitcodesilent/)    { $cfg{'exitcode_quiet'}= 1;} # alias:
-    if ($arg =~ /^--exitcodev/)         { $cfg{'exitcode_v'}    = 1;} #
-    if ($arg =~ /^--traceexit/)         { $cfg{'exitcode_v'}    = 1;} # alias:
-    if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
-    if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; } # -"-
-    if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;} # -"-
-    if ($arg =~ /^--exitcodenolow/)     { $cfg{'exitcode_low'}  = 0;} # -"-
-    if ($arg =~ /^--exitcodenopfs/)     { $cfg{'exitcode_pfs'}  = 0;} # -"-
-    if ($arg =~ /^--exitcodenoprot/)    { $cfg{'exitcode_prot'} = 0;} # -"-
-    if ($arg =~ /^--exitcodenosizes/)   { $cfg{'exitcode_sizes'}= 0;} # -"-
+    if ($arg eq  '--noexitcode')        { _setcfg_use('exitcode',   0); }
+    if ($arg eq  '--exitcode')          { _setcfg_use('exitcode',   1); } # SEE Note:--exitcode
+    if ($arg =~ /^--exitcodev/)         { _setcfg_out('exitcode',   1); } #
+    if ($arg =~ /^--traceexit/)         { _setcfg_out('exitcode',   1); } # alias:
+    if ($arg =~ /^--exitcodequiet/)     { _setcfg_out('exitcode_quiet',  1); } #
+    if ($arg =~ /^--exitcodesilent/)    { _setcfg_out('exitcode_quiet',  1); } # alias:
+    if ($arg =~ /^--exitcodenochecks?/) { _setcfg_out('exitcode_checks', 0); } # -"-
+    if ($arg =~ /^--exitcodenomedium/)  { _setcfg_out('exitcode_medium', 0); } # -"-
+    if ($arg =~ /^--exitcodenoweak/)    { _setcfg_out('exitcode_weak',   0); } # -"-
+    if ($arg =~ /^--exitcodenolow/)     { _setcfg_out('exitcode_low',    0); } # -"-
+    if ($arg =~ /^--exitcodenopfs/)     { _setcfg_out('exitcode_pfs',    0); } # -"-
+    if ($arg =~ /^--exitcodenoprot/)    { _setcfg_out('exitcode_prot',   0); } # -"-
+    if ($arg =~ /^--exitcodenosizes/)   { _setcfg_out('exitcode_sizes',  0); } # -"-
     if ($arg =~ /^--exitcodenociphers?/){   # shortcut options for following
-        $cfg{'exitcode_cipher'} = 0;
-        $cfg{'exitcode_medium'} = 0;
-        $cfg{'exitcode_weak'}   = 0;
-        $cfg{'exitcode_low'}    = 0;
+        _setcfg_out('exitcode_cipher', 0);
+        _setcfg_out('exitcode_medium', 0);
+        _setcfg_out('exitcode_weak',   0);
+        _setcfg_out('exitcode_low',    0);
     }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
@@ -7957,39 +7964,38 @@ while ($#argv >= 0) {
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
     # our options
-    if ($arg eq  '--http')              { $cfg{'use'}->{'http'}++;  }
-    if ($arg eq  '--nohttp')            { $cfg{'use'}->{'http'} = 0;}
-    if ($arg eq  '--https')             { $cfg{'use'}->{'https'}++; }
-    if ($arg eq  '--nohttps')           { $cfg{'use'}->{'https'}= 0;}
+    if ($arg eq  '--nodns')             { _setcfg_use('dns',    0); }
+    if ($arg eq  '--dns')               { _setcfg_use('dns',    1); }
+    if ($arg eq  '--http')              { _setcfg_use('http',   1); }
+    if ($arg eq  '--nohttp')            { _setcfg_use('http',   0); }
+    if ($arg eq  '--https')             { _setcfg_use('https',  1); }
+    if ($arg eq  '--nohttps')           { _setcfg_use('https',  0); }
+    if ($arg eq  '--nosniname')         { _setcfg_use('sni',    0); } # 0: don't use SNI, different than empty string
     if ($arg eq  '--norc')              {                           } # simply ignore
-    if ($arg eq  '--sslerror')          { $cfg{'ssl_error'} = 1;    }
-    if ($arg eq  '--nosslerror')        { $cfg{'ssl_error'} = 0;    }
-    if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    }
-    if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    }
-    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    }
-    if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    }
-    if ($arg eq  '--nodns')             { $cfg{'use'}->{'dns'}  = 0;}
-    if ($arg eq  '--dns')               { $cfg{'use'}->{'dns'}  = 1;}
-    if ($arg eq  '--noenabled')         { $cfg{'enabled'}   = 0;    }
-    if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
-    if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
-    if ($arg eq  '--nodisabled')        { $cfg{'disabled'}  = 0;    }
-    if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
-    if ($arg =~ /^--hints?$/)           { $cfg{'out_hint_info'} = 1; $cfg{'out_hint_check'} = 1; }
-    if ($arg =~ /^--nohints?$/)         { $cfg{'out_hint_info'} = 0; $cfg{'out_hint_check'} = 0; }
-    if ($arg =~ /^--hints?infos?/)      { $cfg{'out_hint_info'} = 1;}
-    if ($arg =~ /^--nohints?infos?/)    { $cfg{'out_hint_info'} = 0;}
-    if ($arg =~ /^--hints?checks?/)     { $cfg{'out_hint_check'}= 1;}
-    if ($arg =~ /^--nohints?checks?/)   { $cfg{'out_hint_check'}= 0;}
-    if ($arg =~ /^--hints?cipher/)      { $cfg{'out_hint_cipher'}=1;}
-    if ($arg =~ /^--nohints?cipher/)    { $cfg{'out_hint_cipher'}=0;}
-    if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
-    if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
-    if ($arg =~ /^--headers?$/)         { $cfg{'out_header'}= 1;    } # some people type --headers
-    if ($arg =~ /^--noheaders?$/)       { $cfg{'out_header'}= 0;    }
+    if ($arg eq  '--sslerror')          { _setcfg_use('ssl_error',   1); }
+    if ($arg eq  '--nosslerror')        { _setcfg_use('ssl_error',   0); }
+    if ($arg eq  '--ssllazy')           { _setcfg_use('ssl_lazy',    1); }
+    if ($arg eq  '--nossllazy')         { _setcfg_use('ssl_lazy',    0); }
+    if ($arg =~ /^--nullsslv?2$/i)      { _setcfg_use('nullssl2',    1); }
+    if ($arg =~ /^--sslv?2null$/i)      { _setcfg_use('nullssl2',    1); }
+    if ($arg eq  '--noenabled')         { _setcfg_out('enabled',     0); }
+    if ($arg eq  '--enabled')           { _setcfg_out('enabled',     1); }
+    if ($arg eq  '--disabled')          { _setcfg_out('disabled',    1); }
+    if ($arg eq  '--nodisabled')        { _setcfg_out('disabled',    0); }
+    if ($arg =~ /^--headers?$/)         { _setcfg_out('header',      1); } # some people type --headers
+    if ($arg =~ /^--noheaders?$/)       { _setcfg_out('header',      0); }
+    if ($arg =~ /^--hints?$/)           { _setcfg_out('hint_info',   1); _setcfg_out('hint_check', 1); }
+    if ($arg =~ /^--nohints?$/)         { _setcfg_out('hint_info',   0); _setcfg_out('hint_check', 0); }
+    if ($arg =~ /^--hints?infos?/)      { _setcfg_out('hint_info',   1); }
+    if ($arg =~ /^--nohints?infos?/)    { _setcfg_out('hint_info',   0); }
+    if ($arg =~ /^--hints?checks?/)     { _setcfg_out('hint_check',  1); }
+    if ($arg =~ /^--nohints?checks?/)   { _setcfg_out('hint_check',  0); }
+    if ($arg =~ /^--hints?cipher/)      { _setcfg_out('hint_cipher', 1); }
+    if ($arg =~ /^--nohints?cipher/)    { _setcfg_out('hint_cipher', 0); }
+    if ($arg =~ /^--showhosts?/i)       { _setcfg_out('hostname',    1); }
+    if ($arg eq  '--score')             { _setcfg_out('score',       1); }
+    if ($arg eq  '--noscore')           { _setcfg_out('score',       0); }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
-    if ($arg =~ /^--showhosts?/i)       { $cfg{'showhost'}++;       }
-    if ($arg eq  '--nosniname')         { $cfg{'use'}->{'sni'}  = 0;} # 0: don't use SNI, different than empty string
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      } # some people type --protoalpns
@@ -8324,18 +8330,18 @@ if (_iscfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
 if (_iscfg_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
-    #$cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
+    #_setcfg_out('header', 0) if ((grep{/--header/} @argv) <= 0);
     $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
     $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
     if (not _iscfg_do('list')) {
-        $cfg{'out_header'}  = $cfg{'opt-V'} if ($cfg{'out_header'} <= 0);
+        _setcfg_out('header', $cfg{'opt-V'}) if (not _iscfg_out('header'));
     }
 }
 if (_iscfg_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
-    $cfg{'out_header'}  = 1 if ((grep{/--no.?header/} @argv) <= 0);
+    _setcfg_out('header', 1)   if ((grep{/--no.?header/} @argv) <= 0);
     $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
 }
 if (_iscfg_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (not _iscfg_do('cipher_pfsall')); }
@@ -8503,9 +8509,10 @@ _yeast_TIME("ini{");
 
 #| set additional defaults if missing
 #| -------------------------------------
-$cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
-$cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
-$cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
+_setcfg_out('header', 1) if(0 => $verbose); # verbose uses headers
+_setcfg_out('header', 1) if(0 => $verbose); # verbose uses headers
+_setcfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
+_setcfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'}; # safe setting; may be undef
 if (not _iscfg_use('http')) {           # was explicitly set with --no-http 'cause default is 1
@@ -8514,7 +8521,7 @@ if (not _iscfg_use('http')) {           # was explicitly set with --no-http 'cau
 }
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
-    $cfg{'enabled'} = 1;
+    _setcfg_out('enabled', 1);
     $cfg{'label'}   = 'short';
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
@@ -8578,7 +8585,7 @@ if (defined $Net::SSLhello::VERSION) {
         $Net::SSLhello::trace       = $cfg{'trace'};
     }
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
-    $Net::SSLhello::experimental    = $cfg{'experimental'};
+    $Net::SSLhello::experimental    = $cfg{'use'}->{'experimental'};
     $Net::SSLhello::usemx           = $cfg{'use'}->{'mx'};
     $Net::SSLhello::usesni          = $cfg{'use'}->{'sni'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
@@ -8750,7 +8757,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $Net::SSLinfo::target_url   = get_target_path($idx);
     $Net::SSLinfo::target_url   =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
-    print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out_header'});
+    print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out'}->{'header'});
 
     _yeast_TIME("DNS{");
 
@@ -8940,8 +8947,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 # format of sslscan not yet supported correctly
-                my $header = $cfg{'out_header'};
-                if (($cfg{'out_header'} > 0) or (scalar @{$cfg{'version'}}) > 1) {
+                my $header = $cfg{'out'}->{'header'};
+                if (_iscfg_out('header') or (scalar @{$cfg{'version'}}) > 1) {
                     # need a header when more than one protocol is checked
                     $header = 1;
                 }
@@ -9092,7 +9099,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
     _yeast_TIME("checks}");
 
-    if ($cfg{'out_score'} > 0) { # no output for +info also
+    if (_iscfg_out('score')) { # no output for +info also
         _y_CMD("scores");
         _yeast_TIME("score{");
         printscores($legacy, $host, $port);
@@ -9122,18 +9129,15 @@ usr_pre_exit();
 _yeast_exit();
 _yeast_EXIT("exit=END   - end");# for symetric reason, rather useless here
 
-$cfg{'exitcode'} += $cfg{'exitcode_v'}; # --exitcode-v
-if ($cfg{'exitcode'} == 0) {
-    exit 0;
-} else {
-    my $status = check_exitcode();
-    if (0 < $status) {
-        # print EXIT message unless switched off with --exitcode-quiet
-        print "# EXIT $status" if (0 == $cfg{'exitcode_quiet'});
-    }
-    exit $status;
+$cfg{'use'}->{'exitcode'} += $cfg{'out'}->{'exitcode'}; # --exitcode-v
+exit 0 if (not _iscfg_use('exitcode'));
+
+my $status = check_exitcode();
+if (0 < $status) {
+    # print EXIT message unless switched off with --exitcode-quiet
+    print "# EXIT $status" if (not _iscfg_out('exitcode_quiet'));
 }
-exit 2; # main; code never reached
+exit $status;
 
 __END__
 __DATA__
