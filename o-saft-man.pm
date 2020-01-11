@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.308 20/01/04 12:06:43";
+my  $SID_man= "@(#) o-saft-man.pm 1.309 20/01/11 02:00:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.308'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.309'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1230,7 +1230,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     } else {
         # additional message here is like a WARNING or Hint,
         # do not print it if any of them is disabled
-        return if (($cfg{'warning'} + $cfg{'out_hint'}) < 2);
+        return if (($cfg{'out'}->{'warning'} + $cfg{'out'}->{'hint'}) < 2);
         print <<"EoHelp";
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
@@ -1728,7 +1728,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.308 2020/01/04
+1.309 2020/01/11
 
 =head1 AUTHOR
 
