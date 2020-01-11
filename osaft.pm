@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '19.12.26',  # official version number of this file
+    OSAFT_VERSION   => '19.12.27',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.215 20/01/08 22:52:06",
+    SID_osaft   => "@(#) osaft.pm 1.216 20/01/11 01:56:40",
 
 };
 
@@ -1511,8 +1511,6 @@ our %cfg = (
     'connect_delay' => 0,       # time to wait in seconds for starting next cipher check
     'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
                                 # 1: reuse existing sockets, even if SSL connect failed
-    'nolocal'       => 0,
-    'experimental'  => 0,       # 1: use experimental functionality
     'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
     'protos_next'   =>          # all names known for ALPN or NPN
                        'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
@@ -1544,17 +1542,6 @@ our %cfg = (
     'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
     'openssl_fips'  => undef,   # NOT YET USED
     'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
-    'exitcode'      => 0,       # 1: exit with status code if any check is "no"
-                                #    see also 'out'->'exitcode'
-    'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
-    'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
-    'exitcode_medium'   => 1,   # 0: do not count MEDIUM ciphers for --exitcode
-    'exitcode_weak' => 1,       # 0: do not count  WEAK  ciphers for --exitcode
-    'exitcode_low'  => 1,       # 0: do not count  LOW   ciphers for --exitcode
-    'exitcode_pfs'  => 1,       # 0: do not count ciphers without PFS for --exitcode
-    'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
-    'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
-    'exitcode_quiet'=> 0,       # 1: do not print "EXIT status" message
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'ignorenoreply' => 1,       # 1: treat "no reply" as heartbeat not enabled
     'label'         => 'long',  # fomat of labels
@@ -1565,7 +1552,6 @@ our %cfg = (
                        [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
     'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
                                 # temporary list 'cause DTLS not supported by openssl (6/2015)
-    'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
     'TLSv1'         => 1,       # 1:   "
@@ -1580,7 +1566,6 @@ our %cfg = (
     'DTLSv13'       => 0,       # 1:   "
     'TLS1FF'        => 0,       # dummy for future use
     'DTLSfamily'    => 0,       # dummy for future use
-    'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # should simply be   ALL:COMPLEMENTOFALL,  but
@@ -1910,18 +1895,12 @@ our %cfg = (
                        )],      # fingerprint is special, see _ishexdata()
    #------------------+---------+----------------------------------------------
 
-    'enabled'       => 0,       # 1: only print enabled ciphers
-    'disabled'      => 0,       # 1: only print disabled ciphers
-    'exitcode_v'    => 0,       # 1: print verbose checks for exit status
-    'showhost'      => 0,       # 1: prefix printed line with hostname
-    'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
    # option key        default   description
    #------------------+---------+----------------------------------------------
     'out' =>    {      # configurations for data to be printed
         'disabled'  => 1,       # 1: print disabled ciphers
         'enabled'   => 1,       # 1: print enabled ciphers
-        'exitcode'  => 0,       # 1: print verbose checks for exit status
         'header'    => 0,       # 1: print header lines in output
         'hostname'  => 0,       # 1: print hostname (target) as prefix for each line
         'hint_cipher'   => 1,   # 1: print hints for +cipher command
@@ -1936,13 +1915,23 @@ our %cfg = (
         'warning'   => 1,       # 1: print warnings
         'score'     => 0,       # 1: print scoring
         'ignore'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
-    },
+        'exitcode'  => 0,       # 1: print verbose checks for exit status
+        'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
+        'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
+        'exitcode_medium'   => 1,   # 0: do not count MEDIUM ciphers for --exitcode
+        'exitcode_weak'     => 1,   # 0: do not count  WEAK  ciphers for --exitcode
+        'exitcode_low'      => 1,   # 0: do not count  LOW   ciphers for --exitcode
+        'exitcode_pfs'      => 1,   # 0: do not count ciphers without PFS for --exitcode
+        'exitcode_prot'     => 1,   # 0: do not count protocols other than TLSv12 for --exitcode
+        'exitcode_sizes'    => 1,   # 0: do not count size checks for --exitcode
+        'exitcode_quiet'    => 0,   # 1: do not print "EXIT status" message
+    }, # out
 
     'use' =>    {      # configurations to use or do some specials
-        'dns'       => 1,       # 1: make DNS reverse lookup
         'mx'        => 0,       # 1: make MX-Record DNS lookup
-        'https'     => 1,       # 1: make HTTPS request
+        'dns'       => 1,       # 1: make DNS reverse lookup
         'http'      => 1,       # 1: make HTTP  request
+        'https'     => 1,       # 1: make HTTPS request
         'forcesni'  => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
         'sni'       => 1,       # 0: do not make connection in SNI mode
                                 # 1: make connection with SNI set (can be empty string)
@@ -1952,9 +1941,15 @@ our %cfg = (
         'npn'       => 1,       # 0: do not use -nextprotoneg option for openssl
         'reconnect' => 1,       # 0: do not use -reconnect option for openssl
         'extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-        'no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
         'cert'      => 1,       # 0: do not get data from certificate
-    },
+        'no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
+        'ssl_lazy'  => 0,       # 1: lazy check for available SSL protocol functionality (Net::SSLeay problem)
+        'nullssl2'  => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
+        'ssl_error' => 1,       # 1: stop connecting to target after ssl-error-max failures
+        'experimental'  => 0,   # 1: use, print experimental functionality
+        'exitcode'  => 0,       # 1: exit with status code if any check is "no"
+                                # see also 'out'->'exitcode'
+    }, # use
 
    # option key        default   description
    #------------------+---------+----------------------------------------------
@@ -1962,12 +1957,6 @@ our %cfg = (
     'opt-V'         => 0,       # 1 when option -V was given
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex 0x esc)],
-    'out_header'    => 0,       # print header lines in output
-    'out_score'     => 0,       # print scoring; default for +check
-    'out_hint'      => 1,       # 1: print hints; 0: don't print hints
-    'out_hint_cipher'   => 1,   # 1: print hints for +cipher command
-    'out_hint_check'=> 1,       # 1: print hints for +check commands
-    'out_hint_info' => 1,       # 1: print hints for +info commands
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
     'mx_domains'    => [],      # list of mx-domain:port to be processed
@@ -2038,7 +2027,7 @@ our %cfg = (
         '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"  ],
         '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"  ],
         #--------------+--------+---------------------------------------------
-    },
+    }, # openssl
     'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
         # will be initialised from %prot
      },
@@ -2058,7 +2047,7 @@ our %cfg = (
         'can_ocsp'  => 1,       # OCSP_cert2ids
         'iosocket'  => 1,       # $IO::Socket::SSL::VERSION # TODO: wrong container
     },
-    'ssl_error'     => 1,       # stop connecting to target after ssl-error-max failures
+    # 'ssl_error'               # see 'use' above
     'sslerror' =>   {  # configurations for TCP SSL protocol
         'timeout'   => 1,       # timeout to receive ssl-answer
         'max'       => 5,       # max. consecutive errors
@@ -2069,7 +2058,7 @@ our %cfg = (
         'ignore_no_conn'   => 0,# 0: ignore warnings if connection fails, check target anyway
                                 # 1: print  warnings if connection fails, don't check target
         'ignore_handshake' => 1,# 1: treat "failed handshake" as error,   don't check target
-    },
+    }, # ssl_error
     'sslhello' =>   {  # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 2,       # number of retry when timeout
@@ -3152,7 +3141,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.215 2020/01/08
+1.216 2020/01/11
 
 =head1 AUTHOR
 
