@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '19.12.19',
+    SSLINFO_VERSION => '20.02.02',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.252 20/01/04 12:11:27',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.254 20/02/15 23:43:14',
 };
 
 ######################################################## public documentation #
@@ -2007,7 +2007,7 @@ sub s_client_check  {
     #_trace("data{ $_OpenSSL_opt{'data'} }";
 
     # store data very simple: set value to 1 if option appears in output
-    foreach my $key (keys %_OpenSSL_opt) {
+    foreach my $key (sort keys %_OpenSSL_opt) {
         next if ($key !~ m/^-/);    # ensure that only options are set
         $_OpenSSL_opt{$key} = grep{/^ *$key\s/} split("\n", $_OpenSSL_opt{'data'}); # returns 1 or 0
     }
@@ -2134,7 +2134,7 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
 
             #1c. disable not specified SSL versions, limit as specified by user
-            foreach  my $_ssl (keys %_SSLmap) {
+            foreach my $_ssl (sort keys %_SSLmap) {
                 # $sslversions  passes the version which should be supported,  but
                 # openssl and hence Net::SSLeay, configures what  should *not*  be
                 # supported, so we skip all versions found in  $sslversions
@@ -2511,7 +2511,7 @@ sub do_ssl_open($$$@) {
                 );
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
-            foreach  my $h (keys %headers) { $headers .= "$h: $headers{$h}\n"; }
+            foreach my $h (sort keys %headers) { $headers .= "$h: $headers{$h}\n"; }
             _trace("request #{\n$host:$port\n$request"); _trace("request #}");
             _trace("response #{\n$headers\n$response");  _trace("response #}");
                 # Net::SSLeay 1.58 (and before)
@@ -2771,7 +2771,7 @@ sub do_ssl_open($$$@) {
             # it's not ensured that all 5 data sets are identical, hence
             # we need to check them all -at least the last one-
             # Unfortunately all following checks use all 5 data sets.
-        foreach my $key (keys %match_map) {
+        foreach my $key (sort keys %match_map) {
             my $regex = $match_map{$key};
             $d = $data;
             $d =~ s/.*?$regex[ \t]*([^\n\r]*)\n.*/$1/si;
@@ -3848,14 +3848,14 @@ sub error           {
 sub _main_help      {
     #? print own help
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval{require POD::Perldoc;}) {
+    if (eval{require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
     if (qx(perldoc -V)) {  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
     }
     exit 0;
 } # _main_help
