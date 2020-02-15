@@ -138,7 +138,7 @@ For example:
 
 =head1 VERSION
 
-1.26 2020/01/04
+1.27 2020/02/15
 
 =head1 AUTHOR
 
@@ -149,7 +149,7 @@ For example:
 use strict;
 use warnings;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.26 20/01/04 12:07:51";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.27 20/02/15 23:21:18";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
@@ -255,12 +255,12 @@ sub _main           {
     if ($arg =~ m/--?h(elp)?$/x) {
         # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
         printf("# %s %s\n", __FILE__, $SID_usr);
-        if (eval{require POD::Perldoc;}) {
+        if (eval{require Pod::Perldoc;}) {
             # pod2usage( -verbose => 1 )
             exit( Pod::Perldoc->run(args=>[$0]) );
         }
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
         }
     }
     exit 0;
