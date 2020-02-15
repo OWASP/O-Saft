@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.309 20/01/11 02:00:14";
+my  $SID_man= "@(#) o-saft-man.pm 1.310 20/02/15 23:23:18";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.309'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.310'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1556,12 +1556,12 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
     if ($arg =~ m/--?h(elp)?$/x) {
         # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a Perl package
         printf("# %s %s\n", __FILE__, $version);
-        if (eval {require POD::Perldoc;}) {
+        if (eval {require Pod::Perldoc;}) {
             # pod2usage( -verbose => 1 );
             exec( Pod::Perldoc->run(args=>[$0]) );
         }
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
         }
     } else {
         $arg =  $ARGV[0];
@@ -1728,7 +1728,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.309 2020/01/11
+1.310 2020/02/15
 
 =head1 AUTHOR
 
