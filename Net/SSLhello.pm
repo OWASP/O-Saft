@@ -69,9 +69,9 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '19.12.21',
+    SSLHELLO_VERSION=> '20.02.02',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.37 20/01/01 18:45:45',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.38 20/02/15 23:50:02',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -5038,13 +5038,13 @@ sub _main_help  {
     #? print own help
     # if ($#argv < 0) { _main_help(); exit 0; }
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
+    if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
-        exec( Pod::Perldoc->run(args=>[$0]) );
+        exit( Pod::Perldoc->run(args=>[$0]) );
     }
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
     }
     return;
 } # _main_help
