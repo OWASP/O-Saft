@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "19.12.19";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.27 20/01/04 12:21:00";
+our $VERSION    = "20.02.02";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.28 20/02/15 23:56:45";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -395,12 +395,12 @@ sub _main_usage {
 sub _main_help  {
     #? print own help
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require POD::Perldoc;}) {
+    if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
-        exec( Pod::Perldoc->run(args=>[$0]) );
+        exit( Pod::Perldoc->run(args=>[$0]) );
     }
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
     }
     exit 0;
 }; # _main_help
@@ -580,7 +580,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.27 2020/01/04
+1.28 2020/02/15
 
 =head1 AUTHOR
 
