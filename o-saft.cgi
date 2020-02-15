@@ -111,7 +111,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.51 20/02/15 20:57:13";
+my $SID_cgi = "@(#) o-saft.cgi 1.52 20/02/15 21:05:06";
 my $VERSION = '20.02.03';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -153,7 +153,6 @@ sub _warn_and_exit  {
 
 if (not $ENV{'QUERY_STRING'}) {
 	print "**WARNNG: test mode: restart using args as value in QUERY_STRING\n";
-print "A $#argv @argv\n";
 	_warn_and_exit "call without parameters" if (1 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
@@ -203,7 +202,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.51\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.52\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
