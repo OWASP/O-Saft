@@ -111,8 +111,8 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.50 20/02/15 19:19:47";
-my $VERSION = '20.02.02';
+my $SID_cgi = "@(#) o-saft.cgi 1.51 20/02/15 20:57:13";
+my $VERSION = '20.02.03';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -153,7 +153,8 @@ sub _warn_and_exit  {
 
 if (not $ENV{'QUERY_STRING'}) {
 	print "**WARNNG: test mode: restart using args as value in QUERY_STRING\n";
-	_warn_and_exit "call without parameters" if (0 > $#argv);
+print "A $#argv @argv\n";
+	_warn_and_exit "call without parameters" if (1 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
 	# NOTE: this produces output before any HTTP header, which results in a
@@ -202,7 +203,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.50\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.51\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -318,8 +319,9 @@ if ($me =~/\.cgi$/) {
 			# first match bare hostname argument without --host=
 			# this avoids false positive matches in more lazy RegEx
 			# FIXME: probably necessary for all following RegEx
+			# NOTE:  also bad 127.666 (= 127.0.2.154)
 
-		qr/(?:(?:$key)?((10|127|224).([0-9]{1,3}.)?[0-9]+))/i,
+		qr/(?:(?:$key)?((10|127|224).[0-9]+(.[0-9]{1,3})?))/i,
 			# abbreviated IPv4: 127.1 127.41.1 10.0.1 224.1
 
 		qr/(?:(?:$key)(localhost|::1|ffff::1|(ffff:)?7f00:1)(&|$))/i,
@@ -353,14 +355,13 @@ if ($me =~/\.cgi$/) {
 			# any IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
 			# NOTE: ([0-9a-f]{0,4}:){1,3} is lazy, matches also ffff:IP or :IP
 
+		qr/(?:&[0-9]+(&|$))/i,
+			# just 11111; does not match +11111 or -11111 or --host=11111
 		qr/(?:(?:$key)[0-9]+(&|$))/i,
 			# just --host=11111
 			# NOTE: in general not bad, but needs to be mapped to
 			#       allowed IPv4 or IPv6 which is not that simple
 			# FIXME: i.e. valid 3221225473 = 192.0.0.1 is denied
-
-#		qr/(?:(?:$key)?[0-9]+(&|$))/i,   # just a number without --host
-			# check disabled because it woud match: some&--opt=42&
 
 		qr/(?:(?:$key)?.*?\.local(&|$))/i,
 			# multicast domain .local (RFC6762)
