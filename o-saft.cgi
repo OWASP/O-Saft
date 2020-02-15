@@ -111,7 +111,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.49 20/02/15 18:58:52";
+my $SID_cgi = "@(#) o-saft.cgi 1.50 20/02/15 19:19:47";
 my $VERSION = '20.02.02';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -129,10 +129,17 @@ my $openssl = '/usr/local/openssl/bin/openssl'; # <== adapt as needed
 
 my @argv    = @ARGV;
 
+sub _print_if_test  {
+	#? print text if environment variable OSAFT_CGI_TEST is set
+	local $\ = "\n";
+	print @_ if defined $ENV{'OSAFT_CGI_TEST'};
+	return;
+} # _print_if_test
+
 sub _warn_and_exit  {
 	#? print error and exit
 	my $txt = shift;
-	die "**ERROR: $txt" if ($ENV{'OSAFT_CGI_TEST'}); ## no critic qw(ErrorHandling::RequireCarping)
+	_print_if_test "**ERROR: $txt";
 	# ####################################################################
 	#
 	# This function should print an empty string and exit with status 0 in
@@ -195,14 +202,12 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.49\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.50\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
 
-	if (defined $ENV{'OSAFT_CGI_TEST'}) {
-		print "**WARNNG: test mode: die with detailed messages on errors\n";
-	}
+	_print_if_test "**WARNNG: test mode: die with detailed messages on errors";
 
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
@@ -377,19 +382,19 @@ if ($me =~/\.cgi$/) {
 		) {
 		#dbx# print "#dbx: $qs =~ m#$dangerous#\n";
 		if ($qs =~ m#$dangerous#) {
-			print "**ERROR: $dangerous\n" if ($ENV{'OSAFT_CGI_TEST'});
+			_print_if_test "**ERROR: $dangerous";
 			$err++;
 		}
 	}
-	_warn_and_exit "dangerous parameters" if 0 < $err;
+	_warn_and_exit "dangerous parameters; aborted" if 0 < $err;
 	#dbx# print "\nQS: $qs\n";
 
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
-	print "$osaft  @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); 
-	exec   $osaft, @argv;       # exec is ok, as we call ourself only
+	_print_if_test "$osaft  @argv";
+	exec  $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 not tested: exec 'perl.exe', $osaft, @argv;
 }
 exit 0; # never reached
