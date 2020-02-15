@@ -1,11 +1,16 @@
 #!/usr/bin/perl
 
-## no critic qw(Documentation::RequirePodSections)
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
-
-# HACKER's INFO
-#       To get a list of RegEx for invalid hosts, use:
-#           grep qr/ $0
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  because we use /x as needed for human readability (may change in future)
+## no critic qw(RegularExpressions::RequireLineBoundaryMatching)
+#  hmm, we're matching only on line here (Severity: 2)
+## no critic qw(RegularExpressions::RequireDotMatchAnything)
+#  hmm, we're matching only on line here (Severity: 2)
+## no critic qw(Variables::ProhibitPunctuationVars)
+#  we make regular use of these variables as we know them;-) (Severity: 2)
+## no critic qw(ControlStructures::ProhibitPostfixControls)
+#  we believe that postfix control make some code more readable (Severity: 2)
 
 =pod
 
@@ -15,53 +20,71 @@ o-saft.cgi  - wrapper script to start o-saft.pl as CGI script
 
 =head1 DESCRIPTION
 
-Calls ./o-saft.pl if first parameter is  I<--cgi>.
+Calls  o-saft.pl  if first parameter is  I<--cgi>  and prints its result
+as plain text. The result is prefixed with proper HTTP headers.
 
-The result is prefixed with proper HTTP headers.  These headers can be omitted
-with the parameter  I<--cgi-no-header> .
+Some parameters are silently ignored (removed from argument list), i.e:
 
-The default HTTP header "Content-type:"is set to:
+  --dump --exec --list --libversion --version --trace* --v --ca*
 
-  Content-type: text/plain;charset=utf-8
-
-If parameter  I<--format=html>  is given it will be set to
-
-  Content-type: text/html;charset=utf-8
-
-Some lazy checks according parameters are done, exits if following is found:
+Some lazy checks according parameters are done, exits silently if any of
+following will be found:
 
 =over 4
 
-=item not allowed characters in parameters, except:
+=item * not allowed characters in parameters, allowed are:
 
  a-zA-Z0-9,.:_&\!\/=\+-
 
-=item not allowed options:
+=item * not allowed options:
 
 --env* --exe* --lib* --call* --openssl*
 
-=item illegal hostnames or IPs:
+=item * illegal hostnames or IPs:
 
-localhost, (0|10|127|169|172|192|224|240|255).X.X.X *.local
+localhost, *.local, (0|10|127|169|172|192|224|240|255).X.X.X
 
-=item any IPv6 addresses in URLs
+=item * any IPv6 addresses in URLs
 
 =back
 
-Exits silently if any above error is detected.
+To get a list of RegEx for invalid parameters, please use:
+
+  grep qr/ o-saft.cgi
+
+=head1 OPTIONS, PARAMETERS
+
+=over 4
+
+=item --cgi
+
+Must be used as first parameter, otherwise dies.
+
+=item --format=html
+
+Use HTTP header:
+
+  Content-type: text/html;charset=utf-8
+
+=item --cgi-no-header
+
+Omit all HTTP headers (useful if headers are added by web server).
+
+=back
 
 =head1 DEBUG
 
-If the environment variable  I<OSAFT_CGI_TEST>  is set, detailed error messages
-are printed.  This is only useful when used on command line, but not within the
-web server. In particular, it prints the RegEx matching a dangerous hostname or
-IP.
+If the environment variable  I<OSAFT_CGI_TEST>  is set,  detailed  error
+messages are printed. In particular, it prints the RegEx matching any of
+the dangerous parameters (i.e. hostname or IP).
 
-The detailed error message is for testing only  and not intended to be used and
-seen when run as a CGI script in a web server. As it is not possible to set the
-environment variable by the client (browser), the code should be safe.
+This is only useful for testing on command line. It's not intended to be
+used when run as a CGI script in a web server.
 
-=head1 EXAMPLE
+As it is not possible to set environment variables for the CGI script by
+the client (browser), the code should be safe.
+
+=head1 EXAMPLES
 
 Call as CGI from command line:
 
@@ -70,6 +93,10 @@ Call as CGI from command line:
 For testing only, call from command line:
 
          o-saft.cgi --cgi --host=demo.tld --cmd=cn
+
+For debugging only, call from command line:
+
+  env OSAFT_CGI_TEST=1 --cgi --host=localhost --cmd=cn o-saft.cgi
 
 =head1 SEE ALSO
 
@@ -84,8 +111,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.47 20/01/09 18:44:55";
-my $VERSION = '19.12.24';
+my $SID_cgi = "@(#) o-saft.cgi 1.48 20/02/15 18:35:54";
+my $VERSION = '20.02.01';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -168,7 +195,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.47\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.48\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -226,22 +253,23 @@ if ($me =~/\.cgi$/) {
 
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
 		#     0.0.0.0/8       This Network
-		#     10.0.0.0/8      Private-Use Networks
-		#     100.64.0.0/10   CGN - Carrier- Grade NAT (RFC6598)
-		#     127.0.0.0/8     Loopback
-		#     169.254.0.0/16  Link local
-		#     172.16.0.0/12   Private-Use Networks
-		#     192.0.0.0/24    IETF Protocol Assignments
-		#     192.0.2.0/24    TEST-NET-1
-		#     192.88.99.0/24  6to4 Relay Anycast
-		#     192.168.0.0/16  Private-Use Networks
-		#     198.18.0.0/15   Network Interconnect, Device Benchmark Testing
-		#     198.51.100.0/24 TEST-NET-2
-		#     203.0.13.0/24   TEST-NET-3
-		#     224.0.0.0/4     224.0.0.0 - 239.255.255.255 Multicast
+		#     10.0.0.0/8      Private-Use Networks      # 10.0.0.0    .. 10.255.255.255
+		#     100.64.0.0/10   CGN - Carrier- Grade NAT  # 100.64.0.0  .. 100.127.255.255
+		#     127.0.0.0/8     Loopback                  # 127.0.0.0   .. 127.255.255.255
+		#     169.254.0.0/16  Link local                # 169.254.0.0 .. 169.254.255.255
+		#     172.16.0.0/12   Private-Use Networks      # 172.16.0.0  .. 172.31.255.255
+		#     192.0.0.0/24    IETF Protocol Assignments # 192.0.0.0   .. 192.0.0.255
+		#     192.0.2.0/24    TEST-NET-1                # 192.0.2.0   .. 192.0.2.255
+		#     192.88.99.0/24  6to4 Relay Anycast        # 192.88.99.0 .. 192.88.99.255
+		#     192.168.0.0/16  Private-Use Networks      # 192.168.0.0 .. 192.168.255.255
+		#     198.18.0.0/15   Network Interconnect,
+                #                     Device Benchmark Testing  # 198.18.0.0  .. 198.19.255.255
+		#     198.51.100.0/24 TEST-NET-2                # 198.51.100.0 .. 198.51.100.255
+		#     203.0.13.0/24   TEST-NET-3                # 203.0.13.0  .. 203.0.13.255
+		#     224.0.0.0/4     Multicast                 # 224.0.0.0   .. 239.255.255.255
 		#       # https://www.iana.org/assignments/multicast-addresses/multicast-addresses.xhtml
-		#     240.0.0.0/4     240.0.0.0 - 255.255.255.255 Reserved for future use
-		#     255.255.255.255/32
+		#     240.0.0.0/4     Reserved for future use   # 240.0.0.0   .. 255.255.255.255 
+		#     255.255.255.255/32 Limited Broadcast
 
 		#     fe80:           IPv6 link local
 		#     fe[c-f][0-9a-f]: IPv6 site local
@@ -268,7 +296,7 @@ if ($me =~/\.cgi$/) {
 		#       Unfortunately Math::BigInt is required (breaks usage on
 		#       ancient systems).
 
-		# NOTE: according followin RegExs
+		# NOTE: according following RegExs
 		# - grouping with back reference is used insted of  (?: ... )
 		#   sometimes, this is because  :  is used literally in RegExs
 		# - RegExs are not case sensitive to match FQDN and (hex) IP,
@@ -278,7 +306,7 @@ if ($me =~/\.cgi$/) {
 		# - the leeading option like --host= is optional as the word to
 		#   be checked may be passed without key, something like:
 		#   --cgi&--host=good.FQDN&localhost&--enabled=
-		#   IPv4 matching is lazy with [0-9]+
+		# - IPv4 matching is lazy with [0-9]+
 
 		qr/(?:&(localhost|10|127|224(.[0-9]){1,3}|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
 			# first match bare hostname argument without --host=
@@ -355,7 +383,7 @@ if ($me =~/\.cgi$/) {
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
-	print "$osaft @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); ## no critic qw(ErrorHandling::RequireCarping)
+	print "$osaft @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); 
 	exec $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
 }
