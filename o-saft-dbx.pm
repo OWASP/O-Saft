@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.130 20/01/11 01:59:27";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.131 20/02/15 23:38:55";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -817,14 +817,14 @@ sub _main_dbx       {
     if ($arg =~ m/--?h(elp)?$/) {
         # printf("# %s %s\n", __PACKAGE__, $mainsid);  # FIXME: if it is a perl package
         printf("# %s %s\n", __FILE__, $SID_dbx);
-        if (eval {require POD::Perldoc;}) {
+        if (eval {require Pod::Perldoc;}) {
             # pod2usage( -verbose => 1 )
-            exec( Pod::Perldoc->run(args=>[$0]) );
+            exit( Pod::Perldoc->run(args=>[$0]) );
         }
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
             # may return:  You need to install the perl-doc package to use this program.
             #exec "perldoc $0"; # scary ...
-            printf("# no POD::Perldoc installed, please try:\n   perldoc $0\n");
+            printf("# no Pod::Perldoc installed, please try:\n   perldoc $0\n");
         }
     }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
@@ -981,7 +981,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.130 2020/01/11
+1.131 2020/02/15
 
 =head1 AUTHOR
 
