@@ -111,8 +111,8 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.48 20/02/15 18:35:54";
-my $VERSION = '20.02.01';
+my $SID_cgi = "@(#) o-saft.cgi 1.49 20/02/15 18:58:52";
+my $VERSION = '20.02.02';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -149,8 +149,8 @@ if (not $ENV{'QUERY_STRING'}) {
 	_warn_and_exit "call without parameters" if (0 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
-	# NOTE: this produces output before any HTTP header, which would result in
-        #       a Server 500 error in the webserver; that's ok here for testing
+	# NOTE: this produces output before any HTTP header, which results in a
+        #       Server 500 error in the web server; that's ok here for testing
 	## no critic qw(Variables::RequireLocalizedPunctuationVars)
 	$ENV{'QUERY_STRING'} =  join('&', @argv);
 	$ENV{'QUERY_STRING'} =~ s/[+]/%2b/g;
@@ -170,7 +170,7 @@ if ($me =~/\.cgi$/) {
 	#       when used with our own  osaft:  schema, it also contains the
 	#       the schema and path, i.e.  osaft:///o-saft.cgi?
 	# NOTE: for debugging using system() writing to a file is better than
-	#       using perl's print() as it may break the HTTP response.
+	#       using perl's print() as it may break the HTTP response
 	my $cgi = 0;
 	my $typ = 'plain';
 	my $qs  = '';
@@ -195,7 +195,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.48\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.49\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -240,6 +240,7 @@ if ($me =~/\.cgi$/) {
         #       a false positive, bug here
         # NOTE: technically & may be a ? too, it is not really RFC compliant,
         #       but possible. Someone may sends malicious data.
+	my $err = 0;
 	my $key = '&--(?:host|url)=';
 	foreach my $dangerous (
 		#dbx# print "#dbx: $dangerous # $qs\n";
@@ -375,16 +376,20 @@ if ($me =~/\.cgi$/) {
 
 		) {
 		#dbx# print "#dbx: $qs =~ m#$dangerous#\n";
-		_warn_and_exit "$dangerous" if ($qs =~ m#$dangerous#);
+		if ($qs =~ m#$dangerous#) {
+			print "**ERROR: $dangerous\n" if ($ENV{'OSAFT_CGI_TEST'});
+			$err++;
+		}
 	}
+	_warn_and_exit "dangerous parameters" if 0 < $err;
 	#dbx# print "\nQS: $qs\n";
 
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
-	print "$osaft @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); 
-	exec $osaft, @argv;        # exec is ok, as we call ourself only
-	# TODO: Win32 nost tested: exec 'perl.exe', $osaft, @argv;
+	print "$osaft  @argv\n" if ($ENV{'OSAFT_CGI_TEST'}); 
+	exec   $osaft, @argv;       # exec is ok, as we call ourself only
+	# TODO: Win32 not tested: exec 'perl.exe', $osaft, @argv;
 }
 exit 0; # never reached
