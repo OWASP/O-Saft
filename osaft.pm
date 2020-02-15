@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.217 20/02/15 23:19:26",
+    SID_osaft   => "@(#) osaft.pm 1.218 20/02/15 23:31:54",
 
 };
 
@@ -3093,7 +3093,8 @@ sub _main_help      {
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
-        exec( Pod::Perldoc->run(args=>[$0]) );
+        Pod::Perldoc->run(args=>[$0]);
+	exit 0;
     }
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
@@ -3141,7 +3142,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.217 2020/02/15
+1.218 2020/02/15
 
 =head1 AUTHOR
 
