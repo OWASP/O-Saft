@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.991 20/06/04 22:23:47",
+    SID         => "@(#) yeast.pl 1.992 20/06/04 22:42:45",
     STR_VERSION => "19.12.27",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7835,8 +7835,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
-    if ($arg =~ /^--test/)              { $test = $arg;             } # SEE Note:--test-*
-    if ($arg =~ /^[+]test/)             { $test = $arg;             } # SEE Note:--test-*
+    if ($arg =~ /^--tests?/)            { $test = $arg;             } # SEE Note:--test-*
+    if ($arg =~ /^[+]tests?/)           { $test = $arg;             } # SEE Note:--test-*
+        # handles also --test-* and --tests-*
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
     if ($arg eq  '--proxyport')         { $typ = 'PROXY_PORT';      }
@@ -8303,7 +8304,6 @@ while ($#argv >= 0) {
     }
 
 } # while options and arguments
-$test =~ s/^[+-]-?test[._-]?//; # remove --test or +test prefix; ignores --test itself below
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
@@ -10309,7 +10309,6 @@ All these commands do not perform any checks on the specified targets, but
 exit right before the checks start. It is the same behaviour as the  +quit
 command.
 
-Starting with VERSION 19.12.21, only the options  --test-*  
 Until VERSION 19.12.21, only the options  --test-*  where supported. Using
 these options exited the program. This behaviour resulted in incomplete or
 misleading informations.
