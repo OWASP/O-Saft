@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.134 20/06/04 22:46:47";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.135 20/06/04 23:13:41";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -587,6 +587,33 @@ sub __prot_version  {
     return $data;
 } # __prot_version
 
+sub _yeast_test_help    {
+    local $\ = "\n";
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== commands for internal testing ===
+=
+= Print list of commands for internal testing/information.
+=
+=   command/option  prints these informations
+=  ----------------+----------------------------------------------
+=   --tests         this text
+=   --test-init     data structure  %cfg after initialization
+=   --test-data     overview of all available commands and checks
+=   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
+=   --test-prot     internal data according protocols
+=   --test-sub      formatted list of internal functions
+=   --test-regex    results for applying various texts to regex
+=   --test-cipher-list      list of hex keys of known ciphers
+=   --test-cipher-show      complete list of ciphers
+=   --test-cipher-sorted    list of ciphers sorted according strength
+=  ----------------+----------------------------------------------
+=";
+    # NOTE: description above should be similar to those in
+    #       OSaft/Doc/help.txt
+    return $data;
+} # _yeast_test_help
+
 sub _yeast_test_data    {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
@@ -785,8 +812,9 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalized option, like --testinit
     _yeast($arg);
+    _yeast_test_help()      if ('--test'    eq $arg);
+    _yeast_test_help()      if ('--tests'   eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test or +test prefix
-        # does not match --tests* , but ignores --test itself below
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
     _yeast_test_init()      if ('init'      eq $arg);
@@ -868,6 +896,8 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =item --help
 
+=item --tests
+
 =item --test-ciphers-list
 
 =item --test-ciphers-show
@@ -932,6 +962,8 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_ciphers_overview( )
 
+=item _yeast_test_help( )
+
 =item _yeast_test_data( )
 
 =item _yeast_test_init( )
@@ -983,7 +1015,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.134 2020/06/04
+1.135 2020/06/04
 
 =head1 AUTHOR
 
