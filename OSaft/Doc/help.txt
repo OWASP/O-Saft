@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.50 20/01/10 20:57:03
+# SID   @(#) help.txt 1.51 20/06/04 23:04:02
 
 NAME
 
@@ -4539,6 +4539,10 @@ TESTING
         The options which provide informations about internal data structures
         and alike described below, behave like the command  +quit  and do not
         perform any checks on the target(s).
+
+      --tests
+
+          Print overview of following commands/options.
 
       --test-data
 
