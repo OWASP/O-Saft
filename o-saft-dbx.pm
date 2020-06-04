@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.131 20/02/15 23:38:55";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.132 20/06/04 21:25:34";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -457,7 +457,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     printf("%s",__TRAC("SSL versions", "[ "));  # no \n !
     printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
     printf("]\n");
-    _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'use'}->{'ssl_lazy'}");
+    _yeast(" special SSLv2= null-sslv2=$cfg{'use'}->{'nullssl2'}, ssl-lazy=$cfg{'use'}->{'ssl_lazy'}");
     _yeast(" ignore output= " . ___ARR(@{$cfg{'ignore-out'}}));
     _yeast(" user commands= " . ___ARR(@{$cfg{'commands_usr'}}));
     _yeast("given commands= " . ___ARR(@{$cfg{'done'}->{'arg_cmds'}}));
@@ -981,7 +981,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.131 2020/02/15
+1.132 2020/06/04
 
 =head1 AUTHOR
 
