@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.135 20/06/04 23:13:41";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.136 20/06/05 00:02:11";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -814,7 +814,7 @@ sub _yeast_test {
     _yeast($arg);
     _yeast_test_help()      if ('--test'    eq $arg);
     _yeast_test_help()      if ('--tests'   eq $arg);
-    $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test or +test prefix
+    $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
     _yeast_test_init()      if ('init'      eq $arg);
@@ -856,6 +856,10 @@ sub _main_dbx       {
             #exec "perldoc $0"; # scary ...
             printf("# no Pod::Perldoc installed, please try:\n   perldoc $0\n");
         }
+    }
+    if ($arg =~ m/--tests?/) {
+        _yeast_test_help();
+        exit 0;
     }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
@@ -1015,7 +1019,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.135 2020/06/04
+1.136 2020/06/05
 
 =head1 AUTHOR
 
