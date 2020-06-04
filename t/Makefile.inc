@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.20 19/12/15 12:52:02
+#?      @(#) Makefile.inc 1.21 20/06/04 19:05:05
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.20
+_SID.inc       := 1.21
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -36,6 +36,9 @@ HELP.inc        = $(_NL)\
 \# Note that all definitions herein should be idempotent, so that this $(_NL)\
 \# file could be included several times. That's why only  =  and no  +=$(_NL)\
 \# assignments are used. $(_NL)\
+
+# ensure that messages and sorting are the same, important to compare results
+LANG=C
 
 ifndef Project
     Project    := o-saft
