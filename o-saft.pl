@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.992 20/06/04 22:42:45",
+    SID         => "@(#) yeast.pl 1.993 20/06/05 00:00:56",
     STR_VERSION => "19.12.27",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -395,7 +395,8 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| read DEBUG-FILE, if any (source for trace and verbose)
 #| -------------------------------------
 my $err = "";
-my @dbx = grep{/--(?:trace|v$|exitcode.?v$|test|yeast)/} @argv;   # may have --trace=./file
+my @dbx =  grep{/--(?:trace|v$|exitcode.?v$|tests?|yeast)/} @argv;  # may have --trace=./file
+push(@dbx, grep{/^[+](?:tests?)/} @argv);   # may have +test*
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -7836,8 +7837,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
     if ($arg =~ /^--tests?/)            { $test = $arg;             } # SEE Note:--test-*
-    if ($arg =~ /^[+]tests?/)           { $test = $arg;             } # SEE Note:--test-*
-        # handles also --test-* and --tests-*
+    if ($arg =~ /^[+]tests?/)           { $test = $arg;       next; } # SEE Note:--test-*
+        # handles also --test-* and --tests-*; no further check if +test*
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
     if ($arg eq  '--proxyport')         { $typ = 'PROXY_PORT';      }
@@ -8629,6 +8630,7 @@ _yeast_TIME("ini}");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
+$test =~ s/^[+](test.*)/--$1/;  # _yeast_test() expects --test*
 if ($test !~ m/^\s*$/)       { _yeast_test($test); exit 0; } # SEE Note:--test-*
 if (_iscfg_do('list'))       { printciphers();     exit 0; }
 if (_iscfg_do('ciphers'))    { printciphers();     exit 0; }
