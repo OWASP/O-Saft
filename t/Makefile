@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.107 20/01/09 15:24:59
+#?      @(#) Makefile 1.108 20/06/04 20:35:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.107
+_SID.test          := 1.108
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -134,6 +134,11 @@ TRACE.target.log=
 TEST.today     := $(shell date +%Y""%m%d)
     # current date in ISO format
 
+_SORT_opt      := -n -f
+    # newer GNU sort (~2018) changed the default behaviour, for example
+    # case-sensitivity, these options do the traditional sort
+    # TODO: need to check first if sort supports these options
+
 # define script or parts of it as variables, for better human readability
 # SEE Make:target matching
 #     _AWK_macro_by_line    - extract all variable names
@@ -205,7 +210,7 @@ HELP-help.test.*.all        = print available individual targets for tests from 
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
-	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort
+	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_SORT_opt)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
@@ -326,7 +331,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 
 help.test.makevars:
 	@echo '# $$(.VARIABLES)    = '
-	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort
+	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort $(_SORT_opt)
 
 .PHONY: help.test.makevars
 
