@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.990 20/01/11 01:58:45",
+    SID         => "@(#) yeast.pl 1.991 20/06/04 22:23:47",
     STR_VERSION => "19.12.27",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7703,7 +7703,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
-    if ($arg =~ /^--yeast/)             { $arg = '--test-data';           } # TODO: should become a more general check
+    if ($arg eq  '--yeast')             { $arg = '--test-data';           } # TODO: should become a more general check
     if ($arg =~ /^--yeast[_.-]?(.*)/)   { $arg = "--test-$1";             } # -"-
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
