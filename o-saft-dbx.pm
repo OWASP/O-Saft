@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.133 20/06/04 22:14:50";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.134 20/06/04 22:46:47";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -783,8 +783,10 @@ sub _yeast_test_prot    {
 
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
-    my $arg = shift;
+    my $arg = shift;    # normalized option, like --testinit
     _yeast($arg);
+    $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test or +test prefix
+        # does not match --tests* , but ignores --test itself below
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
     _yeast_test_init()      if ('init'      eq $arg);
@@ -981,7 +983,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.133 2020/06/04
+1.134 2020/06/04
 
 =head1 AUTHOR
 
