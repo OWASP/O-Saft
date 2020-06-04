@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.132 20/06/04 21:25:34";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.133 20/06/04 22:14:50";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -828,7 +828,7 @@ sub _main_dbx       {
         }
     }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
-        $arg = "--test-$1";
+        $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
         # TODO: _yeast_test($arg);
     }
@@ -981,7 +981,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.132 2020/06/04
+1.133 2020/06/04
 
 =head1 AUTHOR
 
