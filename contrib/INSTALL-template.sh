@@ -175,7 +175,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.47 19/12/15 10:51:44
+#?      @(#)  IRl�U 1.48 20/06/05 22:10:35
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -196,7 +196,7 @@ alias echo=/bin/echo    # need special echo which has -n option;
 	        # TODO: check path for each platform
 tab="	"       # need a real TAB (0x09) for /bin/echo
 
-text_miss="missing, try installing with ";
+text_miss=" missing, try installing with ";
 text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
@@ -301,7 +301,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.47 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.48 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
