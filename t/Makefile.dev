@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.28 20/06/05 00:11:25
+#?      @(#) Makefile.dev 1.29 20/06/06 00:55:53
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.28
+_SID.dev           := 1.29
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -103,12 +103,17 @@ LIST.osaft-man     := \
 LIST.osaft-dbx     := \
 	--tests \
 	--test-data     --test-init --test-maps --test-prot --test-regex    \
-	--test-ciphers  --test-ciphers-list --test-ciphers-show --test-ciphers-sort \
+	--test-ciphers  --test-ciphers-list     --test-ciphers-show \
+			--test-ciphers-sort	--test-ciphers-overview \
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
+LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap  --test-ssleay
+# TODO: --test-openssl
+#LIST.o-saft-pl     += $(LIST.net-sslinfo-t)
+
 LIST.net-sslhello  :=   +VERSION  --test-init
-LIST.net-sslinfo   :=   +VERSION  localhost --test-methods --test-sslmap --test-ssleay
+LIST.net-sslinfo   :=   +VERSION  localhost $(LIST.net-sslinfo-t)
 LIST.t-makefile    :=
 LIST.install-sh    :=   --install  --clean  --check     --expected
 # NOTE: ensure that EXE.install is called with --n !
