@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 #?
 #? NAME
-#?      $0 - install perl moduls
+#?      $0 - install perl modules
+#?
+#? SYNOPSIS
+#?      $0 [OPTIONS]
 #?
 #? DESCRIPTION
 #?      Build and install  Net::DNS,  Net::SSLeay  and  IO::Socket::SSL  in a
@@ -36,7 +39,7 @@
 use strict;
 use warnings;
 use Cwd;
-my  $VERSION  = "@(#) install_perl_modules.pl 1.3 18/10/01 17:18:09";
+my  $VERSION  = "@(#)  1.4 20/06/05 21:20:13";
 my  $pwd      = cwd();
 my  $lib      = "$pwd";
     $lib      = "$pwd/lib" if ($pwd !~ m#/lib/?#);
@@ -50,19 +53,31 @@ my  @modules  = qw(Net-DNS*gz Net-SSLeay*gz IO-Socket-SSL*gz);
 # http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.80.tar.gz
 # http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.047.tar.gz
 
-$try    = "echo" if (grep {/^--?n$/} @ARGV);
-$force  = 1      if (grep {/^--?f$/} @ARGV);
-
-if (grep {/^--?l$/} @ARGV) {
-    foreach my $module (@modules) {
-        my $targz =  (sort glob($module))[-1];
-        if (defined $targz) {
-            print "# $try $targz -> $lib";
-        } else {
-            print "# $module\t: not found";
+foreach my $arg (@ARGV) {
+    if ($arg =~ /^--?h(?:elp)?/x) {
+        my $_me   = $0; $_me   =~ s#.*[/\\]##;
+        open(FID, '<:encoding(UTF-8)', $0) || die "**WARNING: cannot open $0.\n";
+        while(<FID>) {
+            s/\$0/$_me/g;
+            /AUTH?OR$/  && print " VERSION\n      $VERSION\n";
+            /^#\?(.*)$/ && print "$1";
         }
+        close(FID);
+        exit(0);
     }
-    exit 0;
+    if ($arg =~ /^--?n$/x) { $try    = "echo"; }
+    if ($arg =~ /^--?f$/x) { $force  = 1;      }
+    if ($arg =~ /^--?l$/x) {
+        foreach my $module (@modules) {
+            my $targz =  (sort glob($module))[-1];
+            if (defined $targz) {
+                print "# $try $targz -> $lib";
+            } else {
+                print "# $module\t: not found";
+            }
+        }
+        exit 0;
+    }
 }
 
 sub do_install {
@@ -71,6 +86,10 @@ sub do_install {
     my $dst   = shift;
     my $targz =  (sort glob($tar))[-1];
               #  ls Net-SSLeay*gz | sort | tail -1
+    if (not defined $targz) {
+        warn "**WARNING: '$tar' not found; not installed;";
+        return 0;
+    }
     chomp $targz;
     my $dir   =  $targz;
        $dir   =~ s/\.tar.gz$//;
@@ -102,12 +121,17 @@ sub do_install {
     print "# rm $dir ...";
     @args = ("rm", "-rf", "$dir");
     chdir("..") and eval { system(@args) };
-    return;
+    return 1;
 }; # do_install
 
 if (-e $lib) {
     if ($force < 1) {
-        die "**ERROR: '$lib' exists; please use --f to enforce using it; exit";
+        my $txt = "**ERROR: '$lib' exists; please use --f to enforce using it";
+        if ($try eq "") {
+            die "$txt; exit";
+        } else {
+            print STDERR $txt;
+        }
     }
 } else {
     mkdir($lib);
@@ -115,7 +139,7 @@ if (-e $lib) {
 
 foreach my $module (@modules) {
     print "\n# $try $module -> $lib";
-    do_install($try, $module, $lib);
+    next if not do_install($try, $module, $lib);
     chdir($pwd);  # not necessary
     print <<'EoT';
 # try testing with:
