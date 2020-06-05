@@ -175,7 +175,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  IRlíU 1.48 20/06/05 22:10:35
+#?      @(#) ðàd±U 1.49 20/06/05 22:40:24
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -301,7 +301,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.48 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.49 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -538,6 +538,15 @@ for m in $modules ; do
 		  'OSaft::error_handler' | 'osaft') c="green"; ;;
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  'OSaft::Doc::Data' )              c="green"; ;;
+		  'Time::Local')
+			# needs ugly hack :-((
+			if [ 1.25 = $v ]; then
+				# 1.25 seems to be newer than 1.230 which is newer than 1.90
+				c="green";
+			else
+				c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; 
+			fi
+			;;
 		  *) c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
 		   # NOTE: need to compare for example: 1.23 > 1.230
 		   # Comparing version strings is tricky,  best method would be
