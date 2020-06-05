@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.136 20/06/05 00:02:11";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.137 20/06/06 00:30:01";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -602,7 +602,6 @@ sub _yeast_test_help    {
 =   --test-data     overview of all available commands and checks
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
-=   --test-sub      formatted list of internal functions
 =   --test-regex    results for applying various texts to regex
 =   --test-cipher-list      list of hex keys of known ciphers
 =   --test-cipher-show      complete list of ciphers
@@ -857,7 +856,7 @@ sub _main_dbx       {
             printf("# no Pod::Perldoc installed, please try:\n   perldoc $0\n");
         }
     }
-    if ($arg =~ m/--tests?/) {
+    if ($arg =~ m/--tests?$/) {
         _yeast_test_help();
         exit 0;
     }
@@ -914,9 +913,11 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =item --test-data
 
-=item --test-prot
+=item --test-init
 
-=item --test-sub
+=item --test-maps
+
+=item --test-prot
 
 =back
 
@@ -1019,7 +1020,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.136 2020/06/05
+1.137 2020/06/06
 
 =head1 AUTHOR
 
