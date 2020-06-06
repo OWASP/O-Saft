@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.06.02',
+    SSLINFO_VERSION => '20.06.03',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.255 20/06/06 02:08:01',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.256 20/06/06 10:52:03',
 };
 
 ######################################################## public documentation #
@@ -1216,7 +1216,7 @@ sub test_sclient    {
     return join(" ",s_client_get_optionlist());
 } # test_sclient
 
-sub test_sslmap    {
+sub test_sslmap     {
     #? return internal data structure %_SSLmap
     my $line = "#---------------+--------+-------------";
     my $data = "$line\n# _SSLmap{ key    SSLeay  bitmask\n$line\n";
@@ -1310,14 +1310,14 @@ $line
     return $data;
 } # test_ssleay
 
-sub _dump       {
+sub _dump           {
     my $key = shift;
     my $txt = shift;
     my $val = shift;
     return sprintf("#{ %-12s=%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
 } # _dump
 
-sub datadump    {
+sub datadump        {
     #? return internal data structure
     my $data = '';
     if ($Net::SSLinfo::use_sclient > 1) {
@@ -2999,7 +2999,7 @@ sub do_ssl_open($$$@) {
 Close L<Net::SSLeay> connection and free allocated objects.
 =cut
 
-sub do_ssl_close($$) {
+sub do_ssl_close($$)  {
     #? close TCP connection for SSL
     my ($host, $port) = @_;
     _trace("do_ssl_close($host,$port)");
@@ -3034,7 +3034,7 @@ Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
 Returns '<<undefined>>' if PEM missing.
 =cut
 
-sub do_openssl($$$$) {
+sub do_openssl($$$$)  {
     #? call external openssl executable to retrive more data
     my $mode = shift;   # must be openssl command
     my $host = shift;
