@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.30 20/06/06 11:15:40
+#?      @(#) Makefile.dev 1.31 20/06/06 15:11:34
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.30
+_SID.dev           := 1.31
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -99,6 +99,11 @@ LIST.osaft-man     := \
 	toc     todo    tools   warning exit    \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
+    # o-saft-man.pm allows any of the above listed arguments like:
+    #   o-saft-man.pm toc
+    #   o-saft-man.pm --help=toc
+    #   o-saft-man.pm --test-toc
+    # only the first form is tested here, as they all produce the same output
 
 LIST.osaft-dbx     := \
 	--tests \
@@ -165,12 +170,21 @@ HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
 #
 # If a target needs special or additional settings, this is done explicitly.
 #
-# All programs are defined in the variable (list)  LIST.program .
-# Each of these programs should be called  with the arguments defined in the
-# corresponding  LIST.* , where  *  is any of the values from  LIST.program
-# "osaft" is such a program in the example above. With that there is:
+# The variable (list)  LIST.program  defines a unique pattern  for each pro-
+# gram. The pattern appplies to the syntax rules for variable names in Make-
+# file (while the program names itself might not).
+# This pattern is used in the variables  EXE.*  and  LIST.*  . Each of these
+# programs should be called with the  arguments defined in the corresponding
+# LIST.* , where  *  is any of the values from  LIST.program  .  "osaft"  is
+# such a program in the example above. With that there is:
 #       EXE.osaft   = osaft.pm
 #       LIST.osaft  = some-arg
+# The targets for the programs are generated herein. It results in a command
+# like:
+#       $(EXE.osaft) $(LIST.osaft)
+# for each program from  LIST.program .
+# Because these targets are generated dynamically, the statically defined
+# LIST.*  variables are not used elswhere, see  dev-macros-generated  below.
 #
 # Finally all generated targets are added to the variable  ALL.test.dev .
 #
