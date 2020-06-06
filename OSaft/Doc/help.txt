@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.51 20/06/04 23:04:02
+# SID   @(#) help.txt 1.52 20/06/06 15:13:17
 
 NAME
 
@@ -4538,7 +4538,8 @@ TESTING
 
         The options which provide informations about internal data structures
         and alike described below, behave like the command  +quit  and do not
-        perform any checks on the target(s).
+        perform any checks on the target(s).  
+        See 't/Makefile.*' how to use these tests.
 
       --tests
 
@@ -4565,17 +4566,21 @@ TESTING
 
           Print results for applying various texts to defined regex.
 
-      --test-cipher-list
+      --test-ciphers-list
 
           Print list of hex keys of known ciphers.
 
-      --test-cipher-show
+      --test-ciphers-show
 
           Print complete list of ciphers.
 
       --test-cipher-sorted
 
           Print list of ciphers sorted according strength.
+
+      --test-ciphers-overview
+
+          Print overview of all available ciphers with all attributes.
 
       --test-init
 
@@ -4584,7 +4589,21 @@ TESTING
           specified commands on the target.  Therefore it prints the settings
           in  %cfg  containing all applied commands and options.
 
-        See 't/Makefile.*' how to use these tests.
+      --test-methods
+
+          Print available methods for 'openssl' in Net::SSLeay.
+
+      --test-sclient
+
+          Print available options for 'openssl s_client' from Net::SSLeay.
+
+      --test-sslmap
+
+          Print SSL protocols constants from Net::SSLeay.
+
+      --test-ssleay
+
+          Print information about Net::SSLeay capabilities.
 
     Testing results
 
