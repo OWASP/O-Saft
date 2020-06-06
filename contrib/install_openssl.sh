@@ -76,8 +76,8 @@
 #?      This script does no cleanup if any building of  Perl modules, openssl
 #?      or  Net::SSLeay fails. Sucessfully build parts are not removed. There
 #?      may be garbage in  BUILD_DIR  and/or the  CPAN  directory.
-#?      Errors when bulding the additional Perl modules are silently ignored.
-#?      Failing to build openssl or Net::SSLeay will exit the script.
+#?      Errors while building the additional modules are silently ignored.
+#?      Failing to build  openssl  or  Net::SSLeay  will exit the script.
 #?
 #? PRECONDITIONS
 #?      The script needs write access to installation directories (/usr/local
@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.27 19/08/01 21:26:11
+#?      @(#)  1.28 20/06/06 10:39:27
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -207,7 +207,7 @@ perl_modules="
 	Mozilla::CA
 "
 
-# dynamically compute list of Perl modules to be installed
+# dynamically compute list of Perl modules to be installed; see below
 # NOTE: Net::SSLeay must always be istalled after building special openssl
 install_modules="
 "
@@ -219,7 +219,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.27 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.28 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -276,6 +276,11 @@ while [ $# -gt 0 ]; do
 # perl uses @INC=
 EoT
 		perl -le 'print "\t" . join "\n\t",@INC'
+		;;
+	  *)
+		echo "**ERROR: unknown option '$arg'; exit"
+		echo "**USAGE: $0 [--h|--m|--n]"
+		exit 2
 		;;
 	esac
 done
@@ -335,7 +340,16 @@ echo ""
 if [ 0 -eq $err ]; then
 	echo '# OK all preconditions satisfied'
 	echo ''
-	[ 1 -eq $optn  ] && exit 0
+	if [ 1 -eq $optn  ]; then
+		# brief information what will be done
+		[ 1 -eq $optm ] &&
+		echo '#    build and install Perl modules using:' &&
+		echo "#    perl -MCPAN -e install $install_modules"
+		echo ''
+		echo "#    build and install openssl in $OPENSSL_DIR"
+		echo "#    build and install Net::SSLeay in $SSLEAY_DIR"
+		exit 0
+	fi
 else
 	cat <<EoT
 
@@ -359,6 +373,7 @@ fi
 ### install modules (with --m only)
 if [ 1 -eq $optm ]; then
 	#[ 1 -eq $optf ] && install_modules="$perl_modules"
+	echo '### install Perl modules ...'
 	err=0
 	for mod in $install_modules ; do
 		txt=""
@@ -376,7 +391,7 @@ if [ 1 -eq $optm ]; then
 fi
 
 ### install openssl
-echo "### install openssl ..."
+echo '### install openssl ...'
 alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
 alias   apk="\echo '#'apk"  #
 
