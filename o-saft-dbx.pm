@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.137 20/06/06 00:30:01";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.138 20/06/06 02:04:21";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -606,6 +606,10 @@ sub _yeast_test_help    {
 =   --test-cipher-list      list of hex keys of known ciphers
 =   --test-cipher-show      complete list of ciphers
 =   --test-cipher-sorted    list of ciphers sorted according strength
+=   --test-methods  available methods for openssl in Net::SSLeay
+=   --test-sclient  available options for 'openssl s_client' from Net::SSLeay
+=   --test-sslmap   constants for SSL protocols from Net::SSLeay
+=   --test-ssleay   information about Net::SSLeay capabilities
 =  ----------------+----------------------------------------------
 =";
     # NOTE: description above should be similar to those in
@@ -807,12 +811,68 @@ sub _yeast_test_prot    {
     return;
 } # _yeast_test_prot
 
+sub _yeast_test_methods {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal list of methods to call openssl ===
+=
+= Print available methods in Net::SSLeayx
+=
+";
+    my $list = Net::SSLinfo::test_methods();
+       $list =~ s/ /\n# /g;
+    print "# $list";
+    return;
+} # _yeast_test_methods
+
+sub _yeast_test_sclient {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal list of openssl s_client options ===
+=
+= Print available options for 'openssl s_client' from Net::SSLeay
+=
+";
+    my $list = Net::SSLinfo::test_sclient();
+       $list =~ s/ /\n# /g;
+    print "# $list";
+    return;
+} # _yeast_test_sclient
+
+sub _yeast_test_ssleay  {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal data of from Net::SSLeay ===
+=
+= Print information about Net::SSLeay capabilities
+=
+";
+    print Net::SSLinfo::test_ssleay();
+    return;
+} # _yeast_test_ssleay
+
+sub _yeast_test_sslmap  {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal list of constants for SSL protocols ===
+=
+= Print available constants for SSL protocols in Net::SSLeay
+=
+";
+    print Net::SSLinfo::test_sslmap();
+    return;
+} # _yeast_test_sslmap
+
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalized option, like --testinit
     _yeast($arg);
     _yeast_test_help()      if ('--test'    eq $arg);
     _yeast_test_help()      if ('--tests'   eq $arg);
+    _yeast_test_sclient()   if ('--testsclient' eq $arg);
+    _yeast_test_ssleay()    if ('--testssleay'  eq $arg);
+    _yeast_test_sslmap()    if ('--testsslmap'  eq $arg);
+    _yeast_test_methods()   if ('--testmethods' eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
@@ -977,6 +1037,14 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =item _yeast_test_prot( )
 
+=item _yeast_test_methods( )
+
+=item _yeast_test_sclient( )
+
+=item _yeast_test_sslmap( )
+
+=item _yeast_test_ssleay( )
+
 =item _yeast_test( )
 
 =back
@@ -1020,7 +1088,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.137 2020/06/06
+1.138 2020/06/06
 
 =head1 AUTHOR
 
