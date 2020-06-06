@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.28 20/06/06 10:39:27
+#?      @(#)  1.29 20/06/06 10:46:53
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -219,7 +219,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.28 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.29 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -316,13 +316,13 @@ lib=0
 echo ""
 echo "# required libraries:"
 txt=`find /usr/lib -name libidn\.\*`
-[ -z "$txt" ] && txt="**ERROR: libidn.so missing"    && miss="$miss libidn,"
+[ -z "$txt" ] && txt="**ERROR: libidn.so missing, consider installing libidn11-dev" && miss="$miss libidn,"
 echo "	libidn.so $txt"
 
 for pack in $lib_packages ; do
 	ok=1
 	txt=`find /usr -name $pack`
-	[ -z "$txt" ] && txt="**ERROR: $pack missing" && ok=0 && lib=1
+	[ -z "$txt" ] && txt="**ERROR: $pack missing, consider installing $pack" && ok=0 && lib=1
 	[ 1 -eq $ok ] && txt="\tOK $txt"
 	echo "	$pack $txt"
 done
