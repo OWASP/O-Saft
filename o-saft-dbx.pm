@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.138 20/06/06 02:04:21";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.139 20/06/06 15:15:11";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -603,15 +603,17 @@ sub _yeast_test_help    {
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
 =   --test-regex    results for applying various texts to regex
-=   --test-cipher-list      list of hex keys of known ciphers
-=   --test-cipher-show      complete list of ciphers
-=   --test-cipher-sorted    list of ciphers sorted according strength
+=   --test-ciphers-list     list of hex keys of known ciphers
+=   --test-ciphers-show     complete list of ciphers
+=   --test-ciphers-sorted   list of ciphers sorted according strength
+=   --test-ciphers-overview overview of all available ciphers with all attributes
 =   --test-methods  available methods for openssl in Net::SSLeay
 =   --test-sclient  available options for 'openssl s_client' from Net::SSLeay
 =   --test-sslmap   constants for SSL protocols from Net::SSLeay
 =   --test-ssleay   information about Net::SSLeay capabilities
 =  ----------------+----------------------------------------------
 =";
+    # o-saft.tcl --test-o-saft  # just for completeness, not used here
     # NOTE: description above should be similar to those in
     #       OSaft/Doc/help.txt
     return $data;
@@ -1088,7 +1090,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.138 2020/06/06
+1.139 2020/06/06
 
 =head1 AUTHOR
 
