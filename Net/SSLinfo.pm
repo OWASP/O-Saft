@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.02.02',
+    SSLINFO_VERSION => '20.06.02',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.254 20/02/15 23:43:14',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.255 20/06/06 02:08:01',
 };
 
 ######################################################## public documentation #
@@ -92,6 +92,8 @@ Net::SSLinfo -- perl extension for SSL connection and certificate data
     Net::SSLinfo.pm                 # print help
     Net::SSLinfo.pm --help          # print help
     Net::SSLinfo.pm +VERSION        # print version string
+    Net::SSLinfo.pm --test-sclient  # print available options for 'openssl s_client'
+    Net::SSLinfo.pm --test-sslmap   # print constants for SSL protocols
     Net::SSLinfo.pm --test-openssl  # print information about openssl capabilities
     Net::SSLinfo.pm --test-ssleay   # print information about Net::SSLeay capabilities
     Net::SSLinfo.pm --test-methods  # print available methods in Net::SSLeay
@@ -526,6 +528,7 @@ our @EXPORT = qw(
         test_sclient
         test_sslmap
         test_ssleay
+        test_methods
         ssleay_methods
         datadump
         s_client_check
@@ -1203,9 +1206,14 @@ sub ssleay_methods  {
     return @list;
 } # ssleay_methods
 
+sub test_methods    {
+    #? return openssl s_client availabilities (options for s_client)
+    return join(" ",ssleay_methods());
+} # test_methods
+
 sub test_sclient    {
     #? return openssl s_client availabilities (options for s_client)
-    return s_client_get_optionlist();
+    return join(" ",s_client_get_optionlist());
 } # test_sclient
 
 sub test_sslmap    {
@@ -3875,8 +3883,8 @@ sub _main           {
         if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
         if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
         if ($arg =~ /^--test.?sslmap/)      { print test_sslmap();  }
-        if ($arg =~ /^--test.?sc_?lient/)   { print join(" ",test_sclient());   }
-        if ($arg =~ /^--test.?methods/)     { print join(" ",ssleay_methods()); }
+        if ($arg =~ /^--test.?sc_?lient/)   { print test_sclient(); }
+        if ($arg =~ /^--test.?methods/)     { print test_methods(); }
         if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
         # treat remaining args as hostname to test
         do_ssl_open( shift, 443, '');
