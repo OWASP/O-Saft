@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.34 20/01/02 01:25:19
+@(#) Makefile.pod 1.35 20/06/08 01:27:35
 
 =head1 AUTHOR
 
@@ -86,7 +86,7 @@ Calling targets:
 
 
 A common set of variables and targets is provided in all Makefile*. If the
-makefile is named  Makefile.Ext , following variables exit:
+makefile is named  Makefile.Ext , following variables exist:
 
     HELP.test.Ext
     TEST.Ext.hosts
@@ -120,6 +120,8 @@ To get brief (mainly technical) information about the Makefile, use:
     make -f t/Makefile.cgi e-LIST.cgi.badIPv6
     make -f t/Makefile.cgi s-LIST.cgi.badIPv6
 
+(Makefile.cgi is an example, may be any other Makefile also).
+
 
 =head1 O-Saft Makefile Limitations
 
@@ -133,6 +135,19 @@ To get brief (mainly technical) information about the Makefile, use:
    $(T), while other macros must use the TAB character verbatim,  which is
    difficult to identify by human eyes.
 
+
+=head1 O-Saft Makefile Preconditions
+
+The tools used and tested by make are called in the  $(TEST.dir) directory
+(usually ./t ), but they are located in  ../  (or ../contrib). Some (most)
+tools expect "includes" in  ./ ,  i.e.  o-saft.pl  itself includes private
+modules from  ./NET  and  ./OSaft.  This may result in perl warnings like
+"Can't locate ...".
+
+To avoid this, following symbolic links exist in  $(TEST.dir) :
+
+    ./Net   -> ../Net
+    ./OSaft -> ../OSaft
 
 
 =head1 O-Saft Makefile*
@@ -160,10 +175,10 @@ on the local make configuration. SEE  Make:automatic variables  also.
 
 =head2 O-Saft Makefile General
 
-To extract and format the texts, the targets use GNU Make's functionality
+To extract and format the texts, the targets use  GNU Make's functionality
 like  $(eval ...), $(foreach ...) and $(shell).
-External tools like  awk, sed  and  tr  must be used  when information or
-text are to be extracted form other Makefile*.  Each tool and its command
+External tools like  awk,  sed  and  tr  must be used  when information or
+text are to be extracted form other Makefile*.  Each tool  and its command
 arguments are defined as variable, see corresponding  EXE.*  variables.
 
 
@@ -178,6 +193,7 @@ included by the main Makefile and organised as follows:
             include t/Makefile.inc
             include t/Makefile.warnings
             include t/Makefile.cmd
+            include t/Makefile.cipher
             include t/Makefile.exit
             include t/Makefile.opt
             include t/Makefile.ext
@@ -186,9 +202,14 @@ included by the main Makefile and organised as follows:
             include t/Makefile.tcl
             include t/Makefile.etc
             include t/Makefile.dev
+            include t/Makefile.pod
             include t/Makefile.php
+            include t/Makefile.init
+            include t/Makefile.make
             include t/Makefile.misc
             include t/Makefile.critic
+            include t/Makefile.docker
+            include t/Makefile.legacy
             include t/Makefile.make
 
 To get a list of all included Makefile* use:
@@ -348,7 +369,8 @@ Notes about some special variables:
     ALL.tests.log   - list of all targets for tests writing to logfiles
 
 The variables  ALL.tests  and  ALL.tests.log  are generated in  t/Nakefile
-from the corresponding  ALL.test.TYP  in each  t/Makefile.TYP .
+from the corresponding  ALL.test.TYP  in each  t/Makefile.TYP , where  TYP
+is  cmd, cgi, opt, etc. SEE O-Saft Makefile Includes  also.
 
 
 =head2 O-Saft Makefile Targets
@@ -426,14 +448,15 @@ features and behaves slightly different to traditional make.
 
 Some words about the terms and words used in GNU Make and in this project.
 
-* macro  is a synonym for  variable  in makefiles.
+* macro  is a synonym for  variable  in makefilesm, here the term variable
+  is prefered.
 
 * GNU Make uses  prerequisites  when targets depend on something, here the
   term dependencies is used.
 
 * GNU Make distinguishes the terms:   explicit rules,  implicit rules  and
   static pattern rules. For simplicity target is used when  explicit rules
-  are meant and  pattern rule  is used for  static pattern rule
+  are meant and  pattern rule  is used for  static pattern rule .
 
 * GNU Make refers to the commands executed in a target as  recipe.
 
@@ -449,11 +472,11 @@ Some words about the terms and words used in GNU Make and in this project.
 * $$ avoids evaluating  $ (the macro) when reading the makefile, but it is
   evaluated when the corresponding target is executed.
 
-* Definition using   =  deferred  definition; macro expanded when used
+* Definition using   =  deferred  definition; macro expanded when used.
 
-* Definition using  :=  immediate definition; macro expanded when defined
+* Definition using  :=  immediate definition; macro expanded when defined.
 
-* Definition using ::=  immediate definition; macro expanded when defined
+* Definition using ::=  immediate definition; macro expanded when defined.
 
 Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 :=  is used.
@@ -883,7 +906,7 @@ for each call of the tool, for example date and time.
 If these tools are called by make and the results are written to a logfile
 which will be compared with a previous logfile, these files always differ.
 To avoid this difference (because of random text) a dummy constant text is
-written if our special environment variable  OSAFT_MAKE  exits.
+written if our special environment variable  OSAFT_MAKE  exists.
 This environment variable should be set in Makefile*.
 
 A generic text is available as  STR_MAKEVAL  (see osaft.pm). In some cases
