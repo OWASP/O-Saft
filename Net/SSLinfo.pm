@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.06.04',
+    SSLINFO_VERSION => '20.06.05',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.258 20/06/07 17:04:54',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.260 20/06/08 00:37:47',
 };
 
 ######################################################## public documentation #
@@ -906,6 +906,7 @@ sub _ssleay_value_get   {
     my $type= shift;
     my $func= shift;
     my $val = "<<undef>>";
+       $val =    undef  if ('OP_or_undef' eq $type);
     _traceset();
     _trace("_ssleay_value_get('$type', '$func')");
     if (defined &$func) {
@@ -914,8 +915,9 @@ sub _ssleay_value_get   {
        $val = sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode( &$func())) if ('verify_mode'  eq $type);
        $val =                   Net::SSLeay::CTX_get_verify_depth(&$func())  if ('verify_depth' eq $type);
        $val = sprintf('0x%08x', &$func())   if ('OP' eq $type);
+       $val = sprintf('0x%08x', &$func())   if ('OP_or_undef' eq $type);
     }
-    _trace("_ssleay_value_get ret=$val");
+    _trace("_ssleay_value_get ret=" . ($val || "undef"));
     return $val;
 } # _ssleay_value_get
 
@@ -990,33 +992,35 @@ my %_SSLmap = ( # map libssl's constants to speaking names
     # SSL and openssl is a pain, for setting protocols it needs a bitmask
     # and SSL itself returns a hex constant, which is different
     #                 /----- returned by Net::SSLeay::version($ssl)
-    # key             v      bitmask used in Net::SSLeay::CTX_set_options()
+    #                 |      bitmask used in Net::SSLeay::CTX_set_options()
+    # key             v      v          example bitmask
     #-------------+---------+---------------------------------------------
-    'SSLv2'     => [0x0002,  Net::SSLeay::OP_NO_SSLv2()  ], # 0x01000000
-    'SSLv3'     => [0x0300,  Net::SSLeay::OP_NO_SSLv3()  ], # 0x02000000
-    'TLSv1'     => [0x0301,  undef],                        # 0x04000000
-    'TLSv11'    => [0x0302,  undef],                        # 0x08000000
-    'TLSv12'    => [0x0303,  undef],                        # 0x10000000
-    'TLSv13'    => [0x0304,  undef],                        # 0x10000000
-    'TLS1FF'    => [0x03FF,  undef],                        #
-    'DTLSfamily'=> [0xFE00,  undef],                        #
-    'DTLSv09'   => [0x0100,  undef],                        # 0xFEFF in some openssl versions
-    'DTLSv1'    => [0xFEFF,  undef],                        # ??
-    'DTLSv11'   => [0xFEFE,  undef],                        # ??
-    'DTLSv12'   => [0xFEFD,  undef],                        # ??
-    'DTLSv13'   => [0xFEFF,  undef],                        # ??
+    'SSLv2'     => [0x0002,  undef],  # 0x01000000
+    'SSLv3'     => [0x0300,  undef],  # 0x02000000
+    'TLSv1'     => [0x0301,  undef],  # 0x04000000
+    'TLSv11'    => [0x0302,  undef],  # 0x08000000
+    'TLSv12'    => [0x0303,  undef],  # 0x10000000
+    'TLSv13'    => [0x0304,  undef],  # 0x10000000
+    'TLS1FF'    => [0x03FF,  undef],  #
+    'DTLSfamily'=> [0xFE00,  undef],  #
+    'DTLSv09'   => [0x0100,  undef],  # 0xFEFF in some openssl versions
+    'DTLSv1'    => [0xFEFF,  undef],  # ??
+    'DTLSv11'   => [0xFEFE,  undef],  # ??
+    'DTLSv12'   => [0xFEFD,  undef],  # ??
+    'DTLSv13'   => [0xFEFF,  undef],  # ??
 );
 # unfortunately not all openssl and/or Net::SSLeay versions have all constants,
-# hence we need to assign some values dynamically (to avoid perl errors)
-# NOTE: existance cannot be checked with:  defined &Net::SSLeay::OP_NO_TLSv1
-$_SSLmap{'TLSv1'}  [1] = Net::SSLeay::OP_NO_TLSv1()    if (eval {Net::SSLeay::OP_NO_TLSv1()});
-$_SSLmap{'TLSv11'} [1] = Net::SSLeay::OP_NO_TLSv1_1()  if (eval {Net::SSLeay::OP_NO_TLSv1_1()});
-$_SSLmap{'TLSv12'} [1] = Net::SSLeay::OP_NO_TLSv1_2()  if (eval {Net::SSLeay::OP_NO_TLSv1_2()});
-$_SSLmap{'TLSv13'} [1] = Net::SSLeay::OP_NO_TLSv1_3()  if (eval {Net::SSLeay::OP_NO_TLSv1_3()});
-$_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval {Net::SSLeay::OP_NO_DTLSv1()});
-#$_SSLmap{'DTLSv11'}[1] = Net::SSLeay::OP_NO_DTLSv1_1() if (eval {Net::SSLeay::OP_NO_DTLSv1_1()});
-#$_SSLmap{'DTLSv12'}[1] = Net::SSLeay::OP_NO_DTLSv1_2() if (eval {Net::SSLeay::OP_NO_DTLSv1_2()});
-#$_SSLmap{'DTLSv13'}[1] = Net::SSLeay::OP_NO_DTLSv1_3() if (eval {Net::SSLeay::OP_NO_DTLSv1_3()});
+# hence we need to assign values dynamically (to avoid perl errors)
+$_SSLmap{'SSLv2'}  [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_SSLv2);
+$_SSLmap{'SSLv3'}  [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_SSLv3);
+$_SSLmap{'TLSv1'}  [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_TLSv1);
+$_SSLmap{'TLSv11'} [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_TLSv1_1);
+$_SSLmap{'TLSv12'} [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_TLSv1_2);
+$_SSLmap{'TLSv13'} [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_TLSv1_3);
+$_SSLmap{'DTLSv1'} [1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_DTLSv1);
+$_SSLmap{'DTLSv11'}[1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_DTLSv1_1);
+$_SSLmap{'DTLSv12'}[1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_DTLSv1_2);
+$_SSLmap{'DTLSv13'}[1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_DTLSv1_3);
     # NOTE: we use the bitmask provided by the system
     # NOTE: all checks are done now, we don't need to fiddle around that later
     #       we just need to check for undef then
@@ -1242,7 +1246,7 @@ sub test_sslmap     {
     my $data = "$line\n# _SSLmap{ key    SSLeay  bitmask\n$line\n";
     foreach my $_ssl (sort keys %_SSLmap) {
         my $mask = "<<undef>>";
-           $mask = sprintf("0x%08x", $_SSLmap{$_ssl}[1]) if defined $_SSLmap{$_ssl}[1];
+           $mask = $_SSLmap{$_ssl}[1] if defined $_SSLmap{$_ssl}[1];
         $data  .= sprintf("#%14s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
     }
     $data .= "$line";
@@ -1290,6 +1294,7 @@ $line
 #            ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
 $line
 # Net::SSLeay} function\n";
+    no warnings 'once'; # TODO: perl's strict is picky for OP_NO_DTLS* below
     $data .= "# Net::SSLeay{ constant           hex value
 $line
 #            ::OP_NO_SSLv2      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv2) . "
