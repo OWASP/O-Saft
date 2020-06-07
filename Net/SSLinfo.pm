@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.256 20/06/06 10:52:03',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.257 20/06/07 16:24:51',
 };
 
 ######################################################## public documentation #
@@ -525,11 +525,11 @@ use base qw(Exporter);
 our $VERSION   = SSLINFO_VERSION;
 our @EXPORT = qw(
         net_sslinfo_done
+        ssleay_methods
+        test_methods
         test_sclient
         test_sslmap
         test_ssleay
-        test_methods
-        ssleay_methods
         datadump
         s_client_check
         s_client_get_optionlist
@@ -1168,6 +1168,22 @@ sub _SSLinfo_reset  {
     return;
 } # _SSLinfo_reset
 
+sub _get_CTX_value  {
+    #? retrun $type (option, timeout, verify_mode, verify_depth) for specified function as formated string
+    #  returns <<undef>> if specified function does not exist
+    #  $func is i.e.: Net::SSLeay::CTX_v3_new, Net::SSLeay::CTX_v23_new
+    my $type= shift;
+    my $func= shift;
+    my $val = "<<undef>>";
+    if (defined &$func) {
+       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_options(&$func())) if ('options' eq $type);
+       $val =                   Net::SSLeay::CTX_get_timeout(&$func())  if ('timeout' eq $type);
+       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode( &$func())) if ('verify_mode'  eq $type);
+       $val =                   Net::SSLeay::CTX_get_verify_depth(&$func())  if ('verify_depth' eq $type);
+    }
+    return $val;
+} # _get_CTX_value
+
 sub ssleay_methods  {
     #? returns list of available Net::SSLeay::*_method; most important first
 # TODO:  check for mismatch Net::SSLeay::*_method and Net::SSLeay::CTX_*_new
@@ -1235,6 +1251,7 @@ sub test_ssleay     {
     #  a here document is not possible here, or at least more cumbersome,
     #  because Perl code is used inside
     my @list = ssleay_methods();
+print "# list: " . join("\n# ",@list) ."\n";
     my $line = "#------------+------------------+-------------";
     my $data = "# Net::SSLeay{ function           1=available
 $line
@@ -1269,8 +1286,8 @@ $line
 #            ::CTX_set_alpn_protos  = " . ((grep{/^CTX_set_alpn_protos$/}  @list) ? 1 : 0) . "
 #            ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
 $line
-# Net::SSLeay} function
-# Net::SSLeay{ constant           hex value
+# Net::SSLeay} function\n";
+    $data .= "# Net::SSLeay{ constant           hex value
 $line
 #            ::OP_NO_SSLv2      = " . ((defined &Net::SSLeay::OP_NO_SSLv2)    ? sprintf('0x%08x', Net::SSLeay::OP_NO_SSLv2())    : "<<undef>>") . "
 #            ::OP_NO_SSLv3      = " . ((defined &Net::SSLeay::OP_NO_SSLv3)    ? sprintf('0x%08x', Net::SSLeay::OP_NO_SSLv3())    : "<<undef>>") . "
@@ -1284,26 +1301,26 @@ $line
 #            ::OP_NO_DTLSv1_2   = " . ((defined &Net::SSLeay::OP_NO_DTLSv1_2) ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1_2()) : "<<undef>>") . "
 #            ::OP_NO_DTLSv1_3   = " . ((defined &Net::SSLeay::OP_NO_DTLSv1_3) ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1_3()) : "<<undef>>") . "
 $line
-# Net::SSLeay} constant
-# Net::SSLeay{ call
+# Net::SSLeay} constant\n";
+    $data .= "# Net::SSLeay{ call
 #      experimental ...
 # Net::SSLeay::CTX_new {
-#            ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_new())) . "
+#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_new) . "
 # Net::SSLeay::CTX_new }
 # Net::SSLeay::CTX_v3_new {
-#            ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_v3_new())) . "
+#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_v3_new)  . "
 # Net::SSLeay::CTX_v3_new }
 # Net::SSLeay::CTX_v23_new {
-#            ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_v23_new())) . "
-#            ::CTX_get_timeout(CTX)= " . Net::SSLeay::CTX_get_timeout(Net::SSLeay::CTX_v23_new()) . "
-#            ::CTX_get_verify_mode(CTX) = " . sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode(Net::SSLeay::CTX_v23_new())) . "
-#            ::CTX_get_verify_depth(CTX)= " . Net::SSLeay::CTX_get_verify_depth(Net::SSLeay::CTX_v23_new()) . "
+#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_timeout(CTX)= " . _get_CTX_value('timeout', *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_verify_mode(CTX) = " . _get_CTX_value('verify_mode',  *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_verify_depth(CTX)= " . _get_CTX_value('verify_depth', *Net::SSLeay::CTX_v23_new) . "
 # Net::SSLeay::CTX_v23_new }
 # Net::SSLeay::CTX_tlsv1_2_new {
-#            ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_tlsv1_2_new())) . "
-#            ::CTX_get_timeout(CTX)= " . Net::SSLeay::CTX_get_timeout(Net::SSLeay::CTX_tlsv1_2_new()) . "
-#            ::CTX_get_verify_mode(CTX) = " . sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode(Net::SSLeay::CTX_tlsv1_2_new())) . "
-#            ::CTX_get_verify_depth(CTX)= " . Net::SSLeay::CTX_get_verify_depth(Net::SSLeay::CTX_tlsv1_2_new()) . "
+#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_timeout(CTX)= " . _get_CTX_value('timeout', *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_verify_mode(CTX) = " . _get_CTX_value('verify_mode',  *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_verify_depth(CTX)= " . _get_CTX_value('verify_depth', *Net::SSLeay::CTX_tlsv1_2_new) . "
 # Net::SSLeay::CTX_tlsv1_2_new }
 # Net::SSLeay} call\n";
 
