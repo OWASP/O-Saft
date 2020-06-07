@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.06.03',
+    SSLINFO_VERSION => '20.06.04',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.257 20/06/07 16:24:51',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.258 20/06/07 17:04:54',
 };
 
 ######################################################## public documentation #
@@ -444,7 +444,7 @@ Internal documentation only.
 =item do_ssl_open()
 
     do_ssl_new()
-    _ssleay_get()
+    _ssleay_cert_get()
     Net::SSLeay::*()  # getter
     $_SSLinfo{'*'}    # getter
     Net::SSLeay::write() && Net::SSLeay::ssl_read_all  # HTTPS
@@ -829,7 +829,7 @@ sub _setcmd     {
     return;
 } # _setcmd
 
-sub _traceSSLbitmasks {
+sub _traceSSLbitmasks   {
     # print bitmasks of available SSL constants
     my $txt  = shift; # prefix string as in _trace()
     my $mask = shift;
@@ -898,6 +898,26 @@ sub _traceSSLbitmasks {
     }
     return;
 } # _traceSSLbitmasks
+
+sub _ssleay_value_get   {
+    #? retrun value of $type (option, timeout, verify_mode, verify_depth, OP) for specified function as formated string
+    #  returns <<undef>> if specified function does not exist
+    #  $func is i.e.: Net::SSLeay::CTX_v3_new, Net::SSLeay::CTX_v23_new
+    my $type= shift;
+    my $func= shift;
+    my $val = "<<undef>>";
+    _traceset();
+    _trace("_ssleay_value_get('$type', '$func')");
+    if (defined &$func) {
+       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_options(&$func())) if ('options' eq $type);
+       $val =                   Net::SSLeay::CTX_get_timeout(&$func())  if ('timeout' eq $type);
+       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode( &$func())) if ('verify_mode'  eq $type);
+       $val =                   Net::SSLeay::CTX_get_verify_depth(&$func())  if ('verify_depth' eq $type);
+       $val = sprintf('0x%08x', &$func())   if ('OP' eq $type);
+    }
+    _trace("_ssleay_value_get ret=$val");
+    return $val;
+} # _ssleay_value_get
 
 ##################################################### internal data structure #
 
@@ -1168,22 +1188,6 @@ sub _SSLinfo_reset  {
     return;
 } # _SSLinfo_reset
 
-sub _get_CTX_value  {
-    #? retrun $type (option, timeout, verify_mode, verify_depth) for specified function as formated string
-    #  returns <<undef>> if specified function does not exist
-    #  $func is i.e.: Net::SSLeay::CTX_v3_new, Net::SSLeay::CTX_v23_new
-    my $type= shift;
-    my $func= shift;
-    my $val = "<<undef>>";
-    if (defined &$func) {
-       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_options(&$func())) if ('options' eq $type);
-       $val =                   Net::SSLeay::CTX_get_timeout(&$func())  if ('timeout' eq $type);
-       $val = sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode( &$func())) if ('verify_mode'  eq $type);
-       $val =                   Net::SSLeay::CTX_get_verify_depth(&$func())  if ('verify_depth' eq $type);
-    }
-    return $val;
-} # _get_CTX_value
-
 sub ssleay_methods  {
     #? returns list of available Net::SSLeay::*_method; most important first
 # TODO:  check for mismatch Net::SSLeay::*_method and Net::SSLeay::CTX_*_new
@@ -1251,7 +1255,6 @@ sub test_ssleay     {
     #  a here document is not possible here, or at least more cumbersome,
     #  because Perl code is used inside
     my @list = ssleay_methods();
-print "# list: " . join("\n# ",@list) ."\n";
     my $line = "#------------+------------------+-------------";
     my $data = "# Net::SSLeay{ function           1=available
 $line
@@ -1289,38 +1292,38 @@ $line
 # Net::SSLeay} function\n";
     $data .= "# Net::SSLeay{ constant           hex value
 $line
-#            ::OP_NO_SSLv2      = " . ((defined &Net::SSLeay::OP_NO_SSLv2)    ? sprintf('0x%08x', Net::SSLeay::OP_NO_SSLv2())    : "<<undef>>") . "
-#            ::OP_NO_SSLv3      = " . ((defined &Net::SSLeay::OP_NO_SSLv3)    ? sprintf('0x%08x', Net::SSLeay::OP_NO_SSLv3())    : "<<undef>>") . "
-#            ::OP_NO_TLSv1      = " . ((defined &Net::SSLeay::OP_NO_TLSv1)    ? sprintf('0x%08x', Net::SSLeay::OP_NO_TLSv1())    : "<<undef>>") . "
-#            ::OP_NO_TLSv1_1    = " . ((defined &Net::SSLeay::OP_NO_TLSv1_1)  ? sprintf('0x%08x', Net::SSLeay::OP_NO_TLSv1_1())  : "<<undef>>") . "
-#            ::OP_NO_TLSv1_2    = " . ((defined &Net::SSLeay::OP_NO_TLSv1_2)  ? sprintf('0x%08x', Net::SSLeay::OP_NO_TLSv1_2())  : "<<undef>>") . "
-#            ::OP_NO_TLSv1_3    = " . ((defined &Net::SSLeay::OP_NO_TLSv1_3)  ? sprintf('0x%08x', Net::SSLeay::OP_NO_TLSv1_3())  : "<<undef>>") . "
-#            ::OP_NO_DTLSv09    = " . ((defined &Net::SSLeay::OP_NO_DTLSv09)  ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv09())  : "<<undef>>") . "
-#            ::OP_NO_DTLSv1     = " . ((defined &Net::SSLeay::OP_NO_DTLSv1)   ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1())   : "<<undef>>") . "
-#            ::OP_NO_DTLSv1_1   = " . ((defined &Net::SSLeay::OP_NO_DTLSv1_1) ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1_1()) : "<<undef>>") . "
-#            ::OP_NO_DTLSv1_2   = " . ((defined &Net::SSLeay::OP_NO_DTLSv1_2) ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1_2()) : "<<undef>>") . "
-#            ::OP_NO_DTLSv1_3   = " . ((defined &Net::SSLeay::OP_NO_DTLSv1_3) ? sprintf('0x%08x', Net::SSLeay::OP_NO_DTLSv1_3()) : "<<undef>>") . "
+#            ::OP_NO_SSLv2      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv2) . "
+#            ::OP_NO_SSLv3      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv3) . "
+#            ::OP_NO_TLSv1      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1) . "
+#            ::OP_NO_TLSv1_1    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_1)  . "
+#            ::OP_NO_TLSv1_2    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_2)  . "
+#            ::OP_NO_TLSv1_3    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_3)  . "
+#            ::OP_NO_DTLSv09    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv09)  . "
+#            ::OP_NO_DTLSv1     = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1)   . "
+#            ::OP_NO_DTLSv1_1   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_1) . "
+#            ::OP_NO_DTLSv1_2   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_2) . "
+#            ::OP_NO_DTLSv1_3   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_3) . "
 $line
 # Net::SSLeay} constant\n";
     $data .= "# Net::SSLeay{ call
 #      experimental ...
 # Net::SSLeay::CTX_new {
-#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_new) . "
+#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_new) . "
 # Net::SSLeay::CTX_new }
 # Net::SSLeay::CTX_v3_new {
-#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_v3_new)  . "
+#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v3_new)  . "
 # Net::SSLeay::CTX_v3_new }
 # Net::SSLeay::CTX_v23_new {
-#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_timeout(CTX)= " . _get_CTX_value('timeout', *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_verify_mode(CTX) = " . _get_CTX_value('verify_mode',  *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_verify_depth(CTX)= " . _get_CTX_value('verify_depth', *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_v23_new) . "
+#            ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_v23_new) . "
 # Net::SSLeay::CTX_v23_new }
 # Net::SSLeay::CTX_tlsv1_2_new {
-#            ::CTX_get_options(CTX)= " . _get_CTX_value('options', *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_timeout(CTX)= " . _get_CTX_value('timeout', *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_verify_mode(CTX) = " . _get_CTX_value('verify_mode',  *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_verify_depth(CTX)= " . _get_CTX_value('verify_depth', *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_tlsv1_2_new) . "
+#            ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_tlsv1_2_new) . "
 # Net::SSLeay::CTX_tlsv1_2_new }
 # Net::SSLeay} call\n";
 
@@ -1428,16 +1431,16 @@ sub _check_port     {
     return (defined $port) ? 1 : undef;
 } # _check_port
 
-sub _ssleay_get     {
+sub _ssleay_cert_get    {
     #? get specified value from SSLeay certificate
         # wrapper to get data provided by certificate
         # note that all these function may produce "segmentation fault" or alike if
         # the target does not have/use a certificate but allows connection with SSL
     my ($key, $x509) = @_;
     _traceset();
-    _trace("_ssleay_get('$key', x509)");
+    _trace("_ssleay_cert_get('$key', x509)");
     if (0 != $Net::SSLinfo::no_cert) {
-        _trace("_ssleay_get 'use_cert' $Net::SSLinfo::no_cert .");
+        _trace("_ssleay_cert_get 'use_cert' $Net::SSLinfo::no_cert .");
         return $Net::SSLinfo::no_cert_txt if (2 == $Net::SSLinfo::no_cert);
         return '';
     }
@@ -1479,7 +1482,7 @@ sub _ssleay_get     {
 
     if ($key eq 'altname') {
         my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509); # returns array of (type, string)
-        _trace("_ssleay_get: Altname: " . join(' ', @altnames));
+        _trace("_ssleay_cert_get: Altname: " . join(' ', @altnames));
         while (@altnames) {             # construct string like openssl
             my ($type, $name) = splice(@altnames, 0, 2);
             # TODO: replace ugly code by %_SSLtypemap
@@ -1498,9 +1501,9 @@ sub _ssleay_get     {
             $ret .= ' ' . join(':', $type, $name);
         }
     }
-    _trace("_ssleay_get: $ret.");  # or warn "**WARNING: wrong key '$key' given; ignored";
+    _trace("_ssleay_cert_get: $ret.");  # or warn "**WARNING: wrong key '$key' given; ignored";
     return $ret;
-} # _ssleay_get
+} # _ssleay_cert_get
 
 sub _ssleay_socket  {
     #? craete TLS socket or use given socket
@@ -2360,7 +2363,7 @@ sub do_ssl_open($$$@) {
         $src = 'Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
             # $x509 may be undef or 0; this may cause "Segmentation fault"s in
-            # some Net::SSLeay::X509_* methods; hence we always use _ssleay_get
+            # some Net::SSLeay::X509_* methods; hence we always use _ssleay_cert_get
 
         #5a. get internal data
         # Some values may be overwritten below (see %match_map below).
@@ -2384,34 +2387,34 @@ sub do_ssl_open($$$@) {
         #5c. store certificate informations
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
         #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # TODO: returns binary, hence see below
-        $_SSLinfo{'PEM'}        = _ssleay_get('PEM',     $x509);
+        $_SSLinfo{'PEM'}        = _ssleay_cert_get('PEM',     $x509);
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
-        $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
-        $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
-        $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
-        $_SSLinfo{'after'}      = _ssleay_get('after',   $x509);
-        $_SSLinfo{'policies'}   = _ssleay_get('policies',$x509);
+        $_SSLinfo{'subject'}    = _ssleay_cert_get('subject', $x509);
+        $_SSLinfo{'issuer'}     = _ssleay_cert_get('issuer',  $x509);
+        $_SSLinfo{'before'}     = _ssleay_cert_get('before',  $x509);
+        $_SSLinfo{'after'}      = _ssleay_cert_get('after',   $x509);
+        $_SSLinfo{'policies'}   = _ssleay_cert_get('policies',$x509);
         if (1.45 <= $Net::SSLeay::VERSION) {
-            $_SSLinfo{'version'}= _ssleay_get('version', $x509);
+            $_SSLinfo{'version'}= _ssleay_cert_get('version', $x509);
         } else {
             warn("**WARNING: 651: Net::SSLeay >= 1.45 required for getting version");
         }
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
-            $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
+            $_SSLinfo{'altname'}= _ssleay_cert_get('altname', $x509);
         } else {
             warn("**WARNING: 652: Net::SSLeay >= 1.33 required for getting subjectAltNames");
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
-            $_SSLinfo{'cn'}     = _ssleay_get('cn', $x509);
+            $_SSLinfo{'cn'}     = _ssleay_cert_get('cn', $x509);
             $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
             warn("**WARNING: 653: Net::SSLeay >= 1.30 required for getting commonName");
         }
         if (1.45 <= $Net::SSLeay::VERSION) {
-            $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
-            $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
-            $_SSLinfo{'fingerprint_sha2'}= _ssleay_get('sha2', $x509);
+            $_SSLinfo{'fingerprint_md5'} = _ssleay_cert_get('md5',  $x509);
+            $_SSLinfo{'fingerprint_sha1'}= _ssleay_cert_get('sha1', $x509);
+            $_SSLinfo{'fingerprint_sha2'}= _ssleay_cert_get('sha2', $x509);
         } else {
             warn("**WARNING: 654: Net::SSLeay >= 1.45 required for getting fingerprint_md5");
         }
@@ -2419,11 +2422,11 @@ sub do_ssl_open($$$@) {
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
                 # TODO: returns a structure, needs to be unpacked
             $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
-            $_SSLinfo{'error_depth'}    = _ssleay_get('error_depth', $x509);
-            $_SSLinfo{'serial_hex'}     = _ssleay_get('serial_hex',  $x509);
-            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", _ssleay_get('cert_type', $x509) || 0);
-            $_SSLinfo{'subject_hash'}   = sprintf("%x", _ssleay_get('subject_hash', $x509) || 0);
-            $_SSLinfo{'issuer_hash'}    = sprintf("%x", _ssleay_get('issuer_hash',  $x509) || 0);
+            $_SSLinfo{'error_depth'}    = _ssleay_cert_get('error_depth', $x509);
+            $_SSLinfo{'serial_hex'}     = _ssleay_cert_get('serial_hex',  $x509);
+            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", _ssleay_cert_get('cert_type', $x509) || 0);
+            $_SSLinfo{'subject_hash'}   = sprintf("%x", _ssleay_cert_get('subject_hash', $x509) || 0);
+            $_SSLinfo{'issuer_hash'}    = sprintf("%x", _ssleay_cert_get('issuer_hash',  $x509) || 0);
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
         } else {
