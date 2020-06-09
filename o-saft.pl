@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.994 20/06/10 00:24:20",
+    SID         => "@(#) yeast.pl 1.995 20/06/10 00:28:39",
     STR_VERSION => "20.06.06",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7672,7 +7672,7 @@ while ($#argv >= 0) {
 
     # all options starting with  --h or --help or +help  are not handled herein
     _y_ARG("opt_--h? $arg");
-    if ($arg =~ /^--h$/)                        { $arg = "--help=help_cmds"; }# --h  is special
+    if ($arg =~ /^--h$/)                        { $arg = "--help=help_brief"; } # --h  is special
     if ($arg =~ /^(?:--|\+)help$/)              { $arg = "--help=NAME"; }   # --help
     if ($arg =~ /^\+(abbr|abk|glossar|todo)$/i) { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
