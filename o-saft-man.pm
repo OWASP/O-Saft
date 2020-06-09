@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.312 20/06/06 14:18:17";
+my  $SID_man= "@(#) o-saft-man.pm 1.313 20/06/10 00:26:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.312'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.313'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1032,6 +1032,64 @@ sub _man_cmd_from_rcfile {
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
+sub man_help_brief  {
+    #? print overview of help commands (invoked with --h)
+    # TODO: get this data from internal data structure when it is ready ...
+    # extract all --help= options with their description from @help
+    # using a foreach loop instead of regex to avoid memory polution
+    _man_dbx("man_help_brief() ...");
+    my %opts;
+    my $skip  = 1;
+    my $idx   = 0;  # perl hashes are sorted randomly, we want to keep the sequence in @help
+    my $key   = "";
+    foreach my $line (@help) {  # note: @help is in POD format
+        # we expect somthing like:
+        #    =head2 Options for help and documentation
+        #    =head3 --help=cmds
+        #
+        #          Show available commands; short form.
+        #
+        #    ...
+        #
+        $skip = 1 if ($line =~ m/^=head2\s+Options for /);
+        $skip = 0 if ($line =~ m/^=head2\s+Options for help/);
+        next      if ($line =~ m/^=head2\s+Options for help/);
+        next if (1 == $skip);
+        next if ($line =~ m/^\s*$/);
+        chomp $line;
+        #_dbx "$line" if $skip == 0;
+        if ($line =~ m/^=head3\s+--h/) {    # --h and --help and --help=*
+            $idx++;
+            $key  = $line;
+            $key  =~ s/^=head3\s+//;
+            $opts{$idx}->{'opt'} = $key;
+            next;
+        }
+        $line =~ s/^\s*//;                  # normalize
+        $line =~ s!I&([^&]*)&!$1!g;         # remove markup
+        $line =  sprintf("\n%17s %s", " ", $line) if (defined $opts{$idx}->{'txt'});
+        $opts{$idx}->{'txt'} .= $line;
+    }
+    print "\n";
+    _man_head(15, "Option", "Description");
+    foreach my $key (sort {$a <=> $b} keys %opts) {
+        printf("%-17s %s\n", $opts{$key}->{'opt'}, $opts{$key}->{'txt'}||"");
+    }
+    _man_foot(15);
+    print "\n";
+    _man_head(15, "Commands", "Description");
+    print <<"EoHelp";
++info             Overview of most important details of the SSL connection.
++cipher           Check target for ciphers (using libssl).
++check            Check the SSL connection for security issues.
++protocols        Check for protocols supported by target.
++vulns            Check for various vulnerabilities.
+EoHelp
+    _man_foot(15);
+    print "\nFor more commands see: $cfg{me} --help=commands\n\n";
+    return;
+} # man_help_brief
+
 sub man_commands    {
     #? print commands and short description
     # data is extracted from $parents internal data structure
@@ -1492,6 +1550,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
+    return man_help_brief()            if ($hlp =~ /^help_brief$/);
     # anything below requires data defined in parent
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('links'),         return if ($hlp =~ /^links?$/);
@@ -1515,7 +1574,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
     if ($hlp =~ /^help$/) {
-        #my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version);
+        #my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version); # already in @help
         my $txt  = "";
         foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
             # TODO: quick&dirty match against to fixed strings (=head lines)
@@ -1730,7 +1789,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.312 2020/06/06
+1.313 2020/06/10
 
 =head1 AUTHOR
 
@@ -1775,13 +1834,13 @@ The text for documentation is derivied from "help.txt" aka @help using:
 This text contains some  simple (intermediate) markup,  which then will be
 transformed to the final markup, such as HTML, POD, wiki.
 Some sections in that text are handled special or needs to be completed.
-These specialsections are mainly identified by line starting as follows:
+These special sections are mainly identified by lines starting as follows:
 
     Commands for ...
     Commands to ...
     Descrete commands to test ...
-    Option for ...
-    Option to ...
+    Options for ...
+    Options to ...
 
 These strings are hardcoded here. Take care when changing "help.txt".
 See also "OSaft/Doc/Data.pm".
