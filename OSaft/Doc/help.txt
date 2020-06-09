@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.52 20/06/06 15:13:17
+# SID   @(#) help.txt 1.53 20/06/10 00:21:14
 
 NAME
 
@@ -773,9 +773,11 @@ OPTIONS
 
       --h
 
+          Brief documentation of  --help*  options/commands.
+
       --help
 
-          WYSIWYG
+          Complete user documentation.
 
       --help=cmds
 
