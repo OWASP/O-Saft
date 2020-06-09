@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.28 20/06/06 14:35:19
+#?      @(#) Makefile.hlp 1.29 20/06/10 00:38:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.28
+_SID.hlp           := 1.29
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -66,6 +66,7 @@ testarg-hlp-+version--v--usr:   TEST.args  += +version --v --usr
 testarg-hlp---v+version:        TEST.args  += --v +version
 testarg-hlp---v+help:           TEST.args  += --v +help
 testarg-hlp-+help-commands:     TEST.args  += +help=commands
+testarg-hlp---h:                TEST.args  += --h
 
 # all other commands with --trace-CLI
 testarg-hlp-+cipher%:           TEST.init  += --trace-CLI
@@ -100,6 +101,7 @@ testarg-hlp---help-opt:         TEST.args  += --help=opt
 testarg-hlp---help-options:     TEST.args  += --help=options
 testarg-hlp---help-ourstr:      TEST.args  += --help=ourstr
 testarg-hlp---help-pattern:     TEST.args  += --help=pattern
+#testarg-hlp---help-problem:    TEST.args  += --help=error     # alias
 testarg-hlp---help-program.code: TEST.args += --help=program.code
 testarg-hlp---help-range:       TEST.args  += --help=range
 testarg-hlp---help-regex:       TEST.args  += --help=regex
