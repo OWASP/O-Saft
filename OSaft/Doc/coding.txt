@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.8 20/01/04 12:17:06
+# SID   @(#) coding.txt 1.9 20/06/10 23:02:08
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -12,7 +12,7 @@ HACKER's INFO
         It's not designed to be academic code or simple for programmers.
 
         Also testing for various flaws in other tools and protocols could not
-        be done in  a standardized generic way, using well designed software,
+        be done in  a standardised generic way, using well designed software,
         but often needs highly adapted code for each individual check, and --
         more worse -- sometimes variants of the same code.
         Please keep this in mind, before trying to unitise the code.
@@ -71,7 +71,7 @@ HACKER's INFO
         return statements are prefered.
 
         Most code is seqential instead of using functions, except the code is
-        used multiple times. This may be changed in future ...
+        used multiple times. This is currenlty changed ...
         It is not intended to have OO-code,  even perl's  OO capabilities are
         used when rational.
 
@@ -79,13 +79,17 @@ HACKER's INFO
 
         The code is regulary analysed using "perlcritic" -a front-end command
         line tool to the Perl::Critic module. As decribed above, this code is
-        not supposed to be academically correct.  Nevertheless, we follow the
+        not supposed to be academically correct. Nevertheless, we follow most
         recommendations given by perlcritic to make the most of it.
         For details please see:
 
           *  Annotations at end of o-saft.pl
           *  .perlcriticrc
           *  contrib/critic.sh .
+
+        All tests can be done with make, see:
+
+          *  make help.test.critic
 
       General
 
@@ -126,6 +130,7 @@ HACKER's INFO
 
         For debugging the code, the  --trace  option can be used. See  DEBUG
         section below for more details. Be prepared for a lot of output!
+	In fact it's a mix of tracing and debugging, to be technical correct.
 
       LHS condition checks
 
@@ -202,7 +207,7 @@ HACKER's INFO
         o-saft-usr.pm.
 
         For a detailed description of the used variables, please refer to the
-        text starting at the line  '#!# set defaults'  in  o-saft.pl.
+        text starting at the line  '#| set defaults'  in  o-saft.pl.
 
       Function names
 
@@ -222,12 +227,14 @@ HACKER's INFO
 
         Subs are ordered to avoid forward declarations as much as possible.
 
+        In general all names are in lower case. Using _ instead of camel case
+        is prefered. However, there are some exceptions for wrapper functions
+	for  Net::SSLinfo  and  Net::SSLeay .
+
       Code information
 
         Examples to get an overview of perl functions (sub):
           egrep '^(sub|\s*#\?)' $0
-
-        Same a little bit formatted, see  +traceSUB  command.
 
         Examples to get an overview of programs workflow:
           egrep '(^#\|\s|\s\susr_)' $0
@@ -236,6 +243,11 @@ HACKER's INFO
           $0 +check localhost --trace-key \
           | awk -F'#' '($2~/^ /){a=$2;gsub(" ","",a);next}(NF>1){printf"%s{%s}\n",a,$2}' \
           | tr '%' '$'
+
+        Makefile.dev contains following targets for easy use:
+          make testarg-dev-grep_subs
+          make testarg-dev-grep_sub
+          make testarg-dev-grep_desc
 
       Debugging, Tracing
 
@@ -261,7 +273,7 @@ HACKER's INFO
           $0 --cfg-init=prefix_trace="#my-trace:: "
 
         When  --trace  is used,  additional trace output  with timestamps are
-        are also printed,even if no  --trace-time  was given.  This is useful
+        are also printed, even if no  --trace-time  was given. This is useful
         because it automatically "scopes" other output with  '{'  and  '}'.
 
         Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
@@ -275,7 +287,7 @@ HACKER's INFO
           perform commands without connection to target
           loop over all specified targets
               print DNS stuff
-              open connction and retrive information
+              open connection and retrive information
               print ciphers
               print protocols
               print information
@@ -306,12 +318,12 @@ HACKER's INFO
           +cipher  - checking for supported ciphers by the target
           +check   - doing all the checks based on +info and +cipher
 
-        Any information is collected using  Net::SSLinfo and stored in %data.
+        Most information is collected using Net::SSLinfo and stored in %data.
         All information according ciphers is collected directly and stored in
-        @results. Finally, when performing the checks, these informations are
-        used and compared to expected well know values.  The results of these
-        checks are stored in  %checks.
-        Then all information from %data and %checks is printed by just loop-
+        @cipher_results . Finally, when performing the checks, these informa-
+        tions are used and compared to expected well know values. The results
+        of these checks are stored in  %checks .
+        Then all information from  %data and %checks is printed by just loop-
         ing through these hashes.
 
         Information is just collected using  Net::SSLinfo  and then printed.
@@ -366,7 +378,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.8 20/01/04 12:17:06";
+            my $SID = "coding.txt 1.9 20/06/10 23:02:08";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
