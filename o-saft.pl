@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.995 20/06/10 00:28:39",
+    SID         => "@(#) yeast.pl 1.997 20/06/11 00:52:10",
     STR_VERSION => "20.06.06",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -177,9 +177,7 @@ printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI
 
 #| definitions: forward declarations
 #| -------------------------------------
-sub __SSLinfo($$$);
-sub _iscfg_intern($);   # forward ...
-sub _is_member($$);     # forward ...
+sub _is_cfg_intern($);   # forward ...
 
 #| README if any
 #| -------------------------------------
@@ -197,7 +195,7 @@ my  $cgi = 0;
 #_____________________________________________________________________________
 #_________________________________________________________________ funtions __|
 
-#| definitions: debug and tracing
+#| definitions: debug and tracing functions
 #| -------------------------------------
 # functions and variables used very early in main
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
@@ -215,7 +213,7 @@ sub _hint   {
 } # _hint
 sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
-    # don't print if (not _iscfg_out('warning'));
+    # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
     return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $cfg{use}{warning}
     local $\ = "\n";
@@ -296,6 +294,240 @@ sub _load_file          {
     _print_read($fil, $txt);
     return $err;
 } # _load_file
+
+sub __SSLinfo($$$)      {
+    #? wrapper for Net::SSLinfo::*() functions
+    # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
+    # these values will be converted to o-saft's preferred format
+    my ($cmd, $host, $port) = @_;
+    my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
+    my $ext = "";
+    $val =  Net::SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
+    $val =  Net::SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
+    $val =  Net::SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
+    $val =  Net::SSLinfo::fingerprint_sha1( $host, $port) if ($cmd eq 'fingerprint_sha1');
+    $val =  Net::SSLinfo::fingerprint_md5(  $host, $port) if ($cmd eq 'fingerprint_md5');
+    $val =  Net::SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
+    $val =  Net::SSLinfo::sigkey_value(     $host, $port) if ($cmd eq 'sigkey_value');
+    $val =  Net::SSLinfo::heartbeat(        $host, $port) if ($cmd eq 'heartbeat');
+    $val =  Net::SSLinfo::extensions(       $host, $port) if ($cmd =~ /^ext(?:ensions|_)/);
+    $val =  Net::SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
+    if ($cmd eq 'tlsextensions') {
+        $val =  Net::SSLinfo::tlsextensions($host, $port);
+        $val =~ s/^\s*//g;
+        $val =~ s/([\n\r])/; /g;
+    }
+    # ::ocspid may return multiple lines, something like:
+    #   Subject OCSP hash: 57F4D68F870A1698065F803BE9D967B1B2B9E491
+    #   Public key OCSP hash: BF788D39424E219C62538F72701E1C87C4F667EA
+    # it's also assumed that both lines are present
+    if ($cmd =~ /ocspid/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^\n?\s+//g;           # remove leading spaces
+        $val =~ s/([\n\r])/; /g;        # remove newlines
+    }
+    if ($cmd =~ /ocsp_subject_hash/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/.ublic[^:]+:\s*.*//;
+    }
+    if ($cmd =~ /ocsp_public_hash/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/^[^:]+:\s*//;     # TODO: quick&dirty
+    }
+    if ($cmd =~ m/ext_/) {
+        # all following are part of Net::SSLinfo::extensions(), now extract parts
+        # The extension section in the certificate starts with
+        #    X509v3 extensions:
+        # then each extension starts with a string prefixed by  X509v3
+        # except following:
+        #    Authority Information Access
+        #    Netscape Cert Type
+        #    CT Precertificate SCTs
+        #
+        # Example www.microsoft.com (03/2016)
+        #    X509v3 extensions:
+        #        X509v3 Subject Alternative Name:
+        #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
+        #        X509v3 Basic Constraints:
+        #            CA:FALSE
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        X509v3 Certificate Policies:
+        #            Policy: 2.16.840.1.113733.1.7.23.6
+        #              CPS: https://d.symcb.com/cps
+        #              User Notice:
+        #                Explicit Text: https://d.symcb.com/rpa
+        #        X509v3 Authority Key Identifier:
+        #            keyid:0159ABE7DD3A0B59A66463D6CF200757D591E76A
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://sr.symcb.com/sr.crl
+        #        Authority Information Access:
+        #            OCSP - URI:http://sr.symcd.com
+        #            CA Issuers - URI:http://sr.symcb.com/sr.crt
+        #        CT Precertificate SCTs:
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : DDEB1D2B7A0D4FA6208B81AD8168707E:
+        #                            2E8E9D01D55C888D3D11C4CDB6ECBECC
+        #                Timestamp : Mar 24 212018.939 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            304602210095B30A493A8E8B253004AD:
+        #                            A971E0106BE0CC97B6FF2908FDDBBB3D:
+        #                            B8CEBFFCF8022100F37AA34DE5BE38D8:
+        #                            5A03EE8B3AAE451C0014A802C079AA34:
+        #                            9C20BAF44C54CF36
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : A4B90990B418581487BB13A2CC67700A:
+        #                            3C359804F91BDFB8E377CD0EC80DDC10
+        #                Timestamp : Mar 24 212018.983 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            3046022100C877DC1DBBDA2FBC7E5E63:
+        #                            60A7EAB31EED42066F91C724963EE0CE:
+        #                            80C8EBCE8C022100D5865704F32487CF:
+        #                            FF021F1C8A955303E496630CAE3C0F18:
+        #                            B8CDDFD4798365FD
+        #        ...
+        #
+        # Example microsoft.com
+        #    X509v3 extensions:
+        #        X509v3 Key Usage:
+        #            Digital Signature, Key Encipherment, Data Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        S/MIME Capabilities:
+        #            0000 - 30 69 30 0e 06 08 2a 86-48 86 f7 0d 03   0i0...*.H....
+        #            000d - 02 02 02 00 80 30 0e 06-08 2a 86 48 86   .....0...*.H.
+        #            001a - f7 0d 03 04 02 02 00 80-30 0b 06 09 60   ........0...`
+        #            0027 - 86 48 01 65 03 04 01 2a-30 0b 06 09 60   .H.e...*0...`
+        #            0034 - 86 48 01 65 03 04 01 2d-30 0b 06 09 60   .H.e...-0...`
+        #            0041 - 86 48 01 65 03 04 01 02-30 0b 06 09 60   .H.e....0...`
+        #            004e - 86 48 01 65 03 04 01 05-30 07 06 05 2b   .H.e....0...+
+        #            005b - 0e 03 02 07 30 0a 06 08-2a 86 48 86 f7   ....0...*.H..
+        #            0068 - 0d 03 07                                 ...
+        #        X509v3 Subject Key Identifier:
+        #            84C60E3B0FA69BF6EE0640CB02041B5F59340F73
+        #        X509v3 Authority Key Identifier:
+        #            keyid:51AF24269CF468225780262B3B4662157B1ECCA5
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #              URI:http://crl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #        Authority Information Access:
+        #            CA Issuers - URI:http://www.microsoft.com/pki/mscorp/msitwww2.crt
+        #            OCSP - URI:http://ocsp.msocsp.com
+        #        X509v3 Certificate Policies:
+        #            Policy: 1.3.6.1.4.1.311.42.1
+        #              CPS: http://www.microsoft.com/pki/mscorp/cps
+        #        1.3.6.1.4.1.311.21.10:
+        #            0000 - 30 18 30 0a 06 08 2b 06-01 05 05 07 03   0.0...+......
+        #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
+        #        ...
+        #
+        # Example bsi.bund.de (03/2016)
+        #    X509v3 extensions:
+        #        X509v3 Authority Key Identifier:
+        #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Client Authentication, TLS Web Server Authentication
+        #        X509v3 Subject Key Identifier:
+        #            1BA42D9746798AE2AE91D60AA60BE40FAA8A299E
+        #        X509v3 Certificate Policies:
+        #            Policy: 1.3.6.1.4.1.7879.13.2
+        #              CPS: http://www.telesec.de/serverpass/cps.html
+        #            Policy: 2.23.140.1.2.2
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #            Full Name:
+        #              URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #        Authority Information Access:
+        #            OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #            CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #            CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #        X509v3 Basic Constraints: critical
+        #            CA:FALSE
+        #        X509v3 Subject Alternative Name:
+        #            DNS:www.bsi.bund.de
+        #
+        # Example www.bsi.de (06/2016)
+        #    X509v3 CRL Distribution Points:
+        #
+        #         Full Name:
+        #           URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #
+        #         Full Name:
+        #           URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #     Authority Information Access:
+        #         OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #
+        # handled in RegEx below which matches next extension, if any.
+        $val .= " X509";# add string to match last extension also
+        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
+            # FIXME: the RegEx should match OIDs also
+            # FIXME: otherwise OID extensions are added as value to the
+            #        preceding extension, see example above (4/2016)
+        # FIXME: replace following list of RegEx with a loop over the extensions
+        $ext = $val;
+        $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
+        $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
+        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constraints');
+        $val =~ s#.*?Key Usage:$rex#$1#ms                       if ($cmd eq 'ext_keyusage');
+        $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
+        $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
+        $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
+        $val =~ s#.*?Policy\s*:\s*(.*?)(?:\n|CPS|User).*#$1#ims if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?User\s*Notice:\s*(.*?)(?:\n|CPS|Policy).*#$1#ims  if ($cmd eq 'ext_cps_notice');
+        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd eq 'ext_crl');
+        $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
+        $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
+        $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
+        if ($cmd eq 'ext_crl') {
+            $val =~ s#\s*Full Name:\s*##imsg;   # multiple occourances possible
+            $val =~ s#(\s*URI\s*:)# #msg;
+        }
+        $val =  "" if ($ext eq $val);   # nothing changed, then expected pattern is missing
+    }
+# TODO: move code for formatting to print*()
+    if ($cmd =~ /ext(?:ensions|debug|_)/) {
+        # grrr, formatting extensions is special, take care for traps ...
+        if ($cfg{'format'} ne "raw") {
+            $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+            # it was quick&dirty, correct some failures
+            $val =~ s/(keyid)/$1:/i;
+            $val =~ s/(CA)(FALSE)/$1:$2/i;
+            if ($cmd eq 'extensions') {
+                # extensions are special as they contain multiple values
+                # values are separated by emty lines
+                $val =~ s/\n\n+/\n/g;   # remove empty lines
+            } else {
+                $val =~ s/\s\s+/ /g;    # remove multiple spaces
+            }
+        }
+        return $val; # ready!
+    }
+# TODO: move code for formatting to print*()
+    if ($cfg{'format'} ne "raw") {
+        $val =  "" if not defined $val; # avoid warnings
+        $val =~ s/^\s+//g;      # remove leading spaces
+        $val =~ s/\n\s+//g;     # remove trailing spaces
+        $val =~ s/\n/ /g;
+        $val =~ s/\s\s+/ /g;    # remove multiple spaces
+        $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+    }
+    return $val;
+} # __SSLinfo
 
 #| read RC-FILE if any
 #| -------------------------------------
@@ -569,7 +801,7 @@ our %data   = (         # connection and certificate details
     'psk_hint'      => {'val' => sub { Net::SSLinfo::psk_hint(      $_[0], $_[1])}, 'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
-    'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
+    'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
     'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target's advertised protocols"},
 #   'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"}, # old, pre 17.04.17 version
     'alpn'          => {'val' => sub { return $info{'alpn'};                     }, 'txt' => "Target's selected protocol (ALPN)"},
@@ -1303,7 +1535,7 @@ push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
 push(@{$cfg{'cmd-info--v'}}, 'dump');   # more information
 foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
-    next if (_iscfg_intern($key));      # ignore aliases
+    next if (_is_cfg_intern($key));     # ignore aliases
     next if ($key =~ m/^(ciphers)/   and $verbose == 0);# Client ciphers are less important
     next if ($key =~ m/^modulus$/    and $verbose == 0);# same values as 'pubkey_value'
     push(@{$cfg{'cmd-info'}},    $key);
@@ -1931,55 +2163,88 @@ if (defined $ENV{'LIBPATH'}) {
 _yeast_EXIT("exit=INIT1 - initialisation end");
 usr_pre_file();
 
+#| definitions: functions to "convert" values
+#| -------------------------------------
+sub __subst($$)     { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
+    # return given text with '@@' replaced by given value
+sub _get_text($$)   { my ($is,$txt)=@_; return __subst($text{$is}, $txt); }
+    # for given index of %text return text with '@@' replaced by given value
+sub _get_yes_no     { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
+    # return 'yes' if given value is empty, return 'no' otherwise
+
+sub _get_base2      {
+    #? return base-2 of given number
+    my $value = shift;
+       $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
+       return 0   if ($value == 0);         # -''-
+       $value = log($value);
+    # base-2 = log($value) / log(2)
+    # unfortunately this calculation results in  "inf"  for big values
+    # to avoid using Math::BigInt for big values, the calculation is done as
+    # follows (approximately):
+    #   log(2)   = 0.693147180559945;
+    #   1/log(2) = 1.44269504088896;
+    #   v * 1.44 = v + (v / 100 * 44);
+    return ($value + ($value/100*44));
+} # _get_base2
+
+sub _hex_like_openssl   {
+    # return full hex constant formatted as used by openssl's output
+    my $c = shift;
+    $c =~ s/0x(..)(..)(..)(..)/0x$2,0x$3,0x$4 - /; # 0x0300C029 ==> 0x00,0xC0,0x29
+    $c =~ s/^0x00,// if ($c ne "0x00,0x00,0x00");  # first byte omitted if 0x00
+    return sprintf("%22s", $c);
+} # _hex_like_openssl
+
 #| definitions: %cfg functions
 #| -------------------------------------
-sub _need_this($)       {
+sub __need_this($)      {
     # returns >0 if any of the given commands is listed in $cfg{'$_'}
     my $key = shift;
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;      # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
-} # _need_this
-sub _need_cipher()      { return _need_this('need-cipher');     }
-sub _need_default()     { return _need_this('need-default');    }
-sub _need_checkssl()    { return _need_this('need-checkssl');   }
-sub _need_checkalpn()   { return _need_this('need-checkalpn');  }
-sub _need_checkbleed()  { return _need_this('need-checkbleed'); }
-sub _need_checkchr()    { return _need_this('need-checkchr');   }
-sub _need_checkdest()   { return _need_this('need-checkdest');  }
-sub _need_check_dh()    { return _need_this('need-check_dh');   }
-sub _need_checkhttp()   { return _need_this('need-checkhttp');  }
-sub _need_checkprot()   { return _need_this('need-checkprot');  }
+} # __need_this
+sub _need_cipher()      { return __need_this('need-cipher');    }
+sub _need_default()     { return __need_this('need-default');   }
+sub _need_checkssl()    { return __need_this('need-checkssl');  }
+sub _need_checkalpn()   { return __need_this('need-checkalpn'); }
+sub _need_checkbleed()  { return __need_this('need-checkbleed');}
+sub _need_checkchr()    { return __need_this('need-checkchr');  }
+sub _need_checkdest()   { return __need_this('need-checkdest'); }
+sub _need_check_dh()    { return __need_this('need-check_dh');  }
+sub _need_checkhttp()   { return __need_this('need-checkhttp'); }
+sub _need_checkprot()   { return __need_this('need-checkprot'); }
     # returns >0 if any  of the given commands is listed in $cfg{need-*}
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
     # returns list of matching entries in specified array @cfg{*}
-sub _iscfg_do($)        { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
-sub _iscfg_intern($)    { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
-sub _iscfg_hexdata($)   { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
-sub _iscfg_call($)      { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
+sub _is_cfg_do($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
+sub _is_cfg_intern($)   { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
+sub _is_cfg_hexdata($)  { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
+sub _is_cfg_call($)     { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if the given string is listed in $cfg{*}
-sub _iscfg($)           { my  $is=shift;    return $cfg{$is};   }
-sub _iscfg_ssl($)       { my  $is=shift;    return $cfg{$is};   }
+sub _is_cfg($)          { my  $is=shift;    return $cfg{$is};   }
+sub _is_cfg_ssl($)      { my  $is=shift;    return $cfg{$is};   }
     # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
-sub _iscfg_out($)       { my  $is=shift;    return $cfg{'out'}->{$is};  }
-sub _iscfg_use($)       { my  $is=shift;    return $cfg{'use'}->{$is};  }
-    # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
-sub _iscfg_verbose()    { return $cfg{'verbose'}; }
+sub _is_cfg_out($)      { my  $is=shift;    return $cfg{'out'}->{$is};  }
+sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
+    # returns value forgiven key in $cfg{*}->{key}; which is 0 or 1 (usually)
+sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
 
-sub _setcfg_out($$)     { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
-sub _setcfg_use($$)     { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
+sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
+sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _is_nummber         {
+sub __is_number         {
     # return 1 if given parameter is a number; return 0 otherwise
     my $val = shift;
     return 0 if not defined $val;
     return 0 if $val eq '';
     return ($val ^ $val) ? 0 : 1
-} # _is_nummber
+} # __is_number
 
 use IO::Socket::INET;
 sub _load_modules       {
@@ -2016,7 +2281,7 @@ sub _load_modules       {
 
     $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $err) {
-        die  STR_ERROR, "010: $err"  if (not _iscfg_do('version'));
+        die  STR_ERROR, "010: $err"  if (not _is_cfg_do('version'));
         warn STR_ERROR, "010: $err";# no reason to die for +version
     }
     if ($cfg{'starttls'}) {
@@ -2025,7 +2290,7 @@ sub _load_modules       {
     }
     $err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
     if ("" ne $err) {
-        die  STR_ERROR, "011: $err"  if (not _iscfg_do('version'));
+        die  STR_ERROR, "011: $err"  if (not _is_cfg_do('version'));
         warn STR_ERROR, "011: $err";    # no reason to die for +version
     }
     return;
@@ -2059,7 +2324,7 @@ sub _check_modules      {
         #   undef   - version module was not available or didn't define VERSION
         #   string  - even "0.42" cannot be compared to integer, bad luck ...
         #   integer - that's the usual and expected value
-    if (_is_nummber($version::VERSION)) {
+    if (__is_number($version::VERSION)) {
         $have_version = 0 if ($version::VERSION < 0.77);
             # veriosn module too old, use natural number compare
     } else {
@@ -2132,7 +2397,7 @@ sub _enable_functions   {
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
-        if((_iscfg_use('sni')) and ($cmd{'extciphers'} == 0)) {
+        if((_is_cfg_use('sni')) and ($cmd{'extciphers'} == 0)) {
             $cfg{'use'}->{'sni'} = 0;
             my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
             if ($version_iosocket < 1.90) {
@@ -2149,7 +2414,7 @@ sub _enable_functions   {
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
         # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
-        if (_iscfg_use('alpn')) {
+        if (_is_cfg_use('alpn')) {
             $cfg{'use'}->{'alpn'} = 0;
             warn STR_WARN, "126: $txt tests with/for ALPN disabled";
             if ($version_ssleay   < 1.56) {  # is also < 1.46
@@ -2165,7 +2430,7 @@ sub _enable_functions   {
 
     if ($cfg{'ssleay'}->{'set_npn'} == 0) {
         # warnings only if NPN functionality required
-        if (_iscfg_use('npn')) {
+        if (_is_cfg_use('npn')) {
             $cfg{'use'}->{'npn'}  = 0;
             warn STR_WARN, "129: $txt tests with/for NPN disabled";
             if ($version_ssleay   < 1.46) {
@@ -2309,22 +2574,22 @@ sub _check_functions    {
     return;
 } # _check_functions
 
-sub _check_SSL_methods  {
+sub _check_ssl_methods  {
    # check for supported SSL version methods and add them to $cfg{'version'}
    # TODO: anything related to ciphermode=intern can be removed when Net::SSLhello
    #       supports DTLSv1
     my $typ;
     my @list;
     _y_CMD("  check supported SSL versions ...");
-    if (_iscfg_do('cipher_openssl') or _iscfg_do('cipher_ssleay')) {
+    if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
         @list = Net::SSLinfo::ssleay_methods();
         # method names do not literally match our version string, hence the
         # cumbersome code below
     }
     _trace("SSLeay methods  = " . join(" ", @list));
     foreach my $ssl (@{$cfg{'versions'}}) {
-        next if ($cfg{$ssl} == 0);      # don't check what's disabled by option
-        if (_iscfg_do('cipher_intern')) {   # internal method does not depend on other libraries
+        next if ($cfg{$ssl} == 0);          # don't check what's disabled by option
+        if (_is_cfg_do('cipher_intern')) {  # internal method does not depend on other libraries
             if ($ssl eq 'DTLSv1') {
                 _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipher'; not checked");
                 next;
@@ -2354,12 +2619,12 @@ sub _check_SSL_methods  {
         # methods.  Sometimes, for whatever reason,  the user may know that the
         # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
         # which simply disables the check.
-        if (_iscfg_use('ssl_lazy')) {
+        if (_is_cfg_use('ssl_lazy')) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
         }
-        next if (not _iscfg_do('cipher'));
+        next if (not _is_cfg_do('cipher'));
         # Check for high-level API functions, like SSLv2_method, also possible
         # would be    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
         # and similar calls.
@@ -2389,12 +2654,12 @@ sub _check_SSL_methods  {
         }
     } # $ssl
 
-    if (not _iscfg_do('version')) {
+    if (not _is_cfg_do('version')) {
         _v_print("supported SSL versions: @{$cfg{'versions'}}");
         _v_print("  checked SSL versions: @{$cfg{'version'}}");
     }
     return;
-} # _check_SSL_methods
+} # _check_ssl_methods
 
 sub _enable_sclient     {
     # enable internal functionality based on available functionality of openssl s_client
@@ -2626,17 +2891,17 @@ sub _initchecks_val     {
     foreach my $key (@{$cfg{'cmd-vulns'}}) {
         $checks{$key}           ->{val} = $text{'undef'};  # may be refined below
     }
-    if (not _iscfg_use('dns')) {
+    if (not _is_cfg_use('dns')) {
         $checks{'reversehost'}  ->{val} = $text{'na_dns'};
     }
-    if (not _iscfg_use('http')) {
+    if (not _is_cfg_use('http')) {
         $checks{'crl_valid'}    ->{val} = _get_text('disabled', "--no-http");
         $checks{'ocsp_valid'}   ->{val} = _get_text('disabled', "--no-http");
         foreach my $key (keys %checks) {
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
-    if (not _iscfg_use('cert')) {
+    if (not _is_cfg_use('cert')) {
         $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
         foreach my $key (keys %check_cert) {    # anything related to certs
             $checks{$key}   ->{val} = $text{'na_cert'} if (_is_hashkey($key, \%check_cert));
@@ -2645,12 +2910,12 @@ sub _initchecks_val     {
             $checks{$key}   ->{val} = $text{'na_cert'};
         }
     }
-    if (not _iscfg_ssl('SSLv2')) {
+    if (not _is_cfg_ssl('SSLv2')) {
         $notxt = _get_text('disabled', "--no-SSLv2");
         $checks{'hassslv2'} ->{val} = $notxt;
         $checks{'drown'}    ->{val} = $notxt;
     }
-    if (not _iscfg_ssl('SSLv3')) {
+    if (not _is_cfg_ssl('SSLv3')) {
         $notxt = _get_text('disabled', "--no-SSLv3");
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = $notxt;
@@ -2659,11 +2924,11 @@ sub _initchecks_val     {
         $checks{'hastls11'} ->{val} = _get_text('disabled', "--no-TLSv11") if (1 > $cfg{'TLSv11'});
         $checks{'hastls12'} ->{val} = _get_text('disabled', "--no-TLSv12") if (1 > $cfg{'TLSv12'});
         $checks{'hastls13'} ->{val} = _get_text('disabled', "--no-TLSv13") if (1 > $cfg{'TLSv13'});
-        $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (not _iscfg_use('alpn'));
-        $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (not _iscfg_use('npn'));
-        $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _iscfg_use('sni'));
-        $checks{'certfqdn'} ->{val} = $text{'na_sni'}           if (not _iscfg_use('sni'));
-        $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'}   if (not _iscfg_use('extdebug'));
+        $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (not _is_cfg_use('alpn'));
+        $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (not _is_cfg_use('npn'));
+        $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _is_cfg_use('sni'));
+        $checks{'certfqdn'} ->{val} = $text{'na_sni'}           if (not _is_cfg_use('sni'));
+        $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'}   if (not _is_cfg_use('extdebug'));
     if (1 > $cmd{'extopenssl'}) {
         foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
             $checks{$key}   ->{val} = $text{'na_openssl'};
@@ -2736,7 +3001,7 @@ sub _cfg_set_from_file  {
     #       to use an  if-condition
     if (open($fh, '<:encoding(UTF-8)', $fil)) {
         push(@{$dbx{file}}, $fil);
-        _print_read("$fil", "USER-FILE configuration file") if (_iscfg_out('header'));
+        _print_read("$fil", "USER-FILE configuration file") if (_is_cfg_out('header'));
         while ($line = <$fh>) {
             #
             # format of each line in file must be:
@@ -2801,7 +3066,7 @@ sub _cfg_set($$)        {
             next if (_is_hashkey($key, \%checks));
             next if (_is_hashkey($key, \%data));
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}));
-            next if (_iscfg_intern( $key));
+            next if (_is_cfg_intern( $key));
             if ($key eq 'protocols') {  # valid before 17.02.26; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'next_protocols');
                 next;
@@ -2888,397 +3153,9 @@ sub _cfg_set_cipher     {
     return;
 } # _cfg_set_cipher
 
-# check functions for array members and hash keys
-sub __SSLinfo($$$)      {
-    # wrapper for Net::SSLinfo::*() functions
-    # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
-    # these values will be converted to o-saft's preferred format
-    my ($cmd, $host, $port) = @_;
-    my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
-    my $ext = "";
-    $val =  Net::SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
-    $val =  Net::SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
-    $val =  Net::SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
-    $val =  Net::SSLinfo::fingerprint_sha1( $host, $port) if ($cmd eq 'fingerprint_sha1');
-    $val =  Net::SSLinfo::fingerprint_md5(  $host, $port) if ($cmd eq 'fingerprint_md5');
-    $val =  Net::SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
-    $val =  Net::SSLinfo::sigkey_value(     $host, $port) if ($cmd eq 'sigkey_value');
-    $val =  Net::SSLinfo::heartbeat(        $host, $port) if ($cmd eq 'heartbeat');
-    $val =  Net::SSLinfo::extensions(       $host, $port) if ($cmd =~ /^ext(?:ensions|_)/);
-    $val =  Net::SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
-    if ($cmd eq 'tlsextensions') {
-        $val =  Net::SSLinfo::tlsextensions($host, $port);
-        $val =~ s/^\s*//g;
-        $val =~ s/([\n\r])/; /g;
-    }
-    # ::ocspid may return multiple lines, something like:
-    #   Subject OCSP hash: 57F4D68F870A1698065F803BE9D967B1B2B9E491
-    #   Public key OCSP hash: BF788D39424E219C62538F72701E1C87C4F667EA
-    # it's also assumed that both lines are present
-    if ($cmd =~ /ocspid/) {
-        $val =  Net::SSLinfo::ocspid($host, $port);
-        $val =~ s/^\n?\s+//g;           # remove leading spaces
-        $val =~ s/([\n\r])/; /g;        # remove newlines
-    }
-    if ($cmd =~ /ocsp_subject_hash/) {
-        $val =  Net::SSLinfo::ocspid($host, $port);
-        $val =~ s/^[^:]+:\s*//;
-        $val =~ s/.ublic[^:]+:\s*.*//;
-    }
-    if ($cmd =~ /ocsp_public_hash/) {
-        $val =  Net::SSLinfo::ocspid($host, $port);
-        $val =~ s/^[^:]+:\s*//;
-        $val =~ s/^[^:]+:\s*//;     # TODO: quick&dirty
-    }
-    if ($cmd =~ m/ext_/) {
-        # all following are part of Net::SSLinfo::extensions(), now extract parts
-        # The extension section in the certificate starts with
-        #    X509v3 extensions:
-        # then each extension starts with a string prefixed by  X509v3
-        # except following:
-        #    Authority Information Access
-        #    Netscape Cert Type
-        #    CT Precertificate SCTs
-        #
-        # Example www.microsoft.com (03/2016)
-        #    X509v3 extensions:
-        #        X509v3 Subject Alternative Name:
-        #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
-        #        X509v3 Basic Constraints:
-        #            CA:FALSE
-        #        X509v3 Key Usage: critical
-        #            Digital Signature, Key Encipherment
-        #        X509v3 Extended Key Usage:
-        #            TLS Web Server Authentication, TLS Web Client Authentication
-        #        X509v3 Certificate Policies:
-        #            Policy: 2.16.840.1.113733.1.7.23.6
-        #              CPS: https://d.symcb.com/cps
-        #              User Notice:
-        #                Explicit Text: https://d.symcb.com/rpa
-        #        X509v3 Authority Key Identifier:
-        #            keyid:0159ABE7DD3A0B59A66463D6CF200757D591E76A
-        #        X509v3 CRL Distribution Points:
-        #            Full Name:
-        #              URI:http://sr.symcb.com/sr.crl
-        #        Authority Information Access:
-        #            OCSP - URI:http://sr.symcd.com
-        #            CA Issuers - URI:http://sr.symcb.com/sr.crt
-        #        CT Precertificate SCTs:
-        #            Signed Certificate Timestamp:
-        #                Version   : v1(0)
-        #                Log ID    : DDEB1D2B7A0D4FA6208B81AD8168707E:
-        #                            2E8E9D01D55C888D3D11C4CDB6ECBECC
-        #                Timestamp : Mar 24 212018.939 2016 GMT
-        #                Extensions: none
-        #                Signature : ecdsa-with-SHA256
-        #                            304602210095B30A493A8E8B253004AD:
-        #                            A971E0106BE0CC97B6FF2908FDDBBB3D:
-        #                            B8CEBFFCF8022100F37AA34DE5BE38D8:
-        #                            5A03EE8B3AAE451C0014A802C079AA34:
-        #                            9C20BAF44C54CF36
-        #            Signed Certificate Timestamp:
-        #                Version   : v1(0)
-        #                Log ID    : A4B90990B418581487BB13A2CC67700A:
-        #                            3C359804F91BDFB8E377CD0EC80DDC10
-        #                Timestamp : Mar 24 212018.983 2016 GMT
-        #                Extensions: none
-        #                Signature : ecdsa-with-SHA256
-        #                            3046022100C877DC1DBBDA2FBC7E5E63:
-        #                            60A7EAB31EED42066F91C724963EE0CE:
-        #                            80C8EBCE8C022100D5865704F32487CF:
-        #                            FF021F1C8A955303E496630CAE3C0F18:
-        #                            B8CDDFD4798365FD
-        #        ...
-        #
-        # Example microsoft.com
-        #    X509v3 extensions:
-        #        X509v3 Key Usage:
-        #            Digital Signature, Key Encipherment, Data Encipherment
-        #        X509v3 Extended Key Usage:
-        #            TLS Web Server Authentication, TLS Web Client Authentication
-        #        S/MIME Capabilities:
-        #            0000 - 30 69 30 0e 06 08 2a 86-48 86 f7 0d 03   0i0...*.H....
-        #            000d - 02 02 02 00 80 30 0e 06-08 2a 86 48 86   .....0...*.H.
-        #            001a - f7 0d 03 04 02 02 00 80-30 0b 06 09 60   ........0...`
-        #            0027 - 86 48 01 65 03 04 01 2a-30 0b 06 09 60   .H.e...*0...`
-        #            0034 - 86 48 01 65 03 04 01 2d-30 0b 06 09 60   .H.e...-0...`
-        #            0041 - 86 48 01 65 03 04 01 02-30 0b 06 09 60   .H.e....0...`
-        #            004e - 86 48 01 65 03 04 01 05-30 07 06 05 2b   .H.e....0...+
-        #            005b - 0e 03 02 07 30 0a 06 08-2a 86 48 86 f7   ....0...*.H..
-        #            0068 - 0d 03 07                                 ...
-        #        X509v3 Subject Key Identifier:
-        #            84C60E3B0FA69BF6EE0640CB02041B5F59340F73
-        #        X509v3 Authority Key Identifier:
-        #            keyid:51AF24269CF468225780262B3B4662157B1ECCA5
-        #        X509v3 CRL Distribution Points:
-        #            Full Name:
-        #              URI:http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
-        #              URI:http://crl.microsoft.com/pki/mscorp/crl/msitwww2.crl
-        #        Authority Information Access:
-        #            CA Issuers - URI:http://www.microsoft.com/pki/mscorp/msitwww2.crt
-        #            OCSP - URI:http://ocsp.msocsp.com
-        #        X509v3 Certificate Policies:
-        #            Policy: 1.3.6.1.4.1.311.42.1
-        #              CPS: http://www.microsoft.com/pki/mscorp/cps
-        #        1.3.6.1.4.1.311.21.10:
-        #            0000 - 30 18 30 0a 06 08 2b 06-01 05 05 07 03   0.0...+......
-        #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
-        #        ...
-        #
-        # Example bsi.bund.de (03/2016)
-        #    X509v3 extensions:
-        #        X509v3 Authority Key Identifier:
-        #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
-        #        X509v3 Key Usage: critical
-        #            Digital Signature, Key Encipherment
-        #        X509v3 Extended Key Usage:
-        #            TLS Web Client Authentication, TLS Web Server Authentication
-        #        X509v3 Subject Key Identifier:
-        #            1BA42D9746798AE2AE91D60AA60BE40FAA8A299E
-        #        X509v3 Certificate Policies:
-        #            Policy: 1.3.6.1.4.1.7879.13.2
-        #              CPS: http://www.telesec.de/serverpass/cps.html
-        #            Policy: 2.23.140.1.2.2
-        #        X509v3 CRL Distribution Points:
-        #            Full Name:
-        #              URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
-        #            Full Name:
-        #              URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
-        #        Authority Information Access:
-        #            OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
-        #            CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
-        #            CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
-        #        X509v3 Basic Constraints: critical
-        #            CA:FALSE
-        #        X509v3 Subject Alternative Name:
-        #            DNS:www.bsi.bund.de
-        #
-        # Example www.bsi.de (06/2016)
-        #    X509v3 CRL Distribution Points:
-        #
-        #         Full Name:
-        #           URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
-        #
-        #         Full Name:
-        #           URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
-        #     Authority Information Access:
-        #         OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
-        #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
-        #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
-        #
-        # handled in RegEx below which matches next extension, if any.
-        $val .= " X509";# add string to match last extension also
-        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
-            # FIXME: the RegEx should match OIDs also
-            # FIXME: otherwise OID extensions are added as value to the
-            #        preceding extension, see example above (4/2016)
-        # FIXME: replace following list of RegEx with a loop over the extensions
-        $ext = $val;
-        $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
-        $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
-        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constraints');
-        $val =~ s#.*?Key Usage:$rex#$1#ms                       if ($cmd eq 'ext_keyusage');
-        $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
-        $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
-        $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
-        $val =~ s#.*?Policy\s*:\s*(.*?)(?:\n|CPS|User).*#$1#ims if ($cmd eq 'ext_cps_policy');
-        $val =~ s#.*?User\s*Notice:\s*(.*?)(?:\n|CPS|Policy).*#$1#ims  if ($cmd eq 'ext_cps_notice');
-        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd eq 'ext_crl');
-        $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
-        $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
-        $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
-        if ($cmd eq 'ext_crl') {
-            $val =~ s#\s*Full Name:\s*##imsg;   # multiple occourances possible
-            $val =~ s#(\s*URI\s*:)# #msg;
-        }
-        $val =  "" if ($ext eq $val);   # nothing changed, then expected pattern is missing
-    }
-# TODO: move code for formatting to print*()
-    if ($cmd =~ /ext(?:ensions|debug|_)/) {
-        # grrr, formatting extensions is special, take care for traps ...
-        if ($cfg{'format'} ne "raw") {
-            $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
-            # it was quick&dirty, correct some failures
-            $val =~ s/(keyid)/$1:/i;
-            $val =~ s/(CA)(FALSE)/$1:$2/i;
-            if ($cmd eq 'extensions') {
-                # extensions are special as they contain multiple values
-                # values are separated by emty lines
-                $val =~ s/\n\n+/\n/g;   # remove empty lines
-            } else {
-                $val =~ s/\s\s+/ /g;    # remove multiple spaces
-            }
-        }
-        return $val; # ready!
-    }
-# TODO: move code for formatting to print*()
-    if ($cfg{'format'} ne "raw") {
-        $val =  "" if not defined $val; # avoid warnings
-        $val =~ s/^\s+//g;      # remove leading spaces
-        $val =~ s/\n\s+//g;     # remove trailing spaces
-        $val =~ s/\n/ /g;
-        $val =~ s/\s\s+/ /g;    # remove multiple spaces
-        $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
-    }
-    return $val;
-} # __SSLinfo
-
-sub _subst($$)          { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
-    # return given text with '@@' replaced by given value
-sub _get_text($$)       { my ($is,$txt)=@_; return _subst($text{$is}, $txt); }
-    # for given index of %text return text with '@@' replaced by given value
-
-#| definitions: check functions
+#| definitions: check SSL functions
 #| -------------------------------------
-sub _setvalue   { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
-    # return 'yes' if given value is empty, return 'no' otherwise
-sub _isbeast    {
-    # return given cipher if vulnerable to BEAST attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSL|TLSv1$)/); # TLSv11 or later are not vulnerable to BEAST
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
-    return "";
-} # _isbeast
-### _isbreach($)        { return "NOT YET IMPLEMEMNTED"; }
-sub _isbreach   {
-    # return 'yes' if vulnerable to BREACH
-    return "";
-# TODO: checks
-    # To be vulnerable, a web application must:
-    #      Be served from a server that uses HTTP-level compression
-    #      Reflect user-input in HTTP response bodies
-    #      Reflect a secret (such as a CSRF token) in HTTP response bodies
-    #      *  agnostic to the version of TLS/SSL
-    #      *  does not require TLS-layer compression
-    #      *  works against any cipher suite
-    #      *  can be executed in under a minute
-} # _isbreach
-sub _iscrime    {
-    # return compression or SPDY/3 if available, empty string otherwise
-    # $val is usually $data{'compression'}->{val}
-    my ($val, $protocols) = @_;
-    my $ret  = ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " ";
-       $ret .= ($protocols =~ /$cfg{'regex'}->{'isSPDY3'}/) ? "SPDY/3 " : "";
-    #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
-    return $ret;
-} # _iscrime
-sub _istime     { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
-    # return given cipher if vulnerable to TIME attack, empty string otherwise
-sub _islucky    { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
-    # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
-sub _isfreak    {
-    # return given cipher if vulnerable to FREAK attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
-    return "";
-} # _isfreak
-sub _islogjam   {
-    # return given cipher if vulnerable to logjam attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
-    return "";
-} # _islogjam
-sub _isrobot    {
-    # return given cipher if vulnerable to ROBOT attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-   #return ""      if ($cipher =~ /$cfg{'regex'}->{'notROBOT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'ROBOT'}/);
-    return "";
-} # _isrobot
-sub _issloth    {
-    # return given cipher if vulnerable to SLOTH attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
-    return "";
-} # _issloth
-sub _issweet    {
-    # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
-    return "";
-} # _issweet
-sub _ispfs      { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  $c  : ""; }
-    # return given cipher if it supports forward secret connections (PFS)
-sub _isrc4      { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
-    # return given cipher if it is RC4
-sub _istr02102          {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    # this is valid vor TR-02102 2013 and 2016
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-02102'}/);
-    return "";
-} # _istr02102
-sub _istr02102_strict   {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    my $val = _istr02102($ssl, $cipher);
-    if ($val eq "") {   # strict allows AES*-GCM only and no SHA-1
-        return $cipher if ($cipher !~ /$cfg{'regex'}->{'AES-GCM'}/);
-        return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
-    }
-    return $val;
-} # _istr02102_strict
-sub _istr02102_lazy     {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    my $val = _istr02102($ssl, $cipher);
-    return $val;
-} # _istr02102_lazy
-sub _istr03116_strict   {
-    # return given cipher if it is not TR-03116 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-03116'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
-    return "";
-} # _istr03116_strict
-sub _istr03116_lazy     {
-    # return given cipher if it is not TR-03116 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
-    return "";
-} # _istr03116_lazy
-sub _isrfc7525          {
-    # return given cipher if it is not RFC 7525 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    my $bit = get_cipher_bits($cipher);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
-   # /notRFC7525/;
-    return $cipher if ($cipher =~ /NULL/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
-    return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
-    return $cipher if ($bit < 128);
-    return "";
-} # _isrfc7525
-sub _isfips($$)         {
-    # return given cipher if it is not FIPS-140 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv1");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notFIPS-140'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
-    return "";
-} # _isfips
-sub _isnsab($$)         {
-    # return given cipher if it is not NSA Suite B compliant, empty string otherwise
-# TODO:
-} # _isnsab
-sub _ispci($$)          {
-    # return given cipher if it is not PCI compliant, empty string otherwise
-# TODO: DH 1024+ is PCI compliant
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    eq "SSLv2"); # SSLv2 is not PCI compliant
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
-    return "";
-} # _ispci
-sub _readframe($)       {
+sub __readframe     {
     # from https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     my $cl  = shift;
     my $len = 5;
@@ -3304,8 +3181,9 @@ sub _readframe($)       {
         _v_print sprintf("...ssl received type=%d ver=%x size=%d", $type,$ver,length($buf));
     }
     return ($type,$ver,@msg);
-} # _readframe
-sub _isbleed($$)        {
+} # __readframe
+
+sub _is_ssl_bleed   {
     #? return "heartbleed" if target supports TLS extension 15 (heartbeat), empty string otherwise
     # SEE Note:heartbleed
     my ($host, $port) = @_;
@@ -3321,18 +3199,18 @@ sub _isbleed($$)        {
     unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
         # no proxy and not starttls
         $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or do {
-            _warn("321: _isbleed: failed to connect: '$!'");
-            _trace("_isbleed: fatal exit in IO::Socket::INET->new\n");
+            _warn("321: _is_ssl_bleed: failed to connect: '$!'");
+            _trace("_is_ssl_bleed: fatal exit in IO::Socket::INET->new\n");
             return "failed to connect";
         };
     } else {
         # proxy or starttls
-        _trace("_isbleed: using 'Net::SSLhello'");
+        _trace("_is_ssl_bleed: using 'Net::SSLhello'");
         $cl = Net::SSLhello::openTcpSSLconnection($host, $port);
         if ((not defined $cl) || ($@)) { # No SSL Connection
             local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
-            _warn ("322: _isbleed (with openTcpSSLconnection): $@\n");
-            _trace("_isbleed: fatal exit in _doCheckSSLciphers\n");
+            _warn ("322: _is_ssl_bleed (with openTcpSSLconnection): $@\n");
+            _trace("_is_ssl_bleed: fatal exit in _doCheckSSLciphers\n");
             return("failed to connect");
         }
         # NO SSL upgrade needed -> NO else
@@ -3363,7 +3241,7 @@ sub _isbleed($$)        {
         00 0f 00 01 01
     )));
     while (1) {
-        ($type,$ver,@msg) = _readframe($cl) or do {
+        ($type,$ver,@msg) = __readframe($cl) or do {
             #ORIG die "no reply";
             _warn("323: heartbleed: no reply: '$!'");
             _hint("server does not respond, this does not indicate that it is not vulnerable!");
@@ -3376,7 +3254,7 @@ sub _isbleed($$)        {
         _v_print("...send heartbeat#$_");
         print $cl pack("H*",join('',qw(18 03 02 00 03 01 40 00)));
     }
-    if ( ($type,$ver,$buf) = _readframe($cl)) {
+    if ( ($type,$ver,$buf) = __readframe($cl)) {
         if ( $type == 21 ) {
             _v_print("received alert (probably not vulnerable)");
         } elsif ( $type != 24 ) {
@@ -3398,11 +3276,31 @@ sub _isbleed($$)        {
         _v_print("no reply - probably not vulnerable");
     }
     close($cl);
-    _trace("_isbleed= $ret\n");
+    _trace("_is_ssl_bleed= $ret\n");
     return $ret;
-} # _isbleed
-
-sub _isccs($$$)         {
+} # _is_ssl_bleed
+sub _is_ssl_beast   {
+    # return given cipher if vulnerable to BEAST attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return ""      if ($ssl    !~ /(?:SSL|TLSv1$)/); # TLSv11 or later are not vulnerable to BEAST
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
+    return "";
+} # _is_ssl_beast
+### _is_ssl_breach($)        { return "NOT YET IMPLEMEMNTED"; }
+sub _is_ssl_breach  {
+    # return 'yes' if vulnerable to BREACH
+    return "";
+# TODO: checks
+    # To be vulnerable, a web application must:
+    #      Be served from a server that uses HTTP-level compression
+    #      Reflect user-input in HTTP response bodies
+    #      Reflect a secret (such as a CSRF token) in HTTP response bodies
+    #      *  agnostic to the version of TLS/SSL
+    #      *  does not require TLS-layer compression
+    #      *  works against any cipher suite
+    #      *  can be executed in under a minute
+} # _is_ssl_breach
+sub _is_ssl_ccs     {
     #? return "ccs" if target is vulnerable to CCS Injection, empty string otherwise
     # parameter $ssl must be provided as binary value: 0x00, 0x01, 0x02, 0x03 or 0x04
     # http://ccsinjection.lepidum.co.jp/
@@ -3417,11 +3315,11 @@ sub _isccs($$$)         {
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
-        _warn("331: _isccs: failed to connect: '$!'");
+        _warn("331: _is_ssl_ccs: failed to connect: '$!'");
         return "failed to connect";
     };
 #################
-# $ccs = _isccs($host, $port, $ssl);
+# $ccs = _is_ssl_ccs($host, $port, $ssl);
 #    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
 #        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,  }
 #################
@@ -3446,13 +3344,13 @@ sub _isccs($$$)         {
         00 04 00 03 00 02 00 01  01 00
     )));
     while (1) {
-        ($type,$ver,@msg) = _readframe($cl) or do {
-            _warn("332: _isccs: no reply: '$!'");
+        ($type,$ver,@msg) = __readframe($cl) or do {
+            _warn("332: _is_ssl_ccs: no reply: '$!'");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
     }
-    if ( ($type,$ver,$buf) = _readframe($cl)) {
+    if ( ($type,$ver,$buf) = __readframe($cl)) {
         if ( $type == 21 ) {
             _v_print("received alert (probably not vulnerable)");
         } elsif ( $type != 24 ) {
@@ -3475,24 +3373,79 @@ sub _isccs($$$)         {
     }
     close($cl);
     return $ret;
-} # _isccs
+} # _is_ssl_ccs
+sub _is_ssl_crime   {
+    # return compression or SPDY/3 if available, empty string otherwise
+    # $val is usually $data{'compression'}->{val}
+    my ($val, $protocols) = @_;
+    my $ret  = ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " ";
+       $ret .= ($protocols =~ /$cfg{'regex'}->{'isSPDY3'}/) ? "SPDY/3 " : "";
+    #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
+    return $ret;
+} # _is_ssl_crime
+sub _is_ssl_fips    {
+    # return given cipher if it is not FIPS-140 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv1");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notFIPS-140'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
+    return "";
+} # _is_ssl_fips
+sub _is_ssl_freak   {
+    # return given cipher if vulnerable to FREAK attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
+    return "";
+} # _is_ssl_freak
+sub _is_ssl_logjam  {
+    # return given cipher if vulnerable to logjam attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
+    return "";
+} # _is_ssl_logjam
+sub _is_ssl_lucky   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
+    # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
+sub _is_ssl_nsab    {
+    # return given cipher if it is not NSA Suite B compliant, empty string otherwise
+# TODO:
+} # _is_ssl_nsab
+sub _is_ssl_pci     {
+    # return given cipher if it is not PCI compliant, empty string otherwise
+# TODO: DH 1024+ is PCI compliant
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    eq "SSLv2"); # SSLv2 is not PCI compliant
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
+    return "";
+} # _is_ssl_pci
+sub _is_ssl_pfs     { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  $c  : ""; }
+    # return given cipher if it supports forward secret connections (PFS)
+sub _is_ssl_rc4     { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
+    # return given cipher if it is RC4
+sub _is_ssl_robot   {
+    # return given cipher if vulnerable to ROBOT attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+   #return ""      if ($cipher =~ /$cfg{'regex'}->{'notROBOT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'ROBOT'}/);
+    return "";
+} # _is_ssl_robot
+sub _is_ssl_sloth   {
+    # return given cipher if vulnerable to SLOTH attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
+    return "";
+} # _is_ssl_sloth
+sub _is_ssl_sweet   {
+    # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
+    return "";
+} # _is_ssl_sweet
+sub _is_ssl_time    { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
+    # return given cipher if vulnerable to TIME attack, empty string otherwise
 
-sub _isbeastskipped($$) {
-    #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
-    #? returns empty string otherwise.
-    my ($host, $port) = @_;
-    my @ret;
-    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {
-        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
-        if ($cfg{$ssl} == 0) {
-            push(@ret, _get_text('disabled', "--no-$ssl"));
-        }
-    }
-#_dbx ": TLS  " . join(" ", @ret);
-    return join(" ", @ret);
-} # _isbeastskipped
-
-sub _istls12only($$)    {
+sub _is_tls12only   {
 # NOTE: not yet used
     #? returns empty string if TLS 1.2 is the only protocol used,
     #? returns all used protocols otherwise
@@ -3512,7 +3465,78 @@ sub _istls12only($$)    {
     }
 #_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
-} # _istls12only
+} # _is_tls12only
+
+sub _is_tr02102         {
+    # return given cipher if it is not TR-02102 compliant, empty string otherwise
+    # this is valid vor TR-02102 2013 and 2016
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-02102'}/);
+    return "";
+} # _is_tr02102
+sub _is_tr02102_strict  {
+    # return given cipher if it is not TR-02102 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    my $val = _is_tr02102($ssl, $cipher);
+    if ($val eq "") {   # strict allows AES*-GCM only and no SHA-1
+        return $cipher if ($cipher !~ /$cfg{'regex'}->{'AES-GCM'}/);
+        return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
+    }
+    return $val;
+} # _is_tr02102_strict
+sub _is_tr02102_lazy    {
+    # return given cipher if it is not TR-02102 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    my $val = _is_tr02102($ssl, $cipher);
+    return $val;
+} # _is_tr02102_lazy
+sub _is_tr03116_strict  {
+    # return given cipher if it is not TR-03116 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-03116'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
+    return "";
+} # _is_tr03116_strict
+sub _is_tr03116_lazy    {
+    # return given cipher if it is not TR-03116 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
+    return "";
+} # _is_tr03116_lazy
+sub _is_rfc7525         {
+    # return given cipher if it is not RFC 7525 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    my $bit = get_cipher_bits($cipher);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
+   # /notRFC7525/;
+    return $cipher if ($cipher =~ /NULL/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
+    return $cipher if ($bit < 128);
+    return "";
+} # _is_rfc7525
+
+sub _isbeastskipped($$) {
+    #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
+    #? returns empty string otherwise.
+    my ($host, $port) = @_;
+    my @ret;
+    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {
+        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
+        if ($cfg{$ssl} == 0) {
+            push(@ret, _get_text('disabled', "--no-$ssl"));
+        }
+    }
+#_dbx ": TLS  " . join(" ", @ret);
+    return join(" ", @ret);
+} # _isbeastskipped
 
 sub _is_ssl_error($$$)  {
     # returns 1 if probaly a SSL connection error occoured; 0 otherwise
@@ -3521,7 +3545,7 @@ sub _is_ssl_error($$$)  {
     return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
     $cfg{'done'}->{'ssl_errors'}++;     # total counter
     $cfg{'done'}->{'ssl_failed'}++;     # local counter
-    return 0 if (not _iscfg_use('ssl_error'));# no action required
+    return 0 if (not _is_cfg_use('ssl_error'));# no action required
     if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
         _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
         _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
@@ -3568,9 +3592,9 @@ sub _usesocket($$$$)    {
     #       $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
-    my $sni     = (not _iscfg_use('sni'))  ? "" : $host;
-    my $npns    = (not _iscfg_use('npn'))  ? [] : $cfg{'cipher_npns'};
-    my $alpns   = (not _iscfg_use('alpn')) ? [] : $cfg{'cipher_alpns'};
+    my $sni     = (not _is_cfg_use('sni'))  ? "" : $host;
+    my $npns    = (not _is_cfg_use('npn'))  ? [] : $cfg{'cipher_npns'};
+    my $alpns   = (not _is_cfg_use('alpn')) ? [] : $cfg{'cipher_alpns'};
         # --no-alpn or --no-npn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
@@ -3681,7 +3705,7 @@ sub _useopenssl($$$$)   {
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = (not _iscfg_use('sni'))  ? "" : "-servername $host";
+    my $sni  = (not _is_cfg_use('sni'))  ? "" : "-servername $host";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     my $curves  = "-curves " . join(":", $cfg{'ciphercurves'}); # TODO: add to command below
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here ; dumm }
@@ -4049,7 +4073,7 @@ sub ciphers_scan_raw    {
     my @results = ();       # cipher list to be returned
     my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
     my $typ     = "raw";    # used for --trace only
-       $typ     = "all" if (_iscfg_do('cipher_intern'));
+       $typ     = "all" if (_is_cfg_do('cipher_intern'));
     _y_CMD("  use SSLhello +cipher$typ ...");
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
@@ -4070,16 +4094,16 @@ sub ciphers_scan_raw    {
         my @accepted = ();                          # accepted ciphers
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
-        if (_iscfg_do('cipher') or _iscfg_do('check')) {
+        if (_is_cfg_do('cipher') or _is_cfg_do('check')) {
             # FIXME: move to calling place
             print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         }
-        if (_iscfg_do('cipher_intern')) {
+        if (_is_cfg_do('cipher_intern')) {
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
         }
         @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-        if (_iscfg_do('cipher_dump')) {
+        if (_is_cfg_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d",
                          (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
             # correct total number if first 2 ciphers are identical
@@ -4101,13 +4125,13 @@ sub ciphers_scan_raw    {
             $prot{$ssl}->{'default'}        = $cipher;
         }
         # FIXME: move rest of code (print*()) to calling place
-        if (_iscfg_do('cipher') or _iscfg_do('check')) {
-            if (_iscfg_do('cipher_intern')) {
+        if (_is_cfg_do('cipher') or _is_cfg_do('check')) {
+            if (_is_cfg_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
                 print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
                 next if (scalar @accepted < 1); # defensive programming ..
-                #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _ispfs($ssl, $c));  # add PFS cipher
+                #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
             }
@@ -4139,7 +4163,7 @@ sub ciphers_scan        {
         }
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
-            if (_iscfg_do('cipher') or $cfg{'verbose'} > 0) {
+            if (_is_cfg_do('cipher') or $cfg{'verbose'} > 0) {
                 _warn_nosni("410:", $ssl, $cfg{'use'}->{'sni'});
                 # ciphers are collected for various checks, this would result
                 # in above warning, even then if  SSLv3 is not needed for the
@@ -4524,23 +4548,23 @@ sub checkcipher($$) {
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}      ->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _ispci(    $ssl, $c));
-    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _isfips(   $ssl, $c));
-    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _isrfc7525($ssl, $c));
-    $checks{'tr_02102+'}->{val}    .= _prot_cipher_or_empty($ssl, _istr02102_strict($ssl, $c));
-    $checks{'tr_02102-'}->{val}    .= _prot_cipher_or_empty($ssl, _istr02102_lazy(  $ssl, $c));
-    $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _istr03116_strict($ssl, $c));
-    $checks{'tr_03116-'}->{val}    .= _prot_cipher_or_empty($ssl, _istr03116_lazy(  $ssl, $c));
+    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_pci(    $ssl, $c));
+    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_fips(   $ssl, $c));
+    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _is_rfc7525($ssl, $c));
+    $checks{'tr_02102+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_strict($ssl, $c));
+    $checks{'tr_02102-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_lazy(  $ssl, $c));
+    $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
+    $checks{'tr_03116-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_lazy(  $ssl, $c));
     # check attacks
     $checks{'rc4'}      ->{val}     = $checks{'cipher_rc4'}->{val}; # these are the same checks
-    $checks{'beast'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isbeast($ssl, $c));
-    $checks{'breach'}   ->{val}    .= _prot_cipher_or_empty($ssl, _isbreach($c));
-    $checks{'freak'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isfreak($ssl, $c));
-    $checks{'lucky13'}  ->{val}    .= _prot_cipher_or_empty($ssl, _islucky($c));
-    $checks{'robot'}    ->{val}    .= _prot_cipher_or_empty($ssl, _isrobot($ssl, $c));
-    $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _issloth($ssl, $c));
-    $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _issweet($ssl, $c));
-    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _ispfs($ssl, $c));  # add PFS cipher
+    $checks{'beast'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_beast($ssl, $c));
+    $checks{'breach'}   ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_breach($c));
+    $checks{'freak'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_freak($ssl, $c));
+    $checks{'lucky13'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_lucky($c));
+    $checks{'robot'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_robot($ssl, $c));
+    $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sloth($ssl, $c));
+    $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sweet($ssl, $c));
+    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
     $prot{$ssl}->{'WEAK'}++        if ($risk =~ /WEAK/i);
@@ -4611,7 +4635,7 @@ sub checkciphers    {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $cipher);
-            $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _islogjam($ssl, $cipher));
+            $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _is_ssl_logjam($ssl, $cipher));
         }
         $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
@@ -4657,7 +4681,7 @@ sub checkbleed($$)  {
     _y_CMD("checkbleed() ". $cfg{'done'}->{'checkbleed'});
     $cfg{'done'}->{'checkbleed'}++;
     return if (1 < $cfg{'done'}->{'checkbleed'});
-    my $bleed = _isbleed($host, $port);
+    my $bleed = _is_ssl_bleed($host, $port);
     if ($cfg{'ignorenoreply'} > 0) {
         return if ($bleed =~ m/no reply/);
     }
@@ -4734,7 +4758,7 @@ sub checkdates($$)  {
         $txt = $text{'na_STS'};
         last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
         $txt = STR_UNDEF;
-        last MAXAGE_CHECK if (not _iscfg_do('sts_expired'));
+        last MAXAGE_CHECK if (not _is_cfg_do('sts_expired'));
         $txt = "";
         # compute epoch timestamp from 'after'
         my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
@@ -4769,7 +4793,7 @@ sub checkcert($$)   {
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
 
-    if (_iscfg_use('http')) {
+    if (_is_cfg_use('http')) {
         # at least 'ext_crl' may contain more than one URL
         $checks{'crl_valid'}->{val} = "";
         $value = $data{'ext_crl'}->{val}($host);
@@ -4821,13 +4845,13 @@ sub checkcert($$)   {
             $checks{$label}->{val}   = $value if ($value eq "");
 
 # FIXME:  $data{'verify'} $data{'error_verify'} $data{'error_depth'}
-#   if (_iscfg_do('verify')) {
+#   if (_is_cfg_do('verify')) {
 #       print "";
 #       print "Hostname validity:       "  . $data{'verify_hostname'}->{val}($host);
 #       print "Alternate name validity: "  . $data{'verify_altname'}->{val}( $host);
 #   }
 #
-#   if (_iscfg_do('altname')) {
+#   if (_is_cfg_do('altname')) {
 #       print "";
 #       print "Certificate AltNames:    "  . $data{'altname'}->{val}(        $host);
 #       print "Alternate name validity: "  . $data{'verify_altname'}->{val}( $host);
@@ -4875,14 +4899,14 @@ sub checksni($$)    {
     my $rex_cn      =    $cn;
        $rex_cn      =~ s/[*][.]/(?:.*\\.)?/g;   # convert DNS wildcard to Perl regex
 
-    if (_iscfg_use('sni')) {  # useless check for --no-sni
+    if (_is_cfg_use('sni')) {   # useless check for --no-sni
         if ($lc_host eq $lc_nosni) {
             $checks{'sni'}->{val}   = "";
         } else {
             $checks{'sni'}->{val}   = $data{'cn_nosni'}->{val};
         }
     }
-    if (not _iscfg_use('cert')) {
+    if (not _is_cfg_use('cert')) {
         $checks{'certfqdn'}->{val}  = $cfg{'no_cert_txt'};
         $checks{'hostname'}->{val}  = $cfg{'no_cert_txt'};
         return;
@@ -4905,22 +4929,6 @@ sub checksni($$)    {
     return;
 } # checksni
 
-sub _base2  {
-    #? return base-2 of given number
-    my $value = shift;
-       $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
-       return 0   if ($value == 0);         # -''-
-       $value = log($value);
-    # base-2 = log($value) / log(2)
-    # unfortunately this calculation results in  "inf"  for big values
-    # to avoid using Math::BigInt for big values, the calculation is done as
-    # follows (approximately):
-    #   log(2)   = 0.693147180559945;
-    #   1/log(2) = 1.44269504088896;
-    #   v * 1.44 = v + (v / 100 * 44);
-    return ($value + ($value/100*44));
-} # _base2
-
 sub checksizes($$)  {
     #? compute some lengths and counts from certificate values
     # sets %checks
@@ -4930,7 +4938,7 @@ sub checksizes($$)  {
     $cfg{'done'}->{'checksizes'}++;
     return if (1 < $cfg{'done'}->{'checksizes'});
 
-    checkcert($host, $port) if (_iscfg_use('cert')); # in case we missed it before
+    checkcert($host, $port) if (_is_cfg_use('cert')); # in case we missed it before
     $value =  $data{'pem'}->{val}($host);
     $checks{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
@@ -4987,7 +4995,7 @@ sub checksizes($$)  {
         $value = $data{'serial_int'}->{val}($host);
         $value = 0 if ($value =~ m/^\s*$/);     # avoid Perl warning "Argument isn't numeric"
         $value += 0;
-        my $bits_of_value = _base2($value);
+        my $bits_of_value = _get_base2($value);
         $checks{'sernumber'}    ->{val} = "$bits_of_value  > 160" if ($bits_of_value > 160);
         $value = $data{'sigkey_len'}->{val}($host);
         $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
@@ -5412,7 +5420,7 @@ sub check7525($$)   {
     #    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     #    TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 
-    #  ==> done in checkcipher() with _isrfc7525
+    #  ==> done in checkcipher() with _is_rfc7525
 
     # 4.3.  Public Key Length
     #    ... DH key lengths of at least 2048 bits are RECOMMENDED.
@@ -5466,7 +5474,7 @@ sub check7525($$)   {
     $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
     $val .= $checks{'crl_valid'}->{val};
 
-    # All checks for ciphers were done in _isrfc7525() and already stored in
+    # All checks for ciphers were done in _is_rfc7525() and already stored in
     # $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
     $checks{'rfc_7525'}->{val} = $val . " " . $checks{'rfc_7525'}->{val};
 
@@ -5671,13 +5679,13 @@ sub checkprot($$)   {
     #   The protocol may supported by the target, but no ciphers offered. Only
     #   if at least one ciphers is supported, vulnerabilities may there, hence
     #   check if amount of ciphers > 0.
-    if (_iscfg_ssl('SSLv2')) {
+    if (_is_cfg_ssl('SSLv2')) {
         my $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
-        $checks{'hassslv2'} ->{val} = (_iscfg_use('nullssl2')) ? $notxt : "";
+        $checks{'hassslv2'} ->{val} = (_is_cfg_use('nullssl2')) ? $notxt : "";
             # SSLv2 enabled, but no ciphers is ok (aka 'yes') for --nullssl2
         $checks{'drown'}    ->{val} = $notxt;  # SSLv2 there, then potentially vulnerable to DROWN
     }
-    if (_iscfg_ssl('SSLv3')) {
+    if (_is_cfg_ssl('SSLv3')) {
         my $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
@@ -5685,16 +5693,16 @@ sub checkprot($$)   {
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
         # FIXME: OSaft/Doc/help.txt ok now, but needs to be fixed too
     }
-    if (_iscfg_ssl('TLSv1')) {
+    if (_is_cfg_ssl('TLSv1')) {
         $checks{'hastls10'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
     }
-    if (_iscfg_ssl('TLSv11')) {
+    if (_is_cfg_ssl('TLSv11')) {
         $checks{'hastls11'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
     }
-    if (_iscfg_ssl('TLSv12')) {
+    if (_is_cfg_ssl('TLSv12')) {
         $checks{'hastls12'}->{val}  = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
     }
-    if (_iscfg_ssl('TLSv13')) {
+    if (_is_cfg_ssl('TLSv13')) {
         $checks{'hastls13'}->{val}  = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
     }
 
@@ -5725,7 +5733,7 @@ sub checkdest($$)   {
     # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
     # if --proxyhost was used; hence no need to check for proxyhost again
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
-    $checks{'reversehost'}->{val}   = $text{'na_dns'}   if (not _iscfg_use('dns'));
+    $checks{'reversehost'}->{val}   = $text{'na_dns'}   if (not _is_cfg_use('dns'));
     #$checks{'ip'}->{val}            = $cfg{'IP'}; # 12/2019: disabled
     # 12/2019: only relevant when target was IP, then $cfg{'ip'} must be identical to $cfg{'IP'}
 
@@ -5741,7 +5749,7 @@ sub checkdest($$)   {
             $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
     } else {
         if (1 > $#prot) {       # found exactly one matching protocol
-            $checks{'cipher_pfs'}->{val}= ("" eq _ispfs($ssl, $cipher)) ? $cipher : "";
+            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
         } else {
             _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
         }
@@ -5767,7 +5775,7 @@ sub checkdest($$)   {
     $key    = 'compression';
     $value  = $data{$key}->{val}($host);
     $checks{$key}->{val}        = ($value =~ m/$cfg{'regex'}->{'nocompression'}/) ? "" : $value;
-    $checks{'crime'}->{val}     = _iscrime($value, $data{'next_protocols'}->{val}($host));
+    $checks{'crime'}->{val}     = _is_ssl_crime($value, $data{'next_protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
@@ -5869,7 +5877,7 @@ sub checkhttp($$)   {
 # TODO: pins= ==> fingerprint des Zertifikats
 
     $notxt = $text{'na_STS'};
-    $notxt = $text{'na_http'} if (not _iscfg_use('http'));
+    $notxt = $text{'na_http'} if (not _is_cfg_use('http'));
     # NOTE: following sequence is important!
     foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
@@ -5965,7 +5973,7 @@ sub checkssl($$)    {
     return if (1 < $cfg{'done'}->{'checkssl'});
 
     $cfg{'no_cert_txt'} = $text{'na_cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
-    if (_iscfg_use('cert')) {
+    if (_is_cfg_use('cert')) {
         # all checks based on certificate can't be done if there was no cert, obviously
         checkcert( $host, $port);       # SNI, wildcards and certificate
         checkdates($host, $port);       # check certificate dates (since, until, exired)
@@ -6001,7 +6009,7 @@ sub checkssl($$)    {
         $checks{'rfc_2818_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
-    if (_iscfg_use('http')) {
+    if (_is_cfg_use('http')) {
         checkhttp( $host, $port);
     } else {
         $cfg{'done'}->{'checkhttp'}++;
@@ -6016,7 +6024,7 @@ sub checkssl($$)    {
 
 # TODO: to be implemented
     foreach my $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
-# TODO: only if( not _iscfg_use('cert'))
+# TODO: only if( not _is_cfg_use('cert'))
     }
 
     return;
@@ -6034,7 +6042,7 @@ sub check_exitcode  {
     my $cnt_nopfs  = 0; # total number ciphers without PFS
     my $old_verbose= $cfg{'verbose'};       # save global verbose
     $cfg{'verbose'} += $cfg{'out'}->{'exitcode'};  # --v and/or --exitcode-v
-    if (_iscfg_out('exitcode_checks')) {
+    if (_is_cfg_out('exitcode_checks')) {
         $exitcode  = $checks{'cnt_checks_no'} ->{val};
         $exitcode -= $checks{'cnt_checks_noo'}->{val};
     }
@@ -6050,11 +6058,11 @@ sub check_exitcode  {
         $cnt_prot++ if (0 < $cfg{$ssl});
         $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
         $cnt_pfs   = 0 if (0 >= $prot{$ssl}->{'cnt'});  # useless if there're no ciphers
-        $exitcode += $cnt_pfs                if (_iscfg_out('exitcode_pfs'));
+        $exitcode += $cnt_pfs                if (_is_cfg_out('exitcode_pfs'));
         $cnt_ciph  = 0;
-        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (_iscfg_out('exitcode_medium'));
-        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (_iscfg_out('exitcode_weak'));
-        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (_iscfg_out('exitcode_low'));
+        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (_is_cfg_out('exitcode_medium'));
+        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (_is_cfg_out('exitcode_weak'));
+        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (_is_cfg_out('exitcode_low'));
         $exitcode += $cnt_ciph;
         _v_print(sprintf("%-7s\t%3s %3s %3s %3s %3s\t%s", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
@@ -6068,14 +6076,14 @@ sub check_exitcode  {
     # for better human readability, counts disabled by --exitcode-no-* options
     # are marked as "ignored"
     #my $ign_ciphs   = (0 < ($cfg{'out'}->{'exitcode_low'} + $cfg{'out'}->{'exitcode_weak'} + $cfg{'out'}->{'exitcode_medium'}))   ? "" : " (count ignored)";
-    my $ign_ciphs   = (_iscfg_out('exitcode_low') or _iscfg_out('exitcode_weak') or _iscfg_out('exitcode_medium'))   ? "" : " (count ignored)";
-    my $ign_checks  = (_iscfg_out('exitcode_checks')) ? "" : " (count ignored)";
-    my $ign_prot    = (_iscfg_out('exitcode_prot'))   ? "" : " (count ignored)";
-    my $ign_pfs     = (_iscfg_out('exitcode_pfs'))    ? "" : " (count ignored)";
+    my $ign_ciphs   = (_is_cfg_out('exitcode_low') or _is_cfg_out('exitcode_weak') or _is_cfg_out('exitcode_medium'))   ? "" : " (count ignored)";
+    my $ign_checks  = (_is_cfg_out('exitcode_checks')) ? "" : " (count ignored)";
+    my $ign_prot    = (_is_cfg_out('exitcode_prot'))   ? "" : " (count ignored)";
+    my $ign_pfs     = (_is_cfg_out('exitcode_pfs'))    ? "" : " (count ignored)";
     _v_print($__tableline);
     $cnt_prot-- if (0 < $cfg{'TLSv12'});
     $cnt_prot-- if (0 < $cfg{'TLSv13'});
-    $exitcode += $cnt_prot if (_iscfg_out('exitcode_prot'));
+    $exitcode += $cnt_prot if (_is_cfg_out('exitcode_prot'));
     $checks{'cnt_exitcode'}->{val} = $exitcode;
     _v_print(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
     _v_print(sprintf("%s\t%5s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
@@ -6164,7 +6172,7 @@ sub printdump       {
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
     print '######################################################################### %data';
     foreach my $key (keys %data) {
-        next if (_iscfg_intern($key) > 0);  # ignore aliases
+        next if (_is_cfg_intern($key) > 0);  # ignore aliases
         _printdump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
@@ -6172,7 +6180,7 @@ sub printdump       {
     return;
 } # printdump
 
-sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if (_iscfg_out('header')); return; }
+sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if (_is_cfg_out('header')); return; }
     #? print header ruler line
 
 sub print_header    {
@@ -6237,7 +6245,7 @@ sub print_line($$$$$$)  {
     #       host:port:#[key]:label: \tvalue
     # legacy=_cipher is special: does not print label and value
     my  $label  = "";
-        $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if (_iscfg_out('hostname'));
+        $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if (_is_cfg_out('hostname'));
     if ($legacy eq '_cipher') {
         printf("%s#[%s]%s", $label, $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
         return;
@@ -6276,7 +6284,7 @@ sub print_data($$$$)    {
         print_line($legacy, $host, $port, $key, $data{$key}->{txt}, $value);
         return;
     }
-    if ((1 == _iscfg_hexdata($key)) && ($value !~ m/^\s*$/)) {
+    if ((1 == _is_cfg_hexdata($key)) && ($value !~ m/^\s*$/)) {
         # check for empty $value to avoid warnings with -w
         # pubkey_value may look like:
         #   Subject Public Key Info:Public Key Algorithm: rsaEncryptionPublic-Key: (2048 bit)Modulus=00c11b:...
@@ -6323,7 +6331,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if (_iscfg_out('hint_info'));   # SEE Note:hints
+    printhint($key) if (_is_cfg_out('hint_info'));   # SEE Note:hints
     return;
 } # print_data
 
@@ -6334,7 +6342,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if (_iscfg_out('hint_check'));  # SEE Note:hints
+    printhint($key) if (_is_cfg_out('hint_check'));  # SEE Note:hints
     return;
 } # print_check
 
@@ -6348,14 +6356,14 @@ sub print_size($$$$)    {
     return;
 } # print_size
 
-sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if (_iscfg_out('header')); return; }
+sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if (_is_cfg_out('header')); return; }
     #? print header ruler line for ciphers with DH parameters
-sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if (_iscfg_out('header')); return; }
+sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if (_is_cfg_out('header')); return; }
     #? print header ruler line for ciphers
 sub print_cipherhead($) {
     #? print header line according given legacy format
     my $legacy  = shift;
-    return if (not _iscfg_out('header'));
+    return if (not _is_cfg_out('header'));
     if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
     if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
     #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); } # old version
@@ -6643,11 +6651,11 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
     } else {
         print "\n  * $ssl Cipher Suites :";
         print_cipherprefered($legacy, $ssl, $host, $port);
-        if (_iscfg_out('enabled')  or (_iscfg_out('disabled') == _iscfg_out('enabled'))) {
+        if (_is_cfg_out('enabled')  or (_is_cfg_out('disabled') == _is_cfg_out('enabled'))) {
             print "\n      Accepted Cipher Suites:";
             $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", @results);
         }
-        if (_iscfg_out('disabled') or (_iscfg_out('disabled') == _iscfg_out('enabled'))) {
+        if (_is_cfg_out('disabled') or (_is_cfg_out('disabled') == _is_cfg_out('enabled'))) {
             print "\n      Rejected Cipher Suites:";
             $total = _print_cipher_results($legacy, $ssl, $host, $port, "no", @results);
         }
@@ -6703,7 +6711,7 @@ sub printcipherprefered {
     #? print table with prefered/selected (default) cipher per protocol
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    if (_iscfg_out('header')) {
+    if (_is_cfg_out('header')) {
         printf("= prot.\t%-31s%s\n", "prefered cipher (strong first)", "prefered cipher (weak first)");
         printf("=------+------------------------------+-------------------------------\n");
     }
@@ -6716,7 +6724,7 @@ sub printcipherprefered {
                 $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_weak'},
         );
     }
-    if (_iscfg_out('header')) {
+    if (_is_cfg_out('header')) {
         printf("=------+------------------------------+-------------------------------\n");
     }
     print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
@@ -6729,7 +6737,7 @@ sub printprotocols      {
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    if (_iscfg_out('header')) {
+    if (_is_cfg_out('header')) {
         if ('owasp' eq $legacy) {
             printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
             printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot prefered-strong-cipher PFS-cipher));
@@ -6775,7 +6783,7 @@ sub printprotocols      {
         }
         # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
-    if (_iscfg_out('header')) {
+    if (_is_cfg_out('header')) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     return;
@@ -6803,7 +6811,7 @@ sub printdata($$$)      {
     local $\ = "\n";
     print_header($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out'}->{'header'});
     _trace_cmd('%data');
-    if (_iscfg_do('cipher_selected')) {     # value is special
+    if (_is_cfg_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
                    $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
@@ -6813,22 +6821,22 @@ sub printdata($$$)      {
         next if (_is_member( $key, \@{$cfg{'ignore-out'}}));
         next if (not _is_hashkey($key, \%data));
         next if ($key eq 'cipher_selected');# value is special, done above
-        if (not _iscfg_use('experimental')) {
+        if (not _is_cfg_use('experimental')) {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
         # special handling vor +info--v
-        if (_iscfg_do('info--v')) {
+        if (_is_cfg_do('info--v')) {
             next if ($key eq 'info--v');
             next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
         } else {
-            next if (_iscfg_intern($key));
+            next if (_is_cfg_intern($key));
         }
         _y_CMD("(%data)   +" . $key);
         my $value = $data{$key}->{val}($host);
         if (_is_member( $key, \@{$cfg{'cmd-NL'}})) {
             # for +info print multiline data only if --v given
             # if command given explicitly, i.e. +text, print
-            if (_iscfg_do('info') and (0 >= $cfg{'verbose'})) {
+            if (_is_cfg_do('info') and (0 >= $cfg{'verbose'})) {
                 _hint("multiline data '+$key' for '+info' printed with --v only");
                 next;
             }
@@ -6849,21 +6857,21 @@ sub printchecks($$$)    {
     local $\ = "\n";
     print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out'}->{'header'});
     _trace_cmd(' printchecks: %checks');
-    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _iscfg_use('cert'));
+    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _is_cfg_use('cert'));
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}));
         next if (_is_member( $key, \@{$cfg{'ignore-out'}}));
         next if (not _is_hashkey($key, \%checks));
-        next if (_iscfg_intern( $key));# ignore aliases
+        next if (_is_cfg_intern( $key));# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        if (not _iscfg_use('experimental')) {
+        if (not _is_cfg_use('experimental')) {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
-        $value = _setvalue($checks{$key}->{val});
+        $value = _get_yes_no($checks{$key}->{val});
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) {   # sizes are special
-            print_size($legacy, $host, $port, $key) if (_iscfg_use('cert'));
+            print_size($legacy, $host, $port, $key) if (_is_cfg_use('cert'));
         } else {
             # increment counter only here, avoids counting the counter itself
             $checks{'cnt_checks_yes'}->{val}++ if ($value eq "yes");
@@ -6913,7 +6921,7 @@ sub printquit           {
     return;
 } # printquit
 
-sub __SSLeay            {
+sub __SSLeay_version    {
     #? internal wrapper for Net::SSLeay::SSLeay()
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
@@ -6923,12 +6931,12 @@ sub __SSLeay            {
     } else {
         return Net::SSLeay::SSLeay();
     }
-} # __SSLeay
+} # __SSLeay_version
 
 sub printversionmismatch {
     #? check if openssl and compiled SSLeay are of same version
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
-    my $s = __SSLeay();
+    my $s = __SSLeay_version();
     if ($o ne $s) {
         _warn("841: used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
@@ -6952,7 +6960,7 @@ sub printversion        {
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
-    printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay(), __SSLeay());
+    printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay_version(), __SSLeay_version());
     if (1.49 > $Net::SSLeay::VERSION) {
         _warn("851: ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
     } else {
@@ -7098,14 +7106,6 @@ sub printversion        {
     return;
 } # printversion
 
-sub _hex_like_openssl   {
-    # convert full hex constant to format used by openssl's output
-    my $c = shift;
-    $c =~ s/0x(..)(..)(..)(..)/0x$2,0x$3,0x$4 - /; # 0x0300C029 ==> 0x00,0xC0,0x29
-    $c =~ s/^0x00,// if ($c ne "0x00,0x00,0x00");  # first byte omitted if 0x00
-    return sprintf("%22s", $c);
-} # _hex_like_openssl
-
 sub printciphers        {
     #? print cipher descriptions from internal database
     # uses settings from --legacy= and --format= options to select output format
@@ -7198,7 +7198,7 @@ sub printciphers        {
            $hh = "O-Saft";
            $hl = "-------+";
         }
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("= %s\t%s\t%s\n", "OWASP", $hh, "cipher");
             printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
         }
@@ -7209,7 +7209,7 @@ sub printciphers        {
                $sec_osaft = "" if (0 >= $cfg{'verbose'});
             printf("  %s\t%s\t%s\n", $sec_owasp, $sec_osaft,  $c);
         }
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
         }
         return;
@@ -7217,14 +7217,14 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "simple") {   # this format like for +list up to VERSION 14.07.14
         $sep = "\t";
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
         foreach my $c (sort keys %ciphers) {
             printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
         }
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
         return;
@@ -7232,7 +7232,7 @@ sub printciphers        {
 
     if ($cfg{'legacy'} eq "full") {     # internal format with leading hex number
         $sep = $text{'separator'};
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("= Constant$sep%s%-20s${sep}Aliases\n",   "Cipher", join($sep, @{$ciphers_desc{'text'}}));
             printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
@@ -7253,7 +7253,7 @@ sub printciphers        {
             $hex = sprintf("%s$sep", ($hex || "    -?-"));
             printf("%s %s%-30s$sep%s$sep%s\n", $can, $hex, $c, join($sep, @{$ciphers{$c}}), $alias);
         }
-        if (_iscfg_out('header')) {
+        if (_is_cfg_out('header')) {
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
         }
         if (0 < $cfg{'verbose'}) {
@@ -7816,8 +7816,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ciphers?-?v$/)      { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--ciphers?--?v$/)     { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--v-?ciphers?$/)      { $cfg{'v_cipher'}++;       }
-    if ($arg =~ /^--warnings?$/)        { _setcfg_out('warning', 1);}
-    if ($arg =~ /^--nowarnings?$/)      { _setcfg_out('warning', 0);}
+    if ($arg =~ /^--warnings?$/)        { _set_cfg_out('warning', 1);       }
+    if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning', 0);       }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias:
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
@@ -7831,8 +7831,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--timerelative')      { $cfg{'time_absolut'} = 0; }
     if ($arg eq  '--linuxdebug')        { $cfg{'linux_debug'}++;    }
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
-    if ($arg =~ /^--exp(?:erimental)?$/){ _setcfg_use('experimental', 1); }
-    if ($arg =~ /^--noexp(erimental)?$/){ _setcfg_use('experimental', 0); }
+    if ($arg =~ /^--exp(?:erimental)?$/){ _set_cfg_use('experimental', 1);  }
+    if ($arg =~ /^--noexp(erimental)?$/){ _set_cfg_use('experimental', 0);  }
     if ($arg eq  '--filesclient')       { $typ = 'FILE_SCLIENT';    }
     if ($arg eq  '--fileciphers')       { $typ = 'FILE_CIPHERS';    }
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
@@ -7878,54 +7878,54 @@ while ($#argv >= 0) {
     if ($arg eq  '--noopensslciphers')  { $cmd{'extciphers'}= 0;    }
     if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
     if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
-    if ($arg eq  '--alpn')              { _setcfg_use('alpn',   1); }
-    if ($arg eq  '--noalpn')            { _setcfg_use('alpn',   0); }
-    if ($arg eq  '--npn')               { _setcfg_use('npn',    1); }
-    if ($arg eq  '--nonpn')             { _setcfg_use('npn',    0); }
-    if ($arg =~ /^--?nextprotoneg$/)    { _setcfg_use('npn',    1); } # openssl
-    if ($arg =~ /^--nonextprotoneg/)    { _setcfg_use('npn',    0); }
-    if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';   } # alias:
-    if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression'; } # alias:
-    if ($arg =~ /^--sslcompression$/)   { _setcfg_use('no_comp',    0); } # openssl s_client -comp
-    if ($arg =~ /^--nosslcompression$/) { _setcfg_use('no_comp',    1); } # openssl s_client -no_comp
-    if ($arg =~ /^--?tlsextdebug$/)     { _setcfg_use('extdebug',   1); }
-    if ($arg =~ /^--notlsextdebug/)     { _setcfg_use('extdebug',   0); }
-    if ($arg =~ /^--?reconnect$/)       { _setcfg_use('reconnect',  1); }
-    if ($arg =~ /^--noreconnect$/)      { _setcfg_use('reconnect',  0); }
+    if ($arg eq  '--alpn')              { _set_cfg_use('alpn',   1);}
+    if ($arg eq  '--noalpn')            { _set_cfg_use('alpn',   0);}
+    if ($arg eq  '--npn')               { _set_cfg_use('npn',    1);}
+    if ($arg eq  '--nonpn')             { _set_cfg_use('npn',    0);}
+    if ($arg =~ /^--?nextprotoneg$/)    { _set_cfg_use('npn',    1);} # openssl
+    if ($arg =~ /^--nonextprotoneg/)    { _set_cfg_use('npn',    0);}
+    if ($arg =~ /^--?comp(?:ression)?$/){ $arg = '--sslcompression';     } # alias:
+    if ($arg =~ /^--?nocomp(ression)?$/){ $arg = '--nosslcompression';   } # alias:
+    if ($arg =~ /^--sslcompression$/)   { _set_cfg_use('no_comp',    0); } # openssl s_client -comp
+    if ($arg =~ /^--nosslcompression$/) { _set_cfg_use('no_comp',    1); } # openssl s_client -no_comp
+    if ($arg =~ /^--?tlsextdebug$/)     { _set_cfg_use('extdebug',   1); }
+    if ($arg =~ /^--notlsextdebug/)     { _set_cfg_use('extdebug',   0); }
+    if ($arg =~ /^--?reconnect$/)       { _set_cfg_use('reconnect',  1); }
+    if ($arg =~ /^--noreconnect$/)      { _set_cfg_use('reconnect',  0); }
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # various options
-    if ($arg eq  '--forcesni')          { _setcfg_use('forcesni',   1); }
+    if ($arg eq  '--forcesni')          { _set_cfg_use('forcesni',   1); }
     if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'sslerror'}->{'ignore_no_conn'}  = 1;}
     if ($arg =~ /^--ignorehandshake/)   { $cfg{'sslerror'}->{'ignore_handshake'}= 1;}
     if ($arg =~ /^--noignorehandshake/) { $cfg{'sslerror'}->{'ignore_handshake'}= 0;}
-    if ($arg eq  '--lwp')               { _setcfg_use('lwp',    1); }
-    if ($arg eq  '--sni')               { _setcfg_use('sni',    1); }
-    if ($arg eq  '--nosni')             { _setcfg_use('sni',    0); }
-    if ($arg eq  '--snitoggle')         { _setcfg_use('sni',    3); }
-    if ($arg eq  '--togglesni')         { _setcfg_use('sni',    3); }
-    if ($arg eq  '--nocert')            { _setcfg_use('cert',   0); }
+    if ($arg eq  '--lwp')               { _set_cfg_use('lwp',    1);}
+    if ($arg eq  '--sni')               { _set_cfg_use('sni',    1);}
+    if ($arg eq  '--nosni')             { _set_cfg_use('sni',    0);}
+    if ($arg eq  '--snitoggle')         { _set_cfg_use('sni',    3);}
+    if ($arg eq  '--togglesni')         { _set_cfg_use('sni',    3);}
+    if ($arg eq  '--nocert')            { _set_cfg_use('cert',   0);}
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}    = 0;}
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}    = 1;}
     if ($arg eq  '--noignorenoreply')   { $cfg{'ignorenoreply'} = 0;}
     if ($arg eq  '--ignorenoreply')     { $cfg{'ignorenoreply'} = 1;}
-    if ($arg eq  '--noexitcode')        { _setcfg_use('exitcode',   0); }
-    if ($arg eq  '--exitcode')          { _setcfg_use('exitcode',   1); } # SEE Note:--exitcode
-    if ($arg =~ /^--exitcodev/)         { _setcfg_out('exitcode',   1); } #
-    if ($arg =~ /^--traceexit/)         { _setcfg_out('exitcode',   1); } # alias:
-    if ($arg =~ /^--exitcodequiet/)     { _setcfg_out('exitcode_quiet',  1); } #
-    if ($arg =~ /^--exitcodesilent/)    { _setcfg_out('exitcode_quiet',  1); } # alias:
-    if ($arg =~ /^--exitcodenochecks?/) { _setcfg_out('exitcode_checks', 0); } # -"-
-    if ($arg =~ /^--exitcodenomedium/)  { _setcfg_out('exitcode_medium', 0); } # -"-
-    if ($arg =~ /^--exitcodenoweak/)    { _setcfg_out('exitcode_weak',   0); } # -"-
-    if ($arg =~ /^--exitcodenolow/)     { _setcfg_out('exitcode_low',    0); } # -"-
-    if ($arg =~ /^--exitcodenopfs/)     { _setcfg_out('exitcode_pfs',    0); } # -"-
-    if ($arg =~ /^--exitcodenoprot/)    { _setcfg_out('exitcode_prot',   0); } # -"-
-    if ($arg =~ /^--exitcodenosizes/)   { _setcfg_out('exitcode_sizes',  0); } # -"-
+    if ($arg eq  '--noexitcode')        { _set_cfg_use('exitcode',        0); }
+    if ($arg eq  '--exitcode')          { _set_cfg_use('exitcode',        1); } # SEE Note:--exitcode
+    if ($arg =~ /^--exitcodev/)         { _set_cfg_out('exitcode',        1); } #
+    if ($arg =~ /^--traceexit/)         { _set_cfg_out('exitcode',        1); } # alias:
+    if ($arg =~ /^--exitcodequiet/)     { _set_cfg_out('exitcode_quiet',  1); } #
+    if ($arg =~ /^--exitcodesilent/)    { _set_cfg_out('exitcode_quiet',  1); } # alias:
+    if ($arg =~ /^--exitcodenochecks?/) { _set_cfg_out('exitcode_checks', 0); } # -"-
+    if ($arg =~ /^--exitcodenomedium/)  { _set_cfg_out('exitcode_medium', 0); } # -"-
+    if ($arg =~ /^--exitcodenoweak/)    { _set_cfg_out('exitcode_weak',   0); } # -"-
+    if ($arg =~ /^--exitcodenolow/)     { _set_cfg_out('exitcode_low',    0); } # -"-
+    if ($arg =~ /^--exitcodenopfs/)     { _set_cfg_out('exitcode_pfs',    0); } # -"-
+    if ($arg =~ /^--exitcodenoprot/)    { _set_cfg_out('exitcode_prot',   0); } # -"-
+    if ($arg =~ /^--exitcodenosizes/)   { _set_cfg_out('exitcode_sizes',  0); } # -"-
     if ($arg =~ /^--exitcodenociphers?/){   # shortcut options for following
-        _setcfg_out('exitcode_cipher', 0);
-        _setcfg_out('exitcode_medium', 0);
-        _setcfg_out('exitcode_weak',   0);
-        _setcfg_out('exitcode_low',    0);
+        _set_cfg_out('exitcode_cipher', 0);
+        _set_cfg_out('exitcode_medium', 0);
+        _set_cfg_out('exitcode_weak',   0);
+        _set_cfg_out('exitcode_low',    0);
     }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
@@ -7968,37 +7968,37 @@ while ($#argv >= 0) {
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
     # our options
-    if ($arg eq  '--nodns')             { _setcfg_use('dns',    0); }
-    if ($arg eq  '--dns')               { _setcfg_use('dns',    1); }
-    if ($arg eq  '--http')              { _setcfg_use('http',   1); }
-    if ($arg eq  '--nohttp')            { _setcfg_use('http',   0); }
-    if ($arg eq  '--https')             { _setcfg_use('https',  1); }
-    if ($arg eq  '--nohttps')           { _setcfg_use('https',  0); }
-    if ($arg eq  '--nosniname')         { _setcfg_use('sni',    0); } # 0: don't use SNI, different than empty string
+    if ($arg eq  '--nodns')             { _set_cfg_use('dns',    0);}
+    if ($arg eq  '--dns')               { _set_cfg_use('dns',    1);}
+    if ($arg eq  '--http')              { _set_cfg_use('http',   1);}
+    if ($arg eq  '--nohttp')            { _set_cfg_use('http',   0);}
+    if ($arg eq  '--https')             { _set_cfg_use('https',  1);}
+    if ($arg eq  '--nohttps')           { _set_cfg_use('https',  0);}
+    if ($arg eq  '--nosniname')         { _set_cfg_use('sni',    0);} # 0: don't use SNI, different than empty string
     if ($arg eq  '--norc')              {                           } # simply ignore
-    if ($arg eq  '--sslerror')          { _setcfg_use('ssl_error',   1); }
-    if ($arg eq  '--nosslerror')        { _setcfg_use('ssl_error',   0); }
-    if ($arg eq  '--ssllazy')           { _setcfg_use('ssl_lazy',    1); }
-    if ($arg eq  '--nossllazy')         { _setcfg_use('ssl_lazy',    0); }
-    if ($arg =~ /^--nullsslv?2$/i)      { _setcfg_use('nullssl2',    1); }
-    if ($arg =~ /^--sslv?2null$/i)      { _setcfg_use('nullssl2',    1); }
-    if ($arg eq  '--noenabled')         { _setcfg_out('enabled',     0); }
-    if ($arg eq  '--enabled')           { _setcfg_out('enabled',     1); }
-    if ($arg eq  '--disabled')          { _setcfg_out('disabled',    1); }
-    if ($arg eq  '--nodisabled')        { _setcfg_out('disabled',    0); }
-    if ($arg =~ /^--headers?$/)         { _setcfg_out('header',      1); } # some people type --headers
-    if ($arg =~ /^--noheaders?$/)       { _setcfg_out('header',      0); }
-    if ($arg =~ /^--hints?$/)           { _setcfg_out('hint_info',   1); _setcfg_out('hint_check', 1); }
-    if ($arg =~ /^--nohints?$/)         { _setcfg_out('hint_info',   0); _setcfg_out('hint_check', 0); }
-    if ($arg =~ /^--hints?infos?/)      { _setcfg_out('hint_info',   1); }
-    if ($arg =~ /^--nohints?infos?/)    { _setcfg_out('hint_info',   0); }
-    if ($arg =~ /^--hints?checks?/)     { _setcfg_out('hint_check',  1); }
-    if ($arg =~ /^--nohints?checks?/)   { _setcfg_out('hint_check',  0); }
-    if ($arg =~ /^--hints?cipher/)      { _setcfg_out('hint_cipher', 1); }
-    if ($arg =~ /^--nohints?cipher/)    { _setcfg_out('hint_cipher', 0); }
-    if ($arg =~ /^--showhosts?/i)       { _setcfg_out('hostname',    1); }
-    if ($arg eq  '--score')             { _setcfg_out('score',       1); }
-    if ($arg eq  '--noscore')           { _setcfg_out('score',       0); }
+    if ($arg eq  '--sslerror')          { _set_cfg_use('ssl_error',   1); }
+    if ($arg eq  '--nosslerror')        { _set_cfg_use('ssl_error',   0); }
+    if ($arg eq  '--ssllazy')           { _set_cfg_use('ssl_lazy',    1); }
+    if ($arg eq  '--nossllazy')         { _set_cfg_use('ssl_lazy',    0); }
+    if ($arg =~ /^--nullsslv?2$/i)      { _set_cfg_use('nullssl2',    1); }
+    if ($arg =~ /^--sslv?2null$/i)      { _set_cfg_use('nullssl2',    1); }
+    if ($arg eq  '--noenabled')         { _set_cfg_out('enabled',     0); }
+    if ($arg eq  '--enabled')           { _set_cfg_out('enabled',     1); }
+    if ($arg eq  '--disabled')          { _set_cfg_out('disabled',    1); }
+    if ($arg eq  '--nodisabled')        { _set_cfg_out('disabled',    0); }
+    if ($arg =~ /^--headers?$/)         { _set_cfg_out('header',      1); } # some people type --headers
+    if ($arg =~ /^--noheaders?$/)       { _set_cfg_out('header',      0); }
+    if ($arg =~ /^--hints?$/)           { _set_cfg_out('hint_info',   1); _set_cfg_out('hint_check', 1); }
+    if ($arg =~ /^--nohints?$/)         { _set_cfg_out('hint_info',   0); _set_cfg_out('hint_check', 0); }
+    if ($arg =~ /^--hints?infos?/)      { _set_cfg_out('hint_info',   1); }
+    if ($arg =~ /^--nohints?infos?/)    { _set_cfg_out('hint_info',   0); }
+    if ($arg =~ /^--hints?checks?/)     { _set_cfg_out('hint_check',  1); }
+    if ($arg =~ /^--nohints?checks?/)   { _set_cfg_out('hint_check',  0); }
+    if ($arg =~ /^--hints?cipher/)      { _set_cfg_out('hint_cipher', 1); }
+    if ($arg =~ /^--nohints?cipher/)    { _set_cfg_out('hint_cipher', 0); }
+    if ($arg =~ /^--showhosts?/i)       { _set_cfg_out('hostname',    1); }
+    if ($arg eq  '--score')             { _set_cfg_out('score',       1); }
+    if ($arg eq  '--noscore')           { _set_cfg_out('score',       0); }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
@@ -8322,7 +8322,7 @@ if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
 }
 $verbose = $cfg{'verbose'};
 $legacy  = $cfg{'legacy'};
-if (_iscfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
+if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'use'}->{'https'}  = 0;
@@ -8330,27 +8330,27 @@ if (_iscfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     $cfg{'use'}->{'dns'}    = 0;
     _hint($cfg{'hints'}->{'cipher'});
 }
-if (_iscfg_do('ciphers')) {
+if (_is_cfg_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
-    #_setcfg_out('header', 0) if ((grep{/--header/} @argv) <= 0);
+    #_set_cfg_out('header', 0) if ((grep{/--header/} @argv) <= 0);
     $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
     $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
-    if (not _iscfg_do('list')) {
-        _setcfg_out('header', $cfg{'opt-V'}) if (not _iscfg_out('header'));
+    if (not _is_cfg_do('list')) {
+        _set_cfg_out('header', $cfg{'opt-V'}) if (not _is_cfg_out('header'));
     }
 }
-if (_iscfg_do('list')) {
+if (_is_cfg_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
-    _setcfg_out('header', 1)   if ((grep{/--no.?header/} @argv) <= 0);
+    _set_cfg_out('header', 1)  if ((grep{/--no.?header/} @argv) <= 0);
     $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
 }
-if (_iscfg_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (not _iscfg_do('cipher_pfsall')); }
+if (_is_cfg_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (not _is_cfg_do('cipher_pfsall')); }
 
-if (_iscfg_do('version') or (_iscfg_use('mx')))             { $cfg{'need_netdns'}    = 1; }
-if (_iscfg_do('version') or (_iscfg_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
+if (_is_cfg_do('version') or (_is_cfg_use('mx')))             { $cfg{'need_netdns'}    = 1; }
+if (_is_cfg_do('version') or (_is_cfg_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 
@@ -8464,7 +8464,7 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
         if ($mode eq $cfg{'ciphermode'}) {
             # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
             my $do = 'cipher_' . $mode;
-            push(@{$cfg{'do'}}, $do) if (not _iscfg_do($do)); # only if not yet set
+            push(@{$cfg{'do'}}, $do) if (not _is_cfg_do($do)); # only if not yet set
         }
     }
 }
@@ -8479,7 +8479,7 @@ _yeast_TIME("inc}");
 _yeast_TIME("mod{");
 _y_CMD("check $cfg{'me'} internals ...");
 
-my $do_checks = _iscfg_do('cipher_openssl') + _iscfg_do('cipher_ssleay');
+my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay');
 
 #| check for required module versions
 #| -------------------------------------
@@ -8490,7 +8490,7 @@ _check_modules()    if (0 < $do_checks);
 
 #| check for required functionality
 #| -------------------------------------
-_check_functions()  if (0 < $do_checks + _iscfg_do('cipher') + _need_checkprot());
+_check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot());
     # more detailed checks on version numbers with proper warning messages
 
 #| check for proper openssl support
@@ -8499,11 +8499,11 @@ _check_openssl()    if (0 < $do_checks);
 
 #_dbx "do: @{$cfg{'do'}}";
 #_dbx "need-default: @{$cfg{'need-default'}}";
-#_dbx "_check_SSL_methods(): " . _need_cipher() . " : " . _need_default() . " : ver? "._iscfg_do('version');
+#_dbx "_check_ssl_methods(): " . _need_cipher() . " : " . _need_default() . " : ver? "._is_cfg_do('version');
 #exit;
 #| check for supported SSL versions
 #| -------------------------------------
-_check_SSL_methods() if (0 < _need_cipher() + _need_default() + _iscfg_do('version'));
+_check_ssl_methods() if (0 < _need_cipher() + _need_default() + _is_cfg_do('version'));
     # initialise $cfg{'version'} and all $cfg{ssl}
     # function is oversized for --ciphermode=intern but does the work
 
@@ -8512,19 +8512,19 @@ _yeast_TIME("ini{");
 
 #| set additional defaults if missing
 #| -------------------------------------
-_setcfg_out('header', 1) if(0 => $verbose); # verbose uses headers
-_setcfg_out('header', 1) if(0 => $verbose); # verbose uses headers
-_setcfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
-_setcfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
+_set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
+_set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
+_set_cfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
+_set_cfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'}; # safe setting; may be undef
-if (not _iscfg_use('http')) {           # was explicitly set with --no-http 'cause default is 1
+if (not _is_cfg_use('http')) {          # was explicitly set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
-    _setcfg_out('enabled', 1);
+    _set_cfg_out('enabled', 1);
     $cfg{'label'}   = 'short';
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
@@ -8554,7 +8554,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
     $Net::SSLinfo::no_compression   = $cfg{'use'}->{'no_comp'};
-    $Net::SSLinfo::no_cert          = ((_iscfg_use('cert')) ? 0 : 1);
+    $Net::SSLinfo::no_cert          = ((_is_cfg_use('cert')) ? 0 : 1);
     $Net::SSLinfo::no_cert_txt      = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case      = $cfg{'ignorecase'};
     $Net::SSLinfo::ca_crl           = $cfg{'ca_crl'};
@@ -8633,12 +8633,12 @@ _yeast_TIME("ini}");
 #| -------------------------------------
 _y_CMD("no connection commands ...");
 $test =~ s/^[+](test.*)/--$1/;  # _yeast_test() expects --test*
-if ($test !~ m/^\s*$/)       { _yeast_test($test); exit 0; } # SEE Note:--test-*
-if (_iscfg_do('list'))       { printciphers();     exit 0; }
-if (_iscfg_do('ciphers'))    { printciphers();     exit 0; }
-if (_iscfg_do('version'))    { printversion();     exit 0; }
-if (_iscfg_do('libversion')) { printopenssl();     exit 0; }
-if (_iscfg_do('quit'))       { printquit();        exit 0; } # internal test command
+if ($test !~ m/^\s*$/)        { _yeast_test($test); exit 0; } # SEE Note:--test-*
+if (_is_cfg_do('list'))       { printciphers();     exit 0; }
+if (_is_cfg_do('ciphers'))    { printciphers();     exit 0; }
+if (_is_cfg_do('version'))    { printversion();     exit 0; }
+if (_is_cfg_do('libversion')) { printopenssl();     exit 0; }
+if (_is_cfg_do('quit'))       { printquit();        exit 0; } # internal test command
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
@@ -8656,7 +8656,7 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
-if (_iscfg_do('cipher_openssl') or _iscfg_do('cipher_ssleay')) {
+if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
     _yeast_TIME("get{");
     if ((_need_cipher() > 0) or (_need_default() > 0)) {
         _y_CMD("  get cipher list ...");
@@ -8676,7 +8676,7 @@ usr_pre_main();
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
 printusage_exit("no target hosts given") if ($#{$cfg{'targets'}} <= 0); # does not make any sense
-if (_iscfg_do('cipher_openssl') or _iscfg_do('cipher_ssleay')) {
+if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
@@ -8703,7 +8703,7 @@ usr_pre_host();
 my $fail = 0;
 # check if output disabled for given/used commands, SEE Note:ignore-out
 foreach my $cmd (@{$cfg{'ignore-out'}}) {
-    $fail++ if (_iscfg_do($cmd));
+    $fail++ if (_is_cfg_do($cmd));
 }
 if ($fail > 0) {
     _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
@@ -8743,7 +8743,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host   = $host {\n");
     # SNI must be set foreach host, but it's always the same name!
-    if (_iscfg_use('sni')) {
+    if (_is_cfg_use('sni')) {
         if (defined $sniname) {
             if ($host ne $cfg{'sni_name'}) {
                 _warn("069: hostname not equal SNI name; checks are done with '$host'");
@@ -8795,7 +8795,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         # fails also, which produces more Perl warnings later.
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
-        if (_iscfg_use('dns')) {    # following settings only with --dns
+        if (_is_cfg_use('dns')) {   # following settings only with --dns
             _y_CMD("test DNS (disable with --no-dns) ...");
            _yeast_TIME("test DNS{");
            local $? = 0; local $! = undef;
@@ -8817,13 +8817,13 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
     }
     # print DNS stuff
-    if (_iscfg_do('host') or (($info + $check + $cmdsni) > 0)) {
+    if (_is_cfg_do('host') or (($info + $check + $cmdsni) > 0)) {
         _y_CMD("+info || +check || +sni*");
         if ($legacy =~ /(full|compact|simple|owasp)/) {
             print_ruler();
             print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
             print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
-            if (_iscfg_use('dns')) {
+            if (_is_cfg_use('dns')) {
                 print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
                 print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
             }
@@ -8849,14 +8849,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     _yeast_TIME("test connect}");
 
-    if (_iscfg_do('cipher_dh')) {
+    if (_is_cfg_do('cipher_dh')) {
         if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
             _warn("408: OpenSSL disabled using --no-openssl, can't check DH parameters; target ignored");
             next;
         }
     }
 
-    if (_iscfg_do('cipher_intern') or _iscfg_do('cipher_dump')) { # implies _need_cipher()
+    if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump')) { # implies _need_cipher()
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=intern{");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
@@ -8872,14 +8872,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # SEE Note:+cipherall
             my $total   = $checks{'cnt_totals'}->{val};
             checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
-            printciphersummary($legacy, $host, $port, $total) if (_iscfg_do('cipher'));
+            printciphersummary($legacy, $host, $port, $total) if (_is_cfg_do('cipher'));
         ###}
         _yeast_TIME("ciphermode=intern}");
-        next if (_iscfg_do('cipher'));
+        next if (_is_cfg_do('cipher'));
     } # ciphermode=intern
     next if _yeast_NEXT("exit=HOST2 - host ciphermode=intern");
 
-    if (_iscfg_do('fallback_protocol')) {
+    if (_is_cfg_do('fallback_protocol')) {
         _y_CMD("protocol fallback support ...");
         # following similar to ciphers_scan_prot();
         my ($version, $supported, $dh);
@@ -8907,8 +8907,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # FIXME: there are 3 connections above, but only one is counted
             last if (_is_ssl_error($anf, time(), "$ssl: abort getting prefered cipher") > 0);
             my $cipher  = $prot{$ssl}->{'cipher_strong'};
-            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _ispfs($ssl, $cipher));
-            ##if (_iscfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+            ##if (_is_cfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
             ##    # +cipher_selected command given, but no other commands; ready
             ##    print_cipherprefered($legacy, $ssl, $host, $port); # need to check if $ssl available first
             ##    next HOSTS; # TODO: foreach-loop for targets misses label
@@ -8919,14 +8919,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     next if _yeast_NEXT("exit=HOST3 - host ciphers start");
 
-    if (_iscfg_do('cipher_default') and ($#{$cfg{'do'}} == 0)) {
+    if (_is_cfg_do('cipher_default') and ($#{$cfg{'do'}} == 0)) {
         # don't print if not a single command, because +check or +cipher do it
         # in printptotocols() anyway
         printcipherprefered($legacy, $host, $port);
         goto CLOSE_SSL; # next HOSTS
     }
 
-    if (_iscfg_do('cipher_openssl') or _iscfg_do('cipher_ssleay')) {  # implies _need_cipher()
+    if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {  # implies _need_cipher()
         _yeast_TIME("need_cipher{");
         _y_CMD("  need_cipher ...");
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
@@ -8940,7 +8940,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
-    if ((0 < $check or _iscfg_do('cipher')) and (_iscfg_do('cipher_openssl') or _iscfg_do('cipher_ssleay'))) {
+    if ((0 < $check or _is_cfg_do('cipher')) and (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay'))) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=ssleay{");
         _trace(" ciphers= @{$cfg{'ciphers'}}");
@@ -8952,7 +8952,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 # format of sslscan not yet supported correctly
                 my $header = $cfg{'out'}->{'header'};
-                if (_iscfg_out('header') or (scalar @{$cfg{'version'}}) > 1) {
+                if (_is_cfg_out('header') or (scalar @{$cfg{'version'}}) > 1) {
                     # need a header when more than one protocol is checked
                     $header = 1;
                 }
@@ -8978,7 +8978,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     } # cipher
     next if _yeast_NEXT("exit=HOST5 - host ciphers end");
 
-    goto CLOSE_SSL if (_iscfg_do('cipher') and ($quick == 0));
+    goto CLOSE_SSL if (_is_cfg_do('cipher') and ($quick == 0));
 
     usr_pre_info();
     _yeast_TIME("SNI{");
@@ -8989,7 +8989,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     # TODO dirty hack, check with dh256.tlsfun.de
     # checking for DH parameters does not need a default connection
-    if (_iscfg_do('cipher_dh')) {
+    if (_is_cfg_do('cipher_dh')) {
         _y_CMD("+cipher-dh");
         _yeast_TIME("cipher-dh{");
         printciphers_dh($legacy, $host, $port);
@@ -9034,7 +9034,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     usr_pre_cmds();
     _yeast_TIME("prepare{");
 
-    if (_iscfg_do('dump')) {
+    if (_is_cfg_do('dump')) {
         _y_CMD("+dump");
         if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
             _trace(' ############################################################ %SSLinfo');
@@ -9075,7 +9075,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("  need_checkssl ...");
         checkssl(  $host, $port);   _yeast_TIME("  checkssl.");
     }
-    if (_iscfg_do('sstp')) {    # only check if needed
+    if (_is_cfg_do('sstp')) {   # only check if needed
         checksstp( $host, $port);   _yeast_TIME("  checksstp.");
     }
 
@@ -9089,7 +9089,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     # for debugging only
-    if (_iscfg_do('s_client')) {
+    if (_is_cfg_do('s_client')) {
         _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}";
     }
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
@@ -9103,7 +9103,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
     _yeast_TIME("checks}");
 
-    if (_iscfg_out('score')) { # no output for +info also
+    if (_is_cfg_out('score')) { # no output for +info also
         _y_CMD("scores");
         _yeast_TIME("score{");
         printscores($legacy, $host, $port);
@@ -9134,12 +9134,12 @@ _yeast_exit();
 _yeast_EXIT("exit=END   - end");# for symetric reason, rather useless here
 
 $cfg{'use'}->{'exitcode'} += $cfg{'out'}->{'exitcode'}; # --exitcode-v
-exit 0 if (not _iscfg_use('exitcode'));
+exit 0 if (not _is_cfg_use('exitcode'));
 
 my $status = check_exitcode();
 if (0 < $status) {
     # print EXIT message unless switched off with --exitcode-quiet
-    print "# EXIT $status" if (not _iscfg_out('exitcode_quiet'));
+    print "# EXIT $status" if (not _isc_fg_out('exitcode_quiet'));
 }
 exit $status;
 
@@ -9169,7 +9169,7 @@ L<Internal Code Documentation>  and  L<Internal Makefile Documentation>.
 
 All public user documentation is available in plain text format. It can be
 accessed programatially with the --help option and various variants of it.
-All plain text are designed for human radability and simple editing, see:
+All plain texts are designed for human radability and simple editing, see:
 
     ./OSaft/Doc/*.txt
 
