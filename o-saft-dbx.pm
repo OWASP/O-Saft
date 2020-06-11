@@ -9,8 +9,8 @@
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
-#       _iscfg_do()
-#       _iscfg_intern()
+#       _is_cfg_do()
+#       _is_cfg_intern()
 #       _is_member()
 #       _need_cipher()
 #       _get_ciphers_range()
@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.139 20/06/06 15:15:11";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.140 20/06/11 00:49:53";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -110,7 +110,7 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
     my $ciphers = "@{$cfg{'ciphers'}}";
-    if (_iscfg_do('cipherraw')) {
+    if (_is_cfg_do('cipherraw')) {
        $need = 1;
        my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
        if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
@@ -132,7 +132,7 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
     if (0 < $need) {
         $_cnt = sprintf("%5s", $_cnt);  # format count
         _yeast("      starttls= " . $cfg{'starttls'});
-        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_iscfg_do('cipherraw')) {
+        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_is_cfg_do('cipherraw')) {
         _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
         _yeast("use cipher from openssl= " . $cmd{'extciphers'});
         _yeast(" $_cnt ciphers= $ciphers");
@@ -669,7 +669,7 @@ sub _yeast_test_data    {
             ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
             || ($key =~ /$cfg{'regex'}->{'SSLprot'}/i)) ?   "*"  : "!",   # cmd-ch.
             (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
-            (_iscfg_intern($key))                       ?   "I"  : " ",   # intern
+            (_is_cfg_intern($key))                      ?   "I"  : " ",   # intern
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
@@ -1090,7 +1090,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.139 2020/06/06
+1.140 2020/06/11
 
 =head1 AUTHOR
 
