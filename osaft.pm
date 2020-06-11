@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '20.03.10',  # official version number of this file
+    OSAFT_VERSION   => '20.06.06',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.220 20/03/12 09:20:08",
+    SID_osaft   => "@(#) osaft.pm 1.222 20/06/11 14:49:49",
 
 };
 
@@ -41,7 +41,7 @@ use constant {
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
-#	_ispfs()
+#	_is_ssl_pfs()
 
 ## no critic qw(Documentation::RequirePodSections)
 #  our POD below is fine, perlcritic (severity 2) is too pedantic here.
@@ -2895,7 +2895,7 @@ sub test_cipher_regex   {
 === test_cipher_regex: check RegEx for ciphers ===
 =
 = Check RegEx to detect ciphers, which support PFS using the internal function
-= ::_ispfs() .
+= ::_is_ssl_pfs() .
     \$cfg{'regex'}->{'PFS'}:      # match ciphers supporting PFS
       $cfg{'regex'}->{'PFS'}
 =
@@ -2916,7 +2916,7 @@ sub test_cipher_regex   {
     print __regex_head();
     print __regex_line();
     foreach my $cipher (sort keys %ciphers) {
-        my $is_pfs = (::_ispfs(get_cipher_ssl($cipher), $cipher) eq "") ? "no" : "yes";
+        my $is_pfs = (::_is_ssl_pfs(get_cipher_ssl($cipher), $cipher) eq "") ? "no" : "yes";
         my @o = ('', '', '', '', '');
         # following sequence of check should be the same as in get_cipher_owasp()
         $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
@@ -3141,7 +3141,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.220 2020/03/12
+1.222 2020/06/11
 
 =head1 AUTHOR
 
