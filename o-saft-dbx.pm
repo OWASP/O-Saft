@@ -19,7 +19,7 @@
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.140 20/06/11 00:49:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.141 20/06/16 01:31:46";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -841,18 +841,6 @@ sub _yeast_test_sclient {
     return;
 } # _yeast_test_sclient
 
-sub _yeast_test_ssleay  {
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== internal data of from Net::SSLeay ===
-=
-= Print information about Net::SSLeay capabilities
-=
-";
-    print Net::SSLinfo::test_ssleay();
-    return;
-} # _yeast_test_ssleay
-
 sub _yeast_test_sslmap  {
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -865,6 +853,78 @@ sub _yeast_test_sslmap  {
     return;
 } # _yeast_test_sslmap
 
+sub _yeast_test_ssleay  {
+    printf("#%s:\n", (caller(0))[3]);
+    print "
+=== internal data of from Net::SSLeay ===
+=
+= Print information about Net::SSLeay capabilities
+=
+";
+    print Net::SSLinfo::test_ssleay();
+    return;
+} # _yeast_test_ssleay
+
+sub _yeast_test_memory  {
+    #? print overview of memory usage of variables
+    # This is not part of the functionality of O-Saft itself, but more like
+    # a quality or performance check.
+    # I.g. it should be implemented in makefiles or alike, but is done here
+    # in the source because the variables are avaiable in the source only.
+    printf("#%s:\n", (caller(0))[3]);
+    use Devel::Size;
+    my %types = (   # TODO: not yet used
+        'ARRAY'   => '@',
+        'CODE'    => '{',
+        'FORMAT'  => '#',
+        'GLOB'    => '*',
+        'HASH'    => '%',
+        'IO'      => '&',
+        'LVALUE'  => '=',
+        'REF'     => '\\',
+        'REGEXP'  => '/',
+        'SCALAR'  => '$',
+        'VSTRING' => '"',
+    );
+    print "
+=== memory usage of internal variables ===
+=
+";
+    if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
+        foreach my $k (keys %cfg) {
+	    printf "%6s\t%s\n",Devel::Size::total_size(\$cfg{$k}),"%cfg{$k}";
+        }
+    }
+    my $bytes = 0;
+    my $line  = "=------+----------------";
+    # get all global variables and grep for our ones
+    # ugly code, but generic
+    print "= Bytes variable\n$line";
+    foreach my $v (sort keys %main::) {
+        #print Dumper $v; # liefert den gesamten Hash
+        next if ("*{$main::{$v}}" !~ m/\*main::/);
+        next if ($main::{$v} =~ m/::$/);           # avoid "Segmentation fault"
+        next if (not grep {/^(cfg|check|cipher|cmd|data|dbx|info|osaft|short|text)/} $v) ;
+        next if (    grep {/^check(cipher|http)/} $v) ; # avoid "Segmentation fault"
+        # TODO: my $typ = ref($main::{$v}); # not yet working
+        #dbx print "K $v $main::{$v} => $t";
+        my $size = Devel::Size::total_size(\$main::{$v});
+        $bytes += $size;
+        printf("%7s\t%s\n", $size, $v);#if (exists $main::{$v});
+    }
+    print "$line";
+    printf("%7s\t(%2.2f MB) total\n", $bytes, $bytes/1024/1024);
+    # the traditional way ...
+    #print "%cfg    : ", Devel::Size::total_size(\%cfg);
+    #print "%data   : ", Devel::Size::total_size(\%data);
+    #print "%checks : ", Devel::Size::total_size(\%checks);
+    #print "%ciphers: ", Devel::Size::total_size(\%ciphers);
+    #print "\@results: ", Devel::Size::total_size(\@cipher_results);
+    #print "%text   : ", Devel::Size::total_size(\%text);
+    #print "%_SSLinfo   : ", Devel::Size::total_size(\%Net::SSLinfo::_SSLinfo);
+    return;
+} # _yeast_test_memory
+
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalized option, like --testinit
@@ -875,6 +935,7 @@ sub _yeast_test {
     _yeast_test_ssleay()    if ('--testssleay'  eq $arg);
     _yeast_test_sslmap()    if ('--testsslmap'  eq $arg);
     _yeast_test_methods()   if ('--testmethods' eq $arg);
+    _yeast_test_memory()    if ('--testmemory'  eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
     osaft::test_regex()     if ('regex'     eq $arg);
     _yeast_test_data()      if ('data'      eq $arg);
@@ -1090,7 +1151,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.140 2020/06/11
+1.141 2020/06/16
 
 =head1 AUTHOR
 
