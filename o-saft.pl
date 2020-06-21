@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.997 20/06/11 00:52:10",
-    STR_VERSION => "20.06.06",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1000 20/06/15 00:07:33",
+    STR_VERSION => "20.06.08",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -4169,7 +4169,7 @@ sub ciphers_scan        {
                 # in above warning, even then if  SSLv3 is not needed for the
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
-                # NOTE: applys to --ciphermode=openssl|ssleay only
+                # NOTE: applies to --ciphermode=openssl|ssleay only
             }
             $cfg{'use'}->{'sni'} = 0; # do not use SNI for this $ssl
         }
@@ -6449,8 +6449,15 @@ sub print_cipherline($$$$$$) {
         $bit = sprintf("%3s bits", $bit);
         printf("    %s  %s  %s\n", $ssl, $bit, $cipher);
     }
+    if ($legacy eq 'thcsslcheck') {
+        # AES256-SHA - 256 Bits -   supported
+        printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
+    }
+        # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest')   {
         # cipher, description, (supported)
+        return if ("" eq $cipher);  # avoids perl's "Use of uninitialized value"
+            # TODO: analyse when $cipher could be "", should not happen
         my @arr = @{$ciphers{$cipher}};
         pop(@arr);      # remove last value: tags
         pop(@arr);      # remove last value: score
@@ -6463,11 +6470,6 @@ sub print_cipherline($$$$$$) {
         my $tmp = $arr[2]; $arr[2] = $arr[3]; $arr[3] = $tmp;
         printf("   %s, %s (%s)\n",  $cipher, join (", ", @arr), $yesno);
     }
-    if ($legacy eq 'thcsslcheck') {
-        # AES256-SHA - 256 Bits -   supported
-        printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
-    }
-        # compliant;host:port;protocol;cipher;description
     #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s;%s\n", 'C', $host . ":" . $port, $ssl, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
@@ -7453,6 +7455,7 @@ while ($#argv >= 0) {
         #if ($typ eq 'HOST')    # not done here, but at end of loop
         #  +---------+--------------+------------------------------------------
         if ($typ eq 'CIPHER_ITEM')  {
+            # $arg = lc($arg);   # case-sensitive
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
@@ -7464,6 +7467,7 @@ while ($#argv >= 0) {
             push(@{$cfg{'cipher'}}, $arg) if ($arg !~ m/^\s*$/);
         }
         if ($typ eq 'STD_FORMAT') {
+            $arg = lc($arg);
             if ($arg =~ /$cfg{'regex'}->{'std_format'}/) {
                 _set_binmode($arg);
             } else {
@@ -7503,6 +7507,7 @@ while ($#argv >= 0) {
         }
         # following ($arg !~ /^\s*$/) check avoids warnings in CGI mode
         if ($typ eq 'LABEL')   {
+            $arg = lc($arg);
             if (1 == (grep{/^$arg$/i} @{$cfg{'labels'}})) {
                 $cfg{'label'} = lc($arg);
             } else {
@@ -7510,6 +7515,7 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'LEGACY')   {
+            $arg = lc($arg);
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
             if (1 == (grep{/^$arg$/i} @{$cfg{'legacys'}})) {
                 $cfg{'legacy'} = lc($arg);
@@ -7518,6 +7524,7 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'FORMAT')   {
+            $arg = lc($arg);
             $arg = 'esc' if ($arg =~ m#^[/\\]x$#);      # \x and /x are the same
             if (1 == (grep{/^$arg$/}  @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
@@ -7527,12 +7534,13 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'CIPHER_RANGE') {
             if (1 == (grep{/^$arg$/i} keys %{$cfg{'cipherranges'}})) {
-                $cfg{'cipherrange'} = $arg;
+                $cfg{'cipherrange'} = $arg; # case-sensitive
             } else {
                 _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CIPHER_MODE')  {
+            $arg = lc($arg);
             if (1 == (grep{/^$arg$/i} @{$cfg{'ciphermodes'}})) {
                 $cfg{'ciphermode'} = $arg;
             } else {
@@ -7540,11 +7548,12 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'CIPHER_CURVES') {
+            $arg = lc($arg);
             $cfg{'ciphercurves'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
             if ($arg =~ /^[,:]$/) {
                 $cfg{'ciphercurves'} = [];
             } else {
-                push(@{$cfg{'ciphercurves'}}, split(/,/, $arg));
+                push(@{$cfg{'ciphercurves'}}, split(/,/, lc($arg)));
             }
         }
 
@@ -7555,6 +7564,7 @@ while ($#argv >= 0) {
         #   --protosnpn=,,      - set array element to ""
         # NOTE: distinguish:  [], [""], [" "]
         if ($typ eq 'CIPHER_ALPN'){
+            $arg = lc($arg);
             $cfg{'cipher_alpns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
             if ($arg =~ /^[,:]$/) {
                 $cfg{'cipher_alpns'} = [];
@@ -7574,6 +7584,7 @@ while ($#argv >= 0) {
             # TODO: checking names of protocols needs a sophisticated function
         }
         if ($typ eq 'PROTO_ALPN'){
+            $arg = lc($arg);
             $cfg{'protos_alpn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
             if ($arg =~ /^[,:]$/) {
                 $cfg{'protos_alpn'} = [];
@@ -7584,6 +7595,7 @@ while ($#argv >= 0) {
             #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
         }
         if ($typ eq 'PROTO_NPN'){
+            $arg = lc($arg);
             $cfg{'protos_npn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
             if ($arg =~ /^[,:]$/) {
                 $cfg{'protos_npn'} = [];
@@ -8465,6 +8477,9 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
             my $do = 'cipher_' . $mode;
             push(@{$cfg{'do'}}, $do) if (not _is_cfg_do($do)); # only if not yet set
+            # TODO: funktioniert nicht sauber
+            #$cfg{'legacy'} = 'owasp' if ($do eq 'cipher_intern'); # new default
+            #$legacy = $cfg{'legacy'};
         }
     }
 }
@@ -10276,7 +10291,7 @@ which also computes the strongest and weakest selected cipher.
 When using +cipherraw another method to detect these ciphers must be used;
 this is not yet implemented completely.
 The problem should finally be solved when  +cipher and +cipherraw  use the
-same data structre for the results. Then the program flow should be like:
+same data structure for the results. Then the program flow should be like:
 
     ciphers_scan()
     checkciphers()
@@ -10291,7 +10306,7 @@ When using any of the old commands, a hint will be written.
 
 With this version the output format for cipher results was also changed.
 It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
-OWASP. The column "supported" will no t be printed, because only supported
+OWASP. The column "supported" will not be printed,  because only supported
 ciphers are listed now. This makes the options  --enabled  and  --disabled
 also obsolete.
 
