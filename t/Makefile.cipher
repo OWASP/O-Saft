@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.4 20/06/21 21:14:14
+#?      @(#) Makefile.cipher 1.5 20/06/21 21:28:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.4
+_SID.cipher        := 1.5
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -93,7 +93,7 @@ testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-seleced_%:   TEST.args  += +cipher-seleced
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
-ALL.testciphermisc     = testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+ciphercheck_
+ALL.testciphermisc     = testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+cipher-selected_ testcmd-cipher-+cipher-strong_ testcmd-cipher-+ciphercheck_
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
