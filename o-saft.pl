@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1000 20/06/15 00:07:33",
+    SID         => "@(#) yeast.pl 1.1001 20/06/21 23:39:53",
     STR_VERSION => "20.06.08",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8934,7 +8934,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     next if _yeast_NEXT("exit=HOST3 - host ciphers start");
 
-    if (_is_cfg_do('cipher_default') and ($#{$cfg{'do'}} == 0)) {
+    if (_is_cfg_do('cipher_default') and (0 < $#{$cfg{'do'}})) {
         # don't print if not a single command, because +check or +cipher do it
         # in printptotocols() anyway
         printcipherprefered($legacy, $host, $port);
@@ -9013,9 +9013,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     # SEE Note:Connection test
-    if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0) {
+    if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
+        # this is the first call to Net::SSLinfo::do_ssl_open()
         # NOTE: the previous test (see can_connect above) should be sufficient
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
         _yeast_TIME("test connection{");
@@ -9025,7 +9026,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
                              join(" ", @{$cfg{'ciphers'}}))
            ) {
             my @errtxt = Net::SSLinfo::errors($host, $port);
-            if ($#errtxt > 0) {
+            if (0 < $#errtxt) {
                 _v_print(join("\n".STR_ERROR, @errtxt));
                 _warn("205: Can't make a connection to $host:$port; target ignored");
                 _hint("--v  will show more information");
@@ -9038,7 +9039,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         _yeast_TIME("  connection open.");
         my @errtxt = Net::SSLinfo::errors($host, $port);
-        if ((grep{/\*\*ERROR/} @errtxt) > 0) {
+        if (0 < (grep{/\*\*ERROR/} @errtxt)) {
             _warn("207: Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
             _hint("--v  will show more information");
             # do not print @errtxt because of multiple lines not in standard format
@@ -9051,7 +9052,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     if (_is_cfg_do('dump')) {
         _y_CMD("+dump");
-        if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
+        if (1 < $cfg{'trace'}) {   # requires: --v --trace --trace
             _trace(' ############################################################ %SSLinfo');
             print Net::SSLinfo::datadump();
         }
@@ -9062,6 +9063,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     # following sequence important!
     # if conditions are just to improve performance
+    # Net::SSLinfo::do_ssl_open() will be call here if --ignore_no_conn was given
     _y_CMD("get checks ...");
     if (_need_checkalpn() > 0) {
         _y_CMD("  need_pn ...");
@@ -9098,7 +9100,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST6 - host prepare");
     usr_pre_print();
 
-    if ($check > 0) {
+    if (0 < $check) {
         _y_CMD("+check");
         _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
@@ -9110,12 +9112,12 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
     # print all required data and checks
-    # NOTE: if key (aka given command) exists in %checks and %data it will be printed twice
+    # NOTE: if key (aka given command) exists in %checks and %data it will be printed for both
     _yeast_TIME("info{");
-    printdata(  $legacy, $host, $port) if ($check == 0); # not for +check
+    printdata(  $legacy, $host, $port) if (1 > $check); # not for +check
     _yeast_TIME("info}");
     _yeast_TIME("checks{");
-    printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
+    printchecks($legacy, $host, $port) if (1 > $info); # not for +info
     _yeast_TIME("checks}");
 
     if (_is_cfg_out('score')) { # no output for +info also
