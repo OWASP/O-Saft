@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.56 20/10/10 13:00:38
+# SID   @(#) help.txt 1.57 20/10/10 13:29:14
 
 NAME
 
@@ -137,9 +137,10 @@ SECURITY
         Care should be taken, when additional tools and modules are installed
         as described in  INSTALLATION  below. In particular it is recommended
         to do these installations into directoies  specially prepared for use
-        with  $0 . No other tools of your system should use these
-        installations, i.e. by accident or because your environment variables
-        point to them.
+        with  $0 .
+        No other tools of your system  should use  these additional installed
+        tools, for example by accident or because environment variables point
+        to them.
 
         Note that compilation and installation of  additional tools (openssl,
         Net::SSLeay, etc.) uses known insecure configurations and features!
@@ -161,7 +162,7 @@ CONCEPTS
     This Help Text
 
         The sequence of the sections in the help text doesn't strictly follow
-        the common guidlines for UNIX-style man-pages.  This is because it is
+        the common guidlines for UNIX-style man pages.  This is because it is
         important to understand the concepts of the tool and what options and
         commands are in context of the tool. In particular the  DESCRIPTION  
         section contains only a very brief description. The  OPTIONS  section
@@ -291,7 +292,7 @@ TECHNICAL INFORMATION
 
         However, it is recommended to use the most recent version of the mod-
         ules which then gives more accurate results and less warnings. If the
-        modules are missing, they can be installed i.e. with:
+        modules are missing, they can be installed for example with:
 
               cpan Net::SSLeay
 
@@ -602,7 +603,7 @@ COMMANDS
       +cipher vs. +cipherall
 
           +cipher  can only check for ciphers - more precise: cipher suites -
-          provided by the local SSL implementation (i.e. libssl).
+          provided by the local SSL implementation (for example libssl).
           +cipherall  can check for any cipher,  as it just uses the cipher's
           integer value in the range 0 .. 65532.
 
@@ -1088,7 +1089,7 @@ OPTIONS
           paths for searching dynamic shared libraries.
           Default is LD_LIBRARY_PATH.
 
-          Check your system for the proper name, i.e.:
+          Check your system for the proper name, for example:
               DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.
 
       --ssl-error
@@ -1496,7 +1497,7 @@ OPTIONS
           --cipher-npn=,,  sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
-          openssl executable (i.e.  --force-openssl).
+          openssl executable (for example  --force-openssl).
 
       --cipher-curve=NAME
 
@@ -1507,7 +1508,7 @@ OPTIONS
           --cipher-curve=,,  sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
-          openssl executable (i.e.  --force-openssl).
+          openssl executable (for example  --force-openssl).
 
     Options for  +cipherall and +cipherraw  command
 
@@ -2013,7 +2014,7 @@ OPTIONS
 
       --trace --trace --trace --trace
 
-          Print processing of all command line arguments.
+          Print processing of all command-line arguments.
 
       --trace-cli
 
@@ -2022,7 +2023,7 @@ OPTIONS
       --trace-arg
       --trace--
 
-          Print command line argument processing.
+          Print command-line argument processing.
 
 # cannot use --trace=  'cause = will be removed (CGI mode)
 
@@ -2061,7 +2062,7 @@ OPTIONS
 
       --trace=FILE
 
-          Use FILE instead of the default  RC-FILE, i.e. '.$0'.
+          Use FILE instead of the default  RC-FILE, for example '.$0'.
 
       --trace-me
 
@@ -2190,8 +2191,8 @@ RESULTS
               ** all *NULL* ciphers
               ** all *RC2* and  *RC4*  ciphers
               ** all *EXPORT*  ciphers
-              ** all *anon* (aka ADH aka DHA) ciphers
-              ** all *CBC* and *CBC3* (aka 3DES) and DES ciphers
+              ** all *anon* (a.k.a ADH a.k.a DHA) ciphers
+              ** all *CBC* and *CBC3* (a.k.a 3DES) and DES ciphers
             * low:
             * high:
               ** all *AES(128|256)* ciphers
@@ -2979,7 +2980,7 @@ EXIT STATUS
         Following exit codes are used:
 
           * 0   - normal usage and execution
-          * 2   - command line parsing failed, command or option missing
+          * 2   - command-line parsing failed, command or option missing
           * >0  - only if  --exitcode  was used
         
 ENVIRONMENT
@@ -3000,7 +3001,7 @@ CUSTOMIZATION
 
         This tools can be customized as follows:
 
-        * Using command line options
+        * Using command-line options
 
             This is a simple way to redefine  specific settings.  Please  see
             CONFIGURATION OPTIONS  below.
@@ -3012,8 +3013,8 @@ CUSTOMIZATION
 
         * Using resource files
 
-            A resource file can contain multiple command line options. Syntax
-            is the same as for command line options iteself.  Each  directory
+            A resource file can contain multiple command-line options. Syntax
+            is the same as for command-line options iteself.  Each  directory
             may contain its own resource file. Please see  RC-FILE  below.
 
         * Using debugging files
@@ -3099,8 +3100,8 @@ CUSTOMIZATION
         For example  when used with  --cfg-text=FILE  only values for  %text
         will be set, when used with  --cfg-data=FILE  only values for  %data
         will be set, and so on. 'KEY' will not be used when 'KEY=TEXT' is an
-        existing filename. It i recommended to use a non-existing key, i.e.:
-        --cfg-text=my_file=some/path/to/private/file .
+        existing filename.  It is recommended to use a non-existing key, for
+        example  --cfg-text=my_file=some/path/to/private/file .
 
     RC-FILE
 
@@ -3110,7 +3111,7 @@ CUSTOMIZATION
         '.'  (dot),  for example:  '.$0'.
 
         A  rc-file  can contain any of the commands and options valid for the
-        tool itself. The syntax for them is the same as on command line. Each
+        tool itself. The syntax for them is the same as on command-line. Each
         command or option must be in a single line. Any empty or comment line
         will be ignored. Comment lines start with  '#'  or  '='.
 
@@ -3250,7 +3251,7 @@ CIPHER NAMES
         depending on the standard, and/or tool, or version of a tool you use.
 
         As a result, we cannot use human readable cipher names as  identifier
-        (aka unique key), as there are  to many aliases  for the same cipher.
+        (a.k.a unique key), as there are to many aliases for the same cipher.
         And also the number  cannot be used  as unique key, as a key may have
         multiple ciphers assigned.
 
@@ -3412,9 +3413,9 @@ KNOWN PROBLEMS
 
     Character set (like UTF-8) not recognized in some tools
 
-        Some tools do not diplay all characters properly,  i.e. some versions
-        of podviewer. It is not the obligation of this tool to fix well known
-        bugs in other tools. However, we can offer workarounds.
+        Some tools  do not display all characters properly,  for example some
+        versions of  podviewer.  It is not the obligation of this tool to fix
+        well known bugs in other tools. However, we can offer workarounds.
 
         Workaround: generate the affected output using --std-format=* options
         For example:
@@ -3537,13 +3538,13 @@ LIMITATIONS
 
     Target Certificate Chain Verification
 
-        The systems default capabilities i.e. libssl.so, openssl, are used to
-        verify the target's certificate chain.  Unfortunately various systems
-        have implemented different  approaches and rules how identify and how
-        to report a successful verification.  As a consequence  this tool can
-        only return the  same information about the chain verification as the
-        used underlying tools.  If that information is trustworthy depends on
-        how trustworthy the tools are.
+        The systems default capabilities for example  libssl.so, openssl, are
+        used to verify the target's certificate chain.  Unfortunately various
+        systems have implemented different  approaches and rules how identify
+        and how to report a successful verification.  Consequently, this tool
+        can only return the same information  about the chain verification as
+        the used underlying tools. If that information is trustworthy depends
+        on how trustworthy the tools are.
 
         These limitations apply to following commands:
           * +verify
@@ -4088,7 +4089,7 @@ HACKER's INFO
         system's  libssl.so and libcrypt.so  and the  openssl(1)  executable.
 
         It is possible to provide your own libraries, if the  Perl module and
-        the executable are  linked using  dynamic shared objects  (aka shared
+        the executable are  linked using dynamic shared objects (a.k.a shared
         library, position independent code).
         The appropriate option is  --lib=PATH.
 
@@ -4172,7 +4173,7 @@ HACKER's INFO
         Here only the first two libraries are important.  Both,  libcrypto.so
         and libssl.so  need to be version "0.9.8" (in this example).
 
-        2) create a directory for your libraries, i.e.:
+        2) create a directory for your libraries, for example:
 
               mkdir /tmp/dada
 
@@ -4196,7 +4197,7 @@ HACKER's INFO
               $0 +libversion --lib=/tmp/dada -exe=/path/to-openssl
               $0 +list --v   --lib=/tmp/dada -exe=/path/to-openssl
 
-        6) start program with your options, i.e.:
+        6) start program with your options, for example:
 
               $0 --lib=/tmp/dada +ciphers
 
@@ -4761,7 +4762,7 @@ EXAMPLES
         * Do not read RC-FILE .$0
           $0 +info some.tld --no-rc
 
-        * Show command line argument processing
+        * Show command-line argument processing
           $0 +info some.tld --trace-arg
 
         * Simple tracing
@@ -4980,12 +4981,12 @@ TODO
              Ugly workaround using --v implemented in o-saft-man.pm only.
 
         * internal
-          ** move all configuration and code for command line arguments to Arg.pm
+          ** move all configuration and code for command-line arguments to Arg.pm
           ** use qr() for defining regex, see $cfg{'regex'}
           ** print_line() has ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
-             checks or informations (aka %data vs. %check_*)
+             checks or informations (a.k.a %data vs. %check_*)
              currently (2016) each single command returns all values
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
