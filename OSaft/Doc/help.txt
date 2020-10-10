@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.53 20/06/10 00:21:14
+# SID   @(#) help.txt 1.54 20/10/10 12:25:01
 
 NAME
 
@@ -264,16 +264,7 @@ TECHNICAL INFORMATION
 
     Environment variables
 
-        Following environment variables are incorporated:
-          * LD_LIBRARY_PATH - used and extended with definitions from options
-          * OPENSSL         - if set, full path to openssl executable
-          * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
-                              directory where to find openssl.cnf
-#         * OPENSSL_FIPS    -
-#         * OPENSSL_ENGINES -
-#         * OPENSSL_ALLOW_PROXY
-#         * OPENSSL_ALLOW_PROXY_CERTS
-
+        Please see  ENVIRONMENT  .
 
     Requirements
 
@@ -2972,6 +2963,19 @@ OUTPUT
 #          --legacy=quick       |   no      no     yes
 #          +quick               |  yes     yes     yes
 #        #----------------------+-------+-------+----------------
+
+
+ENVIRONMENT
+
+        Following environment variables are incorporated:
+          * LD_LIBRARY_PATH - used and extended with definitions from options
+          * OPENSSL         - if set, full path to openssl executable
+          * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
+                              directory where to find openssl.cnf
+#         * OPENSSL_FIPS    -
+#         * OPENSSL_ENGINES -
+#         * OPENSSL_ALLOW_PROXY
+#         * OPENSSL_ALLOW_PROXY_CERTS
 
 
 CUSTOMIZATION
