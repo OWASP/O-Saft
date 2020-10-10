@@ -1,10 +1,25 @@
 
-# SID   @(#) help.txt 1.54 20/10/10 12:25:01
+# SID   @(#) help.txt 1.55 20/10/10 12:46:21
 
 NAME
 
         O-Saft - OWASP SSL advanced forensic tool
                  OWASP SSL audit for testers
+
+
+SYNOPSIS
+
+        $0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
+
+        where  [COMMANDS]  and  [OPTIONS]  are described below  and target is
+        a hostname either as full qualified domain name or an IP address.
+        Multiple commands and targets may be combined.
+
+        All  commands  and  options  can also be specified in a  rc-file, see
+        RC-FILE  below.
+
+        I.g. all commands start with a  '+'  character and options start with
+        '-'  or  '--'  characters. Anything else is treated as target name.
 
 
 DESCRIPTION
@@ -14,21 +29,6 @@ DESCRIPTION
 
         Note:  Throughout this description  `$0'  is used as an alias for the
         program name  'o-saft.pl'.
-
-
-SYNOPSIS
-
-        $0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
-
-        where  [COMMANDS]  and  [OPTIONS]  are described below  and target is
-        a hostname either as full qualified domain name or as IP address.
-        Multiple commands and targets may be combined.
-
-        All  commands  and  options  can also be specified in a  rc-file, see
-        RC-FILE  below.
-
-        I.g. all commands start with a  '+'  character and options start with
-        '-'  or  '--'  characters. Anything else is treated as target name.
 
 
 QUICKSTART
@@ -158,6 +158,15 @@ CONCEPTS
         However, the user "should do something" if necessary depending on the
         reported results.
 
+    This Help Text
+
+        The sequence of the sections in the help text doesn't strictly follow
+        the common guidlines for UNIX-style man-pages.  This is because it is
+        important to understand the concepts of the tool and what options and
+        commands are in context of the tool. In particular the  DESCRIPTION  
+        section contains only a very brief description. The  OPTIONS  section
+        follows the  COMMANDS  section.
+
     Results
 
         Results of checks are marked  'yes'  or 'no'.  This leaves the proper
@@ -169,7 +178,7 @@ CONCEPTS
         why results are marked  'yes'  or  'no'  if considered "questionable"
         or "not good" (for example according other checks).
 
-        ... more comming soon ...
+        For more details please see  RESULTS  below.
 
 
 TECHNICAL INFORMATION
@@ -299,73 +308,6 @@ TECHNICAL INFORMATION
 
         If you need to run on systems with older perl or Perl module versions
         please refer to the  DEBUG  section for more information.
-
-
-RESULTS
-
-        All output is designed to be easily parsed by postprocessors.  Please
-        see  OUTPUT  section below for details.
-
-        For the results,  we have to distinguish  those  returned by  +cipher
-        command  and those from  all other tests and checks like   +check  or
-        +info  command.
-
-      +cipher
-
-          The cipher checks will return  one line for each  tested cipher. It
-          contains at least the cipher name,  'yes'  or  'no'  whether  it is
-          supported or not, and a security qualification. It may look like:
-              AES256-SHA       yes    HIGH
-              NULL-SHA         no     weak
-
-          Depending on the used  --legacy=*  option the format may differ and
-          also contain more information.  For details see  --legacy=*  option
-          below.
-
-          The text for security qualifications are (mainly) those returned by
-          openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
-          The same texts, but with all lower case characters, are used if the
-          qualification was adapted herein. Following rules for adjusting the
-          qualification were used:
-
-            * weak:
-              ** all *NULL* ciphers
-              ** all *RC2* and  *RC4*  ciphers
-              ** all *EXPORT*  ciphers
-              ** all *anon* (aka ADH aka DHA) ciphers
-              ** all *CBC* and *CBC3* (aka 3DES) and DES ciphers
-            * low:
-            * high:
-              ** all *AES(128|256)* ciphers
-              ** all *CAMELLIA* ciphers
-
-      +check
-
-          These tests return a line with  a label  describing the test  and a
-          test result for it. The  idea is to report  'yes'  if the result is
-          considered "secure"  otherwise report  'no'  followed by the reason
-          why it's considered insecure. Example of a check considered secure:
-              Label of the performed check:           yes
-
-          Example of a check considered insecure:
-              Label of the performed check:           no (reason why)
-
-          Note  that there are tests where the results  appear confusing when
-          first viewed, like for www.wi.ld:
-              Certificate is valid according given hostname:  no (*.wi.ld)
-              Certificate's wildcard does not match hostname: yes
-
-          This can for example occur with:
-              Certificate Common Name:                *.wi.ld
-              Certificate Subject's Alternate Names:  DNS:www.wi.ld
-
-          Please check the result with the  +info  command also to  verify if
-          the check sounds reasonable.
-
-      +info
-
-          The test result contains detailed information. The labels there are
-          mainly the same as for the  +check  command.
 
 
 COMMANDS
@@ -2215,6 +2157,73 @@ LAZY SYNOPSIS
     Options vs. Commands
 
         See  X&Options vs. Commands&  in  OPTIONS  section above
+
+
+RESULTS
+
+        All output is designed to be easily parsed by postprocessors.  Please
+        see  OUTPUT  section below for details.
+
+        For the results,  we have to distinguish  those  returned by  +cipher
+        command  and those from  all other tests and checks like   +check  or
+        +info  command.
+
+      +cipher
+
+          The cipher checks will return  one line for each  tested cipher. It
+          contains at least the cipher name,  'yes'  or  'no'  whether  it is
+          supported or not, and a security qualification. It may look like:
+              AES256-SHA       yes    HIGH
+              NULL-SHA         no     weak
+
+          Depending on the used  --legacy=*  option the format may differ and
+          also contain more information.  For details see  --legacy=*  option
+          below.
+
+          The text for security qualifications are (mainly) those returned by
+          openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
+          The same texts, but with all lower case characters, are used if the
+          qualification was adapted herein. Following rules for adjusting the
+          qualification were used:
+
+            * weak:
+              ** all *NULL* ciphers
+              ** all *RC2* and  *RC4*  ciphers
+              ** all *EXPORT*  ciphers
+              ** all *anon* (aka ADH aka DHA) ciphers
+              ** all *CBC* and *CBC3* (aka 3DES) and DES ciphers
+            * low:
+            * high:
+              ** all *AES(128|256)* ciphers
+              ** all *CAMELLIA* ciphers
+
+      +check
+
+          These tests return a line with  a label  describing the test  and a
+          test result for it. The  idea is to report  'yes'  if the result is
+          considered "secure"  otherwise report  'no'  followed by the reason
+          why it's considered insecure. Example of a check considered secure:
+              Label of the performed check:           yes
+
+          Example of a check considered insecure:
+              Label of the performed check:           no (reason why)
+
+          Note  that there are tests where the results  appear confusing when
+          first viewed, like for www.wi.ld:
+              Certificate is valid according given hostname:  no (*.wi.ld)
+              Certificate's wildcard does not match hostname: yes
+
+          This can for example occur with:
+              Certificate Common Name:                *.wi.ld
+              Certificate Subject's Alternate Names:  DNS:www.wi.ld
+
+          Please check the result with the  +info  command also to  verify if
+          the check sounds reasonable.
+
+      +info
+
+          The test result contains detailed information. The labels there are
+          mainly the same as for the  +check  command.
 
 CHECKS
 
