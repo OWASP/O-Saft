@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.55 20/10/10 12:46:21
+# SID   @(#) help.txt 1.56 20/10/10 13:00:38
 
 NAME
 
@@ -2974,9 +2974,18 @@ OUTPUT
 #        #----------------------+-------+-------+----------------
 
 
+EXIT STATUS
+
+        Following exit codes are used:
+
+          * 0   - normal usage and execution
+          * 2   - command line parsing failed, command or option missing
+          * >0  - only if  --exitcode  was used
+        
 ENVIRONMENT
 
         Following environment variables are incorporated:
+
           * LD_LIBRARY_PATH - used and extended with definitions from options
           * OPENSSL         - if set, full path to openssl executable
           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
