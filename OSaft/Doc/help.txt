@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.59 20/10/11 00:08:42
+# SID   @(#) help.txt 1.60 20/10/11 00:35:40
 
 NAME
 
@@ -149,7 +149,7 @@ SECURITY
         It is  highly recommended to do these installations and use the tools
         on a separate testing system.
 
-        DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.
+        DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYSTEMS.
 
 
 CONCEPTS
@@ -159,7 +159,7 @@ CONCEPTS
         However, the user "should do something" if necessary depending on the
         reported results.
 
-    This Help Text
+    This help text
 
         The sequence of the sections in the help text doesn't strictly follow
         the common guidlines for UNIX-style man pages.  This is because it is
@@ -2128,7 +2128,7 @@ LAZY SYNOPSIS
         We support following options, which are all identical, for lazy users
         and for compatibility with other programs.
 
-      Option Variants
+      Option variants
 
           * --port PORT
           * --port=PORT
@@ -2230,17 +2230,17 @@ CHECKS
 
         All SSL related check performed by the tool will be described here.
 
-    General Checks
+    General checks
 
         Lookup the IP of the given hostname (FQDN), and then tries to reverse
         resolve the FQDN again.
 
-    SSL Ciphers
+    SSL ciphers
 
         Check which ciphers are supported by target. Please see  RESULTS  for
         details of this check.
 
-    SSL Connection
+    SSL connection
 
       heartbeat
 
@@ -2276,7 +2276,7 @@ CHECKS
 
         Please see also  CHECKS  ALPN and NPN  below.
 
-    SSL Vulnerabilities
+    SSL vulnerabilities
 
       ADH
 
@@ -2401,7 +2401,7 @@ CHECKS
         up to 31 random bytes from memory as Session Ticket, see CVE-2016-9244
         and https://filippo.io/Ticketbleed/ .
 
-    Target (server) Configuration and Support
+    Target (server) configuration and support
 
       BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky13, POODLE, RC4, ROBOT,
       SLOTH, Sweet32
@@ -2418,7 +2418,7 @@ CHECKS
         NOT YET IMPLEMENTED
         Check if the server allows changing the protocol.
 
-      DH Parameter
+      DH parameter
 
         Check if target's DH Parameter is less 512 or 2048 bits.
 
@@ -2432,7 +2432,7 @@ CHECKS
         Supporting SSTP is considered insecure, because SSTP allows to tunnel
         other, probably insecure, protocols.
 
-    Target (server) Certificate
+    Target (server) certificate
 
       Certificate Hashes
 
@@ -2443,7 +2443,7 @@ CHECKS
 
         Provided certificate by target should not be a Root CA.
 
-      Self-signed Certificate
+      Self-signed certificate
 
         Certificate should not be self-signed.
 
@@ -2536,7 +2536,7 @@ CHECKS
 
         See  LIMITATIONS  also.
 
-    Target (server) HTTP(S) Support
+    Target (server) HTTP(S) support
 
       STS header (see RFC 6797)
 
@@ -2952,7 +2952,7 @@ OUTPUT
         are defined statically in the program code, or can be added on demand
         by using the option  --cfg-hint=KEY=TEXT .
 
-    Postprocessing Output
+    Postprocessing output
 
         It is recommended to use the   --legacy=quick   option, if the output
         should be postprocessed, as it omits the default separation character
@@ -3006,7 +3006,7 @@ CUSTOMIZATION
             This is a simple way to redefine  specific settings.  Please  see
             CONFIGURATION OPTIONS  below.
 
-        * Using Configuration file
+        * Using configuration file
 
             A configuration file can contain multiple configuration settings.
             Syntax is simply  KEY=VALUE. Please see CONFIGURATION FILE below.
@@ -3041,7 +3041,7 @@ CUSTOMIZATION
         in "Performed Checks" section.  And texts of keys in  %text  are used
         for additional information lines or texts (mainly beginning with '=').
 
-     Configuration File vs. RC-FILE vs. DEBUG-FILE
+     Configuration file vs. RC-FILE vs. DEBUG-FILE
 
         * CONFIGURATION FILE
 
@@ -3443,7 +3443,7 @@ KNOWN PROBLEMS
               C:\Programs\perl\bin\perl.exe $0 --help=FAQ
 
 
-    Performance Problems
+    Performance problems
 
         There are various reasons when the program responds slow, or seems to
         hang. Performance issues are most likely a target-side problem.  Most
@@ -3554,13 +3554,13 @@ LIMITATIONS
           * +chain_verify,  +verify,  +error_verify,  +chain,  +s_client
           * --ca-file,  --ca-path,  --ca-depth
 
-    User Provided Files
+    User provided files
 
         Please note that there cannot be any guarantee that the code provided
         in the  DEBUG-FILE  o-saft-dbx.pm  or  USER-FILE  o-saft-usr.pm  will
         work flawless. Obviously this is the user's responsibility.
 
-    Problems and Errors
+    Problems and errors
 
         Checking the target for supported ciphers may return that a cipher is
         not supported by the server  misleadingly.  Reason is most likely  an
@@ -3588,7 +3588,7 @@ LIMITATIONS
           * -tlsextdebug        --no-tlsextdebug
           * -alpn               --no-alpn
 
-    Connection Problems
+    Connection problems
 
         Sometimes the connection cannot be established. This may have various
         reasons.  Unfortunaly this script seems to hang then.  In  particular
@@ -3640,7 +3640,7 @@ LIMITATIONS
           * --ssl-error-timeout=1
           * --ssl-error-total=10
 
-    Poor Systems
+    Poor systems
 
         Use of  openssl(1)  is disabled by default on  Windows due to various
         performance problems. It needs to be enabled with  --openssl  option.
@@ -3659,7 +3659,7 @@ LIMITATIONS
 
         You have to fiddle around to find the proper one.
 
-    Debug and Trace Output
+    Debug and trace output
 
         When both  --trace-key  and  --trace-cmd  options are used, output is
         mixed, obviously. Hint: output for --trace-cmd always contains "CMD".
@@ -3682,7 +3682,7 @@ DEPENDENCIES
         To see which files have been included use:
               $0 +version --v --user
 
-    Perl Modules
+    Perl modules
 
         * IO::Socket::SSL(3pm)
         * IO::Socket::INET(3pm)
@@ -3949,7 +3949,7 @@ INSTALLATION
         we should see lines similar to those of the last '/usr/local/openssl'
         call. However, it should contain more cipher lines.
 
-    Stand-alone Executable
+    Stand-alone executable
 
         Some people asked for a stand-alone executable (mainly for Windows).
         Even Perl is a scripting language there are situations where a stand-
@@ -4837,7 +4837,7 @@ nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
 
 DOCUMENTATION
 
-    User Documentation
+    User documentation
 
         Documentation is mainly intented for the user, which is provided with
 
@@ -4864,7 +4864,7 @@ DOCUMENTATION
 
           o-saft.tcl
 
-    Developer Documentation
+    Developer documentation
 
         Documentation for developers is provided in various ways. Information
         for developers can be found found in:
