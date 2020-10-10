@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.57 20/10/10 13:29:14
+# SID   @(#) help.txt 1.58 20/10/10 23:20:27
 
 NAME
 
@@ -4857,7 +4857,7 @@ DOCUMENTATION
 
         This is simply avaiable with:
 
-          o-saft -help="some text"
+          o-saft --help="some text"
 
         In the GUI a more sophisticate search is implemented, see the  "Help"
         window there:
