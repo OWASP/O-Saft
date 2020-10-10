@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.313 20/06/10 00:26:17";
+my  $SID_man= "@(#) o-saft-man.pm 1.314 20/10/11 00:46:13";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.313'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.314'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1789,7 +1789,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.313 2020/06/10
+1.314 2020/10/11
 
 =head1 AUTHOR
 
@@ -1838,7 +1838,7 @@ These special sections are mainly identified by lines starting as follows:
 
     Commands for ...
     Commands to ...
-    Descrete commands to test ...
+    Discrete commands to test ...
     Options for ...
     Options to ...
 
@@ -1888,7 +1888,7 @@ The HTML page with the form for the CGI should look as follows:
  +-----------------------------------------------------------------------+
  | Help: [help] [commands] [checks] [options] [FAQ] [Glossar] [ToDo]     H
  |+--------------------------------------------------------------------+ H
- || Hostname: [_________________________________] [start]              c |
+ || Hostname: [_________________________________] [+check]             c |
  ||                                                                    c |
  ||   [+check]  Check SSL connection ...                               c |
  ||   [+cipher] Overview of SSL connection ...                         c |
@@ -1906,6 +1906,7 @@ The HTML page with the form for the CGI should look as follows:
  ||| ( ) --opt                                                       o | |
  ||| (   --opt=[________]                                            o | |
  ||| ...                                                             o | |
+ ||| [^] [start]                                                     o | |
  ||+-----------------------------------------------------------------+ | |
  |+--------------------------------------------------------------------+ |
  +-----------------------------------------------------------------------+
@@ -1918,14 +1919,14 @@ be passed as QUERY_STRING to o-saft.cgi (which is the form's action), when
 The Interfase (web page) consist of following sections:
 
   T    title
-  H    line with buttons openening new TAB with corresponding help text
+  H    line with buttons opening a new TAB with corresponding help text
   c    input field for the hostname (target) and buttons for the most used
        commands
   O    Options button opens the section with the most often used options
   q    list with the most often used options, and the button [Full GUI] to
        show all available commands and options
   o    all available commands and options,  and the button [Simple GUI] to
-       to switch back to the simple list of options
+       switch back to the simple list of options
 
 
 =head2 HTML:INPUT
