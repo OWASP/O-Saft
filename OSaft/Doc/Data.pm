@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.02.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.28 20/02/15 23:56:45";
+my  $SID_data   = "@(#) Data.pm 1.29 20/10/11 00:40:28";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -171,7 +171,9 @@ sub get_markup    {
         s/^( {11})([^ ].*)/=item * $1$2/;# list item
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
         s/^( {18})([^ ].*)/S&$1$2&/;    # exactly 18
-        if (not m/^(?:=|S&|\s+\$0)/) {  # more markup, ...
+        # quick&dirty: should not match lines starting with any of:
+        #     $0 o-saft o-saft.tcl o-saft-docker checkAllCiphers.pl perl perlapp perl2exe
+        if (not m/^(?:=|S&|\s+(\$0|o-saft|o-saft.tcl|o-saft-docker|checkAllCiphers.pl|perl|perl2exe|perlapp)\s)/) {  # more markup, ...
             # but not in example lines and already marked lines
             s#(\s)+(a-zA-Z[^ ]+)(\s+)#$1'$2'$3#g;   # markup literal character class as code
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # our commands and options
@@ -580,7 +582,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.28 2020/02/15
+1.29 2020/10/11
 
 =head1 AUTHOR
 
