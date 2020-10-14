@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.61 20/10/14 22:21:56
+# SID   @(#) help.txt 1.62 20/10/14 23:02:37
 
 NAME
 
@@ -523,7 +523,7 @@ COMMANDS
 
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for  cipherall and cipherraw  command&  for
+          target. See  X&Options for  +cipherall and +cipherraw  command&  for
           details.
 
       +cipherall
@@ -3471,7 +3471,7 @@ KNOWN PROBLEMS
 
           g) target does not respond at all and/or blocks
              Use  --ssl-error
-             For a detailed description, please see X&Connection Problems&.
+             For a detailed description, please see X&Connection problems&.
 
         Other options which may help to get closer to the problem's cause:
         --trace-time,  --timeout=SEC,  --trace,  --trace-cmd
