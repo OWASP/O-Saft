@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.45 19/12/31 16:43:16
+#?      @(#) Makefile.misc 1.46 20/10/14 21:56:40
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.45
+_SID.misc          := 1.46
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -232,7 +232,15 @@ test.profile:     $(ALL.test.profile)
 
 ALL.qa          = $(ALL.pm) $(SRC.pl)
 
+HELP-_qa1           = ____________________________ targets checking code quality _
 HELP-test.quality   = search for various common coding mistakes, see make e-ALL.test.quality
+HELP-test.pod   = check generated pod file
+
+qa.pod:
+	@echo "#make: $(HELP-test.pod) ..."
+	@-podchecker $(GEN.pod)
+	@echo ""
+
 # following checks based on http://perldoc.perl.org/perldiag.html
 # NOTE: all qa.* targets never fail, they are just informational
 #       therefore if egrep fails, "echo OK" is used to avoid failure
@@ -281,6 +289,7 @@ qa.makefile_help:
 #       # duplicate checks for targets need to avoid collecting the conditional
 #       # targets which just define macros, hence $3=="=" 
 ALL.test.quality   := \
+		qa.pod \
 		qa.double_dref \
 		qa.defined_arr \
 		qa.defined_hash \
@@ -294,7 +303,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.45: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.46: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
