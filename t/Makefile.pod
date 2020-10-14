@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.35 20/06/08 01:27:35
+@(#) Makefile.pod 1.36 20/10/14 23:32:08
 
 =head1 AUTHOR
 
@@ -897,6 +897,26 @@ This is done using (see above):
   call like:
 
        make profile.sub.args-+cn DEV.pl=../yeast.pl
+
+
+=head2 Make:podchecker
+
+podchecker  complains if a  =head*  section has no text like:
+
+       *** WARNING: empty section in previous paragraph at line ...
+
+for example if it's followed by the next  =head*  section. Such situations
+are intended when aliases are described, for example:
+
+       =head3 +sts
+
+       =head3 +hsts
+
+podchecker's warning can be avoided, when there is no empty line after the
+first  =head*  line. On the other hand,  POD syntax requires an empty line
+after each  =head*  line. This is considered a bug in podchecker.
+This applies to Pod::Checker <= 1.73  (as podchecker is just a wrapper for
+Pod::Checker).
 
 
 =head2 Make:OSAFT_MAKE
