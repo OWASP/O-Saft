@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.60 20/10/11 00:35:40
+# SID   @(#) help.txt 1.61 20/10/14 22:21:56
 
 NAME
 
@@ -807,14 +807,15 @@ OPTIONS
 
           Show list of cipherranges (see  --cipherrange=RANGE).
 
-      --help=score
-
-          Show score value for each check.
-          Value is printed in format to be used for  --cfg-score=KEY=SCORE.
-
-          Note that the  sequence  of options  is important.  Use the options
-          --trace  and/or  --cfg-score=KEY=SCORE  before  --help=score.
-
+# score will be removed, so don't anounce it
+#      --help=score
+#
+#          Show score value for each check.
+#          Value is printed in format to be used for  --cfg-score=KEY=SCORE.
+#
+#          Note that the  sequence  of options  is important.  Use the options
+#          --trace  and/or  --cfg-score=KEY=SCORE  before  --help=score.
+#
       --help=toc
       --help=content
 
@@ -1875,20 +1876,21 @@ OPTIONS
 
           Main purpose is to reduce list of commands or to print them sorted.
 
-      --cfg-score=KEY=SCORE
-
-          Redefine value for scoring. Sets  %checks{KEY}{score}  to  'SCORE'.
-          Most score values are set to 10 by default. Values '0' .. '100' are
-          allowed.
-
-          To get a list of current score settings, use:
-              $0 --help=score
-
-          For deatils how scoring works, please see  SCORING  section.
-
-          Use the  --trace-key  option for the  +info  and/or  +check command
-          to get the values for  'KEY'.
-
+# score will be removed, so don't anounce it
+#      --cfg-score=KEY=SCORE
+#
+#          Redefine value for scoring. Sets  %checks{KEY}{score}  to  'SCORE'.
+#          Most score values are set to 10 by default. Values '0' .. '100' are
+#          allowed.
+#
+#          To get a list of current score settings, use:
+#              $0 --help=score
+#
+#          For deatils how scoring works, please see  SCORING  section.
+#
+#          Use the  --trace-key  option for the  +info  and/or  +check command
+#          to get the values for  'KEY'.
+#
       --cfg_checks=KEY=TEXT
       --cfg-checks=KEY=TEXT
       --cfg_data=KEY=TEXT
