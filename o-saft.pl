@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1001 20/06/21 23:39:53",
+    SID         => "@(#) yeast.pl 1.1002 20/10/23 10:26:08",
     STR_VERSION => "20.06.08",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -4752,7 +4752,7 @@ sub checkdates($$)  {
     # timestamps (like certificate's  after) into epoch timestamp format.
     # Perl's  Time::Local module is used for that in the hope that it is part
     # of most Perl installations. Existance of Time::Local module was already
-    # done at startup with and +sts_expired disabled if missing.
+    # done at startup (see _warn 112:).
     # SEE Perl:import include
     MAXAGE_CHECK: {
         $txt = $text{'na_STS'};
@@ -4760,11 +4760,16 @@ sub checkdates($$)  {
         $txt = STR_UNDEF;
         last MAXAGE_CHECK if (not _is_cfg_do('sts_expired'));
         $txt = "";
-        # compute epoch timestamp from 'after'
-        my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
-        my $maxage = $data{'hsts_maxage'}->{val}($host);
         $now = time();  # we need epoch timestamp here
-        $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
+        my $maxage = $data{'hsts_maxage'}->{val}($host);
+        my $ts = "@until";
+        if (exists &Time::Local::timelocal) {
+            # compute epoch timestamp from 'after', example: Feb 16 10:23:42 2012 GMT
+            $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
+            $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
+        } else {
+            $txt = "$now + $maxage > $ts ??";
+        }
     }
     $checks{'sts_expired'} ->{val}  = $txt;
 
