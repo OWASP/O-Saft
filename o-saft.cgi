@@ -111,7 +111,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.52 20/02/15 21:05:06";
+my $SID_cgi = "@(#) o-saft.cgi 1.53 20/10/28 22:59:55";
 my $VERSION = '20.02.03';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -202,7 +202,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.52\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.53\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -283,6 +283,23 @@ if ($me =~/\.cgi$/) {
 		#     64:::IP         IPv4-mapped IPv6 addresses as NAT64 (RFC6052): 64:ff9b::192.0.2.128
 		#     ::::IP          IPv4-mapped IPv6 addresses: ::ffff:192.0.2.128 
 		#     127.1  127.0.1  IPv4 abbreviated
+		# TODO: better, more accuarte checks
+		#     ::1/128         localhost
+		#     fe80::/64       link local
+		#     ff00::/8        ULA - Unique Local Address
+		#     ff00::0/8       Multicast
+		#     fd00::/8        Unique Local Address, not routable
+		#     fc00::/7        ? Global Unique Address
+		#     ::ffff:0:0/96   IPv4 mapped addresses
+		#     ::ffff:0:0:0/96 IPv4 translated addresses (SIIT protocol)
+		#     64:ff9b::/96    6to4 addressing
+		#     2000::/3 
+		#     2001::/16       GUA - Global Unique Address, routable!
+		#     2001::/32       Teredo tunneling (RFC 4380)
+		#     2001:2:::/48    Reserved for Benchmarking Methodology Working Group
+		#     2001:20::/28    ORCHIDv2 crypto hash identifiers, not routable
+		#     2001:db8::/32   ? Documentation
+		#     ff02::2         Neighbor Discovery Protocol 
 
 		# match IPv4: ((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}
 		# match IPv6: ([0-9a-f]{0,4}:){1,8}
