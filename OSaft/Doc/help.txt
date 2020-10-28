@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.62 20/10/14 23:02:37
+# SID   @(#) help.txt 1.63 20/10/28 23:31:50
 
 NAME
 
@@ -200,8 +200,8 @@ TECHNICAL INFORMATION
 
         Therefore following commands and options changed:
           * +cipher     uses internal method
-          * +cipherall  command obsolete, automatically changed to  +cipher
-          * +cipherraw  command obsolete, automatically chnaged to  +cipher
+          * +cipherall  command obsolete, !!Hint is printed
+          * +cipherraw  command obsolete, !!Hint is printed
           * --openssl-ciphers  --force-openssl  changed to  --ciphermode=openssl
           * --openssl=TOOL  TOOL only used for  +cipher --ciphermode=openssl
           * --legacy=owasp  option obsolete
@@ -209,13 +209,13 @@ TECHNICAL INFORMATION
         The commands  +cipherall  and  +cipherraw  are "converted" to the new
         syntax, as follows:
 
-            VERSION < 19.11.19           VERSION > 19.11.19
-            ----------------------------+-------------------------------
-            +cipher                      +cipher --ciphermode=ssleay
-            +cipher --force-openssl      +cipher --ciphermode=openssl
-            +cipherall                   +cipher
-            +cipherraw                   +cipher --ciphermode=intern
-            ----------------------------+-------------------------------
+              VERSION < 19.11.19           VERSION > 19.11.19
+             #----------------------------+---------------------------------
+              * +cipher                      +cipher --ciphermode=ssleay
+              * +cipher --force-openssl      +cipher --ciphermode=openssl
+              * +cipherall                   +cipher
+              * +cipherraw                   +cipher --ciphermode=intern
+             #----------------------------+---------------------------------
 
     Version before 19.11.19
 
@@ -1838,7 +1838,7 @@ OPTIONS
           $0 --help=alias
 
                 Tool's Option       (Tool)          $0 Option
-              #--------------------+---------------+------------------------#
+             #---------------------+---------------+------------------------
               * --checks CMD        (TLS-Check.pl)  same as  +CMD
               * -h, -h=HOST         (various tools) same as  --host HOST
               * -p, -p=PORT         (various tools) same as  --port PORT
@@ -1851,7 +1851,7 @@ OPTIONS
               * -connect, -H, -u, -url, -U          ignored
               * -noSSL                              same as  --no-SSL
               * -no_SSL                             same as  --no-SSL
-              #--------------------+---------------+------------------------#
+             #---------------------+---------------+------------------------
 
         For definition of  'SSL'  see  --SSL  and  --no-SSL  above.
 
@@ -2053,14 +2053,15 @@ OPTIONS
 
           Alias for  --trace-VALUE  options (see above).
 
-            Trace Option        Alias Option
-          #--------------------+----------------------------#
+            Trace Option          Alias Option
+          #--------------------+----------------------------
           * --trace=1           same as  --trace
           * --trace=2           same as  --trace --trace
           * --trace=arg         same as  --trace-arg
           * --trace=cmd         same as  --trace-cmd
           * --trace=key         same as  --trace-key
           * --trace=time        same as  --trace-time
+          #--------------------+----------------------------
 
       --trace=FILE
 
