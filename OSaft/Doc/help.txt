@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.63 20/10/28 23:31:50
+# SID   @(#) help.txt 1.64 20/10/29 00:13:40
 
 NAME
 
@@ -41,9 +41,6 @@ QUICKSTART
 
         * Show supported (enabled) ciphers with their DH parameters:
           $0 +cipher-dh example.tld
-
-        * Test all ciphers, even if not supported by local SSL implementation:
-          $0 +cipherall example.tld
 
         * Show details of certificate and connection of target:
           $0 +info example.tld
@@ -278,9 +275,6 @@ TECHNICAL INFORMATION
 
     Requirements
 
-        For checking all ciphers and all protocols with  +cipherall  command,
-        just perl (5.x) without any modules is required.
-
         For  +info  and  +check  (and all related) commands,  perl (5.x) with
         following modules (minimal version) is recommended:
 
@@ -511,9 +505,6 @@ COMMANDS
           Check target for ciphers,  either all ciphers, or ciphers specified
           with  --cipher=CIPHER  option.
 
-          Note that ciphers not supported by the local SSL implementation are
-          not checked by default, use  +cipherall or +cipherraw   command.
-
           Use  --v  option to see all ciphers being checked.
 
       +cipherraw
@@ -525,10 +516,6 @@ COMMANDS
           cipher tests, connection results and some strange behaviours of the
           target. See  X&Options for  +cipherall and +cipherraw  command&  for
           details.
-
-      +cipherall
-
-          Same as  +cipherraw  but ouput format similar to  +cipher  command.
 
       +cipher-default
 
@@ -600,17 +587,6 @@ COMMANDS
 
     Notes about commands
 
-      +cipher vs. +cipherall
-
-          +cipher  can only check for ciphers - more precise: cipher suites -
-          provided by the local SSL implementation (for example libssl).
-          +cipherall  can check for any cipher,  as it just uses the cipher's
-          integer value in the range 0 .. 65532.
-
-      +cipherall vs. +cipherraw
-
-          These commands are identical, just the output format is different.
-
       +cipher vs. +cipher-dh
 
           While  +cipher  prints checked ciphers,  +cipher-dh  prints ciphers
@@ -664,9 +640,6 @@ COMMANDS
           if the server returns the same cipher for both checks, it's assumed
           that it prefers to use the most strongest cipher. In this case it's
           obvious that 'SSLHonorCipherOrder' is set (exceptions see below).
-
-          +cipherall  uses a  more accurate algorithm  to detect the server's
-          cipher order.
 
           Exceptions:
           If either, the server or the client,  uses only one cipher suite in
@@ -1358,7 +1331,7 @@ OPTIONS
       --sni-toggle
       --toggle-sni
 
-          Test with and witout SNI mode (+cipherall  only).
+          Test with and witout SNI mode.
 
       --force-sni
 
@@ -3308,9 +3281,6 @@ KNOWN PROBLEMS
 
         More details why the connection failed can be seen using  --trace=2 .
 
-        If the targets supports SSL, it should be at least possible to check
-        for supported ciphers using  +cipherall  instead of  +cipher .
-
 
     Use of uninitialized value $headers in split ... do_httpx2.al)
 
@@ -3595,10 +3565,10 @@ LIMITATIONS
 
         Sometimes the connection cannot be established. This may have various
         reasons.  Unfortunaly this script seems to hang then.  In  particular
-        when checking for ciphers with  +cipher  or  +cipherall  . The reason
-        is most likely that the server does not respond to the TCP/IP request
-        and hence the script closes the connection after the configured time-
-        out (see  --timeout=SEC  option).
+        when checking for ciphers with  +cipher  command.  The reason is most
+        likely that the server does not respond to the TCP/IP request,  hence
+        the script closes the connection after the configured timeout (please
+        see  --timeout=SEC  option).
 
         Continous connection attempts  can be inhibited with the  --ssl-error
         option, which is set by default. Avoiding further connections results
@@ -4684,12 +4654,6 @@ EXAMPLES
 
         * Test for a specific ciphers
           $0 +cipher --cipher=ADH-AES256-SHA some.tld
-
-        * Test all ciphers, even if not supported by local SSL implementation
-          $0 +cipherraw some.tld
-          $0 +cipherall some.tld
-          $0 +cipherall some.tld --range=full
-          checkAllCiphers.pl example.tld --range=full --v
 
         * Show supported (enabled) ciphers with their DH parameters:
           $0 +cipher-dh some.tld
