@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.101 19/12/15 13:33:14
+#?      @(#) Makefile 1.102 20/10/28 23:38:01
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.101
+_SID            = 1.102
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -254,7 +254,7 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.101
+_INST.text      = generated from Makefile 1.102
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -442,6 +442,7 @@ HELP-pod        = generate POD format help '$(GEN.pod)'
 HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
+HELP-docs       = generate '$(GEN.docs)'
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-gen.all    = generate most "generatable" file
@@ -474,10 +475,11 @@ pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
 wiki:   $(GEN.wiki)
+docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.101
-tar:     GREP_EDIT  = 1.101
+GREP_EDIT           = 1.102
+tar:     GREP_EDIT  = 1.102
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
