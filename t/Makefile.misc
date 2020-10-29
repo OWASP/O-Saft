@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.48 20/10/14 23:34:07
+#?      @(#) Makefile.misc 1.49 20/10/29 01:05:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.48
+_SID.misc          := 1.49
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -110,6 +110,17 @@ test.cloc:        $(ALL.test.cloc)
 # TODO: test.cloc.log  must be special at it compares generated tags files
 
 .PHONY: cloc
+
+HELP-_modules       = _________________ targets for testing ancient Perl modules _
+# TODO: build test targets
+# allready manually tested module versions:
+#    perl 5.24, 5.28
+#    openssl 0.9.8, 1.0.2-chacha, 1.0.2k, 1.1.0l, 1.1.1d
+#
+#    IO::Socket::SSL 2.044,  2.060
+#    Net::DNS        0.66,   1.2, 1.19
+#    Net::SSLeay     0.49.   1.82, 1.85
+#    Time::Local     1.2300, 1.25
 
 HELP-_dev1          = __________________________________ targets for development _
 HELP-test.norc      = special target testing with/without -norc option
@@ -304,7 +315,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.48: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.49: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
