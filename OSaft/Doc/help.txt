@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.64 20/10/29 00:13:40
+# SID   @(#) help.txt 1.65 20/10/29 01:06:43
 
 NAME
 
@@ -292,17 +292,28 @@ TECHNICAL INFORMATION
 
         Note: if you want to use advanced features of openssl or Net::SSLeay,
         please see  INSTALLATION section how to compile and install the tools
-        fully customized.
+        fully customized. Requirements for  openssl  are described there.
 
         Also an openssl executable should be available, but is not mandatory.
 
         For checking DH parameters of ciphers, openssl 1.0.2  or newer should
         be available. If an older version of openssl is found, we try hard to
-        extract  the DH parameters from the  data returned by the server, see
+        extract the  DH parameters  from the data returned by the server, see
         +cipher-dh  command.
 
         If you need to run on systems with older perl or Perl module versions
         please refer to the  DEBUG  section for more information.
+
+    External tools
+
+        For building and viewing the documentationm following tools should be
+        available:
+
+          * aha              0.5-1
+          * perldoc          v3.2801,
+          * pod2man
+          * podviewer        v0.18
+          * tkpod
 
 
 COMMANDS
@@ -3701,6 +3712,24 @@ INSTALLATION
 
         Please read the  SECURITY  section first before following the install
         instructions below.
+
+    Requirements for OpenSSL
+
+        To build openssl following packages are requred  (note that the names
+        may differ depending on the used platform):
+          * libidn11-dev
+
+          * libidn2-0-dev
+          * libgmp-dev
+          * libzip-dev
+          * libsctp-dev
+          * libkrb5-dev
+
+        Also, following Perl modules should be installed:
+          * Module::Build
+          * Net::LibIDN
+          * Net::LibIDN2
+          * Mozilla::CA
 
     OpenSSL
 
