@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.49 20/10/29 01:05:39
+#?      @(#) Makefile.misc 1.50 20/10/30 01:40:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.49
+_SID.misc          := 1.50
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -44,6 +44,8 @@ TEST.bench.host    := $(TEST.host)
 
 TEST.opt.cloc      :=
 EXE.cloc           := cloc $(TEST.opt.cloc)
+EXE.analyse        := perl-analyzer
+EXE.analyse-output := perl-analyzer-output
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -123,6 +125,8 @@ HELP-_modules       = _________________ targets for testing ancient Perl modules
 #    Time::Local     1.2300, 1.25
 
 HELP-_dev1          = __________________________________ targets for development _
+HELP-analyse        = analyse code with Perl::Analyzer
+HELP-analyse-output = analyse code and generate '$(_TEST.analyse.html)'
 HELP-test.norc      = special target testing with/without -norc option
 HELP-tags           = generate tags file for vi(m)
 HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
@@ -131,6 +135,31 @@ HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out
 HELP-nytprof.out    = generate profiling data (for nytprofcalls)
 HELP-nytprof.html   = generate profiling data in HTML format
 HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
+
+_TEST.analyse.src  := ./
+_TEST.analyse.dst  := ./$(DOC.dir)/perl-analyzer
+_TEST.analyse.dat  := $(_TEST.analyse.dst)/o-saft.dat
+_TEST.analyse.html := $(_TEST.analyse.dst)/index.html
+TEST.opt.analyse    =
+# TODO: --with-constants --with-fields
+TEST.opt.analyse.dat= --datafile=$(_TEST.analyse.dat)
+$(_TEST.analyse.dst):
+	@mkdir $@
+
+analyse:         TEST.opt.analyse.dir   = --source-dir=$(_TEST.analyse.src)
+analyse-output:  TEST.opt.analyse.dir   = --output-dir=$(_TEST.analyse.dst)
+analyse: $(_TEST.analyse.dst) $(SRC.pl) $(SRC.pm)
+	@$(TRACE.target)
+	@$(EXE.analyse)        $(TEST.opt.analyse.dat) $(TEST.opt.analyse.dir) $(TEST.opt.analyse)
+$(_TEST.analyse.dat): analyse
+analyse-output: $(_TEST.analyse.dat)
+	@$(TRACE.target)
+	@$(EXE.analyse-output) $(TEST.opt.analyse.dat) $(TEST.opt.analyse.dir) --format=html
+analyse-out: analyse-output
+
+ALL.test.analyse   := analyse analyse-output
+ALL.testmisc       += $(ALL.test.analyse)
+test.analyse:         $(ALL.test.analyse)
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
@@ -315,7 +344,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.49: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.50: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
