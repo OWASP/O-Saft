@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.52 20/10/30 16:59:13
+#?      @(#) Makefile.misc 1.53 20/10/30 17:13:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.52
+_SID.misc          := 1.53
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -56,9 +56,9 @@ _ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt)
 _ALL.devtools.extern   += ctags tags diff
 _ALL.devtools.extern   += $(EXE.dprofpp) $(EXE.nytprof) $(EXE.cloc)
 _ALL.devtools.extern   += $(EXE.analyse) $(EXE.analyse-output)
-_ALL.devmoduls.extern  += Data::Dumper   File::Find Devel::Trace  Debug::Trace
-_ALL.devmoduls.extern  += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
-_ALL.devmoduls.extern  += Devel::DProf Devel::NYTProf
+_ALL.devmodules.extern += Data::Dumper   File::Find Devel::Trace  Debug::Trace
+_ALL.devmodules.extern += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
+_ALL.devmodules.extern += Devel::DProf Devel::NYTProf
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -358,7 +358,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.52: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.53: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
