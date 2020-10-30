@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.50 20/10/30 01:40:04
+#?      @(#) Makefile.misc 1.51 20/10/30 15:22:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.50
+_SID.misc          := 1.51
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -124,6 +124,7 @@ HELP-_modules       = _________________ targets for testing ancient Perl modules
 #    Net::SSLeay     0.49.   1.82, 1.85
 #    Time::Local     1.2300, 1.25
 
+# SEE Make:Perl::Analyzer
 HELP-_dev1          = __________________________________ targets for development _
 HELP-analyse        = analyse code with Perl::Analyzer
 HELP-analyse-output = analyse code and generate '$(_TEST.analyse.html)'
@@ -344,7 +345,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.50: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.51: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
