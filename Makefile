@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.102 20/10/28 23:38:01
+#?      @(#) Makefile 1.103 20/10/30 17:00:49
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.102
+_SID            = 1.103
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -248,16 +248,25 @@ EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
 
+# summary variables (mainly used for INSTALL.sh)
+_ALL.devtools.intern  += $(EXE.single)
+ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
+ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
+
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
 _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.102
+_INST.devtools  = $(sort $(ALL.devtools))
+_INST.devmodules= $(sort $(ALL.modules))
+_INST.text      = generated from Makefile 1.103
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
+			-e 's@DEVTOOLS_INSERTED_BY_MAKE@$(_INST.devtools)@'   \
+			-e 's@DEVMODULES_INSERTED_BY_MAKE@$(_INST.devmodules)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@'         \
 			-e 's@OSAFT_PL_INSERTED_BY_MAKE@$(SRC.pl)@'           \
 			-e 's@OSAFT_GUI_INSERTED_BY_MAKE@$(SRC.tcl)@'         \
@@ -478,8 +487,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.102
-tar:     GREP_EDIT  = 1.102
+GREP_EDIT           = 1.103
+tar:     GREP_EDIT  = 1.103
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
