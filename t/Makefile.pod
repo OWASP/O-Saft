@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.36 20/10/14 23:32:08
+@(#) Makefile.pod 1.37 20/10/30 10:36:42
 
 =head1 AUTHOR
 
@@ -796,16 +796,25 @@ Hence following simplified  if-then-else  construct is used:
 Note that  $(MAKEFLAGS)  may look like:  nrR --no-print-directory
 
 
+=head2 Make:Perl::Analyzer
+
+For generating documentation of the own Perl modules and a calling tree of
+them, perl-analyzer is used. The tools require the Perl modules  JSON  and
+Text::MicroTemplate  (beside some mor commonly installed Perl modules).
+
+
 =head2 Make:Profiling
 
 Profiling is mainly done with Perl's built-in functionality: perldebug.
 
-There are also targets using the Perl modules  DProf and/or NYTProf  to do
-the profiling.
+There are also targets which require the Perl modules  Devel::DProf and/or
+Devel::NYTProf  to do the profiling.
 
 =head3 Perl packages
 
+  * debian: libdevel-trace-perl libdebug-trace-perl
   * debian: libdevel-dprof-perl libdevel-nytprof-perl
+  * debian: libjson-perl libtext-microtemplate-perl
 
 
 =head2 Make:profile.sub
