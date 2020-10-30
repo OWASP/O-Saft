@@ -28,7 +28,8 @@
 #?                        support other options and arguments of
 #?                        contrib/install_openssl.sh
 #?          --expected  - show sample output expected for  --check
-#       All Lines starting with #= are the sample output.
+#                         All lines starting with #= are the sample output.
+#?          --checkdev  - check system for development (make) requirements
 #=
 #=# check installation in /opt/o-saft
 #=# (warnings are ok if 'git clone' will be used for development)
@@ -146,7 +147,8 @@
 #       is assumed that mainly humans read the output.
 #
 #       Environment variable inst can be set to installation directory: This
-#       is usefull for development only, hence not officially documented.
+#       is useful for development only, hence not officially documented.
+#           env inst=. $0 --check
 #
 #       Silently accepts the options  -n  or  -h  or  --x  also.
 #
@@ -175,7 +177,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) ðàd±U 1.49 20/06/05 22:40:24
+#?      @(#) `)Q‚ãU 1.50 20/10/30 15:36:56
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -287,6 +289,8 @@ while [ $# -gt 0 ]; do
 	  '--install')          mode=dest;    ;;
 	  '--openssl')          mode=openssl; ;;
 	  '--expected')         mode=expected; ;;
+	  '--checkdev')         mode=checkdev; ;;
+	  '--check-dev')        mode=checkdev; ;;
 	  '--force')            force=1;      ;;
           '--no-colour')        colour="";    ;;
           '--colour')           colour="34m"; ;;
@@ -301,7 +305,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.49 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.50 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -312,8 +316,8 @@ clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 
 # ------------------------- default mode --------- {
 if [ -z "$mode" ]; then
-	echo ""
-	cat << EoT
+	cat << EoUsage
+
 # O-Saft does not need a specific installation.  It may be used from this
 # directory right away.
 #
@@ -337,11 +341,15 @@ if [ -z "$mode" ]; then
 
 	$0 --expected
 
+# To check development requirements, use:
+
+	$0 --checkdev
+
 # In a Docker image, this script may only be called like:
 
 	$0 --check
 
-EoT
+EoUsage
 	exit 0
 fi; # default mode }
 
@@ -444,6 +452,58 @@ if [ "$mode" = "dest" ]; then
 	echo -n "# installation in $inst_directory "; echo_green "completed."
 	exit 0
 fi; # install mode }
+
+# ------------------------- checkdev mode -------- {
+tools_mandatory="ctags tags diff gpg sccs sha256sum docker perldoc"
+tools_optional="aha cloc perl-analyzer perl-analyzer-output perlcritic
+	podchecker podman podviewer tkpod
+	mgdiff tkdiff xxdiff
+	sslscan sslscan-1.11.9 testssl.sh"
+	# $(LIST.legacy)
+tools_modules="Data::Dumper File::Find Devel::Trace Debug::Trace
+	Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
+	Devel::DProf Devel::NYTProf"
+# TODO: Devel::DProf Devel::NYTProf und GraphViz2  liefern Fehler auch wenn installiert
+if [ "$mode" = "checkdev" ]; then
+	echo ""
+	echo "# check system for development usage"
+	echo ""
+	echo "# check for tools used with/in make targets"
+	echo "#----------------------+---------------------------------------"
+	for t in $tools_mandatory ; do
+		is=`which $t`
+		if [ -n "$is" ] ; then
+			echo -n "# found  $tab" && echo_green  "$t$tab$is"
+		else
+			echo -n "# missing$tab" && echo_red    "$t"
+		fi
+	done
+	for t in $tools_optional ; do
+		is=`which $t`
+		if [ -n "$is" ] ; then
+			echo -n "# found  $tab" && echo_green  "$t$tab$is"
+		else
+			echo -n "# missing$tab" && echo_yellow "$t"
+		fi
+	done
+	echo "#----------------------+---------------------------------------"
+	echo ""
+	echo "# check for Perl modules used with/in make targets"
+	echo "#----------------------+---------------------------------------"
+	for m in $tools_modules ; do
+		perl -le "printf'# %21s',$m"    # use perl instead of echo for formatting
+		# NOTE: -I . used to ensure that local ./Net is found
+		v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
+		if [ -n "$v" ]; then
+			echo_green  "$v"
+		else 
+			echo_red "${tab}missing; install with: 'cpan $m'"
+			err=`expr $err + 1`
+		fi
+	done
+	echo "#----------------------+---------------------------------------"
+	exit 0
+fi; # checkdev mode }
 
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
