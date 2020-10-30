@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.65 20/10/29 01:06:43
+# SID   @(#) help.txt 1.66 20/10/30 15:23:56
 
 NAME
 
@@ -310,10 +310,17 @@ TECHNICAL INFORMATION
         available:
 
           * aha              0.5-1
+          * perl-analyzer
+            (also requires Perl modules, JSON, Text::MicroTemplate)
           * perldoc          v3.2801,
           * pod2man
           * podviewer        v0.18
           * tkpod
+
+        Using make for development uses additional external tools and/or Perl
+        modules:
+
+          * Deug::Trace Devel::Trace Devel::DProf Devel::NYTProf
 
 
 COMMANDS
