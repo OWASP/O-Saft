@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.51 20/10/30 15:22:09
+#?      @(#) Makefile.misc 1.52 20/10/30 16:59:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.51
+_SID.misc          := 1.52
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -43,9 +43,22 @@ TEST.bench.times   := $(EXE.bench).times
 TEST.bench.host    := $(TEST.host)
 
 TEST.opt.cloc      :=
-EXE.cloc           := cloc $(TEST.opt.cloc)
+TEST.opt.dprofpp   :=
+TEST.opt.nytprof   :=
+EXE.cloc           := cloc
 EXE.analyse        := perl-analyzer
 EXE.analyse-output := perl-analyzer-output
+EXE.dprofpp        := dprofpp
+EXE.nytprof        := nytprofhtml
+
+# summary variables (mainly used for INSTALL.sh)
+_ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt)
+_ALL.devtools.extern   += ctags tags diff
+_ALL.devtools.extern   += $(EXE.dprofpp) $(EXE.nytprof) $(EXE.cloc)
+_ALL.devtools.extern   += $(EXE.analyse) $(EXE.analyse-output)
+_ALL.devmoduls.extern  += Data::Dumper   File::Find Devel::Trace  Debug::Trace
+_ALL.devmoduls.extern  += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
+_ALL.devmoduls.extern  += Devel::DProf Devel::NYTProf
 
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
@@ -99,7 +112,7 @@ HELP-cloc.lang  = same as cloc.file and cloc
 # NOTE: --quiet suppresses count of files also, hence not used by default
 cloc%:
 	@$(TRACE.target)
-	@$(EXE.cloc) $(sort $(ALL.src))
+	@$(EXE.cloc) $(TEST.opt.cloc) $(sort $(ALL.src))
 
 cloc.stat:  TEST.opt.cloc  +=
 cloc.file:  TEST.opt.cloc  += --by-file
@@ -242,7 +255,7 @@ nytprof.out: $(_TEST.nytprof.log)
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
 	@$(TRACE.target)
-	@nytprofhtml --file $<
+	@$(EXE.nytprof) $(TEST.opt.nytprof) --file $<
 	@echo "# inspect with: firefox $(TEST.dir)/nytprof/index.html"
 nytprof: nytprof.html
 
@@ -251,7 +264,7 @@ _TEST.dprof.log     = $(TEST.logdir)/dprof.out
 $(_TEST.dprof.log):
 	@$(TRACE.target)
 	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
-	@dprofpp    $(_TEST.dprof.log)
+	@$(EXE.dprofpp) $(TEST.opt.dprofpp) $(_TEST.dprof.log)
 	@echo ""
 	@echo "# show calling tree: dprofpp -t $(_TEST.dprof.log)"
 #dprof.out: PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log)
@@ -345,7 +358,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.51: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.52: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
