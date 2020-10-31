@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated from Makefile 1.102
+#? File generated from Makefile 1.104
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -136,12 +136,13 @@
 #?      $0 /opt/bin/ --force
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
+#?      $0 --checkdev
 #?
 # HACKER's INFO
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       and scopes containing  "generated from Makefile 1.102" .
+#       and scopes containing  "generated from Makefile 1.104" .
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
@@ -177,7 +178,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) `)Q��U 1.50 20/10/30 15:36:56
+#?      @(#) %M% %I% %E% %U%
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -203,7 +204,7 @@ text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
-# generated from Makefile 1.102 {
+# generated from Makefile 1.104 {
 osaft_exe="o-saft.pl"
 osaft_gui="o-saft.tcl"
 contrib_dir="contrib"
@@ -224,7 +225,28 @@ files_install_cgi="
 files_install_doc="
 	docs/o-saft.1 docs/o-saft.html docs/o-saft.pod
 		"
-# generated from Makefile 1.102 }
+
+tools_intern="
+	contrib/gen_standalone.sh t/o-saft_bench.sh t/test-bunt.pl.txt
+	"
+
+tools_extern="
+	cloc ctags diff docker dprofpp gpg mgdiff nytprofhtml perl-analyzer perl-analyzer-output perlcritic podchecker sccs sha256sum tkdiff xxdiff
+	"
+
+tools_modules="
+	Data::Dumper Debug::Trace Devel::DProf Devel::NYTProf Devel::Trace File::Find GraphViz2 JSON Perl::Analyzer Storable Text::MicroTemplate
+	"
+
+tools_optional="
+	aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod
+	"
+
+tools_other="
+	OSSL_CCS_InjectTest.py SSLAudit.exe SSLAudit.pl SSLCertScanner.exe SSLPressure.exe TLSSLed_v1.3.sh TestSSLServer.exe TestSSLServer.jar analyze-ssl.pl athena-ssl-cipher-check_v062.jar bash-heartbleed.sh beast.pl ccs-injection.sh check-ssl-heartbleed.pl chksslkey cnark.pl manyssl poet robot-detect smtp_tls_cert.pl ssl-cert-check ssl-check-heartbleed.pl ssl-cipher-check.pl ssl-dos ssl-renegotiation.sh sslcat ssldiagnos.exe sslmap.py sslscan sslscan.exe sslsniff sslstrip ssltest.pl ssltest_heartbeat.py sslthing.sh sslyze.py stunnel testssl.sh tls-check.pl tls-scan tlsenum vessl
+	"
+
+# generated from Makefile 1.104 }
 
 # HARDCODED {
 # because newer Makefiles may no longer know about them
@@ -305,7 +327,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.50 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo %I% ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -454,44 +476,28 @@ if [ "$mode" = "dest" ]; then
 fi; # install mode }
 
 # ------------------------- checkdev mode -------- {
-tools_mandatory="ctags tags diff gpg sccs sha256sum docker perldoc"
-tools_optional="aha cloc perl-analyzer perl-analyzer-output perlcritic
-	podchecker podman podviewer tkpod
-	mgdiff tkdiff xxdiff
-	sslscan sslscan-1.11.9 testssl.sh"
-	# $(LIST.legacy)
-tools_modules="Data::Dumper File::Find Devel::Trace Debug::Trace
-	Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
-	Devel::DProf Devel::NYTProf"
-# TODO: Devel::DProf Devel::NYTProf und GraphViz2  liefern Fehler auch wenn installiert
 if [ "$mode" = "checkdev" ]; then
 	echo ""
 	echo "# check system for development usage"
 	echo ""
 	echo "# check for tools used with/in make targets"
 	echo "#----------------------+---------------------------------------"
-	for t in $tools_mandatory ; do
+	for t in $tools_intern ; do
+		perl -le "printf'# %21s','$t'"  # use perl instead of echo for formatting
 		is=`which $t`
-		if [ -n "$is" ] ; then
-			echo -n "# found  $tab" && echo_green  "$t$tab$is"
-		else
-			echo -n "# missing$tab" && echo_red    "$t"
-		fi
+		[ -n "$is" ] && echo_green "${tab}$is" || echo_red "${tab}missing"
 	done
-	for t in $tools_optional ; do
+	for t in $tools_extern ; do
+		perl -le "printf'# %21s','$t'"
 		is=`which $t`
-		if [ -n "$is" ] ; then
-			echo -n "# found  $tab" && echo_green  "$t$tab$is"
-		else
-			echo -n "# missing$tab" && echo_yellow "$t"
-		fi
+		[ -n "$is" ] && echo_green "${tab}$is" || echo_red "${tab}missing"
 	done
 	echo "#----------------------+---------------------------------------"
 	echo ""
 	echo "# check for Perl modules used with/in make targets"
 	echo "#----------------------+---------------------------------------"
 	for m in $tools_modules ; do
-		perl -le "printf'# %21s',$m"    # use perl instead of echo for formatting
+		perl -le "printf'# %21s','$m'"
 		# NOTE: -I . used to ensure that local ./Net is found
 		v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
 		if [ -n "$v" ]; then
@@ -499,6 +505,33 @@ if [ "$mode" = "checkdev" ]; then
 		else 
 			echo_red "${tab}missing; install with: 'cpan $m'"
 			err=`expr $err + 1`
+		fi
+	done
+	echo "#----------------------+---------------------------------------"
+	echo "# Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
+	echo ""
+	echo "# check for optional tools to view documentation:"
+	echo "#----------------------+---------------------------------------"
+	for t in $tools_optional ; do
+		perl -le "printf'# %21s','$t'"
+		is=`which $t`
+		if [ -n "$is" ] ; then
+			echo_green  "${tab}$is"
+		else
+			echo_red    "${tab}missing"
+		fi
+	done
+	echo "#----------------------+---------------------------------------"
+	echo ""
+	echo "# check for other SSL-related tools:"
+	echo "#----------------------+---------------------------------------"
+	for t in $tools_other ; do
+		perl -le "printf'# %21s','$t'"
+		is=`which $t`
+		if [ -n "$is" ] ; then
+			echo_green  "${tab}$is"
+		else
+			echo_red    "${tab}missing"
 		fi
 	done
 	echo "#----------------------+---------------------------------------"
@@ -582,7 +615,7 @@ echo "#----------------------+---------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
-	perl -le "printf'# %21s',$m"    # use perl instead of echo for formatting
+	perl -le "printf'# %21s','$m'"  # use perl instead of echo for formatting
 	# NOTE: -I . used to ensure that local ./Net is found
 	v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
 	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
