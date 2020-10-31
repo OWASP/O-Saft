@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.67 20/10/31 12:15:35
+# SID   @(#) help.txt 1.68 20/10/31 12:21:21
 
 NAME
 
@@ -3713,6 +3713,15 @@ INSTALLATION
 
         Please read the  SECURITY  section first before following the install
         instructions below.
+
+    Quickstart
+
+        The script  INSTALL.sh  provides a quick method to check, compile and
+        install anything needed. Please see:
+
+          INSTALL.sh --help
+
+        For more details, read on ...
 
     Requirements for OpenSSL
 
