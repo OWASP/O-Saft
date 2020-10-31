@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.222 20/06/11 14:49:49",
+    SID_osaft   => "@(#) osaft.pm 1.223 20/10/31 13:28:13",
 
 };
 
@@ -59,7 +59,7 @@ o-saft-lib -- common perl modul for O-Saft and related tools
 =over 2
 
 =item use osaft;                  # in perl code
-=item o-saft-lib.pm --help        # on command line will print help
+=item o-saft-lib.pm --help        # on command-line will print help
 
 =back
 
@@ -315,7 +315,7 @@ our %prot   = (     # collected data for protocols and ciphers
     #   "protocol"=> {cipher_pfs, ciphers_pfs, default, cipher_strong, cipher_weak}
     # Notes:
     #  TLS1FF   0x03FF  # last possible version of TLS1.x (not specified, used internal)
-    #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
+    #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardised; some versions use 0xFEFF
     #  DTLSv09: -dtls   # never defined and used in openssl
     #  DTLSv1   0xFEFF  # DTLS1.0 (udp)
     #  DTLSv11  0xFEFE  # DTLS1.1: has never been used (udp)
@@ -1473,7 +1473,7 @@ our %cfg = (
     # following initialised in _osaft_init()
     'me'            => "",
     'ARG0'          => "",
-    'ARGV'          => [],      # arguments passed on command line
+    'ARGV'          => [],      # arguments passed on command-line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
     'RC-FILE'       => "",      # our RC-FILE, search in pwd only!
     # following should be in %text, but as %cfg is available everywhere,
@@ -1505,8 +1505,8 @@ our %cfg = (
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     'starttls_delay'=> 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
-    'starttls_phase'=> [],      # STARTTLS: Array for customized STARTTLS sequences
-    'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
+    'starttls_phase'=> [],      # STARTTLS: Array for customised STARTTLS sequences
+    'starttls_error'=> [],      # STARTTLS: Array for customised STARTTLS sequences error handling
     'slow_server_delay' => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
     'connect_delay' => 0,       # time to wait in seconds for starting next cipher check
     'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
@@ -1886,7 +1886,7 @@ our %cfg = (
                        ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
-                                # not usefull in this list: serial extension
+                                # not useful in this list: serial extension
                         qw(
                          fingerprint fingerprint_hash fingerprint_md5
                          fingerprint_sha1 fingerprint_sha2
@@ -3141,7 +3141,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.222 2020/06/11
+1.223 2020/10/31
 
 =head1 AUTHOR
 
