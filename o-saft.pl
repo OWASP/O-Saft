@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1003 20/10/31 13:41:37",
+    SID         => "@(#) yeast.pl 1.1004 20/10/31 18:56:44",
     STR_VERSION => "20.10.30",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -4145,7 +4145,7 @@ sub ciphers_scan        {
     # returns array with accepted ciphers
     my ($host, $port) = @_;
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialised value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
@@ -9511,7 +9511,7 @@ we only want to ensure UTF-8 on output.
 The I/O layers need to be set in the main script only, all modules inherit
 the settings from there. However, modules need to use the proper binmode()
 call itself, if they are called from command-line.
-Unfortunatelly Perl::Critic  complains that  ':encoding(UTF-8)'  should be
+Unfortunately  Perl::Critic  complains that  ':encoding(UTF-8)'  should be
 used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
 Note that we use STDOUT and STDERR  and not the pseudo layer ':std' or the
@@ -9530,7 +9530,7 @@ examples:
 
 we prefer the perlish one (3. above).  Because it does not copy the array,
 it is the most performant solution also.
-Unfortunatelly Perl::Critic complains about postfix controls with
+Unfortunately  Perl::Critic complains about postfix controls with
 ControlStructures::ProhibitPostfixControls  which seems to be misleading.
 If there are multiple substitutions to be done, it is better to use a loop
 like (which then keep Perl::Critic happy too):
