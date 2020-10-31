@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 1.23 19/11/21 00:03:28
+#?      @(#) Makefile.opt 1.24 20/10/31 09:22:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-_SID.opt           := 1.23
+_SID.opt           := 1.24
 
 _MYSELF.opt        := t/Makefile.opt
 ALL.includes       += $(_MYSELF.opt)
@@ -42,7 +42,7 @@ help.test.opt-vv:     HELP_TYPE = opt
 
 HELP-_opt1          = __________________________________________ testing options _
 HELP-test.alias     = test various alias options
-HELP-test.stdformat = test various --stdformat= options
+HELP-test.stdformat = test various --std-format= options
 HELP-test.opt       = test all options and alias options
 HELP-test.opt.log   = same as test.opt but store output in t/testcmd-CMD.log
 
@@ -71,11 +71,11 @@ testarg-opt-alias-HOST0-many:   TEST.args  += demo demo:42 egal --port 23 localh
 
 testarg-opt-stdformat-%:    EXE.pl      = ../$(SRC.pl)
 testarg-opt-stdformat-%:    TEST.init   = --trace-CLI --no-rc --help=pod
-testarg-opt-stdformat-crlf: TEST.args  += --stdformat=crlf
-testarg-opt-stdformat-raw:  TEST.args  += --stdformat=raw
-testarg-opt-stdformat-unix: TEST.args  += --stdformat=unix
-testarg-opt-stdformat-utf8: TEST.args  += --stdformat=utf8
-testarg-opt-stdformat-UTF8: TEST.args  += --stdformat=UTF-8
+testarg-opt-stdformat-crlf: TEST.args  += --std-format=crlf
+testarg-opt-stdformat-raw:  TEST.args  += --std-format=raw
+testarg-opt-stdformat-unix: TEST.args  += --std-format=unix
+testarg-opt-stdformat-utf8: TEST.args  += --std-format=utf8
+testarg-opt-stdformat-UTF8: TEST.args  += --std-format=UTF-8
 testarg-opt-stdformat-UTF-8: testarg-opt-stdformat-UTF8
 
 # TODO: vialid options to be tested here
@@ -135,12 +135,12 @@ ALL.test.stdformat.log  = $(ALL.test.stdformat:%=%.log)
 ALL.testopt        += $(ALL.test.alias)
 ALL.testopt        += $(ALL.test.stdformat)
 
-test.alias:     $(ALL.test.alias)
-test.stdformat: $(ALL.test.stdformat)
-test.alias.log: $(ALL.test.alias.log)
+test.alias:         $(ALL.test.alias)
+test.stdformat:     $(ALL.test.stdformat)
+test.alias.log:     $(ALL.test.alias.log)
 test.stdformat.log: $(ALL.test.stdformat.log)
 
-test.opt-%:       test.opt.internal test.opt
+test.opt-%:         test.opt.internal test.opt
 
 ALL.test.opt        = $(ALL.testopt)
 ALL.test.opt.log    = $(ALL.testopt:%=%.log)
