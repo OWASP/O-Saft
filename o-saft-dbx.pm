@@ -19,7 +19,7 @@
 #  `use strict;' not useful here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.142 20/10/31 10:07:56";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.143 20/10/31 13:33:58";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -104,7 +104,7 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
     #  avoids printing of empty lines
 
 sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
+    #? print ciphers fromc %cfg (output optimised for +cipher and +cipherraw)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
@@ -244,7 +244,7 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
 =
 =   description of columns:
 =       key         - internal hex key for cipher suite
-=       hex         - hex key for cipher suite (like opnssl)
+=       hex         - hex key for cipher suite (like openssl)
 =       ssl         - SSL/TLS version
 =       keyx        - Key Exchange
 =       auth        - Authentication
@@ -598,7 +598,7 @@ sub _yeast_test_help    {
 =   command/option  prints these informations
 =  ----------------+----------------------------------------------
 =   --tests         this text
-=   --test-init     data structure  %cfg after initialization
+=   --test-init     data structure  %cfg after initialisation
 =   --test-data     overview of all available commands and checks
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
@@ -657,7 +657,7 @@ sub _yeast_test_data    {
         next if ($key eq $old); # unique
         $old = $key;
         if ((not defined $checks{$key}) and (not defined $data{$key})) {
-            push(@yeast, $key); # probaly internal command
+            push(@yeast, $key); # probably internal command
             next;
         }
         $cmd = "+" if (0 < _is_member($key, \@{$cfg{'commands'}})); # command available as is
@@ -927,7 +927,7 @@ sub _yeast_test_memory  {
 
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
-    my $arg = shift;    # normalized option, like --testinit
+    my $arg = shift;    # normalised option, like --testinit
     _yeast($arg);
     _yeast_test_help()      if ('--test'    eq $arg);
     _yeast_test_help()      if ('--tests'   eq $arg);
@@ -1151,7 +1151,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.142 2020/10/31
+1.143 2020/10/31
 
 =head1 AUTHOR
 
