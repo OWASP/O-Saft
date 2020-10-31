@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.68 20/10/31 12:21:21
+# SID   @(#) help.txt 1.69 20/10/31 13:14:53
 
 NAME
 
@@ -292,7 +292,7 @@ TECHNICAL INFORMATION
 
         Note: if you want to use advanced features of openssl or Net::SSLeay,
         please see  INSTALLATION section how to compile and install the tools
-        fully customized. Requirements for  openssl  are described there.
+        fully customised. Requirements for  openssl  are described there.
 
         Also an openssl executable should be available, but is not mandatory.
 
@@ -1246,7 +1246,7 @@ OPTIONS
           This option is only effective with  +cipher  command.
 
           The purpose is to avoid warnings from  IO::Socket::SSL(3pm)  like:
-              Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+              Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
           which occours with some versions of  IO::Socket::SSL(3pm)  when a
           *-MD5  ciphers will be used with other protocols than SSLv2.
@@ -1840,9 +1840,9 @@ OPTIONS
 
         For definition of  'SSL'  see  --SSL  and  --no-SSL  above.
 
-    Options for customization
+    Options for customisation
 
-          For general descriptions please see  CUSTOMIZATION  section below.
+          For general descriptions please see  CUSTOMISATION  section below.
 
       --cfg_cmd=CMD=LIST
       --cfg-cmd=CMD=LIST
@@ -2985,9 +2985,9 @@ ENVIRONMENT
 #         * OPENSSL_ALLOW_PROXY_CERTS
 
 
-CUSTOMIZATION
+CUSTOMISATION
 
-        This tools can be customized as follows:
+        This tools can be customised as follows:
 
         * Using command-line options
 
@@ -3016,7 +3016,7 @@ CUSTOMIZATION
             This file contains  user specified  program code.  It can also be
             (mis-)used to redefine all settings. Please see USER-FILE  below.
 
-        Customization is done by redefining values in internal data structure
+        Customisation is done by redefining values in internal data structure
         which are:  %cfg,  %data,  %checks,  %text,  %scores.
 
         Unless used in  DEBUG-FILE  or  USER-FILE,  there is  no need to know
@@ -3138,7 +3138,7 @@ CUSTOMIZATION
         done before the tools starts.  It is  not really  a task for the tool
         itself, but it can simplify your life, somehow.
 
-        There exist customizations for some commonly used shells,  please see
+        There exist customisations for some commonly used shells,  please see
         the files in the ./contrib/ directory.
 
     COMMANDS
@@ -3294,11 +3294,11 @@ KNOWN PROBLEMS
         More details why the connection failed can be seen using  --trace=2 .
 
 
-    Use of uninitialized value $headers in split ... do_httpx2.al)
+    Use of uninitialised value $headers in split ... do_httpx2.al)
 
         The warning message (like follows or similar):
 
-              Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
+              Use of uninitialised value $headers in split at blib/lib/Net/SSLeay.pm
               (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
 
         occurs if the target refused a connection on port 80.
@@ -3316,12 +3316,12 @@ KNOWN PROBLEMS
 
         Workaround: use option: --no-sslv2 --no-sslv3 --no-tlsv13 --no-dtlsv1
 
-    Use of uninitialized value $_[0] in length at (eval 4) line 1.
+    Use of uninitialised value $_[0] in length at (eval 4) line 1.
 
         This warning occours with IO::Socket::SSL 1.967, reason is unknown.
         It seems not to harm functionality, hence no workaround, just ignore.
 
-    Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+    Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
         Some versions of  IO::Socket::SSL return this error message if  *-MD5
         ciphers are used with other protocols than SSLv2.
@@ -3396,7 +3396,7 @@ KNOWN PROBLEMS
         or
               $0 +help | more
 
-    Character set (like UTF-8) not recognized in some tools
+    Character set (like UTF-8) not recognised in some tools
 
         Some tools  do not display all characters properly,  for example some
         versions of  podviewer.  It is not the obligation of this tool to fix
@@ -4054,7 +4054,7 @@ HACKER's INFO
         * used Perl modules (Socket::SSL, Net::SSLeay) does not handle errors
           properly. Erros may be:
               invalid SSL_version specified at ... IO/Socket/SSL.pm
-              Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm
+              Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm
 
           There're some workarounds implemented since version 15.11.15 .
 
@@ -4422,7 +4422,7 @@ DEBUG
 
               === reading: ./.o-saft.pl (RC-FILE done) ===
               === reading: ./Net/SSLhello.pm (O-Saft module done) ===
-              **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialize at /Net/SSLinfo.pm line 481.
+              **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
               === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
               **WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
               **WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
@@ -4987,7 +4987,7 @@ TODO
              Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
              SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
              see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
-          ** Net::SSLinfo::do_ssl_close()  does not realy work
+          ** Net::SSLinfo::do_ssl_close()  does not really work
 
         * Windows
           ** Unicode:
