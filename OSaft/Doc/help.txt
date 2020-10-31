@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.69 20/10/31 13:14:53
+# SID   @(#) help.txt 1.70 20/10/31 18:58:05
 
 NAME
 
@@ -1246,7 +1246,7 @@ OPTIONS
           This option is only effective with  +cipher  command.
 
           The purpose is to avoid warnings from  IO::Socket::SSL(3pm)  like:
-              Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+              Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
           which occours with some versions of  IO::Socket::SSL(3pm)  when a
           *-MD5  ciphers will be used with other protocols than SSLv2.
@@ -3294,11 +3294,11 @@ KNOWN PROBLEMS
         More details why the connection failed can be seen using  --trace=2 .
 
 
-    Use of uninitialised value $headers in split ... do_httpx2.al)
+    Use of uninitialized value $headers in split ... do_httpx2.al)
 
         The warning message (like follows or similar):
 
-              Use of uninitialised value $headers in split at blib/lib/Net/SSLeay.pm
+              Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
               (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
 
         occurs if the target refused a connection on port 80.
@@ -3316,12 +3316,12 @@ KNOWN PROBLEMS
 
         Workaround: use option: --no-sslv2 --no-sslv3 --no-tlsv13 --no-dtlsv1
 
-    Use of uninitialised value $_[0] in length at (eval 4) line 1.
+    Use of uninitialized value $_[0] in length at (eval 4) line 1.
 
         This warning occours with IO::Socket::SSL 1.967, reason is unknown.
         It seems not to harm functionality, hence no workaround, just ignore.
 
-    Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+    Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
         Some versions of  IO::Socket::SSL return this error message if  *-MD5
         ciphers are used with other protocols than SSLv2.
@@ -4054,7 +4054,7 @@ HACKER's INFO
         * used Perl modules (Socket::SSL, Net::SSLeay) does not handle errors
           properly. Erros may be:
               invalid SSL_version specified at ... IO/Socket/SSL.pm
-              Use of uninitialised value in subroutine entry at lib/IO/Socket/SSL.pm
+              Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm
 
           There're some workarounds implemented since version 15.11.15 .
 
