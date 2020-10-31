@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.111 20/10/31 12:10:29
+#?      @(#) Makefile 1.112 20/10/31 21:10:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.111
+_SID.test          := 1.112
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -808,6 +808,7 @@ TEST.log-suffix     = -$(TEST.today)
 
 define _CMD_log-compare
 	cd $(TEST.logdir) && \
+	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
 	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
