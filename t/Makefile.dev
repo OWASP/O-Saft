@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.31 20/06/06 15:11:34
+#?      @(#) Makefile.dev 1.32 20/10/31 09:47:16
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.31
+_SID.dev           := 1.32
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -286,7 +286,9 @@ HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_subs but with description
 HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
 HELP-testarg-dev-grep_sub   = list all subs from '$(SRC.pl)'
 HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
-HELP-test.dev.grep.sub      = alias for testarg-dev-grep_sub:
+HELP-test.dev.grep.sub      = alias for testarg-dev-grep_sub
+HELP-test.dev.grep.subs     = alias for testarg-dev-grep_subs
+HELP-test.dev.grep.desc     = alias for testarg-dev-grep_desc
 HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 
 # extract from our source (information for developers)
@@ -315,7 +317,6 @@ testarg-dev-grep_sub:
 	@-perl -lane '$(_PERL.subs)' $(SRC.pl)
 	@echo "#-------------------------------+------------------------------------------"
 	@echo ""
-test.dev.grep.sub: testarg-dev-grep_sub
 
 ALL.test.dev.grep   = testarg-dev-grep_subs testarg-dev-grep_desc \
 	testarg-dev-grep_flow testarg-dev-grep_sub
@@ -327,6 +328,10 @@ testarg-dev-o-saft_notyet:  TEST.dev.hosts  = localhost
 testarg-dev-o-saft_notyet:
 	@$(TRACE.target)
 	@cd $(TEST.dir) && $(EXE.pl) --norc --header $(TEST.dev.hosts) $(LIST.o-saft.notyet)
+
+test.dev.grep.sub:  testarg-dev-grep_sub
+test.dev.grep.subs: testarg-dev-grep_subs
+test.dev.grep.desc: testarg-dev-grep_desc
 
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
