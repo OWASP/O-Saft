@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.54 20/10/31 12:05:24
+#?      @(#) Makefile.misc 1.55 20/10/31 13:52:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.54
+_SID.misc          := 1.55
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -57,7 +57,7 @@ _ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt)
 _ALL.devtools.extern   += ctags
 _ALL.devtools.extern   += $(EXE.dprofpp) $(EXE.nytprof)  $(EXE.podchecker)
 _ALL.devtools.extern   += $(EXE.analyse) $(EXE.analyse-output) $(EXE.cloc)
-_ALL.devmodules.extern += Data::Dumper   File::Find Devel::Trace  Debug::Trace
+_ALL.devmodules.extern += Data::Dumper   File::Find Devel::Trace  Debug::Trace Pod::Perldoc
 _ALL.devmodules.extern += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
 _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
 
@@ -359,7 +359,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.54: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.55: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
