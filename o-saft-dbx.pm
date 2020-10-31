@@ -16,10 +16,10 @@
 #       _get_ciphers_range()
 
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
-#  `use strict;' not usefull here, as we mainly use our global variables
+#  `use strict;' not useful here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.141 20/06/16 01:31:46";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.142 20/10/31 10:07:56";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -308,7 +308,7 @@ sub _yeast_ciphers          { # TODO: obsolete when ciphers defined in OSaft/Cip
 sub _yeast_cipher           { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
     printf("#%s:\n", (caller(0))[3]);
     print "
-=== print internal data structures for a cipher ===
+=== internal data structures for a cipher ===
 
 ";
 # TODO: %ciphers %cipher_names
@@ -493,7 +493,7 @@ sub _yeast_args {
     return if (0 >= $cfg{'traceARG'});
     # using _y_ARG() may be a performance penulty, but it's trace anyway ...
     _yline(" ARGV {");
-    _y_ARG("# summary of all arguments and options from command line");
+    _y_ARG("# summary of all arguments and options from command-line");
     _y_ARG("       called program ARG0= " . $cfg{'ARG0'});
     _y_ARG("     passed arguments ARGV= " . ___ARR(@{$cfg{'ARGV'}}));
     _y_ARG("                   RC-FILE= " . $cfg{'RC-FILE'});
@@ -545,7 +545,7 @@ sub _trace_     { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace
 sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (0 < $cfg{'traceCMD'}); return; }
 
 sub _vprintme   {
-    #? write own version, command line arguments and date and time
+    #? write own version, command-line arguments and date and time
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
     _yeast("$0 " . $mainsid);
@@ -623,9 +623,9 @@ sub _yeast_test_data    {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
-=== internal data structure for commands %data and %checks ===
+=== internal data structure: overview of commands, %data and %checks ===
 =
-= Print a simple overview of all available commands for  +info  and  +check.
+= Print a simple overview of all available commands for  +info  and  +check .
 = The purpose is to show if a proper key is defined in  %data and %checks  for
 = each command from  %cfg{'commands'}  and vice versa.
 =
@@ -693,7 +693,7 @@ sub _yeast_test_data    {
 = A shorttext should be available for each command and all data keys, except:
 =      cn_nosni, ext_*, valid_*
 =
-= internal or summary commands:
+= Internal or summary commands:
 =      " . join(" ", @yeast) . "\n";
     return;
 } # _yeast_test_data
@@ -704,9 +704,9 @@ sub _yeast_test_init    {
     my $line = "#--------------------+-------------------------------------------";
     printf("#%s:\n", (caller(0))[3]);
     print "
-=== internal data structure for commands %data and %checks ===
+=== internal data structure: initialisation of %cfg, %data and %checks ===
 =
-= Print initialised data structure  %data and %checks  after all  command line
+= Print initialised data structure  %data and %checks  after all  command-line
 = options have been applied.
 =
 ";
@@ -818,7 +818,7 @@ sub _yeast_test_methods {
     print "
 === internal list of methods to call openssl ===
 =
-= Print available methods in Net::SSLeayx
+= Print available methods in Net::SSLeay.
 =
 ";
     my $list = Net::SSLinfo::test_methods();
@@ -832,7 +832,7 @@ sub _yeast_test_sclient {
     print "
 === internal list of openssl s_client options ===
 =
-= Print available options for 'openssl s_client' from Net::SSLeay
+= Print available options for 'openssl s_client' from Net::SSLeay.
 =
 ";
     my $list = Net::SSLinfo::test_sclient();
@@ -846,7 +846,7 @@ sub _yeast_test_sslmap  {
     print "
 === internal list of constants for SSL protocols ===
 =
-= Print available constants for SSL protocols in Net::SSLeay
+= Print available constants for SSL protocols in Net::SSLeay.
 =
 ";
     print Net::SSLinfo::test_sslmap();
@@ -858,7 +858,7 @@ sub _yeast_test_ssleay  {
     print "
 === internal data of from Net::SSLeay ===
 =
-= Print information about Net::SSLeay capabilities
+= Print information about Net::SSLeay capabilities.
 =
 ";
     print Net::SSLinfo::test_ssleay();
@@ -1151,7 +1151,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.141 2020/06/16
+1.142 2020/10/31
 
 =head1 AUTHOR
 
