@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1002 20/10/23 10:26:08",
-    STR_VERSION => "20.06.08",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1003 20/10/31 13:41:37",
+    STR_VERSION => "20.10.30",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -80,7 +80,7 @@ sub _set_binmode    {
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
 sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:ARGV
-    # return 1 if value in command line arguments @ARGV
+    # return 1 if value in command-line arguments @ARGV
 sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace$)/} @ARGV); }  # case-sensitive! SEE Note:ARGV
     # need to check @ARGV directly as this is called before any options are parsed
 
@@ -172,7 +172,7 @@ my  @argv   = ();   # all options, including those from RC-FILE
 #dbx# print STDERR "#$cfg{'me'} INC=@INC\n";
 
 printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
-    # print complete command line if any --trace-* was given, it's intended
+    # print complete command-line if any --trace-* was given, it's intended
     # that it works if unknown --trace-* was given, for example --trace-CLI
 
 #| definitions: forward declarations
@@ -1326,7 +1326,7 @@ our %shorttexts = (
     'tlsextdebug'   => "TLS Extensions (debug)",
     'tlsextensions' => "TLS Extensions",
     'extensions'    => "Extensions",
-    'heartbeat'     => "Heartbeat",     # not realy a `key', but a extension
+    'heartbeat'     => "Heartbeat",     # not really a `key', but an extension
     'aux'           => "Trust",
     'email'         => "Email",
     'pubkey'        => "Public Key",
@@ -3394,7 +3394,7 @@ sub _is_ssl_fips    {
 sub _is_ssl_freak   {
     # return given cipher if vulnerable to FREAK attack, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
+    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probably only SSLv3 is vulnerable
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _is_ssl_freak
@@ -3539,7 +3539,7 @@ sub _isbeastskipped($$) {
 } # _isbeastskipped
 
 sub _is_ssl_error($$$)  {
-    # returns 1 if probaly a SSL connection error occoured; 0 otherwise
+    # returns 1 if probably a SSL connection error occoured; 0 otherwise
     # increments counters in $cfg{'done'}
     my ($anf, $end, $txt) = @_;
     return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
@@ -3642,7 +3642,7 @@ sub _usesocket($$$$)    {
                 #TODO: SSL_ecdh_curve  => undef, # TODO: cannot be selected by options
                 SSL_alpn_protocols  => $alpns,
                 SSL_npn_protocols   => $npns,
-                #TODO: SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
+                #TODO: SSL_honor_cipher_order  => 1,   # useful for SSLv2 only
                 #SSL_check_crl   => 1,           # if we want to use a client certificate
                 #SSL_cert_file   => "path"       # file for client certificate
             );
@@ -3828,7 +3828,7 @@ sub _get_target         {
     # TODO:  ugly and just simple cases, not very perlish code ...
     return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#);    # defensive programming
     return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
-    # something complicated, analyze ...
+    # something complicated, analyse ...
     my $prot  =  $arg;
        $prot  =~ s#^\s*([a-z][A-Z0-9]*:)?//.*#$1#i; # get schema (protocol), if any
        # TODO: inherit previous schema if not found
@@ -3868,7 +3868,7 @@ sub _get_ciphers_range  {
 } # _get_ciphers_range
 
 sub _get_ciphers_list   {
-    #? return space-separated list of cipher suites according command line options
+    #? return space-separated list of cipher suites according command-line options
     _trace("_get_ciphers_list(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default is 'rfc'
@@ -4145,7 +4145,7 @@ sub ciphers_scan        {
     # returns array with accepted ciphers
     my ($host, $port) = @_;
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# Use of uninitialised value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
@@ -4155,7 +4155,7 @@ sub ciphers_scan        {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'use'}->{'sni'};
         if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
-            # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
+            # optimise output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
                $_me = $cfg{'me'} . "   CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
                $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
@@ -7372,9 +7372,9 @@ while ($#argv >= 0) {
     # Such an argument is handled using $typ. All types except HOST, which is
     # the default, are handled at the begining here (right below). After pro-
     # cessing the argument, $typ is set to HOST again  and next argument will
-    # be taken from command line.
+    # be taken from command-line.
     # $typ='HOST' is handled at end of loop, as it may appear anywhere in the
-    # command line and does not require an option.
+    # command-line and does not require an option.
     # Commands are case sensitive  because they are used directly as key in a
     # hash (see %_SSLinfo Net::SSLinfo.pm). Just commands for the tool itself
     # (not those returning collected data) are case insensitive.
@@ -8397,7 +8397,7 @@ if (2 == @{$cfg{'targets'}}) {
 # is independet of the sub command and any platform.
 # We set the environment variable only, if  --openssl-cnf  was used which
 # then overwrites an already set environment variable.
-# This behaviour also honors that  all command line options are  the last
+# This behaviour also honors that  all command-line options are  the last
 # resort for all configurations.
 # As we do not use  req  or  ca  sub commands (11/2015),  this setting is
 # just to avoid noicy warnings from openssl.
@@ -8535,7 +8535,7 @@ _yeast_TIME("ini{");
 _set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
 _set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
 _set_cfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
-_set_cfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
+_set_cfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command-line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'}; # safe setting; may be undef
 if (not _is_cfg_use('http')) {          # was explicitly set with --no-http 'cause default is 1
@@ -9300,7 +9300,7 @@ for the developer also with:
 
     perldoc o-saft.pl
 
-It is written in POD format, because some tools analyzing the code want to
+It is written in POD format, because some tools analysing the code want to
 "see" comments and documentation. We feed them. For more information about
 that, please see "voodoo" in o-saft-man.pm .
 
@@ -9461,7 +9461,7 @@ Note that  /  works here even for Windoze.
 
 =head2 Perl:BEGIN
 
-Loading `require'd  files and modules  as well as parsing the command line
+Loading `require'd  files and modules  as well as parsing the command-line
 in Perl's  BEGIN section  increases performance and lowers the memory foot
 print for some commands (see o-saft-man.pm also).
 Unfortunately Perl's BEGIN has following limits and restrictions:
@@ -9483,15 +9483,15 @@ Also SEE L<Perl:BEGIN perlcritic>.
 
 =head2 Perl:binmode()
 
-Perl uses various layers for I/O operations. It's called  I/O layers (also
-known as discipline). Layers to be used are defined globaly with binmode()
+Perl uses various layers for I/O operations. It's called  I/O layers -also
+known as discipline. Layers to be used are defined globally with binmode()
 or individually in each open() call. All the glory details can be found in
 Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
 
 The tool here roughly destingushes two types of I/O:
 
     1. writeng texts to the user using STDOUT and STDERR channels
-       note that it never reads, except from command line, hence no STDIN
+       note that it never reads, except from command-line, hence no STDIN
     2. writing and reading to network sockets, which is done underneath
 
 We assume that the  I/O socket (2. above)  is handled properly by the used
@@ -9510,7 +9510,7 @@ Perl destingushes between ':utf8' and ':encoding(UTF-8)' layer,  where the
 we only want to ensure UTF-8 on output.
 The I/O layers need to be set in the main script only, all modules inherit
 the settings from there. However, modules need to use the proper binmode()
-call itself, if they are called from command line.
+call itself, if they are called from command-line.
 Unfortunatelly Perl::Critic  complains that  ':encoding(UTF-8)'  should be
 used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
@@ -9635,7 +9635,7 @@ strings, for example disabled or missing checks, for example:
 The disadvantage is that all checks must assign the value  'yes'  or 'no'.
 
 The default initialisation is done after processing all arguments from the
-command line and the RC-FILE.
+command-line and the RC-FILE.
 
 =head3 Initialisation before VERSION 19.12.26
 
@@ -9670,7 +9670,7 @@ The data to be sorted is for example:
 
 =head2 Note:ARGV
 
-Command line arguments are read after some other internal initialisations.
+Command-line arguments are read after some other internal initialisations.
 Unfortunately sometimes options need to be checked before argument parsing
 is completed. Therfore somthing like '(grep{/--trace)/} @ARGV)' is needed.
 These check are implemented as simple functions and return grep's result.
@@ -9709,7 +9709,7 @@ pass the value to functions.
 
 Note that openssl uses a comma-separated list for ALPN and NPN, but uses a
 colon-separated list for ecliptic curves (and also for ciphers).  Hence we
-allow both separators for all lists on command line.
+allow both separators for all lists on command-line.
 
 See also Note:OpenSSL Version
 
@@ -9746,7 +9746,7 @@ To avoid such information disclosure,  a pattern is used to match texts to
 be anonymised in output.
 The use, hence definition, of this pattern is intended in CGI mode and can
 there be done in the RC-FILE. Therefore it is also necessary that the tool
-has an corresponding command line option:  --anon-output .
+has an corresponding command-line option:  --anon-output .
 The pattern is stored in %cfg.  The correspondig string  for anonymisation
 (replacement) is defined in %text.
 
@@ -10178,7 +10178,7 @@ Following special options are avaiable for CGI mode:
     * --cgi-exec    - must be set by caller only (i.g. o-saft.cgi)
     * --cgi-trace   - print HTTP header (for debugging only)
 
-The option --cgi-trace is for debugging when used from command line only.
+The option --cgi-trace is for debugging when used from command-line only.
 
 It is recommended that this script is called by  o-saft.cgi  in CGI mode.
 
@@ -10345,7 +10345,7 @@ misleading informations.
 The output may contain  !!Hint  messages, see  --help=output  for details.
 
 The texts used for hint messages can be hardcoded in %cfg, set dynamically
-in %cfg in the code, or set using command line options at startup.
+in %cfg in the code, or set using command-line options at startup.
 The hash %{$cfg{'hints'}} contains all these texts.  A definition may look
 like:
 
