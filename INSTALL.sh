@@ -126,6 +126,7 @@
 #?      --colour            use coloured texts (red, yellow, blue|green)
 #?      --colour-blind      same as --colour
 #?      --colour-not-blind  use green instead of blue coloured texts
+#?      --other             check for other SSL-related tool with  --checkdev
 #?
 #? EXAMPLES
 #?      $0
@@ -178,7 +179,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) ÀG×éU 1.52 20/10/31 12:28:37
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -191,6 +192,7 @@ ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 colour=""       # 32 green, 34 blue for colour-blind
+other=0
 force=0
 optx=0
 optn=""
@@ -314,6 +316,7 @@ while [ $# -gt 0 ]; do
 	  '--checkdev')         mode=checkdev; ;;
 	  '--check-dev')        mode=checkdev; ;;
 	  '--force')            force=1;      ;;
+	  '--other')            other=1;      ;;
           '--no-colour')        colour="";    ;;
           '--colour')           colour="34m"; ;;
           '--colour-blind')     colour="34m"; ;;
@@ -327,7 +330,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo %I% ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.52 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -522,6 +525,10 @@ if [ "$mode" = "checkdev" ]; then
 		fi
 	done
 	echo "#----------------------+---------------------------------------"
+
+	[ $other -eq 0 ] && exit 0;
+
+	# printed with --other only
 	echo ""
 	echo "# check for other SSL-related tools:"
 	echo "#----------------------+---------------------------------------"
