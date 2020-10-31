@@ -28,14 +28,14 @@ o-saft-usr.pm - module for o-saft.pl's user definable functions
 
 =item require q{o-saft-usr.pm};     # in perl code
 
-=item o-saft-usr.pm --help          # on command line will print help
+=item o-saft-usr.pm --help          # on command-line will print help
 
 =back
 
 
 =head1 DESCRIPTION
 
-Defines all functions for user customization.
+Defines all functions for user customisation.
 
 WARNING: this is not a perl module defined with `package', but uses:
     package main;
@@ -57,13 +57,13 @@ At beginning, right after initialising internal data.
 
 =item usr_pre_args( )
 
-Right before reading command line arguments.  All internal structures
+Right before reading command-line arguments.  All internal structures
 and variables are initialised, all external files are read (except
 configuration files specified witj  I<--cfg_*=>  option.
 
 =item usr_pre_exec( )
 
-All command line arguments are read. Right before executing myself.
+All command-line arguments are read. Right before executing myself.
 
 =item usr_pre_cipher( )
 
@@ -138,7 +138,7 @@ For example:
 
 =head1 VERSION
 
-1.27 2020/02/15
+1.28 2020/10/31
 
 =head1 AUTHOR
 
@@ -149,7 +149,7 @@ For example:
 use strict;
 use warnings;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.27 20/02/15 23:21:18";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.28 20/10/31 13:38:25";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
