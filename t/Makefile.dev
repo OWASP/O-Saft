@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.32 20/10/31 09:47:16
+#?      @(#) Makefile.dev 1.33 20/10/31 23:15:19
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.32
+_SID.dev           := 1.33
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -113,14 +113,14 @@ LIST.osaft-dbx     := \
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
-LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap  --test-ssleay
+LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap --test-ssleay
 # TODO: --test-openssl
 #LIST.o-saft-pl     += $(LIST.net-sslinfo-t)
 
 LIST.net-sslhello  :=   +VERSION  --test-init
 LIST.net-sslinfo   :=   +VERSION  localhost $(LIST.net-sslinfo-t)
 LIST.t-makefile    :=
-LIST.install-sh    :=   --install  --clean  --check     --expected
+LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
@@ -247,9 +247,15 @@ testarg-dev-osaft-dbx_%:        EXE.pl    = $(EXE.o-saft-pl)
 testarg-dev-osaft-man_%:        TEST.args = --header
 testarg-dev-osaft-man_pod:      TEST.args =
 
-# do not execute scipt, just show: --n
+# do not execute script, just show: --n
 testarg-dev-contrib-openssl_%:  TEST.args = --n
 testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
+# additional special option for INSTALL.sh
+testarg-dev-install-sh_--checkdev--other:   TEST.args += --checkdev --other
+	
+ALL.test.dev.install-sh += testarg-dev-install-sh_--checkdev--other
+ALL.test.dev            += testarg-dev-install-sh_--checkdev--other
+
 
 # targets: EXE.* --help
 ALL.test.dev.help   = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_--help )
