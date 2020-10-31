@@ -179,7 +179,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) ÀG×éU 1.52 20/10/31 12:28:37
+#?      @(#)  §LYäU 1.53 20/10/31 13:05:58
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -285,6 +285,9 @@ osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
 
 # --------------------------------------------- internal functions
+echo_label  () {
+	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
+}
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
 	[ -z "$colour" ] && echo "$@" && return
@@ -330,7 +333,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.52 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.53 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -486,27 +489,27 @@ if [ "$mode" = "checkdev" ]; then
 	echo "# check for tools used with/in make targets"
 	echo "#----------------------+---------------------------------------"
 	for t in $tools_intern ; do
-		perl -le "printf'# %21s','$t'"  # use perl instead of echo for formatting
+		echo_label "$t"
 		is=`which $t`
-		[ -n "$is" ] && echo_green "${tab}$is" || echo_red "${tab}missing"
+		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	for t in $tools_extern ; do
-		perl -le "printf'# %21s','$t'"
+		echo_label "$t"
 		is=`which $t`
-		[ -n "$is" ] && echo_green "${tab}$is" || echo_red "${tab}missing"
+		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	echo "#----------------------+---------------------------------------"
 	echo ""
 	echo "# check for Perl modules used with/in make targets"
 	echo "#----------------------+---------------------------------------"
 	for m in $tools_modules ; do
-		perl -le "printf'# %21s','$m'"
+		echo_label "$m"
 		# NOTE: -I . used to ensure that local ./Net is found
-		v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
+		v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 		if [ -n "$v" ]; then
 			echo_green  "$v"
 		else 
-			echo_red "${tab}missing; install with: 'cpan $m'"
+			echo_red "missing; install with: 'cpan $m'"
 			err=`expr $err + 1`
 		fi
 	done
@@ -516,13 +519,9 @@ if [ "$mode" = "checkdev" ]; then
 	echo "# check for optional tools to view documentation:"
 	echo "#----------------------+---------------------------------------"
 	for t in $tools_optional ; do
-		perl -le "printf'# %21s','$t'"
+		echo_label "$t"
 		is=`which $t`
-		if [ -n "$is" ] ; then
-			echo_green  "${tab}$is"
-		else
-			echo_red    "${tab}missing"
-		fi
+		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	echo "#----------------------+---------------------------------------"
 
@@ -533,13 +532,9 @@ if [ "$mode" = "checkdev" ]; then
 	echo "# check for other SSL-related tools:"
 	echo "#----------------------+---------------------------------------"
 	for t in $tools_other ; do
-		perl -le "printf'# %21s','$t'"
+		echo_label "$t"
 		is=`which $t`
-		if [ -n "$is" ] ; then
-			echo_green  "${tab}$is"
-		else
-			echo_red    "${tab}missing"
-		fi
+		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	echo "#----------------------+---------------------------------------"
 	exit 0
@@ -582,7 +577,7 @@ for o in $osaft_exe $osaft_gui ; do
 		if [ -e "$f" ]; then
 		cnt=`expr $err + 1`
 			v=`$p/$o +VERSION`
-			perl -le 'printf"# %21s\t","'$f'"' && echo_green "$v"
+			echo_label "$f" && echo_green "$v"
 		fi
 	done
 	[ 0 -eq $cnt ] && echo_red "$o not found"
@@ -598,19 +593,19 @@ for p in `echo $inst_directory $HOME $PATH|tr ':' ' '` ; do
 	rc="$p/$osaft_exerc"
 	if [ -e "$rc" ]; then
 		cnt=`expr $err + 1`
-		perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "will be used when started in $p only"
+		echo_label "$rc" && echo_yellow "will be used when started in $p only"
 	fi
 done
 [ 0 -eq $cnt ] && echo_yellow "$rc not found"
 rc="$HOME/$osaft_guirc"
 if [ -e "$rc" ]; then
 	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
-	perl -le 'printf"# %21s\t","'$rc'"' && echo_green  "$v"
+	echo_label "$rc" && echo_green  "$v"
 	txt="ancient"
 else
 	txt="missing"
 fi
-perl -le 'printf"# %21s\t","'$rc'"' && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
+echo_label "$rc" && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
 echo "#----------------------+---------------------------------------"
 
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
@@ -622,9 +617,9 @@ echo "#----------------------+---------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
-	perl -le "printf'# %21s','$m'"  # use perl instead of echo for formatting
+	echo_label "$m"
 	# NOTE: -I . used to ensure that local ./Net is found
-	v=`perl -I . -M$m -le 'printf"\t%8s",$'$m'::VERSION' 2>/dev/null`
+	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 	if [ -n "$v" ]; then
 		case "$m" in
@@ -679,7 +674,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	# NOTE: output format is slightly different, 'cause **WARNINGS are printed too
 	echo "# testing $o ...$tab"
 	for m in $modules ; do
-		perl -le "printf'# %21s',$m"
+		echo_label "$m"
 		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
 		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){$1="";print}'`
 		if [ -n "$w" ]; then
