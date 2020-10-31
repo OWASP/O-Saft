@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.110 20/06/06 11:12:17
+#?      @(#) Makefile 1.111 20/10/31 12:10:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.110
+_SID.test          := 1.111
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -783,7 +783,7 @@ $(_NL)\
 help.test.log-info:
 	@echo "$(HELP.test.log-info)"
 
-# TODO: need a usable way to change diff program
+# need a usable way to change diff program; EXE.diff may be set on command-line
 EXE.log-diff       := diff
 EXE.log-xxdiff     := xxdiff --geometry 1600x1000
 EXE.log-mgdiff     := mgdiff
@@ -791,6 +791,9 @@ EXE.log-tkdiff     := tkdiff
 EXE.diffs          := diff xxdiff mgdiff tkdiff
 EXE.diff           := tkdiff
 EXE.log-diff        = $(EXE.log-tkdiff)
+
+# summary variables (mainly used for INSTALL.sh)
+_ALL.devtools.extern   += $(EXE.diffs)
 
 # default prefix, may be redifined per target
 TEST.target_prefix  = testcmd-
