@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.5 20/01/09 09:28:46
+#?      @(#) Makefile.legacy 1.6 20/10/31 11:52:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.5
+_SID.legacy        := 1.6
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -43,6 +43,27 @@ HELP-test.legacy.log    = same as test.legacy but store output in '$(TEST.logdir
 
 HELP.legacy             = # not yet used
 HELP.test.legacy.all    = # no special documentation yet
+
+# other SSL-related test tools, not used in ths project, just fo documentation
+_TEST.tools.ssl     = \
+	cnark.pl    analyze-ssl.pl      manyssl      SSLAudit.pl \
+	sslmap.py   sslscan  ssltest.pl sslthing.sh  sslyze.py       testssl.sh \
+	TestSSLServer.jar  tls-check.pl tls-scan     TLSSLed_v1.3.sh vessl
+_TEST.tools.vulns   = \
+	beast.pl    ccs-injection.sh    poet ssl-dos robot-detect \
+	ssl-renegotiation.sh OSSL_CCS_InjectTest.py \
+	bash-heartbleed.sh   check-ssl-heartbleed.pl ssl-check-heartbleed.pl ssltest_heartbeat.py
+_TEST.tools.cert    = \
+	ssl-cert-check       chksslkey  smtp_tls_cert.pl
+_TEST.tools.cipher  = \
+	athena-ssl-cipher-check_v062.jar ssl-cipher-check.pl         tlsenum
+_TEST.tools.unix    = \
+	sslcat      sslsniff sslstrip   stunnel
+_TEST.tools.windows = \
+	SSLAudit.exe SSLCertScanner.exe ssldiagnos.exe SSLPressure.exe \
+	sslscan.exe  TestSSLServer.exe
+ALL.tools.ssl       = $(_TEST.tools.ssl) $(_TEST.tools.vulns) $(_TEST.tools.cert) \
+		      $(_TEST.tools.cipher) $(_TEST.tools.unix) $(_TEST.tools.windows)
 
 _TEST.legacy       := testarg-legacy-+cipher--legacy
 LIST.legacy        := \
