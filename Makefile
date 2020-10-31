@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.103 20/10/30 17:00:49
+#?      @(#) Makefile 1.104 20/10/31 12:07:07
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.103
+_SID            = 1.104
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -250,6 +250,8 @@ EXE.pl          = $(SRC.pl)
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
+_ALL.devtools.extern  += sccs gpg sha256sum docker
+ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 
@@ -260,12 +262,19 @@ _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
 _INST.devtools  = $(sort $(ALL.devtools))
-_INST.devmodules= $(sort $(ALL.modules))
-_INST.text      = generated from Makefile 1.103
+_INST.tools_int = $(sort $(_ALL.devtools.intern))
+_INST.tools_ext = $(sort $(_ALL.devtools.extern))
+_INST.tools_opt = $(sort $(ALL.tools.optional))
+_INST.tools_other = $(sort $(ALL.tools.ssl))
+_INST.devmodules= $(sort $(ALL.devmodules))
+_INST.text      = generated from Makefile 1.104
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
-			-e 's@DEVTOOLS_INSERTED_BY_MAKE@$(_INST.devtools)@'   \
+			-e 's@TOOLS_OTHER_INSERTED_BY_MAKE@$(_INST.tools_other)@' \
+			-e 's@TOOLS_OPT_INSERTED_BY_MAKE@$(_INST.tools_opt)@' \
+			-e 's@DEVTOOLSINT_INSERTED_BY_MAKE@$(_INST.tools_int)@' \
+			-e 's@DEVTOOLSEXT_INSERTED_BY_MAKE@$(_INST.tools_ext)@' \
 			-e 's@DEVMODULES_INSERTED_BY_MAKE@$(_INST.devmodules)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@'         \
 			-e 's@OSAFT_PL_INSERTED_BY_MAKE@$(SRC.pl)@'           \
@@ -487,8 +496,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.103
-tar:     GREP_EDIT  = 1.103
+GREP_EDIT           = 1.104
+tar:     GREP_EDIT  = 1.104
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
