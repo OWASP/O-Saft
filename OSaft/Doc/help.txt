@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.66 20/10/30 15:23:56
+# SID   @(#) help.txt 1.67 20/10/31 12:15:35
 
 NAME
 
@@ -306,21 +306,15 @@ TECHNICAL INFORMATION
 
     External tools
 
-        For building and viewing the documentationm following tools should be
-        available:
+        For building and/or viewing the documentation, any of following tools
+        should be available:
 
           * aha              0.5-1
-          * perl-analyzer
-            (also requires Perl modules, JSON, Text::MicroTemplate)
-          * perldoc          v3.2801,
+          * perldoc          v3.2801
           * pod2man
+          * pod2usage
           * podviewer        v0.18
           * tkpod
-
-        Using make for development uses additional external tools and/or Perl
-        modules:
-
-          * Deug::Trace Devel::Trace Devel::DProf Devel::NYTProf
 
 
 COMMANDS
@@ -1732,7 +1726,7 @@ OPTIONS
           Do not print formatting header.
           Usefull if raw output should be passed to other programs.
 
-          Note: must be used on command line to inhibit all header lines.
+          Note: must be used on command-line to inhibit all header lines.
 
       --ignore-cmd=CMD
       --ignore-output=CMD
@@ -2011,7 +2005,7 @@ OPTIONS
 
       --trace-cli
 
-          Print complete command line first. Used for internal testing.
+          Print complete command-line first. Used for internal testing.
 
       --trace-arg
       --trace--
@@ -3116,7 +3110,7 @@ CUSTOMIZATION
         Where 'CFG' is any of:  'cmd', 'check', 'data', 'text'  and  'KEY' is
         any key from internal data structure (see above).
 
-        All commands and options given on command line will  overwrite  those
+        All commands and options given on command-line will  overwrite  those
         found in the rc-file.
 
     DEBUG-FILE
@@ -3708,13 +3702,13 @@ INSTALLATION
         detect such insecure settings, functions, etc.,  it needs these dirty
         things enabled. It needs (incomplete list):
 
-          * insecure protocols like SSLv2, SSLv3
-          * more ciphers enabled, like NULL-MD5, AECDH-NULL-SHA, etc.
-          * some SSL extensions and options
+          * insecure protocols like SSLv2, SSLv3,
+          * more ciphers enabled, like NULL-MD5, AECDH-NULL-SHA, etc.,
+          * some SSL extensions and options.
 
         Therefore we recommend to compile and install at least following:
 
-          * OpenSSL  with SSLv2, SSLv3 and more ciphers enabled
+          * OpenSSL  with SSLv2, SSLv3 and more ciphers enabled,
           * Net::SSLeay  compiled with openssl version as described before.
 
         Please read the  SECURITY  section first before following the install
@@ -4591,11 +4585,6 @@ TESTING
 
           Print internal data according protocols.
 
-      --test-sub
-
-          Print formatted list of internal functions with their description.
-          Not to be intended in conjunction with any target check.
-
       --test-regex
 
           Print results for applying various texts to defined regex.
@@ -4638,6 +4627,14 @@ TESTING
       --test-ssleay
 
           Print information about Net::SSLeay capabilities.
+
+      --test-sub
+
+          Obsolete, please use:
+
+              make test.dev.grep.sub
+              make test.dev-grep.subs
+              make test.dev-grep.desc
 
     Testing results
 
@@ -4872,11 +4869,25 @@ DOCUMENTATION
         Documentation for developers is provided in various ways. Information
         for developers can be found found in:
 
-        * the files itself
+          * the files itself
 
-        * with:  $0 --help=HELP
+          * with:   $0 --help=test
 
-        * using:  make
+          * with:   $0 --test
+
+          * reading: Makefile.pod
+
+          * using:  make
+
+          * using:  make help.doc
+
+        Using make for development uses additional external tools and/or Perl
+        modules:
+
+          * perl-analyzer
+            (also requires Perl modules, JSON, Text::MicroTemplate)
+
+          * Debug::Trace Devel::Trace Devel::DProf Devel::NYTProf
 
 
 ATTRIBUTION
