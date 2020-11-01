@@ -24,8 +24,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "20.02.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.32 20/11/01 22:21:28";
+our $VERSION    = "20.10.30";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.33 20/11/01 23:05:38";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -184,6 +184,9 @@ sub get_markup    {
                 # TODO: fails for something like:  --opt=foo="bar"
                 # TODO: above substitute fails for something like:  --opt --opt
                 #        hence same substitute again (should be sufficent then)
+            s#([A-Z]L)&#$1 &#g; # i.e. SSL
+                # quick&dirty to avoid further inerpretation of L&
+                # ugly hack as it adds a space
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
         if (not m/^S/ and not m/^ {14,}/) {
@@ -592,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.32 2020/11/01
+1.33 2020/11/01
 
 =head1 AUTHOR
 
