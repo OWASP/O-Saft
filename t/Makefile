@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.112 20/10/31 21:10:19
+#?      @(#) Makefile 1.113 20/11/01 19:00:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.112
+_SID.test          := 1.113
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -715,6 +715,10 @@ test.log-compare:       TEST.target_prefix  = test
 test.log-move:          TEST.target_prefix  = test
 
 # quick tests for development
+# the target is named tests.quick instead of test.quick to avoid future naming
+# conficts (if there is a Makefile.quick);
+# unfortunately the targets test*s.quick.log*  must then be explicitly defined
+# because the pattern rules  test.%.log* do not match
 tests.quick:
 	@$(MAKE) $(MFLAGS) -s tests     ALL.test.ext= ALL.test.misc= ALL.test.critic=
 #tests.quick.log:
@@ -724,6 +728,17 @@ tests.quick.log:
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmd.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
+	@-$(_CMD_log-compare-hint)
+
+tests.quick.log-compare:
+	@$(TRACE.target)
+	@-$(_CMD_log-compare)
+	@-$(_CMD_log-move-hint)
+	@echo "# 12 logfiles with differences could be expected."
+
+tests.quick.log-move:
+	@$(TRACE.target)
+	$(_CMD_log-move)
 
 # aliases for convenience
 test:       tests
