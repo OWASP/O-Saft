@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.06.05',
+    SSLINFO_VERSION => '20.10.30',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.260 20/06/08 00:37:47',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.261 20/11/01 22:24:16',
 };
 
 ######################################################## public documentation #
@@ -67,7 +67,7 @@ use constant {
 #  a max_mccabe = 40 would be nice, but cannot be set per file
 
 ## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
-#  NOTE: See t/.perlcritic
+#  NOTE: See t/.perlcriticrc
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
@@ -248,7 +248,7 @@ If disabled, the values returned will be: #
 =item $Net::SSLinfo::use_sclient
 
 Some informations according the  SSL connection and the certificate,
-can only be retrived using  "openssl s_client ...".   Unfortunatelly
+can only be retrived using   "openssl s_client ...".   Unfortunately
 the use may result in a  performance penulty  on some systems and so
 it can be disabled with "0"; default: 1
 
@@ -836,7 +836,7 @@ sub _traceSSLbitmasks   {
     # cannot use _trace() 'cause we want our own formatting
     _traceset();
     ## no critic (TestingAndDebugging::ProhibitProlongedStrictureOverride)
-    #  NOTE: perlcritix is too pedantic
+    #  NOTE: perlcritic is too pedantic
     foreach my $op (qw(
             OP_ALL
             OP_MICROSOFT_SESS_ID_BUG
@@ -930,7 +930,7 @@ my %_OpenSSL_opt = (    # openssl capabilities
     # value is  1  if the option is available at openssl.
     # Currently only options for openssl's  s_client  command are supported.
     # This data structure is for one openssl command. More than one command is
-    # not expected, not usefull, hence it is thread save.
+    # not expected, not useful, hence it is thread save.
     # NOTE:  some options are present in different spellings because different
     #        openssl version use different spellings, grrr.
     'done'          => 0, # set to 1 if initialised
@@ -3896,7 +3896,7 @@ sub _main_help      {
 sub _main           {
     #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  see t/.perlcritic for detailed description of "no critic"
+    #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
@@ -3920,7 +3920,7 @@ sub _main           {
 
 =pod
 
-=head1 DEENDENCIES
+=head1 DEPENDENCIES
 
 L<Net::SSLeay(3pm)>
 L<Math::BigInt(3pm)>  (required if necessary only)
