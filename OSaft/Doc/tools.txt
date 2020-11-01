@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.6 19/09/11 23:46:35
+# SID   @(#) tools.txt 1.7 20/11/01 20:32:59
 
 NAME
 
@@ -49,7 +49,7 @@ CONCEPTS
         All other tools described here are just wrappers around  o-saft.pl or
         tools for postprocessing output data of  o-saft.pl .
 
-        These tools can be categorized as follows:
+        These tools can be categorised as follows:
 
            category       tools            purpose
          #---------------+----------------+----------------------------------
@@ -160,13 +160,13 @@ TOOLS
 
         Other files for development are:
           o-saft-docker-dev
-          t/.perlcritic
+          t/.perlcriticrc
           contrib/critic.sh
 
 
-CUSTOMIZATION
+CUSTOMISATION
 
-        The tools can be customized with following files:
+        The tools can be customised with following files:
 
         * o-saft.pl
            .o-saft.pl
