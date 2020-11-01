@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.51 20/01/11 14:09:04
+#?      @(#) Makefile.cmd 1.52 20/11/01 18:26:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.51
+_SID.cmd           := 1.52
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -103,7 +103,7 @@ ifndef cmd-targets-generated
     )
 endif
 
-# TODO: need generic target which comares results of initial command
+# TODO: need generic target which compares results of initial command
 #       with same command and more options, example:
 #           testcmd-cmd-+info_localhost testcmd-cmd-+info--noout_localhost
 
@@ -111,6 +111,7 @@ testcmd-cmd-%:                  EXE.pl      = ../$(SRC.pl)
 testcmd-cmd-%:                  TEST.init   = --trace-CLI --header
 
 testcmd-cmd-+ignored-keys_%:         TEST.args += $(LIST.ignore.cmd)
+testcmd-cmd-+sts--noout_%:           TEST.args += +sts   $(LIST.no-out.opt)
 testcmd-cmd-+info--tracekey-norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--trace-norc_%:    TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
@@ -120,6 +121,7 @@ testcmd-cmd-+check--nossltls_%:      TEST.args += +check --nosslv2 --nosslv3 --n
 
 ALL.testcmd    += \
 	testcmd-cmd-+ignored-keys_ \
+	testcmd-cmd-+sts--noout_   \
 	testcmd-cmd-+info--tracekey-norc_ \
 	testcmd-cmd-+check--tracekey-norc_ \
 	testcmd-cmd-+check--trace-norc_ \
