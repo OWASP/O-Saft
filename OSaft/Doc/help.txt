@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.70 20/10/31 18:58:05
+# SID   @(#) help.txt 1.71 20/11/02 00:28:36
 
 NAME
 
@@ -244,7 +244,7 @@ TECHNICAL INFORMATION
         for 1.0.0 may not provide all informations.
         Some functionality (checks) of  O-Saft  may be missing or fail,  when
         openssl versions 1.1.x are used (because functionality was removed).
-        LibreSSL is not recommended, because  some functionallity  considered
+        LibreSSL  is not recommended, because  some functionality  considered
         insecure, has been removed.
         For more details, please see  INSTALLATION  below.
 
