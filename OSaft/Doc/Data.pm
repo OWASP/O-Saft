@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.02.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.30 20/10/14 23:03:38";
+my  $SID_data   = "@(#) Data.pm 1.31 20/11/01 15:29:37";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -586,7 +586,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.30 2020/10/14
+1.31 2020/11/01
 
 =head1 AUTHOR
 
@@ -606,6 +606,8 @@ _main(@ARGV) if (not defined caller);
 # SEE Note:Documentation
 # All public (user) documentation is in plain ASCII format (see help.txt).
 
+__END__
+
 =pod
 
 =head1 Annotations, Internal Notes
@@ -613,7 +615,31 @@ _main(@ARGV) if (not defined caller);
 The annotations here are for internal documentation only.
 For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 
+
+=head3 Documentation:General
+
+All public user documentation is written in plain text format. Therfore it
+can be read without a special tool. It's designed for human radability and
+simple editing.
+
+All other formats like HTML, POD, troff (man-page), etc. will be generated
+from this plain text with the methods (funtions) herein. The general work-
+flow is as follows:
+
+=over
+
+=item 1. read text file
+
+=item 2. inject simple markup (i.g. dokuwiki style markup)
+
+=item 3. convert intermediate markup to required format
+
+=back
+
+For generating some formats, external tools are used.  Such a tools mainly
+gets the data in POD format and then converts it to another format. 
+The external tools are called using Perl's exec() function, usually.
+
 =cut
 
 __DATA__
-
