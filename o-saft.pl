@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1005 20/11/01 15:31:29",
+    SID         => "@(#) yeast.pl 1.1006 20/11/01 21:01:02",
     STR_VERSION => "20.10.30",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9390,21 +9390,21 @@ perlcritic  is used for general code quality. Our code isn't accademically
 perfect, nor is  perlcritic. Hence we use  perlcritic's pragmas to disable
 some checks as needed. This is done in general in perlcritic's config file
 
-    t/.perlcritic
+    t/.perlcriticrc
 
 and selectively in the code using the pragma:
 
     ## no critic ...
 
-All disabled checks are documented, wether in t/.perlcritic or as pragma.
+All disabled checks are documented, in  t/.perlcriticrc  or as pragma.
 
 Following pragmas are used in various files:
 
 * InputOutput::ProhibitBacktickOperators)
 
-    This check seems to be a very perosnal opinion of perlcritic's author,
-    see descriptions like   "... but I find that they make a lot of noise"
-    and   "... I think its better to use ..." .
+    This check seems to be a perosnal opinion of perlcritic's author,  see
+    descriptions like   "... but I find that they make a lot of noise" and
+    "... I think its better to use ..." .
     Using IPC::Open3 here is simply over-engineered.
 
 * Documentation::RequirePodSections
