@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.261 20/11/01 22:24:16',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.262 20/11/02 00:30:54',
 };
 
 ######################################################## public documentation #
@@ -794,7 +794,7 @@ sub _setcommand {
        $opt = "--version" if ($command =~ m/timeout$/);
     $cmd = qx($command $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
     if (defined $cmd) {
-        # chomp() and _trace() here only to avoid "Use of uninitialised value $cmd ..."
+        # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
         chomp $cmd;
         _trace("_setcommand: $command = $cmd");
         $cmd = "$command";
@@ -1529,7 +1529,7 @@ sub _ssleay_socket  {
                # $Net::SSLinfo::proxyport was already checked in main
             #1a. no proxy and not starttls
             # $host and $port may be undefined, hence the ugly setting of $src
-            # to avoid Perl's "Use of uninitialised value $host in concatenation ... "
+            # to avoid Perl's "Use of uninitialized value $host in concatenation ... "
             # _check_host() and _check_port() woll work poper with undef values
             $src = '_check_host(' . ($host||'') . ')'; if (not defined _check_host($host)) { $err = $!; last; }
             $src = '_check_port(' . ($port||'') . ')'; if (not defined _check_port($port)) { $err = $!; last; }
@@ -2055,7 +2055,7 @@ sub _OpenSSL_opt_get{
     my $key = shift;
     _traceset();
     if (0 <= $_OpenSSL_opt{'done'}) {
-        # initilise %_OpenSSL_opt
+        # initialise %_OpenSSL_opt
         if (not defined s_client_check()) {
             _trace("_OpenSSL_opt_get('$key') undef");
             return SSLINFO_HASH;
