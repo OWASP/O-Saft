@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.37 20/10/30 10:36:42
+@(#) Makefile.pod 1.38 20/11/01 15:34:25
 
 =head1 AUTHOR
 
@@ -231,19 +231,17 @@ the  _SID.test  variable.
 
 General rules for our variable and target names in Makefile* are:
 
+* variable names start with uppercase characters or  _
+
 * names consist only of characters a-zA-Z0-9_.-
 
-* names start with upper case letters or _
+* names starting with  _  are intended for internal use
 
-* names starting with _ are intended for internal use
+* names use well defined prefixes which are separated by  .  or  -
 
-* names use well defined prefixes which are separated by  "."  or  "-"
+* names may use variable suffixes which are separated by  _
 
-* names may use variable suffixes which are separated by "_"
-
-* target names only use lowercase characters and . and - and _
-
-* variable names start with uppercase characters or _
+* target names use only lowercase characters and  .  and  -  and  _
 
 Examples:
 
@@ -291,7 +289,7 @@ sometimes necessary to use quotes to enforce the proper evaluation of used
 variables in the text (mainly in target actions).
 
 It is prefered that the complete definition, name=value, fits in one line,
-hoever, huge definitions are splited in multiple lines  for better (human)
+however, huge definitions are splited in multiple lines for better (human)
 readability.
 
 
@@ -350,10 +348,10 @@ Following name prefixes are used for variables:
     LIST            - defines lists of something
     TEST            - something related to the t/ directory
     CONTRIB         - something related to the contrib/ directory
-    CRITIC          - something related to percritic targets
+    CRITIC          - something related to perlcritic targets
     HELP            - defines texts to be used in  help  and  doc  targets
     _               - names of internal (helper) variables (they are not
-                      intended to be overwritten on command line)
+                      intended to be overwritten on command-line)
 
 Notes about some special variables:
 
@@ -423,7 +421,7 @@ Example:
     HELP-help       = print overview of all targets
     HELP-doc        = same as help, but evaluates macros
     HELP.typ        = $(_NL)\
-    \# same addition text with more than one line $(_NL)\
+    \# some additional text with more than one line $(_NL)\
     \# other line
 
 These  variables (above) are used by the  help  and  doc  target.  Each of
@@ -433,7 +431,7 @@ these lines is printed as follows:
     help     # print overview of all targets
     doc      # same as help, but evaluates variables
 
-    # same addition text with more than one line
+    # some additional text with more than one line
     # other line
 
 
@@ -446,9 +444,9 @@ features and behaves slightly different to traditional make.
 
 =head2 GNU Make:Terms
 
-Some words about the terms and words used in GNU Make and in this project.
+Some words about the terms and words used in GNU Make in this project.
 
-* macro  is a synonym for  variable  in makefilesm, here the term variable
+* macro  is a synonym for  variable  in makefiles, here the  term variable
   is prefered.
 
 * GNU Make uses  prerequisites  when targets depend on something, here the
@@ -512,7 +510,8 @@ This avoids sophistcated syntax in the files itself, like:
     endif
 
 GNU Make also cannot manage recursive includes of the same file. This must
-be checked before including, for example (using private _SID.* variable):
+be checked before including. The private  _SID.* variable, which is set in
+all Makefile*, is used, example:
 
     ifeq (,$(_SID.test))
         -include t/Makefile
@@ -526,16 +525,16 @@ Missing the required file is silently ignored using  -include  directive.
 Remember important variables:
 
     $(MAKE)         - the make command itself, in sub-make with additional
-                      arguments/options (see make's dosumentation )
+                      arguments/options (see make's documentation )
     $(MAKE_COMMAND) - private variable for the make command, without other
                       arguments/options as in $(MAKE)
                       SEE Make:MAKE vs. MAKE_COMMAND
     $(MFLAGS)       - contains all passed arguments/options to make
-    $(MAKEFLAGS)    - same as $(MFLAGS) but omitts leading - character
+    $(MAKEFLAGS)    - same as $(MFLAGS) but omitts leading  -  character
     $(MAKECMDGOALS) - name of the target to be satisfied
     $(MAKEFILE)     - name of the target to be satisfied
     $(MAKEFILES)    - environment variable containing makefiles to be read
-    $(MAKEFILE_LIST)- inclueded Makefiles in the order they have been read
+    $(MAKEFILE_LIST)- included Makefiles in the order they have been read
 
 For details use: make help.test.make
 
@@ -552,7 +551,7 @@ Remember GNU Make's automatic variables:
     $^    - all dependencies of the target (without duplicates)
     $<    - first dependency of the target
     $?    - dependencies newer than the target
-    $|    - "orde-only" dependencies
+    $|    - "order-only" dependencies
     $*    - matching files of the rule
     $%    - target (archive) member name (rarely used)
 
@@ -748,13 +747,13 @@ To avoid diffs when testing with  *.log  targets, output of such keys must
 be ignored for  all targets with  +info ,  +check  or any other  combining
 commands (like  +hsts). Output such keys can be ignored using  o-saft.pl's
 option  --ignore-output=  (alias  --no-out=). Alias  --no-out=  is used to
-keep the command line shorter.
+keep the command-line shorter.
 
 The variable  _ignore-output  (computed from _ignore-output-keys) contains
 these keys (commands). This variable should be used whenever such commands
 are tested.
 
-Unfortunatelly this  results in  untested commands,  those defined  in the
+Unfortunately  this  results in  untested commands,  those defined  in the
 variable  _ignore-output-keys . An additional target  should exist to test
 these commands also.
 
@@ -983,7 +982,7 @@ but logfiles to identify differences.
 
 =head2 Troubleshooting
 
-To parametrize targets in various ways,  they make heavy use of variables.
+To parametrise targets in various ways,  they make heavy use of variables.
 Some of the variables are set conditionally for targets and pattern rules.
 
 If things go wrong, or results are unexpected, following steps may help to
