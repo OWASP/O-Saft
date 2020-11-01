@@ -46,12 +46,12 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      Can be used to read saved results from other calls of o-saft.pl.
 #?
-#?      Any argument starting with  +  are condidered a command for  o-saft.pl
+#?      Any argument starting with  +  are considered a command for  o-saft.pl
 #?      and  o-saft.pl  will be started with all other  options,  commands and
 #?      targets and show the results in the GUI.
 #?
 #?   Result TAB
-#?      The result of  o-saft.pl  are shown in a new TAB.  The format (layout)
+#?      The results of  o-saft.pl  are shown in a new TAB. The format (layout)
 #?      of the result can be simple "text" or "table".  This can be configured
 #?      in the  Options TAB.
 #?
@@ -72,10 +72,10 @@ exec wish "$0" ${1+"$@"}
 #?        Saving the result will save the complete text.
 #?
 #?   Help
-#?      All functionallity is documented with balloon help on each checkbutton,
+#?      All functionality is documented with balloon help on each checkbutton,
 #?      input field, button or table header line.
 #?
-#?   Examples for filter
+#?   Examples for Filter
 #?      Match complete line containing Certificate:
 #?         r=1 e=0 #=0 Regex=Certificate
 #?      Match word Target:
@@ -85,7 +85,7 @@ exec wish "$0" ${1+"$@"}
 #?
 #?   Configuration
 #?      Some parts of the GUI, for example widget fonts or widget label texts,
-#?      can be customized in  .o-saft.tcl , which  will be searched for in the
+#?      can be customised in  .o-saft.tcl , which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
 #?      available in the contrib/ directory.
@@ -149,11 +149,11 @@ exec wish "$0" ${1+"$@"}
 #?      The pattern must have at least 4 characters, except for mode "exact".
 #?
 #?      The GUI contains various [?] buttons. Clicking such a button will show
-#?      the corresponding section in the help window  context sensitive).
+#?      the corresponding section in the help window (context sensitive).
 #?
 #? OPTIONS
 #?      --h     print this text
-#?      --help=opts print options ((for compatibility with o-saft.pl)
+#?      --help=opts print options (for compatibility with o-saft.pl)
 #?      --v     print verbose messages (calling external tools)
 #?      --d     print more verbose messages (for debugging)
 #?      --d=D   print debug messages according level
@@ -161,7 +161,7 @@ exec wish "$0" ${1+"$@"}
 #?              D=2     - print proc calls (those not triggerd by events)
 #?              D=4     - print debugging in proc
 #?              D=8     - print verbose debugging for "help" window
-#?              values can combined, like --d=6 for print procs and data there
+#?              values can be combined, like  --d=6  to print procs and data,
 #?              all  --d=*  imply  --v
 #?      --rc    print template for .o-saft.tcl
 #?      --text  use simple texts as labels for buttons
@@ -183,7 +183,7 @@ exec wish "$0" ${1+"$@"}
 #?      This script can be used from within any Docker image. The host is then
 #?      responsible for providing the proper protocols for the GUI (i.e. X11).
 #?      In this case,  anything is executed inside the Docker image,  just the
-#?      graphical output is passed to the host. This mode is started with
+#?      graphical output is passed to the host. This mode is started with:
 #?          o-saft-docker gui
 #?      which does the necessary magic with Docker for protocol and DISPLAY.
 #?
@@ -199,7 +199,7 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      Summary
 #?          o-saft.tcl --docker     - run on host using o-saft.pl in Docker
-#?          o-saft-docker gui       - run in Docker with display to host
+#?          o-saft-docker --gui     - run in Docker with display to host
 #?
 #? KNOWN PROBLEMS
 #?      Using option  -v  causes a Tcl error, like:
@@ -291,6 +291,11 @@ exec wish "$0" ${1+"$@"}
 #.        * tk_getSaveFile -confirmoverwrite
 #.        * package require Img
 #.
+#.      This is no academically perfect code, but quick&dirty scripted:
+#.       - makes use of global variables instead of passing parameters etc..
+#.       - mixes layout and functions and application logic
+#.       - some widget names are hardcoded
+#.
 #.   Data Used to Build GUI
 #.      Generation of all objects (widgets in Tk slang) is done  based on data
 #.      provided by  o-saft.pl  itself, in praticular some  --help=*  options,
@@ -322,7 +327,7 @@ exec wish "$0" ${1+"$@"}
 #.          - all  "--help*"  options (as they make no sense here)
 #.          - "+cgi"  and  "+exec"  command (they are for internal use only)
 #.
-#.   Some Nameing Conventions
+#.   Some Naming Conventions
 #.       - procedures:
 #.          create_*    - create widget or window
 #.          osaft_*     - run external  o-saft.pl  (and process output)
@@ -353,13 +358,13 @@ exec wish "$0" ${1+"$@"}
 #.                      - lines are used for internal developer documentation
 #.          lines with  ;#
 #.                      - Tcl requires a  ;  after the statement before any
-#.                        comment; the  ; is usually right before the  #
+#.                        comment; the  ;  is usually right before the  #
 #.
-#.   Codeing (general)
+#.   Coding (general)
 #.      Sequence of function definitions done to avoid forward declarations.
 #.      See  Debugging Options  below also.
 #.
-#.   Codeing (GUI)
+#.   Coding (GUI)
 #.      Images (i.e.for buttons) are defined in  o-saft-img.tcl, which must be
 #.      installed in same path as  o-saft.tcl  itself.  The definitions are in
 #.      a separate file to keep the code more clean herein.
@@ -371,17 +376,17 @@ exec wish "$0" ${1+"$@"}
 #.      own "Copy Text" (see above) with <Control-ButtonPress-1>,  even if the
 #.      button is displayed as image.
 #.
-#.   Traceing (GUI)
+#.   Tracing (GUI)
 #.      Tcl's  trace  functionality is used to trace most procs defined herein
-#.      and all created buttons.  See trace_commands() and trace_buttons() for
+#.      and all created buttons. See  trace_commands() and trace_buttons() for
 #.      details. Tracing does not yet work for buttons created in sub-windows.
-#.      Traceing is invoked with  --trace  option.
+#.      Tracing is invoked with the  --trace  option.
 #.
-#.   Traceing (program flow)
+#.   Tracing (program flow)
 #.      --d=X         - see description above
 #.
-#.   Traceing and Debugging
-#.      All output for --trace and/or --dbx is printed on STDERR.
+#.   Tracing and Debugging
+#.      All output for  --trace  and/or  --dbx  is printed on STDERR.
 #.      Trace messages are prefixed with:   #[$0]:
 #.      Debug messages are prefixed with:   #dbx [$0]:
 #.
@@ -391,25 +396,22 @@ exec wish "$0" ${1+"$@"}
 #.      Another exception (8/2016) is "package require Img" which is necessary
 #.      on some Mac OS X.
 #.      All external programs are started using Tcl's  {*}  syntax.
+#.
 #.      If there is any text visible, we want to copy&paste it. Therefore most
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
 #.      not. These text widgets are set to state "read-only"  instaed of Tcl's
 #.      disabled state, see gui_set_readonly() for details.
 #.
-#.      This is no academically perfect code, but quick&dirty scripted:
-#.       - makes use of global variables instead of passing parameters etc..
-#.       - mixes layout and functions and application logic
-#.       - some widget names are hardcoded
-#.
 #? VERSION
-#?      @(#) 1.230 Summer Edition 2019
+#?      @(#) 1.231 Winter Edition 2020
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
 #?
 #?      Project Home: https://www.owasp.org/index.php/O-Saft
 #?      Help Online:  https://www.owasp.org/index.php/O-Saft/Documentation
+#?                    https://wiki.owasp.org/index.php/O-Saft/Documentation
 #?      Repository:   https://github.com/OWASP/O-Saft
 #?
 # -----------------------------------------------------------------------------
@@ -473,10 +475,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.230 19/12/15 10:03:14"
+set cfg(SID)    "@(#) o-saft.tcl 1.231 20/11/02 00:26:49"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.230}
+set cfg(VERSION) {1.231}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -512,7 +514,7 @@ set prg(rexOUT-show) {^Commands to show }  ;# commands without explizit HELP sec
     # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
 set prg(rexCOMMANDS) "\(o-saft\(.pl|.tcl|-docker\)?|checkAllCiphers.pl|\(/usr/local/\)?openssl|docker|mkdir|ldd|ln|perlapp|perl2exe|pp\)"
     # most common tools used in help text...
-set prg(post)   {}             ;# --post=  parameter, if passed on command line
+set prg(post)   {}             ;# --post=  parameter, if passed on command-line
 set prg(option) 0  ;# set to 1 to avoid internal "option add ..." commands
 #-----------------------------------------------------------------------------}
 
@@ -691,12 +693,12 @@ array set cfg_buttons "
 
     # Note: all buttons as described above,  can be configured also by the user
     # using  cfg(RC).  Configurable are:  text (-text), background colour (-bg)
-    # and the tooltip. Because configuering the above table is a bit cumbersome
+    # and the tooltip.  Because configuring the above table is a bit cumbersome
     # for most users, we provide simple lists with key=value pairs. These lists
     # are: cfg_colors, cfg_texts and cfg_tipps. The settings here are defaults,
     # and may be redefined in cfg(RC) using  cfg_color, cfg_label and cfg_tipp.
     # These lists (arrays in Tcl terms) contain not just the button values, but
-    # also values for other objects.  So the lists are initialized here for all
+    # also values for other objects.  So the lists are initialised here for all
     # other values, and then the values from cfg_buttons are added.
     #
     # array in cfg(RC)  array herein   (see also update_cfg() )
@@ -1066,14 +1068,14 @@ proc _dbx         {level txt} {
 }; # _dbx
 
 proc _trace_add   {cmd} {
-    #? initilaize Tcl's tracing for given command or widget
+    #? initialise Tcl's tracing for given command or widget
     trace add execution $cmd enter _trace
     trace add execution $cmd leave _trace
     return
 }; # _trace_add
 
 proc trace_commands  {} {
-    #? initilaize Tcl's tracing for our procs
+    #? initialise Tcl's tracing for our procs
     append _trace_cmds "[info procs create*] "
     append _trace_cmds "[info procs osaft*] "
     append _trace_cmds "[info procs search*] "
@@ -1087,7 +1089,7 @@ proc trace_commands  {} {
 }; # trace_commands
 
 proc trace_buttons   {} {
-    #? initilaize Tcl's tracing for all buttons
+    #? initialise Tcl's tracing for all buttons
     foreach obj [info commands] {
         if {![regexp {^\.}  $obj]}  { continue }
         switch [winfo class $obj] {
@@ -1272,7 +1274,7 @@ proc gui_set_readonly {w}   {
 }; # gui_set_readonly
 
 proc gui_init     {}    {
-    #? initialize GUI
+    #? initialise GUI
     _dbx 2 "{}"
     global cfg prg myX argv
     if {[catch { package require tablelist } err]} {
@@ -1560,7 +1562,7 @@ proc apply_filter_text  {w} {
 
 proc apply_filter_table {w} {
     #? apply filters for markup in output, data is in table widget $w
-    # FIXME: this is ugly code because the regex in f_rex are optimized for
+    # FIXME: this is ugly code because the regex in f_rex are optimised for
     # use in Tcls's text widget, the regex must be changed to match the values
     # in Tcl's tablelist columns
     _dbx 2 "{$w}"
@@ -1620,7 +1622,7 @@ proc apply_filter_table {w} {
             if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt }
             if {[regexp -nocase -- $rex "$matchtxt"]} {
                 if {$col == 1} {
-                    # if the match is against the first column, colourize the whole line
+                    # if the match is against the first column, colourise the whole line
                     if {$fg ne ""}  { $w rowconfig  $nr -foreground $fg }
                     if {$bg ne ""}  { $w rowconfig  $nr -background $bg }
                     if {$fn ne ""}  { $w rowconfig  $nr -font       $fn }
@@ -2806,7 +2808,7 @@ proc create_main  {targets} {
     set cfg(objS)   $w.fl.t
     gui_set_readonly $cfg(objS)
 
-    #| add hosts from command line
+    #| add hosts from command-line
     foreach host $targets {         # display hosts
         if {$hosts(0) > 5} { pwarn "only 6 hosts possible; »$host« ignored"; continue };
         create_host $w
@@ -2957,7 +2959,7 @@ proc search_text  {w search_text} {
         }
     }
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
-    # new text to be searched, initialize ...
+    # new text to be searched, initialise ...
     set search(last) $search_text
     $w tag delete HELP-search-pos      ;# tag which contains all matches
     _dbx 4 " mode           = $search(mode)"
@@ -3003,7 +3005,7 @@ proc search_text  {w search_text} {
         }
         {regex} {
             # regex fails, when some meta characters are uses as first or last
-            # character, sanatized regex to avoid compiling regex
+            # character, sanatised regex to avoid compiling regex
             # Note: Tcl is picky about character classes, need \\ inside []
             set regex [regsub {^(\\)}     $regex {\\\1}]   ;# leading  \ is bad
             set regex [regsub {^([|*+-])} $regex {[\1]}]   ;# leading *|+ is bad
@@ -3036,7 +3038,7 @@ proc search_text  {w search_text} {
             # else { regex OK }
             }
     }
-    _dbx 4 " regex sanatized= $regex";
+    _dbx 4 " regex sanatised= $regex";
     _dbx 4 " regex mode     = $rmode";
     # ready to fire ...
     set anf [$w search $rmode -all -nocase -count end -- $regex 1.0]
@@ -3142,7 +3144,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.230 19/12/15 10:03:14
+ #?      @(#) .o-saft.tcl generated by 1.231 20/11/02 00:26:49
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3403,7 +3405,7 @@ proc osaft_save   {tbl type nr} {
     }
     set title  [$cfg(objT) tab $nr -text];# get TAB's title
     set suffix [regsub -all {\s*\([0-9]*\)\s*} $title  {}] ;# remove (index)
-    set suffix [regsub -all {[^a-zA-Z0-9_+-]}  $suffix {_}];# sanatize for filename
+    set suffix [regsub -all {[^a-zA-Z0-9_+-]}  $suffix {_}];# sanatise for filename
     if {$type eq "TAB"} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveresult]" -initialfile "$prg(SAFT)--$suffix.log"]
         if {$name eq ""} { return }
@@ -3510,11 +3512,11 @@ proc osaft_exec   {parent cmd}  {
     } else {
         set execcmd [list exec 2>@stdout {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # on some systems (i.e. Mac OS X) buffering of STDOUT and STDERR is not
-        # synchronized, hence we redirect STDERR to STDOUT, which is OK herein,
+        # synchronised, hence we redirect STDERR to STDOUT, which is OK herein,
         # because no other process can fetch STDERR or STDOUT.
         # probaly we also need:  chan configure stdout -buffering none
     }
-    # sanatize $execcmd for printing in status line and results TAB
+    # sanatise $execcmd for printing in status line and results TAB
     # Tcl uses {} to quote strings, which need to be '' for a shell
     # finally we use $execcmd for execution and $exectxt for print
     set exectxt $execcmd
@@ -3526,7 +3528,7 @@ proc osaft_exec   {parent cmd}  {
     set status  0
     putv          " $execcmd "
     if {[catch { {*}$execcmd } result errors]} {
-        # exited abnormaly, get status and sanatize result
+        # exited abnormaly, get status and sanatise result
         # dict get $errors --errorcode   looks like:  CHILDSTATUS 9498 42
         # dict get $errors --errorinfo   returns same as we have in $results
         # because STDERR was redirected to STDOUT
@@ -3732,7 +3734,7 @@ foreach f $cfg(files) {
     osaft_load $f
 }
 
-#| GUI ready, initilize tracing if required
+#| GUI ready, initialise tracing if required
 if {0 < $cfg(TRACE)} { trace_buttons }
 
 #| some verbose output
