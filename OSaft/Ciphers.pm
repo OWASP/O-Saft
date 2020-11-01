@@ -16,7 +16,7 @@ OSaft::Ciphers - common perl module to define O-Saft ciphers
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
 
 ########################  E X P E R I M E N T A L  #######################
-######################  not used in O-Saft 19.04.19  #####################
+################  not used in O-Saft 19.04.19 .. 20.12.31  ###############
 
 =cut
 
@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '20.02.02';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.43 20/02/15 23:54:30";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.44 20/11/01 20:23:11";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -393,7 +393,7 @@ our @cipher_results = [
 #   # dh-bits  : DH Bits
 #   # dh-param : ECDH Kurve
 
-# dann können verschieden Algorithmen implementiert werden
+# dann können verschiedene Algorithmen implementiert werden
 ### 1. o-saft wie jetzt
 ### 2. o-saft mit cipherraw wie jetzt
 ### 3. cipherraw mit unterschiedlicher Anzahl Ciphers, z.B.:
@@ -1461,7 +1461,7 @@ sub _main_help      {
 sub _main           {
     #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  see t/.perlcritic for detailed description of "no critic"
+    #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
@@ -1591,7 +1591,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.43 2020/02/15
+1.44 2020/11/01
 
 =head1 AUTHOR
 
@@ -1609,3 +1609,4 @@ _main(@ARGV) if (not defined caller);
 
 1;
 
+__END__
