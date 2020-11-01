@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.02.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.31 20/11/01 15:29:37";
+my  $SID_data   = "@(#) Data.pm 1.32 20/11/01 22:21:28";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -202,13 +202,19 @@ sub get_markup    {
             # we only want to catch header lines, hence all capital letters
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
+            s/ (SHELL TWEAKS)/ X&$1&/g;
+            s/ (SEE ALSO)/ X&$1&/g;
+            s/ (EXIT STATUS)/ X&$1&/g;
             s/ (CIPHER NAMES)/ X&$1&/g;
             s/ (LAZY SYNOPSIS)/ X&$1&/g;
             s/ (KNOWN PROBLEMS)/ X&$1&/g;
             s/ (BUILD DOCKER IMAGE)/ X&$1&/g;
-            s/ (RESULTS|COMMANDS|OPTIONS|CHECKS|OUTPUT|CUSTOMIZATION) / X&$1& /g;
+            s/ (BUILD DOCKER IMAGE)/ X&$1&/g;
+            s/ (TECHNICAL INFORMATION)/ X&$1&/g;
+            s/ (NAME|CONCEPTS|ENVIRONMENT)/ X&$1&/g;
+            s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT|CUSTOMISATION) / X&$1& /g;
             s/ (LIMITATIONS|DEPENDENCIES|INSTALLATION|DOCKER|TESTING) / X&$1& /g;
-            s/ (CUSTOMIZATION|SCORING|EXAMPLES|ATTRIBUTION|VERSION) / X&$1& /g;
+            s/ (SCORING|EXAMPLES|ATTRIBUTION|DOCUMENTATION|VERSION) / X&$1& /g;
             s/ (DESCRIPTION|SYNOPSIS|QUICKSTART|SECURITY|DEBUG|AUTHOR) / X&$1& /g;
         }
         push(@txt, $_);
@@ -229,7 +235,7 @@ sub get_text    {
     #? print program's help
 # NOTE: NOT YET READY, not yet used
     my $file    = shift;
-    my $label   = shift || "";  # || to avoid "Use of uninitialized value"
+    my $label   = shift || "";  # || to avoid "Use of uninitialised value"
        $label   = lc($label);
     my $anf     = uc($label);
     my $end     = "[A-Z]";
@@ -414,7 +420,7 @@ sub _main_help  {
 sub _main       {
     #? print own documentation or that from specified file
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  see t/.perlcritic for detailed description of "no critic"
+    #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
@@ -503,7 +509,7 @@ Will not be replaced, but kept as is.
 
 =back
 
-Referenzes to titles are written in all upper case characters and prefixed
+Referenses to titles are written in all upper case characters and prefixed
 and suffixed with 2 spaces.
 
 There is only one special markup used:
@@ -586,7 +592,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.31 2020/11/01
+1.32 2020/11/01
 
 =head1 AUTHOR
 
