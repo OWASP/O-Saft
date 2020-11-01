@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1004 20/10/31 18:56:44",
+    SID         => "@(#) yeast.pl 1.1005 20/11/01 15:31:29",
     STR_VERSION => "20.10.30",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -912,7 +912,7 @@ my %check_cert = (  ## certificate data
     'ocsp_valid'    => {'txt' => "Certificate has valid OCSP URL"},
     'cps_valid'     => {'txt' => "Certificate has valid CPS URL"},
     'crl_valid'     => {'txt' => "Certificate has valid CRL URL"},
-    'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
+    'sernumber'     => {'txt' => "Certificate Serial Number size RFC 5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
     'modulus_exp_1' => {'txt' => "Certificate Public Key Modulus Exponent <>1"},
@@ -923,8 +923,8 @@ my %check_cert = (  ## certificate data
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
     'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
-    'rfc_6125_names'=> {'txt' => "Certificate Names compliant to RFC6125"},
-    'rfc_2818_names'=> {'txt' => "Certificate subjectAltNames compliant to RFC2818"},
+    'rfc_6125_names'=> {'txt' => "Certificate Names compliant to RFC 6125"},
+    'rfc_2818_names'=> {'txt' => "Certificate subjectAltNames compliant to RFC 2818"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -1095,7 +1095,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'sts_maxage'    => {'txt' => "Target sends STS header with proper max-age"},
     'sts_subdom'    => {'txt' => "Target sends STS header with includeSubdomain"},
     'sts_preload'   => {'txt' => "Target sends STS header with preload"},
-    'hsts_is301'    => {'txt' => "Target redirects with status code 301"}, # RFC6797 requirement
+    'hsts_is301'    => {'txt' => "Target redirects with status code 301"}, # RFC 6797 requirement
     'hsts_is30x'    => {'txt' => "Target redirects not with 30x status code"}, # other than 301, 304
     'hsts_fqdn'     => {'txt' => "Target redirect matches given host"},
     'http_https'    => {'txt' => "Target redirects HTTP to HTTPS"},
@@ -1195,8 +1195,8 @@ our %shorttexts = (
     'pub_enc_known' => "Public Key Encryption known",
     'sig_encryption'=> "Private Key with Encryption",
     'sig_enc_known' => "Private Key Encryption known",
-    'rfc_6125_names'=> "Names according RFC6125",
-    'rfc_2818_names'=> "subjectAltNames according RFC2818",
+    'rfc_6125_names'=> "Names according RFC 6125",
+    'rfc_2818_names'=> "subjectAltNames according RFC 2818",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -2110,7 +2110,7 @@ our %text = (
     # often describe missing features or functionality.
     # TODO: move this to %cfg{hints}
     'hints' => {
-        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
+        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC 5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
         'cipher'    => "+cipher : functionality changed, please see '$cfg{me} --help=TECHNIC'",
@@ -4957,7 +4957,7 @@ sub checksizes($$)  {
     $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
     #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
-        # NOTE: RFC5280 limits the serial number to an integer with not more
+        # NOTE: RFC 5280 limits the serial number to an integer with not more
         #       than 20 octets. It should also be not a negative number.
         # It's assumed that a octet equals one byte.
 
@@ -5845,7 +5845,7 @@ sub checkhttp($$)   {
         _hint("consider testing with option '--proto-alpn=,' also")   if ($https_body =~ /bad client magic byte string/);
     }
 
-    $checks{'hsts_is301'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
+    $checks{'hsts_is301'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC 6797 requirement
     $checks{'hsts_is30x'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
     # sequence important: first check if redirect to https, then check if empty
@@ -5856,7 +5856,7 @@ sub checkhttp($$)   {
         my $fqdn =  $hsts_fqdn;
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host);# 'yes' if empty
         $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host);# 'yes' if empty
-        $checks{'hsts_ip'}      ->{val} = ($host =~ m/\d+\.\d+\.\d+\.\d+/) ? $host : ""; # RFC6797 requirement
+        $checks{'hsts_ip'}      ->{val} = ($host =~ m/\d+\.\d+\.\d+\.\d+/) ? $host : ""; # RFC 6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
         $checks{'hsts_samehost'}->{val} = $hsts_fqdn   if ($fqdn ne $host);
         $checks{'hsts_sts'}     ->{val} = ($data{'https_sts'}   ->{val}($host) ne "") ? "" : $notxt;
@@ -5867,7 +5867,7 @@ sub checkhttp($$)   {
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< $checks{'sts_maxagexy'}->{val}";
         $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< $checks{'sts_maxage18'}->{val}";
         $checks{'sts_maxage0d'} ->{val} = ($hsts_maxage == 0) ? "0" : "";
-        $checks{'hsts_httpequiv'}->{val} = $hsts_equiv; # RFC6797 requirement; 'yes' if empty
+        $checks{'hsts_httpequiv'}->{val} = $hsts_equiv; # RFC 6797 requirement; 'yes' if empty
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);        # computes check{'sts_expired'}
     } else {
@@ -6702,9 +6702,9 @@ sub printciphers_dh     {
 #
 # wenn dh kommen muesste aber fehlt, dann bei openssl -msg probieren
 # -------
-# rfc4492 wenn im cert ec oder ecdsa steht (extension) dann duerfen nur solche
+# RFC 4492 wenn im cert ec oder ecdsa steht (extension) dann duerfen nur solche
 # akzeptiert werden; wenn nix im cert steht dann durfen nur rsa akzeptiert werden
-# siehe rfc4492 Table 3
+# siehe RFC 4492 Table 3
 # -------
 # cipherPcurve ...P256
 # TODO: }
@@ -9211,12 +9211,15 @@ Some special syntax for comment lines are used, see  "Comments" section in
     OSaft/Doc/coding.txt .
 
 Additional documentation is avaialble in POD format  at end of the files.
-These comments are called  "Annotations"  and refered to using  a sepecial
-syntax, see following chapter  L<Annotations, Internal Notes> .
-These Annotations are used  for descriptions needed at  multiple places in
-the code. For example see:
+Examples:
 
     perldoc o-saft.pl
+    perldoc o-saft-man.pm
+
+These comments are called  "Annotations"  and referred to using a sepecial
+syntax, see following chapter  L<Annotations, Internal Notes> .
+These Annotations are used  for descriptions needed at  multiple places in
+the code.
 
 
 =head3 Internal Makefile Documentation
@@ -9412,8 +9415,8 @@ Following pragmas are used in various files:
 =head2 Perl:BEGIN perlcritic
 
 perlcritic  cannot handle  BEGIN{}  sections semantically correct. If this
-section is defined before the  `use strict;'  statement, is complains with
-with the error 'TestingAndDebugging::ProhibitNoStrict'.
+section is defined before the  `use strict;'  statement, it complains with
+the error 'TestingAndDebugging::ProhibitNoStrict'.
 
 Therefore any  BEGIN{}  section is defined after  `use strict;',  ugly but
 avoids clumsy  `## no critic'  pragmas.
@@ -9421,10 +9424,10 @@ avoids clumsy  `## no critic'  pragmas.
 
 =head2 Perl:import include
 
-Perl's recommend way to import modules is the `use' or `require' statement
+Perl's recommend way to import modules is the `use' or `require' statement.
 Both methods have the disadvantage that this scripts fails  if a requested
 module is missing.  The script fails immediately at startup if modules are
-loaded with `use', or at runtime id loaded with `require'.
+loaded with `use', or at runtime if loaded with `require'.
 
 One goal is to be able to run on  ancient or incomplete configured systems
 too. Hence we try to load all modules with our own function  _load_file(),
@@ -9490,7 +9493,7 @@ Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
 
 The tool here roughly destingushes two types of I/O:
 
-    1. writeng texts to the user using STDOUT and STDERR channels
+    1. writing texts to the user using STDOUT and STDERR channels
        note that it never reads, except from command-line, hence no STDIN
     2. writing and reading to network sockets, which is done underneath
 
@@ -9503,7 +9506,7 @@ modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
 As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
 humans. Only these channels are handled explicitly.  The idea is, that all
 texts consist of printable characters only, probably in various languages.
-Hence UTF-8 is used as default characters set. The channels are configured
+Hence UTF-8 is used as default character set.  The channels are configured
 to expect UTF-8 characters.
 Perl destingushes between ':utf8' and ':encoding(UTF-8)' layer,  where the
 ':utf8' does not check for valid encodings. ':utf8' is sufficient here, as
@@ -9533,7 +9536,7 @@ it is the most performant solution also.
 Unfortunately  Perl::Critic complains about postfix controls with
 ControlStructures::ProhibitPostfixControls  which seems to be misleading.
 If there are multiple substitutions to be done, it is better to use a loop
-like (which then keep Perl::Critic happy too):
+like (which then keeps Perl::Critic happy too):
 
     while (@arr) {
         s/old/new/;
@@ -9543,9 +9546,9 @@ like (which then keep Perl::Critic happy too):
 
 =head2 Perl:warn _warn
 
-I.g. Perl's warn() is not used, but our private _warn(). Using _warn() can
-supressed messages with the  --no-warning  option.  However, some warnings
-should never be supressed, hence warn() is used in rare cases.
+I.g. Perl's warn() is not used, but our private  _warn(). Using the option
+--no-warning  _warn()  can supress messages. However, some warnings should
+never be supressed, hence  warn()  is used in rare cases.
 Each warning should have a unique number, SEE L<Perl:Message Numbers>.
 See also  CONCEPTS  (if it exists in our help texts).
 
@@ -9598,7 +9601,7 @@ Data structures with runtime data:
     %prot           - collected data per protocol (from Net::SSLinfo)
     @cipher_results - collected results as:  [SSL, cipher, "yes|no"]
 
-NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts .
+NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
 NOTE: all keys in %checks  must be in lower case letters,  because generic
 conversion of +commands to keys. The keys related to protocol, i.e. SSLv3,
 TLSv11, etc. are mixed case.
@@ -9647,8 +9650,8 @@ ported as 'yes'.
 
 =head2 Note:Testing, sort
 
-When values are assigned to arrays, or values are pushed on arrays in Perl
-the final order in the array is random.
+When values are assigned to arrays, or values are pushed on arrays, Perl's
+final order in the array is random.
 This results in  different orders  of the values when the array values are
 printed,  means that the order changes for each program call.  Such random
 orders in output makes internal testing difficult.
@@ -9693,7 +9696,7 @@ which reflects the openssl option (-nextprotoneg),  and the function names
 used in some Perl modules.
 As newer versions of openssl uses the option  -alpn,  and some other tools
 also use  -alpn  and/or  -npn  as option, the internal variable names have
-been adapted to this nameing scheme after version 17.04.17.
+been adapted to this naming scheme after version 17.04.17.
 The primary variable names containing ALPN or NPN protocol names are now:
 
     protos_next     - internal list of all protocol names
@@ -9704,12 +9707,12 @@ The primary variable names containing ALPN or NPN protocol names are now:
 
 I.g. these are arrays. But as the common syntax for most other tools is to
 use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
-stored as a string. Using a string instead of an arrays also simplifies to
+stored as a string.  Using a string instead of an array also simplifies to
 pass the value to functions.
 
 Note that openssl uses a comma-separated list for ALPN and NPN, but uses a
-colon-separated list for ecliptic curves (and also for ciphers).  Hence we
-allow both separators for all lists on command-line.
+colon-separated list for ecliptic curves and also for ciphers.  Confusing.
+Hence we allow both separators for all lists on command-line.
 
 See also Note:OpenSSL Version
 
@@ -9728,8 +9731,7 @@ is used for aliases of commands or options. These lines are extracted by
 
 =head2 Note:ignore-out
 
-The option  --no-cmd  uses the commands defined in "cfg{'ignore-out'}".
-Results of these commands are not printed in output. # Purpose is to avoid
+The option  --no-cmd  uses the commands defined in  "cfg{'ignore-out'}".
 The purpose is to avoid  printing the results of these commands in output,
 because the output is too noisy (like some +bsi* commands).
 All data collections and checks are still done, just output of results are
@@ -9747,7 +9749,7 @@ be anonymised in output.
 The use, hence definition, of this pattern is intended in CGI mode and can
 there be done in the RC-FILE. Therefore it is also necessary that the tool
 has an corresponding command-line option:  --anon-output .
-The pattern is stored in %cfg.  The correspondig string  for anonymisation
+The pattern is stored in  %cfg.  The correspondig string for anonymisation
 (replacement) is defined in %text.
 
 Note that the corresponding variable names (in %cfg and %text) should also
@@ -9796,9 +9798,9 @@ are found in the certs/ sub-directory. This certs/ is hardcoded herein.
 Net::SSLinfo::s_client_check() is used to check for openssl capabilities.
 Each capability can be queried with  Net::SSLinfo::s_client_opt_get().
 Even  Net::SSLinfo::s_client_*()  will check capabilities, no proper error
-messages could be printed there.  Hence checks are done herein first which
-diables unavailable functionality a warning. Results (capability supported
-or not) are stored  in $cfg{'openssl'} .
+messages could be printed there. Hence checks are done herein first, which
+disables unavailable functionality and avoids warnings. Results (supported
+or not capability) are stored  in $cfg{'openssl'} .
 
 Some options for s_client are implemented, see Net::SSLinfo.pm , or use:
     Net/SSLinfo.pm --test-sclient
@@ -10080,7 +10082,7 @@ example Net::SSLeay:
 
 =head2 Note:Connection test
 
-To avoid long timouts, a quick connection check to the target is done.  At
+To avoid long timeouts, a quick connection check to the target is done. At
 least the connection to the SSL port must succeed.  If not, all checks are
 skipped. If just the connection to port 80 fails, just the HTTP checks are
 disabled. Also L<SEE Note:--ssl-error>.
@@ -10098,14 +10100,14 @@ if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
 returns an error in $!. Unfortunately the error may be different according
 the used version.  Hence the check herein  does not use the returned error
 but relies on the time passed during the connection.  The assumtion (based
-on experiance) is, that successful or rejected connection take less than a
+on experience) is, that successful or rejected connection take less than a
 second, even on slow connections.  If the connection cannot be established
 (because not supported or blocked), we run into a timeout, which is always
 more than 0, at least 1 second (see --timeout=SEC option).
 
 Timeout cannot be set less than  one second.  Also measuring the times and
 their difference is in seconds.  A more accurate time measurement requires
-the Time::Local module, which we try to avoid.  Measureing within a second
+the  Time::Local  module, which we try to avoid. Measuring within a second
 is sufficent for these checks.
 
 More descriptions are in the section  LIMITATIONS  of the man page, see
@@ -10172,13 +10174,13 @@ some additional checks are necessary then to avoid misuse.
 
 * The caller is also responsible to print proper HTTP headers.
 
-Following special options are avaiable for CGI mode:
+Following special options are available for CGI mode:
 
-    * --cgi         - must be passed to o-saft.cgi as first parameter
+    * --cgi         - must be passed to  o-saft.cgi  as first parameter
     * --cgi-exec    - must be set by caller only (i.g. o-saft.cgi)
     * --cgi-trace   - print HTTP header (for debugging only)
 
-The option --cgi-trace is for debugging when used from command-line only.
+The option  --cgi-trace is for debugging when used from command-line only.
 
 It is recommended that this script is called by  o-saft.cgi  in CGI mode.
 
@@ -10218,7 +10220,7 @@ The term Certificate Authority is defined as being an entity which signs
 certificates in which the following are true:
 
    * the issuer and subject fields are the same,
-   * the KeyUsage field has keyCertSign set
+   * the KeyUsage field has keyCertSign set,
    * and/or the basicConstraints field has the cA attribute set TRUE.
 
 Typically, in chained certificates the root CA certificate is the topmost
@@ -10230,7 +10232,8 @@ certificate may be modified by this entity.
 
 
 Subordinate Authority:
-may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
+May be marked as CAs (the extension BasicContraints will be present and cA
+will be set True).
 
 
 Intermediate Authority (a.k.a. Intermediate CA):
