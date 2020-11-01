@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '20.06.06',  # official version number of this file
+    OSAFT_VERSION   => '20.10.30',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.223 20/10/31 13:28:13",
+    SID_osaft   => "@(#) osaft.pm 1.224 20/11/01 15:06:19",
 
 };
 
@@ -348,11 +348,11 @@ our %tls_handshake_type = (
     0 => 'hello_request',
     1 => 'client_hello',
     2 => 'server_hello',
-    3 => 'hello_verify_request',    # RFC4347 DTLS
+    3 => 'hello_verify_request',    # RFC 4347 DTLS
     4 => 'new_session_ticket',
 #   4 => 'NewSessionTicket',
-    6 => 'hello_retry_request',     # RFC8446
-    8 => 'encrypted_extensions',    # RFC8446
+    6 => 'hello_retry_request',     # RFC 8446
+    8 => 'encrypted_extensions',    # RFC 8446
    11 => 'certificate',
    12 => 'server_key_exchange',
    13 => 'certificate_request',
@@ -360,11 +360,11 @@ our %tls_handshake_type = (
    15 => 'certificate_verify',
    16 => 'client_key_exchange',
    20 => 'finished',
-   21 => 'certificate_url',         # RFC6066 10.2
-   22 => 'certificate_status',      # RFC6066 10.2
-   23 => 'supplemental_data',       # RFC??
-   24 => 'key_update',              # RFC8446
-  254 => 'message_hash',            # RFC8446
+   21 => 'certificate_url',         # RFC 6066 10.2
+   22 => 'certificate_status',      # RFC 6066 10.2
+   23 => 'supplemental_data',       # RFC ??
+   24 => 'key_update',              # RFC 8446
+  254 => 'message_hash',            # RFC 8446
   255 => '255',
    -1 => '<<undefined>>',           # added for internal use
   -99 => '<<fragmented_message>>',  # added for internal use
@@ -1732,7 +1732,7 @@ our %cfg = (
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
     'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
 
-   # following keys for commands, nameing scheme:
+   # following keys for commands, naming scheme:
    #     do         - the list off all commands to be performed
    #     commands_* - internal list for various types of commands
    #     cmd-*      - list for "summary" commands, can be redifined by user
@@ -2657,7 +2657,7 @@ sub get_dh_paramter     {
         _trace1(" get_dh_paramter: keyExchange (DH or ECDH) = $keyExchange");
         # get length of 'dh_parameter' manually from '-msg' data if the
         # 'session cipher' uses a keyExchange with DHE and DH_anon
-        # (according RFC2246/RFC5246: sections 7.4.3)
+        # (according RFC 2246/RFC 5246: sections 7.4.3)
         $dh = Net::SSLhello::parseServerKeyExchange($keyExchange, $msgLen, $msgData);
     }
 
@@ -3141,7 +3141,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.223 2020/10/31
+1.224 2020/11/01
 
 =head1 AUTHOR
 
