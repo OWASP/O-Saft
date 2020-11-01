@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.316 20/11/01 20:49:27";
+my  $SID_man= "@(#) o-saft-man.pm 1.317 20/11/02 00:35:28";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.316'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.317'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1243,7 +1243,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 $txt = join(" ", @{$cfg{$key}});
             }
             $key =~ s/^cmd.// if ($typ =~ m/cfg/);
-                # $key in %cfg looks like  cmd-sni, but when configuering the
+                # $key in %cfg looks like  cmd-sni, but when configuring the
                 # key in RC-FILE it looks like  --cfg_cmd=sni=   ...
             _man_cfg($typ, $key, $sep, $txt);
         }
@@ -1789,7 +1789,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.316 2020/11/01
+1.317 2020/11/02
 
 =head1 AUTHOR
 
