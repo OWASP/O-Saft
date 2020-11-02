@@ -134,8 +134,8 @@ exec wish "$0" ${1+"$@"}
 #?      The search pattern can be used in following modes:
 #?        exact - use pattern as literal text
 #?        regex - use pattern as regular expression (proper syntax required)
-#?        smart - convert pattern to regex: each character may be optional
-#?        fuzzy - convert pattern to regex: each position may be optional
+#?        smart - convert pattern to RegEx: each character may be optional
+#?        fuzzy - convert pattern to RegEx: each position may be optional
 #?      Example:
 #?        exact:  (adh|dha) - search for literal text  (adh|dha)
 #?        regex:  (adh|dha) - search for word  adh  or  word  dha
@@ -144,7 +144,7 @@ exec wish "$0" ${1+"$@"}
 #?        smart:  and       - search for  and  or  a?nd  or  an?d  or  and?
 #?        fuzzy:  and       - search for  and  or  .?nd  or  a.?d  or  an.?
 #?
-#?      Note: regex are applied to lines only, pattern cannot span more than a
+#?      Note: RegEx are applied to lines only, pattern cannot span more than a
 #?            single line.
 #?      The pattern must have at least 4 characters, except for mode "exact".
 #?
@@ -405,7 +405,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.232 Winter Edition 2020
+#?      @(#) 1.233 Winter Edition 2020
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -477,10 +477,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.232 20/11/02 17:14:54"
+set cfg(SID)    "@(#) o-saft.tcl 1.233 20/11/02 19:57:06"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2019"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.232}
+set cfg(VERSION) {1.233}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -501,7 +501,7 @@ set cfg(quit)   0                      ;# quit without GUI
 #   Definitions outside RC-ANF - RC-END scope, because they're not intended to
 #   be changed in .o-saft.tcl .
 #
-#   define some regex to match output from o-saft.pl or data in .o-saft.pl
+#   define some RegEx to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win() and create_buttons()
 set prg(DESC)   {-- CONFIGURATION regex to match output from o-saft.pl -------}
 set prg(rexCMD-int)  {^\+(cgi|exec)}   ;# internal use only
@@ -953,13 +953,13 @@ _txt2arr [string map "
 #   - empty strings in columns must be written as {}
 #   - strings *must not* be enclosed in "" or {}
 #   - variables must be defined in map above and used accordingly
-#   - lines without regex (column f_rex contains {}) will not be applied
+#   - lines without RegEx (column f_rex contains {}) will not be applied
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
 # f_key	f_mod	f_len	f_bg	f_fg	f_fn	f_un	f_rex	description of regex
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
   no	-regexp	1	{}	{}	{}	0	no\s*(LO|WE|we|ME|HI)	word 'no' followed by LOW|WEAK|MEDIUM|HIGH
 # NOTE   no  has no colours, otherwhise it would mix with filters below
-# FIXME  no  must be first regex in liste here, but still causes problems in toggle_filter
+# FIXME  no  must be first RegEx in liste here, but still causes problems in toggle_filter
   LOW	-regexp	3	red	{}	{}	0	(LOW|low)	word  LOW   anywhere
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
@@ -2235,7 +2235,7 @@ proc create_help  {sect} {
     # uses plain text help text from "o-saft.pl --help"
     # This text is parsed for section header line (all capital characters)
     # which will be used as Table of Content and inserted before the text.
-    # All referenzes to this sections are clickable.
+    # All references to this sections are clickable.
     # Also all references to commands (starting with '+') and options ('-')
     # are highlighted and used for navigation.
     # Example text:
@@ -2310,6 +2310,10 @@ proc create_help  {sect} {
            search_text $txt \$search(text);
            "
 
+    # FIXME (2020): all following code for markup needs to be redisigned, as
+    # there are to many missing matches (mainly +CMD and --OPTION)  and some
+    # matches, which result in wrong markup (i.e. --OPTION in a header line)
+
     _dbx 4 " 3. search for section head lines, mark them and add (prefix) to text"
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_0-9? '()=+,:.-]+$} 1.0]
     #dbx# puts "3. $anf\n$end"
@@ -2379,7 +2383,9 @@ proc create_help  {sect} {
     }
 
     _dbx 4 " 5. search all commands and options and try to set click event"
-    set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0]
+    set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([., )]|$)} 3.0]
+    # NOTE: above RegEx does not match  +CMD  or  --OPTION  if they are not
+    #       prefixed with at least two spaces (reason unknown).
     #dbx# puts "4. $anf\n$end"
     # Loop over all matches.  The difficulty is to distinguish matches,  which
     # are the head lines like:
@@ -2394,19 +2400,23 @@ proc create_help  {sect} {
     # is a head line, and following might be a reference:
     #   +version.
     # Unfortunately  --v  --v   (and similar examples) will not be detected as
-    # head line. This is due to the regex in "text search ...",  which doesn't
+    # head line. This is due to the RegEx in "text search ...",  which doesn't
     # allow spaces. # FIXME:
 
+
+    # _dbx "############### {\n[$txt get 0.0 end]\n############### }\n"
     set i 0
     foreach a $anf {
+        set line_nr  [regsub {[.][0-9]*} $a ""]        ;# get line number from $a
+        set line_txt [$txt get $line_nr.1 $line_nr.end];# get full text in the line
         set e [lindex $end $i];
-        set l [$txt get "$a - 2 c" "$a + $e c + 1 c"];  # one char more, so we can detect head line
+        set l [$txt get "$a - 2 c" "$a + $e c + 1 c"]  ;# one char more, so we can detect head line
         set t [string trim [$txt get $a "$a + $e c"]];
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
         set name [_str2obj [string trim $t]]
         _dbx 4 " 5. LNK: $i\tHELP-LNK-$name\t$t"
-        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: does not match all lines proper
+        if {[regexp {^\s*[+|-]} $line_txt] && [regexp -lineanchor "\\s\\s+$r$" $l]} {
             # these matches are assumed to be the header lines
             $txt tag add    HELP-LNK-$name $a "$a + $e c";
             $txt tag add    HELP-LNK       $a "$a + $e c";
@@ -2971,10 +2981,10 @@ proc search_text  {w search_text} {
     set regex $search_text
     set words ""       ;# will be computed below
     set rmode "-regexp";# mode (switch) for Tcl's "Text search"
-    # prepare regex according smart and fuzzy mode; builds a new regex
+    # prepare RegEx according smart and fuzzy mode; builds a new RegEx
     switch $search(mode) {
         {smart} {
-            set regex [regsub -all {([(|*)])}   $regex {[\1]}] ;# some characters need to be escaped before building regex
+            set regex [regsub -all {([(|*)])}   $regex {[\1]}] ;# some characters need to be escaped before building RegEx
             # build pattern with each char optional
             set i 0
             foreach c [lindex [split $regex ""]] {
@@ -3009,8 +3019,8 @@ proc search_text  {w search_text} {
             }
         }
         {regex} {
-            # regex fails, when some meta characters are uses as first or last
-            # character, sanatised regex to avoid compiling regex
+            # RegEx fails, when some meta characters are uses as first or last
+            # character, sanatised RegEx to avoid compiling RegEx
             # Note: Tcl is picky about character classes, need \\ inside []
             set regex [regsub {^(\\)}     $regex {\\\1}]   ;# leading  \ is bad
             set regex [regsub {^([|*+-])} $regex {[\1]}]   ;# leading *|+ is bad
@@ -3149,7 +3159,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.232 20/11/02 17:14:54
+ #?      @(#) .o-saft.tcl generated by 1.233 20/11/02 19:57:06
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
