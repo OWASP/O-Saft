@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.71 20/11/02 00:28:36
+# SID   @(#) help.txt 1.72 20/11/02 19:57:31
 
 NAME
 
@@ -200,7 +200,7 @@ TECHNICAL INFORMATION
           * +cipherall  command obsolete, !!Hint is printed
           * +cipherraw  command obsolete, !!Hint is printed
           * --openssl-ciphers  --force-openssl  changed to  --ciphermode=openssl
-          * --openssl=TOOL  TOOL only used for  +cipher --ciphermode=openssl
+          * --openssl=TOOL  TOOL only used for  +cipher  --ciphermode=openssl
           * --legacy=owasp  option obsolete
 
         The commands  +cipherall  and  +cipherraw  are "converted" to the new
@@ -208,10 +208,10 @@ TECHNICAL INFORMATION
 
               VERSION < 19.11.19           VERSION > 19.11.19
              #----------------------------+---------------------------------
-              * +cipher                      +cipher --ciphermode=ssleay
-              * +cipher --force-openssl      +cipher --ciphermode=openssl
+              * +cipher                      +cipher  --ciphermode=ssleay
+              * +cipher  --force-openssl     +cipher  --ciphermode=openssl
               * +cipherall                   +cipher
-              * +cipherraw                   +cipher --ciphermode=intern
+              * +cipherraw                   +cipher  --ciphermode=intern
              #----------------------------+---------------------------------
 
     Version before 19.11.19
@@ -225,8 +225,8 @@ TECHNICAL INFORMATION
         In general the tool uses Perl's  Net::SSLeay(3pm) module which itself
         is based on libssl and/or libssleay library of the operating system.
         It's possible to use other versions of these libraries, see options:
-          * --exe-path=PATH --exe=PATH
-          * --lib-path=PATH --lib=PATH
+          * --exe-path=PATH  --exe=PATH
+          * --lib-path=PATH  --lib=PATH
           * --envlibvar=NAME
 
         The external  openssl(1)  is called to extract  some information from
@@ -234,10 +234,10 @@ TECHNICAL INFORMATION
         options:
           * --openssl=TOOL
           * --no-openssl
-          * --openssl-ciphers  --force-openssl
-          * --exe-path=PATH --exe=PATH
+          * --openssl-ciphers   --force-openssl
+          * --exe-path=PATH     --exe=PATH
           * --openssl-cnf=PATH
-          * --openssl-s_client --s_client
+          * --openssl-s_client  --s_client
 
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
         0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
@@ -375,8 +375,8 @@ COMMANDS
 
           Different output formats are used for the  --legacy  option:
             * --legacy=simple   tabular output of cipher values
-            * --legacy=full     as --legacy=simple but more data
-            * --legacy=openssl  output like with +ciphers command
+            * --legacy=full     as  --legacy=simple  but more data
+            * --legacy=openssl  output like with  +ciphers  command
             * --legacy=ssltest  output like "ssltest --list"
 
 #          Use  --v  option to show more details.
@@ -479,7 +479,7 @@ COMMANDS
 
           Various checks according certificate's extended Validation (EV).
 
-          Hint: use option  --v --v  to get information about failed checks.
+          Hint: use option  --v  --v  to get information about failed checks.
 
       +sizes
 
@@ -496,10 +496,10 @@ COMMANDS
 
           Dumps internal data for SSL connection and target certificate. This
           is mainly for debugging and  should not be used together with other
-          commands (except +cipher).
+          commands (except  +cipher).
           Each key-value pair is enclosed in  '#{'  and  '#}' .
 
-          Using  --trace --trace  dumps data of  Net::SSLinfo  too.
+          Using  --trace  --trace  dumps data of  Net::SSLinfo  too.
 
       +exec
 
@@ -611,7 +611,7 @@ COMMANDS
 
           +cipher  lists a summary of ciphers selected by the server for each
           protocol requested by the user (for example by using options like:
-          --sslv3 --tlsv1 etc.).  When the  --v  option is used, all selected
+          --sslv3  --tlsv1 etc.). When the  --v  option is used, all selected
           ciphers for all known protocols are listed. This summary focuses on
           counts for various ciphers.
 
@@ -661,8 +661,8 @@ COMMANDS
 
       +extensions vs. +tlsextensions
 
-          +extensions  shows the "Certificate extensions" and  +tlsextensions
-          will show the TLS protocol extensions.
+          "Certificate extensions" are shown with  +extensions  while the TLS
+          protocol extensions are shown with  +tlsextensions.
           Use  +tlsextdebug  to show more informations about the TLS protocol
           extensions.
 
@@ -894,7 +894,7 @@ OPTIONS
       --host=HOST --port=PORT HOST:PORT HOST
 
           When giving more than one HOST argument,  the sequence of the given
-          HOST argument and the given  --port=PORT  and the given --host=HOST
+          HOST argument and the given  --port=PORT and the given  --host=HOST
           options are important.
           The rule how ports and hosts are mapped is as follows:
 
@@ -974,7 +974,7 @@ OPTIONS
           * any check returns  'no', except if  'no (<<...>>)'
           * insecure protocols are available
           * insecure ciphers are supported
-          * ciphers without PFS are supported (disable with --exitcode-cipher)
+          * ciphers without PFS are supported, disable with  --exitcode-cipher
 
           In particular, the status code will be the total count of all these
           checks. The status code will also be printed at end, like:
@@ -983,7 +983,7 @@ OPTIONS
           Parts of these checks can be diasabled,  see  --exitcode-*  options
           below.
 
-          Use  --v or --exitcode-v  to see details about the performed checks.
+          Use  --v or  --exitcode-v to see details about the performed checks.
 
           Functionality implemented experimental, may change in future.
 
@@ -1191,6 +1191,9 @@ OPTIONS
 
     Options for SSL connection to target
 
+      --ciphermode=intern
+      --ciphermode=openssl
+      --ciphermode=ssleay
       --ciphermode=MODE
 
           Following 'MODE's are supported:
@@ -1269,7 +1272,7 @@ OPTIONS
       --dtlsv11
       --dtlsv12
       --dtlsv13
-      --SSL, -protocol SSL
+      --SSL, --protocol SSL
 
       --no-sslv2
       --no-sslv3
@@ -1538,7 +1541,7 @@ OPTIONS
           offered ciphers is supported by the server.
 
           Continue testing with next ciphers  when the target  disconnects or
-          does not send data within specified timeout (see --timeout).
+          does not send data within specified timeout (see  --timeout).
           Useful for TLS intolerant servers.
 
       --no-ssl-nodata-nocipher
@@ -1688,7 +1691,7 @@ OPTIONS
       --legacy=quick
 
           Internal format: use tab as separator; ciphers are printed with bit
-          length (implies --tab).
+          length (implies  --tab).
 
       --legacy=simple
 
@@ -2023,10 +2026,10 @@ OPTIONS
 
           Print some internal variable names in output texts (labels).
           Variable names are prefixed to printed line and enclosed in  # .
-          Example without --trace-key :
+          Example without  --trace-key :
               Certificate Serial Number:          deadbeef
 
-          Example with    --trace-key :
+          Example with     --trace-key :
               #serial#          Certificate Serial Number:          deadbeef
 
       --trace-time
@@ -2041,7 +2044,7 @@ OPTIONS
             Trace Option          Alias Option
           #--------------------+----------------------------
           * --trace=1           same as  --trace
-          * --trace=2           same as  --trace --trace
+          * --trace=2           same as  --trace  --trace
           * --trace=arg         same as  --trace-arg
           * --trace=cmd         same as  --trace-cmd
           * --trace=key         same as  --trace-key
@@ -2123,7 +2126,7 @@ LAZY SYNOPSIS
 
         This applies to most such options,  --port  is just an example.  When
         used in the  RC-FILE, the  --OPTION=VALUE  variant must be used.
-# does not apply to --trace option
+# does not apply to  --trace  option
 
       Option Names
 
@@ -2650,7 +2653,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
         3.2   SSL/TLS_Versionen
 
-          Only TLSv1.2 allowed (except for +tr-02102-  which also allows
+          Only TLSv1.2 allowed (except for  +tr-02102-  which also allows
           TLSv1.1)
 
         3.3.1 Empfohlene Cipher Suites
@@ -2925,7 +2928,7 @@ OUTPUT
 
         For more details on these lines, please refer to  RESULTS  above.
 
-        When used in  --legacy=full  or --legacy=simple  mode, the output may
+        When used in  --legacy=full  or  --legacy=simple mode, the output may
         contain formatting lines for better (human) readability.
 
     Errors, Warnings, Hints
@@ -3179,7 +3182,7 @@ CIPHER NAMES
 
         [openssl] ... openssl 1.0.1
 
-        If in any doubt, use  +list --v  to get an idea about the mapping.
+        If in any doubt, use  +list  --v  to get an idea about the mapping.
         Use  --help=regex  to see which regex are used to handle all variants
         herein.
 
@@ -3314,7 +3317,7 @@ KNOWN PROBLEMS
 
         See also  X&Note on SSL versions& .
 
-        Workaround: use option: --no-sslv2 --no-sslv3 --no-tlsv13 --no-dtlsv1
+        Workaround: use option:  --no-sslv2  --no-sslv3  --no-tlsv13  --no-dtlsv1
 
     Use of uninitialized value $_[0] in length at (eval 4) line 1.
 
@@ -3376,7 +3379,7 @@ KNOWN PROBLEMS
 
         Workaround: try to use  --openssl=TOOL  option.
 
-        This text may appears in any of the compliance checks (like +rfc7525)
+        This text may appear in any of the compliance checks (like  +rfc7525)
         which may be a false positive.  For these checks openssl is also used
         to get the DH Parameter.
 
@@ -3402,7 +3405,7 @@ KNOWN PROBLEMS
         versions of  podviewer.  It is not the obligation of this tool to fix
         well known bugs in other tools. However, we can offer workarounds.
 
-        Workaround: generate the affected output using --std-format=* options
+        Workaround: generate the affected output using  --std-format=*  options
         For example:
               $0 --no-rc --std-format=raw --help=gen-pod
 
@@ -3589,9 +3592,9 @@ LIMITATIONS
         It is a trade-off to wait for all information done accurately,  or to
         get the results quickly. The logic to stop connecting for --ssl-error
         can be controlled with following additional options:
-          * --ssl-error-max=CNT     - max. continous errors
-          * --ssl-error-timeout=SEC - treat a failure as error after timeout
-          * --ssl-error-total=CNT   - max. amount of errors
+          * --ssl-error-max=CNT      - max. continous errors
+          * --ssl-error-timeout=SEC  - treat a failure as error after timeout
+          * --ssl-error-total=CNT    - max. amount of errors
 
         This means that no more connections are made when more than
           * --ssl-error-max errors occour sequentialy
@@ -3613,10 +3616,10 @@ LIMITATIONS
         target. For example, continous but not consecutive timeouts may indi-
         cate a bad or instable network connection, but not that the target to
         be connected blocks. In such a case sequence of timeouts like follows
-        may be observed (assuming --ssl-error-max=3):
+        may be observed (assuming  --ssl-error-max=3):
               0 5 1 2 2 2 4 2 3 2 3 3 3 2
-              . . . ^                 ^____ stop for --ssl-error-timeout=3
-              . . . |______________________ stop for --ssl-error-timeout=2
+              . . . ^                 ^____ stop for  --ssl-error-timeout=3
+              . . . |______________________ stop for  --ssl-error-timeout=2
 
         On normal (even slow) network connections  dozens of  connections per
         second are usual, hence the timeout is always  0 or 1.  Based on that
@@ -3647,7 +3650,8 @@ LIMITATIONS
     Debug and trace output
 
         When both  --trace-key  and  --trace-cmd  options are used, output is
-        mixed, obviously. Hint: output for --trace-cmd always contains "CMD".
+        mixed, obviously.
+        Hint: output for  --trace-cmd  always contains "CMD".
 
         Any  --trace*  option implies  --trace-time .
 
@@ -4120,8 +4124,8 @@ HACKER's INFO
         ('exec') itself recursively with all given options, except the option
         itself. The environment variables  'LD_LIBRARY_PATH'  and 'PATH'  are
         set before executing as follows:
-          * prepend  'PATH'  with all values given with  --exe=PATH
-          * prepend  'LD_LIBRARY_PATH'  with all values given with --lib=PATH
+          * prepend  'PATH'  with all values given by  --exe=PATH
+          * prepend  'LD_LIBRARY_PATH'  with all values given by  --lib=PATH
 
 
         This is exactly, what X&Cumbersome Approach& below describes. So these
@@ -4331,7 +4335,7 @@ DEBUG
 
            #o-saft.pl::
            #Net::SSLinfo::
-             Trace information for --trace  options.
+             Trace information for  --trace  options.
 
            #{
              Trace information from  NET::SSLinfo  for  --trace  options.
