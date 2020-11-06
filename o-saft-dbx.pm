@@ -4,9 +4,6 @@
 #!# Copyright (c) 2020 Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
-## no critic qw(Documentation::RequirePodSections)
-#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
-
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_cfg_do()
@@ -19,7 +16,7 @@
 #  `use strict;' not useful here, as we mainly use our global variables
 use warnings;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.143 20/10/31 13:33:58";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.144 20/11/07 00:08:51";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -32,12 +29,6 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 ## no critic qw(Subroutines::RequireArgUnpacking)
 #        Parameters are ok for trace output.
 
-## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
-#        We have a lot of single character strings, herein, that's ok.
-
-## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
-#        We have some constants herein, that's ok.
-
 ## no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
 #        That's intended.
 
@@ -46,6 +37,14 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #        We believe that most RegEx are not too complex.
+
+# for Severity 2 only:
+
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+#        We have some constants herein, that's ok.
+
+## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
+#        We have a lot of single character strings, herein, that's ok.
 
 # debug functions
 sub _yTIME      {
@@ -1151,7 +1150,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.143 2020/10/31
+1.144 2020/11/07
 
 =head1 AUTHOR
 
