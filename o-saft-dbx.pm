@@ -4,6 +4,8 @@
 #!# Copyright (c) 2020 Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
+package main;   # ensure that main:: variables are used, if not defined herein
+
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_cfg_do()
@@ -11,20 +13,6 @@
 #       _is_member()
 #       _need_cipher()
 #       _get_ciphers_range()
-
-## no critic qw(TestingAndDebugging::RequireUseStrict)
-#  `use strict;' not useful here, as we mainly use our global variables
-use warnings;
-
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.144 20/11/07 00:08:51";
-
-package main;   # ensure that main:: variables are used, if not defined herein
-
-no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # must be herein, as most subroutines are already defined in main
-   # warnings pragma is local to this file!
-no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # "... used only once: possible typo ..." appears when called as main only
 
 ## no critic qw(Subroutines::RequireArgUnpacking)
 #        Parameters are ok for trace output.
@@ -39,13 +27,26 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #        We believe that most RegEx are not too complex.
 
 # for Severity 2 only:
-
 ## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
 #        We have some constants herein, that's ok.
 
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
 #        We have a lot of single character strings, herein, that's ok.
 
+## no critic qw(TestingAndDebugging::RequireUseStrict)
+#  `use strict;' not useful here, as we mainly use our global variables
+use warnings;
+
+no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # must be herein, as most subroutines are already defined in main
+   # warnings pragma is local to this file!
+no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # "... used only once: possible typo ..." appears when called as main only
+
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.145 20/11/07 00:51:57";
+
+#_____________________________________________________________________________
+#__________________________________________________________ debug functions __|
 # debug functions
 sub _yTIME      {
     if (0 >= $cfg{'traceTIME'}) { return ""; }
@@ -960,13 +961,14 @@ sub _yeast_test {
 } # _yeast_test
 
 sub _main_dbx       {
+    my $arg = shift || "--help";
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
-    my $arg = shift || "--help";
+    #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/) {
-        # printf("# %s %s\n", __PACKAGE__, $mainsid);  # FIXME: if it is a perl package
+        # printf("# %s %s\n", __PACKAGE__, $VERSION);   # FIXME: if it is a perl package
         printf("# %s %s\n", __FILE__, $SID_dbx);
         if (eval {require Pod::Perldoc;}) {
             # pod2usage( -verbose => 1 )
@@ -1150,7 +1152,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.144 2020/11/07
+1.145 2020/11/07
 
 =head1 AUTHOR
 
