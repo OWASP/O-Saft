@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.227 20/11/07 11:16:28",
+    SID_osaft   => "@(#) osaft.pm 1.228 20/11/07 11:30:09",
 
 };
 
@@ -2922,14 +2922,16 @@ sub osaft_sleep {
 
 sub print_pod       {
     #? print POD of specified file; exits program
-    my $arg = shift;    # filename where to read POD from
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    my $file = shift;   # filename where to read POD from
+    my $pack = shift;   # package name
+    my $vers = shift;   # package version
+    printf("# %s %s\n", $pack, $vers);
     if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
+        exit( Pod::Perldoc->run(args=>[$file]) );
     }
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
+        printf("# no Pod::Perldoc installed, please try:\n  perldoc $file\n");
     }
     exit 0;
 } # print_pod
@@ -3154,7 +3156,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.227 2020/11/07
+1.228 2020/11/07
 
 =head1 AUTHOR
 
