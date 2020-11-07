@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.228 20/11/07 11:30:09",
+    SID_osaft   => "@(#) osaft.pm 1.229 20/11/07 11:35:21",
 
 };
 
@@ -3129,7 +3129,7 @@ sub _main_lib       {
     binmode(STDERR, ":unix:utf8");
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod(args=>[$0])   if ($arg =~ m/^--?h(?:elp)?$/);
+        print_pod($0, __PACKAGE__, SID_osaft)   if ($arg =~ m/^--?h(?:elp)?$/); # print own help# print own help
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -3156,7 +3156,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.228 2020/11/07
+1.229 2020/11/07
 
 =head1 AUTHOR
 
