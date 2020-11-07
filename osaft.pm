@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.229 20/11/07 11:35:21",
+    SID_osaft   => "@(#) osaft.pm 1.230 20/11/07 11:53:26",
 
 };
 
@@ -2931,6 +2931,8 @@ sub print_pod       {
         exit( Pod::Perldoc->run(args=>[$file]) );
     }
     if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            # may return:  You need to install the perl-doc package to use this program.
+            #exec "perldoc $0"; # scary ...
         printf("# no Pod::Perldoc installed, please try:\n  perldoc $file\n");
     }
     exit 0;
@@ -3156,7 +3158,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.229 2020/11/07
+1.230 2020/11/07
 
 =head1 AUTHOR
 
