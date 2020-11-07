@@ -16,7 +16,14 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.29 20/11/07 01:15:44";
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".", "$_path", "$_path/lib");
+}
+
+use osaft;
+
+my  $SID_usr= "@(#) o-saft-usr.pm 1.30 20/11/07 11:48:39";
 
 
 #_____________________________________________________________________________
@@ -246,17 +253,7 @@ sub _main_usr       {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($arg =~ m/--?h(elp)?$/x) {
-        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
-        printf("# %s %s\n", __FILE__, $SID_usr);
-        if (eval{require Pod::Perldoc;}) {
-            # pod2usage( -verbose => 1 )
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-        }
-    }
+    print_pod($0, __FILE__, $SID_usr)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
     # no other options implemented yet
     exit 0;
 } # _main
@@ -267,7 +264,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.29 2020/11/07
+1.30 2020/11/07
 
 =head1 AUTHOR
 
