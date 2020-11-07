@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1006 20/11/01 21:01:02",
+    SID         => "@(#) yeast.pl 1.1007 20/11/07 16:26:47",
     STR_VERSION => "20.10.30",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -4079,25 +4079,19 @@ sub ciphers_scan_raw    {
         $_printtitle++;
         next if ($cfg{$ssl} == 0);
         if ($usesni >= 1) { # Do not use SNI with SSLv2 and SSLv3
-            # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
-            # they should be the same) because Net::SSLhello functions are
-            # called
+            # SSLv2 has no SNI; SSLv3 has originally no SNI
+            # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even they
+            # should be the same) because Net::SSLhello functions are called
+            $Net::SSLhello::usesni = $usesni;
             if ($ssl =~ m/^SSLv/) {
-                # SSLv2 has no SNI; SSLv3 has originally no SNI
                 _warn_nosni("409:", $ssl, $usesni);
-                $Net::SSLhello::usesni = 0;         # do not use SNI for this $ssl
-            } else {
-                $Net::SSLhello::usesni = $usesni;   # restore
+                $Net::SSLhello::usesni = 0;
             }
         }
         my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
-        my @accepted = ();                          # accepted ciphers
+        my @accepted = ();  # accepted ciphers
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
-        if (_is_cfg_do('cipher') or _is_cfg_do('check')) {
-            # FIXME: move to calling place
-            print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
-        }
         if (_is_cfg_do('cipher_intern')) {
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
@@ -4106,12 +4100,13 @@ sub ciphers_scan_raw    {
         if (_is_cfg_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d",
                          (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
-            # correct total number if first 2 ciphers are identical
-            # (this indicates cipher order by the server)
-            # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+            # correct total number if first 2 ciphers are identical (this
+            # indicates cipher order by the server);  delete one when the
+            # first 2 ciphers are identical (this indicates an order by the server)
         }
+
         # prepare for printing, list, needed for summary checks
-        my $last_a  = "";    # avoid duplicates
+        my $last_a  = "";   # avoid duplicates
         foreach my $key (@accepted) {
             # each entry looks like:  TLSv12  AES128-SHA256  yes
             next if ($last_a eq $key);
@@ -4124,8 +4119,13 @@ sub ciphers_scan_raw    {
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
         }
-        # FIXME: move rest of code (print*()) to calling place
+
+        # print ciphers
+        # NOTE: rest of code (print*()) should be moved to calling place,
+        #       but as the variables @all, @accepted are only available here
+        #       (or must be computed again), printing is done here      11/2020
         if (_is_cfg_do('cipher') or _is_cfg_do('check')) {
+            print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
             if (_is_cfg_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
