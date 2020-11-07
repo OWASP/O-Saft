@@ -16,7 +16,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_usr= "@(#) %M% %I% %E% %U%";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.29 20/11/07 01:15:44";
 
 
 #_____________________________________________________________________________
@@ -267,7 +267,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-%I% 20%E%
+1.29 2020/11/07
 
 =head1 AUTHOR
 
