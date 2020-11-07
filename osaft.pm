@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.225 20/11/07 01:43:16",
+    SID_osaft   => "@(#) osaft.pm 1.226 20/11/07 11:14:53",
 
 };
 
@@ -59,6 +59,7 @@ o-saft-lib -- common perl modul for O-Saft and related tools
 =over 2
 
 =item use osaft;                  # in perl code
+
 =item o-saft-lib.pm --help        # on command-line will print help
 
 =back
@@ -99,6 +100,8 @@ otherwise the calling script must handle warnings properly.
 
 =over 4
 
+=item --help
+
 =item --regex, --test-regex
 
 =back
@@ -124,6 +127,12 @@ Following functions (methods) must be defined in the calling program:
 =item _trace3( )
 
 =back
+
+=head1 NOTES
+
+It's often recommended not to export constants and variables from modules, see
+for example  http://perldoc.perl.org/Exporter.html#Good-Practices . The main
+purpose of this module is defining variables. Hence we export them.
 
 =head1 CONSTANTS
 
@@ -188,9 +197,6 @@ Following functions (methods) must be defined in the calling program:
 =back
 
 =head1 METHODS
-
-Only getter and setter methods are exported. All other methods must be used
-with the full package name.
 
 =cut
 
@@ -275,13 +281,12 @@ our @EXPORT     = qw(
                 set_target_stop
                 set_target_error
                 sort_cipher_names
-                set_hint
-                printhint
-                osaft_done
                 tls_const2text
                 tls_key2text
                 tls_text2key
+                printhint
 );
+# not yet exported: osaft_sleep osaft_done
 # insert above in vi with:
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
@@ -2404,6 +2409,48 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 
 =pod
 
+=head2 tls_text2key($text)
+
+Convert text to internal key: 0x00,0x26 -> 0x03000026
+
+=head2 tls_key2text($key)
+
+Convert internal key to text: 0x03000026 -> 0x00,0x26
+
+=head2 tls_const2text($constant_name)
+
+Convert TLS constant name to text (just replac _ by space).
+
+=cut
+
+sub tls_text2key        {
+    my $txt = shift;
+       $txt =~ s/(,|0x)//g;
+    if (4 < length($txt)) {
+       $txt = "0x02$txt";    # SSLv2
+    } else {
+       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
+    }
+    return $txt;
+}
+
+sub tls_key2text        {
+    my $key = shift;
+    if ($key =~ m/^0x0300/) {
+       $key =~ s/0x0300//;      #   03000004 ->     0004
+    } else {
+       $key =~ s/^0x02//;       # 0x02030080 ->   030080
+    }
+       $key =~ s/(..)/,0x$1/g;  #       0001 -> ,0x00,0x04
+       $key =~ s/^,//;          # ,0x00,0x04 ->  0x00,0x04
+       $key =  "     $key" if (10 > length($key));
+    return "$key";
+}
+
+sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
+
+=pod
+
 =head2 get_cipher_suitename($cipher)
 
 =head2 get_cipher_suiteconst($cipher)
@@ -2434,41 +2481,8 @@ Get information from internal C<%cipher_names> data structure.
 
 Get information from internal C<%cipher> data structure.
 
-=head2 tls_text2key($text)
-
-=head2 tls_key2text($key)
-
-=head2 tls_const2text($constant_name)
-
 =cut
 
-sub tls_text2key        {
-    #? convert text to internal key: 0x00,0x26 -> 0x03000026
-    my $txt = shift;
-       $txt =~ s/(,|0x)//g;
-    if (4 < length($txt)) {
-       $txt = "0x02$txt";    # SSLv2
-    } else {
-       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
-    }
-    return $txt;
-}
-
-sub tls_key2text        {
-    #? convert internal key to text: 0x03000026 -> 0x00,0x26
-    my $key = shift;
-    if ($key =~ m/^0x0300/) {
-       $key =~ s/0x0300//;      #   03000004 ->     0004
-    } else {
-       $key =~ s/^0x02//;       # 0x02030080 ->   030080
-    }
-       $key =~ s/(..)/,0x$1/g;  #       0001 -> ,0x00,0x04
-       $key =~ s/^,//;          # ,0x00,0x04 ->  0x00,0x04
-       $key =  "     $key" if (10 > length($key));
-    return "$key";
-}
-
-sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
 sub get_cipher_suitename { my $c=shift; return $cipher_names{$c}[0] if (defined $cipher_names{$c}[0]); return ""; }
 sub get_cipher_suiteconst{ my $c=shift; return $cipher_names{$c}[1] if (defined $cipher_names{$c}[1]); return ""; }
 sub get_cipher_suitealias{ my $c=shift; return $cipher_alias{$c}[0] if (defined $cipher_alias{$c}[0]); return ""; }
@@ -2971,7 +2985,7 @@ sub test_cipher_regex   {
 
 sub test_cipher_sort    {
     #? check sorting cipher according strength
-    # see ../o-saft-dbx.pm  _yeast_ciphers_sorted()
+    # TODO: see ../o-saft-dbx.pm  _yeast_ciphers_sorted()
     return;
 } # test_cipher_sort
 
@@ -3019,10 +3033,10 @@ sub _prot_init_value    {
 } # _prot_init_value
 
 sub _cfg_init   {
+    #? initialise dynamic settings in %cfg, copy data from %prot
     # initialise targets with entry containing defaults
     push(@{$cfg{'targets'}}, @target_defaults);
-    #? initialise dynamic settings in %cfg, copy data from %prot
-    $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
+    $cfg{'openssl_option_map'} ->{$_} = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
     $cfg{'protos_alpn'} = [split(/,/, $cfg{'protos_next'})];
     $cfg{'protos_npn'}  = [split(/,/, $cfg{'protos_next'})];
@@ -3046,7 +3060,6 @@ sub _cfg_init   {
     $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
     $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
     $cfg{'openssl_fips'}= $ENV{'OPENSSL_FIPS'} if (defined $ENV{'OPENSSL_FIPS'});
-
     return;
 } # _cfg_init
 
@@ -3078,7 +3091,6 @@ sub _osaft_init {
     $cfg{'ARGV'}    = [@ARGV];
     $cfg{'prefix_trace'}    = "#${me}::";
     $cfg{'prefix_verbose'}  = "#${me}: ";
-
     _prot_init_value(); # initallise WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallise dynamic data in %cfg
     _cmd_init();        # initallise dynamic commands in %cfg
@@ -3089,8 +3101,9 @@ sub _osaft_init {
     return;
 } # _osaft_init
 
-sub _main_help      {
-    #? print own help
+sub _main_help       {
+    #? print POD of specified file; exits program
+    my $arg = shift;    # filename where to read POD from
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
@@ -3109,7 +3122,7 @@ sub _main_lib       {
     binmode(STDERR, ":unix:utf8");
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        _main_help()        if ($arg =~ m/^--?h(?:elp)?$/);
+        _main_help(args=>[$0])   if ($arg =~ m/^--?h(?:elp)?$/);
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -3130,19 +3143,13 @@ _osaft_init();          # complete initialisations
 
 =pod
 
-=head1 NOTES
-
-It's often recommended not to export constants and variables from modules, see
-for example  http://perldoc.perl.org/Exporter.html#Good-Practices . The main
-purpose of this module is defining variables. Hence we export them.
-
 =head1 SEE ALSO
 
 # ...
 
 =head1 VERSION
 
-1.225 2020/11/07
+1.226 2020/11/07
 
 =head1 AUTHOR
 
