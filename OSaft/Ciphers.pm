@@ -44,7 +44,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '20.10.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.45 20/11/07 12:08:29";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.46 20/11/07 12:10:46";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1447,19 +1447,6 @@ sub _main_usage     {
     return;
 } # _main_usage
 
-sub _main_help      {
-    #? print own help
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require Pod::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    exit 0;
-} # _main_help
-
 sub _main           {
     #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -1592,7 +1579,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.45 2020/11/07
+1.46 2020/11/07
 
 =head1 AUTHOR
 
