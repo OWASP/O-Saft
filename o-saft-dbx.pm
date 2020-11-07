@@ -43,7 +43,14 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.146 20/11/07 01:14:50";
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".", "$_path", "$_path/lib");
+}
+
+use osaft;
+
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.147 20/11/07 11:55:36";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -967,19 +974,8 @@ sub _main_dbx       {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($arg =~ m/--?h(elp)?$/) {
-        # printf("# %s %s\n", __PACKAGE__, $VERSION);   # FIXME: if it is a perl package
-        printf("# %s %s\n", __FILE__, $SID_dbx);
-        if (eval {require Pod::Perldoc;}) {
-            # pod2usage( -verbose => 1 )
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            # may return:  You need to install the perl-doc package to use this program.
-            #exec "perldoc $0"; # scary ...
-            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-        }
-    }
+    print_pod($0, __FILE__, $SID_dbx)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
+    # else
     if ($arg =~ m/--tests?$/) {
         _yeast_test_help();
         exit 0;
@@ -1152,7 +1148,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.146 2020/11/07
+1.147 2020/11/07
 
 =head1 AUTHOR
 
