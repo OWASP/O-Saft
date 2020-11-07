@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.226 20/11/07 11:14:53",
+    SID_osaft   => "@(#) osaft.pm 1.227 20/11/07 11:16:28",
 
 };
 
@@ -285,6 +285,7 @@ our @EXPORT     = qw(
                 tls_key2text
                 tls_text2key
                 printhint
+                print_pod
 );
 # not yet exported: osaft_sleep osaft_done
 # insert above in vi with:
@@ -2906,6 +2907,10 @@ Wrapper to simulate "sleep" with perl's select.
 
 Print hint for specified command, additionl text will be appended.
 
+=head2 osaft::print_pod($file)
+
+Print POD for specified file, exits program.
+
 =cut
 
 sub osaft_sleep {
@@ -2914,6 +2919,20 @@ sub osaft_sleep {
     select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
     return;
 } # osaft_sleep
+
+sub print_pod       {
+    #? print POD of specified file; exits program
+    my $arg = shift;    # filename where to read POD from
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require Pod::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    exit 0;
+} # print_pod
 
 sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy perlcritic
     #? Print hint for specified command.
@@ -3101,20 +3120,6 @@ sub _osaft_init {
     return;
 } # _osaft_init
 
-sub _main_help       {
-    #? print POD of specified file; exits program
-    my $arg = shift;    # filename where to read POD from
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require Pod::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    exit 0;
-} # _main_help
-
 sub _main_lib       {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -3122,7 +3127,7 @@ sub _main_lib       {
     binmode(STDERR, ":unix:utf8");
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        _main_help(args=>[$0])   if ($arg =~ m/^--?h(?:elp)?$/);
+        print_pod(args=>[$0])   if ($arg =~ m/^--?h(?:elp)?$/);
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -3149,7 +3154,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.226 2020/11/07
+1.227 2020/11/07
 
 =head1 AUTHOR
 
