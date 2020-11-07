@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.224 20/11/01 15:06:19",
+    SID_osaft   => "@(#) osaft.pm 1.225 20/11/07 01:43:16",
 
 };
 
@@ -2882,6 +2882,34 @@ sub set_target_stop  { my $i=shift; $cfg{'targets'}[$i][10] = shift; return; }
 sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 
 
+=pod
+
+=head2 osaft::osaft_sleep($wait)
+
+Wrapper to simulate "sleep" with perl's select.
+
+=head2 osaft::printhint($cmd,@text)
+
+Print hint for specified command, additionl text will be appended.
+
+=cut
+
+sub osaft_sleep {
+    #? wrapper for IO::select
+    my $wait = shift;
+    select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
+    return;
+} # osaft_sleep
+
+sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy perlcritic
+    #? Print hint for specified command.
+    my $cmd  = shift;
+    my @args = @_;
+    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
+    return;
+} # printhint
+
+
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
@@ -3061,33 +3089,6 @@ sub _osaft_init {
     return;
 } # _osaft_init
 
-
-=pod
-
-=head2 osaft::printhint($cmd,@text)
-
-Print hint for specified command, additionl text will be appended.
-
-=head2 osaft::osaft_sleep($wait)
-
-Wrapper to simulate "slee" with perl's select.
-=cut
-
-sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy perlcritic
-    #? Print hint for specified command.
-    my $cmd  = shift;
-    my @args = @_;
-    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
-    return;
-} # printhint
-
-sub osaft_sleep {
-    #? wrapper for IO::select
-    my $wait = shift;
-    select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
-    return;
-} # osaft_sleep
-
 sub _main_help      {
     #? print own help
     printf("# %s %s\n", __PACKAGE__, $VERSION);
@@ -3101,7 +3102,7 @@ sub _main_help      {
     exit 0;
 } # _main_help
 
-sub _main           {
+sub _main_lib       {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     binmode(STDOUT, ":unix:utf8");
@@ -3116,7 +3117,7 @@ sub _main           {
         }
     }
     exit 0;
-} # _main
+} # _main_lib
 
 sub osaft_done  {};         # dummy to check successful include
 
@@ -3141,7 +3142,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.224 2020/11/01
+1.225 2020/11/07
 
 =head1 AUTHOR
 
@@ -3162,7 +3163,7 @@ sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 sub _warn       { ::_warn(@_);  return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
-_main(@ARGV) if (not defined caller);
+_main_lib(@ARGV) if (not defined caller);
 
 1;
 
