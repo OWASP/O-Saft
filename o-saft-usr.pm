@@ -4,10 +4,19 @@
 #!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
+package main;   # ensure that main:: variables are used
+
 ## no critic qw(Documentation::RequirePodSections)
 # SEE Perl:perlcritic
 
-package main;   # ensure that main:: variables are used
+use strict;
+use warnings;
+
+no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # must be herein, as most subroutines are already defined in main
+   # warnings pragma is local to this file!
+
+my  $SID_usr= "@(#) %M% %I% %E% %U%";
 
 
 #_____________________________________________________________________________
@@ -136,24 +145,7 @@ For example:
 
     sub usr_pre_args() {}
 
-=head1 VERSION
-
-1.28 2020/10/31
-
-=head1 AUTHOR
-
-13-nov-13 Achim Hoffmann
-
 =cut
-
-use strict;
-use warnings;
-
-my  $SID_usr= "@(#) o-saft-usr.pm 1.28 20/10/31 13:38:25";
-
-no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # must be herein, as most subroutines are already defined in main
-   # warnings pragma is local to this file!
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -247,11 +239,13 @@ sub usr_pre_exit    {
     return;
 };
 
-sub _main           {
+sub _main_usr       {
+    my $arg = shift || "--help";    # without argument print own help
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
-    my $arg = shift;
-       $arg = "--help"; # no other options implemented yet
+    #  SEE Perl:binmode()
+    binmode(STDOUT, ":unix:utf8");
+    binmode(STDERR, ":unix:utf8");
     if ($arg =~ m/--?h(elp)?$/x) {
         # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a perl package
         printf("# %s %s\n", __FILE__, $SID_usr);
@@ -263,10 +257,24 @@ sub _main           {
             printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
         }
     }
+    # no other options implemented yet
     exit 0;
 } # _main
 
 sub o_saft_usr_done {};     # dummy to check successful include
+
+=pod
+
+=head1 VERSION
+
+%I% 20%E%
+
+=head1 AUTHOR
+
+13-nov-13 Achim Hoffmann
+
+=cut
+
 ## PACKAGE }
 
 # local functions {
@@ -276,6 +284,6 @@ sub o_saft_usr_done {};     # dummy to check successful include
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main(@ARGV) if (not defined caller);
+_main_usr(@ARGV) if (not defined caller);
 
 1;
