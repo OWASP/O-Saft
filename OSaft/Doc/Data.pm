@@ -25,17 +25,22 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.10.30";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.33 20/11/01 23:05:38";
+my  $SID_data   = "@(#) Data.pm 1.34 20/11/07 12:19:23";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
-# TODO: use osaft; # needs proper path
-my $STR_WARN    = "**WARNING: ";
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, ".", "$_path", "$_path/lib");
+}
+
+use osaft qw(print_pod STR_WARN);
+
 sub _warn   {
     my @txt = @_;
     return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
     local $\ = "\n";
-    print($STR_WARN, join(" ", @txt));
+    print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
 }; # _warn
@@ -407,33 +412,19 @@ sub _main_usage {
     return;
 }; # _main_usage
 
-sub _main_help  {
-    #? print own help
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval {require Pod::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    exit 0;
-}; # _main_help
-
 sub _main       {
     #? print own documentation or that from specified file
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
+    #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-
-    if (0 > $#argv) { _main_help(); exit 0; }
-
+    print_pod($0, __PACKAGE__, $SID_data)       if (0 > $#argv);
     # got arguments, do something special
     while (my $cmd = shift @argv) {
         my $arg    = shift @argv; # get 2nd argument, which is filename
-        _main_help()            if ($cmd =~ /^--?h(?:elp)?$/);
+        print_pod($0, __PACKAGE__, $SID_data)   if ($cmd =~ /^--?h(?:elp)?$/);
         _main_usage()           if ($cmd =~ /^--usage$/);
         # ----------------------------- commands
         print list()            if ($cmd =~ /^list$/);
@@ -595,7 +586,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.33 2020/11/01
+1.34 2020/11/07
 
 =head1 AUTHOR
 
