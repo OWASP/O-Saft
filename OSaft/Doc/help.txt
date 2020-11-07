@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.72 20/11/02 19:57:31
+# SID   @(#) help.txt 1.73 20/11/07 15:03:02
 
 NAME
 
@@ -3753,7 +3753,7 @@ INSTALLATION
         Other possibilities are:
           * compiling openssl using following sources
             https://github.com/PeterMosmans/openssl/
-            see  X&Example: Compile OpenSSL&,
+            see  X&Example: Compile openssl&,
           * use any of the precomiled versions provided by https://testssl.sh/
           * use Docker owasp/o-saft (which contains a special openssl)
 
@@ -3774,7 +3774,7 @@ INSTALLATION
 
         Note that  Net::SSLeay  needs to be adapted properly then.
 
-    Example: Compile OpenSSL
+    Example: Compile openssl
 
         OpenSSL can be used from http://openssl.org/ or, as recommended, from
         https://github.com/PeterMosmans/openssl/ .
