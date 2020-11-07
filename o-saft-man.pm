@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.318 20/11/07 00:58:09";
+my  $SID_man= "@(#) o-saft-man.pm 1.319 20/11/07 11:57:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.318'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.319'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1612,23 +1612,13 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($arg =~ m/--?h(elp)?$/x) {
-        # printf("# %s %s\n", __PACKAGE__, $VERSION);  # FIXME: if it is a Perl package
-        printf("# %s %s\n", __FILE__, $version);
-        if (eval {require Pod::Perldoc;}) {
-            # pod2usage( -verbose => 1 );
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-        }
-    } else {
-        $arg =  $ARGV[0];
-        $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
-        $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
-            # testing this module is technically the same as getting the text
-        printhelp($arg);
-    }
+    print_pod($0, __FILE__, $SID_man)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
+    # else
+    $arg =  $ARGV[0];
+    $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
+    $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
+        # testing this module is technically the same as getting the text
+    printhelp($arg);
     exit 0;
 } # _main_man
 
@@ -1789,7 +1779,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.318 2020/11/07
+1.319 2020/11/07
 
 =head1 AUTHOR
 
