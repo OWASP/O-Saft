@@ -43,7 +43,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.145 20/11/07 00:51:57";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.146 20/11/07 01:14:50";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -961,7 +961,7 @@ sub _yeast_test {
 } # _yeast_test
 
 sub _main_dbx       {
-    my $arg = shift || "--help";
+    my $arg = shift || "--help";    # without argument print own help
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
     #  SEE Perl:binmode()
@@ -977,7 +977,7 @@ sub _main_dbx       {
         if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
             # may return:  You need to install the perl-doc package to use this program.
             #exec "perldoc $0"; # scary ...
-            printf("# no Pod::Perldoc installed, please try:\n   perldoc $0\n");
+            printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
         }
     }
     if ($arg =~ m/--tests?$/) {
@@ -1152,7 +1152,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.145 2020/11/07
+1.146 2020/11/07
 
 =head1 AUTHOR
 
