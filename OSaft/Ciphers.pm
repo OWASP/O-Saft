@@ -43,8 +43,8 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-my  $VERSION      = '20.02.02';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.44 20/11/01 20:23:11";
+my  $VERSION      = '20.10.30';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.45 20/11/07 12:08:29";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -58,6 +58,8 @@ BEGIN {
         unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
     }
 }
+
+use osaft qw(print_pod);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1463,14 +1465,13 @@ sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
+    #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-
-    if (0 > $#argv) { _main_help(); exit 0; }
-
+    print_pod($0, __PACKAGE__, $SID_ciphers)     if (0 > $#argv);
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        _main_help()        if ($arg =~ /^--?h(?:elp)?$/);
+        print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help# print own help
         _main_usage()       if ($arg =~ /^--?usage$/);
         # ----------------------------- options
         $VERBOSE++          if ($arg =~ /^--v$/);
@@ -1591,7 +1592,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.44 2020/11/01
+1.45 2020/11/07
 
 =head1 AUTHOR
 
