@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.38 20/11/01 15:34:25
+@(#) Makefile.pod 1.39 20/11/07 14:30:46
 
 =head1 AUTHOR
 
@@ -148,6 +148,7 @@ To avoid this, following symbolic links exist in  $(TEST.dir) :
 
     ./Net   -> ../Net
     ./OSaft -> ../OSaft
+    ./osaft.pm -> ../osaft.pm
 
 
 =head1 O-Saft Makefile*
