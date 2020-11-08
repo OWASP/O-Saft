@@ -29,8 +29,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "20.10.30";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.36 20/11/08 08:55:24";
+our $VERSION    = "20.11.02";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.37 20/11/08 17:00:32";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -76,7 +76,7 @@ OSaft::Doc::Data - common Perl module to read data for user documentation
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
-sub _replace_var {
+sub _replace_var    {
     #? replace $0 by name and $VERSION by version in array, return array
     my ($name, $version, @arr) = @_;
     # SEE Perl:map()
@@ -84,6 +84,18 @@ sub _replace_var {
     s#(?<!`)\$0#$name#g     for @arr;   # my name
     return @arr;
 } # _replace_var
+
+sub _get_standalone {
+    #? return help.txt with path in standalone mode
+    # o-saft-standalone.pl may be in installtion path or in contrib/ directory
+    # hence various places for help.txt are checked
+    my $file = shift;
+    $file =~ s#^\.\./##;
+    $file =~ s#contrib/##;              # remove if in path
+    $file =  "OSaft/Doc/$file";         # try this one ..
+    $file =  "../$file" if (not -e $file);  # .. or this one
+    return $file;
+} # _get_standalone
 
 sub _get_filehandle {
     #? return open file handle for passed filename,
@@ -97,7 +109,7 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
-                $path =~ s#^/(OSaft/.*)#$1#;# own module drectory
+                $path =~ s#^/(OSaft/.*)#$1#;# own module directory
                 $path =~ s#/[^/\\]*$##;     # relative path of this file
                 # Dirty hack: some OS return an absolute path for  __FILE__ ;
                 # then $file would not be found because that path is wrong. If
@@ -105,9 +117,8 @@ sub _get_filehandle {
                 # NOTE: This behaviour (on older Mac OSX) is considered a bug
                 #       in Perl there.
             $file = "$path/$file";
-            # following two line are for gen_standalone.sh (used with make)
-            # OSAFT_STANDALONE $file =~ s#^\.\./##; # remove leading ../
-            # OSAFT_STANDALONE $file =  "../OSaft/Doc/$file"; # use this one
+            # following line for gen_standalone.sh (used with make)
+            # OSAFT_STANDALONE $file =  _get_standalone($file);
         }
     }
     #dbx# print "#Data.pm file=$file ";
@@ -121,7 +132,7 @@ sub _get_filehandle {
         $fh = __PACKAGE__ . "::DATA";   # same as:  *OSaft::Doc::Data::DATA
         _warn("191: no '$file' found, using '$fh'") if not -e $file;
     }
-    #dbx# print "file: $file , FH: *$fh";
+    #dbx# print "#Data.pm file=$file , FH=*$fh";
     return $fh;
 } # _get_filehandle
 
@@ -586,7 +597,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.36 2020/11/08
+1.37 2020/11/08
 
 =head1 AUTHOR
 
