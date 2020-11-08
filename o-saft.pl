@@ -65,12 +65,13 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1007 20/11/07 16:26:47",
-    STR_VERSION => "20.10.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1011 20/11/08 13:00:15",
+    STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
 sub _set_binmode    {
+    # set discipline for I/O operations (STDOUT, STDERR)
     # SEE Perl:binmode()
     my $layer = shift;
     binmode(STDOUT, $layer);
@@ -131,20 +132,18 @@ sub _version_exit   { print STR_VERSION . "\n"; exit 0; }
 #$DB::single=1;          # for debugging; start with: PERL5OPT='-dt' $0
 
 BEGIN {
-    #yeast - yet another SSL tool
+    # SEE Perl:BEGIN
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
-    # SEE Perl:BEGIN , Therefore this scope is used for --help=* options only.
+    sub _VERSION() { return STR_VERSION; }
+        # get official version (used for --help=* and in private modules)
 
-    my $_me   = $0;        $_me   =~ s#.*[/\\]##;
-    my $_path = $0;        $_path =~ s#[/\\][^/\\]*$##;
-    my $_root = $ENV{PWD}; $_root =~ s#[/\\][^/\\]*$##; # should return parent dir
-    #dbx# print "#$_me path=$_path\n# PWD=$ENV{PWD}\n# root=$_root\n";
-    unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");# SEE Perl:@INC
-    if ($_path !~ m#^[.]/*$#) { # . already added
-        unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);  # prepend if found via $PATH
-    }
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+    # SEE Perl:@INC
+    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib/$_path") if ($_path ne $_me and $_path !~ m#^/#);
+    unshift(@INC, $_path);
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
     if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { _version_exit(); }
@@ -177,7 +176,8 @@ printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI
 
 #| definitions: forward declarations
 #| -------------------------------------
-sub _is_cfg_intern($);   # forward ...
+sub _is_cfg_intern($);
+    # forward ...
 
 #| README if any
 #| -------------------------------------
@@ -199,9 +199,9 @@ my  $cgi = 0;
 #| -------------------------------------
 # functions and variables used very early in main
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
-    # print line for debugging
-sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
-    # print line for debugging
+    #? print line for debugging
+sub _dbx    { my @txt = @_; _dprint(@txt); return; }
+    #? print line for debugging (alias for _dprint)
 sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
@@ -268,7 +268,7 @@ sub _print_read         {
 } # _print_read
 
 sub _load_file          {
-    # load file with Perl's require using the paths in @INC
+    #? load file with Perl's require using the paths in @INC
     # use `$0 +version --v'  to see which files are loaded
     my $fil = shift;
     my $txt = shift;
@@ -641,8 +641,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
         #       we don't fix that! Workaround: install file in ./
     }
 } else {
-    # debug functions are defined in o-saft-dbx.pm and loaded on demand
-    # they must be defined always as they are used whether requested or not
     sub _yeast_init   {}
     sub _yeast_exit   {}
     sub _yeast_args   {}
@@ -662,6 +660,10 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _trace2       {}
     sub _trace3       {}
     sub _trace_cmd    {}
+    # debug functions are defined in o-saft-dbx.pm and loaded on demand
+    # they must be defined always as they are used whether requested or not
+    # NOTE: these comment lines at end of else scope so that some make targets
+    #       can produce better human readable results
 }
 
 #| read USER-FILE, if any (source with user-specified code)
@@ -686,6 +688,7 @@ if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
         sub usr_pre_print   {}; #  "
         sub usr_pre_next    {}; #  "
         sub usr_pre_exit    {}; #  "
+        # user functions are defined in o-saft-user.pm and loaded on demand
     }
 }
 
@@ -2173,7 +2176,7 @@ sub _get_yes_no     { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val
     # return 'yes' if given value is empty, return 'no' otherwise
 
 sub _get_base2      {
-    #? return base-2 of given number
+    # return base-2 of given number
     my $value = shift;
        $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
        return 0   if ($value == 0);         # -''-
@@ -2229,7 +2232,7 @@ sub _is_cfg_ssl($)      { my  $is=shift;    return $cfg{$is};   }
     # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
 sub _is_cfg_out($)      { my  $is=shift;    return $cfg{'out'}->{$is};  }
 sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
-    # returns value forgiven key in $cfg{*}->{key}; which is 0 or 1 (usually)
+    # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
@@ -2709,6 +2712,7 @@ sub _reset_openssl      {
 } # _reset_openssl
 
 sub _check_openssl      {
+    # check cpapbilities of openssl
     _y_CMD("  check cpapbilities of openssl ...");
     return if ($cmd{'openssl'} eq "");  # already checked and warning printed
     $Net::SSLinfo::openssl = $cmd{'openssl'};   # this version should be checked
@@ -2988,6 +2992,7 @@ sub _getscore           {
 } # _getscore
 
 sub _cfg_set($$);       # avoid: main::_cfg_set() called too early to check prototype at ...
+    # forward ...
 sub _cfg_set_from_file  {
     # read values to be set in configuration from file
     my $typ = shift;    # type of config value to be set
@@ -9455,11 +9460,24 @@ to search for the files to be included. Following disadvantages are known:
 Therefore  @INC  needs to be adapted properly in Perl's  BEGIN  scope (see
 next annotation also). The added directories are:
 
-  - $_path      # user-friendly: add path of the called script also
-  - ./  ./lib   # we support some local lib directories
-  - /bin"       # special installation on portable media
+  - $_path          # user-friendly: add path of the called script also
+  - lib  $_path/lib # we support some local lib directories
+  - $ENV{PWD}       # calling directory, some kinf of fallback
+  - /bin"           # special installation on portable media
 
 Note that  /  works here even for Windoze.
+
+Some logic is used to prepend these directories to @INC,  avoiding useless
+paths. Keep in mind that any script may be called in following context:
+  - /path/to/OSaft/Doc/Data.pm  # full path
+  - OSaft/Doc/Data.pm           # local path
+  - ./Data.pm                   # local path
+  - ../OSaft/Doc/Data.pm        # relative path
+  - Data.pm                     # by $PATH
+
+Two of the above exmples need special settings:
+  - Data.pm                     # the path matches the script name
+  - /path/to/OSaft/Doc/Data.pm  # the path matches ^/
 
 
 =head2 Perl:BEGIN
