@@ -51,18 +51,18 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 # binmode(...); # inherited from parent
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0; $_me   =~ s#.*[/\\]##;
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin"); # SEE Perl:@INC
-    if ($_path !~ m#^[.]/*$#) { # . already added
-        unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
-    }
+    # SEE Perl:@INC
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib/$_path") if ($_path ne $_me and $_path !~ m#^/#);
+    unshift(@INC, $_path);
 }
 
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.319 20/11/07 11:57:16";
+my  $SID_man= "@(#) o-saft-man.pm 1.321 20/11/08 08:45:31";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.319'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.321'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1779,7 +1779,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.319 2020/11/07
+1.321 2020/11/08
 
 =head1 AUTHOR
 
