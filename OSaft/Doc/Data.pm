@@ -4,6 +4,11 @@
 #!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
+BEGIN { # mainly required for testing ...
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".",  $_path);
+}
+
 ## no critic qw(Documentation::RequirePodSections)
 #        Our POD below is fine, Perl::Critic (severity 2) is too pedantic here.
 
@@ -25,14 +30,9 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.10.30";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.34 20/11/07 12:19:23";
+my  $SID_data   = "@(#) Data.pm 1.36 20/11/08 08:55:24";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
-
-BEGIN {
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, ".", "$_path", "$_path/lib");
-}
 
 use osaft qw(print_pod STR_WARN);
 
@@ -586,7 +586,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.34 2020/11/07
+1.36 2020/11/08
 
 =head1 AUTHOR
 
