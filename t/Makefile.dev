@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.33 20/10/31 23:15:19
+#?      @(#) Makefile.dev 1.35 20/11/08 23:10:25
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.33
+_SID.dev           := 1.35
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -88,7 +88,7 @@ LIST.osaft-cipher  := \
 	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 
 LIST.osaft-doc-data := \
-	version +VERSION        list        print \
+	--usage version         +VERSION    list  print \
 	get     get-markup      get-text    get-as-text \
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
@@ -125,9 +125,11 @@ LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
 
+_TMP.standalone        := /tmp/tmpfile
+
 LIST.contrib-bunt      :=
 LIST.contrib-openssl   := --n --m
-LIST.contrib-standalone:=
+LIST.contrib-standalone:= --n --s --t
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same commands_notyet in osaft.pm
@@ -238,6 +240,9 @@ ifndef dev-macros-generated
 
 endif
 
+$(_TMP.standalone):
+	@mkdir $@
+
 # OSaft/Doc/Data.pm function needs a file where to read the information
 # it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
 testarg-dev-osaft-doc-data_%:   TEST.args = help.txt
@@ -252,9 +257,19 @@ testarg-dev-contrib-openssl_%:  TEST.args = --n
 testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
 # additional special option for INSTALL.sh
 testarg-dev-install-sh_--checkdev--other:   TEST.args += --checkdev --other
-	
+
 ALL.test.dev.install-sh += testarg-dev-install-sh_--checkdev--other
 ALL.test.dev            += testarg-dev-install-sh_--checkdev--other
+
+# special option for gen_standalone.sh; must remove the generated file
+# generated file has permissions 555, hence  rm -f
+# TODO: target works but gen_standalone.sh returns errors (needs to be improved)
+testarg-dev-contrib-standalone-tmp: EXE.pl    = $(EXE.contrib-standalone)
+testarg-dev-contrib-standalone-tmp: TEST.args = $(_TMP.standalone)
+testarg-dev-contrib-standalone_tmpfile: testarg-dev-contrib-standalone-tmp
+	@rm -f $(_TMP.standalone)
+
+ALL.test.dev            += testarg-dev-contrib-standalone_tmpfile
 
 
 # targets: EXE.* --help
