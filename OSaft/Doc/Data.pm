@@ -30,7 +30,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "20.11.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.37 20/11/08 17:00:32";
+my  $SID_data   = "@(#) Data.pm 1.38 20/11/08 21:25:54";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -62,9 +62,9 @@ OSaft::Doc::Data - common Perl module to read data for user documentation
 
 =item  use OSaft::Doc::Data;        # from within perl code
 
-=item OSaft::Doc::Data --usage      # on command line will print short usage
+=item OSaft/Doc/Data --usage        # on command line will print short usage
 
-=item OSaft::Doc::Data [COMMANDS]   # on command line will print help
+=item OSaft/Doc/Data [COMMANDS]     # on command line will print help
 
 =back
 
@@ -148,6 +148,34 @@ sub get_egg     {
     close($fh);
     return scalar reverse "\n$egg";
 } # get_egg
+
+=pod
+
+=head2 get($file,$name,$version)
+
+Return all data from file and replace $0 by $name. Returns data as string.
+
+=cut
+
+sub get         {
+    my $file    = shift;
+    my $name    = shift || "o-saft.pl";
+    my $version = shift || $VERSION;
+    my $fh      = _get_filehandle($file);
+    return _replace_var($name, $version, <$fh>);
+    # TODO: misses  close($fh);
+} # get
+
+=pod
+
+=head2 get_as_text($file)
+
+Return all data from file as is. Returns data as string.
+
+=cut
+
+sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
+# TODO: misses  close($fh);
 
 =pod
 
@@ -242,17 +270,16 @@ sub get_markup    {
     return _replace_var($parent, $version, @txt);
 } # get_markup
 
-=pod
-
-=head2 get_text($file)
-
-Same as  get()  but with some variables substituted.
-
-=cut
+# NOTE: NOT YET READY, not yet used (hence no POD also)
+#=pod
+#
+#=head2 get_text($file)
+#
+#Same as  get()  but with some variables substituted.
+#
+#=cut
 
 sub get_text    {
-    #? print program's help
-# NOTE: NOT YET READY, not yet used
     my $file    = shift;
     my $label   = shift || "";  # || to avoid "Use of uninitialised value"
        $label   = lc($label);
@@ -300,34 +327,6 @@ sub get_text    {
 
 =pod
 
-=head2 get_as_text($file)
-
-Return all data from file as is. Returns data as string.
-
-=cut
-
-sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
-# TODO: misses  close($fh);
-
-=pod
-
-=head2 get($file,$name,$version)
-
-Return all data from file and replace $0 by $name. Returns data as string.
-
-=cut
-
-sub get         {
-    my $file    = shift;
-    my $name    = shift || "o-saft.pl";
-    my $version = shift || $VERSION;
-    my $fh      = _get_filehandle($file);
-    return _replace_var($name, $version, <$fh>);
-    # TODO: misses  close($fh);
-} # get
-
-=pod
-
 =head2 print_as_text($file)
 
 Same as  get()  but prints text directly.
@@ -343,9 +342,9 @@ sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; return; }
 
 If called from command line, like
 
-  OSaft/Doc/Data.pm [COMMANDS] file
+  OSaft/Doc/Data.pm COMMANDS [file]
 
-this modules provides following commands:
+this modules provides following COMMANDS:
 
 =head2 VERSION
 
@@ -357,21 +356,22 @@ Print internal version.
 
 =head2 list
 
-Print list of *.txt files in current directory.
+Print list of *.txt files in current directory. These files may be used for
+following commands.
 
 =head2 get filename
 
 Call get(filename).
-
-=head2 get_text filename
-
-Call get_text(filename).
 
 =head2 get_as_text filename
 
 Call get_as_text(filename).
 
 =head2 get_markup filename
+
+Call get_markup(filename).
+
+=head2 get_text filename
 
 Call get_text(filename).
 
@@ -392,7 +392,7 @@ Print VERSION version.
 =cut
 
 sub list        {
-    #? print sorted list of available .txt files
+    #? return sorted list of available .txt files
     #  sorted list simplifies tests ...
     my $dir = $0;
        $dir =~ s#[/\\][^/\\]*$##;
@@ -438,11 +438,11 @@ sub _main       {
         print_pod($0, __PACKAGE__, $SID_data)   if ($cmd =~ /^--?h(?:elp)?$/);
         _main_usage()           if ($cmd =~ /^--usage$/);
         # ----------------------------- commands
-        print list()            if ($cmd =~ /^list$/);
+        print list() . "\n"     if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
+        print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
         print get_text($arg)    if ($cmd =~ /^get.?text/);
-        print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print_as_text($arg)     if ($cmd =~ /^print$/);
         print "$SID_data\n"     if ($cmd =~ /^version$/);
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
@@ -485,8 +485,8 @@ It is difficult to markup character classes like  a-zA-Z-  this way (using
 quotes), because any character may be part of the class, including quotes or
 those used for markup. For Example will  a-zA-Z-  look like  C<a-zA-Z->  in
 POD format. Hence character classes are defined literally without markup to
-avoid confusion. However, it is assumed (when our generating documentation)
-that strings (words) beginning with <a-zA-Z  are character classes.
+avoid confusion.  However, when generating documentation it is assumed that
+strings (words) beginning with  a-zA-Z  are character classes.
 
 =item '* list item
 
@@ -515,7 +515,7 @@ Will not be replaced, but kept as is.
 =back
 
 Referenses to titles are written in all upper case characters and prefixed
-and suffixed with 2 spaces.
+and suffixed with 2 spaces or a . (dot) or , (comma).
 
 There is only one special markup used:
 
@@ -553,9 +553,7 @@ usually not treated as comment line but verbatim text.
 
 =item exactly 11  - list item
 
-=item exactly 14  - highlighted line
-
-=item exactly 18  - code line
+=item exactly 14  - code line
 
 =back
 
@@ -597,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.37 2020/11/08
+1.38 2020/11/08
 
 =head1 AUTHOR
 
@@ -641,7 +639,7 @@ flow is as follows:
 
 =item 1. read text file
 
-=item 2. inject simple markup (i.g. dokuwiki style markup)
+=item 2. inject simple, intermediate markup (i.g. dokuwiki style markup)
 
 =item 3. convert intermediate markup to required format
 
@@ -649,7 +647,7 @@ flow is as follows:
 
 For generating some formats, external tools are used.  Such a tools mainly
 gets the data in POD format and then converts it to another format. 
-The external tools are called using Perl's exec() function, usually.
+The external tools are called using Perl's 'exec()' function, usually.
 
 =cut
 
