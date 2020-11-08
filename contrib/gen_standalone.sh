@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.14 19/12/03 08:31:08
+#?       @(#)  1.15 20/11/08 17:54:56
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -203,9 +203,17 @@ fi
 [ $info -eq 0 ] && exit
 
 [ "/dev/stdout" != "$dst" ] && $try \ls    -la $dst
-\echo "# $dst generated"
 
-cat << EoDescription
+# Writing on /dev/stdout is scary on some systems (i.e Linux). If code above
+# was written on /dev/stdout, the buffer may not yet flushed. Then following
+# echo and cat commands,  which write on the tty's STDOUT, my overwrite what
+# is already there. Some kind of race condition ...
+# As the shell has no build-in posibility to flush STDOUT,  following output
+# is written to /dev/stdout directly to avoid overwriting, ugly but seems to
+# work ...
+
+cat << EoDescription >> /dev/stdout
+# $dst generated
 
 	The generated stand-alone script misses following functionality:
 	* Commands
