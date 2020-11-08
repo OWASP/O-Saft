@@ -4,6 +4,15 @@
 #!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
+BEGIN {
+    # SEE Perl:@INC
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib/$_path") if ($_path ne $_me);
+    unshift(@INC, $_path)       if ($_path !~ m#^/#);
+}
+
 =pod
 
 =encoding utf8
@@ -44,20 +53,11 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '20.10.30';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.46 20/11/07 12:10:46";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.47 20/11/08 00:40:46";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
-
-BEGIN {
-    my $_me   = $0; $_me   =~ s#.*[/\\]##x;
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin"); # SEE Perl:@INC
-    if ($_path !~ m#^[.]/*$#x) { # . already added
-        unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
-    }
-}
 
 use osaft qw(print_pod);
 
@@ -1579,7 +1579,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.46 2020/11/07
+1.47 2020/11/08
 
 =head1 AUTHOR
 
