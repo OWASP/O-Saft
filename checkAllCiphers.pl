@@ -169,6 +169,7 @@ DESCRIPTION
 INSTALLATION
     checkAllCiphers.pl requires following Perl modules:
                 IO::Socket::INET     (preferred >= 1.31)
+                Devel::Size          (for debugging)
                 Net::DNS             (if option '--mx' is used)
 
                 Module Net::SSLhello is part of O-Saft and should be
@@ -184,7 +185,8 @@ return;
 if (! eval {require 'o-saft-dbx.pm';} ) {
     # o-saft-dbx may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require("o-saft-dbx.pm");
+    require Devel::Size;
+    require "o-saft-dbx.pm";
 }
 ##use critic
 
