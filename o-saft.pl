@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1012 20/11/09 17:31:17",
+    SID         => "@(#) yeast.pl 1.1013 20/11/09 18:27:21",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -6257,7 +6257,8 @@ sub print_line($$$$$$)  {
     my  $label  = "";
         $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if (_is_cfg_out('hostname'));
     if ($legacy eq '_cipher') {
-        printf("%s#[%s]%s", $label, $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+        printf("%s", $label)                        if (_is_cfg_out('hostname'));
+        printf("#[%s]%s", $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
         return;
     }
         $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
@@ -8463,7 +8464,7 @@ foreach my $key (qw(ca_file ca_path ca_crl)) {
 #| set openssl-specific path for CAs
 #| -------------------------------------
 if (_is_cfg_do('cipher') and ("openssl" eq $cfg{'ciphermode'})) {
-    # for +cipher openssl executable is only requrired for ciphermode=openssl
+    # cipher openssl executable for +is only requrired with --ciphermode=openssl
     $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
     if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
         $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
@@ -8893,7 +8894,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _warn("209: No SSL versions for +cipher available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
         @cipher_results = ();           # new list for every host
-        @cipher_results = ciphers_scan_raw($host, $port);
+        @cipher_results = ciphers_scan_raw($host, $port);   # print ciphers also
         $checks{'cnt_totals'}->{val} = scalar @cipher_results;  # FIXME: this is the number of enabled ciphers!
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             $checks{'cnt_totals'}->{val} += _get_ciphers_range($ssl, $cfg{'cipherrange'});
