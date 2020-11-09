@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.6 20/06/21 21:31:05
+#?      @(#) Makefile.cipher 1.7 20/11/09 18:14:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.6
+_SID.cipher        := 1.7
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -90,13 +90,18 @@ ALL.testcipher += testcmd-cipher+cipher--nossltls_
 testcmd-cipher-+cipher%:        TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
-testcmd-cipher-+cipher-seleced_%:   TEST.args  += +cipher-seleced
+testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
 # not yet implemented # TODO: hende missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
 testcmd-cipher-+cipher-weak_%:      TEST.args  += +cipher-weak
-ALL.testciphermisc     = testcmd-cipher-+cipher-dh_ testcmd-cipher-+cipher-default_ testcmd-cipher-+cipher-selected_ testcmd-cipher-+cipher-strong_ testcmd-cipher-+ciphercheck_
+ALL.testciphermisc     = \
+	testcmd-cipher-+cipher-dh_ \
+	testcmd-cipher-+cipher-default_ \
+	testcmd-cipher-+cipher-selected_ \
+	testcmd-cipher-+cipher-strong_ \
+	testcmd-cipher-+ciphercheck_
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
