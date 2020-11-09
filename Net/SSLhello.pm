@@ -69,7 +69,7 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '20.02.02',
+    SSLHELLO_VERSION=> '20.11.09',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.39 20/10/31 18:53:20',
 };
@@ -1094,6 +1094,67 @@ my %cipherHexHash = (
    '0x0300C070'=>[qw(ECDHE_PSK_WITH_ARIA_128_CBC_SHA256    ECDHE-PSK-ARIA128-SHA256)],
    '0x0300C071'=>[qw(ECDHE_PSK_WITH_ARIA_256_CBC_SHA384    ECDHE-PSK-ARIA256-SHA384)],
 
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: TLS 1.3 ciphers (prefix TLS13 added)
+#!# added manually 20201106
+#!# RFC8446
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x0301301'=>[qw(TLS13_AES_128_GCM_SHA256               TLS13-AES-128-GCM-SHA256)],
+   '0x0301302'=>[qw(TLS13_AES_256_GCM_SHA384               TLS13-AES-256-GCM-SHA384)],
+   '0x0301303'=>[qw(TLS13_CHACHA20_POLY1305_SHA256         TLS13-CHACHA20_POLY1305-SHA256)],
+   '0x0301304'=>[qw(TLS13_AES_128_CCM_SHA256               TLS13-AES-128-CCM-SHA256)],
+   '0x0301305'=>[qw(TLS13_AES_128_CCM_8_SHA256             TLS13-AES-128-CCM-8-SHA256)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: some further TLS 1.3 ciphers (prefix TLS13 added)
+#!# added manually 20201106
+#!# DRAFT yang-tls-tls13-sm-suites; OpenSSL-Names are expected (TBD: verify names later)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x03000C6'=>[qw(TLS13_SM4_GCM_SM3                      TLS13-SM4-CGM)],
+   '0x03000C7'=>[qw(TLS13_SM4_CCM_SM3                      TLS13-SM4-CCM)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: DRAFT for GOST cipher suites (TLS 1.2 and TLS 1.3 (prefix TLS13 added)
+#!# added manually 20201109
+#!# DRAFT draft-smyshlyaev-tls12-gost-suites; OpenSSL-Names are expected (TBD: verify names later)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x030C100'=>[qw(GOSTR341112_256_WITH_KUZNYECHIK_CTR_OMAC    GOSTR341112-256-KUZNYECHIK-CTR-OMAC)],
+   '0x030C101'=>[qw(GOSTR341112_256_WITH_MAGMA_CTR_OMAC         GOSTR341112-256-MAGMA-CTR-OMAC)],
+   '0x030C102'=>[qw(GOSTR341112_256_WITH_28147_CNT_IMIT         GOSTR341112-256-28147-CNT-IMIT)],
+   '0x030C103'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L GOSTR341112-256-KUZNYECHIK-MGM-L)],
+   '0x030C104'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_L      GOSTR341112-256-MAGMA-MGM-L)],
+   '0x030C105'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S GOSTR341112-256-KUZNYECHIK-MGM-S)],
+   '0x030C106'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_S      GOSTR341112-256-MAGMA-MGM-S)],
+
+#!# Protocol: some further TLS 1.3 ciphers (prefix TLS13 added)
+#!# added manually 20201106
+#!# DRAFT draft-camwinget-tls-ts13-macciphersuites; OpenSSL-Names are expected (TBD: verify names later)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x030C4B4'=>[qw(TLS13_SHA256_SHA256                    TLS13-SHA256-SHA256)],
+   '0x030C4B5'=>[qw(TLS13_SHA384_SHA384                    TLS13-SHA384-SHA384)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: RFC8442 PSK cipher suites (TLS 1.2)
+#!# added manually 20201109
+#!# RFC8442 OpenSSL-Names are expected (TBD: verify names later)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x030D001'=>[qw(ECDHE_PSK_WITH_AES_128_GCM_SHA256      ECDHE_PSK_WITH_AES_128_GCM_SHA256)],
+   '0x030D002'=>[qw(ECDHE_PSK_WITH_AES_256_GCM_SHA384      ECDHE_PSK_WITH_AES_256_GCM_SHA384)],
+   '0x030D003'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_8_SHA256    ECDHE_PSK_WITH_AES_128_CCM_8_SHA256)],
+   '0x030D005'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_SHA256      ECDHE_PSK_WITH_AES_128_CCM_SHA256)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# and more ....
 #!#----------------------------------------+-------------+--------------------+
 ); # cipherHexHash
 
