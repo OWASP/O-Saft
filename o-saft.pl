@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1013 20/11/09 18:27:21",
-    STR_VERSION => "20.11.02",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1014 20/11/09 21:46:10",
+    STR_VERSION => "20.11.09",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -7737,9 +7737,11 @@ while ($#argv >= 0) {
     #} specials
 
     # normalise options with arguments:  --opt=name --> --opt name
+    my $has_value = 0;  # set to 1 if option has value, which needs to be ignored for unknown option
     if ($arg =~ m/(^-[^=]*)=(.*)/) {
         $arg = $1;
         unshift(@argv, $2);
+        $has_value = 1;
         #_dbx("push to ARGV $2");
     } # $arg now contains option only, no argument
 
@@ -8091,10 +8093,14 @@ while ($#argv >= 0) {
     #} --------+------------------------+---------------------------+----------
 
     _y_ARG("option=  $arg") if ($arg =~ /^-/);
-    next if ($arg =~ /^-/); # all options handled, remaining are ignored
-        # i.e. from sslscan: --no-renegotiation --no-compression ...
+    if ($arg =~ /^-/) {
+        # argument was an unknown option, irgnore it and its value (if any)
+        shift @argv if (0 < $has_value);
+        _warn("029: option '$arg' unknown; option ignored");
         # TODO: means that targets starting with '-' are not possible,
         #       however, such FQDN are illegal
+        next;
+    }
 
     #{ COMMANDS
     my $p = qr/[._-]/;  # characters used as separators in commands keys
