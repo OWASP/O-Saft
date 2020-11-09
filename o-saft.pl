@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1011 20/11/08 13:00:15",
+    SID         => "@(#) yeast.pl 1.1012 20/11/09 17:31:17",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8462,13 +8462,18 @@ foreach my $key (qw(ca_file ca_path ca_crl)) {
 
 #| set openssl-specific path for CAs
 #| -------------------------------------
-$cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
-if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
-    $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
+if (_is_cfg_do('cipher') and ("openssl" eq $cfg{'ciphermode'})) {
+    # for +cipher openssl executable is only requrired for ciphermode=openssl
+    $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
+    if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
+        $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
+    }
 }
-$cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
-if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
-    _warn("060: no PEM fila for CA found; some certificate checks may fail");
+if (not _is_cfg_do('cipher')) {
+    $cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
+    if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
+        _warn("060: no PEM fila for CA found; some certificate checks may fail");
+    }
 }
 
 if (0 < $info) {                # +info does not do anything with ciphers
