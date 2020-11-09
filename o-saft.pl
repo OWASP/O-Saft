@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1013 20/11/09 18:27:21",
+    SID         => "@(#) yeast.pl 1.1014 20/11/09 22:24:40",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -3098,7 +3098,7 @@ sub _cfg_set($$)        {
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands_usr'}}, $key);
-                    _warn("043: command '+$key' specified by user") if _is_v_trace();
+                    _warn("046: command '+$key' specified by user") if _is_v_trace();
                 }
             }
         }
@@ -8301,7 +8301,7 @@ while ($#argv >= 0) {
         my $default_port = ($cfg{'port'} || $target_defaults[0]->[3]);
         my ($prot, $host, $port, $auth, $path) = _get_target($default_port, $arg);
         if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/)){
-            _warn("042: invalid host-like argument '$arg'; ignored");
+            _warn("043: invalid port argument '$arg'; ignored");
             # TODO: occours i.e with --port=' ' but not with --host=' '
         } else {
             my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
