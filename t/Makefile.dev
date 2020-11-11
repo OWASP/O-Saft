@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.36 20/11/11 14:54:33
+#?      @(#) Makefile.dev 1.37 20/11/11 16:08:31
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.36
+_SID.dev           := 1.37
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -126,7 +126,7 @@ LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
 
-_TMP.standalone        := /tmp/tmpfile
+_TEST.dev.tmpfile      := /tmp/tmpfile
 
 LIST.contrib-bunt      :=
 LIST.contrib-openssl   := --n --m
@@ -241,7 +241,7 @@ ifndef dev-macros-generated
 
 endif
 
-$(_TMP.standalone):
+$(_TEST.dev.tmpfile):
 	@mkdir $@
 
 # OSaft/Doc/Data.pm function needs a file where to read the information
@@ -266,9 +266,9 @@ ALL.test.dev            += testarg-dev-install-sh_--checkdev--other
 # generated file has permissions 555, hence  rm -f
 # TODO: target works but gen_standalone.sh returns errors (needs to be improved)
 testarg-dev-contrib-standalone-tmp: EXE.pl    = $(EXE.contrib-standalone)
-testarg-dev-contrib-standalone-tmp: TEST.args = $(_TMP.standalone)
+testarg-dev-contrib-standalone-tmp: TEST.args = $(_TEST.dev.tmpfile)
 testarg-dev-contrib-standalone_tmpfile: testarg-dev-contrib-standalone-tmp
-	@rm -f $(_TMP.standalone)
+	@rm -f $(_TEST.dev.tmpfile)
 
 ALL.test.dev            += testarg-dev-contrib-standalone_tmpfile
 
