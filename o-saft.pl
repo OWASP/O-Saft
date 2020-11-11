@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1014 20/11/09 22:24:40",
+    SID         => "@(#) yeast.pl 1.1016 20/11/11 13:19:57",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2208,6 +2208,7 @@ sub __need_this($)      {
        $is  =~ s/\+/\\+/g;      # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 } # __need_this
+#sub _need_openssl()     { return __need_this('need-openssl');   }
 sub _need_cipher()      { return __need_this('need-cipher');    }
 sub _need_default()     { return __need_this('need-default');   }
 sub _need_checkssl()    { return __need_this('need-checkssl');  }
@@ -2839,6 +2840,32 @@ sub _init_openssl_ca    {
     }
     return; # same as: return undef
 } # _init_openssl_ca
+
+sub _init_openssl       {
+    # initialisation for openssl executable
+    # TODO: Checking for openssl executable and configuration files may print
+    #       **WARNINGs, even if openssl is not used at all.
+    #       Unfortunately thers is no simple rule "openssl needed if ...", so
+    #       A userfriendly solution would be to define %cfg{need-openssl}  to
+    #       contain all commands which require openssl, following settings
+    #       should then check %cfg{need-openssl}.
+    #       As long as there is no %cfg{need-openssl}, warnings are printed.
+    # TODO: if (_is_needed_openssl()) {
+
+    # openssl executable only requrired for +cipher with --ciphermode=openssl
+    # or for advanced check commands
+    $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
+
+    if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
+        $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
+    }
+
+    $cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
+    if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
+        _warn("060: no PEM file for CA found; some certificate checks may fail");
+    }
+    return;
+} # _init_openssl
 
 sub _initchecks_score   {
     # set all default score values here
@@ -8400,7 +8427,7 @@ if (2 == @{$cfg{'targets'}}) {
 # NOTE:  openssl  has no option to specify the path to its  configuration
 # directoy.  However, some sub command (like req) do have -config option.
 # Nevertheless the environment variable is used to specify the path, this
-# is independet of the sub command and any platform.
+# is independent of the sub command and any platform.
 # We set the environment variable only, if  --openssl-cnf  was used which
 # then overwrites an already set environment variable.
 # This behaviour also honors that  all command-line options are  the last
@@ -8461,23 +8488,11 @@ foreach my $key (qw(ca_file ca_path ca_crl)) {
         if ($cfg{$key} =~ m/\s/);
 }
 
-#| set openssl-specific path for CAs
+#| set openssl-specific path for executable and CAs
 #| -------------------------------------
-if (_is_cfg_do('cipher') and ("openssl" eq $cfg{'ciphermode'})) {
-    # cipher openssl executable for +is only requrired with --ciphermode=openssl
-    $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
-    if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
-        $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
-    }
-}
-if (not _is_cfg_do('cipher')) {
-    $cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
-    if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
-        _warn("060: no PEM fila for CA found; some certificate checks may fail");
-    }
-}
+_init_openssl();    # if (0 < _need_openssl());
 
-if (0 < $info) {                # +info does not do anything with ciphers
+if (0 < $info) {        # +info does not do anything with ciphers
     # main purpose is to avoid missing "*PN" warnings in following _checks_*()
     $cmd{'extciphers'}      = 0;
     $cfg{'use'}->{'alpn'}   = 0;
