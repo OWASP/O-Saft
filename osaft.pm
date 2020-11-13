@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '20.10.30',  # official version number of this file
+    OSAFT_VERSION   => '20.11.09',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.230 20/11/07 11:53:26",
+    SID_osaft   => "@(#) osaft.pm 1.231 20/11/13 21:58:56",
 
 };
 
@@ -1659,16 +1659,22 @@ our %cfg = (
         'yeast'     => "",      # internal list, computed later ...
                                 # push(@all, @{$_}[0]) foreach (values %cipher_names);
         'rfc'       =>          # constants for ciphers defined in various RFCs
-                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       "0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                        0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                        0x0300D000 .. 0x0300D0FF, 0x0300DA00 .. 0x0300DAFF,
+                        0x0300EA00 .. 0x0300EAFF, 0x0300FA00 .. 0x0300FAFF,
+                        0x0300FE00 .. 0x0300FFFF,
                        ",
         'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
                        "0x03000100 .. 0x0300013F,
-                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                        0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                        0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                        0x0300D000 .. 0x0300D0FF, 0x0300DA00 .. 0x0300DAFF,
+                        0x0300EA00 .. 0x0300EAFF, 0x0300FA00 .. 0x0300FAFF,
+                        0x0300FE00 .. 0x0300FFFF,
                        ",
         'long'      =>          # more lazy list of constants for cipher
-                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF",
+                       "0x03000000 .. 0x030013FF, 0x0300C000 .. 0x0300FFFF",
         'huge'      =>          # huge range of constants for cipher
                        "0x03000000 .. 0x0300FFFF",
         'safe'      =>          # safe full range of constants for cipher
@@ -3158,7 +3164,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.230 2020/11/07
+1.231 2020/11/13
 
 =head1 AUTHOR
 
