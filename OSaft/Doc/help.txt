@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.73 20/11/07 15:03:02
+# SID   @(#) help.txt 1.74 20/11/18 22:16:48
 
 NAME
 
@@ -2835,7 +2835,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
           SSLv2 and SSLv3 must not be supportetd.
           TLSv1 should only be supported if there is no TLSv1.1 or TLSv1.2.
-          Either TLSv1.1 or TLSv1.2 must be supported, prefered is TLSv1.2.
+          Either TLSv1.1 or TLSv1.2 must be supported, preferred is TLSv1.2.
 
         3.1.2.  DTLS Protocol Versions
 
