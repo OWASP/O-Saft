@@ -4,11 +4,6 @@
 #!# Copyright (c) 2020 Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
-BEGIN { # mainly required for testing ...
-    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".",  $_path);
-}
-
 package main;   # ensure that main:: variables are used, if not defined herein
 
 # HACKER's INFO
@@ -48,9 +43,15 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
+BEGIN { # mainly required for testing ...
+    # SEE Perl:BEGIN perlcritic
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".",  $_path);
+}
+
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.150 20/11/18 19:43:39";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.151 20/11/18 21:30:17";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -1148,7 +1149,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.150 2020/11/18
+1.151 2020/11/18
 
 =head1 AUTHOR
 
