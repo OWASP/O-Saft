@@ -50,7 +50,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.149 20/11/08 08:52:21";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.150 20/11/18 19:43:39";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -879,7 +879,7 @@ sub _yeast_test_memory  {
     # I.g. it should be implemented in makefiles or alike, but is done here
     # in the source because the variables are avaiable in the source only.
     printf("#%s:\n", (caller(0))[3]);
-    use Devel::Size;
+    require Devel::Size;    # require instead of use to avoid dependencies (i.e. in checkAllCiphers.pl)
     my %types = (   # TODO: not yet used
         'ARRAY'   => '@',
         'CODE'    => '{',
@@ -1148,7 +1148,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.149 2020/11/08
+1.150 2020/11/18
 
 =head1 AUTHOR
 
