@@ -29,8 +29,8 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
-our $VERSION    = "20.11.02";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.38 20/11/08 21:25:54";
+our $VERSION    = "20.11.09";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.39 20/11/18 19:50:50";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -595,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.38 2020/11/08
+1.39 2020/11/18
 
 =head1 AUTHOR
 
@@ -632,8 +632,8 @@ can be read without a special tool. It's designed for human radability and
 simple editing.
 
 All other formats like HTML, POD, troff (man-page), etc. will be generated
-from this plain text with the methods (funtions) herein. The general work-
-flow is as follows:
+from this plain text with the methods (functions) herein.
+The general workflow is as follows:
 
 =over
 
