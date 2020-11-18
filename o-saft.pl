@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1017 20/11/18 20:56:11",
+    SID         => "@(#) yeast.pl 1.1018 20/11/18 22:16:10",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -133,6 +133,7 @@ sub _version_exit   { print STR_VERSION . "\n"; exit 0; }
 
 BEGIN {
     # SEE Perl:BEGIN
+    # SEE Perl:BEGIN perlcritic
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
     sub _VERSION() { return STR_VERSION; }
@@ -193,7 +194,7 @@ my  $cgi = 0;
 #} # CGI
 
 #_____________________________________________________________________________
-#_________________________________________________________________ funtions __|
+#________________________________________________________________ functions __|
 
 #| definitions: debug and tracing functions
 #| -------------------------------------
@@ -3031,7 +3032,7 @@ sub _cfg_set_from_file  {
     #       is a false positive, because  Perl::Critic  seems not to understand
     #       the logic of "open() && do{}; warn();",  hence the code was changed
     #       to use an  if-condition
-    if (open($fh, '<:encoding(UTF-8)', $fil)) {
+    if (open($fh, '<:encoding(UTF-8)', $fil)) { ## no critic qw(InputOutput::RequireBriefOpen)
         push(@{$dbx{file}}, $fil);
         _print_read("$fil", "USER-FILE configuration file") if (_is_cfg_out('header'));
         while ($line = <$fh>) {
@@ -4752,7 +4753,7 @@ sub checkdates($$)  {
    # to the format  YYYYMMDD.  The format given in the certificate  is always
    # GMT and in fixed form: MMM DD hh:mm:ss YYYY GMT. So a split() gives year
    # and day as integer.  Just the month is a string, which must be converted
-   # to an integer using the map() funtion on @mon array.
+   # to an integer using the map() function on @mon array.
    # The same format is used for the current date given by gmtime(), but
    # convertion is much simpler as no strings exist here.
     my @now = gmtime(time);
@@ -5963,7 +5964,7 @@ EoREQ
     $response =~ s#HTTP/1.. #STATUS: #; # first line is status line, add :
     $response =~ s#(?:\r\n\r\n|\n\n|\r\r).*$##ms;   # remove HTTP body
     _trace2("_get_sstp_https: response= #{\n$response\n#}");
-    return "<<empty response>>" if ($response =~ m/^\s*-1/);    # somthing wrong
+    return "<<empty response>>" if ($response =~ m/^\s*-1/);    # something wrong
     %headers  = map { split(/:/, $_, 2) } split(/[\r\n]+/, $response);
     # FIXME: map() fails if any header contains [\r\n] (split over more than one line)
     # use elaborated trace with --trace=3 because some servers return strange results
@@ -6802,7 +6803,7 @@ sub printprotocols      {
            $cipher_pfs    = "" if (STR_UNDEF eq $cipher_pfs);
         }
         if ((@{$prot{$ssl}->{'ciphers_pfs'}}) and
-            (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # somthing went wrong
+            (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # something went wrong
            #$cipher_pfs   # should be empty
            $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
            $cnt = 0;
@@ -8579,7 +8580,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 #| -------------------------------------
 {
     #$IO::Socket::SSL::DEBUG         = $cfg{'trace'} if ($cfg{'trace'} > 0);
-    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
+    no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+        # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     if ($cfg{'traceME'} < 1) {
         $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
     }
@@ -8629,7 +8631,8 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 #| set defaults for Net::SSLhello
 #| -------------------------------------
 if (defined $Net::SSLhello::VERSION) {
-    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
+    no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+        # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     if ($cfg{'traceME'} < 1) {
         $Net::SSLhello::trace       = $cfg{'trace'};
     }
@@ -9161,7 +9164,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     CLOSE_SSL:
     _y_CMD("host " . ($host||"") . ":$port }");
     {
-      no warnings qw(once);
+      no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
       if (defined $Net::SSLinfo::socket) { # check to avoid: WARNING undefined Net::SSLinfo::socket
         Net::SSLinfo::do_ssl_close($host, $port);
       }
@@ -9344,7 +9347,7 @@ where  "<Annotation>"  is the text right of the  =head2  keyword.
 
 I.g. no other markup is used, except POD'S =head3 and  L <..> markup.
 
-All following texts from hereon are Annotations.
+All following texts from here on are Annotations.
 
 
 =head2 Note:Documentation
@@ -9353,7 +9356,7 @@ All following texts from hereon are Annotations.
 
 Switching to CGI mode if the script is named *.cgi is no longer supported,
 this script should be called by a proper wrapper, i.e o-saft.cgi .
-Functionality silently removed, no warning or error is printed.
+The functionality was silently removed, no warning or error is printed.
 
 =head3 Since VERSION 18.01.18
 
@@ -9387,19 +9390,18 @@ it, which is described in o-saft-README itself. People won't read :-(
 
 =head3 Until VERSION 14.11.12
 
-Initilly the documentation was written in Perl's doc format: perldoc, POD.
-The advantage of POD is the well formated output on various platforms, but
-results in more difficult efforts for extracting information from there.
+The documentation was initially written in Perl's doc format: perldoc POD.
+The advantage  of POD is the  well formatted output on  various platforms,
+but results in more difficult efforts for extracting information from it.
 In particular following problems occoured with POD:
 
     - perldoc is not available on all platforms by default
     - POD is picky when text lines start with a whitespace
-    - programatically extracting data requires additional substitutes
+    - programmatically extracting data requires additional substitutes
     - POD is slow
 
-Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
-
-* equal source code, lines or kBytes:
+See following table  how changing POD to plain ASCII (VERSION 14.11.14 vs.
+14.12.14) results (for equal number of source code lines or kBytes):
 
       Description              POD ASCII           %    File
     -------------------------+----+-------------+------+----------
@@ -9414,7 +9416,7 @@ Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
 =head2 Perl:perlcritic
 
 perlcritic  is used for general code quality. Our code isn't accademically
-perfect, nor is  perlcritic. Hence we use  perlcritic's pragmas to disable
+perfect, nor is perlcritic. Hence perlcritic's pragmas are used to disable
 some checks as needed. This is done in general in perlcritic's config file
 
     t/.perlcriticrc
@@ -9451,7 +9453,7 @@ avoids clumsy  `## no critic'  pragmas.
 
 =head2 Perl:import include
 
-Perl's recommend way to import modules is the `use' or `require' statement.
+Perl recommends to import modules using the  `use' or `require' statement.
 Both methods have the disadvantage that this scripts fails  if a requested
 module is missing.  The script fails immediately at startup if modules are
 loaded with `use', or at runtime if loaded with `require'.
@@ -9491,6 +9493,7 @@ Note that  /  works here even for Windoze.
 
 Some logic is used to prepend these directories to @INC,  avoiding useless
 paths. Keep in mind that any script may be called in following context:
+
   - /path/to/OSaft/Doc/Data.pm  # full path
   - OSaft/Doc/Data.pm           # local path
   - ./Data.pm                   # local path
@@ -9498,6 +9501,7 @@ paths. Keep in mind that any script may be called in following context:
   - Data.pm                     # by $PATH
 
 Two of the above exmples need special settings:
+
   - Data.pm                     # the path matches the script name
   - /path/to/OSaft/Doc/Data.pm  # the path matches ^/
 
@@ -9517,7 +9521,7 @@ Unfortunately Perl's BEGIN has following limits and restrictions:
 
 Perl subs used in the  BEGIN section must be defined there also, or before
 the BEGIN section (which is a crazy behaviour of Perl).
-To make the program work as needed,  these limitations  forces to use some
+To make the program work as needed,  the limitations  force us to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
 
@@ -9533,9 +9537,9 @@ Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
 
 The tool here roughly destingushes two types of I/O:
 
-    1. writing texts to the user using STDOUT and STDERR channels
-       note that it never reads, except from command-line, hence no STDIN
-    2. writing and reading to network sockets, which is done underneath
+    1. writing texts to the user using STDOUT and STDERR channels,
+       note that it never reads, except from command-line, hence no STDIN;
+    2. writing and reading to network sockets, which is done underneath.
 
 We assume that the  I/O socket (2. above)  is handled properly by the used
 modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
@@ -9544,7 +9548,7 @@ modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
     binmode(STDERR, ":unix:utf8");
 
 As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
-humans. Only these channels are handled explicitly.  The idea is, that all
+humans, only these channels are handled explicitly.  The idea is, that all
 texts consist of printable characters only, probably in various languages.
 Hence UTF-8 is used as default character set.  The channels are configured
 to expect UTF-8 characters.
@@ -9554,6 +9558,7 @@ we only want to ensure UTF-8 on output.
 The I/O layers need to be set in the main script only, all modules inherit
 the settings from there. However, modules need to use the proper binmode()
 call itself, if they are called from command-line.
+
 Unfortunately  Perl::Critic  complains that  ':encoding(UTF-8)'  should be
 used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
@@ -9587,8 +9592,8 @@ like (which then keeps Perl::Critic happy too):
 =head2 Perl:warn _warn
 
 I.g. Perl's warn() is not used, but our private  _warn(). Using the option
---no-warning  _warn()  can supress messages. However, some warnings should
-never be supressed, hence  warn()  is used in rare cases.
+--no-warning  _warn() can suppress messages. However, some warnings should
+never be suppressed, hence  warn()  is used in rare cases.
 Each warning should have a unique number, SEE L<Perl:Message Numbers>.
 See also  CONCEPTS  (if it exists in our help texts).
 
@@ -9607,6 +9612,7 @@ Each warning has a unique number. The numbers are grouped as follows:
     8xx     print functions
 
 Check for used numbers with:
+
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
 
 A proper test for the message should be done in t/Makefile.warnings.
@@ -9647,6 +9653,7 @@ conversion of +commands to keys. The keys related to protocol, i.e. SSLv3,
 TLSv11, etc. are mixed case.
 
 Note according perlish programming style:
+
     references to $arr->{'val') are most often simplified as $arr->{val) ,
     same applies to 'txt' and 'typ'.
 
@@ -9715,7 +9722,7 @@ The data to be sorted is for example:
 
 Command-line arguments are read after some other internal initialisations.
 Unfortunately sometimes options need to be checked before argument parsing
-is completed. Therfore somthing like '(grep{/--trace)/} @ARGV)' is needed.
+is completed. Therfore following is needed: '(grep{/--trace)/} @ARGV)'.
 These check are implemented as simple functions and return grep's result.
 
 
@@ -9766,6 +9773,7 @@ The code for parsing options and arguments uses some special syntax:
     # alias: any other text
 
 is used for aliases of commands or options. These lines are extracted by
+
    --help=alias
 
 
@@ -9823,14 +9831,14 @@ _init_openssldir() gets the configured directory for the certificate files
 from the openssl executable. It is expected that openssl returns something
 like:  OPENSSLDIR: "/usr/local/openssl"
 
-Some versions of openssl on windows may return "/usr/local/ssl", or alike,
-which is most likely wrong. As the existance of the returned directoy will
+Some versions of openssl on Windows may return "/usr/local/ssl", or alike,
+which is most likely wrong.  The existence of the returned directory  will
 be checked,  this produces a  **WARNING  and unsets the ca_path.  However,
 the used Perl modules (i.e. Net::SSLeay)  may be compiled with a different
 OpenSSL, and hence use their (compiled-in) private path to the certs.
 
 Note that the returned OPENSSLDIR is a base-directory where the cert files
-are found in the certs/ sub-directory. This certs/ is hardcoded herein.
+are found in the certs/ sub-directory. This 'certs/' is hardcoded herein.
 
 
 =head2 Note:OpenSSL s_client
@@ -10125,7 +10133,7 @@ example Net::SSLeay:
 To avoid long timeouts, a quick connection check to the target is done. At
 least the connection to the SSL port must succeed.  If not, all checks are
 skipped. If just the connection to port 80 fails, just the HTTP checks are
-disabled. Also L<SEE Note:--ssl-error>.
+disabled. Also SEE L<Note:--ssl-error>.
 
 The initial connection check just opens the port and does nothing. This is
 done because  some methods, i.e.  Net::SSLeay::get_http(),  do not support
@@ -10192,6 +10200,8 @@ https://www.nginx.com/blog/nginx-and-the-heartbleed-vulnerability/
 
 
 =head2 Note:ticketbleed
+
+TBD
 
 
 =head2 Note:CGI mode
