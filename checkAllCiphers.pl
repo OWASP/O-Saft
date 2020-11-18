@@ -31,19 +31,19 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
-use strict;
-use warnings;
-use Carp;                                                       #replaces warn and die
-use OSaft::error_handler qw (:sslhello_contants);               # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
-
-use osaft;
-
 BEGIN {
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, $_path, "/bin" ); # /bin for special installation on portable media
+    my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".", $_path, "/bin" ); # /bin for special installation on portable media
 }
 
-my $VERSION = "17.07.15";
+use strict;
+use warnings;
+use Carp;                                           #replaces warn and die
+
+use osaft;
+use OSaft::error_handler qw (:sslhello_contants);   # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
+
+my $VERSION = "20.11.09";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -169,7 +169,6 @@ DESCRIPTION
 INSTALLATION
     checkAllCiphers.pl requires following Perl modules:
                 IO::Socket::INET     (preferred >= 1.31)
-                Devel::Size          (for debugging)
                 Net::DNS             (if option '--mx' is used)
 
                 Module Net::SSLhello is part of O-Saft and should be
@@ -185,8 +184,7 @@ return;
 if (! eval {require 'o-saft-dbx.pm';} ) {
     # o-saft-dbx may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require Devel::Size;
-    require "o-saft-dbx.pm";
+    require("o-saft-dbx.pm");
 }
 ##use critic
 
