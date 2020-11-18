@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1016 20/11/11 13:19:57",
+    SID         => "@(#) yeast.pl 1.1017 20/11/18 20:56:11",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -597,7 +597,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'ciphers_all'   => 0,
         'ciphers_get'   => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
-        'checkprefered' => 0,
+        'checkpreferred' => 0,
         'check02102'=> 0,
         'check03116'=> 0,
         'check2818' => 0,
@@ -2103,7 +2103,7 @@ our %text = (
         #                -?- means "not implemented"
         # all other text used in headers titles, etc. are defined in the
         # corresponding print functions:
-        #     print_title, print_cipherhead, print_footer, print_cipherprefered, print_ciphertotals
+        #     print_title, print_cipherhead, print_footer, print_cipherpreferred, print_ciphertotals
     },
     # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
@@ -3618,7 +3618,7 @@ sub _checkwildcard($$)  {
 
 sub _usesocket($$$$)    {
     # return protocol and cipher accepted by SSL connection
-    # should return the target's prefered cipher if none are given in $ciphers
+    # should return the target's preferred cipher if none are given in $ciphers
     # NOTE: this function is used to check for supported ciphers only, hence
     #       no need for sophisticated options in new() and no certificate checks
     #       $ciphers must be colon (:) separated list
@@ -3731,7 +3731,7 @@ sub _usesocket($$$$)    {
 
 sub _useopenssl($$$$)   {
     # return cipher accepted by SSL connection
-    # should return the target's prefered cipher if none are given in $ciphers
+    # should return the target's preferred cipher if none are given in $ciphers
     # $ciphers must be colon (:) separated list
     # adds all configured options, like -alpn -curves -servername etc. with
     # their proper values
@@ -3945,12 +3945,12 @@ sub _get_ciphers_list   {
 
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
-    # mode defines how to retrieve the prefered cipher
+    # mode defines how to retrieve the preferred cipher
     #   strong:  pass cipher list sorted with strongest first
     #   weak:    pass cipher list sorted with weakest first
     #   default: pass no cipher list which then uses system default
 
-    # To get the target's prefered cipher, all known ciphers are send so that
+    # To get the target's preferred cipher, all known ciphers are send so that
     # the target should select the most secure one.
     # Both, openssl and sockets (IO::Socket::SSL), use the underlaying libssl
     # which works with the compiled in ciphers only.  Hence all known ciphers
@@ -3982,11 +3982,11 @@ sub _get_default($$$$)  {
 
     $cipher = "" if not defined $cipher;
     if ($cipher =~ m#^\s*$#) {
-        my $txt = "SSL version '$ssl': cannot get prefered cipher; ignored";
+        my $txt = "SSL version '$ssl': cannot get preferred cipher; ignored";
         # SSLv2 is special, see _usesocket "dirty hack"; don't print
         _v_print($txt) if ($ssl !~ m/SSLv[2]/);
     } else {
-        _v2print("prefered cipher: $ssl:\t$cipher");
+        _v2print("preferred cipher: $ssl:\t$cipher");
     }
     _trace("_get_default()\t= $cipher }"); # TODO: trace a bit late
     return $cipher;
@@ -4540,13 +4540,13 @@ sub checkalpn       {
     return;
 } # checkalpn
 
-sub checkprefered   {
+sub checkpreferred  {
     #? test if target prefers strong ciphers, aka SSLHonorCipherOrder
     my ($host, $port) = @_;     # not yet used
-    _y_CMD("checkprefered() " . $cfg{'done'}->{'checkprefered'});
-    $cfg{'done'}->{'checkprefered'}++;
-    return if (1 < $cfg{'done'}->{'checkprefered'});
-    _trace("checkprefered($host, $port){");
+    _y_CMD("checkpreferred() " . $cfg{'done'}->{'checkpreferred'});
+    $cfg{'done'}->{'checkpreferred'}++;
+    return if (1 < $cfg{'done'}->{'checkpreferred'});
+    _trace("checkpreferred($host, $port){");
     foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
         my $strong = $prot{$ssl}->{'cipher_strong'};
         my $weak   = $prot{$ssl}->{'cipher_weak'};
@@ -4559,9 +4559,9 @@ sub checkprefered   {
             $cfg{'hints'}->{'cipher_weak'} = 'check if "weak" cipher was returned may be misleading if the strongest cipher is returned always';
         }
     }
-    _trace("checkprefered() }");
+    _trace("checkpreferred() }");
     return;
-} # checkprefered
+} # checkpreferred
 
 sub checkcipher($$) {
     #? test given cipher and add result to %checks and %prot
@@ -6514,8 +6514,8 @@ sub print_cipherline($$$$$$) {
     return;
 } # print_cipherline
 
-sub print_cipherprefered($$$$) {
-    #? print prefered cipher according given legacy format
+sub print_cipherpreferred($$$$) {
+    #? print preferred cipher according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
     my $yesno   = 'yes';
     if ($legacy eq 'sslyze')    { print "\n\n      Preferred Cipher Suites:"; }
@@ -6524,7 +6524,7 @@ sub print_cipherprefered($$$$) {
     # all others are empty, no need to do anything
     print_cipherline($legacy, $ssl, $host, $port, $data{'cipher_selected'}->{val}($host), $yesno);
     return;
-} # print_cipherprefered
+} # print_cipherpreferred
 
 sub print_ciphertotals($$$$) {
     #? print total number of ciphers supported for SSL version according given legacy format
@@ -6678,7 +6678,7 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
     my $total   = 0;
     local    $\ = "\n";
     print_cipherhead( $legacy) if ($count == 0);
-    print_cipherprefered($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
+    print_cipherpreferred($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
     @results = _sort_cipher_results(@results); # sorting has no impact on severity
     if ($legacy ne 'sslyze') {
@@ -6690,7 +6690,7 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
         print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
     } else {
         print "\n  * $ssl Cipher Suites :";
-        print_cipherprefered($legacy, $ssl, $host, $port);
+        print_cipherpreferred($legacy, $ssl, $host, $port);
         if (_is_cfg_out('enabled')  or (_is_cfg_out('disabled') == _is_cfg_out('enabled'))) {
             print "\n      Accepted Cipher Suites:";
             $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", @results);
@@ -6747,12 +6747,12 @@ sub printciphers_dh     {
     return;
 } # printciphers_dh
 
-sub printcipherprefered {
-    #? print table with prefered/selected (default) cipher per protocol
+sub printcipherpreferred {
+    #? print table with preferred/selected (default) cipher per protocol
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     if (_is_cfg_out('header')) {
-        printf("= prot.\t%-31s%s\n", "prefered cipher (strong first)", "prefered cipher (weak first)");
+        printf("= prot.\t%-31s%s\n", "preferred cipher (strong first)", "preferred cipher (weak first)");
         printf("=------+------------------------------+-------------------------------\n");
     }
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
@@ -6769,7 +6769,7 @@ sub printcipherprefered {
     }
     print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
     return;
-} # printcipherprefered
+} # printcipherpreferred
 
 sub printprotocols      {
     #? print table with cipher informations per protocol
@@ -6780,10 +6780,10 @@ sub printprotocols      {
     if (_is_cfg_out('header')) {
         if ('owasp' eq $legacy) {
             printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
-            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot prefered-strong-cipher PFS-cipher));
+            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot preferred-strong-cipher PFS-cipher));
         } else {
             printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
-            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot prefered-strong-cipher PFS-cipher));
+            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot preferred-strong-cipher PFS-cipher));
         }
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
@@ -8168,8 +8168,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias:
     if ($arg =~ /^\+ciphers$p?openssl/i){ $arg = '+ciphers_local';  } # alias: for backward compatibility
     if ($arg =~ /^\+ciphers$p?local/i)  { $arg = '+ciphers_local';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?prefered?/i){$arg='+cipher_default'; }
-    if ($arg =~ /^\+ciphers?$p?defaults?/i){$arg='+cipher_default'; } # alias:
+    if ($arg =~ /^\+ciphers?$p?preferr?ed/i){ $arg = '+cipher_default'; }
+    if ($arg =~ /^\+ciphers?$p?defaults?/i){  $arg = '+cipher_default'; } # alias:
     if ($arg =~ /^\+ciphers?$p?dh/i)    { $arg = '+cipher_dh';      } # alias:
     if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
@@ -8951,16 +8951,16 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
             $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
             # FIXME: there are 3 connections above, but only one is counted
-            last if (_is_ssl_error($anf, time(), "$ssl: abort getting prefered cipher") > 0);
+            last if (_is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher") > 0);
             my $cipher  = $prot{$ssl}->{'cipher_strong'};
             $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
             ##if (_is_cfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
             ##    # +cipher_selected command given, but no other commands; ready
-            ##    print_cipherprefered($legacy, $ssl, $host, $port); # need to check if $ssl available first
+            ##    print_cipherpreferred($legacy, $ssl, $host, $port); # need to check if $ssl available first
             ##    next HOSTS; # TODO: foreach-loop for targets misses label
             ##}
         }
-        checkprefered($host, $port);
+        checkpreferred($host, $port);
         _yeast_TIME("need_default}");
     }
     next if _yeast_NEXT("exit=HOST3 - host ciphers start");
@@ -8968,7 +8968,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_is_cfg_do('cipher_default') and (0 < $#{$cfg{'do'}})) {
         # don't print if not a single command, because +check or +cipher do it
         # in printptotocols() anyway
-        printcipherprefered($legacy, $host, $port);
+        printcipherpreferred($legacy, $host, $port);
         goto CLOSE_SSL; # next HOSTS
     }
 
@@ -9010,10 +9010,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         if ($legacy eq 'sslscan') {
             my $ssl = ${$cfg{'version'}}[4];
-            print_cipherprefered($legacy, $ssl, $host, $port);
+            print_cipherpreferred($legacy, $ssl, $host, $port);
             # TODO: there is only one $data{'cipher_selected'}
             #foreach my $ssl (@{$cfg{'version'}}) {
-            #    print_cipherprefered($legacy, $ssl, $host, $port);
+            #    print_cipherpreferred($legacy, $ssl, $host, $port);
             #}
         }
         if ($_printtitle > 0) { # if we checked for ciphers
@@ -9216,8 +9216,9 @@ L<Internal Code Documentation>  and  L<Internal Makefile Documentation>.
 =head3 Public User Documentation
 
 All public user documentation is available in plain text format. It can be
-accessed programatially with the --help option and various variants of it.
-All plain texts are designed for human radability and simple editing, see:
+accessed programmatically with the  --help  option and various variants of
+it. All plain texts are designed for human readability and simple editing,
+see:
 
     ./OSaft/Doc/*.txt
 
@@ -9242,10 +9243,10 @@ Examples:
     perldoc o-saft.pl
     perldoc o-saft-man.pm
 
-These comments are called  "Annotations"  and referred to using a sepecial
+These comments are called  "Annotations"  and referred to using  a special
 syntax, see following chapter  L<Annotations, Internal Notes> .
 These Annotations are used  for descriptions needed at  multiple places in
-the code.
+the code or even multiple files.
 
 
 =head3 Internal Makefile Documentation
@@ -9255,7 +9256,7 @@ Documentation of the make system is mainly done in POD format in:
     perldoc t/Makefile.pod
 
 It contains the general documentation as well as the Annotations used from
-within the Makefile*.
+within the other Makefile*.
 
 =head3 Terminology
 
@@ -9295,7 +9296,7 @@ Is used when files to be used as  input for make in general are meant.
 
 In documentations for makefiles, for example GNU Make, the terms macro and
 variable are used interchangeable.  In our documentation the term variable
-is prefered.
+is preferred.
 
 =item target
 
@@ -10315,9 +10316,9 @@ checkev() above:
 =head2 Note:term default cipher
 
 Technically SSL/TLS does not know about a "default cipher".  Starting with
-TLSv1 it can provide a "prefered selected cipher". The server then selects
+TLSv1, a "preferred selected cipher" is provided.  The server then selects
 a cipher which is common between its own list of ciphers and the list send
-by the client. The more correct term therfore is  "prefered" or "selected"
+by the client. The more correct term therfore is "preferred" or "selected"
 cipher.
 Many documents still use the term "default".  Some code exists, which also
 uses "default" as part of variable or function names.
