@@ -31,14 +31,15 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
-BEGIN {
-    my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".", $_path, "/bin" ); # /bin for special installation on portable media
-}
-
 use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
+
+BEGIN {
+    # SEE Perl:BEGIN perlcritic
+    my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".", $_path, "/bin" ); # /bin for special installation on portable media
+}
 
 use osaft;
 use OSaft::error_handler qw (:sslhello_contants);   # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
@@ -379,7 +380,8 @@ while ($#argv >= 0) {
 # set defaults for Net::SSLhello
 # -------------------------------------
 {
-    no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
+    no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+        # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
     $Net::SSLhello::trace           = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
     $Net::SSLhello::usesni          = $cfg{'usesni'};
