@@ -4,11 +4,6 @@
 #!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
-BEGIN { # mainly required for testing ...
-    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".",  $_path);
-}
-
 ## no critic qw(Documentation::RequirePodSections)
 #        Our POD below is fine, Perl::Critic (severity 2) is too pedantic here.
 
@@ -29,8 +24,14 @@ package OSaft::Doc::Data;
 use strict;
 use warnings;
 
+BEGIN { # mainly required for testing ...
+    # SEE Perl:BEGIN perlcritic
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, ".",  $_path);
+}
+
 our $VERSION    = "20.11.09";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.39 20/11/18 19:50:50";
+my  $SID_data   = "@(#) Data.pm 1.40 20/11/18 21:37:46";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -219,7 +220,7 @@ sub get_markup    {
         #     $0 o-saft o-saft.tcl o-saft-docker checkAllCiphers.pl perl perlapp perl2exe
         # quick&dirty: should also not match  X& ... & as no other potential
         # markup should be substituted in there
-        if (not m/^(?:=|S&|\s+(\$0|o-saft|o-saft.tcl|o-saft-docker|checkAllCiphers.pl|perl|perl2exe|perlapp)\s)/
+        if (not m/^(?:=|S&|\s+(?:\$0|o-saft|o-saft.tcl|o-saft-docker|checkAllCiphers.pl|perl|perl2exe|perlapp)\s)/
             and not m/X&[^&]*(?:\+|--)/
            ) {  # more markup, ...
             # but not in example lines and already marked lines
@@ -595,7 +596,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.39 2020/11/18
+1.40 2020/11/18
 
 =head1 AUTHOR
 
