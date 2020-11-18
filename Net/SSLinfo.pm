@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.10.30',
+    SSLINFO_VERSION => '20.11.09',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.262 20/11/02 00:30:54',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.263 20/11/18 21:44:11',
 };
 
 ######################################################## public documentation #
@@ -1294,7 +1294,8 @@ $line
 #            ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
 $line
 # Net::SSLeay} function\n";
-    no warnings 'once'; # TODO: perl's strict is picky for OP_NO_DTLS* below
+    no warnings 'once'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+        # TODO: perl's strict is picky for OP_NO_DTLS* below
     $data .= "# Net::SSLeay{ constant           hex value
 $line
 #            ::OP_NO_SSLv2      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv2) . "
