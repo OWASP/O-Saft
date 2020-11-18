@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.231 20/11/13 21:58:56",
+    SID_osaft   => "@(#) osaft.pm 1.232 20/11/18 11:03:43",
 
 };
 
@@ -1661,16 +1661,16 @@ our %cfg = (
         'rfc'       =>          # constants for ciphers defined in various RFCs
                        "0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
                         0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
-                        0x0300D000 .. 0x0300D0FF, 0x0300DA00 .. 0x0300DAFF,
-                        0x0300EA00 .. 0x0300EAFF, 0x0300FA00 .. 0x0300FAFF,
+                        0x0300D000 .. 0x0300D0FF,
+                        0x0300DADA,   0x0300EAEA, 0x0300FAFA, 
                         0x0300FE00 .. 0x0300FFFF,
                        ",
         'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
                        "0x03000100 .. 0x0300013F,
                         0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
                         0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
-                        0x0300D000 .. 0x0300D0FF, 0x0300DA00 .. 0x0300DAFF,
-                        0x0300EA00 .. 0x0300EAFF, 0x0300FA00 .. 0x0300FAFF,
+                        0x0300D000 .. 0x0300D0FF,
+                        0x0300DADA,   0x0300EAEA, 0x0300FAFA, 
                         0x0300FE00 .. 0x0300FFFF,
                        ",
         'long'      =>          # more lazy list of constants for cipher
@@ -3164,7 +3164,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.231 2020/11/13
+1.232 2020/11/18
 
 =head1 AUTHOR
 
