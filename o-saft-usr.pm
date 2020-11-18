@@ -4,11 +4,6 @@
 #!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
-BEGIN { # mainly required for testing ...
-    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".",  $_path);
-}
-
 package main;   # ensure that main:: variables are used
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -21,9 +16,15 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
+BEGIN { # mainly required for testing ...
+    # SEE Perl:BEGIN perlcritic
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, ".",  $_path);
+}
+
 use osaft qw(print_pod);
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.32 20/11/08 08:53:37";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.33 20/11/18 21:33:12";
 
 
 #_____________________________________________________________________________
@@ -264,7 +265,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.32 2020/11/08
+1.33 2020/11/18
 
 =head1 AUTHOR
 
