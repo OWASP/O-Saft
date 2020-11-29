@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.321 20/11/08 08:45:31";
+my  $SID_man= "@(#) o-saft-man.pm 1.322 20/11/29 21:24:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.321'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.322'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -305,35 +305,53 @@ function toggle_handler(){
 }
 </script>
 <style>
- .h             {margin-left:     1em;border:0px solid #fff;}
+  /* variable definitions */
+  :root {
+    /* color and background */
+    --bg-osaft:     #fff;
+    --bg-blue:      #226;               /* darkblue  */
+    --bg-head:      linear-gradient(#000,#fff);    /* black,white */
+    --bg-mbox:      rgba(0,0,0,0.9);
+    --bg-mdiv:      linear-gradient(#fff,#226);
+    --bg-button:    linear-gradient(#d3d3d3,#fff);  /* lightgray */
+    --bg-start:     linear-gradient(#ffd700,#ff0);  /* gold */
+    --bg-start-h:   linear-gradient(#ff0,#ffd700);  /* gold */
+    --bg-hover:     #d3d3d3;            /* lightgray */
+    --bg-literal:   #d3d3d3;            /* lightgray */
+    --border-0:     0px solid #fff;
+    --border-1:     1px solid #080;     /* green */
+    --border-w:     1px solid #fff;     /* white */
+  }
+ .h             {margin-left:     1em;border:var(--border-0);}
  .l             {margin-left:     2em;}
  .r             {float:right;}
  .b, div[class=h] > a, input[type=submit] {
-                 margin:        0.1em;padding:0px 0.5em 0px 0.5em; text-decoration:none; font-weight:bold; color:#000; border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666; background:linear-gradient(#fff, #ddd);}
- a[class="b r"]:hover, div[class=h] > a:hover {background:linear-gradient(#ddd, #fff);}
+                 margin:        0.1em;padding:0px 0.5em 0px 0.5em; text-decoration:none; font-weight:bold; color:#000; border:var(--border-1); border-radius:2px; box-shadow:1px 1px 3px #666; background:var(--bg-button);}
+ a[class="b r"]:hover, div[class=h] > a:hover {background:var(--bg-button);}
  p > a[class="b"] {margin-left: -2em; }
- p > a[class="b"]:hover {background:linear-gradient(#ddd, #fff);}
- .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;} /* white-space:pro */
- .q             {border:0px solid white;}
+ p > a[class="b"]:hover         {background:var(--bg-button);}
+ .c             {padding:0px 3px 0px 3px;            border:var(--border-0);font-size:12pt !important; font-family:monospace;background:var(--bg-literal);} /* white-space:pro */
+ .q             {border:var(--border-0);}
  p              {margin-left:     2em;margin-top:0;}
  td             {                     padding-left:    1em;}
- h2             {margin:       -0.3em;margin-bottom: 0.5em;height:1.5em;padding:1em;background:linear-gradient(black,white);color:white;border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0; }
+ h2             {margin:       -0.3em;margin-bottom: 0.5em;height:1.5em;padding:1em;background:var(--bg-head);color:white;border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0; }
  h3, h4, h5     {margin-bottom: 0.2em;}
  body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
  body > h4      {margin-left:     1em;}
- b              {margin-left:     1em;} /* for discrete commands */
+ b              {margin-left:     1em;}     /* for discrete commands */
  li             {margin-left:     3em;}
- div            {                     padding:0.5em; border:1px solid green;}
- div[class=c]   {margin-left:     4em;padding:0.1em; border:0px solid green;}
- div[class=n]   {                                    border:0px solid white;}
+ div            {                     padding:0.5em; border:var(--border-1);}
+ div[class=c]   {margin-left:     4em;padding:0.1em; border:var(--border-0);}
+ div[class=n]   {                                    border:var(--border-0);}
+ form           {font-size:       20px; }   /* chromium hack */
  form           {                     padding:1em;}
- span           {margin-bottom:   2em;font-size:120%;border:1px solid green;}
- h2 > span      {                                    border:0px solid white;}
- label[class=i] {margin-right:    1em;min-width:8em; border:1px solid white;display:inline-block;}
- label[class=i]:hover    {background-color:lightgray;border-bottom:1px solid green;}
+ span           {margin-bottom:   2em;font-size:120%;border:var(--border-1);}
+ h2 > span      {                                    border:var(--border-0);}
+ label[class=i] {margin-right:    1em;min-width:8em; border:var(--border-w);display:inline-block;}
+ label[class=i]:hover           {background:var(--bg-hover);border-bottom:var(--border-1);}
+ input[type=submit]             {background:var(--bg-start);min-width:8em;text-align:left;}
+ input[type=submit]:hover       {background:var(--bg-start-h);}
  input          {margin-right:  0.5em;}
- input[type=submit]      {background:linear-gradient(gold, #ff0);min-width:8em;text-align:left;}
- input[type=submit]:hover{background:linear-gradient(#ff0, gold);}
  fieldset > p   {margin:           0px;padding:0.5em;background-color:#ffa;}
  /* dirty hack for mobile-friendly A tag's title= attribute;
   * placed left bound below tag; browser's title still visible
@@ -363,14 +381,14 @@ sub _man_html_warn  {
     _man_dbx("_man_html_warn() ...");
     print << 'EoHTML';
  <style>
-  /* message box "Note", if necessary */
-  .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:rgba(0,0,0,0.9); top:0; right:0; bottom:0; left:0; z-index:9; }
-  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:#fff; background:linear-gradient(#fff, #226); font-size:150%; }
+  /* message box "Note", if necessary # TODO: font-size not working in firefox */
+  .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
+  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:150%; }
   .m > div > p  {font-size:120%; }
   .m > div > a  {opacity:1; pointer-events:auto; }
-  .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:#226; color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 1px 3px #5bb; }
+  .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:var(--bg-blue); color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 3px 3px #5bb; }
   .m > div > a:hover  {background: #5bb; }
-  .m > div > h3       {margin:-0.8em; border-bottom:1px solid black; margin-bottom:1em; }
+  .m > div > h3       {margin:-0.8em; border-bottom:var(--border-1); margin-bottom:1em; }
   .m > div > h3:before{content:"\00a0\00a0\00a0" }
  </style>
  <div id="warn" class="m"> <div>
@@ -1779,7 +1797,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.321 2020/11/08
+1.322 2020/11/29
 
 =head1 AUTHOR
 
