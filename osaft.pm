@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '20.11.09',  # official version number of this file
+    OSAFT_VERSION   => '21.01.10',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.232 20/11/18 11:03:43",
+    SID_osaft   => "@(#) %M% %I% %E% %U%",
 
 };
 
@@ -172,7 +172,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =item %tls_error_alerts
 
-=item %tls_extensions
+=item %TLS_EXTENSIONS
 
 =item %tls_curve_types
 
@@ -226,9 +226,16 @@ our @EXPORT     = qw(
                 %tls_handshake_type
                 %tls_record_type
                 %tls_error_alerts
-                %tls_extensions
                 %tls_curve_types
                 %tls_curves
+                %TLS_EXTENSIONS
+                %TLS_EC_POINT_FORMATS
+                %TLS_MAX_FRAGMENT_LENGTH
+                %TLS_NAME_TYPE
+                %TLS_PROTOCOL_VERSION
+                %TLS_PSK_KEY_EXCHANGE_MODE
+                %TLS_SIGNATURE_SCHEME
+                %TLS_SUPPORTED_GROUPS
                 @target_defaults
                 %data_oid
                 %dbx
@@ -459,52 +466,1073 @@ our %tls_error_alerts = ( # mainly RFC 6066
     #----+-------------------------------------+----+--+---------------
 ); # %tls_error_alerts
 
-our %tls_extensions = (         # RFC 6066, 8446, ...
-    #----+-----------------------------+----+---+------------------------------
-    # ID      name                      RFC DTLS other names
-    #----+-----------------------------+----+---+------------------------------
-    0 => [qw( server_name               4366  -   )],   # also 6066
-    1 => [qw( max_fragment_length       6066  -   )],
-    2 => [qw( client_certificate_url    ????  -   )],
-    3 => [qw( trusted_ca_keys           ????  -   )],
-    4 => [qw( truncated_hmac            ????  -   )],
-    5 => [qw( status_request            6066  -   )],
-    6 => [qw( user_mapping              ????  -   )],
-    7 => [qw( reserved_7                ????  -   )],
-    8 => [qw( reserved_8                ????  -   )],
-    9 => [qw( cert_type                 5081  -   )],   # also 6091
-   10 => [qw( supported_groups          8422  -   )],   # also 7919
-#   10 => [qw( ecliptic_curves           4492  -   )],  # TODO: old name (see above)?
-   11 => [qw( ec_point_formats          4492  -   )],
-   12 => [qw( srp                       5054  -   )],
-   13 => [qw( signature_algorithms      8446  -   )],
-   14 => [qw( use_srp                   5764  -   )],
-   15 => [qw( heartbeat                 6520  -   )],
-   16 => [qw( application_layer_protocol_negotiation 7301  -  )],
-   18 => [qw( signed_certificate_timestamp 6962 - )],
-   19 => [qw( client_certificate_type   7250  -   )],
-   20 => [qw( server_certificate_type   7250  -   )],
-   21 => [qw( padding                   7685  -   )],
-#  34 => [qw( unassigned                5246  -   )],
-   35 => [qw( SessionTicket             4507  -   )],
-   40 => [qw( RESERVERD_40              ????  -   )],
-   41 => [qw( pre_shared_key            8446  -   )],
-   42 => [qw( early_data                8446  -   )],
-   43 => [qw( supported_versions        8446  -   )],
-   44 => [qw( cookie                    8446  -   )],
-   45 => [qw( psk_key_exchange_modes    8446  -   )],
-   46 => [qw( RESERVERD_46              ????  -   )],
-#  ...
-   47 => [qw( certificate_authorities   8446  -   )],
-   48 => [qw( oid_filters               8446  -   )],
-   49 => [qw( post_handshake_auth       8446  -   )],
-   50 => [qw( signature_algorithms_cert 8446  -   )],
-   51 => [qw( key_share                 8446  -   )],
-62208 => [qw( TACK                      ????  -   )],
-65535 => [qw( 65535                     ????  -   )],
-); # %tls_extensions
+# https://tools.ietf.org/html/rfc4492#page-13
 
-my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_extensions above
+our %TLS_EC_POINT_FORMATS = (
+   #----+-----------------------------------+----+---+----------------------------
+   # ID        name                          DTLS RECOMMENDED  RFC
+   #----+-----------------------------------+----+---+----------------------------
+
+   TEXT =>      "ec point format(s)",                                 # define text for print
+ FORMAT => [    "%s",                                               ],# define format for printf
+      0 => [qw( uncompressed                    Y   Y   [RFC4492]   )],
+      1 => [qw( ansiX962_compressed_prime       Y?  N?  [RFC4492]   )],
+      2 => [qw( ansiX962_compressed_char2       Y?  N?  [RFC4492]   )],
+);
+
+# https://tools.ietf.org/html/rfc6066#section-3 
+
+our %TLS_NAME_TYPE = (
+    #----+----------------------------------------+--+----------------------------
+    # ID        name                              DTLS  RFC
+    #----+----------------------------------------+--+----------------------------
+
+   TEXT =>      "server name type",                                    # define text for print
+ FORMAT => [qw( %s                                                  )],# define format for printf
+
+   0x00 => [qw( host_name                           Y   [RFC6066]   )],
+);
+
+# https://tools.ietf.org/html/rfc6066#section-4
+# Default is 2^14 if this extension is not present
+our %TLS_MAX_FRAGMENT_LENGTH = (
+   #----+----------------------------------------+----+---------------------------
+   # ID        name                      RECONMMENDED   RFC
+   #----+----------------------------------------+----+---------------------------
+   TEXT =>      "max fragment length negotiation",                   # define text for print
+ FORMAT => [    "%s",   "(%s bytes)"                               ],# define format for printf
+   0x01 => [qw( 2^9        512                      -   [RFC6066] )],
+   0x02 => [qw( 2^10      1024                      -   [RFC6066] )],
+   0x03 => [qw( 2^11      2048                      -   [RFC6066] )],
+   0x04 => [qw( 2^12      4096                      -   [RFC6066] )],
+);
+
+# https://tools.ietf.org/html/rfc8446#appendix-B.3.1.1 (added versions manually)
+our %TLS_PROTOCOL_VERSION  = (
+   #----+-------------------------------------------------------------------------
+   # ID        name
+   #----+-------------------------------------------------------------------------
+   TEXT =>      "supported protocol version(s)",                    # define text for print
+ FORMAT => [qw( %s    ) ],                                          # define format for printf
+
+ 0x0304 => [qq(TLS 1.3) ],
+ 0x0303 => [qq(TLS 1.2) ],
+ 0x0302 => [qq(TLS 1.1) ],
+ 0x0301 => [qq(TLS 1.0) ],
+ 0x0300 => [qq(SSL 3)   ],
+);
+
+# https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-pskkeyexchangemode
+our %TLS_PSK_KEY_EXCHANGE_MODE  = (
+   #----+----------------------------------------+----+---------------------------
+   # ID        name                      RECONMMENDED   RFC
+   #----+----------------------------------------+----+---------------------------
+   TEXT =>      "PSK key exchange mode(s)",                          # define text for print
+ FORMAT => [    "%s"                                               ],# define format for printf
+   0x00 => [qw( psk_ke                              Y   [RFC8446] )],
+   0x01 => [qw( psk_dhe_ke                          Y   [RFC8446] )],
+);
+
+# https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-signaturescheme
+
+our %TLS_SIGNATURE_SCHEME = (
+    #----+----------------------------------------+--+----------------------------
+    # ID        name                              DTLS  RFC
+    #----+----------------------------------------+--+----------------------------
+
+   TEXT =>      "signature scheme(s)",                                 # define text for print
+ FORMAT => [qw( %s                                                  )],# define format for printf
+ 
+ 0x0201 => [qw( rsa_pkcs1_sha1                      Y   [RFC8446]   )],
+ 0x0202 => [qw( dsa_sha1                            ?   [RFC8446] (Quelle suchen & prüfen!) )],
+ 0x0203 => [qw( ecdsa_sha1                          Y   [RFC8446]   )],
+
+ 0x0301 => [qw( rsa_sha224                          ?   (Quelle suchen & prüfen!) )],
+ 0x0302 => [qw( dsa_sha224                          ?   (Quelle suchen & prüfen!) )],
+ 0x0303 => [qw( ecdsa_sha224                        ?   (Quelle suchen & prüfen!) )],
+
+ 0x0401 => [qw( rsa_pkcs1_sha256                    Y   [RFC8446] )],
+ 0x0402 => [qw( dsa_sha256                          ?   [RFC8446] (Quelle suchen & prüfen!)     )],
+ 0x0403 => [qw( ecdsa_secp256r1_sha256              Y   [RFC8446] )],
+ 0x0420 => [qw( rsa_pkcs1_sha256_legacy             N   [draft-davidben-tls13-pkcs1-00] )],
+
+ 0x0501 => [qw( rsa_pkcs1_sha384                    Y   [RFC8446] )],
+ 0x0502 => [qw( dsa_sha384                          ?   [RFC8446](Quelle suchen und prüfen)     )],
+ 0x0503 => [qw( ecdsa_secp384r1_sha384              Y   [RFC8446] )],
+
+ 0x0520 => [qw( rsa_pkcs1_sha384_legacy             N   [draft-davidben-tls13-pkcs1-00]         )],
+
+ 0x0601 => [qw( rsa_pkcs1_sha512                    Y   [RFC8446] )],
+ 0x0602 => [qw( dsa_pkcs1_sha512                    Y   [RFC8446]? (Quelle suchen und prüfen!)  )],
+ 0x0603 => [qw( ecdsa_secp521r1_sha512              Y   [RFC8446] )],
+
+ 0x0620 => [qw( rsa_pkcs1_sha512_legacy             N   [draft-davidben-tls13-pkcs1-00]         )],
+
+ 0x0704 => [qw( eccsi_sha256                        N   [draft-wang-tls-raw-public-key-with-ibc])],
+ 0x0705 => [qw( iso_ibs1                            N   [draft-wang-tls-raw-public-key-with-ibc])],
+ 0x0706 => [qw( iso_ibs2                            N   [draft-wang-tls-raw-public-key-with-ibc])],
+ 0x0707 => [qw( iso_chinese_ibs                     N   [draft-wang-tls-raw-public-key-with-ibc])],
+ 0x0708 => [qw( sm2sig_sm3                          N   [draft-yang-tls-tls13-sm-suites]        )],
+ 0x0709 => [qw( gostr34102012_256a                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070A => [qw( gostr34102012_256b                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070B => [qw( gostr34102012_256c                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070C => [qw( gostr34102012_256d                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070D => [qw( gostr34102012_512a                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070E => [qw( gostr34102012_512b                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+ 0x070F => [qw( gostr34102012_512c                  N   [draft-smyshlyaev-tls13-gost-suites]    )],
+
+ 0x0804 => [qw( rsa_pss_rsae_sha256                 Y   [RFC8446] )],
+ 0x0805 => [qw( rsa_pss_rsae_sha384                 Y   [RFC8446] )],
+ 0x0806 => [qw( rsa_pss_rsae_sha512                 Y   [RFC8446] )],
+ 0x0807 => [qw( ed25519                             Y   [RFC8446] )],
+ 0x0808 => [qw( ed448                               Y   [RFC8446] )],
+ 0x0809 => [qw( rsa_pss_pss_sha256                  Y   [RFC8446] )],
+ 0x080A => [qw( rsa_pss_pss_sha384                  Y   [RFC8446] )],
+ 0x080B => [qw( rsa_pss_pss_sha512                  Y   [RFC8446] )],
+
+ 0x081A => [qw( ecdsa_brainpoolP256r1tls13_sha256   N   [RFC8734] )],
+ 0x081B => [qw( ecdsa_brainpoolP384r1tls13_sha384   N   [RFC8734] )],
+ 0x081C => [qw( ecdsa_brainpoolP512r1tls13_sha512   N   [RFC8734] )],
+);
+
+# Torsten: ex %ECC_NAMED_CURVE =
+# http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
+
+our %TLS_SUPPORTED_GROUPS = (
+   #----+----------------------------+------+----+---+----------------------------
+   # ID        name             (added:)bits DTLS RECOMMENDED  RFC
+   #----+----------------------------+------+----+---+----------------------------
+   TEXT =>      "supported group(s)",                               # define text for print
+ FORMAT => [    "%s",           "(%s bits)"                       ],# define format for printf
+      0 => [qw( Reverved_0                 0    N   N   [RFC8447])],
+      1 => [qw( sect163k1                163    Y   N   [RFC4492])],
+      2 => [qw( sect163r1                163    Y   N   [RFC4492])],
+      3 => [qw( sect163r2                163    Y   N   [RFC4492])],
+      4 => [qw( sect193r1                193    Y   N   [RFC4492])],
+      5 => [qw( sect193r2                193    Y   N   [RFC4492])],
+      6 => [qw( sect233k1                233    Y   N   [RFC4492])],
+      7 => [qw( sect233r1                233    Y   N   [RFC4492])],
+      8 => [qw( sect239k1                239    Y   N   [RFC4492])],
+      9 => [qw( sect283k1                283    Y   N   [RFC4492])],
+     10 => [qw( sect283r1                283    Y   N   [RFC4492])],
+     11 => [qw( sect409k1                409    Y   N   [RFC4492])],
+     12 => [qw( sect409r1                409    Y   N   [RFC4492])],
+     13 => [qw( sect571k1                571    Y   N   [RFC4492])],
+     14 => [qw( sect571r1                571    Y   N   [RFC4492])],
+     15 => [qw( secp160k1                160    Y   N   [RFC4492])],
+     16 => [qw( secp160r1                160    Y   N   [RFC4492])],
+     17 => [qw( secp160r2                160    Y   N   [RFC4492])],
+     18 => [qw( secp192k1                192    Y   N   [RFC4492])],
+     19 => [qw( secp192r1                192    Y   N   [RFC4492])],
+     20 => [qw( secp224k1                224    Y   N   [RFC4492])],
+     21 => [qw( secp224r1                224    Y   N   [RFC4492])],
+     22 => [qw( secp256k1                256    Y   N   [RFC4492])],
+     23 => [qw( secp256r1                256    Y   Y   [RFC4492])],
+     24 => [qw( secp384r1                384    Y   Y   [RFC4492])],
+     25 => [qw( secp521r1                521    Y   N   [RFC4492])],
+     26 => [qw( brainpoolP256r1          256    Y   Y   [RFC7027])],
+     27 => [qw( brainpoolP384r1          384    Y   Y   [RFC7027])],
+     28 => [qw( brainpoolP512r1          512    Y   Y   [RFC7027])],
+     29 => [qw( x25519                   255    Y   Y   [RFC8446][RFC8422])],
+     30 => [qw( x448                     448    Y   Y   [RFC8446][RFC8422])],
+     31 => [qw( brainpoolP256r1tls13     256    Y   N   [RFC8734])],
+     32 => [qw( brainpoolP384r1tls13     384    Y   N   [RFC8734])],
+     33 => [qw( brainpoolP512r1tls13     512    Y   N   [RFC8734])],
+     34 => [qw( GC256A                   256    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     35 => [qw( GC256B                   256    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     36 => [qw( GC256C                   256    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     37 => [qw( GC256D                   256    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     38 => [qw( GC512A                   512    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     39 => [qw( GC512B                   512    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     40 => [qw( GC512C                   512    Y   N   [draft-smyshlyaev-tls12-gost-suites])],
+     41 => [qw( curveSM2                 256    N   N   [draft-yang-tls-tls13-sm-suites])],
+#    42-255  Unassigned
+    256 => [qw( ffdhe2048               2048    Y   N   [RFC7919])],
+    257 => [qw( ffdhe3072               3072    Y   N   [RFC7919])],
+    258 => [qw( ffdhe4096               4096    Y   N   [RFC7919])],
+    259 => [qw( ffdhe6144               6144    Y   N   [RFC7919])],
+    260 => [qw( ffdhe8192               8192    Y   N   [RFC7919])],
+#   261-507 Unassigned
+    508 => [qw( ffdhe_private_use_508     NN    Y   N   [RFC7919])],
+    509 => [qw( ffdhe_private_use_509     NN    Y   N   [RFC7919])],
+    510 => [qw( ffdhe_private_use_510     NN    Y   N   [RFC7919])],
+    511 => [qw( ffdhe_private_use_511     NN    Y   N   [RFC7919])],
+#   512-2569    Unassigned
+   2570 => [qw( Reserved_2570             NN    Y   N   [RFC8701])],
+#  2571-6681    Unassigned
+   6682 => [qw( Reserved_6682             NN    Y   N   [RFC8701])],
+# 6683-10793   Unassigned
+  10794 => [qw( Reserved_10794            NN    Y   N   [RFC8701])],
+# 10795-14905   Unassigned
+  14906 => [qw( Reserved_14906            NN    Y   N   [RFC8701])],
+# 14907-19017   Unassigned
+  19018 => [qw( Reserved_19018            NN    Y   N   [RFC8701])],
+# 19019-23129   Unassigned
+  23130 => [qw( Reserved_23130            NN    Y   N   [RFC8701])],
+# 23131-27241   Unassigned
+  27242 => [qw( Reserved_27242            NN    Y   N   [RFC8701])],
+# 27243-31353   Unassigned
+  31354 => [qw( Reserved_31354            NN    Y   N   [RFC8701])],
+# 31355-35465   Unassigned
+  35466 => [qw( Reserved_35466            NN    Y   N   [RFC8701])],
+# 35467-39577   Unassigned
+  39578 => [qw( Reserved_39578            NN    Y   N   [RFC8701])],
+# 39579-43689   Unassigned
+  43690 => [qw( Reserved_43690            NN    Y   N   [RFC8701])],
+# 43691-47801   Unassigned
+  47802 => [qw( Reserved_47802            NN    Y   N   [RFC8701])],
+# 47803-51913   Unassigned
+  51914 => [qw( Reserved_51914            NN    Y   N   [RFC8701])],
+# 51915-56025   Unassigned
+  56026 => [qw( Reserved_56026            NN    Y   N   [RFC8701])],
+# 56027-60137   Unassigned
+  60138 => [qw( Reserved_60138            NN    Y   N   [RFC8701])],
+# 60139-64249   Unassigned
+  64250 => [qw( Reserved_64250            NN    Y   N   [RFC8701])],
+# 64251-65023   Unassigned
+# 65024-65279   Reserved_for_Private_Use  NN    Y   N   [RFC8422],
+ 0xFE00 => [qw( ecdhe_private_use_65024   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE01 => [qw( ecdhe_private_use_65025   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE02 => [qw( ecdhe_private_use_65026   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE03 => [qw( ecdhe_private_use_65027   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE04 => [qw( ecdhe_private_use_65028   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE05 => [qw( ecdhe_private_use_65029   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE06 => [qw( ecdhe_private_use_65030   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+ 0xFE07 => [qw( ecdhe_private_use_65031   NN    Y   N          NN)],# 0xFE00..0xFEFF => "ecdhe_private_use",
+# 65280         Unassigned
+  65281 => [qw( arbitrary_explicit_prime_curves  -variable- Y   N   [RFC8422])],
+  65282 => [qw( arbitrary_explicit_char2_curves  -variable- Y   N   [RFC8422])],
+# 65283-65535   Unassigned
+);
+
+
+our %TLS_EXTENSIONS = (
+# Generated on base of IANA (https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xml#tls-extensiontype-values-1), RFCs and drafts for RFCs
+#
+# Added a self defined general description for the structure of for PDUs, e.g. tls extensions:
+# len1:     Len of the next bytes, coded in 1 byte      (-> max 0xFF)
+# len2:     Len of the next bytes, coded in 2 bytes     (-> max 0xFFFF)
+# len3:     Len of the next bytes, coded in 3 bytes     (-> max 0xFFFFFF)
+# size1:    Size of the next value, coded in 1 byte     (-> max 0xFF)
+# size2:    Size of the next value, coded in 2 bytes    (-> max 0xFFFF)
+# val1:     value, coded in 1 byte                      (-> max 0xFF)
+# val2:     value, coded in 2 bytes                     (-> max 0xFFFF)
+# val4:     value, coded in 4 byters                    (-> max 0xFFFFFFFF)
+# val1List: List of value, coded in 1 byte              (-> max 0xFF, 0xFF, ...)
+# val2List: List of value, coded in 2 bytes             (-> max 0xFFFF, 0xFFFF, ...)
+# raw:      Raw bytes (number needs to be previously defined by a len or size element)
+# sequence: Sequence of structured elements that form lists of compound values
+#
+# Hash values:
+# <Hash>:       Extension name by IANA, RFC or draft for a RFCr
+# ID:           Official nr by IANA, RFC or DRAFT for a RFC
+# CH:           Client Hello: describes the structure of client hellos based on the general descrition language defined above
+# CH_TEXT:      Descriptions and references to decoding hashes by the structure element of a CH
+# RX:           Received Extension, e.g. Server Hellon: describes the structure of received hellos based on the general descrition language defined above
+# RX_TEXT:      Descriptions and references to decoding hashes by the structure element of a RX
+# RECOMMENDED:  From IANA, 'N' or '?' if the extension is taken from a RFC or draft for a RFC
+# TLS13:        Whrere used by TLSv1.3 according IANA
+# RFC:          RFC according, IANA, RFC or draft
+# DEFAULT:      Default values for client hellos (used by val1 ... val4, val1List, val2List, raw, sequences define an array inside the array lists).
+# CHECK:        Internal value, if the VALUE or CHECKing for a list of all (supporeted) values (might be reserved for future deployment)
+# COMMENT:      Optional comments
+#
+#---------------------------------+---------------+------------+----------------------------------+--------------------------------+--------+---------------+--------------------------
+#Extension Name: (ID (Value), CH* (Client Hello)*, RX* (Receive SH, ...), RECOMMENDED, TLS13 (TLS 1.3), RFC, COMMENT*; *= Added             comment
+#---------------------------------+---------------+------------+----------------------------------+--------------------------------+--------+---------------+--------------------------
+server_name => {
+            ID      => 0,                                           # Hex:     0x0000
+            CH         => [qw(len2 len2 sequence val1 len2 raw)],
+            CH_TEXT    => ["length", "server name list length", "server name element", \%TLS_NAME_TYPE, "server name length", "server name" ],
+            RX            => [qw(len2 raw)],                        # Example: 0x0000 (no data, only as marker)
+            RX_TEXT       => ["length", "server name list length" ],
+            RECOMMENDED      => q(Y),
+            TLS13               => [qw(CH EE)],
+            RFC                    => [qw(6066)],
+            DEFAULT                   => [
+                                             [                      # 1st sequence element
+                                                 0x00,              # host_name
+                                                 "localhost",       # $TLS_EXTENSION{server_name}{DEFAULT}[0][0][1], might be overwritten
+                                             ],
+                                         ],
+            CHECK                        => q(VALUE),
+            COMMENT                         => q(),
+    },
+
+max_fragment_length => {
+            ID    => 1,
+            CH       => [qw(len2 len2 val1List)],
+            CH_TEXT  => ["length", "length of max fragment lenght", \%TLS_MAX_FRAGMENT_LENGTH ],
+            RX          => [qw(len2 raw)],
+            RX_TEXT  => ["length", \%TLS_MAX_FRAGMENT_LENGTH ],
+            RECOMMENDED    => q(-),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(6066 8449)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(replaced by extension 'record_size_limit'; Default max length is 2^14 if this extension is not negotiated),
+    },
+
+client_certificate_url => {
+            ID    => 2,
+            CH       => [qw(len2 len2 val1 sequence len2 val1 raw)],#TBD Check sequence position
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(6066)],
+            DEFAULT                 => [ ],                         # [ [<seqence>], ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(val20 oder len2_val?),
+    },
+
+trusted_ca_keys => {
+            ID    => 3,
+            CH       => [qw(len2 len2 val1 len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(N)],
+            RFC                  => [qw(6066)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(?),
+    },
+truncated_hmac => {
+            ID    => 4,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q[N],
+            TLS13             => [qw(N)],
+            RFC                  => [qw(6066 IESG_Action_2018-08-16)],
+            DEFAULT                 => [],
+            CHECK                      => q[VALUE],
+            COMMENT                       => q[Shall be empty],
+    },
+status_request => {
+            ID    => 5,
+            CH       => [qw(len2 val1 len2 raw len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH CR CT)],
+            RFC                  => [qw(6066)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[SH ext_form_val1_len2_val?],
+    },
+user_mapping => {
+            ID    => 6,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(4681)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(),
+    },
+client_authz => {
+            ID    => 7,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(5878)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(),
+    },
+server_authz => {
+            ID    => 8,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(5878)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(),
+    },
+cert_type => {
+            ID    => 9,
+            CH       => [qw(len2 len1 val1List)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(6091)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(Server: val1),
+    },
+#elliptic_curves  =>                                                             # old name
+supported_groups => {
+            ID    => 10,
+            CH       => [qw(len2 len2 val2List)],
+            CH_TEXT  => ["length", "supported groups list length", \%TLS_SUPPORTED_GROUPS],
+            RX          => [qw(len2 val2)],
+            RX_TEXT     => ["length", \%TLS_SUPPORTED_GROUPS],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(8422 7919)],
+            DEFAULT                 => [
+                                         [ #0x0000, # 0x0000 (Unassigned_0)       ## disabled by default
+                                            0x0001, # sect163k1
+                                            0x0002, # sect163r1
+                                            0x0003, # sect163r2
+                                            0x0004, # sect193r1
+                                            0x0005, # sect193r2
+                                            0x0006, # sect233k1
+                                            0x0007, # sect233r1
+                                            0x0008, # sect239k1
+                                            0x0009, # sect283k1
+                                            0x000a, # sect283r1
+                                            0x000b, # sect409k1
+                                            0x000c, # sect409r1
+                                            0x000d, # sect571k1
+                                            0x000e, # sect571r1
+                                            0x000f, # secp160k1
+                                            0x0010, # secp160r1
+                                            0x0011, # secp160r2
+                                            0x0012, # secp192k1
+                                            0x0013, # secp192r1
+                                            0x0014, # secp224k1
+                                            0x0015, # secp224r1
+                                            0x0016, # secp256k1
+                                            0x0017, # secp256r1     ## => common default curve
+                                            0x0018, # secp384r1
+                                            0x0019, # secp512r1
+                                            0x001a, # brainpoolP256r1
+                                            0x001b, # brainpoolP384r1
+                                            0x001c, # brainpoolP512r1
+                                            0x001d, # ecdh_x25519
+                                            0x001e, # ecdh_x448
+                                            0x001f, # brainpoolP256r1tls13
+                                            0x0020, # brainpoolP384r1tls13
+                                            0x0021, # brainpoolP512r1tls13
+                                            0x0022, # GC256A        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0023, # GC256B        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0024, # GC256C        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0025, # GC256D        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0026, # GC512A        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0027, # GC512B        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0028, # GC512C        [draft-smyshlyaev-tls12-gost-suites]
+                                            0x0029, # curveSM2      [draft-yang-tls-tls13-sm-suites]
+                                                    # Finite Field Groups (DHE):
+                                            0x0100, # ffdhe2048
+                                            0x0101, # ffdhe3072
+                                            0x0102, # ffdhe4096
+                                            0x0103, # ffdhe6144
+                                            0x0104, # ffdhe8192
+                                         ],
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(renamed from "elliptic_curves"),
+    },
+ec_point_formats => {
+            ID    => 11,                            # Hex:      0x000b
+            CH       => [qw(len2 len1 val1List)],   # Example:  0x0002 0x01 0x00
+            CH_TEXT  => ["length", "ec point formats list length", \%TLS_EC_POINT_FORMATS],
+            RX          => [qw(len2 val1)],
+            CH_TEXT     => ["length", \%TLS_EC_POINT_FORMATS],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(8422)],
+            DEFAULT                 => [ 
+                                         [ 0x00,    # uncompressed,Y,[RFC8422]
+                                           0x01,    # ansiX962_compressed_prime,Y,[RFC8422]
+                                           0x02,    # ansiX962_compressed_char2,Y,[RFC8422]
+                                         ],
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(),
+    },
+srp => {
+            ID    => 12,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),,
+            TLS13             => [qw(-)],
+            RFC                  => [qw(5054)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(),
+    },
+signature_algorithms => {
+            ID    => 13,                            # Hex: 0x000d
+            CH       => [qw(len2 len2 val2List)],     # Example: 0x0020 0x001E 0x0601 0x0602 0x0603 0x0501 0x0502 0x0503 0x0401 0x0402 0x0403 0x0301 0x0302 0x0303 0x0201 0x0202 0x0203
+            CH_TEXT  => ["length", "signature hash algorithms list length", \%TLS_SIGNATURE_SCHEME],
+            RX          => [qw(len2 val2)],
+            RX_TEXT     => ["length", \%TLS_SIGNATURE_SCHEME],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH CR)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [
+                                         [ 0x0201, # rsa_pkcs1_sha1,Y,[RFC8446]
+                                           0x0202, # SHA1 DSA,[RFC8446] (Quelle suchen & prüfen!)
+                                           0x0203, # ecdsa_sha1,Y,[RFC8446]
+
+                                           0x0301, # SHA224 RSA (Quelle suchen & prüfen!)
+                                           0x0302, # SHA224 DSA (Quelle suchen & prüfen!)
+                                           0x0303, # SHA224 ECDSA (Quelle suchen & prüfen!)
+
+                                           0x0401, # rsa_pkcs1_sha256,Y,[RFC8446]
+                                           0x0402, # SHA256 DSA (Quelle suchen & prüfen!),[RFC8446] (Quelle suchen & prüfen!)
+                                           0x0403, # ecdsa_secp256r1_sha256,Y,[RFC8446]
+                                           0x0420, # rsa_pkcs1_sha256_legacy,N,[draft-davidben-tls13-pkcs1-00]
+
+                                           0x0501, # rsa_pkcs1_sha384,Y,[RFC8446]
+                                           0x0502, # Reserved for backward compatibility,,[RFC8446]
+                                           0x0503, # ecdsa_secp384r1_sha384,Y,[RFC8446]
+
+                                           0x0520, # rsa_pkcs1_sha384_legacy,N,[draft-davidben-tls13-pkcs1-00]
+
+                                           0x0601, # rsa_pkcs1_sha512,Y,[RFC8446]
+                                           0x0602, # dsa_pkcs1_sha512,Y,[RFC8446]? (Quelle suchen und prüfen!)
+                                           0x0603, # ecdsa_secp521r1_sha512,Y,[RFC8446]
+
+                                           0x0620, # rsa_pkcs1_sha512_legacy,N,[draft-davidben-tls13-pkcs1-00]
+
+                                           0x0704, # eccsi_sha256,N,[draft-wang-tls-raw-public-key-with-ibc]
+                                           0x0705, # iso_ibs1,N,[draft-wang-tls-raw-public-key-with-ibc]
+                                           0x0706, # iso_ibs2,N,[draft-wang-tls-raw-public-key-with-ibc]
+                                           0x0707, # iso_chinese_ibs,N,[draft-wang-tls-raw-public-key-with-ibc]
+                                           0x0708, # sm2sig_sm3,N,[draft-yang-tls-tls13-sm-suites]
+                                           0x0709, # gostr34102012_256a,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070A, # gostr34102012_256b,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070B, # gostr34102012_256c,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070C, # gostr34102012_256d,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070D, # gostr34102012_512a,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070E, # gostr34102012_512b,N,[draft-smyshlyaev-tls13-gost-suites]
+                                           0x070F, # gostr34102012_512c,N,[draft-smyshlyaev-tls13-gost-suites]
+
+                                           0x0804, # rsa_pss_rsae_sha256,Y,[RFC8446]
+                                           0x0805, # rsa_pss_rsae_sha384,Y,[RFC8446]
+                                           0x0806, # rsa_pss_rsae_sha512,Y,[RFC8446]
+                                           0x0807, # ed25519,Y,[RFC8446]
+                                           0x0808, # ed448,Y,[RFC8446]
+                                           0x0809, # rsa_pss_pss_sha256,Y,[RFC8446]
+                                           0x080A, # rsa_pss_pss_sha384,Y,[RFC8446]
+                                           0x080B, # rsa_pss_pss_sha512,Y,[RFC8446]
+
+                                           0x081A, # ecdsa_brainpoolP256r1tls13_sha256,N,[RFC8734]
+                                           0x081B, # ecdsa_brainpoolP384r1tls13_sha384,N,[RFC8734]
+                                           0x081C, # ecdsa_brainpoolP512r1tls13_sha512,N,[RFC8734]
+                                         ],
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+use_srtp => {
+            ID    => 14,
+            CH       => [qw(len2 size2 val2List len1 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(5764)],
+            DEFAULT                 => [
+                                         [ 0x0001, # SRTPProtectionProfile SRTP_AES128_CM_HMAC_SHA1_80
+                                           0x0002, # SRTPProtectionProfile SRTP_AES128_CM_HMAC_SHA1_32
+                                           0x0005, # SRTPProtectionProfile SRTP_NULL_HMAC_SHA1_80
+                                           0x0006, # SRTPProtectionProfile SRTP_NULL_HMAC_SHA1_32
+                                         ]
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+heartbeat => {
+            ID    => 15,
+            CH       => [qw(len2 val1)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(6520)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(Syntax prüfen!),
+    },
+application_layer_protocol_negotiation => {
+            ID    => 16,
+            CH       => [qw(len2 len2 size1 raw size1 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(7301)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+status_request_v2 => {
+            ID    => 17,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(6961)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+signed_certificate_timestamp => {
+            ID    => 18,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(CH CR CT)],
+            RFC                  => [qw(6962)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+client_certificate_type => {
+            ID    => 19,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(7250)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+server_certificate_type => {
+            ID    => 20,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(7250)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+padding => {
+            ID    => 21,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH)],
+            RFC                  => [qw(7685)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(val= 0x00-Bytes),
+    },
+encrypt_then_mac => {
+            ID    => 22,                            # Hex:        0x0016
+            CH       => [qw(len2 raw)],               # Example:    0x0000 (no data, only as marker)
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(7366)],
+            DEFAULT                 => [], #empty
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+extended_master_secret => {
+            ID    => 23,                            # Hex:      0x0017
+            CH       => [qw(len2 raw)],               # Example:  0x0000 (no data, only as marker)
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(7627)],
+            DEFAULT                 => [], #empty
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+token_binding => {
+            ID    => 24,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(8472)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+cached_info => {
+            ID    => 25,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(7924)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+tls_lts => {
+            ID    => 26,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(draft-gutmann-tls-lts)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+compress_certificate => {
+            ID    => 27,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH CR)],
+            RFC                  => [qw(draft-ietf-tls-certificate-compression)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(TEMPORARY registered 2018-05-23 extension registered 2019-04-22 expires 2020-05-23),
+    },
+record_size_limit => {
+            ID    => 28,
+            CH       => [qw(len2 val2)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE)],
+            RFC                  => [qw(8449)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+pwd_protect => {
+            ID    => 29,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(CH)],
+            RFC                  => [qw(8492)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+pwd_clear => {
+            ID    => 30,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(CH)],
+            RFC                  => [qw(8492)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+password_salt => {
+            ID    => 31,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(N),
+            TLS13             => [qw(CH SH HRR)],
+            RFC                  => [qw(8492)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+#  32-34    Unassigned
+session_ticket => {
+            ID    => 35,                            # Hex:      0x0023
+#            CH       => [qw(len2 val4 len2 raw)],     # Example:  0x0000 (no data)
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(-)],
+            RFC                  => [qw(5077 8447)],
+            DEFAULT                 => [], # empty
+            CHECK                      => q(VALUE),
+            COMMENT                       => q(renamed from "SessionTicket TLS"),
+    },
+
+#  36-40    Unassigned
+# NOT official:
+extended_random => {
+            ID    => 40,
+            CH        => [qw(len2 len2 raw)],
+            RX           => [qw(len2 raw)],
+            RECOMMENDED     => q(N!),
+            TLS13              => [qw(?)],
+            RFC                   => [qw(draft-rescorla-tls-extended-random-02)],
+            DEFAULT                  => [],
+            CHECK                       => q(VALUE),
+            COMMENT                        => q(NSA; March 02, 2009; DO NOT USE!! https://gist.github.com/bonsaiviking/9921180: 0x0028, RSA BSAFE library),
+    },
+pre_shared_key => {
+            ID    => 41,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH SH)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+early_data    => {
+            ID    => 42,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH EE NST)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+supported_versions    => {
+            ID    => 43,                            # Hex:      0x002b
+            CH       => [qw(len2 len1 val2List)],     # Example:  0x0003 0x02 0x0304
+            CH_TEXT  => ["length", "supported versions list length", \%TLS_PROTOCOL_VERSION],
+            RX          => [qw(len2 val2)],
+            RX_TEXT     => ["length", \%TLS_PROTOCOL_VERSION],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH SH HRR)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [
+                                         [ 0x0304, # TLS 1.3
+                                           # 0x0303, # TLS 1.2
+                                           # 0x0302, # TLS 1.1
+                                           # 0x0301, # TLS 1.0
+                                           # 0x0300, # SSL 3
+                                         ],
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+cookie    => {
+            ID    => 44,
+            CH       => [qw(len2 raw)],
+            RX          => [qw(len2 raw)],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH HRR)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+psk_key_exchange_modes    => {                      # MUST be included if key_share is used
+            ID    => 45,                            # Hex:      0x02d
+            CH       => [qw(len2 len1 val1List)],   # Example:  0x0002 0x01 0x01
+            CH_TEXT     => ["length", "PSK key exchange modes list length", %TLS_PSK_KEY_EXCHANGE_MODE],
+            RX          => [qw(len2 val1)],
+            RX_TEXT     => ["length", %TLS_PSK_KEY_EXCHANGE_MODE],
+            RECOMMENDED    => q(Y),
+            TLS13             => [qw(CH)],
+            RFC                  => [qw(8446)],
+            DEFAULT                 => [ 
+                                         [ 0x00,    # psk_ke,Y,[RFC8446]
+                                           0x01,    # psk_dhe_ke,Y,[RFC8446]
+                                         ],
+                                       ],
+            CHECK                      => q(VALUE),
+            COMMENT                       => q[],
+    },
+#  46    Unassigned
+certificate_authorities    => {
+            ID    => 47,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CH CR)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+oid_filters    => {
+            ID    => 48,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CR)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+post_handshake_auth    => {
+            ID    => 49,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CH)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+signature_algorithms_cert => {
+            ID    => 50,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CH CR)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+key_share        => {                                               # MUST be the last extension if used
+            ID    => 51,                                            # Hex: 0x0033
+            CH        => [qw(len2 len2 sequence val2 size2 raw)],   # Example:  0x0026 0x0024 0x001d 0x0020 <raw32>
+            CH_TEXT   => ["length", "client key share list length", "key share element", \%TLS_SUPPORTED_GROUPS, "key exchange length", "key exchange"],
+            RX            => [qw(len2 val2 size2 raw)],
+            RX_TEXT       => ["length", \%TLS_SUPPORTED_GROUPS, "key exchange length", "key exchange"],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CH SH HRR)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [ 
+                                                [                   # 1st sequence element
+                                                  0x001d,           # Group x25519
+                                                  "\x01\x02\x03\x04\x05\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x20", # Key Exchange
+                                                ],
+                                                [                   # second sequence element
+                                                  0x0017,           # Group secp256r1
+                                                  "\x21\x22\x23\x24\x25\x27\x28\x29\x2A\x2B\x2C\x2D\x2E\x2F\x30\x31\x32\x33\x33\x34\x35\x36\x37\x38\x39\x3A\x3B\x3C\x3D\x3E\x3F\x40"
+                                                  . "\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4A\x4B\x4C\x4D\x4E\x4F\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5A\x5B\x5C\x5D\x5E\x5F\x60\x61", # Key Exchange
+                                                ],
+                                              ],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+transparency_info => {
+            ID    => 52,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(CH CR CT)],
+            RFC                        => [qw(draft-ietf-trans-6962-bis)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+#  53-65279    Unassigned
+supports_npn    => {
+            ID    => 13172,                         # Hex:      0x3374
+#            CH        => [qw(len2 len1 raw len1 raw)],# Example:  0x0000 (no data)
+            CH        => [qw(len2 len1 raw)],# Example:  0x0000 (no data)
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(draft-agl-tls-nextprotoneg-04)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q[],
+    },
+# NOT official:
+channel_id_old    => {
+            ID    => 33031,
+            CH        => [qw(len2 val4 val4 val4 val4)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(N),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(draft-balfanz-tls-channelid-00)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(channel_id_old=0x754F),
+    },
+# NOT official:
+channel_id    => {
+            ID    => 33032,
+            CH        => [qw(len2 val4 val4 val4 val4)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(N),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(draft-balfanz-tls-channelid-01)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(channel_id=0x7550),
+    },
+# NOT official:
+opaque_prf_input    => {
+            ID    => 38183,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(N!),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(draft-rescorla-tls-opaque-prf-input-00)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(NSA; December 13, 2006; DO NOT USE!! https://www.openssl.org/news/changelog.html#x44 [29 Mar 2010]: opaque_prf_input=0x9527),
+    },
+tack    => {
+            ID    => 62208,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(draft-perrin-tls-tack-02)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(January 07, 2013, expired July 11, 2013),
+    },
+
+#
+private_65280    => {
+            ID    => 65280,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(for private use),
+    },
+renegotiation_info    => {
+            ID    => 65281,                             # Hex: 0xff01
+            CH        => [qw(len2 len1 raw)],             # Example: 0x0001 0x00
+            RX            => [qw(len2 len1 raw)],
+            RECOMMENDED        => q(Y),
+            TLS13                => [qw(-)],
+            RFC                        => [qw(5746)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(Default value is empty => len1=0x00 => len2=0x0001),
+    },
+
+#65282-65535 Reserved for Private Use
+private_65282   => {
+            ID    => 65282,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(for private use),
+    },
+private_65283    => {
+            ID    => 65283,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(for private use),
+    },
+private_65284    => {
+            ID    => 65284,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(for private use),
+    },
+private_65285    => {
+            ID    => 65285,
+            CH        => [qw(len2 raw)],
+            RX            => [qw(len2 raw)],
+            RECOMMENDED        => q(?),
+            TLS13                => [qw(?)],
+            RFC                        => [qw(8446)],
+            DEFAULT                        => [],
+            CHECK                            => q(VALUE),
+            COMMENT                                => q(for private use),
+    },
+); # %TLS_EXTENSIONS
+
+my %tls_extensions__text = ( # TODO: this information might be added to %TLS_EXTENSIONS above
     'extension' => {            # TLS extensions
         '00000'     => "renegotiation info length",     # 0x0000 ??
         '00001'     => "renegotiation length",          # 0x0001 ??
@@ -624,15 +1652,11 @@ our %ec_curve_types = ( # RFC 4492
     #----+-----------------------------+----+---+------------------------------
 ); # ec_curve_types
 
-# Torsten: %ECC_NAMED_CURVE =
-# http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
-# Value =>   Description bits(added) DTLS-OK Reference
-# our %named_curves =
-our %tls_curves = (
-# TODO: merge with %tls_signature_algorithms and %tls_supported_groups
-    # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+
+# EX: incl. OIDs:
+our %tls_curves = ($
     #----+-------------------------------------+----+--+-------+---+-------------------------
-    # ID      name                              RFC DTLS NIST  bits OID
+    # ID      name                               RFC DTLS NIST  bits OID
     #----+-------------------------------------+----+--+-------+---+------------------------
     0 => [qw( unassigned                        IANA  -      -    0                      )],
     1 => [qw( sect163k1                         4492  Y  K-163  163 1.3.132.0.1          )],
