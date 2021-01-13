@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2021, Achim Hoffmann
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -30,8 +30,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".",  $_path);
 }
 
-our $VERSION    = "20.11.09";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.40 20/11/18 21:37:46";
+our $VERSION    = "21.01.12";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.41 21/01/14 00:18:58";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -596,7 +596,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.40 2020/11/18
+1.41 2021/01/14
 
 =head1 AUTHOR
 
