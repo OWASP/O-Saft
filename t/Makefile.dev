@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.37 20/11/11 16:08:31
+#?      @(#) Makefile.dev 1.38 21/01/14 00:58:57
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.37
+_SID.dev           := 1.38
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -306,11 +306,15 @@ HELP-_dev3          = _____________________________________ some special targets
 HELP-testarg-dev-grep_subs  = list perl function definitons from '$(LIST.sources)'
 HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_subs but with description
 HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
+HELP-testarg-dev-grep_hint  = list all _hint() from '$(LIST.sources)'
+HELP-testarg-dev-grep_warn  = list all _warn() from '$(LIST.sources)'
 HELP-testarg-dev-grep_sub   = list all subs from '$(SRC.pl)'
 HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
 HELP-test.dev.grep.sub      = alias for testarg-dev-grep_sub
 HELP-test.dev.grep.subs     = alias for testarg-dev-grep_subs
 HELP-test.dev.grep.desc     = alias for testarg-dev-grep_desc
+HELP-test.dev.grep.hint     = alias for testarg-dev-grep_hint
+HELP-test.dev.grep.warn     = alias for testarg-dev-grep_warn
 HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 
 # extract from our source (information for developers)
@@ -324,7 +328,15 @@ testarg-dev-grep_desc:
 testarg-dev-grep_flow:
 	@$(TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
-# TODO: above $(foreach ...) requires a ; at ends, which may fail on Windows
+_TEST.brace=(
+# ) beat Make's foreach dragon
+testarg-dev-grep_hint:
+	@$(TRACE.target)
+	$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_hint$(_TEST.brace)' $($(prg)) ..." && cd $(TEST.dir)&&grep -H '_hint$(_TEST.brace)' $($(prg)) |sed -e 's/: */\t/'; )
+testarg-dev-grep_warn:
+	@$(TRACE.target)
+	$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_warn$(_TEST.brace)' $($(prg)) ..." && cd $(TEST.dir)&&grep -H '_warn$(_TEST.brace)' $($(prg)) |sed -e 's/: */\t/'; )
+# TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
 
 # function definitons more beautified for $(SRC.pl)
 _PERL.subs   = sub p{printf("%-24s\t%s\n",@_);} \
@@ -341,7 +353,8 @@ testarg-dev-grep_sub:
 	@echo ""
 
 ALL.test.dev.grep   = testarg-dev-grep_subs testarg-dev-grep_desc \
-	testarg-dev-grep_flow testarg-dev-grep_sub
+	testarg-dev-grep_flow testarg-dev-grep_sub \
+	HELP-testarg-dev-grep_hint HELP-testarg-dev-grep_warn
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
@@ -354,6 +367,8 @@ testarg-dev-o-saft_notyet:
 test.dev.grep.sub:  testarg-dev-grep_sub
 test.dev.grep.subs: testarg-dev-grep_subs
 test.dev.grep.desc: testarg-dev-grep_desc
+test.dev.grep.hint: testarg-dev-grep_hint
+test.dev.grep.warn: testarg-dev-grep_warn
 
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
