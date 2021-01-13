@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2021, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used
@@ -24,7 +24,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.33 20/11/18 21:33:12";
+my  $SID_usr= "@(#) o-saft-usr.pm 1.34 21/01/14 00:12:00";
 
 
 #_____________________________________________________________________________
@@ -265,7 +265,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.33 2020/11/18
+1.34 2021/01/14
 
 =head1 AUTHOR
 
