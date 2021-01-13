@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.232 20/11/18 11:03:43",
+    SID_osaft   => "@(#) osaft.pm 1.233 21/01/13 21:39:00",
 
 };
 
@@ -1867,6 +1867,8 @@ our %cfg = (
                          cipher_pfs cipher_pfsall cipher_cbc cipher_des
                          cipher_edh cipher_exp cipher_rc4 cipher_selected
                          ev+ ev- tr_02102+ tr_02102- tr_03116+ tr_03116-
+                         ocsp_response ocsp_response_status ocsp_stapling
+                         ocsp_uri ocsp_valid
                          rfc_7525 rfc_6125_names rfc_2818_names
                        )],
     'need-checkalnp'=> [        # commands which need checkalpn()
@@ -3164,7 +3166,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.232 2020/11/18
+1.233 2021/01/13
 
 =head1 AUTHOR
 
