@@ -2,7 +2,7 @@
 ## PACKAGE {
 
 #!#############################################################################
-#!#             Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
+#!#             Copyright (c) 2021, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '20.11.09',
+    SSLINFO_VERSION => '21.01.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.263 20/11/18 21:44:11',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.264 21/01/14 00:15:56',
 };
 
 ######################################################## public documentation #
