@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2021, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 =pod
@@ -53,8 +53,8 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $VERSION      = '20.11.09';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.48 20/11/18 21:35:06";
+my  $VERSION      = '21.01.12';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.49 21/01/14 00:17:38";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1580,7 +1580,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.48 2020/11/18
+1.49 2021/01/14
 
 =head1 AUTHOR
 
