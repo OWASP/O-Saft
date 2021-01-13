@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.74 20/11/18 22:16:48
+# SID   @(#) help.txt 1.75 21/01/14 00:21:01
 
 NAME
 
@@ -4929,7 +4929,7 @@ VERSION
 
 AUTHOR
 
-        31. July 2012 Achim Hoffmann (at) sicsec de
+        31. July 2012 Achim Hoffmann
 
         Project Home: https://www.owasp.org/index.php/O-Saft
 
