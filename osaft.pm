@@ -7,7 +7,7 @@
 
 ## PACKAGE {
 
-#!# Copyright (c) 2020, Achim Hoffmann, sic[!]sec GmbH
+#!# Copyright (c) 2021, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package osaft;
@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '20.11.09',  # official version number of this file
+    OSAFT_VERSION   => '21.01.12',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.233 21/01/13 21:39:00",
+    SID_osaft   => "@(#) osaft.pm 1.234 21/01/13 21:50:23",
 
 };
 
@@ -1539,13 +1539,14 @@ our %cfg = (
     'ca_file'       => undef,   # PEM format file with CAs
     'ca_path'       => undef,   # path to directory with PEM files for CAs
                                 # see Net::SSLinfo why undef as default
-    'ca_paths'      => [qw(/etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL)],
-                                # common paths to PEM files for CAs
     'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
-                                # common PEM filenames for CAs
-    'openssl_env'   => undef,   # environment variable OPENSSL if defined
+                                # common PEM filenames for CAs; 1st used as default
+    'ca_paths'      => [qw(/etc/ssl/certs       /usr/lib/certs           /System/Library/OpenSSL)],
+                                # common paths to PEM files for CAs; 1st used as default
+    'openssl_cnfs'  => [qw(/etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)],
+                                # common openssl.cnf files for openssl; 1st used as default
     'openssl_cnf'   => undef,   # full path to openssl's openssl.cnf
-    'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
+    'openssl_env'   => undef,   # environment variable OPENSSL if defined
     'openssl_fips'  => undef,   # NOT YET USED
     'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
@@ -3166,7 +3167,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.233 2021/01/13
+1.234 2021/01/13
 
 =head1 AUTHOR
 
