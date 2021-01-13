@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1018 20/11/18 22:16:10",
+    SID         => "@(#) yeast.pl 1.1019 21/01/13 22:14:56",
     STR_VERSION => "20.11.02",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2834,8 +2834,8 @@ sub _init_openssl_ca    {
     foreach my $p (@{$cfg{'ca_paths'}}) {
         foreach my $f (@{$cfg{'ca_files'}}) {
             if (-e "$p/$f") {
-                _warn("059: found PEM fila for CA; using '--ca-path=$p'");
-                return $p;  # ugly return from inner loop; but exactly what we want
+                _warn("059: found PEM file for CA; using '--ca-path=$p'");
+                return "$p/$f"; # ugly return from inner loop; but exactly what we want
             }
         }
     }
@@ -2863,7 +2863,10 @@ sub _init_openssl       {
 
     $cfg{'ca_file'} = _init_openssl_ca($cfg{'ca_path'});
     if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
-        _warn("060: no PEM file for CA found; some certificate checks may fail");
+        $cfg{'ca_file'} = "$cfg{'ca_paths'}[0]/$cfg{'ca_files'}[0]"; # use default
+        _warn("060: no PEM file for CA found; using '--ca-file=$cfg{'ca_file'}'");
+        _warn("     if default file does not exist, some certificate checks may fail");
+        _hint("use option '--ca-file=/full/path/ca-certificates.crt'");
     }
     return;
 } # _init_openssl
