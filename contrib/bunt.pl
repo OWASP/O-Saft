@@ -32,10 +32,10 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.11 19/11/05 01:13:59
+#?      @(#) bunt.pl 1.12 21/01/14 01:18:06
 #?
 #? AUTHOR
-#?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
+#?      08-jan-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
