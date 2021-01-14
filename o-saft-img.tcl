@@ -5,9 +5,9 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.8 19/12/15 08:47:01
+#?      @(#) o-saft-img.tcl 1.9 21/01/14 01:15:39
 #? AUTHOR
-#? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#? Copyright (c) 2021, Achim Hoffmann
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
 #?      Project Home: https://www.owasp.org/index.php/O-Saft                   
 #?      Repository:   https://github.com/OWASP/O-Saft  
