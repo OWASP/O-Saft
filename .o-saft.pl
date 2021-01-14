@@ -29,13 +29,13 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.101 19/12/14 16:49:28
+#?      @(#) .o-saft.pl 1.105 21/01/15 00:41:01
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.rc = 1.101; # our own SID required for Makefile and some tools
+_SID.rc = 1.105; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -166,7 +166,7 @@ _SID.rc = 1.101; # our own SID required for Makefile and some tools
 #
 --cfg_cmd=ocsp=ocsp_response ocsp_response_status ocsp_cert_status ocsp_this_update ocsp_next_update ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid ocsp_stapling len_ocsp
 
---cfg_hint=ocsp=use ++oscp_response_data to get the full response
+--cfg_hint=ocsp=use +oscp_response_data to get the full response
 
 ###
 ### define new command +fingerprints
@@ -195,7 +195,7 @@ _SID.rc = 1.101; # our own SID required for Makefile and some tools
 ###
 ### redefine command +http
 ###
---cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins https_pins http
+--cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins http
 
 ###
 ### redefine command +hsts
@@ -205,7 +205,7 @@ _SID.rc = 1.101; # our own SID required for Makefile and some tools
 ###
 ### redefine command +info
 ###
---cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols public_key_len dh_parameter master_key session_id session_id_ctx session_ticket session_lifetime session_startdate session_starttime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins https_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify compression expansion heartbeat renegotiation resumption srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols public_key_len dh_parameter master_key session_id session_id_ctx session_ticket session_lifetime session_startdate session_starttime fallback_protocol sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins info
 # useless for +info ('cause aliases): issuer issuer_hash
 # included in +info to be printed with --v :
 #      certificate sigdump pubkey extensions ext_*
@@ -214,14 +214,15 @@ _SID.rc = 1.101; # our own SID required for Makefile and some tools
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random ocsp_stapling closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp sstp scsv cnt_checks_yes cnt_checks_no cnt_checks_noo cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid dv ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_ip hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_preload sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random ocsp_stapling closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp compression heartbeat sstp scsv cnt_checks_yes cnt_checks_no cnt_checks_noo cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
-# don't use   +check:   (SSLv|TLSv)*
+# don't use   +check:    hastls10, hastls11 (they may be changed in 2020)
+# don't use   +check:    hastls13 as it is not yet fully suported
 
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify compression expansion heartbeat hostname hsts_sts crl resumption renegotiation
 
 ###
 ### redefine command +sizes
