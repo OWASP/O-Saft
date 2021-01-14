@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1021 21/01/14 12:09:20",
+    SID         => "@(#) yeast.pl 1.1022 21/01/14 17:46:29",
     STR_VERSION => "21.01.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2041,6 +2041,7 @@ our %text = (
     'miss_ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
     'enabled_extension' => " <<@@ extension enabled>>",
+    'unexpected'    => " <<unexpected @@>>",
     'insecure'      => " <<insecure @@>>",
     'invalid'       => " <<invalid @@>>",
     'bit256'        => " <<keysize @@ < 256>>",
@@ -4422,7 +4423,7 @@ sub check_url($$)   {
     _trace2("check_url: STATUS= $status");
 
     if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
-        return "<<connection to '$url' failed>>";
+        return "<<connection to '$host:$port$url' failed>>";
     }
     _trace2("check_url: header= #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
     if ($status =~ m#^HTTP/... 200 #) {
@@ -4432,9 +4433,10 @@ sub check_url($$)   {
         $binary = $headers{(grep{/^Content-transfer-encoding$/i} keys %headers)[0] || ""};
         $chunk  = $headers{(grep{/^Transfer-Encoding$/i} keys %headers)[0] || ""};
     } else {
-        return "<<unexpected response: $status>>";
+        return _get_text('unexpected', "response from '$host:$port$url': $status");
+        # FIXME: 30x status codes are ok; we should then call ourself again
     }
-    # FIXME: 30x status codes are ok; we should then call ourself again
+    _trace2("check_url: length=$length, accept=$accept, ctype=$ctype");
 
     if ($type eq 'ocsp_uri') {
         _trace2("check_url: ocsp_uri ...");
@@ -4851,6 +4853,10 @@ sub checkcert($$)   {
                 $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
             }
         }
+    } else {
+        $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
+    }
+    if ($checks{'ocsp_uri'}->{val} eq '') {
         $checks{'ocsp_valid'}->{val} = "";
         $value = $data{'ocsp_uri'}->{val}($host);
         if ($value eq '<<openssl>>') {
@@ -4859,7 +4865,7 @@ sub checkcert($$)   {
             _trace("ocsp_uri: $value");
             foreach my $url (split(/\s+/, $value)) {
                 next if ($url =~ m/^\s*$/);     # skip empty url
-                if ($url !~ m/^\s*http$/) {
+                if ($url !~ m/^\s*http/) {
                     _trace("ocsp_uri skipped: $url");
                     next;
                 }
@@ -4867,9 +4873,9 @@ sub checkcert($$)   {
             }
         }
     } else {
-        $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
-        $checks{'ocsp_valid'}->{val}= _get_text('disabled', "--no-http");
+        $checks{'ocsp_valid'}->{val}= " ";  # _get_text('missing', "OCSP URL");
     }
+
     $value = $data{'ext_constraints'}->{val}($host);
     $checks{'constraints'}->{val}   = " "    if ($value eq "");
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
