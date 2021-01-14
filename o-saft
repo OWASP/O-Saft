@@ -26,8 +26,12 @@
 #?      -docker start o-saft-docker with remaining arguments
 #?      -id=*   passed to o-saft-docker
 #?      -tag=*  passed to o-saft-docker
+#       -prg="program"
+#               use program instead of  o-saft.pl; intended for debugging only
 #?      -post="program [options]"
 #?              program to pipe output of  o-saft.pl  to
+#?      -colour alias for  -post=bunt.pl
+#?      -blind  alias for  -post='bunt.pl -blind'
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
 #?
 #? LIMITATIONS
@@ -42,7 +46,9 @@
 #?          $0 +cmd --option target
 #?          $0 -post='bunt.pl'      ' +cmd --option target
 #?          $0 -post='bunt.pl -blind' +cmd --option target
+#?          $0 -colour                +cmd --option target  # same as above
 #?          $0 -gui target
+#           $0 -prd=yeast.pl  +cmd   target
 #?
 #?          $0 -docker +cmd --option target
 #?          $0 -docker -post='bunt.pl'      ' +cmd --option target
@@ -58,7 +64,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.22 19/12/15 10:20:08
+#?      @(#) o-saft 1.23 21/01/14 12:54:19
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -72,7 +78,7 @@ gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
 dok=$dir/$ich-docker
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
-    # then check (below) if tools exists, if not, remove path ans rely on $PATH
+    # then check (below) if tools exists, if not, remove path and rely on $PATH
 [ ! -x "$prg" ] && prg=$ich.pl
 [ ! -x "$gui" ] && gui=$ich.tcl
 [ ! -x "$cgi" ] && cgi=$ich.cgi
@@ -111,7 +117,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.22"; exit 0; ;;
+        +VERSION)       echo "1.23"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -133,8 +139,19 @@ EoT
         -docker | --docker) docker=1    ; ;;
         -id*)           docker_id="$1"  ; ;;
         -tag*)          docker_tag="$1" ; ;;
+        -colour | --colour) post="$contrib/bunt.pl" ; ;;
+        -color  | --color)  post="$contrib/bunt.pl" ; ;;
+        -blind  | --blind)  post="$contrib/bunt.pl -blind" ; ;;
+        -prg=*) prg="`expr "$1" ':' '-prg=\(.*\)'`" ; ;;  # for debugging only
         -post=*)
-            post="`expr "$1" ':' '-post=\(.*\)'`"
+            post="`expr "$1" ':' '-post=\(.*\)'`" ;
+            cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
+            [ -x "$contrib/$cmd" ] && post="$contrib/$post"
+            shift
+            break
+            ;;
+        --post=*)
+            post="`expr "$1" ':' '--post=\(.*\)'`" ;
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
             [ -x "$contrib/$cmd" ] && post="$contrib/$post"
             shift
