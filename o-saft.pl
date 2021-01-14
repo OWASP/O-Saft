@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1020 21/01/14 00:07:51",
+    SID         => "@(#) yeast.pl 1.1021 21/01/14 12:09:20",
     STR_VERSION => "21.01.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -563,7 +563,7 @@ if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
         if (_is_v_trace()) {
             my @cfgs;
             print "#$cfg{'me'}  $cfg{'RC-FILE'}\n";
-            print "#$cfg{'me'}: !!Hint: use '--trace' to see complete settings\n";
+            print "#$cfg{'me'}: !!Hint: use  --trace  to see complete settings\n";
             print "#$cfg{'me'}: #------------------------------------------------- RC-FILE {\n";
             foreach my $val (@rc_argv) {
                 #print join("\n  ", "", @rc_argv);
@@ -8864,8 +8864,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
                 #dbx printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
             }
-            _warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
-            _hint("use '--no-dns' to disable this check");
+            if ($cfg{'rhost'} =~ m/gethostbyaddr/) {
+                _warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored");
+                _hint("use '--no-dns' to disable this check");
+            }
            _yeast_TIME("test DNS}");
         }
     }
