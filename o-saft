@@ -16,6 +16,7 @@
 #? OPTIONS
 #?      -h      got it
 #       -help   got it
+#?      -n      just show command to be executed
 #?      -help=* grep for *  in 'o-saft.pl --help'
 # TODO: should also grep in --help=commads and some other programs
 #?      -list   list available programs in ./contrib/ directory
@@ -38,6 +39,9 @@
 #?      All option listed above must preceed options to be passed through.
 #?      $0  must be install in the same directory as the tools it will call
 #?          $0.pl  $0.cgi  $0.tcl
+#?
+#?      Option  +VERSION  prints version of this program  and not the version
+#?      of  o-saft.pl .
 #?
 #?      Automatic detection of GUI mode fails, if the starter in the desktop's
 #?      panel (or whatever functionality is used) uses a terminal.
@@ -64,7 +68,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.23 21/01/14 12:54:19
+#?      @(#) o-saft 1.24 21/01/15 00:34:03
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -117,7 +121,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.23"; exit 0; ;;
+        +VERSION)       echo "1.24"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
