@@ -36,10 +36,10 @@
 #       if shell builtin is needed.
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.7 17/06/25 20:24:07
+#?      @(#) bunt.sh 1.8 21/01/14 01:16:56
 #?
 #? AUTHOR
-#?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
+#?      08-jan-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
