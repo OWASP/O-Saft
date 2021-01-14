@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.38 21/01/14 00:58:57
+#?      @(#) Makefile.dev 1.39 21/01/14 11:40:51
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.38
+_SID.dev           := 1.39
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -354,7 +354,7 @@ testarg-dev-grep_sub:
 
 ALL.test.dev.grep   = testarg-dev-grep_subs testarg-dev-grep_desc \
 	testarg-dev-grep_flow testarg-dev-grep_sub \
-	HELP-testarg-dev-grep_hint HELP-testarg-dev-grep_warn
+	testarg-dev-grep_hint testarg-dev-grep_warn
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
 
