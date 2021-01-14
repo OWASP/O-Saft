@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.264 21/01/14 00:15:56',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.265 21/01/14 22:51:46',
 };
 
 ######################################################## public documentation #
@@ -2536,10 +2536,18 @@ sub do_ssl_open($$$@) {
             my %headers;
             my $response = '';
             my $request  = '';
+            my $accept   = undef;  # some servers don't close the connection otherwise (akamai.com)
+            my $agent    = undef;  # some servers don't close the connection otherwise (akamai.com)
+            # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) =
                 Net::SSLeay::get_http($host, 80, $Net::SSLinfo::target_url,
-                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+                  Net::SSLeay::make_headers(
+                        'Host'       => $host,
+                        'Connection' => 'close',
+                        'Accept'     => $accept,
+                        'User-Agent' => $agent,
+                  )
                   # TODO: test with a browser User-Agent
                   # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
                 );
