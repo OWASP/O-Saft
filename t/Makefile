@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.113 20/11/01 19:00:34
+#?      @(#) Makefile 1.114 21/01/15 00:19:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.113
+_SID.test          := 1.114
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -210,7 +210,22 @@ help.test.test-v-v: _help_list
 #_____________________________________________________________________________
 #____________________________________________ target for help in t/Makefile*__|
 
+HELP-help.test.test.all     = print available targets for tests from all Makefiles
+HELP-help.test.test.alls    = print available targets for tests one per line
+#HELP-help.test.test.all-n   = show command for all available test targets
 HELP-help.test.*.all        = print available individual targets for tests from Makefile.*
+
+# experimental: some targets print too many shell commands
+help.test.test.all-n:
+	@$(TRACE.target)
+	@$(MAKE) -n $(ALL.tests)
+
+help.test.test.alls:
+	@$(TRACE.target)
+	@echo " # $(words $(ALL.tests)) targets for tests:"
+	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_SORT_opt)
+	@echo ""
+
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
