@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1022 21/01/14 17:46:29",
+    SID         => "@(#) yeast.pl 1.1023 21/01/14 22:54:00",
     STR_VERSION => "21.01.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -3807,6 +3807,7 @@ sub _can_connect        {
     my ($host, $port, $sni, $timeout, $ssl) = @_;
     local $? = 0; local $! = undef;
     my $socket;
+    _trace("_can_connect($host, $port', $sni, $timeout, $ssl)");
     if ($ssl == 1) {    # need different method for connecting with SSL
         if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quiet = $IO::Socket::SSL::debug3; }
         # simple and fast connect: full cipher list, no handshake,
@@ -4372,29 +4373,46 @@ sub check_url($$)   {
     #     Content-Length: 5
     #     content-transfer-encoding: binary
     #
-    # bad example: http://clients1.google.com/ocsp
+    # example (?/2019): http://sr.symcb.com/sr.crl
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/pkix-crl
+    #     Transfer-Encoding:  chunked
+    #     Connection: Transfer-Encoding
+    #
+    # example (12/2020): http://sr.symcb.com/sr.crl
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/x-pkcs7-crl
+    #     Content-Length: 540
+    #
+    # example (12/2020): http://ocsp.msocsp.com
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/ocsp-response
+    #     Content-Length: 5
+    #
+    # bad example (12/2020): http://clients1.google.com/ocsp
     #     HTTP/1.1 404 Not Found
     #     Date: Sun, 17 Apr 2016 10:24:46 GMT
+    #     Server: ocsp_responder
     #     Content-Type: text/html; charset=UTF-8
     #     Content-Length: 1565
     #
-    # bad example: http://ocsp.entrust.net
+    # bad example (12/2020): http://ocsp.entrust.net
+    #     HTTP/1.1 200 OK
+    #     Content-Length: 0
+    #
+    # bad example (??/2019): http://ocsp.entrust.net
     #     HTTP/1.1 200 OK
     #     Content-Type: text/html
     #     Content-Length: 68
     #
     #     meta HTTP-EQUIV="REFRESH" content="0; url=http://www.entrust.net">
     #
-    # example: http://ocsp.msocsp.com
-    #     HTTP/1.1 200 OK
-    #     Content-Type: application/ocsp-response
-    #     Content-Length: 5
-    #
-    # example: http://sr.symcb.com/sr.crl
-    #     HTTP/1.1 200 OK
-    #     Content-Type: application/pkix-crl
-    #     Transfer-Encoding:  chunked
-    #     Connection: Transfer-Encoding
+    # bad example (12/2020): http://ocsp.pki.goog/gts1o1core
+    # bad example (12/2020): http://ocsp.pki.goog/
+    #     HTTP/1.1 404 Not Found
+    #     Server: ocsp_responder
+    #     Content-Type: text/html; charset=UTF-8
+    #     Content-Length: 1561
     #
     # for AIA we expect something like:
     # example: http://www.microsoft.com/pki/mscorp/msitwww2.crt
@@ -4416,9 +4434,19 @@ sub check_url($$)   {
        $host=~ m#^([^:]+)(?::[0-9]{1,5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    my $_accept = undef;# some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
+    my $_agent  = undef;# some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
+    # TODO: use of $_accept and $_agent should be configurable
+    # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
+
     _trace2("check_url: get_http($host, $port, $url)");
     my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
-            Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+            Net::SSLeay::make_headers(
+                'Host'       => $host,
+                'Connection' => 'close',
+                'Accept'     => $_accept,
+                'User-Agent' => $_agent,
+            )
     );
     _trace2("check_url: STATUS= $status");
 
@@ -4427,16 +4455,16 @@ sub check_url($$)   {
     }
     _trace2("check_url: header= #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
     if ($status =~ m#^HTTP/... 200 #) {
-        $accept = $headers{(grep{/^Accept-Ranges$/i}     keys %headers)[0] || ""};
-        $ctype  = $headers{(grep{/^Content-Type$/i}      keys %headers)[0] || ""};
-        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
+        $accept = $headers{(grep{/^Accept-Ranges$/i}     keys %headers)[0] || ""}  || " ";
+        $ctype  = $headers{(grep{/^Content-Type$/i}      keys %headers)[0] || ""}  || " ";
+        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""}  || "-1";
         $binary = $headers{(grep{/^Content-transfer-encoding$/i} keys %headers)[0] || ""};
-        $chunk  = $headers{(grep{/^Transfer-Encoding$/i} keys %headers)[0] || ""};
+        $chunk  = $headers{(grep{/^Transfer-Encoding$/i} keys %headers)[0] || ""}  || " ";
+        _trace2("check_url: length=$length, accept=$accept, ctype=$ctype");
     } else {
         return _get_text('unexpected', "response from '$host:$port$url': $status");
         # FIXME: 30x status codes are ok; we should then call ourself again
     }
-    _trace2("check_url: length=$length, accept=$accept, ctype=$ctype");
 
     if ($type eq 'ocsp_uri') {
         _trace2("check_url: ocsp_uri ...");
@@ -4856,6 +4884,7 @@ sub checkcert($$)   {
     } else {
         $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
     }
+    # NOTE: checking OCSP is most likely with http: ; done even if --no-http in use
     if ($checks{'ocsp_uri'}->{val} eq '') {
         $checks{'ocsp_valid'}->{val} = "";
         $value = $data{'ocsp_uri'}->{val}($host);
@@ -4875,6 +4904,8 @@ sub checkcert($$)   {
     } else {
         $checks{'ocsp_valid'}->{val}= " ";  # _get_text('missing', "OCSP URL");
     }
+    # FIXME: more OCSP checks missing, see ../Net/SSLinfo.pm  "probably complete OCSP Response Data:"
+    #    https://raymii.org/s/articles/OpenSSL_Manually_Verify_a_certificate_against_an_OCSP.html
 
     $value = $data{'ext_constraints'}->{val}($host);
     $checks{'constraints'}->{val}   = " "    if ($value eq "");
@@ -5858,6 +5889,8 @@ sub checkdest($$)   {
     }
     $value = $data{'ocsp_response'}->{val}($host);
     $checks{'ocsp_stapling'}->{val} = ($value =~ /.*no\s*response.*/i) ? $value : "";
+        # vor valid ocsp_stapling, ocsp_response should be something like:
+        # Response Status: successful (0x0); Cert Status: good; This Update: Jan 01 00:23:42 2021 GMT; Next Update:
     return;
 } # checkdest
 
