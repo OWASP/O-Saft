@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '21.01.12',
+    SSLINFO_VERSION => '21.01.13',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.265 21/01/14 22:51:46',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.266 21/01/15 13:40:28',
 };
 
 ######################################################## public documentation #
@@ -137,6 +137,9 @@ Debugging of low level SSL can be enabled by setting I<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
 
 In trace messages empty or undefined strings are written as "<<undefined>>".
+
+I<$Net::SSLinfo::prefix_trace> contains the string used as prefix for each
+message printed with trace
 
 =over
 
@@ -744,11 +747,12 @@ $Net::SSLinfo::ca_depth = undef;# depth of peer certificate verification verific
 $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
+$Net::SSLinfo::prefix_trace= '#' . SSLINFO . '::';  # prefix string used in trace   messages
 $Net::SSLinfo::verbose     = 0; # 1: print some verbose messages
 $Net::SSLinfo::linux_debug = 0; # passed to Net::SSLeay::linux_debug
 $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
 
-$Net::SSLeay::slowly = 0;
+$Net::SSLeay::slowly       = 0;
 
 # avoid perl warning "... used only once: possible typo ..."
 my $dumm_1   = $Net::SSLinfo::linux_debug;
@@ -776,9 +780,11 @@ sub _traceset   {
     return;
 }
 
-sub _trace      { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' .  $txt if (0 < $trace); return; }
+sub _trace      { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $trace); return; }
+sub _trace1     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1 == $trace); return; }
+sub _trace2     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1  < $trace); return; }
 
-sub _verbose    { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' .  $txt if (0 < $Net::SSLinfo::verbose); return; }
+sub _verbose    { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $Net::SSLinfo::verbose); return; }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = '';              # dangerous if aliased or wrong one found
@@ -2536,8 +2542,9 @@ sub do_ssl_open($$$@) {
             my %headers;
             my $response = '';
             my $request  = '';
-            my $accept   = undef;  # some servers don't close the connection otherwise (akamai.com)
-            my $agent    = undef;  # some servers don't close the connection otherwise (akamai.com)
+            my $_accept  = undef; # some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
+            my $_agent   = undef; # some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
+            # TODO: use of $_accept and $_agent should be configurable
             # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) =
@@ -2545,8 +2552,8 @@ sub do_ssl_open($$$@) {
                   Net::SSLeay::make_headers(
                         'Host'       => $host,
                         'Connection' => 'close',
-                        'Accept'     => $accept,
-                        'User-Agent' => $agent,
+                        'Accept'     => $_accept,
+                        'User-Agent' => $_agent,
                   )
                   # TODO: test with a browser User-Agent
                   # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
