@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.53 21/01/16 13:16:04
+#?      @(#) Makefile.cmd 1.54 21/01/16 16:08:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.53
+_SID.cmd           := 1.54
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -83,8 +83,9 @@ LIST.cmd.withtrace := +quit +info  +check
 LIST.cmd.cmd       := $(LIST.cmd.withtrace) +quick +vulns +http +hsts +sts
 LIST.cmd.vulns     := +BEAST +CRIME +DROWN +FREAK +POODLE +logjam +lucky13 +Sloth +Sweet32
 LIST.cmd.summ      := +bsi  +EV +TR-02102+ +ocsp  +preload +protocols +fingerprints +sizes +pfs +sni
-LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime --trace --trace=2
-    # --trace* options used instead --trace-*; make nicer targets names
+LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime --traceme --trace --trace=2
+    # --trace* options used instead --trace-*; make nicer target names
+    # Note that  --tracecmd is same as --traceCMD is same as --trace-CMD
 
 _TEST.cmd          := testcmd-cmd
 
