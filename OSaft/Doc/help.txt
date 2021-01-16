@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.75 21/01/14 00:21:01
+# SID   @(#) help.txt 1.76 21/01/16 16:27:30
 
 NAME
 
@@ -2047,6 +2047,7 @@ OPTIONS
           * --trace=2           same as  --trace  --trace
           * --trace=arg         same as  --trace-arg
           * --trace=cmd         same as  --trace-cmd
+          * --trace=cli         same as  --trace-cli
           * --trace=key         same as  --trace-key
           * --trace=time        same as  --trace-time
           #--------------------+----------------------------
@@ -4315,11 +4316,21 @@ DEBUG
         * --trace
         * --trace-arg
         * --trace-cmd
+        * --trace-cli
         * --trace-key
+        * --trace-me
+        * --trace-time
+        * --trace=FILE
+
+        Please see  OPTIONS  section above for detailed description.
 
         Empty or undefined strings are written as  '<<undefined>>'  in texts.
         Some parameters, in particular those of  HTTP responses,  are written
         as  '<<response>>'.  Long parameter lists are abbreviated with '...'.
+        In general, single-line values are always printed,  multi-line values
+        are printed with  --trace=2  only.
+
+        Hint: start with  --trace-me, then  --trace  and finally  --trace=2 .
 
     Output
 
@@ -4931,7 +4942,7 @@ AUTHOR
 
         31. July 2012 Achim Hoffmann
 
-        Project Home: https://www.owasp.org/index.php/O-Saft
+        Project Home: https://owasp.org/www-project-o-saft/
 
 
 # TODO must be last section
