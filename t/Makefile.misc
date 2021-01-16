@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.55 20/10/31 13:52:16
+#?      @(#) Makefile.misc 1.56 21/01/16 19:53:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.55
+_SID.misc          := 1.56
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -42,10 +42,20 @@ TEST.args.misc     := +quit
 TEST.bench.times   := $(EXE.bench).times
 TEST.bench.host    := $(TEST.host)
 
-TEST.opt.cloc      :=
+TEST.opt.cloc      := \
+	--force-lang=Perl,pl \
+	--force-lang=make,cmd \
+	--force-lang=make,inc \
+	--force-lang=make,FQDN \
+	--force-lang=AsciiDoc,pod \
+	--force-lang=AsciiDoc,txt \
+	--script-lang=make,make \
+	--by-percent c
 TEST.opt.dprofpp   :=
 TEST.opt.nytprof   :=
 EXE.cloc           := cloc
+EXE.cloc.filter    := cat
+EXE.cloc.total     := t/cloc-total.awk
 EXE.analyse        := perl-analyzer
 EXE.analyse-output := perl-analyzer-output
 EXE.dprofpp        := dprofpp
@@ -53,7 +63,7 @@ EXE.nytprof        := nytprofhtml
 EXE.podchecker     := podchecker
 
 # summary variables (mainly used for INSTALL.sh)
-_ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt)
+_ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt) $(EXE.cloc.total)
 _ALL.devtools.extern   += ctags
 _ALL.devtools.extern   += $(EXE.dprofpp) $(EXE.nytprof)  $(EXE.podchecker)
 _ALL.devtools.extern   += $(EXE.analyse) $(EXE.analyse-output) $(EXE.cloc)
@@ -64,6 +74,23 @@ _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
 ifndef CONTRIB.dir
     CONTRIB.dir = contrib
 endif
+
+# cloc detect file types (language) on file extension primarily. Unfortunately
+# some files have no extension and some extension fool cloc's detection. Hence
+# special options should prefix to these files to detect them correctly.
+# Unfortunately this would result in rebuilding $(ALL.src)  with sophisticates
+# use of Make's  $(foreach..) and $(patsubst..) like:
+#   _TEST.cloc.src += $(foreach src, $(filter t/Makefile.%,$(ALL.src)), \
+#     $(patsubst t/Makefile%,--force-lang=make $(src),$(src)) \
+#     )
+#   _TEST.cloc.src += $(foreach src, $(filter contrib/%_o-saft,$(ALL.src)), \
+#     $(patsubst contrib/%_o-saft,--force-lang="Bourne Shell" $(src),$(src)) \
+#     )
+#   ...
+# Up to now (01/2021), cloc detects one file  contrib/%_o-saft  incorrectly as
+# Ruby, not worth for more complicated code here ...
+_TEST.cloc.src = $(sort $(ALL.src))
+_TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
@@ -106,6 +133,8 @@ HELP-_cloc      = ________________________________________ statistic targets _
 HELP-cloc       = count lines of code of all source files; summary output
 HELP-cloc.file  = count lines of code of all source files; output by file
 HELP-cloc.lang  = same as cloc.file and cloc
+HELP-cloc.csv   = same as cloc but output as comma separated values
+HELP-cloc.total = same as cloc but added "total %" column
 # NOTE: also possible usage:
 #       make cloc TEST.opt.cloc=--3
 #       make cloc TEST.opt.cloc=--csv
@@ -113,14 +142,18 @@ HELP-cloc.lang  = same as cloc.file and cloc
 # NOTE: --quiet suppresses count of files also, hence not used by default
 cloc%:
 	@$(TRACE.target)
-	@$(EXE.cloc) $(TEST.opt.cloc) $(sort $(ALL.src))
+	@$(EXE.cloc) $(TEST.opt.cloc) $(_TEST.cloc.src) | $(EXE.cloc.filter)
+	@$(ECHO) "$(_NL)# $(_TEST.cloc.hint)"
 
 cloc.stat:  TEST.opt.cloc  +=
 cloc.file:  TEST.opt.cloc  += --by-file
 cloc.lang:  TEST.opt.cloc  += --by-file-by-lang
+cloc.csv:   TEST.opt.cloc  += --csv --quiet
+cloc.total: TEST.opt.cloc  += --csv --quiet
+cloc.total: EXE.cloc.filter = $(EXE.cloc.total)
 cloc:       cloc.stat
 
-ALL.test.cloc  := cloc.stat cloc.file cloc.lang
+ALL.test.cloc  := cloc.stat cloc.file cloc.lang cloc.csv cloc.total
 ALL.testmisc   += $(ALL.test.cloc)
 test.cloc:        $(ALL.test.cloc)
 # TODO: test.cloc.log  must be special at it compares generated tags files
@@ -359,7 +392,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.55: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.56: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
