@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.52 20/11/01 18:26:30
+#?      @(#) Makefile.cmd 1.53 21/01/16 13:16:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.52
+_SID.cmd           := 1.53
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -74,11 +74,16 @@ LIST.ignore-output-keys := master_key \
 LIST.no-out.opt    := $(LIST.ignore-output-keys:%=--no-out=%)
 LIST.ignore.cmd    := $(LIST.ignore-output-keys:%=+%)
     # The  ignored keys are tested with the target  testcmd-cmd-+ignored-keys_ .
-LIST.cmd.withtrace := +info  +check
+LIST.cmd.withtrace := +quit +info  +check
+    # various --trace* options to be used with these commands
+    #   +quit  - the most simple output, no call to a target
+    #   +info  - output with call to a target, hence trace from Net/SSLinfo.pm also
+    #   +check - some more output from $(EXE.pl) than with +info
+    #   +cipher - # TODO
 LIST.cmd.cmd       := $(LIST.cmd.withtrace) +quick +vulns +http +hsts +sts
 LIST.cmd.vulns     := +BEAST +CRIME +DROWN +FREAK +POODLE +logjam +lucky13 +Sloth +Sweet32
 LIST.cmd.summ      := +bsi  +EV +TR-02102+ +ocsp  +preload +protocols +fingerprints +sizes +pfs +sni
-LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime
+LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime --trace --trace=2
     # --trace* options used instead --trace-*; make nicer targets names
 
 _TEST.cmd          := testcmd-cmd
@@ -87,6 +92,9 @@ _TEST.cmd          := testcmd-cmd
 # SEE Make:target name prefix
 
 ifndef cmd-targets-generated
+    # arguments from LIST.* used in the target name must not contain =
+    # hence $(subst =,-,$(arg)) is used to replace = by -
+
     # target foreach command
     $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summ),\
 	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))_%:  TEST.args += $(cmd) ) \
@@ -97,8 +105,8 @@ ifndef cmd-targets-generated
 	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_%:  TEST.args += $(cmd) $(LIST.no-out.opt) ) \
 	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_ ) \
       $(foreach opt, $(LIST.cmd.trace-opt),\
-	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))$(opt)_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
-	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))$(opt)_ ) \
+	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
+	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))_ ) \
       ) \
     )
 endif
