@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1024 21/01/16 12:45:06",
+    SID         => "@(#) yeast.pl 1.1025 21/01/16 16:08:03",
     STR_VERSION => "21.01.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8612,7 +8612,7 @@ if (not _is_cfg_use('http')) {          # was explicitly set with --no-http 'cau
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
-if ($quick == 1) {
+if (1 == $quick) {
     _set_cfg_out('enabled', 1);
     $cfg{'label'}   = 'short';
 }
@@ -8624,8 +8624,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     #$IO::Socket::SSL::DEBUG         = $cfg{'trace'} if ($cfg{'trace'} > 0);
     no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
         # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
-    if ($cfg{'traceME'} < 1) {
-        $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    if (1 > $cfg{'traceME'}) {
+        $Net::SSLinfo::trace        = $cfg{'trace'} if (0 < $cfg{'trace'});
     }
     $Net::SSLinfo::verbose          = $cfg{'verbose'};
     $Net::SSLinfo::linux_debug      = $cfg{'linux_debug'};
@@ -8675,7 +8675,7 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 if (defined $Net::SSLhello::VERSION) {
     no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
         # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
-    if ($cfg{'traceME'} < 1) {
+    if (1 > $cfg{'traceME'}) {
         $Net::SSLhello::trace       = $cfg{'trace'};
     }
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
@@ -8709,7 +8709,8 @@ if (defined $Net::SSLhello::VERSION) {
     # representation
     push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}}[1..3]);
 }
-$cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
+$cfg{'trace'} = 1 if (0 < $cfg{'traceME'});
+$cfg{'trace'} = 0 if (0 > $cfg{'traceME'});
 
 if ($cfg{'label'} eq 'short') {     # reconfigure texts
     foreach my $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
