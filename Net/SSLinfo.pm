@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.266 21/01/15 13:40:28',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.267 21/01/16 12:48:25',
 };
 
 ######################################################## public documentation #
@@ -127,7 +127,9 @@ I<Net::SSLinfo::errors()> method.
 
 =head1 DEBUGGING
 
-Simple tracing can be activated with I<$Net::SSLinfo::trace=1>.
+Simple tracing can be activated with I<$Net::SSLinfo::trace=1>. If set to 2
+or greater, more data will be printed, for example the complete request and
+response data as well as data which covers more than one line.
 
 I<$Net::SSLinfo::trace=2> or I<$Net::SSLinfo::trace=3> will be passed to
 I<$Net::SSLeay::trace>.
@@ -135,6 +137,7 @@ I<$Net::SSLeay::linux_debug=1> will be set if trace > 2.
 
 Debugging of low level SSL can be enabled by setting I<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
+Note that Net::SSLeay may print on STDERR with I<$Net::SSLeay::trace> set.
 
 In trace messages empty or undefined strings are written as "<<undefined>>".
 
@@ -798,11 +801,12 @@ sub _setcommand {
     my $cmd;
     my $opt = "version";
        $opt = "--version" if ($command =~ m/timeout$/);
+    _trace("_setcommand($command) $opt 2>&1");
     $cmd = qx($command $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
     if (defined $cmd) {
         # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
         chomp $cmd;
-        _trace("_setcommand: $command = $cmd");
+        _trace2("_setcommand: #{ $cmd #}");
         $cmd = "$command";
         if ($cmd =~ m#timeout$#) {
             # some timout implementations require -t option, i.e. BusyBox v1.26.2
@@ -817,6 +821,7 @@ sub _setcommand {
         # Windows is too stupid for secure program calls
         $cmd = '\\' .  $cmd if (($cmd ne '') and ($cmd !~ /\//));
     }
+    _trace("_setcommand cmd=$cmd");
     return $cmd;
 } # _setcommand
 
@@ -827,7 +832,7 @@ sub _setcmd     {
     $_openssl   = _setcommand($Net::SSLinfo::openssl);
     $_timeout   = _setcommand($Net::SSLinfo::timeout);
     $_timeout  .= " $Net::SSLinfo::timeout_sec" if (defined $_timeout);
-    _trace("#_setcmd using: $_openssl ; $_timeout");
+    _trace("#_setcmd: _openssl=$_openssl ; _timeout=$_timeout");
     if ($^O !~ m/MSWin32/) {
         # Windows is too stupid for secure program calls
         $_echo  = '\\' .  $_echo;
@@ -843,7 +848,7 @@ sub _traceSSLbitmasks   {
     _traceset();
     ## no critic (TestingAndDebugging::ProhibitProlongedStrictureOverride)
     #  NOTE: perlcritic is too pedantic
-    foreach my $op (qw(
+    foreach my $op (sort qw(
             OP_ALL
             OP_MICROSOFT_SESS_ID_BUG
             OP_NETSCAPE_CHALLENGE_BUG
@@ -1351,11 +1356,13 @@ sub _dump           {
 
 sub datadump        {
     #? return internal data structure
-    my $data = '';
+    my $prefix  = shift;    # get prefix as parameter
+    my $data    = $prefix;
+       $data   .= " datadump #{\n";
     if ($Net::SSLinfo::use_sclient > 1) {
-        $data .= _dump('s_client', " ", $_SSLinfo{'s_client'});
+       $data   .= _dump('s_client', " ", $_SSLinfo{'s_client'});
     } else {
-        $data .= _dump('s_client', " ", "#### please set 'Net::SSLinfo::use_sclient > 1' to dump s_client data also ###");
+       $data   .= _dump('s_client', " ", "#### please set 'Net::SSLinfo::use_sclient > 1' to dump s_client data also ###");
     }
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
@@ -1377,6 +1384,7 @@ sub datadump        {
         $data .= _dump($key, " ", $_SSLinfo{$key});
     }
     $data .= _dump('errors',  "\n", join("\n ** ", @{$_SSLinfo{'errors'}}));
+    $data .= "$Net::SSLinfo::prefix_trace$prefix datadump #}"; # quick&dirty global prefix_trace
     return $data;
 } # datadump
 
@@ -1398,15 +1406,24 @@ sub _SSLinfo_get    {
         #src = Net::SSLeay::ERR_peek_last_error; # should work since openssl 0.9.7
         return wantarray ? @{$_SSLinfo{$key}} : join("\n", @{$_SSLinfo{$key}});
     }
-    return '' if not defined do_ssl_open($host, $port, '');
+    if (not defined $_SSLinfo{'ssl'}) {
+        # if-condition only to avoid multiple calls, improves performance and produces less trace output
+        return '' if not defined do_ssl_open($host, $port, '');
+    }
     if ($key eq 'ciphers') { # special handling
         return wantarray ? @{$_SSLinfo{$key}} : join(' ', @{$_SSLinfo{$key}});
         return wantarray ? @{$_SSLinfo{$key}} : join(':', @{$_SSLinfo{$key}}); # if we want `openssl ciphers' format
     }
     if ($key eq 'dates') {
+       _trace("_SSLinfo_get 'dates'=" . $_SSLinfo{'before'} . " " . $_SSLinfo{'after'});
         return ( $_SSLinfo{'before'}, $_SSLinfo{'after'});
     }
-    _trace("_SSLinfo_get '$key'=" . ($_SSLinfo{$key} || ''));
+    if (0 < $trace) {
+        # prepare data to be printed by trace_()
+        my $value = $_SSLinfo{$key} || '';
+           $value = "<<use --trace=2 to print data>>" if ($value =~ m/[\r\n]/);
+        _trace("_SSLinfo_get '$key'=$value");
+    }
     return (grep{/^$key$/} keys %_SSLinfo) ? $_SSLinfo{$key} : '';
 } # _SSLinfo_get
 
@@ -1427,7 +1444,8 @@ sub _check_host     {
     } else {
         push(@{$_SSLinfo{'errors'}}, "_check_host: $!");
     }
-    _trace("_check_host $_SSLinfo{'host'} $_SSLinfo{'ip'} .");
+    _trace("_check_host $_SSLinfo{'host'} $_SSLinfo{'ip'}");
+    #dbx# _trace("_check_host =" . ((defined $ip) ? 1 : undef));
     return (defined $ip) ? 1 : undef;
 } # _check_host
 
@@ -1439,7 +1457,7 @@ sub _check_port     {
     $port  = getservbyname($port, 'tcp') unless $port =~ /^\d+$/;
     push(@{$_SSLinfo{'errors'}}, "_check_port: $!") if ($! !~ m/^\s*$/);
     $_SSLinfo{'port'} = $port if (defined $port);
-    _trace("_check_port $port .");
+    #dbx# _trace("_check_port =$port");
     return (defined $port) ? 1 : undef;
 } # _check_port
 
@@ -1494,7 +1512,7 @@ sub _ssleay_cert_get    {
 
     if ($key eq 'altname') {
         my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509); # returns array of (type, string)
-        _trace("_ssleay_cert_get: Altname: " . join(' ', @altnames));
+        _trace2("_ssleay_cert_get: Altname: " . join(' ', @altnames));
         while (@altnames) {             # construct string like openssl
             my ($type, $name) = splice(@altnames, 0, 2);
             # TODO: replace ugly code by %_SSLtypemap
@@ -1513,7 +1531,7 @@ sub _ssleay_cert_get    {
             $ret .= ' ' . join(':', $type, $name);
         }
     }
-    _trace("_ssleay_cert_get: $ret.");  # or warn "**WARNING: wrong key '$key' given; ignored";
+    _trace("_ssleay_cert_get '$key'=$ret");  # or warn "**WARNING: wrong key '$key' given; ignored";
     return $ret;
 } # _ssleay_cert_get
 
@@ -1560,7 +1578,7 @@ sub _ssleay_socket  {
         return $socket;
     }; # TRY
     push(@{$_SSLinfo{'errors'}}, "_ssleay_socket() failed calling $src: $err");
-    _trace("_ssleay_socket: undef");
+    _trace("_ssleay_socket retu=undef");
     return;
 } # _ssleay_socket
 
@@ -1712,7 +1730,7 @@ sub _ssleay_ctx_new {
     } # TRY
     # reach here if ::CTX_* failed
     push(@{$_SSLinfo{'errors'}}, "_ssleay_ctx_new() failed calling $src: $err");
-    _trace("_ssleay_ctx_new: undef");
+    _trace("_ssleay_ctx_new ret=undef");
     return;
 } # _ssleay_ctx_new
 
@@ -1772,7 +1790,7 @@ sub _ssleay_ctx_ca  {
         return 1; # success
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "_ssleay_ctx_ca() failed calling $src: $err");
-    _trace("_ssleay_ctx_ca: undef.");
+    _trace("_ssleay_ctx_ca ret=undef");
     return;
 } # _ssleay_ctx_ca
 
@@ -1814,7 +1832,7 @@ sub _ssleay_ssl_new {
         return $ssl;
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "_ssleay_ssl_new() failed calling $src: $err");
-    _trace("_ssleay_ssl_new: undef.");
+    _trace("_ssleay_ssl_new ret=undef");
     return;
 } # _ssleay_ssl_new
 
@@ -1851,7 +1869,7 @@ sub _ssleay_ssl_np  {
             };
         }
     }
-    _trace("_ssleay_ssl_np $#err.");
+    _trace("_ssleay_ssl_np err=$#err");
     return @err;
 } # _ssleay_ssl_np
 
@@ -1894,7 +1912,7 @@ sub _openssl_MS     {
     my $err = '';
     my $src = 'open';
     my $tmp = '.\\_yeast.bat'; # do not use $ENV{'TMP'} as it can be empty or unset
-    _trace("_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp") if (1 < $trace);
+    _trace2("_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp");
     TRY: {
         my $fh;
         open($fh, '>', $tmp)                or do {$err = $!} and last;
@@ -1907,11 +1925,11 @@ sub _openssl_MS     {
         unlink  $tmp                        or do {$err = $!} and last;
          $data =~ s#^[^)]*[^\r\n]*.##s;          # remove cmd.exe's output
          $data =~ s#WARN.*?openssl.cnf[\r\n]##;  # remove WARNINGs
-        _trace("_openssl_MS $mode $host$port : $data #") if (1 < $trace);
+        _trace2("_openssl_MS $mode $host$port : $data #");
     }
     if ('' ne $err) {
         $text = "_openssl_MS() failed calling $src: $err";
-        _trace($text) if (1 < $trace);
+        _trace2($text);
         push(@{$_SSLinfo{'errors'}}, $text);
         return '';
     }
@@ -1923,7 +1941,7 @@ sub _openssl_x509   {
     my $pem  = shift;
     my $mode = shift;   # must be one of openssl x509's options
     my $data = '';
-    _trace("_openssl_x509($mode,...).");
+    _trace("_openssl_x509($mode,...)");
     _setcmd();
     if ($_openssl eq '') {
         _trace("_openssl_x509($mode): WARNING: no openssl");
@@ -1957,7 +1975,7 @@ sub _openssl_x509   {
     } else {
         $mode = "x509 -noout $mode";
     }
-    _trace("_openssl_x509(openssl $mode).") if (1 < $trace);
+    _trace2("_openssl_x509(openssl $mode)");
     if ($^O !~ m/MSWin32/) {
         $data = `echo '$pem' | $_openssl $mode 2>&1`; ## no critic qw(InputOutput::ProhibitBacktickOperators)
     } else { # it's sooooo simple, except on Windows :-(
@@ -1968,6 +1986,7 @@ sub _openssl_x509   {
     $data =~ s/\s*$//;  # be sure ...
     $data =~ s/\s*Version:\s*//i if (($mode =~ m/ -text /) && ($mode !~ m/version,/)); # ugly test for version
     #_dbx# print "#3 $data \n#3";
+    _trace2("_openssl_x509 '$mode'=$data");
     return $data;
 } # _openssl_x509
 
@@ -2053,7 +2072,7 @@ sub s_client_check  {
     }
     $_OpenSSL_opt{'-npn'} = $_OpenSSL_opt{'-nextprotoneg'}; # -npn is an alias
     $_OpenSSL_opt{'done'} = 1;
-    _trace("s_client_check done.");
+    _trace("s_client_check ret=1");
     return 1;
 } # s_client_check
 
@@ -2229,7 +2248,8 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
             last;
         } # TRY_PROTOCOL }
         if ('' eq $src) {
-            _trace(join("\n" . SSLINFO_ERR . ' ', '', @{$_SSLtemp{'errors'}}));
+            # avoid printing empty line, hence "if -1 < $#"
+            _trace(join("\n" . SSLINFO_ERR . ' ', '', @{$_SSLtemp{'errors'}})) if (-1 < $#{$_SSLtemp{'errors'}});
             _trace(" errors reseted.");
             @{$_SSLtemp{'errors'}} = ();        # messages no longer needed
             goto finished;
@@ -2494,8 +2514,16 @@ sub do_ssl_open($$$@) {
             $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
             $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
-            _trace("request #{\n$host:$port\n$request"); _trace("request #}");
-            _trace("response #{\n$response");            _trace("response #}");
+            _trace("do_ssl_open: request $host:$port");
+            if (1 == $trace) {
+                _trace("do_ssl_open: request  #{<<use --trace=2 to print data>>#}");
+                _trace("do_ssl_open: response #{\n$response #}") if ($response =~ m/<<GET failed/); # always
+                _trace("do_ssl_open: response #{<<use --trace=2 to print data>>#}");
+            } else {
+                # matches $trace==0 too; that's ok as handled correctly in _trace()
+                _trace2("do_ssl_open: request  #{\n$request");  _trace("do_ssl_open request #}");
+                _trace2("do_ssl_open: response #{\n$response"); _trace("do_ssl_open response #}");
+            }
             if ($response =~ /handshake_failed/) {  # may get: http2_handshake_failed
                 $response = "<<HTTP handshake failed>>";
                 # no last; # as it will break checks outside
@@ -2561,8 +2589,16 @@ sub do_ssl_open($$$@) {
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
             foreach my $h (sort keys %headers) { $headers .= "$h: $headers{$h}\n"; }
-            _trace("request #{\n$host:$port\n$request"); _trace("request #}");
-            _trace("response #{\n$headers\n$response");  _trace("response #}");
+            _trace("do_ssl_open: request $host:$port");
+            if (1 == $trace) {
+                _trace("do_ssl_open: request  #{<<use --trace=2 to print data>>#}");
+                _trace("do_ssl_open: response #{\n$response #}") if ($response =~ m/<<GET failed/); # always
+                _trace("do_ssl_open: response #{<<use --trace=2 to print data>>#}");
+            } else {
+                # matches $trace==0 too; that's ok as handled correctly in _trace()
+                _trace2("do_ssl_open: request  #{\n$request");  _trace("do_ssl_open request #}");
+                _trace2("do_ssl_open: response #{\n$response"); _trace("do_ssl_open response #}");
+            }
                 # Net::SSLeay 1.58 (and before)
                 # Net::SSLeay::get_http() may return:
                 # Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
@@ -2591,7 +2627,7 @@ sub do_ssl_open($$$@) {
                 # TODO: http_protocols somtimes fails, reason unknown (03/2015)
             } else { # any status code > 500
                 #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
-                push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: " . $_SSLinfo{'http_status'});
+                push(@{$_SSLinfo{'errors'}}, "do_ssl_open WARNING $src: " . $_SSLinfo{'http_status'});
                 if ($_SSLinfo{'http_status'} =~ m:^HTTP/... (50[12345]) :) {
                     # If we get status 50x, there is most likely a (local)
                     # proxy which is not able to connect to the target.
@@ -2599,7 +2635,7 @@ sub do_ssl_open($$$@) {
                     # connection (status 503 and 504) or 'cause the proxy
                     # itself has a problem.
                     # HTTP headers and response may contain more hints.
-                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: check HTTP gateway");
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open WARNING $src: check HTTP gateway");
                 #} else { Net::SSLeay::get_http() most likely returns status 900
                 }
                 $response = ''; # avoid uninitialised value later
@@ -2611,7 +2647,7 @@ sub do_ssl_open($$$@) {
             # calling external openssl is a performance penulty
             # it would be better to manually parse $_SSLinfo{'text'} but that
             # needs to be adapted to changes of openssl's output then
-            _trace("do_ssl_open() without openssl done.");
+            _trace("do_ssl_open without openssl done.");
             goto finished;
         }
 
@@ -2687,7 +2723,7 @@ sub do_ssl_open($$$@) {
         my  $eee = $_SSLinfo{'s_client'};
         if ($eee =~ m/.*(?:\*\*ERROR)/) {   # pass errors to caller
             $eee =~ s/.*(\*\*ERROR[^\n]*).*/$1/s;
-            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING openssl: $eee");
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open WARNING openssl: $eee");
         } else {
             $eee =  '';
         }
@@ -2794,7 +2830,7 @@ sub do_ssl_open($$$@) {
                     # use $Config{ivsize}
                 } else {
                     $err = "use Config";
-                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),Cfg failed calling $src: $err");
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open Cfg failed calling $src: $err");
                     $_SSLinfo{'serial_int'} = "<<$err failed>>";
                 }
                 ## use critic
@@ -2806,7 +2842,7 @@ sub do_ssl_open($$$@) {
                     $_SSLinfo{'serial_int'} = Math::BigInt->from_hex($d);
                 } else {
                     $err = "Math::BigInt->from_hex($d)";
-                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),Big failed calling $src: $err");
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open Big failed calling $src: $err");
                     $_SSLinfo{'serial_int'} = "<<$err failed>>";
                 }
             } else {
@@ -2824,7 +2860,7 @@ sub do_ssl_open($$$@) {
             my $regex = $match_map{$key};
             $d = $data;
             $d =~ s/.*?$regex[ \t]*([^\n\r]*)\n.*/$1/si;
-            _trace("do_ssl_open: match key: $key\t= $regex");
+            _trace("do_ssl_open: match key:   $key\t= $regex");
             if ($data =~ m/$regex/) {
                 $_SSLinfo{$key} = $d;
                 $_SSLinfo{$key} = $regex if ($key eq 'no_alpn');
@@ -3008,28 +3044,29 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'tlsextensions'} .= "\n" . $d;
             $_SSLinfo{'heartbeat'}= $d if ($d =~ m/heartbeat/);
             # following already done, see above, hence with --trace only
-            _trace("-tlsextdebug  $d") if ($d =~ m/session ticket/);
-            _trace("-tlsextdebug  $d") if ($d =~ m/renegotiation info/);
+            _trace("do_ssl_open: -tlsextdebug  $d") if ($d =~ m/session ticket/);
+            _trace("do_ssl_open: -tlsextdebug  $d") if ($d =~ m/renegotiation info/);
         }
         $_SSLinfo{'tlsextensions'} =~ s/\([^)]*\),?\s+//g;  # remove additional informations
         $_SSLinfo{'tlsextensions'} =~ s/\s+len=\d+//g;      # ...
 
-        _trace("do_ssl_open() with openssl done.");
-        print Net::SSLinfo::datadump() if (0 < $trace);
+        _trace("do_ssl_open(with openssl done.");
+        _trace1("do_ssl_open <<use --trace=2 to print data collected from openssl>>");
+        _trace2(Net::SSLinfo::datadump("do_ssl_open"));
         goto finished;
     } # TRY
 
     #6. error handling
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),TRY failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open TRY failed calling $src: $err");
     if (1 < $trace) {
         Net::SSLeay::print_errs(SSLINFO_ERR);
         print SSLINFO_ERR . $_ foreach @{$_SSLinfo{'errors'}};
     }
-    _trace("do_ssl_open() failed.");
+    _trace("do_ssl_open failed.");
     return;
 
     finished:
-    _trace("do_ssl_open() done.");
+    _trace("do_ssl_open done.");
     return wantarray ? ($_SSLinfo{'ssl'}, $_SSLinfo{'ctx'}) : $_SSLinfo{'ssl'};
 } # do_ssl_open
 
@@ -3102,7 +3139,7 @@ sub do_openssl($$$$)  {
             return SSLINFO_HASH;
         }
         if (0 == $Net::SSLinfo::use_sclient) {
-            _trace("do_openssl($mode): WARNING: no openssl s_client") if (1 < $trace);
+            _trace2("do_openssl($mode): WARNING: no openssl s_client");
             return SSLINFO_HASH;
         }
 # TODO: Optionen hier entfernen, muss im Caller gemacht werden
@@ -3131,7 +3168,7 @@ sub do_openssl($$$$)  {
         $mode .= ' -connect'     if  ($mode !~ m/-connect/);
     }
     $host = $port = '' if ($mode =~ m/^-?(ciphers)/);   # TODO: may be scary
-    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1"); 
+    _trace("do_openssl($mode): echo '' | $_timeout $_openssl $mode $host:$port 2>&1"); 
     _verbose("$_timeout $_openssl $mode $host:$port");
         # TODO: both, _trace and _verbose, may produce useless trailing : 
     if ($^O !~ m/MSWin32/) {
@@ -3285,7 +3322,7 @@ sub cipher_openssl  {
     my $list;
     _trace("cipher_openssl($pattern)");
     _setcmd();
-    _trace("cipher_openssl: openssl ciphers $pattern") if (1 < $trace);
+    _trace2("cipher_openssl: openssl ciphers $pattern");
     $list = do_openssl("ciphers $pattern", '', '', '');
     chomp  $list;
     return (wantarray) ? split(/[:\s]+/, $list) : $list;
@@ -3929,7 +3966,7 @@ sub _main           {
         if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
         # treat remaining args as hostname to test
         do_ssl_open( shift, 443, '');
-        print Net::SSLinfo::datadump();
+        print Net::SSLinfo::datadump("main");
     }
     exit 0;
 } # _main
