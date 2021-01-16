@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.324 21/01/14 11:30:25";
+my  $SID_man= "@(#) o-saft-man.pm 1.325 21/01/16 16:49:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.324'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.325'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -523,8 +523,9 @@ sub _man_html_foot  {
     my $vers    = _man_get_version();
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
- <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a><br>
- <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
+ <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
+ <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
+ <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
  <hr><p><span style="display:none">&copy; Achim Hoffmann 2021</span></p>
  <script>
   osaft_title("$title", "$vers");
@@ -1452,7 +1453,7 @@ sub man_cgi         {
 } # man_cgi
 
 sub man_wiki        {
-    #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org)
+    #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org until 2019)
     #? recommended usage:   $0 --no-warning --no-header --help=gen-wiki
     my $mode =  shift;
         # currently only mode=colon is implemented to print  :*  instead of *
@@ -1797,7 +1798,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.324 2021/01/14
+1.325 2021/01/16
 
 =head1 AUTHOR
 
