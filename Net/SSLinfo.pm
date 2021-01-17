@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.267 21/01/16 12:48:25',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.268 21/01/17 21:48:46',
 };
 
 ######################################################## public documentation #
@@ -1243,12 +1243,12 @@ sub ssleay_methods  {
 
 sub test_methods    {
     #? return openssl s_client availabilities (options for s_client)
-    return join(" ",ssleay_methods());
+    return join(" ", sort(ssleay_methods()));
 } # test_methods
 
 sub test_sclient    {
     #? return openssl s_client availabilities (options for s_client)
-    return join(" ",s_client_get_optionlist());
+    return join(" ", sort(s_client_get_optionlist()) );
 } # test_sclient
 
 sub test_sslmap     {
