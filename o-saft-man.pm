@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.325 21/01/16 16:49:25";
+my  $SID_man= "@(#) o-saft-man.pm 1.326 21/01/17 22:12:43";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.325'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.326'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1085,7 +1085,7 @@ sub man_help_brief  {
             next;
         }
         $line =~ s/^\s*//;                  # normalise
-        $line =~ s!I&([^&]*)&!$1!g;         # remove markup
+        $line =~ s![IX]&([^&]*)&!$1!g;      # remove markup
         $line =  sprintf("\n%17s %s", " ", $line) if (defined $opts{$idx}->{'txt'});
         $opts{$idx}->{'txt'} .= $line;
     }
@@ -1096,7 +1096,7 @@ sub man_help_brief  {
     }
     _man_foot(15);
     print "\n";
-    _man_head(15, "Commands", "Description");
+    _man_head(15, "Command", "Description");
     print <<"EoHelp";
 +info             Overview of most important details of the SSL connection.
 +cipher           Check target for ciphers (using libssl).
@@ -1105,7 +1105,8 @@ sub man_help_brief  {
 +vulns            Check for various vulnerabilities.
 EoHelp
     _man_foot(15);
-    print "\nFor more commands see: $cfg{me} --help=commands\n\n";
+    my $opt = " --header" if (0 < $cfg_header); # be nice to the user
+    print "\nFor more commands see: $cfg{me}$opt --help=commands\n\n";
     return;
 } # man_help_brief
 
@@ -1798,7 +1799,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.325 2021/01/16
+1.326 2021/01/17
 
 =head1 AUTHOR
 
