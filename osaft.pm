@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.236 21/01/17 14:00:17",
+    SID_osaft   => "@(#) osaft.pm 1.237 21/01/17 15:13:56",
 
 };
 
@@ -471,10 +471,10 @@ our %TLS_EC_POINT_FORMATS = (
     # ID        name                            DTLS RECOMMENDED  RFC
     #----+-------------------------------------+----+---+----------------------------
    TEXT =>      "ec point format(s)",                            # define text for print
- FORMAT => [qw( "%s",                                         )],# define format for printf
-    0 => [qw( uncompressed                      Y    Y   4492 )],
-    1 => [qw( ansiX962_compressed_prime         Y?   N?  4492 )],
-    2 => [qw( ansiX962_compressed_char2         Y?   N?  4492 )],
+ FORMAT => [qw( "%s"                                          )],# define format for printf
+      0 => [qw( uncompressed                    Y    Y   4492 )],
+      1 => [qw( ansiX962_compressed_prime       Y?   N?  4492 )],
+      2 => [qw( ansiX962_compressed_char2       Y?   N?  4492 )],
     #----+-------------------------------------+----+---+----------------------------
 );
 
@@ -486,7 +486,7 @@ our %TLS_NAME_TYPE = (
     #----+-------------------------------------+----+-------+------------------------
    TEXT =>      "server name type",                             # define text for print
  FORMAT => [qw( %s                                           )],# define format for printf
- 0x00 => [qw( host_name                         Y    6066    )],
+   0x00 => [qw( host_name                       Y    6066    )],
     #----+-------------------------------------+----+-------+------------------------
 );
 
@@ -498,10 +498,10 @@ our %TLS_MAX_FRAGMENT_LENGTH = (
     #----+-------------------------------------+----+-------+------------------------
    TEXT =>      "max fragment length negotiation",              # define text for print
  FORMAT => [    "%s",   "(%s bytes)"                          ],# define format for printf
- 0x01 => [qw( 2^9        512                    -    6066    )],
- 0x02 => [qw( 2^10      1024                    -    6066    )],
- 0x03 => [qw( 2^11      2048                    -    6066    )],
- 0x04 => [qw( 2^12      4096                    -    6066    )],
+   0x01 => [qw( 2^9        512                  -    6066    )],
+   0x02 => [qw( 2^10      1024                  -    6066    )],
+   0x03 => [qw( 2^11      2048                  -    6066    )],
+   0x04 => [qw( 2^12      4096                  -    6066    )],
     #----+-------------------------------------+----+-------+------------------------
 );
 
@@ -603,7 +603,7 @@ our %TLS_SUPPORTED_GROUPS = (
     # ID        name               (added:)bits DTLS RECOMMENDED  RFC
    #----+----------------------------+------+----+---+----------------------------
    TEXT =>      "supported group(s)",                               # define text for print
- FORMAT => [qw( "%s",           "(%s bits)"                      )],# define format for printf
+ FORMAT => [qw( "%s"            "(%s bits)"                      )],# define format for printf
     #----+--------------------------------+----+----+---+----------------------------
       0 => [qw( Reverved_0                 0    N    N   8447    )],
       1 => [qw( sect163k1                163    Y    N   4492    )],
@@ -634,8 +634,8 @@ our %TLS_SUPPORTED_GROUPS = (
      26 => [qw( brainpoolP256r1          256    Y    Y   7027    )],
      27 => [qw( brainpoolP384r1          384    Y    Y   7027    )],
      28 => [qw( brainpoolP512r1          512    Y    Y   7027    )],
-     29 => [qw( x25519                   255    Y    Y   8446,8422 )],
-     30 => [qw( x448                     448    Y    Y   8446,8422 )],
+     29 => [qw( x25519                   255    Y    Y   8446:8422 )],
+     30 => [qw( x448                     448    Y    Y   8446:8422 )],
      31 => [qw( brainpoolP256r1tls13     256    Y    N   8734    )],
      32 => [qw( brainpoolP384r1tls13     384    Y    N   8734    )],
      33 => [qw( brainpoolP512r1tls13     512    Y    N   8734    )],
@@ -4233,7 +4233,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.236 2021/01/17
+1.237 2021/01/17
 
 =head1 AUTHOR
 
