@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.239 21/01/17 20:32:02",
+    SID_osaft   => "@(#) osaft.pm 1.240 21/01/19 00:22:35",
 
 };
 
@@ -3021,8 +3021,10 @@ our %cfg = (
     'use' =>    {      # configurations to use or do some specials
         'mx'        => 0,       # 1: make MX-Record DNS lookup
         'dns'       => 1,       # 1: make DNS reverse lookup
-        'http'      => 1,       # 1: make HTTP  request
-        'https'     => 1,       # 1: make HTTPS request
+        'http'      => 1,       # 1: make HTTP  request with default (Net::LLeay) settings
+                                # 2: make HTTP  request without headers User-Agent and Accept
+        'https'     => 1,       # 1: make HTTPS request with default (Net::LLeay) settings
+                                # 2: make HTTPS request without headers User-Agent and Accept
         'forcesni'  => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
         'sni'       => 1,       # 0: do not make connection in SNI mode
                                 # 1: make connection with SNI set (can be empty string)
@@ -4243,7 +4245,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.239 2021/01/17
+1.240 2021/01/19
 
 =head1 AUTHOR
 
