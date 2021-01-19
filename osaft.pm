@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.240 21/01/19 00:22:35",
+    SID_osaft   => "@(#) osaft.pm 1.241 21/01/19 08:31:58",
 
 };
 
@@ -2830,7 +2830,7 @@ our %cfg = (
    # TODO: need to unify  cmd-* and need-* and regex->cmd-*;
    #       see also _need_* functions and "construct list for special commands"
    #       in o-saft.pl
-   # config. key        list      description
+   # config. key       list       description
    #------------------+---------+----------------------------------------------
     'do'            => [],      # commands to be performed
     'commands'      => [],      # contains all commands from %data, %checks and commands_int
@@ -2987,26 +2987,26 @@ our %cfg = (
    #------------------+---------+----------------------------------------------
 
     'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
-   # option key        default   description
-   #------------------+---------+----------------------------------------------
+   # out->option key           default   description
+   #--------------------------+-----+------------------------------------------
     'out' =>    {      # configurations for data to be printed
-        'disabled'  => 1,       # 1: print disabled ciphers
-        'enabled'   => 1,       # 1: print enabled ciphers
-        'header'    => 0,       # 1: print header lines in output
-        'hostname'  => 0,       # 1: print hostname (target) as prefix for each line
-        'hint_cipher'   => 1,   # 1: print hints for +cipher command
-        'hint_check'=> 1,       # 1: print hints for +check commands
-        'hint_info' => 1,       # 1: print hints for +info commands
-        'hint'      => 1,       # 1: print hints for +cipher +check +info
-        'key'       => 0,       # 1: print internal variable names for %data and %checks (was traceKEY)
-        'traceARG'  => 0,       # 1: (trace) print argument processing
-        'traceCMD'  => 0,       # 1: (trace) print command processing
-        'traceTIME' => 0,       # 1: (trace) print additiona time for benchmarking
-        'time_absolut'  => 0,   # 1: (trace) --traceTIME uses absolut timstamps
-        'warning'   => 1,       # 1: print warnings
-        'score'     => 0,       # 1: print scoring
-        'ignore'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
-        'exitcode'  => 0,       # 1: print verbose checks for exit status
+        'disabled'          => 1,   # 1: print disabled ciphers
+        'enabled'           => 1,   # 1: print enabled ciphers
+        'header'            => 0,   # 1: print header lines in output
+        'hostname'          => 0,   # 1: print hostname (target) as prefix for each line
+        'hint_cipher'       => 1,   # 1: print hints for +cipher command
+        'hint_check'        => 1,   # 1: print hints for +check commands
+        'hint_info'         => 1,   # 1: print hints for +info commands
+        'hint'              => 1,   # 1: print hints for +cipher +check +info
+        'key'               => 0,   # 1: print internal variable names for %data and %checks (was traceKEY)
+        'traceARG'          => 0,   # 1: (trace) print argument processing
+        'traceCMD'          => 0,   # 1: (trace) print command processing
+        'traceTIME'         => 0,   # 1: (trace) print additiona time for benchmarking
+        'time_absolut'      => 0,   # 1: (trace) --traceTIME uses absolut timstamps
+        'warning'           => 1,   # 1: print warnings
+        'score'             => 0,   # 1: print scoring
+        'ignore'            => [],  # commands (output) to be ignored, SEE Note:ignore-out
+        'exitcode'          => 0,   # 1: print verbose checks for exit status
         'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
         'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
         'exitcode_medium'   => 1,   # 0: do not count MEDIUM ciphers for --exitcode
@@ -3017,34 +3017,38 @@ our %cfg = (
         'exitcode_sizes'    => 1,   # 0: do not count size checks for --exitcode
         'exitcode_quiet'    => 0,   # 1: do not print "EXIT status" message
     }, # out
+   #--------------------------+-----+------------------------------------------
 
+   # use->option key     default  description
+   #----------------------+-----+----------------------------------------------
     'use' =>    {      # configurations to use or do some specials
-        'mx'        => 0,       # 1: make MX-Record DNS lookup
-        'dns'       => 1,       # 1: make DNS reverse lookup
-        'http'      => 1,       # 1: make HTTP  request with default (Net::LLeay) settings
+        'mx'            => 0,   # 1: make MX-Record DNS lookup
+        'dns'           => 1,   # 1: make DNS reverse lookup
+        'http'          => 1,   # 1: make HTTP  request with default (Net::LLeay) settings
                                 # 2: make HTTP  request without headers User-Agent and Accept
-        'https'     => 1,       # 1: make HTTPS request with default (Net::LLeay) settings
+        'https'         => 1,   # 1: make HTTPS request with default (Net::LLeay) settings
                                 # 2: make HTTPS request without headers User-Agent and Accept
-        'forcesni'  => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-        'sni'       => 1,       # 0: do not make connection in SNI mode
+        'forcesni'      => 0,   # 1: do not check if SNI seems to be supported by Net::SSLeay
+        'sni'           => 1,   # 0: do not make connection in SNI mode
                                 # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
-        'lwp'       => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
-        'alpn'      => 1,       # 0: do not use -alpn option for openssl
-        'npn'       => 1,       # 0: do not use -nextprotoneg option for openssl
-        'reconnect' => 1,       # 0: do not use -reconnect option for openssl
-        'extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-        'cert'      => 1,       # 0: do not get data from certificate
-        'no_comp'   => 0,       # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
-        'ssl_lazy'  => 0,       # 1: lazy check for available SSL protocol functionality (Net::SSLeay problem)
-        'nullssl2'  => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
-        'ssl_error' => 1,       # 1: stop connecting to target after ssl-error-max failures
+        'lwp'           => 0,   # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
+        'alpn'          => 1,   # 0: do not use -alpn option for openssl
+        'npn'           => 1,   # 0: do not use -nextprotoneg option for openssl
+        'reconnect'     => 1,   # 0: do not use -reconnect option for openssl
+        'extdebug'      => 1,   # 0: do not use -tlsextdebug option for openssl
+        'cert'          => 1,   # 0: do not get data from certificate
+        'no_comp'       => 0,   # 0: do not use OP_NO_COMPRESSION for connetion in Net::SSLeay
+        'ssl_lazy'      => 0,   # 1: lazy check for available SSL protocol functionality (Net::SSLeay problem)
+        'nullssl2'      => 0,   # 1: complain if SSLv2 enabled but no ciphers accepted
+        'ssl_error'     => 1,   # 1: stop connecting to target after ssl-error-max failures
         'experimental'  => 0,   # 1: use, print experimental functionality
-        'exitcode'  => 0,       # 1: exit with status code if any check is "no"
+        'exitcode'      => 0,   # 1: exit with status code if any check is "no"
                                 # see also 'out'->'exitcode'
     }, # use
+   #----------------------+-----+----------------------------------------------
 
-   # option key        default   description
+   # option key        default    description
    #------------------+---------+----------------------------------------------
     'opt-v'         => 0,       # 1 when option -v was given
     'opt-V'         => 0,       # 1 when option -V was given
@@ -3073,53 +3077,58 @@ our %cfg = (
                                 #       higher, which results in a performance
                                 #       bottleneck, obviously
                                 #  see 'sslerror' settings and options also
+
+   #----------------+----------------------------------------------------------
     'openssl'  =>   {  # configurations for various openssl functionality
                        # same data structure as Net::SSLinfo's %_OpenSSL_opt
                        # not all values used yet
-        #--------------+--------+---------------------------------------------
-        # key (=option) supported=1    warning message if option is missing
-        #--------------+--------+---------------------------------------------
-        '-CAfile'       => [ 1, "using -CAfile disabled"        ],
-        '-CApath'       => [ 1, "using -CApath disabled"        ],
-        '-alpn'         => [ 1, "checks with ALPN disabled"     ],
-        '-npn'          => [ 1, "checks with NPN  disabled"     ],
-        '-nextprotoneg' => [ 1, "checks with NPN  disabled"     ], # alias for -npn
-        '-reconnect'    => [ 1, "checks with openssl reconnect disabled"],
-        '-fallback_scsv'=> [ 1, "checks for TLS_FALLBACK_SCSV wrong"],
-        '-comp'         => [ 1, "<<NOT YET USED>>"              ],
-        '-no_comp'      => [ 1, "<<NOT YET USED>>"              ],
-        '-no_tlsext'    => [ 1, "<<NOT YET USED>>"              ],
-        '-no_ticket'    => [ 1, "<<NOT YET USED>>"              ],
-        '-serverinfo'   => [ 1, "checks without TLS extension disabled"],
-        '-servername'   => [ 1, "checks with TLS extension SNI disabled"],
-        '-serverpref'   => [ 1, "<<NOT YET USED>>"              ],
-        '-showcerts'    => [ 1, "<<NOT YET USED>>"              ],
-        '-curves'       => [ 1, "using -curves disabled"        ],
-        '-debug'        => [ 1, "<<NOT YET USED>>"              ],
-        '-bugs'         => [ 1, "<<NOT YET USED>>"              ],
-        '-key'          => [ 1, "<<NOT YET USED>>"              ],
-        '-msg'          => [ 1, "using -msg disabled, DH paramaters missing or wrong"],
-        '-nbio'         => [ 1, "<<NOT YET USED>>"              ],
-        '-psk'          => [ 1, "PSK  missing or wrong"         ],
-        '-psk_identity' => [ 1, "PSK identity missing or wrong" ],
-        '-pause'        => [ 1, "<<NOT YET USED>>"              ],
-        '-prexit'       => [ 1, "<<NOT YET USED>>"              ],
-        '-proxy'        => [ 1, "<<NOT YET USED>>"              ],
-        '-quiet'        => [ 1, "<<NOT YET USED>>"              ],
-        '-sigalgs'      => [ 1, "<<NOT YET USED>>"              ],
-        '-state'        => [ 1, "<<NOT YET USED>>"              ],
-        '-status'       => [ 1, "<<NOT YET USED>>"              ],
-        '-strict'       => [ 1, "<<NOT YET USED>>"              ],
-        '-nbio_test'    => [ 1, "<<NOT YET USED>>"              ],
-        '-tlsextdebug'  => [ 1, "TLS extension missing or wrong"],
-        '-client_sigalgs'       => [ 1, "<<NOT YET USED>>"      ],
-        '-record_padding'       => [ 1, "<<NOT YET USED>>"      ],
-        '-no_renegotiation'     => [ 1, "<<NOT YET USED>>"      ],
-        '-legacyrenegotiation'  => [ 1, "<<NOT YET USED>>"      ],
-        '-legacy_renegotiation' => [ 1, "<<NOT YET USED>>"      ],
-        '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"  ],
-        '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"  ],
-        #--------------+--------+---------------------------------------------
+                       # default value 1 means supported by openssl, will be
+                       # structure initialised correctly in _check_openssl()
+                       # which uses Net::SSLinfo::s_client_check()
+        #------------------+-------+-------------------------------------------
+        # key (=option) supported=1  warning message if option is missing
+        #------------------+-------+-------------------------------------------
+        '-CAfile'           => [ 1, "using -CAfile disabled"        ],
+        '-CApath'           => [ 1, "using -CApath disabled"        ],
+        '-alpn'             => [ 1, "checks with ALPN disabled"     ],
+        '-npn'              => [ 1, "checks with NPN  disabled"     ],
+        '-nextprotoneg'     => [ 1, "checks with NPN  disabled"     ], # alias for -npn
+        '-reconnect'        => [ 1, "checks with openssl reconnect disabled"],
+        '-fallback_scsv'    => [ 1, "checks for TLS_FALLBACK_SCSV wrong"    ],
+        '-comp'             => [ 1, "<<NOT YET USED>>"              ],
+        '-no_comp'          => [ 1, "<<NOT YET USED>>"              ],
+        '-no_tlsext'        => [ 1, "<<NOT YET USED>>"              ],
+        '-no_ticket'        => [ 1, "<<NOT YET USED>>"              ],
+        '-serverinfo'       => [ 1, "checks without TLS extension disabled" ],
+        '-servername'       => [ 1, "checks with TLS extension SNI disabled"],
+        '-serverpref'       => [ 1, "<<NOT YET USED>>"              ],
+        '-showcerts'        => [ 1, "<<NOT YET USED>>"              ],
+        '-curves'           => [ 1, "using -curves disabled"        ],
+        '-debug'            => [ 1, "<<NOT YET USED>>"              ],
+        '-bugs'             => [ 1, "<<NOT YET USED>>"              ],
+        '-key'              => [ 1, "<<NOT YET USED>>"              ],
+        '-msg'              => [ 1, "using -msg disabled, DH paramaters missing or wrong"],
+        '-nbio'             => [ 1, "<<NOT YET USED>>"              ],
+        '-psk'              => [ 1, "PSK  missing or wrong"         ],
+        '-psk_identity'     => [ 1, "PSK identity missing or wrong" ],
+        '-pause'            => [ 1, "<<NOT YET USED>>"              ],
+        '-prexit'           => [ 1, "<<NOT YET USED>>"              ],
+        '-proxy'            => [ 1, "<<NOT YET USED>>"              ],
+        '-quiet'            => [ 1, "<<NOT YET USED>>"              ],
+        '-sigalgs'          => [ 1, "<<NOT YET USED>>"              ],
+        '-state'            => [ 1, "<<NOT YET USED>>"              ],
+        '-status'           => [ 1, "<<NOT YET USED>>"              ],
+        '-strict'           => [ 1, "<<NOT YET USED>>"              ],
+        '-nbio_test'        => [ 1, "<<NOT YET USED>>"              ],
+        '-tlsextdebug'      => [ 1, "TLS extension missing or wrong"],
+        '-client_sigalgs'   => [ 1, "<<NOT YET USED>>"              ],
+        '-record_padding'   => [ 1, "<<NOT YET USED>>"              ],
+        '-no_renegotiation' => [ 1, "<<NOT YET USED>>"              ],
+        '-legacyrenegotiation'      => [ 1, "<<NOT YET USED>>"      ],
+        '-legacy_renegotiation'     => [ 1, "<<NOT YET USED>>"      ],
+        '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"      ],
+        '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"      ],
+        #------------------+-------+-------------------------------------------
     }, # openssl
     'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
         # will be initialised from %prot
@@ -3127,49 +3136,53 @@ our %cfg = (
     'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
         # will be initialised from %prot
      },
+
+   # ssleay->option      default  description
+   #----------------------+-----+----------------------------------------------
     'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
                                 # 1: if available is default (see _check_functions())
-        'openssl'   => 1,       # OPENSSL_VERSION_NUMBER()
-        'get_alpn'  => 1,       # P_alpn_selected available()
-        'get_npn'   => 1,       # P_next_proto_negotiated()
-        'set_alpn'  => 1,       # CTX_set_alpn_protos()
-        'set_npn'   => 1,       # CTX_set_next_proto_select_cb()
-        'can_npn'   => 1,       # same as get_npn, just an alias
-        'can_ecdh'  => 1,       # can_ecdh()
-        'can_sni'   => 1,       # for openssl version > 0x01000000
-        'can_ocsp'  => 1,       # OCSP_cert2ids
-        'iosocket'  => 1,       # $IO::Socket::SSL::VERSION # TODO: wrong container
+        'openssl'       => 1,   # OPENSSL_VERSION_NUMBER()
+        'get_alpn'      => 1,   # P_alpn_selected available()
+        'get_npn'       => 1,   # P_next_proto_negotiated()
+        'set_alpn'      => 1,   # CTX_set_alpn_protos()
+        'set_npn'       => 1,   # CTX_set_next_proto_select_cb()
+        'can_npn'       => 1,   # same as get_npn, just an alias
+        'can_ecdh'      => 1,   # can_ecdh()
+        'can_sni'       => 1,   # for openssl version > 0x01000000
+        'can_ocsp'      => 1,   # OCSP_cert2ids
+        'iosocket'      => 1,   # $IO::Socket::SSL::VERSION # TODO: wrong container
     },
     # 'ssl_error'               # see 'use' above
     'sslerror' =>   {  # configurations for TCP SSL protocol
-        'timeout'   => 1,       # timeout to receive ssl-answer
-        'max'       => 5,       # max. consecutive errors
-        'total'     => 10,      # max. overall errors
+        'timeout'       => 1,   # timeout to receive ssl-answer
+        'max'           => 5,   # max. consecutive errors
+        'total'         => 10,  # max. overall errors
                                 # following are NOT YET fully implemented:
-        'delay'     => 0,       # if > 0 continue trying to connect after this time
-        'per_prot'  => 1,       # if > 0 detection and count are per SSL version
-        'ignore_no_conn'   => 0,# 0: ignore warnings if connection fails, check target anyway
+        'delay'         => 0,   # if > 0 continue trying to connect after this time
+        'per_prot'      => 1,   # if > 0 detection and count are per SSL version
+        'ignore_no_conn' => 0,  # 0: ignore warnings if connection fails, check target anyway
                                 # 1: print  warnings if connection fails, don't check target
         'ignore_handshake' => 1,# 1: treat "failed handshake" as error,   don't check target
     }, # ssl_error
     'sslhello' =>   {  # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
-        'timeout'   => 2,       # timeout to receive ssl-answer
-        'retry'     => 2,       # number of retry when timeout
-        'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
+        'timeout'       => 2,   # timeout to receive ssl-answer
+        'retry'         => 2,   # number of retry when timeout
+        'maxciphers'    => 32,  # number of ciphers sent in SSL3/TLS Client-Hello
         'usesignaturealg' => 1, # 1: use extension "signature algorithm"
-        'useecc'    => 1,       # 1: use supported elliptic curves
-        'useecpoint'=> 1,       # 1: use ec_point_formats extension
-        'usereneg'  => 0,       # 1: secure renegotiation
+        'useecc'        => 1,   # 1: use supported elliptic curves
+        'useecpoint'    => 1,   # 1: use ec_point_formats extension
+        'usereneg'      => 0,   # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
         'nodatanocipher'=> 1,   # 1: do not abort testing next cipher for some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher'
     },
-    'legacy'        => "simple",
-    'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
-                        ssltest-g sslyze testsslserver thcsslcheck openssl
-                        simple full compact quick owasp)],
-                       # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
-    'usr_args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
+   #----------------------+-----+----------------------------------------------
+    'legacy'            => "simple",
+    'legacys'           => [qw(cnark sslaudit sslcipher ssldiagnos sslscan
+                            ssltest ssltest-g sslyze testsslserver thcsslcheck
+                            openssl simple full compact quick owasp)],
+                           # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
+    'usr_args'          => [],  # list of all arguments --usr* (to be used in o-saft-usr.pm)
    #------------------+---------+----------------------------------------------
     'data'  => {       # data provided (mainly used for testing and debugging)
         'file_sclient'  => "",  # file containing data from "openssl s_client "
@@ -3179,76 +3192,79 @@ our %cfg = (
                                 # i.e. "openssl s_client -showcerts ..."
     }, # data
    #------------------+---------+----------------------------------------------
-   #------------------+--------------------------------------------------------
+
+   # regex->type           RegEx
+   #----------------------+----------------------------------------------------
     'regex' => {
         # RegEx for matching commands and options
-        'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
-        'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
-        'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
-        'cmd-cfg'   => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
+        'cmd-http'      => '^h?(?:ttps?|sts)_', # match keys for HTTP
+        'cmd-hsts'      => '^h?sts',            # match keys for (H)STS
+        'cmd-sizes'     => '^(?:cnt|len)_',     # match keys for length, sizes etc.
+        'cmd-cfg'       => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
         'commands_int'  => '^(?:cn_nosni|valid_(?:year|month|day|host)s?)', # internal data only, no command
-        'opt_empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
-                       # these options may have no value
-                       # i.e.  --cmd=   ; this may occour in CGI mode
+        'opt_empty'     => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
+                           # these options may have no value
+                           # i.e.  --cmd=   ; this may occour in CGI mode
         'std_format'    => '^(?:unix|raw|crlf|utf8|win32|perlio)$', # match keys for --std-format
 
         # RegEx for matching strings to anonymise in output 
         'anon_output'   => '',  # pattern for strings to be anonymised in output
-                       # SEE Note:anon-out
+                           # SEE Note:anon-out
 
         # RegEx for matching SSL protocol keys in %data and %checks
-        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
+        'SSLprot'       => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
 
         # RegEx for matching SSL cipher-suite names
         # First some basic RegEx used later on, either in following RegEx or
         # as $cfg{'regex'}->{...}  itself.
-        '_or-'      => '[\+_-]',
-                       # tools use _ or - as separator character; + used in openssl
-        'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
-                       # Anonymous DH has various acronyms:
-                       #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, ...
-                       # TODO:missing: AECDH
-        'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
-                       # RC4 has other names due to copyright problems:
-                       #     ARC4, ARCFOUR, RC4
-        '3DESorCBC3'=> '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
-                       # Tripple DES is used as 3DES-CBC, 3DES-EDE-CBC, or DES-CBC3
-        'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
-                       # Tripple DES is used as 3DES or DES_192
-        'DHEorEDH'  => '(?:DHE|EDH)[_-]',
-                       # DHE and EDH are 2 acronyms for the same thing
-        'EC-DSA'    => 'EC(?:DHE|EDH)[_-]ECDSA',
-        'EC-RSA'    => 'EC(?:DHE|EDH)[_-]RSA',
-                       # ECDHE-RSA or ECDHE-ECDSA
-        'EC'        => 'EC(?:DHE|EDH)[_-]',
-        'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
-                       # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
-        'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
-                       # FORTEZZA has abbreviations FZA and FRZ
-                       # unsure about FORTEZZA_KEA
-        'SHA2'      => 'sha(?:2|224|256|384|512)',
-                       # any SHA2, just sha2 is too lazy
-        'AES-GCM'   => 'AES(?:128|256)[_-]GCM[_-]SHA(?:256|384|512)',
-                       # any AES128-GCM or AES256-GCM
-        'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
-                       # Numerous protocol prefixes are in use:
-                       #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
-        'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
-                       # various variants for aliases to select cipher groups
+        '_or-'          => '[\+_-]',
+                           # tools use _ or - as separator character; + used in openssl
+        'ADHorDHA'      => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
+                           # Anonymous DH has various acronyms:
+                           #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, ...
+                           # TODO:missing: AECDH
+        'RC4orARC4'     => '(?:ARC(?:4|FOUR)|RC4)',
+                           # RC4 has other names due to copyright problems:
+                           #     ARC4, ARCFOUR, RC4
+        '3DESorCBC3'    => '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
+                           # Tripple DES is used as 3DES-CBC, 3DES-EDE-CBC, or DES-CBC3
+        'DESor3DES'     => '(?:[_-]3DES|DES[_-]_192)',
+                           # Tripple DES is used as 3DES or DES_192
+        'DHEorEDH'      => '(?:DHE|EDH)[_-]',
+                           # DHE and EDH are 2 acronyms for the same thing
+        'EC-DSA'        => 'EC(?:DHE|EDH)[_-]ECDSA',
+        'EC-RSA'        => 'EC(?:DHE|EDH)[_-]RSA',
+                           # ECDHE-RSA or ECDHE-ECDSA
+        'EC'            => 'EC(?:DHE|EDH)[_-]',
+        'EXPORT'        => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
+                           # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
+        'FRZorFZA'      => '(?:FORTEZZA|FRZ|FZA)[_-]',
+                           # FORTEZZA has abbreviations FZA and FRZ
+                           # unsure about FORTEZZA_KEA
+        'SHA2'          => 'sha(?:2|224|256|384|512)',
+                           # any SHA2, just sha2 is too lazy
+        'AES-GCM'       => 'AES(?:128|256)[_-]GCM[_-]SHA(?:256|384|512)',
+                           # any AES128-GCM or AES256-GCM
+        'SSLorTLS'      => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
+                           # Numerous protocol prefixes are in use:
+                           #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
+        'aliases'       => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
+                           # various variants for aliases to select cipher groups
 
         # RegEx for matching various strings
         'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
         'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
         'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
         'encryption_ok' =>'(?:(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)|id-ecPublicKey)',
-                       # well known strings to identify signature and public key encryption
-                       # rsaencryption, dsaencryption, md[245]withrsaencryption,
-                       # ripemd160withrsa shaXXXwithrsaencryption
-                       # id-ecPublicKey
+                           # well known strings to identify signature and public
+                           # key encryption:
+                           # rsaencryption, dsaencryption, md[245]withrsaencryption,
+                           # ripemd160withrsa shaXXXwithrsaencryption
+                           # id-ecPublicKey
         'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
-                       # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
+                           # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
         'security'      => '(?:HIGH|MEDIUM|LOW|WEAK|NONE)',
-                       # well known "security" strings, should be used case-insensitive
+                           # well known "security" strings, should be used case-insensitive
         'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
         'isDNS'         => '(?:[a-z0-9.-]+)',
         'isIDN'         => '(?:xn--)',
@@ -3257,22 +3273,22 @@ our %cfg = (
         'invalidwild'   => '(?:\.\*\.)',            # no .*.
         'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
         'isSPDY3'       => '(?:spdy\/3)',           # match in protocols (NPN)
-                       # TODO: lazy match as it matches spdy/3.1 also
+                           # TODO: lazy match as it matches spdy/3.1 also
 
         # TODO: replace following RegEx by concrete list of constants
         # RegEx matching OWASP TLS Cipher String Cheat Sheet
             # matching list of concrete constants would be more accurate, but
             # that cannot be done with RegEx or ranges, unfortunatelly
-        'OWASP_A'   => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
-        'OWASP_B'   => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
-        'OWASP_C'   => '^(?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]',
-        'OWASP_D'   => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
-        'OWASP_NA'  => '(?:ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ)',
+        'OWASP_A'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
+        'OWASP_B'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
+        'OWASP_C'       => '^(?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]',
+        'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
+        'OWASP_NA'      => '(?:ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ)',
         # TODO: need exception, i.e. TLSv1 and TLSv11
-        'notOWASP_A'=> '^(?:TLSv11?)',
-        'notOWASP_B'=> '',
-        'notOWASP_C'=> '',
-        'notOWASP_D'=> '',
+        'notOWASP_A    '=> '^(?:TLSv11?)',
+        'notOWASP_B'    => '',
+        'notOWASP_C'    => '',
+        'notOWASP_D'    => '',
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
@@ -3366,7 +3382,8 @@ our %cfg = (
         'EV-empty'  => '^(?:n\/a|(?:in|not )valid)\s*$',    # empty string, or "invalid" or "not valid"
 
     }, # regex
-   #------------------+--------------------------------------------------------
+   #----------------------+----------------------------------------------------
+
     'hints' => {       # texts used for hints, SEE Note:hints
        #   'key'   => "any string, may contain \t and \n",
     }, # hints
@@ -4245,7 +4262,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.240 2021/01/19
+1.241 2021/01/19
 
 =head1 AUTHOR
 
