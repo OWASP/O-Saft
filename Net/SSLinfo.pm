@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.268 21/01/17 21:48:46',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.269 21/01/20 07:21:17',
 };
 
 ######################################################## public documentation #
@@ -2570,18 +2570,15 @@ sub do_ssl_open($$$@) {
             my %headers;
             my $response = '';
             my $request  = '';
-            my $_accept  = undef; # some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
-            my $_agent   = undef; # some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
-            # TODO: use of $_accept and $_agent should be configurable
+            _trace("do_ssl_open ::use_http: $Net::SSLinfo::use_http");
             # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
+            # NOTE: Net::SSLeay always sets  Accept:*/*
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) =
                 Net::SSLeay::get_http($host, 80, $Net::SSLinfo::target_url,
                   Net::SSLeay::make_headers(
                         'Host'       => $host,
                         'Connection' => 'close',
-                        'Accept'     => $_accept,
-                        'User-Agent' => $_agent,
                   )
                   # TODO: test with a browser User-Agent
                   # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
