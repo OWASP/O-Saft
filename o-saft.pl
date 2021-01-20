@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1027 21/01/17 16:32:53",
+    SID         => "@(#) yeast.pl 1.1028 21/01/20 07:27:24",
     STR_VERSION => "21.01.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2902,7 +2902,7 @@ sub _init_openssl       {
     # initialisation for openssl executable
     # TODO: Checking for openssl executable and configuration files may print
     #       **WARNINGs, even if openssl is not used at all.
-    #       Unfortunately thers is no simple rule "openssl needed if ...", so
+    #       Unfortunately there is no simple rule "openssl needed if ...", so
     #       A userfriendly solution would be to define %cfg{need-openssl}  to
     #       contain all commands which require openssl, following settings
     #       should then check %cfg{need-openssl}.
@@ -4489,18 +4489,15 @@ sub check_url($$)   {
        $host=~ m#^([^:]+)(?::[0-9]{1,5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    my $_accept = undef;# some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
-    my $_agent  = undef;# some servers don't close the connection otherwise (12/2020 i.e. akamai.com)
-    # TODO: use of $_accept and $_agent should be configurable
     # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
+    # NOTE: Net::SSLeay always sets  Accept:*/* 
 
+    _trace2("check_url: use_http " . _is_cfg_use('http'));
     _trace2("check_url: get_http($host, $port, $url)");
     my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
             Net::SSLeay::make_headers(
                 'Host'       => $host,
                 'Connection' => 'close',
-                'Accept'     => $_accept,
-                'User-Agent' => $_agent,
             )
     );
     _trace2("check_url: STATUS= $status");
@@ -8119,8 +8116,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--nodns')             { _set_cfg_use('dns',    0);}
     if ($arg eq  '--dns')               { _set_cfg_use('dns',    1);}
     if ($arg eq  '--http')              { _set_cfg_use('http',   1);}
+    if ($arg eq  '--httpanon')          { _set_cfg_use('http',   2);} # NOT YET USED
     if ($arg eq  '--nohttp')            { _set_cfg_use('http',   0);}
     if ($arg eq  '--https')             { _set_cfg_use('https',  1);}
+    if ($arg eq  '--httspanon')         { _set_cfg_use('https',  2);} # NOT YET USED
     if ($arg eq  '--nohttps')           { _set_cfg_use('https',  0);}
     if ($arg eq  '--nosniname')         { _set_cfg_use('sni',    0);} # 0: don't use SNI, different than empty string
     if ($arg eq  '--norc')              {                           } # simply ignore
