@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.241 21/01/19 08:31:58",
+    SID_osaft   => "@(#) osaft.pm 1.243 21/01/24 22:59:37",
 
 };
 
@@ -467,11 +467,11 @@ our %tls_error_alerts = ( # mainly RFC 6066
 ); # %tls_error_alerts
 
 our %TLS_EC_POINT_FORMATS = (
+   TEXT =>      "ec point format(s)",                            # define text for print
+ FORMAT => [qw( "%s"                                          )],# define format for printf
     #----+-------------------------------------+----+---+----------------------------
     # ID        name                            DTLS RECOMMENDED  RFC
     #----+-------------------------------------+----+---+----------------------------
-   TEXT =>      "ec point format(s)",                            # define text for print
- FORMAT => [qw( "%s"                                          )],# define format for printf
       0 => [qw( uncompressed                    Y    Y   4492 )],
       1 => [qw( ansiX962_compressed_prime       Y?   N?  4492 )],
       2 => [qw( ansiX962_compressed_char2       Y?   N?  4492 )],
@@ -481,11 +481,11 @@ our %TLS_EC_POINT_FORMATS = (
 # https://tools.ietf.org/html/rfc6066#section-3 
 
 our %TLS_NAME_TYPE = (
+   TEXT =>      "server name type",                             # define text for print
+ FORMAT => [qw( %s                                           )],# define format for printf
     #----+-------------------------------------+----+-------+------------------------
     # ID        name                            DTLS RFC
     #----+-------------------------------------+----+-------+------------------------
-   TEXT =>      "server name type",                             # define text for print
- FORMAT => [qw( %s                                           )],# define format for printf
    0x00 => [qw( host_name                       Y    6066    )],
     #----+-------------------------------------+----+-------+------------------------
 );
@@ -493,11 +493,11 @@ our %TLS_NAME_TYPE = (
 # https://tools.ietf.org/html/rfc6066#section-4
 # Default is 2^14 if this extension is not present
 our %TLS_MAX_FRAGMENT_LENGTH = (
+   TEXT =>      "max fragment length negotiation",              # define text for print
+ FORMAT => [    "%s",   "(%s bytes)"                          ],# define format for printf
     #----+-------------------------------------+----+-------+------------------------
     # ID        name                    RECONMMENDED RFC
     #----+-------------------------------------+----+-------+------------------------
-   TEXT =>      "max fragment length negotiation",              # define text for print
- FORMAT => [    "%s",   "(%s bytes)"                          ],# define format for printf
    0x01 => [qw( 2^9        512                  -    6066    )],
    0x02 => [qw( 2^10      1024                  -    6066    )],
    0x03 => [qw( 2^11      2048                  -    6066    )],
@@ -507,12 +507,11 @@ our %TLS_MAX_FRAGMENT_LENGTH = (
 
 # https://tools.ietf.org/html/rfc8446#appendix-B.3.1.1 (added versions manually)
 our %TLS_PROTOCOL_VERSION  = (
+   TEXT =>      "supported protocol version(s)",                # define text for print
+ FORMAT => [qw( %s    ) ],                                      # define format for printf
     #----+-------------------------------------------------------------------------
     # ID        name
     #----+-------------------------------------------------------------------------
-   TEXT =>      "supported protocol version(s)",                # define text for print
- FORMAT => [qw( %s    ) ],                                      # define format for printf
-
  0x0304 => [qq( TLS 1.3 )],
  0x0303 => [qq( TLS 1.2 )],
  0x0302 => [qq( TLS 1.1 )],
@@ -523,11 +522,11 @@ our %TLS_PROTOCOL_VERSION  = (
 
 # https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-pskkeyexchangemode
 our %TLS_PSK_KEY_EXCHANGE_MODE  = (
+   TEXT =>      "PSK key exchange mode(s)",                     # define text for print
+ FORMAT => [qw( "%s"                                         )],# define format for printf
     #----+-------------------------------------+----+-------+------------------------
     # ID        name                    RECONMMENDED RFC
     #----+-------------------------------------+----+-------+------------------------
-   TEXT =>      "PSK key exchange mode(s)",                     # define text for print
- FORMAT => [qw( "%s"                                         )],# define format for printf
    0x00 => [qw( psk_ke                          Y    8446    )],
    0x01 => [qw( psk_dhe_ke                      Y    8446    )],
     #----+-------------------------------------+----+-------+------------------------
@@ -535,13 +534,11 @@ our %TLS_PSK_KEY_EXCHANGE_MODE  = (
 
 # https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-signaturescheme
 our %TLS_SIGNATURE_SCHEME = (
+   TEXT =>      "signature scheme(s)",                          # define text for print
+ FORMAT => [qw( %s                                           )],# define format for printf
     #----+-------------------------------------+----+-------+------------------------
     # ID        name                            DTLS  RFC       # comment
     #----+-------------------------------------+----+-------+------------------------
-
-   TEXT =>      "signature scheme(s)",                          # define text for print
- FORMAT => [qw( %s                                           )],# define format for printf
-
  0x0201 => [qw( rsa_pkcs1_sha1                   Y   8446    )],
  0x0202 => [qw( dsa_sha1                         ?   8446    )],# Quelle suchen & prüfen!
  0x0203 => [qw( ecdsa_sha1                       Y   8446    )],
@@ -598,13 +595,11 @@ our %TLS_SIGNATURE_SCHEME = (
 # Torsten: ex %ECC_NAMED_CURVE =
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 our %TLS_SUPPORTED_GROUPS = (
-    # ID        name                            DTLS RECOMMENDED  RFC
-    #----+-------------------------------------+----+---+----------------------------
-    # ID        name               (added:)bits DTLS RECOMMENDED  RFC
-   #----+----------------------------+------+----+---+----------------------------
    TEXT =>      "supported group(s)",                               # define text for print
  FORMAT => [qw( "%s"            "(%s bits)"                      )],# define format for printf
-    #----+--------------------------------+----+----+---+----------------------------
+    #----+-----------------------------+-------+----+---+----------------------------
+    # ID        name               (added:)bits DTLS RECOMMENDED  RFC
+    #----+-----------------------------+-------+----+---+----------------------------
       0 => [qw( Reverved_0                 0    N    N   8447    )],
       1 => [qw( sect163k1                163    Y    N   4492    )],
       2 => [qw( sect163r1                163    Y    N   4492    )],
@@ -930,8 +925,8 @@ ec_point_formats => {
             ID    => 11,                            # Hex:      0x000b
             CH       => [qw(len2 len1 val1List)],   # Example:  0x0002 0x01 0x00
             CH_TEXT  => ["length", "ec point formats list length", \%TLS_EC_POINT_FORMATS],
-            RX          => [qw(len2 val1)],
-            CH_TEXT     => ["length", \%TLS_EC_POINT_FORMATS],
+            RX          => [qw(len2 len1 val1List)],
+            RX_TEXT     => ["length", "ec point formats list length", \%TLS_EC_POINT_FORMATS],
             RECOMMENDED    => q(Y),
             TLS13             => [qw(-)],
             RFC                  => [qw(8422)],
@@ -1477,6 +1472,7 @@ renegotiation_info    => {
             ID    => 65281,                             # Hex: 0xff01
             CH        => [qw(len2 len1 raw)],             # Example: 0x0001 0x00
             RX            => [qw(len2 len1 raw)],
+            RX_TEXT       => ["length", "renegotiated connection data length", "server verify data"],
             RECOMMENDED        => q(Y),
             TLS13                => [qw(-)],
             RFC                        => [qw(5746)],
@@ -1531,6 +1527,20 @@ private_65285    => {
             COMMENT                                => q(for private use),
     },
 ); # %TLS_EXTENSIONS
+
+# Compile a reverse Hash to %TLS_EXTENSIONS by the IDs
+our %TLS_ID_TO_EXTENSIONS = (
+    #----+-------------------------------------------------------------------------
+    # ID        extension_name
+    #----+-------------------------------------------------------------------------
+
+ FORMAT => [    "Extension '%s':",                                   ],# define format for printf
+);
+
+foreach my $key (keys %TLS_EXTENSIONS) {                        # compile a reverse hash for extension IDs
+    $TLS_ID_TO_EXTENSIONS{$TLS_EXTENSIONS{$key}{ID}}[0] = $key; # store it in the fiorstv element of an array for compatibility reasons with hashes above, e.g. %TLS_SUPPORTED_GROUPS
+}
+
 
 my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_extensions above
     'extension' => {            # TLS extensions
@@ -2603,8 +2613,9 @@ our %cfg = (
     'protos_alpn'   => [],      # initially same as cfg{protos_next}, see _cfg_init()
     'protos_npn'    => [],      # "-"
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
+    'usesni'        => 1,       # use SNI extensionn by default (for TLSv1 and above)
     'sni_name'      => undef,   # if set, name to be used for connection with SNI
-                                # must be set to $host if undef and 'usesni'=1 (see above)
+                                # must be set to $host if undef and 'use_sni_name'=1 (see below)
                                 # all other strings are used verbatim, even empty one
     'use_sni_name'  => 0,       # 0: use hostname; 1: use name provided by --sni-name
                                 # used by Net::SSLhello only
@@ -2820,6 +2831,18 @@ our %cfg = (
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
     'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
+
+    # List of all extensions sent by protocol
+    'extensions_by_prot' => {   # List all Extensions used by protocol, SSLv2 does not support extensions by design
+         'SSLv3'     => [],      # SSLv3 does not support extensions as originally defined, may be back-ported
+         'TLSv10'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+         'TLSv11'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+         'TLSv12'    => [qw(renegotiation_info supported_groups ec_point_formats signature_algorithms )],
+         'TLSv13'    => [qw(supported_versions supported_groups ec_point_formats signature_algorithms
+                            session_ticket renegotiation_info encrypt_then_mac
+                            extended_master_secret psk_key_exchange_modes key_share
+                         )],
+    }, # extensions_by_prot
 
    # following keys for commands, naming scheme:
    #     do         - the list off all commands to be performed
@@ -4262,7 +4285,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.241 2021/01/19
+1.243 2021/01/24
 
 =head1 AUTHOR
 
