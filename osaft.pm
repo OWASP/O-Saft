@@ -2567,6 +2567,7 @@ our %cfg = (
     'protos_alpn'   => [],      # initially same as cfg{protos_next}, see _cfg_init()
     'protos_npn'    => [],      # "-"
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
+    'usesni'        => 1,       # use SNI extensionn by default (for TLSv1 and above)
     'sni_name'      => undef,   # if set, name to be used for connection with SNI
                                 # must be set to $host if undef and 'usesni'=1 (see above)
                                 # all other strings are used verbatim, even empty one
