@@ -1534,6 +1534,20 @@ private_65285    => {
     },
 ); # %TLS_EXTENSIONS
 
+# Compile a reverse Hash to %TLS_EXTENSIONS by the IDs
+our %TLS_ID_TO_EXTENSIONS = (
+   #----+-------------------------------------------------------------------------
+   # ID        extension_name
+   #----+-------------------------------------------------------------------------
+
+ FORMAT => [    "Extension '%s':",                                   ],# define format for printf
+);
+
+foreach my $key (keys %TLS_EXTENSIONS) {                        # compile a reverse hash for extension IDs
+    $TLS_ID_TO_EXTENSIONS{$TLS_EXTENSIONS{$key}{ID}}[0] = $key; # store it in the fiorstv element of an array for compatibility reasons with hashes above, e.g. %TLS_SUPPORTED_GROUPS
+}
+
+
 my %tls_extensions__text = ( # TODO: this information might be added to %TLS_EXTENSIONS above
     'extension' => {            # TLS extensions
         '00000'     => "renegotiation info length",     # 0x0000 ??
