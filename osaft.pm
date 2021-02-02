@@ -2784,6 +2784,14 @@ our %cfg = (
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
     'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
+   # List of all extensions sent by protocol
+    'extensions_by_prot' => {   # List all Extensions used by protocol, SSLv2 does not support extensions by design
+        'SSLv3'     => [],      # SSLv3 does not support extensions as originally defined, may be back-ported
+        'TLSv10'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+        'TLSv11'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+        'TLSv12'    => [qw(renegotiation_info signature_algorithms supported_groups ec_point_formats )],
+        'TLSv13'    => [qw(supported_versions signature_algorithms supported_groups ec_point_formats renegotiation_info session_ticket encrypt_then_mac extended_master_secret psk_key_exchange_modes key_share)],
+    }, # extensions_by_prot
 
    # following keys for commands, naming scheme:
    #     do         - the list off all commands to be performed
