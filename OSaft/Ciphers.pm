@@ -53,8 +53,8 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $VERSION      = '21.01.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.49 21/01/14 00:17:38";
+my  $VERSION      = '21.02.12';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.50 21/02/15 15:54:41";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1023,7 +1023,8 @@ sub show_const  {
 =       iana        - constant of cipher suite as defined by IANA
 =       OpenSSL     - constant of cipher suite used in openssl's *.h files
 =       osaft       - constant of cipher suite used by O-Saft
-=       o=iana o=op - yes if IANA's cipher suite name is same as O-Saft's name
+=       osaft=iana  - yes if IANA's cipher suite name is same as O-Saft's name
+=       osaft=openssl - yes if OpenSSL's cipher suite name is same as O-Saft's name
 =
 ";
     printf("=%s+%s+%s+%s+%s-%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
@@ -1067,7 +1068,7 @@ sub show_alias  {
     printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
     printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
     return;
-} # show_const
+} # show_alias
 
 sub show_names  {
     printf("#%s:\n", (caller(0))[3]);
@@ -1580,7 +1581,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.49 2021/01/14
+1.50 2021/02/15
 
 =head1 AUTHOR
 
