@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.153 21/02/16 11:45:17";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.154 21/02/16 12:24:42";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -603,7 +603,7 @@ sub _yeast_test_help    {
 =
 = Print list of commands for internal testing/information.
 =
-=   command/option  prints these information
+=   command/option  prints this information
 =  ----------------+----------------------------------------------
 =   --tests         this text
 =   --test-init     data structure  %cfg after initialisation
@@ -937,25 +937,25 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit
     _yeast($arg);
-    _yeast_test_help()      if ('--test'    eq $arg);
-    _yeast_test_help()      if ('--tests'   eq $arg);
-    _yeast_test_sclient()   if ('--testsclient' eq $arg);
-    _yeast_test_ssleay()    if ('--testssleay'  eq $arg);
-    _yeast_test_sslmap()    if ('--testsslmap'  eq $arg);
-    _yeast_test_methods()   if ('--testmethods' eq $arg);
-    _yeast_test_memory()    if ('--testmemory'  eq $arg);
+    _yeast_test_help()        if ('--test'      eq $arg);
+    _yeast_test_help()        if ('--tests'     eq $arg);
+    _yeast_test_sclient()     if ('--testsclient' eq $arg);
+    _yeast_test_ssleay()      if ('--testssleay'  eq $arg);
+    _yeast_test_sslmap()      if ('--testsslmap'  eq $arg);
+    _yeast_test_methods()     if ('--testmethods' eq $arg);
+    _yeast_test_memory()      if ('--testmemory'  eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    osaft::test_regex()     if ('regex'     eq $arg);
-    _yeast_test_data()      if ('data'      eq $arg);
-    _yeast_test_init()      if ('init'      eq $arg);
-    _yeast_test_maps()      if ('maps'      eq $arg);
-    _yeast_test_prot()      if ('prot'      eq $arg);
+    osaft::test_regex()       if ('regex'       eq $arg);
+    _yeast_test_data()        if ('data'        eq $arg);
+    _yeast_test_init()        if ('init'        eq $arg);
+    _yeast_test_maps()        if ('maps'        eq $arg);
+    _yeast_test_prot()        if ('prot'        eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
-    _yeast_ciphers()        if ('ciphers'   eq $arg);
-    $arg =~ s/^ciphers?[._-]?//;    # allow --test-* and --test-cipher-*
-    _yeast_ciphers_sorted() if ('sort'      eq $arg);
-    _yeast_ciphers_show()   if ('show'      eq $arg);
-    _yeast_ciphers_overview() if ('overview' eq $arg);
+    _yeast_ciphers()          if ('ciphers'     eq $arg);
+    $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
+    _yeast_ciphers_sorted()   if ($arg =~ m/^sort(?:ed)?/);
+    _yeast_ciphers_show()     if ('show'        eq $arg);
+    _yeast_ciphers_overview() if ('overview'    eq $arg);
    #_yeast_ciphers_list()    if ('list'     eq $arg);
     if ('list'     eq $arg) {
         # FIXME: --test-ciphers is experimental
@@ -1149,7 +1149,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.153 2021/02/16
+1.154 2021/02/16
 
 =head1 AUTHOR
 
