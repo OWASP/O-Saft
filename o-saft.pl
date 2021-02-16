@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1028 21/01/20 07:27:24",
-    STR_VERSION => "21.01.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1029 21/02/16 11:42:09",
+    STR_VERSION => "21.02.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -2114,7 +2114,7 @@ our %text = (
     'gethost'       => " <<gethostbyaddr() failed>>",
     'out_target'    => "\n==== Target: @@ ====\n",
     'out_ciphers'   => "\n=== Ciphers: Checking @@ ===",
-    'out_infos'     => "\n=== Informations ===",
+    'out_infos'     => "\n=== Information ===",
     'out_scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
     'out_checks'    => "\n=== Performed Checks ===",
     'out_list'      => "=== List @@ Ciphers ===",
@@ -2200,7 +2200,7 @@ our %text = (
         'HKLM\\...' => "sequence of ciphers",   #
         },
 
-    # for more informations about definitions and RFC, see o-saft-man.pm
+    # for more information about definitions and RFC, see o-saft-man.pm
 
 ); # %text
 
@@ -5955,7 +5955,7 @@ sub checkhttp($$)   {
     return if (1 < $cfg{'done'}->{'checkhttp'});
     # remember: check is 'yes' for empty value ""
 
-    # collect informations
+    # collect information
     my $notxt = " "; # use a variable to make assignments below more human readable
     my $https_body    = $data{'https_body'}    ->{val}($host) || "";
     my $http_sts      = $data{'http_sts'}      ->{val}($host) || ""; # value may be undefined, avoid Perl error
@@ -6867,7 +6867,7 @@ sub printcipherpreferred {
 } # printcipherpreferred
 
 sub printprotocols      {
-    #? print table with cipher informations per protocol
+    #? print table with cipher information per protocol
     # number of found ciphers, various risks ciphers, default and PFS cipher
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
@@ -10490,7 +10490,7 @@ command.
 
 Until VERSION 19.12.21, only the options  --test-*  where supported. Using
 these options exited the program. This behaviour resulted in incomplete or
-misleading informations.
+misleading information.
 
 
 =head2 Note:hints
