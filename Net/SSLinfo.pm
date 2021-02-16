@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '21.01.13',
+    SSLINFO_VERSION => '21.02.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.269 21/01/20 07:21:17',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.270 21/02/16 11:40:08',
 };
 
 ######################################################## public documentation #
@@ -245,7 +245,7 @@ Path for timeout executable to be used; default: timeout
 
 =item $Net::SSLinfo::use_openssl
 
-More informations according the  SSL connection and  the certificate,
+More information  according the  SSL connection and  the certificate,
 additional to that of Net::SSLeay, can be retrived using the  openssl
 executable. If set to "1" openssl will be used also; default: 1
 
@@ -253,7 +253,7 @@ If disabled, the values returned will be: #
 
 =item $Net::SSLinfo::use_sclient
 
-Some informations according the  SSL connection and the certificate,
+Some information  according the  SSL connection and the certificate,
 can only be retrived using   "openssl s_client ...".   Unfortunately
 the use may result in a  performance penulty  on some systems and so
 it can be disabled with "0"; default: 1
@@ -1748,7 +1748,7 @@ sub _ssleay_ctx_ca  {
     TRY: {
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
             # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
-            # used; as we want to get all informations,  even if something went
+            # used; as we want to get all information,  even if something  went
             # wrong, we use VERIFY_NONE so we can proceed collecting data
             # possible values:
             #  0 = SSL_VERIFY_NONE
@@ -2390,7 +2390,7 @@ sub do_ssl_open($$$@) {
         #dbx# $IO::Socket::SSL::DEBUG = 1;
         #dbx# Net::SSLeay::print_errs();
 
-        #5. SSL established, let's get informations
+        #5. SSL established, let's get information
         # TODO: starting from here implement error checks
         $src = 'Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
@@ -2416,7 +2416,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'selected'}   = Net::SSLeay::get_cipher($ssl);
             # same as above:      Net::SSLeay::CIPHER_get_name(Net::SSLeay::get_current_cipher($ssl));
 
-        #5c. store certificate informations
+        #5c. store certificate information
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
         #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # TODO: returns binary, hence see below
         $_SSLinfo{'PEM'}        = _ssleay_cert_get('PEM',     $x509);
@@ -3044,7 +3044,7 @@ sub do_ssl_open($$$@) {
             _trace("do_ssl_open: -tlsextdebug  $d") if ($d =~ m/session ticket/);
             _trace("do_ssl_open: -tlsextdebug  $d") if ($d =~ m/renegotiation info/);
         }
-        $_SSLinfo{'tlsextensions'} =~ s/\([^)]*\),?\s+//g;  # remove additional informations
+        $_SSLinfo{'tlsextensions'} =~ s/\([^)]*\),?\s+//g;  # remove additional information
         $_SSLinfo{'tlsextensions'} =~ s/\s+len=\d+//g;      # ...
 
         _trace("do_ssl_open(with openssl done.");
