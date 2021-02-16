@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.76 21/01/16 16:27:30
+# SID   @(#) help.txt 1.77 21/02/16 11:37:01
 
 NAME
 
@@ -241,7 +241,7 @@ TECHNICAL INFORMATION
 
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
         0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
-        for 1.0.0 may not provide all informations.
+        for 1.0.0 may not provide all information.
         Some functionality (checks) of  O-Saft  may be missing or fail,  when
         openssl versions 1.1.x are used (because functionality was removed).
         LibreSSL  is not recommended, because  some functionality  considered
@@ -663,7 +663,7 @@ COMMANDS
 
           "Certificate extensions" are shown with  +extensions  while the TLS
           protocol extensions are shown with  +tlsextensions.
-          Use  +tlsextdebug  to show more informations about the TLS protocol
+          Use  +tlsextdebug  to show more information about the  TLS protocol
           extensions.
 
       +http2 +spdy +spdy3 +spdy31 +spdy4 +prots
@@ -739,7 +739,7 @@ OPTIONS
 
       --help=data
 
-          Show available informations.
+          Show available information.
 
       --help=data-cfg
       --help=cfg-data
@@ -1016,7 +1016,7 @@ OPTIONS
           Use  "openssl s_slient ..."  call to retrieve more information from
           the SSL connection.  This is disabled by default on Windows because
           of performance problems. Without this option (default on Windows !)
-          following informations are missing:
+          following information are missing:
               compression, expansion, renegotiation, resumption,
               selfsigned, verify, chain, protocols, DH parameters
 
@@ -1029,7 +1029,7 @@ OPTIONS
 
           Do not use external "openssl"  tool to retrieve information. Use of
           "openssl" is disabled by default on Windows.
-          Note that this results in some missing informations, see above.
+          Note that this results in some missing information, see above.
 
       --openssl=TOOL
 
@@ -1200,7 +1200,7 @@ OPTIONS
           * 'intern'    scan for ciphers using internal method; (default)
           * 'openssl'   scan for ciphers using external openssl executable
           * 'ssleay'    scan for ciphers using  IO::Socket  and  Net::SSLeay
-          * 'dump'      same as 'intern' but print  all cipher informations,
+          * 'dump'      same as 'intern' but print  all cipher information,
                         useful when postprocessed by contrib/* tools
 
       --cipher=CIPHER
@@ -2920,7 +2920,7 @@ OUTPUT
           * Label and value for all checks are separated by at least one  TAB
             character.
           * Texts for additional information are enclosed in '<<'  and  '>>'.
-          * 'N/A'  is used when no proper informations was found or provided.
+          * 'N/A'  is used  when no proper information was found or provided.
             Replace  'N/A'  by whatever you think is adequate:  "No answer",
             "Not available",  "Not applicable",  ...
 
@@ -4588,7 +4588,7 @@ TESTING
           or the text used as prefix triggerd by the  --trace  option:
               $0 --cfg-init=prefix_trace="#TRACE: "
 
-        The options which provide informations about internal data structures
+        The options which provide information about  internal data structures
         and alike described below, behave like the command  +quit  and do not
         perform any checks on the target(s).  
         See 't/Makefile.*' how to use these tests.
@@ -5024,7 +5024,7 @@ TODO
           ** print_line() has ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
-             checks or informations (a.k.a %data vs. %check_*)
+             checks or information (a.k.a %data vs. %check_*)
              currently (2016) each single command returns all values
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
