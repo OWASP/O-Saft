@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.152 21/01/14 00:10:51";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.153 21/02/16 11:45:17";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -402,7 +402,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
 
     _yline(" %cmd {");
-    if (2 > $cfg{'trace'}) {    # user friendly informations
+    if (2 > $cfg{'trace'}) {    # user friendly information
         _yeast("          path= " . ___ARR(@{$cmd{'path'}}));
         _yeast("          libs= " . ___ARR(@{$cmd{'libs'}}));
         _yeast("     envlibvar= $cmd{'envlibvar'}");
@@ -441,7 +441,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _yline(" %cfg }");
         return;
     }
-    # else  user friendly informations
+    # else  user friendly information
     my $sni_name = $cfg{'sni_name'} || "<<undef>>"; # default is Perl's undef
     my $port     = $cfg{'port'} || "<<undef>>";     # default is Perl's undef
     _yline(" user-friendly cfg {");
@@ -603,7 +603,7 @@ sub _yeast_test_help    {
 =
 = Print list of commands for internal testing/information.
 =
-=   command/option  prints these informations
+=   command/option  prints these information
 =  ----------------+----------------------------------------------
 =   --tests         this text
 =   --test-init     data structure  %cfg after initialisation
@@ -1149,7 +1149,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.152 2021/01/14
+1.153 2021/02/16
 
 =head1 AUTHOR
 
