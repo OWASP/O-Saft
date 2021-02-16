@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '21.01.13',  # official version number of this file
+    OSAFT_VERSION   => '21.02.12',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.243 21/01/24 22:59:37",
+    SID_osaft   => "@(#) osaft.pm 1.244 21/02/16 11:43:35",
 
 };
 
@@ -1930,7 +1930,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # weak unqualified by openssl or know vulnerable
                             # NOTE: weak includes NONE (no security at all)
                             #
-                            # all following informations as reported by openssl 0.9.8 .. 1.0.1h
+                            # all following information as reported by openssl 0.9.8 .. 1.0.1h
         'SSL/TLS',          # Protocol Version:
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
@@ -3423,7 +3423,7 @@ our %cfg = (
         'verbose'   => qr(^#[^[]),              # verbose output
         # matches somewhere in the line:
         'undef'     => qr(\<\<undef),           # see STR_UNDEF
-        'yeast'     => qr(\<\<.*?\>\>),         # additional informations
+        'yeast'     => qr(\<\<.*?\>\>),         # additional information
         'na'        => qr(N\/A),                # N/A
         'yes'       => qr(:\s*yes),             # good check result; # TODO: : needs to be $text{separator}
         'no'        => qr(:\s*no ),             # bad check result
@@ -4285,7 +4285,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.243 2021/01/24
+1.244 2021/02/16
 
 =head1 AUTHOR
 
