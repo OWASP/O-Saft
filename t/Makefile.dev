@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.39 21/01/14 11:40:51
+#?      @(#) Makefile.dev 1.40 21/02/17 10:36:13
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.39
+_SID.dev           := 1.40
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -85,8 +85,9 @@ LIST.osaft         :=
 LIST.osaft-cipher  := \
 	description     alias   const   names   rfc     version overview \
 	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
-	getter=0xC0,0x2C        key=ECDHE-ECDSA-AES256-GCM-SHA384 \
-	getter=0xCC,0xA9        key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
+	getter=0x060040   getter=0x02060040 key=DES-CBC-MD5 \
+	getter=0xC0,0x2C  getter=0x0300C02C key=ECDHE-ECDSA-AES256-GCM-SHA384 \
+	getter=0xCC,0xA9  getter=0x0300CCA9 key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 
 LIST.osaft-doc-data := \
 	--usage version         +VERSION    list  print \
