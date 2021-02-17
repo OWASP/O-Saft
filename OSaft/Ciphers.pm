@@ -54,7 +54,7 @@ BEGIN {
 }
 
 my  $VERSION      = '21.02.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.50 21/02/15 15:54:41";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.51 21/02/17 10:15:15";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -255,8 +255,8 @@ our @EXPORT_OK  = qw(
                 get_tags
                 get_score
                 get_desc
-                get_key
                 get_hex
+                get_key
                 get_keys
                 get_name
                 get_alias
@@ -482,27 +482,32 @@ sub id2key      {
 =cut
 
 sub text2key    {
-    #? convert text to internal key: 0x00,0x26 -> 0x03000026
+    #? convert text to internal key: 0x00,0x26 --> 0x03000026
     my $txt = shift;
-       $txt =~ s/(,|0x)//g;
+       $txt =~ s/(,|0x)//g;     # 0x00,0x26  --> 0026
+    return "0x$txt" if (8 == length($txt));
+    # fuzzy approach from here on as it may convert from illegal strings
     if (4 < length($txt)) {
-       $txt = "0x02$txt";    # SSLv2
+       # SSLv2: quick&dirty: expects 6 characers
+       $txt = "0x02$txt";       # 010080     --> 0x02010080
     } else {
-       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
+       # SSLv3, TLSv1.x
+       while (6 > length($txt)) { $txt = "0$txt"; }
+       $txt = "0x03$txt";       # 000026     --> 0x03000026
     }
     return $txt;
 } # text2key
 
 sub key2text    {
-    #? convert internal key to text: 0x03000026 -> 0x00,0x26
+    #? convert internal key to text: 0x03000026 --> 0x00,0x26
     my $key = shift;
     if ($key =~ m/^0x0300/) {
-       $key =~ s/0x0300//;      #   03000004 ->     0004
+       $key =~ s/0x0300//;      #   03000004 -->     0004
     } else {
-       $key =~ s/^0x02//;       # 0x02030080 ->   030080
+       $key =~ s/^0x02//;       # 0x02010080 -->   010080
     }
-       $key =~ s/(..)/,0x$1/g;  #       0001 -> ,0x00,0x04
-       $key =~ s/^,//;          # ,0x00,0x04 ->  0x00,0x04
+       $key =~ s/(..)/,0x$1/g;  #       0001 --> ,0x00,0x04
+       $key =~ s/^,//;          # ,0x00,0x04 -->  0x00,0x04
        $key =  "     $key" if (10 > length($key));
     return "$key";
 } # key2text
@@ -535,9 +540,9 @@ sub const2text  { my $c=shift; $c =~ s/_/ /g; return $c; }
 
 =head2 get_score($cipher)
 
-=head2 get_key(  $cipher)
-
 =head2 get_hex(  $cipher)
+
+=head2 get_key(  $cipher)
 
 =head2 get_keys( $cipher)
 
@@ -558,8 +563,9 @@ Get information from internal C<%cipher> data structure.
 # see %ciphers_desc about description of the columns
 # returns STR_UNDEF if requested cipher is missing
 sub get_param   {
-    #? internal method to return required value from %cipher
+    #? internal method to return required value from %cipher ($cipher is hex-key)
     my ($cipher, $key) = @_;
+        $cipher = text2key($cipher);
     return $ciphers{$cipher}->{$key} || '' if (0 < (grep{/^$cipher/i} %ciphers));
     return $STR_UNDEF;
 } # get_param
@@ -576,7 +582,8 @@ sub get_tags    { my $c=shift; return get_param($c, 'tags'); }
 sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
 sub get_desc    {
     # get description for specified cipher from %ciphers as string
-    my $c=shift;
+    my $c = shift;
+    $c = text2key($c);
     if (not defined $ciphers{$c}) {
        _warn("511: undefined cipher description for '$c'"); # TODO: correct %ciphers
        return $STR_UNDEF;
@@ -599,15 +606,6 @@ Get common name for given cipher hex C<$cipher>.
 
 =cut
 
-sub get_key     {
-    #? translate given string to valid hex key for %cipher; returns key if exists
-    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
-    my $txt = shift;
-    my $key = uc($txt);
-       $key =~ s/X/x/g;
-    return text2key(get_hex($txt)); # TODO: quick&dirty
-} # get_key
-
 sub get_hex     {
     #? translate given string to valid hex key for %cipher; returns key if exists
     #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
@@ -619,7 +617,7 @@ sub get_hex     {
     return $key if defined $ciphers{$key};
     $key =  $txt;
     $key =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix;
-    $key =~ s/^(?:CK|TXT)_//;     # strip any prefix;
+    $key =~ s/^(?:CK|TXT)_//;           # strip any prefix;
     # not a key itself, try to find in names
     foreach my $k (keys %ciphers_names) {
         foreach (qw( iana OpenSSL openssl osaft )) {
@@ -629,6 +627,15 @@ sub get_hex     {
     }
     return '';
 } # get_hex
+
+sub get_key     {
+    #? translate given string to valid hex key for %cipher; returns key if exists
+    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
+    my $txt = shift;
+    my $key = uc($txt);
+       $key =~ s/X/x/g;
+    return text2key(get_hex($txt)); # TODO: quick&dirty
+} # get_key
 
 sub get_keys    {
     #? find hex key for cipher in %ciphers_names or %ciphers_alias
@@ -647,7 +654,7 @@ sub get_keys    {
     #    return $k if ($ciphers_old{$k}[0] eq $c);
     #}
     return '';
-} # get_keyS
+} # get_keys
 
 sub get_name    {
     #? return name for given cipher key
@@ -810,8 +817,9 @@ sub show_getter03 {
 # C,0x00,0x03   RSA_EXPORT_WITH_RC4_40_MD5
 
     my $cipher = "0x00,0x03";
-    print "# testing: $cipher ...\n";
-    printf("# %20s\t%s\t%-14s\t# %s\n", "function(key)", "key", "value", "(expected)");
+    print "# testing example: $cipher ...\n";
+    $cipher = text2key("0x00,0x03");# normalize cipher key which is then used below
+    printf("# %s(%s)\t%s\t%-14s\t# %s\n", "function", "cipher key", "key", "value", "(expected)");
     printf("#----------------------+-------+----------------+---------------\n");
 #   printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_key",  $cipher, "hex",  get_key( $cipher), "?");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher), "N");
@@ -824,7 +832,7 @@ sub show_getter03 {
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",  $cipher, "sec",  get_sec( $cipher), "WEAK");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",  $cipher, "ssl",  get_ssl( $cipher), "SSLv3");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_tags", $cipher, "tags", get_tags($cipher), "export");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name", $cipher, "name", get_name($cipher), "?");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name", $cipher, "name", get_name($cipher), "EXP-RC4-MD5");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_desc", $cipher, "desc", get_desc($cipher), "40 4346,6347 MD5 N RC4 RSA RSA(512) SSLv3 WEAK export");
     printf("#----------------------+-------+----------------+---------------\n");
     return;
@@ -839,7 +847,8 @@ sub show_getter {
         return;
     }
     print "= testing: $cipher ...\n";
-    printf("= %20s\t%s\t%s\n", "function(key)", "key", "value");
+    $cipher = text2key($cipher);# normalize cipher key which is then used below
+    printf("= %s(%s)\t%s\t%s\n", "function", "cipher key", "key", "value");
     printf("=----------------------+-------+----------------\n");
 #   printf("%-8s %s\t%s\t%s\n", "get_key",  $cipher, "hex",  get_key( $cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher) );
@@ -1581,7 +1590,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.50 2021/02/15
+1.51 2021/02/17
 
 =head1 AUTHOR
 
