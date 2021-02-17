@@ -54,7 +54,7 @@ BEGIN {
 }
 
 my  $VERSION      = '21.02.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.52 21/02/17 10:31:06";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.53 21/02/17 17:15:29";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -489,7 +489,12 @@ sub text2key    {
     # fuzzy approach from here on as it may convert from illegal strings
     if (4 < length($txt)) {
        # SSLv2: quick&dirty: expects 6 characers
-       $txt = "0x02$txt";       # 010080     --> 0x02010080
+       if ($txt =~ m/^0x42/) {
+           # our private hex values
+           $txt = "0x42$txt";   # 420001     --> 0x42420001
+       } else {
+           $txt = "0x02$txt";   # 010080     --> 0x02010080
+       }
     } else {
        # SSLv3, TLSv1.x
        while (6 > length($txt)) { $txt = "0$txt"; }
@@ -501,11 +506,17 @@ sub text2key    {
 sub key2text    {
     #? convert internal key to text: 0x03000026 --> 0x00,0x26
     my $key = shift;
-    if ($key =~ m/^0x0300/) {
-       $key =~ s/0x0300//;      #   03000004 -->     0004
-    } else {
+    if (6 < length($key)) {
+       $key =~ s/^0x42//;       # 0x42420001 -->   420001
        $key =~ s/^0x02//;       # 0x02010080 -->   010080
+       $key =~ s/^0x0300//;     # 0x03000004 -->     0004
     }
+#print "K $key";
+    #if ($key =~ m/^0x0300/) {
+    #   $key =~ s/0x0300//;      #   03000004 -->     0004
+    #} else {
+    #   $key =~ s/^0x02//;       # 0x02010080 -->   010080
+    #}
        $key =~ s/(..)/,0x$1/g;  #       0001 --> ,0x00,0x04
        $key =~ s/^,//;          # ,0x00,0x04 -->  0x00,0x04
        $key =  "     $key" if (10 > length($key));
@@ -1232,13 +1243,14 @@ sub _show_ciphers   {
     # print internal list of ciphers
     my $format = shift;
     # key in %ciphers is the cipher's hex value, but we want the ciphers sorted
-    # according their hex constant; perl's sort need a compare funtion
+    # according their hex constant; perl's sort need a compare function
     my $cnt = 0;
     my %keys;
     map { $keys{text2key($_)} = $_; } keys %ciphers;
     foreach my $key (sort keys %keys) {
         $cnt++;
-        my $hex = $keys{$key};
+        #my $hex = $keys{$key};
+        my $hex = key2text($key);   # 0x02010080 --> 0x01,0x00,0x80
         my @values;
         if ($format =~ m/^(?:dump|yeast)/) {
             # simple approach, not used because we want a special order
@@ -1246,14 +1258,14 @@ sub _show_ciphers   {
             #    push(@values, $ciphers{$key}->{$col});
             #}
             foreach my $col (qw(ssl keyx auth enc bits mac sec)) {
-                push(@values, $ciphers{$hex}->{$col});
+                push(@values, $ciphers{$key}->{$col});
             }
-                push(@values, $ciphers_names{$hex}->{'osaft'});
+                push(@values, $ciphers_names{$key}->{'osaft'});
             $hex =  "     $hex" if (10 > length($hex)); # align right
             printf"%s\t%s\t%s\n", $key, $hex, join("\t",@values);
             next;
         }
-        _show_tabledata($format, $hex);
+        _show_tabledata($format, $key);
     }
     return $cnt;
 } # _show_ciphers
@@ -1590,7 +1602,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.52 2021/02/17
+1.53 2021/02/17
 
 =head1 AUTHOR
 
