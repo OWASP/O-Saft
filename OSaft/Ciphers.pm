@@ -54,7 +54,7 @@ BEGIN {
 }
 
 my  $VERSION      = '21.02.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.51 21/02/17 10:15:15";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.52 21/02/17 10:31:06";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -583,15 +583,11 @@ sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
 sub get_desc    {
     # get description for specified cipher from %ciphers as string
     my $c = shift;
-    $c = text2key($c);
-    if (not defined $ciphers{$c}) {
-       _warn("511: undefined cipher description for '$c'"); # TODO: correct %ciphers
-       return $STR_UNDEF;
-    }
+       $c = text2key($c);
+    return $STR_UNDEF if (not defined $ciphers{$c});
     my @x = sort values %{$ciphers{$c}};
     shift @x;
-    return join(' ', @x) if (0 < (grep{/^$c/} %ciphers));
-    return '';
+    return join(' ', @x);
 } # get_desc
 
 =pod
@@ -848,6 +844,10 @@ sub show_getter {
     }
     print "= testing: $cipher ...\n";
     $cipher = text2key($cipher);# normalize cipher key which is then used below
+    if (not defined $ciphers{$cipher}) {
+        _warn("511: undefined cipher '$cipher'");
+        return;
+    }
     printf("= %s(%s)\t%s\t%s\n", "function", "cipher key", "key", "value");
     printf("=----------------------+-------+----------------\n");
 #   printf("%-8s %s\t%s\t%s\n", "get_key",  $cipher, "hex",  get_key( $cipher) );
@@ -1590,7 +1590,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.51 2021/02/17
+1.52 2021/02/17
 
 =head1 AUTHOR
 
