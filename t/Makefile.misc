@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.56 21/01/16 19:53:36
+#?      @(#) Makefile.misc 1.57 21/02/17 01:25:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.56
+_SID.misc          := 1.57
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -91,6 +91,43 @@ endif
 # Ruby, not worth for more complicated code here ...
 _TEST.cloc.src = $(sort $(ALL.src))
 _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
+
+# Checking for duplicate keys in files with various definitions for ciphers is
+# done using a simple awk script which prints the keys from the definitions. A
+# definition looks like:
+#   our %_cipher_alias = (
+#     '0x03000101' => [qw( value1 ... )],
+#     '0x03000102' => [qw( value2 ... )],
+#     ...
+#   ); # %_cipher_alias = (
+# The check should only be performed for a single hash definition (for example
+# %_cipher_alias here). This requires a proper definition of the hash varaible
+# as described above.  The awk detects the start and the end of the scope  and 
+# check the keys inside only.  As the keys are enclosed in single quotes,  the 
+# awk will be call with ' as field delimiter to easily extract the key values. 
+# The name of the variable (scope) is passed as  awk variable (see -v option),
+# hence gawk must be used.
+# Also make's syntax requires that the awk script is enclosed in single quotes
+# and then must be uses without quotes. The other way around will not work.
+# The purpose of the targets is to list the duplicate entries.
+_AWK_cipher_key    := '\
+                      /^ *$$/   {next} \
+                      ($$1~pattern){p=1;next} \
+                      /^)/      {if(p==1){exit}} \
+                      ($$1~/\#/){next} \
+                      (p==1)    {print $$2} \
+                      '
+
+# Checking for duplicate values in files with various definitions for ciphers.
+# Finding the value is similar to finding the key,  except that values are not
+# enclosed in single quotes (awk -F' not necessary).
+_AWK_cipher_value  := '\
+                      /^ *$$/   {next} \
+                      ($$1~pattern){p=1;next} \
+                      /^)/      {if(p==1){exit}} \
+                      ($$1~/\#/){next} \
+                      (p==1)    {print $$4} \
+                      '
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
@@ -323,6 +360,8 @@ ALL.qa          = $(ALL.pm) $(SRC.pl)
 HELP-_qa1           = ____________________________ targets checking code quality _
 HELP-test.quality   = search for various common coding mistakes, see make e-ALL.test.quality
 HELP-test.pod   = check generated pod file
+HELP-test.keys  = check for duplicate keys in %_cipher_* hashes, see make e-ALL.test.keys
+HELP-test.values = check for duplicate values in %_cipher_* hashes, see make e-ALL.test.values
 
 # SEE Make:podchecker
 qa.pod:
@@ -392,7 +431,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.56: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.57: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -421,10 +460,93 @@ test.misc.todo.log:       $(ALL.test.misc.todo.log)
 	@$(TRACE.target)
 .PHONY: $(ALL.test.misc.log)
 
+# define PHONY target to avoid misleading error messages when files are missing
+#       2/2021: files are not yet on github
+.PHONY: OSaft/_ciphers_iana.pm
+.PHONY: OSaft/_ciphers_osaft.pm
+.PHONY: OSaft/_ciphers_openssl_all.pm
+.PHONY: OSaft/_ciphers_openssl_h.pm
+
+keys.iana._ciphers_%: OSaft/_ciphers_iana.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_iana.pm ..."
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@echo ""
+keys.osaft._ciphers_% : OSaft/_ciphers_osaft.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_osaft.pm ..."
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@echo ""
+keys.openssl._ciphers_% : OSaft/_ciphers_openssl_all.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_openssl_all.pm ..."
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@echo ""
+keys.openssl-h._ciphers_% : OSaft/_ciphers_openssl_h.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_openssl_h.pm ..."
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@echo ""
+ALL.test.keys      := \
+		keys.iana._ciphers_iana \
+		keys.osaft._ciphers_alias \
+		keys.osaft._ciphers_names \
+		keys.osaft._ciphers_osaft \
+		keys.openssl._ciphers_openssl_all \
+		keys.openssl-h._ciphers_openssl_h
+ALL.testmisc       += $(ALL.test.keys)
+test.keys:            $(ALL.test.keys)
+
+values.iana._ciphers_%: OSaft/_ciphers_iana.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_iana.pm ..."
+	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@echo ""
+values.osaft._ciphers_% : OSaft/_ciphers_osaft.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_osaft.pm ..."
+	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@echo ""
+values.openssl._ciphers_% : OSaft/_ciphers_openssl_all.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_openssl_all.pm ..."
+	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@echo ""
+values.openssl-h._ciphers_% : OSaft/_ciphers_openssl_h.pm
+	@$(TRACE.target)
+	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_openssl_h.pm ..."
+	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@echo ""
+ALL.test.values    := \
+		values.iana._ciphers_iana \
+		values.osaft._ciphers_alias \
+		values.osaft._ciphers_names \
+		values.osaft._ciphers_osaft \
+		values.openssl._ciphers_openssl_all \
+		values.openssl-h._ciphers_openssl_h
+ALL.testmisc       += $(ALL.test.values)
+test.values:          $(ALL.test.values)
+
+_TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
+$(_TEST.keys.log):
+	@echo "# Makefile.misc 1.57: $(MAKE) test.keys.log" > $@
+	@$(MAKE) -i test.keys >> $@ 2>&1
+test.keys.log: $(_TEST.keys.log)
+	@$(TRACE.target)
+	@$(TRACE.target.log)
+	@diff $(TEST.logdir)/$@ $(_TEST.keys.log) \
+	    && rm $(_TEST.keys.log) \
+	    || mv $(_TEST.keys.log) $(TEST.logdir)/$@
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.keys.log) $(TEST.logdir)/$@
+	@ls -l  $(TEST.logdir)/$@*
+# TODO: same target as test.warnings.log
+
 ALL.test.misc      += test.bench test.bunt test.norc \
 			$(ALL.test.cloc) \
 			$(ALL.test.quality) \
 			$(ALL.test.misc.todo) \
+			$(ALL.test.keys) \
+			$(ALL.test.values) \
 			$(GEN.tags)
 ALL.test.misc.log  += test.quality.log $(ALL.test.misc.todo.log)
     # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
