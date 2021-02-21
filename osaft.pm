@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.244 21/02/16 11:43:35",
+    SID_osaft   => "@(#) osaft.pm 1.245 21/02/21 22:07:30",
 
 };
 
@@ -596,7 +596,7 @@ our %TLS_SIGNATURE_SCHEME = (
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 our %TLS_SUPPORTED_GROUPS = (
    TEXT =>      "supported group(s)",                               # define text for print
- FORMAT => [qw( "%s"            "(%s bits)"                      )],# define format for printf
+ FORMAT => [    "%s",           "(%s bits)"                       ],# define format for printf, space is needed -> no 'qw'
     #----+-----------------------------+-------+----+---+----------------------------
     # ID        name               (added:)bits DTLS RECOMMENDED  RFC
     #----+-----------------------------+-------+----+---+----------------------------
@@ -1471,6 +1471,7 @@ private_65280    => {
 renegotiation_info    => {
             ID    => 65281,                             # Hex: 0xff01
             CH        => [qw(len2 len1 raw)],             # Example: 0x0001 0x00
+            CH_TEXT   => ["length", "renegotiated connection data length", "client verify data"],
             RX            => [qw(len2 len1 raw)],
             RX_TEXT       => ["length", "renegotiated connection data length", "server verify data"],
             RECOMMENDED        => q(Y),
@@ -2835,7 +2836,7 @@ our %cfg = (
     # List of all extensions sent by protocol
     'extensions_by_prot' => {   # List all Extensions used by protocol, SSLv2 does not support extensions by design
          'SSLv3'     => [],      # SSLv3 does not support extensions as originally defined, may be back-ported
-         'TLSv10'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+         'TLSv1'     => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
          'TLSv11'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
          'TLSv12'    => [qw(renegotiation_info supported_groups ec_point_formats signature_algorithms )],
          'TLSv13'    => [qw(supported_versions supported_groups ec_point_formats signature_algorithms
@@ -4285,7 +4286,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.244 2021/02/16
+1.245 2021/02/21
 
 =head1 AUTHOR
 
