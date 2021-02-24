@@ -54,7 +54,7 @@ BEGIN {
 }
 
 my  $VERSION      = '21.02.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.53 21/02/17 17:15:29";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.54 21/02/24 21:33:11";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1351,8 +1351,8 @@ sub _ciphers_init_iana  {
     undef %OSaft::Ciphers::_ciphers_iana;
 
     # correct IANA settings (new in June 2016)
-    foreach my $key (qw(0xA8 0xA9 0xAA 0xAB 0xAC 0xAD 0xAE)) {
-        $ciphers{'0xCC,' . $key}->{'rfc'} = "7905";
+    foreach my $key (qw(0x0300CCA8 0x0300CCA9 0x0300CCAA 0x0300CCAB 0x0300CCAC 0x0300CCAD 0x0300CCAE)) {
+        $ciphers{$key}->{'rfc'} = "7905";
     }
     vprint "  keys:    " . ($#keys + 1);
     vprint "  ciphers: " . scalar(keys %ciphers);
@@ -1602,7 +1602,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.53 2021/02/17
+1.54 2021/02/24
 
 =head1 AUTHOR
 
