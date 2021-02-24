@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1029 21/02/16 11:42:09",
-    STR_VERSION => "21.02.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1030 21/02/24 23:50:08",
+    STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -2054,6 +2054,13 @@ _yeast_TIME("cfg}");
         'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
         'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
+
+	# from: https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
+        'TLS13-AES128-GCM-SHA256'       => [qw( HIGH TLSv12  AESGCM  128 RSA    RSA   AEAD    91 :)],
+        'TLS13-AES256-GCM-SHA384'       => [qw( HIGH TLSv12  AESGCM  256 RSA    RSA   AEAD    91 :)],
+        'TLS13-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 RSA RSA AEAD 91 :)],
+        'TLS13-AES128-CCM-SHA256'       => [qw( high TLSv12  AESCCM  128 RSA    RSA   SHA256  91 :)],
+        'TLS13-AES128-CCM-8-SHA256'     => [qw( high TLSv12  AESCCM  128 RSA    RSA   SHA256  91 :)]
 
     # === openssl ===
     # most of above table (roughly) generated with:
