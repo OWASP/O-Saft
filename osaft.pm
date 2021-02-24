@@ -16,7 +16,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '21.02.12',  # official version number of this file
+    OSAFT_VERSION   => '21.02.21',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.245 21/02/21 22:07:30",
+    SID_osaft   => "@(#) osaft.pm 1.246 21/02/24 23:48:53",
 
 };
 
@@ -2201,9 +2201,9 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
 #    https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
     '0x03001301' => [qw(TLS13-AES128-GCM-SHA256         AES_128_GCM_SHA256)],           # TLS 1.3; see Note(d)
     '0x03001302' => [qw(TLS13-AES256-GCM-SHA384         AES_256_GCM_SHA384)],           # TLS 1.3; see Note(d)
-    '0x03001303' => [qw(CHACHA20-POLY1305-SHA256        CHACHA20_POLY1305_SHA256)],     # TLS 1.3
-    '0x03001304' => [qw(AES128-CCM-SHA256               AES_128_CCM_SHA256)],           # TLS 1.3
-    '0x03001305' => [qw(AES128-CCM8-SHA256              AES_128_CCM_8_SHA256)],         # TLS 1.3
+    '0x03001303' => [qw(TLS13-CHACHA20-POLY1305-SHA256  CHACHA20_POLY1305_SHA256)],     # TLS 1.3
+    '0x03001304' => [qw(TLS13-AES128-CCM-SHA256         AES_128_CCM_SHA256)],           # TLS 1.3
+    '0x03001305' => [qw(TLS13-AES128-CCM8-SHA256        AES_128_CCM_8_SHA256)],         # TLS 1.3
 #
 #    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
 #    https://tools.ietf.org/html/rfc7905
@@ -4286,7 +4286,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.245 2021/02/21
+1.246 2021/02/24
 
 =head1 AUTHOR
 
