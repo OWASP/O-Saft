@@ -1602,6 +1602,26 @@ sub printParameters {
     print _yprint("proxyport",       $Net::SSLhello::proxyport)       if (defined($Net::SSLhello::proxyport));
     print _yprint("max_ciphers",     $Net::SSLhello::max_ciphers)     if (defined($Net::SSLhello::max_ciphers));
     print _yprint("max_sslHelloLen", $Net::SSLhello::max_sslHelloLen) if (defined($Net::SSLhello::max_sslHelloLen));
+    print ("\n#O-Saft::Net::SSLhello: information about the OS and some socket constants and functions.\n");
+    print __print($line);
+    print _yprint("OS",                  $^O)                         if (defined($^O));
+    my $_pf_inet =                                      PF_INET;
+    print _yprint("socket::PF"."_INET",  $_pf_inet);
+    my $_af_inet =                                      AF_INET;
+    print _yprint("socket::AF"."_INET",  $_af_inet);
+    my $_sock_stream =  (defined(SOCK_STREAM))        ? SOCK_STREAM   : "--undef --";
+    print _yprint("socket::SOCK_STREAM", $_sock_stream);
+    my $_sol_socket =   (defined(SOL_SOCKET))         ? SOL_SOCKET    : "--undef --";
+    print _yprint("socket::SOL_SOCKET",  $_sol_socket);
+    my $_so_sndtimeo = (defined(SO_SNDTIMEO))         ? SO_SNDTIMEO   : "--undef --";
+    print _yprint("socket::SO_SNDTIMEO", $_so_sndtimeo);
+    my $_so_rcvtimeo = (defined(SO_RCVTIMEO))         ? SO_RCVTIMEO   : "--undef --";
+    print _yprint("socket::SO_RCVTIMEO", $_so_rcvtimeo);
+    my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
+        if (! $_protocol) { 
+            $_protocol = Socket::IPPROTO_TCP;
+        }
+    print _yprint("socket::getprotobyname('tcp')", $_protocol);
     print __print($line);
     return;
 } # printParameters
@@ -2411,7 +2431,11 @@ sub openTcpSSLconnection ($$) {
             eval {
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);                       # set Alarm for get-socket and set-socketoptions->timeout(s)
-                socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
+                my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
+                if (! $_protocol) { 
+                    $_protocol = Socket::IPPROTO_TCP;
+                }
+                socket($socket, PF_INET, SOCK_STREAM, $_protocol) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
                 setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
                 setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
                 alarm (0);      # clear alarm
