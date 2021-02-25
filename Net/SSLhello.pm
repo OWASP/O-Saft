@@ -69,9 +69,9 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '20.11.09',
+    SSLHELLO_VERSION=> '21.02.21',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.40 20/11/09 17:40:44',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.42 21/02/24 23:54:04',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
