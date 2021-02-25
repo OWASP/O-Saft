@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.246 21/02/24 23:48:53",
+    SID_osaft   => "@(#) osaft.pm 1.247 21/02/25 11:14:05",
 
 };
 
@@ -2199,11 +2199,11 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x0300007E' => [qw(RSA-AES256-CBC-RMD              RSA_WITH_AES_256_CBC_RMD)],
 #
 #    https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
-    '0x03001301' => [qw(TLS13-AES128-GCM-SHA256         AES_128_GCM_SHA256)],           # TLS 1.3; see Note(d)
-    '0x03001302' => [qw(TLS13-AES256-GCM-SHA384         AES_256_GCM_SHA384)],           # TLS 1.3; see Note(d)
+    '0x03001301' => [qw(TLS13-AES-128-GCM-SHA256        AES_128_GCM_SHA256)],           # TLS 1.3; see Note(d), see Note(e)
+    '0x03001302' => [qw(TLS13-AES-256-GCM-SHA384        AES_256_GCM_SHA384)],           # TLS 1.3; see Note(d), see Note(e)
     '0x03001303' => [qw(TLS13-CHACHA20-POLY1305-SHA256  CHACHA20_POLY1305_SHA256)],     # TLS 1.3
-    '0x03001304' => [qw(TLS13-AES128-CCM-SHA256         AES_128_CCM_SHA256)],           # TLS 1.3
-    '0x03001305' => [qw(TLS13-AES128-CCM8-SHA256        AES_128_CCM_8_SHA256)],         # TLS 1.3
+    '0x03001304' => [qw(TLS13-AES-128-CCM-SHA256        AES_128_CCM_SHA256)],           # TLS 1.3
+    '0x03001305' => [qw(TLS13-AES-128-CCM8-SHA256       AES_128_CCM_8_SHA256)],         # TLS 1.3
 #
 #    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
 #    https://tools.ietf.org/html/rfc7905
@@ -2442,6 +2442,11 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     #       AES128-GCM-SHA256, AES256-GCM-SHA384 for TLSv1 and TLSv13
     #   Their cipher constant is different.  So the cipher name for 0x03001301 and
     #   0x03001302 is prefixed with  TLS13- .
+    #
+    # Note(e)
+    #   The (human readable) cipher suite name for TLSv13 seem to be non-standard.
+    #   While OpenSSL and most vendors use the scheme  TLS13-AES-* ,  some vendors
+    #   use the (more traditional) scheme  TLS13-AES128  (without -).
 ); # %cipher_names
 
 our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
@@ -2473,6 +2478,10 @@ our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      #
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
+    '0x03001301' => [qw(TLS13-AES128-GCM-SHA256)],     # TLS 1.3; see Note(d), see Note(e)
+    '0x03001302' => [qw(TLS13-AES256-GCM-SHA384)],     # TLS 1.3; see Note(d), see Note(e)
+    '0x03001304' => [qw(TLS13-AES128-CCM-SHA256)],     # TLS 1.3, see Note(e)
+    '0x03001305' => [qw(TLS13-AES128-CCM8-SHA256)],    # TLS 1.3, see Note(e)
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # see Note(c) above
@@ -4286,7 +4295,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.246 2021/02/24
+1.247 2021/02/25
 
 =head1 AUTHOR
 
