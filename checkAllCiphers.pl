@@ -44,7 +44,7 @@ BEGIN {
 use osaft;
 use OSaft::error_handler qw (:sslhello_contants);   # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
 
-my $VERSION = "20.11.09";
+my $VERSION = "21.02.21";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -297,6 +297,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?tlsv?1$/i)                         { $cfg{'TLSv1'}     = 1; next; } # ..
     if ($arg =~ /^--?tlsv?1[-_.]?1$/i)                  { $cfg{'TLSv11'}    = 1; next; } # allow ._- separator
     if ($arg =~ /^--?tlsv?1[-_.]?2$/i)                  { $cfg{'TLSv12'}    = 1; next; } # ..
+    if ($arg =~ /^--?tlsv?1[-_.]?3$/i)                  { $cfg{'TLSv13'}    = 1; next; } # ..
     if ($arg =~ /^--?dtlsv?0[-_.]?9$/i)                 { $cfg{'DTLSv09'}   = 1; next; } # .. OpenSSL pre 0.9.8f
     if ($arg =~ /^--?dtlsv?1[-_.]?0?$/i)                { $cfg{'DTLSv1'}    = 1; next; } # ..
     if ($arg =~ /^--?dtlsv?1[-_.]?1$/i)                 { $cfg{'DTLSv11'}   = 1; next; } # ..
