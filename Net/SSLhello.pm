@@ -1757,12 +1757,11 @@ sub checkSSLciphers ($$$@) {
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
-    printParameters () if ($Net::SSLhello::trace >= 4);              # additional trace information
-    
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
     %_SSLhello = ();                        # delete result hash '_SSLhello'
     printConstants ()  if ($Net::SSLhello::trace > 3);              # additional trace information
+    printParameters () if ($Net::SSLhello::trace > 3);              # additional trace information
 
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
     if ($Net::SSLhello::trace > 0) {
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -1800,22 +1799,22 @@ sub checkSSLciphers ($$$@) {
         $cipher_spec = ""; # collect cipher specs
         _trace4_ ("\n");
         foreach my $cipher_str (@cipher_str_array) {
-            _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
+            _trace5 ("checkSSLciphers: add cipher >$cipher_str< to cipher-string -> ");
             if ($cipher_str !~ /0x02/x) { # No SSL2 cipher
                 ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
-                _trace4_ ("  >". hexCodedCipher($cipher_str)."<");
+                _trace5_ ("  >". hexCodedCipher($cipher_str)."<");
             } else {
-                _trace4_ ("  SSL2-Cipher suppressed\n");
+                _trace5_ ("  SSL2-Cipher suppressed\n");
                 next; # nothing to do for this cipher
             }
-            _trace4_ ("\n");
+            _trace5_ ("\n");
 
             push (@cipherSpecArray, $cipher_str); # add cipher to next test
             $arrayLen = @cipherSpecArray;
             if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
                 $my_error = ""; # reset error message
                 # reset error_handler and set basic information for this sub
-                OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+                OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
                 $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round
 
                 if ($Net::SSLhello::trace > 1) { # print ciphers that are tested this round:
@@ -1894,7 +1893,7 @@ sub checkSSLciphers ($$$@) {
                         }
                         $my_error = ""; # reset error message
                         #reset error_handler and set basic information for this sub
-                        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+                        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
                     } # else: no cipher accepted but no error
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
                 } # end: if 'no ciphers accepted'
@@ -1981,10 +1980,10 @@ sub checkSSLciphers ($$$@) {
         printTLSCipherList ($cipher_str) if ($Net::SSLhello::trace > 3); # abt: _trace4
 
         while ($cipher_str) { # found some cipher => Check priority
-            _trace2 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
+            _trace2 ("checkSSLciphers: Check Cipher Priority for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $my_error = ""; # reset error message
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect accepted ciphers by priority
-            _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
+            _trace2_ ("# -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($my_error) {
                 _trace2 ("checkSSLciphers (3): '$my_error'\n");
                 # list untested ciphers
@@ -2023,18 +2022,17 @@ sub checkSSLciphers ($$$@) {
                 $arrayLen = @acceptedCipherSortedArray;
                 if ( $arrayLen == 1) { # 1st cipher
                     if ($acceptedCipher eq ($acceptedCipherArray[0])) { # is equal to 1st cipher of requested cipher_spec
-                        _trace3    ("#   Got back 1st cipher of unsorted List => Check again with this Cipher >".hexCodedTLSCipher($acceptedCipher)."< at the end of the List\n");
+                        _trace3_ ("# --> Got back 1st cipher of unsorted List => Check again with this Cipher >".hexCodedTLSCipher($acceptedCipher)."< at the end of the List\n");
                         shift (@acceptedCipherArray); # delete first cipher in this array
                         $cipher_str = join ("",@acceptedCipherArray).$acceptedCipher; # test again with the first cipher as the last
-                        _trace3 ("Check Cipher Prioity for Cipher-S(2) > ". hexCodedCipher($cipher_str)."< ");
-                        _trace4 ("\n");
+                        _trace3_ ("# --> Check Cipher Prioity for Cipher-S(2) > ". hexCodedString($cipher_str)."<\n");
+                        _trace4_ ("# ---> backup parameters to values of the first check of cipher " . hexCodedTLSCipher($acceptedCipher) . "\n");
                         my %_param_tmp_hash = ();
                         %_param_tmp_hash = %{$_SSLhello{'0x0300'.hexCodedCipher($acceptedCipher)}{param}} if (exists ($_SSLhello{'0x0300'.hexCodedCipher($acceptedCipher)}{param}));# save the param hash, just in case we will get the same cipher again
                         $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # if server uses a priority List we get the same cipher again!
-                        _trace3_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
-                        _trace4_ ("#                                 --->". hexCodedCipher($acceptedCipher)."<\n");
-                        if ($acceptedCipher) { # received an accepted cipher ### TBD: if ($acceptedCipher eq ($acceptedCipherArray[0]) => no order => return (@acceptedCipherSortedArray[0].$acceptedCipherArray)
+                        _trace3_ ("# -->". hexCodedCipher($acceptedCipher)."<\n");
                         _trace4_ ("# --->". hexCodedCipher($acceptedCipher)."<\n");
+                        if ($acceptedCipher) { # received an accepted cipher
                             push (@acceptedCipherSortedArray, $acceptedCipher);
                             if ($acceptedCipher eq $acceptedCipherSortedArray[0]) { # got 1st cipher again  => order -> restore param hash
                                 _trace4_ ("# ---> restore stored parameters to values of first check of cipher ". hexCodedTLSCipher($acceptedCipher) . "\n");
@@ -2319,7 +2317,7 @@ sub openTcpSSLconnection ($$) {
 
     my %startTlsTypeHash;
     local $my_error = ""; # reset error message
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
     } else {
@@ -2383,7 +2381,7 @@ sub openTcpSSLconnection ($$) {
     }
 
     RETRY_TO_OPEN_SSL_CONNECTION: { do { # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
-        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
         if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
             _trace_ ("\n");
             _trace  ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
@@ -2484,7 +2482,7 @@ sub openTcpSSLconnection ($$) {
 
             { # >> start a block
                 $my_error = "";
-                local $@ = ""; 
+                local $@ = "";
                 eval {
                     $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
                     _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
@@ -3005,7 +3003,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     local $my_error = ""; # reset error message
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
 
     unless ($isUdp) { # NO UDP = TCP
@@ -3153,10 +3151,10 @@ sub _doCheckSSLciphers ($$$$;$$) {
             }
 
             if ( ($acceptedCipher ne "") && ($parseAllRecords > 0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) {
-                _trace2 ("_doCheckSSLciphers: Try to get and parse next records\n");
+                _trace4 ("_doCheckSSLciphers: Try to get and parse next records\n");
                 while ( (length($input) >0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) {
                     ###### receive next record
-                    _trace2 ("_doCheckSSLciphers: receive next record\n");
+                    _trace4 ("_doCheckSSLciphers: receive next record\n");
                     $input = $buffer;
                     $buffer = "";
                     ($recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr, $my_error) = _readRecord ($socket, $isUdp, \$input, $host, $port, $protocol);
@@ -3770,7 +3768,7 @@ sub compileClientHello ($$$$;$$$$) {
 
         $clientHello{'extensions_total_len'} = length($clientHello_extensions);
 
-         _trace4    ("compileClientHello (SSL3/TLS) (1):\n");
+         _trace4 ("compileClientHello (SSL3/TLS) (1):\n");
 
         $clientHello_tmp = pack ("n a[32] C n a[$clientHello{'cipher_spec_len'}] C C[$clientHello{'compression_method_len'}] a[$clientHello{'extensions_total_len'}]",
             $clientHello{'version'},                # n
@@ -3832,17 +3830,16 @@ sub compileClientHello ($$$$;$$$$) {
 
         _trace2_ ( sprintf (
                 "# -->       compression_method_len:  >%02X<\n".
-                "# -->       compression_method:      >%02X<\n".
-                "# -->       extensions_total_len:  >%04X<\n",   #Comma!!
+                "# -->       compression_method:      >%02X<\n",    #Comma!!
                 $clientHello{'compression_method_len'}, # C (0x01)
                 $clientHello{'compression_method'},     # C[1] (0x00)
-                $clientHello{'extensions_total_len'},
         ));
 
-        _trace4_ (
-            sprintf (
-              "#        --->       extensions:      >%s<\n",
-              hexCodedString ($clientHello_extensions),
+        _trace5_ ( sprintf (
+                "#   --->    extensions_total_len:  >%04X<\n".      #Point!!
+                "#   --->    extensions:            >%s<\n",        #Comma!!
+                $clientHello{'extensions_total_len'},
+                hexCodedString ($clientHello_extensions),
             )
         );
 
@@ -3947,14 +3944,21 @@ sub compileClientHello ($$$$;$$$$) {
 
         _trace2_ ( sprintf (
                 "# -->       compression_method_len:  >%02X<\n".
-                "# -->       compression_method:      >%02X<\n".
-                "# -->       extensions_total_len:  >%04X<\n", #Comma!
+                "# -->       compression_method:      >%02X<\n",    # Comma!!
                 $clientHello{'compression_method_len'},  # C (0x01)
                 $clientHello{'compression_method'},      # C[1] (0x00)
-                $clientHello{'extensions_total_len'},
         ));
 
+        _trace5_ ( sprintf (
+                "#   --->    extensions_total_len:  >%04X<\n".      #Point!!
+                "#   --->    extensions:            >%s<\n",        #Comma!!
+                $clientHello{'extensions_total_len'},
+                hexCodedString ($clientHello_extensions),
+            )
+        );
+
         _parseExtensions ("CH", undef, \$clientHello_extensions, -1) if ($Net::SSLhello::trace > 2);  # only for trace purposes; $clientHello_extensions includes the length -> length = '-1' as indicator
+
         _trace4 (sprintf ("compileClientHello (%04X)\n          >",$record_version).hexCodedString ($clientHello,"           ")."<\n");
     } else {
         if (! defined $ssl) {
@@ -6135,7 +6139,7 @@ sub compileSSL2CipherArray ($) {
         } else { # V2Cipher
             $protocolCipher = pack ("a4a*", "0x02", hexCodedCipher($cipherTable[$i]));
         }
-        if ($Net::SSLhello::trace > 2) {
+        if ($Net::SSLhello::trace > 3) {
             if ($cipherHexHash {$protocolCipher} ) { # defined, no Null-String
                 _trace_ (sprintf "%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]);
             } else {
@@ -6166,7 +6170,7 @@ sub compileTLSCipherArray ($) {
         _trace4_ (sprintf ("           Cipher[%2d]: ", $i));
         _trace4_ (sprintf (" >".hexCodedCipher ($cipherTable[$i])."< -> "));
         $protocolCipher = pack ("a6a*", "0x0300", hexCodedCipher($cipherTable[$i]));
-        if ($Net::SSLhello::trace > 2) {
+        if ($Net::SSLhello::trace > 3) {
             if ( (defined ($cipherHexHash {$protocolCipher})) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 _trace4_ (sprintf ("%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]));
             } else {
