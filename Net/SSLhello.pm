@@ -33,6 +33,7 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
+# TODO:  TLSv13: Decrypt and parse also the encrypted extensions.
 
 ## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
 #  NOTE:  Contrary to  Perl::Critic  we consider prototypes as useful, even if
@@ -1382,11 +1383,11 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x0301301'=>[qw(TLS13_AES_128_GCM_SHA256               TLS13-AES-128-GCM-SHA256)],
-   '0x0301302'=>[qw(TLS13_AES_256_GCM_SHA384               TLS13-AES-256-GCM-SHA384)],
-   '0x0301303'=>[qw(TLS13_CHACHA20_POLY1305_SHA256         TLS13-CHACHA20_POLY1305-SHA256)],
-   '0x0301304'=>[qw(TLS13_AES_128_CCM_SHA256               TLS13-AES-128-CCM-SHA256)],
-   '0x0301305'=>[qw(TLS13_AES_128_CCM_8_SHA256             TLS13-AES-128-CCM-8-SHA256)],
+   '0x03001301'=>[qw(TLS13_AES_128_GCM_SHA256              TLS13-AES128-GCM-SHA256)],
+   '0x03001302'=>[qw(TLS13_AES_256_GCM_SHA384              TLS13-AES256-GCM-SHA384)],
+   '0x03001303'=>[qw(TLS13_CHACHA20_POLY1305_SHA256        TLS13-CHACHA20-POLY1305-SHA256)],
+   '0x03001304'=>[qw(TLS13_AES_128_CCM_SHA256              TLS13-AES128-CCM-SHA256)],
+   '0x03001305'=>[qw(TLS13_AES_128_CCM_8_SHA256            TLS13-AES128-CCM-8-SHA256)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: some further TLS 1.3 ciphers (prefix TLS13 added)
@@ -1395,8 +1396,8 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x03000C6'=>[qw(TLS13_SM4_GCM_SM3                      TLS13-SM4-CGM)],
-   '0x03000C7'=>[qw(TLS13_SM4_CCM_SM3                      TLS13-SM4-CCM)],
+   '0x030000C6'=>[qw(TLS13_SM4_GCM_SM3                     TLS13-SM4-CGM)],
+   '0x030000C7'=>[qw(TLS13_SM4_CCM_SM3                     TLS13-SM4-CCM)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: DRAFT for GOST cipher suites (TLS 1.2 and TLS 1.3 (prefix TLS13 added)
@@ -1405,13 +1406,13 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x030C100'=>[qw(GOSTR341112_256_WITH_KUZNYECHIK_CTR_OMAC    GOSTR341112-256-KUZNYECHIK-CTR-OMAC)],
-   '0x030C101'=>[qw(GOSTR341112_256_WITH_MAGMA_CTR_OMAC         GOSTR341112-256-MAGMA-CTR-OMAC)],
-   '0x030C102'=>[qw(GOSTR341112_256_WITH_28147_CNT_IMIT         GOSTR341112-256-28147-CNT-IMIT)],
-   '0x030C103'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L GOSTR341112-256-KUZNYECHIK-MGM-L)],
-   '0x030C104'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_L      GOSTR341112-256-MAGMA-MGM-L)],
-   '0x030C105'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S GOSTR341112-256-KUZNYECHIK-MGM-S)],
-   '0x030C106'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_S      GOSTR341112-256-MAGMA-MGM-S)],
+   '0x0300C100'=>[qw(GOSTR341112_256_WITH_KUZNYECHIK_CTR_OMAC    GOSTR341112-256-KUZNYECHIK-CTR-OMAC)],
+   '0x0300C101'=>[qw(GOSTR341112_256_WITH_MAGMA_CTR_OMAC         GOSTR341112-256-MAGMA-CTR-OMAC)],
+   '0x0300C102'=>[qw(GOSTR341112_256_WITH_28147_CNT_IMIT         GOSTR341112-256-28147-CNT-IMIT)],
+   '0x0300C103'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L GOSTR341112-256-KUZNYECHIK-MGM-L)],
+   '0x0300C104'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_L      GOSTR341112-256-MAGMA-MGM-L)],
+   '0x0300C105'=>[qw(TLS13_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S GOSTR341112-256-KUZNYECHIK-MGM-S)],
+   '0x0300C106'=>[qw(TLS13_GOSTR341112_256_WITH_MAGMA_MGM_S      GOSTR341112-256-MAGMA-MGM-S)],
 
 #!# Protocol: some further TLS 1.3 ciphers (prefix TLS13 added)
 #!# added manually 20201106
@@ -1419,8 +1420,8 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x030C4B4'=>[qw(TLS13_SHA256_SHA256                    TLS13-SHA256-SHA256)],
-   '0x030C4B5'=>[qw(TLS13_SHA384_SHA384                    TLS13-SHA384-SHA384)],
+   '0x0300C4B4'=>[qw(TLS13_SHA256_SHA256                   TLS13-SHA256-SHA256)],
+   '0x0300C4B5'=>[qw(TLS13_SHA384_SHA384                   TLS13-SHA384-SHA384)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: RFC8442 PSK cipher suites (TLS 1.2)
@@ -1429,10 +1430,10 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x030D001'=>[qw(ECDHE_PSK_WITH_AES_128_GCM_SHA256      ECDHE_PSK_WITH_AES_128_GCM_SHA256)],
-   '0x030D002'=>[qw(ECDHE_PSK_WITH_AES_256_GCM_SHA384      ECDHE_PSK_WITH_AES_256_GCM_SHA384)],
-   '0x030D003'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_8_SHA256    ECDHE_PSK_WITH_AES_128_CCM_8_SHA256)],
-   '0x030D005'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_SHA256      ECDHE_PSK_WITH_AES_128_CCM_SHA256)],
+   '0x0300D001'=>[qw(ECDHE_PSK_WITH_AES_128_GCM_SHA256     ECDHE_PSK_WITH_AES_128_GCM_SHA256)],
+   '0x0300D002'=>[qw(ECDHE_PSK_WITH_AES_256_GCM_SHA384     ECDHE_PSK_WITH_AES_256_GCM_SHA384)],
+   '0x0300D003'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_8_SHA256   ECDHE_PSK_WITH_AES_128_CCM_8_SHA256)],
+   '0x0300D005'=>[qw(ECDHE_PSK_WITH_AES_128_CCM_SHA256     ECDHE_PSK_WITH_AES_128_CCM_SHA256)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# and more ....
@@ -3681,6 +3682,12 @@ sub compileClientHello ($$$$;$$$$) {
     $challenge= pack("Na[28]", time(), $challenge); # 4 bytes: uint32 gmt_unix_time;, 28 byte random
     _trace4_("#   --->   challenge >".hexCodedString ($challenge)."<\n");
 
+    my $handshake_version = $version;
+    if ( ($version > $PROTOCOL_VERSION{'TLSv12'}) && ($version < $PROTOCOL_VERSION{'DTLSv12'}) ) {
+        $handshake_version  = $PROTOCOL_VERSION{'TLSv12'};
+        $record_version     = $PROTOCOL_VERSION{'TLSv12'};
+    }
+
     my %clientHello =  ( #V2ClientHello
         'record_type'            => $RECORD_TYPE {'handshake'},# from SSL3:  Handshake (22=0x16) #uint8
         'record_version'         => $record_version,           # from SSL3:  #uint16
@@ -3692,7 +3699,7 @@ sub compileClientHello ($$$$;$$$$) {
         'msg_seqNr'              => 0x0000,                    # DTLS only:  #uint16
         'fragment_offset'        => 0x000000,                  # DTLS only:  #uint24 (!)
         'fragment_len'           => 0x000000,                  # DTLS only:  #uint24 (!)
-        'version'                => $version,                  # SSL2:0x0002,SSL3:0x3000,TLS1:0x0301 #uint16
+        'version'                => $handshake_version,        # SSL2:0x0002,SSL3:0x3000,TLS1:0x0301 #uint16
         'cipher_spec_len'        => length($ciphers),          # uint16
         'session_id_len'         => 0x0000,                    # uint16
         'cookie_len'             => 0x00,                      # DTLS only:  #uint8
