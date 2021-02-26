@@ -30,9 +30,11 @@
 #       -prg="program"
 #               use program instead of  o-saft.pl; intended for debugging only
 #?      -post="program [options]"
-#?              program to pipe output of  o-saft.pl  to
+#?              program in ./contrib to pipe output of  o-saft.pl  to
 #?      -colour alias for  -post=bunt.pl
 #?      -blind  alias for  -post='bunt.pl -blind'
+#?      -less   pipe output of  o-saft.pl  to  less
+#?      -more   pipe output of  o-saft.pl  to  more
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
 #?
 #? LIMITATIONS
@@ -68,7 +70,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.24 21/01/15 00:34:03
+#?      @(#) o-saft 1.25 21/02/26 02:06:03
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -121,7 +123,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.24"; exit 0; ;;
+        +VERSION)       echo "1.25"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -146,6 +148,8 @@ EoT
         -colour | --colour) post="$contrib/bunt.pl" ; ;;
         -color  | --color)  post="$contrib/bunt.pl" ; ;;
         -blind  | --blind)  post="$contrib/bunt.pl -blind" ; ;;
+        -less   | --less)   post="less" ; ;;
+        -more   | --more)   post="more" ; ;;
         -prg=*) prg="`expr "$1" ':' '-prg=\(.*\)'`" ; ;;  # for debugging only
         -post=*)
             post="`expr "$1" ':' '-post=\(.*\)'`" ;
