@@ -32,7 +32,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.12 21/01/14 01:18:06
+#?      @(#) bunt.pl 1.13 21/02/26 01:15:58
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann
@@ -69,8 +69,6 @@ if (defined $ENV{ComSpec}) {    # supported systems do not have it, usually ..
 	# Note that  cmd.exe and command.exe  do not support colours, at least
 	# not per word or line. There exists some alternates like  ansicmd.exe
 	# or  cecho.exe,  which are not supported herein (not tested if loaded
-	# modules support them). If any of these alternates mudt be supported,
-	# feel free to hack the code below.  Meanwhile,  colourizing for these
 	# dumb terminals is simply disabled.
 	# Hint to get the number of columns in cmd.exe:
 	#       $c= qx(mode);
@@ -285,7 +283,7 @@ sub bgcyan ($) {
 }
 
 ## no critic qw(InputOutput::ProhibitInteractiveTest)
-#  it's the authors opinion that the perlish  -t  is better (human) readable
+#  it's the author's opinion that the perlish  -t  is better (human) readable
 if (-t STDIN) {
 	_warn("ERROR text on STDIN expected; exit");
 	exit 2;
