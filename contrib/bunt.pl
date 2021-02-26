@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #?
 #? NAME
-#?      $0 - postprocess to colourize output of o-saft.pl
+#?      $0 - postprocess to colourise output of o-saft.pl
 #?
 #? SYNOPSIS
 #?      o-saft.pl | $0 [OPTIONS]
@@ -12,18 +12,20 @@
 #? OPTIONS
 #?      --h     got it
 #?      --test  simple self-testing
-#?      --line  colourize complete line
-#?      --word  colourize special words
+#?      --line  colourise complete line
+#?      --word  colourise special words
 #?      --blind use blue instead of green
 #?      --purple use purple instead of yellow
 #?               purple may be better readable on light backgrounds
-#?      --italic colourize special words and additionally print "label texts:"
+#?      --italic colourise special words and additionally print "label texts:"
 #?               with italic characters
 #?              "label text:" is all text left of first : including :
 #?      --NUM   if a number, change assumed terminal width to NUM
 #?              (used for padding text on the right);  default: terminal width
 #?
 #? LIMITATIONS
+#?      Uses tput or stty to detect current terminal with. If both fail, 80 is
+#?      used as default.
 #
 # HACKER's INFO
 #       Feel free to write your own code. You just need to add/modify the code
@@ -32,7 +34,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.13 21/02/26 01:15:58
+#?      @(#) bunt.pl 1.14 21/02/26 01:47:02
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann
@@ -58,7 +60,7 @@ if (defined $ENV{TERM}) {
 	# probably better exit here
 
 # --------------------------------------------- internal variables; defaults
-my $mode    = 'word';   # default: colourize words
+my $mode    = 'word';   # default: colourise words
 my $italic  = 0;        # default: nothing italic
 my $_LEN    = 80;       # default: 80 characters per line; -1 for unsupported terminals
 			# set to termial width below
@@ -80,7 +82,12 @@ if (defined $ENV{ComSpec}) {    # supported systems do not have it, usually ..
 	$_LEN = -1;
 } else {
     if ($^O !~ m/MSWin32/) {
-	$cols = qx(\\tput cols); # quick&dirty
+	# try with tput, if it fails try with stty
+	$cols = qx(\\tput cols 2>/dev/null) || undef; # quick&dirty
+	if (not defined $cols) {    # tput failed or missing
+	    $cols =  qx(\\stty size 2>/dev/null) || $_LEN; # default if stty fails
+	    $cols =~ s/^[^ ]* //;   # stty returns:  23 42  ; extract 42
+	}
     } else {
 	my $rows;
 	$cols = $ENV{COLUMNS};
