@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.327 21/01/17 22:17:18";
+my  $SID_man= "@(#) o-saft-man.pm 1.328 21/02/26 17:35:12";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -108,7 +108,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.327'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.328'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1495,6 +1495,12 @@ sub man_help        {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
+    if (defined $cfg{'out'}->{'width'}) {
+        my $max   = $cfg{'out'}->{'width'} - 1; # let's have one space right
+        my $ident = ' ' x $cfg{'out'}->{'ident'};# reduced identation
+        $txt =~ s/\n {8}/\n$ident/g;
+        $txt =~ s/(\n.{$max})/$1\n  /g;
+    }
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         print "**WARNING: using workaround to print large strings.\n\n";
@@ -1801,7 +1807,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.327 2021/01/17
+1.328 2021/02/26
 
 =head1 AUTHOR
 
