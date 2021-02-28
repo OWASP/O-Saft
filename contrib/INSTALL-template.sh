@@ -93,6 +93,21 @@
 #=# /opt/o-saft/o-saft.pl	/usr/local/openssl/bin/openssl (1.0.2k-dev) 
 #=#----------------------+---------------------------------------
 #=
+#=# check for optional tools to view documentation:
+#=#----------------------+---------------------------------------
+#=#                   aha	/usr/bin/aha
+#=#               perldoc	/usr/bin/perldoc
+#=#              pod2html	/usr/bin/pod2html
+#=#               pod2man	/usr/bin/pod2man
+#=#              pod2text	/usr/bin/pod2text
+#=#             pod2usage	/usr/bin/pod2usage
+#=#                podman	missing
+#=#             podviewer	/usr/bin/podviewer
+#=#                  stty	/bin/stty
+#=#                 tkpod	missing
+#=#                  tput	/usr/bin/tput
+#=#----------------------+---------------------------------------
+#=
 #=# check for contributed files
 #=# (in /opt/o-saft/contrib )
 #=#----------------------+---------------------------------------
@@ -185,7 +200,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) 0VÞó¢U 1.55 21/02/28 17:21:48
+#?      @(#)  1.56 21/02/28 17:50:09
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -310,6 +325,14 @@ echo_red    () {
 	\echo "\033[1;31m$@\033[0m"
 }
 
+check_commands () {
+	for c in $* ; do
+		echo_label "$c"
+		is=`\command -v $c`
+		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
+	done
+}
+
 # --------------------------------------------- arguments and options
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -341,7 +364,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.55 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.56 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -496,16 +519,8 @@ if [ "$mode" = "checkdev" ]; then
 	echo ""
 	echo "# check for tools used with/in make targets"
 	echo "#$_line"
-	for t in $tools_intern ; do
-		echo_label "$t"
-		is=`which $t`
-		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
-	done
-	for t in $tools_extern ; do
-		echo_label "$t"
-		is=`which $t`
-		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
-	done
+	check_commands $tools_intern
+	check_commands $tools_extern
 	echo "#$_line"
 	echo ""
 	echo "# check for Perl modules used with/in make targets"
@@ -524,26 +539,14 @@ if [ "$mode" = "checkdev" ]; then
 	echo "#$_line"
 	echo "# Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 	echo ""
-	echo "# check for optional tools to view documentation:"
-	echo "#$_line"
-	for t in $tools_optional ; do
-		echo_label "$t"
-		is=`which $t`
-		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
-	done
-	echo "#$_line"
 
 	[ $other -eq 0 ] && exit 0;
 
 	# printed with --other only
 	echo ""
-	echo "# check for other SSL-related tools:"
+	echo "# check for other SSL-related tools"
 	echo "#$_line"
-	for t in $tools_other ; do
-		echo_label "$t"
-		is=`which $t`
-		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
-	done
+	check_commands $tools_other
 	echo "#$_line"
 	exit 0
 fi; # checkdev mode }
@@ -734,17 +737,9 @@ done
 echo "#$_line"
 
 echo ""
-echo "# check for optional executables used by O-Saft"
+echo "# check for optional tools to view documentation:"
 echo "#$_line"
-for e in $tools_optional ; do
-	echo_label "$e"
-	p=`\command -v $e`
-	if [ -n "$p" ]; then
-		echo_green  "$p"
-	else
-		echo_yellow "missing, consider installing $e"
-	fi
-done
+check_commands $tools_optional
 echo "#$_line"
 
 echo ""
