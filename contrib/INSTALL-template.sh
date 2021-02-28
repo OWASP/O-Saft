@@ -185,7 +185,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.54 20/10/31 23:21:34
+#?      @(#) 0VÞó¢U 1.55 21/02/28 17:21:48
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -341,7 +341,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.54 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.55 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -729,6 +729,20 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
 		echo_label "$o" && echo_green "$openssl"
 		)
+	fi
+done
+echo "#$_line"
+
+echo ""
+echo "# check for optional executables used by O-Saft"
+echo "#$_line"
+for e in $tools_optional ; do
+	echo_label "$e"
+	p=`\command -v $e`
+	if [ -n "$p" ]; then
+		echo_green  "$p"
+	else
+		echo_yellow "missing, consider installing $e"
 	fi
 done
 echo "#$_line"
