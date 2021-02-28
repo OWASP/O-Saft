@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.249 21/02/28 19:38:26",
+    SID_osaft   => "@(#) osaft.pm 1.250 21/02/28 23:10:42",
 
 };
 
@@ -2574,6 +2574,7 @@ our %cfg = (
     'mename'        => "O-Saft ", # my name pretty printed
     'need_netdns'   => 0,       # used for better error message handling only
     'need_timelocal'=> 0,       # -"-
+    'need_netinfo'  => 1,       # 0: do not load Net::SSLinfo
     # following initialised in _osaft_init()
     'me'            => "",
     'ARG0'          => "",
@@ -4313,7 +4314,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.249 2021/02/28
+1.250 2021/02/28
 
 =head1 AUTHOR
 
