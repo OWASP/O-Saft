@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1037 21/02/28 22:52:26",
+    SID         => "@(#) yeast.pl 1.1038 21/02/28 23:30:42",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2347,7 +2347,7 @@ sub _load_modules       {
         }
     }
 
-    return if ($osaft_standalone > 0);  # SEE Note:Stand-alone
+    return if (0 < $osaft_standalone);  # SEE Note:Stand-alone
 
     $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $err) {
@@ -2358,6 +2358,7 @@ sub _load_modules       {
         $cfg{'use'}->{'http'} = 0;      # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
+    return if (1 > $cfg{'need_netinfo'});
     $err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
     if ("" ne $err) {
         die  STR_ERROR, "011: $err"  if (not _is_cfg_do('version'));
@@ -8626,6 +8627,7 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             #$legacy = $cfg{'legacy'};
         }
     }
+    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
 }
 
 _yeast_TIME("inc{");
