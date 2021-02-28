@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.78 21/02/28 17:58:47
+# SID   @(#) help.txt 1.79 21/02/28 19:45:03
 
 NAME
 
@@ -1699,7 +1699,6 @@ OPTIONS
 
           Internal default format.
 
-csv html json ssv tab xml fullxml raw hex 0x esc
       --format=0x
       --format=\x
       --format=/x
@@ -1721,6 +1720,33 @@ csv html json ssv tab xml fullxml raw hex 0x esc
           * '/x'        Same as  --format=\x
           * '\x'        Convert some data with hex values:
                            2 bytes preceded by '\x' and no separating char.
+
+      --tty
+      --format-tty
+
+          Get the screen width and then adapt  output of documentation to fit
+          to that width. If the environment variable 'COLUMNS' is not set the
+          system's 'tput' or 'stty' command is used to get the screen width.
+
+          It's a very simple approach to make texts better readable on narrow
+          devices like tablets. For more details, please see:
+
+
+              perdoc $0   # the section Note:tty  there
+
+      --format-width=NN
+
+          Set the screen width to 'NN' characters (see  --format-tty  also).
+          Default will be calculated automatically.
+
+      --format-ident=NN
+
+          Set the amount of spaces used for identation (see  --tty  also).
+          Default is 2.
+
+      --format-arrow=CHR
+
+          Set the additional chacacter when lines are split. Default: ↲
 
       --header
 
