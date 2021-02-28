@@ -48,6 +48,7 @@ package main;   # ensure that main:: variables are used
 use strict;
 use warnings;
 use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
+use utf8;
 # binmode(...); # inherited from parent
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -62,7 +63,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.328 21/02/26 17:35:12";
+my  $SID_man= "@(#) o-saft-man.pm 1.329 21/02/28 20:54:01";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -104,11 +105,65 @@ sub _man_dbx        {   # similar to _y_CMD
     return;
 } # _man_dbx
 
+sub _man_use_tty    {   # break long lines of text; SEE Note:tty
+    # set screen width in $cfg{'tty'}->{'width'}
+    _man_dbx("_man_use_tty() ...");
+    return if not defined $cfg{'tty'}->{'width'};
+    my $_len = 80;
+    my $cols = $cfg{'tty'}->{'width'};
+    if (10 > $cols) {   # size smaller 10 doesn't make sense
+        $cols = $ENV{COLUMNS} || 0;  # ||0 avoids perl's "Use of uninitialized value"
+        if ($cols =~ m/^[1-9][0-9]+$/) {    # ensure that we get numbers
+            $cfg{'tty'}->{'width'} = $cols;
+            return;
+        }
+        # try with tput, if it fails try with stty; errors silently ignored
+        $cols = qx(\\tput cols 2>/dev/null) || undef; # quick&dirty
+        if (not defined $cols) {    # tput failed or missing
+            $cols =  qx(\\stty size 2>/dev/null) || $_len; # default if stty fails
+            $cols =~ s/^[^ ]* //;   # stty returns:  23 42  ; extract 42
+        }
+        $cfg{'tty'}->{'width'} = $cols;
+    }
+    $cfg{'tty'}->{'width'} = 80 if (10 > $cfg{'tty'}->{'width'});   # safe fallback
+    _man_dbx("_man_use_tty: " . $cfg{'tty'}->{'width'});
+    return;
+} # _man_use_tty
+
+sub _man_squeeze    {   # break long lines of text; SEE Note:tty
+    # if len is undef, default from %cfg is used
+    my $len   = shift;
+    my $txt   = shift;
+    return $txt if not defined $cfg{'tty'}->{'width'};
+    # if a width is defined, --tty  was used
+    # Keep in mind that  help.txt  is formatted to fit in 80 columns,  hence a
+    # width > 80 does not change the total length of the line (which is always
+    # < 80), but changes the number of left most spaces.
+    $txt =~ s/[\t]/    /g;    # replace all TABs
+    my $max   = $cfg{'tty'}->{'width'} - 2;     # let's have one space right
+    my $ident = ' ' x $cfg{'tty'}->{'ident'};   # default ident spaces
+    if (defined $len) {
+        # break long lines at max size and ident remaining with len
+        $ident = "$cfg{'tty'}->{'arrow'}\n" . ' ' x $len;
+        $txt =~ s/(.{$max})/$1$ident/g;
+    } else {
+        # change left most 8 spaces to specified number of spaces
+        # break long lines at max size
+        # break long lines at max size and ident with specified number of spaces
+        $txt =~ s/\n {8}/$ident/g;              # reduced existing identation
+        $ident = "$cfg{'tty'}->{'arrow'}\n" . $ident;
+        $max--;
+    }
+    #$max--;
+    $txt =~ s/(.{$max})/$1$ident/g;             # squeeze line length
+    return $txt;
+} # _man_squeeze
+
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.328'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.329'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -733,10 +788,11 @@ sub _man_foot       {
 
 sub _man_opt        {
     #? print line in  "KEY - VALUE"  format
-    my @args = @_;
+    my @args = @_; # key, sep, value
     my $len  = 16;
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
-    printf("%${len}s%s%s\n", @args);
+    my $txt  = sprintf("%${len}s%s%s\n", @args);
+    print _man_squeeze((16+length($_[1])), $txt);
     return;
 } # _man_opt
 
@@ -1121,7 +1177,7 @@ sub man_commands    {
     # SEE Help:Syntax
     print "\n";
     _man_head(15, "Command", "Description");
-    print <<"EoHelp";
+    my $txt = <<"EoHelp";
                   Commands for information about this tool
 +dump             Dumps internal data for SSL connection and target certificate.
 +exec             Internal command; should not be used directly.
@@ -1167,7 +1223,9 @@ sub man_commands    {
 
 EoHelp
 
-    print _man_cmd_from_source();
+    print _man_squeeze(18, $txt);
+
+    print _man_squeeze(18,_man_cmd_from_source());
     print _man_cmd_from_rcfile();
     _man_foot(15);
     print "\n";
@@ -1222,6 +1280,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
     _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
+    # return; 
 
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
 
@@ -1340,8 +1399,9 @@ sub man_alias       {
     #
     print "\n";
     _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
-    my $fh   = undef;
-    my $p    = '[._-]'; # regex for separators as used in o-saft.pl
+    my $txt =  "";
+    my $fh  = undef;
+    my $p   = '[._-]'; # regex for separators as used in o-saft.pl
     if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
         # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
@@ -1358,12 +1418,13 @@ sub man_alias       {
             $regex =~ s/\[\+\]/+/g; # replace [+] with +
             $regex =~ s/\$p\?/-/g;  # replace variable
             if (29 > length($regex)) {
-                printf("%-29s%-21s# %s\n", $regex, $alias, $commt);
+                $txt = sprintf("%-29s%-21s# %s\n", $regex, $alias, $commt);
             } else {
                 # pretty print if regex is to large for first column
-                printf("%s\n", $regex);
-                printf("%-29s%-21s# %s\n", "", $alias, $commt);
+                $txt  = sprintf("%s\n", $regex);
+                $txt .= sprintf("%-29s%-21s# %s\n", "", $alias, $commt);
             }
+            print _man_squeeze(29, $txt);
         }
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
@@ -1391,6 +1452,7 @@ sub man_toc         {
             # just =head1 is lame, =head1 and =head2 and =head3 is too much
             $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
         }
+        # TODO:  _man_squeeze(6, $txt); # not really necessary
     }
     return;
 } # man_toc
@@ -1495,12 +1557,7 @@ sub man_help        {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
-    if (defined $cfg{'out'}->{'width'}) {
-        my $max   = $cfg{'out'}->{'width'} - 1; # let's have one space right
-        my $ident = ' ' x $cfg{'out'}->{'ident'};# reduced identation
-        $txt =~ s/\n {8}/\n$ident/g;
-        $txt =~ s/(\n.{$max})/$1\n  /g;
-    }
+    $txt =  _man_squeeze(undef, $txt);
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         print "**WARNING: using workaround to print large strings.\n\n";
@@ -1550,6 +1607,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
     _man_dbx("printhelp($hlp) ...");
+    _man_use_tty();
     # NOTE: some lower case strings are special
     man_help('NAME'),           return if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
@@ -1594,10 +1652,12 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # we do not allow --help=cfg-cmds or --help=cfg-checks due to conflict
         #    with --help=cmds (see next condiftion);  since 19.01.19
     if ($hlp =~ /^cmds$/i)      { # print program's commands
+        # no need for _man_squeeze()
         print "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
         return;
     }
     if ($hlp =~ /^legacys?$/i)  { # print program's legacy options
+        # no need for _man_squeeze()
         print "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
         return;
     }
@@ -1608,7 +1668,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             # TODO: quick&dirty match against to fixed strings (=head lines)
         $txt =~ s/^=head.//msg;
         $txt =~ s/Options for all commands.*.//msg;
-        print "$txt";
+        print _man_squeeze(undef, $txt);
         #man_help('Options for help and documentation');
         return;
     }
@@ -1617,14 +1677,19 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
         print join('', "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
+        # no need for _man_squeeze()
         return;
     }
     if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
-        print OSaft::Doc::Data::get("tools.txt", $parent, $version);
+        my @txt = OSaft::Doc::Data::get("tools.txt", $parent, $version);
+        #print _man_squeeze(undef, "@txt"); # TODO: does not work well here
+        print @txt;
         return;
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description
-        print OSaft::Doc::Data::get("coding.txt", $parent, $version);
+        my @txt = OSaft::Doc::Data::get("coding.txt", $parent, $version);
+        #print _man_squeeze(undef, "@txt"); # TODO: does not work well here
+        print @txt;
         return;
     }
     src_grep("exit="),          return if ($hlp =~ /^exit$/i);
@@ -1807,7 +1872,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.328 2021/02/26
+1.329 2021/02/28
 
 =head1 AUTHOR
 
