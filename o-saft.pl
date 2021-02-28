@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1036 21/02/28 20:56:00",
+    SID         => "@(#) yeast.pl 1.1037 21/02/28 22:52:26",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7976,7 +7976,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--warnings?$/)        { _set_cfg_out('warning', 1);       }
     if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning', 0);       }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
-    if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias:
+    if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias: --n
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
     if ($arg =~ /^--trace(?:@|key)/i)   { $cfg{'traceKEY'}++;       } # ..
@@ -8068,9 +8068,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--noexitcode')        { _set_cfg_use('exitcode',        0); }
     if ($arg eq  '--exitcode')          { _set_cfg_use('exitcode',        1); } # SEE Note:--exitcode
     if ($arg =~ /^--exitcodev/)         { _set_cfg_out('exitcode',        1); } #
-    if ($arg =~ /^--traceexit/)         { _set_cfg_out('exitcode',        1); } # alias:
+    if ($arg =~ /^--traceexit/)         { _set_cfg_out('exitcode',        1); } # alias: --exitcode
     if ($arg =~ /^--exitcodequiet/)     { _set_cfg_out('exitcode_quiet',  1); } #
-    if ($arg =~ /^--exitcodesilent/)    { _set_cfg_out('exitcode_quiet',  1); } # alias:
+    if ($arg =~ /^--exitcodesilent/)    { _set_cfg_out('exitcode_quiet',  1); } # alias: --exitcode-quiet
     if ($arg =~ /^--exitcodenochecks?/) { _set_cfg_out('exitcode_checks', 0); } # -"-
     if ($arg =~ /^--exitcodenomedium/)  { _set_cfg_out('exitcode_medium', 0); } # -"-
     if ($arg =~ /^--exitcodenoweak/)    { _set_cfg_out('exitcode_weak',   0); } # -"-
@@ -8181,7 +8181,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--formatwidth')       { $typ = 'TTY_WIDTH';       }
     if ($arg eq  '--formatarrow')       { $typ = 'TTY_ARROW';       }
     if ($arg =~ /^--(?:format)?tty$/)   { _set_cfg_tty('width', 0) if not defined $cfg{'tty'}->{'width'}; } # SEE Note:tty
-    #if ($arg eq  '--tty')               { $typ = 'TTY';             } # alias:
     if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'label'} = 'short';  } # ancient sinc 19.01.14
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
