@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1035 21/02/28 10:53:51",
+    SID         => "@(#) yeast.pl 1.1036 21/02/28 20:56:00",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2296,11 +2296,13 @@ sub _is_cfg($)          { my  $is=shift;    return $cfg{$is};   }
 sub _is_cfg_ssl($)      { my  $is=shift;    return $cfg{$is};   }
     # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
 sub _is_cfg_out($)      { my  $is=shift;    return $cfg{'out'}->{$is};  }
+sub _is_cfg_tty($)      { my  $is=shift;    return $cfg{'tty'}->{$is};  }
 sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
+sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
 sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
 
@@ -7566,6 +7568,9 @@ while ($#argv >= 0) {
         if ($typ eq 'PROXY_PASS')   { $cfg{'proxypass'}   = $arg;   }
         if ($typ eq 'PROXY_AUTH')   { $cfg{'proxyauth'}   = $arg;   }
         if ($typ eq 'SNINAME')      { $cfg{'sni_name'}    = $arg;   }
+        if ($typ eq 'TTY_ARROW')    { _set_cfg_tty('arrow', $arg);  }
+        if ($typ eq 'TTY_IDENT')    { _set_cfg_tty('ident', $arg);  }
+        if ($typ eq 'TTY_WIDTH')    { _set_cfg_tty('width', $arg);  }
         if ($typ eq 'ANON_OUT')     { $cfg{'regex'}->{'anon_output'}  = qr($arg); }
         if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'}  = $arg; }
         if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'}  = $arg; }
@@ -8169,9 +8174,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG_CIPHER';      }
     if ($arg =~ /^--cfginit$/)          { $typ = 'CFG_INIT';        }
     if ($arg eq  '--call')              { $typ = 'CALL';            }
-    if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
     if ($arg eq  '--label')             { $typ = 'LABEL';           }
+    if ($arg eq  '--format')            { $typ = 'FORMAT';          }
+    if ($arg eq  '--formatident')       { $typ = 'TTY_IDENT';       }
+    if ($arg eq  '--formatwidth')       { $typ = 'TTY_WIDTH';       }
+    if ($arg eq  '--formatarrow')       { $typ = 'TTY_ARROW';       }
+    if ($arg =~ /^--(?:format)?tty$/)   { _set_cfg_tty('width', 0) if not defined $cfg{'tty'}->{'width'}; } # SEE Note:tty
+    #if ($arg eq  '--tty')               { $typ = 'TTY';             } # alias:
     if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'label'} = 'short';  } # ancient sinc 19.01.14
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
@@ -8662,7 +8672,6 @@ _yeast_TIME("ini{");
 
 #| set additional defaults if missing
 #| -------------------------------------
-_set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
 _set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
 _set_cfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 _set_cfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command-line option overwrites defaults above
@@ -10565,8 +10574,9 @@ be used to force formatting of some output depending on the screen width.
 These options are mainly (for details please see  OPTIONS  section):
 
     --format-tty   --tty
-    --format-width=XX
-    --format-ident=XX
+    --format-width=NN
+    --format-ident=NN
+    --format-arrow=CHR
 
 By default, the format settings are not used.  The settings are grouped in
 the  %cfg{tty}  structure.
