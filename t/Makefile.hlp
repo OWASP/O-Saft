@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.29 20/06/10 00:38:35
+#?      @(#) Makefile.hlp 1.30 21/02/28 23:46:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.29
+_SID.hlp           := 1.30
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -127,6 +127,12 @@ testarg-hlp---help-gen-html:    TEST.args  += --help=gen-html
 testarg-hlp---help-gen-cgi:     TEST.args  += --help=gen-cgi
 testarg-hlp---help-gen-pod:     TEST.args  += --help=gen-pod
 testarg-hlp---help-exit:        TEST.args  += --help=exit
+testarg-hlp---help-cmd--format-width:   TEST.args  += --format-width=54 --help=cmd
+testarg-hlp---help-why--format-width:   TEST.args  += --format-width=54 --help=why
+    # NOTE: options mus preceed --help=* option
+#testarg-hlp---help-cmd--tty:    TEST.args  += --format-tty --help=cmd
+#testarg-hlp---help-cmd--tty:    TEST.args  += --tty --help=cmd # alias
+    # --tty does not produce different output, except on special devices
 
 ALL.testhlp         = $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.hlp))
 ALL.test.hlp        = $(ALL.testhlp)
