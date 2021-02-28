@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.77 21/02/16 11:37:01
+# SID   @(#) help.txt 1.78 21/02/28 17:58:47
 
 NAME
 
@@ -24,7 +24,7 @@ SYNOPSIS
 
 DESCRIPTION
 
-        This tools lists  information  about remote target's  SSL certificate
+        This tool lists  information  about remote target's  SSL certificate,
         and tests the remote target according given list of ciphers.
 
         Note:  Throughout this description  `$0'  is used as an alias for the
@@ -315,6 +315,8 @@ TECHNICAL INFORMATION
           * pod2usage
           * podviewer        v0.18
           * tkpod
+          * tput
+          * stty
 
 
 COMMANDS
@@ -1697,6 +1699,7 @@ OPTIONS
 
           Internal default format.
 
+csv html json ssv tab xml fullxml raw hex 0x esc
       --format=0x
       --format=\x
       --format=/x
@@ -1710,7 +1713,7 @@ OPTIONS
             Note:  all data will be printed as is,  without  additional label
             or formatting. It's recommended to use the  option in conjunction
             with exactly one command.  Otherwise the user needs  to know  how
-            to "read"  the printed data.
+            to "read" the printed data.
 
           * 'hex'       Convert some data to hex: 2 bytes separated by ':'.
           * '0x'        Convert some data with hex values:
@@ -2991,7 +2994,7 @@ ENVIRONMENT
 
 CUSTOMISATION
 
-        This tools can be customised as follows:
+        This tool can be customised as follows:
 
         * Using command-line options
 
@@ -3139,8 +3142,8 @@ CUSTOMISATION
     SHELL TWEAKS
 
         Configuring the shell environment where the tool is startet,  must be
-        done before the tools starts.  It is  not really  a task for the tool
-        itself, but it can simplify your life, somehow.
+        done before the tool starts. It isn't a task for the tool itself, but
+        it can simplify your life, somehow.
 
         There exist customisations for some commonly used shells,  please see
         the files in the ./contrib/ directory.
@@ -4358,7 +4361,7 @@ DEBUG
 
     Using outdated modules
 
-        The tools was designed to work with old Perl modules too.  When using
+        This tool was designed to work with old Perl modules too.  When using
         old modules, a proper  '**WARNING:'  will be printed. These warinings
         cannot be switched of using  --no-warning  .
         The warning also informs about the missing functionality or check.
