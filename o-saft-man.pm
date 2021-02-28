@@ -63,7 +63,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.329 21/02/28 20:54:01";
+my  $SID_man= "@(#) o-saft-man.pm 1.330 21/02/28 22:48:53";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -82,7 +82,7 @@ local $\    = "";
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
-sub _get_filename   {   # similar to _y_CMD
+sub _get_filename   {
 # TODO: move to osaft.pm or alike
     my $src = shift || "o-saft.pl";
     foreach my $dir (@INC) {    # find the proper file
@@ -163,7 +163,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.329'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.330'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1417,6 +1417,11 @@ sub man_alias       {
             $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
             $regex =~ s/\[\+\]/+/g; # replace [+] with +
             $regex =~ s/\$p\?/-/g;  # replace variable
+            # check if alias is command or option
+            if ($alias !~ m/^[+-]/) {
+                # look not like command or option, use comment
+                $alias = $commt if ($commt =~ m/^[+-]/);
+            }
             if (29 > length($regex)) {
                 $txt = sprintf("%-29s%-21s# %s\n", $regex, $alias, $commt);
             } else {
@@ -1872,7 +1877,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.329 2021/02/28
+1.330 2021/02/28
 
 =head1 AUTHOR
 
