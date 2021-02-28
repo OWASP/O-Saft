@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.104 20/10/31 12:07:07
+#?      @(#) Makefile 1.106 21/02/28 17:25:06
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.104
+_SID            = 1.106
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -123,7 +123,12 @@ CONTRIB.post.awk= \
 		  JSON-array.awk JSON-struct.awk \
 		  XML-attribute.awk XML-value.awk \
 		  lazy_checks.awk
-CONTRIB.post    = bunt.pl bunt.sh symbol.pl
+CONTRIB.post    = \
+		  alertscript.pl \
+		  alertscript.cfg \
+		  bunt.pl \
+		  bunt.sh \
+		  symbol.pl
 CONTRIB.misc    = \
 		  cipher_check.sh \
 		  critic.sh \
@@ -251,7 +256,7 @@ EXE.pl          = $(SRC.pl)
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
-ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod
+ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod stty tput
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 
@@ -267,7 +272,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.104
+_INST.text      = generated from Makefile 1.106
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
 			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
@@ -496,8 +501,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.104
-tar:     GREP_EDIT  = 1.104
+GREP_EDIT           = 1.106
+tar:     GREP_EDIT  = 1.106
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
