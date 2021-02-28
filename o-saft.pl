@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1033 21/02/25 14:06:25",
+    SID         => "@(#) yeast.pl 1.1034 21/02/28 10:44:40",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -10535,6 +10535,57 @@ They can be printed immediately (without being specified in  $cfg{hints} :
 It is not recommended to use:
 
     print STR_HINT, "my text";
+
+
+=head2 Note:tty
+
+The general concept is to use postprocessors for any output processing and
+formatting.  This concept becomes clumsy  when the tool is used on devices
+with limited capabilities (like tablets or smartphones).
+
+The format of the output is described in the  RESULT  section of the docu-
+mentation. Beside the results we also have the documentation itself, which
+is intended to be read by humans.
+I.g. all output may be passed to well known  formatting tools like  nroff,
+troff, etc.  but this may clutter some texts  which are well formatted for
+human readability.
+The documentation is also preformatted for a screen width of 80 characters
+(when troff or alike is not in use).
+
+This means that following situations have to be handled:
+
+    * output of results
+    * output of documentation
+    * output of preformatted documentation
+
+To get a better human readable documentation on small devices, options can
+be used to force formatting of some output depending on the screen width.
+These options are mainly (for details please see  OPTIONS  section):
+
+    --format-tty   --tty
+    --format-width=XX
+    --format-ident=XX
+
+By default, the format settings are not used.  The settings are grouped in
+the  %cfg{tty}  structure.
+
+All special formatting according the tty is done in o-saft-man.pl (because
+only documentation is effected). The function  _man_squeeze()  is used for
+that. It tries to optimize the ouput for the device. Text preformatted for
+better readability will be respected.
+
+As the approach is genereric, the final result may not be perfect. 
+Following restrictions, oddities exist:
+
+    * splitting is done on length of the text not on word bounderies
+    * additional empty lines may occour
+    * dashed lines (used for headings) are mainly not adapted (split)
+
+To clearly mark the special formatting,  an additional "return" character
+is inserted where text was split.
+
+Hopefully this generated result is more comfortable to read than the text
+provided by the default behaviour. Simply use the  --tty  option.
 
 
 =cut
