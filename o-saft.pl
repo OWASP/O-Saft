@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1034 21/02/28 10:44:40",
+    SID         => "@(#) yeast.pl 1.1035 21/02/28 10:53:51",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9305,6 +9305,8 @@ __END__
 __DATA__
 public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 
+following annotations are avalable by using:  perldoc o-saft.pl
+
 =pod
 
 =encoding utf8
@@ -10577,14 +10579,19 @@ better readability will be respected.
 As the approach is genereric, the final result may not be perfect. 
 Following restrictions, oddities exist:
 
-    * splitting is done on length of the text not on word bounderies
+    * splitting is done on length of the text not on word bounderies, some
+      words may be split in the middle
     * additional empty lines may occour
     * dashed lines (used for headings) are mainly not adapted (split)
 
-To clearly mark the special formatting,  an additional "return" character
+To clearly mark the special formatting,  an additional  "return" character
 is inserted where text was split.
 
-Hopefully this generated result is more comfortable to read than the text
+If the (human) user decided to use  --tty , the output is  most likely not
+subject to further postprocessing,  hence each leading TAB can be replaced
+by 8 spaces too.
+
+Hopefully this generated result is more comfortable to read  than the text
 provided by the default behaviour. Simply use the  --tty  option.
 
 
