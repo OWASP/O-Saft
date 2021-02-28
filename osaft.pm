@@ -14,6 +14,7 @@ package osaft;
 
 use strict;
 use warnings;
+use utf8;
 
 use constant {
     OSAFT_VERSION   => '21.02.21',  # official version number of this file
@@ -26,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.247 21/02/25 11:14:05",
+    SID_osaft   => "@(#) osaft.pm 1.249 21/02/28 19:38:26",
 
 };
 
@@ -2473,15 +2474,16 @@ our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
     '0x0300008B' => [qw(PSK-3DES-SHA)],
 
+    '0x03001301' => [qw(TLS13-AES128-GCM-SHA256)],     # TLS 1.3; see Note(d), see Note(e)
+    '0x03001302' => [qw(TLS13-AES256-GCM-SHA384)],     # TLS 1.3; see Note(d), see Note(e)
+    '0x03001304' => [qw(TLS13-AES128-CCM-SHA256)],     # TLS 1.3, see Note(e)
+    '0x03001305' => [qw(TLS13-AES128-CCM8-SHA256    TLS13-AES128-CCM-8-SHA256   TLS13-AES-128-CCM-8-SHA256)],    # TLS 1.3, see Note(e)
+
     # TODO: need to mark following 10 as old ciphers with changed IDs
     '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA)],    # ??
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      #
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],   # probably a typo
-    '0x03001301' => [qw(TLS13-AES128-GCM-SHA256)],     # TLS 1.3; see Note(d), see Note(e)
-    '0x03001302' => [qw(TLS13-AES256-GCM-SHA384)],     # TLS 1.3; see Note(d), see Note(e)
-    '0x03001304' => [qw(TLS13-AES128-CCM-SHA256)],     # TLS 1.3, see Note(e)
-    '0x03001305' => [qw(TLS13-AES128-CCM8-SHA256)],    # TLS 1.3, see Note(e)
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
     '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # see Note(c) above
@@ -3081,12 +3083,28 @@ our %cfg = (
     }, # use
    #----------------------+-----+----------------------------------------------
 
+   # SEE Note:tty
+   # following keys used when --tty (or similar) option was used
+   # i.g. the code will use the values only   if defined $cfg{'tty'}->{'width'}
+   # option key        default    description
+   #------------------+---------+----------------------------------------------
+    'tty' =>    {      # configuration for tty and behaviour according tty
+        'width'     => undef,   # screen width (columns) of the tty
+                                # NOTE: the value undef is used to detect if the
+                                #       option --tty was used
+        'ident'     => 2,       # left ident spaces, used to replace leftmost 8 spaces
+        'arrow'     => "↲",     # "continous arrow when line is split
+                                # ← 0x2190, ↲ 0x21b2, ⮠ 0x2ba0, ⤶ 0x2936, ⤸ 0x2938, 
+                                # NOTE: it's mandatory to have:  "use utf8"
+    }, # tty
+
    # option key        default    description
    #------------------+---------+----------------------------------------------
     'opt-v'         => 0,       # 1 when option -v was given
     'opt-V'         => 0,       # 1 when option -V was given
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex 0x esc)],
+                                # not yet used: csv html json ssv tab xml fullxml
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
     'mx_domains'    => [],      # list of mx-domain:port to be processed
@@ -4295,7 +4313,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.247 2021/02/25
+1.249 2021/02/28
 
 =head1 AUTHOR
 
