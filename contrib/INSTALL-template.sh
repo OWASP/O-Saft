@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.59 21/03/01 23:18:17
+#?      @(#) à#úTV 1.60 21/03/01 23:34:42
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -229,46 +229,46 @@ text_alt="file from previous installation, try running Â»$0 --cleanÂ« "
 text_old="ancient module found, try installing newer version, at least "
 
 # INSERTED_BY_MAKE {
-osaft_sh="OSAFT_SH_INSERTED_BY_MAKE"
-osaft_exe="OSAFT_PL_INSERTED_BY_MAKE"
-osaft_gui="OSAFT_GUI_INSERTED_BY_MAKE"
-contrib_dir="CONTRIBDIR_INSERTED_BY_MAKE"
-inst_directory=${inst:="INSTALLDIR_INSERTED_BY_MAKE"}
+osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
+osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
+osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
+contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
+inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
 
 files_contrib="
-	CONTRIB_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_CONTRIB
 		"
 
 files_install="
-	OSAFT_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_OSAFT
 		"
 
 files_install_cgi="
-	OSAFT_CGI_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_OSAFT_CGI
 		"
 
 files_install_doc="
-	OSAFT_DOC_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_OSAFT_DOC
 		"
 
 tools_intern="
-	DEVTOOLSINT_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_DEVTOOLSINT
 	"
 
 tools_extern="
-	DEVTOOLSEXT_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_DEVTOOLSEXT
 	"
 
 tools_modules="
-	DEVMODULES_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_DEVMODULES
 	"
 
 tools_optional="
-	TOOLS_OPT_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_TOOLS_OPT
 	"
 
 tools_other="
-	TOOLS_OTHER_INSERTED_BY_MAKE
+	INSERTED_BY_MAKE_TOOLS_OTHER
 	"
 
 # INSERTED_BY_MAKE }
@@ -284,10 +284,10 @@ files_ancient="
 
 # first, dirty hack to make tests in development mode possible
 # remember the inserted " to avoid substitutions here
-[ "OSAFT_SH_INSERTED_""BY_MAKE"   = "$osaft_sh"    ]  && osaft_sh=o-saft
-[ "OSAFT_PL_INSERTED_""BY_MAKE"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
-[ "OSAFT_GUI_INSERTED_""BY_MAKE"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
-[ "CONTRIBDIR_INSERTED_""BY_MAKE" = "$contrib_dir" ]  && contrib_dir=contrib
+[ "INSERTED_""BY_MAKE_OSAFT_SH"   = "$osaft_sh"    ]  && osaft_sh=o-saft
+[ "INSERTED_""BY_MAKE_OSAFT_PL"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
+[ "INSERTED_""BY_MAKE_OSAFT_GUI"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
+[ "INSERTED_""BY_MAKE_CONTRIBDIR" = "$contrib_dir" ]  && contrib_dir=contrib
 
 # some files "not to be installed" are ancient, they are kept here in
 # $files_not_installed to ensure that outdated content is also handled
@@ -367,7 +367,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.59 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.60 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
