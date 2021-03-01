@@ -39,10 +39,8 @@
 #=
 #=# check for installed O-Saft in /opt/o-saft
 #=#----------------------+---------------------------------------
-#=#           ./o-saft.pl	20.10.30
-#=# /opt/o-saft/o-saft.pl	20.10.30
-#=#          ./o-saft.tcl	1.230
-#=# /opt/o-saft/o-saft.tcl	1.230
+#=#             o-saft.pl	21.02.21 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	   1.237 /opt/o-saft/o-saft.tcl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -200,7 +198,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.56 21/02/28 17:50:09
+#?      @(#)  1.57 21/03/01 22:25:42
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -364,7 +362,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.56 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.57 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -551,6 +549,8 @@ if [ "$mode" = "checkdev" ]; then
 	exit 0
 fi; # checkdev mode }
 
+PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
+
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
 	echo_red "**ERROR: unknow mode  $mode; exit"
@@ -582,16 +582,16 @@ echo ""
 echo "# check for installed O-Saft in $inst_directory"
 echo "#$_line"
 for o in $osaft_exe $osaft_gui ; do
-	cnt=0
-	for p in `echo $PATH|tr ':' ' '` ; do
-		f="$p/$o"
-		if [ -e "$f" ]; then
-		cnt=`expr $err + 1`
-			v=`$p/$o +VERSION`
-			echo_label "$f" && echo_green "$v"
-		fi
-	done
-	[ 0 -eq $cnt ] && echo_red "$o not found"
+	echo_label "$o"
+	e=`\command -v $o`
+	if [ -n "$e" ] ; then
+		v=`$o +VERSION`
+		txt=`echo "$v $e"|awk '{printf("%8s %s",$1,$2)}'`
+		echo_green "$txt"
+	else
+		err=`expr $err + 1`
+		echo_red   "not found"
+	fi
 done
 echo "#$_line"
 
@@ -600,7 +600,7 @@ echo "# check for installed O-Saft resource files"
 echo "#$_line"
 # currently no version check
 cnt=0
-for p in `echo $inst_directory $HOME $PATH|tr ':' ' '` ; do
+for p in `echo $HOME $PATH|tr ':' ' '` ; do
 	rc="$p/$osaft_exerc"
 	if [ -e "$rc" ]; then
 		cnt=`expr $err + 1`
