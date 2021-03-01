@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.107 21/03/01 23:15:41
+#?      @(#) Makefile 1.108 21/03/01 23:34:06
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.107
+_SID            = 1.108
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -272,21 +272,21 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.107
-EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@'    \
-			-e 's@CONTRIBDIR_INSERTED_BY_MAKE@$(CONTRIB.dir)@'    \
-			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@'     \
-			-e 's@TOOLS_OTHER_INSERTED_BY_MAKE@$(_INST.tools_other)@' \
-			-e 's@TOOLS_OPT_INSERTED_BY_MAKE@$(_INST.tools_opt)@' \
-			-e 's@DEVTOOLSINT_INSERTED_BY_MAKE@$(_INST.tools_int)@' \
-			-e 's@DEVTOOLSEXT_INSERTED_BY_MAKE@$(_INST.tools_ext)@' \
-			-e 's@DEVMODULES_INSERTED_BY_MAKE@$(_INST.devmodules)@' \
-			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@'         \
-			-e 's@OSAFT_SH_INSERTED_BY_MAKE@$(SRC.sh)@'           \
-			-e 's@OSAFT_PL_INSERTED_BY_MAKE@$(SRC.pl)@'           \
-			-e 's@OSAFT_GUI_INSERTED_BY_MAKE@$(SRC.tcl)@'         \
-			-e 's@OSAFT_CGI_INSERTED_BY_MAKE@$(_INST.osaft_cgi)@' \
-			-e 's@OSAFT_DOC_INSERTED_BY_MAKE@$(_INST.osaft_doc)@' \
+_INST.text      = generated from Makefile 1.108
+EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
+			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
+			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
+			-e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@' \
+			-e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@' \
+			-e 's@INSERTED_BY_MAKE_DEVTOOLSINT@$(_INST.tools_int)@' \
+			-e 's@INSERTED_BY_MAKE_DEVTOOLSEXT@$(_INST.tools_ext)@' \
+			-e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@' \
+			-e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'           \
+			-e 's@INSERTED_BY_MAKE_OSAFT_PL@$(SRC.pl)@'           \
+			-e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'         \
+			-e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@' \
+			-e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@' \
+			-e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'         \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
                 # last substitude is fallback to ensure everything is changed
 
@@ -502,8 +502,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.107
-tar:     GREP_EDIT  = 1.107
+GREP_EDIT           = 1.108
+tar:     GREP_EDIT  = 1.108
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
