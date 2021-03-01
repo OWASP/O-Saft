@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.58 21/03/01 22:51:46
+#?      @(#)  1.59 21/03/01 23:18:17
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -229,6 +229,7 @@ text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
 # INSERTED_BY_MAKE {
+osaft_sh="OSAFT_SH_INSERTED_BY_MAKE"
 osaft_exe="OSAFT_PL_INSERTED_BY_MAKE"
 osaft_gui="OSAFT_GUI_INSERTED_BY_MAKE"
 contrib_dir="CONTRIBDIR_INSERTED_BY_MAKE"
@@ -283,6 +284,7 @@ files_ancient="
 
 # first, dirty hack to make tests in development mode possible
 # remember the inserted " to avoid substitutions here
+[ "OSAFT_SH_INSERTED_""BY_MAKE"   = "$osaft_sh"    ]  && osaft_sh=o-saft
 [ "OSAFT_PL_INSERTED_""BY_MAKE"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
 [ "OSAFT_GUI_INSERTED_""BY_MAKE"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
 [ "CONTRIBDIR_INSERTED_""BY_MAKE" = "$contrib_dir" ]  && contrib_dir=contrib
@@ -365,7 +367,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.58 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.59 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -597,7 +599,7 @@ echo "#$_line"
 echo ""
 echo "# check for installed O-Saft in $inst_directory"
 echo "#$_line"
-for o in $osaft_exe $osaft_gui ; do
+for o in $osaft_exe $osaft_gui $osaft_sh ; do
 	echo_label "$o"
 	e=`\command -v $o`
 	if [ -n "$e" ] ; then
