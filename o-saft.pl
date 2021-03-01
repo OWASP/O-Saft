@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1038 21/02/28 23:30:42",
+    SID         => "@(#) yeast.pl 1.1040 21/03/01 00:44:00",
     STR_VERSION => "21.02.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -109,7 +109,7 @@ sub _yeast_EXIT($)  {
     my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
+    if ((grep{/(?:([+,]|--)$arg).*/i} @ARGV) > 0) { # case-sensitve, cannot use _is_argv()
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         exit 0;
     }
@@ -120,7 +120,7 @@ sub _yeast_NEXT($)  {
     my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {  # case-sensitve, cannot use _is_argv()
+    if ((grep{/(?:([+,]|--)$arg).*/i} @ARGV) > 0) { # case-sensitve, cannot use _is_argv()
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         return 1;
     }
@@ -147,7 +147,7 @@ BEGIN {
     unshift(@INC, $_path);
 
     # handle simple help very quickly; _is_argv() cannot be used because upper case
-    if ((grep{/(?:--|\+)VERSION/} @ARGV) > 0) { _version_exit(); }
+    if ((grep{/(?:[+]|,|--)VERSION/} @ARGV) > 0) { _version_exit(); }
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
@@ -554,7 +554,7 @@ if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
         #  NOTE: the purpose here is to *change the source array"
         @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
         @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
-        @rc_argv = grep{s/\s*([+-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
+        @rc_argv = grep{s/\s*([+,-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
         ## use critic
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
@@ -629,7 +629,7 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| -------------------------------------
 my $err = "";
 my @dbx =  grep{/--(?:trace|v$|exitcode.?v$|tests?|yeast)/} @argv;  # may have --trace=./file
-push(@dbx, grep{/^[+](?:tests?)/} @argv);   # may have +test*
+push(@dbx, grep{/^[+,](?:tests?)/} @argv);  # may have +test*
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -4792,8 +4792,8 @@ sub checkciphers    {
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
-    $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
-    $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
+#    $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
+#    $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
     # TODO: $checks{'cipher_pfs'}->{val} = (1 > $cnt_pfs) ? " " : "";
 
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
@@ -6942,10 +6942,13 @@ sub printciphersummary  {
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
-    my $key = $data{'cipher_selected'}->{val}($host, $port);
-    print_line($legacy, $host, $port, 'cipher_selected',
-               $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
-    # print_data($legacy, $host, $port, 'cipher_selected');
+    if (0 < $cfg{'need_netinfo'}) {
+        my $key = $data{'cipher_selected'}->{val}($host, $port);
+        print_line($legacy, $host, $port, 'cipher_selected',
+                   $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+    } else {
+        _hint("'cipher_selected' temporarily disabled");  # TODO: adapte to new SSLhello (2/2021)
+    }
     _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
     return;
 } # printciphersummary
@@ -7830,11 +7833,11 @@ while ($#argv >= 0) {
 
     # all options starting with  --h or --help or +help  are not handled herein
     _y_ARG("opt_--h? $arg");
-    if ($arg =~ /^--h$/)                        { $arg = "--help=help_brief"; } # --h  is special
-    if ($arg =~ /^(?:--|\+)help$/)              { $arg = "--help=NAME"; }   # --help
-    if ($arg =~ /^\+(abbr|abk|glossar|todo)$/i) { $arg = "--help=$1"; }     # for historic reason
+    if ($arg =~ /^--h$/)                            { $arg = "--help=help_brief"; } # --h  is special
+    if ($arg =~ /^(?:--|\+)help$/)                  { $arg = "--help=NAME"; }   # --help
+    if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
-    if ($arg =~ /^(?:--|\+)help=?(.*)?$/) {
+    if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # if it was --help=*
@@ -7997,7 +8000,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
     if ($arg =~ /^--tests?/)            { $test = $arg;             } # SEE Note:--test-*
-    if ($arg =~ /^[+]tests?/)           { $test = $arg;       next; } # SEE Note:--test-*
+    if ($arg =~ /^[+,]tests?/)          { $test = $arg;       next; } # SEE Note:--test-*
         # handles also --test-* and --tests-*; no further check if +test*
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
@@ -8241,6 +8244,7 @@ while ($#argv >= 0) {
     my $p = qr/[._-]/;  # characters used as separators in commands keys
                         # this will always be used as $p? below
     _y_ARG("command? $arg");
+    $arg =~ s/^,/+/;    # allow +command and ,command
     # The following sequence of conditions is important: commands which are an
     # alias for another command are listed first. These aliases should contain
     # the comment  "# alias"  somewhere in the line, so it can be extracted by
@@ -8627,7 +8631,8 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             #$legacy = $cfg{'legacy'};
         }
     }
-    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+    # $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+    # TODO: need_netinfo disabled until all functionaluty provided by NET::SSLhello
 }
 
 _yeast_TIME("inc{");
