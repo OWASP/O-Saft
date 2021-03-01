@@ -31,6 +31,9 @@
 #                         All lines starting with #= are the sample output.
 #?          --checkdev  - check system for development (make) requirements
 #=
+#=# check environment variable PATH
+#=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
+#=
 #=# check installation in /opt/o-saft
 #=# (warnings are ok if 'git clone' will be used for development)
 #=#--------------------------------------------------------------
@@ -198,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.57 21/03/01 22:25:42
+#?      @(#)  1.58 21/03/01 22:51:46
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -362,7 +365,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.57 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.58 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -549,8 +552,6 @@ if [ "$mode" = "checkdev" ]; then
 	exit 0
 fi; # checkdev mode }
 
-PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
-
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
 	echo_red "**ERROR: unknow mode  $mode; exit"
@@ -559,6 +560,21 @@ fi
 
 # all following is mode "check"
 #[ 0 -lt "$optx" ] && set -x    # - not used here
+
+cnt=0
+echo ""
+echo "# check environment variable PATH"
+for p in `echo $PATH|tr ':' ' '` ; do
+	o="$p/$osaft_exe"
+	if [ -e "$o" ]; then
+		cnt=`expr $cnt + 1`
+		echo_label "$osaft_exe" && echo_green "$p"
+	fi
+done
+[ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
+		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
+
+PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
 
 [ -n "$optn"  ] && echo cd "$inst_directory"
 cd "$inst_directory"
