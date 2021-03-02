@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) à#úTV 1.60 21/03/01 23:34:42
+#?      @(#)  1.61 21/03/02 01:09:47
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -213,6 +213,7 @@ try=''
 ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
+_break=0        # 1 if screen width < 50; then use two line as output
 colour=""       # 32 green, 34 blue for colour-blind
 other=0
 force=0
@@ -308,11 +309,22 @@ osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
 
-_line='----------------------+---------------------------------------'
+_line='----------------------+-----------------'
+_cols=0
+\command -v \tput >/dev/null && _cols=`\tput cols`
+if [ 0 -lt $_cols ]; then
+	# adapt _line to screen width
+	[ 51 -gt $_cols ] && _break=1   # see echo_label()
+	while [ 42 -lt $_cols ]; do
+		_line="$_line-"
+		_cols=`expr $_cols - 1`
+	done
+fi
 
 # --------------------------------------------- internal functions
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
+	[ 0 -lt $_break ] && perl -le 'printf"\n\t"'   # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
@@ -367,7 +379,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.60 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.61 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -732,15 +744,14 @@ echo "#$_line"
 echo ""
 echo "# check for openssl executable in PATH"
 echo "#$_line"
-echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)"
-# TODO: warning when openssl missing
+echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)" \
+	|| echo_yellow "missing"
 # TODO: error when openssl older than 0x01000000 has no SNI
 echo "#$_line"
 
 echo ""
 echo "# check for openssl executable used by O-Saft"
 echo "#$_line"
-# TODO: error when openssl missing
 for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	r="$p/.$osaft_exe"
@@ -748,7 +759,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		(
 		cd "$p" # ensure that $r is used
 		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
-		echo_label "$o" && echo_green "$openssl"
+		echo_label "$o" && echo_green "$openssl" || echo_red "missing"
 		)
 	fi
 done
