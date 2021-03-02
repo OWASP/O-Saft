@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.61 21/03/02 01:09:47
+#?      @(#)  1.62 21/03/02 14:45:56
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -324,7 +324,8 @@ fi
 # --------------------------------------------- internal functions
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
-	[ 0 -lt $_break ] && perl -le 'printf"\n\t"'   # use additional line
+	[ 0 -eq $_break ] && return
+	perl -le 'printf"\n\t"'     # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
@@ -379,7 +380,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.61 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.62 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
