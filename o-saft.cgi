@@ -46,11 +46,15 @@ localhost, *.local, (0|10|127|169|172|192|224|240|255).X.X.X
 
 =item * any IPv6 addresses in URLs
 
+=item * any octal notation in IP addresses
+
 =back
 
 To get a list of RegEx for invalid parameters, please use:
 
   grep qr/ o-saft.cgi
+
+where $key is  --(host|url)=
 
 =head1 OPTIONS, PARAMETERS
 
@@ -111,7 +115,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.54 21/01/14 01:09:01";
+my $SID_cgi = "@(#) o-saft.cgi 1.55 21/03/29 17:23:44";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -202,7 +206,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.54\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.55\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -248,7 +252,6 @@ if ($me =~/\.cgi$/) {
 	my $err = 0;
 	my $key = '&--(?:host|url)=';
 	foreach my $dangerous (
-		#dbx# print "#dbx: $dangerous # $qs\n";
 		qr/[^a-zA-Z0-9,.:_&\!\/=\+-]/i,
 			# dangerous characters anywhere
 			# above whitelist for allowed characters!
@@ -319,6 +322,14 @@ if ($me =~/\.cgi$/) {
 		#       Unfortunately Math::BigInt is required (breaks usage on
 		#       ancient systems).
 
+		# octal IP addresses may look like:
+		#   0127.000000002.0.1
+		# i.g. each octet is prefixed with 0, followed by any amount of
+                # 0, followed by [1-4] (may be missing), followed by [0-7][0-7]
+                # NOTE: octal addresses are not bad in general,  but the checks
+		#   below expect only  CIDR numbers in decimal notation,  hence
+		#   any occourance of octal numbers are rejected
+
 		# NOTE: according following RegExs
 		# - grouping with back reference is used insted of  (?: ... )
 		#   sometimes, this is because  :  is used literally in RegExs
@@ -330,6 +341,9 @@ if ($me =~/\.cgi$/) {
 		#   be checked may be passed without key, something like:
 		#   --cgi&--host=good.FQDN&localhost&--enabled=
 		# - IPv4 matching is lazy with [0-9]+
+
+		qr/(?:(?:$key)?[0-9.]*(?:(0+[1-4]?[0-7]{1,2}[.])|([.]0+[1-4]?[0-7]{1,2})))/,
+			# octal addresses are always ignored
 
 		qr/(?:&(localhost|10|127|224(.[0-9]){1,3}|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
 			# first match bare hostname argument without --host=
