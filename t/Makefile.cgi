@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.52 20/02/16 00:31:48
+#?      @(#) Makefile.cgi 1.53 21/03/29 17:19:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.52
+_SID.cgi           := 1.53
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -90,6 +90,9 @@ LIST.cgi.badIPv4   := \
 	240.0.0.1     251.251.251.251            255.255.255.255 \
 	127.0.1       127.1         10.0.1  10.1 224.0.1   224.1 \
 	127001        111111        2133465000   42 \
+	0127.0.1      127.071       127.0.07     127.0.0.000042  \
+
+# last line contain IPs with ocatl notations; should be ignored in general
 
 # the IP or hostname becomes part of the target name, hence IPv6 are not
 # possible verbatim because they contain : in the name; the : must be escaped
@@ -308,7 +311,7 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.52: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.53: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
