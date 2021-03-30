@@ -44,6 +44,17 @@ following will be found:
 
 localhost, *.local, (0|10|127|169|172|192|224|240|255).X.X.X
 
+=item * any IP notation other than "dotted decimal" are illegal:
+
+* https://0127.00.000.01/     - octal IP address
+
+* https://0x7f000001/         - hexadecimal IP address
+
+* https://2130706433/         - integer or DWORD IP address
+
+* https://0x0b.026.8492/      - any mixed notation
+
+
 =item * any IPv6 addresses in URLs
 
 =item * any octal (prefix 0) or hex (prefix 0x) notation in IP addresses:
@@ -117,7 +128,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.56 21/03/30 12:49:34";
+my $SID_cgi = "@(#) o-saft.cgi 1.57 21/03/30 15:18:58";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -208,7 +219,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.56\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.57\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -352,15 +363,18 @@ if ($me =~/\.cgi$/) {
 			# this avoids false positive matches in more lazy RegEx
 			# FIXME: probably necessary for all following RegEx
 			# NOTE:  also bad 127.666 (= 127.0.2.154)
-e
+
+		qr/(?:(?:$key)?((?:0?127|0x0?7f).[0-9afx.]+))/i,
+			# any 127.*
+
 		qr/(?:(?:$key)?[0-9.]*(?:(0+[1-4]?[0-7]{1,2}[.])|([.]0+[1-4]?[0-7]{1,2})))/,
 			# octal addresses are always ignored
 
 		qr/(?:(?:$key)?[0-9x.]*(?:(0x0*[0-9af]{1,2}[.])|([.]0x0*[0-9af]{1,2})))/i,
 			# hex addresses are always ignored
 
-		qr/(?:(?:$key)?((10|127|224).[0-9]+(.[0-9]{1,3})?))/i,
-			# abbreviated IPv4: 127.1 127.41.1 10.0.1 224.1
+		qr/(?:(?:$key)?((10|224).[0-9]+(.[0-9]{1,3})?))/i,
+			# abbreviated IPv4: 10.1 10.41.1 10.0.1 224.1
 
 		qr/(?:(?:$key)(localhost|::1|ffff::1|(ffff:)?7f00:1)(&|$))/i,
 			# localhost
@@ -373,7 +387,7 @@ e
 		qr/(?:(?:$key)?((ffff:)?(192\.0\.[02]|192.88\.99|198\.51\.100|203\.0\.13)\.[\d]+))/i,
 			# common class C RFC networks for private use
 
-		qr/(?:(?:$key)?((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
+		qr/(?:(?:$key)?((ffff:)?(0|10|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
 			# loopback, mulicast
 
 		qr/(?:(?:$key)?((fe80|fe[c-f][0-9a-f]:)))/i,
