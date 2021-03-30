@@ -46,7 +46,9 @@ localhost, *.local, (0|10|127|169|172|192|224|240|255).X.X.X
 
 =item * any IPv6 addresses in URLs
 
-=item * any octal notation in IP addresses
+=item * any octal (prefix 0) or hex (prefix 0x) notation in IP addresses:
+
+0x0b.026.8492
 
 =back
 
@@ -115,7 +117,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.55 21/03/29 17:23:44";
+my $SID_cgi = "@(#) o-saft.cgi 1.56 21/03/30 12:49:34";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -206,7 +208,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.55\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.56\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -322,6 +324,9 @@ if ($me =~/\.cgi$/) {
 		#       Unfortunately Math::BigInt is required (breaks usage on
 		#       ancient systems).
 
+		# hex IP addresses may look like:
+		#   127.0xb.0.1    127.0x00000b.0.1
+
 		# octal IP addresses may look like:
 		#   0127.000000002.0.1
 		# i.g. each octet is prefixed with 0, followed by any amount of
@@ -342,14 +347,17 @@ if ($me =~/\.cgi$/) {
 		#   --cgi&--host=good.FQDN&localhost&--enabled=
 		# - IPv4 matching is lazy with [0-9]+
 
-		qr/(?:(?:$key)?[0-9.]*(?:(0+[1-4]?[0-7]{1,2}[.])|([.]0+[1-4]?[0-7]{1,2})))/,
-			# octal addresses are always ignored
-
 		qr/(?:&(localhost|10|127|224(.[0-9]){1,3}|(ffff)?::1|(ffff:)?7f00:1)(&|$))/i,
 			# first match bare hostname argument without --host=
 			# this avoids false positive matches in more lazy RegEx
 			# FIXME: probably necessary for all following RegEx
 			# NOTE:  also bad 127.666 (= 127.0.2.154)
+e
+		qr/(?:(?:$key)?[0-9.]*(?:(0+[1-4]?[0-7]{1,2}[.])|([.]0+[1-4]?[0-7]{1,2})))/,
+			# octal addresses are always ignored
+
+		qr/(?:(?:$key)?[0-9x.]*(?:(0x0*[0-9af]{1,2}[.])|([.]0x0*[0-9af]{1,2})))/i,
+			# hex addresses are always ignored
 
 		qr/(?:(?:$key)?((10|127|224).[0-9]+(.[0-9]{1,3})?))/i,
 			# abbreviated IPv4: 127.1 127.41.1 10.0.1 224.1
