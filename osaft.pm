@@ -17,7 +17,7 @@ use warnings;
 use utf8;
 
 use constant {
-    OSAFT_VERSION   => '21.02.21',  # official version number of this file
+    OSAFT_VERSION   => '21.03.21',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.250 21/02/28 23:10:42",
+    SID_osaft   => "@(#) osaft.pm 1.251 21/04/14 23:23:24",
 
 };
 
@@ -2639,9 +2639,10 @@ our %cfg = (
     'ca_file'       => undef,   # PEM format file with CAs
     'ca_path'       => undef,   # path to directory with PEM files for CAs
                                 # see Net::SSLinfo why undef as default
-    'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
+    'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem cert.pem)],
                                 # common PEM filenames for CAs; 1st used as default
-    'ca_paths'      => [qw(/etc/ssl/certs       /usr/lib/certs           /System/Library/OpenSSL)],
+                                # cert.pem instead of certs.pem on Android :-(
+    'ca_paths'      => [qw(/etc/ssl/certs       /usr/lib/certs           /System/Library/OpenSSL /etc/tls/certs)],
                                 # common paths to PEM files for CAs; 1st used as default
     'openssl_cnfs'  => [qw(/etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)],
                                 # common openssl.cnf files for openssl; 1st used as default
@@ -4314,7 +4315,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.250 2021/02/28
+1.251 2021/04/14
 
 =head1 AUTHOR
 
