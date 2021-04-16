@@ -34,7 +34,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.14 21/02/26 01:47:02
+#?      @(#) bunt.pl 1.15 21/04/16 13:38:20
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann
@@ -48,6 +48,7 @@ use charnames qw( :full );
 our ($VERSION) = -1;   # dummy assignment to keep `perlcritic -s ...' silent
 
 ## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
 my $ich   = $0; $ich =~ s#.*[/\\]##;
 sub _warn(@) { my @args = @_; print STDERR "[$ich]: **", @args, "\n"; return; }
@@ -243,6 +244,7 @@ sub testme () {
 
 # --------------------------------------------- options
 while ( $#ARGV >= 0 ) {
+        ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 	my $arg = shift;
 	my $fh;
 	my $dumm;
@@ -298,7 +300,8 @@ if (-t STDIN) {
 ## use critic
 
 my $txt = "";
-while (my $line = <STDIN>) {
+while (my $line = <>) {
+        ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 	$_ = $line; # = $_;
 	if ("$line" =~ m/^\s*$/) { print "\n"; next; } # speed!
 	#dbx print "DBX: $_";
@@ -318,24 +321,30 @@ while (my $line = <STDIN>) {
 	#} all modes
 
 	if ($mode eq "line") {
-		/<<[^>]*>>/     && do { print cyan( "$line"); next; };
-		/yes.*WEAK/i    && do { print red(  "$line"); next; };
-		/yes.*LOW/i     && do { print red(  "$line"); next; };
-		/yes.*MEDIU/i   && do { print brown("$line"); next; };
-		/yes.*HIGH/i    && do { print green("$line"); next; };
-		/yes$/          && do { print green("$line"); next; };
-		/no$/           && do { print brown("$line"); next; };
-		/no .*/         && do { print red(  "$line"); next; };
+		/<<[^>]*>>/         && do { print cyan( "$line"); next; };
+		/yes.*WEAK/i        && do { print red(  "$line"); next; };
+		/yes.*LOW/i         && do { print red(  "$line"); next; };
+		/yes.*MEDIUM/i      && do { print brown("$line"); next; };
+		/yes.*HIGH/i        && do { print green("$line"); next; };
+		/yes$/              && do { print green("$line"); next; };
+		/no$/               && do { print brown("$line"); next; };
+		/no .*/             && do { print red(  "$line"); next; };
+		/\s+(?:C|D|WEAK)$/i && do { print red(  "$line"); next; };
+		/\s+(?:C|D|LOW)$/i  && do { print red(  "$line"); next; };
+		/\s+(?:B|MEDIUM)$/i && do { print brown("$line"); next; };
+		/\s+(?:A|HIGH)$/i   && do { print green("$line"); next; };
+		/\s+(?:-[?]-)$/i    && do { print cyan( "$line"); next; };
 		print "$line"; next;
 	}
 
 	if ($mode eq "word") {
-		/yes\s*(?:LOW|WEAK|MEDIUM|HIGH)$/i && do {
+		/(?:A|B|C|D|-[?]-|LOW|WEAK|MEDIUM|HIGH)$/i && do {
 			# match cipher line with risk
-			s/(LOW)$/    red(  $1);/ie;
-			s/(WEAK)$/   red(  $1);/ie;
-			s/(MEDIUM)$/ brown($1);/ie;
-			s/(HIGH)$/   green($1);/ie;
+			s/(C|D|WEAK)$/ red(  $1);/ie;
+			s/(C|D|LOW)$/  red(  $1);/ie;
+			s/(B|MEDIUM)$/ brown($1);/ie;
+			s/(A|HIGH)$/   green($1);/ie;
+			s/(-[?]-)$/    cyan ($1);/ie;
 			print "$_";
 			next;
 		};
