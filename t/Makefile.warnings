@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#)  1.59 20/11/09 22:22:46
+#?      @(#)  1.60 21/04/16 11:39:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.59
+_SID.warnings      := 1.60
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -241,7 +241,7 @@ warning-149: TEST.args  = --openssl=/does/not/exist         +quit
 warning-201: TEST.args  = +cn                               unknown-host
 warning-202: TEST.args  = +cn --exit=HOST1                  www.skype.com
 #                       # scary: need a reliable FQDN here -^^^^^^^^^^^^^
-#warning-203: TEST.args  = free
+warning-203: TEST.args  = TODO: testing connection without SNI (errors), difficult ...
 warning-204: TEST.args  = TODO: testing connection without SNI, difficult ...
 warning-205: TEST.args  = TODO: testing connection failed, difficult ...
 warning-206: TEST.args  = TODO: testing connection witout SNI errors from Net::SSLinfo, difficult ...
@@ -384,7 +384,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "#  1.59: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.60: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
