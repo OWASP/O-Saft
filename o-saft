@@ -32,7 +32,8 @@
 #?      -post="program [options]"
 #?              program in ./contrib to pipe output of  o-saft.pl  to
 #?      -colour alias for  -post=bunt.pl
-#?      -blind  alias for  -post='bunt.pl -blind'
+#?      -blind  alias for  -post='bunt.pl --blind'
+#?      -line   alias for  -post='bunt.pl --line'
 #?      -less   pipe output of  o-saft.pl  to  less
 #?      -more   pipe output of  o-saft.pl  to  more
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
@@ -70,7 +71,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.25 21/02/26 02:06:03
+#?      @(#) o-saft 1.26 21/04/16 13:26:57
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -123,7 +124,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.25"; exit 0; ;;
+        +VERSION)       echo "1.26"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -147,7 +148,8 @@ EoT
         -tag*)          docker_tag="$1" ; ;;
         -colour | --colour) post="$contrib/bunt.pl" ; ;;
         -color  | --color)  post="$contrib/bunt.pl" ; ;;
-        -blind  | --blind)  post="$contrib/bunt.pl -blind" ; ;;
+        -blind  | --blind)  post="$contrib/bunt.pl --blind" ; ;;
+        -line   | --line)   post="$contrib/bunt.pl --line"  ; ;;
         -less   | --less)   post="less" ; ;;
         -more   | --more)   post="more" ; ;;
         -prg=*) prg="`expr "$1" ':' '-prg=\(.*\)'`" ; ;;  # for debugging only
