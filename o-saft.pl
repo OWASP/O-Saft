@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1040 21/03/01 00:44:00",
-    STR_VERSION => "21.02.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1042 21/04/16 11:36:03",
+    STR_VERSION => "21.03.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -2866,13 +2866,16 @@ sub _init_openssldir    {
         $status = 0;  # avoid following warning below
     } else {
         # process only if no errors to avoid "Use of uninitialized value"
+        # until 4/2021: path was only returned if $dir/certs exists
+        # since 4/2021: path is always returned (because Android does not have certs/ :
         my $openssldir = $dir;
-        $dir =~ s#[^"]*"([^"]*)"#$1#;
+        $dir    =~ s#[^"]*"([^"]*)"#$1#;
+        $capath =  $dir;
+        unshift(@{$cfg{'ca_paths'}}, $dir); # dosn't harm
         if (-e "$dir/certs") {
             $capath = "$dir/certs";
-        } else {    # no directory found, add path to common paths as last resort
-            _warn("148: 'openssl version -d' returned not existing: '$openssldir'; ca_path not set .");
-            unshift(@{$cfg{'ca_paths'}}, $dir); # dirty hack (but dosn't harm:)
+        } else {
+            _warn("148: 'openssl version -d' returned: '$openssldir' which does not contain certs/ ; ignored.");
         }
     }
     if ($status != 0) {                 # on Windoze status may be 256
@@ -2932,7 +2935,7 @@ sub _init_openssl       {
         $cfg{'ca_file'} = "$cfg{'ca_paths'}[0]/$cfg{'ca_files'}[0]"; # use default
         _warn("060: no PEM file for CA found; using '--ca-file=$cfg{'ca_file'}'");
         _warn("     if default file does not exist, some certificate checks may fail");
-        _hint("use '--ca-file=/full/path/ca-certificates.crt'");
+        _hint("use '--ca-file=/full/path/$cfg{'ca_files'}[0]'");
     }
     return;
 } # _init_openssl
@@ -4095,12 +4098,17 @@ sub _get_data0          {
         _warn("204: Can't make a connection to '$host:$port' without SNI; no initial data (compare with and without SNI not possible)");
     }
     _yeast_TIME("no SNI}");
+    if (0 < (length Net::SSLinfo::errors())) {
+        _warn("203: connection without SNI succeded with errors; errors ignored");
+        if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
+            _warn("206: $_") foreach Net::SSLinfo::errors();
+        } else {
+            _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
+        }
+    }
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
-    if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
-        _warn("206: $_") foreach Net::SSLinfo::errors();
-    }
     Net::SSLinfo::do_ssl_close($host, $port);
     $Net::SSLinfo::use_SNI  = $cfg{'use'}->{'sni'};
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
@@ -4454,6 +4462,11 @@ sub check_url($$)   {
     #     Content-Type: application/ocsp-response
     #     Content-Length: 5
     #
+    # example (3/2021): http://r3.i.lencr.org
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/pkix-cert
+    #     Content-Length: 1129
+    #
     # bad example (12/2020): http://clients1.google.com/ocsp
     #     HTTP/1.1 404 Not Found
     #     Date: Sun, 17 Apr 2016 10:24:46 GMT
@@ -4544,6 +4557,7 @@ sub check_url($$)   {
                 }
             }
         }
+#if ($ctype !~ m#application/(?:pkix-cert|pkcs7-mime)#i)   # for CA Issuers; see rfc5280#section-4.2.1.13
         if ($ctype !~ m#application/(?:pkix-crl|x-pkcs7-crl)#i) {
                 return _get_text('invalid', "Content-Type: $ctype");
         }
