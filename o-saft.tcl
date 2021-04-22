@@ -392,6 +392,15 @@ exec wish "$0" ${1+"$@"}
 #.      Trace messages are prefixed with:   #[$0]:
 #.      Debug messages are prefixed with:   #dbx [$0]:
 #.
+#.   Tracing and Debugging with alias names
+#.      If nor arguments (options) can be passed to the script, alias names of
+#.      the script can be used to simulate passed options:
+#.      # alias name            # behaves as called like
+#.      #-----------------------#-------------------------------
+#.      o-saft--testtcl.tcl     $0 --test-tcl
+#.      o-saft--d.tcl           $0 --d
+#.      o-saft--trace.tcl       $0 --trace
+#.
 #.   Notes About Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions since 2015
 #.      are the perl executable and the start method of the external browser.
@@ -406,7 +415,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.239 Spring Edition 2021
+#?      @(#) 1.240 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -418,8 +427,14 @@ exec wish "$0" ${1+"$@"}
 #?
 # -----------------------------------------------------------------------------
 
-package require Tcl     8.5
-package require Tk      8.5
+set cfg(testtcl) 0
+#package require Tcl     8.5    ;# for documentation only
+#package require Tk      8.5    ;# modern Tcl/Tk doesn't need it anymore
+if {![regexp -- {--test-?tcl} $argv]} {
+    # keep some systems quiet
+    package require Tk
+    set cfg(testtcl) 1
+}
 
 #_____________________________________________________________________________
 #___________________________________________________________ early bindings __|
@@ -433,7 +448,7 @@ package require Tk      8.5
 # might be defined later in the code, but it must be done before any usage.
 # Hence it's defined right below.
 
-if {![regexp -- {--test-?tcl} $argv]} {
+if {0==$cfg(testtcl)} {
     # do not bind in debug-only mode to avoid errors
     foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
                          TButton TCombobox TEntry TLabel TText Frame Menu \
@@ -480,10 +495,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.239 21/04/22 14:26:51"
+set cfg(SID)    "@(#) o-saft.tcl 1.240 21/04/23 00:57:48"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.239}
+set cfg(VERSION) {1.240}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -605,14 +620,17 @@ set cfg(max53)  4090           ;# max. size of text to be stored in table column
 #   To avoid the crash, large texts (greater than this value) can be stripped.
 #   The default value of ~4000 is based on experience.
 
+set cfg(DESC)   {-- CONFIGURATION misc settings ------------------------------}
+
 # RC-END }
 
 if {[info exists env(o_saft_docker_tag)] ==1} { set prg(docker-tag) $env(o_saft_docker_tag);  }
 if {[info exists env(o_saft_docker_name)]==1} { set prg(docker-id)  $env(o_saft_docker_name); }
 
 catch {
-  set fid [open $prg(INIT) r]
-  set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
+    set fid [open $prg(INIT) r] ;# read .o-saft.pl
+    set cfg(.CFG) [read $fid]
+    close $fid
 }
 
 #| configure GUI
@@ -620,9 +638,6 @@ catch {
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
 set IMG(help) ::tk::icons::question
-if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
-    # reset if no icons there, forces text (see cfg_buttons below)
-
 #et IMG(...)                   ;#  other images are defined in cfg(IMG)
 
 #et myX(minx)  myX(miny)  myX(geoS)     # see gui_init() below
@@ -636,8 +651,10 @@ set myX(buffer) PRIMARY        ;# buffer to be used for copy&paste GUI texts
                                 #         <Btn2Up>: insert-selection(PRIMARY,CLIPBOARD) \
                                 #         ... \
 
-set my_bg       "[lindex [. config -bg] 4]"    ;# default background color
+set my_bg       lightgray      ;# default background color
                                 # this colour is used for buttons too
+                                # default background of Tk widget (if available)
+catch { set my_bg "[lindex [.i config -bg] 4]" }
 
 # define all buttons used in GUI
     # Following table defines the  label text, background colour, image and tip
@@ -649,6 +666,7 @@ set my_bg       "[lindex [. config -bg] 4]"    ;# default background color
     # simple theme (just text and background) or a more sexy one using images.
     # Note:   the key (object name) in following table must be the last part of
     #         the object (widget) name of the button, example: .f.about  .
+    # Note:   should be used after calling gui_init
 
     #----------+---------------+-------+-------+-------------------------------
     # object    button text colour   image      help text (aka tooltip)
@@ -791,6 +809,16 @@ proc _get_image   {key} { global cfg_images;  return $cfg_images($key) };
 proc _get_padx    {key} { global myX;         return $myX($key)        };
     #? return padx value for key from global myX variable
 
+proc _message     {icon title txt} {
+    # print message, either with GUI or on STDERR
+    if {""==[info commands tk_messageBox]} {
+        puts stderr "# $icon: $title #\n$txt"
+    } else {
+        tk_messageBox -icon $icon -title "$title" -message "$txt"
+    }
+    return
+};# _message
+
 if {[regexp {indows} $tcl_platform(os)]} {
     # Some platforms are too stupid to run our executable prg(SAFT) directly,
     # they need a proper  perl executable to do it. Check for perl.exe in all
@@ -810,6 +838,12 @@ if {[regexp {indows} $tcl_platform(os)]} {
         set prg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
     }
 }
+if {1==[info exists env(ANDROID_DATA)]} {
+    # dirty hack to detect Android and adapt configuration
+    set cfg(bstyle) "text" ;# text by default, because icons are too small
+    set prg(PERL) /data/data/com.termux/files/usr/bin/perl
+        # FIXME: not working for all perl installations on Android
+}
 # NOTE:  as Tcl is picky about empty variables, we have to ensure later, that
 # $prg(PERL) is evaluated propperly,  in particular when it is empty.  We use
 # Tcl's  {*}  evaluation for that.
@@ -817,13 +851,16 @@ if {[regexp {indows} $tcl_platform(os)]} {
 #| check if prg(SAFT) exists in PATH, +VERSION just prints the version number
 #_dbx 3        " $prg(PERL) $prg(SAFT) +VERSION"; # _dbx() not yet defined
 catch { exec {*}$prg(PERL) $prg(SAFT) +VERSION } usage;
+cd $cfg(DIR)
 if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} { # check other PATH
     set osaft "$cfg(DIR)/$prg(SAFT)";       # check in PATH of $argv0
     catch { exec {*}$prg(PERL) $osaft +VERSION }  usage;
     if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} {
-        tk_messageBox -icon warning -title "$prg(SAFT) not found" -message "
+        _message warning "$prg(SAFT) not found" "
 most parts of the GUI are missing!
-
+----
+$usage
+----
 !!Hint:
 check PATH environment variable."
 
@@ -1140,8 +1177,8 @@ proc update_cfg   {}    {
         # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
         _dbx 4 " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
         if {$cfg(RCmin) > $cfg(RCSID)} {
-            tk_messageBox -icon warning -title "$cfg(RC) version $cfg(RCSID)" \
-                -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
+            _message warning "$cfg(RC) version $cfg(RCSID)" \
+                "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
         }
     }
     global cfg_colors cfg_color
@@ -1275,7 +1312,7 @@ proc gui_set_readonly {w}   {
 proc gui_init     {}    {
     #? initialise GUI
     _dbx 2 "{}"
-    global cfg prg myX argv
+    global cfg prg myX argv IMG
     if {[catch { package require tablelist } err]} {
         pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
         set cfg(layout) {text}
@@ -1287,6 +1324,9 @@ proc gui_init     {}    {
             # tables in the result tab after  osaft_exec(), and will not harm
             # widgets or functionality created by create_filtertab().
     }
+    if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
+        # reset if no icons there, forces text (see cfg_buttons)
+
     font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
     font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
@@ -1314,8 +1354,8 @@ proc gui_init     {}    {
         {Aqua}  { set __native "open"
                   set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
                   if {[regexp -- {-(img|image)} $argv]} {
-                      tk_messageBox -icon warning \
-                          -message "using images for buttons is not recomended on Aqua systems"
+                      _message warning "(gui_init)" \
+                          "using images for buttons is not recomended on Aqua systems"
                   } else {
                       set cfg(bstyle) "text"; # text by default, because Aqua looks nice
                   }
@@ -2965,7 +3005,7 @@ proc search_text  {w search_text} {
     if {[regexp ^\\s*$ $search_text]}  { return; } ;# do not search for spaces
     if {"exact" ne $search(mode)} {
         if {[string length $search_text] < 4} {
-            tk_messageBox -icon warning -title "Search pattern" -message [_get_text h_min4chars]
+            _message warning "Search pattern" [_get_text h_min4chars]
             return
         }
     }
@@ -3043,7 +3083,7 @@ proc search_text  {w search_text} {
             set err ""
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {[regexp {compile} $err]} {
-                tk_messageBox -icon warning -title [_get_text h_badregex] -message $err
+                _message warning [_get_text h_badregex] $err
                 return
             }
             # else { regex OK }
@@ -3154,7 +3194,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.239 21/04/22 14:26:51
+ #?      @(#) .o-saft.tcl generated by 1.240 21/04/23 00:57:48
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3590,13 +3630,15 @@ proc config_read   {}        {
     if {5 > [llength [split $cfg(CMDS) "\n"]]} {
         # failed, so we have no commands, no options and no help text
         # checking cfg(CMDS) is sufficient, as without commands nothing can be done
-        tk_messageBox -icon error -title "**ERROR: $prg(SAFT) failed" \
-            -message "$prg(SAFT) did not return list of commands
+        _message error "**ERROR: $prg(SAFT) failed" \
+            "$prg(SAFT) did not return list of commands
 ----
 $cfg(CMDS)
 ----
 "
-        exit 2
+        if {0==$cfg(testtcl)} {
+            exit 2
+        }
     }
     return
 }; # config_read
@@ -3605,6 +3647,16 @@ proc config_print  {targets} {
     #? print debug information
     _dbx 2 "{$targets}"
     global argv0 argv env cfg prg myX
+
+    # some platforms are picky (i.e. Android's AndroWish)-:
+    global tcl_patchLevel
+    global tcl_platform
+    global tcl_library
+    global tcl_rcFileName
+    global tk_library
+    global tk_patchLevel
+    global tk_strictMotif
+
     if {[info commands console] eq "console"} { console show }; # windows hack
     # cfg(RCSID) set in RC-file
     set rc  "not found";    if {1==[info exists cfg(RCSID)]} { set rc  "found" };
@@ -3613,7 +3665,7 @@ proc config_print  {targets} {
     set geo "";             if {1==[info exists geometry]}   { set geo "$geometry" }
     set wmf "<<shown with --d only>>"
     set max "<<shown with --d only>>"
-    set osv $::tcl_platform(osVersion)
+    set osv $tcl_platform(osVersion)
     set str_make "<<value not printed (OSAFT_MAKE exists)>>"
     set tab "<<no values>>"
     if {0<[string length $cfg(objT)]} {
@@ -3634,12 +3686,40 @@ proc config_print  {targets} {
     }
     #.CFG:      $cfg(.CFG)   # don't print, too much data
 
+    set tk_wm ""
+    if {0==[info exists env(ANDROID_DATA)]} {
+        # some platforms are picky (i.e. Android's AndroWish)-:
+        set tk_wm "\
+|  rcFileName= $tcl_rcFileName
+Tk  version   = $tk_patchLevel
+ |  library   = $tk_library
+ |  strictMotif= $tk_strictMotif
+WM  frame     = $wmf
+ |  maxsize   = $max
+ |  geometry  = [wm geometry   .]
+ |  focusmodel= [wm focusmodel .]
+ |  system    = [tk windowingsystem]
+ |  clipboard = $myX(buffer)
+ |  geometry  = $geo "
+    };# not Android
+
     puts [regsub -all -lineanchor {^} "
-PRG $argv0 -- $cfg(ICH)
+ICH self      = $cfg(ICH)
+ |  SID       = $cfg(SID)
+ |  DIR       = $cfg(DIR)
+ |  ME        = $cfg(ME)
+ |  IMG       = $cfg(IMG)
+ |  POD       = $cfg(POD)
  |  RC        = $cfg(RC)\t$rc
+ |  CDIR, pwd = $cfg(CDIR)
+PRG $argv0
  |  O-Saft    = $prg(SAFT)
  |  INIT      = $prg(INIT)\t$ini
  |  post      = $prg(post)
+ |  BROWSER   = $prg(BROWSER)
+ |  PERL      = $prg(PERL)
+ |  SAFT      = $prg(SAFT)
+ |  TKPOD     = $prg(TKPOD)
 ARG argv      = $argv
  |  targets   = $targets
  |  files     = $cfg(files)
@@ -3649,27 +3729,14 @@ CFG TITLE     = $cfg(TITLE)
  |  tooltip   = tooltip package\t$tip
  |  bstyle    = $cfg(bstyle)
  |  layout    = $cfg(layout)
- |  BROWSER   = $prg(BROWSER)
- |  PERL      = $prg(PERL)
- |  SAFT      = $prg(SAFT)
-TCL version   = $::tcl_patchLevel
- |  library   = $::tcl_library
- |  platform  = $::tcl_platform(platform)
- |  os        = $::tcl_platform(os)
+TCL version   = $tcl_patchLevel
+ |  library   = $tcl_library
+ |  platform  = $tcl_platform(platform)
+ |  os        = $tcl_platform(os)
  |  osVersion = $osv
- |  byteOrder = $::tcl_platform(byteOrder)
- |  wordSize  = $::tcl_platform(wordSize)
- |  rcFileName= $::tcl_rcFileName
-Tk  version   = $::tk_patchLevel
- |  library   = $::tk_library
- |  strictMotif= $::tk_strictMotif
-WM  frame     = $wmf
- |  maxsize   = $max
- |  geometry  = [wm geometry   .]
- |  focusmodel= [wm focusmodel .]
- |  system    = [tk windowingsystem]
- |  clipboard = $myX(buffer)
- |  geometry  = $geo
+ |  byteOrder = $tcl_platform(byteOrder)
+ |  wordSize  = $tcl_platform(wordSize)
+$tk_wm
 TAB tabs      = $tab
  |  count     = $cfg(EXEC)
  |
@@ -3684,6 +3751,16 @@ _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
 
 set targets ""                 ;# will be copied to hosts() in create_main
 set doit    0;
+# On some systems (i.e. Android) it could be difficult to pass arguments to
+# this script. Hence we provide alias names to simulate passing options.
+switch $cfg(ICH) {
+    osaft--testtcl.tcl  -
+    o-saft--testtcl.tcl { set cfg(DEBUG)    98; set cfg(quit) 1; set cfg(testtcl) 1; }
+    osaft--d.tcl        -
+    o-saft--d.tcl       { set cfg(DEBUG)    1;  }
+    osaft--trace.tcl    -
+    o-saft--trace.tcl   { set cfg(TRACE)    1;  }
+};# switch cfg(ICH)
 foreach arg $argv {
     switch -glob $arg {
         --h         -
@@ -3715,7 +3792,7 @@ foreach arg $argv {
 
         options__for_debugging__only  { set dumm "";   }
         --test-tcl  -
-        --testtcl   { set cfg(DEBUG)    1; set cfg(quit) 1; }
+        --testtcl   { set cfg(DEBUG)    98; set cfg(quit) 1; set cfg(testtcl) 1; }
         --test-o-saft -
         --test-osaft  -
         --testosaft { set cfg(DEBUG)    99;            }
@@ -3726,9 +3803,9 @@ foreach arg $argv {
         default     { pwarn "unknown parameter »$arg«; ignored" }
     }
 }
-if {$cfg(DEBUG)> 0} { set cfg(VERB) 1; }
-if {$cfg(TRACE)> 0} { trace_commands;  }
-if {$cfg(VERB) > 0} { lappend prg(Ocmd) {+quit} {+version}; }
+if {0<$cfg(DEBUG)} { set cfg(VERB) 1; }
+if {0<$cfg(TRACE)} { trace_commands;  }
+if {0<$cfg(VERB)}  { lappend prg(Ocmd) {+quit} {+version}; }
 if {[regexp {\-docker$} $prg(SAFT)]} { lappend prg(Ocmd) {docker_status}; }
 
 #| read $cfg(RC) and $cfg(IMG)
@@ -3736,7 +3813,13 @@ config_read
 
 #| special debug output
 if {99==$cfg(DEBUG)} { puts "$cfg(HELP)"; exit; }
-
+if {98==$cfg(DEBUG)} {
+    config_print $targets ;
+    if {0<$cfg(testtcl)} {
+        _message info "$cfg(ICH) --test-tcl" "click \[OK\] to exit"
+    }
+    exit;
+}
 gui_init
 
 #| create toplevel window
