@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1044 21/04/23 10:24:53",
+    SID         => "@(#) yeast.pl 1.1045 21/04/23 12:06:52",
     STR_VERSION => "21.03.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -4099,15 +4099,17 @@ sub _get_data0          {
     } else {
         _warn("204: Can't make a connection to '$host:$port' without SNI; no initial data (compare with and without SNI not possible)");
     }
-    _yeast_TIME("no SNI}");
     if (0 < (length Net::SSLinfo::errors())) {
         _warn("203: connection without SNI succeded with errors; errors ignored");
+            # fails often with: Error in cipher list; SSL_CTX_set_cipher_list:no cipher match
+            # TODO: don't show warning 203 if only this in Net::SSLinfo::errors
         if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
             _warn("206: $_") foreach Net::SSLinfo::errors();
         } else {
             _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
         }
     }
+    _yeast_TIME("no SNI}");         # should be before if {}, but also ok here 
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
