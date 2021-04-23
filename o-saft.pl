@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1042 21/04/16 11:36:03",
+    SID         => "@(#) yeast.pl 1.1044 21/04/23 10:24:53",
     STR_VERSION => "21.03.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2937,6 +2937,7 @@ sub _init_openssl       {
         _warn("     if default file does not exist, some certificate checks may fail");
         _hint("use '--ca-file=/full/path/$cfg{'ca_files'}[0]'");
     }
+    _v_print("_init_openssl: ca_file=$cfg{'ca_file'}");
     return;
 } # _init_openssl
 
@@ -3873,6 +3874,7 @@ sub _useopenssl($$$$)   {
 sub _can_connect        {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
+    if (not defined $sni) { $sni = STR_UNDEF; } # defensive programming
     local $? = 0; local $! = undef;
     my $socket;
     _trace("_can_connect($host, $port', $sni, $timeout, $ssl)");
