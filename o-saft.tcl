@@ -178,6 +178,7 @@ exec wish "$0" ${1+"$@"}
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #.      +quit       exit without GUI (for compatibility with o-saft.pl)
+#?      --test=FILE read FILE and print on STDOUT; used for testing only
 #.      --test-tcl  just print debug information; same as: --d +quit
 #.      --test-osaft    just print text used for help window (help button)
 #?
@@ -415,7 +416,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.243 Spring Edition 2021
+#?      @(#) 1.244 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -495,10 +496,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.243 21/04/23 22:09:30"
+set cfg(SID)    "@(#) o-saft.tcl 1.244 21/04/23 22:54:39"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.243}
+set cfg(VERSION) {1.244}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -513,6 +514,7 @@ set cfg(files)  {}                     ;# files to be loaded at startup --load
 set cfg(.CFG)   {}                     ;# contains data from prg(INIT)
                                        ;# set below and processed in osaft_init
 set cfg(quit)   0                      ;# quit without GUI
+set cfg(stdout) 0                      ;# 1: call osaft_save TTY
 #et cfg(HELP-key) ""                   ;# contains linenumber of result table
 
 #-----------------------------------------------------------------------------{
@@ -871,7 +873,7 @@ check PATH environment variable."
 set cfg(DESC)   {-- CONFIGURATION internal data storage ----------------------}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
 set cfg(EXEC)   0  ;# count executions, used for object names
-    #               # counter also used for number of TABs in $cfg(objT), hence
+    #               # counter also used for number of TABs in $cfg(objN), hence
     #               # TABs with executions start at 3, see create_main()
 set cfg(x--x)   0  ;# each option  will have its own entry (this is a dummy)
 set cfg(x++x)   0  ;# each command will have its own entry (this is a dummy)
@@ -881,8 +883,9 @@ set cfg(winS)   ".";# object name of main   window (usually not used as just .)
 set cfg(winA)   "" ;# object name of About  window
 set cfg(winF)   "" ;# object name of Filter window
 set cfg(winT)   "" ;# (reserved for future use)
+set cfg(objN)   "" ;# object name of notebook; needed to add more note TABS
 set cfg(objS)   "" ;# object name of status line
-set cfg(objT)   "" ;# object name of notebook; needed to add more note TABS
+set cfg(objT)   "" ;# widget name of button ttyresult
 set cfg(VERB)   0  ;# set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0  ;# set to 1 to print debugging messages
 set cfg(TRACE)  0  ;# set to 1 to print program tracing
@@ -1453,7 +1456,7 @@ proc guitheme_init  {theme} {
 proc guicursor_set {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
     global cfg
-    foreach w [list . objT objS winA winF winO] {
+    foreach w [list . objN objS winA winF winO] {
         if {$w ne "."} { set w $cfg($w) }
         if {$w eq ""}  { continue }
         # now get all children too
@@ -2570,11 +2573,12 @@ proc create_tab   {parent layout cmd content} {
          [button $tab.filter     -command "create_filter $w $cmd"    ] \
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
+   set cfg(objT) $tab.ttyresult
     guitheme_set $tab.closetab   $cfg(bstyle)
     guitheme_set $tab.saveresult $cfg(bstyle)
     guitheme_set $tab.ttyresult  $cfg(bstyle)
     guitheme_set $tab.filter     $cfg(bstyle)
-    $cfg(objT) select $tab
+    $cfg(objN) select $tab
     return $w
 }; # create_tab
 
@@ -2840,15 +2844,15 @@ proc create_main  {targets} {
     }
 
     #| create notebook object and set up Ctrl+Tab traversal
-    set cfg(objT)   $w.note
-    ttk::notebook   $cfg(objT) -padding 5
-    ttk::notebook::enableTraversal $cfg(objT)
-    pack $cfg(objT) -fill both -expand 1
+    set cfg(objN)   $w.note
+    ttk::notebook   $cfg(objN) -padding 5
+    ttk::notebook::enableTraversal $cfg(objN)
+    pack $cfg(objN) -fill both -expand 1
 
     #| create TABs: Command and Options
-    set tab_cmds    [create_note $cfg(objT) "Commands"]
-    set tab_opts    [create_note $cfg(objT) "Options"]
-    set tab_filt    [create_note $cfg(objT) "Filter"]
+    set tab_cmds    [create_note $cfg(objN) "Commands"]
+    set tab_opts    [create_note $cfg(objN) "Options"]
+    set tab_filt    [create_note $cfg(objN) "Filter"]
     set cfg(EXEC) 2;# ttk::notebook's index counting starts at 0
     create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
     create_buttons  $tab_opts {OPT}    ;# fill Options pane
@@ -3200,7 +3204,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.243 21/04/23 22:09:30
+ #?      @(#) .o-saft.tcl generated by 1.244 21/04/23 22:54:39
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3459,7 +3463,7 @@ proc osaft_save   {tbl type nr} {
         }
         return     ;# ready
     }
-    set title  [$cfg(objT) tab $nr -text];# get TAB's title
+    set title  [$cfg(objN) tab $nr -text];# get TAB's title
     set suffix [regsub -all {\s*\([0-9]*\)\s*} $title  {}] ;# remove (index)
     set suffix [regsub -all {[^a-zA-Z0-9_+-]}  $suffix {_}];# sanatise for filename
     if {$type eq "TAB"} {
@@ -3506,7 +3510,7 @@ proc osaft_load   {cmd}     {
     set fid [open $name r]
     set results($cfg(EXEC)) [read $fid]
     close $fid
-    set w [create_tab  $cfg(objT) $cfg(layout) $cmd $results($cfg(EXEC))]
+    set w [create_tab  $cfg(objN) $cfg(layout) $cmd $results($cfg(EXEC))]
     apply_filter $w $cfg(layout) $cmd      ;# text placed in pane, now do some markup
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $results($nr)
@@ -3602,7 +3606,7 @@ proc osaft_exec   {parent cmd}  {
     set _layout $cfg(layout)
     if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
     if {$cmd eq "docker_status"}     { set _layout "text" };# don't need table here
-    set txt [create_tab  $cfg(objT) $_layout $cmd $results($cfg(EXEC))]
+    set txt [create_tab  $cfg(objN) $_layout $cmd $results($cfg(EXEC))]
     apply_filter $txt $_layout $cmd    ;# text placed in pane, now do some markup
     destroy $cfg(winF)                 ;# workaround, see FIXME in create_filtertab
     guistatus_set "#} $do done (status=$status)."  ;# status not yet used ...
@@ -3674,8 +3678,8 @@ proc config_print  {targets} {
     set osv $tcl_platform(osVersion)
     set str_make "<<value not printed (OSAFT_MAKE exists)>>"
     set tab "<<no values>>"
-    if {0<[string length $cfg(objT)]} {
-        set tab [$cfg(objT) tabs]
+    if {0<[string length $cfg(objN)]} {
+        set tab [$cfg(objN) tabs]
     }
     if {[info exists env(OSAFT_MAKE)] == 1} {
         set osv $str_make
@@ -3797,6 +3801,10 @@ foreach arg $argv {
         --pod*      { set   prg(TKPOD)  "podviewer";   }
 
         options__for_debugging__only  { set dumm "";   }
+        --test=*    { lappend cfg(files)    [regsub {^--test=} $arg {}];
+                      set   cfg(stdout) 1;
+                      set   cfg(quit)   1;
+                    }
         --test-tcl  -
         --testtcl   { set cfg(DEBUG)    98; set cfg(quit) 1; set cfg(testtcl) 1; }
         --test-o-saft -
@@ -3843,6 +3851,11 @@ create_main $targets
 foreach f $cfg(files) {
     if {![file exists $f]} { continue }
     osaft_load $f
+}
+
+#| special test output
+if {0<$cfg(stdout)} {
+    $cfg(objT) invoke  ;# call button to save on STDOUT
 }
 
 #| GUI ready, initialise tracing if required
