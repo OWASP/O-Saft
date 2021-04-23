@@ -415,7 +415,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.242 Spring Edition 2021
+#?      @(#) 1.243 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -495,10 +495,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.242 21/04/23 15:18:10"
+set cfg(SID)    "@(#) o-saft.tcl 1.243 21/04/23 22:09:30"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.242}
+set cfg(VERSION) {1.243}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -609,7 +609,7 @@ set cfg(bstyle) {image}        ;# button style:  image  or  text
 set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
                                 # see also comment in gui_init()
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
-set cfg(max53)  4090           ;# max. size of text to be stored in table columns
+set cfg(max53)  4050           ;# max. size of text to be stored in table columns
 #   Some combinations of Tcl/Tk and X-Servers are limited in the size of text,
 #   which can be stored in Tk's table columns. When such a widget is rendered,
 #   the script crashes with following error message:
@@ -1915,13 +1915,18 @@ proc create_table {parent content}  {
     $this.t columnconfigure 1 -width 50            ;# label
     $this.t columnconfigure 2 -width 25            ;# value
     # insert content
-    set n 1;   # add uniwue number to each line, for initial sorting
-    set ssl "";# TODO: ungly hack: need to detect header line with protocol
+    set i 0        ;# count line numbers; for debuging and warning message
+    set n 1        ;# add unique number to each line, for initial sorting
+    set ssl ""     ;# TODO: ungly hack: need to detect header line with protocol
+    set tsize 0    ;# count size of text, for debugging only
     foreach line [split $content "\n"] {
+        incr i
         # content consist of lines separated by \n , where each line is a label
         # and a value separated by a tab (and additional spaces for formatting)
         # in tabular context, only label and value is required; no tabs, spaces
-        if {[regexp {^\s*$} $line]} { continue };# skip empty lines
+        #_dbx 16 " line   = $i, len=[string length $line]"
+        if {0>=[string length $line]} { continue } ;# defensive programming
+        if {[regexp  {^\s*$}  $line]} { continue } ;# skip empty lines
         #_dbx 16 " line   = $line"
         set nr [format %03d [incr n]]
             # integer must have leading 0, otherwise sorting of tablelist fails
@@ -1981,9 +1986,9 @@ proc create_table {parent content}  {
                 set col1 ""
             }
             if {$cfg(max53) < [string length $col2]} {
-                pwarn "comment for '$col0' to large (> $cfg(max53)); stripped"
+                pwarn "line $i: comment for '$col0' to large (> $cfg(max53)); stripped"
                 set col2 "[string range $col2 1 $cfg(max53)] ..\[stripped\].." ;# see cfg(max53)
-                # FIXME: need to store orignal text somewhere (notin table)
+                # FIXME: need to store orignal text somewhere (not in table)
             }
             set line [list $nr $col0 $col1 $col2]
         } else {
@@ -1997,7 +2002,9 @@ proc create_table {parent content}  {
         }
         set line [regsub -all \t $line {}] ;# remove tabs
         $this.t insert end $line
+        set tsize [expr $tsize + [string length $line]]
     }
+    #_dbx 16 " tsize  = $tsize"
     pack $this -side top
     return $this
 }; # create_table
@@ -2554,13 +2561,13 @@ proc create_tab   {parent layout cmd content} {
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
     switch $layout {
-        text    { set txt [create_text  $tab $content].t }
-        table   { set txt [create_table $tab $content].t }
+        text    { set w [create_text  $tab $content].t }
+        table   { set w [create_table $tab $content].t }
     }
         # ugly hardcoded .t from .note
-    pack [button $tab.saveresult -command "osaft_save $txt {TAB} $cfg(EXEC)"] \
-         [button $tab.ttyresult  -command "osaft_save $txt {TTY} $cfg(EXEC)"    ] \
-         [button $tab.filter     -command "create_filter $txt $cmd"    ] \
+    pack [button $tab.saveresult -command "osaft_save $w {TAB} $cfg(EXEC)"] \
+         [button $tab.ttyresult  -command "osaft_save $w {TTY} $cfg(EXEC)"    ] \
+         [button $tab.filter     -command "create_filter $w $cmd"    ] \
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
     guitheme_set $tab.closetab   $cfg(bstyle)
@@ -2568,7 +2575,7 @@ proc create_tab   {parent layout cmd content} {
     guitheme_set $tab.ttyresult  $cfg(bstyle)
     guitheme_set $tab.filter     $cfg(bstyle)
     $cfg(objT) select $tab
-    return $txt
+    return $w
 }; # create_tab
 
 proc create_cmd   {parent title} {
@@ -3193,7 +3200,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.242 21/04/23 15:18:10
+ #?      @(#) .o-saft.tcl generated by 1.243 21/04/23 22:09:30
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3499,8 +3506,8 @@ proc osaft_load   {cmd}     {
     set fid [open $name r]
     set results($cfg(EXEC)) [read $fid]
     close $fid
-    set txt [create_tab  $cfg(objT) $cfg(layout) $cmd $results($cfg(EXEC))]
-    apply_filter $txt $cfg(layout) $cmd    ;# text placed in pane, now do some markup
+    set w [create_tab  $cfg(objT) $cfg(layout) $cmd $results($cfg(EXEC))]
+    apply_filter $w $cfg(layout) $cmd      ;# text placed in pane, now do some markup
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $results($nr)
     guistatus_set "loaded file: $name"
