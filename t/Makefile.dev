@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.40 21/02/17 10:36:13
+#?      @(#) Makefile.dev 1.41 21/04/23 11:38:03
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.40
+_SID.dev           := 1.41
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -129,7 +129,7 @@ LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected
 
 _TEST.dev.tmpfile      := /tmp/tmpfile
 
-LIST.contrib-bunt      :=
+LIST.contrib-bunt      := --test
 LIST.contrib-openssl   := --n --m
 LIST.contrib-standalone:= --n --s --t
 
@@ -244,6 +244,17 @@ endif
 
 $(_TEST.dev.tmpfile):
 	@mkdir $@
+
+# more individual targets for EXE.osaft (calling contrib/bunt.pl)
+# TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
+#       testarg-dev-o-saft-sh_--colour%:    TEST.dev.hosts  = localhost
+testarg-dev-o-saft-sh_--colour:      TEST.args = --colour +unknown-cmd localhost
+testarg-dev-o-saft-sh_--colour+ocsp: TEST.args = --colour        +ocsp localhost
+testarg-dev-o-saft-sh_--colour-line: TEST.args = --colour --line +ocsp localhost
+ALL.test.dev            += \
+	testarg-dev-o-saft-sh_--colour \
+	testarg-dev-o-saft-sh_--colour+ocsp \
+	testarg-dev-o-saft-sh_--colour-line
 
 # OSaft/Doc/Data.pm function needs a file where to read the information
 # it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
