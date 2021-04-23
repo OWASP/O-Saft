@@ -34,7 +34,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.15 21/04/16 13:38:20
+#?      @(#) bunt.pl 1.16 21/04/23 10:49:06
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann
@@ -339,12 +339,12 @@ while (my $line = <>) {
 
 	if ($mode eq "word") {
 		/(?:A|B|C|D|-[?]-|LOW|WEAK|MEDIUM|HIGH)$/i && do {
-			# match cipher line with risk
-			s/(C|D|WEAK)$/ red(  $1);/ie;
-			s/(C|D|LOW)$/  red(  $1);/ie;
-			s/(B|MEDIUM)$/ brown($1);/ie;
-			s/(A|HIGH)$/   green($1);/ie;
-			s/(-[?]-)$/    cyan ($1);/ie;
+			# match cipher line with risk (must be last word)
+			s/\s(C|D|WEAK)$/ red(  $1);/ie;
+			s/\s(C|D|LOW)$/  red(  $1);/ie;
+			s/\s(B|MEDIUM)$/ brown($1);/ie;
+			s/\s(A|HIGH)$/   green($1);/ie;
+			s/\s(-[?]-)$/    cyan ($1);/ie;
 			print "$_";
 			next;
 		};
