@@ -448,7 +448,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.246 Spring Edition 2021
+#?      @(#) 1.248 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -528,10 +528,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.246 21/04/24 09:14:01"
+set cfg(SID)    "@(#) o-saft.tcl 1.248 21/04/27 20:39:32"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.246}
+set cfg(VERSION) {1.248}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -552,7 +552,9 @@ set cfg(stdout) 0                      ;# 1: call osaft_save TTY
 #-----------------------------------------------------------------------------{
 #   Definitions outside RC-ANF - RC-END scope, because they're not intended to
 #   be changed in .o-saft.tcl .
-#
+
+#et exe()  ... # will contain commands and options to call prg(SAFT)
+
 #   define some RegEx to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win() and create_buttons()
 set prg(DESC)   {-- CONFIGURATION regex to match output from o-saft.pl -------}
@@ -1343,89 +1345,6 @@ proc gui_set_readonly {w}   {
     return
 }; # gui_set_readonly
 
-proc gui_init     {}    {
-    #? initialise GUI
-    _dbx 2 "{}"
-    global cfg prg myX argv IMG
-    if {[catch { package require tablelist } err]} {
-        pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
-        set cfg(layout) {text}
-            # cfg(layout) used in create_tab() and create_filtertab()
-            # it's hardcoded set to {text} here if package is missing, that's
-            # working for create_filtertab() as the widgets there are created
-            # only once at startup.
-            # Changing cfg(layout) in the GUI later does only affect creating
-            # tables in the result tab after  osaft_exec(), and will not harm
-            # widgets or functionality created by create_filtertab().
-    }
-    if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
-        # reset if no icons there, forces text (see cfg_buttons)
-
-    font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
-    font create osaftBold   {*}[font config TkDefaultFont] -weight bold
-    font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
-    if {0 == $prg(option)} {    # only if not done in RC-file
-        option add *Button.font osaftBold  ;# if we want buttons more exposed
-        option add *Label.font  osaftBold  ;# ..
-        option add *Text.font   TkFixedFont;
-    }
-
-    # configure according real size
-    set __x         [lindex [wm maxsize .] 0]
-    set __y         [lindex [wm maxsize .] 1]
-    if {$__y < $myX(miny)} { set myX(miny) $__y  }
-    if {$__x < $myX(minx)} { set myX(minx) $__x  }
-    if {$__x > 1000 }      { set myX(minx) "999" }
-    set myX(geoS)   "$myX(minx)x$myX(miny)"
-
-    set __native    "";
-    # next switch is ugly workaround to detect special start methods ...
-    # it also does some special setup for MacOSX
-    switch [tk windowingsystem] {
-        {win32} { set __native "start" }
-        {win64} { set __native "start" }
-        {aqua}  -
-        {Aqua}  { set __native "open"
-                  set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
-                  if {[regexp -- {-(img|image)} $argv]} {
-                      _message warning "(gui_init)" \
-                          "using images for buttons is not recomended on Aqua systems"
-                  } else {
-                      set cfg(bstyle) "text"; # text by default, because Aqua looks nice
-                  }
-                  set myX(miny)   770;        # because fonts are bigger by default
-                }
-    }
-    set myX(geoS)   "$myX(minx)x$myX(miny)"
-
-    # find proper font for tablelist::tablelist; MacOSX is strange ...
-    # usually we should have:  flat6x4, flat7x4, flat7x5, flat7x7, flat8x5,
-    #                          flat9x5, flat9x6, flat9x7, flat10x6,
-    #                          photo7x7, sunken8x7, sunken10x9, or sunken12x11
-    # if no font is found, default will be used, which results in a Tcl error
-    foreach f "flat9x5 flat9x6 flat9x7 flat10x6 flat8x5" {
-        if {[catch {tablelist::tablelist .ttest -arrowstyle $f} err]} { continue }
-        set cfg(tfont) $f
-        destroy .ttest
-        break
-    }
-    _dbx 4 " table font = $cfg(tfont)"
-
-    # search browser, first matching will be used
-    foreach bin " $__native \
-            firefox chrome chromium iceweasel konqueror mozilla \
-            netscape opera safari webkit htmlview www-browser w3m" {
-        set binary [lindex [auto_execok $bin] 0];   # search in $PATH
-        _dbx 4 " browser= $bin $binary"
-        if {[string length   $binary]} {
-            set prg(BROWSER) $binary
-            break
-        }
-    }
-
-    return
-}; # gui_init
-
 proc guitip_set   {w txt}   {
     #? add tooltip message to given widget
     global cfg
@@ -1815,7 +1734,7 @@ proc create_window     {title size} {
     pack [label  $this.f0.t  -text $title   -relief flat  ]    -fill x -side left
     pack [button $this.f0.help_me     -command "create_help {$title}"] -side right
     pack [button $this.f1.saveconfig  -command {osaft_save "CFG" 0}]   -side left
-    # FIXME: wiget paremeter $tbl missing for osaft_save
+    # FIXME: widget paremeter $tbl missing for osaft_save
     guitheme_set $this.f1.saveconfig $cfg(bstyle)
     guitheme_set $this.f0.help_me    $cfg(bstyle)
     return $this
@@ -3236,7 +3155,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.246 21/04/24 09:14:01
+ #?      @(#) .o-saft.tcl generated by 1.248 21/04/27 20:39:32
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3424,17 +3343,17 @@ proc osaft_help   {}        {
 }; # osaft_help
 
 proc osaft_reset  {}        {
-    #? reset all options in cfg()
+    #? reset all options in exe()
     _dbx 2 "{}"
-    global cfg
+    global exe
     guistatus_set "reset"
-    foreach {idx val} [array get cfg] {
+    foreach {idx val} [array get exe] {
         if {[regexp {^[^-]} $idx]}     { continue };# want options only
         if {[string trim $val] eq "0"} { continue };# already ok
         if {[string trim $val] eq "1"} {
-            set cfg($idx]) 0
+            set exe($idx]) 0
         } else {
-            set cfg($idx]) ""
+            set exe($idx]) ""
         }
     }
     return
@@ -3443,10 +3362,10 @@ proc osaft_reset  {}        {
 proc osaft_init   {}        {
     #? set values from .o-saft.pl in cfg()
     _dbx 2 "{}"
-    global cfg prg
+    global cfg exe prg
     if {[regexp {\-docker$} $prg(SAFT)]} { return };# skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
-        # expected lines look like:
+        # data from .o-saft.pl, expected lines look like:
         #  --no-header
         #  --cfg_cmd=bsi=xxx yyy
         #
@@ -3460,8 +3379,8 @@ proc osaft_init   {}        {
             set idx [string trim $l]
             set val 1
         }
-        _dbx 4 " cfg($idx) = »$val«"
-        set cfg($idx) $val
+        _dbx 4 " exe($idx) = »$val«"
+        set exe($idx) $val
     }
     return
 }; # osaft_init
@@ -3486,7 +3405,7 @@ proc osaft_save   {tbl type nr} {
     #? save selected output from text widget $tbl to file; $nr used if $type == TAB
     # $type denotes type of data (TAB = results() or CFG = cfg()); $nr denotes entry
     _dbx 2 "{$tbl, $type, $nr}"
-    global cfg prg results
+    global cfg exe prg results
     if {$type eq "TTY"} {
         # FIXME: following type of TAB needs to be identified individually, not globally
         switch $cfg(layout) {
@@ -3495,6 +3414,7 @@ proc osaft_save   {tbl type nr} {
         }
         return     ;# ready
     }
+puts "Tab: $cfg(objN) tab $nr"
     set title  [$cfg(objN) tab $nr -text];# get TAB's title
     set suffix [regsub -all {\s*\([0-9]*\)\s*} $title  {}] ;# remove (index)
     set suffix [regsub -all {[^a-zA-Z0-9_+-]}  $suffix {_}];# sanatise for filename
@@ -3511,7 +3431,7 @@ proc osaft_save   {tbl type nr} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveconfig]" -initialfile ".$prg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
-        foreach {idx val} [array get cfg] { # collect selected options
+        foreach {idx val} [array get exe] { # collect selected options
             if {[regexp {^[^-]} $idx]}     { continue } ;# want options only
             if {[string trim $val] eq "0"} { continue } ;#
             if {[string trim $val] eq "1"} {
@@ -3555,12 +3475,12 @@ proc osaft_exec   {parent cmd}  {
     #? run $prg(SAFT) with given command; write result to global $osaft
     # $parent is a dummy here
     _dbx 2 "{$cmd}"
-    global cfg hosts prg results
+    global cfg exe hosts prg results
     guicursor_set watch
     guistatus_set "#{ $cmd"
-    set do  {};     # must be set to avoid tcl error
-    set opt {};     # ..
-    set targets {}; # ..
+    set do  {}     ;# must be set to avoid tcl error
+    set opt {}     ;# ..
+    set targets {} ;# ..
     if {[regexp {\-docker$} $prg(SAFT)]} {
         # pass image ID to Docker;
         # note that this option must be before o-saft.pl commands or options
@@ -3569,18 +3489,18 @@ proc osaft_exec   {parent cmd}  {
         lappend do "-tag=$prg(docker-tag)"
     }
     if {"Start" eq $cmd} {
-        foreach {idx val} [array get cfg] { # collect selected commands
-            if {[regexp {^[^+]} $idx]}     { continue }; # want commands only
+        foreach {idx val} [array get exe] { # collect selected commands
+            if {[regexp {^[^+]} $idx]}     { continue };# want commands only
             if {[string trim $val] ne "1"} { continue };
             lappend do $idx
         }
     } else {
         lappend do $cmd
     }
-    foreach {idx val} [array get cfg] {     # collect selected options
+    foreach {idx val} [array get exe] {     # collect selected options
         if {[regexp {^[^-]} $idx]}  { continue };# want options only
         set val [string trim $val]
-        if {$val eq "0"} { continue };      # unset # FIXME: cannot use 0 as value --x=0
+        if {$val eq "0"} { continue }      ;# unset # FIXME: cannot use 0 as value --x=0
         if {$val eq "1"} { lappend opt  $idx; continue };
         if {$val ne  ""} { lappend opt "$idx=$val"; };
     }
@@ -3589,7 +3509,7 @@ proc osaft_exec   {parent cmd}  {
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
-    # check for some special docker commands; # TODO: quick&dirty
+    # check for some special docker commands;# TODO: quick&dirty
     if {"docker_status" eq $cmd} {
         # o-saft-docker status  has no other options
         set targets {}
@@ -3599,7 +3519,7 @@ proc osaft_exec   {parent cmd}  {
         lappend do  "status"
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
-        set execcmd [list exec {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        set execcmd [list exec           {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # Microsoft windows has no proper STDERR etc.
     } else {
         set execcmd [list exec 2>@stdout {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
@@ -3646,7 +3566,7 @@ proc osaft_exec   {parent cmd}  {
     return
 }; # osaft_exec
 
-proc config_read   {}        {
+proc config_read  {}        {
     #? read configuration RC-file and IMG-file
     _dbx 2 "{}"
     global cfg prg env
@@ -3685,7 +3605,7 @@ $cfg(CMDS)
     return
 }; # config_read
 
-proc config_print  {targets} {
+proc config_print {targets} {
     #? print debug information
     _dbx 2 "{$targets}"
     global argv0 argv env cfg prg myX
@@ -3745,6 +3665,9 @@ WM  frame     = $wmf
  |  geometry  = $geo "
     };# not Android
 
+#dbx# puts "CFG: [array names cfg]"
+#dbx# puts "EXE: [array names exe]"
+
     puts [regsub -all -lineanchor {^} "
 ICH self      = $cfg(ICH)
  |  SID       = $cfg(SID)
@@ -3787,6 +3710,132 @@ _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
 
     return
 }; # config_print
+
+proc gui_init     {}        {
+    #? initialise GUI
+    _dbx 2 "{}"
+    global cfg prg myX argv IMG
+    if {[catch { package require tablelist } err]} {
+        pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
+        set cfg(layout) {text}
+            # cfg(layout) used in create_tab() and create_filtertab()
+            # it's hardcoded set to {text} here if package is missing, that's
+            # working for create_filtertab() as the widgets there are created
+            # only once at startup.
+            # Changing cfg(layout) in the GUI later does only affect creating
+            # tables in the result tab after  osaft_exec(), and will not harm
+            # widgets or functionality created by create_filtertab().
+    }
+    if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
+        # reset if no icons there, forces text (see cfg_buttons)
+
+    font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
+    font create osaftBold   {*}[font config TkDefaultFont] -weight bold
+    font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
+    if {0 == $prg(option)} {    # only if not done in RC-file
+        option add *Button.font osaftBold  ;# if we want buttons more exposed
+        option add *Label.font  osaftBold  ;# ..
+        option add *Text.font   TkFixedFont;
+    }
+
+    # configure according real size
+    set __x         [lindex [wm maxsize .] 0]
+    set __y         [lindex [wm maxsize .] 1]
+    if {$__y < $myX(miny)} { set myX(miny) $__y  }
+    if {$__x < $myX(minx)} { set myX(minx) $__x  }
+    if {$__x > 1000 }      { set myX(minx) "999" }
+    set myX(geoS)   "$myX(minx)x$myX(miny)"
+
+    set __native    "";
+    # next switch is ugly workaround to detect special start methods ...
+    # it also does some special setup for MacOSX
+    switch [tk windowingsystem] {
+        {win32} { set __native "start" }
+        {win64} { set __native "start" }
+        {aqua}  -
+        {Aqua}  { set __native "open"
+                  set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
+                  if {[regexp -- {-(img|image)} $argv]} {
+                      _message warning "(gui_init)" \
+                          "using images for buttons is not recomended on Aqua systems"
+                  } else {
+                      set cfg(bstyle) "text"; # text by default, because Aqua looks nice
+                  }
+                  set myX(miny)   770;        # because fonts are bigger by default
+                }
+    }
+    set myX(geoS)   "$myX(minx)x$myX(miny)"
+
+    # find proper font for tablelist::tablelist; MacOSX is strange ...
+    # usually we should have:  flat6x4, flat7x4, flat7x5, flat7x7, flat8x5,
+    #                          flat9x5, flat9x6, flat9x7, flat10x6,
+    #                          photo7x7, sunken8x7, sunken10x9, or sunken12x11
+    # if no font is found, default will be used, which results in a Tcl error
+    foreach f "flat9x5 flat9x6 flat9x7 flat10x6 flat8x5" {
+        if {[catch {tablelist::tablelist .ttest -arrowstyle $f} err]} { continue }
+        set cfg(tfont) $f
+        destroy .ttest
+        break
+    }
+    _dbx 4 " table font = $cfg(tfont)"
+
+    # search browser, first matching will be used
+    foreach bin " $__native \
+            firefox chrome chromium iceweasel konqueror mozilla \
+            netscape opera safari webkit htmlview www-browser w3m" {
+        set binary [lindex [auto_execok $bin] 0];   # search in $PATH
+        _dbx 4 " browser= $bin $binary"
+        if {[string length   $binary]} {
+            set prg(BROWSER) $binary
+            break
+        }
+    }
+
+    bind . <Control-v> {clipboard get}
+    bind . <Control-c> {clipboard clear ; clipboard append [selection get]}
+    bind . <Key-q>     {exit}
+
+    return
+}; # gui_init
+
+proc gui_main     {targets} {
+    global argv0 argv env cfg prg myX hosts
+    gui_init
+
+    #| create toplevel window
+    wm title        . $cfg(TITLE)
+    wm iconname     . [string tolower $cfg(TITLE)]
+    #wm geometry     . $myX(geoS)   ;# use only for small screens
+
+    #| create main window, see  #| main {  ..  #| main }  above
+    create_main $targets
+
+    #| load files, if any
+    foreach f $cfg(files) {
+        if {"STDIN"!=$f && ![file exists $f]} { continue }
+        osaft_load $f
+    }
+
+    #| special test output
+    if {0<$cfg(stdout)} {
+        $cfg(objT) invoke  ;# call button to save on STDOUT
+    }
+
+    #| some verbose output
+    putv " hosts= $hosts(0)"
+    set vm ""      ;# check if inside docker
+    if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
+    if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
+    guistatus_set "$argv0 $vm $argv"
+        # full path and all passed arguments; useful if started from .desktop file
+    if {0 < ($cfg(VERB) + $cfg(DEBUG))} { config_print $targets ; }
+        # must be at end when window was created, otherwise wm data is missing or mis-leading
+
+    #| GUI ready, initialise tracing if required
+    if {0 < $cfg(TRACE)} { trace_buttons }
+
+    return
+}; # gui_main
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
@@ -3846,8 +3895,8 @@ foreach arg $argv {
         --test-osaft  -
         --testosaft { set cfg(DEBUG)    99;            }
 
-        --*         { set cfg($arg)     1;             }
-        +*          { set cfg($arg)     1; set doit 1; }
+        --*         { set exe($arg)     1;             }
+        +*          { set exe($arg)     1; set doit 1; }
         *           { lappend targets   $arg;          }
         default     { pwarn "unknown parameter »$arg«; ignored" }
     }
@@ -3869,45 +3918,10 @@ if {98==$cfg(DEBUG)} {
     }
     exit;
 }
-gui_init
 
-#| create toplevel window
-wm title        . $cfg(TITLE)
-wm iconname     . [string tolower $cfg(TITLE)]
-wm geometry     . $myX(geoS)
-
-bind . <Control-v> {clipboard get}
-bind . <Control-c> {clipboard clear ; clipboard append [selection get]}
-
-#| create main window, see  #| main {  ..  #| main }  above
-create_main $targets
-
-#| load files, if any
-foreach f $cfg(files) {
-    if {"STDIN"!=$f && ![file exists $f]} { continue }
-    osaft_load $f
-}
-
-#| special test output
-if {0<$cfg(stdout)} {
-    $cfg(objT) invoke  ;# call button to save on STDOUT
-}
-
-#| GUI ready, initialise tracing if required
-if {0 < $cfg(TRACE)} { trace_buttons }
-
-#| some verbose output
-putv " hosts= $hosts(0)"
-set vm ""      ;# check if inside docker
-if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
-if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-guistatus_set "$argv0 $vm $argv"
-    # full path and all passed arguments; useful if started from .desktop file
-if {0 < ($cfg(VERB) + $cfg(DEBUG))} { config_print $targets ; }
-    # must be at end when window was created, otherwise wm data is missing or mis-leading
+gui_main $targets
 
 #| start main (event loop)
 if {1 == $doit}      { osaft_exec . "Start"; } ;# call o-saft.pl if commands are given
-
-if {1 == $cfg(quit)} { putv " exit"; exit }
+if {1 == $cfg(quit)} { putv " exit"; exit }    ;# special for testing with Makefile*
 
