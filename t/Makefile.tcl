@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.31 20/01/09 09:16:21
+#?      @(#) Makefile.tcl 1.32 21/04/29 17:41:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.31
+_SID.tcl           := 1.32
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -56,6 +56,8 @@ testcmd-tcl-%:              TEST.init   = +quit
 testcmd-tcl-+VERSION_%:     TEST.args  += +VERSION
 testcmd-tcl---version_%:    TEST.args  += --version
 testcmd-tcl---rc_%:         TEST.args  += --rc
+testcmd-tcl---v_%:          TEST.args  += --v
+testcmd-tcl---v--no-docs_%: TEST.args  += --v --no-docs
 testcmd-tcl---v--load_%:    TEST.args  += --v --load=Makefile
 #               returns: different count and TAB tabs: .... .note.oX3XXMake
 testcmd-tcl---d_%:          TEST.args  += --d
