@@ -347,6 +347,8 @@ exec wish "$0" ${1+"$@"}
 #.          txt         - a text widget
 #.          w  or  obj  - any widget
 #.          parent      - parent widget (may be toplevel)
+#.          exe()       - global variable containing commands and options for
+#.                        o-saft.pl
 #.          cfg()       - global variable containing most configurations
 #.          cfg_colors()- global variable containing colours for widgets
 #.          cfg_texts() - global variable containing texts for widgets
@@ -448,7 +450,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.248 Spring Edition 2021
+#?      @(#) 1.249 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -528,10 +530,10 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.248 21/04/27 20:39:32"
+set cfg(SID)    "@(#) o-saft.tcl 1.249 21/04/29 09:01:12"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.248}
+set cfg(VERSION) {1.249}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -619,9 +621,10 @@ set prg(DESC)   {-- CONFIGURATION default buttons and checkboxes -------------}
 set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
     # List of quick access commands, for which a button will be created in the
     # GUI. This must be commands of o-saft.pl, which start with  +  character.
+    # +quit  and  +version  will be added for  --v  or  --d  only.
 set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
-    # List of quick access options,  for which a button will be created in the
-    # GUI. This must be options of o-saft.pl, which start with  --  character.
+    # List of quick access options,  a checkbox will be created in the GUI.
+    # This must be options of o-saft.pl, which start with  --  character.
 
 set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -908,7 +911,7 @@ set cfg(DESC)   {-- CONFIGURATION internal data storage ----------------------}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
 set cfg(EXEC)   0  ;# count executions, used for object names
     #               # counter also used for number of TABs in $cfg(objN), hence
-    #               # TABs with executions start at 3, see create_main()
+    #               # TABs with executions start at 3, see create_main_tabs()
 set cfg(x--x)   0  ;# each option  will have its own entry (this is a dummy)
 set cfg(x++x)   0  ;# each command will have its own entry (this is a dummy)
 set cfg(winO)   "" ;# object name of Help   window
@@ -1759,41 +1762,43 @@ proc create_window:nohelp   {w}     { destroy $w.f0.help_me;    return; }
 proc create_window:nosave   {w}     { destroy $w.f1.saveconfig; return; }
     #? destroy "Save" button in created window
 
-proc create_host  {parent}          {
+proc create_host  {parent host_nr}  {
     #? frame with label and entry for host:port; $nr is index to hosts()
+    # must use index to hosts() instead of host itself because the entry widget
+    # needs a variable
     global cfg hosts myX
-    set host  $hosts($hosts(0))
-    incr hosts(0)
-    _dbx 4 " host($hosts(0))= $host"
-    set this $parent.ft$hosts(0)
+    _dbx 2 "{$parent, $host_nr}"
+    set host  $hosts($host_nr)
+    _dbx 4 " host=$host"
+    # the frame with the entry and button widgets will be created and deleted
+    # dynamically, it's difficult to find a unique widget name, hence it will
+    # be search for 
+    set nr   0
+    set this $parent.ft$nr
+    incr hosts(0)      ;# for new, empty entry
+    set hosts($hosts(0)) ""
+    while {[winfo exists $this]} { incr nr; set this $parent.ft$nr; }
+    # got new valid widget name
           frame  $this
     grid [label  $this.lh -text [_get_text host]] \
-         [entry  $this.eh -textvariable hosts($hosts(0))] \
-         [button $this.host_add -command "create_host {$parent};"] \
-         [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] \
+         [entry  $this.eh -textvariable hosts($host_nr)] \
+         [button $this.host_add -command "create_host {$parent}  $hosts(0);"] \
+         [button $this.host_del -command "remove_host $this; set hosts($host_nr) {}"] \
 
     guitheme_set $this.host_add $cfg(bstyle)
-    if {$hosts(0)==1} {
+    if {0==$host_nr} {
         # first line has no {-} but {about}
         grid forget  $this.host_del
         grid [button $this.about -command "create_about"] -row 0
-        grid config  $this.about -column 4 -sticky e  -padx "1 $myX(padx)"
+        grid config  $this.about -column 4 -sticky e -padx "1 $myX(padx)"
         guitheme_set $this.about $cfg(bstyle)
+        $this.eh config -textvariable hosts($hosts(0)) ;# correct empty entry
     } else {
         guitheme_set $this.host_del $cfg(bstyle)
     }
     grid config  $this.eh -column 1 -sticky ew
     grid columnconfigure    $this 1 -weight 1
-    set i [expr $hosts(0) - 1]
-    set prev $parent.ft$i
-    while {$i > 0} {    # check if previous frame exists, otherwise decrement
-        if {[winfo exists $prev]} { break; }
-        incr i -1
-        set prev $parent.ft$i
-    }
-    # if we reach here a previous frame exists
-    # or i==0 which should never occour and then will force an error in next line
-    pack $this -fill x -after $prev
+    pack $this -fill x -before ${parent.ft_1
     return
 }; # create_host
 
@@ -2750,92 +2755,104 @@ proc create_buttons {parent cmd} {
     return
 }; # create_buttons
 
-proc create_main  {targets} {
+proc create_main_host_entries  {parent w} {
     #? create main window (the complete GUI)
-    #| main {
-    _dbx 2 "{»$targets«}"
-    global cfg prg myX hosts
-    set w ""
-    pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
+    # add hosts from command-line; line  with  +  and  -  or  !  button
+    global hosts
+    set w $parent.$w
+    pack [frame ${w}_1]   ;# create dummy frame to keep create_host() happy
+    foreach {i host} [array get hosts] {    # display hosts
+        if {$i > 5} { pwarn "only 6 hosts possible; »$host« ignored"; continue };
+        create_host $parent $i
+    }
+    return
+}; # create_main_host_entries
 
-    #| create command buttons for simple commands and help
-    pack [frame     $w.fq] -fill x -side bottom
-    pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
+proc create_main_quick_buttons {parent w} {
+    #? create command buttons for simple commands and help
+    global prg myX
+    set w   $parent.$w
+    pack [frame     $w] -fill x
+    pack [button    $w.cmdstart   -command "osaft_exec $w.fc {Start}"] -side left -padx 11
+    foreach b $prg(Ocmd) {
+        create_cmd  $w $b;
+    }
+    pack [button    $w.loadresult -command "osaft_load {_LOAD}"] -side left  -padx 11
+    pack [button    $w.help       -command "create_help {}"]     -side right -padx $myX(padx)
+    return
+}; # create_main_quick_buttons
+
+proc create_main_quick_options {parent w} {
+    #? create option checkboxes for simple access
+    global prg
+    set w   $parent.$w
+    pack [frame     $w] -fill x
+    pack [label     $w.ol -text " "] -side left -padx 11
+    foreach b $prg(Oopt) {
+        create_opt  $w $b;
+    }
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+        pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
+        guitip_set  $w.dockerid [_get_tipp docker-id]
+    }
+    return
+}; # create_main_quick_options
+
+proc create_main_tabs          {parent w} {
+    #? create notebook object and set up Ctrl+Tab traversal
+    global cfg
+    set w   $parent.$w
+    set cfg(objN)   $w
+    ttk::notebook   $w -padding 5
+    ttk::notebook::enableTraversal $w
+    pack $w -fill both -expand 1
+    # create TABs: Command and Options
+    set tab_cmds    [create_note $w "Commands"]
+    set tab_opts    [create_note $w "Options"]
+    set tab_filt    [create_note $w "Filter"]
+    set cfg(EXEC) 2;# ttk::notebook's index counting starts at 0
+    create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
+    create_buttons  $tab_opts {OPT}    ;# fill Options pane
+    create_filtertab $tab_filt {FIL}   ;# fill Filter pane
+    # add Save and Reset button in Options pane
+    pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
+    pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
+    osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
+    return
+}; # create_main_tabs
+
+proc create_main_status_line   {parent w} {
+    #? create status line
+    global cfg
+    set w   $parent.$w
+    set cfg(objS)   $w.t
+    pack [frame     $w   -relief sunken -borderwidth 1] -fill x
+    pack [text      $w.t -relief flat   -height 3 -background [_get_color status] ] -fill x
+    gui_set_readonly $cfg(objS)
+    return
+}; # create_main_status_line
+
+proc create_main_exit_button   {parent w} {
+    #? create exit button
+    global cfg myX
+    set w   $parent.$w
+    pack [frame     $w] -fill x -side bottom
+    pack [button    $w.closeme  -command {exit}] -side right -padx $myX(rpad)
     if {$cfg(VERB)==1} {
-        #pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
+        #pack [button $w.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
         # TODO: does not work proper 'cause passing --v fails
-
-        pack [checkbutton $w.fq.img_txt -variable cfg(img_txt) -command {
+        pack [checkbutton $w.img_txt -variable cfg(img_txt) -command {
             if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
             if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
             _dbx 4 " toggle: $cfg(img_txt) # $cfg(bstyle) "
             guitheme_init $cfg(bstyle)
         } \
         ] -side right
-        if {$cfg(bstyle) eq "image"} { $w.fq.img_txt select }
-        guitheme_set $w.fq.img_txt $cfg(bstyle)
+        if {$cfg(bstyle) eq "image"} { $w.img_txt select }
+        guitheme_set $w.img_txt $cfg(bstyle)
     }
-    pack [frame     $w.fc] -fill x
-    pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
-    foreach b $prg(Ocmd) {
-        create_cmd  $w.fc $b;
-    }
-    pack [button    $w.fc.loadresult -command "osaft_load {_LOAD}"] -side left -padx 11
-    pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
-
-    #| create option buttons for simple access
-    pack [frame     $w.fo] -fill x
-    pack [label     $w.fo.ol -text " "] -side left -padx 11
-    foreach b $prg(Oopt) {
-        create_opt  $w.fo $b;
-    }
-    if {[regexp {\-docker$} $prg(SAFT)]} {
-        pack [entry $w.fo.dockerid -textvariable prg(docker-id) -width 12] -anchor w
-        guitip_set  $w.fo.dockerid [_get_tipp docker-id]
-    }
-
-    #| create notebook object and set up Ctrl+Tab traversal
-    set cfg(objN)   $w.note
-    ttk::notebook   $cfg(objN) -padding 5
-    ttk::notebook::enableTraversal $cfg(objN)
-    pack $cfg(objN) -fill both -expand 1
-
-    #| create TABs: Command and Options
-    set tab_cmds    [create_note $cfg(objN) "Commands"]
-    set tab_opts    [create_note $cfg(objN) "Options"]
-    set tab_filt    [create_note $cfg(objN) "Filter"]
-    set cfg(EXEC) 2;# ttk::notebook's index counting starts at 0
-    create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
-    create_buttons  $tab_opts {OPT}    ;# fill Options pane
-    create_filtertab $tab_filt {FIL}   ;# fill Filter pane
-
-    #| add Save and Reset button in Options pane
-    pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
-    pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
-    osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
-
-    #| create status line
-    pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
-    pack [text      $w.fl.t -relief flat   -height 3 -background [_get_color status] ] -fill x
-    set cfg(objS)   $w.fl.t
-    gui_set_readonly $cfg(objS)
-
-    #| add hosts from command-line
-    foreach host $targets {         # display hosts
-        if {$hosts(0) > 5} { pwarn "only 6 hosts possible; »$host« ignored"; continue };
-        create_host $w
-        set hosts($hosts(0)) $host
-    }
-
-    #| add one Host: line  with  +  and  !  button
-    create_host $w
-
-    #| apply themes
-    guitheme_init $cfg(bstyle)
-    #| main }
-
     return
-}; # create_main
+}; # create_main_exit_button
 
 proc search_view  {w key}   {
     #? scroll given text widget according key
@@ -3096,7 +3113,7 @@ proc search_text  {w search_text} {
     return
 }; # search_text
 
-proc search_rset  {} {
+proc search_rset  {}    {
     #? reset/clear search list (history)
     _dbx 2 "{}"
     global search
@@ -3155,7 +3172,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.248 21/04/27 20:39:32
+ #?      @(#) .o-saft.tcl generated by 1.249 21/04/29 09:01:12
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3255,7 +3272,7 @@ proc osaft_write_opts   {}  {
     return
 }; # osaft_write_opts
 
-proc osaft_about    {mode}  {
+proc osaft_about {mode} {
     #? extract description from myself; returns text
     _dbx 2 "{$mode}"
     global arrv argv0
@@ -3273,7 +3290,7 @@ proc osaft_about    {mode}  {
     return $hlp
 }; # osaft_about
 
-proc osaft_help   {}        {
+proc osaft_help   {}    {
     #? get help from o-saft.pl --help (for use in own help window)
     _dbx 2 "{}"
     global cfg prg
@@ -3342,7 +3359,7 @@ proc osaft_help   {}        {
     return $help
 }; # osaft_help
 
-proc osaft_reset  {}        {
+proc osaft_reset  {}    {
     #? reset all options in exe()
     _dbx 2 "{}"
     global exe
@@ -3359,7 +3376,7 @@ proc osaft_reset  {}        {
     return
 }; # osaft_reset
 
-proc osaft_init   {}        {
+proc osaft_init   {}    {
     #? set values from .o-saft.pl in cfg()
     _dbx 2 "{}"
     global cfg exe prg
@@ -3385,7 +3402,7 @@ proc osaft_init   {}        {
     return
 }; # osaft_init
 
-proc _get_table   {tbl}     {
+proc _get_table   {tbl} {
     #? return all line from the text widget (table) $tbl, except the hidden ones
     # lines are formatted like result from O-Saft (roughly, not exactly)
     set txt ""
@@ -3447,7 +3464,7 @@ puts "Tab: $cfg(objN) tab $nr"
     return
 }; # osaft_save
 
-proc osaft_load   {cmd}     {
+proc osaft_load   {cmd} {
     #? load results from file and create a new TAB for it
     _dbx 2 "{$cmd}"
     global cfg results
@@ -3504,10 +3521,10 @@ proc osaft_exec   {parent cmd}  {
         if {$val eq "1"} { lappend opt  $idx; continue };
         if {$val ne  ""} { lappend opt "$idx=$val"; };
     }
-    foreach {i h} [array get hosts] {       # collect hosts
-        if {0==$i}                  { continue };   # first entry is counter
-        if {[string trim $h] eq ""} { continue };   # skip empty entries
-        lappend targets $h
+    foreach {i host} [array get hosts] {    # collect hosts
+        if {0==$i}                     { continue };# first entry is counter
+        if {[string trim $host] eq ""} { continue };# skip empty entries
+        lappend targets $host
     }
     # check for some special docker commands;# TODO: quick&dirty
     if {"docker_status" eq $cmd} {
@@ -3566,7 +3583,7 @@ proc osaft_exec   {parent cmd}  {
     return
 }; # osaft_exec
 
-proc config_read  {}        {
+proc config_read  {}    {
     #? read configuration RC-file and IMG-file
     _dbx 2 "{}"
     global cfg prg env
@@ -3605,10 +3622,10 @@ $cfg(CMDS)
     return
 }; # config_read
 
-proc config_print {targets} {
+proc config_print {}    {
     #? print debug information
-    _dbx 2 "{$targets}"
-    global argv0 argv env cfg prg myX
+    _dbx 2 "{}"
+    global argv0 argv env cfg prg myX hosts
 
     # some platforms are picky (i.e. Android's AndroWish)-:
     global tcl_patchLevel
@@ -3648,6 +3665,11 @@ proc config_print {targets} {
     }
     #.CFG:      $cfg(.CFG)   # don't print, too much data
 
+    set targets ""
+    foreach {i host} [array get hosts] {
+        if {0==$i} { continue };# first entry is counter
+        set targets "$targets $host"
+    }
     set tk_wm ""
     if {0==[info exists env(ANDROID_DATA)]} {
         # some platforms are picky (i.e. Android's AndroWish)-:
@@ -3685,6 +3707,8 @@ PRG $argv0
  |  PERL      = $prg(PERL)
  |  SAFT      = $prg(SAFT)
  |  TKPOD     = $prg(TKPOD)
+ |  Ocmd      = $prg(Ocmd)
+ |  Oopt      = $prg(Oopt)
 ARG argv      = $argv
  |  targets   = $targets
  |  files     = $cfg(files)
@@ -3711,7 +3735,7 @@ _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
     return
 }; # config_print
 
-proc gui_init     {}        {
+proc gui_init     {}    {
     #? initialise GUI
     _dbx 2 "{}"
     global cfg prg myX argv IMG
@@ -3798,7 +3822,7 @@ proc gui_init     {}        {
     return
 }; # gui_init
 
-proc gui_main     {targets} {
+proc gui_main     {}    {
     global argv0 argv env cfg prg myX hosts
     gui_init
 
@@ -3807,8 +3831,15 @@ proc gui_main     {targets} {
     wm iconname     . [string tolower $cfg(TITLE)]
     #wm geometry     . $myX(geoS)   ;# use only for small screens
 
-    #| create main window, see  #| main {  ..  #| main }  above
-    create_main $targets
+    #| create toplevel GUI
+    set w ""
+    create_main_host_entries  $w ft
+    create_main_quick_buttons $w fc
+    create_main_quick_options $w fo
+    create_main_tabs          $w note
+    create_main_status_line   $w fl
+    create_main_exit_button   $w fq
+    guitheme_init $cfg(bstyle) ;# apply themes
 
     #| load files, if any
     foreach f $cfg(files) {
@@ -3828,7 +3859,7 @@ proc gui_main     {targets} {
     if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
     guistatus_set "$argv0 $vm $argv"
         # full path and all passed arguments; useful if started from .desktop file
-    if {0 < ($cfg(VERB) + $cfg(DEBUG))} { config_print $targets ; }
+    if {0 < ($cfg(VERB) + $cfg(DEBUG))} { config_print ; }
         # must be at end when window was created, otherwise wm data is missing or mis-leading
 
     #| GUI ready, initialise tracing if required
@@ -3840,7 +3871,6 @@ proc gui_main     {targets} {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-set targets ""                 ;# will be copied to hosts() in create_main
 set doit    0;
 # On some systems (i.e. Android) it could be difficult to pass arguments to
 # this script. Hence we provide alias names to simulate passing options.
@@ -3852,6 +3882,7 @@ switch $cfg(ICH) {
     osaft--trace.tcl    -
     o-saft--trace.tcl   { set cfg(TRACE)    1;  }
 };# switch cfg(ICH)
+#| main: arguments and options
 foreach arg $argv {
     switch -glob $arg {
         --h         -
@@ -3897,7 +3928,7 @@ foreach arg $argv {
 
         --*         { set exe($arg)     1;             }
         +*          { set exe($arg)     1; set doit 1; }
-        *           { lappend targets   $arg;          }
+        *           { incr hosts(0); set hosts($hosts(0)) $arg; }
         default     { pwarn "unknown parameter »$arg«; ignored" }
     }
 }
@@ -3912,14 +3943,14 @@ config_read
 #| special debug output
 if {99==$cfg(DEBUG)} { puts "$cfg(HELP)"; exit; }
 if {98==$cfg(DEBUG)} {
-    config_print $targets ;
+    config_print
     if {0<$cfg(testtcl)} {
         _message info "$cfg(ICH) --test-tcl" "click \[OK\] to exit"
     }
     exit;
 }
 
-gui_main $targets
+gui_main
 
 #| start main (event loop)
 if {1 == $doit}      { osaft_exec . "Start"; } ;# call o-saft.pl if commands are given
