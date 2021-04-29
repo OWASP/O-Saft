@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.108 21/03/01 23:34:06
+#?      @(#) Makefile 1.109 21/04/30 00:21:21
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.108
+_SID            = 1.109
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -206,6 +206,11 @@ GEN.rel         = $(Project).rel
 GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
+# generated files for $(SRC.tcl) internal use
+_TCL.data       = +help --help=opt --help=commands \
+		  --help=alias --help=data --help=checks --help=regex --help=rfc
+GEN.TCL.data = $(_TCL.data:%=$(DOC.dir)/$(SRC.pl).%)
+
 # summary variables
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 SRC.exe         = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
@@ -223,7 +228,7 @@ ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst)
+ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst) $(GEN.TCL.data)
 ALL.docs        = $(SRC.doc) $(GEN.docs)
     # NOTE: ALL.docs is are the files for user documentation, ALL.doc are SRC-files
 #               # $(GEN.tags) added in t/Makefile.misc
@@ -272,7 +277,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.108
+_INST.text      = generated from Makefile 1.109
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -469,6 +474,7 @@ HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-docs       = generate '$(GEN.docs)'
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
+HELP-tcl.data   = generate '$(GEN.TCL.data)' for $(SRC.tcl)
 HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
@@ -502,8 +508,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.108
-tar:     GREP_EDIT  = 1.108
+GREP_EDIT           = 1.109
+tar:     GREP_EDIT  = 1.109
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -518,6 +524,8 @@ clear.all:  clean.tar clean
 clean.all:  clean.tar clean
 tgz:        tar
 gen.all:    $(ALL.gen)
+tcl.data:   $(GEN.TCL.data)
+tcldata:    $(GEN.TCL.data)
 
 # docker target uses project's own script to build and remove the image
 docker.build:
@@ -621,6 +629,9 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 	@grep -q '$(GREP_EDIT)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
+
+$(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
+	$(SRC.pl) --no-rc $* > $@
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
