@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '21.02.12',
+    SSLINFO_VERSION => '21.08.20',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.270 21/02/16 11:40:08',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.272 21/09/01 14:19:57',
 };
 
 ######################################################## public documentation #
@@ -335,7 +335,7 @@ matches the other parameters, in particular the host and port.
 
 =item $Net::SSLinfo::verbose
 
-print some some verbose messages
+Print some verbose messages.
 
 =back
 
@@ -1051,6 +1051,7 @@ my %_SSLtemp= ( # temporary internal data structure when establishing a connecti
     'ssl'       => undef,       # handle for Net::SSLeay
     'method'    => '',          # used Net::SSLeay::*_method
     'errors'    => [],          # stack for errors, if any
+    'PEM_text'  => '',          # temp. storage oF PEM to avoid multiple openssl calls
     #-------------+-------------+---------------------------------------------
 ); # %_SSLtemp
 
@@ -1059,6 +1060,7 @@ sub _SSLtemp_reset  {
     foreach my $key (keys %_SSLtemp) { $_SSLtemp{$key} = undef; }
     $_SSLtemp{'method'}     = '';
     $_SSLtemp{'errors'}     = [];
+    $_SSLtemp{'PEM_text'}   = '';
     return;
 } # _SSLtemp_reset
 
@@ -1955,6 +1957,16 @@ sub _openssl_x509   {
         return $Net::SSLinfo::no_cert_txt;
     }
 
+######## 4/2021
+# TODO: external openssl is called for every $mode to extract some data from
+#       the given $pem.  In practice openssl "simply extracts" the requested
+#       information $mode from the textual representation of $pem.
+# idea: convert $pem once to text ($mode==-text), then all other data can be
+#       extracted from that text; results in one external openssl call.
+# currently 4/2021 openssl is call ca. 13 times
+# see more comments labeled 14apr21
+########
+
     #if ($mode =~ m/^-(text|email|modulus|serial|fingerprint|subject_hash|trustout)$/) {
     #   # supported by openssl's x509 (0.9.8 and higher)
     #}
@@ -1975,7 +1987,11 @@ sub _openssl_x509   {
     } else {
         $mode = "x509 -noout $mode";
     }
-    _trace2("_openssl_x509(openssl $mode)");
+    if (1 < $trace) {
+        _trace("_openssl_x509: openssl $mode < '$pem'");
+    } else {
+        _trace("_openssl_x509: openssl $mode");
+    }
     if ($^O !~ m/MSWin32/) {
         $data = `echo '$pem' | $_openssl $mode 2>&1`; ## no critic qw(InputOutput::ProhibitBacktickOperators)
     } else { # it's sooooo simple, except on Windows :-(
@@ -2661,6 +2677,11 @@ sub do_ssl_open($$$@) {
         # $_SSLinfo{'PEM'}  (see initial setting above),  then  all values
         # would contain an empty string instead of the the openssl warning:
         #         unable to load certificate
+# 14apr21 my $cert = Net::SSLeay::get_peer_certificate($ssl);
+# 14apr21 my $id = eval { Net::SSLeay::OCSP_cert2ids($ssl,$cert) };
+# 14apr21 my $id = Net::SSLeay::OCSP_cert2ids($ssl,$cert) ;
+# 14apr21 print "#### ID $id ";
+# 14apr21 print "#### PEM=$_SSLinfo{'PEM'} ";
         my $fingerprint                 = _openssl_x509($_SSLinfo{'PEM'}, '-fingerprint');
         chomp $fingerprint;
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
