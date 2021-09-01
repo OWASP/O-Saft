@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '21.08.20',
+    SSLINFO_VERSION => '21.08.21',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.272 21/09/01 14:19:57',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.273 21/09/01 14:40:25',
 };
 
 ######################################################## public documentation #
@@ -1205,7 +1205,90 @@ sub _SSLinfo_reset  {
     return;
 } # _SSLinfo_reset
 
+sub _SSLinfo_print  {
+    #? print some data in $_SSLinfo (for --verbose)
+    foreach my $key (sort qw(
+            subject_hash
+            issuer_hash
+            aux
+            ocsp_response
+            ocsp_response_data
+            ocsp_response_status
+            ocsp_cert_status
+            ocsp_next_update
+            ocsp_this_update
+            pubkey
+            pubkey_algorithm
+            pubkey_value
+            signame
+            sigdump
+            sigkey_len
+            sigkey_value
+            extensions
+            tlsextdebug
+            tlsextensions
+            email
+            heartbeat
+            serial
+            serial_hex
+            serial_int
+            modulus
+            modulus_len
+            modulus_exponent
+            fingerprint_text
+            fingerprint_type
+            fingerprint_hash
+            fingerprint_sha2
+            fingerprint_sha1
+            fingerprint_md5
+            selected
+            verify
+            chain
+            chain_verify
+            dh_parameter
+            renegotiation
+            resumption
+            selfsigned
+            compression
+            expansion
+            next_protocols
+            alpn
+            no_alpn
+            next_protocol
+            krb5
+            psk_hint
+            psk_identity
+            srp
+            master_key
+            public_key_len
+            session_id
+            session_id_ctx
+            session_startdate
+            session_starttime
+            session_lifetime
+            session_ticket
+            session_timeout
+            session_protocol
+            ))
+            # not yet:
+            #  cert_type
+            #  ciphers
+            #  s_client
+            #  ciphers_openssl
+            # not HTTP(S)
+    {
+        next if (not defined $_SSLinfo{$key});
+        _verbose("$key=$_SSLinfo{$key}"); 
+    }
+    return;
+} # _SSLinfo_print
+
 sub ssleay_methods  {
+            # not yet
+            #  cert_type
+            #  ciphers
+            #  s_client
+            #  ciphers_openssl
     #? returns list of available Net::SSLeay::*_method; most important first
 # TODO:  check for mismatch Net::SSLeay::*_method and Net::SSLeay::CTX_*_new
     my @list;
@@ -2334,7 +2417,7 @@ sub do_ssl_open($$$@) {
         #       mainly happens if called with --ignore-no-connect
     _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
-    goto finished if (defined $_SSLinfo{'ssl'});
+    goto finished_return if (defined $_SSLinfo{'ssl'});
     #_traceSSLbitmasks(
     #    SSLINFO . "::do_ssl_open SSL version bitmask",
     #    &Net::SSLeay::OP_ALL
@@ -3084,6 +3167,8 @@ sub do_ssl_open($$$@) {
     return;
 
     finished:
+    _SSLinfo_print();   # --verbose only
+    finished_return:
     _trace("do_ssl_open done.");
     return wantarray ? ($_SSLinfo{'ssl'}, $_SSLinfo{'ctx'}) : $_SSLinfo{'ssl'};
 } # do_ssl_open
