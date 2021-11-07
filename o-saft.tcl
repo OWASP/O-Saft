@@ -170,21 +170,23 @@ exec wish "$0" ${1+"$@"}
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
 #?      --pod   use podviewer to show help text
 #.      --tip   use own tooltip
-#.      --trace use Tcl's trace to trace proc calls
+#?      --trace use Tcl's trace to trace proc calls
 #?      --stdin read data from STDIN and show in result TAB
 #?      --load=FILE read FILE and show in result TAB
 #?      --id=ID     use Docker image ID (registry:tag); default: owasp/o-saft
 #?      --tag=TAG   use Docker image ID with tag; default: (empty)
 #?      --docker    use o-saft-docker instead of o-saft.pl
-#.      --gui       dummy for compatibility with other tools
-#?      --gui-result=text   print result of o-saft.pl as simple plain text
-#?      --gui-result=table  print result of o-saft.pl formated in a table
+#?      --gui       dummy for compatibility with other tools
+#?      --gui-layout=classic tool layout for view on desktop; default: classic
+#?      --gui-layout=tablet  tool layout for tablet, smartphone
+#?      --gui-result=text    print result of o-saft.pl as simple plain text
+#?      --gui-result=table   print result of o-saft.pl formated in a table
 #?      --version   print version number
-#.      +VERSION    print version number (for compatibility with o-saft.pl)
-#.      +quit       exit without GUI (for compatibility with o-saft.pl)
+#?      +VERSION    print version number (for compatibility with o-saft.pl)
+#?      +quit       exit without GUI (for compatibility with o-saft.pl)
 #?      --test=FILE read FILE and print on STDOUT; used for testing only
-#.      --test-tcl  just print debug information; same as: --d +quit
-#.      --test-osaft    just print text used for help window (help button)
+#?      --test-tcl  just print debug information; similar to: --d +quit
+#?      --test-osaft    just print text used for help window (help button)
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -246,13 +248,31 @@ exec wish "$0" ${1+"$@"}
 #?      o-saft-docker
 #?
 #. LAYOUT
+#.      --gui-layout=tablet
+#.           +---------------------------------------------------------------+
+#.       (M) | ☰  Cmd  Opt                                                   |
+#.           |---------------------------------------------------------------|
+#.       (H) | Host:Port [________________________________________]  [+] [-] |
+#.           |                                                               |
+#.           | +----------++----------+                                      |
+#.       (R) | | (n) +cmd || (m) +cmd |                                      |
+#.           | +          +------------------------------------------------+ |
+#.           | |                                                           | |
+#.           | |                                                           | |
+#.           | +-----------------------------------------------------------+ |
+#.           |---------------------------------------------------------------|
+#.           |---------------------------------------------------------------|
+#.       (S) | |                                                           | |
+#.           +---------------------------------------------------------------+
+#.
+#.      --gui-layout=classic
 #.           +---------------------------------------------------------------+
 #.       (H) | Host:Port [________________________________________]  [+] [-] |
 #.           |                                                       [!] [?] |
 #.       (C) | [Start] [+info] [+check] [+cipher] [+quick] [+vulns]   [Load] |
 #.       (O) | [ ] --header  [ ] --enabled  [ ] --no-dns  [ ] -no-http  ...  |
 #.           |---------------------------------------------------------------|
-#.           | +----------++---------++----------++----------+               |
+#.           | +----------++---------++--------++----------++----------+     |
 #.       (T) | | Commands || Options || Filter || (n) +cmd || (m) +cmd |     |
 #.           | +          +------------------------------------------------+ |
 #.           | |                                                           | |
@@ -264,9 +284,14 @@ exec wish "$0" ${1+"$@"}
 #.
 #.      Description
 #.       (H) - Frame containing hostnames to be checked
+#.       (M) - Frame containing menus for  all commands, commands, options
+#.        ☰  - menubutton for  all commands and options
+#.       Cmd - menubutton for  quick commands (most often used)
+#.       Opt - menubutton for  quick options (most often used)
 #.       (C) - Buttons for most commonly used commands
 #.       (O) - CheckButtons for most commonly used options
-#.       (T) - Frame containing panes for commands, options, filter, results.
+#.       (R) - Frame containing panes for results
+#.       (T) - Frame containing panes for commands, options, filter, results
 #.       (S) - Frame containing Status messages
 #.       [+] - Add line with Host:Port
 #.       [-] - Remove line with Host:Port
@@ -390,6 +415,11 @@ exec wish "$0" ${1+"$@"}
 #.      own "Copy Text" (see above) with <Control-ButtonPress-1>,  even if the
 #.      button is displayed as image.
 #.
+#.      Starting 11/2021 the default tool layout was changed from "classic" to
+#.      "tablet". This only affects building the GUI itself. The difference in
+#.      building the GUI is mainly controlled by the variable cfg(gui-layout).
+#.      This effects the procs: create_host() create_buttons() and gui_main().
+#.
 #.   STDIN
 #.      Tcl's file handle (channel) for STDIN is named stdin, which is open by
 #.      default. Data piped to  $0  can be read from this file handle.
@@ -430,7 +460,6 @@ exec wish "$0" ${1+"$@"}
 #.          be slightly different, as the tablelist doesn't always contain all
 #.          data of the file.
 #.
-#.
 #.   Tracing and Debugging with Alias Names
 #.      If arguments (options) can not be passed to the script, alias names of
 #.      the script can be used to simulate passed options:
@@ -454,7 +483,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.256 Spring Edition 2021
+#?      @(#) 1.257 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -554,10 +583,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.256 21/11/07 14:45:36"
+set cfg(SID)    "@(#) o-saft.tcl 1.257 21/11/07 20:32:34"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.256}
+set cfg(VERSION) {1.257}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -664,7 +693,7 @@ set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help      window
 set myX(geo-)   "400x80"       ;# geometry and position of no match  window
 set myX(geoS)   "700x720"      ;# geometry and position of O-Saft    window
 set myX(geoA)   "660x610"      ;# geometry and position of About     window
-set myX(geoF)   ""             ;# geometry and position of Filter    window (computed dynamically)
+set myX(geoF)   "700x700"      ;# geometry and position of Filter    window (computed dynamically)
 set myX(geoT)   ""             ;#
 set myX(minx)   700            ;# O-Saft  window min. width
 set myX(miny)   850            ;# O-Saft  window min. height
@@ -674,6 +703,8 @@ set myX(padx)   5              ;# padding to right border
 
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
+set cfg(gui-layout) {classic}  ;# tablet:  tool layout for tablet, smartphone
+                                # classic: tool layout for view on desktop
 set cfg(gui-result) {table}    ;# layout o-saft.pl's results:  text  or  table
                                 # see also comment in gui_init()
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
@@ -778,6 +809,19 @@ array set cfg_buttons "
     {cmdversion} {{+version} #fffa00 +version   {Execute $prg(SAFT) +version }}
     {docker_status} {{docker status} #00faff docker_status {Execute $prg(SAFT) status   }}
     {img_txt}   {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
+    {----_----} {-- for following rows, colour is the forground colour of the objekt --}
+    {menu_menu} {{☰}               orange  {}   {Main menu}}
+    {menu_cmd}  {{Cmd}             white   {}   {Quick commands menu}}
+    {menu_opt}  {{Opt}             white   {}   {Quick options menu}}
+    {menu_cmds} {{+ All Commands}  {}      {}   {Commands submenu}}
+    {menu_opts} {{-  All Options}  {}      {}   {Options submenu}}
+    {menu_load} {{   Load Results} {}      {}   {Load results from file}}
+    {menu_conf} {{  Confg Filter} {}      {}   {Show configuration for filtering results}}
+    {menu_help} {{ ? Help}         {}      help {Open window with complete help}}
+    {menu_uber} {{ ❗  About}      {}      {!}  {About $cfg(ICH) $cfg(VERSION)}}
+    {menu_exit} {{⏻  Quit}         orange  quit {Close program}}
+    {menu_rsave}  {{Save}          {}      save {Save results to file}}
+    {menu_reset}  {{Reset}         {}     reset {Reset configuration to defaults}}
 ";  #----------+-----------+-------+-----------+-------------------------------
 
     # Note: all buttons as described above,  can be configured also by the user
@@ -828,6 +872,7 @@ array set cfg_tipps "
     choosen     {Choosen value for}
     hideline    {Hide complete line instead of pattern only}
     show_hide   {show/hide: }
+    tabMENU     {Select commands and options in ☰ menu.}
     tabCMD      {
 Select commands. All selected commands will be executed with the 'Start' button.
 }
@@ -1802,7 +1847,7 @@ proc create_host  {parent host_nr}  {
     _dbx 2 "{$parent, $host_nr}"
     global cfg hosts myX
     set host  $hosts($host_nr)
-    _dbx 4 " host=$host"
+    _dbx 4 " host=$host, gui-layout=$cfg(gui-layout)"
     # the frame with the entry and button widgets will be created and deleted
     # dynamically, it's difficult to find a unique widget name, hence it will
     # be search for 
@@ -1815,17 +1860,21 @@ proc create_host  {parent host_nr}  {
           frame  $this
     grid [label  $this.lh -text [_get_text host]] \
          [entry  $this.eh -textvariable hosts($host_nr)] \
-         [button $this.host_add -command "create_host {$parent}  $hosts(0);"] \
          [button $this.host_del -command "remove_host $this; set hosts($host_nr) {}"] \
+         [button $this.host_add -command "create_host {$parent}  $hosts(0);"] \
 
     guitheme_set $this.host_add $cfg(bstyle)
     if {0==$host_nr} {
-        # first line has no {-} but {about}
+        # first line has no {-}
         grid forget  $this.host_del
-        grid [button $this.about -command "create_about"] -row 0
-        grid config  $this.about -column 4 -sticky e -padx "1 $myX(padx)"
-        guitheme_set $this.about $cfg(bstyle)
-        $this.eh config -textvariable hosts($hosts(0)) ;# correct empty entry
+        if {"tablet" eq $cfg(gui-layout)} {
+            $this.eh config -textvariable hosts($hosts(0)) ;# correct empty entry
+        } else {
+            # first line has also {about}
+            grid [button $this.about -command "create_about"] -row 0
+            grid config  $this.about -column 4 -sticky e -padx "1 $myX(padx)"
+            guitheme_set $this.about $cfg(bstyle)
+        }
     } else {
         guitheme_set $this.host_del $cfg(bstyle)
     }
@@ -2171,6 +2220,16 @@ proc create_filtertab   {parent cmd}    {
     guitheme_set $parent.tkcolor $cfg(bstyle)
     return
 }; # create_filtertab
+
+proc create_filterwin   {}    {
+    #? create tab with filter data
+    #  used for --gui-layout=tablet only
+    _dbx 2 "{}"
+    global myX
+    set win [create_window  {Filter} $myX(geoF)]
+    create_filtertab        $win {FIL}
+    return
+}; # create_filterwin
 
 proc create_filter      {parent cmd}    {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
@@ -2742,6 +2801,19 @@ proc create_win   {parent title cmd} {
     return
 }; # create_win
 
+proc create_buttons_opt {parent cmd} {
+    #? create special option buttons
+    #  used for --gui-layout=classic only (and version < 1.254)
+    _dbx 2 "{$parent, $cmd}"
+    pack [frame $parent.of] -fill x -padx 5 -anchor w
+    pack [label $parent.of.l -text "Layout format of results:"] \
+         [radiobutton $parent.of.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
+         [radiobutton $parent.of.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
+         -padx 5 -anchor w -side left
+    guitip_set   $parent.of [_get_tipp "layout"]
+    return
+}; # create_buttons_opt
+
 proc create_buttons {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
@@ -2749,22 +2821,24 @@ proc create_buttons {parent cmd} {
     _dbx 2 "{$parent, $cmd}"
     global cfg prg
     set data $cfg(OPTS)
-    set txt  [_get_tipp "tab$cmd"]          ;# tabCMD and tabOPT
+    _dbx 4 " gui-layout=$cfg(gui-layout)"
     switch $cmd {
       "CMD" { # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
-              set data $cfg(CMDS) }
+              set data $cfg(CMDS)
+            }
       "OPT" { # add options for o-saft.tcl itself
-              pack [frame $parent.of] -fill x -padx 5 -anchor w
-              pack [label $parent.of.l -text "Layout format of results:"] \
-                   [radiobutton $parent.of.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
-                   [radiobutton $parent.of.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
-                   -padx 5 -anchor w -side left
-              guitip_set $parent.of [_get_tipp "layout"]
+# TODO: radiobutton table und text für gui-layout=tablet implementieren
+              if {"tablet" ne $cfg(gui-layout)} {
+                  create_buttons_opt $parent $cmd
+              }
             }
       default { pwarn "create_buttons called with wrong command »$cmd«"; return }
     }
+    if {"tablet" ne $cfg(gui-layout)} {
+        set txt  [_get_tipp "tab$cmd"]     ;# tabCMD and tabOPT
+        pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
+    }
     #_dbx 4 "$data"
-    pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
         if {0==[regexp $prg(rexOUT-cmd)  $txt]} { continue }   ;# buttons for Commands and Options only
@@ -2777,19 +2851,96 @@ proc create_buttons {parent cmd} {
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [_str2obj $txt]
         set this $parent.$name
-        _dbx 4 " .$name {$txt}"
-        pack [frame $this] -anchor c -padx 10 -pady 2
-        pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [_get_color button] ] \
-             [button $this.help_me -command "create_help {$txt}" ] \
-               -side left
-        guitheme_set $this.help_me $cfg(bstyle)
-        guitip_set   $this.b [_get_tipp settings]
-
-        # argh, some command sections are missing in HELP, then disable help button
-        if {1==[regexp $prg(rexOUT-show) $txt]} { $this.help_me config -state disable }
+        _dbx 4 " $name {$txt}"
+        if {"tablet" eq $cfg(gui-layout)} {
+            $parent add command -label $dat -command "create_win .$name {$txt} $cmd"
+        } else {
+            pack [frame  $this] -anchor c -padx 10 -pady 2
+            pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [_get_color button] ] \
+                 [button $this.help_me -command "create_help {$txt}" ] \
+                   -side left
+            guitheme_set $this.help_me $cfg(bstyle)
+            guitip_set   $this.b [_get_tipp settings]
+    
+            # argh, some command sections are missing in HELP, then disable help button
+            if {1==[regexp $prg(rexOUT-show) $txt]} { $this.help_me config -state disable }
+        }
     }
     return
 }; # create_buttons
+
+proc create_main_menu          {parent w} {
+    #? create frame with main menu, quick commands and quick options menu
+    #  used for --gui-layout=tablet only
+    #.       +---------------------------------------------------------------+
+    #.       | ☰  Cmd  Opt                                                   |
+    #.       +---------------------------------------------------------------+
+    #   ☰  Cmd  Opt  are Tcl menus
+    #
+    _dbx 2 "{$parent, $w}"
+    global cfg prg myX
+    set menu_type menubar  ;# FIXME: not yet implemented due to improper widget names
+    set menu_type normal
+    # on Mac OS X not yet used: .menubar.apple .menubar.window .menubar.help
+    switch $menu_type {
+        menubar { set w ""         ;  set packman pack }
+        normal  { set w $parent.$w ;  set packman grid;
+                  pack [frame   $w -bg black ] -fill x -expand yes
+                }
+    }
+    # create nenu line with button for: Menu, Commands and Options
+    set w_menu $w.main.m
+    set w_cmds $w.cmds.m
+    set w_opts $w.opts.m
+    $packman \
+         [menubutton $w.main -text [_get_text menu_menu] -menu $w_menu -bg black -fg [_get_color menu_menu] -borderwidth 0] \
+         [menubutton $w.cmds -text [_get_text menu_cmd ] -menu $w_cmds -bg black -fg [_get_color menu_cmd ]  -borderwidth 0 -width 5] \
+         [menubutton $w.opts -text [_get_text menu_opt ] -menu $w_opts -bg black -fg [_get_color menu_opt ]  -borderwidth 0 -width 5]
+    menu $w_menu -type $menu_type  ;# complete menu
+    menu $w_opts -type $menu_type  ;# Quick Options menu
+    guitip_set   $w.main [_get_tipp menu_menu]
+    guitip_set   $w.cmds [_get_tipp menu_cmd ]
+    guitip_set   $w.opts [_get_tipp menu_opt ]
+    foreach opt $prg(Oopt) {
+         $w_opts add checkbutton -label $opt -variable cfg($opt) -indicatoron yes
+    }
+    menu $w_cmds -type $menu_type  ;# Quick Commands menu
+    foreach cmd "start $prg(Ocmd)" {
+         $w_cmds add command     -label $cmd -command "osaft_exec $w.fc $cmd"
+         $w_menu add command     -label $cmd -command "osaft_exec $w.fc $cmd"
+    }
+    bind . <Key-m>  "$w_menu activate none"
+    # {1==$cfg(docker)}
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+# TODO: add to options tab, see create_main_quick_options()
+         set cmd "docker_status"
+# TODO:  pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
+# TODO:  guitip_set  $w.dockerid [_get_tipp docker-id]
+    }
+    $w_menu add separator
+    $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
+    $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
+    $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
+    $w_menu add command -label [_get_text menu_conf] -command "create_filterwin"
+    $w_menu add command -label [_get_text menu_uber] -command "create_about"
+    $w_menu add command -label [_get_text menu_help] -command "create_help {}"
+    $w_menu add command -label [_get_text menu_exit] -command "exit"
+
+    # clone wäre einfach, dann sind die beiden Menüs aber identisch, was nicht gewollt ist
+    #$w.m.m clone $w_cmds;# jeder menubutton braucht eigenes Menu
+    #$w_cmds delete 10 13
+
+    menu $w_menu.commands          ;# All Commands menu
+    create_buttons $w_menu.commands {CMD}
+
+    menu $w_menu.options           ;# All Options menu
+    create_buttons $w_menu.options  {OPT}
+    $w_menu.options add separator
+    $w_menu.options add command -label [_get_text menu_rsave] -command {osaft_save "CFG" 0}
+    $w_menu.options add command -label [_get_text menu_reset] -command {osaft_reset; osaft_init;}
+
+    return $w.main
+}; # create_main_menu
 
 proc create_main_host_entries  {parent w} {
     #? create main window (the complete GUI)
@@ -2837,8 +2988,9 @@ proc create_main_quick_options {parent w} {
     return
 }; # create_main_quick_options
 
-proc create_main_tabs          {parent w} {
+proc create_main_note          {parent w} {
     #? create notebook object and set up Ctrl+Tab traversal
+    #  used for --gui-layout=classic (and version < 1.254 )
     _dbx 2 "{$parent, $w}"
     global cfg
     set w   $parent.$w
@@ -2846,6 +2998,15 @@ proc create_main_tabs          {parent w} {
     ttk::notebook   $w -padding 5
     ttk::notebook::enableTraversal $w
     pack $w -fill both -expand 1
+    return
+}; # create_main_note
+
+proc create_main_tabs          {parent w} {
+    #? create notebook object and set up Ctrl+Tab traversal
+    #  used for --gui-layout=classic (and version < 1.254 )
+    _dbx 2 "{$parent, $w}"
+    global cfg
+    set w   $parent.$w
     # create TABs: Command and Options
     set tab_cmds    [create_note $w "Commands"]
     set tab_opts    [create_note $w "Options"]
@@ -2857,7 +3018,6 @@ proc create_main_tabs          {parent w} {
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
     pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
-    osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
     return
 }; # create_main_tabs
 
@@ -3214,7 +3374,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.256 21/11/07 14:45:36
+ #?      @(#) .o-saft.tcl generated by 1.257 21/11/07 20:32:34
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3781,6 +3941,7 @@ CFG TITLE     = $cfg(TITLE)
  |  tooltip   = tooltip package\t$tip
  |  bstyle    = $cfg(bstyle)
  |  gui-result= $cfg(gui-result)
+ |  gui-layout= $cfg(gui-layout)
  |  docs-files= $cfg(docs-files)
 TCL version   = $tcl_patchLevel
  |  library   = $tcl_library
@@ -3881,6 +4042,8 @@ proc gui_init     {}    {
 
     bind . <Control-v>      {clipboard get}
     bind . <Control-c>      {clipboard clear ; clipboard append [selection get]}
+    bind . <Key-exclam>     {create_about }
+    bind . <Key-question>   {create_help {} }
     bind . <Key-q>          {exit}
 
     return
@@ -3897,12 +4060,25 @@ proc gui_main     {}    {
 
     #| create toplevel GUI
     set w ""
-    create_main_host_entries  $w ft
-    create_main_quick_buttons $w fc
-    create_main_quick_options $w fo
-    create_main_tabs          $w note
+
+    switch $cfg(gui-layout) {
+        tablet  {
+            create_main_menu $w "menu"
+            create_main_host_entries  $w ft
+            create_main_note          $w note
+            pack [label $w.lm -text [_get_tipp tabMENU]]
+        }
+        classic {
+            create_main_host_entries  $w ft
+            create_main_quick_buttons $w fc
+            create_main_quick_options $w fo
+            create_main_note          $w note
+            create_main_tabs          $w note
+            create_main_exit_button   $w fq
+        }
+    }
     create_main_status_line   $w fl
-    create_main_exit_button   $w fq
+    osaft_init     ;# initialise options from .-osaft.pl (values shown in Options tab)
     guitheme_init $cfg(bstyle) ;# apply themes
 
     #| load files, if any
@@ -3979,8 +4155,13 @@ foreach arg $argv {
         --tag=*     { set   prg(docker-tag) [regsub {^--tag=}  $arg {}]; }
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --stdin     { lappend cfg(files)    "STDIN";   }
-        --gui-result=text   { set cfg(gui-result)   "text" ;   }
-        --gui-result=table  { set cfg(gui-result)   "table";   }
+
+        --gui-result=text    { set cfg(gui-result)  "text" ;   }
+        --gui-result=table   { set cfg(gui-result)  "table";   }
+        --gui-layout=note    -
+        --gui-layout=classic { set cfg(gui-layout)  "classic"; }
+        --gui-layout=tablet  { set cfg(gui-layout)  "tablet" ; }
+        --gui-layout=window  { set cfg(gui-layout)  "window";  }
 
         options__for_debugging__only  { set dumm "";   }
         --test=*    { lappend cfg(files)    [regsub {^--test=} $arg {}];
