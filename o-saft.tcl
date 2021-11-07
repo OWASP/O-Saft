@@ -177,6 +177,8 @@ exec wish "$0" ${1+"$@"}
 #?      --tag=TAG   use Docker image ID with tag; default: (empty)
 #?      --docker    use o-saft-docker instead of o-saft.pl
 #.      --gui       dummy for compatibility with other tools
+#?      --gui-result=text   print result of o-saft.pl as simple plain text
+#?      --gui-result=table  print result of o-saft.pl formated in a table
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #.      +quit       exit without GUI (for compatibility with o-saft.pl)
@@ -417,15 +419,16 @@ exec wish "$0" ${1+"$@"}
 #.      Debug messages are prefixed with:   #dbx [$0]:
 #.
 #.      --test=FILE
-#.      --test=FILE --layout=text
-#.      --test=FILE --layout=table
+#.      --test=FILE --gui-result=text
+#.      --test=FILE --gui-result=table
 #.          loads FILE into the GUI's tablelist widget and then calls the save
 #.          function, which prints the content of tablelist on STDOUT.
 #.          This is used in Makefile* for testing functionality, does not make
 #.          any sense otherwise.
-#.          The  --layout=*  option enforces storing the file, content in Tk's
-#.          tablelist or text widget. The output may be slightly different, as 
-#.          the tablelist does not always contain all data of the file.
+#.          The  --gui-result=*  option enforces to display and store the file
+#.          content in Tk's tablelist or text widget. The displayed output may
+#.          be slightly different, as the tablelist doesn't always contain all
+#.          data of the file.
 #.
 #.
 #.   Tracing and Debugging with Alias Names
@@ -451,7 +454,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.253 Spring Edition 2021
+#?      @(#) 1.254 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -551,10 +554,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.253 21/05/02 11:28:18"
+set cfg(SID)    "@(#) o-saft.tcl 1.254 21/11/07 07:56:47"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.253}
+set cfg(VERSION) {1.254}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -671,7 +674,7 @@ set myX(padx)   5              ;# padding to right border
 
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
-set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
+set cfg(gui-result) {table}    ;# layout o-saft.pl's results:  text  or  table
                                 # see also comment in gui_init()
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
 set cfg(max53)  4050           ;# max. size of text to be stored in table columns
@@ -1527,7 +1530,7 @@ proc toggle_filter  {w tag val line} {
     #? toggle visability of text tagged with name $tag
     _dbx 2 "{$w $tag $val $line}"
     global cfg
-    switch $cfg(layout) {
+    switch $cfg(gui-result) {
         text    { toggle_filter_text  $w $tag $val $line }
         table   { toggle_filter_table $w $tag $val }
     }
@@ -2153,8 +2156,8 @@ proc create_filtertab   {parent cmd}    {
     set this $parent.g
     pack [frame $this] -side top -expand yes -fill both
     set tab [create_filtertext  $this $cmd].t
-    #if {"text"  eq $cfg(layout)} { set tab [create_filtertext  $this $cmd].t }
-    #if {"table" eq $cfg(layout)} { set tab [create_filtertable $this $cmd].t }
+    #if {"text"  eq $cfg(gui-result)} { set tab [create_filtertext  $this $cmd].t }
+    #if {"table" eq $cfg(gui-result)} { set tab [create_filtertable $this $cmd].t }
         # create_filter_* returns widget, which is same as $parent
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
         tk fontchooser config -command {create_selected "Font"}; # what to do with selection
@@ -2750,8 +2753,8 @@ proc create_buttons {parent cmd} {
       "OPT" { # add options for o-saft.tcl itself
               pack [frame $parent.of] -fill x -padx 5 -anchor w
               pack [label $parent.of.l -text "Layout format of results:"] \
-                   [radiobutton $parent.of.t$cmd -variable cfg(layout) -value "table" -text "table"] \
-                   [radiobutton $parent.of.s$cmd -variable cfg(layout) -value "text"  -text "text"] \
+                   [radiobutton $parent.of.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
+                   [radiobutton $parent.of.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
                    -padx 5 -anchor w -side left
               guitip_set $parent.of [_get_tipp "layout"]
             }
@@ -3202,7 +3205,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.253 21/05/02 11:28:18
+ #?      @(#) .o-saft.tcl generated by 1.254 21/11/07 07:56:47
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3478,7 +3481,7 @@ proc osaft_save   {tbl type nr} {
     global cfg exe prg results
     if {$type eq "TTY"} {
         # FIXME: following type of TAB needs to be identified individually, not globally
-        switch $cfg(layout) {
+        switch $cfg(gui-result) {
             text    { puts $results($nr) }
             table   { puts [_get_table $tbl] }
         }
@@ -3491,7 +3494,7 @@ proc osaft_save   {tbl type nr} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveresult]" -initialfile "$prg(SAFT)--$suffix.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
-        switch $cfg(layout) {
+        switch $cfg(gui-result) {
             text    { puts $fid $results($nr) }
             table   { puts $fid [_get_table $tbl] }
         }
@@ -3531,8 +3534,8 @@ proc osaft_load   {cmd} {
     if {"STDIN"!=$name} { set fid [open $name r] }
     set results($cfg(EXEC)) [read $fid]
     if {"STDIN"!=$name} { close $fid }
-    set w [create_tab  $cfg(objN) $cfg(layout) [file tail $name] $results($cfg(EXEC))]
-    apply_filter $w $cfg(layout) $name     ;# text placed in pane, now do some markup
+    set w [create_tab  $cfg(objN) $cfg(gui-result) [file tail $name] $results($cfg(EXEC))]
+    apply_filter $w $cfg(gui-result) $name     ;# text placed in pane, now do some markup
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $results($nr)
     guistatus_set "loaded file: $name"
@@ -3624,7 +3627,7 @@ proc osaft_exec   {parent cmd}  {
     #else: nothing to do, everything in $result
     }
     set results($cfg(EXEC)) "\n$exectxt\n\n$result\n"      ;# store result for later use
-    set _layout $cfg(layout)
+    set _layout $cfg(gui-result)
     if {[regexp {[+]version$} $cmd]} { set _layout "text" };# no table data (only 2 columns)
     if {$cmd eq "docker_status"}     { set _layout "text" };# don't need table here
     set txt [create_tab  $cfg(objN) $_layout $cmd $results($cfg(EXEC))]
@@ -3768,7 +3771,7 @@ CFG TITLE     = $cfg(TITLE)
  |  trace     = $cfg(TRACE)
  |  tooltip   = tooltip package\t$tip
  |  bstyle    = $cfg(bstyle)
- |  layout    = $cfg(layout)
+ |  gui-result= $cfg(gui-result)
  |  docs-files= $cfg(docs-files)
 TCL version   = $tcl_patchLevel
  |  library   = $tcl_library
@@ -3793,12 +3796,12 @@ proc gui_init     {}    {
     global cfg prg myX argv IMG
     if {[catch { package require tablelist } err]} {
         pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
-        set cfg(layout) {text}
-            # cfg(layout) used in create_tab() and create_filtertab()
+        set cfg(gui-result) {text}
+            # cfg(gui-result) used in create_tab() and create_filtertab()
             # it's hardcoded set to {text} here if package is missing, that's
             # working for create_filtertab() as the widgets there are created
             # only once at startup.
-            # Changing cfg(layout) in the GUI later does only affect creating
+            # Changing cfg(gui-result) in the GUI later only affects creating
             # tables in the result tab after  osaft_exec(), and will not harm
             # widgets or functionality created by create_filtertab().
     }
@@ -3967,8 +3970,8 @@ foreach arg $argv {
         --tag=*     { set   prg(docker-tag) [regsub {^--tag=}  $arg {}]; }
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --stdin     { lappend cfg(files)    "STDIN";   }
-        --layout=text   { set cfg(layout)   "text" ;   }
-        --layout=table  { set cfg(layout)   "table";   }
+        --gui-result=text   { set cfg(gui-result)   "text" ;   }
+        --gui-result=table  { set cfg(gui-result)   "table";   }
 
         options__for_debugging__only  { set dumm "";   }
         --test=*    { lappend cfg(files)    [regsub {^--test=} $arg {}];
