@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.32 21/04/29 17:41:23
+#?      @(#) Makefile.tcl 1.33 21/11/07 21:38:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.32
+_SID.tcl           := 1.33
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -40,8 +40,10 @@ help.test.tcl-vv:     HELP_TYPE = tcl
 HELP-_tcl1          = _________________________________________ testing GUI tool _
 HELP-test.tcl       = test functionality of '$(SRC.tcl)'
 HELP-test.tcl.log   = same as test.tcl but store output in '$(TEST.logdir)/'
+HELP-test.tclinteractive= test functionality of '$(SRC.tcl) with GUI'
+HELP-test.tclinteractive.log = same as test.tclinterive but store output in '$(TEST.logdir)/'
+HELP-test.GUI       = alias for test.tclinteractive
 HELP-_tcl2          = ________________________________________________ GUI tests _
-HELP-GUI-not-yet    = not yet implemented ...
 
 HELP.tcl            = # no special documentation yet
 HELP.test.tcl.all   = # no special documentation yet
@@ -70,10 +72,22 @@ testcmd-tcl---v--img_%:     TEST.args  += --v --img
 testcmd-tcl---v--text_%:    TEST.args  += --v --text
 testcmd-tcl---v-host_%:     TEST.args  += --v host1 host2
 testcmd-tcl---v-host-host_%:TEST.args  += --v host1 host2 host3 host4 host5
+testcmd-tcl---gui-classic_%:TEST.args  += --gui-layout=classic
+testcmd-tcl---gui-tablet_% :TEST.args  += --gui-layout=tablet
+testcmd-tcl---test-osaft_%: TEST.args  += --test-osaft
+# TODO:  to be implemented
+#testcmd-tcl---load-FILE_%:  TEST.args  += --load=EXAMPLE
 # TODO:  test with docker
-#testcmd-tcl---docker%:      TEST.args  += --docker
 #testcmd-tcl---id%:          TEST.args  += --id=docker-ID
 #testcmd-tcl---tag%:         TEST.args  += --id=docker-Tag
+
+# test command wich require user interaction (in GUI)
+testcmd-tclinteractive-%:   EXE.pl      = ../o-saft.tcl
+testcmd-tclinteractive-%:   TEST.init   =
+testcmd-tclinteractive---gui--gui-classic_%: TEST.args  += --gui --gui-layout=classic
+testcmd-tclinteractive---gui--gui-tablet_%:  TEST.args  += --gui --gui-layout=tablet
+testcmd-tclinteractive---gui--docker_%:      TEST.args  += --gui --docker
+testcmd-tclinteractive---test-tcl_%:         TEST.args  += --test-tcl
 
 # test some warnings
 testcmd-tcl---v-host1-host2_%:  TEST.args  += --v host1 host2 host3 host4 host5 host6 
@@ -84,6 +98,16 @@ testcmd-tcl---unknown_%:    TEST.args  += --unknown
 ALL.testtcl         = $(shell awk -F% '/^testcmd-tcl-%/{next} /^testcmd-tcl-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
 ALL.test.tcl        = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log    = $(ALL.test.tcl:%=%.log)
+
+# *test-interactive* targets are not added to coomon variables,
+# they cannot be used in scripted make, but need to be startet interactive
+ALL.testtclinteractive      = $(shell awk -F% '/^testcmd-tclinteractive-%/{next} /^testcmd-tclinteractive-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
+ALL.test.tclinteractive     = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtclinteractive:%=%$(host)))
+ALL.test.tclinteractive.log = $(ALL.test.tclinteractive:%=%.log)
+test.tclinteractive:          $(ALL.test.tclinteractive)
+test.tclinteractive.log:      $(ALL.test.tclinteractive.log)
+test.GUI:           test.tclinteractive
+test.GUI.log:       test.tclinteractive.log
 
 test.tcl.log-compare:       TEST.target_prefix  = testcmd-tcl-
 test.tcl.log-move:          TEST.target_prefix  = testcmd-tcl-
