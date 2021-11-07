@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.62 21/03/02 14:45:56
+#?      @(#) êÄ§ñU 1.63 21/11/07 23:07:57
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -380,7 +380,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.62 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.63 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -676,8 +676,11 @@ for m in $modules ; do
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  'OSaft::Doc::Data' )              c="green"; ;;
 		  'Time::Local')
-			# needs ugly hack :-((
-			if [ 1.25 = $v ]; then
+			# has strange version numbering, needs ugly hack :-((
+			if [ 1.25 = $v \
+			  -o 1.26 = $v \
+			  -o 1.27 = $v \
+			  -o 1.28 = $v ]; then
 				# 1.25 seems to be newer than 1.230 which is newer than 1.90
 				c="green";
 			else
