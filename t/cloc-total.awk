@@ -14,7 +14,7 @@
 #?      per language.
 #?
 #? VERSION
-#?      @(#) cloc-total.awk 1.2 21/11/08 12:53:52
+#?      @(#) cloc-total.awk 1.3 21/11/08 13:01:02
 #?
 #? AUTHOR
 #?      12. January 2021 Achim Hoffmann
@@ -25,6 +25,7 @@ BEGIN {
 	FS = ",";
 	l  = 1;
 }
+/^ *#/  { comments[c++] = $0; next; }   # comment lines from cloc
 /^ *$/  { next; }       # empty lines from cloc
 /^files/{ next; }       # header line from cloc
 /SUM/   { sum=$NF; }
@@ -48,5 +49,7 @@ END {
 			lang, files[lang], total, blank[lang], commt[lang], lines[lang]);
 	}
 	print l;
+	if (0<c) { print "\n# Comments reported by cloc:"; }
+	for (idx in comments) { print comments[idx]; }
 }
 
