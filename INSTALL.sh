@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated from Makefile 1.108
+#? File generated from Makefile 1.110
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -165,7 +165,7 @@
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       and scopes containing  "generated from Makefile 1.108" .
+#       and scopes containing  "generated from Makefile 1.110" .
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
@@ -201,7 +201,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.61 21/03/02 01:09:47
+#?      @(#) êÄ§ñU 1.63 21/11/07 23:07:57
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -229,7 +229,7 @@ text_dev="did you run ¬ª$0 --clean¬´?"
 text_alt="file from previous installation, try running ¬ª$0 --clean¬´ "
 text_old="ancient module found, try installing newer version, at least "
 
-# generated from Makefile 1.108 {
+# generated from Makefile 1.110 {
 osaft_sh="o-saft"
 osaft_exe="o-saft.pl"
 osaft_gui="o-saft.tcl"
@@ -272,7 +272,7 @@ tools_other="
 	OSSL_CCS_InjectTest.py SSLAudit.exe SSLAudit.pl SSLCertScanner.exe SSLPressure.exe TLSSLed_v1.3.sh TestSSLServer.exe TestSSLServer.jar analyze-ssl.pl athena-ssl-cipher-check_v062.jar bash-heartbleed.sh beast.pl ccs-injection.sh check-ssl-heartbleed.pl chksslkey cnark.pl manyssl poet robot-detect smtp_tls_cert.pl ssl-cert-check ssl-check-heartbleed.pl ssl-cipher-check.pl ssl-dos ssl-renegotiation.sh sslcat ssldiagnos.exe sslmap.py sslscan sslscan.exe sslsniff sslstrip ssltest.pl ssltest_heartbeat.py sslthing.sh sslyze.py stunnel testssl.sh tls-check.pl tls-scan tlsenum vessl
 	"
 
-# generated from Makefile 1.108 }
+# generated from Makefile 1.110 }
 
 # HARDCODED {
 # because newer Makefiles may no longer know about them
@@ -324,7 +324,8 @@ fi
 # --------------------------------------------- internal functions
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
-	[ 0 -lt $_break ] && perl -le 'printf"\n\t"'   # use additional line
+	[ 0 -eq $_break ] && return
+	perl -le 'printf"\n\t"'     # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
@@ -379,7 +380,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.61 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.63 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            inst_directory="$1";  ;; # directory, last one wins
 	esac
 	shift
@@ -675,8 +676,11 @@ for m in $modules ; do
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  'OSaft::Doc::Data' )              c="green"; ;;
 		  'Time::Local')
-			# needs ugly hack :-((
-			if [ 1.25 = $v ]; then
+			# has strange version numbering, needs ugly hack :-((
+			if [ 1.25 = $v \
+			  -o 1.26 = $v \
+			  -o 1.27 = $v \
+			  -o 1.28 = $v ]; then
 				# 1.25 seems to be newer than 1.230 which is newer than 1.90
 				c="green";
 			else
