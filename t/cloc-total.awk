@@ -14,7 +14,7 @@
 #?      per language.
 #?
 #? VERSION
-#?      @(#) cloc-total.awk 1.3 21/11/08 13:01:02
+#?      @(#) cloc-total.awk 1.4 21/11/08 13:15:02
 #?
 #? AUTHOR
 #?      12. January 2021 Achim Hoffmann
@@ -28,13 +28,14 @@ BEGIN {
 /^ *#/  { comments[c++] = $0; next; }   # comment lines from cloc
 /^ *$/  { next; }       # empty lines from cloc
 /^files/{ next; }       # header line from cloc
-/SUM/   { sum=$NF; }
+/SUM/   { cnt=$1; sum=$NF; }
 {
 	types[l++] = $2;
 	files[$2]  = $1; # print files[$2];
 	blank[$2]  = $3;
 	commt[$2]  = $4;
 	lines[$2]  = $5;
+	if ($2 !~ /SUM/) { mycnt += $1; mysum += $NF; }
 }
 END {
 	l = "#-------------+------+---------+-------+------------+-------------";
@@ -49,6 +50,11 @@ END {
 			lang, files[lang], total, blank[lang], commt[lang], lines[lang]);
 	}
 	print l;
+        if (mycnt != cnt || mysum != sum) {
+		print "# mismatch calculated vs. reported numbers:"
+		printf("#   calculated cnt %6d vs. reported cnt %6d\n", mycnt, cnt);
+		printf("#   calculated sum %6d vs. reported SUM %6d\n", mysum, sum);
+}
 	if (0<c) { print "\n# Comments reported by cloc:"; }
 	for (idx in comments) { print comments[idx]; }
 }
