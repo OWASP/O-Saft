@@ -8,17 +8,13 @@
 #?      cloc --csv file ... | clock-total.awk
 #?      cloc --csv file ... | awk -f clock-total.awk
 #?
-#? OPTIONS
-#?      -v all=1    - prints all line not matching certificate data from input
-#?                    default is to extract matching certificate data only
-#?
 #? DESCRIPTION
-#?      Formats output of  "cloc --csv files ..."  same ways as  cloc  itself 
-#?      and adds new column  "total %"  which contains the ratio of code lines
+#?      Formats output of "cloc --csv files ..." same ways as  cloc itself. It
+#?      adds the new column  "total %"  which contains the ratio of code lines
 #?      per language.
 #?
 #? VERSION
-#?      @(#) cloc-total.awk 1.1 %E 19:49:18
+#?      @(#) cloc-total.awk 1.2 21/11/08 12:53:52
 #?
 #? AUTHOR
 #?      12. January 2021 Achim Hoffmann
@@ -29,8 +25,8 @@ BEGIN {
 	FS = ",";
 	l  = 1;
 }
-/^ *$/  { next; }
-/^files/{ next; }
+/^ *$/  { next; }       # empty lines from cloc
+/^files/{ next; }       # header line from cloc
 /SUM/   { sum=$NF; }
 {
 	types[l++] = $2;
