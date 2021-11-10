@@ -19,6 +19,7 @@
 #?          /path/to/installation/directory
 #?                      - copy all necessary files into specified directory
 #?          --install   - copy all necessary files into default directory
+#?                        default if no other option given
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./.files_to_be_removed
@@ -201,7 +202,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) êÄ§ñU 1.63 21/11/07 23:07:57
+#?      @(#) 0ﬂç53V 1.64 21/11/10 15:10:58
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -350,6 +351,7 @@ check_commands () {
 }
 
 # --------------------------------------------- arguments and options
+new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help' | '-?')
@@ -380,12 +382,16 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.63 ; exit;      ;; # for compatibility to $osaft_exe
-	  *)            inst_directory="$1";  ;; # directory, last one wins
+	  '+VERSION')   echo 1.64 ; exit;      ;; # for compatibility to $osaft_exe
+	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
 done
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
+if [ -n "$new_dir" ]; then
+	inst_directory="$new_dir"
+	[ -z "$mode" ] && mode=dest           # no mode given, set default
+fi
 
 # --------------------------------------------- main
 
