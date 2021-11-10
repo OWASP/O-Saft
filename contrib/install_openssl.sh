@@ -12,6 +12,7 @@
 #?      --m - install all required Perl modules also
 #?      --n - do not execute, just show preconditions and where to install
 #?	--debian    - install required debian packages first
+#?      --list      - list required packages, modules, etc.
 #?
 #? DESCRIPTION
 #?      Build special openssl based on  Peter Mosman's openssl.  Additionally
@@ -162,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.37 21/11/10 23:57:12
+#?      @(#)  1.38 21/11/11 00:07:57
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -242,6 +243,20 @@ echo_head       () {
 	echo ""
 	echo "$@"
 } # echo_head
+
+list_data       () {
+	echo '# mandatory packages:'
+	echo "#\t$exe_mandatory"
+	echo "\t$lib_packages"
+	echo '# openssl:'
+	echo "#\t$OSAFT_VM_SRC_OPENSSL"
+	echo '# Perl modules:'
+	echo "#\t$OSAFT_VM_SRC_SSLEAY"
+	echo "\t$perl_modules"
+	echo "\t$perl_io_socket"
+	echo ""
+	return
+} # list_data
 
 apt_install_debian  () {
 	err=0
@@ -376,7 +391,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.37 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.38 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -384,6 +399,10 @@ while [ $# -gt 0 ]; do
 
 	  '-h' | '--h' | '--help' | '-?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+		exit 0
+		;;
+	  '-list' | '--list')
+		list_data
 		exit 0
 		;;
 	  '-debian' | '--debian')
