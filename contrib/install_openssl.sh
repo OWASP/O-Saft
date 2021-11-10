@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.29 20/06/06 10:46:53
+#?      @(#)  1.30 21/11/10 18:48:24
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -189,6 +189,10 @@ LD_RUN_PATH=${LD_RUN_PATH:=$OPENSSL_DIR/lib}
   BUILD_DIR=${BUILD_DIR:=/tmp/_src}
    WORK_DIR=$dir
 
+exe_mandatory="
+	gcc
+	make
+"
 lib_packages="
 	libidn2-0-dev
 	libgmp-dev
@@ -219,7 +223,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.29 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.30 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -290,6 +294,22 @@ miss=""
 err=0
 echo ""
 echo "### Preconditions"
+echo ""
+echo "# required mandatory tools:"
+for exe in $exe_mandatory ; do
+	txt=""
+	echo -n "	$exe "
+	exe=$(\command -v $exe)
+	if [ -n "$exe" ]; then
+		echo "\tOK $exe"
+	else
+		echo "\tmissing"
+		miss="$miss $exe"
+		err=1
+	fi
+done
+[ 1 -eq $err  ] && echo "**WARNING: development tools need to be installed"
+
 echo ""
 echo "# required Perl modules (installed with  --m  option):"
 for mod in $perl_modules ; do
