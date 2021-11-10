@@ -202,8 +202,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) `?
-ïU 1.66 21/11/10 15:39:23
+#?      @(#) °aEéU 1.67 21/11/10 17:04:55
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -390,7 +389,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.66 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.67 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -524,8 +523,13 @@ if [ "$mode" = "dest" ]; then
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
 	if [ -z "$try" ]; then
-		$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
-		|| echo_red "**ERROR: 041: generating $osaft_guirc failed"
+		w=$(\command -v wish)
+		if [ -n "$osaft_gui" -a -n "$w" ]; then
+			$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
+			|| echo_red "**ERROR: 041: generating $osaft_guirc failed"
+		else
+			echo -n "# " && echo_yellow "missing wish; $osaft_guirc not installed"
+		fi
 	else
 		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
 	fi
@@ -591,6 +595,7 @@ fi
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
 cnt=0
+gui=0
 echo ""
 echo "# check environment variable PATH"
 for p in `echo $PATH|tr ':' ' '` ; do
@@ -599,9 +604,17 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		cnt=`expr $cnt + 1`
 		echo_label "$osaft_exe" && echo_green "$p"
 	fi
+	w="$p/wish"     # wich hardcoded here
+	if [ -e "$w" ]; then
+		gui=`expr $gui + 1`
+		echo_label "wish" && echo_green "$p"
+	fi
 done
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
+[ 0 -eq $gui ]  && echo_label  "wish" \
+		&& echo_yellow "not found in PATH, consider installing wish" \
+		&& osaft_gui=
 
 PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
 
