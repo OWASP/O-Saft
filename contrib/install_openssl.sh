@@ -158,7 +158,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.30 21/11/10 18:48:24
+#?      @(#)  1.31 21/11/10 19:47:56
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -223,7 +223,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.30 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.31 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -386,7 +386,14 @@ else
 **ERROR: preconditions incomplete: $miss; exit
 EoT
         # TODO: print only required packages and moduls in Hint above
-	exit 2
+
+	if [ 1 -eq $optm ]; then
+		echo ""
+		echo "#    continue due to  --m  was given."
+		echo ""
+	else
+		exit 2
+	fi
 fi
 [ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
 
