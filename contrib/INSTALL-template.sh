@@ -202,7 +202,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) 0ߍ53V 1.64 21/11/10 15:10:58
+#?      @(#)  1qʨU 1.65 21/11/10 15:23:28
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -306,6 +306,13 @@ files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 files_info="CHANGES README o-saft.tgz"
 # HARDCODED }
 
+osaft_subdirs="
+	$contrib_dir
+	Net
+	OSaft/Doc
+	docs
+	"
+
 osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
@@ -382,7 +389,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.64 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.65 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -509,9 +516,9 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	echo "# installing ..."
-	$try \mkdir -p "$inst_directory/$contrib_dir"
-	$try \mkdir -p "$inst_directory/Net"
-	$try \mkdir -p "$inst_directory/OSaft/Doc"
+	for d in $osaft_subdirs ; do
+		$try \mkdir -p "$inst_directory/$d"
+	done
 	for f in $files ; do
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
