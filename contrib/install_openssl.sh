@@ -11,6 +11,7 @@
 #?      --i - ignore failed preconditions; continue always
 #?      --m - install all required Perl modules also
 #?      --n - do not execute, just show preconditions and where to install
+#?	--debian    - install required debian packages
 #?
 #? DESCRIPTION
 #?      Build special openssl based on  Peter Mosman's openssl.  Additionally
@@ -156,10 +157,13 @@
 #? EXAMPLES
 #?      Simple build with defaults:
 #?          $0
+#?      Most common usage (on debian systems):
+#?          $0 --debian
+#?          $0 --i
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) °ò4NV 1.34 21/11/10 20:51:03
+#?      @(#) Ð‹í-V 1.35 21/11/10 21:30:16
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -204,6 +208,7 @@ lib_packages="
 "
 # FIXME: libidn11-dev also required
 
+# FIXME: IO::Socket::SSL must be installed after openssl and Net::SSLeay
 perl_modules="
 	Module::Build
 	IO::Socket::SSL
@@ -222,6 +227,16 @@ echo_head       () {
 	echo ""
 	echo "$@"
 } # echo_head
+
+apt_install_debian  () {
+	err=0
+	echo_head '### install debian packages ...'
+	for pkg in $exe_mandatory $lib_packages ; do
+		apt install --no-install-recommends $pkg
+	done
+	echo "# installed packages: $exe_mandatory $lib_packages"
+	return
+} # apt_install_debian
 
 mcpan_modules   () {
 	#? install modules (with --m only)
@@ -339,7 +354,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.34 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.35 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -347,6 +362,10 @@ while [ $# -gt 0 ]; do
 
 	  '-h' | '--h' | '--help' | '-?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+		exit 0
+		;;
+	  '-debian' | '--debian')
+		apt_install_debian
 		exit 0
 		;;
 	  '-i' | '--f')
@@ -457,6 +476,7 @@ EoT
 fi
 [ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
 
+### install modules
 [ 1 -eq $optm  ] && mcpan_modules
 
 ### install openssl
@@ -569,6 +589,7 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
+
 
 ### test o-saft.pl
 test_osaft
