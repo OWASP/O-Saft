@@ -202,7 +202,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) °aEéU 1.67 21/11/10 17:04:55
+#?      @(#) @jDåU 1.68 21/11/10 17:39:01
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -304,6 +304,9 @@ files_not_installed="
 files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
+
+# important Perl modules # TODO: should be specified in/by Makefile
+perl_modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 # HARDCODED }
 
 osaft_subdirs="
@@ -389,7 +392,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.67 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.68 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -739,21 +742,30 @@ echo "#$_line"
 echo ""
 echo "# check for important Perl modules used by installed O-Saft"
 echo "#$_line"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
-	# NOTE: output format is slightly different, 'cause **WARNINGS are printed too
+	# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
 	echo "# testing $o ...$tab"
-	for m in $modules ; do
+	for m in $perl_modules ; do
 		echo_label "$m"
 		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
 		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
 		if [ -n "$w" ]; then
-			echo_red    "$v"
-			echo_yellow "$w"
+			# ERROR in $w most likely means that $m is not found by
+			# perl, then $v is empty
+			if [ -z "$v" ]; then
+				echo_red    "$w"
+			else
+				echo_red    "$v"
+				echo_yellow "$w"
+			fi
 		else
-			echo_green  "$v"
+			if [ -z "$v" ]; then
+				echo_yellow "missing?"  # probaly due to ERROR
+			else
+				echo_green  "$v"
+			fi
 		fi
 		#err=`expr $err + 1`    # already counted in previous check
 	done
@@ -803,8 +815,7 @@ check_commands $tools_optional
 echo "#$_line"
 
 echo ""
-echo "# check for contributed files"
-echo "# (in $inst_directory/$contrib_dir )"
+echo "# check for contributed files (in $inst_directory/$contrib_dir ):"
 echo "#$_line"
 for c in $files_contrib ; do
 	skip=0
