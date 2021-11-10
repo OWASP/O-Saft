@@ -8,6 +8,7 @@
 #?
 #? OPTIONS
 #?      --h - nice option
+#?      --i - ignore failed preconditions; continue always
 #?      --m - install all required Perl modules also
 #?      --n - do not execute, just show preconditions and where to install
 #?
@@ -158,7 +159,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.31 21/11/10 19:47:56
+#?      @(#) `BÙ8žU 1.33 21/11/10 20:44:02
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -193,6 +194,7 @@ exe_mandatory="
 	gcc
 	make
 "
+# FIXME: checked package names are based on debian, and desendents
 lib_packages="
 	libidn2-0-dev
 	libgmp-dev
@@ -216,6 +218,120 @@ perl_modules="
 install_modules="
 "
 
+echo_head       () {
+	echo ""
+	echo "$@"
+} # echo_head
+
+mcpan_modules   () {
+	#? install modules (with --m only)
+	err=0
+	echo_head '### install Perl modules ...'
+	for mod in $install_modules ; do
+		txt=""
+		[ "Module::Build" = $mod ] && continue
+		    # cannot be installed, -MCPAN does it automatically if needed
+		echo "### install perl modul $mod ..."
+		perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
+		[ -n "$txt" ] && err=1
+		# FIXME: perl -MCPAN does not return proper error codes; need
+		#        to parse output, grrr
+	done
+	perl -MCPAN -e "install $mod"   || err=1
+	[ 0 -ne $err ] && echo "**ERROR: module installation failed"
+	return
+} # mcpan_modules
+
+check_mandatory () {
+	err=0
+	echo_head "# required mandatory tools:"
+	for exe in $exe_mandatory ; do
+		txt=""
+		echo -n "	$exe "
+		exe=$(\command -v $exe)
+		if [ -n "$exe" ]; then
+			echo "\tOK $exe"
+		else
+			echo "\tmissing"
+			miss="$miss $exe"
+			err=1
+		fi
+	done
+	[ 1 -eq $err  ] && echo "**WARNING: development tools need to be installed"
+	return
+} # check_mandatory
+
+check_modules   () {
+	err=0
+	echo_head "# required Perl modules (installed with  --m  option):"
+	for mod in $perl_modules ; do
+		txt=""
+		echo -n "	$mod "
+		perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
+		if [ -z "$txt" ]; then
+			# found: print OK followed by directory of used module
+			loc=`perl -M$mod -le 'my $idx='$mod'; $idx=~s#::#/#g; print $INC{"${idx}.pm"}'`
+			txt="\tOK $loc"
+		else
+			# not found: add to modules to be installed
+			install_modules="$install_modules $mod"
+			err=1
+		fi
+		#[ -z "$txt" ] && txt="\tOK" || err=1
+		echo "$txt"
+	done
+	[ 1 -eq $err  ] && miss="$miss modules,"
+	#[ 1 -eq $optm ] && err=0 # when --m was given continue even if Perl modules are missing
+	return
+} # check_modules
+
+check_libraries () {
+	lib=0
+	echo_head "# required libraries:"
+	txt=`find /usr/lib -name libidn\.\*`
+	[ -z "$txt" ] && txt="**ERROR: libidn.so missing, consider installing libidn11-dev" && miss="$miss libidn,"
+	echo "	libidn.so $txt"
+	for pack in $lib_packages ; do
+		ok=1
+		txt=`find /usr -name $pack`
+		[ -z "$txt" ] && txt="**ERROR: $pack missing, consider installing $pack" && ok=0 && lib=1
+		[ 1 -eq $ok ] && txt="\tOK $txt"
+		echo "	$pack $txt"
+	done
+	[ 1 -eq $lib ] && miss="$miss libraries," && err=1
+	return
+} # check_libraries
+
+check_directories () {
+	echo ""
+	echo -n "# requred directories:"
+	txt=""
+	[ ! -e "$OSAFT_DIR" ]   && txt="$txt\n**ERROR: missing: OSAFT_DIR=$OSAFT_DIR"
+	[   -e "$BUILD_DIR" ]   && txt="$txt\n**ERROR: exists:  BUILD_DIR=$BUILD_DIR"
+	[   -e "$OPENSSL_DIR" ] && txt="$txt\n**ERROR: exists:  OPENSSL_DIR=$OPENSSL_DIR"
+	[ ! -e "$SSLEAY_DIR" ]  && txt="$txt\n**ERROR: missing: SSLEAY_DIR=$SSLEAY_DIR"
+	[   -n "$txt" ] && miss="$miss directories" && echo $txt.
+	return
+} # check_directories
+
+test_osaft      () {
+	echo_head "### test o-saft.pl ..."
+	o_saftrc=$OSAFT_DIR/.o-saft.pl
+	[ -e  $o_saftrc ] || \
+		echo "**WARNING: $o_saftrc not found; testing without"
+	o_saft=$OSAFT_DIR/o-saft.pl
+	if [ ! -e  $o_saft ]; then
+		echo "**WARNING: $o_saft missing; trying to find in PATH"
+		o_saft=o-saft.pl
+	fi
+	# call in installation dir without --no-rc to ensure adapted .o-saft.pl is used
+	cd $OSAFT_DIR
+	echo "$o_saft +version |egrep -i '(SSL|supported)'"
+	$o_saft +version |egrep -i '(SSL|supported|cert)'
+	return
+} # test_osaft
+
+optf=0
 optm=0
 optn=0
 while [ $# -gt 0 ]; do
@@ -223,7 +339,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.31 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.33 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -232,6 +348,9 @@ while [ $# -gt 0 ]; do
 	  '-h' | '--h' | '--help' | '-?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
+		;;
+	  '-f' | '--f')
+		optf=1
 		;;
 	  '-m' | '--m')
 		optm=1
@@ -292,70 +411,11 @@ done
 ### preconditions (needs to be checked with or without --n)
 miss=""
 err=0
-echo ""
-echo "### Preconditions"
-echo ""
-echo "# required mandatory tools:"
-for exe in $exe_mandatory ; do
-	txt=""
-	echo -n "	$exe "
-	exe=$(\command -v $exe)
-	if [ -n "$exe" ]; then
-		echo "\tOK $exe"
-	else
-		echo "\tmissing"
-		miss="$miss $exe"
-		err=1
-	fi
-done
-[ 1 -eq $err  ] && echo "**WARNING: development tools need to be installed"
-
-echo ""
-echo "# required Perl modules (installed with  --m  option):"
-for mod in $perl_modules ; do
-	txt=""
-	echo -n "	$mod "
-	perl -M$mod -le "print ${mod}::Version" || txt="**ERROR: $mod missing"
-	if [ -z "$txt" ]; then
-		# found: print OK followed by directory of used module
-		loc=`perl -M$mod -le 'my $idx='$mod'; $idx=~s#::#/#g; print $INC{"${idx}.pm"}'`
-		txt="\tOK $loc"
-	else
-		# not found: add to modules to be installed
-		install_modules="$install_modules $mod"
-		err=1
-	fi
-	#[ -z "$txt" ] && txt="\tOK" || err=1
-	echo "$txt"
-done
-[ 1 -eq $err  ] && miss="$miss modules,"
-[ 1 -eq $optm ] && err=0 # when --m was given continue even if Perl modules are missing
-
-# FIXME: checked package names are based on debian, and desendents
-lib=0
-echo ""
-echo "# required libraries:"
-txt=`find /usr/lib -name libidn\.\*`
-[ -z "$txt" ] && txt="**ERROR: libidn.so missing, consider installing libidn11-dev" && miss="$miss libidn,"
-echo "	libidn.so $txt"
-
-for pack in $lib_packages ; do
-	ok=1
-	txt=`find /usr -name $pack`
-	[ -z "$txt" ] && txt="**ERROR: $pack missing, consider installing $pack" && ok=0 && lib=1
-	[ 1 -eq $ok ] && txt="\tOK $txt"
-	echo "	$pack $txt"
-done
-[ 1 -eq $lib ] && miss="$miss libraries," && err=1
-
-echo ""
-echo -n "# requred directories:"
-txt=""
-[ ! -e "$OSAFT_DIR" ]   && txt="$txt\n**ERROR: missing: OSAFT_DIR=$OSAFT_DIR"
-[   -e "$BUILD_DIR" ]   && txt="$txt\n**ERROR: exists:  BUILD_DIR=$BUILD_DIR"
-[   -e "$OPENSSL_DIR" ] && txt="$txt\n**ERROR: exists:  OPENSSL_DIR=$OPENSSL_DIR"
-[ ! -e "$SSLEAY_DIR" ]  && txt="$txt\n**ERROR: missing: SSLEAY_DIR=$SSLEAY_DIR"
-[   -n "$txt" ] && miss="$miss directories" && echo $txt.
+echo_head "### Preconditions"
+check_mandatory
+check_modules
+check_libraries
+check_directories
 echo ""
 if [ 0 -eq $err ]; then
 	echo '# OK all preconditions satisfied'
@@ -397,28 +457,10 @@ EoT
 fi
 [ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
 
-### install modules (with --m only)
-if [ 1 -eq $optm ]; then
-	#[ 1 -eq $optf ] && install_modules="$perl_modules"
-	echo '### install Perl modules ...'
-	err=0
-	for mod in $install_modules ; do
-		txt=""
-		[ "Module::Build" = $mod ] && continue
-		    # cannot be installed, -MCPAN does it automatically if needed
-		echo "### install perl modul $mod ..."
-		perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
-		[ -n "$txt" ] && err=1
-		# FIXME: perl -MCPAN does not return proper error codes; need
-		#        to parse output, grrr
-	done
-	perl -MCPAN -e "install $mod"   || err=1
-	[ 0 -ne $err ] && echo "**ERROR: module installation failed"
-	# $err no longer used
-fi
+[ 1 -eq $optm  ] && mcpan_modules
 
 ### install openssl
-echo '### install openssl ...'
+echo_head '### install openssl ...'
 alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
 alias   apk="\echo '#'apk"  #
 
@@ -529,15 +571,5 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
 
 ### test o-saft.pl
-echo "### test o-saft.pl ..."
-[ -e  $OSAFT_DIR/.o-saft.pl ] || echo "**WARNING: $OSAFT_DIR/.o-saft.pl not found; testing without"
-o_saft=$OSAFT_DIR/o-saft.pl
-if [ ! -e  $o_saft ]; then
-	echo "**WARNING: $o_saft missing; trying to find in PATH"
-	o_saft=o-saft.pl
-fi
-# call in installation dir without --no-rc to ensure adapted .o-saft.pl is used
-cd $OSAFT_DIR
-echo "$o_saft +version |egrep -i '(SSL|supported)'"
-$o_saft +version |egrep -i '(SSL|supported|cert)'
+test_osaft
 
