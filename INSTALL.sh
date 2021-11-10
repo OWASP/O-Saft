@@ -19,6 +19,7 @@
 #?          /path/to/installation/directory
 #?                      - copy all necessary files into specified directory
 #?          --install   - copy all necessary files into default directory
+#?                        default if no other option given
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./.files_to_be_removed
@@ -32,11 +33,13 @@
 #?          --checkdev  - check system for development (make) requirements
 #=
 #=# check environment variable PATH
+#=#--------------------------------------------------------------
 #=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
+#=#--------------------------------------------------------------
 #=
 #=# check installation in /opt/o-saft
-#=# (warnings are ok if 'git clone' will be used for development)
 #=#--------------------------------------------------------------
+#=# (warnings are ok if 'git clone' will be used for development)
 #=#            Dockerfile	found; did you run Â»INSTALL.sh --cleanÂ«?
 #=#--------------------------------------------------------------
 #=
@@ -109,8 +112,7 @@
 #=#                  tput	/usr/bin/tput
 #=#----------------------+---------------------------------------
 #=
-#=# check for contributed files
-#=# (in /opt/o-saft/contrib )
+#=# check for contributed files (in /opt/o-saft/contrib )
 #=#----------------------+---------------------------------------
 #=#     Cert-beautify.awk	/opt/o-saft/contrib/Cert-beautify.awk
 #=#      Cert-beautify.pl	/opt/o-saft/contrib/Cert-beautify.pl
@@ -201,7 +203,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) €¤–U 1.63 21/11/07 23:07:57
+#?      @(#)  1.71 21/11/10 18:07:59
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -303,7 +305,17 @@ files_not_installed="
 files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
+
+# important Perl modules # TODO: should be specified in/by Makefile
+perl_modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 # HARDCODED }
+
+osaft_subdirs="
+	$contrib_dir
+	Net
+	OSaft/Doc
+	docs
+	"
 
 osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
@@ -322,6 +334,14 @@ if [ 0 -lt $_cols ]; then
 fi
 
 # --------------------------------------------- internal functions
+echo_head   () {
+	echo ""
+	echo "$@"
+	echo "#$_line"
+}
+echo_foot   () {
+	echo "#$_line"
+}
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
 	[ 0 -eq $_break ] && return
@@ -350,6 +370,7 @@ check_commands () {
 }
 
 # --------------------------------------------- arguments and options
+new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help' | '-?')
@@ -380,11 +401,15 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.63 ; exit;      ;; # for compatibility to $osaft_exe
-	  *)            inst_directory="$1";  ;; # directory, last one wins
+	  '+VERSION')   echo 1.71 ; exit;      ;; # for compatibility to $osaft_exe
+	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
 done
+if [ -n "$new_dir" ]; then
+	inst_directory="$new_dir"
+	[ -z "$mode" ] && mode=dest              # no mode given, set default
+fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 
 # --------------------------------------------- main
@@ -430,8 +455,8 @@ fi; # default mode }
 
 if [ "$mode" != "check" ]; then
 	if [ -n "$osaft_vm_build" ]; then
-	    echo "**ERROR: found 'osaft_vm_build=$osaft_vm_build'"
-	    echo_red "**ERROR: inside docker only --check possible; exit"
+	    echo "**ERROR: 001: found 'osaft_vm_build=$osaft_vm_build'"
+	    echo_red "**ERROR: 002: inside docker only --check possible; exit"
 	    exit 6
 	fi
 fi
@@ -447,7 +472,7 @@ fi; # expected mode }
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
 	echo "# call $build_openssl"
-	[ ! -x "$build_openssl" ] && echo_red "**ERROR: $build_openssl does not exist; exit" && exit 2
+	[ ! -x "$build_openssl" ] && echo_red "**ERROR: 020: $build_openssl does not exist; exit" && exit 2
 	[ 0 -lt "$optx" ] && set -x
 	$build_openssl $optn $@
 	status=$?
@@ -468,7 +493,7 @@ fi; # openssl mode }
 if [ "$mode" = "clean" ]; then
 	echo "# cleanup installation in $inst_directory"
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
-	[ -d "$clean_directory" ] || $try echo_red "**ERROR: $clean_directory does not exist; exit"
+	[ -d "$clean_directory" ] || $try echo_red "**ERROR: 030: $clean_directory does not exist; exit"
 	[ -d "$clean_directory" ] || $try exit 2
 	# do not move $contrib_dir/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
@@ -487,7 +512,7 @@ fi; # clean mode }
 # ------------------------- install mode  -------- {
 if [ "$mode" = "dest" ]; then
 	if [ ! -d "$inst_directory" ]; then
-		echo_red "**ERROR: $inst_directory does not exist; exit"
+		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
 		[ "$try" = "echo" ] || exit 2
 		# with --n continue, so we see what would be done
 	fi
@@ -503,15 +528,20 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	echo "# installing ..."
-	$try \mkdir -p "$inst_directory/$contrib_dir"
-	$try \mkdir -p "$inst_directory/Net"
-	$try \mkdir -p "$inst_directory/OSaft/Doc"
+	for d in $osaft_subdirs ; do
+		$try \mkdir -p "$inst_directory/$d"
+	done
 	for f in $files ; do
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
 	if [ -z "$try" ]; then
-		$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
-		|| echo_red "**ERROR: generating $osaft_guirc failed"
+		w=$(\command -v wish)
+		if [ -n "$osaft_gui" -a -n "$w" ]; then
+			$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
+			|| echo_red "**ERROR: 041: generating $osaft_guirc failed"
+		else
+			echo -n "# " && echo_yellow "missing wish; $osaft_guirc not installed"
+		fi
 	else
 		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
 	fi
@@ -519,7 +549,7 @@ if [ "$mode" = "dest" ]; then
 	if [ $force -eq 1 ]; then
 		echo '# installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
-			$try \cp $f "$HOME/" || echo_red "**ERROR: copying $f failed"
+			$try \cp $f "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
 		done
 	fi
 
@@ -532,15 +562,11 @@ fi; # install mode }
 if [ "$mode" = "checkdev" ]; then
 	echo ""
 	echo "# check system for development usage"
-	echo ""
-	echo "# check for tools used with/in make targets"
-	echo "#$_line"
+	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
-	echo "#$_line"
-	echo ""
-	echo "# check for Perl modules used with/in make targets"
-	echo "#$_line"
+	echo_foot
+	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
 		echo_label "$m"
 		# NOTE: -I . used to ensure that local ./Net is found
@@ -552,24 +578,22 @@ if [ "$mode" = "checkdev" ]; then
 			err=`expr $err + 1`
 		fi
 	done
-	echo "#$_line"
+	echo_foot
 	echo "# Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 	echo ""
 
 	[ $other -eq 0 ] && exit 0;
 
 	# printed with --other only
-	echo ""
-	echo "# check for other SSL-related tools"
-	echo "#$_line"
+	echo_head "# check for other SSL-related tools"
 	check_commands $tools_other
-	echo "#$_line"
+	echo_foot
 	exit 0
 fi; # checkdev mode }
 
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
-	echo_red "**ERROR: unknow mode  $mode; exit"
+	echo_red "**ERROR: 060: unknow mode  $mode; exit"
 	exit 5
 fi
 
@@ -577,17 +601,26 @@ fi
 #[ 0 -lt "$optx" ] && set -x    # - not used here
 
 cnt=0
-echo ""
-echo "# check environment variable PATH"
+gui=0
+echo_head "# check environment variable PATH"
 for p in `echo $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	if [ -e "$o" ]; then
 		cnt=`expr $cnt + 1`
 		echo_label "$osaft_exe" && echo_green "$p"
 	fi
+	w="$p/wish"     # wich hardcoded here
+	if [ -e "$w" ]; then
+		gui=`expr $gui + 1`
+		echo_label "wish" && echo_green "$p"
+	fi
 done
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
+[ 0 -eq $gui ]  && echo_label  "wish" \
+		&& echo_yellow "not found in PATH, consider installing wish" \
+		&& osaft_gui=
+echo_foot
 
 PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
 
@@ -596,10 +629,8 @@ cd "$inst_directory"
 
 err=0
 
-echo ""
-echo "# check installation in $inst_directory"
+echo_head "# check installation in $inst_directory"
 echo "# (warnings are ok if 'git clone' will be used for development)"
-echo "#$_line"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
@@ -607,11 +638,9 @@ done
 for f in $files_develop $files_info ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_dev"
 done
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for installed O-Saft in $inst_directory"
-echo "#$_line"
+echo_head "# check for installed O-Saft in $inst_directory"
 for o in $osaft_exe $osaft_gui $osaft_sh ; do
 	echo_label "$o"
 	e=`\command -v $o`
@@ -624,11 +653,9 @@ for o in $osaft_exe $osaft_gui $osaft_sh ; do
 		echo_red   "not found"
 	fi
 done
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for installed O-Saft resource files"
-echo "#$_line"
+echo_head "# check for installed O-Saft resource files"
 # currently no version check
 cnt=0
 for p in `echo $HOME $PATH|tr ':' ' '` ; do
@@ -648,14 +675,12 @@ else
 	txt="missing"
 fi
 echo_label "$rc" && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
-echo "#$_line"
+echo_foot
 
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
 # redirected to /dev/null
 
-echo ""
-echo "# check for installed Perl modules"
-echo "#$_line"
+echo_head "# check for installed Perl modules"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
@@ -707,35 +732,40 @@ for m in $modules ; do
 		err=`expr $err + 1`
 	fi
 done
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for important Perl modules used by installed O-Saft"
-echo "#$_line"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL"
+echo_head "# check for important Perl modules used by installed O-Saft"
 for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	[ -e "$o" ] || continue
-	# NOTE: output format is slightly different, 'cause **WARNINGS are printed too
+	# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
 	echo "# testing $o ...$tab"
-	for m in $modules ; do
+	for m in $perl_modules ; do
 		echo_label "$m"
-		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
+		w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
 		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
 		if [ -n "$w" ]; then
-			echo_red    "$v"
-			echo_yellow "$w"
+			# ERROR in $w most likely means that $m is not found by
+			# perl, then $v is empty
+			if [ -z "$v" ]; then
+				echo_red    "$w"
+			else
+				echo_red    "$v"
+				echo_yellow "$w"
+			fi
 		else
-			echo_green  "$v"
+			if [ -z "$v" ]; then
+				echo_yellow "missing?"  # probaly due to ERROR
+			else
+				echo_green  "$v"
+			fi
 		fi
 		#err=`expr $err + 1`    # already counted in previous check
 	done
 done
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# summary of warnings from installed O-Saft (should be empty)"
-echo "#$_line"
+echo_head "# summary of warnings from installed O-Saft (should be empty)"
 o="$inst_directory/$osaft_exe"
 if [ -e "$o" ]; then
 	echo "# testing $o in $inst_directory ...$tab"
@@ -743,19 +773,15 @@ if [ -e "$o" ]; then
 	w=`$o +version 2>&1 | awk '/WARNING:/{print}'`
 	[ -n "$w" ] && echo_yellow "$w"
 fi
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for openssl executable in PATH"
-echo "#$_line"
+echo_head "# check for openssl executable in PATH"
 echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)" \
 	|| echo_yellow "missing"
 # TODO: error when openssl older than 0x01000000 has no SNI
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for openssl executable used by O-Saft"
-echo "#$_line"
+echo_head "# check for openssl executable used by O-Saft"
 for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	r="$p/.$osaft_exe"
@@ -767,18 +793,13 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		)
 	fi
 done
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for optional tools to view documentation:"
-echo "#$_line"
+echo_head "# check for optional tools to view documentation:"
 check_commands $tools_optional
-echo "#$_line"
+echo_foot
 
-echo ""
-echo "# check for contributed files"
-echo "# (in $inst_directory/$contrib_dir )"
-echo "#$_line"
+echo_head "# check for contributed files (in $inst_directory/$contrib_dir ):"
 for c in $files_contrib ; do
 	skip=0
 	for f in $files_not_installed $files_develop ; do
@@ -791,7 +812,7 @@ for c in $files_contrib ; do
 	[ -e "$c" ] && echo_green "$c" || echo_yellow "missing $c"
 	#err=`expr $err + 1`    # not counted as error
 done
-echo "#$_line"
+echo_foot
 
 echo ""
 echo -n "# checks$tab"
