@@ -203,7 +203,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) ÀšY0ÀU 1.70 21/11/10 18:06:28
+#?      @(#)  1.71 21/11/10 18:07:59
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -401,16 +401,16 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.70 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.71 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
 done
-clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 if [ -n "$new_dir" ]; then
 	inst_directory="$new_dir"
-	[ -z "$mode" ] && mode=dest           # no mode given, set default
+	[ -z "$mode" ] && mode=dest              # no mode given, set default
 fi
+clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 
 # --------------------------------------------- main
 
