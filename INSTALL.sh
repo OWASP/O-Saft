@@ -203,7 +203,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.71 21/11/10 18:07:59
+#?      @(#)  1.72 21/11/11 00:29:46
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -401,7 +401,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.71 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.72 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -484,6 +484,7 @@ if [ "$mode" = "openssl" ]; then
 #     $build_openssl --help
 #     $build_openssl --n
 #     $build_openssl /path/to/install
+#     $build_openssl /path/to/install --debian --i --m
 EoT
 	fi
 	exit $status
