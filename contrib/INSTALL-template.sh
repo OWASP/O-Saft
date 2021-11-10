@@ -202,7 +202,8 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1qÊ¨U 1.65 21/11/10 15:23:28
+#?      @(#) `?
+ïU 1.66 21/11/10 15:39:23
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -389,7 +390,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.65 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.66 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -443,8 +444,8 @@ fi; # default mode }
 
 if [ "$mode" != "check" ]; then
 	if [ -n "$osaft_vm_build" ]; then
-	    echo "**ERROR: found 'osaft_vm_build=$osaft_vm_build'"
-	    echo_red "**ERROR: inside docker only --check possible; exit"
+	    echo "**ERROR: 001: found 'osaft_vm_build=$osaft_vm_build'"
+	    echo_red "**ERROR: 002: inside docker only --check possible; exit"
 	    exit 6
 	fi
 fi
@@ -460,7 +461,7 @@ fi; # expected mode }
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
 	echo "# call $build_openssl"
-	[ ! -x "$build_openssl" ] && echo_red "**ERROR: $build_openssl does not exist; exit" && exit 2
+	[ ! -x "$build_openssl" ] && echo_red "**ERROR: 020: $build_openssl does not exist; exit" && exit 2
 	[ 0 -lt "$optx" ] && set -x
 	$build_openssl $optn $@
 	status=$?
@@ -481,7 +482,7 @@ fi; # openssl mode }
 if [ "$mode" = "clean" ]; then
 	echo "# cleanup installation in $inst_directory"
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
-	[ -d "$clean_directory" ] || $try echo_red "**ERROR: $clean_directory does not exist; exit"
+	[ -d "$clean_directory" ] || $try echo_red "**ERROR: 030: $clean_directory does not exist; exit"
 	[ -d "$clean_directory" ] || $try exit 2
 	# do not move $contrib_dir/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
@@ -500,7 +501,7 @@ fi; # clean mode }
 # ------------------------- install mode  -------- {
 if [ "$mode" = "dest" ]; then
 	if [ ! -d "$inst_directory" ]; then
-		echo_red "**ERROR: $inst_directory does not exist; exit"
+		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
 		[ "$try" = "echo" ] || exit 2
 		# with --n continue, so we see what would be done
 	fi
@@ -524,7 +525,7 @@ if [ "$mode" = "dest" ]; then
 	done
 	if [ -z "$try" ]; then
 		$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
-		|| echo_red "**ERROR: generating $osaft_guirc failed"
+		|| echo_red "**ERROR: 041: generating $osaft_guirc failed"
 	else
 		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
 	fi
@@ -532,7 +533,7 @@ if [ "$mode" = "dest" ]; then
 	if [ $force -eq 1 ]; then
 		echo '# installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
-			$try \cp $f "$HOME/" || echo_red "**ERROR: copying $f failed"
+			$try \cp $f "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
 		done
 	fi
 
@@ -582,7 +583,7 @@ fi; # checkdev mode }
 
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
-	echo_red "**ERROR: unknow mode  $mode; exit"
+	echo_red "**ERROR: 060: unknow mode  $mode; exit"
 	exit 5
 fi
 
