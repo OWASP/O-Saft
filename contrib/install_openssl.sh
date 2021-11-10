@@ -163,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) Ð‹í-V 1.35 21/11/10 21:30:16
+#?      @(#)  1.36 21/11/10 23:19:49
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -171,6 +171,8 @@
 # -----------------------------------------------------------------------------
 
 dir=`pwd`
+
+# TODO: on error or interrupt list remaining files and dirs
 
 # Parameters passed to build
 OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"}
@@ -198,20 +200,22 @@ exe_mandatory="
 	gcc
 	make
 "
-# FIXME: checked package names are based on debian, and desendents
-lib_packages="
+debian_packages="
+	libidn11-dev
 	libidn2-0-dev
 	libgmp-dev
 	libzip-dev
 	libsctp-dev
 	libkrb5-dev
 "
-# FIXME: libidn11-dev also required
+lib_packages="$debian_packages"
 
-# FIXME: IO::Socket::SSL must be installed after openssl and Net::SSLeay
+# following not yet used
+debian_packages_perl="libnet-dns-perl libnet-libidn-perl"
+
+perl_io_socket="IO::Socket::SSL"
 perl_modules="
 	Module::Build
-	IO::Socket::SSL
 	Net::LibIDN
 	Net::LibIDN2
 	Net::DNS
@@ -223,6 +227,15 @@ perl_modules="
 install_modules="
 "
 
+# TODO: list of installed files and dirs; not yet used
+uninstall_data="
+	/usr/local/lib/x86_64-linux-gnu/perl/Net/SSLeay
+	/usr/local/share/man/man3/IO::Socket::SSL*
+	/usr/local/share/man/man3/Net::SSLeay*
+	$OPENSSL_DIR
+	$BUILD_DIR
+"
+
 echo_head       () {
 	echo ""
 	echo "$@"
@@ -231,12 +244,25 @@ echo_head       () {
 apt_install_debian  () {
 	err=0
 	echo_head '### install debian packages ...'
-	for pkg in $exe_mandatory $lib_packages ; do
+	for pkg in $exe_mandatory $debian_packages ; do
 		apt install --no-install-recommends $pkg
 	done
 	echo "# installed packages: $exe_mandatory $lib_packages"
 	return
 } # apt_install_debian
+
+mcpan_install   () {
+	#? install module with MCPAN
+	_mod=$1
+	err=0
+	txt=""
+	echo "### install perl modul $mod ..."
+	perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
+	[ -n "$txt" ] && return 1
+	# FIXME: perl -MCPAN does not return proper error codes; need
+	#        to parse output, grrr
+	return 0
+} # mcpan_modules
 
 mcpan_modules   () {
 	#? install modules (with --m only)
@@ -246,14 +272,9 @@ mcpan_modules   () {
 		txt=""
 		[ "Module::Build" = $mod ] && continue
 		    # cannot be installed, -MCPAN does it automatically if needed
-		echo "### install perl modul $mod ..."
-		perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
-		[ -n "$txt" ] && err=1
-		# FIXME: perl -MCPAN does not return proper error codes; need
-		#        to parse output, grrr
+		err=`mcpan_modules $mod`
 	done
-	perl -MCPAN -e "install $mod"   || err=1
-	[ 0 -ne $err ] && echo "**ERROR: module installation failed"
+	[ 0 -ne $err ] && echo "**ERROR: modules installation failed"
 	return
 } # mcpan_modules
 
@@ -354,7 +375,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.35 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.36 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -589,6 +610,9 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
+
+### install IO::Socket::SSL; uses previous openssl and Net::SSLeay
+mcpan_install $perl_io_socket
 
 
 ### test o-saft.pl
