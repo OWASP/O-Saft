@@ -159,7 +159,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) `BÙ8žU 1.33 21/11/10 20:44:02
+#?      @(#) °ò4NV 1.34 21/11/10 20:51:03
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -331,7 +331,7 @@ test_osaft      () {
 	return
 } # test_osaft
 
-optf=0
+opti=0
 optm=0
 optn=0
 while [ $# -gt 0 ]; do
@@ -339,7 +339,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.33 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.34 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -349,8 +349,8 @@ while [ $# -gt 0 ]; do
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	  '-f' | '--f')
-		optf=1
+	  '-i' | '--f')
+		opti=1
 		;;
 	  '-m' | '--m')
 		optm=1
@@ -452,7 +452,7 @@ EoT
 		echo "#    continue due to  --m  was given."
 		echo ""
 	else
-		exit 2
+		[ 0 -eq $opti  ] && exit 2
 	fi
 fi
 [ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
