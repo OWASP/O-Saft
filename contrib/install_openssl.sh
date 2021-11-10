@@ -11,7 +11,7 @@
 #?      --i - ignore failed preconditions; continue always
 #?      --m - install all required Perl modules also
 #?      --n - do not execute, just show preconditions and where to install
-#?	--debian    - install required debian packages
+#?	--debian    - install required debian packages first
 #?
 #? DESCRIPTION
 #?      Build special openssl based on  Peter Mosman's openssl.  Additionally
@@ -157,13 +157,12 @@
 #? EXAMPLES
 #?      Simple build with defaults:
 #?          $0
-#?      Most common usage (on debian systems):
-#?          $0 --debian
-#?          $0 --i
+#?      Build with installing packages and ignoring check errors:
+#?          $0 --debian -i
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.36 21/11/10 23:19:49
+#?      @(#)  1.37 21/11/10 23:57:12
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -200,6 +199,7 @@ exe_mandatory="
 	gcc
 	make
 "
+# packages required for building openssl
 debian_packages="
 	libidn11-dev
 	libidn2-0-dev
@@ -211,8 +211,10 @@ debian_packages="
 lib_packages="$debian_packages"
 
 # following not yet used
-debian_packages_perl="libnet-dns-perl libnet-libidn-perl"
+debian_packages_perl="libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl"
+alpine_packages_perl="perl-net-dns    perl-net-libidn    perl-mozilla-ca"
 
+# Perl module names
 perl_io_socket="IO::Socket::SSL"
 perl_modules="
 	Module::Build
@@ -313,11 +315,9 @@ check_modules   () {
 			install_modules="$install_modules $mod"
 			err=1
 		fi
-		#[ -z "$txt" ] && txt="\tOK" || err=1
 		echo "$txt"
 	done
 	[ 1 -eq $err  ] && miss="$miss modules,"
-	#[ 1 -eq $optm ] && err=0 # when --m was given continue even if Perl modules are missing
 	return
 } # check_modules
 
@@ -367,6 +367,7 @@ test_osaft      () {
 	return
 } # test_osaft
 
+optd=0
 opti=0
 optm=0
 optn=0
@@ -375,7 +376,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.36 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.37 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -386,8 +387,7 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	  '-debian' | '--debian')
-		apt_install_debian
-		exit 0
+		optd=1
 		;;
 	  '-i' | '--f')
 		opti=1
@@ -448,6 +448,9 @@ EoT
 	esac
 done
 
+### install packages first
+[ 1 -eq $optd  ] && apt_install_debian
+
 ### preconditions (needs to be checked with or without --n)
 miss=""
 err=0
@@ -462,38 +465,35 @@ if [ 0 -eq $err ]; then
 	echo ''
 	if [ 1 -eq $optn  ]; then
 		# brief information what will be done
+		echo "#    build and install openssl in $OPENSSL_DIR"
+		echo "#    build and install Net::SSLeay in $SSLEAY_DIR"
+		echo ''
 		[ 1 -eq $optm ] &&
 		echo '#    build and install Perl modules using:' &&
 		echo "#    perl -MCPAN -e install $install_modules"
-		echo ''
-		echo "#    build and install openssl in $OPENSSL_DIR"
-		echo "#    build and install Net::SSLeay in $SSLEAY_DIR"
 		exit 0
 	fi
 else
+        # TODO: print only required packages and moduls in Hint below
 	cat <<EoT
 
 !!Hint: install packages like (examples):
-        $lib_packages
-        perl-net-dns perl-net-libidn perl-mozilla-ca
-        libnet-dns-perl libnet-libidn-perl libmozilla-ca-perl
-        libmodule-build-perl
+        $debian_packages_perl
+        $alpine_packages_perl
 # Note  all lib*-dev  are only necessary for compiling openssl and may be
-#       removed afterwards.
+#       removed afterwards. Same for  gcc  and  make package.
 
 !!Hint: Perl modules may also be installed with "perl -MCPAN -e "install ..."
         $perl_modules
 **ERROR: preconditions incomplete: $miss; exit
-EoT
-        # TODO: print only required packages and moduls in Hint above
 
-	if [ 1 -eq $optm ]; then
-		echo ""
-		echo "#    continue due to  --m  was given."
-		echo ""
-	else
-		[ 0 -eq $opti  ] && exit 2
-	fi
+!!Hint: use  --i  option to ignore errors and continue building opnssl.
+
+EoT
+	[ 0 -eq $opti ] && exit 2
+	echo ""
+	echo "#    continue due to  --i  was given."
+	echo ""
 fi
 [ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
 
