@@ -202,7 +202,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) @jDåU 1.68 21/11/10 17:39:01
+#?      @(#) À*”£AV 1.69 21/11/10 17:42:26
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -392,7 +392,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.68 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.69 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -749,7 +749,7 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	echo "# testing $o ...$tab"
 	for m in $perl_modules ; do
 		echo_label "$m"
-		w=`$o --no-warn +version 2>&1        | awk '/WARNING.*'$m'/{print}'`
+		w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
 		v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
 		if [ -n "$w" ]; then
 			# ERROR in $w most likely means that $m is not found by
