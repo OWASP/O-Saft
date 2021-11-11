@@ -163,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.38 21/11/11 00:07:57
+#?      @(#)  1.39 21/11/11 01:13:11
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -273,8 +273,8 @@ mcpan_install   () {
 	_mod=$1
 	err=0
 	txt=""
-	echo "### install perl modul $mod ..."
-	perl -MCPAN -e "install $mod"   || txt="**ERROR: installation failed for $mod"
+	echo "### install perl modul $_mod ..."
+	perl -MCPAN -e "install $_mod"   || txt="**ERROR: installation failed for $_mod"
 	[ -n "$txt" ] && return 1
 	# FIXME: perl -MCPAN does not return proper error codes; need
 	#        to parse output, grrr
@@ -289,7 +289,8 @@ mcpan_modules   () {
 		txt=""
 		[ "Module::Build" = $mod ] && continue
 		    # cannot be installed, -MCPAN does it automatically if needed
-		err=`mcpan_modules $mod`
+		mcpan_install $mod
+		err=$?
 	done
 	[ 0 -ne $err ] && echo "**ERROR: modules installation failed"
 	return
@@ -391,7 +392,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.38 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.39 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
@@ -408,7 +409,7 @@ while [ $# -gt 0 ]; do
 	  '-debian' | '--debian')
 		optd=1
 		;;
-	  '-i' | '--f')
+	  '-i' | '--i')
 		opti=1
 		;;
 	  '-m' | '--m')
