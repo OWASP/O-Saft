@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1045 21/04/23 12:06:52",
-    STR_VERSION => "21.03.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1046 21/11/12 22:27:31",
+    STR_VERSION => "12.11.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -142,7 +142,9 @@ BEGIN {
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     # SEE Perl:@INC
-    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib");
+    unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
+    unshift(@INC, "bin");
     unshift(@INC, "lib/$_path") if ($_path ne $_me and $_path !~ m#^/#);
     unshift(@INC, $_path);
 
@@ -7118,7 +7120,9 @@ sub printversion        {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
+    if (defined $ENV{PWD}) {
     print( "=== started in: $ENV{PWD} ===");    # avoid "use Cwd;" or `pwd`
+    } # quick&dirty check, should rarely occour (i.e. when used as CGI)
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     my $me = $cfg{'me'};
@@ -9628,9 +9632,10 @@ next annotation also). The added directories are:
 
   - $_path          # user-friendly: add path of the called script also
   - lib  $_path/lib # we support some local lib directories
-  - $ENV{PWD}       # calling directory, some kinf of fallback
+  - $ENV{PWD}       # calling directory, some kind of fallback
   - /bin"           # special installation on portable media
 
+Note that  $ENV{PWD}  may be undefined, it will obviously not used then. 
 Note that  /  works here even for Windoze.
 
 Some logic is used to prepend these directories to @INC,  avoiding useless
