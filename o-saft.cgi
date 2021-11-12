@@ -128,7 +128,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.57 21/03/30 15:18:58";
+my $SID_cgi = "@(#) o-saft.cgi 1.58 21/11/13 00:38:45";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -149,7 +149,7 @@ my @argv    = @ARGV;
 sub _print_if_test  {
 	#? print text if environment variable OSAFT_CGI_TEST is set
 	local $\ = "\n";
-	print @_ if defined $ENV{'OSAFT_CGI_TEST'};
+	print @_ if (defined $ENV{'OSAFT_CGI_TEST'});
 	return;
 } # _print_if_test
 
@@ -184,15 +184,15 @@ if (not $ENV{'QUERY_STRING'}) {
 
 if ($me =~/\.cgi$/) {
 	# CGI mode is pretty simple:
-	#   * URL-decode QUERY_STRING and POST data and once
+	#   * URL-decode once: QUERY_STRING and POST data
 	#   * check if data contains suspicious characters, die if so
 	#       NOTE that % is suspicious as we decode only once
 	#   * check if target is suspicious host or net, die if so
-	#   * then split data at & to get our options and arguments
+	#   * then split data at  &  to get our options and arguments
 	#   * ready we go by calling $osaft
-	# NOTE: in true CGI-mode, QUERY_STRING just contains the form fields,
-	#       when used with our own  osaft:  schema, it also contains the
-	#       the schema and path, i.e.  osaft:///o-saft.cgi?
+	# NOTE: in true CGI-mode,  QUERY_STRING just contains the form fields,
+	#       when used with our own  osaft:  schema, the  QUERY_STRING also
+	#       contains the schema and path, i.e.  osaft:///o-saft.cgi?
 	# NOTE: for debugging using system() writing to a file is better than
 	#       using perl's print() as it may break the HTTP response
 	my $cgi = 0;
@@ -214,12 +214,14 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # argument required for some more checks
 	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
+	# TODO: check if following RegEx need $ at end
 	$typ    = 'html' if ($qs =~ m/--format=html/); # --format=html already in @argv
 	$header = 1 if (0 < (grep{/--cgi.?header/}     $qs));
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
+	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.57\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.58\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -230,7 +232,7 @@ if ($me =~/\.cgi$/) {
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
 	}
 
-	# ignore (remove) potential dangerous commands and options
+	# ignore (just remove) potential dangerous commands and options
 	my $ignore = qr/
 		^--(?:
 		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version) # illegal commands
@@ -241,7 +243,7 @@ if ($me =~/\.cgi$/) {
 	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 	my @save_argv;
 	foreach my $arg (@argv) {
-		#dbx# print "#dbx: $arg # sielently ignored\n" if ($arg =~ m#$ignore#);
+		#dbx# print "#dbx: $arg # silently ignored\n" if ($arg =~ m#$ignore#);
 		next if ($arg =~ m#$ignore#);
 		push(@save_argv, $arg);
 	}
@@ -260,7 +262,7 @@ if ($me =~/\.cgi$/) {
         #       --cgi&--cmd=cn&--other-opt=42   # ok
         # FIXME: last example will be detected as malicious and dies, this is
         #       a false positive, bug here
-        # NOTE: technically & may be a ? too, it is not really RFC compliant,
+        # NOTE: Technically & may be a ? too, it is not really RFC compliant,
         #       but possible. Someone may sends malicious data.
 	my $err = 0;
 	my $key = '&--(?:host|url)=';
@@ -443,7 +445,8 @@ if ($me =~/\.cgi$/) {
 	#dbx# print "\nQS: $qs\n";
 
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
-	local $ENV{PATH} = "$openssl/bin/" . ':' . $ENV{PATH};
+	local $ENV{PATH}  = "$openssl/bin/";
+	      $ENV{PATH} .= ':' . $ENV{PATH}   if (defined $ENV{PATH}); # defensive programming
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
 	_print_if_test "$osaft  @argv";
