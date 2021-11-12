@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.331 21/11/12 22:20:20";
+my  $SID_man= "@(#) o-saft-man.pm 1.332 21/11/13 00:01:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -165,7 +165,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.331'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.332'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -523,7 +523,7 @@ EoHTML
                      no-sni sni   BR
                      no-http http BR
                      header  no-header  no-warnings BR
-                     enabled disabled   BR
+                     enabled disabled   cgi-no-header BR
                      traceKEY traceCMD  trace v     BR
                  )) {
         if ('BR' eq $key) { print "        <br>\n"; next; }
@@ -1879,7 +1879,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.331 2021/11/12
+1.332 2021/11/13
 
 =head1 AUTHOR
 
