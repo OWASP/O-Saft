@@ -60,7 +60,9 @@ BEGIN {
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     if ("SSLhello.pm" eq $_me) {
         my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-        unshift(@INC, ".", "./lib", $ENV{PWD}, "/bin");
+        unshift(@INC, ".", "lib");
+        unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
+        unshift(@INC, "bin");
         if ($_path !~ m#^[.]/*$#) { # . already added
             unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
         }
@@ -69,9 +71,9 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '21.02.21',
+    SSLHELLO_VERSION=> '12.11.21',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.42 21/02/24 23:54:04',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.44 21/11/12 22:09:31',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -1383,11 +1385,11 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x03001301'=>[qw(TLS13_AES_128_GCM_SHA256              TLS13-AES128-GCM-SHA256)],
-   '0x03001302'=>[qw(TLS13_AES_256_GCM_SHA384              TLS13-AES256-GCM-SHA384)],
+   '0x03001301'=>[qw(TLS13_AES_128_GCM_SHA256              TLS13-AES-128-GCM-SHA256)],
+   '0x03001302'=>[qw(TLS13_AES_256_GCM_SHA384              TLS13-AES-256-GCM-SHA384)],
    '0x03001303'=>[qw(TLS13_CHACHA20_POLY1305_SHA256        TLS13-CHACHA20-POLY1305-SHA256)],
-   '0x03001304'=>[qw(TLS13_AES_128_CCM_SHA256              TLS13-AES128-CCM-SHA256)],
-   '0x03001305'=>[qw(TLS13_AES_128_CCM_8_SHA256            TLS13-AES128-CCM-8-SHA256)],
+   '0x03001304'=>[qw(TLS13_AES_128_CCM_SHA256              TLS13-AES-128-CCM-SHA256)],
+   '0x03001305'=>[qw(TLS13_AES_128_CCM_8_SHA256            TLS13-AES-128-CCM-8-SHA256)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: some further TLS 1.3 ciphers (prefix TLS13 added)
