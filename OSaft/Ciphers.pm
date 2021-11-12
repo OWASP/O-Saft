@@ -48,13 +48,15 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib");
+    unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
+    unshift(@INC, "bin");
     unshift(@INC, "lib/$_path") if ($_path ne $_me);
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $VERSION      = '21.02.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.54 21/02/24 21:33:11";
+my  $VERSION      = '12.11.12';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.55 21/11/12 22:17:46";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1602,7 +1604,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.54 2021/02/24
+1.55 2021/11/12
 
 =head1 AUTHOR
 
