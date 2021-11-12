@@ -55,7 +55,9 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, "lib", $ENV{PWD}, "$ENV{PWD}/lib", "/bin");
+    unshift(@INC, "lib");
+    unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
+    unshift(@INC, "bin");
     unshift(@INC, "lib/$_path") if ($_path ne $_me and $_path !~ m#^/#);
     unshift(@INC, $_path);
 }
@@ -63,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.330 21/02/28 22:48:53";
+my  $SID_man= "@(#) o-saft-man.pm 1.331 21/11/12 22:20:20";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -163,7 +165,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.330'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.331'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1877,7 +1879,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.330 2021/02/28
+1.331 2021/11/12
 
 =head1 AUTHOR
 
