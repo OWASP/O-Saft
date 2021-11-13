@@ -35,6 +35,7 @@
 #=
 #=# check environment variable PATH
 #=#--------------------------------------------------------------
+#=#                  wish	/usr/bin
 #=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
 #=#--------------------------------------------------------------
 #=
@@ -46,8 +47,9 @@
 #=
 #=# check for installed O-Saft in /opt/o-saft
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	21.02.21 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	   1.237 /opt/o-saft/o-saft.tcl
+#=#             o-saft.pl	12.11.21 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	   1.257 /opt/o-saft/o-saft.tcl
+#=#                o-saft	    1.26 /opt/o-saft/o-saft
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -60,9 +62,9 @@
 #=# check for installed Perl modules
 #=#----------------------+---------------------------------------
 #=#              Net::DNS	    1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL	   2.060 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.25 /usr/share/perl/5.28/Time/Local.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=#          Net::SSLinfo	20.06.05 Net/SSLinfo.pm
 #=#         Net::SSLhello	20.02.02 Net/SSLhello.pm
 #=#                 osaft	20.06.06 osaft.pm
@@ -73,13 +75,13 @@
 #=# check for important Perl modules used by installed O-Saft
 #=#----------------------+---------------------------------------
 #=# testing /opt/o-saft/o-saft.pl ...	
-#=#              Net::DNS     1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay     1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL    2.060 /usr/share/perl5/IO/Socket/SSL.pm
+#=#              Net::DNS     1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay     1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL    2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
-#=#              Net::DNS     1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#              Net::DNS     1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay     1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL    2.060 /usr/share/perl5/IO/Socket/SSL.pm
+#=#       IO::Socket::SSL    2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#----------------------+---------------------------------------
 #=
 #=# summary of warnings from installed O-Saft (should be empty)
@@ -123,6 +125,8 @@
 #=#       JSON-struct.awk	/opt/o-saft/contrib/JSON-struct.awk
 #=#     XML-attribute.awk	/opt/o-saft/contrib/XML-attribute.awk
 #=#         XML-value.awk	/opt/o-saft/contrib/XML-value.awk
+#=#       alertscript.cfg	/opt/o-saft/contrib/alertscript.cfg
+#=#        alertscript.pl	/opt/o-saft/contrib/alertscript.pl
 #=# bash_completion_o-saft	/opt/o-saft/contrib/bash_completion_o-saft
 #=#               bunt.pl	/opt/o-saft/contrib/bunt.pl
 #=#               bunt.sh	/opt/o-saft/contrib/bunt.sh
@@ -206,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.73 21/11/13 17:30:15
+#?      @(#)  1.74 21/11/13 17:40:40
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -405,7 +409,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.73 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.74 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
