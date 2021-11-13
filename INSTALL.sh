@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated from Makefile 1.110
+#? File generated from Makefile 1.113
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -28,6 +28,7 @@
 #?                        installs  openssl  and  Net::SSLeay ; this doesn't
 #?                        support other options and arguments of
 #?                        contrib/install_openssl.sh
+#?          --cgi       - prepare directory to be used in CGI mode
 #?          --expected  - show sample output expected for  --check
 #                         All lines starting with #= are the sample output.
 #?          --checkdev  - check system for development (make) requirements
@@ -162,12 +163,14 @@
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
 #?      $0 --checkdev
+#?      $0 --cgi /opt/bin/
+#?      $0 --cgi .
 #?
 # HACKER's INFO
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       and scopes containing  "generated from Makefile 1.110" .
+#       and scopes containing  "generated from Makefile 1.113" .
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
@@ -203,7 +206,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.72 21/11/11 00:29:46
+#?      @(#)  1.73 21/11/13 17:30:15
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -221,7 +224,7 @@ other=0
 force=0
 optx=0
 optn=""
-mode="";        # "", check, clean, dest, openssl
+mode="";        # "", cgi, check, clean, dest, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	        # TODO: check path for each platform
 tab="	"       # need a real TAB (0x09) for /bin/echo
@@ -231,7 +234,7 @@ text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
-# generated from Makefile 1.110 {
+# generated from Makefile 1.113 {
 osaft_sh="o-saft"
 osaft_exe="o-saft.pl"
 osaft_gui="o-saft.tcl"
@@ -274,7 +277,7 @@ tools_other="
 	OSSL_CCS_InjectTest.py SSLAudit.exe SSLAudit.pl SSLCertScanner.exe SSLPressure.exe TLSSLed_v1.3.sh TestSSLServer.exe TestSSLServer.jar analyze-ssl.pl athena-ssl-cipher-check_v062.jar bash-heartbleed.sh beast.pl ccs-injection.sh check-ssl-heartbleed.pl chksslkey cnark.pl manyssl poet robot-detect smtp_tls_cert.pl ssl-cert-check ssl-check-heartbleed.pl ssl-cipher-check.pl ssl-dos ssl-renegotiation.sh sslcat ssldiagnos.exe sslmap.py sslscan sslscan.exe sslsniff sslstrip ssltest.pl ssltest_heartbeat.py sslthing.sh sslyze.py stunnel testssl.sh tls-check.pl tls-scan tlsenum vessl
 	"
 
-# generated from Makefile 1.110 }
+# generated from Makefile 1.113 }
 
 # HARDCODED {
 # because newer Makefiles may no longer know about them
@@ -379,6 +382,7 @@ while [ $# -gt 0 ]; do
 		;;
 	 '-n' | '--n')          optn="--n"; try=echo; ;;
 	 '-x' | '--x')          optx=1;       ;;
+	  '--cgi')              mode=cgi;     ;;
 	  '--check')            mode=check;   ;;
 	  '--clean')            mode=clean;   ;;
 	  '--install')          mode=dest;    ;;
@@ -401,7 +405,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.72 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.73 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -460,6 +464,29 @@ if [ "$mode" != "check" ]; then
 	    exit 6
 	fi
 fi
+
+# ------------------------ cgi mode -------------- {
+if [ "$mode" = "cgi" ]; then
+	echo "# prepare $inst_directory for use in CGI mode"
+	if [ ! -d "$inst_directory" ]; then
+		echo_red "**ERROR: 050: $inst_directory does not exist; exit"
+		[ "$try" = "echo" ] || exit 2
+		# with --n continue, so we see what would be done
+	fi
+	if [ -d "$clean_directory" ]; then
+		echo_red "**ERROR: 051: $clean_directory exist; CGI installation not yet supported"
+		exit 2
+	fi
+	for f in $files_install_cgi ; do
+		file=${f##*/}
+		[ -e "$inst_directory/$file" ] && echo -n "# " && echo_yellow "existing $file; ignored" && continue
+		$try \mv $f "$inst_directory/" || echo_red "**ERROR: 052: moving $f failed"
+	done
+	lnk=cgi-bin
+	[ -e "$inst_directory/$lnk" ] && echo -n "# " && echo_yellow "existing $lnk; ignored" && continue
+	$try \ln -s "$inst_directory" $lnk  || echo_red "**ERROR: 053: symlink $lnk failed"
+	exit 0
+fi; # cgi mode }
 
 # ------------------------ expected mode --------- {
 if [ "$mode" = "expected" ]; then
