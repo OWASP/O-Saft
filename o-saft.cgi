@@ -128,7 +128,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.58 21/11/13 00:38:45";
+my $SID_cgi = "@(#) o-saft.cgi 1.59 21/11/13 01:06:29";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -221,7 +221,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.58\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.59\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -233,6 +233,7 @@ if ($me =~/\.cgi$/) {
 	}
 
 	# ignore (just remove) potential dangerous commands and options
+	# also fix trailing =
 	my $ignore = qr/
 		^--(?:
 		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version) # illegal commands
@@ -245,6 +246,16 @@ if ($me =~/\.cgi$/) {
 	foreach my $arg (@argv) {
 		#dbx# print "#dbx: $arg # silently ignored\n" if ($arg =~ m#$ignore#);
 		next if ($arg =~ m#$ignore#);
+		# quick&dirty fix generated parameters also:
+		#   in o-saft.cgi.html there may be parameter names like:
+		#       --lagacy=owasp
+		#   as these are input tags with type checkbox,  the value is
+		#   empty, hence the parameter passed in is like:
+		#       --lagacy=owasp=
+		#   because the input tag's value is empty; this would result
+		#   in passing  the value  owasp=  instead of  owasp  for the
+		#   the paramter name  legacy ; the trailing = is removed
+		$arg =~ s#=$##;   # remove trailing = in key=value
 		push(@save_argv, $arg);
 	}
 	@argv = @save_argv;
@@ -449,6 +460,7 @@ if ($me =~/\.cgi$/) {
 	      $ENV{PATH} .= ':' . $ENV{PATH}   if (defined $ENV{PATH}); # defensive programming
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
+print "$osaft  @argv\n";
 	_print_if_test "$osaft  @argv";
 	exec  $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 not tested: exec 'perl.exe', $osaft, @argv;
