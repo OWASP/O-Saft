@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.112 21/11/13 11:23:00
+#?      @(#) Makefile 1.113 21/11/13 14:53:17
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.112
+_SID            = 1.113
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -263,6 +263,9 @@ EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
 
+# other tools
+EXE.office      = libreoffice
+
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
@@ -282,7 +285,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.112
+_INST.text      = generated from Makefile 1.113
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -506,6 +509,7 @@ HELP-help.help  = print targets to get information/documentation from Makefiles
 pl:     $(SRC.pl)
 cgi:    $(GEN.cgi.html)
 man:    $(GEN.man)
+pdf:    $(GEN.pdf)
 pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
@@ -513,8 +517,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.112
-tar:     GREP_EDIT  = 1.112
+GREP_EDIT           = 1.113
+tar:     GREP_EDIT  = 1.113
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -637,6 +641,18 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	$(SRC.pl) --no-rc $* > $@
+
+# use libreoffice to generate PDF from .odg
+# unfortunately  libreoffice has no option to specify the name of the output,
+# hence we need to use its --outdir option instead of make's $@
+# ancient libreoffice (before 5.0) may also need following option:
+#     -env:UserInstallation=file:///tmp/dummy${USER}
+# FIXME: (11/2021) libreoffice --headless  generates a file slighly different
+#        compared to the file generated interactively (reason yet unknown)
+#        we keep the generation here, to avoid missing files
+$(DOC.dir)/%.pdf: %.odg
+	@$(TRACE.target)
+	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(DOC.dir)/ $^ 
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
