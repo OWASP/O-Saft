@@ -79,7 +79,7 @@ Must be used as first parameter, otherwise dies.
 
 =item --format=html
 
-Use HTTP header:
+Convert output to HTML format. Sends HTTP header:
 
   Content-type: text/html;charset=utf-8
 
@@ -128,7 +128,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.59 21/11/13 01:06:29";
+my $SID_cgi = "@(#) o-saft.cgi 1.61 21/11/13 13:46:19";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -221,7 +221,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.59\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.61\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -455,13 +455,24 @@ if ($me =~/\.cgi$/) {
 	_warn_and_exit "dangerous parameters; aborted" if 0 < $err;
 	#dbx# print "\nQS: $qs\n";
 
+	# prepare execution environment
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
 	local $ENV{PATH}  = "$openssl/bin/";
 	      $ENV{PATH} .= ':' . $ENV{PATH}   if (defined $ENV{PATH}); # defensive programming
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
+
+	# start $osaft
 	#dbx# system "$osaft @argv >> /tmp/osaft.cgi.log";
-print "$osaft  @argv\n";
 	_print_if_test "$osaft  @argv";
+	if ('html' eq $typ) {
+		# 11/2021 ah: experimental: generate HTML output
+		# need to use system, as exec can't pipe
+		my $cmd = join(" ", $osaft, @argv);
+		#dbx# print "# mepath=$mepath\n";
+		#dbx# print "# system($cmd | /usr/bin/awk -f $mepath/contrib/HTML-simple.awk)\n";
+		system("$cmd | /usr/bin/awk -f $mepath/contrib/HTML-simple.awk");
+		exit;
+	}
 	exec  $osaft, @argv;        # exec is ok, as we call ourself only
 	# TODO: Win32 not tested: exec 'perl.exe', $osaft, @argv;
 }
