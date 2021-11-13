@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.111 21/11/13 11:06:06
+#?      @(#) Makefile 1.112 21/11/13 11:23:00
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.111
+_SID            = 1.112
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -169,7 +169,10 @@ SRC.test        = \
 
 # documentation files
 DOC.dir         = docs
-DOC.src         = o-saft.odg o-saft.pdf o-saft-docker.pdf
+DOC.src         = o-saft_CLI_data_flow.odg \
+		  o-saft_GUI_data_flow.odg \
+		  o-saft_docker.de.odg \
+		  o-saft_docker.en.odg
 SRC.doc         = $(DOC.src:%=$(DOC.dir)/%)
 WEB.dir         = docs/img
 WEB.src         = \
@@ -200,6 +203,7 @@ GEN.wiki        = $(DOC.dir)/$(Project).wiki
 GEN.man         = $(DOC.dir)/$(Project).1
 GEN.pod         = $(DOC.dir)/$(Project).pod
 GEN.src         = $(CONTRIB.dir)/$(Project)-standalone.pl
+GEN.pdf         = $(SRC.doc:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
 GEN.rel         = $(Project).rel
@@ -231,7 +235,7 @@ ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst) $(GEN.TCL.data)
 ALL.docs        = $(SRC.doc) $(GEN.docs)
-    # NOTE: ALL.docs is are the files for user documentation, ALL.doc are SRC-files
+    # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
 #               # $(GEN.tags) added in t/Makefile.misc
 #               # $(GEN.wiki) not part of ALL.gen as rarly used
 ALL.src         = \
@@ -278,7 +282,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.111
+_INST.text      = generated from Makefile 1.112
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -484,7 +488,7 @@ HELP-clean.tmp  = remove '$(TMP.dir)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
 HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)'
 HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
-HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) may exist
+HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', '$(INSTALL.dir)' may exist
 HELP-o-saft.rel = generate '$(GEN.rel)'
 #               # HELP-o-saft.rel hardcoded, grrr
 
@@ -509,8 +513,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.111
-tar:     GREP_EDIT  = 1.111
+GREP_EDIT           = 1.112
+tar:     GREP_EDIT  = 1.112
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
