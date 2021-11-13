@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.110 21/04/30 01:00:15
+#?      @(#) Makefile 1.111 21/11/13 11:06:06
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.110
+_SID            = 1.111
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -159,6 +159,7 @@ TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
 TEST.do         = SSLinfo.pl \
                   o-saft_bench.sh \
+                  cloc-total.awk \
                   critic_345.sh \
                   test-bunt.pl.txt
 CRITIC.rc       = .perlcriticrc
@@ -277,7 +278,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.110
+_INST.text      = generated from Makefile 1.111
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -508,8 +509,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.110
-tar:     GREP_EDIT  = 1.110
+GREP_EDIT           = 1.111
+tar:     GREP_EDIT  = 1.111
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
