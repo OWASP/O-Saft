@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.85 20/06/04 20:47:39
+#?      @(#) Makefile.help 1.86 21/11/13 12:40:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.85
+_SID.help          := 1.86
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -58,10 +58,21 @@ _TEST.empty    :=
 _SP            := $(_TEST.empty) $(_TEST.empty)
 
 # internal help
-# default dummy  HELP_TYPE  to avoid errors; results in wrong output
-# however, it is for development and testing only; help*-v  may give hints
+#     HELP_TYPE     - type of the Makefile*, must be the filename's extension
+#                     (the definition here is a default dummy to avoid errors
+#                      using this Makefile.help, resulting in wrong output)
+#     HELP_INFO     - formatted header line to show general informations
+#     HELP_NAME     - formatted header line to show macro/variable definition
+#     HELP_RULE     - formatted header line to show target definition
+#     HELP_LINE     - just a separation line (used in tabular output)
+#     HELP_HEAD     - actual header line, defined per target; it's usualy set
+#                     to HELP_INFO, HELP_NAME or HELP_RULE, can be individual
+#     HELP_HEADER   - complete text for header in tabular output, looks like:
+#                           #---------------+----------
+#                           # key           | value
+#                           #---------------+----------
+#                     it's mainly used in internal targets like _help.HEAD
 HELP_TYPE       = help
-# some often uses formatting strings
 HELP_INFO      := \# Name          | Description/Content
 HELP_NAME      := \# Macro/Variable| Value
 HELP_RULE      := \# Target        | Description
