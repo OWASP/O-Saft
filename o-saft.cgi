@@ -128,7 +128,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.61 21/11/13 13:46:19";
+my $SID_cgi = "@(#) o-saft.cgi 1.62 21/11/15 00:02:14";
 my $VERSION = '21.01.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -221,7 +221,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.61\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.62\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -469,8 +469,8 @@ if ($me =~/\.cgi$/) {
 		# need to use system, as exec can't pipe
 		my $cmd = join(" ", $osaft, @argv);
 		#dbx# print "# mepath=$mepath\n";
-		#dbx# print "# system($cmd | /usr/bin/awk -f $mepath/contrib/HTML-simple.awk)\n";
-		system("$cmd | /usr/bin/awk -f $mepath/contrib/HTML-simple.awk");
+		#dbx# print "# system($cmd | /usr/bin/gawk -f $mepath/contrib/HTML-simple.awk)\n";
+		system("$cmd | /usr/bin/gawk -f $mepath/contrib/HTML-table.awk");
 		exit;
 	}
 	exec  $osaft, @argv;        # exec is ok, as we call ourself only
