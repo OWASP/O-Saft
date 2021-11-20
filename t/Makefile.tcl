@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.33 21/11/07 21:38:04
+#?      @(#) Makefile.tcl 1.34 21/11/20 17:24:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.33
+_SID.tcl           := 1.34
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -70,6 +70,7 @@ testcmd-tcl---gui_%:        TEST.args  += --gui
 testcmd-tcl---v_%:          TEST.args  += --v
 testcmd-tcl---v--img_%:     TEST.args  += --v --img
 testcmd-tcl---v--text_%:    TEST.args  += --v --text
+testcmd-tcl---v--gen-docs_%:TEST.args  += --v --gen-docs
 testcmd-tcl---v-host_%:     TEST.args  += --v host1 host2
 testcmd-tcl---v-host-host_%:TEST.args  += --v host1 host2 host3 host4 host5
 testcmd-tcl---gui-classic_%:TEST.args  += --gui-layout=classic
