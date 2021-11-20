@@ -152,9 +152,44 @@ exec wish "$0" ${1+"$@"}
 #?      the corresponding section in the help window (context sensitive).
 #?
 #? OPTIONS
+#?   Options for information and help:
 #?      --h     print this text
 #?      --help=opts print options (for compatibility with o-saft.pl)
-#?      --v     print verbose messages (calling external tools)
+#?      --version   print version number
+#?      +VERSION    print version number (for compatibility with o-saft.pl)
+#?
+#?   Options for configuration and startup behaviour:
+#?      --rc        print template for .o-saft.tcl
+#?      --no-docs   use configuration texts returned from o-saft.pl instead of
+#?                  reading prepared static files
+#?      --pod       use podviewer to show help text
+#?      --stdin     read data from STDIN and show in result TAB
+#?      --load=FILE read FILE and show in result TAB
+#?
+#?   Options passed through to o-saft.pl:
+#?      +*          any option starting with +
+#?      --*         any other option starting with --
+# TODO: --post=PRG  --post=  parameter passed to o-saft
+#?
+#?   Options for use with docker:
+#?      --docker    use o-saft-docker instead of o-saft.pl
+#?      --docker-id=ID
+#?                  use Docker image ID (registry:tag); default: owasp/o-saft
+#?      --docker-tag=ID      use Docker image ID with tag; default: (empty)
+#?
+#?   Options for GUI behaviour:
+#?      --gui       dummy for compatibility with other tools
+#?      --gui-tip   use own tooltip
+#?      --gui-button=text    use simple texts as labels for buttons
+#?      --gui-button=image   use images for buttons (see o-saft-img.tcl)
+#?              (not recommended on Mac OS X, because Aqua has nice buttons)
+#?      --gui-layout=classic tool layout for view on desktop; default: classic
+#?      --gui-layout=tablet  tool layout for tablet, smartphone
+#?      --gui-result=text    print result of o-saft.pl as simple plain text
+#?      --gui-result=table   print result of o-saft.pl formated in a table
+#?
+#?   Options for debugging:
+#?      --v     print verbose messages (startup and calling external tools)
 #?      --d     print more verbose messages (for debugging)
 #?      --d=D   print debug messages according level
 #?              D=1     - print verbose messages (main)
@@ -163,35 +198,22 @@ exec wish "$0" ${1+"$@"}
 #?              D=8     - print verbose debugging for "help" window
 #?              values can be combined, like  --d=6  to print procs and data,
 #?              all  --d=*  imply  --v
-#?      --rc    print template for .o-saft.tcl
-#?      --no-docs   use configuration texts from o-saft.pl instead of static files
-#?      --text  use simple texts as labels for buttons
-#?      --img   use images as defined in o-saft-img.tcl for buttons
-#?              (not recommended on Mac OS X, because Aqua has nice buttons)
-#?      --pod   use podviewer to show help text
-#.      --tip   use own tooltip
-#?      --trace use Tcl's trace to trace proc calls
-#?      --stdin read data from STDIN and show in result TAB
-#?      --load=FILE read FILE and show in result TAB
-#?      --docker    use o-saft-docker instead of o-saft.pl
-#?      --docker-id=ID
-#?      --id=ID     use Docker image ID (registry:tag); default: owasp/o-saft
-#?      --docker-tag=ID
-#?      --tag=TAG   use Docker image ID with tag; default: (empty)
-#.      .id=ID  -tag=TAG     as before, used for compatibility with docker
-#?      --gui       dummy for compatibility with other tools
-#?      --gui-button=image   use images for buttons (alias: --image)
-#?      --gui-button=text    use text   for buttons (alias: --text)
-#?      --gui-layout=classic tool layout for view on desktop; default: classic
-#?      --gui-layout=tablet  tool layout for tablet, smartphone
-#?      --gui-result=text    print result of o-saft.pl as simple plain text
-#?      --gui-result=table   print result of o-saft.pl formated in a table
-#?      --version   print version number
-#?      +VERSION    print version number (for compatibility with o-saft.pl)
+#?      --trace     use Tcl's trace to trace proc calls
+#?
+#?   Options for testing:
 #?      +quit       exit without GUI (for compatibility with o-saft.pl)
 #?      --test=FILE read FILE and print on STDOUT; used for testing only
 #?      --test-tcl  just print debug information; similar to: --d +quit
 #?      --test-osaft    just print text used for help window (help button)
+#?
+#?   Option aliases for compatibility with other programs or legacy:
+#?      # Alias     Option
+#?      #----------+--------------------
+#?      --image     --gui-button=image
+#?      --text      --gui-button=text
+#?      --tip       --gui-tip
+#?      --id=ID     --docker-id=ID
+#?      --tag=TAG   --docker-tag=TAG
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -489,7 +511,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 1.259 Spring Edition 2021
+#?      @(#) 1.260 Spring Edition 2021
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -589,10 +611,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 1.259 21/11/19 22:47:18"
+set cfg(SID)    "@(#) o-saft.tcl 1.260 21/11/20 16:18:11"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2021"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {1.259}
+set cfg(VERSION) {1.260}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1239,6 +1261,7 @@ proc trace_commands  {} {
     append _trace_cmds "[info procs osaft*] "
     append _trace_cmds "[info procs search*] "
     append _trace_cmds "read_images remove_host www_browser show_window guitheme_init"
+        # procs not found by info command before
     foreach _cmd $_trace_cmds {
         if {[regexp "\(create_\(tip\)\)" $_cmd]} { continue }
         _trace_add $_cmd
@@ -1508,7 +1531,7 @@ proc guicursor_set {cursor} {
     return
 }; # guicursor_set
 
-proc guistatus_set {val}    {
+proc guistatus_set    {val} {
     #? add text to status line
     global cfg
     if {1==$cfg(quit)} { return }          ;# no GUI update
@@ -2820,7 +2843,7 @@ proc create_buttons_opt {parent cmd} {
     return
 }; # create_buttons_opt
 
-proc create_buttons {parent cmd} {
+proc create_buttons     {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     #  cmd must be "OPT" or "CMD"
@@ -3380,7 +3403,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 1.259 21/11/19 22:47:18
+ #?      @(#) .o-saft.tcl generated by 1.260 21/11/20 16:18:11
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3493,6 +3516,7 @@ proc osaft_get_data {norc mode} {
         set file "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
         if {![catch {open $file  r} fid]} {
             set txt [read $fid]
+            putv  " read  $file"
             close  $fid
             lappend cfg(docs-files) $file
             return $txt
@@ -4143,18 +4167,12 @@ foreach arg $argv {
         --nodoc     -
         --nodocs    -
         --no-docs   { set   cfg(docs-exe) 1;           }
-        +quit       { set   cfg(quit)   1;             }
-        --dbx       -
-        --d         { set   cfg(DEBUG)  1;             }
-        --d=*       { set   cfg(DEBUG)  [regsub {^--d=} $arg {}]; }
-        --trace     { set   cfg(TRACE)  1;             }
-        --v         { set   cfg(VERB)   1;             }
-        --tip       { set   cfg(TIP)    1;             }
         --post=*    { set   prg(post)   $arg;          }
         --pod*      { set   prg(TKPOD)  "podviewer";   }
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --stdin     { lappend cfg(files)    "STDIN";   }
 
+        options__for_runtime_behavior { set dumm "";   }
         options__for_use_with_docker  { set dumm "";   }
          -docker        -
         --docker        { config_docker opt;           }
@@ -4171,34 +4189,46 @@ foreach arg $argv {
         --dockertag=*   -
         --docker-tag=*  { set   prg(docker-id)  [regsub {^--?(docker-?)?tag=} $arg {}]; }
 
-        --gui           { }
-        --img           -
-        --image         -
-        --gui-button=image   { set cfg(bstyle)      "image";   }
+        options__for_GUI_behaviour    { set dumm "";   }
+        --gui                { }
+        --tip                -
+        --gui-tip            { set  cfg(TIP)         1;         }
+        --img                -
+        --image              -
+        --gui-button=image   { set  cfg(bstyle)      "image";   }
         --text               -
-        --gui-button=text    { set cfg(bstyle)      "text";    }
-        --gui-result=text    { set cfg(gui-result)  "text" ;   }
-        --gui-result=table   { set cfg(gui-result)  "table";   }
+        --gui-button=text    { set  cfg(bstyle)      "text";    }
+        --gui-result=text    { set  cfg(gui-result)  "text" ;   }
+        --gui-result=table   { set  cfg(gui-result)  "table";   }
         --gui-layout=note    -
-        --gui-layout=classic { set cfg(gui-layout)  "classic"; }
-        --gui-layout=tablet  { set cfg(gui-layout)  "tablet" ; }
-        --gui-layout=window  { set cfg(gui-layout)  "window";  }
+        --gui-layout=classic { set  cfg(gui-layout)  "classic"; }
+        --gui-layout=tablet  { set  cfg(gui-layout)  "tablet" ; }
+        --gui-layout=window  { set  cfg(gui-layout)  "window";  }
 
         options__for_debugging__only  { set dumm "";   }
-        --test=*    { lappend cfg(files)    [regsub {^--test=} $arg {}];
-                      set   cfg(stdout) 1;
-                      set   cfg(quit)   1;
-                    }
-        --test-tcl  -
-        --testtcl   { set cfg(DEBUG)    98; set cfg(quit) 1; set cfg(testtcl) 1; }
-        --test-o-saft -
-        --test-osaft  -
-        --testosaft { set cfg(DEBUG)    99;            }
+        --dbx                -
+        --d                  { set  cfg(DEBUG)  1;              }
+        --d=*                { set  cfg(DEBUG)  [regsub {^--d=} $arg {}]; }
+        --trace              { set  cfg(TRACE)  1;              }
+        --v                  { set  cfg(VERB)   1;              }
 
-        --*         { set exe($arg)     1;             }
-        +*          { set exe($arg)     1; set doit 1; }
-        *           { incr hosts(0); set hosts($hosts(0)) $arg; }
-        default     { pwarn "unknown parameter »$arg«; ignored" }
+        options__for_testing__only    { set dumm "";   }
+        +quit                { set  cfg(quit)   1;              }
+        --test=*         { lappend  cfg(files)  [regsub {^--test=} $arg {}];
+                               set  cfg(stdout) 1;
+                               set  cfg(quit)   1;
+                             }
+        --test-tcl           -
+        --testtcl            { set  cfg(DEBUG)  98; set cfg(quit) 1; set cfg(testtcl) 1; }
+        --test-o-saft        -
+        --test-osaft         -
+        --testosaft          { set  cfg(DEBUG)  99;             }
+
+        options__passed_to_o-saft     { set dumm "";   }
+        --*                  { set  exe($arg)   1;              }
+        +*                   { set  exe($arg)   1; set doit 1;  }
+        *                    { incr hosts(0); set hosts($hosts(0)) $arg; }
+        default              { pwarn "unknown parameter »$arg«; ignored" }
     }
 }
 if {0<$cfg(DEBUG)}  { set cfg(VERB) 1; }
