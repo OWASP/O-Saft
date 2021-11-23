@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.334 21/11/23 23:22:42";
+my  $SID_man= "@(#) o-saft-man.pm 1.335 21/11/24 00:29:24";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -109,7 +109,7 @@ sub _man_dbx        {   # similar to _y_CMD
         # TODO: need to sanitise @txt : remove <!-- and/or -->
     }
     if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)) {
-        print $anf . "#" . $ich . " CMD: " . join(' ', @txt) . "$end\n";
+        print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
     }
     return;
 } # _man_dbx
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.334'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.335'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -194,6 +194,7 @@ sub _man_http_head  {
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
     print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
+    _man_dbx("_man_http_head() ...");   # note that it must be after all HTTP headers
     return;
 } # _man_http_head
 
@@ -431,8 +432,8 @@ function toggle_handler(){
 </style>
 </head>
 <body>
- <h2 id=title title="" ><span id=txt ></span>
-     <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all&#13;action and href attributes">Change to osaft: schema</button>
+ <h2 id="title" title="" ><span id="txt" ></span>
+     <button id="schema" style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all&#13;action and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
 EoHTML
@@ -482,6 +483,7 @@ sub _man_help_button{
 sub _man_form_head  {
     #? print start of CGI form
     my $cgi_bin = shift;
+    _man_dbx("_man_form_head() ...");
     printf(" <div class=h ><b>Help:</b>\n");
     printf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
     printf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help (plain text)"));
@@ -510,7 +512,7 @@ All options with values are passed to $cgi_bin .
     </table><br>
     <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
     <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
-    <div id=a >
+    <div id="a" >
         <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
     <br>
       <div class=n>
@@ -540,8 +542,8 @@ EoHTML
     print _man_html_go("cgi");
     print << "EoHTML";
       </div><!-- class=n -->
-    </div><!-- id=a -->
-    <div id=b >
+    </div><!-- id="a" -->
+    <div id="b" >
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
         <!-- not yet working properly
         <input type=text     name=--cmds size=55 title="type any command or option"/>/>
@@ -553,11 +555,12 @@ EoHTML
 sub _man_form_foot  {
     #? print end of CGI form
     my $cgi_bin = shift;
+    _man_dbx("_man_form_foot() ...");
     print << "EoHTML";
 </p>
         <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-    </div><!-- id=a -->
+    </div><!-- id="b" -->
   </fieldset>
  </form>
  <hr>
@@ -672,6 +675,7 @@ sub _man_html_cmds  {
     my $txt = "";
     my $cmds= _man_cmd_from_source(); # get all command from %data and %check_*
     # $cmds.= _man_cmd_from_rcfile(); # RC-FILE not used here
+    _man_dbx("_man_html_cmds($key) ...");
     foreach my $cmd (split(/[\r\n]/, $cmds)) {
         next if ($cmd =~ m/^\s*$/);
         $cmd =~ s/^\s*//;
@@ -1888,7 +1892,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.334 2021/11/23
+1.335 2021/11/24
 
 =head1 AUTHOR
 
