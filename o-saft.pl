@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1046 21/11/12 22:27:31",
+    SID         => "@(#) yeast.pl 1.1047 21/11/23 23:11:57",
     STR_VERSION => "12.11.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -3160,7 +3160,7 @@ sub _cfg_set($$)        {
     } # read file
 
     ($key, $val) = split(/=/, $arg, 2); # left of first = is key
-    $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanatize key
+    $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanitise key
     $val =  "" if not defined $val;     # avoid warnings when not KEY=VALUE
     $val =~ s/^[+]//;                   # remove first + in command liss
     $val =~ s/ [+]/ /g;                 # remove + in commands
