@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.79 21/02/28 19:45:03
+# SID   @(#) help.txt 1.80 21/11/23 23:19:46
 
 NAME
 
@@ -128,7 +128,7 @@ SECURITY
         analyses. Hence no malicious input is expected.
 
         There are no special security checks implemented. Some parameters are
-        roughly sanatised according unwanted characters.  In particular there
+        roughly sanitised according unwanted characters.  In particular there
         are no checks according any kind of code injection.
 
         Care should be taken, when additional tools and modules are installed
