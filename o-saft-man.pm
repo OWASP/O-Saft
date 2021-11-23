@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.333 21/11/13 13:56:49";
+my  $SID_man= "@(#) o-saft-man.pm 1.334 21/11/23 23:22:42";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -101,8 +101,15 @@ sub _man_dbx        {   # similar to _y_CMD
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
     my @txt = @_;
+    my $anf = "";
+    my $end = "";
+    if (0 < (grep{/^--help=gen.cgi/i} @ARGV)) {
+        # debug messages should be HTML comments when generating HTML
+        $anf = "<!-- "; $end = " -->";
+        # TODO: need to sanitise @txt : remove <!-- and/or -->
+    }
     if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)) {
-        print "#" . $ich . " CMD: " . join(' ', @txt, "\n");
+        print $anf . "#" . $ich . " CMD: " . join(' ', @txt) . "$end\n";
     }
     return;
 } # _man_dbx
@@ -165,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.333'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.334'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1881,7 +1888,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.333 2021/11/13
+1.334 2021/11/23
 
 =head1 AUTHOR
 
