@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.80 21/11/23 23:19:46
+# SID   @(#) help.txt 1.81 22/02/02 20:29:15
 
 NAME
 
@@ -1876,7 +1876,6 @@ OPTIONS
 
           For general descriptions please see  CUSTOMISATION  section below.
 
-      --cfg_cmd=CMD=LIST
       --cfg-cmd=CMD=LIST
 
           Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
@@ -1908,9 +1907,7 @@ OPTIONS
 #          Use the  --trace-key  option for the  +info  and/or  +check command
 #          to get the values for  'KEY'.
 #
-      --cfg_checks=KEY=TEXT
       --cfg-checks=KEY=TEXT
-      --cfg_data=KEY=TEXT
       --cfg-data=KEY=TEXT
 
           Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
@@ -1926,7 +1923,6 @@ OPTIONS
           Example:
               --cfg-cipher=NULL-MD5=no-security-at-all
 
-      --cfg_text=KEY=TEXT
       --cfg-text=KEY=TEXT
 
           Redefine general texts used in output. Sets  %text{KEY}  to  'TEXT'.
