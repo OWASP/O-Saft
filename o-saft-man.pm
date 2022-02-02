@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.335 21/11/24 00:29:24";
+my  $SID_man= "@(#) o-saft-man.pm 1.336 22/02/02 21:38:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.335'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.336'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -760,9 +760,16 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 };
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
-        s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
+        #dbx# m/-SSL/ && do { print STDERR "##1 $_ ###"; };
+        m![IX]&([^&]*)&! && do {
+                    # avoid spaces in internal links to anchors
+                    # FIXME: dirty hack, probably bug in get_markup()
+                    $_=~s/\s+&/&/g; # trim trailing spaces
+                };
         s!I&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup commands and options
         s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
+        s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
+            # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
         s!^\s+($mytool .*)!<div class=c >$1</div>!; # example line
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
@@ -1892,7 +1899,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.335 2021/11/24
+1.336 2022/02/02
 
 =head1 AUTHOR
 
