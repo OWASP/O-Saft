@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.81 22/02/02 20:29:15
+# SID   @(#) help.txt 1.82 22/02/03 01:21:20
 
 NAME
 
@@ -375,7 +375,7 @@ COMMANDS
           instead of spaces to seperate columns.  It also prints table header
           lines by default.
 
-          Different output formats are used for the  --legacy  option:
+          Different output formats are used for the  --legacy=*  option:
             * --legacy=simple   tabular output of cipher values
             * --legacy=full     as  --legacy=simple  but more data
             * --legacy=openssl  output like with  +ciphers  command
@@ -521,6 +521,10 @@ COMMANDS
 
           Use  --v  option to see all ciphers being checked.
 
+      +cipherall
+
+          Option is obsolete.
+
       +cipherraw
 
           Check target for all possible ciphers.
@@ -594,6 +598,7 @@ COMMANDS
 
           Check if target selects weak cipher (oposite of  +cipher-strong).
 
+# next 4 lines will be replaced by o-saft-man.pl, see /Discrete commands/ there
     Discrete commands to test SSL connection and certificate details
 
         Discrete commands, please see:
@@ -661,6 +666,10 @@ COMMANDS
           The same happens, if only one cipher in the client's list matches a
           cipher in the server's list.
 
+      +tlsextdebug
+
+      +tlsextensions
+
       +extensions vs. +tlsextensions
 
           "Certificate extensions" are shown with  +extensions  while the TLS
@@ -671,6 +680,8 @@ COMMANDS
       +http2 +spdy +spdy3 +spdy31 +spdy4 +prots
 
           These commands are just an alias for the  +protocols  command.
+
+      +wildcard
 
       +hostname vs. +wildhost vs. +altname vs. +rfc_2818
 
@@ -699,6 +710,9 @@ OPTIONS
       --help
 
           Complete user documentation.
+
+# next line to keep generated HTML links happy
+      --help*
 
       --help=cmds
 
@@ -1645,6 +1659,9 @@ OPTIONS
           For ciphers and protocols, the corresponding  hex value  is used as
           key. Note that these values are unique.
 
+# next line to keep generated HTML links happy
+      --legacy=*
+
       --legacy=TOOL
 
           For compatibility with other tools,  the output format used for the
@@ -1798,6 +1815,9 @@ OPTIONS
 
 #         However, it applies partially if used twice for  +info.
 
+# next line to keep generated HTML links happy
+      --std-format=*
+
       --std-format=utf8
       --std-format=crlf
       --std-format=raw
@@ -1874,6 +1894,10 @@ OPTIONS
 
     Options for customisation
 
+# next line is not a real option, just to keep generated HTML links happy
+      --cfg-CFG
+
+          Option for customisation have the general from:  --cfg-CFG=KEY=TEXT
           For general descriptions please see  CUSTOMISATION  section below.
 
       --cfg-cmd=CMD=LIST
@@ -2044,7 +2068,7 @@ OPTIONS
 
       --trace-cmd
 
-          Trace execution of command processing (those given as  +*).
+          Trace execution of command processing (those given as  +CMD).
 
       --trace-key
       --trace@
