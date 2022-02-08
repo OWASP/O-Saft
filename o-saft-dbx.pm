@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2021 Achim Hoffmann
+#!# Copyright (c) 2022 Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used, if not defined herein
@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.154 21/02/16 12:24:42";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.155 22/02/08 22:57:16";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -1149,7 +1149,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.154 2021/02/16
+1.155 2022/02/08
 
 =head1 AUTHOR
 
