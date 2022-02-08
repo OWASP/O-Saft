@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Filename: error_handler.pm
 #!#############################################################################
-#!#                    Copyright (c) Torsten Gigler
+#!#                    Copyright (c) 2022, Torsten Gigler
 #!#   This script is part of the OWASP-Project 'o-saft'.
 #!#   It's a simple library 'OSaft::error_handler' stores and optionally
 #!#   prints all classified errors for other parts of o-saft.
