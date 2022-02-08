@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2021, Achim Hoffmann
+#!# Copyright (c) 2022, Achim Hoffmann
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -31,7 +31,7 @@ BEGIN { # mainly required for testing ...
 }
 
 our $VERSION    = "21.01.12";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.41 21/01/14 00:18:58";
+my  $SID_data   = "@(#) Data.pm 1.42 22/02/08 23:13:08";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -216,21 +216,25 @@ sub get_markup    {
         s/^( {11})([^ ].*)/=item * $1$2/;# list item
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
         s/^( {18})([^ ].*)/S&$1$2&/;    # exactly 18
-        # quick&dirty: should not match lines starting with any of:
+        # check for other markup in lines which are not code examples or
+        # already injected other markup;
+        # SEE Note:Markup for Tool Examples;  SEE Note:Markup for Internal Links
+        # quick&dirty: identifying code examples by
         #     $0 o-saft o-saft.tcl o-saft-docker checkAllCiphers.pl perl perlapp perl2exe
         # quick&dirty: should also not match  X& ... & as no other potential
         # markup should be substituted in there
         if (not m/^(?:=|S&|\s+(?:\$0|o-saft|o-saft.tcl|o-saft-docker|checkAllCiphers.pl|perl|perl2exe|perlapp)\s)/
             and not m/X&[^&]*(?:\+|--)/
            ) {  # more markup, ...
-            # but not in example lines and already marked lines
             s#(\s)+(a-zA-Z[^ ]+)(\s+)#$1'$2'$3#g;   # markup literal character class as code
-            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # our commands and options
+            # our commands and options; SEE Note:Markup for Commands and Options
+            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
                 # TODO: fails for something like:  --opt=foo="bar"
                 # TODO: above substitute fails for something like:  --opt --opt
                 #        hence same substitute again (should be sufficent then)
-            s#([A-Z]L)&#$1 &#g; # i.e. SSL
-                # quick&dirty to avoid further inerpretation of L&
+            s#([A-Z]L)&#$1 &#g;         # SEE Note:Upercase Markup
+################ --option=,   extra behandeln
+                # quick&dirty to avoid further inerpretation of L& , i.e. SSL
                 # ugly hack as it adds a space
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
@@ -596,7 +600,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.41 2021/01/14
+1.42 2022/02/08
 
 =head1 AUTHOR
 
@@ -628,9 +632,9 @@ For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 
 =head3 Documentation:General
 
-All public user documentation is written in plain text format. Therfore it
-can be read without a special tool. It's designed for human radability and
-simple editing.
+All public user documentation is written in plain text format. Hence it is
+possible to read it without a special tool. It is designed for human read-
+ability and simple editing.
 
 All other formats like HTML, POD, troff (man-page), etc. will be generated
 from this plain text with the methods (functions) herein.
@@ -649,6 +653,41 @@ The general workflow is as follows:
 For generating some formats, external tools are used.  Such a tools mainly
 gets the data in POD format and then converts it to another format. 
 The external tools are called using Perl's 'exec()' function, usually.
+
+=head Note:Upercase Markup
+
+There's a conflict in detecting TITLEs and options with uppercase letters,
+for example  --SSL  .  To avoid incorrectly mixed markup,  the sequence of
+some pattern matching is important.
+
+=head Note:Markup for Internal Links
+
+In some cases it is not possible to identify targets for internal links in
+the human readable text, because such targets are also human readable text
+but not written in all uppercase letters.
+Therefore the special markup  X&some text here&  can be used.
+
+No other pattern must be matched in this markup.
+
+=head Note:Markup for Commands and Options
+
+While commands are easy to detect, it may become complicated for options.
+The general pattern for options is: starting with  --  and all charachters
+before next space, comma, or dot.
+
+Unfortunately options may contain such terminating characters too. Special
+handling for such options must be implemented,  otherwise generated markup
+may not behave as intended.
+
+=head Note:Markup for Tool Examples
+
+The documentation contains example code to call tools.  It is obvious that
+the examples also conatain texts looking like our own options. The options
+shouldn't be subject to special markup of option, like generating internal
+links (HTML).
+
+A list of tools (pattern) is used to detect such code examples. Such lines
+are identified if the first word in the line matches this paatern.
 
 =cut
 
