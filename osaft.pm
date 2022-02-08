@@ -7,7 +7,7 @@
 
 ## PACKAGE {
 
-#!# Copyright (c) 2021, Achim Hoffmann
+#!# Copyright (c) 2022, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package osaft;
@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.251 21/04/14 23:23:24",
+    SID_osaft   => "@(#) osaft.pm 1.252 22/02/08 23:05:32",
 
 };
 
@@ -4315,7 +4315,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.251 2021/04/14
+1.252 2022/02/08
 
 =head1 AUTHOR
 
