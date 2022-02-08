@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2021, Achim Hoffmann
+#!# Copyright (c) 2022, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used
@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.336 22/02/02 21:38:16";
+my  $SID_man= "@(#) o-saft-man.pm 1.337 22/02/08 23:04:28";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.336'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.337'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -593,7 +593,7 @@ sub _man_html_foot  {
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
  <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
  <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
- <hr><p><span style="display:none">&copy; Achim Hoffmann 2021</span></p>
+ <hr><p><span style="display:none">&copy; Achim Hoffmann 2022</span></p>
  <script>
   osaft_title("$title", "$vers");
   if (schema_is_file()===true) { osaft_disable_help(); }
@@ -1899,7 +1899,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.336 2022/02/02
+1.337 2022/02/08
 
 =head1 AUTHOR
 
