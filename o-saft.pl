@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #!#############################################################################
-#!#             Copyright (c) 2021, Achim Hoffmann
+#!#             Copyright (c) 2022, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1047 21/11/23 23:11:57",
+    SID         => "@(#) yeast.pl 1.1048 22/02/08 22:54:26",
     STR_VERSION => "12.11.21",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9474,7 +9474,7 @@ See  L<Documentation>  above and  L<Note:--test-*>  below and
 The annotations from here on describe behaviours, observations, and alike,
 which lead to special program logic.  The intention is to have one central
 place where to do the documentation.
-Up to now --2020-- this is an internal documentation only. It is available
+Up to now --2022-- this is an internal documentation only. It is available
 for the developer also with:
 
     perldoc o-saft.pl
