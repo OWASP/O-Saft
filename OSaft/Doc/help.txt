@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.82 22/02/03 01:21:20
+# SID   @(#) help.txt 1.83 22/02/10 20:41:34
 
 NAME
 
@@ -914,8 +914,8 @@ OPTIONS
           options are important.
           The rule how ports and hosts are mapped is as follows:
 
-            HOST:PORT arguments are used as is (connection to HOST on PORT)
-            only HOST is given, then previous specified  --port=PORT  is used
+            * HOST:PORT arguments are used as is (connection to HOST on PORT)
+            * only HOST is given, then previous specified PORT is used
 
           Note that URLs are treated as HOST:PORT, if they contain a port.
           Example:
@@ -991,6 +991,7 @@ OPTIONS
           * insecure protocols are available
           * insecure ciphers are supported
           * ciphers without PFS are supported, disable with  --exitcode-cipher
+# SEE HTML:Known Bugs in o-saft-man.pm
 
           In particular, the status code will be the total count of all these
           checks. The status code will also be printed at end, like:
