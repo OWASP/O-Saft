@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.338 22/02/10 19:39:33";
+my  $SID_man= "@(#) o-saft-man.pm 1.339 22/02/10 20:38:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.338'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.339'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -405,6 +405,7 @@ function toggle_handler(){
  body > h4      {margin-left:     1em;}
  b              {margin-left:     1em;}     /* for discrete commands */
  li             {margin-left:     3em;}
+ li.n           {list-style-type: none; }
  div            {                     padding:0.5em; border:var(--border-1);}
  div[class=c]   {margin-left:     4em;padding:0.1em; border:var(--border-0);}
  div[class=n]   {                                    border:var(--border-0);}
@@ -771,7 +772,8 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
             # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
         s!^\s+($mytool .*)!<div class=c >$1</div>!; # example line
-        m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
+        # detect lists, very lazy ... # SEE HTML:Known Bugs
+        m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;};
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         s!<<!&lt;&lt;!g;                            # encode special markup
@@ -782,6 +784,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                     $p = "</p>";
                     $a = '';
                 }; # SEE Perlcritic:LocalVars
+        s!(^ {12}.*)!<li class="n">$1</li>!;        # 12 spaces are used in lists, mainly
         print;
     }
     print "$p"; # if not empty, otherwise harmless
@@ -1899,7 +1902,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.338 2022/02/10
+1.339 2022/02/10
 
 =head1 AUTHOR
 
@@ -2106,5 +2109,10 @@ JavaScript. See JavaScript function  'osaft_buttons()'.
 The documenation in HTML format contains a "start" button at the bottom of
 each toplevel section.  This should only be done when the page is used for
 CGI (aka --help=cgi).
+
+
+=head2 HTML:Known Bugs
+
+Our options and commands (like +cipher --help) are not detected in lists.
 
 =cut
