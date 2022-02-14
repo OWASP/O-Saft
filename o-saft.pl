@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1049 22/02/14 16:58:32",
+    SID         => "@(#) yeast.pl 1.1050 22/02/14 17:00:22",
     STR_VERSION => "22.02.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -808,6 +808,8 @@ our %data   = (         # connection and certificate details
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
+    'master_secret' => {'val' => sub { Net::SSLinfo::master_secret( $_[0], $_[1])}, 'txt' => "Target supports Extended Master Secret"},
+#    master_secret  is alias for extended_master_secret, TLS 1.3 and later
     'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target's advertised protocols"},
 #   'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"}, # old, pre 17.04.17 version
     'alpn'          => {'val' => sub { return $info{'alpn'};                     }, 'txt' => "Target's selected protocol (ALPN)"},
@@ -1038,6 +1040,7 @@ my %check_dest = (  ## target (connection) data
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
     'ocsp_stapling' => {'txt' => "Target supports OCSP Stapling"},
+    'master_secret' => {'txt' => "Target supports Extended Master Secret"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
     'session_lifetime'  =>{ 'txt'=> "Target TLS Session Ticket Lifetime"},
     'session_starttime' =>{ 'txt'=> "Target TLS Session Start Time match"},
@@ -1154,6 +1157,7 @@ our %shorttexts = (
     'npn'           => "Selected  NPN",
     'alpns'         => "Supported ALPNs",
     'npns'          => "Supported  NPNs",
+    'master_secret' => "Supports EMS",
     'next_protocols'=> "(NPN) Protocols",
     'cipher_strong' => "Strongest cipher selected",
     'cipher_order'  => "Client's cipher order",
@@ -5948,7 +5952,7 @@ sub checkdest($$)   {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
+    foreach my $key (qw(krb5 psk_hint psk_identity master_secret srp session_ticket session_lifetime)) {
             # master_key session_id: see %check_dest above also
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
@@ -8379,6 +8383,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?$/)    { $arg = '+sig_encryption'; } # alias:
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg = '+sig_enc_known';  } # alias:
     if ($arg =~ /^\+server$p?(?:temp)?$p?key$/)       { $arg = '+dh_parameter';   } # alias:
+    if ($arg =~ /^\+master$p?secret$/)                { $arg = '+master_secret';  }
+    if ($arg =~ /^\+extended$p?master$p?secret$/)     { $arg = '+master_secret';  } # alias:
     if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation';  } # alias:
     if ($arg =~ /^\+resum/)             { $arg = '+resumption';     } # alias:
     if ($arg =~ /^\+reused?$/i)         { $arg = '+resumption';     } # alias:
@@ -9852,6 +9858,7 @@ names. The main reason is to avoid overlong coding lines. Some examples:
     ext_certtype        - ext_netscape_certtyp
     ext_cps_notice      - ext_cps_user_notice
     ext_crl             - ext_crl_distribution_point
+    master_secret       - extended_master_secret
     psk_hint            - psk_identity_hint
 
 
