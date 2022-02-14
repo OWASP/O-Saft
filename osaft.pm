@@ -17,7 +17,7 @@ use warnings;
 use utf8;
 
 use constant {
-    OSAFT_VERSION   => '21.03.21',  # official version number of this file
+    OSAFT_VERSION   => '22.02.12',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.252 22/02/08 23:05:32",
+    SID_osaft   => "@(#) osaft.pm 1.253 22/02/14 17:53:46",
 
 };
 
@@ -2922,8 +2922,8 @@ our %cfg = (
                          lucky13 poodle rc4 robot sloth sweet32
                          fingerprint_hash fp_not_md5 sha2signature pub_encryption
                          pub_enc_known email serial subject dates verify heartbeat
-                         expansion compression hostname hsts_sts crl
-                         resumption renegotiation tr_02102+ tr_02102- rfc_7525
+                         expansion compression hostname hsts_sts crl master_secret
+                         renegotiation resumption tr_02102+ tr_02102- rfc_7525
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev_chars)], # commands for +ev
     'cmd-bsi'       => [        # commands for +bsi
@@ -4315,7 +4315,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.252 2022/02/08
+1.253 2022/02/14
 
 =head1 AUTHOR
 
