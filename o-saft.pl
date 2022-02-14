@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1050 22/02/14 17:00:22",
+    SID         => "@(#) yeast.pl 1.1051 22/02/14 17:50:04",
     STR_VERSION => "22.02.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1157,7 +1157,8 @@ our %shorttexts = (
     'npn'           => "Selected  NPN",
     'alpns'         => "Supported ALPNs",
     'npns'          => "Supported  NPNs",
-    'master_secret' => "Supports EMS",
+    'master_secret' => "Supports Extended Master Secret",
+#   'master_secret' => "Supports EMS",
     'next_protocols'=> "(NPN) Protocols",
     'cipher_strong' => "Strongest cipher selected",
     'cipher_order'  => "Client's cipher order",
@@ -9075,7 +9076,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             printciphersummary($legacy, $host, $port, $total) if (_is_cfg_do('cipher'));
         ###}
         _yeast_TIME("ciphermode=intern}");
-        next if (_is_cfg_do('cipher'));
+        next if (_is_cfg_do('cipher') and (0 == $quick));
     } # ciphermode=intern
     next if _yeast_NEXT("exit=HOST2 - host ciphermode=intern");
 
