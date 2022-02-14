@@ -31,7 +31,7 @@ BEGIN { # mainly required for testing ...
 }
 
 our $VERSION    = "21.01.12";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.42 22/02/08 23:13:08";
+my  $SID_data   = "@(#) Data.pm 1.43 22/02/14 22:04:34";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -600,7 +600,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.42 2022/02/08
+1.43 2022/02/14
 
 =head1 AUTHOR
 
@@ -654,13 +654,13 @@ For generating some formats, external tools are used.  Such a tools mainly
 gets the data in POD format and then converts it to another format. 
 The external tools are called using Perl's 'exec()' function, usually.
 
-=head Note:Upercase Markup
+=head2 Note:Upercase Markup
 
 There's a conflict in detecting TITLEs and options with uppercase letters,
 for example  --SSL  .  To avoid incorrectly mixed markup,  the sequence of
 some pattern matching is important.
 
-=head Note:Markup for Internal Links
+=head2 Note:Markup for Internal Links
 
 In some cases it is not possible to identify targets for internal links in
 the human readable text, because such targets are also human readable text
@@ -669,7 +669,7 @@ Therefore the special markup  X&some text here&  can be used.
 
 No other pattern must be matched in this markup.
 
-=head Note:Markup for Commands and Options
+=head2 Note:Markup for Commands and Options
 
 While commands are easy to detect, it may become complicated for options.
 The general pattern for options is: starting with  --  and all charachters
@@ -679,7 +679,7 @@ Unfortunately options may contain such terminating characters too. Special
 handling for such options must be implemented,  otherwise generated markup
 may not behave as intended.
 
-=head Note:Markup for Tool Examples
+=head2 Note:Markup for Tool Examples
 
 The documentation contains example code to call tools.  It is obvious that
 the examples also conatain texts looking like our own options. The options
