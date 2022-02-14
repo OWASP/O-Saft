@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '21.08.21',
+    SSLINFO_VERSION => '22.02.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.274 22/02/08 23:07:49',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.275 22/02/14 16:54:24',
 };
 
 ######################################################## public documentation #
@@ -641,6 +641,8 @@ our @EXPORT = qw(
         chain_verify
         compression
         expansion
+        extended_master_secret
+        master_secret
         next_protocols
         alpn
         no_alpn
@@ -1150,6 +1152,7 @@ my %_SSLinfo= ( # our internal data structure
     'psk_identity'      => "",  # PSK identity
     'srp'               => "",  # SRP username
     'master_key'        => "",  # Master-Key
+    'master_secret'     => "",  # Extended master secret
     'public_key_len'    => "",  # Server public key
     'session_id'        => "",  # Session-ID
     'session_id_ctx'    => "",  # Session-ID-ctx
@@ -1259,6 +1262,7 @@ sub _SSLinfo_print  {
             psk_hint
             psk_identity
             srp
+            master_secret
             master_key
             public_key_len
             session_id
@@ -2879,6 +2883,7 @@ sub do_ssl_open($$$@) {
             'session_id'       => "Session-ID:",
             'session_id_ctx'   => "Session-ID-ctx:",
             'master_key'       => "Master-Key:",
+            'master_secret'    => "Extended master secret:",
             'krb5'             => "Krb5 Principal:",
             'psk_identity'     => "PSK identity:",
             'psk_hint'         => "PSK identity hint:",
@@ -3557,6 +3562,14 @@ Get target's SRP username.
 
 Get target's Master-Key.
 
+=head2 master_secret
+
+Get target's support for Extended master secret.
+
+=head2 extended_master_secret
+
+Same as master_secret .
+
 =head2 public_key_len
 
 Get target's Server public key length.
@@ -3894,6 +3907,8 @@ sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
 sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
 sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
 sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
+sub master_secret   { return _SSLinfo_get('master_secret',    $_[0], $_[1]); }
+sub extended_master_secret  { return _SSLinfo_get('master_secret', $_[0], $_[1]); } # alias
 sub public_key_len  { return _SSLinfo_get('public_key_len',   $_[0], $_[1]); }
 sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
 sub session_id_ctx  { return _SSLinfo_get('session_id_ctx',   $_[0], $_[1]); }
