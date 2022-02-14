@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1048 22/02/08 22:54:26",
-    STR_VERSION => "12.11.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1049 22/02/14 16:58:32",
+    STR_VERSION => "22.02.12",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -868,7 +868,7 @@ our %data   = (         # connection and certificate details
     'valid_host'    => {'val' =>  0, 'txt' => "dummy used for printing DNS stuff"},
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|next_protocols|
-# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|public_key_len|session_id|session_id_ctx|session_protocol|session_ticket|session_lifetime|session_timeout|session_starttime|session_startdate
+# need s_client for: krb5|psk_hint|psk_identity|master_secret|srp|master_key|public_key_len|session_id|session_id_ctx|session_protocol|session_ticket|session_lifetime|session_timeout|session_starttime|session_startdate
 
 # add keys from %prot to %data,
 foreach my $ssl (keys %prot) {
@@ -5948,7 +5948,8 @@ sub checkdest($$)   {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) { # master_key session_id: see %check_dest above also
+    foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
+            # master_key session_id: see %check_dest above also
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val}    = ($value eq "") ? " " : "";
@@ -5957,12 +5958,12 @@ sub checkdest($$)   {
         # TODO: see ZLIB also (seems to be wrong currently)
     }
 
-    # time on server differs more tnan +/- 5 seconds?
+    # time on server differs more than +/- 5 seconds?
     my $currenttime = time();
     $key    = 'session_starttime';
     $value  = $data{$key}->{val}($host);
-    $checks{$key}->{val} = "$value < $currenttime" if ($value < ($currenttime - 5));
-    $checks{$key}->{val} = "$value > $currenttime" if ($value > ($currenttime + 5));
+    $checks{$key}->{val}        = "$value < $currenttime" if ($value < ($currenttime - 5));
+    $checks{$key}->{val}        = "$value > $currenttime" if ($value > ($currenttime + 5));
 
     foreach my $key (qw(heartbeat)) {   # these are good if there is no value
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
@@ -5971,7 +5972,7 @@ sub checkdest($$)   {
     }
     $value = $data{'ocsp_response'}->{val}($host);
     $checks{'ocsp_stapling'}->{val} = ($value =~ /.*no\s*response.*/i) ? $value : "";
-        # vor valid ocsp_stapling, ocsp_response should be something like:
+        # for valid ocsp_stapling, ocsp_response should be something like:
         # Response Status: successful (0x0); Cert Status: good; This Update: Jan 01 00:23:42 2021 GMT; Next Update:
     return;
 } # checkdest
@@ -8376,7 +8377,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ocsp$p?public$p?hash$/)           { $arg = '+ocsp_public_hash'; }
     if ($arg =~ /^\+ocsp$p?subject$p?hash$/)          { $arg = '+ocsp_subject_hash';}
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?$/)    { $arg = '+sig_encryption'; } # alias:
-    if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg ='+sig_enc_known';   } # alias:
+    if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg = '+sig_enc_known';  } # alias:
     if ($arg =~ /^\+server$p?(?:temp)?$p?key$/)       { $arg = '+dh_parameter';   } # alias:
     if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation';  } # alias:
     if ($arg =~ /^\+resum/)             { $arg = '+resumption';     } # alias:
@@ -9840,6 +9841,18 @@ All values in %check were set to  ""  which means 'yes'. The advantage was
 a very simple default assignment and only failed checks are assigned.  The
 disadvantage was that missing checks, due to programming errors,  were re-
 ported as 'yes'.
+
+=head3 Shortened variable names
+
+Some varaible names are abrevated,  instead of using full blown "speaking"
+names. The main reason is to avoid overlong coding lines. Some examples:
+
+    cn                  - common_name
+    ext_authorityid     - ext_authorityid_key_id
+    ext_certtype        - ext_netscape_certtyp
+    ext_cps_notice      - ext_cps_user_notice
+    ext_crl             - ext_crl_distribution_point
+    psk_hint            - psk_identity_hint
 
 
 =head2 Note:Testing, sort
