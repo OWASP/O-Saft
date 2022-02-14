@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.21 22/02/14 16:15:38
+# SID	@(#) glossary.txt 1.22 22/02/14 16:19:41
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -221,6 +221,8 @@ EtA	Encrypt-then-Authenticate (see also EtM)
 E&A	Encrypt-and-Authenticate (see also E&M)
 E&M	Encrypt-and-MAC (see also E&A)
 EtM	Encrypt-then-MAC (see also EtA)
+eTLS	Enterprise TLS (social attack on privacy by ETSI; renamed to ETS)
+ETS	Enterprise Transport Security (renamed from eTLS)
 ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
