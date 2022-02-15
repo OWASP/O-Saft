@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.83 22/02/10 20:41:34
+# SID   @(#) help.txt 1.84 22/02/15 09:41:42
 
 NAME
 
@@ -3316,19 +3316,19 @@ KNOWN PROBLEMS
         mainly happens if the target does not return certificate information.
         If so, the  --no-cert  option may help.
 
-    **WARNING: empty result from openssl; ignored at ...
+    **WARNING: 311: empty result from openssl; ignored at ...
 
         This most likely occurs when the  provided cipher is  not accepted by
         the server, or the server expects client certificates.
 
-    **WARNING: unknown result from openssl; ignored at ...
+    **WARNING: 311: unknown result from openssl; ignored at ...
 
         This most likely occurs when the openssl(1) executable is used with a
         very slow connection. Typically the reason is a connection timeout.
         Try to use  --timeout=SEC  option.
         To get more information, use  --v --v  and/or  --trace  also.
 
-    **WARNING: undefined cipher description
+    **WARNING: 016: undefined cipher description
 
         May occour if ciphers are checked, but no description is available for
         them herein. This results in printed cipher checks like:
@@ -3337,8 +3337,8 @@ KNOWN PROBLEMS
         instead of:
               EXP-KRB5-RC4-MD5                no       weak
 
-    **WARNING: Can't make a connection to your.tld:443; no initial data
-    **WARNING: Can't make a connection to your.tld:443; target ignored
+    **WARNING: 205: Can't make a connection to your.tld:443; no initial data
+    **WARNING: 205: Can't make a connection to your.tld:443; target ignored
 
         This message occours if the underlaying  SSL library (i.e. libssl.a)
         was not able to connect to the target. Known observed reasons are:
@@ -4129,10 +4129,10 @@ HACKER's INFO
 
         We try to detect unsupported versions and disable them automatically,
         a warning like follwoing is shown then:
-              **WARNING: SSL version 'SSLv2': not supported by openssl
+              **WARNING: 303: SSL version 'SSLv2': not supported by openssl
 
         All such warnings look like:
-              **WARNING: SSL version 'SSLv2': ...
+              **WARNING: 303: SSL version 'SSLv2': ...
 
         If problems occour with  SSL versions, following commands and options
         may help to get closer to the reason or can be used as workaround:
@@ -4487,23 +4487,23 @@ DEBUG
 
               === reading: ./.o-saft.pl (RC-FILE done) ===
               === reading: ./Net/SSLhello.pm (O-Saft module done) ===
-              **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
+              **WARNING: 121: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
               === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
-              **WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
-              **WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
-              **WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
-              **WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+              **WARNING: 120: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
+              **WARNING: 121: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+              **WARNING: 121: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+              **WARNING: 124: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
               !!Hint: --force-openssl can be used to disables this check
-              **WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
               **WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
               **WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
               **WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
               === o-saft.pl 16.09.09 ===
                   Net::SSLeay::
                   ::OPENSSL_VERSION_NUMBER()       0x9470143
-              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
                   ::SSLeay()                       0x1.35
-              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
               = openssl =
                   version of external executable   OpenSSL 0.9.8y 5 Feb 2013
                   external executable              /usr/bin/openssl
@@ -4524,8 +4524,8 @@ DEBUG
                   openssl supported SSL versions   SSLv2 SSLv3 TLSv1
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
                   .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-              **WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+              **WARNING: 841: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
               = o-saft.pl +cipherall =
                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                   .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
