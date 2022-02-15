@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.58 21/11/13 18:21:43
+#?      @(#) Makefile.misc 1.59 22/02/15 17:35:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.58
+_SID.misc          := 1.59
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -202,7 +202,7 @@ test.cloc:        $(ALL.test.cloc)
 
 HELP-_modules       = _________________ targets for testing ancient Perl modules _
 # TODO: build test targets
-# allready manually tested module versions:
+# already manually tested module versions:
 #    perl 5.24, 5.28
 #    openssl 0.9.8, 1.0.2-chacha, 1.0.2k, 1.1.0l, 1.1.1d
 #
@@ -434,7 +434,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.58: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.59: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -532,7 +532,7 @@ test.values:          $(ALL.test.values)
 
 _TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
 $(_TEST.keys.log):
-	@echo "# Makefile.misc 1.58: $(MAKE) test.keys.log" > $@
+	@echo "# Makefile.misc 1.59: $(MAKE) test.keys.log" > $@
 	@$(MAKE) -i test.keys >> $@ 2>&1
 test.keys.log: $(_TEST.keys.log)
 	@$(TRACE.target)
