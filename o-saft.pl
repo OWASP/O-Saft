@@ -65,8 +65,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1051 22/02/14 17:50:04",
-    STR_VERSION => "22.02.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1052 22/02/16 12:51:41",
+    STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 
@@ -218,7 +218,14 @@ sub _warn   {
     #? print warning if wanted; SEE Perl:Message Numbers
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
-    return if _is_argv('(?:--no.?warn)');   # ugly hack 'cause we won't pass $cfg{use}{warning}
+    my ($_no) = "@txt" =~ m/^([0-9(]{3})/;  # message number, usually
+    return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't pass $cfg{use}{warning}
+    # other configuration values can be retrieved from %cfg
+    if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
+        # SEE  Note:warning-no-duplicates
+        return if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_printed'}}));
+        push(@{$cfg{out}->{'warnings_printed'}}, $_no);
+    }
     local $\ = "\n";
     print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -8007,6 +8014,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--v-?ciphers?$/)      { $cfg{'v_cipher'}++;       }
     if ($arg =~ /^--warnings?$/)        { _set_cfg_out('warning', 1);       }
     if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning', 0);       }
+    if ($arg =~ /^--warningsdups?$/)    { _set_cfg_out('warnings_no_dups', []); }
+    if ($arg =~ /^--nowarningsnodups?$/){ _set_cfg_out('warnings_no_dups', []); }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias: --n
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
@@ -9770,7 +9779,10 @@ Check for used numbers with:
 
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
 
-A proper test for the message should be done in t/Makefile.warnings.
+A proper test for the message should be done in t/Makefile.warnings, where
+we have:
+
+    make warnings-info
 
 
 =head2 Note:Data Structures
@@ -9980,6 +9992,39 @@ Known (9/2020) variables and texts with potential information disclosure:
     cfg{RC-FILE}
     cfg{regex}->{anon_output}
     cmd{openssl}
+
+
+=head2 Note:warning-no-duplicates
+
+Due to the program logic, for example nested looping (targets, protocols,
+ciphers), the same message may be printed multiple times (in each loop).
+As the duplicate warning doesn't give additional information to the user,
+the duplicates are ignored by default. The option  --warnings_dups can be
+used to enable printing of all messages.
+
+As the tool traditionally supports complementary options for enabling and
+disabling a functionality,  there is  --no-warnings_no_dups  respectively
+--warnings_dups  too.
+Note that using both options  --no-warnings --no-warnings_no_dups  is not
+supported, means that no messages are printed.  This behaviour may change
+in future.
+
+Technically the list (array)  "cfg{'warnings_no_dups'}"  contains message
+numbers not to be printed multiple times. This list is set empty when the
+option  --warnings_dups  is given.
+
+Some messages contain variable values,  therefore the printed text of the
+message sligtly differs for several messages. Such messages should not be
+subject to the "don't print duplicates" mechanism, in practice: don't add
+their message number to  "cfg{'warnings_no_dups'}".
+The array  "cfg{'warnings_printed'}"  is used internally and contains the
+numbers of messages already printed.
+
+SEE L<Perl:Message Numbers> also.
+
+To get a list of message numbers, use:
+
+    make warnings-info
 
 
 =head2 Note:OpenSSL Version
