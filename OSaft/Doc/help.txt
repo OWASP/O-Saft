@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.84 22/02/15 09:41:42
+# SID   @(#) help.txt 1.85 22/02/16 12:58:00
 
 NAME
 
@@ -2129,6 +2129,11 @@ OPTIONS
       --no-warning
 
           Do not print warning messages (**WARNING:).
+
+      --warnings-dups
+      --no-warnings-no-dups
+
+	  Do not suppress duplicate warning messages (**WARNING:).
 
       --exit=KEY
 
