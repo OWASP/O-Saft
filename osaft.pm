@@ -17,7 +17,7 @@ use warnings;
 use utf8;
 
 use constant {
-    OSAFT_VERSION   => '22.02.12',  # official version number of this file
+    OSAFT_VERSION   => '22.02.13',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.253 22/02/14 17:53:46",
+    SID_osaft   => "@(#) osaft.pm 1.254 22/02/16 12:43:49",
 
 };
 
@@ -3043,6 +3043,11 @@ our %cfg = (
         'warning'           => 1,   # 1: print warnings
         'score'             => 0,   # 1: print scoring
         'ignore'            => [],  # commands (output) to be ignored, SEE Note:ignore-out
+        'warnings_no_dups'  => [qw(303 304 412)],
+                                    # do not print these warnings multiple times
+                                    # SEE  Note:warning-no-duplicates
+        'warnings_printed'  => [],  # list of unique warning numbers already printed
+                                    # SEE  Note:warning-no-duplicates
         'exitcode'          => 0,   # 1: print verbose checks for exit status
         'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
         'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
@@ -4315,7 +4320,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.253 2022/02/14
+1.254 2022/02/16
 
 =head1 AUTHOR
 
