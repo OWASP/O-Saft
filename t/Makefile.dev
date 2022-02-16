@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.42 21/11/13 17:46:01
+#?      @(#) Makefile.dev 1.43 22/02/16 14:07:50
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.42
+_SID.dev           := 1.43
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -336,10 +336,10 @@ testarg-dev-grep_subs:
 	$(foreach prg, $(LIST.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
 testarg-dev-grep_desc:
 	@$(TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^(sub|proc|\s+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^(sub|proc|\s+#[?])' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((sub|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^((sub|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)); )
 testarg-dev-grep_flow:
 	@$(TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^\s*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^\s*#[|]' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $($(prg)); )
 _TEST.brace=(
 # ) beat Make's foreach dragon
 testarg-dev-grep_hint:
@@ -369,6 +369,7 @@ ALL.test.dev.grep   = testarg-dev-grep_subs testarg-dev-grep_desc \
 	testarg-dev-grep_hint testarg-dev-grep_warn
 test.dev.grep.all:  $(ALL.test.dev.grep)
 .PHONY: $(ALL.test.grep)
+#.PHONY: $(ALL.test.grep:%=%.log)
 
 # some special targets
 testarg-dev-o-saft_notyet:  TEST.dev.hosts  = localhost
