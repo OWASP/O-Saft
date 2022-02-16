@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.254 22/02/16 12:43:49",
+    SID_osaft   => "@(#) osaft.pm 1.255 22/02/16 13:08:47",
 
 };
 
@@ -3046,6 +3046,7 @@ our %cfg = (
         'warnings_no_dups'  => [qw(303 304 412)],
                                     # do not print these warnings multiple times
                                     # SEE  Note:warning-no-duplicates
+                                    # 410 not added, as it appears once per protocol only
         'warnings_printed'  => [],  # list of unique warning numbers already printed
                                     # SEE  Note:warning-no-duplicates
         'exitcode'          => 0,   # 1: print verbose checks for exit status
@@ -4320,7 +4321,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.254 2022/02/16
+1.255 2022/02/16
 
 =head1 AUTHOR
 
