@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.43 22/02/16 14:07:50
+#?      @(#) Makefile.dev 1.44 22/02/16 14:11:18
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.43
+_SID.dev           := 1.44
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -333,7 +333,7 @@ HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 # TODO: need to generate individual targets
 testarg-dev-grep_subs:
 	@$(TRACE.target)
-	$(foreach prg, $(LIST.sources), echo "" && echo "# grep ^sub $($(prg)) ..." && cd $(TEST.dir)&&grep ^sub $($(prg)); )
+	$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^sub[[:space:]]' $($(prg)) ..." && cd $(TEST.dir)&&egrep '^sub[[:space:]]' $($(prg)); )
 testarg-dev-grep_desc:
 	@$(TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((sub|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^((sub|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)); )
