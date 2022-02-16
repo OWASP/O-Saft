@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.44 22/02/16 14:11:18
+#?      @(#) Makefile.dev 1.45 22/02/16 15:21:04
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.44
+_SID.dev           := 1.45
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -351,16 +351,21 @@ testarg-dev-grep_warn:
 # TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
 
 # function definitons more beautified for $(SRC.pl)
-_PERL.subs   = sub p{printf("%-24s\t%s\n",@_);} \
+define _CMD_grep-sub
+	perl -lane '\
+		sub p{printf("%-24s\t%s\n",@_);} \
 		($$F[0]=~/^\#/)&&do{$$_=~s/^\s*\#\??/-/;p($$s,$$_)if($$s ne "");$$s="";}; \
-		($$F[0] eq "sub")&&do{p($$s,"")if($$s ne "");$$s=$$F[1];}
+		($$F[0] eq "sub")&&do{p($$s,"")if($$s ne "");$$s=$$F[1];} \
+	'
+endef
     # NOTE: $$ and \# in perl code is contribution to Makefile
+
 testarg-dev-grep_sub:
 	@echo "#make: print all subs  in $(SRC.pl) ..."
 	@echo ""
 	@echo "# function name                 | description"
 	@echo "#-------------------------------+------------------------------------------"
-	@-perl -lane '$(_PERL.subs)' $(SRC.pl)
+	@$(_CMD_grep-sub) $(SRC.pl)
 	@echo "#-------------------------------+------------------------------------------"
 	@echo ""
 
