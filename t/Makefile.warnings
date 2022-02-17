@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#)  1.60 21/04/16 11:39:18
+#?      @(#)  1.61 22/02/17 18:49:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.60
+_SID.warnings      := 1.61
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -331,22 +331,35 @@ warnings.gen.template: $(ALL.Makefiles) $(_TEST.template)
 #       warn STR_ERROR, 
 #       warn STR_WARN, 
 #       warn STR_WARN . 
+#       warn(STR_
 #       warn "**WARNING:
 #       _warn("
-# replacing die|warn bei **WARNING; finally remove anything behind closing ")
+#       _warn(STR_
+# Because perl comments with # cannot be used inside Makefile's defines, the
+# following sequence of the perl code is explained first:
+#   skip assignments
+#   remove opening ( if any
+#   if line mtches die or warn or print
+#       replace die|warn by **WARNING: or **ERROR:
+#       replace _warn by **WARNING:
+#       remove postfix condition
+#       remove ") and anything reight to it
+#       remove _warn (if still there)
+# TODO: warn and die not detected, if they do not appear as first word in line
 define _CMD_extract_warn
 	perl -nle '\
 		m/^\s*warn\s+=/ && do {next};\
+		s/[(]/ / if m/^\s*(?:die|_?warn|print)\s*\(\s*STR_[EW]/;\
 		m/^\s*(?:die|_?warn|print STR_[EW])/ && do {\
-		s/^\s*(?:print|die|warn)\s+STR_ERROR,\s"/**ERROR: /;\
-		s/^\s*(?:print|die|warn)\s+STR_WARN[,.\s]+"/**WARNING: /;\
-		s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
-		s/ +if +\(.*//;\
-		s/"\s*\)?\s*;?\s*$$//;\
-		s/^\s*_?warn\s*\(?"//;\
-		print}'
+			s/^\s*(?:print|die|warn)\s+STR_ERROR,\s"/**ERROR: /;\
+			s/^\s*(?:print|die|warn)\s+STR_WARN[,.\s]+"/**WARNING: /;\
+			s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
+			s/ +if +\(.*//;\
+			s/"\s*\)?\s*;?\s*$$//;\
+			s/^\s*_?warn\s*\(?"//;\
+			print;\
+		}'
 endef
-# TODO: warn and die not detected, if they do not appear as first word in line
 
 define _CMD_gen_warning-target
 	perl -nle '\
@@ -384,7 +397,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "#  1.60: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.61: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
