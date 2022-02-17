@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.339 22/02/10 20:38:14";
+my  $SID_man= "@(#) o-saft-man.pm 1.340 22/02/17 20:03:36";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.339'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.340'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1110,7 +1110,7 @@ sub _man_cmd_from_rcfile {
     my $fh   = undef;
     if (open($fh, '<:encoding(UTF-8)', $cfg{'RC-FILE'})) {
         # TODO: need a better method to identify the proper file, RC-FILE is
-        #       wrong when ths file was called directly
+        #       wrong when this file was called directly
         while(<$fh>) {
             if (m/^##[?]\s+([a-zA-Z].*)/) { # looks like:  ##? Some text here ...
                 $skip = 0;
@@ -1256,6 +1256,62 @@ EoHelp
     print "\n";
     return;
 } # man_commands
+
+sub man_warnings    {
+    #? print warning messages defined in code
+    #? recommended usage:   $0 --header --help=warnings
+    # data is extracted from separate file, which could be created by make
+    _man_dbx("man_warnings($parent) ...");
+    my $txt  = "";
+    my $rex  = join('|', STR_ERROR, STR_WARN, STR_HINT, 'print ');
+       $rex  =~ s/([*!])/\\$1/g;
+       $rex  = qr($rex);        # match our own messages only
+    my $doc  = 'docs/o-saft.pl.--help=warnings'; # TODO: need some kind of configuration for the filename
+    my $fh   = undef;
+    if (open($fh, '<:encoding(UTF-8)', $doc)) {
+        while(<$fh>) {
+            # parse file and print warnings while parsing first
+            # otherwise it's difficult (for human readers) to distinguished
+            # the collected messages from the warning messages printed here
+            # also note that Perl's warn() and not _warn() is used, so that
+            # developers get the line number from the file also
+            next if (m/^\s*#/);
+            next if (m/^\s*$/);
+            #$_ =~ s/warn(STR_WARN,/kkk
+            if (not m/$rex/) {
+                warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored");
+                next;
+            }
+            # following formats of a line are expected:
+            #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
+            #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
+            my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
+            if ($err =~ m/^$/ or $nr =~ m/^$/ or $msg =~ m/^$/) {
+                 # unexpected format, silently print and continue
+                 $txt .= sprintf("%s", $_);
+                 next;
+            }
+            $msg =~ s/^[", ]*//;
+            $txt .= sprintf("%s%s\t- %s\n", $err, $nr, $msg);
+        }
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+    } else {
+        _warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
+    }
+
+    # print collected messages
+    print "\n";
+    _man_head(15, "Warning", "Message text");
+    print "                  Warnings and error messages used in $cfg{'me'}\n";
+    print $txt;
+    _man_foot(15);
+    print <<'EoHelp';
+= Note that message texts may contain variables, like "$key", which are
+=      replaced with propper texts at runtime.
+
+EoHelp
+    return;
+} # man_warnings
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
@@ -1641,7 +1697,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # NOTE: some lower case strings are special
     man_help('NAME'),           return if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-    man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
+    man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|problem)s?$/i);
     if ($hlp =~ /^faq/i) {
         man_help('KNOWN PROBLEMS');
         man_help('LIMITATIONS');
@@ -1666,7 +1722,8 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
-    return man_help_brief()            if ($hlp =~ /^help_brief$/);
+    return man_warnings()              if ($hlp =~ /^warnings?$/);
+    return man_help_brief()            if ($hlp =~ /^help_brief$/); # --h
     # anything below requires data defined in parent
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('links'),         return if ($hlp =~ /^links?$/);
@@ -1883,6 +1940,8 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * error   -> show known problems about warning and error messages
 
+=item * warnings -> show used message texts for warnings and errors
+
 =item * intern  -> some internal documentations
 
 =item * Program.Code  -> description of coding style, conventions, etc.
@@ -1902,7 +1961,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.339 2022/02/10
+1.340 2022/02/17
 
 =head1 AUTHOR
 
