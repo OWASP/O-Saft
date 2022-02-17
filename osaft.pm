@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.255 22/02/16 13:08:47",
+    SID_osaft   => "@(#) osaft.pm 1.256 22/02/17 12:22:22",
 
 };
 
@@ -303,6 +303,9 @@ our @EXPORT     = qw(
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
+
+my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
+    $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
 
 our %prot   = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
@@ -3444,7 +3447,17 @@ our %cfg = (
    #----------------------+----------------------------------------------------
 
     'hints' => {       # texts used for hints, SEE Note:hints
-       #   'key'   => "any string, may contain \t and \n",
+       # key for hints must be same as a command (without leading +), otherwise
+       # it will not be used automatically.
+       # 'key'      => "any string, may contain \t and \n",
+       #--------------+--------------------------------------------------------
+        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC 5746 ",
+        'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
+        'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
+        'cipher'    => "+cipher : functionality changed, please see '$cfg__me --help=TECHNIC'",
+        'cipherall' => "+cipherall : functionality changed, please see '$cfg__me --help=TECHNIC'",
+        'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
+       #--------------+--------------------------------------------------------
     }, # hints
    #------------------+--------------------------------------------------------
     'ourstr' => {
@@ -4321,7 +4334,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.255 2022/02/16
+1.256 2022/02/17
 
 =head1 AUTHOR
 
