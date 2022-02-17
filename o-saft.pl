@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1052 22/02/16 12:51:41",
+    SID         => "@(#) yeast.pl 1.1053 22/02/17 11:05:48",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -10612,8 +10612,15 @@ The output may contain  !!Hint  messages, see  --help=output  for details.
 
 The texts used for hint messages can be hardcoded in %cfg, set dynamically
 in %cfg in the code, or set using command-line options at startup.
-The hash %{$cfg{'hints'}} contains all these texts.  A definition may look
-like:
+The hash %{$cfg{'hints'}} contains all these texts.
+
+There're at least following types (places of definition) of hints:
+
+    * permanent hints   -- defined in %{$cfg{'hints'}} directly
+    * dynamic hints     -- defined at command line with option --cfg_hint=
+    * hints for new or experimental code    -- defined in the code itself
+
+A definition for a hint may look like:
 
     $cfg{hints}->{KEY} = 'new text';
 
@@ -10621,13 +10628,19 @@ KEY can be any string. If KEY (without leading +) is a known valid command
 the message is printed automatically with the commands output (see below).
 The text may contain formatting characters like \t and \n.
 
+To set new hints dynamicly, following option can be used:
+
+    $0 --cfg_hint=KEY="some text\nin 2 lines"
+
 All predefined (hardcoded) hints can be listed with:
 
-    --help=hint
+    $0 --help=hint
 
-To set new hints, following option can be used:
+Note that dynamicly defined hints with  --cfg_hint=KEY=  are also shown if
+the option was given before  --help=hint , example
 
-    --cfg_hint=KEY="some text\nin 2 lines"
+
+    $0 --cfg_hint=my-hint="given on command-line" --help=hint
 
 Automatic printing works as follows:
 
