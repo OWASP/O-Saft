@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.115 22/02/17 18:11:56
+#?      @(#) Makefile 1.116 22/02/17 18:53:23
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.115
+_SID            = 1.116
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -287,7 +287,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.115
+_INST.text      = generated from Makefile 1.116
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -519,8 +519,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.115
-tar:     GREP_EDIT  = 1.115
+GREP_EDIT           = 1.116
+tar:     GREP_EDIT  = 1.116
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -651,8 +651,9 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # because make does not allow = in target names
 $(DOC.dir)/$(SRC.pl).--help-warnings: $(SRC.pl)
 	@$(TRACE.target)
-	@$(MAKE_COMMAND) -s warnings-info > $@
-	@mv $@ $(DOC.dir)/$(SRC.pl).--help=warnings
+	@$(MAKE_COMMAND) -s warnings-info | sort > $@
+	@mv     $@ $(DOC.dir)/$(SRC.pl).--help=warnings
+	@rm -rf $@
 
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	$(SRC.pl) --no-rc $* > $@
