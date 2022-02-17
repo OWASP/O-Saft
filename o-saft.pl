@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1053 22/02/17 11:05:48",
+    SID         => "@(#) yeast.pl 1.1054 22/02/17 12:21:42",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -2182,21 +2182,12 @@ our %text = (
         # all other text used in headers titles, etc. are defined in the
         # corresponding print functions:
         #     print_title, print_cipherhead, print_footer, print_cipherpreferred, print_ciphertotals
+        # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
     },
-    # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
-    # Texts used for hints, key must be same as a command (without leading +)
-    # Currently we define the hints here,  but it can be done anywhere in the
-    # code, which may be useful for documentation purpose  because such hints
-    # often describe missing features or functionality.
-    # TODO: move this to %cfg{hints}
-    'hints' => {
-        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC 5746 ",
-        'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
-        'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
-        'cipher'    => "+cipher : functionality changed, please see '$cfg{me} --help=TECHNIC'",
-        'cipherall' => "+cipherall : functionality changed, please see '$cfg{me} --help=TECHNIC'",
-        'cipherraw' => "+cipherraw : functionality changed, please see '$cfg{me} --help=TECHNIC'",
+    # SEE Note:hints
+    'hints' => {       # define hints here only if not feasable in osaft.pm
+                       # will be added to $cfg{hints} in _init_all()
     },
 
     'mnemonic'      => { # NOT YET USED
@@ -2210,7 +2201,7 @@ our %text = (
         'browser.cache.disk_cache_ssl'        => "En-/Disable caching of SSL pages",        # false
         'security.enable_tls_session_tickets' => "En-/Disable Session Ticket extension",    # false
         'security.ssl.allow_unrestricted_renego_everywhere__temporarily_available_pref' =>"",# false
-        'security.ssl.renego_unrestricted_hosts' => '??',   # Liste
+        'security.ssl.renego_unrestricted_hosts' => '??',   # list of hosts
         'security.ssl.require_safe_negotiation'  => "",     # true
         'security.ssl.treat_unsafe_negotiation_as_broken' => "", # true
         'security.ssl.warn_missing_rfc5746'      => "",     # true
@@ -3135,7 +3126,7 @@ sub _cfg_set_from_file  {
                 # remove trailing comments, but CFG-text may contain hash (#)
             next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
             next if ($line =~ m/^\s*$/);# ignore empty lines
-            _trace("_cfg_set: set $line ");
+            _trace("_cfg_set_from_file: set $line ");
             _cfg_set($typ, $line);
         }
         close($fh);
@@ -4681,10 +4672,11 @@ sub checkpreferred  {
         my $txt = ($weak ne $strong) ? _prot_cipher($ssl, "$strong,$weak") : "";
         $checks{'cipher_strong'}->{val} .= $txt;  # FIXME: assumtion wrong if only one cipher accepted
         $checks{'cipher_order'}->{val}  .= $txt;  # NOT YET USED
-        $checks{'cipher_weak'} ->{val}  .= $txt;  # remember: eq !
-        # FIXME: assumtion wrong if target returns always strongest cipher; meanwhile print hint
+        $checks{'cipher_weak'}->{val}   .= $txt;  # remember: eq !
         if ($weak eq $strong) {
-            $cfg{'hints'}->{'cipher_weak'} = 'check if "weak" cipher was returned may be misleading if the strongest cipher is returned always';
+            # FIXME: assumtion wrong if target returns always strongest cipher;
+            #        meanwhile print hint (set hint here, printed later)
+            _cfg_set('CFG-hint', 'cipher_weak=check if "weak" cipher was returned may be misleading if the strongest cipher is returned always');
         }
     }
     _trace("checkpreferred() }");
@@ -10637,8 +10629,7 @@ All predefined (hardcoded) hints can be listed with:
     $0 --help=hint
 
 Note that dynamicly defined hints with  --cfg_hint=KEY=  are also shown if
-the option was given before  --help=hint , example
-
+the option was given before  --help=hint , example:
 
     $0 --cfg_hint=my-hint="given on command-line" --help=hint
 
