@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.114 22/02/17 18:10:21
+#?      @(#) Makefile 1.115 22/02/17 18:11:56
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.114
+_SID            = 1.115
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -212,8 +212,10 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # generated files for internal use, i.e. $(SRC.tcl)
+# NOTE: --help-warnings is used instead of --help=warnings because it needs its own target
 _HELP.opt_data  = +help --help=opt --help=commands --help=glossar --help=alias \
-		  --help=data --help=checks --help=regex --help=rfc
+		  --help=data --help=checks --help=regex --help=rfc \
+                  --help-warnings
 GEN.HELP.data   = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
 
 # summary variables
@@ -285,7 +287,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.114
+_INST.text      = generated from Makefile 1.115
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -517,8 +519,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.114
-tar:     GREP_EDIT  = 1.114
+GREP_EDIT           = 1.115
+tar:     GREP_EDIT  = 1.115
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -641,6 +643,16 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 	@grep -q '$(GREP_EDIT)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
+
+# generating file containing our messages uses target from t/Makefile.warnings
+# hense make is called recursively for this special file
+# TODO: this a dirty hack, because no Makefiles from t/ should be used here
+# also not that the target could not be the final name of the generated file,
+# because make does not allow = in target names
+$(DOC.dir)/$(SRC.pl).--help-warnings: $(SRC.pl)
+	@$(TRACE.target)
+	@$(MAKE_COMMAND) -s warnings-info > $@
+	@mv $@ $(DOC.dir)/$(SRC.pl).--help=warnings
 
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	$(SRC.pl) --no-rc $* > $@
