@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.116 22/02/17 18:53:23
+#?      @(#) Makefile 1.117 22/02/18 16:32:21
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.116
+_SID            = 1.117
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -212,10 +212,11 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # generated files for internal use, i.e. $(SRC.tcl)
-# NOTE: --help-warnings is used instead of --help=warnings because it needs its own target
+# TODO: because make does not allow = in target names, the generated targets
+#       should use - instead
 _HELP.opt_data  = +help --help=opt --help=commands --help=glossar --help=alias \
 		  --help=data --help=checks --help=regex --help=rfc \
-                  --help-warnings
+                  --help=warnings
 GEN.HELP.data   = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
 
 # summary variables
@@ -287,7 +288,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.116
+_INST.text      = generated from Makefile 1.117
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -519,8 +520,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.116
-tar:     GREP_EDIT  = 1.116
+GREP_EDIT           = 1.117
+tar:     GREP_EDIT  = 1.117
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -647,16 +648,14 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # generating file containing our messages uses target from t/Makefile.warnings
 # hense make is called recursively for this special file
 # TODO: this a dirty hack, because no Makefiles from t/ should be used here
-# also not that the target could not be the final name of the generated file,
-# because make does not allow = in target names
-$(DOC.dir)/$(SRC.pl).--help-warnings: $(SRC.pl)
-	@$(TRACE.target)
-	@$(MAKE_COMMAND) -s warnings-info | sort > $@
-	@mv     $@ $(DOC.dir)/$(SRC.pl).--help=warnings
-	@rm -rf $@
-
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
-	$(SRC.pl) --no-rc $* > $@
+	@$(TRACE.target)
+	@-if expr "$@" ":" ".*help=warnings" >/dev/null ; then \
+	    $(MAKE_COMMAND) -s warnings-info | sort > $@  ; \
+	else \
+	    $(SRC.pl) --no-rc $* > $@ ; \
+	fi
+
 
 # use libreoffice to generate PDF from .odg
 # unfortunately  libreoffice has no option to specify the name of the output,
