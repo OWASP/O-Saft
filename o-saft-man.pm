@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.341 22/02/18 09:44:40";
+my  $SID_man= "@(#) o-saft-man.pm 1.342 22/02/18 09:56:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.341'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.342'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1269,40 +1269,41 @@ sub man_warnings    {
     my $doc  = 'docs/o-saft.pl.--help=warnings'; # TODO: need some kind of configuration for the filename
     my $fh   = undef;
     _man_dbx("man_warnings: rex=$rex");
-    if (open($fh, '<:encoding(UTF-8)', $doc)) {
-        while(<$fh>) {
-            # parse file and print warnings while parsing first
-            # otherwise it is difficult (for human readers) to distinguish the
-            # collected messages from the warning messages printed here
-            # also note that Perl's warn() and not of _warn() is used, because
-            # it prints the line number from the read file, which contains the
-            # line with unknown syntax
-            # following formats of a line are expected:
-            #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
-            #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
-            next if (m/^\s*#/);
-            next if (m/^\s*$/);
-            if (not m/$rex/) {
-                warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored");
-                next;
-            }
-            my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
-            my  $bad = 0;
-                $bad = 1 if (not defined $err or $err =~ m/^$/);
-                $bad = 1 if (not defined $nr  or $nr  =~ m/^$/);
-                $bad = 1 if (not defined $msg or $msg =~ m/^$/);
-            if ($bad == 1) {
-                 # unexpected format, silently print and continue
-                 $txt .= sprintf("%s", $_);
-                 next;
-            }
-            $msg =~ s/^[", ]*//;
-            $txt .= sprintf("%s%s\t- %s\n", $err, $nr, $msg);
-        }
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
-    } else {
+    if (not open($fh, '<:encoding(UTF-8)', $doc)) {
         _warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
+        return;
+    } # else
+    # parse file and collect messages from there, print warnings while parsing
+    # first,  otherwise it is difficult (for human readers) to distinguish the
+    # collected messages from the warning messages printed while parsing; also
+    # note that Perl's  warn()  and not  our own  _warn()  is used, because it
+    # prints the line number from the read file,  which contains the line with
+    # unknown/unexpected syntax
+    # following formats of a line are expected:
+    #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
+    #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
+    #       print STR_WARN, "text ..."   -- print used to print message
+    while(<$fh>) {
+        next if (m/^\s*#/);
+        next if (m/^\s*$/);
+        if (not m/$rex/) {
+            warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored");
+            next;
+        }
+        my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
+        my  $bad = 0;
+            $bad = 1 if (not defined $err or $err =~ m/^$/);
+            $bad = 1 if (not defined $nr  or $nr  =~ m/^$/);
+            $bad = 1 if (not defined $msg or $msg =~ m/^$/);
+        if ($bad == 1) {
+             # unexpected format, silently print and continue
+             $txt .= sprintf("%s", $_);
+             next;
+        }
+        $msg =~ s/^[", ]*//;
+        $txt .= sprintf("%s%s\t- %s\n", $err, $nr, $msg);
     }
+    close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     # print collected messages
     print "\n";
     _man_head(15, "Error/Warning", "Message text");
@@ -1965,7 +1966,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.341 2022/02/18
+1.342 2022/02/18
 
 =head1 AUTHOR
 
