@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.343 22/02/18 10:24:14";
+my  $SID_man= "@(#) o-saft-man.pm 1.344 22/02/18 15:34:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -83,6 +83,11 @@ local $\    = "";
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn = sub { print(STR_WARN, join(" ", @_), "\n"); } if not defined &_warn;
+*_hint = sub { print(STR_HINT, join(" ", @_), "\n"); } if not defined &_hint;
+*_dbx  = sub { print(STR_DBX,  join(" ", @_), "\n"); } if not defined &_dbx;
 
 sub _get_filename   {
 # TODO: move to osaft.pm or alike
@@ -172,7 +177,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.343'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.344'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1968,7 +1973,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.343 2022/02/18
+1.344 2022/02/18
 
 =head1 AUTHOR
 
