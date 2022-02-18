@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.257 22/02/18 10:23:00",
+    SID_osaft   => "@(#) osaft.pm 1.258 22/02/18 21:15:41",
 
 };
 
@@ -3539,8 +3539,20 @@ our %cfg = (
            sha384WithRSAEncryption sha512WithRSAEncryption
         )
     ],
+   #------------------+-----------------+--------------------------------------
+    'files' => {       # list of files used in the tool # NOT YET USED 2/2022
+        'RC-FILE'   => "",              # computed at startup
+        'SELF'      => "o-saft.pl",
+        'coding'    => "coding.txt",
+        'glossary'  => "glossary.txt",
+        'help'      => "help.txt",
+        'links'     => "links.txt",
+        'rfc'       => "rfc.txt",
+        'tools'     => "tools.txt",
+        'warnings'  => "docs/o-saft.pl.--help=warnings",
+    }, # files
+   #------------------+-----------------+--------------------------------------
     'done'      => {},          # defined in caller
-   #------------------+---------+----------------------------------------------
 ); # %cfg
 
 our %target_desc = (
@@ -4335,7 +4347,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.257 2022/02/18
+1.258 2022/02/18
 
 =head1 AUTHOR
 
