@@ -260,7 +260,7 @@ This tool is designed to be used by people doing security or forensic
 analyses. Hence no malicious input is expected.
 
 There are no special security checks implemented. Some parameters are
-roughly sanatised according unwanted characters.  In particular there
+roughly sanitised according unwanted characters.  In particular there
 are no checks according any kind of code injection.
 
 Care should be taken, when additional tools and modules are installed
@@ -680,7 +680,7 @@ In contrast to the  I<+ciphers>  command,  I<+list>  uses  TAB characters
 instead of spaces to seperate columns.  It also prints table header
 lines by default.
 
-Different output formats are used for the  I<--legacy>  option:
+Different output formats are used for the  I<--legacy=*>  option:
 
 =over
 
@@ -843,6 +843,10 @@ with  I<--cipher=CIPHER>  option.
 
 Use  I<--v>  option to see all ciphers being checked.
 
+=head3 +cipherall
+
+Option is obsolete.
+
 =head3 +cipherraw
 
 Check target for all possible ciphers.
@@ -989,6 +993,10 @@ the list, SSLHonorCipherOrder cannot be detected at all.
 The same happens, if only one cipher in the client's list matches a
 cipher in the server's list.
 
+=head3 +tlsextdebug
+
+=head3 +tlsextensions
+
 =head3 +extensions vs. +tlsextensions
 
 "Certificate extensions" are shown with  I<+extensions>  while the TLS
@@ -999,6 +1007,8 @@ extensions.
 =head3 +http2 +spdy +spdy3 +spdy31 +spdy4 +prots
 
 These commands are just an alias for the  I<+protocols>  command.
+
+=head3 +wildcard
 
 =head3 +hostname vs. +wildhost vs. +altname vs. +rfc_2818
 
@@ -1026,6 +1036,8 @@ Brief documentation of  I<--help*>  options/commands.
 =head3 --help
 
 Complete user documentation.
+
+=head3 --help*
 
 =head3 --help=cmds
 
@@ -1165,8 +1177,6 @@ Print documentation in format to be used for CGI.
 
 =head3 --help=error
 
-=head3 --help=warning
-
 =head3 --help=problem
 
 Show  L</KNOWN PROBLEMS>  section with  description of known  error and
@@ -1195,6 +1205,10 @@ Show known problems and bugs.
 =head3 --help=exit
 
 Show possible  I<--exit=KEY>  options. Used for debugging only.
+
+=head3 --help=warnings
+
+Show warning messages defined in code.
 
 =head3 --help=program.code
 
@@ -1227,8 +1241,17 @@ HOST argument and the given  I<--port=PORT> and the given  I<--host=HOST>
 options are important.
 The rule how ports and hosts are mapped is as follows:
 
-HOST:PORT arguments are used as is (connection to HOST on PORT)
-only HOST is given, then previous specified  I<--port=PORT>  is used
+=over
+
+=item * HOST:PORT arguments are used as is (connection to HOST on PORT)
+
+=back
+
+=over
+
+=item * only HOST is given, then previous specified PORT is used
+
+=back
 
 Note that URLs are treated as HOST:PORT, if they contain a port.
 Example:
@@ -2201,6 +2224,8 @@ internal data structure(s).
 For ciphers and protocols, the corresponding  hex value  is used as
 key. Note that these values are unique.
 
+=head3 --legacy=*
+
 =head3 --legacy=TOOL
 
 For compatibility with other tools,  the output format used for the
@@ -2447,6 +2472,8 @@ option.
 Prefix each printed line with the given hostname (target).
 The hostname will be followed by the separator character.
 
+=head3 --std-format=*
+
 =head3 --std-format=utf8
 
 =head3 --std-format=crlf
@@ -2612,9 +2639,10 @@ For definition of  C<SSL>  see  I<--SSL >  and  I<--no-SSL >  above.
 
 =head2 Options for customisation
 
-For general descriptions please see  L</CUSTOMISATION>  section below.
+=head3 --cfg-CFG
 
-=head3 --cfg_cmd=CMD=LIST
+Option for customisation have the general from:  I<--cfg-CFG=KEY=TEXT>
+For general descriptions please see  L</CUSTOMISATION>  section below.
 
 =head3 --cfg-cmd=CMD=LIST
 
@@ -2634,11 +2662,7 @@ To get a list of commands and their settings, use:
 
 Main purpose is to reduce list of commands or to print them sorted.
 
-=head3 --cfg_checks=KEY=TEXT
-
 =head3 --cfg-checks=KEY=TEXT
-
-=head3 --cfg_data=KEY=TEXT
 
 =head3 --cfg-data=KEY=TEXT
 
@@ -2656,8 +2680,6 @@ Redefine the security value (i.e. HIGH) in the cipher description.
 Example:
 
 	--cfg-cipher=NULL-MD5=no-security-at-all
-
-=head3 --cfg_text=KEY=TEXT
 
 =head3 --cfg-text=KEY=TEXT
 
@@ -2772,7 +2794,7 @@ Print command-line argument processing.
 
 =head3 --trace-cmd
 
-Trace execution of command processing (those given as  I<+*>).
+Trace execution of command processing (those given as  I<+CMD>).
 
 =head3 --trace-key
 
@@ -2871,6 +2893,12 @@ Print warning messages (**WARNING:).
 =head3 --no-warning
 
 Do not print warning messages (**WARNING:).
+
+=head3 --warnings-dups
+
+=head3 --no-warnings-no-dups
+
+	  Do not suppress duplicate warning messages (**WARNING:).
 
 =head3 --exit=KEY
 
@@ -4603,19 +4631,19 @@ Sometimes  the program terminates with a  C<Segmentation fault>.  This
 mainly happens if the target does not return certificate information.
 If so, the  I<--no-cert>  option may help.
 
-=head2 **WARNING: empty result from openssl; ignored at ...
+=head2 **WARNING: 311: empty result from openssl; ignored at ...
 
 This most likely occurs when the  provided cipher is  not accepted by
 the server, or the server expects client certificates.
 
-=head2 **WARNING: unknown result from openssl; ignored at ...
+=head2 **WARNING: 311: unknown result from openssl; ignored at ...
 
 This most likely occurs when the L<openssl(1)|openssl(1)> executable is used with a
 very slow connection. Typically the reason is a connection timeout.
 Try to use  I<--timeout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
-=head2 **WARNING: undefined cipher description
+=head2 **WARNING: 016: undefined cipher description
 
 May occour if ciphers are checked, but no description is available for
 them herein. This results in printed cipher checks like:
@@ -4626,9 +4654,9 @@ instead of:
 
 	EXP-KRB5-RC4-MD5                no       weak
 
-=head2 **WARNING: Can't make a connection to your.tld:443; no initial data
+=head2 **WARNING: 205: Can't make a connection to your.tld:443; no initial data
 
-=head2 **WARNING: Can't make a connection to your.tld:443; target ignored
+=head2 **WARNING: 205: Can't make a connection to your.tld:443; target ignored
 
 This message occours if the underlaying  SSL library (i.e. libssl.a)
 was not able to connect to the target. Known observed reasons are:
@@ -5938,11 +5966,11 @@ There're some workarounds implemented since version 15.11.15 .
 We try to detect unsupported versions and disable them automatically,
 a warning like follwoing is shown then:
 
-	**WARNING: SSL version 'SSLv2': not supported by openssl
+	**WARNING: 303: SSL version 'SSLv2': not supported by openssl
 
 All such warnings look like:
 
-	**WARNING: SSL version 'SSLv2': ...
+	**WARNING: 303: SSL version 'SSLv2': ...
 
 If problems occour with  SSL versions, following commands and options
 may help to get closer to the reason or can be used as workaround:
@@ -6447,23 +6475,23 @@ Following example shows the result with warnings (line nr. may vary):
 
 	=== reading: ./.o-saft.pl (RC-FILE done) ===
 	=== reading: ./Net/SSLhello.pm (O-Saft module done) ===
-	**WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
+	**WARNING: 121: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
 	=== reading: ./Net/SSLinfo.pm (O-Saft module done) ===
-	**WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
-	**WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
-	**WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
-	**WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+	**WARNING: 120: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
+	**WARNING: 121: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+	**WARNING: 121: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+	**WARNING: 124: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
 	!!Hint: --force-openssl can be used to disables this check
-	**WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
 	**WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
 	**WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
 	**WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
 	=== o-saft.pl 16.09.09 ===
 	Net::SSLeay::
 	::OPENSSL_VERSION_NUMBER()       0x9470143
-	**WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
 	::SSLeay()                       0x1.35
-	**WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
 	= openssl =
 	version of external executable   OpenSSL 0.9.8y 5 Feb 2013
 	external executable              /usr/bin/openssl
@@ -6484,8 +6512,8 @@ Following example shows the result with warnings (line nr. may vary):
 	openssl supported SSL versions   SSLv2 SSLv3 TLSv1
 	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
 	.                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-	**WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-	**WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
+	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+	**WARNING: 841: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
 	= o-saft.pl +cipherall =
 	default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
 	.                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
@@ -7148,7 +7176,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 12.11.21
+@(#) 22.02.13
 
 =head1 AUTHOR
 
@@ -7498,7 +7526,7 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.20 19/07/03 11:49:17
+# # SID	@(#) glossary.txt 1.22 22/02/14 16:19:41
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
@@ -7712,6 +7740,7 @@ Generated with:
 # ENCIPHER	synonym for encryption
 # EME	ECB-mask-ECB
 # EME 	Encoding Method for Encryption
+# EMS 	Extended Master Secret
 # ESNI	Encrypted Server Name Indication
 # ESP	Encapsulating Security Payload
 # ESSIV	Encrypted salt-sector initialization vector
@@ -7719,6 +7748,8 @@ Generated with:
 # E&A	Encrypt-and-Authenticate (see also E&M)
 # E&M	Encrypt-and-MAC (see also E&A)
 # EtM	Encrypt-then-MAC (see also EtA)
+# eTLS	Enterprise TLS (social attack on privacy by ETSI; renamed to ETS)
+# ETS	Enterprise Transport Security (renamed from eTLS)
 # ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 # EV	Extended Validation
 # EV-SSL	Extended Validation Certificate
