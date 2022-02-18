@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.39 20/11/07 14:30:46
+@(#) Makefile.pod 1.40 22/02/18 17:21:23
 
 =head1 AUTHOR
 
@@ -146,9 +146,12 @@ modules from  ./NET  and  ./OSaft.  This may result in perl warnings like
 
 To avoid this, following symbolic links exist in  $(TEST.dir) :
 
-    ./Net   -> ../Net
-    ./OSaft -> ../OSaft
+    ./t        -> .
+    ./Net      -> ../Net
+    ./OSaft    -> ../OSaft
     ./osaft.pm -> ../osaft.pm
+    ./contrib  -> ../contrib
+    ./docs     -> ../docs
 
 
 =head1 O-Saft Makefile*
