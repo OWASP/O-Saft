@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.114 21/01/15 00:19:58
+#?      @(#) Makefile 1.115 22/02/18 18:37:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.114
+_SID.test          := 1.115
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -93,9 +93,10 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 # store -n (dry-run) option in own variable
 TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 
-# test tools (part of distribution)
+# internal variables
 TEST.dir       := t
 TEST.logdir     = $(TEST.dir)/log
+TEST.symlinks  := ../contrib ../docs ../osaft.pm ../.o-saft.pl ../Net ../OSaft
 
 # following may be redefined in included t/Makefiles*
 #TEST.init      := --header
@@ -364,6 +365,19 @@ help.test.makevars:
 #       testcmd-%
 #       test.all-%:
 
+$(TEST.logdir):
+	@mkdir $@
+
+HELP-test.links = create required symbolic links in '$(TEST.dir)'
+# creating links is scary, fails if they exist; therefore ln --force is used,
+# but this may destroy existing links or files silently
+# because the target itself is never created, it will always be executed
+# use this target (rule)  with care!
+../%: $(TEST.dir)/%
+	cd $(TEST.dir) && ln --force -s $@
+
+test.links: $(TEST.symlinks)
+
 # target to check for empty hostname list, can also be used for more debugging
 _no-hosts__not-yet-working:
 	@[ "$(eTEST.hosts)" = "" ] && $(eval _ERR := "no TESTS.hosts defined")
@@ -382,9 +396,6 @@ _no-hosts:
 		|| echo -n ""
 
 .PHONY: _no-hosts
-
-$(TEST.logdir):
-	@mkdir $@
 
 
 # Testing for messages or other strings (i.e **WARNING) works as follows:
