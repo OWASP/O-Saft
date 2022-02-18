@@ -65,7 +65,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.340 22/02/17 20:03:36";
+my  $SID_man= "@(#) o-saft-man.pm 1.341 22/02/18 09:44:40";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -172,7 +172,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.340'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.341'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1268,25 +1268,30 @@ sub man_warnings    {
        $rex  = qr($rex);        # match our own messages only
     my $doc  = 'docs/o-saft.pl.--help=warnings'; # TODO: need some kind of configuration for the filename
     my $fh   = undef;
+    _man_dbx("man_warnings: rex=$rex");
     if (open($fh, '<:encoding(UTF-8)', $doc)) {
         while(<$fh>) {
             # parse file and print warnings while parsing first
-            # otherwise it's difficult (for human readers) to distinguished
-            # the collected messages from the warning messages printed here
-            # also note that Perl's warn() and not _warn() is used, so that
-            # developers get the line number from the file also
+            # otherwise it is difficult (for human readers) to distinguish the
+            # collected messages from the warning messages printed here
+            # also note that Perl's warn() and not of _warn() is used, because
+            # it prints the line number from the read file, which contains the
+            # line with unknown syntax
+            # following formats of a line are expected:
+            #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
+            #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
             next if (m/^\s*#/);
             next if (m/^\s*$/);
-            #$_ =~ s/warn(STR_WARN,/kkk
             if (not m/$rex/) {
                 warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored");
                 next;
             }
-            # following formats of a line are expected:
-            #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
-            #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
             my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
-            if ($err =~ m/^$/ or $nr =~ m/^$/ or $msg =~ m/^$/) {
+            my  $bad = 0;
+                $bad = 1 if (not defined $err or $err =~ m/^$/);
+                $bad = 1 if (not defined $nr  or $nr  =~ m/^$/);
+                $bad = 1 if (not defined $msg or $msg =~ m/^$/);
+            if ($bad == 1) {
                  # unexpected format, silently print and continue
                  $txt .= sprintf("%s", $_);
                  next;
@@ -1298,10 +1303,9 @@ sub man_warnings    {
     } else {
         _warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
     }
-
     # print collected messages
     print "\n";
-    _man_head(15, "Warning", "Message text");
+    _man_head(15, "Error/Warning", "Message text");
     print "                  Warnings and error messages used in $cfg{'me'}\n";
     print $txt;
     _man_foot(15);
@@ -1961,7 +1965,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.340 2022/02/17
+1.341 2022/02/18
 
 =head1 AUTHOR
 
