@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1054 22/02/17 12:21:42",
+    SID         => "@(#) yeast.pl 1.1055 22/02/18 15:22:03",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -9625,6 +9625,35 @@ Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
 
 
+=head2 Perl:Undefined subroutine
+
+Perl requires that subroutines are defined before first use, obviously. As
+we have some subroutines which should be used in the main script, and also
+in our modules, another separate module would be necessary to achieve this.
+This module then needs to be imported ('use' or 'require') in all scripts.
+
+In practice, only a small number of these subroutines  are required in our
+modules.  Hence we avoid building a special purpose module.  Unfortunately
+this may result in Perl errors like:
+
+    Undefined subroutine &main::_warn called at ...
+
+when the module is called as standalone script.
+
+Following approach is used:
+
+  - subroutines are defined where (mainly) needed
+  - modules use Perl's named subroutines like following, example: _warn():
+
+    *_warn = sub { print(STR_WARN, @_); } if not defined &_warn;
+
+This ensures, that the definition is used only, if it doesn't exists. This
+also avoids use of Perl's eval(). The disadvantage is, that the subroutine
+does not have exacly the same functionality as the original definition.
+
+Also SEE L<Perl:BEGIN>.
+
+
 =head2 Perl:@INC
 
 Perl includes modules with the `use' or `require' statement. Therefore the
@@ -9682,6 +9711,7 @@ dirty code hacks and split the flow of processing into  different parts of
 the source.
 
 Also SEE L<Perl:BEGIN perlcritic>.
+Also SEE L<Perl:Undefined subroutine>.
 
 
 =head2 Perl:binmode()
