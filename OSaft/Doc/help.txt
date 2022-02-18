@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.85 22/02/16 12:58:00
+# SID   @(#) help.txt 1.86 22/02/18 18:40:00
 
 NAME
 
@@ -853,7 +853,6 @@ OPTIONS
           Print documentation in format to be used for CGI.
 
       --help=error
-      --help=warning
       --help=problem
 
           Show  X&KNOWN PROBLEMS&  section with  description of known  error and
@@ -882,6 +881,10 @@ OPTIONS
       --help=exit
 
           Show possible  --exit=KEY  options. Used for debugging only.
+
+      --help=warnings
+
+          Show warning messages defined in code.
 
       --help=program.code
 
