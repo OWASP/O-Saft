@@ -30,9 +30,6 @@ package main;   # ensure that main:: variables are used
 #        Perl::Critic is uses a strange list of required sections in POD.
 #        See  t/.perlcriticrc .
 
-## no critic qw(Documentation::RequirePodLinksIncludeText)
-#        only one L<> used here, which is ok.
-
 ## no critic qw(Variables::ProhibitPunctuationVar)
 #        We want to use $\ $0 etc.
 
@@ -65,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.344 22/02/18 15:34:16";
+my  $SID_man= "@(#) o-saft-man.pm 1.345 22/02/18 15:50:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -132,9 +129,10 @@ sub _man_use_tty    {   # break long lines of text; SEE Note:tty
             return;
         }
         # try with tput, if it fails try with stty; errors silently ignored
-        $cols = qx(\\tput cols 2>/dev/null) || undef; # quick&dirty
+        $cols = qx(\\tput cols 2>/dev/null) || undef; ## no critic qw(InputOutput::ProhibitBacktickOperators)
         if (not defined $cols) {    # tput failed or missing
-            $cols =  qx(\\stty size 2>/dev/null) || $_len; # default if stty fails
+            $cols =  qx(\\stty size 2>/dev/null)      ## no critic qw(InputOutput::ProhibitBacktickOperators)
+                     || $_len; # default if stty fails
             $cols =~ s/^[^ ]* //;   # stty returns:  23 42  ; extract 42
         }
         $cfg{'tty'}->{'width'} = $cols;
@@ -177,7 +175,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.344'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.345'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -767,10 +765,10 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
         #dbx# m/-SSL/ && do { print STDERR "##1 $_ ###"; };
-        m![IX]&([^&]*)&! && do {
+        m![IX]&(?:[^&]*)&! && do {
                     # avoid spaces in internal links to anchors
                     # FIXME: dirty hack, probably bug in get_markup()
-                    $_=~s/\s+&/&/g; # trim trailing spaces
+                    s/\s+&/&/g;                     # trim trailing spaces
                 };
         s!I&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup commands and options
         s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
@@ -816,7 +814,7 @@ sub _man_foot       {
     return;
 } # _man_foot
 
-sub _man_opt        {
+sub _man_opt        {   ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print line in  "KEY - VALUE"  format
     my @args = @_; # key, sep, value
     my $len  = 16;
@@ -1293,7 +1291,7 @@ sub man_warnings    {
         next if (m/^\s*#/);
         next if (m/^\s*$/);
         if (not m/$rex/) {
-            warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored");
+            warn(STR_WARN, "092:", " help file '$doc' unknown syntax: »$_« ; ignored"); ## no critic qw(ErrorHandling::RequireCarping)
             next;
         }
         my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
@@ -1973,7 +1971,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.344 2022/02/18
+1.345 2022/02/18
 
 =head1 AUTHOR
 
