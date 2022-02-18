@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.115 22/02/18 18:37:03
+#?      @(#) Makefile 1.116 22/02/18 18:59:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.115
+_SID.test          := 1.116
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -96,7 +96,7 @@ TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 # internal variables
 TEST.dir       := t
 TEST.logdir     = $(TEST.dir)/log
-TEST.symlinks  := ../contrib ../docs ../osaft.pm ../.o-saft.pl ../Net ../OSaft
+TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 
 # following may be redefined in included t/Makefiles*
 #TEST.init      := --header
@@ -373,7 +373,8 @@ HELP-test.links = create required symbolic links in '$(TEST.dir)'
 # but this may destroy existing links or files silently
 # because the target itself is never created, it will always be executed
 # use this target (rule)  with care!
-../%: $(TEST.dir)/%
+../%:
+	@$(TRACE.target)
 	cd $(TEST.dir) && ln --force -s $@
 
 test.links: $(TEST.symlinks)
