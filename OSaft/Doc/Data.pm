@@ -30,21 +30,12 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".",  $_path);
 }
 
-our $VERSION    = "21.01.12";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.43 22/02/14 22:04:34";
+our $VERSION    = "22.02.13";  # official verion number of tis file
+my  $SID_data   = "@(#) Data.pm 1.45 22/02/18 20:57:31";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
 use osaft qw(print_pod STR_WARN);
-
-sub _warn   {
-    my @txt = @_;
-    return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
-    local $\ = "\n";
-    print(STR_WARN, join(" ", @txt));
-    # TODO: in CGI mode warning must be avoided until HTTP header written
-    return;
-}; # _warn
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -76,6 +67,11 @@ OSaft::Doc::Data - common Perl module to read data for user documentation
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
 
 sub _replace_var    {
     #? replace $0 by name and $VERSION by version in array, return array
@@ -338,8 +334,7 @@ Same as  get()  but prints text directly.
 
 =cut
 
-sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; return; }
-# TODO: misses  close($fh);
+sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; close($fh); return; }
 
 =pod
 
@@ -600,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.43 2022/02/14
+1.45 2022/02/18
 
 =head1 AUTHOR
 
