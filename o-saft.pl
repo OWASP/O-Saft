@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1055 22/02/18 15:22:03",
+    SID         => "@(#) yeast.pl 1.1056 22/02/18 15:30:24",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -215,7 +215,7 @@ sub _hint   {
     return;
 } # _hint
 sub _warn   {
-    #? print warning if wanted; SEE Perl:Message Numbers
+    #? print warning if wanted; SEE Note:Message Numbers
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
     my ($_no) = "@txt" =~ m/^([0-9(]{3})/;  # message number, usually
@@ -9780,11 +9780,11 @@ like (which then keeps Perl::Critic happy too):
 I.g. Perl's warn() is not used, but our private  _warn(). Using the option
 --no-warning  _warn() can suppress messages. However, some warnings should
 never be suppressed, hence  warn()  is used in rare cases.
-Each warning should have a unique number, SEE L<Perl:Message Numbers>.
+Each warning should have a unique number, SEE L<Note:Message Numbers>.
 See also  CONCEPTS  (if it exists in our help texts).
 
 
-=head2 Perl:Message Numbers
+=head2 Note:Message Numbers
 
 Each warning has a unique number. The numbers are grouped as follows:
 
@@ -10042,7 +10042,7 @@ their message number to  "cfg{'warnings_no_dups'}".
 The array  "cfg{'warnings_printed'}"  is used internally and contains the
 numbers of messages already printed.
 
-SEE L<Perl:Message Numbers> also.
+SEE L<Note:Message Numbers> also.
 
 To get a list of message numbers, use:
 
