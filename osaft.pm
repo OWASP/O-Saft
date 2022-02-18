@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.256 22/02/17 12:22:22",
+    SID_osaft   => "@(#) osaft.pm 1.257 22/02/18 10:23:00",
 
 };
 
@@ -3451,6 +3451,7 @@ our %cfg = (
        # it will not be used automatically.
        # 'key'      => "any string, may contain \t and \n",
        #--------------+--------------------------------------------------------
+        'help=warnings' => "consider building the file using: 'make warnings-info'",
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC 5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
@@ -4334,7 +4335,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.256 2022/02/17
+1.257 2022/02/18
 
 =head1 AUTHOR
 
