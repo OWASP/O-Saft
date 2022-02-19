@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.16 21/02/17 23:09:48
+#?       @(#)  1.17 22/02/19 08:54:36
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -209,10 +209,13 @@ fi
 # 7.
 ##TODO:
 
+lsopt=  # tweak output if used from make
+[ -z "$OSAFT_MAKE" ] && lsopt="-la"
+
 [ "/dev/stdout" != "$dst" ] && $try \chmod 555 $dst
 [ $info -eq 0 ] && exit
 
-[ "/dev/stdout" != "$dst" ] && $try \ls    -la $dst
+[ "/dev/stdout" != "$dst" ] && $try \ls $lsopt $dst
 
 # Writing on /dev/stdout is scary on some systems (i.e Linux). If code above
 # was written on /dev/stdout, the buffer may not yet flushed. Then following
