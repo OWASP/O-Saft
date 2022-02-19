@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.17 22/02/19 08:54:36
+#?       @(#)  1.18 22/02/19 09:04:12
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -49,6 +49,11 @@ while [ $# -gt 0 ]; do
 	esac
 	shift
 done
+
+if [ ! -e "$src" ]; then
+  	\echo "**ERROR: '$src' does not exist; exit"
+	[ "echo" = "$try" ] || exit 2
+fi
 
 _o_saft="
 	osaft.pm
@@ -85,14 +90,14 @@ if [ $sid -eq 1 ]; then
 	for f in $o_saft ; do
 		# NOTE contribution to SCCS:  %I''%
 		\egrep -q 'SID.*%I''%' $f \
-	  	&& \echo "**ERROR: $f changes not commited; exit" \
+	  	&& \echo "**ERROR: '$f' changes not commited; exit" \
 	  	&& exit 2
 	done
 fi
 
 if [ $info -eq 1 ]; then
 	if [ "/dev/stdout" = "$dst" ]; then
-		\echo "# generate standalone.pl ..."
+		\echo "# generate file standalone.pl ..."
 	else
 		\echo "# generate $dst ..."
 	fi
