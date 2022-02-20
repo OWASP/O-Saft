@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1056 22/02/18 15:30:24",
+    SID         => "@(#) yeast.pl 1.1057 22/02/20 22:11:36",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8967,7 +8967,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     # prepare DNS stuff
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
-    $fail = "";
+    $fail = "";     # reusing variable
     if ("" ne $cfg{'proxyhost'}) {
         # if a proxy is used, DNS might not work at all, or be done by the
         # proxy (which even may return other results than the local client)
@@ -8983,7 +8983,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         if (not defined $cfg{'ip'}) {
             _warn("201: Can't get IP for host '$host'; host ignored");
             _y_CMD("host}");
-            next; # otherwise all following fails
+            next;   # otherwise all following fails
         }
         # gethostbyaddr() is strange: returns $?==0 but an error message in $!
         # hence just checking $? is not reliable, we do it additionally.
