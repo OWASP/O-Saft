@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1057 22/02/20 22:11:36",
+    SID         => "@(#) yeast.pl 1.1058 22/02/20 23:44:58",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8557,6 +8557,7 @@ $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 # _dbx "unsorted: @{$cfg{'do'}}";
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
 # _dbx "  sorted: @{$cfg{'do'}}";
+# $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
 
 if (2 == @{$cfg{'targets'}}) {
     # Exactly one host defined, check if --port was also given after --host .
@@ -8697,7 +8698,7 @@ _check_openssl()    if (0 < $do_checks);
 #_dbx "do: @{$cfg{'do'}}";
 #_dbx "need-default: @{$cfg{'need-default'}}";
 #_dbx "_check_ssl_methods(): " . _need_cipher() . " : " . _need_default() . " : ver? "._is_cfg_do('version');
-#exit;
+
 #| check for supported SSL versions
 #| -------------------------------------
 _check_ssl_methods() if (0 < _need_cipher() + _need_default() + _is_cfg_do('version'));
@@ -8863,6 +8864,15 @@ if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
     } # _need_cipher or _need_default
     _yeast_TIME("get}");
 }
+
+#| SEE Note:Duplicate Commands
+#| -------------------------------------
+# my %unique = map{$_, 42} @{$cfg{'do'}};   # perlish way cannot be used,
+# @{$cfg{'do'}} = keys %unique;             # because sequence is user-defined
+                                            # hashes do not preserve sequence
+_dbx "do=@{$cfg{'do'}}";
+@{$cfg{'do'}} = do { my %seen; grep { !$seen{$_}++ } @{$cfg{'do'}} };
+_dbx "DO=@{$cfg{'do'}}";
 
 _yeast_EXIT("exit=MAIN  - start");
 _yeast_ciphers_list();
@@ -9038,7 +9048,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     # Quick check if the target is available
     _y_CMD("test connect ...");
-    _yeast_TIME("test connect{");# SEE Note:Connection test
+    _yeast_TIME("test connect{");# SEE Note:Connection Test
     my $connect_ssl = 1;
     _trace("sni_name= " . ($cfg{'sni_name'} || STR_UNDEF));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
@@ -9199,7 +9209,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         goto CLOSE_SSL;
     }
 
-    # SEE Note:Connection test
+    # SEE Note:Connection Test
     if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
@@ -10363,7 +10373,7 @@ example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
 
 
-=head2 Note:Connection test
+=head2 Note:Connection Test
 
 To avoid long timeouts, a quick connection check to the target is done. At
 least the connection to the SSL port must succeed.  If not, all checks are
@@ -10567,6 +10577,13 @@ by the client. The more correct term therfore is "preferred" or "selected"
 cipher.
 Many documents still use the term "default".  Some code exists, which also
 uses "default" as part of variable or function names.
+
+
+=head2 Note:Duplicate Commands
+
+If commands are given multiple times, in any order, this command shouldn't
+be executed multiple times.  Because multiple commands  may occour in many
+places, the normalisation is done right bevore they are executed.
 
 
 =head2 Note:+cipherall
