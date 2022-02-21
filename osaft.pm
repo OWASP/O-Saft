@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.258 22/02/18 21:15:41",
+    SID_osaft   => "@(#) osaft.pm 1.259 22/02/21 19:04:43",
 
 };
 
@@ -2599,8 +2599,8 @@ our %cfg = (
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
-    'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
-    'time_absolut'  => 0,       # 1: (trace) --traceTIME uses absolut timstamps
+    'traceTIME'     => 0,       # 1: (trace) print additional time for benchmarking
+    'time_absolut'  => 0,       # 1: (trace) --traceTIME uses absolut timestamps
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'v_cipher'      => 0,       # used for --v-cipher
@@ -3041,8 +3041,8 @@ our %cfg = (
         'key'               => 0,   # 1: print internal variable names for %data and %checks (was traceKEY)
         'traceARG'          => 0,   # 1: (trace) print argument processing
         'traceCMD'          => 0,   # 1: (trace) print command processing
-        'traceTIME'         => 0,   # 1: (trace) print additiona time for benchmarking
-        'time_absolut'      => 0,   # 1: (trace) --traceTIME uses absolut timstamps
+        'traceTIME'         => 0,   # 1: (trace) print additional time for benchmarking
+        'time_absolut'      => 0,   # 1: (trace) --traceTIME uses absolut timestamps
         'warning'           => 1,   # 1: print warnings
         'score'             => 0,   # 1: print scoring
         'ignore'            => [],  # commands (output) to be ignored, SEE Note:ignore-out
@@ -4347,7 +4347,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.258 2022/02/18
+1.259 2022/02/21
 
 =head1 AUTHOR
 
