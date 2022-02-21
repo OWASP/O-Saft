@@ -71,13 +71,13 @@ BEGIN {
 }
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '21.11.12',
+    SSLHELLO_VERSION=> '22.02.13',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.46 22/02/14 17:59:28',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.47 22/02/21 23:11:15',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
-#require IO::Select if ($main::cfg{'trace'} > 1);
+#require IO::Select if ($Net::SSLhello::trace > 1);
 use Carp;
 use OSaft::error_handler qw (:sslhello_contants);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
@@ -417,7 +417,7 @@ sub _sprintf_hex_val        ($$;$);
 
 
 # TODO: import/export of the trace-function from o-saft-dbx.pm;
-# this is a workaround to get trace running using parameter '$main::cfg{'trace'}'
+# this is a workaround to get trace running using parameter '$Net::SSLhello::trace'
 ## forward declarations
 #sub _trace  {};
 #sub _trace1 {};
@@ -432,21 +432,21 @@ sub _sprintf_hex_val        ($$;$);
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]) }
+sub _y_ts      { if ($Net::SSLhello::traceTIME <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]) }
 
-sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $messages[0]                 if ($main::cfg{'trace'} > 0); return }
-sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                                if ($main::cfg{'trace'} > 0); return }
-sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)        if ($main::cfg{'trace'} > 1); return }
-sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($main::cfg{'trace'} > 2); return }
-sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($main::cfg{'trace'} ==3); return }
-sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($main::cfg{'trace'} > 3); return }
-sub _trace5($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($main::cfg{'trace'} > 4); return }
-sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($main::cfg{'trace'} > 0); return }
-sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($main::cfg{'trace'} > 1); return }
-sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 2); return }
-sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} ==3); return }
-sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 3); return }
-sub _trace5_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 4); return }
+sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $messages[0]                 if ($Net::SSLhello::trace > 0); return }
+sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                                if ($Net::SSLhello::trace > 0); return }
+sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)        if ($Net::SSLhello::trace > 1); return }
+sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace > 2); return }
+sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace ==3); return }
+sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 3); return }
+sub _trace5($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 4); return }
+sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 0); return }
+sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 1); return }
+sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 2); return }
+sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace ==3); return }
+sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 3); return }
+sub _trace5_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 4); return }
 
 sub _carp   {
     #? print warning message if wanted
@@ -2412,7 +2412,7 @@ sub openTcpSSLconnection ($$) {
         }
         alarm (0); # switch off alarm (e.g. for  next retry )
         if ($retryCnt >0) { # retry
-            _trace1_ ("\n") if (($retryCnt == 1) && ($main::cfg{'trace'} < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
+            _trace1_ ("\n") if (($retryCnt == 1) && ($Net::SSLhello::trace < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
             if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
                 _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport);
                 if ($retryCnt > $Net::SSLhello::retry) {
@@ -2424,7 +2424,7 @@ sub openTcpSSLconnection ($$) {
             }
         }
         if ($Net::SSLhello::starttls) {
-            _trace ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($main::cfg{'trace'} >2) || ($sleepSecs > 0) );
+            _trace ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($Net::SSLhello::trace >2) || ($sleepSecs > 0) );
             sleep ($sleepSecs);
         }
 
