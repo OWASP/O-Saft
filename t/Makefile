@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.120 22/02/21 13:17:47
+#?      @(#) Makefile 1.121 22/02/21 14:55:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.120
+_SID.test          := 1.121
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -135,12 +135,12 @@ TRACE.target.log    =
 TEST.today         := $(shell date +%Y""%m%d)
     # current date in ISO format
 
-_CMD.sort.opt      := -n -f
+_EXE.sort-opt      := -n -f
     # newer GNU sort (~2018) changed the default behaviour, for example
     # case-sensitivity, these options do the traditional sort
     # TODO: need to check first if sort supports these options
 
-_CMD.perldoc.opt   := -n nroff
+_EXE.perldoc-opt   := -n nroff
     # newer perldoc prints with plain text format by default
     # -n nroff enforced the traditional behaviour with ASCII-escapes
 
@@ -231,13 +231,13 @@ help.test.test.all-n:
 help.test.test.alls:
 	@$(TRACE.target)
 	@echo " # $(words $(ALL.tests)) targets for tests:"
-	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_CMD.sort.opt)
+	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_EXE.sort-opt)
 	@echo ""
 
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
-	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_CMD.sort.opt)
+	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_EXE.sort-opt)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
@@ -358,7 +358,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 
 help.test.makevars:
 	@echo '# $$(.VARIABLES)    = '
-	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort $(_CMD.sort.opt)
+	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort $(_EXE.sort-opt)
 
 .PHONY: help.test.makevars
 
@@ -605,12 +605,12 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 # for in  $(ALL.tests) .
 # TODO: more documentation ...
 # TODO: Examples:
-#       test.pattern.info
-#       test.pattern.+info
-#       test.pattern.+check
-#       test.pattern.+cipher
-#       test.pattern.+ciphers
-#       test.pattern.-header
+#       test.pattern-info
+#       test.pattern-+info
+#       test.pattern-+check
+#       test.pattern-+cipher
+#       test.pattern-+ciphers
+#       test.pattern--header
 #
 dbx-test.pattern-%:
 	@$(TRACE.target)
