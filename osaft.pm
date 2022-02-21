@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.259 22/02/21 19:04:43",
+    SID_osaft   => "@(#) osaft.pm 1.260 22/02/21 19:47:42",
 
 };
 
@@ -2601,6 +2601,7 @@ our %cfg = (
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'traceTIME'     => 0,       # 1: (trace) print additional time for benchmarking
     'time_absolut'  => 0,       # 1: (trace) --traceTIME uses absolut timestamps
+    'time0'         => 0,       # current time, must be set in main
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'v_cipher'      => 0,       # used for --v-cipher
@@ -4347,7 +4348,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.259 2022/02/21
+1.260 2022/02/21
 
 =head1 AUTHOR
 
