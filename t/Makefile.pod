@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.41 22/02/21 16:42:20
+@(#) Makefile.pod 1.42 22/02/21 17:33:52
 
 =head1 AUTHOR
 
@@ -671,11 +671,11 @@ Following variable should then be set only for these targets, like:
 For collecting all targets defined in a Makefile.*, following $(shell awk)
 is used:
 
-    $(shell awk -F% '($$1 ~ /^target-/){arr[$$1]=1}$(_AWK_print_arr_END)'\
+    $(shell awk -F% '($$1 ~ /^target-/){arr[$$1]=1}$(_EXE.print_arr_END.awk)'\
         $(_MYSELF.some-type))
 
-(where  target-  is an example target name, and _AWK_print_arr_END  is the
-awk code to print the defined array  arr[]).
+(where  target-  is an example target name, and _EXE.print_arr_END.awk is
+the awk code to print the defined array  arr[]).
 
 Target names may occour as following constructs:
 
