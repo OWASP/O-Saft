@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.117 22/02/21 12:53:01
+#?      @(#) Makefile 1.118 22/02/21 12:59:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.117
+_SID.test          := 1.118
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -129,18 +129,18 @@ endif
 # option, because it would als change the final target called with  $(MAKE) .
 # Hence an additional variable is used.
 # TODO: not public, not documented, variable needs to be defined here
-TRACE.target.log=
+TRACE.target.log    =
     #  example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
-TEST.today     := $(shell date +%Y""%m%d)
+TEST.today         := $(shell date +%Y""%m%d)
     # current date in ISO format
 
-_SORT_opt      := -n -f
+_CMD.sort.opt      := -n -f
     # newer GNU sort (~2018) changed the default behaviour, for example
     # case-sensitivity, these options do the traditional sort
     # TODO: need to check first if sort supports these options
 
-_PERLDOC_opt   := -n nroff
+_CMD.perldoc.opt   := -n nroff
     # newer perldoc prints with plain text format by default
     # -n nroff enforced the traditional behaviour with ASCII-escapes
 
@@ -231,13 +231,13 @@ help.test.test.all-n:
 help.test.test.alls:
 	@$(TRACE.target)
 	@echo " # $(words $(ALL.tests)) targets for tests:"
-	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_SORT_opt)
+	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_CMD.sort.opt)
 	@echo ""
 
 help.test.%.all:
 	@$(TRACE.target)
 	@echo " # individual targets for testing $* :"
-	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_SORT_opt)
+	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_CMD.sort.opt)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
@@ -358,7 +358,7 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 
 help.test.makevars:
 	@echo '# $$(.VARIABLES)    = '
-	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort $(_SORT_opt)
+	@echo '$(.VARIABLES)' | $(EXE.wordperline) | sort $(_CMD.sort.opt)
 
 .PHONY: help.test.makevars
 
