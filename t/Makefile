@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.123 22/02/21 16:16:54
+#?      @(#) Makefile 1.124 22/02/21 17:33:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.123
+_SID.test          := 1.124
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -156,18 +156,18 @@ _EXE.perldoc-opt   := -n nroff
 
 # define script or parts of it as variables, for better human readability
 # SEE Make:target matching
-#     _AWK_macro_by_line    - extract all variable names
-#     _AWK_target_by_line   - extract all target names
-#     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
-#     _AWK_print_arr_END    - print collected data from arr[]
-#     _AWK_print_file       - either print separator line or the filename
+#     _EXE.macro_by_line.awk    - extract all variable names
+#     _EXE.target_by_line.awk   - extract all target names
+#     _EXE.target_to_arr.awk    - extract target names and store uniquely in arr[]
+#     _EXE.print_arr_END.awk    - print collected data from arr[]
+#     _EXE.print_file.awk       - either print separator line or the filename
 TEST.target_prefix :=   [a-zA-Z][_a-zA-Z.]
    # matching target names not starting with _
-_AWK_macro_by_line := /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
-_AWK_target_by_line:= /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
-_AWK_target_to_arr  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
-_AWK_print_arr_END := END{for(idx in arr){print idx}}
-_AWK_print_file    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
+_EXE.macro_by_line.awk := /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
+_EXE.target_by_line.awk:= /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
+_EXE.target_to_arr.awk  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
+_EXE.print_arr_END.awk := END{for(idx in arr){print idx}}
+_EXE.print_file.awk    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 
 # if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
 # checking this variable if not empty is sufficent to print verbose information
