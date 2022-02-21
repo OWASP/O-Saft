@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 1.24 20/10/31 09:22:51
+#?      @(#) Makefile.opt 1.25 22/02/21 17:33:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-_SID.opt           := 1.24
+_SID.opt           := 1.25
 
 _MYSELF.opt        := t/Makefile.opt
 ALL.includes       += $(_MYSELF.opt)
@@ -128,8 +128,8 @@ testarg-opt-stdformat-UTF-8: testarg-opt-stdformat-UTF8
 #stdarg-opt-508:             TEST.args  += +hsts-sts
 
 # note: no sort because we want the sequence as defined above
-ALL.test.alias      = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-alias-[^%]/     {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
-ALL.test.stdformat  = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-stdformat-[^%]/ {arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.opt))
+ALL.test.alias      = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-alias-[^%]/     {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.opt))
+ALL.test.stdformat  = $(shell awk -F: '/^testarg-opt-.*%/{next} /^testarg-opt-stdformat-[^%]/ {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.opt))
 ALL.test.alias.log  = $(ALL.test.salias:%=%.log)
 ALL.test.stdformat.log  = $(ALL.test.stdformat:%=%.log)
 ALL.testopt        += $(ALL.test.alias)
