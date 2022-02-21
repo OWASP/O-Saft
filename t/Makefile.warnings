@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#)  1.62 22/02/21 15:24:44
+#?      @(#)  1.63 22/02/21 17:33:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.62
+_SID.warnings      := 1.63
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -349,7 +349,7 @@ warning-521: EXE.pl     = ../OSaft/Ciphers.pm
 warning-522: TEST.args  = TODO: testing duplicate openssl key, difficult ...
 warning-522: EXE.pl     = ../OSaft/Ciphers.pm
 
-ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.warnings))
+ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.warnings))
 
 _TEST.template  = t/test.warning.Makefile-template
 $(_TEST.template): $(SRC.pl) $(SRC.pm)
@@ -397,7 +397,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "#  1.62: $(MAKE) test.warnings.log" > $@
+	@echo "#  1.63: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
