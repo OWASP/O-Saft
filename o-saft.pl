@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1060 22/02/21 10:51:35",
+    SID         => "@(#) yeast.pl 1.1063 22/02/21 23:17:00",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -86,7 +86,7 @@ sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV
     # need to check @ARGV directly as this is called before any options are parsed
 
 # SEE Make:OSAFT_MAKE (in Makefile.pod)
-our $time0  = time();
+our $time0  = time();   # must be set very early, cannot be done in osaft.pm
     $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
     # normalise to even seconds, allows small time diffs
 sub _yeast_TIME(@)  {
@@ -96,8 +96,11 @@ sub _yeast_TIME(@)  {
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     my $now = time();
        $now = time() - ($time0 || 0) if not _is_argv('(?:--time.*absolut)');
+       $now +=1 if (0 > $now);  # fix runtime error: $now == -1
        $now += ($now % 2) if (defined $ENV{'OSAFT_MAKE'});
        $now = sprintf("%02s:%02s:%02s", (localtime($now))[2,1,0]);
+
+
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
        $now = "HH:MM:SS (OSAFT_MAKE exists)" if (not $time0);# time0 unset or 0
     }
@@ -162,6 +165,8 @@ our $osaft_standalone = 0;      # SEE Note:Stand-alone
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
 use osaft;          # get most of our configuration; it's ok to die if missing
+
+$cfg{'time0'}   = $time0;
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -4096,7 +4101,8 @@ sub _get_data0          {
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
 # TODO:  following needs to be improved, because there are multipe openssl
         # calls which may produce unexpected results (10/2015) {
-        foreach my $key (keys %data) { # copy to %data0
+        # 'sort' is used to make tests comparable
+        foreach my $key (sort keys %data) { # copy to %data0
             next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
             $data0{$key}->{val} = $data{$key}->{val}($host, $port);
         }
@@ -4274,10 +4280,10 @@ sub ciphers_scan        {
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'use'}->{'sni'};
-        if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
+        if (($cfg{'verbose'} + $cfg{'trace'} > 0) or _is_cfg_out('traceCMD')) {
             # optimise output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
-               $_me = $cfg{'me'} . "   CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
+               $_me = $cfg{'me'} . "   CMD:" if (_is_cfg_out('traceCMD')); # TODO: _yTIME() missing
                $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
             print("#$_me     checking $cnt ciphers for $ssl ... ($__openssl)");
         }
@@ -6415,10 +6421,10 @@ sub print_line($$$$$$)  {
         $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if (_is_cfg_out('hostname'));
     if ($legacy eq '_cipher') {
         printf("%s", $label)                        if (_is_cfg_out('hostname'));
-        printf("#[%s]%s", $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+        printf("#[%s]%s", $key, $text{'separator'}) if (_is_cfg_out('traceKEY'));
         return;
     }
-        $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+        $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if (_is_cfg_out('traceKEY'));
     if ($legacy =~ m/(compact|full|quick)/) {
         $label .= sprintf("%s",    $text . $text{'separator'});
     } else {
@@ -7080,12 +7086,12 @@ sub printquit           {
     #       the commands may be unknown. This results in  **WARNING  texts
     #       for the correspoding commands.
 
-    if ($cfg{'trace'} + $cfg{'traceARG'} + $cfg{'verbose'} <= 0) {
+    if (($cfg{'trace'} + $cfg{'verbose'} <= 0) and not _is_cfg_out('traceARG')) {
         _warn("831: '+quit' command should be used with '--trace=arg' option");
     }
     $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
     $cfg{'trace'}   = 2 if ($cfg{'trace'}   < 2);   # -"-
-    $cfg{'traceARG'}= 1; # for _yeast_args()
+    _set_cfg_out('traceARG', 1);    # for _yeast_args(); harmless change as +quit exits
     print("\n# +quit using:  --verbode=2 --trace=2 --traceARG");
     _v_print("\n# +quit : some information may appear multiple times\n#");
     _yeast_init();
@@ -7475,7 +7481,7 @@ sub printscores         {
     }
     print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
     print_ruler();
-    if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
+    if (_is_cfg_out('traceKEY') and (0 < $verbose)) {
         _y_CMD("verbose score table");
         print "\n";
         printtable('score');
@@ -7797,10 +7803,10 @@ while ($#argv >= 0) {
         # and pass it to further examination if it not matches
         if ($typ eq 'TRACE')    {
             $typ = 'HOST';      # expect host as next argument
-            $cfg{'traceARG'}++   if ($arg =~ m#^ARG$#i);
-            $cfg{'traceCMD'}++   if ($arg =~ m#^CMD$#i);
-            $cfg{'traceKEY'}++   if ($arg =~ m#^KEY$#i);
-            $cfg{'traceTIME'}++  if ($arg =~ m#^TIME$#i);
+            _set_cfg_out('traceARG',  1)    if ($arg =~ m#^ARG$#i);
+            _set_cfg_out('traceCMD',  1)    if ($arg =~ m#^CMD$#i);
+            _set_cfg_out('traceKEY',  1)    if ($arg =~ m#^KEY$#i);
+            _set_cfg_out('traceTIME', 1)    if ($arg =~ m#^TIME$#i);
             $cfg{'traceME'}++    if ($arg =~ m#^ME(?:only)?#i);
             $cfg{'traceME'}--    if ($arg =~ m#^notme$#i);
             $cfg{'trace'} = $arg if ($arg =~ m#^\d+$#i);
@@ -7885,7 +7891,7 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
-    if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
+    if ($arg eq  '--trace--')         { _set_cfg_out('traceARG',1); next; } # for backward compatibility
     if ($arg =~ /^--trace.?CLI$/)       {                           next; } # ignore, already handled
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
@@ -8004,21 +8010,21 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ciphers?-?v$/)      { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--ciphers?--?v$/)     { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--v-?ciphers?$/)      { $cfg{'v_cipher'}++;       }
-    if ($arg =~ /^--warnings?$/)        { _set_cfg_out('warning', 1);       }
-    if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning', 0);       }
+    if ($arg =~ /^--warnings?$/)        { _set_cfg_out('warning',      1);  }
+    if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning',      0);  }
     if ($arg =~ /^--warningsdups?$/)    { _set_cfg_out('warnings_no_dups', []); }
     if ($arg =~ /^--nowarningsnodups?$/){ _set_cfg_out('warnings_no_dups', []); }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias: --n
-    if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
-    if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
-    if ($arg =~ /^--trace(?:@|key)/i)   { $cfg{'traceKEY'}++;       } # ..
+    if ($arg =~ /^--tracearg/i)         { _set_cfg_out('traceARG',     1);  } # special internal tracing
+    if ($arg =~ /^--tracecmd/i)         { _set_cfg_out('traceCMD',     1);  } # ..
+    if ($arg =~ /^--trace(?:@|key)/i)   { _set_cfg_out('traceKEY',     1);  } # ..
+    if ($arg =~ /^--tracetime/i)        { _set_cfg_out('traceTIME',    1);  } # ..
     if ($arg =~ /^--traceme/i)          { $cfg{'traceME'}++;        } # ..
     if ($arg =~ /^--tracenotme/i)       { $cfg{'traceME'}--;        } # ..
-    if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
-    if ($arg =~ /^--timeabsolute?/i)    { $cfg{'time_absolut'} = 1; }
-    if ($arg eq  '--timerelative')      { $cfg{'time_absolut'} = 0; }
+    if ($arg =~ /^--timeabsolute?/i)    { _set_cfg_out('time_absolut', 1);  }
+    if ($arg eq  '--timerelative')      { _set_cfg_out('time_absolut', 0);  }
     if ($arg eq  '--linuxdebug')        { $cfg{'linux_debug'}++;    }
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
     if ($arg =~ /^--exp(?:erimental)?$/){ _set_cfg_use('experimental', 1);  }
@@ -8625,7 +8631,7 @@ if (0 == $cfg{'exec'})  {
             _yeast("exec: PATH=$ENV{PATH}");
         }
         _yeast("exec: $0 +exec " . join(" ", @ARGV));
-        _yeast("################################################") if (($cfg{'traceARG'} + $cfg{'traceCMD'}) > 0);
+        _yeast("################################################") if (_is_cfg_out('traceARG') or _is_cfg_out('traceCMD'));
         exec $0, '+exec', @ARGV;
     }
 }
@@ -8786,7 +8792,7 @@ if (defined $Net::SSLhello::VERSION) {
     if (1 > $cfg{'traceME'}) {
         $Net::SSLhello::trace       = $cfg{'trace'};
     }
-    $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
+    $Net::SSLhello::traceTIME       = $cfg{'out'}->{'traceTIME'};
     $Net::SSLhello::experimental    = $cfg{'use'}->{'experimental'};
     $Net::SSLhello::usemx           = $cfg{'use'}->{'mx'};
     $Net::SSLhello::usesni          = $cfg{'use'}->{'sni'};
