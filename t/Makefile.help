@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.86 21/11/13 12:40:14
+#?      @(#) Makefile.help 1.87 22/02/21 13:00:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.86
+_SID.help          := 1.87
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -148,9 +148,9 @@ ifndef _MYSELF.inc
     _MYSELF.inc = t/Makefile.inc
 endif
 
-ifndef _SORT_opt
+ifndef _CMD.sort.opt
     # setting until Makefile.inc is included
-    _SORT_opt  := -n -f
+    _CMD.sort.opt   := -n -f
 endif
 
 #_____________________________________________________________________________
@@ -315,10 +315,10 @@ help-makefiletitle-%:
 
 macros:
 	@$(TRACE.target)
-	@$(EXE.list) $(MAKEFILE_LIST)    | sort $(_SORT_opt)
+	@$(EXE.list) $(MAKEFILE_LIST)    | sort $(_CMD.sort.opt)
 macros%me:
 	@$(TRACE.target)
-	@$(EXE.list) $(MAKEFILE)         | sort $(_SORT_opt)
+	@$(EXE.list) $(MAKEFILE)         | sort $(_CMD.sort.opt)
 vars: macros
 list: macros
 lists%me: macros.me
