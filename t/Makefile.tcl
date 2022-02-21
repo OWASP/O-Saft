@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.34 21/11/20 17:24:08
+#?      @(#) Makefile.tcl 1.35 22/02/21 17:33:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.34
+_SID.tcl           := 1.35
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -96,13 +96,13 @@ testcmd-tcl---unknown_%:    TEST.args  += --unknown
 #testcmd-tcl---v--load-bad_%:TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
 # SEE Make:target matching
-ALL.testtcl         = $(shell awk -F% '/^testcmd-tcl-%/{next} /^testcmd-tcl-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
+ALL.testtcl         = $(shell awk -F% '/^testcmd-tcl-%/{next} /^testcmd-tcl-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.tcl))
 ALL.test.tcl        = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log    = $(ALL.test.tcl:%=%.log)
 
 # *test-interactive* targets are not added to coomon variables,
 # they cannot be used in scripted make, but need to be startet interactive
-ALL.testtclinteractive      = $(shell awk -F% '/^testcmd-tclinteractive-%/{next} /^testcmd-tclinteractive-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.tcl))
+ALL.testtclinteractive      = $(shell awk -F% '/^testcmd-tclinteractive-%/{next} /^testcmd-tclinteractive-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.tcl))
 ALL.test.tclinteractive     = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtclinteractive:%=%$(host)))
 ALL.test.tclinteractive.log = $(ALL.test.tclinteractive:%=%.log)
 test.tclinteractive:          $(ALL.test.tclinteractive)
