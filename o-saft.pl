@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1059 22/02/21 08:47:56",
+    SID         => "@(#) yeast.pl 1.1060 22/02/21 10:51:35",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -10578,9 +10578,13 @@ uses "default" as part of variable or function names.
 
 =head2 Note:Duplicate Commands
 
-If commands are given multiple times, in any order, this command shouldn't
-be executed multiple times.  Because multiple commands  may occour in many
-places, the normalisation is done right bevore they are executed.
+If a command is given multiple times, in any order,  it should be executed
+only once.  The normalisation is done  right before commands are executed,
+because multiple commands may occour in many places.
+
+The normalisation must preserve the sequence of the commands, which can be
+defined by the user. The first occourance of a command is used, all others
+are ignored.
 
 
 =head2 Note:+cipherall
