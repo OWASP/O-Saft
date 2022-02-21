@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1058 22/02/20 23:44:58",
+    SID         => "@(#) yeast.pl 1.1059 22/02/21 08:47:56",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8869,10 +8869,7 @@ if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
 #| -------------------------------------
 # my %unique = map{$_, 42} @{$cfg{'do'}};   # perlish way cannot be used,
 # @{$cfg{'do'}} = keys %unique;             # because sequence is user-defined
-                                            # hashes do not preserve sequence
-_dbx "do=@{$cfg{'do'}}";
 @{$cfg{'do'}} = do { my %seen; grep { !$seen{$_}++ } @{$cfg{'do'}} };
-_dbx "DO=@{$cfg{'do'}}";
 
 _yeast_EXIT("exit=MAIN  - start");
 _yeast_ciphers_list();
