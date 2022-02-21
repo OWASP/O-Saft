@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.88 22/02/21 14:58:06
+#?      @(#) Makefile.help 1.89 22/02/21 17:33:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.88
+_SID.help          := 1.89
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -93,27 +93,28 @@ help.inc: HELP_HEAD = $(HELP_RULE)
 # the commands for matching macro and target names, please see in Makefile.pod
 # "O-Saft Makefile Syntax"  and  "Make:target matching".
 # Script variables defined in t/Makefile:
-#     _AWK_macro_by_line    - extract macro  names
-#     _AWK_target_by_line   - extract target names
-#     _AWK_target_to_arr    - extract target names and store uniquely in arr[]
-#     _AWK_print_arr_END    - print collected data from arr[]
-#     _AWK_print_file       - either print seperator line or the filename
+#     _EXE.macro_by_line.awk    - extract macro  names
+#     _EXE.target_by_line.awk   - extract target names
+#     _EXE.target_to_arr.awk    - extract target names, store uniquely in arr
+#     _EXE.print_arr_END.awk    - print collected data from arr[]
+#     _EXE.print_file.awk       - either print seperator line or the filename
 # Script variables defined below:
-#     _AWK_HELP_by_line     - extract HELP- macro names for documentation, the
-#                             HELP-_* print as is
-#                             HELP-*  extract target name and print with text
-#     _AWK_gen_eval_target  - print f-* and _f-* target name from HELP-* macro
-#     _AWK_gen_print_file   - print
+#     _EXE.HELP_by_line.awk     - extract HELP- macro names for documentation
+#                           the HELP-_* print as is
+#                           HELP-*    extract target name and print with text
+#     _EXE.gen_eval_target.awk  - print f-* and _f-* target name from HELP-* macro
+#     _EXE.gen_print_file.awk   - print
 #                             NOTE: FILENAME there is an awk variable
-_AWK_HELP_by_line   := /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next} \
-                       /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
-                                 sub(/HELP-/,"",key); gsub(/ /,"",key);    \
-                                 tab="\t"; if(length(key)<8){tab="\t\t";}  \
-                                 printf("%s%s\# %s\n",key,tab,txt);         \
-                              }
-_AWK_gen_eval_target:= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
-_AWK_gen_print_file := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
-%-v: _AWK_print_file:= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
+_EXE.HELP_by_line.awk  := \
+        /^HELP-_/{sub(/ /,"",$$2); print "\n\t\t\#"$$2; next}\
+        /^HELP-/{ key=$$1; txt=substr($$0,index($$0,"=")+2);\
+            sub(/HELP-/,"",key); gsub(/ /,"",key);    \
+            tab="\t"; if(length(key)<8){tab="\t\t";}  \
+            printf("%s%s\# %s\n",key,tab,txt);        \
+        }
+_EXE.gen_eval_target.awk:= /^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}
+_EXE.gen_print_file.awk := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
+%-v: _EXE.print_file.awk:= (FNR==1){ print "\n\t\t\# ---------- "FILENAME" ..." }
 
 # Tools used to gather information from Makefile*,  take care! real  TABS  are
 # inside the sed commands.
@@ -122,16 +123,16 @@ _AWK_gen_print_file := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
 
 # Above script variables and following tool variables rely on  the conventions
 # (variable names, etc.) as defined in Makefile.pod  "O-Saft Makefile Syntax".
-EXE.eval        = awk -F=   '$(_AWK_gen_print_file)$(_AWK_gen_eval_target)'
-EXE.list        = awk       '$(_AWK_print_file)$(_AWK_macro_by_line)'
-EXE.help        = awk -F=   '$(_AWK_print_file)$(_AWK_HELP_by_line)'
+EXE.eval        = awk -F=   '$(_EXE.gen_print_file.awk)$(_EXE.gen_eval_target.awk)'
+EXE.list        = awk       '$(_EXE.print_file.awk)$(_EXE.macro_by_line.awk)'
+EXE.help        = awk -F=   '$(_EXE.print_file.awk)$(_EXE.HELP_by_line.awk)'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
-EXE.targets     = awk       '$(_AWK_print_file)$(_AWK_target_by_line)'
+EXE.targets     = awk       '$(_EXE.print_file.awk)$(_EXE.target_by_line.awk)'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
@@ -405,7 +406,7 @@ t-%:
 # HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
 # HELP-test.help.log-compare  = compare results of test.help.log (if any)
 
-ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.help))
+ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.help))
 ALL.test.help       = $(ALL.testhelp)
 ALL.test.help.log   = $(ALL.test.help:%=%.log)
 
