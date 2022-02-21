@@ -51,26 +51,27 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.155 22/02/08 22:57:16";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.156 22/02/21 23:13:49";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
 # debug functions
 sub _yTIME      {
-    if (0 >= $cfg{'traceTIME'}) { return ""; }
+    return "" if (not _is_cfg_out('traceTIME'));
     my $now = time() - ($time0 || 0);
-       $now = time() if (1 == $cfg{'time_absolut'});# $time0 defined in main
+       $now = time() if (_is_cfg_out('time_absolut'));# $time0 defined in main
+       $now +=1 if (0 > $now);  # fix runtime error: $now == -1
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
 sub __yeast     { return $cfg{'prefix_verbose'} . $_[0]; }
-sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_);  }
-sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_);  }
+sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_);    }
+sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_);    }
 sub __line      { return "#----------------------------------------------------" . $_[0]; }
 sub ___ARR      { return join(" ", "[", sort(@_), "]"); }
-sub __INIT      { return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
-sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);   }
-sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (0 < $cfg{'traceARG'}); return;  }
-sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (0 < $cfg{'traceCMD'}); return;  }
+sub __INIT      { return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);     }
+sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);     }
+sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (_is_cfg_out('traceARG')); return; }
+sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (_is_cfg_out('traceCMD')); return; }
 sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
 sub _yINIT      { local $\ = "\n"; print __INIT(@_);    return; }
 sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
@@ -374,8 +375,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yTRAC("--rc",    ((grep{/(?:--rc)$/i}     @ARGV) > 0)? 1 : 0);
     _yTRAC("--no-rc", ((grep{/(?:--no.?rc)$/i} @ARGV) > 0)? 1 : 0);
     _yTRAC("verbose", $cfg{'verbose'});
-    _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
-    _yTRAC("time_absolut", $cfg{'time_absolut'});
+    _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'out'}->{'traceARG'}, traceCMD=$cfg{'out'}->{'traceCMD'}, traceKEY=$cfg{'out'}->{'traceKEY'}, traceTIME=$cfg{'out'}->{'traceTIME'}");
+    _yTRAC("time_absolut", $cfg{'out'}->{'time_absolut'});
     _yTRAC("dbx{file}", "[ " . join(", ", @{$dbx{'file'}}) . " ]");
 
     if (1 < $cfg{'trace'}) {
@@ -498,7 +499,7 @@ sub _yeast_exit {
 } # _yeast_exit
 
 sub _yeast_args {
-    return if (0 >= $cfg{'traceARG'});
+    return if (not _is_cfg_out('traceARG'));
     # using _y_ARG() may be a performance penulty, but it's trace anyway ...
     _yline(" ARGV {");
     _y_ARG("# summary of all arguments and options from command-line");
@@ -550,7 +551,7 @@ sub _trace2     { print $cfg{'prefix_trace'} . join(" ", @_) if (2 < $cfg{'trace
 sub _trace3     { print $cfg{'prefix_trace'} . join(" ", @_) if (3 < $cfg{'trace'}); return; }
 sub _trace_     { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace'}); return; }
 # if --trace-arg given
-sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (0 < $cfg{'traceCMD'}); return; }
+sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (_is_cfg_out('traceCMD')); return; }
 
 sub _vprintme   {
     #? write own version, command-line arguments and date and time
@@ -1149,7 +1150,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.155 2022/02/08
+1.156 2022/02/21
 
 =head1 AUTHOR
 
