@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.22 19/11/21 00:03:24
+#?      @(#) Makefile.exit 1.23 22/02/21 16:18:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.22
+_SID.exit          := 1.23
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -96,7 +96,7 @@ test.exit.log: $(_TEST.exit.log)
 	    || mv $(_TEST.exit.log) $(TEST.logdir)/$@
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.exit.log) $(TEST.logdir)/$@
 	@ls -l    $(TEST.logdir)/$@*
-	@-$(_CMD_log-compare-hint)
+	@-$(EXE.log-compare-hint)
 # TODO: same target as test.warnings.log
 
 ALL.test.exit.log   = test.exit.log
