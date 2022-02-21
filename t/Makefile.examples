@@ -6,7 +6,7 @@
 #?      make help.test.examples
 #?
 #? VERSION
-#?      @(#)  1.7 19/12/12 23:40:38
+#?      @(#)  1.8 22/02/21 17:33:51
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.examples = print targets for testing documented examples
 
-_SID.examples      := 1.7
+_SID.examples      := 1.8
 
 _MYSELF.examples   := t/Makefile.examples
 ALL.includes       += $(_MYSELF.examples)
@@ -119,7 +119,7 @@ test.examples.log-compare:          TEST.target_prefix  = testarg-examples
 test.examples.log-move:             TEST.target_prefix  = testarg-examples
 test.examples.log:                  TEST.target_prefix  = testarg-examples
 
-ALL.testexamples     = $(shell awk -F: '/^testarg-example-.*%/{next} /^testarg-example-/{arr[$$1]=1}$(_AWK_print_arr_END)' $(_MYSELF.examples))
+ALL.testexamples     = $(shell awk -F: '/^testarg-example-.*%/{next} /^testarg-example-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.examples))
 ALL.test.examples    = $(ALL.testexamples)
 ALL.test.examples.log= $(ALL.test.examples:%=%.log) test.log-compare-hint
 
