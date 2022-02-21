@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.122 22/02/21 16:13:56
+#?      @(#) Makefile 1.123 22/02/21 16:16:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.122
+_SID.test          := 1.123
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -171,9 +171,10 @@ _AWK_print_file    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};
 
 # if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
 # checking this variable if not empty is sufficent to print verbose information
+# not tested if following defines could be written as macros
 # SEE Make:defines with commands
 
-define _CMD_log-compare
+define EXE.log-compare
 	cd $(TEST.logdir) && \
 	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
 	for f in $(TEST.target_prefix)*.log; do \
@@ -183,7 +184,7 @@ define _CMD_log-compare
 	done
 endef
 
-define _CMD_log-compare-hint
+define EXE.log-compare-hint
 	echo ""
 	echo "# for informations and to show differences with $(EXE.diff), use:"
 	echo "    $(MAKE_COMMAND) help.test.log-info"
@@ -192,7 +193,7 @@ define _CMD_log-compare-hint
 	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
-define _CMD_log-move
+define EXE.log-move
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
@@ -202,7 +203,7 @@ define _CMD_log-move
 endef
 
 # FIXME: does not set _stub properly if $* is set
-define _CMD_log-move-hint
+define EXE.log-move-hint
 	_stub="log"
 	$(eval _stub="log")
 	$(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
@@ -817,17 +818,17 @@ tests.quick.log:
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmd.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
-	@-$(_CMD_log-compare-hint)
+	@-$(EXE.log-compare-hint)
 
 tests.quick.log-compare:
 	@$(TRACE.target)
-	@-$(_CMD_log-compare)
-	@-$(_CMD_log-move-hint)
+	@-$(EXE.log-compare)
+	@-$(EXE.log-move-hint)
 	@echo "# 12 logfiles with differences could be expected."
 
 tests.quick.log-move:
 	@$(TRACE.target)
-	$(_CMD_log-move)
+	$(EXE.log-move)
 
 # aliases for convenience
 test:       tests
@@ -898,25 +899,25 @@ TEST.target_logfile = $(TEST.logdir)/testcmd-
 TEST.log-suffix     = -$(TEST.today)
 
 test.log-compare-hint:
-	@-$(_CMD_log-compare-hint)
+	@-$(EXE.log-compare-hint)
 
 test.%.log-compare:
 	@$(TRACE.target)
-	@-$(_CMD_log-compare)
-	@-$(_CMD_log-move-hint)
+	@-$(EXE.log-compare)
+	@-$(EXE.log-move-hint)
 
 test.%.log-move:
 	@$(TRACE.target)
-	$(_CMD_log-move)
+	$(EXE.log-move)
 
 test.log-compare:
 	@$(TRACE.target)
-	@-$(_CMD_log-compare)
-	@-$(_CMD_log-move-hint)
+	@-$(EXE.log-compare)
+	@-$(EXE.log-move-hint)
 
 test.log-move:
 	@$(TRACE.target)
-	$(_CMD_log-move)
+	$(EXE.log-move)
 
 #_____________________________________________________________________________
 #________________________________________________ collected ALL.* variables __|
