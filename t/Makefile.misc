@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.59 22/02/15 17:35:30
+#?      @(#) Makefile.misc 1.60 22/02/21 17:33:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.59
+_SID.misc          := 1.60
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -110,24 +110,24 @@ _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 # Also make's syntax requires that the awk script is enclosed in single quotes
 # and then must be uses without quotes. The other way around will not work.
 # The purpose of the targets is to list the duplicate entries.
-_AWK_cipher_key    := '\
-                      /^ *$$/   {next} \
-                      ($$1~pattern){p=1;next} \
-                      /^)/      {if(p==1){exit}} \
-                      ($$1~/\#/){next} \
-                      (p==1)    {print $$2} \
-                      '
+_EXE.cipher_key.awk    := '\
+        /^ *$$/   {next} \
+        ($$1~pattern){p=1;next} \
+        /^)/      {if(p==1){exit}} \
+        ($$1~/\#/){next} \
+        (p==1)    {print $$2} \
+'
 
 # Checking for duplicate values in files with various definitions for ciphers.
 # Finding the value is similar to finding the key,  except that values are not
 # enclosed in single quotes (awk -F' not necessary).
-_AWK_cipher_value  := '\
-                      /^ *$$/   {next} \
-                      ($$1~pattern){p=1;next} \
-                      /^)/      {if(p==1){exit}} \
-                      ($$1~/\#/){next} \
-                      (p==1)    {print $$4} \
-                      '
+_EXE.cipher_value.awk  := '\
+        /^ *$$/   {next} \
+        ($$1~pattern){p=1;next} \
+        /^)/      {if(p==1){exit}} \
+        ($$1~/\#/){next} \
+        (p==1)    {print $$4} \
+'
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
@@ -434,7 +434,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.59: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.60: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -473,22 +473,22 @@ test.misc.todo.log:       $(ALL.test.misc.todo.log)
 keys.iana._ciphers_%: OSaft/_ciphers_iana.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_iana.pm ..."
-	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_EXE.cipher_key.awk) $< | sort | uniq -d 
 	@echo ""
 keys.osaft._ciphers_% : OSaft/_ciphers_osaft.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_osaft.pm ..."
-	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_EXE.cipher_key.awk) $< | sort | uniq -d 
 	@echo ""
 keys.openssl._ciphers_% : OSaft/_ciphers_openssl_all.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_openssl_all.pm ..."
-	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_EXE.cipher_key.awk) $< | sort | uniq -d 
 	@echo ""
 keys.openssl-h._ciphers_% : OSaft/_ciphers_openssl_h.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate keys for %_ciphers_$* in OSaft/_ciphers_openssl_h.pm ..."
-	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_AWK_cipher_key) $< | sort | uniq -d 
+	@-gawk -F"'" -v pattern='%_ciphers_$* =' $(_EXE.cipher_key.awk) $< | sort | uniq -d 
 	@echo ""
 ALL.test.keys      := \
 		keys.iana._ciphers_iana \
@@ -503,22 +503,22 @@ test.keys:            $(ALL.test.keys)
 values.iana._ciphers_%: OSaft/_ciphers_iana.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_iana.pm ..."
-	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@-gawk -v pattern='%_ciphers_$* =' $(_EXE.cipher_value.awk) $< | sort | uniq -d 
 	@echo ""
 values.osaft._ciphers_% : OSaft/_ciphers_osaft.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_osaft.pm ..."
-	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@-gawk -v pattern='%_ciphers_$* =' $(_EXE.cipher_value.awk) $< | sort | uniq -d 
 	@echo ""
 values.openssl._ciphers_% : OSaft/_ciphers_openssl_all.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_openssl_all.pm ..."
-	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@-gawk -v pattern='%_ciphers_$* =' $(_EXE.cipher_value.awk) $< | sort | uniq -d 
 	@echo ""
 values.openssl-h._ciphers_% : OSaft/_ciphers_openssl_h.pm
 	@$(TRACE.target)
 	@echo "#make: check duplicate values for %_ciphers_$* in OSaft/_ciphers_openssl_h.pm ..."
-	@-gawk -v pattern='%_ciphers_$* =' $(_AWK_cipher_value) $< | sort | uniq -d 
+	@-gawk -v pattern='%_ciphers_$* =' $(_EXE.cipher_value.awk) $< | sort | uniq -d 
 	@echo ""
 ALL.test.values    := \
 		values.iana._ciphers_iana \
@@ -532,7 +532,7 @@ test.values:          $(ALL.test.values)
 
 _TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
 $(_TEST.keys.log):
-	@echo "# Makefile.misc 1.59: $(MAKE) test.keys.log" > $@
+	@echo "# Makefile.misc 1.60: $(MAKE) test.keys.log" > $@
 	@$(MAKE) -i test.keys >> $@ 2>&1
 test.keys.log: $(_TEST.keys.log)
 	@$(TRACE.target)
