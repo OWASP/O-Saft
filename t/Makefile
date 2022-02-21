@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.121 22/02/21 14:55:27
+#?      @(#) Makefile 1.122 22/02/21 16:13:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.121
+_SID.test          := 1.122
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -117,10 +117,6 @@ TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 
 #  $(SRC.rc)  may not be defined here, hence hardcoded
 
-TEST.opt.grep      := -q
-    # grep (mainly used in message-% target) should not report matching lines
-    # variable can be reset or redifined for more verbose output
-
 ifndef CONTRIB.dir
     CONTRIB.dir     = contrib
 endif
@@ -134,6 +130,20 @@ TRACE.target.log    =
 
 TEST.today         := $(shell date +%Y""%m%d)
     # current date in ISO format
+
+# need a usable way to change diff program; EXE.diff may be set on command-line
+EXE.log-diff       := diff
+EXE.log-xxdiff     := xxdiff --geometry 1600x1000
+EXE.log-mgdiff     := mgdiff
+EXE.log-tkdiff     := tkdiff
+EXE.diffs          := diff xxdiff mgdiff tkdiff
+EXE.diff           := tkdiff
+EXE.log-diff        = $(EXE.log-tkdiff)
+    # chaneg EXE.log-diff to use another program
+
+_EXE.grep-opt      := -q
+    # grep (mainly used in message-% target) should not report matching lines
+    # variable can be reset or redifined for more verbose output
 
 _EXE.sort-opt      := -n -f
     # newer GNU sort (~2018) changed the default behaviour, for example
@@ -158,6 +168,50 @@ _AWK_target_by_line:= /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
 _AWK_target_to_arr  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
 _AWK_print_arr_END := END{for(idx in arr){print idx}}
 _AWK_print_file    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
+
+# if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
+# checking this variable if not empty is sufficent to print verbose information
+# SEE Make:defines with commands
+
+define _CMD_log-compare
+	cd $(TEST.logdir) && \
+	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
+	for f in $(TEST.target_prefix)*.log; do \
+	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
+	done
+endef
+
+define _CMD_log-compare-hint
+	echo ""
+	echo "# for informations and to show differences with $(EXE.diff), use:"
+	echo "    $(MAKE_COMMAND) help.test.log-info"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare-v"
+	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
+endef
+
+define _CMD_log-move
+	cd $(TEST.logdir) && \
+	for f in $(TEST.target_prefix)*.log; do \
+	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+	    mv $${f}$(TEST.log-suffix) $${f} ; \
+	done
+endef
+
+# FIXME: does not set _stub properly if $* is set
+define _CMD_log-move-hint
+	_stub="log"
+	$(eval _stub="log")
+	$(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
+	echo ""
+	echo "# for informations and to move new files to .log , use:"
+	echo "    $(MAKE_COMMAND) help.test.log-info"
+	echo "    $(MAKE_COMMAND) test.$(_stub)-move"
+	echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
+endef
 
 
 HELP.test       = $(_NL)\
@@ -464,8 +518,8 @@ message-%:
 	    echo "$@:    $(TEST.args)"; \
 	else \
 	    echo "$(TEST.rc)" > $(TEST.tmp.rc) ; \
-	    echo "cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* " ; \
-	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(TEST.opt.grep) $* ; \
+	    echo "cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(_EXE.grep-opt) $* " ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $(_EXE.grep-opt) $* ; \
 	    _status=$$? ; \
 	    rm -f $(TEST.tmp.rc) ; \
 	    exit $$_status ; \
@@ -833,15 +887,6 @@ $(_NL)\
 help.test.log-info:
 	@echo "$(HELP.test.log-info)"
 
-# need a usable way to change diff program; EXE.diff may be set on command-line
-EXE.log-diff       := diff
-EXE.log-xxdiff     := xxdiff --geometry 1600x1000
-EXE.log-mgdiff     := mgdiff
-EXE.log-tkdiff     := tkdiff
-EXE.diffs          := diff xxdiff mgdiff tkdiff
-EXE.diff           := tkdiff
-EXE.log-diff        = $(EXE.log-tkdiff)
-
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.extern   += $(EXE.diffs)
 
@@ -851,50 +896,6 @@ TEST.target_logfile = $(TEST.logdir)/testcmd-
 
 # default suffix for logfiles
 TEST.log-suffix     = -$(TEST.today)
-
-# if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
-# checking this variable if not empty is sufficent to print verbose information
-# SEE Make:defines with commands
-
-define _CMD_log-compare
-	cd $(TEST.logdir) && \
-	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
-	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
-	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
-	done
-endef
-
-define _CMD_log-compare-hint
-	echo ""
-	echo "# for informations and to show differences with $(EXE.diff), use:"
-	echo "    $(MAKE_COMMAND) help.test.log-info"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare-v"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
-endef
-
-define _CMD_log-move
-	cd $(TEST.logdir) && \
-	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
-	    mv $${f}$(TEST.log-suffix) $${f} ; \
-	done
-endef
-
-# FIXME: does not set _stub properly if $* is set
-define _CMD_log-move-hint
-	_stub="log"
-	$(eval _stub="log")
-	$(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
-	echo ""
-	echo "# for informations and to move new files to .log , use:"
-	echo "    $(MAKE_COMMAND) help.test.log-info"
-	echo "    $(MAKE_COMMAND) test.$(_stub)-move"
-	echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
-endef
 
 test.log-compare-hint:
 	@-$(_CMD_log-compare-hint)
