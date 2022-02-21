@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.45 22/02/16 15:21:04
+#?      @(#) Makefile.dev 1.46 22/02/21 13:04:04
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.45
+_SID.dev           := 1.46
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -233,7 +233,7 @@ ifndef dev-macros-generated
     # EXE.pl and TEST.* variables for testarg-dev-* targets
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc $(_PERLDOC_opt) ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc $(_CMD.perldoc.opt) ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
     $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
