@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.118 22/02/21 12:59:24
+#?      @(#) Makefile 1.119 22/02/21 13:05:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.118
+_SID.test          := 1.119
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -930,3 +930,7 @@ ifndef ALL-macros-generated
     $(foreach inc, $(ALL.inc.type), $(eval  ALL.tests      += $(ALL.test.$(inc))) )
     $(foreach inc, $(ALL.inc.type), $(eval  ALL.tests.log  += $(ALL.test.$(inc).log)) )
 endif
+
+# satisfy generated variables
+ALL.test.test      := $(ALL.tests)
+ALL.test.test.log  := $(ALL.tests.log)
