@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.54 21/01/16 16:08:39
+#?      @(#) Makefile.cmd 1.55 22/02/21 13:08:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.54
+_SID.cmd           := 1.55
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -116,16 +116,20 @@ endif
 #       with same command and more options, example:
 #           testcmd-cmd-+info_localhost testcmd-cmd-+info--noout_localhost
 
-testcmd-cmd-%:                  EXE.pl      = ../$(SRC.pl)
-testcmd-cmd-%:                  TEST.init   = --trace-CLI --header
+testcmd-cmd-%:                      EXE.pl      = ../$(SRC.pl)
+testcmd-cmd-%:                      TEST.init   = --trace-CLI --header
 
-testcmd-cmd-+ignored-keys_%:         TEST.args += $(LIST.ignore.cmd)
-testcmd-cmd-+sts--noout_%:           TEST.args += +sts   $(LIST.no-out.opt)
-testcmd-cmd-+info--tracekey-norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd-+ignored-keys_%:        TEST.args += $(LIST.ignore.cmd)
+# avoid output of random values in some commands
+testcmd-cmd-+http_%:                TEST.args += --no-out=sts_expired
+testcmd-cmd-+hsts_%:                TEST.args += --no-out=sts_expired
+testcmd-cmd-+sts_%:                 TEST.args += --no-out=sts_expired
+testcmd-cmd-+sts--noout_%:          TEST.args += +sts   $(LIST.no-out.opt)
+testcmd-cmd-+info--tracekey-norc_%: TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check--trace-norc_%:    TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
-testcmd-cmd-+quick--tracearg_%:      TEST.args += +quick --trace-arg
-testcmd-cmd-+check--nossltls_%:      TEST.args += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
+testcmd-cmd-+check--trace-norc_%:   TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
+testcmd-cmd-+quick--tracearg_%:     TEST.args += +quick --trace-arg
+testcmd-cmd-+check--nossltls_%:     TEST.args += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
 
 ALL.testcmd    += \
