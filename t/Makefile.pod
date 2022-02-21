@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.40 22/02/18 17:21:23
+@(#) Makefile.pod 1.41 22/02/21 16:42:20
 
 =head1 AUTHOR
 
@@ -110,8 +110,8 @@ a Makefile* itself, see
 To get brief (mainly technical) information about the Makefile, use:
 
     make -f t/Makefile.cgi
-    make -f t/Makefile.cgi helpt.test.cgi
-    make                   helpt.test.cgi
+    make -f t/Makefile.cgi help.test.cgi
+    make                   help.test.cgi
     make -f t/Makefile.cgi targets.me
     make -f t/Makefile.cgi macros.me
     make -f t/Makefile.cgi s-ALL.test.cgi
@@ -141,8 +141,9 @@ To get brief (mainly technical) information about the Makefile, use:
 The tools used and tested by make are called in the  $(TEST.dir) directory
 (usually ./t ), but they are located in  ../  (or ../contrib). Some (most)
 tools expect "includes" in  ./ ,  i.e.  o-saft.pl  itself includes private
-modules from  ./NET  and  ./OSaft.  This may result in perl warnings like
-"Can't locate ...".
+modules from  ./Net  and  ./OSaft.  This may result in perl warnings like:
+
+    "Can't locate ...".
 
 To avoid this, following symbolic links exist in  $(TEST.dir) :
 
@@ -271,11 +272,11 @@ Examples:
 Most targets and variables are named with one of following prefixes:
 
    ALL
+   EXE
    GEN
    HELP
    SRC
    TEST
-   _CMD_
    _HELP
    _TEST
    _SID
@@ -295,6 +296,9 @@ variables in the text (mainly in target actions).
 It is prefered that the complete definition, name=value, fits in one line,
 however, huge definitions are splited in multiple lines for better (human)
 readability.
+
+Sometimes Make's  'define'  are used instead of variables (macros), mainly
+if it does not fit in one line.
 
 
 =head2 O-Saft:Makefile Version String
@@ -347,7 +351,7 @@ Following name prefixes are used for variables:
 
     SRC             - defines a source file
     GEN             - defines a generated file
-    EXE             - defines tools to be used
+    EXE             - defines tools to be used (or parameters for it)
     ALL             - defines summary variables
     LIST            - defines lists of something
     TEST            - something related to the t/ directory
@@ -402,7 +406,7 @@ and their definitions, following special naming syntax is used:
 * All texts for documentation are stored in variables prefixed  HELP-
 
 * Anything following the prefix  HELP-  is the name of an existing target.
-  Example:   HELP-doc  contains the description of the target  doc
+  Example:   HELP-doc   = contains the description of the target  doc
 
 * Variable names with prefix  HELP-_  are treated as header texts, usually
   heading a group of targets.
@@ -429,7 +433,8 @@ Example:
     \# other line
 
 These  variables (above) are used by the  help  and  doc  target.  Each of
-these lines is printed as follows:
+These  variables (above) are used by the  help  and  doc  target. They are
+printed as follows:
 
              #_______________________________ some targets _
     help     # print overview of all targets
@@ -457,8 +462,8 @@ Some words about the terms and words used in GNU Make in this project.
   term dependencies is used.
 
 * GNU Make distinguishes the terms:   explicit rules,  implicit rules  and
-  static pattern rules. For simplicity target is used when  explicit rules
-  are meant and  pattern rule  is used for  static pattern rule .
+  static pattern rules. For simplicity, target is used when explicit rules
+  are meant, and  pattern rule  is used for  static pattern rule .
 
 * GNU Make refers to the commands executed in a target as  recipe.
 
