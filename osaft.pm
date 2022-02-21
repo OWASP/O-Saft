@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.260 22/02/21 19:47:42",
+    SID_osaft   => "@(#) osaft.pm 1.261 22/02/21 23:15:21",
 
 };
 
@@ -2596,11 +2596,6 @@ our %cfg = (
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
     'traceME'       => 0,       # 1: trace yeast only, but no modules
                                 # -1: trace modules only, but not yeast
-    'traceARG'      => 0,       # 1: trace yeast's argument processing
-    'traceCMD'      => 0,       # 1: trace command processing
-    'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
-    'traceTIME'     => 0,       # 1: (trace) print additional time for benchmarking
-    'time_absolut'  => 0,       # 1: (trace) --traceTIME uses absolut timestamps
     'time0'         => 0,       # current time, must be set in main
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
@@ -3039,9 +3034,9 @@ our %cfg = (
         'hint_check'        => 1,   # 1: print hints for +check commands
         'hint_info'         => 1,   # 1: print hints for +info commands
         'hint'              => 1,   # 1: print hints for +cipher +check +info
-        'key'               => 0,   # 1: print internal variable names for %data and %checks (was traceKEY)
         'traceARG'          => 0,   # 1: (trace) print argument processing
         'traceCMD'          => 0,   # 1: (trace) print command processing
+        'traceKEY'          => 0,   # 1: print internal variable names for %data and %checks
         'traceTIME'         => 0,   # 1: (trace) print additional time for benchmarking
         'time_absolut'      => 0,   # 1: (trace) --traceTIME uses absolut timestamps
         'warning'           => 1,   # 1: print warnings
@@ -4348,7 +4343,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.260 2022/02/21
+1.261 2022/02/21
 
 =head1 AUTHOR
 
