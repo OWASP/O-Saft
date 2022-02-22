@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.117 22/02/18 16:32:21
+#?      @(#) Makefile 1.118 22/02/22 07:54:38
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.117
+_SID            = 1.118
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -254,12 +254,10 @@ ALL.src         = \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
 
-# tools for targets
-ECHO            = /bin/echo -e
+# internal used make
 MAKE            = $(MAKE_COMMAND)
 # some rules need to have a command, otherwise they are not evaluated
 EXE.dummy       = /bin/echo -n ""
-
 # internal used tools (paths hardcoded!)
 EXE.single      = contrib/gen_standalone.sh
 EXE.docker      = o-saft-docker
@@ -288,7 +286,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.117
+_INST.text      = generated from Makefile 1.118
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -520,8 +518,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.117
-tar:     GREP_EDIT  = 1.117
+GREP_EDIT           = 1.118
+tar:     GREP_EDIT  = 1.118
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
