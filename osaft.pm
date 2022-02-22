@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.261 22/02/21 23:15:21",
+    SID_osaft   => "@(#) osaft.pm 1.262 22/02/22 01:20:43",
 
 };
 
@@ -153,6 +153,8 @@ purpose of this module is defining variables. Hence we export them.
 
 =item STR_NOTXT
 
+=item STR_MAKEVAL
+
 =back
 
 =head1 VARIABLES
@@ -222,6 +224,7 @@ our @EXPORT     = qw(
                 STR_DBX
                 STR_UNDEF
                 STR_NOTXT
+                STR_MAKEVAL
                 %prot
                 %prot_txt
                 %tls_handshake_type
@@ -4343,7 +4346,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.261 2022/02/21
+1.262 2022/02/22
 
 =head1 AUTHOR
 
