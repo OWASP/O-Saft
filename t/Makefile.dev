@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.48 22/02/21 17:33:50
+#?      @(#) Makefile.dev 1.49 22/02/22 09:05:30
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.48
+_SID.dev           := 1.49
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -56,9 +56,9 @@ EXE.t-makefile     := ../$(TEST.dir)/Makefile.pod
 EXE.install-sh     := ../INSTALL.sh
 # TODO: other tools should go to Makefile.contrib
 #       these targets require the symbolic link: contrib -> ../contrib
-EXE.contrib-bunt   := $(CONTRIB.dir)/bunt.pl
-EXE.contrib-openssl = $(CONTRIB.dir)/install_openssl.sh
-EXE.contrib-standalone := $(CONTRIB.dir)/gen_standalone.sh
+EXE.contrib-bunt   := $(SRC.contrib.dir)/bunt.pl
+EXE.contrib-openssl = $(SRC.contrib.dir)/install_openssl.sh
+EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 # NOTE: there is already EXE.install in ../Makefile
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
