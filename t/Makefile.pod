@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.44 22/02/22 08:54:07
+@(#) Makefile.pod 1.45 22/02/22 09:07:41
 
 =head1 AUTHOR
 
@@ -353,7 +353,7 @@ Following name prefixes are used for variables:
     EXE             - defines tools to be used (or parameters for it)
     ALL             - defines summary variables
     LIST            - defines lists of something
-    CONTRIB         - something related to the contrib/ directory
+    SRC.contrib     - something related to the contrib/ directory
     TEST            - something related to the t/ directory
     TEST.critic     - something related to perlcritic targets
     HELP            - defines texts to be used in  help  and  doc  targets
