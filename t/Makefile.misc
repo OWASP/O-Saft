@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.61 22/02/22 08:00:22
+#?      @(#) Makefile.misc 1.62 22/02/22 09:05:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.61
+_SID.misc          := 1.62
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -71,8 +71,8 @@ _ALL.devmodules.extern += Data::Dumper   File::Find Devel::Trace  Debug::Trace P
 _ALL.devmodules.extern += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
 _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
 
-ifndef CONTRIB.dir
-    CONTRIB.dir = contrib
+ifndef SRC.contrib.dir
+    SRC.contrib.dir = contrib
 endif
 
 # cloc detect file types (language) on file extension primarily. Unfortunately
@@ -135,7 +135,7 @@ _EXE.cipher_value.awk  := '\
 HELP-_misc1         = ____________________________________________ testing misc. _
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
-HELP-test.bunt      = test '$(CONTRIB.dir)/bunt.pl' with sample file
+HELP-test.bunt      = test '$(SRC.contrib.dir)/bunt.pl' with sample file
 
 HELP.misc           = $(_NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
@@ -155,7 +155,7 @@ test.bench.log:
 
 test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
-	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
+	-cat $(EXE.test.bunt) | $(SRC.contrib.dir)/bunt.pl
 
 ALL.testmisc       := test.bench test.bunt
 ALL.testmisc.log   := test.bench.log
@@ -434,7 +434,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.61: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.62: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -532,7 +532,7 @@ test.values:          $(ALL.test.values)
 
 _TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
 $(_TEST.keys.log):
-	@echo "# Makefile.misc 1.61: $(MAKE) test.keys.log" > $@
+	@echo "# Makefile.misc 1.62: $(MAKE) test.keys.log" > $@
 	@$(MAKE) -i test.keys >> $@ 2>&1
 test.keys.log: $(_TEST.keys.log)
 	@$(TRACE.target)
