@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.118 22/02/22 07:54:38
+#?      @(#) Makefile 1.119 22/02/22 08:51:50
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.118
+_SID            = 1.119
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -162,10 +162,10 @@ TEST.do         = SSLinfo.pl \
                   cloc-total.awk \
                   critic_345.sh \
                   test-bunt.pl.txt
-CRITIC.rc       = .perlcriticrc
+TEST.critic.rc  = .perlcriticrc
 SRC.test        = \
                   $(TEST.do:%=$(TEST.dir)/%) \
-                  $(CRITIC.rc:%=$(TEST.dir)/%)
+                  $(TEST.critic.rc:%=$(TEST.dir)/%)
 
 # documentation files
 DOC.dir         = docs
@@ -286,7 +286,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.118
+_INST.text      = generated from Makefile 1.119
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -518,8 +518,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.118
-tar:     GREP_EDIT  = 1.118
+GREP_EDIT           = 1.119
+tar:     GREP_EDIT  = 1.119
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
