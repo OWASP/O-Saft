@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.89 22/02/21 17:33:44
+#?      @(#) Makefile.help 1.90 22/02/22 08:11:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.89
+_SID.help          := 1.90
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -139,6 +139,10 @@ EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
 # NOTE: all EXE.* macros above cannot be shown using echo, eval or show target
 #       they all may return errors like: /bin/sh: 1: Syntax error:...
+
+ifndef EXE.echo
+    EXE.echo    = /bin/echo -e
+endif
 
 ifndef EXE.dummy
     EXE.dummy   = /bin/echo -n ""
@@ -298,21 +302,21 @@ _file-v%:
 #       why we use  $($($@)) instead of $($@)
 _notempty:
 	@if [ '$($($@))' = '' ]; then \
-	    $(ECHO) "$(HELP-$($@))"; \
-	    $(ECHO) "$(HELP_USAGE)"; \
+	    $(EXE.echo) "$(HELP-$($@))"; \
+	    $(EXE.echo) "$(HELP_USAGE)"; \
 	    exit 1; \
 	fi;
-	@$(ECHO) "$(HELP_HEADER)"
+	@$(EXE.echo) "$(HELP_HEADER)"
 
 _line:
 	@echo ""
-	@$(ECHO) "$(_TAB)$(_TAB)#$($($@))"
+	@$(EXE.echo) "$(_TAB)$(_TAB)#$($($@))"
 
 .PHONY: _notempty _line
 
 help-makefiletitle-%:
 	@$(TRACE.target)
-	@$(ECHO) "Makefile.$*$(_TAB)# $(HELP-help.test.$*)"
+	@$(EXE.echo) "Makefile.$*$(_TAB)# $(HELP-help.test.$*)"
 
 macros:
 	@$(TRACE.target)
@@ -334,11 +338,11 @@ rules: targets
 rules%me: targets.me
 
 # eval target quick&dirty:
-#       @$(ECHO) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
+#       @$(EXE.echo) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
 # pretty printed format using awk see below
 eval:
 	@$(TRACE.target)
-	@$(ECHO) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
+	@$(EXE.echo) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
 
 # Following targets are used to show information about variables and targets:
 #       echo, eval, macro, pmacro, show, target
@@ -355,13 +359,13 @@ eval:
 # FIXME: echo fails if the content of the variable contains braces or semicolon
 echo:
 	@$(TRACE.target)
-	@$(ECHO) '$($($@))'
+	@$(EXE.echo) '$($($@))'
 
 show: _notempty=show
 show: _notempty
 	@$(TRACE.target)
-	@$(ECHO) '$($@) = '
-	@$(ECHO) '$($($@))' | $(EXE.wordperline)
+	@$(EXE.echo) '$($@) = '
+	@$(EXE.echo) '$($($@))' | $(EXE.wordperline)
 
 macro: _notempty=macro
 macro: _notempty
