@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.27 22/02/22 07:57:50
+#?      @(#) Makefile.inc 1.28 22/02/22 08:39:38
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.27
+_SID.inc       := 1.28
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -89,7 +89,7 @@ ifndef MAKEFILE
         # Define a variable for myself, it is the first file in MAKEFILE_LIST.
         # $(MAKEFILE)  will be used where  any makefile is possible.
         # Makefile  is used when exactly Makefile file is meant.
-        # $(ALL.Makefiles)  is used, when all makefiles are needed.  Existance
+        # $(ALL.Makefiles)  is used, when all makefiles are needed.  Existence
         # of  ALL.Makefiles  can also be used to check if  this file should be
         # included.
 endif
@@ -137,8 +137,8 @@ ifndef _EXE.sort-opt
     _EXE.sort-opt      := -n -f
 endif
 
-ifndef __EXE.perldoc-opt
-    __EXE.perldoc-opt  := -n nroff
+ifndef _EXE.perldoc-opt
+    _EXE.perldoc-opt   := -n nroff
 endif
 
 ifndef TAB
