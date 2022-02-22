@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.60 22/02/21 17:33:53
+#?      @(#) Makefile.misc 1.61 22/02/22 08:00:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.60
+_SID.misc          := 1.61
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -180,7 +180,7 @@ HELP-cloc.total = same as cloc but added "total %" column
 cloc%:
 	@$(TRACE.target)
 	@$(EXE.cloc) $(TEST.opt.cloc) $(_TEST.cloc.src) | $(EXE.cloc.filter)
-	@$(ECHO) "$(_NL)# $(_TEST.cloc.hint)"
+	@$(EXE.echo) "$(_NL)# $(_TEST.cloc.hint)"
 
 cloc.stat:  TEST.opt.cloc  +=
 cloc.file:  TEST.opt.cloc  += --by-file
@@ -434,7 +434,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.60: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.61: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -532,7 +532,7 @@ test.values:          $(ALL.test.values)
 
 _TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
 $(_TEST.keys.log):
-	@echo "# Makefile.misc 1.60: $(MAKE) test.keys.log" > $@
+	@echo "# Makefile.misc 1.61: $(MAKE) test.keys.log" > $@
 	@$(MAKE) -i test.keys >> $@ 2>&1
 test.keys.log: $(_TEST.keys.log)
 	@$(TRACE.target)
