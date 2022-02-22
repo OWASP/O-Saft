@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.119 22/02/22 08:51:50
+#?      @(#) Makefile 1.120 22/02/22 09:02:05
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.119
+_SID            = 1.120
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -112,24 +112,25 @@ SRC.rc          = .$(SRC.pl)
 
 SRC.make        = Makefile
 SRC.misc        = README CHANGES
-SRC.inst        = $(CONTRIB.dir)/INSTALL-template.sh
+SRC.inst        = $(SRC.contrib.dir)/INSTALL-template.sh
 
 # contrib files
-CONTRIB.dir     = contrib
-CONTRIB.examples= filter_examples usage_examples
-CONTRIB.post.awk= \
-		  Cert-beautify.awk Cert-beautify.pl \
-		  HTML-simple.awk HTML-table.awk \
-		  JSON-array.awk JSON-struct.awk \
+SRC.contrib.dir     = contrib
+SRC.contrib.examples= filter_examples usage_examples
+SRC.contrib.post.awk= \
+		  Cert-beautify.awk \
+		  HTML-simple.awk   HTML-table.awk \
+		  JSON-struct.awk   JSON-array.awk \
 		  XML-attribute.awk XML-value.awk \
 		  lazy_checks.awk
-CONTRIB.post    = \
+SRC.contrib.post    = \
+		  Cert-beautify.pl \
 		  alertscript.pl \
 		  alertscript.cfg \
 		  bunt.pl \
 		  bunt.sh \
 		  symbol.pl
-CONTRIB.misc    = \
+SRC.contrib.misc    = \
 		  cipher_check.sh \
 		  critic.sh \
 		  gen_standalone.sh \
@@ -139,20 +140,20 @@ CONTRIB.misc    = \
 		  INSTALL-template.sh \
 		  Dockerfile.alpine-3.6
 
-CONTRIB.zap     = zap_config.sh zap_config.xml
+SRC.contrib.zap     = zap_config.sh zap_config.xml
 # some file should get the $(Project) suffix, which is appended later
-CONTRIB.complete= \
+SRC.contrib.complete= \
 		  bash_completion \
 		  dash_completion \
 		  fish_completion \
 		  tcsh_completion
 SRC.contrib     = \
-		  $(CONTRIB.complete:%=$(CONTRIB.dir)/%_$(Project)) \
-		  $(CONTRIB.examples:%=$(CONTRIB.dir)/%) \
-		  $(CONTRIB.post.awk:%=$(CONTRIB.dir)/%) \
-		  $(CONTRIB.post:%=$(CONTRIB.dir)/%) \
-		  $(CONTRIB.misc:%=$(CONTRIB.dir)/%) \
-		  $(CONTRIB.zap:%=$(CONTRIB.dir)/%)
+		  $(SRC.contrib.complete:%=$(SRC.contrib.dir)/%_$(Project)) \
+		  $(SRC.contrib.examples:%=$(SRC.contrib.dir)/%) \
+		  $(SRC.contrib.post.awk:%=$(SRC.contrib.dir)/%) \
+		  $(SRC.contrib.post:%=$(SRC.contrib.dir)/%) \
+		  $(SRC.contrib.misc:%=$(SRC.contrib.dir)/%) \
+		  $(SRC.contrib.zap:%=$(SRC.contrib.dir)/%)
 
 # test files
 TEST.dir        = t
@@ -202,7 +203,7 @@ GEN.text        = $(DOC.dir)/$(Project).txt
 GEN.wiki        = $(DOC.dir)/$(Project).wiki
 GEN.man         = $(DOC.dir)/$(Project).1
 GEN.pod         = $(DOC.dir)/$(Project).pod
-GEN.src         = $(CONTRIB.dir)/$(Project)-standalone.pl
+GEN.src         = $(SRC.contrib.dir)/$(Project)-standalone.pl
 GEN.pdf         = $(SRC.doc:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
@@ -286,9 +287,9 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.119
+_INST.text      = generated from Makefile 1.120
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
-			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(CONTRIB.dir)@'    \
+			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
 			-e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@' \
 			-e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@' \
@@ -518,8 +519,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.119
-tar:     GREP_EDIT  = 1.119
+GREP_EDIT           = 1.120
+tar:     GREP_EDIT  = 1.120
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -591,7 +592,7 @@ $(OSD.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
+$(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(SRC.contrib.dir) $(TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
