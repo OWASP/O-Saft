@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.156 22/02/21 23:13:49";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.157 22/02/22 01:22:10";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -77,7 +77,7 @@ sub _yINIT      { local $\ = "\n"; print __INIT(@_);    return; }
 sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
 sub _yline      { _yeast(__line($_[0]));                return; }
 sub _ynull      { _yeast("value <<undef>> means that internal variable is not defined @_"); return; }
-sub __trac      {}          # forward declaration
+sub __trac      {}      # forward declaration
 sub __trac      {
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
     my $ref  = shift;   # must be a hash reference
@@ -435,7 +435,16 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
                     _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
                 } else {
-                    _yeast_trac(\%cfg, $key);
+                    if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
+                        # SEE Make:OSAFT_MAKE (in Makefile.pod)
+                        #TODO: quick&dirty
+                        my $t0 = $cfg{'time0'};
+                        $cfg{'time0'} = STR_MAKEVAL;
+                        _yeast_trac(\%cfg, $key);
+                        $cfg{'time0'} = $t0;
+                    } else {
+                        _yeast_trac(\%cfg, $key);
+                    }
                 }
             }
         }
@@ -1150,7 +1159,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.156 2022/02/21
+1.157 2022/02/22
 
 =head1 AUTHOR
 
