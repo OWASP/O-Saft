@@ -48,7 +48,7 @@ The sub-headers in this in section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.42 22/02/21 17:33:52
+@(#) Makefile.pod 1.43 22/02/22 07:56:22
 
 =head1 AUTHOR
 
@@ -343,7 +343,6 @@ Where  t/Makefile  may include more files.
 
 Following names are used, which potentially conflict with make itself:
 
-    ECHO            - echo command
     MAKE            - make command
     MAKEFILE        - Makefile (i.g. myself, but may be redifined)
 
