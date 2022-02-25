@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.266 22/02/25 11:52:06",
+    SID_osaft   => "@(#) osaft.pm 1.267 22/02/25 13:49:48",
 
 };
 
@@ -3050,7 +3050,7 @@ our %cfg = (
                        )],      # fingerprint is special, see _ishexdata()
    #------------------+---------+----------------------------------------------
 
-    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
+    'ignore-out'    => [qw(https_body)],# commands (output) to be ignored, SEE Note:ignore-out
    # out->option key           default   description
    #--------------------------+-----+------------------------------------------
     'out' =>    {      # configurations for data to be printed
@@ -3070,7 +3070,8 @@ our %cfg = (
         'time_absolut'      => 0,   # 1: (trace) --traceTIME uses absolut timestamps
         'warning'           => 1,   # 1: print warnings
         'score'             => 0,   # 1: print scoring
-        'ignore'            => [],  # commands (output) to be ignored, SEE Note:ignore-out
+        'ignore'            => [qw(https_body)],
+                                    # commands (output) to be ignored, SEE Note:ignore-out
         'warnings_no_dups'  => [qw(303 304 412)],
                                     # do not print these warnings multiple times
                                     # SEE  Note:warning-no-duplicates
@@ -4380,7 +4381,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.266 2022/02/25
+1.267 2022/02/25
 
 =head1 AUTHOR
 
