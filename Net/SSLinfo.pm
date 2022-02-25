@@ -37,10 +37,12 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.275 22/02/14 16:54:24',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.276 22/02/25 19:04:26',
 };
 
-######################################################## public documentation #
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
+
 # Documentaion starts here, so  POD-style inline documentation  can be used for
 # functions also which will be extracted automatically by POD tools. All public
 # functions will be prefixed with a POD description.
@@ -524,7 +526,8 @@ follow the rules describend above.
 
 =cut
 
-############################################################## initialisation #
+#_____________________________________________________________________________
+#___________________________________________________________ initialisation __|
 
 use Exporter qw(import);
 use base qw(Exporter);
@@ -774,6 +777,14 @@ sub do_ssl_open($$$@);
 sub do_ssl_close($$);
 sub do_openssl($$$$);
 
+#_____________________________________________________________________________
+#___________________________________________________ internal trace methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
+
 sub _traceset   {
     $trace = $Net::SSLinfo::trace;          # set global variable
     $Net::SSLeay::trace = $trace    if (1 < $trace);
@@ -912,6 +923,9 @@ sub _traceSSLbitmasks   {
     return;
 } # _traceSSLbitmasks
 
+#_____________________________________________________________________________
+#__________________________________________________ internal data structure __|
+
 sub _ssleay_value_get   {
     #? retrun value of $type (option, timeout, verify_mode, verify_depth, OP) for specified function as formated string
     #  returns <<undef>> if specified function does not exist
@@ -933,8 +947,6 @@ sub _ssleay_value_get   {
     _trace("_ssleay_value_get ret=" . ($val || "undef"));
     return $val;
 } # _ssleay_value_get
-
-##################################################### internal data structure #
 
 my %_OpenSSL_opt = (    # openssl capabilities
     # openssl has various capabilities which can be used with options.
@@ -1287,6 +1299,9 @@ sub _SSLinfo_print  {
     return;
 } # _SSLinfo_print
 
+#_____________________________________________________________________________
+#______________________________________________________ public test methods __|
+
 sub ssleay_methods  {
             # not yet
             #  cert_type
@@ -1477,7 +1492,8 @@ sub datadump        {
     return $data;
 } # datadump
 
-########################################################## internal functions #
+#_____________________________________________________________________________
+#_______________________________________________________ internal functions __|
 
 ### _OpenSSL_opt_get()  defined later to avoid forward declaration
 
@@ -1549,6 +1565,24 @@ sub _check_port     {
     #dbx# _trace("_check_port =$port");
     return (defined $port) ? 1 : undef;
 } # _check_port
+
+sub _check_peer     {
+    # TBD
+    my ($ok, $x509_store_ctx) = @_;
+    _trace("_check_peer($ok, $x509_store_ctx)");
+    $_SSLinfo{'verify_cnt'} += 1;
+    return $ok;
+} # _check_peer
+
+sub _check_crl      {
+    # TBD
+    my $ssl = shift;
+    _trace("_check_crl()");
+    return;
+} # _check_crl
+
+sub _check_client_cert {print "##check_client_cert\n"; return; }
+#$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
 
 sub _ssleay_cert_get    {
     #? get specified value from SSLeay certificate
@@ -2093,7 +2127,8 @@ sub _openssl_x509   {
     return $data;
 } # _openssl_x509
 
-############################################################ public functions #
+#_____________________________________________________________________________
+#___________________________________________________________ public methods __|
 
 =pod
 
@@ -4027,27 +4062,13 @@ sub verify_altname  {
 
 sub verify_alias    { return verify_altname($_[0], $_[1]); }
 
-sub _check_peer     {
-    # TBD
-    my ($ok, $x509_store_ctx) = @_;
-    _trace("_check_peer($ok, $x509_store_ctx)");
-    $_SSLinfo{'verify_cnt'} += 1;
-    return $ok;
-} # _check_peer
-sub _check_client_cert {print "##check_client_cert\n"; return; }
-#$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
-
-sub _check_crl      {
-    # TBD
-    my $ssl = shift;
-    _trace("_check_crl()");
-    return;
-} # _check_crl
-
 sub error           {
     # TBD
     #return Net::SSLeay::ERR_get_error;
 } # error
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 sub _main_help      {
     #? print own help
