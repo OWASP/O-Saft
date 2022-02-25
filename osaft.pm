@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.265 22/02/23 11:36:01",
+    SID_osaft   => "@(#) osaft.pm 1.266 22/02/25 11:52:06",
 
 };
 
@@ -3062,6 +3062,7 @@ our %cfg = (
         'hint_check'        => 1,   # 1: print hints for +check commands
         'hint_info'         => 1,   # 1: print hints for +info commands
         'hint'              => 1,   # 1: print hints for +cipher +check +info
+        'http_body'         => 0,   # 1: print received HTTP body if explicitly requested
         'traceARG'          => 0,   # 1: (trace) print argument processing
         'traceCMD'          => 0,   # 1: (trace) print command processing
         'traceKEY'          => 0,   # 1: print internal variable names for %data and %checks
@@ -4379,7 +4380,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.265 2022/02/23
+1.266 2022/02/25
 
 =head1 AUTHOR
 
