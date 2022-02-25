@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.24 22/02/21 17:33:49
+#?      @(#) Makefile.exit 1.25 22/02/25 16:37:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.24
+_SID.exit          := 1.25
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -88,7 +88,7 @@ $(_TEST.exit.log):
 
 # not yet needed: test.log-compare-hint
 # TODO: diff not yet working proper
-test.exit.log: $(_TEST.exit.log) 
+testmsg.exit.log: $(_TEST.exit.log) 
 	@$(TRACE.target)
 	@$(TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.exit.log) \
@@ -99,7 +99,7 @@ test.exit.log: $(_TEST.exit.log)
 	@-$(EXE.log-compare-hint)
 # TODO: same target as test.warnings.log
 
-ALL.test.exit.log   = test.exit.log
+ALL.test.exit.log   = testmsg.exit.log
 
 test.exit.log-compare:  TEST.target_prefix  = test.exit
 test.exit.log-move:     TEST.target_prefix  = test.exit
