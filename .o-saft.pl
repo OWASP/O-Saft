@@ -29,13 +29,13 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.106 22/02/14 17:51:04
+#?      @(#) .o-saft.pl 1.107 22/02/25 13:51:18
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.rc = 1.106; # our own SID required for Makefile and some tools
+_SID.rc = 1.107; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -111,9 +111,6 @@ _SID.rc = 1.106; # our own SID required for Makefile and some tools
 --ignore-output=pci
 --ignore-output=fips
 --ignore-output=ev+
-
-# https_body contains the HTML page, not important
---ignore-output=https_body
 
 ###
 ### anonymise strings in output
