@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1069 22/02/25 12:14:25",
+    SID         => "@(#) yeast.pl 1.1070 22/02/25 13:48:51",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8214,9 +8214,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--nohttp')            { _set_cfg_use('http',   0);}
     if ($arg eq  '--https')             { _set_cfg_use('https',  1);}
     if ($arg eq  '--httspanon')         { _set_cfg_use('https',  2);} # NOT YET USED
-    if ($arg eq  '--nohttps')           { _set_cfg_use('https',  0);}
-    if ($arg eq  '--nosniname')         { _set_cfg_use('sni',    0);} # 0: don't use SNI, different than empty string
-    if ($arg eq  '--norc')              {                           } # simply ignore
+    if ($arg eq  '--nohttps')           { _set_cfg_use('https',       0); }
+    if ($arg =~ /^\--https?body$/i)     { _set_cfg_out('http_body',   1); } # SEE Note:--https_body
+    if ($arg eq  '--nosniname')         { _set_cfg_use('sni',         0); } # 0: don't use SNI, different than empty string
+    if ($arg eq  '--norc')              {                                 } # simply ignore
     if ($arg eq  '--sslerror')          { _set_cfg_use('ssl_error',   1); }
     if ($arg eq  '--nosslerror')        { _set_cfg_use('ssl_error',   0); }
     if ($arg eq  '--ssllazy')           { _set_cfg_use('ssl_lazy',    1); }
@@ -8451,7 +8452,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
     if ($arg =~ /^\+hpkp$/i)            { $arg = '+https_pins';     } # alias:
     if ($arg =~ /^\+pkp$p?pins$/i)      { $arg = '+https_pins';     } # alias: +pkp_pins before 19.12.19
-    if ($arg =~ /^\+https?${p}body$/i)  { _set_cfg_out('http_body', 0); } # spezial handling for +https_body
+    if ($arg =~ /^\+https?${p}body$/i)  { _set_cfg_out('http_body', 1); } # SEE Note:--https_body
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
@@ -8603,6 +8604,11 @@ if (_is_cfg_do('version') or (_is_cfg_use('mx')))             { $cfg{'need_netdn
 if (_is_cfg_do('version') or (_is_cfg_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
+
+if (_is_cfg_out('http_body')) { # SEE Note:ignore-out, SEE Note:--https_body
+    @{$cfg{'ignore-out'}} = grep{not /https_body/} @{$cfg{'ignore-out'}};
+    @{$cfg{'out'}->{'ignore'}} = grep{not /https_body/} @{$cfg{'out'}->{'ignore'}};
+}
 
 # SEE Note:Testing, sort
 # _dbx "unsorted: @{$cfg{'do'}}";
@@ -10037,17 +10043,6 @@ is used for aliases of commands or options. These lines are extracted by
    --help=alias
 
 
-=head2 Note:ignore-out
-
-The option  --no-cmd  uses the commands defined in  "cfg{'ignore-out'}".
-The purpose is to avoid  printing the results of these commands in output,
-because the output is too noisy (like some +bsi* commands).
-All data collections and checks are still done, just output of results are
-omitted. Technically these commands are not removed from cfg{do}, but just
-skipped in printdata() and printchecks(),  which makes implementation much
-easier.
-
-
 =head2 Note:anon-out
 
 Some texts in output, mainly in warning or verbose messages,  may disclose
@@ -10072,6 +10067,27 @@ Known (9/2020) variables and texts with potential information disclosure:
     cfg{RC-FILE}
     cfg{regex}->{anon_output}
     cmd{openssl}
+
+
+=head2 Note:ignore-out
+
+The option  --ignore-out  (same as  --no-cmd) adds commands to the list of
+commands  @cfg{out}->{ignore}.   The purpose is that values of the  listed
+commands should not be printed in output. This is used mainly for commands
+where theoutput will be noisy (like some +bsi* commands).
+All data collections and checks are still done, just output of results are
+omitted. Technically these commands are not removed from cfg{do}, but just
+skipped in printdata() and printchecks(),  which makes implementation much
+easier.
+
+
+=head2 Note:--https_body
+
++https_body  prints the HTTP response body of the target. This may be very
+noisy and is disabled by default. The option  --https_body  can be used to
+force printing the HTTP data. The option removes  'https_body'  from array
+cfg{out}->{ignore}.  For convenience and lacy users, some variants of this
+options are allowed.
 
 
 =head2 Note:warning-no-duplicates
