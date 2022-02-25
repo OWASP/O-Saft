@@ -65,10 +65,11 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1067 22/02/25 09:30:56",
+    SID         => "@(#) yeast.pl 1.1068 22/02/25 10:26:15",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
+#use Encode;    # see _load_modules()
 
 sub _set_binmode    {
     # set discipline for I/O operations (STDOUT, STDERR)
@@ -2384,6 +2385,10 @@ sub _load_modules       {
             _warn("112: value for '+sts_expired' not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
+    }
+    $err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
+    if ("" ne $err) {
+        warn STR_ERROR, "010: $err";
     }
 
     return if (0 < $osaft_standalone);  # SEE Note:Stand-alone
@@ -6443,6 +6448,7 @@ sub print_line($$$$$$)  {
     my ($legacy, $host, $port, $key, $text, $value) = @_;
         $text   = STR_NOTXT if not defined $text;   # defensive programming ..
         $value  = STR_UNDEF if not defined $value;  # .. missing variable declaration
+        $value  = Encode::decode("UTF-8", $value);
     # general format of a line is:
     #       host:port:#[key]:label: \tvalue
     # legacy=_cipher is special: does not print label and value
