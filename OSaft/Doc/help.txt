@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.87 22/02/25 12:00:11
+# SID   @(#) help.txt 1.88 22/02/25 13:58:25
 
 NAME
 
@@ -1606,6 +1606,12 @@ OPTIONS
       --disabled
 
           Only print result for ciphers not accepted by target.
+
+      --https_body
+
+          Prints HTTP response body of the target also, if requested with
+          +https_body  , which is disabled by default (because it may be huge
+          amount of data not related to SSL/TLS).
 
       --ignorecase
 
