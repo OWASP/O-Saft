@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1066 22/02/23 11:37:13",
+    SID         => "@(#) yeast.pl 1.1067 22/02/25 09:30:56",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -7619,7 +7619,6 @@ while ($#argv >= 0) {
         if ($typ eq 'OPENSSL_FIPS') { $cfg{'openssl_fips'}= $arg;   }
         if ($typ eq 'VERBOSE')      { $cfg{'verbose'}     = $arg;   }
         if ($typ eq 'DO')           { push(@{$cfg{'do'}}, $arg);    } # treat as command,
-        if ($typ eq 'NO_OUT')       { push(@{$cfg{'ignore-out'}}, $arg);}
         if ($typ eq 'EXE')          { push(@{$cmd{'path'}}, $arg);  }
         if ($typ eq 'LIB')          { push(@{$cmd{'libs'}}, $arg);  }
         if ($typ eq 'CALL')         { push(@{$cmd{'call'}}, $arg);  }
@@ -7667,6 +7666,13 @@ while ($#argv >= 0) {
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
         #  +---------+--------------+------------------------------------------
+        if ($typ eq 'NO_OUT') {
+            if ($arg =~ /^[,:]*$/) {            # special to set empty string
+                $cfg{'ignore-out'} = [];
+            } else {
+                push(@{$cfg{'ignore-out'}}, $arg);
+            }
+        }
         if ($typ eq 'CIPHER_ITEM')  {
             # $arg = lc($arg);   # case-sensitive
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
