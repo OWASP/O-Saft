@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1068 22/02/25 10:26:15",
+    SID         => "@(#) yeast.pl 1.1069 22/02/25 12:14:25",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8451,6 +8451,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
     if ($arg =~ /^\+hpkp$/i)            { $arg = '+https_pins';     } # alias:
     if ($arg =~ /^\+pkp$p?pins$/i)      { $arg = '+https_pins';     } # alias: +pkp_pins before 19.12.19
+    if ($arg =~ /^\+https?${p}body$/i)  { _set_cfg_out('http_body', 0); } # spezial handling for +https_body
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
