@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.86 22/02/18 18:40:00
+# SID   @(#) help.txt 1.87 22/02/25 12:00:11
 
 NAME
 
@@ -1789,6 +1789,8 @@ OPTIONS
           Do not print output (data or check result) for command 'CMD'. 'CMD'
           is any valid command, see  COMMANDS ,  without leading '+'.
           Option can be used multiple times.
+
+          --ignore-out=,    sets empty list.
 
       --score
 
