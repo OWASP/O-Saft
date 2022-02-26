@@ -37,8 +37,19 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.276 22/02/25 19:04:26',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.277 22/02/26 15:07:24'
 };
+
+my %STR = (     # TODO: import from OSaft::Text
+    ERROR   => "**ERROR:",
+    WARN    => "**wARNING:",
+    HINT    => "!!Hint:",
+    USAGE   => "**USAGE:",
+    DBX     => "#dbx#",
+    UNDEF   => "<<undef>>",
+    NOTXT   => "<<>>",
+    MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>"
+);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1200,8 +1211,7 @@ my %_SSLinfo= ( # our internal data structure
 
 #  $_SSLinfo_random # SEE Make:OSAFT_MAKE (in Makefile.pod)
 my $_SSLinfo_random = qr/ctx|master_key|session_(?:startdate|starttime|ticket)|ssl|x509/; # handled special
-my $_SSLinfo_random_text = '<<value not printed (OSAFT_MAKE exists)>>';
-    # same string as STR_MAKEVAL from osaft.pm
+my $_SSLinfo_random_text = $STR{MAKEVAL};
 
 sub _SSLinfo_reset  {
     #? reset internal data structure%_SSLinfo ; for internal use only
@@ -1654,7 +1664,7 @@ sub _ssleay_cert_get    {
             $ret .= ' ' . join(':', $type, $name);
         }
     }
-    _trace("_ssleay_cert_get '$key'=$ret");  # or warn "**WARNING: wrong key '$key' given; ignored";
+    _trace("_ssleay_cert_get '$key'=$ret");  # or warn "$STR{WARN} wrong key '$key' given; ignored";
     return $ret;
 } # _ssleay_cert_get
 
@@ -2244,8 +2254,8 @@ sub do_ssl_free     {
     #? free SSL objects of NET::SSLeay TCP connection
     my ($ctx, $ssl, $socket) = @_;
     close($socket)              if (defined $socket);
-    Net::SSLeay::free($ssl)     if (defined $ssl); # or warn "**WARNING: Net::SSLeay::free(): $!";
-    Net::SSLeay::CTX_free($ctx) if (defined $ctx); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
+    Net::SSLeay::free($ssl)     if (defined $ssl); # or warn "$STR{WARN} Net::SSLeay::free(): $!";
+    Net::SSLeay::CTX_free($ctx) if (defined $ctx); # or warn "$STR{WARN} Net::SSLeay::CTX_free(): $!";
     return;
 } # do_ssl_free
 
@@ -2490,7 +2500,7 @@ sub do_ssl_open($$$@) {
     {
       no warnings;  ## no critic (TestingAndDebugging::ProhibitNoWarnings)
       if (defined $Net::SSLinfo::next_protos) { # < 1.182
-        warn("**WARNING: 090: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead");
+        warn("$STR{WARN} 090: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead");
       }
     }
 
@@ -2568,25 +2578,25 @@ sub do_ssl_open($$$@) {
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'version'}= _ssleay_cert_get('version', $x509);
         } else {
-            warn("**WARNING: 651: Net::SSLeay >= 1.45 required for getting version");
+            warn("$STR{WARN} 651: Net::SSLeay >= 1.45 required for getting version");
         }
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
             $_SSLinfo{'altname'}= _ssleay_cert_get('altname', $x509);
         } else {
-            warn("**WARNING: 652: Net::SSLeay >= 1.33 required for getting subjectAltNames");
+            warn("$STR{WARN} 652: Net::SSLeay >= 1.33 required for getting subjectAltNames");
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
             $_SSLinfo{'cn'}     = _ssleay_cert_get('cn', $x509);
             $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
-            warn("**WARNING: 653: Net::SSLeay >= 1.30 required for getting commonName");
+            warn("$STR{WARN} 653: Net::SSLeay >= 1.30 required for getting commonName");
         }
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'fingerprint_md5'} = _ssleay_cert_get('md5',  $x509);
             $_SSLinfo{'fingerprint_sha1'}= _ssleay_cert_get('sha1', $x509);
             $_SSLinfo{'fingerprint_sha2'}= _ssleay_cert_get('sha2', $x509);
         } else {
-            warn("**WARNING: 654: Net::SSLeay >= 1.45 required for getting fingerprint_md5");
+            warn("$STR{WARN} 654: Net::SSLeay >= 1.45 required for getting fingerprint_md5");
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
@@ -2600,7 +2610,7 @@ sub do_ssl_open($$$@) {
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
         } else {
-            warn("**WARNING: 655: Net::SSLeay >= 1.46 required for getting some certificate checks");
+            warn("$STR{WARN} 655: Net::SSLeay >= 1.46 required for getting some certificate checks");
         }
         $_SSLinfo{'commonName'} = $_SSLinfo{'cn'};
         $_SSLinfo{'authority'}  = $_SSLinfo{'issuer'};
@@ -2761,7 +2771,7 @@ sub do_ssl_open($$$@) {
                 $_SSLinfo{'http_protocols'} =  $headers{(grep{/^Alternate-Protocol/i} keys %headers)[0] || ''};
                 # TODO: http_protocols somtimes fails, reason unknown (03/2015)
             } else { # any status code > 500
-                #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
+                #no print "$STR{WARN} http:// connection refused; consider using --no-http"; # no print here!
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open WARNING $src: " . $_SSLinfo{'http_status'});
                 if ($_SSLinfo{'http_status'} =~ m:^HTTP/... (50[12345]) :) {
                     # If we get status 50x, there is most likely a (local)
@@ -3478,7 +3488,7 @@ sub cipher_openssl  {
 # _SSLinfo_get()  does not modify the parameters.
 
 sub cipher_local    {
-    warn("**WARNING: 451: function obsolete, please use cipher_openssl()");
+    warn("$STR{WARN} 451: function obsolete, please use cipher_openssl()");
     return cipher_openssl(@_);
 } # cipher_local
 
