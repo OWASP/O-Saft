@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.121 22/02/22 09:43:51
+#?      @(#) Makefile 1.122 22/02/27 22:41:33
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.121
+_SID            = 1.122
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -287,7 +287,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.121
+_INST.text      = generated from Makefile 1.122
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -519,8 +519,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.121
-tar:     GREP_EDIT  = 1.121
+GREP_EDIT           = 1.122
+tar:     GREP_EDIT  = 1.122
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -645,12 +645,13 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 	    || echo tar zcf $@ $^
 
 # generating file containing our messages uses target from t/Makefile.warnings
-# hense make is called recursively for this special file
-# TODO: this a dirty hack, because no Makefiles from t/ should be used here
+# hence make is called recursively for this special file
+# TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	@$(TRACE.target)
+	@echo "# make $@"
 	@-if expr "$@" ":" ".*help=warnings" >/dev/null ; then \
-	    $(MAKE_COMMAND) -s warnings-info | sort > $@  ; \
+	    $(MAKE_COMMAND) -s warnings-info > $@  ; \
 	else \
 	    $(SRC.pl) --no-rc $* > $@ ; \
 	fi
