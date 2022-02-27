@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.122 22/02/27 22:41:33
+#?      @(#) Makefile 1.123 22/02/27 22:48:36
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.122
+_SID            = 1.123
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -218,7 +218,7 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 _HELP.opt_data  = +help --help=opt --help=commands --help=glossar --help=alias \
 		  --help=data --help=checks --help=regex --help=rfc \
                   --help=warnings
-GEN.HELP.data   = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
+GEN.DOC.data    = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
 
 # summary variables
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
@@ -237,7 +237,7 @@ ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst) $(GEN.HELP.data)
+ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst) $(GEN.DOC.data)
 ALL.docs        = $(SRC.doc) $(GEN.docs)
     # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
 #               # $(GEN.tags) added in t/Makefile.misc
@@ -287,7 +287,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.122
+_INST.text      = generated from Makefile 1.123
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -484,7 +484,7 @@ HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-docs       = generate '$(GEN.docs)'
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
-HELP-help.data  = generate '$(GEN.HELP.data)' for $(SRC.tcl)
+HELP-doc.data   = generate '$(GEN.DOC.data)' for $(SRC.tcl)
 HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
@@ -519,8 +519,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.122
-tar:     GREP_EDIT  = 1.122
+GREP_EDIT           = 1.123
+tar:     GREP_EDIT  = 1.123
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -535,10 +535,10 @@ clear.all:  clean.tar clean
 clean.all:  clean.tar clean
 tgz:        tar
 gen.all:    $(ALL.gen)
-help.data:  $(GEN.HELP.data)
-helpdata:   $(GEN.HELP.data)
+doc.data:   $(GEN.DOC.data)
+docdata:    $(GEN.DOC.data)
 tcl.data:
-	@echo "**ERROR: ancient target; please use 'help.data'"
+	@echo "**ERROR: ancient target; please use 'doc.data'"
 tcldata:    tcl.data
 
 # docker target uses project's own script to build and remove the image
@@ -649,7 +649,6 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	@$(TRACE.target)
-	@echo "# make $@"
 	@-if expr "$@" ":" ".*help=warnings" >/dev/null ; then \
 	    $(MAKE_COMMAND) -s warnings-info > $@  ; \
 	else \
