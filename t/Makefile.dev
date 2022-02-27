@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.49 22/02/22 09:05:30
+#?      @(#) Makefile.dev 1.50 22/02/27 11:13:59
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.49
+_SID.dev           := 1.50
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -111,7 +111,7 @@ LIST.osaft-dbx     := \
 	--tests \
 	--test-data     --test-init --test-maps --test-prot --test-regex    \
 	--test-ciphers  --test-ciphers-list     --test-ciphers-show \
-			--test-ciphers-sort	--test-ciphers-overview \
+	--test-memory   --test-ciphers-sort	--test-ciphers-overview \
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
