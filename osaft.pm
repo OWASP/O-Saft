@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.267 22/02/25 13:49:48",
+    SID_osaft   => "@(#) osaft.pm 1.268 22/02/27 11:52:23",
 
 };
 
@@ -2257,10 +2257,12 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
     '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
     '0x030000AD' => [qw(RSA-PSK-AES256-GCM-SHA384       RSA_PSK_WITH_AES_256_GCM_SHA384)],
-    '0x030000AE' => [qw(PSK-AES128-CBC-SHA256           PSK_WITH_AES_128_CBC_SHA256)],
-    '0x030000AF' => [qw(PSK-AES256-CBC-SHA384           PSK_WITH_AES_256_CBC_SHA384)],
-    '0x030000B0' => [qw(PSK-SHA256                      PSK_WITH_NULL_SHA256)],
-    '0x030000B1' => [qw(PSK-SHA384                      PSK_WITH_NULL_SHA384)],
+#   '0x030000AE' => [qw(PSK-AES128-CBC-SHA256           PSK_WITH_AES_128_CBC_SHA256)],
+#   '0x030000AF' => [qw(PSK-AES256-CBC-SHA384           PSK_WITH_AES_256_CBC_SHA384)],
+    '0x030000AE' => [qw(PSK-AES128-SHA256               PSK_WITH_AES_128_CBC_SHA256)],  # openssl 1.1.1k
+    '0x030000AF' => [qw(PSK-AES256-SHA384               PSK_WITH_AES_256_CBC_SHA384)],  # openssl 1.1.1k
+    '0x030000B0' => [qw(PSK-NULL-SHA256                 PSK_WITH_NULL_SHA256)],
+    '0x030000B1' => [qw(PSK-NULL-SHA384                 PSK_WITH_NULL_SHA384)],
     '0x030000B2' => [qw(DHE-PSK-AES128-SHA256           DHE_PSK_WITH_AES_256_CBC_SHA256)],
     '0x030000B3' => [qw(DHE-PSK-AES256-SHA384           DHE_PSK_WITH_AES_256_CBC_SHA384)],
     '0x030000B4' => [qw(DHE-PSK-SHA256                  DHE_PSK_WITH_NULL_SHA256)],
@@ -2290,10 +2292,10 @@ our %cipher_names = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x0300C0A9' => [qw(PSK-AES256-CCM8                 PSK_WITH_AES_256_CCM_8)],       # RFC 6655
     '0x0300C0AA' => [qw(DHE-PSK-AES128-CCM8             DHE_PSK_WITH_AES_128_CCM_8)],   # RFC 6655
     '0x0300C0AB' => [qw(DHE-PSK-AES256-CCM8             DHE_PSK_WITH_AES_256_CCM_8)],   # RFC 6655
-    '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)], # RFC 7251
-    '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)], # RFC 7251
-    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM8           ECDHE_ECDSA_WITH_AES_128_CCM_8)], # RFC 7251
-    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM8           ECDHE_ECDSA_WITH_AES_256_CCM_8)], # RFC 7251
+    '0x0300C0AC' => [qw(ECDHE-ECDSA-AES128-CCM          ECDHE_ECDSA_WITH_AES_128_CCM)], # RFC 7251
+    '0x0300C0AD' => [qw(ECDHE-ECDSA-AES256-CCM          ECDHE_ECDSA_WITH_AES_256_CCM)], # RFC 7251
+    '0x0300C0AE' => [qw(ECDHE-ECDSA-AES128-CCM8         ECDHE_ECDSA_WITH_AES_128_CCM_8)], # RFC 7251
+    '0x0300C0AF' => [qw(ECDHE-ECDSA-AES256-CCM8         ECDHE_ECDSA_WITH_AES_256_CCM_8)], # RFC 7251
     '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/7507.html
     '0x030000FF' => [qw(INFO_SCSV                       EMPTY_RENEGOTIATION_INFO_SCSV)],
     '0x0300C01A' => [qw(SRP-3DES-EDE-CBC-SHA            SRP_SHA_WITH_3DES_EDE_CBC_SHA)],
@@ -2509,6 +2511,8 @@ our %cipher_alias = (   # TODO: define and move to in OSaft/Cipher.pm
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],       #
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],       #
     '0x030000AD' => [qw(PSK-RSA-AES256-GCM-SHA384)],    # probably a typo
+    '0x030000AE' => [qw(PSK-AES128-CBC-SHA256)],
+    '0x030000AF' => [qw(PSK-AES256-CBC-SHA384)],
     '0x030000B2' => [qw(DHE-PSK-AES128-CBC-SHA256)],    # openssl 1.1.1k
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)],  # see Note(c) above
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# see Note(c) above
@@ -4381,7 +4385,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.267 2022/02/25
+1.268 2022/02/27
 
 =head1 AUTHOR
 
