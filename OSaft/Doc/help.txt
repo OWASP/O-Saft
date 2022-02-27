@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.88 22/02/25 13:58:25
+# SID   @(#) help.txt 1.89 22/02/27 10:35:39
 
 NAME
 
@@ -4701,6 +4701,10 @@ TESTING
           described above,  --test-init  exits straight before performing the
           specified commands on the target.  Therefore it prints the settings
           in  %cfg  containing all applied commands and options.
+
+      --test-memory
+
+          Print overview of variables' memory usage, used for debugging only.
 
       --test-methods
 
