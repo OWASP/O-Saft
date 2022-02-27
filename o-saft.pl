@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1070 22/02/25 13:48:51",
+    SID         => "@(#) yeast.pl 1.1071 22/02/27 11:53:16",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1614,7 +1614,6 @@ _yeast_TIME("cfg}");
         'AECDH-DES-CBC3-SHA'    => [qw(  weak SSLv3 3DES  168 SHA1 None  ECDH        0 :)],
         'AECDH-NULL-SHA'        => [qw(  weak SSLv3 None    0 SHA1 None  ECDH        0 :)],
         'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)], # openssl: MEDIUM
-        'PSK-SHA256'            => [qw( weak TLSv12 None   0   SHA256 PSK   PSK         1 :)],
         'PSK-SHA'               => [qw(  weak SSLv3 None    0 SHA1 RSA   DH          0 :)],
         'AES128-SHA'            => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   RSA        80 :)],
         'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
@@ -1895,12 +1894,6 @@ _yeast_TIME("cfg}");
         'PSK-AES128-CCM8'               => [qw( HIGH TLSv12 AESCCM8 128 AEAD  PSK   PSK        91 :)],
         'PSK-AES256-CCM8'               => [qw( HIGH TLSv12 AESCCM8 256 AEAD  PSK   PSK        91 :)],
 
-        # from http://tools.ietf.org/html/rfc725
-        'ECDHE-RSA-AES128-CCM'          => [qw( HIGH TLSv12 AESCCM  128 AEAD  ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES256-CCM'          => [qw( HIGH TLSv12 AESCCM  256 AEAD  ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES128-CCM8'         => [qw( HIGH TLSv12 AESCCM8 128 AEAD  ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES256-CCM8'         => [qw( HIGH TLSv12 AESCCM8 256 AEAD  ECDSA ECDH       91 :)],
-
         # from: http://botan.randombit.net/doxygen/tls__suite__info_8cpp_source.html
         #/ RSA_WITH_AES_128_CCM           (0xC09C, "RSA",   "RSA",  "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
         #/ RSA_WITH_AES_256_CCM           (0xC09D, "RSA",   "RSA",  "AES-256/CCM",   32, 4, "AEAD", 0, "SHA-256");
@@ -1985,8 +1978,6 @@ _yeast_TIME("cfg}");
         'DHE-PSK-SHA384'                => [qw( weak TLSv12 None   0   SHA384 PSK   DHE         1 :)],
         'RSA-PSK-AES128-SHA256'         => [qw( high TLSv12 AES    128 SHA256 PSK   RSA         1 :)],
         'RSA-PSK-AES256-SHA384'         => [qw( high TLSv12 AES    256 SHA384 PSK   RSA         1 :)],
-        'RSA-PSK-SHA256'                => [qw( weak TLSv12 AES    0   SHA256 PSK   RSA         1 :)],
-        'RSA-PSK-SHA384'                => [qw( weak TLSv12 AES    0   SHA384 PSK   RSA         1 :)],
 
         # from http://tools.ietf.org/html/rfc6367
         'ECDHE-ECDSA-CAMELLIA128-SHA256'=> [qw( HIGH TLSv12 CAMELLIA 128 SHA256 ECDSA ECDH       100 : )],
@@ -4150,6 +4141,9 @@ sub _get_data0          {
             # TODO: don't show warning 203 if only this in Net::SSLinfo::errors
         if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
             _warn("206: $_") foreach Net::SSLinfo::errors();
+            # following OK, i.e. if SSLv2 or SSLv3 is not supported:
+            #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
+            #   ....SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1383:
         } else {
             _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
         }
