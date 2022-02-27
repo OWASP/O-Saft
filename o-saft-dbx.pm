@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.158 22/02/27 09:37:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.159 22/02/27 10:07:08";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -156,16 +156,30 @@ sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cip
     print "
 === ciphers sorted according strength ===
 =
-= OWASP openssl cipher
+= Print overview of all available ciphers sorted according OWASP rating.
+=
+=   description of columns:
+=       OWASP       - OWASP rating (A, B, C, D)
+=       openssl     - strength gven bei OpenSSL
+=       cipher suite- OpenSSL suite name
+=
+= OWASP openssl cipher suite
 =------+-------+----------------------------------------------";
     my @sorted;
+    my @cnt = keys %ciphers;
     # TODO: sorting as in yeast.pl _sort_results()
     foreach my $c (sort_cipher_names(keys %ciphers)) {
         push(@sorted, sprintf("%2s\t%s\t%s", get_cipher_owasp($c), get_cipher_sec($c), $c));
     }
     print foreach sort @sorted;
     print "=------+-------+----------------------------------------------";
-    print "= OWASP openssl cipher";
+    print "= OWASP openssl cipher suite";
+    printf("= %s sorted ciphers\n", scalar @sorted);
+    # FIXME: list contains duplicates; following check fails
+    if ($#cnt != $#sorted) {
+        printf("= %s sorted number of ciphers %s <> %s number of ciphers\n",
+               STR_WARN, $#sorted + 1, $#cnt + 1);
+    }
     return;
 } # _yeast_ciphers_sorted
 
@@ -180,11 +194,12 @@ sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cip
 =   description of columns:
 =       key         - hex key for cipher suite
 =       cipher sec. - cipher suite security is known
-=       cipher name - cipher suite (openssl) name exists
+=       cipher name - cipher suite (OpenSSL) name exists
 =       cipher const- cipher suite constant name exists
 =       cipher desc - cipher suite known in internal data structure
 =       cipher alias- other (alias) cipher suite names exist
 =       name + desc - name and description exists
+=       cipher suite- OpenSSL suite name
 =   description of values:
 =       *    value present
 =       -    value missing
@@ -237,7 +252,7 @@ sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cip
     print __data_title("key", "security", " name ",  " const",  "  desc.", "  alias", "  desc.", "  suite");
     printf("= %s ciphers\n", $cnt);
     printf("= identified errors: ");
-    printf("%6s=%-2s,", $_, $err{$_}) foreach keys %err;
+    printf("%6s=%-2s,", $_, $err{$_}) foreach sort keys %err;
     printf("\n\n");
     return;
 } # _yeast_ciphers_overview
@@ -261,11 +276,11 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
 =       bits        - Key Size
 =       mac         - MAC Algorithm
 =       sec         - Security
-=       name        - OpenSSL suite name
+=       cipher suite- OpenSSL suite name
 =";
     my $cnt = 0;
     printf("=%9s\t%9s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "name");
+           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "cipher suite");
     printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
     # key in %ciphers is the cipher suite name, but we want the ciphers sorted
     # according their hex constant; perl's sort need a copare funtion
@@ -299,7 +314,7 @@ sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cip
     }
     printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
     printf("=%14s\t%15s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "name");
+           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "cipher suite");
     printf("= %s ciphers\n", $cnt);
     return;
 } # _yeast_ciphers_show
@@ -1159,7 +1174,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.158 2022/02/27
+1.159 2022/02/27
 
 =head1 AUTHOR
 
