@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.159 22/02/27 10:07:08";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.160 22/02/27 10:36:19";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -156,10 +156,10 @@ sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cip
     print "
 === ciphers sorted according strength ===
 =
-= Print overview of all available ciphers sorted according OWASP rating.
+= Print overview of all available ciphers sorted according OWASP scoring.
 =
 =   description of columns:
-=       OWASP       - OWASP rating (A, B, C, D)
+=       OWASP       - OWASP scoring (A, B, C, D)
 =       openssl     - strength gven bei OpenSSL
 =       cipher suite- OpenSSL suite name
 =
@@ -640,6 +640,7 @@ sub _yeast_test_help    {
 =   --test-ciphers-show     complete list of ciphers
 =   --test-ciphers-sorted   list of ciphers sorted according strength
 =   --test-ciphers-overview overview of all available ciphers with all attributes
+=   --test-memory   overview of variables' memory usage
 =   --test-methods  available methods for openssl in Net::SSLeay
 =   --test-sclient  available options for 'openssl s_client' from Net::SSLeay
 =   --test-sslmap   constants for SSL protocols from Net::SSLeay
@@ -962,25 +963,25 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit
     _yeast($arg);
-    _yeast_test_help()        if ('--test'      eq $arg);
-    _yeast_test_help()        if ('--tests'     eq $arg);
-    _yeast_test_sclient()     if ('--testsclient' eq $arg);
-    _yeast_test_ssleay()      if ('--testssleay'  eq $arg);
-    _yeast_test_sslmap()      if ('--testsslmap'  eq $arg);
-    _yeast_test_methods()     if ('--testmethods' eq $arg);
-    _yeast_test_memory()      if ('--testmemory'  eq $arg);
+    _yeast_test_help()        if ('--test'          eq $arg);
+    _yeast_test_help()        if ('--tests'         eq $arg);
+    _yeast_test_sclient()     if ('--testsclient'   eq $arg); # Net::SSLinfo
+    _yeast_test_ssleay()      if ('--testssleay'    eq $arg); # Net::SSLinfo
+    _yeast_test_sslmap()      if ('--testsslmap'    eq $arg); # Net::SSLinfo
+    _yeast_test_methods()     if ('--testmethods'   eq $arg); # Net::SSLinfo
+    _yeast_test_memory()      if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    osaft::test_regex()       if ('regex'       eq $arg);
-    _yeast_test_data()        if ('data'        eq $arg);
-    _yeast_test_init()        if ('init'        eq $arg);
-    _yeast_test_maps()        if ('maps'        eq $arg);
-    _yeast_test_prot()        if ('prot'        eq $arg);
+    osaft::test_regex()       if ('regex'           eq $arg);
+    _yeast_test_data()        if ('data'            eq $arg);
+    _yeast_test_init()        if ('init'            eq $arg);
+    _yeast_test_maps()        if ('maps'            eq $arg);
+    _yeast_test_prot()        if ('prot'            eq $arg);
     # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
-    _yeast_ciphers()          if ('ciphers'     eq $arg);
+    _yeast_ciphers()          if ('ciphers'         eq $arg);
     $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
     _yeast_ciphers_sorted()   if ($arg =~ m/^sort(?:ed)?/);
-    _yeast_ciphers_show()     if ('show'        eq $arg);
-    _yeast_ciphers_overview() if ('overview'    eq $arg);
+    _yeast_ciphers_show()     if ('show'            eq $arg);
+    _yeast_ciphers_overview() if ('overview'        eq $arg);
    #_yeast_ciphers_list()    if ('list'     eq $arg);
     if ('list'     eq $arg) {
         # FIXME: --test-ciphers is experimental
@@ -1174,7 +1175,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.159 2022/02/27
+1.160 2022/02/27
 
 =head1 AUTHOR
 
