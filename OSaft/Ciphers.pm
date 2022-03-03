@@ -44,6 +44,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, "..")         if (__FILE__ eq $_me);  # allow call from within OSaft/
     unshift(@INC, "lib");
     unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
     unshift(@INC, "bin");
@@ -52,7 +53,7 @@ BEGIN {
 }
 
 my  $VERSION      = '12.11.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.57 22/03/03 10:02:17";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.58 22/03/03 11:15:26";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -261,30 +262,17 @@ our @EXPORT_OK  = qw(
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
-# internal wrappers for main's methods
-# _trace() and alike should be available when this file is `use'd from another
-# file, or if this file is called directly (as main).  Hence we need to define
-# _trace() depending on the existance of ::_trace(). Unfortunately Perl's subs
-# are defined at startup, hence when a condition (if-then-else) is used,  Perl
-# bails out with an error  "Subroutine _trace redefined ...".
-# That's why the check is done inside _trace() itself.
-# TODO: only _trace() implemented correctly, as others are not yet used
-sub _trace      {   ## no critic qw(Subroutines::RequireArgUnpacking)
-    if (defined &::_trace) {
-        ::_trace(@_);
-    } else {
-        #print "#$0: @_\n"; # no trace output if called itself
-    }
-    return;
-} # _trace()
-sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
-sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
-sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
-sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
+#_____________________________________________________________________________
+#_______________________________________________________ internal functions __|
 
-sub _warn       { my @args = @_; carp("**WARNING: ", join(' ', @args)); return; }
-sub vprint      { my @args = @_; return if (1 > $VERBOSE); print("# ", join(' ', @args) . "\n");  return; }
-sub v2print     { my @args = @_; return if (2 > $VERBOSE); print("# ", join(' ', @args) . "\n");  return; }
+# SEE Perl:Undefined subroutine
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n"); return; } if not defined &_trace;
+*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $VERBOSE); return; } if not defined &_v_print;
+*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $VERBOSE); return; } if not defined &_v2print;
+# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
+
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -1321,7 +1309,7 @@ our @_keys;
 sub _ciphers_init_iana  {
     my @keys;
 
-    vprint "initialise from IANA tls-parameters.txt ...";
+    _v_print("initialise from IANA tls-parameters.txt ...");
     foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
         if (grep{/^$key$/} @keys) {
             _warn("521: duplicate IANA key: »$key«");
@@ -1339,18 +1327,18 @@ sub _ciphers_init_iana  {
     foreach my $key (qw(0x0300CCA8 0x0300CCA9 0x0300CCAA 0x0300CCAB 0x0300CCAC 0x0300CCAD 0x0300CCAE)) {
         $ciphers{$key}->{'rfc'} = "7905";
     }
-    vprint "  keys:    " . ($#keys + 1);
-    vprint "  ciphers: " . scalar(keys %ciphers);
+    _v_print("  keys:    " . ($#keys + 1));
+    _v_print("  ciphers: " . scalar(keys %ciphers));
     return @keys;
 } # _ciphers_init_iana
 
 sub _ciphers_init_osaft {
-    vprint "initialise from OSaft settings ...";
+    _v_print("initialise from OSaft settings ...");
     foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
         if (grep{/^$key$/} @_keys) {
-            v2print("  found O-Saft key: »$key«");
+            _v2print("  found O-Saft key: »$key«");
         } else {
-            v2print("  new   O-Saft key: »$key«");
+            _v2print("  new   O-Saft key: »$key«");
             push(@_keys, $key);
             $ciphers{$key}->{'rfc'}  = '';
             $ciphers{$key}->{'dtls'} = '';
@@ -1385,13 +1373,13 @@ sub _ciphers_init_osaft {
     undef %OSaft::Ciphers::_ciphers_const;
     undef %OSaft::Ciphers::_ciphers_names;
     undef %OSaft::Ciphers::_ciphers_osaft;
-    #vprint "  keys:    " . ($#_keys + 1);
-    vprint "  ciphers: " . scalar(keys %ciphers);
+    #_v_print("  keys:    " . ($#_keys + 1));
+    _v_print("  ciphers: " . scalar(keys %ciphers));
     return;
 } # _ciphers_init_osaft
 
 sub _ciphers_init_openssl   {
-    vprint "initialise data from »openssl ciphers -V« ...";
+    _v_print("initialise data from »openssl ciphers -V« ...");
     foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
         if (grep{/^$key$/} @_keys) {
             _warn("522: duplicate openssl key: »$key«");
@@ -1409,7 +1397,7 @@ sub _ciphers_init_openssl   {
         my $name                = $OSaft::Ciphers::_ciphers_openssl_all{$key}[6];
         $ciphers_names{$key}->{'openssl'} = $name;
     }
-    vprint "  ciphers: " . scalar(keys %ciphers);
+    _v_print("  ciphers: " . scalar(keys %ciphers));
     return;
 } # _ciphers_init_openssl
 
@@ -1587,7 +1575,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.57 2022/03/03
+1.58 2022/03/03
 
 =head1 AUTHOR
 
