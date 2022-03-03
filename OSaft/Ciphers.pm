@@ -10,13 +10,13 @@
 
 =head1 NAME
 
-OSaft::Ciphers - common perl module to define O-Saft ciphers
+OSaft::Ciphers - common perl module to define cipher suites for O-Saft
 
 #####
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
 
 ########################  E X P E R I M E N T A L  #######################
-################  not used in O-Saft 19.04.19 .. 20.12.31  ###############
+################  not used in O-Saft 19.04.19 .. 21.12.31  ###############
 
 =cut
 
@@ -25,12 +25,8 @@ OSaft::Ciphers - common perl module to define O-Saft ciphers
 ## 0.12  0.00  0:00.12  96%  0k  6668k
 ## 0.11  0.00  0:00.11  98%  0k  6852k
 ## 0.14  0.01  0:00.16  97%  0k  7100k
+## 0.17  0.00  0:00.18  99%  0k 10360k
 
-
-#############
-# RFC in OSaft/_ciphers_iana.pm abgeglichen mit https://tools.ietf.org/rfc/rfcXXXX.txt
-#   d.h. keys passen zu den Konstanten
-#############
 
 # TODO: see comment at %ciphers_names
 
@@ -56,7 +52,7 @@ BEGIN {
 }
 
 my  $VERSION      = '12.11.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.56 22/02/08 23:11:00";
+my  $SID_ciphers  = "@(#) Ciphers.pm 1.57 22/03/03 10:02:17";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -67,11 +63,11 @@ use osaft qw(print_pod);
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
 
-# more public documentation, see start of methods section, and at end of file.
+# More public documentation, see start of methods section, and at end of file.
 
 ## no critic qw(Variables::ProtectPrivateVars)
 #  Our private variable names start with an  _  as suggested by percritic.
-#  However, percritic is too stupid to recognice such names if the is fully
+#  However, percritic is too stupid to recognice such names if it is fully
 #  qualified with preceding package name.
 
 ## no critic qw(Documentation::RequirePodSections)
@@ -79,7 +75,7 @@ use osaft qw(print_pod);
 
 ## no critic qw(Documentation::RequirePodAtEnd)
 #  Our POD is inline as it serves for documenting the code itself too.
-#  But: this is a violation for severity 1, which is fixed and the produces
+#  But: this is a violation for severity 1, which is fixed and then produces
 #       another violation for severity 2.
 
 ## no critic qw(Documentation::RequirePodLinksIncludeText)
@@ -112,7 +108,7 @@ Utility package for O-Saft (o-saft.pl and related tools). This package declares
 and defines common L</VARIABLES> and L</METHODS> to be used in the calling tool.
 It contains the primary data structure for cipher suites.
 
-This documentaion is intended for developers. Users should read any of the help
+The documentation is intended for developers. Users should read any of the help
 texts for example provided by O-Saft, i.e. C<o-saft.pl --help>.
 
 This module provides  additional functionality  to list and check the used data
@@ -123,7 +119,7 @@ this additional functionality, please read descriptions there.
 
 Following functions (methods) must be defined in the calling program:
 
-None (06/2016).
+None (06/2021).
 
 =head1 CONCEPT
 
@@ -132,7 +128,7 @@ It's defined as a static hash with the cipher's ID (hex number) as the hash key
 and all cipher suite data (in an array) as value for that hash key. For example
 I<AES256-SHA256>:
 
-    '0x00,0x3D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)],
+    '0x03000003D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)],
 
 For a more detailed description, please use:
 
@@ -140,35 +136,30 @@ For a more detailed description, please use:
 
 or consult the source code directly, in particular  C<%ciphers_desc>.
 
-The main key -aka ID- to identify a cipher suite is the identifier (hex number)
-of a cipher suite as defined vy IANA. This key is also used in all other data
-structures related to ciphers.
+The main key -aka ID- to identify a cipher suite is a 32-bit key where the last
+16 bits are the numbers as defined by IANA and/or various RFCs.
+This key is also used in all other data structures related to ciphers.
 
 Other data, related to the cipher suite (like the cipher suite name, the cipher
-suite constant) are defined in additional data structures C<%ciphers_const> and
-C<%ciphers_names>.
+suite constant) are defined in additional data structures  C<%ciphers_names> ,
+C<%ciphers_const>  and  C<%ciphers_alias>.
 
-Each cipher suite is defined as a perl array (,see above) and will be converted
+Each cipher suite is defined as a perl array (see above)  and will be converted
 to a perl hash at initialisation like:
 
-    '0x00,0x3D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
+    '0x03000003D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
 
 Such a hash is simpler to use. Finally a getter method (see L</METHODS>) is
 provided for each value.
 
-This approach to specify the definition, which must be done by developers, in a
-simple table, which then will be converted into a hash  automatically, is based
-on the consideration that the data structure  for all cipher suite  needs to be
-maintained very carefully. It is the author's opinion that tabular data is more
-easy to maintain than structured data.
-
 =cut
 
-#The decision to use an array with proper getter methods (see METHODS) rather
-#than a hash is based on the consideration that the cipher suite data structure
-#needs to be maintained very carefully. It's the author's opinion that tabular
-#data is simpler to maintain than structured data, which requires the hash key
-#for each value in each line.
+#This approach to specify the definition,  which must be done by developers,  is
+#is based on the consideration that the corresponding data structure needs to be
+#maintained very carefully. Hence the description of all (known) cipher suite is
+#done in a simple, which then will be converted into a hash automatically. It is
+#the author's opinion that tabular data is more easy to maintain than structured
+#data.
 
 =pod
 
@@ -190,8 +181,8 @@ See also:  OSaft/Ciphers.pm --usage
 
 =head2 Documentaion
 
-This documentaion describes the public variables and methods only,  but not the
-internal ones, in particular the  C<print*()> functions.  Please see the source
+This documentation describes the public variables and methods only, but not the
+internal ones, in particular the  C<show_*()> functions.  Please see the source
 itself for that.
 
 =head1 VARIABLES
@@ -270,7 +261,7 @@ our @EXPORT_OK  = qw(
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
-# interanl wrappers for main's methods
+# internal wrappers for main's methods
 # _trace() and alike should be available when this file is `use'd from another
 # file, or if this file is called directly (as main).  Hence we need to define
 # _trace() depending on the existance of ::_trace(). Unfortunately Perl's subs
@@ -333,7 +324,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # :    (colon) is empty marker (need for other tools
         ],
     'sample'        => { # example
-        '0x00,0x3D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)], # AES256-SHA256
+      '0x03000003D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)], # AES256-SHA256
         },
 ); # %ciphers_desc
 
@@ -343,7 +334,7 @@ our %ciphers_desc = (   # description of following %ciphers table
 our %ciphers = (
     #? list of all ciphers, will be generated in _ciphers_init()
     #------------------+----+----+----+----+----+----+-------+----+---+-------,
-    # hex,hex   => [qw( ssl  keyx auth enc  bits mac  DTLS-OK RFC  sec tags )],
+    # hex       => [qw( ssl  keyx auth enc  bits mac  DTLS-OK RFC  sec tags )],
     #------------------+----+----+----+----+----+----+-------+----+---+-------,
     #------------------+----+----+----+----+----+----+-------+----+---+-------,
 # ...
@@ -357,7 +348,7 @@ our %ciphers = (
 our %ciphers_const = (
     #? list of cipher suite constant names, will be generated in _ciphers_init()
     #------------------+-------+-------+-------+--------,
-    # hex,hex   => [qw( iana    OpenSSL openssl osaft )],
+    # hex       => [qw( iana    OpenSSL openssl osaft )],
     #                             (osaft: SSL_CK_ and TLS_ prefix missing)
     #------------------+-------+-------+-------+--------,
 # ...
@@ -367,7 +358,7 @@ our %ciphers_const = (
 our %ciphers_names = (
     #? list of cipher suite names, will be generated in _ciphers_init()
     #------------------+-------+-------+-------+--------,
-    # hex,hex   => [qw( iana    OpenSSL openssl osaft )],
+    # hex       => [qw( iana    OpenSSL openssl osaft )],
     #                             (osaft: SSL_CK_ and TLS_ prefix missing)
     #------------------+-------+-------+-------+--------,
 # ...
@@ -377,7 +368,7 @@ our %ciphers_names = (
 our %ciphers_alias = (
     #? list of cipher suite alias names, will be generated in _ciphers_init()
     #------------------+-----------------------------+----------------------,
-    # hex,hex   => [qw( cipher suite name aliases )],# comment (where found)
+    # hex       => [qw( cipher suite name aliases )],# comment (where found)
     #------------------+-----------------------------+----------------------,
 # ...
 ); # %ciphers_alias
@@ -412,33 +403,25 @@ our @cipher_results = [
 
 # NOTE: argument to following require statement is the filename without .pm
 
-###
-### die Hashes werden hier statisch definiert, können aber dynamisch
-### aus den Files geladen werden
-### Stand 6/2016:  bis die erste statische Version fertig ist, werden die
-### Daten dynamisch geladen
+### bis die erste statische Version fertig ist, werden die Daten dynamisch geladen
 
 my %_ciphers_openssl_all = (
     #? internal list, generated by gen_ciphers.sh
     #-------------------+----+----+----+----+----+----+----+-------,
-    # hex,hex    => [qw( ssl  keyx auth enc  bits mac  name tags )],
+    # hex        => [qw( ssl  keyx auth enc  bits mac  name tags )],
     #-------------------+----+----+----+----+----+----+----+-------,
-#   '0x00,0x05'  => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
+#   '0x03000005' => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
     #-------------------+----+----+----+----+----+----+----+-------,
 ); # %_ciphers_openssl_all
 eval { require _ciphers_openssl_all; } or _warn("501: cannot read _ciphers_openssl_all.pm");
 
-my %_ciphers_openssl_inc = (
-    #? internal list, generated from openssl source
-); # %_ciphers_openssl_inc
-
 my %_ciphers_iana = (
     #? internal list, generated by gen_ciphers.sh
     #-------------------+------------------------------------+-------+---------,
-    # hex,hex    => [qw( IANA cipher suite constant           RFC(s) DTLS-OK )],
+    # hex        => [qw( IANA cipher suite constant           RFC(s) DTLS-OK )],
     #-------------------+------------------------------------+-------+---------,
-#   '0xC0,0x32'  => [qw( TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 5289    Y      )],
-#   '0xC0,0x33'  => [qw( TLS_ECDHE_PSK_WITH_RC4_128_SHA       5489,6347    N )],
+#   '0x0300C032' => [qw( TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 5289    Y      )],
+#   '0x0300C033' => [qw( TLS_ECDHE_PSK_WITH_RC4_128_SHA       5489,6347    N )],
     #-------------------+------------------------------------+-------+---------,
 ); # %__ciphers_iana
 eval { require _ciphers_iana; }  or _warn("502: cannot read _ciphers_iana.pm");
@@ -1604,7 +1587,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.56 2022/02/08
+1.57 2022/03/03
 
 =head1 AUTHOR
 
@@ -1622,4 +1605,5 @@ _main(@ARGV) if (not defined caller);
 
 1;
 
+__DATA__
 __END__
