@@ -27,7 +27,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.269 22/03/03 10:05:02",
+    SID_osaft   => "@(#) osaft.pm 1.270 22/03/03 14:00:38",
 
 };
 
@@ -1568,107 +1568,109 @@ my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_
 ); # %tls_extensions__text
 
 our %tls_signature_algorithms = (
-    #----+--------------------------+-----------------------
-    # ID  name                       comment
-    #----+--------------------------+-----------------------
+    #----------+--------------------+-----------------------
+    # ID        name                 comment
+    #----------+--------------------+-----------------------
                                     # Legacy algorithms
-0x0201 => "rsa_pkcs1_sha1",
-0x0203 => "ecdsa_sha1",
+    0x0201  => "rsa_pkcs1_sha1",
+    0x0203  => "ecdsa_sha1",
                                     # RSASSA-PKCS1-v1_5 algorithms
-0x0401 => "rsa_pkcs1_sha256",
-0x0501 => "rsa_pkcs1_sha384",
-0x0601 => "rsa_pkcs1_sha512",
+    0x0401  => "rsa_pkcs1_sha256",
+    0x0501  => "rsa_pkcs1_sha384",
+    0x0601  => "rsa_pkcs1_sha512",
                                     # ECDSA algorithms
-0x0403 => "ecdsa_secp256r1_sha256",
-0x0503 => "ecdsa_secp384r1_sha384",
-0x0603 => "ecdsa_secp521r1_sha512",
+    0x0403  => "ecdsa_secp256r1_sha256",
+    0x0503  => "ecdsa_secp384r1_sha384",
+    0x0603  => "ecdsa_secp521r1_sha512",
                                     # RSASSA-PSS algorithms with public key OID rsaEncryption
-0x0804 => "rsa_pss_rsae_sha256",
-0x0805 => "rsa_pss_rsae_sha384",
-0x0806 => "rsa_pss_rsae_sha512",
+    0x0804  => "rsa_pss_rsae_sha256",
+    0x0805  => "rsa_pss_rsae_sha384",
+    0x0806  => "rsa_pss_rsae_sha512",
                                     # EdDSA algorithms
-0x0807 => "ed25519",
-0x0808 => "ed448",
+    0x0807  => "ed25519",
+    0x0808  => "ed448",
                                     # RSASSA-PSS algorithms with public key OID RSASSA-PSS
-0x0809 => "rsa_pss_pss_sha256",
-0x080a => "rsa_pss_pss_sha384",
-0x080b => "rsa_pss_pss_sha512",
+    0x0809  => "rsa_pss_pss_sha256",
+    0x080a  => "rsa_pss_pss_sha384",
+    0x080b  => "rsa_pss_pss_sha512",
                                     # Reserved Code Points
-#0x0000..0x0200 => "obsolete_RESERVED",
-0x0202 => "dsa_sha1_RESERVED",
-#0x0204..0x0400 => "obsolete_RESERVED",
-0x0402 => "dsa_sha256_RESERVED",
-#0x0404..0x0500 => "obsolete_RESERVED",
-0x0502 => "dsa_sha384_RESERVED",
-#0x0504..0x0600 => "obsolete_RESERVED",
-0x0602 => "dsa_sha512_RESERVED",
-#0x0604..0x06FF => "obsolete_RESERVED",
-#0xFE00..0xFFFF => "private_use",
-0xFFFF => "private_use",
-    #----+--------------------------+-----------------------
+    #0x0000..0x0200 => "obsolete_RESERVED",
+    0x0202  => "dsa_sha1_RESERVED",
+    #0x0204..0x0400 => "obsolete_RESERVED",
+    0x0402  => "dsa_sha256_RESERVED",
+    #0x0404..0x0500 => "obsolete_RESERVED",
+    0x0502  => "dsa_sha384_RESERVED",
+    #0x0504..0x0600 => "obsolete_RESERVED",
+    0x0602  => "dsa_sha512_RESERVED",
+    #0x0604..0x06FF => "obsolete_RESERVED",
+    #0xFE00..0xFFFF => "private_use",
+    0xFFFF  => "private_use",
+    #----------+--------------------+-----------------------
 ); # %tls_signature_algorithms
 
 our %tls_supported_groups = (   # RFC 8446
-    #----+--------------------------+-----------------------
-0x0001 => "obsolete_RESERVED",      # 0x0001..0x0016 => "obsolete_RESERVED",
-0x0017 => "secp256r1",              # Elliptic Curve Groups (ECDHE)
-0x0018 => "secp384r1",              # 
-0x0019 => "secp521r1",              # 
-0x001A => "obsolete_RESERVED",      #0x001A..0x001C => "obsolete_RESERVED",
-0x001D => "x25519",                 #
-0x001E => "x448",                   #
-0x0100 => "ffdhe2048",              # Finite Field Groups (DHE)
-0x0101 => "ffdhe3072",              # 
-0x0102 => "ffdhe4096",              # 
-0x0103 => "ffdhe6144",              # 
-0x0104 => "ffdhe8192",              # 
+    #----------+--------------------+-----------------------
+    # ID        name                 comment
+    #----------+--------------------+-----------------------
+    0x0001  => "obsolete_RESERVED", # 0x0001..0x0016 => "obsolete_RESERVED",
+    0x0017  => "secp256r1",         # Elliptic Curve Groups (ECDHE)
+    0x0018  => "secp384r1",         # 
+    0x0019  => "secp521r1",         # 
+    0x001A  => "obsolete_RESERVED", #0x001A..0x001C => "obsolete_RESERVED",
+    0x001D  => "x25519",            #
+    0x001E  => "x448",              #
+    0x0100  => "ffdhe2048",         # Finite Field Groups (DHE)
+    0x0101  => "ffdhe3072",         # 
+    0x0102  => "ffdhe4096",         # 
+    0x0103  => "ffdhe6144",         # 
+    0x0104  => "ffdhe8192",         # 
                                     # Reserved Code Points
-0x01FC => "ffdhe_private_use",      # 0x01FC..0x01FF => "ffdhe_private_use",
-0xFE00 => "ecdhe_private_use",      # 0xFE00..0xFEFF => "ecdhe_private_use",
-0xFF01 => "obsolete_RESERVED_ff01",
-0xFF02 => "obsolete_RESERVED_ff02",
-0xFFFF => "FFFF",
+    0x01FC  => "ffdhe_private_use", # 0x01FC..0x01FF => "ffdhe_private_use",
+    0xFE00  => "ecdhe_private_use", # 0xFE00..0xFEFF => "ecdhe_private_use",
+    0xFF01  => "obsolete_RESERVED_ff01",
+    0xFF02  => "obsolete_RESERVED_ff02",
+    0xFFFF  => "FFFF",
     #----+--------------------------+-----------------------
 ); # %tls_supported_groups
 
 our %ec_point_formats = (       # RFC 4492
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
-    #----+-----------------------------+----+---+------------------------------
-    # ID      name                      RFC  DTLS other names
-    #----+-----------------------------+----+---+------------------------------
-    0 => [qw( uncompressed              4492  Y   )],
-    1 => [qw( ansiX962_compressed_prime 4492  Y   )],
-    2 => [qw( ansiX962_compressed_char2 4492  Y   )],
-  248 => [qw( reserved_248              4492  N   )],
-  249 => [qw( reserved_249              4492  N   )],
-  250 => [qw( reserved_250              4492  N   )],
-  251 => [qw( reserved_251              4492  N   )],
-  252 => [qw( reserved_252              4492  N   )],
-  253 => [qw( reserved_253              4492  N   )],
-  254 => [qw( reserved_254              4492  N   )],
-  255 => [qw( reserved_255              4492  N   )],
+    #--------+-----------------------------+----+---+--------------------------
+    # ID          name                      RFC  DTLS other names
+    #--------+-----------------------------+----+---+--------------------------
+        0 => [qw( uncompressed              4492  Y   )],
+        1 => [qw( ansiX962_compressed_prime 4492  Y   )],
+        2 => [qw( ansiX962_compressed_char2 4492  Y   )],
+      248 => [qw( reserved_248              4492  N   )],
+      249 => [qw( reserved_249              4492  N   )],
+      250 => [qw( reserved_250              4492  N   )],
+      251 => [qw( reserved_251              4492  N   )],
+      252 => [qw( reserved_252              4492  N   )],
+      253 => [qw( reserved_253              4492  N   )],
+      254 => [qw( reserved_254              4492  N   )],
+      255 => [qw( reserved_255              4492  N   )],
     #----+-----------------------------+----+---+------------------------------
 ); # ec_point_formats
 
 # Torsten: %ECCURVE_TYPE
 our %ec_curve_types = ( # RFC 4492
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
-    #----+-----------------------------+----+---+------------------------------
-    # ID      name                      RFC DTLS other names
-    #----+-----------------------------+----+---+------------------------------
-    0 => [qw( unassigned                4492  N   )],
-    1 => [qw( explicit_prime            4492  Y   )],
-    2 => [qw( explicit_char2            4492  Y   )],
-    3 => [qw( named_curve               4492  Y   )],
-  248 => [qw( reserved_248              4492  N   )],
-  249 => [qw( reserved_249              4492  N   )],
-  250 => [qw( reserved_250              4492  N   )],
-  251 => [qw( reserved_251              4492  N   )],
-  252 => [qw( reserved_252              4492  N   )],
-  253 => [qw( reserved_253              4492  N   )],
-  254 => [qw( reserved_254              4492  N   )],
-  255 => [qw( reserved_255              4492  N   )],
-    #----+-----------------------------+----+---+------------------------------
+    #--------+-----------------------------+----+---+--------------------------
+    # ID          name                      RFC  DTLS other names
+    #--------+-----------------------------+----+---+--------------------------
+        0 => [qw( unassigned                4492  N   )],
+        1 => [qw( explicit_prime            4492  Y   )],
+        2 => [qw( explicit_char2            4492  Y   )],
+        3 => [qw( named_curve               4492  Y   )],
+      248 => [qw( reserved_248              4492  N   )],
+      249 => [qw( reserved_249              4492  N   )],
+      250 => [qw( reserved_250              4492  N   )],
+      251 => [qw( reserved_251              4492  N   )],
+      252 => [qw( reserved_252              4492  N   )],
+      253 => [qw( reserved_253              4492  N   )],
+      254 => [qw( reserved_254              4492  N   )],
+      255 => [qw( reserved_255              4492  N   )],
+    #--------+-----------------------------+----+---+--------------------------
 ); # ec_curve_types
 
 # EX: incl. OIDs:
@@ -4303,7 +4305,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.269 2022/03/03
+1.270 2022/03/03
 
 =head1 AUTHOR
 
