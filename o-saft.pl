@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1071 22/02/27 11:53:16",
+    SID         => "@(#) yeast.pl 1.1072 22/03/03 10:31:52",
     STR_VERSION => "22.02.13",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1581,20 +1581,6 @@ _yeast_TIME("cfg}");
 
 # definitions here until moved to OSaft/Ciphers.pm
 %ciphers = (
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        #'head'                 => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        #'ADH-AES128-SHA'        => [qw(  HIGH SSLv3 AES   128 SHA1 None  DH         11 "")],
-        #'ADH-AES256-SHA'        => [qw(  HIGH SSLv3 AES   256 SHA1 None  DH         11 "")],
-        #'ADH-DES-CBC3-SHA'      => [qw(  HIGH SSLv3 3DES  168 SHA1 None  DH         11 "")],
-        #'ADH-DES-CBC-SHA'       => [qw(   LOW SSLv3 DES    56 SHA1 None  DH         11 "")],
-        #'ADH-RC4-MD5'           => [qw(MEDIUM SSLv3 RC4   128 MD5  None  DH         11 "")],
-        #'ADH-SEED-SHA'          => [qw(MEDIUM SSLv3 SEED  128 SHA1 None  DH         11 "")],
-        #   above use anonymous DH and hence are vulnerable to MiTM attacks
-        #   see openssl's `man ciphers' for details (eNULL and aNULL)
-        #   so they are qualified   weak  here instead of the definition
-        #   in  `openssl ciphers -v HIGH'
-        #--------
         # values  -?-  are unknown yet; column score no longer used (Jan/2022)
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
@@ -1606,14 +1592,14 @@ _yeast_TIME("cfg}");
         'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
         'ADH-DES-CBC3-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 None  DH          0 :)],
         'ADH-DES-CBC-SHA'       => [qw(  weak SSLv3 DES    56 SHA1 None  DH          0 :)],
-        'ADH-RC4-MD5'           => [qw(  weak SSLv3 RC4   128 MD5  None  DH          0 :)], # openssl: MEDIUM
-        'ADH-SEED-SHA'          => [qw(  weak SSLv3 SEED  128 SHA1 None  DH          0 OSX)], # openssl: MEDIUM
+        'ADH-RC4-MD5'           => [qw(  weak SSLv3 RC4   128 MD5  None  DH          0 :)],
+        'ADH-SEED-SHA'          => [qw(  weak SSLv3 SEED  128 SHA1 None  DH          0 OSX)],
         #
         'AECDH-AES128-SHA'      => [qw(  weak SSLv3 AES   128 SHA1 None  ECDH       11 :)],
         'AECDH-AES256-SHA'      => [qw(  weak SSLv3 AES   256 SHA1 None  ECDH       11 :)],
         'AECDH-DES-CBC3-SHA'    => [qw(  weak SSLv3 3DES  168 SHA1 None  ECDH        0 :)],
         'AECDH-NULL-SHA'        => [qw(  weak SSLv3 None    0 SHA1 None  ECDH        0 :)],
-        'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)], # openssl: MEDIUM
+        'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)],
         'PSK-SHA'               => [qw(  weak SSLv3 None    0 SHA1 RSA   DH          0 :)],
         'AES128-SHA'            => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   RSA        80 :)],
         'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
@@ -1631,10 +1617,6 @@ _yeast_TIME("cfg}");
         'DHE-DSS-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 DSS   DH         80 :)],
         'DHE-DSS-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 DSS   DH        100 :)],
         'DHE-DSS-RC4-SHA'       => [qw(  weak SSLv3 RC4   128 SHA1 DSS   DH         20 :)],
-            # see SSLlabs.com:
-            # https://www.ssllabs.com/ssltest/viewClient.html?name=IE&version=11&platform=Win%208.1
-            # ...  Cannot be used for Forward Secrecy because they require DSA
-            #      keys, which are effectively limited to 1024 bits.
         'DHE-DSS-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 DSS   DH         81 OSX)],
         'DHE-RSA-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   DH         80 :)],
         'DHE-RSA-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   DH        100 :)],
@@ -1642,22 +1624,22 @@ _yeast_TIME("cfg}");
         'ECDH-ECDSA-AES128-SHA' => [qw(  HIGH SSLv3 AES   128 SHA1 ECDH  ECDH/ECDSA 91 :)],
         'ECDH-ECDSA-AES256-SHA' => [qw(  HIGH SSLv3 AES   256 SHA1 ECDH  ECDH/ECDSA 91 :)],
         'ECDH-ECDSA-DES-CBC3-SHA'=>[qw(  weak SSLv3 3DES  168 SHA1 ECDH  ECDH/ECDSA  0 :)],
-        'ECDH-ECDSA-RC4-SHA'    => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/ECDSA 81 :)], #openssl: MEDIUM
+        'ECDH-ECDSA-RC4-SHA'    => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/ECDSA 81 :)],
         'ECDH-ECDSA-NULL-SHA'   => [qw(  weak SSLv3 None    0 SHA1 ECDH  ECDH/ECDSA  0 :)],
         'ECDH-RSA-AES128-SHA'   => [qw(  HIGH SSLv3 AES   128 SHA1 ECDH  ECDH/RSA   11 :)],
         'ECDH-RSA-AES256-SHA'   => [qw(  HIGH SSLv3 AES   256 SHA1 ECDH  ECDH/RSA   11 :)],
         'ECDH-RSA-DES-CBC3-SHA' => [qw(  weak SSLv3 3DES  168 SHA1 ECDH  ECDH/RSA    0 :)],
-        'ECDH-RSA-RC4-SHA'      => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/RSA   81 :)], #openssl: MEDIUM
+        'ECDH-RSA-RC4-SHA'      => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/RSA   81 :)],
         'ECDH-RSA-NULL-SHA'     => [qw(  weak SSLv3 None    0 SHA1 ECDH  ECDH/RSA    0 :)],
         'ECDHE-ECDSA-AES128-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 ECDSA ECDH       11 :)],
         'ECDHE-ECDSA-AES256-SHA'=> [qw(  HIGH SSLv3 AES   256 SHA1 ECDSA ECDH       11 :)],
         'ECDHE-ECDSA-DES-CBC3-SHA'=> [qw(weak SSLv3 3DES  168 SHA1 ECDSA ECDH        0 :)],
         'ECDHE-ECDSA-NULL-SHA'  => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH        0 :)],
-        'ECDHE-ECDSA-RC4-SHA'   => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)], #openssl: MEDIUM
+        'ECDHE-ECDSA-RC4-SHA'   => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)],
         'ECDHE-RSA-AES128-SHA'  => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)],
         'ECDHE-RSA-AES256-SHA'  => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   ECDH       11 :)],
         'ECDHE-RSA-DES-CBC3-SHA'=> [qw(  weak SSLv3 3DES  168 SHA1 RSA   ECDH        0 :)],
-        'ECDHE-RSA-RC4-SHA'     => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #openssl: MEDIUM
+        'ECDHE-RSA-RC4-SHA'     => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)],
         'ECDHE-RSA-NULL-SHA'    => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH        0 :)],
         'EDH-DSS-DES-CBC3-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 DSS   DH          0 :)],
         'EDH-DSS-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 DSS   DH          0 :)],
@@ -1672,9 +1654,8 @@ _yeast_TIME("cfg}");
         'EXP-RC2-CBC-MD5'       => [qw(  weak SSLv3 RC2    40 MD5  RSA   RSA(512)    0 export)],
         'EXP-RC4-MD5'           => [qw(  WEAK SSLv2 RC4    40 MD5  RSA   RSA(512)    2 export)],
         'EXP-RC4-MD5'           => [qw(  WEAK SSLv3 RC4    40 MD5  RSA   RSA(512)    2 export)],
-#       'EXP-RC4-64-MD5'        => [qw(  weak SSLv3 RC4    64 MD5  RSA   RSA         2 :)], # (from RSA BSAFE SSL-C); same as RC4-64-MD5?
         'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
-        'EXP-EDH-DSS-RC4-56-SHA'=> [qw(  WEAK SSLv3 RC4    56 SHA  DSS   DHE         2 :)], # (from RSA BSAFE SSL-C)
+        'EXP-EDH-DSS-RC4-56-SHA'=> [qw(  WEAK SSLv3 RC4    56 SHA  DSS   DHE         2 :)],
         'EXP1024-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 RSA   RSA(1024)   0 export)],
         'EXP1024-DHE-DSS-RC4-SHA'=>[qw(  WEAK SSLv3 RC4    56 SHA1 DSS   DH(1024)    2 export)],
         'EXP1024-DHE-DSS-DES-CBC-SHA' => [qw(weak SSLv3 DES 56 SHA1 DSS  DH(1024)    0 export)],
@@ -1683,18 +1664,17 @@ _yeast_TIME("cfg}");
         'EXP1024-RC4-SHA'       => [qw(  WEAK SSLv3 RC4    56 SHA1 RSA   RSA(1024)   2 export)],
         'IDEA-CBC-MD5'          => [qw(  weak SSLv2 IDEA  128 MD5  RSA   RSA         0 :)],
         'IDEA-CBC-SHA'          => [qw(  weak SSLv3 IDEA  128 SHA1 RSA   RSA         0 :)],
-        #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
-        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  RSA(512)    0 :)], # openssl SSLeay testing
-        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  RSA         0 :)], # openssl SSLeay testing
+        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  RSA(512)    0 :)],
+        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  RSA         0 :)],
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA         0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-SHA
-#       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
-        'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-SHA
-#       'RSA-PSK-AES256-SHA'    => [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES256-CBC-SHA
-        'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-SHA
-#       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-EDE-CBC-SHA
+        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
+#       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
+        'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
+#       'RSA-PSK-AES256-SHA'    => [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
+        'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
+#       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 PSK   PSK         0 :)],
         'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 PSK   PSK         0 :)],
         'PSK-AES256-CBC-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
@@ -1702,13 +1682,12 @@ _yeast_TIME("cfg}");
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA1 PSK   PSK        80 :)],
         'RC2-CBC-MD5'           => [qw(  weak SSLv2 RC2   128 MD5  RSA   RSA         0 :)],
         'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
-        'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA         8 :)], #openssl: MEDIUM
-        'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA         8 :)], #openssl: MEDIUM
-        'RC4-SHA'               => [qw(  weak SSLv3 RC4   128 SHA1 RSA   RSA         8 :)], #openssl: MEDIUM
+        'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA         8 :)],
+        'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA         8 :)],
+        'RC4-SHA'               => [qw(  weak SSLv3 RC4   128 SHA1 RSA   RSA         8 :)],
         'SEED-SHA'              => [qw(MEDIUM SSLv3 SEED  128 SHA1 RSA   RSA        11 OSX)],
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        'ADH-CAMELLIA128-SHA'   => [qw(  weak SSLv3 CAMELLIA  128 SHA1 None  DH      0 :)], #openssl: HIGH
-        'ADH-CAMELLIA256-SHA'   => [qw(  weak SSLv3 CAMELLIA  256 SHA1 None  DH      0 :)], #openssl: HIGH
+        'ADH-CAMELLIA128-SHA'   => [qw(  weak SSLv3 CAMELLIA  128 SHA1 None  DH      0 :)],
+        'ADH-CAMELLIA256-SHA'   => [qw(  weak SSLv3 CAMELLIA  256 SHA1 None  DH      0 :)],
         'CAMELLIA128-SHA'       => [qw(  HIGH SSLv3 CAMELLIA  128 SHA1 RSA   RSA    80 :)],
         'CAMELLIA256-SHA'       => [qw(  HIGH SSLv3 CAMELLIA  256 SHA1 RSA   RSA   100 :)],
         'DHE-DSS-CAMELLIA128-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  128 SHA1 DSS   DH     80 :)],
@@ -1720,17 +1699,16 @@ _yeast_TIME("cfg}");
         'GOST-GOST89STREAM'     => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
         'GOST-GOST89MAC'        => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
         'GOST-GOST94'           => [qw(  HIGH SSLv3 GOST89 256 GOST94  RSA    RSA  100 :)],
-        'GOST-MD5'              => [qw(  weak SSLv3 GOST89 256 MD5     RSA    RSA    0 :)], #openssl: HIGH
+        'GOST-MD5'              => [qw(  weak SSLv3 GOST89 256 MD5     RSA    RSA    0 :)],
         'GOST2001-NULL-GOST94'  => [qw(  weak SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
         'GOST94-NULL-GOST94'    => [qw(  weak SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-
         # https://tools.ietf.org/id/draft-ietf-tls-openpgp-keys-00.txt
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        'DHE-DSS-CAST128-CBC-SHA'       => [qw(  weak SSLv3 CAST   128 SHA1   DSS   DH          0 :)], # CAST128 == CAST5 ?
-        'DHE-DSS-CAST128-CBC-RMD'       => [qw(  weak SSLv3 CAST   128 RMD    DSS   DH          0 :)], # CAST128 == CAST5 ?
+        'DHE-DSS-CAST128-CBC-SHA'       => [qw(  weak SSLv3 CAST   128 SHA1   DSS   DH          0 :)],
+        'DHE-DSS-CAST128-CBC-RMD'       => [qw(  weak SSLv3 CAST   128 RMD    DSS   DH          0 :)],
         'DHE-DSS-3DES-EDE-CBC-RMD'      => [qw(  weak SSLv3 3DES   128 RMD    DSS   DH          0 :)],
         'DHE-DSS-AES128-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    DSS   DH          0 :)],
         'DHE-DSS-AES256-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    DSS   DH          0 :)],
@@ -1739,26 +1717,26 @@ _yeast_TIME("cfg}");
         'DHE-RSA-3DES-EDE-CBC-RMD'      => [qw(  weak SSLv3 3DES   128 RMD    RSA   DH          0 :)],
         'DHE-RSA-AES128-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    RSA   DH          0 :)],
         'DHE-RSA-AES256-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    RSA   DH          0 :)],
-        'RSA-CAST128-CBC-SHA'           => [qw(  weak SSLv3 CAST   128 SHA1   RSA   RSA         0 :)], # CAST128 == CAST5 ?
-        'RSA-CAST128-CBC-RMD'           => [qw(  weak SSLv3 CAST   128 RMD    RSA   RSA         0 :)], # CAST128 == CAST5 ?
+        'RSA-CAST128-CBC-SHA'           => [qw(  weak SSLv3 CAST   128 SHA1   RSA   RSA         0 :)],
+        'RSA-CAST128-CBC-RMD'           => [qw(  weak SSLv3 CAST   128 RMD    RSA   RSA         0 :)],
         'RSA-3DES-EDE-CBC-RMD'          => [qw(  weak SSLv3 3DES   128 RMD    RSA   RSA         0 :)],
         'RSA-AES128-CBC-RMD'            => [qw(  weak SSLv3 AES    128 RMD    RSA   RSA         0 :)],
         'RSA-AES256-CBC-RMD'            => [qw(  weak SSLv3 AES    128 RMD    RSA   RSA         0 :)],
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         # from openssl-1.0.1c
-        'SRP-AES-128-CBC-SHA'           => [qw(  HIGH SSLv3 AES    128 SHA1   None  SRP         0 :)], # openssl: HIGH
-        'SRP-AES-256-CBC-SHA'           => [qw(  HIGH SSLv3 AES    256 SHA1   None  SRP         0 :)], # openssl: HIGH
+        'SRP-AES-128-CBC-SHA'           => [qw(  HIGH SSLv3 AES    128 SHA1   None  SRP         0 :)],
+        'SRP-AES-256-CBC-SHA'           => [qw(  HIGH SSLv3 AES    256 SHA1   None  SRP         0 :)],
         'SRP-DSS-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   DSS   SRP         0 :)],
         'SRP-DSS-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   DSS   SRP         0 :)],
         'SRP-DSS-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   DSS   SRP         0 :)],
         'SRP-RSA-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   RSA   SRP         0 :)],
         'SRP-RSA-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   RSA   SRP         0 :)],
         'SRP-RSA-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   RSA   SRP         0 :)],
-        'SRP-3DES-EDE-CBC-SHA'          => [qw(  weak SSLv3 3DES   168 SHA1   None  SRP         0 :)], # openssl: HIGH
-        'ADH-AES128-SHA256'             => [qw( weak TLSv12 AES    128 SHA256 None  DH         10 :)], # openssl: HIGH
-        'ADH-AES128-GCM-SHA256'         => [qw( weak TLSv12 AESGCM 128 AEAD   None  DH         10 :)], # openssl: HIGH
-        'ADH-AES256-GCM-SHA384'         => [qw( weak TLSv12 AESGCM 256 AEAD   None  DH         10 :)], # openssl: HIGH
-        'ADH-AES256-SHA256'             => [qw( weak TLSv12 AES    256 SHA256 None  DH         10 :)], # openssl: HIGH
+        'SRP-3DES-EDE-CBC-SHA'          => [qw(  weak SSLv3 3DES   168 SHA1   None  SRP         0 :)],
+        'ADH-AES128-SHA256'             => [qw( weak TLSv12 AES    128 SHA256 None  DH         10 :)],
+        'ADH-AES128-GCM-SHA256'         => [qw( weak TLSv12 AESGCM 128 AEAD   None  DH         10 :)],
+        'ADH-AES256-GCM-SHA384'         => [qw( weak TLSv12 AESGCM 256 AEAD   None  DH         10 :)],
+        'ADH-AES256-SHA256'             => [qw( weak TLSv12 AES    256 SHA256 None  DH         10 :)],
         'AES128-GCM-SHA256'             => [qw( HIGH TLSv12 AESGCM 128 AEAD   RSA   RSA        91 :)],
         'AES128-SHA256'                 => [qw( HIGH TLSv12 AES    128 SHA256 RSA   RSA        91 :)],
         'AES256-GCM-SHA384'             => [qw( HIGH TLSv12 AESGCM 256 AEAD   RSA   RSA        91 :)],
@@ -1788,7 +1766,6 @@ _yeast_TIME("cfg}");
         'ECDH-RSA-AES256-GCM-SHA384'    => [qw( HIGH TLSv12 AESGCM 256 AEAD   ECDH  ECDH/RSA   91 :)],
         'ECDH-RSA-AES256-SHA384'        => [qw( HIGH TLSv12 AES    256 SHA384 ECDH  ECDH/RSA   91 :)],
         'NULL-SHA256'                   => [qw( weak TLSv12 None     0 SHA256 RSA   RSA         0 :)],
-        #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         'PSK-AES128-CBC-SHA256'         => [qw( HIGH TLSv1  AES     128 SHA256 PSK  PSK        80 :)],
         'PSK-AES256-CBC-SHA384'         => [qw( HIGH TLSv1  AES     256 SHA384 PSK  PSK        80 :)],
         'PSK-NULL-SHA256'               => [qw( weak TLSv1  None     0  SHA256 PSK  PSK         1 :)],
@@ -1808,7 +1785,6 @@ _yeast_TIME("cfg}");
         'ECDHE-ECDSA-AES256-CCM'        => [qw( HIGH TLSv12 AESCCM  256  AEAD ECDSA ECDH       91 :)],
         'ECDHE-ECDSA-AES128-CCM8'       => [qw( HIGH TLSv12 AESCCM8 128  AEAD ECDSA ECDH       91 :)],
         'ECDHE-ECDSA-AES128-CCM'        => [qw( HIGH TLSv12 AESCCM  128  AEAD ECDSA ECDH       91 :)],
-        #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         'ECDHE-PSK-RC4-SHA'             => [qw( weak TLSv12 RC4    128 SHA1   PSK   ECDHEPSK    0 :)],
         'ECDHE-PSK-3DES-EDE-CBC-SHA'    => [qw( high TLSv12 3DES   192 SHA1   PSK   ECDHEPSK   80 :)],
         'ECDHE-PSK-AES128-CBC-SHA'      => [qw( high TLSv1  AES    128 SHA1   PSK   ECDHEPSK   80 :)],
@@ -1819,13 +1795,9 @@ _yeast_TIME("cfg}");
         'ECDHE-PSK-NULL-SHA256'         => [qw( weak TLSv1  None     0 SHA1   PSK   ECDHEPSK    0 :)],
         'ECDHE-PSK-NULL-SHA384'         => [qw( weak TLSv1  None     0 SHA1   PSK   ECDHEPSK    0 :)],
         #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-
         # from openssl-1.0.2d
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        'ADH-CAMELLIA128-SHA256'        => [qw( weak TLSv12 CAMELLIA 128 SHA256 None  DH        0 :)], #openssl: HIGH
-        'ADH-CAMELLIA256-SHA256'        => [qw( weak TLSv12 CAMELLIA 256 SHA256 None  DH        0 :)], #openssl: HIGH
+        'ADH-CAMELLIA128-SHA256'        => [qw( weak TLSv12 CAMELLIA 128 SHA256 None  DH        0 :)],
+        'ADH-CAMELLIA256-SHA256'        => [qw( weak TLSv12 CAMELLIA 256 SHA256 None  DH        0 :)],
         'CAMELLIA128-SHA256'            => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   RSA      80 :)],
         'CAMELLIA256-SHA256'            => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 RSA   RSA     100 :)],
         'DHE-DSS-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 DSS   DH       80 :)],
@@ -1836,26 +1808,28 @@ _yeast_TIME("cfg}");
         'DH-RSA-CAMELLIA128-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 128 SHA1   RSA   DH       90 :)],
         'DH-DSS-CAMELLIA128-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 DSS   DH       90 :)],
         'DH-RSA-CAMELLIA128-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   DH       90 :)],
-        'DH-DSS-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    DSS     100 :)], # openssl 1.0.2-chacha; auth=DH ??
-        'DH-RSA-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    RSA     100 :)], # openssl 1.0.2-chacha; auth=DH ??
-        'DH-DSS-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    DSS     100 :)], # openssl 1.0.2-chacha; auth=DH ??
-        'DH-RSA-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    RSA     100 :)], # openssl 1.0.2-chacha; auth=DH ??
-        'DHE-RSA-CHACHA20-POLY1305-SHA256'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # openssl 1.0.2 DHE-RSA-CHACHA20-POLY1305
-        'ECDHE-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # openssl 1.0.2 ECDHE-RSA-CHACHA20-POLY1305
-        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # openssl 1.0.2 ECDHE-ECDSA-CHACHA20-POLY1305
-        'DHE-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # bugfix for openssl 1.0.2
-        'ECDHE-RSA-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # bugfix for openssl 1.0.2
-        'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # bugfix for openssl 1.0.2
+        'DH-DSS-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    DSS     100 :)],
+        'DH-RSA-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    RSA     100 :)],
+        'DH-DSS-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    DSS     100 :)],
+        'DH-RSA-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    RSA     100 :)],
+        'DHE-RSA-CHACHA20-POLY1305-SHA256'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
+        'ECDHE-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
+        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
+        'DHE-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
+        'ECDHE-RSA-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
+        'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
         'DHE-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   DH    1 :)],
-        'DHE-RSA-CHACHA20-POLY1305-OLD'       => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # openssl 1.0.2k-dev (patched version)
-        'ECDHE-RSA-CHACHA20-POLY1305-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
-        'ECDHE-ECDSA-CHACHA20-POLY1305-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
-        'DHE-RSA-CHACHA20-POLY1305-SHA256-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], #
-        'ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], #
-        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], #
+        'DHE-RSA-CHACHA20-POLY1305-OLD'       => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
+        'ECDHE-RSA-CHACHA20-POLY1305-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
+        'ECDHE-ECDSA-CHACHA20-POLY1305-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
+        'DHE-RSA-CHACHA20-POLY1305-SHA256-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
+        'ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
+        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-
         # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
+        #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
+        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         'RSA-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSA         1 :)],
         'ECDHE-RSA-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
         'ECDHE-ECDSA-CHACHA20-SHA'      => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
@@ -1864,53 +1838,29 @@ _yeast_TIME("cfg}");
         'PSK-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   PSK         1 :)],
         'ECDHE-PSK-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
         'RSA-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSAPSK      1 :)],
-
         # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
         'PSK-CHACHA20-POLY1305'         => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
         'ECDHE-PSK-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
         'RSA-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-
         # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
         'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
         'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
         'DHE-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD DHE   DHEPSK 1 :)],
         'RSA-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   RSAPSK 1 :)],
-
+        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         # from http://tools.ietf.org/html/rfc6655
-#       'RSA-AES128-CCM'                => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
-#       'RSA-AES256-CCM'                => [qw( high TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
-        'AES128-CCM'                    => [qw( HIGH TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)], # openssl 1.1.1k
-        'AES256-CCM'                    => [qw( HIGH TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)], # openssl 1.1.1k
+        'AES128-CCM'                    => [qw( HIGH TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
+        'AES256-CCM'                    => [qw( HIGH TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
         'DHE-RSA-AES128-CCM'            => [qw( HIGH TLSv12 AESCCM 128 AEAD   RSA   DH         91 :)],
         'DHE-RSA-AES256-CCM'            => [qw( HIGH TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
         'PSK-AES128-CCM'                => [qw( HIGH TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
         'PSK-AES256-CCM'                => [qw( HIGH TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
-#       'RSA-AES128-CCM8'               => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   RSA        91 :)],
-#       'RSA-AES256-CCM8'               => [qw( HIGH TLSv12 AESCCM8 256 AEAD  RSA   RSA        91 :)],
-        'AES128-CCM8'                   => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   RSA        91 :)], # openssl 1.1.1k
+        'AES128-CCM8'                   => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   RSA        91 :)],
         'AES256-CCM8'                   => [qw( HIGH TLSv12 AESCCM8 256 AEAD  RSA   RSA        91 :)],
         'DHE-RSA-AES128-CCM8'           => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   DH         91 :)],
         'DHE-RSA-AES256-CCM8'           => [qw( HIGH TLSv12 AESCCM8 256 AEAD  RSA   DH         91 :)],
         'PSK-AES128-CCM8'               => [qw( HIGH TLSv12 AESCCM8 128 AEAD  PSK   PSK        91 :)],
         'PSK-AES256-CCM8'               => [qw( HIGH TLSv12 AESCCM8 256 AEAD  PSK   PSK        91 :)],
-
-        # from: http://botan.randombit.net/doxygen/tls__suite__info_8cpp_source.html
-        #/ RSA_WITH_AES_128_CCM           (0xC09C, "RSA",   "RSA",  "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
-        #/ RSA_WITH_AES_256_CCM           (0xC09D, "RSA",   "RSA",  "AES-256/CCM",   32, 4, "AEAD", 0, "SHA-256");
-        #/ DHE_RSA_WITH_AES_128_CCM       (0xC09E, "RSA",   "DH",   "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
-        #/ DHE_RSA_WITH_AES_256_CCM       (0xC09F, "RSA",   "DH",   "AES-256/CCM",   32, 4, "AEAD", 0, "SHA-256");
-        #/ PSK_WITH_AES_128_CCM           (0xC0A5, "",      "PSK",  "AES-256/CCM",   32, 4, "AEAD", 0, "SHA-256");
-        #/ PSK_WITH_AES_256_CCM           (0xC0A4, "",      "PSK",  "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
-        #/ ECDHE_ECDSA_WITH_AES_128_CCM   (0xC0AC, "ECDSA", "ECDH", "AES-128/CCM",   16, 4, "AEAD", 0, "SHA-256");
-        #/ ECDHE_ECDSA_WITH_AES_256_CCM   (0xC0AD, "ECDSA", "ECDH", "AES-256/CCM",   32, 4, "AEAD", 0, "SHA-256");
-        #/ RSA_WITH_AES_128_CCM_8         (0xC0A0, "RSA",   "RSA",  "AES-128/CCM-8", 16, 4, "AEAD", 0, "SHA-256");
-        #/ RSA_WITH_AES_256_CCM_8         (0xC0A1, "RSA",   "RSA",  "AES-256/CCM-8", 32, 4, "AEAD", 0, "SHA-256");
-        #/ DHE_RSA_WITH_AES_128_CCM_8     (0xC0A2, "RSA",   "DH",   "AES-128/CCM-8", 16, 4, "AEAD", 0, "SHA-256");
-        #/ DHE_RSA_WITH_AES_256_CCM_8     (0xC0A3, "RSA",   "DH",   "AES-256/CCM-8", 32, 4, "AEAD", 0, "SHA-256");
-        #/ PSK_WITH_AES_128_CCM_8         (0xC0A8, "",      "PSK",  "AES-128/CCM-8", 16, 4, "AEAD", 0, "SHA-256");
-        #/ PSK_WITH_AES_256_CCM_8         (0xC0A9, "",      "PSK",  "AES-256/CCM-8", 32, 4, "AEAD", 0, "SHA-256");
-        #/ ECDHE_ECDSA_WITH_AES_128_CCM_8 (0xC0AE, "ECDSA", "ECDH", "AES-128/CCM-8", 16, 4, "AEAD", 0, "SHA-256");
-        #/ ECDHE_ECDSA_WITH_AES_256_CCM_8 (0xC0AF, "ECDSA", "ECDH", "AES-256/CCM-8", 32, 4, "AEAD", 0, "SHA-256");
         #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         # from openssl-1.0.1g
         'KRB5-DES-CBC3-MD5'             => [qw(  weak SSLv3 3DES   168 MD5    KRB5  KRB5        0 :)],
@@ -1935,11 +1885,9 @@ _yeast_TIME("cfg}");
         'RSA-FIPS-DES-CBC-SHA-2'        => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-
         'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/DSS      0 export)],
         'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/RSA      0 export)],
-
-        # FIXME: all following
+        # FIXME: all following {
         'DH-DSS-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/DSS      0 :)],
         'DH-RSA-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/RSA      0 :)],
         'DH-DSS-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DH    DH/DSS      0 :)],
@@ -1978,144 +1926,128 @@ _yeast_TIME("cfg}");
         'DHE-PSK-SHA384'                => [qw( weak TLSv12 None   0   SHA384 PSK   DHE         1 :)],
         'RSA-PSK-AES128-SHA256'         => [qw( high TLSv12 AES    128 SHA256 PSK   RSA         1 :)],
         'RSA-PSK-AES256-SHA384'         => [qw( high TLSv12 AES    256 SHA384 PSK   RSA         1 :)],
-
+        # }
+        #!#-----------------------------------+------+-----+------+-----+------+-----+--------+----+--------,
         # from http://tools.ietf.org/html/rfc6367
-        'ECDHE-ECDSA-CAMELLIA128-SHA256'=> [qw( HIGH TLSv12 CAMELLIA 128 SHA256 ECDSA ECDH       100 : )],
-        'ECDHE-ECDSA-CAMELLIA256-SHA384'=> [qw( HIGH TLSv12 CAMELLIA 256 SHA384 ECDSA ECDH       100 : )],
-        'ECDH-ECDSA-CAMELLIA128-SHA256' => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 ECDH  ECDH/ECDSA 100 : )],
-        'ECDH-ECDSA-CAMELLIA256-SHA384' => [qw( HIGH TLSv12 CAMELLIA 256 SHA384 ECDH  ECDH/ECDSA 100 : )],
-        'ECDHE-RSA-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   ECDH       100 : )],
-        'ECDHE-RSA-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA 256 SHA384 RSA   ECDH       100 : )],
-        'ECDH-RSA-CAMELLIA128-SHA256'   => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 ECDH  ECDH/RSA   100 : )],
-        'ECDH-RSA-CAMELLIA256-SHA384'   => [qw( HIGH TLSv12 CAMELLIA 256 SHA384 ECDH  ECDH/RSA   100 : )],
-        'RSA-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   RSA     100 : )],
-        'RSA-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   RSA     100 : )],
-        'DHE-RSA-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   RSA     100 : )],
-        'DHE-RSA-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   RSA     100 : )],
-        'DH-RSA-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    RSA     100 : )],
-        'DH-RSA-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    RSA     100 : )],
-        'DHE-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   DSS     100 : )],
-        'DHE-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   DSS     100 : )],
-        'DH-DSS-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    DSS     100 : )],
-        'DH-DSS-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    DSS     100 : )],
-        'ADH-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ADH   DSS     100 : )],
-        'ADH-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ADH   DSS     100 : )],
+        #!# 'head'                      => [qw(  sec  ssl   enc        bits mac    auth  keyx    score tags)],
+        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
+        'ECDHE-ECDSA-CAMELLIA128-SHA256'=> [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDSA ECDH       100 : )],
+        'ECDHE-ECDSA-CAMELLIA256-SHA384'=> [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDSA ECDH       100 : )],
+        'ECDH-ECDSA-CAMELLIA128-SHA256' => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDH  ECDH/ECDSA 100 : )],
+        'ECDH-ECDSA-CAMELLIA256-SHA384' => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDH  ECDH/ECDSA 100 : )],
+        'ECDHE-RSA-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 RSA   ECDH       100 : )],
+        'ECDHE-RSA-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 RSA   ECDH       100 : )],
+        'ECDH-RSA-CAMELLIA128-SHA256'   => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDH  ECDH/RSA   100 : )],
+        'ECDH-RSA-CAMELLIA256-SHA384'   => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDH  ECDH/RSA   100 : )],
+        'RSA-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   RSA      100 : )],
+        'RSA-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   RSA      100 : )],
+        'DHE-RSA-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   RSA      100 : )],
+        'DHE-RSA-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   RSA      100 : )],
+        'DH-RSA-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    RSA      100 : )],
+        'DH-RSA-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    RSA      100 : )],
+        'DHE-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   DSS      100 : )],
+        'DHE-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   DSS      100 : )],
+        'DH-DSS-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    DSS      100 : )],
+        'DH-DSS-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    DSS      100 : )],
+        'ADH-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ADH   DSS      100 : )],
+        'ADH-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ADH   DSS      100 : )],
         'ECDHE-ECDSA-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDHE ECDH 100 : )],
         'ECDHE-ECDSA-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDHE ECDH 100 : )],
         'ECDH-ECDSA-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDH  ECDH 100 : )],
         'ECDH-ECDSA-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDH  ECDH 100 : )],
-        'ECDHE-RSA-CAMELLIA128-GCM-SHA256'  => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDHE RSA 100 : )],
-        'ECDHE-RSA-CAMELLIA256-GCM-SHA384'  => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDHE RSA 100 : )],
-        'ECDH-RSA-CAMELLIA128-GCM-SHA256'   => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDH  RSA 100 : )],
-        'ECDH-RSA-CAMELLIA256-GCM-SHA384'   => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDH  RSA 100 : )],
-        'PSK-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK     100 : )],
-        'PSK-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  RSA   PSK     100 : )],
-        'DHE-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA25  DHE   PSK     100 : )],
-        'DHE-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  DHE   PSK     100 : )],
-        'RSA-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK     100 : )],
-        'RSA-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   PSK     100 : )],
-        'PSK-CAMELLIA128-SHA256'        => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 PSK   PSK     100 : )],
-        'PSK-CAMELLIA256-SHA384'        => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 PSK   PSK     100 : )],
-        'DHE-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 DHE   PSK     100 : )],
-        'DHE-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  DHE   PSK     100 : )],
-        'RSA-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA25  RSA   PSK     100 : )],
-        'RSA-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  RSA   PSK     100 : )],
-        'ECDHE-PSK-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDHE PSK     100 : )],
-        'ECDHE-PSK-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDHE PSK     100 : )],
-
+        'ECDHE-RSA-CAMELLIA128-GCM-SHA256'  => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDHE RSA  100 : )],
+        'ECDHE-RSA-CAMELLIA256-GCM-SHA384'  => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDHE RSA  100 : )],
+        'ECDH-RSA-CAMELLIA128-GCM-SHA256'   => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDH  RSA  100 : )],
+        'ECDH-RSA-CAMELLIA256-GCM-SHA384'   => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDH  RSA  100 : )],
+        'PSK-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK      100 : )],
+        'PSK-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  RSA   PSK      100 : )],
+        'DHE-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA25  DHE   PSK      100 : )],
+        'DHE-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  DHE   PSK      100 : )],
+        'RSA-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK      100 : )],
+        'RSA-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   PSK      100 : )],
+        'PSK-CAMELLIA128-SHA256'        => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 PSK   PSK      100 : )],
+        'PSK-CAMELLIA256-SHA384'        => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 PSK   PSK      100 : )],
+        'DHE-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 DHE   PSK      100 : )],
+        'DHE-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  DHE   PSK      100 : )],
+        'RSA-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA25  RSA   PSK      100 : )],
+        'RSA-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  RSA   PSK      100 : )],
+        'ECDHE-PSK-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDHE PSK      100 : )],
+        'ECDHE-PSK-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDHE PSK      100 : )],
+        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
         # from http://tools.ietf.org/html/rfc6209
-        #!# 'head'                      => [qw(  sec  ssl   enc   bits   mac    auth  keyx    score tags)],
-        #!#-----------------------------------+------+-----+------+-----+------+-----+--------+----+--------,
-        'RSA-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   RSA     11 :)],
-        'RSA-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   RSA     11 :)],
-        'DH-DSS-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA     128 SHA256 DSS   DH      11 :)],
-        'DH-DSS-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA     256 SHA384 DSS   DH      11 :)],
-        'DH-RSA-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   DH      11 :)],
-        'DH-RSA-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   DH      11 :)],
-        'DHE-DSS-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA     128 SHA256 DSS   DHE     11 :)], # unklar
-        'DHE-DSS-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA     256 SHA384 DSS   DHE     11 :)], # unklar
-        'DHE-RSA-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   DHE     11 :)], # unklar
-        'DHE-RSA-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   DHE     11 :)], # unklar
-        'ADH-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA     128 SHA256 None  DH      11 :)], # unklar
-        'ADH-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA     256 SHA384 None  DH      11 :)], # unklar
-        'ECDHE-ECDSA-ARIA128-SHA256'    => [qw(  -?- TLSv12 ARIA     128 SHA256 ECDSA ECDHE   11 :)],
-        'ECDHE-ECDSA-ARIA256-SHA384'    => [qw(  -?- TLSv12 ARIA     256 SHA384 ECDSA ECDHE   11 :)],
-        'ECDH-ECDSA-ARIA128-SHA256'     => [qw(  -?- TLSv12 ARIA     128 SHA256 ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA256-SHA384'     => [qw(  -?- TLSv12 ARIA     256 SHA384 ECDSA ECDH    11 :)],
-        'ECDHE-RSA-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   ECDHE   11 :)],
-        'ECDHE-RSA-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   ECDHE   11 :)],
-        'ECDH-RSA-ARIA128-SHA256'       => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA256-SHA384'       => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   ECDH    11 :)],
-#       'RSA-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   RSA   RSA     11 :)],
-#       'RSA-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   RSA   RSA     11 :)],
-        'ARIA128-GCM-SHA256'            => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   RSA   RSA     11 :)],
-        'ARIA256-GCM-SHA384'            => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   RSA   RSA     11 :)],
-        'DHE-RSA-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   RSA   DH      11 :)], # unklar
-        'DHE-RSA-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   RSA   DH      11 :)], # unklar
-        'DH-RSA-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   RSA   DH      11 :)],
-        'DH-RSA-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   RSA   DH      11 :)],
-        'DHE-DSS-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   DSS   DH      11 :)], # unklar
-        'DHE-DSS-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   DSS   DH      11 :)], # unklar
-        'DH-DSS-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   DSS   DH      11 :)],
-        'DH-DSS-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   DSS   DH      11 :)],
-        'ADH-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   None  DH      11 :)],
-        'ADH-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   None  DH      11 :)],
-        'ECDHE-ECDSA-ARIA128-GCM-SHA256'=> [qw( HIGH TLSv12 ARIAGCM  128 AEAD   ECDSA ECDH    11 :)],
-        'ECDHE-ECDSA-ARIA256-GCM-SHA384'=> [qw( HIGH TLSv12 ARIAGCM  256 AEAD   ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA128-GCM-SHA256' => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA256-GCM-SHA384' => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   ECDSA ECDH    11 :)],
-        'ECDHE-RSA-ARIA128-GCM-SHA256'  => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   RSA   ECDHE   11 :)], # unklar wo benutzt
-        'ECDHE-RSA-ARIA256-GCM-SHA384'  => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   RSA   ECDHE   11 :)], # unklar wo benutzt
-        'ECDHE-ARIA128-GCM-SHA256'      => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   RSA   ECDH    11 :)],
-        'ECDHE-ARIA256-GCM-SHA384'      => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA128-GCM-SHA256'   => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA256-GCM-SHA384'   => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   RSA   ECDH    11 :)],
-        'PSK-ARIA128-SHA256'            => [qw( HIGH TLSv12 ARIA     128 SHA256 PSK   PSK     11 :)],
-        'PSK-ARIA256-SHA384'            => [qw( HIGH TLSv12 ARIA     256 SHA384 PSK   PSK     11 :)],
-        'DHE-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   DHE     11 :)], # unklar
-        'DHE-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA     256 SHA384 PSK   DHE     11 :)], # unklar
-        'RSA-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   RSA     11 :)],
-        'RSA-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA     256 SHA384 PSK   RSA     11 :)],
-        'PSK-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM  128 AEAD   PSK   PSK     11 :)],
-        'PSK-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 AEAD   PSK   PSK     11 :)],
-        'DHE-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   PSK   DHEPSK  11 :)], # unklar
-        'DHE-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   PSK   DHEPSK  11 :)], # unklar
-        'RSA-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM  128 AEAD   RSA   RSAPSK  11 :)],
-        'RSA-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM  256 AEAD   PSK   RSAPSK  11 :)],
-        'ECDHE-PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   ECDHE   11 :)],
-        'ECDHE-PSK-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA     256 SHA384 PSK   ECDHE   11 :)],
-        #'head'                         => [qw(  sec  ssl   enc     bits mac    auth  keyx    score tags)],
-
+        'RSA-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   RSA     11 :)],
+        'RSA-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   RSA     11 :)],
+        'DH-DSS-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA        128 SHA256 DSS   DH      11 :)],
+        'DH-DSS-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA        256 SHA384 DSS   DH      11 :)],
+        'DH-RSA-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   DH      11 :)],
+        'DH-RSA-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   DH      11 :)],
+        'DHE-DSS-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 DSS   DHE     11 :)],
+        'DHE-DSS-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 DSS   DHE     11 :)],
+        'DHE-RSA-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   DHE     11 :)],
+        'DHE-RSA-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   DHE     11 :)],
+        'ADH-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA        128 SHA256 None  DH      11 :)],
+        'ADH-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA        256 SHA384 None  DH      11 :)],
+        'ECDHE-ECDSA-ARIA128-SHA256'    => [qw(  -?- TLSv12 ARIA        128 SHA256 ECDSA ECDHE   11 :)],
+        'ECDHE-ECDSA-ARIA256-SHA384'    => [qw(  -?- TLSv12 ARIA        256 SHA384 ECDSA ECDHE   11 :)],
+        'ECDH-ECDSA-ARIA128-SHA256'     => [qw(  -?- TLSv12 ARIA        128 SHA256 ECDSA ECDH    11 :)],
+        'ECDH-ECDSA-ARIA256-SHA384'     => [qw(  -?- TLSv12 ARIA        256 SHA384 ECDSA ECDH    11 :)],
+        'ECDHE-RSA-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   ECDHE   11 :)],
+        'ECDHE-RSA-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   ECDHE   11 :)],
+        'ECDH-RSA-ARIA128-SHA256'       => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   ECDH    11 :)],
+        'ECDH-RSA-ARIA256-SHA384'       => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   ECDH    11 :)],
+        'ARIA128-GCM-SHA256'            => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   RSA     11 :)],
+        'ARIA256-GCM-SHA384'            => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   RSA     11 :)],
+        'DHE-RSA-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   DH      11 :)],
+        'DHE-RSA-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   DH      11 :)],
+        'DH-RSA-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   RSA   DH      11 :)],
+        'DH-RSA-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   RSA   DH      11 :)],
+        'DHE-DSS-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   DSS   DH      11 :)],
+        'DHE-DSS-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   DSS   DH      11 :)],
+        'DH-DSS-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   DSS   DH      11 :)],
+        'DH-DSS-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   DSS   DH      11 :)],
+        'ADH-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   None  DH      11 :)],
+        'ADH-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   None  DH      11 :)],
+        'ECDHE-ECDSA-ARIA128-GCM-SHA256'=> [qw( HIGH TLSv12 ARIAGCM     128 AEAD   ECDSA ECDH    11 :)],
+        'ECDHE-ECDSA-ARIA256-GCM-SHA384'=> [qw( HIGH TLSv12 ARIAGCM     256 AEAD   ECDSA ECDH    11 :)],
+        'ECDH-ECDSA-ARIA128-GCM-SHA256' => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   ECDSA ECDH    11 :)],
+        'ECDH-ECDSA-ARIA256-GCM-SHA384' => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   ECDSA ECDH    11 :)],
+        'ECDHE-RSA-ARIA128-GCM-SHA256'  => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   ECDHE   11 :)],
+        'ECDHE-RSA-ARIA256-GCM-SHA384'  => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   ECDHE   11 :)],
+        'ECDHE-ARIA128-GCM-SHA256'      => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   ECDH    11 :)],
+        'ECDHE-ARIA256-GCM-SHA384'      => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   ECDH    11 :)],
+        'ECDH-RSA-ARIA128-GCM-SHA256'   => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   RSA   ECDH    11 :)],
+        'ECDH-RSA-ARIA256-GCM-SHA384'   => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   RSA   ECDH    11 :)],
+        'PSK-ARIA128-SHA256'            => [qw( HIGH TLSv12 ARIA        128 SHA256 PSK   PSK     11 :)],
+        'PSK-ARIA256-SHA384'            => [qw( HIGH TLSv12 ARIA        256 SHA384 PSK   PSK     11 :)],
+        'DHE-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   DHE     11 :)],
+        'DHE-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   DHE     11 :)],
+        'RSA-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   RSA     11 :)],
+        'RSA-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   RSA     11 :)],
+        'PSK-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   PSK   PSK     11 :)],
+        'PSK-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   PSK   PSK     11 :)],
+        'DHE-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   PSK   DHEPSK  11 :)],
+        'DHE-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   PSK   DHEPSK  11 :)],
+        'RSA-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   RSAPSK  11 :)],
+        'RSA-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   PSK   RSAPSK  11 :)],
+        'ECDHE-PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   ECDHE   11 :)],
+        'ECDHE-PSK-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   ECDHE   11 :)],
+        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
         # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
         'CECPQ1-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
         'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
-
+        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
 	# from: https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
-        'TLS13-AES-128-GCM-SHA256'      => [qw( HIGH TLSv12 AESGCM   128 AEAD   any   any     91 :)],
-        'TLS13-AES-256-GCM-SHA384'      => [qw( HIGH TLSv12 AESGCM   256 AEAD   any   any     91 :)],
-        'TLS_AES_128_GCM_SHA256'        => [qw( HIGH TLSv13 AESGCM   128 AEAD   any   any     91 :)],
-        'TLS_AES_256_GCM_SHA384'        => [qw( HIGH TLSv13 AESGCM   256 AEAD   any   any     91 :)],
-        'TLS13-AES-128-CCM-SHA256'      => [qw( high TLSv12 AESCCM   128 AEAD   any   any     91 :)],
-        'TLS13-AES-128-CCM8-SHA256'     => [qw( high TLSv12 AESCCM   128 AEAD   any   any     91 :)],
-        'TLS13-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD any any 91 :)],
-        'TLS_CHACHA20_POLY1305_SHA256'  => [qw( HIGH TLSv13 ChaCha20-Poly1305 256 AEAD any any 91 :)], # openssl 1.1.1
-
+        'TLS13-AES-128-GCM-SHA256'      => [qw( HIGH TLSv12 AESGCM      128 AEAD   any   any     91 :)],
+        'TLS13-AES-256-GCM-SHA384'      => [qw( HIGH TLSv12 AESGCM      256 AEAD   any   any     91 :)],
+        'TLS_AES_128_GCM_SHA256'        => [qw( HIGH TLSv13 AESGCM      128 AEAD   any   any     91 :)],
+        'TLS_AES_256_GCM_SHA384'        => [qw( HIGH TLSv13 AESGCM      256 AEAD   any   any     91 :)],
+        'TLS13-AES-128-CCM-SHA256'      => [qw( high TLSv12 AESCCM      128 AEAD   any   any     91 :)],
+        'TLS13-AES-128-CCM8-SHA256'     => [qw( high TLSv12 AESCCM      128 AEAD   any   any     91 :)],
+        'TLS13-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD any any   91 :)],
+        'TLS_CHACHA20_POLY1305_SHA256'  => [qw( HIGH TLSv13 ChaCha20-Poly1305 256 AEAD any any   91 :)],
 ); # %ciphers
-
-    # === openssl ===
-    # most of above table (roughly) generated with:
-    #   openssl ciphers -v ALL:eNULL:aNULL | sort \
-    #   | awk '{e=$7;printf("\t%26s => [%s, %s, %s, %s, %s, %s, %s],\n",$1,$2,substr($5,5),substr($5,index($5,"(")+1),substr($6,5),substr($4,4),substr($3,4),e)}' # )
-    # or better
-    #   | awk '{q="'"'"'";a=sprintf("%s%c",$1,q);e=$7;printf("\t%c%-26s => [qw( -?-\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t13 :)],\n",q,a,$2,substr($5,5),substr($5,index($5,"(")+1),substr($6,5),substr($4,4),substr($3,4),e)}' # )
-    # === openssl 0.9.8o ===
-    # most of above table (roughly) generated with:
-    #   openssl ciphers -v ALL:eNULL:aNULL | sort
-    #
-    # NOTE: some openssl (0.9.8o on Ubuntu 11.10) fail to list ciphers with
-    #    openssl ciphers -ssl2 -v
 
 our %text = (
     'separator'     => ":",# separator character between label and value
@@ -4148,7 +4080,7 @@ sub _get_data0          {
             _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
         }
     }
-    _yeast_TIME("no SNI}");         # should be before if {}, but also ok here 
+    _yeast_TIME("no SNI}");         # should be before if {}, but also ok here
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
@@ -4556,7 +4488,7 @@ sub check_url($$)   {
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
-    # NOTE: Net::SSLeay always sets  Accept:*/* 
+    # NOTE: Net::SSLeay always sets  Accept:*/*
 
     _trace2("check_url: use_http " . _is_cfg_use('http'));
     _trace2("check_url: get_http($host, $port, $url)");
@@ -6763,7 +6695,7 @@ sub _sort_cipher_results {
         $weight  = 79 if ($cipher =~ /^AEC/i);  # NOTE: must be after ^A
         $weight  = 99 if ($cipher =~ /^NULL/i);
         $weight -= 10 if ($cipher =~ /^TLS_/);  # some TLSv1.3 start with TLS_*
-        $weight -= 10 if ($cipher =~ /^TLS13-/);# some TLSv1.3 start or TLS13_* 
+        $weight -= 10 if ($cipher =~ /^TLS13-/);# some TLSv1.3 start or TLS13_*
         $weight -= 5  if ($cipher =~ /SHA512$/);
         $weight -= 4  if ($cipher =~ /SHA384$/);
         $weight -= 3  if ($cipher =~ /SHA256$/);
@@ -9731,7 +9663,7 @@ next annotation also). The added directories are:
   - $ENV{PWD}       # calling directory, some kind of fallback
   - /bin"           # special installation on portable media
 
-Note that  $ENV{PWD}  may be undefined, it will obviously not used then. 
+Note that  $ENV{PWD}  may be undefined, it will obviously not used then.
 Note that  /  works here even for Windoze.
 
 Some logic is used to prepend these directories to @INC,  avoiding useless
@@ -10805,7 +10737,7 @@ only documentation is effected). The function  _man_squeeze()  is used for
 that. It tries to optimize the ouput for the device. Text preformatted for
 better readability will be respected.
 
-As the approach is genereric, the final result may not be perfect. 
+As the approach is genereric, the final result may not be perfect.
 Following restrictions, oddities exist:
 
     * splitting is done on length of the text not on word bounderies, some
