@@ -2168,6 +2168,12 @@ Only print result for ciphers accepted by target.
 
 Only print result for ciphers not accepted by target.
 
+=head3 --https_body
+
+Prints HTTP response body of the target also, if requested with
+I<+https_body>  , which is disabled by default (because it may be huge
+amount of data not related to SSL/TLS).
+
 =head3 --ignorecase
 
 Checks are done case insensitive.
@@ -2443,6 +2449,8 @@ Note: must be used on command-line to inhibit all header lines.
 Do not print output (data or check result) for command C<CMD>. C<CMD>
 is any valid command, see  L</COMMANDS> ,  without leading C<+>.
 Option can be used multiple times.
+
+I<--ignore-out=>,    sets empty list.
 
 =head3 --score
 
@@ -6691,6 +6699,10 @@ described above,  I<--test-init>  exits straight before performing the
 specified commands on the target.  Therefore it prints the settings
 in  %cfg  containing all applied commands and options.
 
+=head3 --test-memory
+
+Print overview of variables' memory usage, used for debugging only.
+
 =head3 --test-methods
 
 Print available methods for C<openssl> in Net::SSLeay.
@@ -7176,7 +7188,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 22.02.13
+@(#) 22.02.22
 
 =head1 AUTHOR
 
