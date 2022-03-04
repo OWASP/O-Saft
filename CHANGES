@@ -1,4 +1,239 @@
 
+Version: 22.02.22
+  BUGFIX
+    * Net/SSLhello.pm: BF: avoid "Use of uninitialized value $ENV{"PWD"} in ..."
+    * o-saft*, OSaft/Ciphers.pm: BF: avoid "Use of uninitialized value $ENV{"PWD"} in ..."
+    * INSTALL.sh: BF: improved check for Perl modules
+    * INSTALL.sh: BF: create required directories
+    * contrib/gen_standalone.sh: BF: avoid overwriting generated code when used with -t option
+    * o-saft.cgi: BF: checks for bad IPs improved
+    * o-saft: BF: --port= handling for single host argument corrected
+    * o-saft: BF: output for --legacy=testssl-g corrected
+    * o-saft: BF: do not start GUI on CLI when output is redirected; detect GUI if STDIN is missing
+    * contrib/install_openssl.sh: BF: conflicting variable names and check for libidn.so corrected
+    * contrib/gen_standalone.sh: BF: avoid perl warning "Unescaped left brace in regex is deprecated" (in newer perl versions)
+    * contrib.bunt.pl: BF: missing space in substitution corrected
+    * contrib.bunt.pl: BF: colourizing cipher rating improved
+    * contrib.bunt.pl: BF: detecting host:port corrected
+    * t/o-saft_bench.sh: BF: +VERSION corrected
+    * t/o-saft_bench.sh: BF: redirect output of time command (from tty) correctly
+    * osaft.pm: BF: some cipher names corrected
+    * osaft.pm: BF: TLS 1.3 cipher-suites corrected
+    * osaft.pm: BF: ciphers 0x00,0x7x corrected (ciphers for openpgp extension)
+    * osaft.pm: BF: cipher rating (OWASP A) adapted to OWASP TLS Cheat Sheet (DHE*)
+    * osaft.pm: BF: avoid **WARNING: 412: for INFO_SCSV
+    * osaft.pm: BF: sorting ciphers according strength improved (added some CHACHA*, FZA*,
+    * o-saft*: BF: settings in @INC improved; set . instead ./ in @INC
+    * o-saft.pl: BF: check for --trace* option improved
+    * o-saft.pl: BF: check for +ocsp_uri and +ocsp_valid corrected
+    * o-saft.pl: BF: set default CA file if none found (--ca-file)
+    * o-saft.pl: BF: duplicate warning 042 corrected
+    * o-saft.pl: BF: ignore unknown options (new warning 029); avoids using its value as target
+    * o-saft.pl: BF: avoid perl error: "Undefined subroutine &Time::Local::timelocal ..."
+    * o-saft.pl: BF: check for +cipher_pfsall corrected
+    * o-saft.pl: BF: check for +logjam corrected (use $cipher instead of $c)
+    * o-saft.pl: BF: better ckeck for ancient Net:SSLeay < 1.49 functionality to avoid crash
+    * o-saft.pl: EF: better check vor valid hostname arguments
+    * o-saft.pl: BF: --exitcode does not count missing PFS if no ciphers offered
+    * o-saft.pl: BF: --exitcode does not count TLSv13
+    * o-saft.pl: BF: --exitcode-v corrected
+    * o-saft.pl: BF: setting cfg{'ca_file'} corrected
+    * o-saft.pl: BF: description of some ciphers corrected (according openssl description)
+    * Net/SSLinfo.pm: EF: output for --trace improved and unified
+    * Net/SSLinfo.pm: BT: test_ssleay() avoids using undefined functions which results in perl's "Can't locate .." error
+    * Net/SSLinfo.pm: documentation for --test-* corrected
+    * Net/SSLinfo.pm: avoid Perl warning "used only once: possible typo"
+    * Net/SSLinfo.pm: BF: get session information from Net::SSLeay (avoid perl warnings)
+    * Net/SSLinfo.pm: BF: avoid confusing message in servers access.log like: "\n" 400 750 "-" "-"
+    * Net/SSLhello.pm: BF: avoid "Use of uninitialized value $ENV{"PWD"} in ..."
+    * OSaft/Doc/Data.pm: BF: avoid some POD link syntax L<
+    * OSaft/Doc/Data.pm: BF: warnings have a message number
+    * OSaft/Ciphers.pm: BF: extend @INC (for internal use; @INC depends on OS and distribution)
+    * OSaft/Ciphers.pm: BF: sorting of strong ciphers improved
+    * OSaft/Ciphers.pm: BF: numbers for warning messages
+    * o-saft.tcl: EF: generating Tcl-markup for help improved (still not perfect)
+    * o-saft.tcl: BF: syntax corrected when --rc used
+    * o-saft.tcl: BF: UP and DOwn button in help window aktivated
+    * o-saft.tcl: BF: avoid searching for empty strings in help window
+    * o-saft.tcl: BF: result from +version not shown as table data
+    * Makefile.dev: BT: test with gen_standalone.sh improved
+    * Makefile.warning: BT: duplicate warning 042 corrected
+    * Makefile.cipher: BT: typo in target name corrected
+    * Makefile: BF: GEN.man depends on GEN.pod
+    * Makefile: BF: generation of files depending on OSaft/Doc/help.txt corrected
+    * o-saft-dbx.pm: BF: print content of %cfg{targets} instead of array ref
+    * o-saft-man.pm: BF: avoid "Use of uninitialized value ..." in man_warnings()
+    * o-saft-man.pm: BF: detect o-saft as one of our own commands in help texts
+    * o-saft-man.pm: BF: dirty hack to find proper .pod file for gen-man
+    * o-saft-man.pm: BF: generation of links in POD and HTML improved
+    * o-saft-man.pm: BF: _main renamed to _main_man (because this file is not yet a Perl package)
+    * o-saft-man.pm: BF: setting default options in generated .html corrected
+  CHANGES
+    * contrib/HTML-table.awk: EF: print table header for each table
+    * Makefile: ET: t/cloc-total.awk added as source file; list of documentation files improved
+    * o-saft.cgi: EF: --format=html implemented (experimental)
+    * o-saft.cgi: EF: parameter sanitation improved (trailing = in names removed)
+    * o-saft-man.pm: ED: output for --help=warnings in man_warnings() improved
+    * o-saft-man.pm: ED: idention in HTML <li> lists improved
+    * o-saft-man.pm: EF: --help=warnings implemented
+    * o-saft-man.pm: EF: --format=html option generated for --help=gen-cgi (o-saft.cgi.html)
+    * o-saft-man.pm: EF: --cgi-no-header added to quick options for o-saft.cgi.html
+    * t/Makefile.tcl: ET: target testcmd-tclinteractive-* and test.GUI added; testcmd-tcl---gui-* added
+    * t/Makefile.tcl: ET: new test targets
+    * t/Makefile.dev: ET: more individual targets for EXE.osaft (calling contrib/bunt.pl)
+    * t/Makefile.misc: ET: targets test.keys and test.values
+    * t/Makefile.misc: ET: targets cloc.csv and cloc.total added
+    * t/cloc-total.awk: EF: check calculated vs. reported values
+    * t/cloc-total.awk: EF: print comments reported by cloc
+    * o-saft.tcl: EF: read configuration from static files; new option --no-docs
+    * o-saft.tcl: EF: --stdin (reading data from STDIN) implemented
+    * o-saft.tcl: EF: options --test=FILE --layout=table implemented
+    * o-saft.tcl: EF: degugging improved; default configuration for Android improved
+    * o-saft.tcl: ET: option --test-tcl added
+    * INSTALL.sh: EF: --check and --install check for installed wish
+    * INSTALL.sh: EF: use unique error numbers
+    * INSTALL.sh: EF: use --install as default if no option given
+    * INSTALL.sh: EF: check for optional executables
+    * INSTALL.sh: EF: functionality and documentation improved
+    * Dockerfile: EF: build with debian supported
+    * Dockerfile: EF: using alpine:3.10
+    * Dockerfile: EF: Workaround for docker/alpine (bug or race condition) added
+    * contrib/o-saft.php: EF: moved to .
+    * contrib.bunt.pl: EF: improved for ciphrs with OWASP rating
+    * contrib.bunt.pl: ED: documentation improved
+    * Makefile.cipher: EF: new targets for testing +cipher with options
+    * Makefile.cmds: ET: renamed to Makefile.cmd
+    * OSaft/Doc/tools.txt: ED: checkAllCiphers.pl and contrib/alertscript.pl added
+    * OSaft/Doc/Data.pm: EF: fix for strange Perl behaviour on older Mac OSX
+    * OSaft/Ciphers.pm: BF: list command returns sorted list of files
+    * contrib/gen_standalone.sh: EF: check improved if source file exists
+    * contrib/gen_standalone.sh: ET: less noisy "ls" if called by make (check OSAFT_MAKE variable)
+    * contrib/gen_standalone.sh: ED: documentation for generated code improved
+    * contrib/gen_standalone.sh: EF: handle comments with OSAFT_STANDALONE
+    * contrib/o-saft.php: EF: improve: search for script to be called (no longer hardcoded)
+    * contrib/INSTALL-template.sh: EF: options improved; --not-blind added, default is --blind
+    * contrib/install_openssl.sh: EF: +VERSION and --version added
+    * contrib/install_openssl.sh: EF: Install Perl modules using "perl -MCPAN" instead of building from .tgz
+    * contrib/install_openssl.sh: EF: checking preconditions improved; building modules improved
+    * contrib/install_openssl.sh: EF: option --m to install required Perl modules
+    * contrib/install_openssl.sh: EF: adapting .o-saft.pl improved
+    * o-saft-man.pm: EF: _man_squeeze() and _man_use_tty() implemented for --tty option
+    * o-saft-man.pm: EF: output of man_help(), man_table() may have fixed width
+    * o-saft-man.pm: EF: CSS improved for o-saft.cgi.html
+    * o-saft: EF: option -line added
+    * o-saft: EF: options -colour -blind and -prg=* added
+    * o-saft*: EF: use print_pod() to print own help
+    * o-saft-dbx.pl: EF: --test implemented
+    * o-saft.pl: BF: allow $cfg{'ignore-out'} to set empty
+    * o-saft.pl: BF: intended functionality of --enabled --disabled corrected
+    * o-saft.pl: BF: initial time corrected if < 0: set $cfg{'time0'}
+    * o-saft.pl: EF: use Encode::decode("UTF-8", ...) for all printed values
+    * o-saft.pl: ED: formal changes in %ciphers (adaption to openssl 1.1.1k)
+    * o-saft.pl: ED: useless debug output removed; avoid duplicate commands
+    * o-saft.pl: EF: do not print same message (warning) multiple times; --warnings-dups added
+    * o-saft.pl: EF: check for Extended master secret
+    * o-saft.pl: EF: checking CA paths and files for Android improved
+    * o-saft.pl: EF: options --format-* and --ty implemented
+    * o-saft.pl: EF: TLS 1.3 cipher-suites added
+    * o-saft.pl: EF: ciphers 0x00,0x7x added (ciphers for openpgp extension)
+    * o-saft.pl: EF: warning and hint messages unified
+    * o-saft.pl: EF: check for openssl executable only if openssl required
+    * o-saft.pl: EF: --test implemented
+    * o-saft.pl: EF: --test* options unified
+    * o-saft.pl: EF: ECDHE-ECDSA-* ciphers are classified with "unknown" security
+    * osaft.pm: EF: +http_body disabled by default
+    * osaft.pm: EF: cfg{regex]{OWASP_AA} added; formal changes in %ciphers
+    * osaft.pm: EF: cipher names adapted to openssl 1.1.1k
+    * osaft.pm: EF: own _warn() and _dbx() if missing
+    * osaft.pm: EF: export STR_MAKEVAL
+    * osaft.pm: ED: formal changes; permanent hint texts defined here
+    * osaft.pm: EF: cfg{warnings_no_dups} and cfg{warnings_printed} added
+    * osaft.pm: EF: master_secret added to cmd-quick
+    * osaft.pm: EF: ca_paths and ca_files improved for Android
+    * osaft.pm: EF: new TLS_EXTENSIONS data structure
+    * osaft.pm: EF: cipher suites from rfc6367 added
+    * osaft.pm: EF: ca_paths[], openssl_cnfs[] improved
+    * osaft.pm: EF: reserved ciphers removed from cipher ranges
+    * osaft.pm: EF: ECDHE-ECDSA-* ciphers are classified with "unknown" security
+    * osaft.pm: EF: primary and alias name of some RSA-PSK-AES* cipher changed
+    * osaft.pm: ED: VERSION added for POD
+    * o-saft: EF: cal o-saft.tcl if no STDOUT available
+    * o-saft.cgi: EF: print all error for any invalid parameter
+    * o-saft.cgi: ED: POD and internal documentation improved
+    * o-saft.cgi: EF: pass parameter --format=html to o-saft.pl too
+    * o-saft.cgi: EF: printing HTTP headers conditionally; --cgi-header and --cgi-no-header implemented
+    * o-saft.cgi: EF: improved to check for invalid arguments without --*= prefix
+    * o-saft.cgi: EF: disallow IPv4-mapped IPv6 addresses
+    * o-saft.cgi: EF: disallow IPv4-mapped or incomplete  IPv6 addresses; disallow integer addresses
+    * o-saft-*.pm: ED: documentation improved
+    * t/Makefile*: ED: ALL.tests and ALL.tests.log are set in Makefile
+    * t/Makefile*: ED: documentation improved
+    * t/Makefile*: ET: --trace-CLI option added to most o-saft.pl calls 
+    * t/Makefile*: ET: do not force setting of EXE.pl for testcmd-%
+    * t/Makefile*: ET: qa.pod - check generated pod file
+    * Makefile: EF: dependency on tags file improved
+    * Makefile, t/Makefile*: ET: targets and documentation unified and improved
+    * o-saft-dbx.pm: ED: description for ciphers_sorted and ciphers_overview improved
+    * o-saft-dbx.pm: EF: avoid printing random value for cfg{time0} if OSAFT_MAKE ist set
+    * o-saft-dbx.pm: EF: avoid printing random value for cfg{time0} if OSAFT_MAKE ist set
+    * o-saft-dbx.pm: EF: $cfg{'trace*'} --> $cfg{'out'}->{'trace*'}
+    * o-saft-dbx.pm: EF: $VERSION renamed to $mainsid to avoid conflicts withother modules
+    * o-saft-dbx.pm: EF: output for --v improved (host:port/path)
+    * o-saft-man.pm: EF: --h improved (remove internal markup)
+    * o-saft-man.pm: EF: print own help if called without arguments
+    * o-saft-man.pm: EF: mobile-friendly title= attributes in generated HTML
+    * o-saft-man.pm: EF: help button to show o-saft.html for --help=cgi added
+    * o-saft-man.pm: EF: setting document title in generated .html improved
+    * o-saft.tcl: EF: docker_status_99x29_magenta.png added
+    * o-saft.tcl: EF: filename for saving contains name of TAB
+    * o-saft.tcl: EF: testing and debugging options --help-* renamed to --test-*
+    * o-saft.tcl: EF: --help=opts option implemented
+    * o-saft.tcl: EF: o-saft.pl initially called if +command arguments are given
+    * o-saft.tcl: EF: --rc improved; contrib/.o-saft.tcl removed
+    * o-saft.tcl: ED: searching for text starting with - in help text improved
+    * o-saft.tcl: EF: debugging improved
+    * o-saft.tcl: EF: avoid creating multiple option enty fields
+    * o-saft.pl: EF: +traceSUB removed, is now --test-sub (see o-saft-dbx.pm 1.110)
+    * o-saft.pl: EF: print ciphers for --no-enabled and --legacy=owasp also
+    * o-saft.pl: EF: $VERSION renamed to $mainsid to avoid conflicts withother modules
+    * o-saft.pl: EF: avoid duplicate settings in @INC; setting @INC simplified; set . but not ./
+    * o-saft.pl: EF: --exitcode does not count "no (<<..>>)" results
+    * o-saft.pl: ED: typos
+    * o-saft.pl: EF: use URL if any to connect to target
+    * Net/SSLhello.pm: $main::cfg{'trace*'} --> $Net::SSLhello::trace*
+    * Net/SSLhello.pm: version string corrected
+    * Net/SSLhello.pm: EF: usinag IANA constant names for cipher suites instead of openssl constant names
+    * Net/SSLinfo.pm: ED: formal change: use $STR{WARN}
+    * Net/SSLinfo.pm: EF: check for Extended master secret
+    * Net/SSLinfo.pm: ET: improved verbose and debug messages
+    * Net/SSLinfo.pm: EF: prepared for improved extracting of PEM data
+    * Net/SSLinfo.pm: EF: empty headers in Net::SSLeay::get_http() removed
+    * Net/SSLinfo.pm: EF: use URL if any to connect to target
+    * Net/SSLinfo.pm: EF: --test-* and +VERSION options added
+  NEW
+    * t/Makefile: ET: set O-SAFT_MAKE
+    * t/cloc-total.awk: EF: added
+    * contrib/symbol.pl: new
+    * contrib/*_completion_o-saft: EF: completion for o-saft.tcl added
+    * contrib/INSTALL-template.sh: various adaptions to previous changes
+    * t/Makefile: ET: set O-SAFT_MAKE
+    * t/Makefile.misc: ET: testing CLI with *pm
+    * t/Makefile.doc: ET: testing internal documentation
+    * OSaft/Ciphers.pm: EF: --usage implemented
+    * OSaft/Doc/help.txt: ED: --test* options added
+    * OSaft/Doc/Data.pm: EF: --usage implemented
+    * Net/SSLinfo.pm: EF: _verbose()
+    * Net/SSLinfo.pm: EF: Net::SSLinfo::use_https and ::target_url added
+    * o-saft.tcl: EF: --help=opts option implemented
+    * o-saft.pl: EF: --use-https implemented
+    * o-saft.pl: EF: new functionality: +public_key_len +session_id_ctx
+    * o-saft.pl: EF: +sstp implemented
+    * o-saft.pl: EF: print warning if --port used after host argument
+    * o-saft-man.pm: EF: generate nroff format implemented
+    * o-saft-man.pm: EF: message box for "CGI Usage Note" added to gen-cgi
+    * o-saft-dbx.pm: ET: --test* option implemented
+    * o-saft-dbx.pm: ET: write real date and time only if O-SAFT_MAKE environment variable does not exist
+
 Version: 19.01.19
   BUGFIX
     * t/Makefile.*: BT: macro ALL.inc.type corrected
@@ -327,7 +562,7 @@ Version: 16.11.16
     * osaft.pm: regex->TR-02102  corrected
     * .o-saft.pl: cmd-info should not contain selected
   CHANGES
-    * o-saft-man.pm: comments? description for TR-02102-2 (2016-01) instead of TR-02102-2 (2013-01)
+    * o-saft-man.pm: description for TR-02102-2 (2016-01) instead of TR-02102-2 (2013-01)
 
 Version: 16.11.14
   BUGFIX
