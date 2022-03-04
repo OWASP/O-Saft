@@ -142,7 +142,7 @@ MAINTAINER Achim <achim@owasp.org>
 ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_USER=osaft
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-ARG     OSAFT_VM_SHA_OSAFT="29d4faa2ed3025ed18d31175e868d6be9312b36ba486c6e5f305afeb34947f68"
+ARG     OSAFT_VM_SHA_OSAFT="5f23bbed8d411d84faec29c0a5da07ca58a64702c98339c7e7739450f0f9161c"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"
 ARG     OSAFT_VM_SHA_SSLEAY="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"
@@ -154,7 +154,7 @@ ARG     OSAFT_VM_SRC_OPENSSL="https://github.com/PeterMosmans/openssl/archive/1.
 ARG     OSAFT_VM_SHA_OPENSSL="ad3d99ec091e403a3a7a678ddda38b392e3204515425827c53dc5baa92d61d67"
 ARG     OSAFT_VM_TAR_OPENSSL="openssl.tgz"
 ARG     OSAFT_VM_DYN_OPENSSL="--shared"
-#                             --static  not yet (2017) working 'cause of libkrb5
+#                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
 
@@ -167,7 +167,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.35 19/12/15 00:08:51" \
+	SID="@(#) Dockerfile 1.36 22/03/04 20:20:53" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
