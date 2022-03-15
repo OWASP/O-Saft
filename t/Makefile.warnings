@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) @ 1.65 22/03/13 16:33:22
+#?      @(#) `@#UU 1.66 22/03/15 22:23:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.65
+_SID.warnings      := 1.66
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -181,7 +181,7 @@ warning-005: TEST.args  = TODO: testing missing IO/Socket/SSL.pm
 warning-006: TEST.args  = TODO: testing missing IO/Socket/INET.pm, disabled ...
 warning-007: TEST.args  = TODO: testing missing Net/DNS.pm
 warning-008: TEST.args  = TODO: testing missing Time/Local.pm
-warning-009: TEST.args  = TODO: testing die, missing OSaft/Cipher.pm
+#warning-009: TEST.args  = free
 warning-010: TEST.args  = TODO: testing die, missing Net/SSLhello.pm
 warning-011: TEST.args  = TODO: testing die, missing Net/SSLinfo.pm
 warning-012: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
@@ -411,7 +411,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# @ 1.65: $(MAKE) test.warnings.log" > $@
+	@echo "# `@#UU 1.66: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
