@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.160 22/02/27 10:36:19";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.161 22/03/15 22:26:14";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -149,195 +149,6 @@ sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cip
     _yline(" ciphers }");
     return;
 } # _yeast_ciphers_list
-
-sub _yeast_ciphers_sorted   { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    local $\ = "\n";
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== ciphers sorted according strength ===
-=
-= Print overview of all available ciphers sorted according OWASP scoring.
-=
-=   description of columns:
-=       OWASP       - OWASP scoring (A, B, C, D)
-=       openssl     - strength gven bei OpenSSL
-=       cipher suite- OpenSSL suite name
-=
-= OWASP openssl cipher suite
-=------+-------+----------------------------------------------";
-    my @sorted;
-    my @cnt = keys %ciphers;
-    # TODO: sorting as in yeast.pl _sort_results()
-    foreach my $c (sort_cipher_names(keys %ciphers)) {
-        push(@sorted, sprintf("%2s\t%s\t%s", get_cipher_owasp($c), get_cipher_sec($c), $c));
-    }
-    print foreach sort @sorted;
-    print "=------+-------+----------------------------------------------";
-    print "= OWASP openssl cipher suite";
-    printf("= %s sorted ciphers\n", scalar @sorted);
-    # FIXME: list contains duplicates; following check fails
-    if ($#cnt != $#sorted) {
-        printf("= %s sorted number of ciphers %s <> %s number of ciphers\n",
-               STR_WARN, $#sorted + 1, $#cnt + 1);
-    }
-    return;
-} # _yeast_ciphers_sorted
-
-sub _yeast_ciphers_overview { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== internal data structure for ciphers ===
-=
-= Print a simple overview of all available ciphers.  The purpose is to show if
-= the internal data structure provides all necessary data for a cipher suite.
-=
-=   description of columns:
-=       key         - hex key for cipher suite
-=       cipher sec. - cipher suite security is known
-=       cipher name - cipher suite (OpenSSL) name exists
-=       cipher const- cipher suite constant name exists
-=       cipher desc - cipher suite known in internal data structure
-=       cipher alias- other (alias) cipher suite names exist
-=       name + desc - name and description exists
-=       cipher suite- OpenSSL suite name
-=   description of values:
-=       *    value present
-=       -    value missing
-=       -?-  security unknown/undefined
-=       miss security missing in data structure
-=
-= No perl or other warnings should be printed.
-= Note: following columns should have a *
-=       security, name, const, desc
-=
-";
-    my $cnt = 0;
-    my %err = (
-       'key'    => 0,
-       'sec'    => 0,
-       'name'   => 0,
-       'const'  => 0,
-       'descr'  => 0,
-    );
-    print __data_title("",    " cipher",  " cipher", "cipher",  " cipher", " cipher", " name +", " cipher");
-    print __data_title("key", "security", " name ",  " const",  "  desc.", "  alias", "  desc.", "  suite");
-    print __data_line();
-    # key in %ciphers is the cipher suite name, but we want the ciphers sorted
-    # according their hex constant; perl's sort need a copare funtion
-    my %keys;
-    map { $keys{get_cipher_hex($_)} = $_; } keys %ciphers;
-    foreach my $k (sort {$a cmp $b} keys %keys) {
-        $cnt++;
-        my $c   = $keys{$k};
-        my $key = get_cipher_hex($c);
-           $key = "-" if ($key =~ m/^\s*$/);
-        my $sec = get_cipher_sec($c);
-           $sec = "*" if ($sec =~ m/$cfg{'regex'}->{'security'}/i);
-           $sec = "-" if ($sec =~ m/^\s*$/);
-        my $name= (get_cipher_name($c)  =~ m/^\s*$/) ? "-" : "*";
-        my $desc= join(" ", get_cipher_desc($c));
-           $desc= ($desc =~ m/^\s*$/) ? "-" : "*";
-        my $const=(get_cipher_suiteconst($c) =~ m/^\s*$/) ? "*" : "*"; # FIXME: 
-        my $alias= "-"; #get_cipher_suitealias($c); # =~ m/^\s*$/) ? "-" : "*";
-        my $both= "-";
-        $both   = "*" if ('*' eq $desc and '*' eq $name);
-        print __data_data( $key, $sec, $name, $const, $desc, $alias, $both, $c);
-        $err{'key'}++   if ($key  eq "-");
-        $err{'sec'}++   if ($sec  ne "*");
-        $err{'name'}++  if ($name ne "*");
-       #$err{'cnst'}++  if ($cnst ne "*");
-        $err{'desc'}++  if ($desc ne "*");
-    }
-    print __data_line();
-    print __data_title("key", "security", " name ",  " const",  "  desc.", "  alias", "  desc.", "  suite");
-    printf("= %s ciphers\n", $cnt);
-    printf("= identified errors: ");
-    printf("%6s=%-2s,", $_, $err{$_}) foreach sort keys %err;
-    printf("\n\n");
-    return;
-} # _yeast_ciphers_overview
-
-sub _yeast_ciphers_show     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    local $\ = "\n";
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== internal data structure for ciphers ===
-=
-= Print a full overview of all available ciphers.  Output is similar (order of
-= columns) but not identical to result of  'openssl ciphers -V'  command.
-=
-=   description of columns:
-=       key         - internal hex key for cipher suite
-=       hex         - hex key for cipher suite (like openssl)
-=       ssl         - SSL/TLS version
-=       keyx        - Key Exchange
-=       auth        - Authentication
-=       enc         - Encryption Algorithm
-=       bits        - Key Size
-=       mac         - MAC Algorithm
-=       sec         - Security
-=       cipher suite- OpenSSL suite name
-=";
-    my $cnt = 0;
-    printf("=%9s\t%9s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "cipher suite");
-    printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
-    # key in %ciphers is the cipher suite name, but we want the ciphers sorted
-    # according their hex constant; perl's sort need a copare funtion
-    my %keys;
-    map { $keys{get_cipher_hex($_)} = $_; } keys %ciphers;
-    foreach my $k (sort {$a cmp $b} keys %keys) {
-        $cnt++;
-        my $c   = $keys{$k};
-        my $key = get_cipher_hex($c);
-        my $hex = tls_key2text($key);
-        ## $key = tls_text2key($hex);
-        my $ssl = get_cipher_ssl($c);
-        my $sec = get_cipher_sec($c);
-        my $keyx= get_cipher_keyx($c);
-        my $auth= get_cipher_keyx($c);
-        my $enc = get_cipher_enc($c);
-        my $bits= get_cipher_bits($c);
-        my $mac = get_cipher_mac($c);
-        my $name= get_cipher_name($c);
-        my $desc= join(" ", get_cipher_desc($c));
-        my $const=get_cipher_suiteconst($c);
-        my $rfc = "-"; # get_cipher_rfc($c);
-        my $alias= "-"; #get_cipher_suitealias($c); # =~ m/^\s*$/) ? "-" : "*";
-        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-               $key, $hex, $ssl, $keyx, $auth, $enc, $bits, $mac, $sec, $name);
-        $err{'key'}++   if ($key  eq "-");
-        $err{'sec'}++   if ($sec  ne "*");
-        $err{'name'}++  if ($name ne "*");
-        $err{'rfc'}++   if ($rfc  ne "*");
-        $err{'desc'}++  if ($desc ne "*");
-    }
-    printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
-    printf("=%14s\t%15s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-           "key", "hex", "ssl", "keyx", "auth", "enc", "bits", "mac", "sec", "cipher suite");
-    printf("= %s ciphers\n", $cnt);
-    return;
-} # _yeast_ciphers_show
-
-sub _yeast_ciphers          { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    local $\ = "\n";
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== list of ciphers ===
-=
-";
-    return;
-} # _yeast_ciphers
-
-sub _yeast_cipher           { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== internal data structures for a cipher ===
-
-";
-# TODO: %ciphers %cipher_names
-    return;
-}
 
 sub _yeast_targets          {
     my $trace   = shift;
@@ -963,26 +774,22 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit
     _yeast($arg);
-    _yeast_test_help()        if ('--test'          eq $arg);
-    _yeast_test_help()        if ('--tests'         eq $arg);
-    _yeast_test_sclient()     if ('--testsclient'   eq $arg); # Net::SSLinfo
-    _yeast_test_ssleay()      if ('--testssleay'    eq $arg); # Net::SSLinfo
-    _yeast_test_sslmap()      if ('--testsslmap'    eq $arg); # Net::SSLinfo
-    _yeast_test_methods()     if ('--testmethods'   eq $arg); # Net::SSLinfo
-    _yeast_test_memory()      if ('--testmemory'    eq $arg);
+    OSaft::Ciphers::show($arg)  if ($arg =~ /^--test[._-]?cipher/);
+    _yeast_test_help()          if ('--test'          eq $arg);
+    _yeast_test_help()          if ('--tests'         eq $arg);
+    _yeast_test_sclient()       if ('--testsclient'   eq $arg); # Net::SSLinfo
+    _yeast_test_ssleay()        if ('--testssleay'    eq $arg); # Net::SSLinfo
+    _yeast_test_sslmap()        if ('--testsslmap'    eq $arg); # Net::SSLinfo
+    _yeast_test_methods()       if ('--testmethods'   eq $arg); # Net::SSLinfo
+    _yeast_test_memory()        if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    osaft::test_regex()       if ('regex'           eq $arg);
-    _yeast_test_data()        if ('data'            eq $arg);
-    _yeast_test_init()        if ('init'            eq $arg);
-    _yeast_test_maps()        if ('maps'            eq $arg);
-    _yeast_test_prot()        if ('prot'            eq $arg);
-    # TODO: some of following obsolete when ciphers defined in OSaft/Cipher.pm
-    _yeast_ciphers()          if ('ciphers'         eq $arg);
+    osaft::test_regex()         if ('regex'           eq $arg);
+    _yeast_test_data()          if ('data'            eq $arg);
+    _yeast_test_init()          if ('init'            eq $arg);
+    _yeast_test_maps()          if ('maps'            eq $arg);
+    _yeast_test_prot()          if ('prot'            eq $arg);
     $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
-    _yeast_ciphers_sorted()   if ($arg =~ m/^sort(?:ed)?/);
-    _yeast_ciphers_show()     if ('show'            eq $arg);
-    _yeast_ciphers_overview() if ('overview'        eq $arg);
-   #_yeast_ciphers_list()    if ('list'     eq $arg);
+    OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
     if ('list'     eq $arg) {
         # FIXME: --test-ciphers is experimental
         # _yeast_ciphers_list() relies on some special $cfg{} settings
@@ -1106,14 +913,6 @@ Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl
 
 =over 4
 
-=item _yeast_ciphers_list( )
-
-=item _yeast_ciphers_sorted( )
-
-=item _yeast_ciphers_show( )
-
-=item _yeast_ciphers_overview( )
-
 =item _yeast_test_help( )
 
 =item _yeast_test_data( )
@@ -1175,7 +974,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.160 2022/02/27
+1.161 2022/03/15
 
 =head1 AUTHOR
 
