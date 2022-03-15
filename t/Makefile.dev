@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.50 22/02/27 11:13:59
+#?      @(#) Makefile.dev 1.51 22/03/15 09:14:59
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.50
+_SID.dev           := 1.51
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -48,7 +48,7 @@ EXE.osaft-standalone   := ../$(GEN.src)
 EXE.osaft-dbx      := ../o-saft-dbx.pm
 EXE.osaft-man      := ../o-saft-man.pm
 EXE.osaft-usr      := ../o-saft-usr.pm
-EXE.osaft-cipher   := ../OSaft/Ciphers.pm
+EXE.osaft-ciphers  := ../OSaft/Ciphers.pm
 EXE.osaft-doc-data := ../OSaft/Doc/Data.pm
 EXE.net-sslhello   := ../Net/SSLhello.pm
 EXE.net-sslinfo    := ../Net/SSLinfo.pm
@@ -65,7 +65,7 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
 
 # list of variables containing source files (executables)
-LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-cipher EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
+LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-ciphers EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
@@ -82,8 +82,8 @@ LIST.o-saft-docker :=  -help
 LIST.osaft         :=
 # done with LIST.osaft-dbx:  --regex --test-regex
 
-LIST.osaft-cipher  := \
-	description     alias   const   names   rfc     version overview \
+LIST.osaft-ciphers := \
+	version alias   const   description          overview   rfc \
 	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
 	getter=0x060040   getter=0x02060040 key=DES-CBC-MD5 \
 	getter=0xC0,0x2C  getter=0x0300C02C key=ECDHE-ECDSA-AES256-GCM-SHA384 \
