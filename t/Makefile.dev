@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.51 22/03/15 09:14:59
+#?      @(#) Makefile.dev 1.52 22/03/15 22:22:27
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.51
+_SID.dev           := 1.52
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -82,12 +82,22 @@ LIST.o-saft-docker :=  -help
 LIST.osaft         :=
 # done with LIST.osaft-dbx:  --regex --test-regex
 
-LIST.osaft-ciphers := \
-	version alias   const   description          overview   rfc \
-	ciphers=dump ciphers=osaft ciphers=yeast ciphers=openssl ciphers=dumptab \
+# Ciphers.pm supports command/options with or without + and -- prefix
+LIST.osaft-ciphers-cmd  := \
+	alias   const   dump    description overview    rfc     show    sorted 
+
+# some command and options supported by Ciphers.pm are supported by $(SRC.pl)
+# too, but must be used there as  --test-ciphers-*
+LIST.osaft-ciphers--test := $(LIST.osaft-ciphers-cmd:%=--test-ciphers-%)
+
+# command/options for Ciphers.pm composed of previoues ones and some specials
+LIST.osaft-ciphers  := \
+	$(LIST.osaft-ciphers--test) $(LIST.osaft-ciphers-cmd) \
 	getter=0x060040   getter=0x02060040 key=DES-CBC-MD5 \
 	getter=0xC0,0x2C  getter=0x0300C02C key=ECDHE-ECDSA-AES256-GCM-SHA384 \
 	getter=0xCC,0xA9  getter=0x0300CCA9 key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
+
+LIST.o-saft-pl     += $(LIST.osaft-ciphers--test)
 
 LIST.osaft-doc-data := \
 	--usage version         +VERSION    list  print \
