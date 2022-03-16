@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.89 22/02/27 10:35:39
+# SID   @(#) help.txt 1.90 22/03/16 23:18:22
 
 NAME
 
@@ -4669,7 +4669,7 @@ TESTING
 
       --test-maps
 
-          Print internal data strucures '%cfg{openssl}', '%cfg{ssleay}'.
+          Print internal data strucures  '%cfg{openssl}',  '%cfg{ssleay}'.
 
       --test-prot
 
@@ -4679,28 +4679,26 @@ TESTING
 
           Print results for applying various texts to defined regex.
 
+      --test-ciphers-dump
+      --test-ciphers-hex=*
+      --test-ciphers-key=*
       --test-ciphers-list
-
-          Print list of hex keys of known ciphers.
-
-      --test-ciphers-show
-
-          Print complete list of ciphers.
-
-      --test-cipher-sorted
-
-          Print list of ciphers sorted according strength.
-
       --test-ciphers-overview
+      --test-ciphers-openssl
+      --test-ciphers-show
+      --test-ciphers-simple
+      --test-ciphers-sorted
+      --test-ciphers-ssltest
 
-          Print overview of all available ciphers with all attributes.
+          Print ciphers in variou formats, please see: OSaft/Ciphers.pm .
+
 
       --test-init
 
-          Print parts of the data structure  %cfg. In contrast to the options
+          Print parts of  data structure  '%cfg'.  In contrast to the options
           described above,  --test-init  exits straight before performing the
           specified commands on the target.  Therefore it prints the settings
-          in  %cfg  containing all applied commands and options.
+          in  '%cfg'  containing all applied commands and options.
 
       --test-memory
 
