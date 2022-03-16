@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.162 22/03/16 23:12:48";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.163 22/03/17 00:00:23";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -813,7 +813,6 @@ sub _main_dbx       {
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
-        # TODO: _yeast_test($arg);
     }
     exit 0;
 } # _main_dbx
@@ -970,7 +969,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.162 2022/03/16
+1.163 2022/03/17
 
 =head1 AUTHOR
 
