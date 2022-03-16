@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.8 20/11/09 18:23:39
+#?      @(#) Makefile.cipher 1.9 22/03/16 22:15:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.8
+_SID.cipher        := 1.9
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -65,9 +65,10 @@ _TEST.cipher       := testcmd-cipher+cipher
 LIST.cipher        := dummy-no-arg  \
 	legacy=owasp  force-openssl \
 	cipher-alpn   cipher-npn    cipher-openssl  cipher-curves \
-	range=ecc     range=rfc     range=long \
-	range=SSLv2   range=TLSv12  range=shifted
-# --range=safe  disabled, because it takes a long time
+	range=c0xx    range=ccxx    range=ecc       range=SSLv2_long \
+	range=rfc     range=long    range=shifted   range=SSLv3_SSLv2 \
+	range=SSLv2   range=SSLv3   range=TLSv12    range=TLSv13
+# --range=safe  and  --range=huge  disabled, because it takes a long time
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
