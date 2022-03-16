@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.161 22/03/15 22:26:14";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 1.162 22/03/16 23:12:48";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -112,7 +112,7 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
     #  avoids printing of empty lines
 
-sub _yeast_ciphers_list     { # TODO: obsolete when ciphers defined in OSaft/Cipher.pm
+sub _yeast_ciphers_list     {
     #? print ciphers fromc %cfg (output optimised for +cipher and +cipherraw)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
@@ -447,15 +447,12 @@ sub _yeast_test_help    {
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
 =   --test-regex    results for applying various texts to regex
-=   --test-ciphers-list     list of hex keys of known ciphers
-=   --test-ciphers-show     complete list of ciphers
-=   --test-ciphers-sorted   list of ciphers sorted according strength
-=   --test-ciphers-overview overview of all available ciphers with all attributes
 =   --test-memory   overview of variables' memory usage
 =   --test-methods  available methods for openssl in Net::SSLeay
 =   --test-sclient  available options for 'openssl s_client' from Net::SSLeay
 =   --test-sslmap   constants for SSL protocols from Net::SSLeay
 =   --test-ssleay   information about Net::SSLeay capabilities
+=   --test-ciphers-*    various ciphers listings; available with o-saft.pl only
 =  ----------------+----------------------------------------------
 =";
     # o-saft.tcl --test-o-saft  # just for completeness, not used here
@@ -791,7 +788,6 @@ sub _yeast_test {
     $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
     OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
     if ('list'     eq $arg) {
-        # FIXME: --test-ciphers is experimental
         # _yeast_ciphers_list() relies on some special $cfg{} settings
         $cfg{'verbose'} = 1;
         push(@{$cfg{'do'}},      'cipherraw');
@@ -974,7 +970,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.161 2022/03/15
+1.162 2022/03/16
 
 =head1 AUTHOR
 
