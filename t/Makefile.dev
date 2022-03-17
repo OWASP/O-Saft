@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.54 22/03/17 00:29:22
+#?      @(#) Makefile.dev 1.55 22/03/17 08:34:59
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.54
+_SID.dev           := 1.55
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -80,11 +80,10 @@ LIST.o-saft-sh     :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
 LIST.osaft         :=
-# done with LIST.osaft-dbx:  --regex --test-regex
 
 # Ciphers.pm supports command/options with or without + and -- prefix
 LIST.osaft-ciphers-cmd  := \
-	alias   const   rfc     description sorted \
+	alias   const   rfc     regex   description sorted \
 	dump    openssl osaft   show    simple  ssltest
 
 # some command and options supported by Ciphers.pm are supported by $(SRC.pl)
@@ -125,8 +124,8 @@ LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap --test-sslea
 #LIST.o-saft-pl     += $(LIST.net-sslinfo-t)
 
 LIST.osaft-dbx     := \
-	--tests $(LIST.net-sslinfo-t)    --test-memory \
-	--test-data --test-init --test-maps --test-prot --test-regex    \
+	--tests $(LIST.net-sslinfo-t) \
+	--test-memory   --test-data --test-init --test-maps --test-prot
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
