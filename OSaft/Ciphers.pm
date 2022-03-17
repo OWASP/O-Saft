@@ -1,4 +1,15 @@
 #!/usr/bin/perl
+
+## no critic qw(ControlStructures::ProhibitPostfixControls)
+#  We believe it's better readable (severity 2 only).
+
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+#  We use perlish multiplication vor strings, like "'-' x 7", (severity 2 only).
+
+# test resources with:
+# /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
+# 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
+
 ## PACKAGE {
 
 #!# Copyright (c) 2022, Achim Hoffmann
@@ -12,25 +23,7 @@
 
 OSaft::Ciphers - common perl module to define cipher suites for O-Saft
 
-#####
-# perlcritic -3 OSaft/Ciphers.pm # -verbose 10
-
-########################  E X P E R I M E N T A L  #######################
-################  not used in O-Saft 19.04.19 .. 21.12.31  ###############
-
 =cut
-
-# test resources with:
-## /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  names
-## 0.12  0.00  0:00.12  96%  0k  6668k
-## 0.11  0.00  0:00.11  98%  0k  6852k
-## 0.14  0.01  0:00.16  97%  0k  7100k
-## 0.17  0.00  0:00.18  99%  0k 10360k
-
-
-# TODO: see comment at %ciphers_names
-
-########################  E X P E R I M E N T A L  #######################
 
 package OSaft::Ciphers;
 
@@ -52,44 +45,20 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $VERSION      = '12.11.12';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 1.58 22/03/03 11:15:26";
+our $VERSION      = '22.03.03';     # official verion number of tis file
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.1 22/03/18 00:38:16";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
 
-use osaft qw(print_pod);
+#use osaft qw(print_pod);
+use osaft;
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
 
 # More public documentation, see start of methods section, and at end of file.
-
-## no critic qw(Variables::ProtectPrivateVars)
-#  Our private variable names start with an  _  as suggested by percritic.
-#  However, percritic is too stupid to recognice such names if it is fully
-#  qualified with preceding package name.
-
-## no critic qw(Documentation::RequirePodSections)
-#  Our POD below is fine, perlcritic (severity 2) is too pedantic here.
-
-## no critic qw(Documentation::RequirePodAtEnd)
-#  Our POD is inline as it serves for documenting the code itself too.
-#  But: this is a violation for severity 1, which is fixed and then produces
-#       another violation for severity 2.
-
-## no critic qw(Documentation::RequirePodLinksIncludeText)
-#     Severity 2 only.
-
-## no critic qw(ControlStructures::ProhibitPostfixControls)
-#  We believe it's better readable (severity 2 only).
-
-## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#  There're a lot of expressions here, it's ok to use them without /x flag.
-
-## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
-#  We believe it's better readable.
 
 =pod
 
@@ -120,16 +89,16 @@ this additional functionality, please read descriptions there.
 
 Following functions (methods) must be defined in the calling program:
 
-None (06/2021).
+None (03/2022).
 
 =head1 CONCEPT
 
 The main data structure is  C<%ciphers>, which will be defined herein.
-It's defined as a static hash with the cipher's ID (hex number) as the hash key
-and all cipher suite data (in an array) as value for that hash key. For example
-I<AES256-SHA256>:
+Ciphers (more precisely: cipher suites) are defined statically as perl __DATA__
+herein. Each cipher is defined statically in one line with TAB-separated values
+for example:
 
-    '0x03000003D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)],
+    0x0300003D HIGH  HIGH  TLSv12  RSA  RSA  AES  256  SHA256 .. AES256-SHA256
 
 For a more detailed description, please use:
 
@@ -141,14 +110,10 @@ The main key -aka ID- to identify a cipher suite is a 32-bit key where the last
 16 bits are the numbers as defined by IANA and/or various RFCs.
 This key is also used in all other data structures related to ciphers.
 
-Other data, related to the cipher suite (like the cipher suite name, the cipher
-suite constant) are defined in additional data structures  C<%ciphers_names> ,
-C<%ciphers_const>  and  C<%ciphers_alias>.
-
 Each cipher suite is defined as a perl array (see above)  and will be converted
 to a perl hash at initialisation like:
 
-    '0x03000003D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
+    '0x0300003D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
 
 Such a hash is simpler to use. Finally a getter method (see L</METHODS>) is
 provided for each value.
@@ -156,17 +121,18 @@ provided for each value.
 =cut
 
 #This approach to specify the definition,  which must be done by developers,  is
-#is based on the consideration that the corresponding data structure needs to be
-#maintained very carefully. Hence the description of all (known) cipher suite is
-#done in a simple, which then will be converted into a hash automatically. It is
-#the author's opinion that tabular data is more easy to maintain than structured
-#data.
+#based on the consideration that the data structure needs to be  maintained very
+#carefully. Therefore the description of  all (known) cipher suites is done in a
+#simple table, which just contains TAB-separated words.  This table will then be
+#converted into the %cipher hash automatically when thes module is loaded. It is
+#the author's opinion, that tabular data is more easy to maintain by humans than
+#structured data.
 
 =pod
 
 =head2 Variables
 
-All variables except C<@cipher_results> are constants, and hence read-only. There
+All variables except C<$cipher_results> are constants, and hence read-only. There
 is no need to change them in the calling program.
 
 =head2 Methods
@@ -175,10 +141,7 @@ Because all variables are constants, we only provide getter methods for them.
 
 =head2 Testing
 
-All data structures are defined herein. For testing, the data structures can be
-read from a file.
-
-See also:  OSaft/Ciphers.pm --usage
+The getter methods can be used directly, see:  OSaft/Ciphers.pm --usage
 
 =head2 Documentaion
 
@@ -198,19 +161,14 @@ Hash with all cipher suites and paramters of each suite. Indexed by cipher ID.
 
 Describes the data structure in C<%ciphers>.
 
-=item %ciphers_names
+=item %ciphers_notes
 
-Hash with various names, identifiers and constants for each cipher suite.
-Indexed by cipher ID.
+Notes and comments for a specific cipher, documentation only.
+Will be used in C<%ciphers>.
 
-=item %ciphers_alias
+=item $cipher_results
 
-Hash with additional names, identifiers and constants for a cipher suite.
-Indexed by cipher ID.
-
-=item @cipher_results
-
-Array with all checked ciphers.
+Pointer to hash with all checked ciphers.
 
 =back
 
@@ -224,20 +182,18 @@ used with the full package name.
 ## no critic qw(Modules::ProhibitAutomaticExportation, Variables::ProhibitPackageVars)
 # FIXME: perlcritic complains to not declare (global) package variables, but
 #        the purpose of this module is to do that. This may change in future.
+# The caller may uses most symbols, hence we use @EXPORT and not @EXPORT_OK .
 
 use Exporter qw(import);
 use base     qw(Exporter);
-our @EXPORT_OK  = qw(
+our @EXPORT = qw(
                 %ciphers
                 %ciphers_desc
-                %ciphers_names
-                %ciphers_alias
-                %ciphers_const
-                @cipher_results
-                text2key
-                key2text
+                %cipher_notes
+                $cipher_results
                 get_param
                 get_ssl
+                get_sec
                 get_keyx
                 get_auth
                 get_enc
@@ -245,22 +201,22 @@ our @EXPORT_OK  = qw(
                 get_mac
                 get_dtls
                 get_rfc
-                get_sec
-                get_tags
-                get_score
                 get_desc
-                get_hex
+                get_name
+                get_names
+                get_const
+                get_consts
+                get_note
+                get_notes
                 get_key
                 get_keys
-                get_name
-                get_alias
-                get_const
+                get_cipherkeys
+                get_ciphernames
                 sort_cipher_names
+                show
+                show_ciphers
                 cipher_done
 );
-# insert above in vi with:
-# :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
-# :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
 #_____________________________________________________________________________
 #_______________________________________________________ internal functions __|
@@ -268,17 +224,17 @@ our @EXPORT_OK  = qw(
 # SEE Perl:Undefined subroutine
 *_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n"); return; } if not defined &_trace;
-*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $VERBOSE); return; } if not defined &_v_print;
-*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $VERBOSE); return; } if not defined &_v2print;
+*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
+*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
+*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $cfg{'verbose'}); return; } if not defined &_v_print;
+*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $cfg{'verbose'}); return; } if not defined &_v2print;
 # TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
-
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 our %ciphers_desc = (   # description of following %ciphers table
-    'head'          => [qw( ssl  keyx auth enc  bits mac  dtls rfc  sec  tags )],
+    'head'          => [qw( OpenSSL sec  ssl  keyx auth enc  bits mac  rfc  cipher;alias  const;const  comment )],
                             # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
                             # Kx=  key exchange (DH is diffie-hellman)
@@ -286,160 +242,69 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # Enc= encryption with bit size
                             # Mac= mac encryption algorithm
     'text'          => [ # full description of each column in 'ciphers' below
-                            # all following informations as reported by openssl 0.9.8 .. 1.0.1h
+                            #
+        'OpenSSL Security', # LOW, MEDIUM, HIGH as reported by openssl 0.9.8 .. 1.0.1h
+                            # WEAK as reported by openssl 0.9.8 as EXPORT
+                            # weak unqualified by openssl or known vulnerable
+                            # NOTE: weak includes NONE (no security at all)
+                            # high unqualified by openssl, but considerd secure
+        'Security',         # weak, medium, high
+                            # weak unqualified by openssl or known vulnerable
+                            # high unqualified by openssl, but considerd secure
         'SSL/TLS version',  # Protocol Version:
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
-        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST
+        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST, ECCPWD
                             # last column is a : separated list (only export from openssl)
                             # different versions of openssl report  ECDH or ECDH/ECDSA
         'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
         'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED, GOST89
         'Key Size',         # in bits
         'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
-        'DTLS OK',          # Y  if cipher is compatible for DTLS, N  otherwise
-                            # (information from IANA)
+#        'DTLS OK',          # Y  if cipher is compatible for DTLS, N  otherwise
+#                            # (information from IANA)
         'RFC',              # RFC number where cipher was defined
-        'Security',         # LOW, MEDIUM, HIGH as reported by openssl 0.9.8 .. 1.0.1h
-                            # WEAK as reported by openssl 0.9.8 as EXPORT
-                            # weak unqualified by openssl or know vulnerable
-                            # NOTE: weak includes NONE (no security at all)
-                            # high unqualified by openssl, but considerd secure
-                            #
-        'tags',             # export  as reported by openssl 0.9.8 .. 1.0.1h
-                            # OSX     on Mac OS X only
-                            # :    (colon) is empty marker (need for other tools
+        'Names, Aliases',   # Comma-separated list of cipher suite names and aliases
+        'Constants',        # Comma-separated list of cipher suite constants
+        'Notes, Comments',  # Comma-separated list of notes and comments for
+                            # this cipher suite; for eaxmple: EXPORT, OSX
+                            # each value is used as key to %ciphers_notes
+                            # 
         ],
     'sample'        => { # example
-      '0x03000003D' => [qw( TLSv12 RSA  RSA  AES  256  SHA256 Y 5246 HIGH :)], # AES256-SHA256
+      '0x0300003D'  => [qw( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256;RSA_WITH_AES_256_CBC_SHA256 L )],
         },
 ); # %ciphers_desc
 
-####### nur  %ciphers  und  %ciphers_names  wird verwendet
-####### alle anderen  %_cipher*  sind nur zur Initialisierung
-
 our %ciphers = (
-    #? list of all ciphers, will be generated in _ciphers_init()
-    #------------------+----+----+----+----+----+----+-------+----+---+-------,
-    # hex       => [qw( ssl  keyx auth enc  bits mac  DTLS-OK RFC  sec tags )],
-    #------------------+----+----+----+----+----+----+-------+----+---+-------,
-    #------------------+----+----+----+----+----+----+-------+----+---+-------,
+    #? list of all ciphers, will be generated in _ciphers_init() from <DATA>
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
+    # key       => [qw( OpenSSL sec ssl  keyx auth enc  bits mac  rfc  cipher;alias const;const comment )],
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
 # ...
 ); # %ciphers
 
-    # iana	- aus _ciphers_iana.pm
-    # OpenSSL	- aus _ciphers_??   (ssl.h, tls.h, ...)
-    # openssl	- aus _ciphers_openssl_all.pm  (openssl ciphers -V)
-    # osaft	- aus _ciphers_osaft.pm  (handgestrickt)
+our $cipher_results = { # list of checked ciphers
+    #--------------+--------+--------------+----------+
+    # key       => [  ssl    supported ], # cipher suite name
+    #--------------+--------+--------------+----------+
+#  '0x02010080' => [ SSLv3,  yes ],  # RC4-MD5
+#  '0x03000004' => [ SSLv3,  yes ],  # RC4-MD5
+#  '0x0300003D' => [ TLSv12, yes ],  # AES256-SHA256
+#  '0x02FF0810' => [ SSLv3,  no  ],  # NULL
+    #--------------+--------+--------------+----------+
+}; # $cipher_results
 
-our %ciphers_const = (
-    #? list of cipher suite constant names, will be generated in _ciphers_init()
-    #------------------+-------+-------+-------+--------,
-    # hex       => [qw( iana    OpenSSL openssl osaft )],
-    #                             (osaft: SSL_CK_ and TLS_ prefix missing)
-    #------------------+-------+-------+-------+--------,
+our %cipher_notes = (
+    #? list of notes and comments for ciphers, these texts are referenced in %ciphers
+    #------------------+---------,
+    # hex       =>      'text'   ,
+    #------------------+---------,
+    #------------------+---------,
 # ...
-); # %ciphers_const
-#  defined in OSaft/_ciphers_iana.pm, OSaft/_ciphers_osaft.pm
-
-our %ciphers_names = (
-    #? list of cipher suite names, will be generated in _ciphers_init()
-    #------------------+-------+-------+-------+--------,
-    # hex       => [qw( iana    OpenSSL openssl osaft )],
-    #                             (osaft: SSL_CK_ and TLS_ prefix missing)
-    #------------------+-------+-------+-------+--------,
-# ...
-); # %ciphers_names
-#  defined in OSaft/_ciphers_iana.pm, OSaft/_ciphers_osaft.pm
-
-our %ciphers_alias = (
-    #? list of cipher suite alias names, will be generated in _ciphers_init()
-    #------------------+-----------------------------+----------------------,
-    # hex       => [qw( cipher suite name aliases )],# comment (where found)
-    #------------------+-----------------------------+----------------------,
-# ...
-); # %ciphers_alias
-#  defined in OSaft/_ciphers_osaft.pm
-
-our @cipher_results = [
-# currently (12/2015)
-#   [ sslv3, rc4-md5, yes ]
-#   [ sslv3, NULL,    no ]
-
-# in future (01/2016)
-#   [ ssl, cipher, pos+cipher, pos+cipherraw, dh-bits, dh-param, "comment"]
-#
-#   # ssl      : SSLv2, SSLv3, TLS10, ...
-#   # cipher   : hex-Wert (als String)
-#   # pos+*    : -1 = undef (noch nicht berechnet), 0 = keine Reihenfolge
-#                       beim Server, 1 .. n wie vom Server ausgewaehlt
-#   # dh-bits  : DH Bits
-#   # dh-param : ECDH Kurve
-
-# dann können verschiedene Algorithmen implementiert werden
-### 1. o-saft wie jetzt
-### 2. o-saft mit cipherraw wie jetzt
-### 3. cipherraw mit unterschiedlicher Anzahl Ciphers, z.B.:
-###      1, 8,9,15,16,17,32,64,48,49,127,128,129
-### 4. von cipherraw den selected Cipher geben lassen
-
-]; # @cipher_results
-
-#_____________________________________________________________________________
-#______________________________________________________ temporary variables __|
-
-# NOTE: argument to following require statement is the filename without .pm
-
-### bis die erste statische Version fertig ist, werden die Daten dynamisch geladen
-
-my %_ciphers_openssl_all = (
-    #? internal list, generated by gen_ciphers.sh
-    #-------------------+----+----+----+----+----+----+----+-------,
-    # hex        => [qw( ssl  keyx auth enc  bits mac  name tags )],
-    #-------------------+----+----+----+----+----+----+----+-------,
-#   '0x03000005' => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
-    #-------------------+----+----+----+----+----+----+----+-------,
-); # %_ciphers_openssl_all
-eval { require _ciphers_openssl_all; } or _warn("501: cannot read _ciphers_openssl_all.pm");
-
-my %_ciphers_iana = (
-    #? internal list, generated by gen_ciphers.sh
-    #-------------------+------------------------------------+-------+---------,
-    # hex        => [qw( IANA cipher suite constant           RFC(s) DTLS-OK )],
-    #-------------------+------------------------------------+-------+---------,
-#   '0x0300C032' => [qw( TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 5289    Y      )],
-#   '0x0300C033' => [qw( TLS_ECDHE_PSK_WITH_RC4_128_SHA       5489,6347    N )],
-    #-------------------+------------------------------------+-------+---------,
-); # %__ciphers_iana
-eval { require _ciphers_iana; }  or _warn("502: cannot read _ciphers_iana.pm");
-
-my %_ciphers_osaft = (
-    #? internal list, additions to %_ciphers_openssl
-    # /opt/tools/openssl-chacha/bin/openssl ciphers -V ALL:eNULL:LOW:EXP \
-);# %_ciphers_osaft
-eval { require _ciphers_osaft; } or _warn("503: cannot read _ciphers_osaft.pm");
-
-######################################################
-sub id2key      {
-    #? convert any hex or integer id to key used in internal data structure
-# Umrechnung:  0x0300C01C <--> 0xC0C1 <--> 0xC0,0x1C
-    my $ssl_base    = 0x02000000;   #   33554432
-    my $tls_base    = 0x03000000;   #   50331648
-    my $ptc_base    = 0x80000000;   # 2147483648
-    my $chacha_mask = 0xCC;         # i.e 0xCC,0xAA
-    my $fips_mask   = 0xFE;         # i.e 0xFE,0xE0
-    my $gost_mask   = 0xFF;         # i.e 0xFF,0x01
-		# Sonderfall 0x00,0x1e  , sonst alle upper case
-    return;
-} # id2key
-
-# sub is_auth   { }
-# sub is_enc    { }
-# sub is_ephermeral { }
-# sub is_export { }
-
-######################################################
+); # %%cipher_notes
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -448,223 +313,246 @@ sub id2key      {
 
 =head2 text2key($text)
 
+Convert hex text to internal key: 0x00,0x3D --> 0x0300003D.
+
 =head2 key2text($key)
 
-=head2 const2text($constant_name)
+Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 
 =cut
 
 sub text2key    {
-    #? convert text to internal key: 0x00,0x26 --> 0x03000026
+    # return as is if not hex
     my $txt = shift;
-       $txt =~ s/(,|0x)//g;     # 0x00,0x26  --> 0026
-    return "0x$txt" if (8 == length($txt));
-    # fuzzy approach from here on as it may convert from illegal strings
-    if (4 < length($txt)) {
+    my $key = $txt;
+#printf(STDERR "# %s txt=%s\n", (caller(0))[3], $txt); return;
+#printf(STDERR "# text2key txt=%s\n", $txt); 
+       $key =~ s/(,|0x)//g;     # 0x00,0x26  --> 0026
+    return $txt if ($key !~ m/^[0-9A-Fa-f]+$/); # unknown format, return as is
+    return "0x$key" if (8 == length($key));
+    if (4 < length($key)) {
        # SSLv2: quick&dirty: expects 6 characers
-       if ($txt =~ m/^0x42/) {
-           # our private hex values
-           $txt = "0x42$txt";   # 420001     --> 0x42420001
-       } else {
-           $txt = "0x02$txt";   # 010080     --> 0x02010080
-       }
+       $key = "0x02$key";       # 010080     --> 0x02010080
     } else {
        # SSLv3, TLSv1.x
-       while (6 > length($txt)) { $txt = "0$txt"; }
-       $txt = "0x03$txt";       # 000026     --> 0x03000026
+       while (6 > length($key)) { $key = "0$key"; }
+       $key = "0x03$key";       # 000026     --> 0x03000026
     }
-    return $txt;
+    return $key;
 } # text2key
 
 sub key2text    {
-    #? convert internal key to text: 0x03000026 --> 0x00,0x26
     my $key = shift;
-    if (6 < length($key)) {
-       $key =~ s/^0x42//;       # 0x42420001 -->   420001
+    if (6 < length($key)) {     #   from     -->     to
+       $key =~ s/^0x42//;       # 0x42420001 -->   420001 ; internal use in future
        $key =~ s/^0x02//;       # 0x02010080 -->   010080
        $key =~ s/^0x0300//;     # 0x03000004 -->     0004
     }
-#print "K $key";
-    #if ($key =~ m/^0x0300/) {
-    #   $key =~ s/0x0300//;      #   03000004 -->     0004
-    #} else {
-    #   $key =~ s/^0x02//;       # 0x02010080 -->   010080
-    #}
        $key =~ s/(..)/,0x$1/g;  #       0001 --> ,0x00,0x04
        $key =~ s/^,//;          # ,0x00,0x04 -->  0x00,0x04
        $key =  "     $key" if (10 > length($key));
     return "$key";
 } # key2text
 
-sub const2text  { my $c=shift; $c =~ s/_/ /g; return $c; }
-
 =pod
 
-=head2 get_param($cipher, $key)
+=head2 get_param( $cipher_key, $key)
 
-=head2 get_ssl(  $cipher)
+=head2 get_openssl( $cipher_key)
 
-=head2 get_keyx( $cipher)
+=head2 get_ssl(   $cipher_key)
 
-=head2 get_auth( $cipher)
+=head2 get_sec(   $cipher_key)
 
-=head2 get_enc(  $cipher)
+=head2 get_keyx(  $cipher_key)
 
-=head2 get_bits( $cipher)
+=head2 get_auth(  $cipher_key)
 
-=head2 get_mac(  $cipher)
+=head2 get_enc(   $cipher_key)
 
-=head2 get_dtls( $cipher)
+=head2 get_bits(  $cipher_key)
 
-=head2 get_rfc(  $cipher)
+=head2 get_mac(   $cipher_key)
 
-=head2 get_sec(  $cipher)
+=head2 get_dtls(  $cipher_key)
 
-=head2 get_tags( $cipher)
+=head2 get_rfc(   $cipher_key)
 
-=head2 get_score($cipher)
+=head2 get_notes( $cipher_key)
 
-=head2 get_hex(  $cipher)
+=head2 get_name(  $cipher_key)
 
-=head2 get_key(  $cipher)
+=head2 get_names( $cipher_key)
 
-=head2 get_keys( $cipher)
+=head2 get_alias( $cipher_key)
 
-=head2 get_name( $cipher)
+TBD alias is anything except first cipher name
 
-=head2 get_alias($cipher)
+=head2 get_const( $cipher_key)
 
-=head2 get_const($cipher)
+=head2 get_consts($cipher_key)
 
-=head2 get_desc( $cipher)
+=head2 get_note(  $cipher_key)
 
-Get information from internal C<%cipher> data structure.
+=head2 get_notes( $cipher_key)
 
 =cut
 
 # some people prefer to use a getter function to get data from objects
-# each function returns a spcific value (column) from the %cipher table
+# each function returns a spcific value (column) from the %ciphers table
 # see %ciphers_desc about description of the columns
-# returns STR_UNDEF if requested cipher is missing
+# returns STR_UNDEF if requested cipher (hex key) is missing
 sub get_param   {
-    #? internal method to return required value from %cipher ($cipher is hex-key)
-    my ($cipher, $key) = @_;
-        $cipher = text2key($cipher);
-    return $ciphers{$cipher}->{$key} || '' if (0 < (grep{/^$cipher/i} %ciphers));
+    #? internal method to return required value from %ciphers ($cipher is hex-key)
+    #? returns array or string depending on calling context
+    my ($hex, $key) = @_;
+    #_trace("get_param: '$hex' : '$h'");
+        $hex = text2key($hex);      # normalize cipher key
+    # if (0 < (grep{/^$hex/i} %ciphers))  # TODO: brauchen wir das für defense programming?
+    if ('ARRAY' eq ref($ciphers{$hex}->{$key})) {
+        return wantarray ? @{$ciphers{$hex}->{$key}} : join(' ', @{$ciphers{$hex}->{$key}});
+    } else {
+        return               $ciphers{$hex}->{$key};
+    }
     return $STR_UNDEF;
 } # get_param
-sub get_ssl     { my $c=shift; return get_param($c, 'ssl');  }
-sub get_keyx    { my $c=shift; return get_param($c, 'keyx'); }
-sub get_auth    { my $c=shift; return get_param($c, 'auth'); }
-sub get_enc     { my $c=shift; return get_param($c, 'enc');  }
-sub get_bits    { my $c=shift; return get_param($c, 'bits'); }
-sub get_mac     { my $c=shift; return get_param($c, 'mac');  }
-sub get_dtls    { my $c=shift; return get_param($c, 'dtls'); }
-sub get_rfc     { my $c=shift; return get_param($c, 'rfc');  }
-sub get_sec     { my $c=shift; return get_param($c, 'sec');  }
-sub get_tags    { my $c=shift; return get_param($c, 'tags'); }
-sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
-sub get_desc    {
-    # get description for specified cipher from %ciphers as string
-    my $c = shift;
-       $c = text2key($c);
-    return $STR_UNDEF if (not defined $ciphers{$c});
-    my @x = sort values %{$ciphers{$c}};
-    shift @x;
-    return join(' ', @x);
-} # get_desc
+
+sub get_openssl { return  get_param(shift, 'OpenSSL');  }
+sub get_sec     { return  get_param(shift, 'sec'  );    }
+sub get_ssl     { return  get_param(shift, 'ssl'  );    }
+sub get_keyx    { return  get_param(shift, 'keyx' );    }
+sub get_auth    { return  get_param(shift, 'auth' );    }
+sub get_enc     { return  get_param(shift, 'enc'  );    }
+sub get_bits    { return  get_param(shift, 'bits' );    }
+sub get_mac     { return  get_param(shift, 'mac'  );    }
+sub get_rfc     { return  get_param(shift, 'rfc'  );    }
+sub get_name    { return (get_param(shift, 'names'))[0];}
+#sub get_name    { my @n = get_param(shift, 'names'); print "# get_name: $n[0]"; return $n[0];}
+sub get_names   { return  get_param(shift, 'names');    }
+sub get_const   { return (get_param(shift, 'const'))[0];}
+sub get_consts  { return  get_param(shift, 'const');    }
+sub get_note    { return (get_param(shift, 'notes'))[0];}
+sub get_notes   { return  get_param(shift, 'notes');    }
 
 =pod
 
-=head2 get_keys($cipher)
+=head2 get_key(   $cipher_name)
 
-Get cipher's all hex keys from C<%ciphers_names> or C<%ciphers_alias> data structure.
+Get hex key for given cipher name; searches in cipher suite names and in cipher
+suite constants.
 
-=head2 get_name($cipher)
+=head2 get_keys(  $cipher_pattern)
 
-Get common name for given cipher hex C<$cipher>.
+Get all matching hex keys for given cipher name (pattern).
+
+=head2 get_desc(  $cipher_key)
+
+Get description for internal C<%cipher> data structure.
+
+=head2 get_cipherkeys()
+
+Get list of all defined hex keys for cipher suites.
+Returns space-separetd string or array depending on calling context.
+
+=head2 get_ciphernames()
+
+Get list of all defined cipher suite names in C<%cipher>. Returns first name if
+multiple names are defined for a cipher key.
+
+=head2 find_name($cipher)
+
+Find cipher key(s) for given cipher name or cipher constant.
 
 =cut
 
-sub get_hex     {
-    #? translate given string to valid hex key for %cipher; returns key if exists
-    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
-    my $txt = shift;
-    my $key = uc($txt);
-       $key =~ s/X/x/g;
-# FIXME: returns first matching even if more exist; example: RC4-MD5
-#        need protocol parameter
-    return $key if defined $ciphers{$key};
-    $key =  $txt;
-    $key =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix;
-    $key =~ s/^(?:CK|TXT)_//;           # strip any prefix;
-    # not a key itself, try to find in names
-    foreach my $k (keys %ciphers_names) {
-        foreach (qw( iana OpenSSL openssl osaft )) {
-#print "#$ciphers_names{$k}->{$_}#\n" if ($ciphers_names{$k}->{$_} =~ m/$key/i);
-            return $k if (defined $ciphers_names{$k}->{$_} && ($ciphers_names{$k}->{$_} =~ m/^$key$/i));
-        }
-    }
-    return '';
-} # get_hex
-
 sub get_key     {
-    #? translate given string to valid hex key for %cipher; returns key if exists
-    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
     my $txt = shift;
     my $key = uc($txt);
        $key =~ s/X/x/g;
-    return text2key(get_hex($txt)); # TODO: quick&dirty
+    return $key if defined $ciphers{$key};  # cipher's hex key itself
+    foreach my $key (keys %ciphers) {
+        my @names = get_names($key);
+        return $key if (0 < (grep{/^$txt/i} @names));
+    }
+    # any other text, try to normalise ...      # example:  SSL_CK_NULL_WITH_MD5
+    $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
+    $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
+    foreach my $key (keys %ciphers) {
+        my @names = get_const($key);
+        return $key if (0 < (grep{/^$txt/i} @names));
+    }
+    _warn("521: no key found for '$txt'");  # most likely a programming error %cfg or <DATA> herein
+    return '';
 } # get_key
 
 sub get_keys    {
-    #? find hex key for cipher in %ciphers_names or %ciphers_alias
-    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
+    #? TODO  find all hex key for wich given cipher pattern matches in %ciphers
     my $c = shift;
-# FIXME: returns first matching even if more exist; example: RC4-MD5
-#        need protocol parameter
-    foreach my $k (keys %ciphers_names) { # database up to VERSION 14.07.14
-        return $k if (($ciphers_names{$k}[0] eq $c) or ($ciphers_names{$k}[1] eq $c));
-    }
-    foreach my $k (keys %ciphers_alias) { # not yet found, check for alias
-        return $k if ($ciphers_alias{$k}[0] eq $c);
-    }
-    # NOTE: need to check if this is necessary here
-    #foreach my $k (keys %ciphers_old) {   # not yet found, check old names
-    #    return $k if ($ciphers_old{$k}[0] eq $c);
-    #}
     return '';
 } # get_keys
 
-sub get_name    {
-    #? return name for given cipher key
-    #  example: 0x01,0x00,0x80 -> RC4-MD5;  0x00,0x3 -> AES128-SHA256
+sub get_desc    {
     my $key = shift;
-    #return $cipher if (0 < (grep{/^$cipher/} %ciphers)); ## TODO: brauchen wir das?
-    if (exists $ciphers_names{$key}) {
-        foreach my $typ (qw( osaft openssl OpenSSL iana)) {
-            my $name = $ciphers_names{$key}->{$typ} || '';
-            return $name if ("" ne $name);
-        }
+    return $STR_UNDEF if (not defined $ciphers{$key});
+    # my @x = sort values %{$ciphers{$key}}; # lasy approach not used
+    return join("\t", 
+            get_param($key, 'OpenSSL'),
+            get_param($key, 'sec'  ),
+            get_param($key, 'ssl'  ),
+            get_param($key, 'keyx' ),
+            get_param($key, 'auth' ),
+            get_param($key, 'enc'  ),
+            get_param($key, 'bits' ),
+            get_param($key, 'mac'  ),
+            get_param($key, 'rfc'  ),
+            #get_param($key, 'dtls' ), # not yet implemented
+            get_param($key, 'names'),
+            get_param($key, 'const'),
+            get_param($key, 'notes'),
+    );
+} # get_desc
+
+sub get_cipherkeys      {
+    my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
+    return wantarray ? @keys : join(' ', @keys);
+} # get_cipherkeys
+
+sub get_ciphernames     {
+    my @list;
+    foreach my $key (sort keys %ciphers) {      # SEE Note:Testing, sort
+        next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
+        push(@list, get_name($key));
     }
-    return $STR_UNDEF;
-} # get_name
+    return wantarray ? @list : join(' ', @list);
+} # get_ciphernames
 
 sub find_name   {   # TODO: not yet used
     #? check if given cipher name is a known cipher
-    #  checks in %ciphers, if not found in %ciphers_names
-    #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES128-SHA256
+    #  checks in %ciphers, if not found search in all aliases and constants
+    #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES256-SHA256
     # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
     #       use the same cipher suite name (like RC4-MD5).
-    # nothing found yet, try more lazy match
+# TODO: need $ssl parameter because of duplicate names (SSLv3, TLSv10)
     my $cipher  = shift;
-    _trace("fnd_name: search $cipher");
-    foreach my $k (keys %ciphers_names) {
-        if ($ciphers_names{$k}[0] =~ m/$cipher/) {
-            _warn("513: partial match for cipher name found '$cipher'");
-            return $ciphers_names{$k}[0];
+    my @list;
+    _trace("find_name: search $cipher");
+    my $key = get_key($cipher);
+    return $key if $key !~ m/^\s*$/;
+    # try fuzzy search in names and const:
+    foreach my $key (sort keys %ciphers) {
+        my $name = get_name($key);
+        next if not $name;
+        next if $name =~ m/^\s*$/;
+        if ($name !~ m/$cipher/i) {
+            my @const = get_consts($key);
+# print "C = @const\n";
+        # TODO
         }
+        _warn("513: partial match for cipher name found '$cipher'");
+        push(@list, $key);
     }
+    print "#name=$cipher : @list\n";
+# TODO: # $rex_name = s/([_-])/.?/g; $rex_name = s/DHE/EDH/;
     return $STR_UNDEF;
 } # find_name
 
@@ -672,7 +560,7 @@ sub find_name   {   # TODO: not yet used
 
 =head2 sort_cipher_names(@ciphers)
 
-Sort given list of C<@ciphers> according their strength, most strongest first.
+Sort given list of C<@ciphers> according their strength, most strongest first,
 returns sorted list of ciphers.
 
 C<@ciphers> is a list of cipher suite names. These names should be those used
@@ -683,31 +571,42 @@ sub sort_cipher_names   {
     # cipher suites must be given as array
     # NOTE: the returned list may not be exactly sorted according the cipher's
     #       strength, just roughly
-    # known insecure (i.e. CBC, DES, RC4) and NULL ciphers are added at the end
+    # known insecure, i.e. CBC, DES, NULL, etc. ciphers are added at the end
+    # all ciphers classified "insecure" are added to end of the result list,
+    # these (insecure) ciphers are not sorted according their strength as it
+    # doesn't make much sense to distinguish "more" or "less" insecure
     my @ciphers = @_;
     my @sorted  ;
     my @latest  ;
-    my $cnt     = scalar @ciphers;  # number of passed ciphers; see check at end
+    my $cnt_in  = scalar @ciphers;  # number of passed ciphers; see check at end
 
-    # now define list of regex to match openssl cipher suite names
+    _trace("sort_cipher_names(){ $cnt_in ciphers: @ciphers }");
+
+    # Algorithm:
+    #  1. remove all known @insecure ciphers from given list
+    #  2. start building new list with most @strength cipher first
+    #  3. add previously removed @insecure ciphers to new list
+
+    # define list of RegEx to match openssl cipher suite names
     # each regex could be seen as a  class of ciphers with the same strength
     # the list defines the strength in descending order, most strength first
     # NOTE the list may contain pattern, which actually do not match a valid
     # cipher suite name; doese't matter, but may avoid future adaptions, see
-    # warning at nd also
+    # warning at end also
 
     my @insecure = (
         qw((?:RC[24]))  ,               # all RC2 and RC4
         qw((?:CBC|DES)) ,               # all CBC, DES, 3DES
-        qw((?:DSS))     ,               # all DSS
+        qw((?:DSA|DSS)) ,               # all DSA, DSS
         qw((?:MD[2345])),               # all MD
-        qw(DH.?(?i:anon)) ,             # Anon needs to be caseless
+        qw(DH.?(?i:anon)),              # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
-        qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV )
+        qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
     );
     my @strength = (
         qw(CECPQ1[_-].*?CHACHA)       ,
         qw(CECPQ1[_-].*?AES256.GCM)   ,
+        qw(^(TLS_|TLS13-))   ,
         qw((?:ECDHE|EECDH).*?CHACHA)  , # 1. all ecliptical curve, ephermeral, GCM
         qw((?:ECDHE|EECDH).*?512.GCM) , # .. sorts -ECDSA before -RSA
         qw((?:ECDHE|EECDH).*?384.GCM) ,
@@ -724,12 +623,12 @@ sub sort_cipher_names   {
         qw(ECDH[_-].*?384.GCM)  ,
         qw(ECDH[_-].*?256.GCM)  ,
         qw(ECDH[_-].*?128.GCM)  ,
-        qw(ECDHE.*?CHACHA) ,            # 4. all remaining ecliptical curve, ephermeral
+        qw(ECDHE.*?CHACHA),             # 4. all remaining ecliptical curve, ephermeral
         qw(ECDHE.*?512) ,
         qw(ECDHE.*?384) ,
         qw(ECDHE.*?256) ,
         qw(ECDHE.*?128) ,
-        qw(ECDH[_-].*?CHACHA)   ,       # 5. all remaining ecliptical curve
+        qw(ECDH[_-].*?CHACHA),          # 5. all remaining ecliptical curve
         qw(ECDH[_-].*?512) ,
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
@@ -740,16 +639,16 @@ sub sort_cipher_names   {
         qw(PSK)     ,
         qw(GOST)    ,
         qw(FZA)     ,
-        qw((?:PSK|RSA).*?CHACHA) ,
+        qw((?:PSK|RSA).*?CHACHA),
         qw(CHACHA)  ,
-        qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
+        qw((?:EDH|DHE).*?CHACHA),       # 6. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
         qw((?:EDH|DHE).*?256) ,
         qw((?:EDH|DHE).*?128) ,
         qw((?:EDH|DHE).*?(?:RSA|DSS)) ,
         qw(CAMELLIA) ,                  # 7. unknown strength
-        qw((?:SEED|IDEA)) ,
+        qw((?:SEED|IDEA|ARIA)),
         qw(RSA[_-]) ,                   # 8.
         qw(DH[_-])  ,
         qw(RC)      ,
@@ -768,26 +667,31 @@ sub sort_cipher_names   {
     }
     foreach my $rex (@strength) {               # sort according strength
         $rex = qr/^(?:(?:SSL|TLS)[_-])?$rex/;   # allow IANA constant names too
-        #_trace2("sort_cipher_names(): regex\t= $rex }");
+        _trace2("sort_cipher_names(): regex\t= $rex }");
         push(@sorted, grep{ /$rex/} @ciphers);  # add matches to result
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
     }
+    # TODO: @ciphers should now be empty, check ...
     push(@sorted, @latest);                     # add insecure ciphers again
-    my $num = scalar @sorted;
-    if ($cnt != $num) {
+    my $cnt_out = scalar @sorted;
+    if ($cnt_in != $cnt_out) {
         # print warning if above algorithm misses ciphers;
-        #uses perl's  warn() # instead of our _warn() to clearly inform the user
+        # uses perl's warn() instead of our _warn() to clearly inform the user
         # that the code here needs to be fixed
-        #warn STR_WARN . ": 412: missing ciphers in sorted list: $num < $cnt";
-        warn "**WARNING: 412: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
-        #dbx# print "## ".@sorted . " # @ciphers";
+        my @miss;
+        for my $i (0..$#ciphers) {
+            push(@miss, $ciphers[$i]) unless grep {$_ eq $ciphers[$i]} @sorted;
+        }
+        @miss = sort @miss; # SEE Note:Testing, sort
+        warn STR_WARN . "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
     }
     @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
+    _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
     return @sorted;
 } # sort_cipher_names
 
 #_____________________________________________________________________________
-#_________________________________________________________ internal methods __|
+#_________________________________________________ internal/testing methods __|
 
 sub show_getter03 {
     #? show hardcoded example for all getter functions for key 0x00,0x03
@@ -798,55 +702,56 @@ sub show_getter03 {
 
     my $cipher = "0x00,0x03";
     print "# testing example: $cipher ...\n";
-    $cipher = text2key("0x00,0x03");# normalize cipher key which is then used below
+    $cipher = text2key("0x00,0x03");# normalize cipher key
     printf("# %s(%s)\t%s\t%-14s\t# %s\n", "function", "cipher key", "key", "value", "(expected)");
     printf("#----------------------+-------+----------------+---------------\n");
-#   printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_key",  $cipher, "hex",  get_key( $cipher), "?");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher), "N");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_bits", $cipher, "bits", get_bits($cipher), "40");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_enc",  $cipher, "enc",  get_enc( $cipher), "RC4");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_keyx", $cipher, "keyx", get_keyx($cipher), "RSA(512)");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_auth", $cipher, "auth", get_auth($cipher), "RSA");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_mac",  $cipher, "mac",  get_mac( $cipher), "MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_rfc",  $cipher, "rfc",  get_rfc( $cipher), "4346,6347");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",  $cipher, "sec",  get_sec( $cipher), "WEAK");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",  $cipher, "ssl",  get_ssl( $cipher), "SSLv3");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_tags", $cipher, "tags", get_tags($cipher), "export");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name", $cipher, "name", get_name($cipher), "EXP-RC4-MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_desc", $cipher, "desc", get_desc($cipher), "40 4346,6347 MD5 N RC4 RSA RSA(512) SSLv3 WEAK export");
+    #printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls",  $cipher, "dtls", get_dtls( $cipher), "N");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_bits",  $cipher, "bits", get_bits( $cipher), "40");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_enc",   $cipher, "enc",  get_enc(  $cipher), "RC4");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_keyx",  $cipher, "keyx", get_keyx( $cipher), "RSA(512)");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_auth",  $cipher, "auth", get_auth( $cipher), "RSA");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_mac",   $cipher, "mac",  get_mac(  $cipher), "MD5");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_rfc",   $cipher, "rfc",  get_rfc(  $cipher), "4346,6347");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",   $cipher, "sec",  get_sec(  $cipher), "WEAK");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",   $cipher, "ssl",  get_ssl(  $cipher), "SSLv3");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "tags", get_notes($cipher), "export");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_desc",  $cipher, "desc", get_desc( $cipher), "40 4346,6347 MD5 N RC4 RSA RSA(512) SSLv3 WEAK export");
     printf("#----------------------+-------+----------------+---------------\n");
     return;
 } # show_getter03
 
 sub show_getter {
     #? show example for all getter functions for specified cipher key
-    my $cipher = shift;
-    printf("#%s:\n", (caller(0))[3]);
-    if ($cipher !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
+    my $key = shift;
+    if ($key !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
         show_getter03;
         return;
     }
-    print "= testing: $cipher ...\n";
-    $cipher = text2key($cipher);# normalize cipher key which is then used below
-    if (not defined $ciphers{$cipher}) {
-        _warn("511: undefined cipher '$cipher'");
+    print "= testing: $key ...\n";
+    $key = text2key($key);    # normalize cipher key
+    if (not defined $ciphers{$key}) {
+        _warn("511: undefined cipher '$key'");
         return;
     }
     printf("= %s(%s)\t%s\t%s\n", "function", "cipher key", "key", "value");
     printf("=----------------------+-------+----------------\n");
-#   printf("%-8s %s\t%s\t%s\n", "get_key",  $cipher, "hex",  get_key( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_bits", $cipher, "bits", get_bits($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_enc",  $cipher, "enc",  get_enc( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_keyx", $cipher, "keyx", get_keyx($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_auth", $cipher, "auth", get_auth($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_mac",  $cipher, "mac",  get_mac( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_rfc",  $cipher, "rfc",  get_rfc( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_sec",  $cipher, "sec",  get_sec( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_ssl",  $cipher, "ssl",  get_ssl( $cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_tags", $cipher, "tags", get_tags($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_name", $cipher, "name", get_name($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_desc", $cipher, "desc", get_desc($cipher) );
+    #printf("%-8s %s\t%s\t%s\n", "get_dtls",  $key, "dtls",  get_dtls( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_bits",  $key, "bits",  get_bits( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_enc",   $key, "enc",   get_enc(  $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_keyx",  $key, "keyx",  get_keyx( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_auth",  $key, "auth",  get_auth( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_mac",   $key, "mac",   get_mac(  $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_rfc",   $key, "rfc",   get_rfc(  $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_sec",   $key, "sec",   get_sec(  $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_ssl",   $key, "ssl",   get_ssl(  $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_name",  $key, "name",  get_name( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names", get_names($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_desc",  $key, "desc",  get_desc( $key) );
     printf("=----------------------+-------+----------------\n");
     return;
 } # show_getter
@@ -855,568 +760,435 @@ sub show_key    {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
-    printf("#%s:\n", (caller(0))[3]);
-    print "key for $txt : $key\n";
+    local $\ = "\n";
+    print "key for $txt : $key";
     return;
 } # show_key
 
 sub show_hex    {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
-    my $key = get_hex($txt);
-    printf("#%s:\n", (caller(0))[3]);
-    print "key for $txt : $key\n";
+    my $key = get_key($txt);
+    local $\ = "\n";
+    print "key for $txt : $key";
     return;
 } # show_hex
 
 sub show_desc   {
-    #? print textual description for columns %cipher hash
+    #? print textual description for columns %ciphers hash
+    local $\ = "\n";
+    print "
+=== internal data structure: overview of %ciphers ===
+";
 
-    printf("#%s:\n", (caller(0))[3]);
-    print  "\n= %ciphers : example line:\n";
     my $key = 0;
-    printf("  '0x00,0x3D' -> [");
+    print ("= %ciphers : example line:\n");
+#0x0300003D	HIGH	HIGH	TLSv12	RSA	RSA	AES	256	SHA256	5246	AES256-SHA256	RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256	L
+    printf("  '0x0300003D' -> ["); # TODO 0x00,0x3D
     foreach (@{$ciphers_desc{head}}) {
-        printf("\t%s", $ciphers_desc{sample}->{'0x00,0x3D'}[$key]);
+        printf("\t%s", $ciphers_desc{sample}->{'0x0300003D'}[$key]);
         $key++;
     }
     printf(" ]\n");
-    print  "\n= %ciphers : tabular description of one (example) line:\n";
-    printf("=-------+------+-----------------------+--------\n");
-    printf("= [%s]\t%5s\t%16s\t%s\n", "nr", "key", "description", "example");
-    printf("=-------+------+-----------------------+--------\n");
+    print ("\n= %ciphers : tabular description of one (example) line:\n");
+    printf("=-------+--------------+-----------------------+--------\n");
+    printf("= [%s]\t%15s\t%16s\t%s\n", "nr", "key", "description", "example");
+    printf("=-------+--------------+-----------------------+--------\n");
     $key = 0;
     foreach (@{$ciphers_desc{head}}) {
-        printf("  [%s]\t%6s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
-            $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x00,0x3D'}[$key]);
+        printf("  [%s]\t%15s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
+            $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x0300003D'}[$key]);
         $key++;
     }
-    printf("=-------+------+-----------------------+--------\n");
+    printf("=-------+--------------+-----------------------+--------\n");
 
-    print  "\n= %ciphers : description of one line as perl code:\n";
-    printf("= varname  %-23s\t# example # description\n", "%ciphers hash");
-    printf("=---------+-----------------------------+---------+---------------\n");
-    $key = 0;
-    foreach (@{$ciphers_desc{head}}) {
-        printf("  %6s = \$ciphers{'0xBE,0xEF'}[%s];\t# %-7s # %s\n",
-            '$' . $ciphers_desc{head}[$key], $key,
-            $ciphers_desc{sample}->{'0x00,0x3D'}[$key], $ciphers_desc{text}[$key]);
-        $key++;
+    print ("\n= %ciphers : description of one line as perl code:\n");
+    printf("= varname  %-23s\t# example\t# description\n", "%ciphers hash");
+    printf("=------+--------------------------------+---------------+---------------\n");
+    my $idx = 0;
+    foreach my $col (@{$ciphers_desc{head}}) {
+        $col = "names" if $col =~ /cipher/;     # dirty hack
+        $col = "const" if $col =~ /const/;      # dirty hack
+        $col = "notes" if $col =~ /comment/;    # dirty hack
+        printf("%6s = \$ciphers{'0x0300003D'}{%s};\t# %-7s\t# %s\n",
+            '$' . $ciphers_desc{head}[$idx], $col,
+            $ciphers_desc{sample}->{'0x0300003D'}[$idx], $ciphers_desc{text}[$idx]);
+        $idx++;
     }
-    printf("=---------+-----------------------------+---------+---------------\n");
+    printf("=------+--------------------------------+---------------+---------------\n");
 
-    print  "\n= %ciphers_names : description of one line as perl code:\n";
-    #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("= varname  %-31s\t  # source of name\n", "%ciphers hash");
-    printf("=---------+---------------------------------------+-----------------\n");
-    $key = 0;
-    foreach (qw( iana OpenSSL openssl osaft )) {
-        printf("%8s = \$ciphers_names{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
-            $key, $_);
-        $key++;
-    }
-    printf("=---------+---------------------------------------+-----------------\n");
-
-    print  "\n= %ciphers_const : description of one line as perl code:\n";
-    #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("= varname  %-31s\t  # source of constant\n", "%ciphers hash");
-    printf("=---------+---------------------------------------+-----------------\n");
-    $key = 0;
-    foreach (qw( iana OpenSSL openssl osaft )) {
-        printf("%8s = \$ciphers_const{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
-            $key, $_);
-        $key++;
-    }
-    printf("=---------+---------------------------------------+-----------------\n");
-
-    print  "\n= \@cipher_results : description of one line in array:\n";
+    print  "\n= \%cipher_results : description of hash:\n";
 # currently (12/2015)
-    printf("=------+---------------+-------\n");
-    printf("= %s\t%12s\t%s\n", "ssl", "cipher name", "support");
-    printf("=------+---------------+-------\n");
-    printf(" %s\t%-12s\t%s\n", "TLSv12", "AES256-SHA256", "yes");
-    printf(" %s\t%-12s\t%s\n", "SSLv3", "NULL", "no");
-    printf("=------+---------------+-------\n");
-
-    printf("= in future (01/2016)\n");
-    printf("=------+---------------+-------+-------+-------+-------+-------\n");
-    printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-        "ssl", "cipher\t", "pos +cipher", "pos +cipherraw", "dh-bits", "dh-par", "comment");
-    printf("=------+---------------+-------+-------+-------+-------+-------\n");
-    printf(" %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-        "TLSv12", "0x00,0x3D", "0", "3", "512", "ec256", "comment");
-    printf("=------+---------------+-------+-------+-------+-------+-------\n");
+    printf("=--------------------------------------------+-------\n");
+    printf("=           %%hash{  ssl   }->{'cipher key'} = value;\n");
+    printf("=--------------------------------------------+-------\n");
+    printf("  %%cipher_results{'TLSv12'}->{'0x0300003D'} = 'yes';\n"); # AES256-SHA256
+    printf("  %%cipher_results{'SSLv3'} ->{'0x02FF0810'} = 'no'; \n"); # NULL-NULL
+    printf("=--------------------------------------------+-------\n");
 
     return;
 } # show_desc
 
-sub show_overview   {
-    printf("#%s:\n", (caller(0))[3]);
+sub show_sorted {
+    local $\ = "\n";
+    my $head = "= OWASP openssl cipher suite";
+    my $line = "=------+-------+----------------------------------------------";
+    print "
+=== internal data structure: ciphers sorted according strength ===
+=
+= Print overview of all available cipher names sorted according OWASP scoring.
+=
+=   description of columns:
+=       OWASP       - OWASP scoring (A, B, C, D)
+=       openssl     - strength gven bei OpenSSL
+=       cipher suite- OpenSSL suite name
+";
+    print($line);
+    print($head);
+    print($line);
+    my @sorted;
+    my @unsorted;
+    push(@unsorted, get_name($_)) foreach sort keys %ciphers;
+    foreach my $c (sort_cipher_names(@unsorted)) {
+        my $sec = get_sec(get_key($c));
+        push(@sorted, sprintf("%4s\t%s\t%s", get_cipher_owasp($c), $sec, $c));
+    }
+    print foreach sort @sorted;
+    print($line);
+    print($head);
+    printf("=\n");
+    printf("= %4s sorted ciphers\n",  scalar @sorted);
+    printf("= %4s ignored ciphers\n", ((keys %ciphers) - (scalar @sorted)));
+    return;
+} # show_sorted
+
+sub show_overview {
+    local $\ = "\n";
     print  "
-=== internal data structure for ciphers ===
+=== internal data structure: information about ciphers ===
 =
 = This function prints a simple overview of all available ciphers. The purpose
 = is to show if the internal data structure provides all necessary data.
 =
 =   description of columns:
 =       key         - hex key for cipher suite
-=       cipher sec. - cipher suite security is known
-=       cipher name - cipher suite (openssl) name exists
-=       cipher const- cipher suite constant name exists
-=       cipher desc - cipher suite known in internal data structure
-=       cipher alias- other (alias) cipher suite names exist
-=       name # desc - 'yes' if name and description exists
+=       security    - cipher suite security is known
+=       name        - cipher suite (OpenSSL) name exists
+=       aliases     - cipher suite has other kown cipher suite names
+=       const       - cipher suite constant name exists
+=       cipher suite- cipher suite name (OpenSSL)
 =   description of values:
 =       *    value present
 =       -    value missing
 =       -?-  security unknown/undefined
+=       None security for pseudo ciphers like TLS_FALLBACK_SCSV
 =       miss security missing in data structure
 =
 = No perl or other warnings should be printed.
 = Note: following columns should have a *
-=       security, name, const, desc
+=       security, name, const, desc.
 =
 ";
-    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
-    printf("= %13s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",  "",   "cipher", "cipher", "cipher", "cipher", "cipher", "name +", "cipher");
-    printf("= %12s %s\t%s\t%s\t%s\t%s\t%s\t%s\n", "key", "security",   " name",   " const",   " desc.", " alias",  " desc.", " suite");
-    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
+    my $line = sprintf("=%s+%s+%s+%s+%s+%s", "-" x 14, "-"x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 21);
+    my $head = sprintf("= %-13s%s\t%s\t%s\t%s\t%s", "key", "security", "name", "aliases", "const", "cipher suite");
+    print($line);
+    print($head);
+    print($line);
+    my %err;    # count incomplete settings
     my $cnt = 0;
     foreach my $key (sort keys %ciphers) {
          $cnt++;
-         my $both  = "-";
-         my $sec   = $ciphers{$key}->{'sec'};
-         my $desc  = "-";
-         my $name  = "-";
-         my $const = "-";
-         my $alias = "-";
-         # TODO: compare direct access of %cipher* with results of method get_cipher_*
+         my $both   = "-";
+         my $sec    = $ciphers{$key}->{'sec'};
+         my $name   = "-";
+         my $alias  = "-";
+         my $const  = "-";
+         my $cipher = $ciphers{$key}->{'names'}[0];
+         # TODO: compare direct access of %cipher* with results of method get_*
          $sec   = "*" if ($sec =~ m/weak|low|medium|high/i); # TODO: $cfg{'regex'}->{'security'}/i);
-         $sec   = "-" if ($sec =~ m/^\s*$/);
-         $desc  = join(" ", %{$ciphers{$key}});
-         $desc  = "*" if $ciphers{$key};
-         $name  = "*" if $ciphers_names{$key}->{'osaft'};
-         $const = "*" if defined $ciphers_const{$key};
-         $alias = "*" if defined $ciphers_alias{$key};
-         $both  = "*" if ('*' eq $desc and '*' eq $name);
-         printf("%14s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key, $sec, $name, $const, $desc, $alias, $both, $ciphers_names{$key}->{'osaft'});
+         $sec   = "-" if ($sec ne "*"); # anything else is -
+         $name  = "*" if $ciphers{$key}->{'names'}[0] ne "";
+         $alias = "*" if $ciphers{$key}->{'names'}    ne "-";
+         $const = "*" if $ciphers{$key}->{'const'}[0] ne "";
+         printf("%12s\t%s\t%s\t%s\t%s\t%s\n", $key, $sec, $name, $alias, $const, $cipher);
+         $err{'security'}++ if ('*' ne $sec );
+         $err{'name'}++     if ('*' ne $name);
+         $err{'const'}++    if ('*' ne $const);
+         $err{'aliases'}++  if ('*' ne $alias);
     }
-    printf("=%s+%s+%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
-    printf("= %12s %s\t%s\t%s\t%s\t%s\t%s\t%s\n", "key", "security",   " name",   " const",   " desc.", " alias",  " desc.", " suite");
-    printf("= %s ciphers\n", $cnt);
+    print($line);
+    print($head);
+    printf("=\n= %s ciphers\n", $cnt);
+    printf("= identified errors: ");
+    printf("%6s=%-2s,", $_, $err{$_}) foreach sort keys %err;
+    printf("\n");
     return;
 } # show_overview
 
-sub show_const  {
-    printf("#%s:\n", (caller(0))[3]);
-    print  "
-=== overview of various cipher suite constant names ===
-=   description of columns:
-=       key         - hex key for cipher suite
-=       iana        - constant of cipher suite as defined by IANA
-=       OpenSSL     - constant of cipher suite used in openssl's *.h files
-=       osaft       - constant of cipher suite used by O-Saft
-=       osaft=iana  - yes if IANA's cipher suite name is same as O-Saft's name
-=       osaft=openssl - yes if OpenSSL's cipher suite name is same as O-Saft's name
-=
-";
-    printf("=%s+%s+%s+%s+%s-%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
-    printf("=%s   osaft = \n", " " x 119);
-    printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
-    printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
-    foreach my $key (sort keys %ciphers) {
-         my $const1 = $ciphers_const{$key}->{'iana'}    || '';
-         my $const2 = $ciphers_const{$key}->{'OpenSSL'} || '';
-         my $const3 = $ciphers_const{$key}->{'osaft'}   || '';
-         my $o_i = "no";
-            $o_i = "yes" if ($const1 eq ("TLS_" . $const3));
-         my $o_o = "no";
-            $o_o = "yes" if ($const2 eq ("TLS_" . $const3));
-         printf("%14s\t%-37s\t%-31s\t%-31s\t%s\t%s\n", $key, $const1, $const2, $const3, $o_i, $o_o);
-    }
-    printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
-    printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
-    return;
-} # show_const
-
 sub show_alias  {
-    printf("#%s:\n", (caller(0))[3]);
+    #? show aliases for ciher suite names or constants depending on $type
+    #  $type: name | const
+    my $type = shift;
+    my $text = $type;
+       $text = "name"     if $type =~ /names/;  # lazy check
+       $text = "constant" if $type =~ /const/;  # lazy check
+       $text = "RFC"      if $type =~ /rfc/;    #
+    my $txt_cols = 
+"=       cipher name - (most common) cipher suite $text
+=       alias names - known aliases for cipher suite $text";
+       $txt_cols =
+"=       cipher name - cipher suite name as used in openssl
+=       RFC         - RFC numbers, where cipher suite is described" if ("rfc" eq $type);
+    local $\ = "\n";
     print "
-=== overview of various cipher suite alias names ===
+=== internal data structure: overview of various cipher suite ${text}s ===
 =
 =   description of columns:
 =       key         - hex key for cipher suite
-=       alias       - alias of cipher suite name
-=       used in     - where alias is used / was found
-=
+$txt_cols
 ";
-    printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
-    printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
-    foreach my $key (sort keys %ciphers_alias) {
-         my $alias = $ciphers_alias{$key}[0];
-         my $from  = $ciphers_names{$key}[2];
-         printf("%14s\t%-37s\t%-31s\n", $key, $alias, $from);
+    my $line = sprintf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
+    printf("$line");
+    printf("= %-13s\t%-37s\t%s\n", "key", "cipher name", "$text  names");
+    printf("$line");
+    foreach my $key (sort keys %ciphers) {
+        my @aliases = [];
+        my $name    = "";
+        if ($type =~ /rfc/) {
+            $name   = $ciphers{$key}->{'names'}[0];
+            my $rfc = $ciphers{$key}->{$type};
+            next if "-" eq $rfc;
+            @aliases= $rfc;
+        } else {
+            @aliases= @{$ciphers{$key}->{$type}};
+            $name   = shift @aliases;
+            next if 1 > scalar @aliases;
+        }
+        printf("%s\t%-37s\t@aliases\n", $key, $name);
     }
-    # hex,hex   => [qw( cipher suite name aliases )],# comment (where found)
-    printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
-    printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
+    printf("$line");
+    printf("= %-13s\t%-37s\t%s\n", "key", "cipher name", "alias names");
     return;
 } # show_alias
 
-sub show_names  {
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== overview of various cipher suite names ===
-=
-=   description of columns:
-=       key         - hex key for cipher suite
-=       OpenSSL     - cipher suite name used in openssl's *.h files
-=       openssl     - cipher suite name used by openssl executable
-=       osaft       - cipher suite name used by O-Saft
-=       o=o         - yes if openssl's cipher suite name is same as O-Saft's name
-=
-";
-
-    printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
-    printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
-    printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
-    foreach my $key (sort keys %ciphers) {
-         my $name1 = $ciphers_names{$key}->{'openssl'} || '';
-         my $name2 = $ciphers_names{$key}->{'osaft'}   || '';
-         my $both  = "no";
-            $both  = "yes" if ($name1 eq $name2);
-         printf("%14s\t%-23s\t%-23s\t%-23s\t%s\n", $key,
-                $ciphers_names{$key}->{'OpenSSL'} || '',
-                $name1, $name2, $both,
-               );
-    }
-    printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
-    printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
-    return;
-} # show_names
-
-######################################################
-# show_names_o-o {
-#   print  "=    openssl O-Saft iden-";
-#   print  "= key  name  name   tical";
-#   print  "=----+------+----+-------";
-#   print  "  key DHE-   DHE-   yes  ";
-#   print  "  key DHE-   EDH-   no   ";
-# }; #
-
-# show_const_o-o {
-#   print  "=    openssl O-Saft iden-";
-#   print  "= key const  const  tical";
-#   print  "=----+------+----+-------";
-#   print  "  key TLS_   TLS_   yes  ";
-#   print  "  key TLS_   PCT_   no   ";
-# }; #
-######################################################
-
-sub show_rfc    {
-    printf("#%s:\n", (caller(0))[3]);
-    print "
-=== cipher suite and corresponding RFCs ===
-=
-=   description of columns:
-=       key         - hex key for cipher suite
-=       RFC         - RFC numbers, where cipher suite is described
-=       OpenSSL     - cipher suite name as used in openssl
-=
-";
-    printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
-    printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
-    printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
-    foreach my $key (sort keys %ciphers) {
-         my $rfc = $ciphers{$key}->{'rfc'} || '';
-            $rfc = "$rfc" if ('' eq $rfc);
-         printf("%14s\t%-15s\t%-23s\n", $key,
-                $rfc,
-                $ciphers_names{$key}->{'osaft'} || '',
-               );
-         # TODO: in 'rfc' können mehrer stehen, durch : getrennt
-    }
-    printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
-    printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
-    return;
-} # show_rfc
-
-
-sub _show_tablehead {
-    # print table headline according given format
-    my $format = shift;
-    my @values;
-
-    return if ($format =~ m/tab$/);
-
-    if ($format =~ m/^(?:dump|yeast)/) {
-        my $key = "0x00,0x00";  # use first entry to get keys
-        #foreach my $val (sort keys %{$ciphers{$key}}) {
-        #    push(@values, $val);
-        #}
-        printf("=%9s\t%9s\t%s\n", "key", "hex", join("\t", qw(ssl keyx auth enc bits mac sec name)));
-        printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
-    }
-#   printf("=%14s\t%-39s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-#            "key", "name", "sec", "ssl", "enc", "bit", "mac", "auth", "keyx", "score", "tag" );
-#	format=15.12
-
-    if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
-        printf("=%14s\t%-47s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-               "key", "name", "ssl", "keyx", "auth", "enc", "bits", "mac", "tags" );
-        printf("=%s+%s+%s+%s+%s+%s+%s+%s+%s\n",
-               "-" x 14, "-" x 47, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 11 );
-    }
-
-#    0x00,0x00,0x00 - NULL-MD5                SSLv2 Kx=RSA(512) Au=RSA  Enc=None(0) Ma
-    if ($format =~ m/^openssl/) {
-        printf("=% 18s - %-23s %-5s %-11s %-7s %-11s %-7s %s\n",
-               "key", "name", "ssl", "keyx", "auth", "enc(bit)", "mac", "tags" );
-        printf("=%s+%s+%s+%s+%s+%s+%s+%s\n",
-               "-" x 19, "-" x 24, "-" x 5, "-" x 11, "-" x 7, "-" x 11, "-" x 7, "-" x 11 );
-    }
-
-    return;
-} # _show_tablehead
-
-sub _show_tabledata {
-    # print table data line according given format
-    my ($format, $key) = @_;
-    my $name= $ciphers_names{$key}->{'iana'} || '';
-    my $ssl = $ciphers{$key}->{'ssl'}   || '';
-    my $kx  = $ciphers{$key}->{'keyx'}  || '';
-    my $au  = $ciphers{$key}->{'auth'}  || '';
-    my $enc = $ciphers{$key}->{'enc'}   || '';
-    my $bit = $ciphers{$key}->{'bits'}  || '0';
-    my $mac = $ciphers{$key}->{'mac'}   || '';
-    my $sec = $ciphers{$key}->{'sec'}   || '';
-    my $tag = $ciphers{$key}->{'tags'}  || '';
-    my $score = "0"; # dummy because we don't have scores in new structure
-    if ($format =~ m/^(?:15|15.12.15|old)/) {
-        $name= $ciphers_names{$key}->{'osaft'}   || '';
-        #next if $key =~ m/0x/;    # dirty hack 'til %cipher is clean
-        printf(" %-30s %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                 $name, $sec, $ssl, $enc, $bit, $mac, $au, $kx, $score, $tag);
-    }
-    if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
-        $name= $ciphers_names{$key}->{'iana'}    || '';
-        $name= $ciphers_names{$key}->{'osaft'}   || '';
-        printf("%14s\t%-41s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                $key, $name, $ssl, $kx, $au, $enc, $bit, $mac, $tag);
-    }
-    if ($format =~ m/^(?:openssl)/) {
-        $name= $ciphers_names{$key}->{'openssl'} || '';
-        printf("%19s - %-23s %-5s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%-4s %s\n",
-                $key, $name, $ssl, $kx,   $au,   $enc, $bit, $mac,    $tag);
-    }
-    return;
-} # _show_tabledata
-
-sub _show_ciphers   {
-    # print internal list of ciphers
-    my $format = shift;
-    # key in %ciphers is the cipher's hex value, but we want the ciphers sorted
-    # according their hex constant; perl's sort need a compare function
-    my $cnt = 0;
-    my %keys;
-    map { $keys{text2key($_)} = $_; } keys %ciphers;
-    foreach my $key (sort keys %keys) {
-        $cnt++;
-        #my $hex = $keys{$key};
-        my $hex = key2text($key);   # 0x02010080 --> 0x01,0x00,0x80
-        my @values;
-        if ($format =~ m/^(?:dump|yeast)/) {
-            # simple approach, not used because we want a special order
-            #foreach my $col (sort keys %{$ciphers{$key}}) {
-            #    push(@values, $ciphers{$key}->{$col});
-            #}
-            foreach my $col (qw(ssl keyx auth enc bits mac sec)) {
-                push(@values, $ciphers{$key}->{$col});
-            }
-                push(@values, $ciphers_names{$key}->{'osaft'});
-            $hex =  "     $hex" if (10 > length($hex)); # align right
-            printf"%s\t%s\t%s\n", $key, $hex, join("\t",@values);
-            next;
+sub _show_ciphers_ssltest {
+    # special output for --legacy=ssltest: ciphers sorted by protocol
+    # %ciphers are sorted by protocol # TODO sorting cipher names not yet implemented
+    my $last_k  = "";
+    foreach my $key (sort { $ciphers{$a}->{ssl} cmp $ciphers{$b}->{ssl} } keys %ciphers) {
+        if ($last_k ne $ciphers{$key}->{ssl}) {
+            $last_k =  $ciphers{$key}->{ssl};
+            printf("%s Ciphers Supported...\n", $ciphers{$key}->{ssl});
         }
-        _show_tabledata($format, $key);
+        my $name    = $ciphers{$key}->{'names'}[0]; # special value
+        my $auth =  $ciphers{$key}->{auth};
+           $auth =  "No" if ($auth =~ /none/i);
+        my $keyx =  $ciphers{$key}->{keyx};
+           $keyx =~ s/[()]//g;
+        my $bits =  $ciphers{$key}->{bits};
+        if ($bits =~ m/\d+/) {
+           $bits =  sprintf("%03d", $ciphers{$key}->{bits});
+        } else {
+           $bits =  "-?-";
+           $bits =  "000" if ($ciphers{$key}->{enc} =~ m/None/i);
+        }
+#   NULL-MD5, None 000 bits, No Auth, MD5 MAC, RSA512 Kx
+        printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx\n", $name,
+                $ciphers{$key}->{enc}, $bits, $auth, $ciphers{$key}->{mac}, $keyx);
     }
-    return $cnt;
-} # _show_ciphers
+    return;
+} # _show_ciphers_ssltes {
 
-# =pod
-#
-# =head2 show_ciphers($format)
-#
-# Print C<%ciphers> data structure in specified format.
-#
-# Supported formats are:
-# * openssl       - like openssl ciphers -V
-# * osaft         - most important data
-# * dump          - all available data
-# * 15.12.15      - format like in version 15.12.15 (for compatibility)
-#
-# =cut
-
-sub show_ciphers    {
+sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print internal list of ciphers in specified format
     my $format = shift;
-    printf("#%s:\n", (caller(0))[3]);
-
-    if ($format !~ m/(?:dump|tab|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) { ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+    local $\ = "\n";
+    if ($format !~ m/(?:dump|osaft|openssl|simple|ssltest|show)/) {
         _warn("520: unknown format '$format'");
         return;
     }
+    if ($format =~ m/^(?:ssltest)/) {
+        _show_ciphers_ssltest();
+        return;
+    }
 
-    if ($format !~ m/tab$/) {
-        print  <<'EoT';
+    my $txt_openssl = "=";
+       $txt_openssl =
+"= Output is similar (order of columns) but not identical to result of
+= 'openssl ciphers -V' command." if ($format =~ m/openssl/);
+    my $txt_head    = "";
+    my $idx = 0;
+    foreach (@{$ciphers_desc{head}}) {  # build description from %ciphers_desc
+        $txt_head .= sprintf("=      %-12s - %s\n", $ciphers_desc{head}[$idx], $ciphers_desc{text}[$idx]);
+        $idx++;
+    }
+
+    print  << "EoT";
+=== internal %ciphers data ===
 =
 = Show a full overview of all available ciphers.
-= Output is similar (order of columns) but not identical to result of
-= 'openssl ciphers -V' command.
+$txt_openssl
 =
-=   description of columns:
-=       key         - internal hex key for cipher suite
-=       hex         - hex key for cipher suite (like opnssl)
+=   description of columns (if available):
+=      key          - internal hex key for cipher suite
+=      hex          - hex key for cipher suite (like opnssl)
+=      cipher name  - OpenSSL suite name
+$txt_head
 EoT
-        my $key = 0;
-        foreach (@{$ciphers_desc{head}}) {
-            printf("=       %-4s        - %s\n", $ciphers_desc{head}[$key],
-                $ciphers_desc{text}[$key]);
-            $key++;
+    my @columns = @{$ciphers_desc{head}}; # cannot be used because we want specific order
+    @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|osaft)/);
+    @columns = qw(ssl keyx auth enc bits mac sec) if ($format =~ m/^(?:show)/);
+    @columns = qw(sec ssl keyx auth enc bits mac) if ($format =~ m/^(?:simple)/);
+    @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
+
+    # table head
+    my $line    = sprintf("=%s\n", "-" x 77 );
+    my $head    = "";
+    if ($format =~ m/^(?:dump|osaft)/) {
+# 0x02000000    weak   SSLv2   RSA(512) RSA    None    Mac     -?-     NULL-MD5 NULL_WITH_MD5 -
+        $line = sprintf("=%9s%s%s\n", "-" x 14, "+-------" x 9, "+---------------" x 3 );
+        $head = sprintf("= %-13s\t%9s\n", "key",    join("\t", @columns));
+    }
+    if ($format =~ m/^(?:show)/) {
+# 0x02000000    SSLv2   RSA(512) RSA    None   0       Mac     weak     NULL-MD5
+        $line = sprintf("=%s%s+%s\n", "-" x 14, "+-------" x 7, "-" x 15 );
+        $head = sprintf("= %-13s\t%s\t%s\n", "key", join("\t", @columns), "cipher name");
+    }
+    if ($format =~ m/^(?:simple)/) {
+# 0x02000000    weak SSLv2 RSA(512) RSA None 0 Mac NULL-MD5
+        # no header just a line
+    }
+    if ($format =~ m/^openssl/) {
+#         0x00,0x3D - AES256-SHA256           TLSv1.2 Kx=RSA      Au=RSA  Enc=AES(256)  Mac=SHA256
+#    0x00,0x00,0x00 - NULL-MD5                SSLv2   Kx=RSA(512) Au=RSA  Enc=None(0)   Mac
+        $line = sprintf("=%s+%s+%s+%s+%s+%s+%s\n",
+               "-" x 19, "-" x 24, "-" x 5, "-" x 11, "-" x 7, "-" x 11, "-" x 7 );
+        $head = sprintf("=% 18s - %-23s %-5s %-11s %-7s %-11s %s\n",
+               "key", "name", @columns[0..2], "enc(bit)", "mac");
+    }
+    printf($line);
+    printf($head);
+    printf($line);
+
+    # table data (format should be same as for table head above)
+    my $cnt = 0;
+    foreach my $key (sort keys %ciphers) {
+        $cnt++;
+        my $hex     = key2text($key);   # 0x02010080 --> 0x01,0x00,0x80
+        my $name    = $ciphers{$key}->{'names'}[0]; # special value
+        my $const   = $ciphers{$key}->{'const'}[0]; # special value
+        my $note    = $ciphers{$key}->{'notes'}[0]; # special value
+        my @values;
+        if ($format =~ m/^(?:dump|osaft)/) {
+            push(@values, $key);
+            push(@values, $ciphers{$key}->{$_}) foreach @columns[0..8];
+           #push(@values, join(",", @{$ciphers{$key}->{$_}})) foreach @columns[9..11];
+            push(@values, join(",", @{$ciphers{$key}->{names}}));
+            push(@values, join(",", @{$ciphers{$key}->{const}}));
+            push(@values, join(",", @{$ciphers{$key}->{notes}}));
+            printf("%s\n", join("\t", @values));
         }
-        printf("=       name        - OpenSSL suite name\n=\n");
-    }
+        if ($format =~ m/^(?:show)/) {
+            push(@values, $key);
+            push(@values, $ciphers{$key}->{$_}) foreach @columns;
+            push(@values, $name);
+            printf("%s\n", join("\t", @values));
+        }
+        if ($format =~ m/^(?:simple)/) {
+            push(@values, $ciphers{$key}->{$_}) foreach @columns;
+            push(@values, $name);
+            printf("%s\t%s\n", $key, join(" ", @values));
+        }
+        if ($format =~ m/^(?:openssl)/) {
+            push(@values, $hex, $name);
+            push(@values, $ciphers{$key}->{$_}) foreach @columns;
+            printf("%19s - %-23s %-6s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%s\n", @values);
+        }
+    } # keys
 
-    _show_tablehead($format);
-    my $cnt = _show_ciphers($format);
-
-    if ($format =~ m/^(?:dump|yeast)/) {
-        printf("=%s+%s+%s\n", "-"x14, "-"x15, "-------+"x8 );
-    }
-    if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
-        printf("=%s+%s+%s+%s+%s+%s+%s+%s+%s\n",
-               "-" x 14, "-" x 47, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 11 );
-    }
-    printf("= %s ciphers\n", $cnt);
+    # table footer
+    printf($line);
+    printf($head);
+    printf("=\n= %s ciphers\n", $cnt);
     return;
 } # show_ciphers
+
+sub show            {
+    #? dispatcher for various --test-cipher-* options; show information
+    my $arg = shift;
+       $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
+    #_dbx("arg=$arg");
+    show_overview()         if ($arg =~ m/^overview/        );
+    show_alias('const')     if ($arg =~ m/^const(?:ants?)?/ );
+    show_alias('names')     if ($arg =~ m/^alias(?:es)?/    );
+    show_alias('rfc')       if ($arg =~ m/^rfc/i            );
+    show_desc()             if ($arg =~ m/^desc(?:ription)?/);
+    show_desc()             if ($arg =~ m/^ciphers.?desc(?:ription)?/);
+        ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    show_ciphers($1)        if ($arg =~ m/^(dump|osaft|openssl|show|simple|ssltest)/);
+    show_getter($1)         if ($arg =~ m/^getter=?(.*)/    );
+    show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
+    show_key($1)            if ($arg =~ m/^key=(.*)/        );
+    find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
+#   $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
+    show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
+    if ($arg =~ m/get_cipherkeys/   ) {
+        my $list = get_cipherkeys();    # enforce string value
+        print $list;
+    }
+    if ($arg =~ m/get_ciphernames/   ) {
+        my $list = get_ciphernames();   # enforce string value
+        print $list;
+    }
+    if ($arg =~ m/^regex/) {
+        $arg = "--test-ciphers-regex";
+        printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
+    }
+    return;
+} # show
 
 #_____________________________________________________________________________
 #___________________________________________________ initialisation methods __|
 
-our @_keys;
-
-sub _ciphers_init_iana  {
-    my @keys;
-
-    _v_print("initialise from IANA tls-parameters.txt ...");
-    foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
-        if (grep{/^$key$/} @keys) {
-            _warn("521: duplicate IANA key: »$key«");
-        } else {
-            push(@keys, $key);
-        }
-        $ciphers_const{$key}->{'iana'} = $OSaft::Ciphers::_ciphers_iana{$key}[0] || '';
-        $ciphers_names{$key}->{'iana'} = $OSaft::Ciphers::_ciphers_iana{$key}[0] || '';
-        $ciphers{$key}->{'rfc'} = $OSaft::Ciphers::_ciphers_iana{$key}[1] || '';
-        $ciphers{$key}->{'dtls'}= $OSaft::Ciphers::_ciphers_iana{$key}[2] || '';
-    }
-    undef %OSaft::Ciphers::_ciphers_iana;
-
-    # correct IANA settings (new in June 2016)
-    foreach my $key (qw(0x0300CCA8 0x0300CCA9 0x0300CCAA 0x0300CCAB 0x0300CCAC 0x0300CCAD 0x0300CCAE)) {
-        $ciphers{$key}->{'rfc'} = "7905";
-    }
-    _v_print("  keys:    " . ($#keys + 1));
-    _v_print("  ciphers: " . scalar(keys %ciphers));
-    return @keys;
-} # _ciphers_init_iana
-
-sub _ciphers_init_osaft {
-    _v_print("initialise from OSaft settings ...");
-    foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
-        if (grep{/^$key$/} @_keys) {
-            _v2print("  found O-Saft key: »$key«");
-        } else {
-            _v2print("  new   O-Saft key: »$key«");
-            push(@_keys, $key);
-            $ciphers{$key}->{'rfc'}  = '';
-            $ciphers{$key}->{'dtls'} = '';
-        }
-        $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_osaft{$key}[0] || '';
-        $ciphers{$key}->{'keyx'}= $OSaft::Ciphers::_ciphers_osaft{$key}[1] || '';
-        $ciphers{$key}->{'auth'}= $OSaft::Ciphers::_ciphers_osaft{$key}[2] || '';
-        $ciphers{$key}->{'enc'} = $OSaft::Ciphers::_ciphers_osaft{$key}[3] || '';
-        $ciphers{$key}->{'bits'}= $OSaft::Ciphers::_ciphers_osaft{$key}[4] || '0';
-        $ciphers{$key}->{'mac'} = $OSaft::Ciphers::_ciphers_osaft{$key}[5] || '';
-        $ciphers{$key}->{'sec'} = $OSaft::Ciphers::_ciphers_osaft{$key}[6] || '';
-        $ciphers{$key}->{'tags'}= $OSaft::Ciphers::_ciphers_osaft{$key}[7] || '';
-        $ciphers{$key}->{'score'} = "0";  # dummy because we don't have scores in new structure
-        $ciphers_names{$key}->{'osaft'} = $OSaft::Ciphers::_ciphers_names{$key}[0] || '';
-        $ciphers_const{$key}->{'osaft'} = $OSaft::Ciphers::_ciphers_names{$key}[1] || '';
-#print "$key - $ciphers{$key}->{'ssl'} : $ciphers_names{$key}->{'osaft'} #\n";
-    }
-    # add misisng names and constants
-    foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_names}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
-        my $name  = $OSaft::Ciphers::_ciphers_names{$key}[0] || '';
-        my $const = $OSaft::Ciphers::_ciphers_names{$key}[1] || '';
-        if (not defined $ciphers_names{$key}->{'osaft'}) {
-            #print("  undef O-Saft name: $key : »$name«\n");
-            $ciphers_names{$key}->{'osaft'} = $name;
+sub _ciphers_init   {
+    #? initialisations of %cihers data structures from <DATA>
+    # example:   #0     #1      #3      #4      #5          #6      #7 ...
+    #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
+    while (my $line = <DATA>) {
+        chomp $line;
+        next if ($line =~ m/^\s*$/);
+        next if ($line =~ m/^\s*#/);
+        last if ($line =~ m/__END/);
+        my @fields = split(/\t/, $line);
+        my $len    = $#fields;
+        my $key    = $fields[0];
+        if ($key  !~ /^0x[0-9A-F]{8}/) {
+            _warn(sprintf("504: DATA line%4d: wrong hex key '%s'", $., $key));
             next;
         }
-        if ('' eq $ciphers_names{$key}->{'osaft'}) {
-            #print("  emtpty O-Saft name: $key : »$name«\n");
-            $ciphers_names{$key}->{'osaft'} = $name;
+        if (13 != $len+1) {
+            _warn(sprintf("505: DATA line%4d: wrong number of TAB-separated fields '%s' != 13\n", $., $len));
+            next;
         }
+        # now loop over @fields, but assign each to the hash
+        $ciphers{$key}->{'OpenSSL'} = $fields[1]  || '';
+        $ciphers{$key}->{'sec'}     = $fields[2]  || '';
+        $ciphers{$key}->{'ssl'}     = $fields[3]  || '';
+        $ciphers{$key}->{'keyx'}    = $fields[4]  || '';
+        $ciphers{$key}->{'auth'}    = $fields[5]  || '';
+        $ciphers{$key}->{'enc'}     = $fields[6]  || '';
+        $ciphers{$key}->{'bits'}    = $fields[7]  || '';
+        $ciphers{$key}->{'mac'}     = $fields[8]  || '';
+        $ciphers{$key}->{'rfc'}     = $fields[9]  || '';
+        @{$ciphers{$key}->{'names'}}= split(/,/, $fields[10]);
+        @{$ciphers{$key}->{'const'}}= split(/,/, $fields[11]);
+        @{$ciphers{$key}->{'notes'}}= split(/,/, $fields[12]);
     }
-    undef %OSaft::Ciphers::_ciphers_const;
-    undef %OSaft::Ciphers::_ciphers_names;
-    undef %OSaft::Ciphers::_ciphers_osaft;
-    #_v_print("  keys:    " . ($#_keys + 1));
-    _v_print("  ciphers: " . scalar(keys %ciphers));
-    return;
-} # _ciphers_init_osaft
-
-sub _ciphers_init_openssl   {
-    _v_print("initialise data from »openssl ciphers -V« ...");
-    foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
-        if (grep{/^$key$/} @_keys) {
-            _warn("522: duplicate openssl key: »$key«");
-        } else {
-            push(@_keys, $key);
-        }
-        #print $key;
-        $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[0];
-        $ciphers{$key}->{'kexx'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[1];
-        $ciphers{$key}->{'auth'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[2];
-        $ciphers{$key}->{'enc'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[3];
-        $ciphers{$key}->{'bits'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[4];
-        $ciphers{$key}->{'mac'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[5];
-        $ciphers{$key}->{'tags'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[7] || '';
-        my $name                = $OSaft::Ciphers::_ciphers_openssl_all{$key}[6];
-        $ciphers_names{$key}->{'openssl'} = $name;
-    }
-    _v_print("  ciphers: " . scalar(keys %ciphers));
-    return;
-} # _ciphers_init_openssl
-
-sub _ciphers_init   {
-    #? additional initialisations for data structures
-
-    # scan options, must be ckecked here also because this function will be
-    # called before _main()
-    foreach (@ARGV) {
-        $VERBOSE++      if ($_ =~ /^--v$/);
-    }
-
-    @_keys = _ciphers_init_iana();
-    _ciphers_init_osaft();
-    undef @_keys;
-    _ciphers_init_openssl();
-
     return;
 } # _ciphers_init
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 sub _main_usage     {
     #? print usage
@@ -1455,24 +1227,19 @@ sub _main           {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help# print own help
-        _main_usage()       if ($arg =~ /^--?usage$/);
+        _main_usage()       if ($arg eq '--usage');
         # ----------------------------- options
-        $VERBOSE++          if ($arg =~ /^--v$/);
+        $VERBOSE++          if ($arg eq '--v');
         # ----------------------------- commands
         print "$VERSION\n"  if ($arg =~ /^version/i);
-        show_overview()     if ($arg =~ /^overview/);
-        show_names()        if ($arg =~ /^names/);
-        show_const()        if ($arg =~ /^const/);
-        show_alias()        if ($arg =~ /^alias(?:es)?/);
-        show_rfc()          if ($arg =~ /^rfc/i);
-        show_desc()         if ($arg =~ /^desc(?:ription)?/);
-        show_desc()         if ($arg =~ /^ciphers.?desc(?:ription)?/);
-        ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-        #show_ciphers($1)    if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
-        show_ciphers($1)    if ($arg =~ /^ciphers=(.*)$/);
-        show_getter($1)     if ($arg =~ /^getter=?(.*)/);
-        show_hex($1)        if ($arg =~ /^hex=?(.*)/);
-        show_key($1)        if ($arg =~ /^key=?(.*)/);
+        # allow short option without --test-ciphers- prefix
+        # (using multiple assignments for better human readability)
+        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(alias|const(?:ants?)?|desc|regex|rfc)/);
+        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(dump|openssl|osaft|simple|ssltest)/);
+        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(overview|show|sort(?:ed))/);
+        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?((?:get_|hex=|key=).*)/);
+#print "A $arg\n";
+        show($arg)          if ($arg =~ /^--test.?cipher/);
     }
     exit 0;
 } # _main
@@ -1507,7 +1274,39 @@ this modules provides following commands:
 
 =item overview
 
-- print overview if cipher description and name exists in internal lists
+- print overview of various checks according cipher definitions
+
+=item alias
+
+- print overview of various known cipher suite names
+
+=item const
+
+- print overview of various cipher suite constant names
+
+=item rfc
+
+- print overview of cipher suites and corresponding RFCs
+
+=item dump
+
+- print internal lists of ciphers (all data, internal format)
+
+=item show
+
+- print internal lists of ciphers (simple human readable format)
+
+=item simple
+
+- print internal lists of ciphers (simple space-separated format)
+
+=item openssl
+
+- print internal lists of ciphers (format like "openssl ciphers -V")
+
+=item ssltest
+
+- print internal lists of ciphers (format like "ssltest --list")
 
 =item hex=CIPHER-SUITE
 
@@ -1517,37 +1316,11 @@ this modules provides following commands:
 
 - print cipher suite name's internal key
 
-=item names
-
-- print overview of various cipher suite names
-
-=item const
-
-- print overview of various cipher suite constant names
-
-=item rfc
-
-- print cipher suite name and corresponding RFCs
-
-=item ciphers=dump
-
-- print internal lists of ciphers (all data, internal format)
-
-=item ciphers=dumptab
-
-- same as C<ciphers=dump> but without comments
-
-=item ciphers=osaft
-
-- print internal lists of ciphers (internal format)
-
-=item ciphers=openssl
-
-- print internal lists of ciphers (format like "openssl ciphers -V")
-
-=item ciphers=16
-
 =back
+
+All commands can be used with or without '+' prefix, for example 'dump' is same
+as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
+'--test-ciphers-show'.
 
 =head1 OPTIONS
 
@@ -1575,7 +1348,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-1.58 2022/03/03
+2.1 2022/03/18
 
 =head1 AUTHOR
 
@@ -1585,7 +1358,6 @@ purpose of this module is defining variables. Hence we export them.
 
 ## PACKAGE }
 
-
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
@@ -1594,4 +1366,485 @@ _main(@ARGV) if (not defined caller);
 1;
 
 __DATA__
+
+# Format of following data lines:
+#   <empty>     - empty lines are ignored
+#   comments    - all line beginning with a # (hash); lines are ignored
+#   0xhhhhhhhh  - data line containing a cipher suite; used columns are:
+#       OpenSSL - security value (STRENGTH) used by openssl
+#       sec     - security value used by o-saft.pl
+#       ssl     - protocol where the cipher is used (PCT just for information)
+#       keyx    - key exchange of the cipher suite (Kx= in openssl)
+#       auth    - authenticatione of the cipher suite (Au= in openssl)
+#       enc     - encryption of the cipher suite (Enc= in openssl)
+#       bits    - bits for encryption of the cipher suite (Enc= in openssl)
+#       mac     - Mac of the cipher suite (Mac= in openssl)
+#       cipher, - list of known cipher suite names, most common first
+#       const   - list of known cipher suite constants, most common first
+#       comment - list of notes and comments
+#
+#   All columns must be separated by TABs (0x9 aka \t), no spaces are allowed.
+#   The left-most column must not preceded by white spaces. It must begin with
+#   the cipher suite hex key, like:  0x  followed by exactly  8 hex characters
+#   [0-9A-F]. Only the lines are used for ciphers.
+#   If additional characters  [a-zA-Z-]  are used in the hex key and then does
+#   does't match  ^0x[0-9a-fA-F]{8}  , the definition is stored in  %ciphers ,
+#   but will not be used anywhere (except informational lists).
+#   
+#   Values in left-most column (the cipher's hex key) must be unique.
+#
+#   In all other columns, following special strings are used:
+#       -       - empty value/string, value not existent, value not applicable
+#       -?-     - value currently unknown
+#       None    - value not used (as in openssl)
+#
+#   The fomat/syntax of the table is very strict, because some other tools may
+#   use and/or ignore this data.  In particular,  the characters  " [ ] =  are
+#   not used to avoid conflicts in other tools (for example Excel).
+#
+#   This table will be read in _ciphers_init() and converted to %ciphers .
+
+# constant	OpenSSL	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,alias	const	comment
+#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+---------------+-------+---------------+
+0x03005600	-	None	SSL/TLS	None	None	-	0	None	7507	SCSV,TLS_FALLBACK_SCSV	TLS_FALLBACK_SCSV	SCSV
+0x030000FF	-	None	SSL/TLS	None	None	-	0	None	5746	INFO_SCSV	EMPTY_RENEGOTIATION_INFO_SCSV	DOC
+#0x00800000	-	nix	PCT	-?-	-?-	-?-	-?-	-?-	-	const	-	for testing only
+0x00800001	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_CERT_TYPE	PCT1_CERT_X509	PCT
+0x00800003	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_CERT_TYPE	PCT1_CERT_X509_CHAIN	PCT
+0x00810001	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_HASH_TYPE	PCT1_HASH_MD5	PCT
+0x00810003	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_HASH_TYPE	PCT1_HASH_SHA	PCT
+0x00820003	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_EXCH_TYPE	PCT1_EXCH_RSA_PKCS1	PCT
+0x00823004	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_CIPHER_TYPE_1ST_HALF	PCT1_CIPHER_RC4	PCT
+0x00842840	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_CIPHER_TYPE_2ND_HALF	PCT1_ENC_BITS_40|PCT1_MAC_BITS_128	PCT
+0x00848040	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_CIPHER_TYPE_2ND_HALF	PCT1_ENC_BITS_128|PCT1_MAC_BITS_128	PCT
+0x008F8001	-	-?-	PCT	-?-	-?-	-?-	-?-	-?-	-	PCT_SSL_COMPAT	PCT_VERSION_1	PCT
+0x02000000	-	weak	SSLv2	RSA(512)	None	None	0	MD5	-?-	NULL-MD5	NULL_WITH_MD5	-
+0x02010080	MEDIUM	weak	SSLv2	RSA	RSA	RC4	128	MD5	-?-	RC4-MD5	RC4_128_WITH_MD5	-
+0x02020080	WEAK	WEAK	SSLv2	RSA(512)	RSA	RC4	40	MD5	-?-	EXP-RC4-MD5	RC4_128_EXPORT40_WITH_MD5	EXPORT
+0x02030080	MEDIUM	weak	SSLv2	RSA	RSA	RC2	128	MD5	-?-	RC2-CBC-MD5,RC2-MD5	RC2_128_CBC_WITH_MD5	-
+0x02040080	-?-	weak	SSLv2	RSA(512)	RSA	RC2	40	MD5	-?-	EXP-RC2-CBC-MD5,EXP-RC2-MD5	RC2_128_CBC_EXPORT40_WITH_MD5	EXPORT
+0x02050080	MEDIUM	weak	SSLv2	RSA	RSA	IDEA	128	MD5	-?-	IDEA-CBC-MD5	IDEA_128_CBC_WITH_MD5,IDEA_CBC_WITH_MD5	-
+0x02060040	LOW	weak	SSLv2	RSA	RSA	DES	56	MD5	-?-	DES-CBC-MD5	DES_64_CBC_WITH_MD5,DES_CBC_WITH_MD5	-
+0x02060140	-?-	weak	SSLv2	RSA	RSA	DES	56	SHA1	-?-	DES-CBC-SHA	DES_64_CBC_WITH_SHA	-
+0x020700C0	MEDIUM	weak	SSLv2	RSA	RSA	3DES	168	MD5	-?-	DES-CBC3-MD5	DES_192_EDE3_CBC_WITH_MD5	-
+0x020701C0	MEDIUM	weak	SSLv2	RSA	RSA	3DES	168	SHA1	-?-	DES-CBC3-SHA	DES_192_EDE3_CBC_WITH_SHA	-
+0x02080080	LOW	weak	SSLv2	RSA	RSA	RC4	64	MD5	-?-	RC4-64-MD5,EXP-RC4-64-MD5	RC4_64_WITH_MD5	BSAFE
+0x02FF0800	-?-	weak	SSLv2	RSA	RSA	DES	64	MD5	-?-	DES-CFB-M1	DES_64_CFB64_WITH_MD5_1	-
+0x02FF0810	-?-	weak	SSLv2	RSA(512)	None	None	0	MD5	-	NULL	NULL	SSLeay
+0x03000000	-?-	weak	SSLv3	RSA	None	None	0	MD5	5246	NULL-NULL	NULL_WITH_NULL_NULL	SSLeay
+0x03000001	-?-	weak	SSLv3	RSA	RSA	None	0	MD5	5246	NULL-MD5	RSA_WITH_NULL_MD5,RSA_NULL_MD5	EXPORT
+0x03000002	-?-	weak	SSLv3	RSA	RSA	None	0	SHA1	5246	NULL-SHA	RSA_WITH_NULL_SHA,RSA_NULL_SHA	-
+0x03000003	WEAK	WEAK	SSLv3	RSA(512)	RSA	RC4	40	MD5	4346,6347	EXP-RC4-MD5	RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5	EXPORT
+0x03000004	MEDIUM	weak	SSLv3	RSA	RSA	RC4	128	MD5	5246,6347	RC4-MD5	RSA_WITH_RC4_128_MD5,RSA_RC4_128_MD5,RC4_128_WITH_MD5	-
+0x03000005	MEDIUM	weak	SSLv3	RSA	RSA	RC4	128	SHA1	5246,6347	RC4-SHA	RSA_WITH_RC4_128_SHA,RSA_RC4_128_SHA,RC4_128_WITH_SHA	-
+0x03000006	-?-	weak	SSLv3	RSA(512)	RSA	RC2	40	MD5	4346	EXP-RC2-CBC-MD5	RSA_WITH_RC2_40_MD5,RSA_RC2_40_MD5,RSA_EXPORT_WITH_RC2_CBC_40_MD5,RC2_128_CBC_EXPORT40_WITH_MD5	EXPORT
+0x03000007	MEDIUM	weak	SSLv3	RSA	RSA	IDEA	128	SHA1	5469	IDEA-CBC-SHA	RSA_WITH_IDEA_CBC_SHA,RSA_WITH_IDEA_SHA,RSA_IDEA_128_SHA	-
+0x03000008	WEAK	WEAK	SSLv3	RSA(512)	RSA	DES	40	SHA1	4346	EXP-DES-CBC-SHA	RSA_DES_40_CBC_SHA,RSA_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x03000009	LOW	weak	SSLv3	RSA	RSA	DES	56	SHA1	5469	DES-CBC-SHA	RSA_WITH_DES_CBC_SHA,RSA_DES_64_CBC_SHA	-
+0x0300000A	MEDIUM	weak	SSLv3	RSA	RSA	3DES	168	SHA1	5246	DES-CBC3-SHA	RSA_WITH_3DES_EDE_CBC_SHA,RSA_DES_192_CBC3_SHA,DES_192_EDE3_CBC_WITH_SHA	-
+0x0300000B	-?-	weak	SSLv3	DH/DSS	DH	DES	40	SHA1	4346	EXP-DH-DSS-DES-CBC-SHA	DH_DSS_DES_40_CBC_SHA,DH_DSS_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x0300000C	LOW	weak	SSLv3	DH/DSS	DH	DES	56	SHA1	5469	DH-DSS-DES-CBC-SHA	DH_DSS_DES_64_CBC_SHA,DH_DSS_WITH_DES_CBC_SHA	-
+0x0300000D	MEDIUM	weak	SSLv3	DH/DSS	DH	3DES	168	SHA1	5246	DH-DSS-DES-CBC3-SHA	DH_DSS_DES_192_CBC3_SHA,DH_DSS_WITH_3DES_EDE_CBC_SHA	-
+0x0300000E	-?-	weak	SSLv3	DH/RSA	DH	DES	40	SHA1	4346	EXP-DH-RSA-DES-CBC-SHA	DH_RSA_DES_40_CBC_SHA,DH_RSA_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x0300000F	LOW	weak	SSLv3	DH/RSA	DH	DES	56	SHA1	5469	DH-RSA-DES-CBC-SHA	DH_RSA_DES_64_CBC_SHA,DH_RSA_WITH_DES_CBC_SHA	-
+0x03000010	MEDIUM	weak	SSLv3	DH/RSA	DH	3DES	168	SHA1	5246	DH-RSA-DES-CBC3-SHA	DH_RSA_DES_192_CBC3_SHA,DH_RSA_WITH_3DES_EDE_CBC_SHA	-
+0x03000011	-?-	weak	SSLv3	DH(512)	DSS	DES	40	SHA1	4346	EXP-EDH-DSS-DES-CBC-SHA	EDH_DSS_DES_40_CBC_SHA,DHE_DSS_DES_40_CBC_SHA,EDH_DSS_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x03000012	LOW	weak	SSLv3	DH	DSS	DES	56	SHA1	5469	EDH-DSS-DES-CBC-SHA,EDH-DSS-CBC-SHA	EDH_DSS_DES_64_CBC_SHA,DHE_DSS_DES_64_CBC_SHA,DHE_DSS_WITH_DES_CBC_SHA,EDH_DSS_WITH_DES_CBC_SHA	-
+0x03000013	MEDIUM	weak	SSLv3	DH	DSS	3DES	168	SHA1	5246	EDH-DSS-DES-CBC3-SHA,DHE-DSS-DES-CBC3-SHA	EDH_DSS_DES_192_CBC3_SHA,DHE_DSS_DES_192_CBC3_SHA,DHE_DSS_WITH_3DES_EDE_CBC_SHA,EDH_DSS_WITH_3DES_EDE_CBC_SHA	-
+0x03000014	LOW	weak	SSLv3	DH(512)	RSA	DES	40	SHA1	4346	EXP-EDH-RSA-DES-CBC-SHA	EDH_RSA_DES_40_CBC_SHA,DHE_RSA_DES_40_CBC_SHA,DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,EDH_RSA_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x03000015	LOW	weak	SSLv3	DH	RSA	DES	56	SHA1	5469	EDH-RSA-DES-CBC-SHA	EDH_RSA_DES_64_CBC_SHA,DHE_RSA_DES_64_CBC_SHA,DHE_RSA_WITH_DES_CBC_SHA,EDH_RSA_WITH_DES_CBC_SHA	-
+0x03000016	MEDIUM	weak	SSLv3	DH	RSA	3DES	168	SHA1	5246	EDH-RSA-DES-CBC3-SHA,DHE-RSA-DES-CBC3-SHA	EDH_RSA_DES_192_CBC3_SHA,DHE_RSA_DES_192_CBC3_SHA,DHE_RSA_WITH_3DES_EDE_CBC_SHA,EDH_RSA_WITH_3DES_EDE_CBC_SHA	-
+0x03000017	WEAK	WEAK	SSLv3	DH(512)	None	RC4	40	MD5	4346,6347	EXP-ADH-RC4-MD5	ADH_RC4_40_MD5,DH_anon_EXPORT_WITH_RC4_40_MD5	EXPORT
+0x03000018	MEDIUM	weak	SSLv3	DH	None	RC4	128	MD5	5246,6347	ADH-RC4-MD5,DHanon-RC4-MD5	ADH_RC4_128_MD5,DH_anon_WITH_RC4_MD5,DH_anon_WITH_RC4_128_MD5	-
+0x03000019	-?-	weak	SSLv3	DH(512)	None	DES	40	SHA1	4346	EXP-ADH-DES-CBC-SHA	ADH_DES_40_CBC_SHA,DH_anon_EXPORT_WITH_DES40_CBC_SHA	EXPORT
+0x0300001A	LOW	weak	SSLv3	DH	None	DES	56	SHA1	5469	ADH-DES-CBC-SHA,DHanon-DES-CBC-SHA	ADH_DES_64_CBC_SHA,DH_anon_WITH_DES_CBC_SHA	-
+0x0300001B	MEDIUM	weak	SSLv3	DH	None	3DES	168	SHA1	5246	ADH-DES-CBC3-SHA,DHanon-DES-CBC3-SHA	ADH_DES_192_CBC_SHA,DH_anon_WITH_3DES_EDE_CBC_SHA	-
+0x0300001C	-?-	weak	SSLv3	FZA	FZA	None	0	SHA1	5246	FZA-NULL-SHA	FZA_DMS_NULL_SHA,FORTEZZA_KEA_WITH_NULL_SHA	M
+0x0300001D	MEDIUM	MEDIUM	SSLv3	FZA	FZA	FZA	0	SHA1	5246	FZA-FZA-SHA,FZA-FZA-CBC-SHA	FZA_DMS_FZA_SHA,FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA	M
+0x0300001E-bug	WEAK	WEAK	SSLv3	FZA	FZA	RC4	128	SHA1	-	FZA-RC4-SHA	FZA_DMS_RC4_SHA	M
+0x0300001E	LOW	weak	SSLv3	KRB5	KRB5	DES	56	SHA1	2712	KRB5-DES-CBC-SHA	KRB5_DES_64_CBC_SHA,KRB5_WITH_DES_CBC_SHA	P
+0x0300001F	MEDIUM	weak	SSLv3	KRB5	KRB5	3DES	168	SHA1	2712	KRB5-DES-CBC3-SHA	KRB5_DES_192_CBC3_SHA,KRB5_WITH_3DES_EDE_CBC_SHA	P
+0x03000020	MEDIUM	weak	SSLv3	KRB5	KRB5	RC4	128	SHA1	2712,6347	KRB5-RC4-SHA	KRB5_RC4_128_SHA,KRB5_WITH_RC4_128_SHA	P
+0x03000021	MEDIUM	weak	SSLv3	KRB5	KRB5	IDEA	128	SHA1	2712	KRB5-IDEA-CBC-SHA	KRB5_IDEA_128_CBC_SHA,KRB5_WITH_IDEA_CBC_SHA	P
+0x03000022	LOW	weak	SSLv3	KRB5	KRB5	DES	56	MD5	2712	KRB5-DES-CBC-MD5	KRB5_DES_64_CBC_MD5,KRB5_WITH_DES_CBC_MD5	P
+0x03000023	MEDIUM	weak	SSLv3	KRB5	KRB5	3DES	168	MD5	2712	KRB5-DES-CBC3-MD5	KRB5_DES_192_CBC3_MD5,KRB5_WITH_3DES_EDE_CBC_MD5	P
+0x03000024	MEDIUM	weak	SSLv3	KRB5	KRB5	RC4	128	MD5	2712,6347	KRB5-RC4-MD5	KRB5_RC4_128_MD5,KRB5_WITH_RC4_128_MD5	P
+0x03000025	MEDIUM	weak	SSLv3	KRB5	KRB5	IDEA	128	MD5	2712	KRB5-IDEA-CBC-MD5	KRB5_IDEA_128_CBC_MD5,KRB5_WITH_IDEA_CBC_MD5	P
+0x03000026	-?-	weak	SSLv3	KRB5	KRB5	DES	40	SHA1	2712	EXP-KRB5-DES-CBC-SHA	KRB5_DES_40_CBC_SHA,KRB5_EXPORT_WITH_DES_CBC_40_SHA	EXPORT,P
+0x03000027	-?-	weak	SSLv3	KRB5	KRB5	RC2	40	SHA1	2712	EXP-KRB5-RC2-CBC-SHA	KRB5_RC2_40_CBC_SHA,KRB5_EXPORT_WITH_RC2_CBC_40_SHA	EXPORT,P
+0x03000028	-?-	weak	SSLv3	KRB5	KRB5	RC4	40	SHA1	2712,6347	EXP-KRB5-RC4-SHA	KRB5_RC4_40_SHA,KRB5_EXPORT_WITH_RC4_40_SHA	EXPORT,P
+0x03000029	-?-	weak	SSLv3	KRB5	KRB5	DES	40	MD5	2712	EXP-KRB5-DES-CBC-MD5	KRB5_DES_40_CBC_MD5,KRB5_EXPORT_WITH_DES_CBC_40_MD5	EXPORT,P
+0x0300002A	-?-	weak	SSLv3	KRB5	KRB5	RC2	40	MD5	2712	EXP-KRB5-RC2-CBC-MD5	KRB5_RC2_40_CBC_MD5,KRB5_EXPORT_WITH_RC2_CBC_40_MD5,KRB5_WITH_RC2_CBC_40_MD5	EXPORT,P
+0x0300002B	-?-	weak	SSLv3	KRB5	KRB5	RC4	40	MD5	2712,6347	EXP-KRB5-RC4-MD5	KRB5_RC4_40_MD5,KRB5_EXPORT_WITH_RC4_40_MD5	EXPORT,P
+0x0300002C	-?-	weak	SSLv3	DH	RSA	None	0	SHA1	4785	PSK-SHA,PSK-NULL-SHA	PSK_WITH_NULL_SHA	-
+0x0300002D	-?-	weak	SSLv3	DHEPSK	PSK	None	0	SHA1	4785	DHE-PSK-NULL-SHA	DHE_PSK_WITH_NULL_SHA	FIXME
+0x0300002E	-?-	weak	SSLv3	RSAPSK	PSK	None	0	SHA1	4785	RSA-PSK-NULL-SHA	RSA_PSK_WITH_NULL_SHA	FIXME
+0x0300002F	HIGH	HIGH	SSLv3	RSA	RSA	AES	128	SHA1	5246	AES128-SHA	RSA_WITH_AES_128_CBC_SHA,RSA_WITH_AES_128_SHA	-
+0x03000030	HIGH	medium	SSLv3	DH	DSS	AES	128	SHA1	5246	DH-DSS-AES128-SHA	DH_DSS_WITH_AES_128_SHA,DH_DSS_WITH_AES_128_CBC_SHA	-
+0x03000031	HIGH	medium	SSLv3	DH	RSA	AES	128	SHA1	5246	DH-RSA-AES128-SHA	DH_RSA_WITH_AES_128_SHA,DH_RSA_WITH_AES_128_CBC_SHA	-
+0x03000032	HIGH	HIGH	SSLv3	DH	DSS	AES	128	SHA1	5246	DHE-DSS-AES128-SHA,EDH-DSS-AES128-SHA	DHE_DSS_WITH_AES_128_CBC_SHA,DHE_DSS_WITH_AES_128_SHA	BSAFE
+0x03000033	HIGH	HIGH	SSLv3	DH	RSA	AES	128	SHA1	5246	DHE-RSA-AES128-SHA,EDH-RSA-AES128-SHA	DHE_RSA_WITH_AES_128_CBC_SHA,DHE_RSA_WITH_AES_128_SHA	-
+0x03000034	HIGH	weak	SSLv3	DH	None	AES	128	SHA1	5246	ADH-AES128-SHA	ADH_WITH_AES_128_SHA,DH_anon_WITH_AES_128_CBC_SHA	-
+0x03000035	HIGH	HIGH	SSLv3	RSA	RSA	AES	256	SHA1	5246	AES256-SHA	RSA_WITH_AES_256_SHA,RSA_WITH_AES_256_CBC_SHA	-
+0x03000036	HIGH	medium	SSLv3	DH	DSS	AES	256	SHA1	5246	DH-DSS-AES256-SHA	DH_DSS_WITH_AES_256_SHA,DH_DSS_WITH_AES_256_CBC_SHA	-
+0x03000037	HIGH	medium	SSLv3	DH	RSA	AES	256	SHA1	5246	DH-RSA-AES256-SHA	DH_RSA_WITH_AES_256_SHA,DH_RSA_WITH_AES_256_CBC_SHA	-
+0x03000038	HIGH	HIGH	SSLv3	DH	DSS	AES	256	SHA1	5246	DHE-DSS-AES256-SHA,EDH-DSS-AES256-SHA	DHE_DSS_WITH_AES_256_SHA,DHE_DSS_WITH_AES_256_CBC_SHA	-
+0x03000039	HIGH	HIGH	SSLv3	DH	RSA	AES	256	SHA1	5246	DHE-RSA-AES256-SHA,EDH-RSA-AES256-SHA	DHE_RSA_WITH_AES_256_SHA,DHE_RSA_WITH_AES_256_CBC_SHA	-
+0x0300003A	HIGH	weak	SSLv3	DH	None	AES	256	SHA1	5246	ADH-AES256-SHA	ADH_WITH_AES_256_SHA,DH_anon_WITH_AES_256_CBC_SHA	-
+0x0300003B	-?-	weak	TLSv12	RSA	RSA	None	0	SHA256	5246	NULL-SHA256	RSA_WITH_NULL_SHA256	L
+0x0300003C	HIGH	HIGH	TLSv12	RSA	RSA	AES	128	SHA256	5246	AES128-SHA256	RSA_WITH_AES_128_SHA256,RSA_WITH_AES_128_CBC_SHA256	L
+0x0300003D	HIGH	HIGH	TLSv12	RSA	RSA	AES	256	SHA256	5246	AES256-SHA256	RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256	L
+0x0300003E	HIGH	HIGH	TLSv12	DH/DSS	DH	AES	128	SHA256	5246	DH-DSS-AES128-SHA256	DH_DSS_WITH_AES_128_SHA256,DH_DSS_WITH_AES_128_CBC_SHA256	L
+0x0300003F	HIGH	HIGH	TLSv12	DH/RSA	DH	AES	128	SHA256	5246	DH-RSA-AES128-SHA256	DH_RSA_WITH_AES_128_SHA256,DH_RSA_WITH_AES_128_CBC_SHA256	L
+0x03000040	HIGH	HIGH	TLSv12	DH	DSS	AES	128	SHA256	5246	DHE-DSS-AES128-SHA256	DHE_DSS_WITH_AES_128_SHA256,DHE_DSS_WITH_AES_128_CBC_SHA256	L
+0x03000041	HIGH	HIGH	TLSv1	RSA	RSA	CAMELLIA	128	SHA1	4132,5932	CAMELLIA128-SHA	RSA_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000042	HIGH	HIGH	TLSv1	DH	DSS	CAMELLIA	128	SHA1	4132,5932	DH-DSS-CAMELLIA128-SHA	DH_DSS_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000043	HIGH	HIGH	TLSv1	DH	RSA	CAMELLIA	128	SHA1	4132,5932	DH-RSA-CAMELLIA128-SHA	DH_RSA_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000044	HIGH	HIGH	TLSv1	DH	DSS	CAMELLIA	128	SHA1	4132,5932	DHE-DSS-CAMELLIA128-SHA	DHE_DSS_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000045	HIGH	HIGH	TLSv1	DH	RSA	CAMELLIA	128	SHA1	4132,5932	DHE-RSA-CAMELLIA128-SHA	DHE_RSA_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000046	HIGH	weak	TLSv1	DH	None	CAMELLIA	128	SHA1	4132,5932	ADH-CAMELLIA128-SHA	ADH_WITH_CAMELLIA_128_CBC_SHA,DH_anon_WITH_CAMELLIA_128_CBC_SHA	-
+0x03000060	WEAK	WEAK	SSLv3	RSA(1024)	RSA	RC4	56	MD5	-?-	EXP1024-RC4-MD5	RSA_EXPORT1024_WITH_RC4_56_MD5	EXPORT
+0x03000061	-?-	weak	SSLv3	RSA(1024)	RSA	RC2	56	MD5	-?-	EXP1024-RC2-CBC-MD5	RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	EXPORT
+0x03000062	-?-	weak	SSLv3	RSA(1024)	RSA	DES	56	SHA1	-?-	EXP1024-DES-CBC-SHA,EXP-DES-56-SHA	RSA_EXPORT1024_WITH_DES_CBC_SHA	EXPORT
+0x03000063	-?-	weak	SSLv3	DH(1024)	DSS	DES	56	SHA1	-?-	EXP1024-DHE-DSS-DES-CBC-SHA,EXP-EDH-DSS-DES-56-SHA	DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA	EXPORT
+0x03000064	WEAK	WEAK	SSLv3	RSA(1024)	RSA	RC4	56	SHA1	-?-	EXP1024-RC4-SHA,EXP-RC4-56-SHA	RSA_EXPORT1024_WITH_RC4_56_SHA	EXPORT
+0x03000065	WEAK	WEAK	SSLv3	DH(1024)	DSS	RC4	56	SHA1	-?-	EXP1024-DHE-DSS-RC4-SHA,EXP-EDH-DSS-RC4-56-SHA	DHE_DSS_EXPORT1024_WITH_RC4_56_SHA	EXPORT,BSAFE
+0x03000066	MEDIUM	weak	SSLv3	DH	DSS	RC4	128	SHA1	-?-	DHE-DSS-RC4-SHA,EDH-DSS-RC4-SHA	DHE_DSS_WITH_RC4_128_SHA	BSAFE
+0x03000067	HIGH	HIGH	TLSv12	DH	RSA	AES	128	SHA256	5246	DHE-RSA-AES128-SHA256	DHE_RSA_WITH_AES_128_SHA256,DHE_RSA_WITH_AES_128_CBC_SHA256	L
+0x03000068	HIGH	HIGH	TLSv12	DH/DSS	DH	AES	256	SHA256	5246	DH-DSS-AES256-SHA256	DH_DSS_WITH_AES_256_SHA256,DH_DSS_WITH_AES_256_CBC_SHA256	-
+0x03000069	HIGH	HIGH	TLSv12	DH/RSA	DH	AES	256	SHA256	5246	DH-RSA-AES256-SHA256	DH_RSA_WITH_AES_256_SHA256,DH_RSA_WITH_AES_256_CBC_SHA256	-
+0x0300006A	HIGH	HIGH	TLSv12	DH	DSS	AES	256	SHA256	5246	DHE-DSS-AES256-SHA256	DHE_DSS_WITH_AES_256_SHA256,DHE_DSS_WITH_AES_256_CBC_SHA256	L
+0x0300006B	HIGH	HIGH	TLSv12	DH	RSA	AES	256	SHA256	5246	DHE-RSA-AES256-SHA256	DHE_RSA_WITH_AES_256_SHA256,DHE_RSA_WITH_AES_256_CBC_SHA256	L
+0x0300006C	HIGH	weak	TLSv12	DH	None	AES	128	SHA256	5246	ADH-AES128-SHA256	ADH_WITH_AES_128_SHA256,DH_anon_WITH_AES_128_CBC_SHA256	L
+0x0300006D	HIGH	weak	TLSv12	DH	None	AES	256	SHA256	5246	ADH-AES256-SHA256	ADH_WITH_AES_256_SHA256,DH_anon_WITH_AES_256_CBC_SHA256	L
+0x03000070	-?-	weak	SSLv3	DH	DSS	CAST	128	SHA1	-	DHE-DSS-CAST128-CBC-SHA	DHE_DSS_WITH_CAST_128_CBC_SHA	PGP,H
+0x03000071	-?-	weak	SSLv3	DH	DSS	CAST	128	RMD	-	DHE-DSS-CAST128-CBC-RMD	DHE_DSS_WITH_CAST_128_CBC_RMD	PGP,H
+0x03000072	-?-	weak	SSLv3	DH	DSS	3DES	128	RMD	-?-	DHE-DSS-3DES-EDE-CBC-RMD	DHE_DSS_WITH_3DES_EDE_CBC_RMD	PGP
+0x03000073	-?-	weak	SSLv3	DH	DSS	AES	128	RMD	-?-	DHE-DSS-AES128-CBC-RMD	DHE_DSS_WITH_AES_128_CBC_RMD	PGP
+0x03000074	-?-	weak	SSLv3	DH	DSS	AES	128	RMD	-?-	DHE-DSS-AES256-CBC-RMD	DHE_DSS_WITH_AES_256_CBC_RMD	PGP
+0x03000075	-?-	weak	SSLv3	DH	RSA	CAST	128	SHA1	-	DHE-RSA-CAST128-CBC-SHA	DHE_RSA_WITH_CAST_128_CBC_SHA	PGP,H
+0x03000076	-?-	weak	SSLv3	DH	RSA	CAST	128	RMD	-	DHE-RSA-CAST128-CBC-RMD	DHE_RSA_WITH_CAST_128_CBC_RMD	PGP,H
+0x03000077	-?-	weak	SSLv3	DH	RSA	3DES	128	RMD	-?-	DHE-RSA-3DES-EDE-CBC-RMD	DHE_RSA_WITH_3DES_EDE_CBC_RMD	PGP
+0x03000078	-?-	weak	SSLv3	DH	RSA	AES	128	RMD	-?-	DHE-RSA-AES128-CBC-RMD	DHE_RSA_WITH_AES_128_CBC_RMD	PGP
+0x03000079	-?-	weak	SSLv3	DH	RSA	AES	128	RMD	-?-	DHE-RSA-AES256-CBC-RMD	DHE_RSA_WITH_AES_256_CBC_RMD	PGP
+0x0300007A	-?-	weak	SSLv3	RSA	RSA	CAST	128	SHA1	-	RSA-CAST128-CBC-SHA	RSA_WITH_CAST_128_CBC_SHA	H
+0x0300007B	-?-	weak	SSLv3	RSA	RSA	CAST	128	RMD	-	RSA-CAST128-CBC-RMD	RSA_WITH_CAST_128_CBC_RMD	H
+0x0300007C	-?-	weak	SSLv3	RSA	RSA	3DES	128	RMD	-?-	RSA-3DES-EDE-CBC-RMD	RSA_WITH_3DES_EDE_CBC_RMD	-
+0x0300007D	-?-	weak	SSLv3	RSA	RSA	AES	128	RMD	-?-	RSA-AES128-CBC-RMD	RSA_WITH_AES_128_CBC_RMD	-
+0x0300007E	-?-	weak	SSLv3	RSA	RSA	AES	128	RMD	-?-	RSA-AES256-CBC-RMD	RSA_WITH_AES_256_CBC_RMD	-
+0x03000080	HIGH	HIGH	SSLv3	GOST	GOST94	GOST89	256	GOST89	5830	GOST94-GOST89-GOST89	GOSTR341094_WITH_28147_CNT_IMIT	G
+0x03000081	HIGH	HIGH	SSLv3	GOST	GOST01	GOST89	256	GOST89	5830	GOST2001-GOST89-GOST89	GOSTR341001_WITH_28147_CNT_IMIT	G
+0x03000082	-?-	weak	SSLv3	GOST	GOST94	None	0	GOST94	-?-	GOST94-NULL-GOST94	GOSTR341094_WITH_NULL_GOSTR3411	G
+0x03000083	-?-	weak	SSLv3	GOST	GOST01	None	0	GOST94	-?-	GOST2001-NULL-GOST94	GOSTR341001_WITH_NULL_GOSTR3411	G
+0x03000084	HIGH	HIGH	TLSv1	RSA	RSA	CAMELLIA	256	SHA1	4132,5932	CAMELLIA256-SHA	RSA_WITH_CAMELLIA_256_CBC_SHA	-
+0x03000085	HIGH	HIGH	TLSv1	DSS	DH	CAMELLIA	256	SHA1	4132,5932	DH-DSS-CAMELLIA256-SHA	DH_DSS_WITH_CAMELLIA_256_CBC_SHA	-
+0x03000085-c	HIGH	HIGH	TLSv1	DH	DH	CAMELLIA	256	SHA1	-?-	DH-DSS-CAMELLIA256-SHA	-?-	C
+0x03000086	HIGH	HIGH	TLSv1	RSA	DH	CAMELLIA	256	SHA1	4132,5932	DH-RSA-CAMELLIA256-SHA	DH_RSA_WITH_CAMELLIA_256_CBC_SHA	-
+0x03000086-c	HIGH	HIGH	TLSv1	DH	DH	CAMELLIA	256	SHA1	-?-	DH-RSA-CAMELLIA256-SHA	-?-	C
+0x03000087	HIGH	HIGH	TLSv1	DH	DSS	CAMELLIA	256	SHA1	4132,5932	DHE-DSS-CAMELLIA256-SHA	DHE_DSS_WITH_CAMELLIA_256_CBC_SHA	-
+0x03000088	HIGH	HIGH	TLSv1	DH	RSA	CAMELLIA	256	SHA1	4132,5932	DHE-RSA-CAMELLIA256-SHA	DHE_RSA_WITH_CAMELLIA_256_CBC_SHA	-
+0x03000089	HIGH	weak	TLSv1	DH	None	CAMELLIA	256	SHA1	4132,5932	ADH-CAMELLIA256-SHA	ADH_WITH_CAMELLIA_256_CBC_SHA,DH_anon_WITH_CAMELLIA_256_CBC_SHA	-
+0x0300008A	MEDIUM	MEDIUM	SSLv3	PSK	PSK	RC4	128	SHA1	4279,6347	PSK-RC4-SHA	PSK_WITH_RC4_128_SHA	-
+0x0300008B	MEDIUM	weak	SSLv3	PSK	PSK	3DES	168	SHA1	4279	PSK-3DES-EDE-CBC-SHA,PSK-3DES-SHA	PSK_WITH_3DES_EDE_CBC_SHA	-
+0x0300008C	HIGH	HIGH	SSLv3	PSK	PSK	AES	128	SHA1	4279	PSK-AES128-CBC-SHA	PSK_WITH_AES_128_CBC_SHA	-
+0x0300008D	HIGH	HIGH	SSLv3	PSK	PSK	AES	256	SHA1	4279	PSK-AES256-CBC-SHA	PSK_WITH_AES_256_CBC_SHA	-
+0x0300008E	-?-	medium	TLSv12	DHE	PSK	RC4	128	SHA1	4279,6347	DHE-PSK-RC4-SHA	DHE_PSK_WITH_RC4_128_SHA	FIXME
+0x0300008F	-?-	weak	TLSv12	DHE	PSK	3DES	168	SHA1	4279	DHE-PSK-3DES-SHA	DHE_PSK_WITH_3DES_EDE_CBC_SHA	FIXME
+0x03000090	HIGH	high	TLSv12	DHE	PSK	AES	128	SHA1	4279	DHE-PSK-AES128-SHA	DHE_PSK_WITH_AES_128_CBC_SHA	FIXME
+0x03000091	HIGH	high	TLSv12	DHE	PSK	AES	256	SHA1	4279	DHE-PSK-AES256-SHA	DHE_PSK_WITH_AES_256_CBC_SHA	FIXME
+0x03000092	MEDIUM	MEDIUM	SSLv3	RSAPSK	RSA	RC4	128	SHA1	4279,6347	RSA-PSK-RC4-SHA	RSA_PSK_WITH_RC4_128_SHA	-
+0x03000093	-?-	weak	SSLv3	RSAPSK	RSA	3DES	168	SHA1	4279	RSA-PSK-3DES-EDE-CBC-SHA,RSA-PSK-3DES-SHA	RSA_PSK_WITH_3DES_EDE_CBC_SHA	-
+0x03000094	HIGH	HIGH	SSLv3	RSAPSK	AES	AES	128	SHA1	4279	RSA-PSK-AES128-CBC-SHA,RSA-PSK-AES128-SHA	RSA_PSK_WITH_AES_128_CBC_SHA	-
+0x03000095	HIGH	HIGH	SSLv3	RSAPSK	AES	RSA	256	SHA1	4279	RSA-PSK-AES256-CBC-SHA,RSA-PSK-AES256-SHA	RSA_PSK_WITH_AES_256_CBC_SHA	-
+0x03000096	MEDIUM	MEDIUM	TLSv1	RSA	RSA	SEED	128	SHA1	4162	SEED-SHA	RSA_WITH_SEED_SHA,RSA_WITH_SEED_CBC_SHA	OSX
+0x03000097	MEDIUM	medium	TLSv1	DH/DSS	DH	SEED	128	SHA1	4162	DH-DSS-SEED-SHA	DH_DSS_WITH_SEED_SHA,DH_DSS_WITH_SEED_CBC_SHA	-
+0x03000098	MEDIUM	medium	TLSv1	DH/RSA	DH	SEED	128	SHA1	4162	DH-RSA-SEED-SHA	DH_RSA_WITH_SEED_SHA,DH_RSA_WITH_SEED_CBC_SHA	-
+0x03000099	MEDIUM	MEDIUM	TLSv1	DH	DSS	SEED	128	SHA1	4162	DHE-DSS-SEED-SHA	DHE_DSS_WITH_SEED_SHA,DHE_DSS_WITH_SEED_CBC_SHA	OSX
+0x0300009A	MEDIUM	MEDIUM	TLSv1	DH	RSA	SEED	128	SHA1	4162	DHE-RSA-SEED-SHA	DHE_RSA_WITH_SEED_SHA,DHE_RSA_WITH_SEED_CBC_SHA	OSX
+0x0300009B	MEDIUM	weak	TLSv1	DH	None	SEED	128	SHA1	4162	ADH-SEED-SHA,DHanon-SEED-SHA	ADH_WITH_SEED_SHA,ADH_WITH_SEED_SHA_SHA,DH_anon_WITH_SEED_CBC_SHA	OSX
+0x0300009C	HIGH	HIGH	TLSv12	RSA	RSA	AESGCM	128	AEAD	5288	AES128-GCM-SHA256	RSA_WITH_AES_128_GCM_SHA256	L
+0x0300009D	HIGH	HIGH	TLSv12	RSA	RSA	AESGCM	256	AEAD	5288	AES256-GCM-SHA384	RSA_WITH_AES_256_GCM_SHA384	L
+0x0300009E	HIGH	HIGH	TLSv12	DH	RSA	AESGCM	128	AEAD	5288	DHE-RSA-AES128-GCM-SHA256	DHE_RSA_WITH_AES_128_GCM_SHA256	L
+0x0300009F	HIGH	HIGH	TLSv12	DH	RSA	AESGCM	256	AEAD	5288	DHE-RSA-AES256-GCM-SHA384	DHE_RSA_WITH_AES_256_GCM_SHA384	L
+0x030000A0	HIGH	HIGH	TLSv12	DH/RSA	DH	AESGCM	128	AEAD	5288	DH-RSA-AES128-GCM-SHA256	DH_RSA_WITH_AES_128_GCM_SHA256	-
+0x030000A1	HIGH	HIGH	TLSv12	DH/RSA	DH	AESGCM	256	AEAD	5288	DH-RSA-AES256-GCM-SHA384	DH_RSA_WITH_AES_256_GCM_SHA384	-
+0x030000A2	HIGH	HIGH	TLSv12	DH	DSS	AESGCM	128	AEAD	5288	DHE-DSS-AES128-GCM-SHA256	DHE_DSS_WITH_AES_128_GCM_SHA256	L
+0x030000A3	HIGH	HIGH	TLSv12	DH	DSS	AESGCM	256	AEAD	5288	DHE-DSS-AES256-GCM-SHA384	DHE_DSS_WITH_AES_256_GCM_SHA384	L
+0x030000A4	HIGH	HIGH	TLSv12	DH/DSS	DH	AESGCM	128	AEAD	5288	DH-DSS-AES128-GCM-SHA256	DH_DSS_WITH_AES_128_GCM_SHA256	-
+0x030000A5	HIGH	HIGH	TLSv12	DH/DSS	DH	AESGCM	256	AEAD	5288	DH-DSS-AES256-GCM-SHA384	DH_DSS_WITH_AES_256_GCM_SHA384	-
+0x030000A6	HIGH	weak	TLSv12	DH	None	AESGCM	128	AEAD	5288	ADH-AES128-GCM-SHA256	ADH_WITH_AES_128_GCM_SHA256,DH_anon_WITH_AES_128_GCM_SHA256	L
+0x030000A7	HIGH	weak	TLSv12	DH	None	AESGCM	256	AEAD	5288	ADH-AES256-GCM-SHA384	ADH_WITH_AES_256_GCM_SHA384,DH_anon_WITH_AES_256_GCM_SHA256	L
+0x030000A8	HIGH	high	TLSv12	PSK	PSK	AESGCM	128	SHA256	5487	PSK-AES128-GCM-SHA256	PSK_WITH_AES_128_GCM_SHA256	-
+0x030000A9	HIGH	high	TLSv12	PSK	PSK	AESGCM	256	SHA384	5487	PSK-AES256-GCM-SHA384	PSK_WITH_AES_256_GCM_SHA384	-
+0x030000AA	HIGH	high	TLSv12	DHE	PSK	AESGCM	128	SHA256	5487	DHE-PSK-AES128-GCM-SHA256	DHE_PSK_WITH_AES_128_GCM_SHA256	-
+0x030000AB	HIGH	high	TLSv12	DHE	PSK	AESGCM	256	SHA384	5487	DHE-PSK-AES256-GCM-SHA384	DHE_PSK_WITH_AES_256_GCM_SHA384	-
+0x030000AC	HIGH	high	TLSv12	RSA	PSK	AESGCM	128	SHA256	5487	RSA-PSK-AES128-GCM-SHA256	RSA_PSK_WITH_AES_128_GCM_SHA256	-
+0x030000AD	HIGH	high	TLSv12	RSA	PSK	AESGCM	256	SHA384	5487	RSA-PSK-AES256-GCM-SHA384,PSK-RSA-AES256-GCM-SHA384	RSA_PSK_WITH_AES_256_GCM_SHA384	-
+0x030000AE	HIGH	HIGH	TLSv1	PSK	PSK	AES	128	SHA256	5487	PSK-AES128-SHA256,PSK-AES128-CBC-SHA256	PSK_WITH_AES_128_CBC_SHA256	K
+0x030000AF	HIGH	HIGH	TLSv1	PSK	PSK	AES	256	SHA384	5487	PSK-AES256-SHA384,PSK-AES256-CBC-SHA384	PSK_WITH_AES_256_CBC_SHA384	K
+0x030000B0	-?-	weak	TLSv1	PSK	PSK	None	0	SHA256	5487	PSK-NULL-SHA256	PSK_WITH_NULL_SHA256	-
+0x030000B1	-?-	weak	TLSv1	PSK	PSK	None	0	SHA384	5487	PSK-NULL-SHA384	PSK_WITH_NULL_SHA384	-
+0x030000B2	HIGH	HIGH	TLSv1	DHEPSK	PSK	AES	128	SHA256	5487	DHE-PSK-AES128-SHA256,DHE-PSK-AES128-CBC-SHA256	DHE_PSK_WITH_AES_128_CBC_SHA256	-
+0x030000B3	HIGH	HIGH	TLSv1	DHE	PSK	AES	256	SHA384	5487	DHE-PSK-AES256-SHA384,DHE-PSK-AES256-CBC-SHA384	DHE_PSK_WITH_AES_256_CBC_SHA384	-
+0x030000B4	-?-	weak	TLSv12	DHE	PSK	None	0	SHA256	5487	DHE-PSK-SHA256,DHE-PSK-NULL-SHA256	DHE_PSK_WITH_NULL_SHA256	-
+0x030000B5	-?-	weak	TLSv12	DHE	PSK	None	0	SHA384	5487	DHE-PSK-SHA384,DHE-PSK-NULL-SHA384	DHE_PSK_WITH_NULL_SHA384	-
+0x030000B6	HIGH	HIGH	TLSv1	RSAPSK	PSK	AES	128	SHA256	5487	RSA-PSK-AES128-CBC-SHA256,RSA-PSK-AES128-SHA256	RSA_PSK_WITH_AES_128_CBC_SHA256	-
+0x030000B7	HIGH	HIGH	TLSv1	RSAPSK	PSK	AES	256	SHA384	5487	RSA-PSK-AES256-CBC-SHA384,RSA-PSK-AES256-SHA384	RSA_PSK_WITH_AES_256_CBC_SHA384	-
+0x030000B8	-?-	weak	TLSv1	RSAPSK	RSA	None	0	SHA256	5487	RSA-PSK-SHA256,RSA-PSK-NULL-SHA256	RSA_PSK_WITH_NULL_SHA256	-
+0x030000B9	-?-	weak	TLSv1	RSAPSK	RSA	None	0	SHA364	5487	RSA-PSK-SHA384,RSA-PSK-NULL-SHA384	RSA_PSK_WITH_NULL_SHA384	-
+0x030000BA	HIGH	HIGH	TLSv12	RSA	RSA	CAMELLIA	128	SHA256	5932	CAMELLIA128-SHA256	RSA_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000BB	HIGH	HIGH	TLSv12	DH	DSS	CAMELLIA	128	SHA256	5932	DH-DSS-CAMELLIA128-SHA256	DH_DSS_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000BC	HIGH	HIGH	TLSv12	DH	RSA	CAMELLIA	128	SHA256	5932	DH-RSA-CAMELLIA128-SHA256	DH_RSA_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000BD	HIGH	HIGH	TLSv12	DH	DSS	CAMELLIA	128	SHA256	5932	DHE-DSS-CAMELLIA128-SHA256	DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000BE	HIGH	HIGH	TLSv12	DH	RSA	CAMELLIA	128	SHA256	5932	DHE-RSA-CAMELLIA128-SHA256	DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000BF	HIGH	weak	TLSv12	DH	None	CAMELLIA	128	SHA256	5932	ADH-CAMELLIA128-SHA256	ADH_WITH_CAMELLIA_128_CBC_SHA256,DH_anon_WITH_CAMELLIA_128_CBC_SHA256	Q
+0x030000C0	HIGH	HIGH	TLSv12	RSA	RSA	CAMELLIA	256	SHA256	5932	CAMELLIA256-SHA256	RSA_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x030000C1	HIGH	HIGH	TLSv12	DSS	DH	CAMELLIA	256	SHA256	5932	DH-DSS-CAMELLIA256-SHA256	DH_DSS_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x030000C1-c	HIGH	HIGH	TLSv12	DH	DH	CAMELLIA	256	SHA256	-	DH-DSS-CAMELLIA256-SHA256	DH_DSS_WITH_CAMELLIA_256_CBC_SHA256	C
+0x030000C2	HIGH	HIGH	TLSv12	RSA	DH	CAMELLIA	256	SHA256	5932	DH-RSA-CAMELLIA256-SHA256	DH_RSA_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x030000C2-c	HIGH	HIGH	TLSv12	DH	DH	CAMELLIA	256	SHA256	-	DH-RSA-CAMELLIA256-SHA256	DH_RSA_WITH_CAMELLIA_256_CBC_SHA256	C
+0x030000C3	HIGH	HIGH	TLSv12	DH	DSS	CAMELLIA	256	SHA256	5932	DHE-DSS-CAMELLIA256-SHA256	DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x030000C4	HIGH	HIGH	TLSv12	DH	RSA	CAMELLIA	256	SHA256	5932	DHE-RSA-CAMELLIA256-SHA256	DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x030000C5	HIGH	weak	TLSv12	DH	None	CAMELLIA	256	SHA256	5932	ADH-CAMELLIA256-SHA256	ADH_WITH_CAMELLIA_256_CBC_SHA256,DH_anon_WITH_CAMELLIA_256_CBC_SHA256	Q
+0x03001301	HIGH	HIGH	TLSv13	any	any	AESGCM	128	AEAD	8446	TLS13-AES128-GCM-SHA256,TLS13-AES-128-GCM-SHA256,TLS_AES_128_GCM_SHA256	AES_128_GCM_SHA256,DTLS_AES_128_GCM_SHA256	D,E,F
+0x03001302	HIGH	HIGH	TLSv13	any	any	AESGCM	256	AEAD	8446	TLS13-AES256-GCM-SHA384,TLS13-AES-256-GCM-SHA384,TLS_AES_256_GCM_SHA384	AES_256_GCM_SHA384	D,E,F
+0x03001303	HIGH	HIGH	TLSv13	any	any	ChaCha20-Poly1305	256	AEAD	8446	TLS13-CHACHA20-POLY1305-SHA256,TLS_CHACHA20_POLY1305_SHA256	CHACHA20_POLY1305_SHA256	F
+0x03001304	-?-	high	TLSv13	any	any	AESCCM	128	AEAD	8446	TLS13-AES128-CCM-SHA256,TLS13-AES-128-CCM-SHA256	AES_128_CCM_SHA256	F
+0x03001305	-?-	high	TLSv13	any	any	AESCCM	128	AEAD	8446	TLS13-AES128-CCM8-SHA256,TLS13-AES-128-CCM8-SHA256,TLS13-AES128-CCM-8-SHA256,TLS13-AES-128-CCM-8-SHA256	AES_128_CCM_8_SHA256	F
+0x030016B7	HIGH	HIGH	TLSv12	CECPQ1	RSA	ChaCha20-Poly1305	256	SHA256	-?-	CECPQ1-RSA-CHACHA20-POLY1305-SHA256	CECPQ1_RSA_WITH_CHACHA20_POLY1305_SHA256	O
+0x030016B8	HIGH	HIGH	TLSv12	CECPQ1	ECDSA	ChaCha20-Poly1305	256	SHA256	-?-	CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256	CECPQ1_ECDSA_WITH_CHACHA20_POLY1305_SHA256	O
+0x030016B9	HIGH	HIGH	TLSv12	CECPQ1	RSA	AESGCM	256	SHA384	-?-	CECPQ1-RSA-AES256-GCM-SHA384	CECPQ1_RSA_WITH_AES_256_GCM_SHA384	O
+0x030016BA	HIGH	HIGH	TLSv12	CECPQ1	ECDSA	AESGCM	256	SHA384	-?-	CECPQ1-ECDSA-AES256-GCM-SHA384	CECPQ1_ECDSA_WITH_AES_256_GCM_SHA384	O
+0x0300C001	-?-	weak	SSLv3	ECDH/ECDSA	ECDH	None	0	SHA1	4492	ECDH-ECDSA-NULL-SHA	ECDH_ECDSA_WITH_NULL_SHA	-
+0x0300C002	MEDIUM	weak	SSLv3	ECDH/ECDSA	ECDH	RC4	128	SHA1	4492,6347	ECDH-ECDSA-RC4-SHA	ECDH_ECDSA_WITH_RC4_128_SHA	-
+0x0300C003	MEDIUM	weak	SSLv3	ECDH/ECDSA	ECDH	3DES	168	SHA1	4492	ECDH-ECDSA-DES-CBC3-SHA	ECDH_ECDSA_WITH_DES_192_CBC3_SHA,ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA	-
+0x0300C004	HIGH	HIGH	SSLv3	ECDH/ECDSA	ECDH	AES	128	SHA1	4492	ECDH-ECDSA-AES128-SHA	ECDH_ECDSA_WITH_AES_128_CBC_SHA	-
+0x0300C005	HIGH	HIGH	SSLv3	ECDH/ECDSA	ECDH	AES	256	SHA1	4492	ECDH-ECDSA-AES256-SHA	ECDH_ECDSA_WITH_AES_256_CBC_SHA	-
+0x0300C006	-?-	weak	SSLv3	ECDH	ECDSA	None	0	SHA1	4492	ECDHE-ECDSA-NULL-SHA	ECDHE_ECDSA_WITH_NULL_SHA	-
+0x0300C007	MEDIUM	weak	SSLv3	ECDH	ECDSA	RC4	128	SHA1	4492,6347	ECDHE-ECDSA-RC4-SHA	ECDHE_ECDSA_WITH_RC4_128_SHA	-
+0x0300C008	MEDIUM	weak	SSLv3	ECDH	ECDSA	3DES	168	SHA1	4492	ECDHE-ECDSA-DES-CBC3-SHA	ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA	-
+0x0300C009	HIGH	HIGH	SSLv3	ECDH	ECDSA	AES	128	SHA1	4492	ECDHE-ECDSA-AES128-SHA	ECDHE_ECDSA_WITH_AES_128_CBC_SHA	-
+0x0300C00A	HIGH	HIGH	SSLv3	ECDH	ECDSA	AES	256	SHA1	4492	ECDHE-ECDSA-AES256-SHA	ECDHE_ECDSA_WITH_AES_256_CBC_SHA	-
+0x0300C00B	-?-	weak	SSLv3	ECDH/RSA	ECDH	None	0	SHA1	4492	ECDH-RSA-NULL-SHA	ECDH_RSA_WITH_NULL_SHA	-
+0x0300C00C	MEDIUM	weak	SSLv3	ECDH/RSA	ECDH	RC4	128	SHA1	4492,6347	ECDH-RSA-RC4-SHA	ECDH_RSA_WITH_RC4_128_SHA	-
+0x0300C00D	MEDIUM	weak	SSLv3	ECDH/RSA	ECDH	3DES	168	SHA1	4492	ECDH-RSA-DES-CBC3-SHA	ECDH_RSA_WITH_DES_192_CBC3_SHA,ECDH_RSA_WITH_3DES_EDE_CBC_SHA	-
+0x0300C00E	HIGH	HIGH	SSLv3	ECDH/RSA	ECDH	AES	128	SHA1	4492	ECDH-RSA-AES128-SHA	ECDH_RSA_WITH_AES_128_CBC_SHA	-
+0x0300C00F	HIGH	HIGH	SSLv3	ECDH/RSA	ECDH	AES	256	SHA1	4492	ECDH-RSA-AES256-SHA	ECDH_RSA_WITH_AES_256_CBC_SHA	-
+0x0300C010	-?-	weak	SSLv3	ECDH	RSA	None	0	SHA1	4492	ECDHE-RSA-NULL-SHA	ECDHE_RSA_WITH_NULL_SHA	-
+0x0300C011	MEDIUM	weak	SSLv3	ECDH	RSA	RC4	128	SHA1	4492,6347	ECDHE-RSA-RC4-SHA	ECDHE_RSA_WITH_RC4_128_SHA	-
+0x0300C012	MEDIUM	weak	SSLv3	ECDH	RSA	3DES	168	SHA1	4492	ECDHE-RSA-DES-CBC3-SHA	ECDHE_RSA_WITH_DES_192_CBC3_SHA,ECDHE_RSA_WITH_3DES_EDE_CBC_SHA	-
+0x0300C013	HIGH	HIGH	SSLv3	ECDH	RSA	AES	128	SHA1	4492	ECDHE-RSA-AES128-SHA	ECDHE_RSA_WITH_AES_128_CBC_SHA	-
+0x0300C014	HIGH	HIGH	SSLv3	ECDH	RSA	AES	256	SHA1	4492	ECDHE-RSA-AES256-SHA	ECDHE_RSA_WITH_AES_256_CBC_SHA	-
+0x0300C015	-?-	weak	SSLv3	ECDH	None	None	0	SHA1	4492	AECDH-NULL-SHA	ECDH_anon_WITH_NULL_SHA	-
+0x0300C016	MEDIUM	weak	SSLv3	ECDH	None	RC4	128	SHA1	4492,6347	AECDH-RC4-SHA	ECDH_anon_WITH_RC4_128_SHA	-
+0x0300C017	MEDIUM	weak	SSLv3	ECDH	None	3DES	168	SHA1	4492	AECDH-DES-CBC3-SHA	ECDH_anon_WITH_DES_192_CBC3_SHA,ECDH_anon_WITH_3DES_EDE_CBC_SHA	-
+0x0300C018	HIGH	weak	SSLv3	ECDH	None	AES	128	SHA1	4492	AECDH-AES128-SHA	ECDH_anon_WITH_AES_128_CBC_SHA	-
+0x0300C019	HIGH	weak	SSLv3	ECDH	None	AES	256	SHA1	4492	AECDH-AES256-SHA	ECDH_anon_WITH_AES_256_CBC_SHA	-
+0x0300C01A	MEDIUM	weak	SSLv3	SRP	None	3DES	168	SHA1	5054	SRP-3DES-EDE-CBC-SHA	SRP_SHA_WITH_3DES_EDE_CBC_SHA	L
+0x0300C01B	MEDIUM	weak	SSLv3	SRP	RSA	3DES	168	SHA1	5054	SRP-RSA-3DES-EDE-CBC-SHA	SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA	L
+0x0300C01C	MEDIUM	weak	SSLv3	SRP	DSS	3DES	168	SHA1	5054	SRP-DSS-3DES-EDE-CBC-SHA	SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA	L
+0x0300C01D	HIGH	weak	SSLv3	SRP	None	AES	128	SHA1	5054	SRP-AES-128-CBC-SHA	SRP_SHA_WITH_AES_128_CBC_SHA	L
+0x0300C01E	HIGH	HIGH	SSLv3	SRP	RSA	AES	128	SHA1	5054	SRP-RSA-AES-128-CBC-SHA	SRP_SHA_RSA_WITH_AES_128_CBC_SHA	L
+0x0300C01F	HIGH	HIGH	SSLv3	SRP	DSS	AES	128	SHA1	5054	SRP-DSS-AES-128-CBC-SHA	SRP_SHA_DSS_WITH_AES_128_CBC_SHA	L
+0x0300C020	HIGH	weak	SSLv3	SRP	None	AES	256	SHA1	5054	SRP-AES-256-CBC-SHA	SRP_SHA_WITH_AES_256_CBC_SHA	L
+0x0300C021	HIGH	HIGH	SSLv3	SRP	RSA	AES	256	SHA1	5054	SRP-RSA-AES-256-CBC-SHA	SRP_SHA_RSA_WITH_AES_256_CBC_SHA	L
+0x0300C022	HIGH	HIGH	SSLv3	SRP	DSS	AES	256	SHA1	5054	SRP-DSS-AES-256-CBC-SHA	SRP_SHA_DSS_WITH_AES_256_CBC_SHA	L
+0x0300C023	HIGH	HIGH	TLSv12	ECDH	ECDSA	AES	128	SHA256	5289	ECDHE-ECDSA-AES128-SHA256	ECDHE_ECDSA_WITH_AES_128_SHA256,ECDHE_ECDSA_WITH_AES_128_CBC_SHA256	L
+0x0300C024	HIGH	HIGH	TLSv12	ECDH	ECDSA	AES	256	SHA384	5289	ECDHE-ECDSA-AES256-SHA384	ECDHE_ECDSA_WITH_AES_256_SHA384,ECDHE_ECDSA_WITH_AES_256_CBC_SHA384	L
+0x0300C025	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	AES	128	SHA256	5289	ECDH-ECDSA-AES128-SHA256	ECDH_ECDSA_WITH_AES_128_SHA256,ECDH_ECDSA_WITH_AES_128_CBC_SHA256	L
+0x0300C026	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	AES	256	SHA384	5289	ECDH-ECDSA-AES256-SHA384	ECDH_ECDSA_WITH_AES_256_SHA384,ECDH_ECDSA_WITH_AES_256_CBC_SHA384	L
+0x0300C027	HIGH	HIGH	TLSv12	ECDH	RSA	AES	128	SHA256	5289	ECDHE-RSA-AES128-SHA256	ECDHE_RSA_WITH_AES_128_SHA256,ECDHE_RSA_WITH_AES_128_CBC_SHA256	L
+0x0300C028	HIGH	HIGH	TLSv12	ECDH	RSA	AES	256	SHA384	5289	ECDHE-RSA-AES256-SHA384	ECDHE_RSA_WITH_AES_256_SHA384,ECDHE_RSA_WITH_AES_256_CBC_SHA384	L
+0x0300C029	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	AES	128	SHA256	5289	ECDH-RSA-AES128-SHA256	ECDH_RSA_WITH_AES_128_SHA256,ECDH_RSA_WITH_AES_128_CBC_SHA256	L
+0x0300C02A	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	AES	256	SHA384	5289	ECDH-RSA-AES256-SHA384	ECDH_RSA_WITH_AES_256_SHA384,ECDH_RSA_WITH_AES_256_CBC_SHA384	L
+0x0300C02B	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESGCM	128	AEAD	5289	ECDHE-ECDSA-AES128-GCM-SHA256	ECDHE_ECDSA_WITH_AES_128_GCM_SHA256	L
+0x0300C02C	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESGCM	256	AEAD	5289	ECDHE-ECDSA-AES256-GCM-SHA384	ECDHE_ECDSA_WITH_AES_256_GCM_SHA384	L
+0x0300C02D	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	AESGCM	128	AEAD	5289	ECDH-ECDSA-AES128-GCM-SHA256	ECDH_ECDSA_WITH_AES_128_GCM_SHA256	L
+0x0300C02E	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	AESGCM	256	AEAD	5289	ECDH-ECDSA-AES256-GCM-SHA384	ECDH_ECDSA_WITH_AES_256_GCM_SHA384	L
+0x0300C02F	HIGH	HIGH	TLSv12	ECDH	RSA	AESGCM	128	AEAD	5289	ECDHE-RSA-AES128-GCM-SHA256	ECDHE_RSA_WITH_AES_128_GCM_SHA256	L
+0x0300C030	HIGH	HIGH	TLSv12	ECDH	RSA	AESGCM	256	AEAD	5289	ECDHE-RSA-AES256-GCM-SHA384	ECDHE_RSA_WITH_AES_256_GCM_SHA384	L
+0x0300C031	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	AESGCM	128	AEAD	5289	ECDH-RSA-AES128-GCM-SHA256	ECDH_RSA_WITH_AES_128_GCM_SHA256	L
+0x0300C032	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	AESGCM	256	AEAD	5289	ECDH-RSA-AES256-GCM-SHA384	ECDH_RSA_WITH_AES_256_GCM_SHA384	L
+0x0300C033	-?-	weak	TLSv12	ECDHEPSK	PSK	RC4	128	SHA1	5489,6347	ECDHE-PSK-RC4-SHA,ECDHE-PSK-RC4-128-SHA	ECDHE_PSK_WITH_RC4_128_SHA	-
+0x0300C034	-?-	high	TLSv12	ECDHEPSK	PSK	3DES	192	SHA1	5489	ECDHE-PSK-3DES-EDE-CBC-SHA	ECDHE_PSK_WITH_3DES_EDE_CBC_SHA	-
+0x0300C035	HIGH	high	TLSv1	ECDHEPSK	PSK	AES	128	SHA1	5489	ECDHE-PSK-AES128-CBC-SHA	ECDHE_PSK_WITH_AES_128_CBC_SHA	-
+0x0300C036	HIGH	high	TLSv12	ECDHEPSK	PSK	AES	256	SHA1	5489	ECDHE-PSK-AES256-CBC-SHA	ECDHE_PSK_WITH_AES_256_CBC_SHA	-
+0x0300C037	HIGH	high	TLSv1	ECDHEPSK	PSK	AES	128	SHA256	5489	ECDHE-PSK-AES128-CBC-SHA256	ECDHE_PSK_WITH_AES_128_CBC_SHA256	-
+0x0300C038	HIGH	high	TLSv1	ECDHEPSK	PSK	AES	256	SHA384	5489	ECDHE-PSK-AES256-CBC-SHA384	ECDHE_PSK_WITH_AES_256_CBC_SHA384	-
+0x0300C039	-?-	weak	TLSv1	ECDHEPSK	PSK	None	0	SHA1	5489	ECDHE-PSK-NULL-SHA	ECDHE_PSK_WITH_NULL_SHA	-
+0x0300C03A	-?-	weak	TLSv1	ECDHEPSK	PSK	None	0	SHA1	5489	ECDHE-PSK-NULL-SHA256	ECDHE_PSK_WITH_NULL_SHA256	-
+0x0300C03B	-?-	weak	TLSv1	ECDHEPSK	PSK	None	0	SHA1	5489	ECDHE-PSK-NULL-SHA384	ECDHE_PSK_WITH_NULL_SHA384	-
+0x0300C03C	-?-	-?-	TLSv12	RSA	RSA	ARIA	128	SHA256	6209	RSA-ARIA128-SHA256	RSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C03D	-?-	-?-	TLSv12	RSA	RSA	ARIA	256	SHA384	6209	RSA-ARIA256-SHA384	RSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C03E	-?-	-?-	TLSv12	DH	DSS	ARIA	128	SHA256	6209	DH-DSS-ARIA128-SHA256	DH_DSS_WITH_ARIA_128_CBC_SHA256	-
+0x0300C03F	-?-	-?-	TLSv12	DH	DSS	ARIA	256	SHA384	6209	DH-DSS-ARIA256-SHA384	DH_DSS_WITH_ARIA_256_CBC_SHA384	-
+0x0300C040	-?-	-?-	TLSv12	DH	RSA	ARIA	128	SHA256	6209	DH-RSA-ARIA128-SHA256	DH_RSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C041	-?-	-?-	TLSv12	DH	RSA	ARIA	256	SHA384	6209	DH-RSA-ARIA256-SHA384	DH_RSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C042	-?-	-?-	TLSv12	DHE	DSS	ARIA	128	SHA256	6209	DHE-DSS-ARIA128-SHA256	DHE_DSS_WITH_ARIA_128_CBC_SHA256	-
+0x0300C043	-?-	-?-	TLSv12	DHE	DSS	ARIA	256	SHA384	6209	DHE-DSS-ARIA256-SHA384	DHE_DSS_WITH_ARIA_256_CBC_SHA384	-
+0x0300C044	-?-	-?-	TLSv12	DHE	RSA	ARIA	128	SHA256	6209	DHE-RSA-ARIA128-SHA256,DHE-RSA-ARIA256-SHA256	DHE_RSA_WITH_ARIA_256_CBC_SHA256	I
+0x0300C045	-?-	-?-	TLSv12	DHE	RSA	ARIA	256	SHA384	6209	DHE-RSA-ARIA256-SHA384	DHE_RSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C046	-?-	-?-	TLSv12	DH	None	ARIA	128	SHA256	6209	ADH-ARIA128-SHA256	DH_anon_WITH_ARIA_128_CBC_SHA256	-
+0x0300C047	-?-	-?-	TLSv12	DH	None	ARIA	256	SHA384	6209	ADH-ARIA256-SHA384	DH_anon_WITH_ARIA_256_CBC_SHA384	-
+0x0300C048	-?-	-?-	TLSv12	ECDHE	ECDSA	ARIA	128	SHA256	6209	ECDHE-ECDSA-ARIA128-SHA256	ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C049	-?-	-?-	TLSv12	ECDHE	ECDSA	ARIA	256	SHA384	6209	ECDHE-ECDSA-ARIA256-SHA384	ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C04A	-?-	-?-	TLSv12	ECDH	ECDSA	ARIA	128	SHA256	6209	ECDH-ECDSA-ARIA128-SHA256	ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C04B	-?-	-?-	TLSv12	ECDH	ECDSA	ARIA	256	SHA384	6209	ECDH-ECDSA-ARIA256-SHA384	ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C04C	-?-	-?-	TLSv12	ECDHE	RSA	ARIA	128	SHA256	6209	ECDHE-RSA-ARIA128-SHA256	ECDHE_RSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C04D	-?-	-?-	TLSv12	ECDHE	RSA	ARIA	256	SHA384	6209	ECDHE-RSA-ARIA256-SHA384	ECDHE_RSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C04E	-?-	-?-	TLSv12	ECDH	RSA	ARIA	128	SHA256	6209	ECDH-RSA-ARIA128-SHA256	ECDH_RSA_WITH_ARIA_128_CBC_SHA256	-
+0x0300C04F	-?-	-?-	TLSv12	ECDH	RSA	ARIA	256	SHA384	6209	ECDH-RSA-ARIA256-SHA384	ECDH_RSA_WITH_ARIA_256_CBC_SHA384	-
+0x0300C050	HIGH	HIGH	TLSv12	RSA	RSA	ARIAGCM	128	AEAD	6209	ARIA128-GCM-SHA256,RSA-ARIA128-GCM-SHA256	RSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C051	HIGH	HIGH	TLSv12	RSA	RSA	ARIAGCM	256	AEAD	6209	ARIA256-GCM-SHA384,RSA-ARIA256-GCM-SHA384	RSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C052	HIGH	HIGH	TLSv12	DH	RSA	ARIAGCM	128	AEAD	6209	DHE-RSA-ARIA128-GCM-SHA256	DHE_RSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C053	HIGH	HIGH	TLSv12	DH	RSA	ARIAGCM	256	AEAD	6209	DHE-RSA-ARIA256-GCM-SHA384	DHE_RSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C054	-?-	-?-	TLSv12	DH	RSA	ARIAGCM	128	AEAD	6209	DH-RSA-ARIA128-GCM-SHA256	DH_RSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C055	-?-	-?-	TLSv12	DH	RSA	ARIAGCM	256	AEAD	6209	DH-RSA-ARIA256-GCM-SHA384	DH_RSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C056	HIGH	HIGH	TLSv12	DH	DSS	ARIAGCM	128	AEAD	6209	DHE-DSS-ARIA128-GCM-SHA256	DHE_DSS_WITH_ARIA_128_GCM_SHA256	-
+0x0300C057	HIGH	HIGH	TLSv12	DH	DSS	ARIAGCM	256	AEAD	6209	DHE-DSS-ARIA256-GCM-SHA384	DHE_DSS_WITH_ARIA_256_GCM_SHA384	-
+0x0300C058	-?-	-?-	TLSv12	DH	DSS	ARIAGCM	128	AEAD	6209	DH-DSS-ARIA128-GCM-SHA256	DH_DSS_WITH_ARIA_128_GCM_SHA256	-
+0x0300C059	-?-	-?-	TLSv12	DH	DSS	ARIAGCM	256	AEAD	6209	DH-DSS-ARIA256-GCM-SHA384	DH_DSS_WITH_ARIA_256_GCM_SHA384	-
+0x0300C05A	-?-	-?-	TLSv12	DH	None	ARIAGCM	128	AEAD	6209	ADH-ARIA128-GCM-SHA256	DH_anon_WITH_ARIA_128_GCM_SHA256	-
+0x0300C05B	-?-	-?-	TLSv12	DH	None	ARIAGCM	256	AEAD	6209	ADH-ARIA256-GCM-SHA384	DH_anon_WITH_ARIA_256_GCM_SHA384	-
+0x0300C05C	HIGH	HIGH	TLSv12	ECDH	ECDSA	ARIAGCM	128	AEAD	6209	ECDHE-ECDSA-ARIA128-GCM-SHA256	ECDHE_ECDSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C05D	HIGH	HIGH	TLSv12	ECDH	ECDSA	ARIAGCM	256	AEAD	6209	ECDHE-ECDSA-ARIA256-GCM-SHA384	ECDHE_ECDSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C05E	-?-	-?-	TLSv12	ECDH	ECDSA	ARIAGCM	128	AEAD	6209	ECDH-ECDSA-ARIA128-GCM-SHA256	ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C05F	-?-	-?-	TLSv12	ECDH	ECDSA	ARIAGCM	256	AEAD	6209	ECDH-ECDSA-ARIA256-GCM-SHA384	ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C060	HIGH	HIGH	TLSv12	ECDH	RSA	ARIAGCM	128	AEAD	6209	ECDHE-ARIA128-GCM-SHA256,ECDHE-RSA-ARIA128-GCM-SHA256	ECDHE_RSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C061	HIGH	HIGH	TLSv12	ECDH	RSA	ARIAGCM	256	AEAD	6209	ECDHE-ARIA256-GCM-SHA384,ECDHE-RSA-ARIA256-GCM-SHA384	ECDHE_RSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C062	-?-	-?-	TLSv12	ECDH	RSA	ARIAGCM	128	AEAD	6209	ECDH-ARIA128-GCM-SHA256,ECDH-RSA-ARIA128-GCM-SHA256	ECDH_RSA_WITH_ARIA_128_GCM_SHA256	-
+0x0300C063	-?-	-?-	TLSv12	ECDH	RSA	ARIAGCM	256	AEAD	6209	ECDH-ARIA256-GCM-SHA384,ECDH-RSA-ARIA256-GCM-SHA384	ECDH_RSA_WITH_ARIA_256_GCM_SHA384	-
+0x0300C064	HIGH	HIGH	TLSv12	PSK	PSK	ARIA	128	SHA256	6209	PSK-ARIA128-SHA256	PSK_WITH_ARIA_128_CBC_SHA256	-
+0x0300C065	HIGH	HIGH	TLSv12	PSK	PSK	ARIA	256	SHA384	6209	PSK-ARIA256-SHA384	PSK_WITH_ARIA_256_CBC_SHA384	-
+0x0300C066	-?-	-?-	TLSv12	DHE	PSK	ARIA	128	SHA256	6209	DHE-PSK-ARIA128-SHA256	DHE_PSK_WITH_ARIA_128_CBC_SHA256	-
+0x0300C067	-?-	-?-	TLSv12	DHE	PSK	ARIA	256	SHA384	6209	DHE-PSK-ARIA256-SHA384	DHE_PSK_WITH_ARIA_256_CBC_SHA384	-
+0x0300C068	-?-	-?-	TLSv12	RSA	PSK	ARIA	128	SHA256	6209	RSA-PSK-ARIA128-SHA256	RSA_PSK_WITH_ARIA_128_CBC_SHA256	-
+0x0300C069	-?-	-?-	TLSv12	RSA	PSK	ARIA	256	SHA384	6209	RSA-PSK-ARIA256-SHA384	RSA_PSK_WITH_ARIA_256_CBC_SHA384	-
+0x0300C06A	HIGH	-?-	TLSv12	PSK	PSK	ARIAGCM	128	AEAD	6209	PSK-ARIA128-GCM-SHA256	PSK_WITH_ARIA_128_GCM_SHA256	-
+0x0300C06B	HIGH	-?-	TLSv12	PSK	PSK	ARIAGCM	256	AEAD	6209	PSK-ARIA256-GCM-SHA384	PSK_WITH_ARIA_256_GCM_SHA384	-
+0x0300C06C	HIGH	HIGH	TLSv12	DHEPSK	PSK	ARIAGCM	128	AEAD	6209	DHE-PSK-ARIA128-GCM-SHA256	DHE_PSK_WITH_ARIA_128_GCM_SHA256	-
+0x0300C06D	HIGH	HIGH	TLSv12	DHEPSK	PSK	ARIAGCM	256	AEAD	6209	DHE-PSK-ARIA256-GCM-SHA384	DHE_PSK_WITH_ARIA_256_GCM_SHA384	-
+0x0300C06E	HIGH	HIGH	TLSv12	RSAPSK	RSA	ARIAGCM	128	AEAD	6209	RSA-PSK-ARIA128-GCM-SHA256	RSA_PSK_WITH_ARIA_128_GCM_SHA256	-
+0x0300C06F	HIGH	HIGH	TLSv12	RSAPSK	PSK	ARIAGCM	256	AEAD	6209	RSA-PSK-ARIA256-GCM-SHA384	RSA_PSK_WITH_ARIA_256_GCM_SHA384	-
+0x0300C070	-?-	-?-	TLSv12	ECDHE	PSK	ARIA	128	SHA256	6209	ECDHE-PSK-ARIA128-SHA256	ECDHE_PSK_WITH_ARIA_128_CBC_SHA256	-
+0x0300C071	-?-	-?-	TLSv12	ECDHE	PSK	ARIA	256	SHA384	6209	ECDHE-PSK-ARIA256-SHA384	ECDHE_PSK_WITH_ARIA_256_CBC_SHA384	-
+0x0300C072	HIGH	HIGH	TLSv12	ECDH	ECDSA	CAMELLIA	128	SHA256	6367	ECDHE-ECDSA-CAMELLIA128-SHA256	ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C073	HIGH	HIGH	TLSv12	ECDH	ECDSA	CAMELLIA	256	SHA384	6367	ECDHE-ECDSA-CAMELLIA256-SHA384	ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C074	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	CAMELLIA	128	SHA256	6367	ECDH-ECDSA-CAMELLIA128-SHA256	ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C075	HIGH	HIGH	TLSv12	ECDH/ECDSA	ECDH	CAMELLIA	256	SHA384	6367	ECDH-ECDSA-CAMELLIA256-SHA384	ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C076	HIGH	HIGH	TLSv12	ECDH	RSA	CAMELLIA	128	SHA256	6367	ECDHE-RSA-CAMELLIA128-SHA256	ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C077	HIGH	HIGH	TLSv12	ECDH	RSA	CAMELLIA	256	SHA384	6367	ECDHE-RSA-CAMELLIA256-SHA384	ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C078	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	CAMELLIA	128	SHA256	6367	ECDH-RSA-CAMELLIA128-SHA256	ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C079	HIGH	HIGH	TLSv12	ECDH/RSA	ECDH	CAMELLIA	256	SHA384	6367	ECDH-RSA-CAMELLIA256-SHA384	ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C07A	HIGH	HIGH	TLSv12	RSA	RSA	CAMELLIAGCM	128	SHA256	6367	RSA-CAMELLIA128-GCM-SHA256	RSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C07B	HIGH	HIGH	TLSv12	RSA	RSA	CAMELLIAGCM	256	SHA384	6367	RSA-CAMELLIA256-GCM-SHA384	RSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C07C	HIGH	HIGH	TLSv12	RSA	DHE	CAMELLIAGCM	128	SHA256	6367	DHE-RSA-CAMELLIA128-GCM-SHA256	DHE_RSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C07D	HIGH	HIGH	TLSv12	RSA	DHE	CAMELLIAGCM	256	SHA384	6367	DHE-RSA-CAMELLIA256-GCM-SHA384	DHE_RSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C07E	HIGH	HIGH	TLSv12	RSA	DH	CAMELLIAGCM	128	SHA256	6367	DH-RSA-CAMELLIA128-GCM-SHA256	DH_RSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C07F	HIGH	HIGH	TLSv12	RSA	DH	CAMELLIAGCM	256	SHA384	6367	DH-RSA-CAMELLIA256-GCM-SHA384	DH_RSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C080	HIGH	HIGH	TLSv12	DSS	DHE	CAMELLIAGCM	128	SHA256	6367	DHE-DSS-CAMELLIA128-GCM-SHA256	DHE_DSS_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C081	HIGH	HIGH	TLSv12	DSS	DHE	CAMELLIAGCM	256	SHA384	6367	DHE-DSS-CAMELLIA256-GCM-SHA384	DHE_DSS_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C082	HIGH	HIGH	TLSv12	DSS	DH	CAMELLIAGCM	128	SHA256	6367	DH-DSS-CAMELLIA128-GCM-SHA256	DH_DSS_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C083	HIGH	HIGH	TLSv12	DSS	DH	CAMELLIAGCM	256	SHA384	6367	DH-DSS-CAMELLIA256-GCM-SHA384	DH_DSS_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C084	HIGH	HIGH	TLSv12	DSS	ADH	CAMELLIAGCM	128	SHA256	6367	ADH-DSS-CAMELLIA128-GCM-SHA256	DH_anon_DSS_WITH_CAMELLIA_128_GCM_SHA256,DH_anon_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C085	HIGH	HIGH	TLSv12	DSS	ADH	CAMELLIAGCM	256	SHA384	6367	ADH-DSS-CAMELLIA256-GCM-SHA384	DH_anon_DSS_WITH_CAMELLIA_256_GCM_SHA384,DH_anon_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C086	HIGH	HIGH	TLSv12	ECDH	ECDHE	CAMELLIAGCM	128	SHA256	6367	ECDHE-ECDSA-CAMELLIA128-GCM-SHA256	ECDHE_ECDSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C087	HIGH	HIGH	TLSv12	ECDH	ECDHE	CAMELLIAGCM	256	SHA384	6367	ECDHE-ECDSA-CAMELLIA256-GCM-SHA384	ECDHE_ECDSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C088	HIGH	HIGH	TLSv12	ECDH	ECDH	CAMELLIAGCM	128	SHA256	6367	ECDH-ECDSA-CAMELLIA128-GCM-SHA256	ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C089	HIGH	HIGH	TLSv12	ECDH	ECDH	CAMELLIAGCM	256	SHA384	6367	ECDH-ECDSA-CAMELLIA256-GCM-SHA384	ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C08A	HIGH	HIGH	TLSv12	RSA	ECDHE	CAMELLIAGCM	128	SHA256	6367	ECDHE-RSA-CAMELLIA128-GCM-SHA256	ECDHE_RSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C08B	HIGH	HIGH	TLSv12	RSA	ECDHE	CAMELLIAGCM	256	SHA384	6367	ECDHE-RSA-CAMELLIA256-GCM-SHA384	ECDHE_RSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C08C	HIGH	HIGH	TLSv12	RSA	ECDH	CAMELLIAGCM	128	SHA256	6367	ECDH-RSA-CAMELLIA128-GCM-SHA256	ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C08D	HIGH	HIGH	TLSv12	RSA	ECDH	CAMELLIAGCM	256	SHA384	6367	ECDH-RSA-CAMELLIA256-GCM-SHA384	ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C08E	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIAGCM	128	SHA256	6367	PSK-CAMELLIA128-GCM-SHA256	PSK_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C08F	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIAGCM	256	SHA38	6367	PSK-CAMELLIA256-GCM-SHA384	PSK_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C090	HIGH	HIGH	TLSv12	PSK	DHE	CAMELLIAGCM	128	SHA25	6367	DHE-PSK-CAMELLIA128-GCM-SHA256	DHE_PSK_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C091	HIGH	HIGH	TLSv12	PSK	DHE	CAMELLIAGCM	256	SHA38	6367	DHE-PSK-CAMELLIA256-GCM-SHA384	DHE_PSK_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C092	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIAGCM	128	SHA256	6367	RSA-PSK-CAMELLIA128-GCM-SHA256	RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256	-
+0x0300C093	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIAGCM	256	SHA384	6367	RSA-PSK-CAMELLIA256-GCM-SHA384	RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384	-
+0x0300C094	HIGH	HIGH	TLSv12	PSK	PSK	CAMELLIA	128	SHA256	6367	PSK-CAMELLIA128-SHA256	PSK_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C095	HIGH	HIGH	TLSv12	PSK	PSK	CAMELLIA	256	SHA384	6367	PSK-CAMELLIA256-SHA384	PSK_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C096	HIGH	HIGH	TLSv12	PSK	DHE	CAMELLIA	128	SHA256	6367	DHE-PSK-CAMELLIA128-SHA256	DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C097	HIGH	HIGH	TLSv12	PSK	DHE	CAMELLIA	256	SHA38	6367	DHE-PSK-CAMELLIA256-SHA384	DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C098	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIA	128	SHA25	6367	RSA-PSK-CAMELLIA128-SHA256	RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C099	HIGH	HIGH	TLSv12	PSK	RSA	CAMELLIA	256	SHA38	6367	RSA-PSK-CAMELLIA256-SHA384	RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C09A	HIGH	HIGH	TLSv12	PSK	ECDHE	CAMELLIA	128	SHA256	6367	ECDHE-PSK-CAMELLIA128-SHA256	ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256	-
+0x0300C09B	HIGH	HIGH	TLSv12	PSK	ECDHE	CAMELLIA	256	SHA384	6367	ECDHE-PSK-CAMELLIA256-SHA384	ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384	-
+0x0300C09C	HIGH	HIGH	TLSv12	RSA	RSA	AESCCM	128	AEAD	6655	AES128-CCM,RSA-AES128-CCM	RSA_WITH_AES_128_CCM	-
+0x0300C09D	HIGH	HIGH	TLSv12	RSA	RSA	AESCCM	256	AEAD	6655	AES256-CCM,RSA-AES256-CCM	RSA_WITH_AES_256_CCM	-
+0x0300C09E	HIGH	HIGH	TLSv12	DH	RSA	AESCCM	128	AEAD	6655	DHE-RSA-AES128-CCM	DHE_RSA_WITH_AES_128_CCM	-
+0x0300C09F	HIGH	HIGH	TLSv12	DH	RSA	AESCCM	256	AEAD	6655	DHE-RSA-AES256-CCM	DHE_RSA_WITH_AES_256_CCM	-
+0x0300C0A0	HIGH	HIGH	TLSv12	RSA	RSA	AESCCM8	128	AEAD	6655	AES128-CCM8,RSA-AES128-CCM8,RSA-AES128-CCM-8	RSA_WITH_AES_128_CCM_8	-
+0x0300C0A1	HIGH	HIGH	TLSv12	RSA	RSA	AESCCM8	256	AEAD	6655	AES256-CCM8,RSA-AES256-CCM8,RSA-AES256-CCM-8	RSA_WITH_AES_256_CCM_8	-
+0x0300C0A2	HIGH	HIGH	TLSv12	DH	RSA	AESCCM8	128	AEAD	6655	DHE-RSA-AES128-CCM8,DHE-RSA-AES128-CCM-8	DHE_RSA_WITH_AES_128_CCM_8	-
+0x0300C0A3	HIGH	HIGH	TLSv12	DH	RSA	AESCCM8	256	AEAD	6655	DHE-RSA-AES256-CCM8,DHE-RSA-AES256-CCM-8	DHE_RSA_WITH_AES_256_CCM_8	-
+0x0300C0A4	HIGH	HIGH	TLSv12	PSK	PSK	AESCCM	128	AEAD	6655	PSK-AES128-CCM,PSK-RSA-AES128-CCM	PSK_WITH_AES_128_CCM	-
+0x0300C0A5	HIGH	HIGH	TLSv12	PSK	PSK	AESCCM	256	AEAD	6655	PSK-AES256-CCM,PSK-RSA-AES256-CCM	PSK_WITH_AES_256_CCM	-
+0x0300C0A6	HIGH	high	TLSv12	DHE	RSA	AESGCM	128	AEAD	6655	DHE-PSK-AES128-CCM,DHE-PSK-RSA-AES128-CCM	DHE_PSK_WITH_AES_128_CCM	-
+0x0300C0A7	HIGH	high	TLSv12	DHE	RSA	AESGCM	256	AEAD	6655	DHE-PSK-AES256-CCM,DHE-PSK-RSA-AES256-CCM	DHE_PSK_WITH_AES_256_CCM	-
+0x0300C0A8	HIGH	HIGH	TLSv12	PSK	PSK	AESCCM8	128	AEAD	6655	PSK-AES128-CCM8,PSK-AES128-CCM-8,PSK-RSA-AES128-CCM-8	PSK_WITH_AES_128_CCM_8	-
+0x0300C0A9	HIGH	HIGH	TLSv12	PSK	PSK	AESCCM8	256	AEAD	6655	PSK-AES256-CCM8,PSK-AES256-CCM-8,PSK-RSA-AES256-CCM-8	PSK_WITH_AES_256_CCM_8	-
+0x0300C0AA	HIGH	HIGH	TLSv12	DHEPSK	PSK	AESGCM8	128	AEAD	6655	DHE-PSK-AES128-CCM8,DHE-PSK-AES128-CCM-8	DHE_PSK_WITH_AES_128_CCM_8,PSK_DHE_WITH_AES_128_CCM_8	FIXME
+0x0300C0AB	HIGH	HIGH	TLSv12	DHEPSK	PSK	AESGCM8	256	AEAD	6655	DHE-PSK-AES256-CCM8,DHE-PSK-AES256-CCM-8	DHE_PSK_WITH_AES_256_CCM_8,PSK_DHE_WITH_AES_256_CCM_8	FIXME
+0x0300C0AC	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESCCM	128	AEAD	7251	ECDHE-ECDSA-AES128-CCM	ECDHE_ECDSA_WITH_AES_128_CCM	-
+0x0300C0AD	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESCCM	256	AEAD	7251	ECDHE-ECDSA-AES256-CCM	ECDHE_ECDSA_WITH_AES_256_CCM	-
+0x0300C0AE	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESCCM8	128	AEAD	7251	ECDHE-ECDSA-AES128-CCM8,ECDHE-RSA-AES128-CCM-8	ECDHE_ECDSA_WITH_AES_128_CCM_8	-
+0x0300C0AF	HIGH	HIGH	TLSv12	ECDH	ECDSA	AESCCM8	256	AEAD	7251	ECDHE-ECDSA-AES256-CCM8,ECDHE-RSA-AES256-CCM-8	ECDHE_ECDSA_WITH_AES_256_CCM_8	-
+0x0300C0B0	-?-	-?-	TLSv12	ECCPWD	RSA	AESGCM	128	AEAD	6655?	ECCPWD-AES128-GCM-SHA384	ECCPWD_WITH_AES_128_GCM_SHA384	R
+0x0300C0B1	-?-	-?-	TLSv12	ECCPWD	RSA	AESGCM	256	AEAD	6655?	ECCPWD-AES256-GCM-SHA384	ECCPWD_WITH_AES_256_GCM_SHA384	R
+0x0300C0B2	-?-	-?-	TLSv12	ECCPWD	RSA	AESCCM	128	AEAD	6655?	ECCPWD-AES128-CCM-SHA384	ECCPWD_WITH_AES_128_CCM_SHA384	R
+0x0300C0B3	-?-	-?-	TLSv12	ECCPWD	RSA	AESCCM	256	AEAD	6655?	ECCPWD-AES256-CCM-SHA384	ECCPWD_WITH_AES_256_CCM_SHA384	R
+0x0300C102	HIGH	HIGH	TLSv12	GOST	GOST	GOST89	256	GOST89	-?-	IANA-GOST2012-GOST8912-GOST8912,GOST2012-GOST8912-GOST8912	GOSTR341112_256_WITH_28147_CNT_IMIT	FIXME
+0x0300CC12	-?-	high	TLSv12	RSA	RSA	ChaCha20-Poly1305	256	AEAD	-?-	RSA-CHACHA20-POLY1305	RSA_WITH_CHACHA20_POLY1305	C
+0x0300CC13	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20-Poly1305	256	AEAD	-?-	ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD,ECDHE-RSA-CHACHA20-POLY1305-OLD	ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,ECDHE_RSA_CHACHA20_POLY1305	C
+0x0300CC13-c	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20-Poly1305	256	AEAD	-	ECDHE-RSA-CHACHA20-POLY1305	ECDHE_RSA_WITH_CHACHA20_POLY1305	B
+0x0300CC14	HIGH	HIGH	TLSv12	ECDH	ECDSA	ChaCha20-Poly1305	256	AEAD	-?-	ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD,ECDHE-ECDSA-CHACHA20-POLY1305-OLD	ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,ECDHE_ECDSA_CHACHA20_POLY1305	C
+0x0300CC14-c	HIGH	HIGH	TLSv12	ECDH	ECDSA	ChaCha20-Poly1305	256	AEAD	-	ECDHE-ECDSA-CHACHA20-POLY1305	ECDHE_ECDSA_WITH_CHACHA20_POLY1305	B
+0x0300CC15	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	-?-	DHE-RSA-CHACHA20-POLY1305-SHA256-OLD,DHE-RSA-CHACHA20-POLY1305-OLD	DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,DHE_RSA_CHACHA20_POLY1305	C
+0x0300CC15-c	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	-	DHE-RSA-CHACHA20-POLY1305	DHE_RSA_WITH_CHACHA20_POLY1305	B
+0x0300CC16	HIGH	HIGH	TLSv12	DH	PSK	ChaCha20-Poly1305	256	AEAD	-	DHE-PSK-CHACHA20-POLY1305	DHE_PSK_WITH_CHACHA20_POLY1305	B
+0x0300CC17	HIGH	HIGH	TLSv12	PSK	PSK	ChaCha20-Poly1305	256	AEAD	-	PSK-CHACHA20-POLY1305	PSK_WITH_CHACHA20_POLY1305	B
+0x0300CC18	HIGH	HIGH	TLSv12	ECDHEPSK	ECDHE	ChaCha20-Poly1305	256	AEAD	-	ECDHE-PSK-CHACHA20-POLY1305	ECDHE_PSK_WITH_CHACHA20_POLY1305	B
+0x0300CC19	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	-	RSA-PSK-CHACHA20-POLY1305	RSA_PSK_WITH_CHACHA20_POLY1305	B
+0x0300CC20	HIGH	HIGH	TLSv12	RSA	RSA	ChaCha20	256	SHA1	-?-	RSA-CHACHA20-SHA	RSA_WITH_CHACHA20_SHA	C
+0x0300CC21	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20	256	SHA1	-?-	ECDHE-RSA-CHACHA20-SHA	ECDHE_RSA_WITH_CHACHA20_SHA	C
+0x0300CC22	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20	256	SHA1	-?-	ECDHE-ECDSA-CHACHA20-SHA	ECDHE_ECDSA_WITH_CHACHA20_SHA	C
+0x0300CC23	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20	256	SHA1	-?-	DHE-RSA-CHACHA20-SHA	DHE_RSA_WITH_CHACHA20_SHA	C
+0x0300CC24	HIGH	HIGH	TLSv12	DH	PSK	ChaCha20	256	SHA1	-?-	DHE-PSK-CHACHA20-SHA	DHE_PSK_WITH_CHACHA20_SHA	C
+0x0300CC25	HIGH	HIGH	TLSv12	PSK	PSK	ChaCha20	256	SHA1	-?-	PSK-CHACHA20-SHA	PSK_WITH_CHACHA20_SHA	C
+0x0300CC26	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20	256	SHA1	-?-	ECDHE-PSK-CHACHA20-SHA	ECDHE_PSK_WITH_CHACHA20_SHA	C
+0x0300CC27	HIGH	HIGH	TLSv12	RSAPSK	RSA	ChaCha20	256	SHA1	-?-	RSA-PSK-CHACHA20-SHA	RSA_PSK_WITH_CHACHA20_SHA	C
+0x0300CCA0	-?-	high	TLSv12	RSA	RSA	ChaCha20-Poly1305	256	AEAD	-?-	RSA-CHACHA20-POLY1305	RSA_WITH_CHACHA20_POLY1305	C
+0x0300CCA1	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20-Poly1305	256	AEAD	-?-	ECDHE-RSA-CHACHA20-POLY1305	ECDHE_RSA_WITH_CHACHA20_POLY1305	C
+0x0300CCA2	HIGH	HIGH	TLSv12	ECDH	ECDSA	ChaCha20-Poly1305	256	AEAD	-?-	ECDHE-ECDSA-CHACHA20-POLY1305	ECDHE_ECDSA_WITH_CHACHA20_POLY1305	C
+0x0300CCA3	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	-?-	DHE-RSA-CHACHA20-POLY1305	DHE_RSA_WITH_CHACHA20_POLY1305	C
+0x0300CCA4	HIGH	HIGH	TLSv12	DH	PSK	ChaCha20-Poly1305	256	AEAD	-?-	DHE-PSK-CHACHA20-POLY1305	DHE_PSK_WITH_CHACHA20_POLY1305	C
+0x0300CCA5	HIGH	HIGH	TLSv12	PSK	PSK	ChaCha20-Poly1305	256	AEAD	-?-	PSK-CHACHA20-POLY1305	PSK_WITH_CHACHA20_POLY1305	C
+0x0300CCA6	HIGH	HIGH	TLSv12	ECDHEPSK	ECDHE	ChaCha20-Poly1305	256	AEAD	-?-	ECDHE-PSK-CHACHA20-POLY1305	ECDHE_PSK_WITH_CHACHA20_POLY1305	C
+0x0300CCA7	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	-?-	RSA-PSK-CHACHA20-POLY1305	RSA_PSK_WITH_CHACHA20_POLY1305	C
+0x0300CCA8	HIGH	HIGH	TLSv12	ECDH	RSA	ChaCha20-Poly1305	256	AEAD	7905	ECDHE-RSA-CHACHA20-POLY1305-SHA256	ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCA9	HIGH	HIGH	TLSv12	ECDH	ECDSA	ChaCha20-Poly1305	256	AEAD	7905	ECDHE-ECDSA-CHACHA20-POLY1305-SHA256	ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCAA	HIGH	HIGH	TLSv12	DH	RSA	ChaCha20-Poly1305	256	AEAD	7905	DHE-RSA-CHACHA20-POLY1305-SHA256	DHE_RSA_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCAB	HIGH	HIGH	TLSv12	PSK	PSK	ChaCha20-Poly1305	256	AEAD	7905	PSK-CHACHA20-POLY1305-SHA256	PSK_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCAC	HIGH	HIGH	TLSv12	ECDHEPSK	ECDHE	ChaCha20-Poly1305	256	AEAD	7905	ECDHE-PSK-CHACHA20-POLY1305-SHA256	ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCAD	HIGH	HIGH	TLSv12	DHEPSK	DHE	ChaCha20-Poly1305	256	AEAD	7905	DHE-PSK-CHACHA20-POLY1305-SHA256	DHE_PSK_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300CCAE	HIGH	HIGH	TLSv12	RSAPSK	RSA	ChaCha20-Poly1305	256	AEAD	7905	RSA-PSK-CHACHA20-POLY1305-SHA256	RSA_PSK_WITH_CHACHA20_POLY1305_SHA256	C
+0x0300D001	-?-	-?-	TLSv12	ECDH	PSK	AESGCM	128	AEAD	6655?	ECDHE-PSK-AES128-GCM-SHA256	ECDHE_PSK_WITH_AES_128_GCM_SHA256	R
+0x0300D002	-?-	-?-	TLSv12	ECDH	PSK	AESGCM	256	AEAD	6655?	ECDHE-PSK-AES256-GCM-SHA384	ECDHE_PSK_WITH_AES_256_GCM_SHA384	R
+0x0300D003	-?-	-?-	TLSv12	ECDH	PSK	AESCCM8	128	AEAD	6655?	ECDHE-PSK-AES256-CCM8-SHA256	ECDHE_PSK_WITH_AES_128_CCM_8_SHA256	R
+0x0300D005	-?-	-?-	TLSv12	ECDH	PSK	AESCCM	128	AEAD	6655?	ECDHE-PSK-AES256-CCM-SHA256	ECDHE_PSK_WITH_AES_128_CCM_SHA256	R
+0x0300FEE0	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	3DES	168	SHA1	-?-	RSA-FIPS-3DES-EDE-SHA-2	RSA_FIPS_WITH_3DES_EDE_CBC_SHA_2	M
+0x0300FEE1	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	DES	56	SHA1	-?-	RSA-FIPS-DES-CBC-SHA-2	RSA_FIPS_WITH_DES_CBC_SHA_2	M
+0x0300FEFE	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	DES	56	SHA1	-?-	RSA-FIPS-DES-CBC-SHA	RSA_FIPS_WITH_DES_CBC_SHA	N
+0x0300FEFF	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	3DES	168	SHA1	-?-	RSA-FIPS-3DES-EDE-SHA	RSA_FIPS_WITH_3DES_EDE_CBC_SHA	N
+0x0300FF00	HIGH	weak	SSLv3	RSA	RSA	GOST89	256	MD5	5830	GOST-MD5	GOSTR341094_RSA_WITH_28147_CNT_MD5	G
+0x0300FF01	HIGH	HIGH	SSLv3	RSA	RSA	GOST89	256	GOST94	5830	GOST-GOST94	RSA_WITH_28147_CNT_GOST94	G
+0x0300FF02	HIGH	HIGH	SSLv3	RSA	RSA	GOST89	256	GOST89	-?-	GOST-GOST89MAC	GOST-GOST89MAC	G
+0x0300FF03	HIGH	HIGH	SSLv3	RSA	RSA	GOST89	256	GOST89	-?-	GOST-GOST89STREAM	GOST-GOST89STREAM	G
+0x0300FF85	HIGH	HIGH	TLSv13	GOST	GOST	GOST89	256	GOST89	-?-	LEGACY-GOST2012-GOST8912-GOST8912,GOST2012-GOST8912-GOST891	GOSTR341112_256_WITH_28147_CNT_IMIT	FIXME
+0x0300FF87	-?-	weak	TLSv13	GOST	GOST	None	0	GOST89	-?-	GOST2012-NULL-GOST12	GOSTR341112_256_WITH_NULL_GOSTR3411	FIXME
+#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+---------------+-------+---------------+
+# constant	OpenSSL	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,alias	const	comment
+
 __END__
+
