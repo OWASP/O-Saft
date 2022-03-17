@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.62 22/02/22 09:05:31
+#?      @(#) Makefile.misc 1.63 22/03/18 00:13:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.62
+_SID.misc          := 1.63
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -172,6 +172,7 @@ HELP-cloc.file  = count lines of code of all source files; output by file
 HELP-cloc.lang  = same as cloc.file and cloc
 HELP-cloc.csv   = same as cloc but output as comma separated values
 HELP-cloc.total = same as cloc but added "total %" column
+HELP-cloc.stat.log  = same as cloc but redirect to '$(_TEST.cloc.log)' also
 # NOTE: also possible usage:
 #       make cloc TEST.opt.cloc=--3
 #       make cloc TEST.opt.cloc=--csv
@@ -190,13 +191,21 @@ cloc.total: TEST.opt.cloc  += --csv --quiet
 cloc.total: EXE.cloc.filter = $(EXE.cloc.total)
 cloc:       cloc.stat
 
+# cloc is ugly, writes to tty, hence we always get the output also, even
+# if STDOUT and STDERR is redirected to a file
+_TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
+$(_TEST.cloc.log):
+	@echo "# Makefile.misc 1.63: $(MAKE) cloc.stat.log" > $@
+	@$(MAKE) -i cloc.stat >> $@ 2>&1
+cloc.stat.log: $(_TEST.cloc.log)
+
 ALL.test.cloc  := cloc.stat cloc.file cloc.lang cloc.csv cloc.total
 ALL.testmisc   += $(ALL.test.cloc)
 test.cloc:        $(ALL.test.cloc)
 # TODO: test.cloc.log  must be special as it compares generated tags files
+ALL.test.misc.log  += cloc.stat.log
 #ALL.test.cloc.log   = $(ALL.test.cloc:%=%.log)
 #test.cloc.log:    $(ALL.test.cloc.log)
-
 
 .PHONY: cloc
 
@@ -434,7 +443,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.62: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.63: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -532,7 +541,7 @@ test.values:          $(ALL.test.values)
 
 _TEST.keys.log      = $(TEST.logdir)/test.keys.log-$(TEST.today)
 $(_TEST.keys.log):
-	@echo "# Makefile.misc 1.62: $(MAKE) test.keys.log" > $@
+	@echo "# Makefile.misc 1.63: $(MAKE) test.keys.log" > $@
 	@$(MAKE) -i test.keys >> $@ 2>&1
 test.keys.log: $(_TEST.keys.log)
 	@$(TRACE.target)
