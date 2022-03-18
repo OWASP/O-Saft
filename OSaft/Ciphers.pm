@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.5 22/03/18 12:08:50";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.6 22/03/18 12:34:21";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -572,7 +572,7 @@ C<@ciphers> is a list of cipher suite names. These names should be those used
 by  openssl(1)  .
 =cut
 
-sub set_sec     { my ($key, $val) = @_; %ciphers{$key}->{'sec'} = $val; return; }
+sub set_sec     { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
 
 sub sort_cipher_names   {
     # cipher suites must be given as array
@@ -1349,7 +1349,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.5 2022/03/18
+2.6 2022/03/18
 
 =head1 AUTHOR
 
