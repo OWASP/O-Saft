@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.75 22/03/18 01:28:46
+#?      @(#)  1.76 22/03/18 11:45:36
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -222,16 +222,16 @@ try=''
 ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
-_break=0        # 1 if screen width < 50; then use two line as output
-colour=""       # 32 green, 34 blue for colour-blind
+_break=0                # 1 if screen width < 50; then use two lines as output
+colour=""               # 32 green, 34 blue for colour-blind
 other=0
 force=0
 optx=0
 optn=""
-mode="";        # "", cgi, check, clean, dest, openssl
+mode="";                # "", cgi, check, clean, dest, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
-	        # TODO: check path for each platform
-tab="	"       # need a real TAB (0x09) for /bin/echo
+	                # TODO: check path for each platform
+tab="	"               # need a real TAB (0x09) for /bin/echo
 
 text_miss=" missing, try installing with ";
 text_dev="did you run »$0 --clean«?"
@@ -333,7 +333,8 @@ _cols=0
 \command -v \tput >/dev/null && _cols=`\tput cols`
 if [ 0 -lt $_cols ]; then
 	# adapt _line to screen width
-	[ 51 -gt $_cols ] && _break=1   # see echo_label()
+	[ -n "$OSAFT_MAKE" ] && _cols=78    # SEE Make:OSAFT_MAKE
+	[ 51 -gt $_cols ] && _break=1       # see echo_label()
 	while [ 42 -lt $_cols ]; do
 		_line="$_line-"
 		_cols=`expr $_cols - 1`
@@ -352,7 +353,7 @@ echo_foot   () {
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
 	[ 0 -eq $_break ] && return
-	perl -le 'printf"\n\t"'     # use additional line
+	perl -le 'printf"\n\t"'             # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
@@ -409,7 +410,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.75 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.76 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
