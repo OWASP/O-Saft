@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.3 22/03/18 08:56:01";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.4 22/03/18 09:04:08";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -215,7 +215,7 @@ our @EXPORT = qw(
                 sort_cipher_names
                 show
                 show_ciphers
-                cipher_done
+                ciphers_done
 );
 
 #_____________________________________________________________________________
@@ -1190,15 +1190,11 @@ sub _ciphers_init   {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _main_ciphers_usage     {
+sub _main_ciphers_usage {
     #? print usage
     my $name = (caller(0))[1];
     print "# commands to show internal cipher tables:\n";
-    foreach my $cmd (qw(overview names const alias rfc description)) {
-        printf("\t%s %s\n", $name, $cmd);
-    }
-    print "# commands to show ciphers based on origin:\n";
-    foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
+    foreach my $cmd (qw(alias const dump description openssl rfc simple sort overview )) {
         printf("\t%s %s\n", $name, $cmd);
     }
     print "# commands to show cipher data:\n";
@@ -1207,11 +1203,10 @@ sub _main_ciphers_usage     {
     }
     print "# various commands (examples):\n";
     printf("\t$name version\n");
-    printf("\t$name getter=0xCC0xA9\n");  # avoid: Possible attempt to separate words with commas at ...
-    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ciphers=dumptab )) {
+    printf("\t$name getter=0x0300CC0A9\n");  # avoid: Possible attempt to separate words with commas at ...
+    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 )) {
         printf("\t%s %s\n", $name, $cmd);
     }
-    printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
     return;
 } # _main_ciphers_usage
 
@@ -1237,14 +1232,13 @@ sub _main_ciphers   {
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(alias|const(?:ants?)?|desc|regex|rfc)/);
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(dump|openssl|osaft|simple|ssltest)/);
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(overview|show|sort(?:ed))/);
-        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?((?:get_|hex=|key=).*)/);
-#print "A $arg\n";
+        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?((?:get|hex=|key=).*)/);
         show($arg)          if ($arg =~ /^--test.?cipher/);
     }
     exit 0;
 } # _main_ciphers
 
-sub cipher_done {};         # dummy to check successful include
+sub ciphers_done {};        # dummy to check successful include
 
 # complete initialisations
 _ciphers_init();
@@ -1348,7 +1342,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.3 2022/03/18
+2.4 2022/03/18
 
 =head1 AUTHOR
 
