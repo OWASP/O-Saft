@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  1.18 22/02/19 09:04:12
+#?       @(#)  2.1 22/03/18 09:06:53
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -64,6 +64,7 @@ _o_saft="
 	o-saft-dbx.pm
 	o-saft-usr.pm
 	o-saft-man.pm
+	OSaft/Ciphers.pm
 "
 o_saft=""
 for f in $_o_saft ; do
@@ -108,7 +109,8 @@ fi
 
 [ "$try" = "echo" ] && dst=/dev/stdout
 
-# general hints how to include:
+# general workflow and hints how to include:
+#
 # 1.  extract from o-saft.pl anything before line
 ## PACKAGES
 #
@@ -116,15 +118,17 @@ fi
 #
 # 3. add $osaft_standalone
 #
-# ?. include osaft.pm
+# 4. include osaft.pm and OSaft/Ciphers.pm without brackets and no "package" keyword
 #
-# 4. include text from module file enclosed in  ## PACKAGE  scope  from all modules
+# .. include text from module file enclosed in  ## PACKAGE  scope  from all modules
 #
 # 5. add rest of o-saft.pl
 #
-# 6. patch "standalone specials"
+# 6. include cipher definitions from OSaft/Ciphers.pm
 #
-# 7. add separator line for POD
+# 7. patch "standalone specials"
+#
+# 8. add separator line for POD
 
 (
   # 1.
@@ -139,12 +143,22 @@ fi
   \echo ''
 
   # 4.
-  # osaft.pm without brackets and no package
+  # osaft.pm and OSaft/Ciphers.pm without brackets and no package
   f=osaft.pm ; [ -f $f ] || f=../$f
   \echo "# { # $f"
   $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
   \echo "# } # $f"
   \echo ""
+
+  f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
+  \echo "{ # $f"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package OSaft::Ciphers;)' $f
+  \echo "} # $f"
+  \echo ""
+  # 5.
+  \echo "package main;"
+  $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
+     | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
   ## TODO: OSaft/Doc/Data.pm
   f=OSaft/Doc/Data.pm ; [ -f $f ] || f=../$f
@@ -200,18 +214,21 @@ fi
   #\echo "} # $f"
   #\echo ""
 
-  # 5.
-  \echo "package main;"
-  $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
-     | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
+  # 6.
+  f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
+  \echo "## $f DATA .. END"
+  $try \perl -ne 'print if (m(## CIPHERS [{])..m(## CIPHERS }))' $f
+  #$try \perl -ne 'print if (m(^__DATA__)..m(__END__))' $f
+  \echo ""
 
-# 6.
+
+# 7.
 ) \
   | $try \perl -pe '/^=head1 (NAME|Annotation)/ && do{print "=head1 "."_"x77 ."\n\n";};' \
   | $try \sed  -e  's/#\s*OSAFT_STANDALONE\s*//' \
 > $dst
 
-# 7.
+# 8.
 ##TODO:
 
 lsopt=  # tweak output if used from make
