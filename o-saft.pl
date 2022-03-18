@@ -1,5 +1,17 @@
 #!/usr/bin/perl
 
+# TODO Umbau #branch
+#	printciphers # TODO umbauen ; üblerlegen ob nach Ciphers.pm
+#	_cfg_set_cipher # TODO üblerlegen ob nach Ciphers.pm
+#	_sort_cipher_results # TODO move to Ciphers.pm
+#	printcipherall	<-- erledigt    TODO: my @results = @_  umbauen zu $results
+#	$cipher_alias{$hex}
+# TODO print_cipherpreferred umstellen, wenn $data{'cipher_selected'}->{val}($host)
+#      den cipher key antsatt des cipuer suite name enthält
+# TODO: print_cipherline: sslscan new format 1.11.0 (Option für altes Format)
+# TODO: _cfg_set_cipher nach Ciphers.pm
+
+
 #!#############################################################################
 #!#             Copyright (c) 2022, Achim Hoffmann
 #!#----------------------------------------------------------------------------
@@ -65,8 +77,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1073 22/03/04 13:30:42",
-    STR_VERSION => "22.02.22",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.1074 22/03/18 00:59:27",
+    STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
 #use Encode;    # see _load_modules()
@@ -165,7 +177,11 @@ our $osaft_standalone = 0;      # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
+use OSaft::Ciphers; # not loaded with _load_modules() because always needed
 use osaft;          # get most of our configuration; it's ok to die if missing
+
+#my %ciphers        = \%OSaft::Ciphers::ciphers;        # forward if Ciphers.pm not loaded
+#my $cipher_results = \$OSaft::Ciphers::cipher_results; # --''--
 
 $cfg{'time0'}   = $time0;
 
@@ -661,7 +677,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _yeast_exit   {}
     sub _yeast_args   {}
     sub _yeast_data   {}
-    sub _yeast_test   {}
     sub _yeast_ciphers_list {}
     sub _yeast        {}
     sub _y_ARG        {}
@@ -1579,475 +1594,11 @@ if (0 < _is_argv('(?:--no.?rc)')) {
 
 _yeast_TIME("cfg}");
 
-# definitions here until moved to OSaft/Ciphers.pm
-%ciphers = (
-        # values  -?-  are unknown yet; column score no longer used (Jan/2022)
-        #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
-        #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        'SCSV'                  => [qw( none fallback -     0 None None  None        0 :)], # just for documentation
-        'INFO_SCSV'             => [qw( none TLSv12   -     0 None None  None        0 :)], # just for documentation
- # FIXME: Perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
-        'ADH-AES128-SHA'        => [qw(  weak SSLv3 AES   128 SHA1 None  DH          0 :)],
-        'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
-        'ADH-DES-CBC3-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 None  DH          0 :)],
-        'ADH-DES-CBC-SHA'       => [qw(  weak SSLv3 DES    56 SHA1 None  DH          0 :)],
-        'ADH-RC4-MD5'           => [qw(  weak SSLv3 RC4   128 MD5  None  DH          0 :)],
-        'ADH-SEED-SHA'          => [qw(  weak SSLv3 SEED  128 SHA1 None  DH          0 OSX)],
-        #
-        'AECDH-AES128-SHA'      => [qw(  weak SSLv3 AES   128 SHA1 None  ECDH       11 :)],
-        'AECDH-AES256-SHA'      => [qw(  weak SSLv3 AES   256 SHA1 None  ECDH       11 :)],
-        'AECDH-DES-CBC3-SHA'    => [qw(  weak SSLv3 3DES  168 SHA1 None  ECDH        0 :)],
-        'AECDH-NULL-SHA'        => [qw(  weak SSLv3 None    0 SHA1 None  ECDH        0 :)],
-        'AECDH-RC4-SHA'         => [qw(  weak SSLv3 RC4   128 SHA1 None  ECDH       11 :)],
-        'PSK-SHA'               => [qw(  weak SSLv3 None    0 SHA1 RSA   DH          0 :)],
-        'AES128-SHA'            => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   RSA        80 :)],
-        'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
-        'DES-CBC3-MD5'          => [qw(  weak SSLv2 3DES  168 MD5  RSA   RSA         0 :)],
-        'DES-CBC3-SHA'          => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSA         0 :)],
-        'DES-CBC3-SHA'          => [qw(  weak SSLv2 3DES  168 SHA1 RSA   RSA         0 :)],
-        'DES-CBC-MD5'           => [qw(  weak SSLv2 DES    56 MD5  RSA   RSA         0 :)],
-        'DES-CBC-SHA'           => [qw(  weak SSLv3 DES    56 SHA1 RSA   RSA         0 :)],
-        'DES-CBC-SHA'           => [qw(  weak SSLv2 DES    56 SHA1 RSA   RSA         0 :)],
-        'DES-CFB-M1'            => [qw(  weak SSLv2 DES    64 MD5  RSA   RSA        20 :)],
-        'DH-DSS-AES128-SHA'     => [qw(medium SSLv3 AES   128 SHA1 DSS   DH         81 :)],
-        'DH-DSS-AES256-SHA'     => [qw(medium SSLv3 AES   256 SHA1 DSS   DH         81 :)],
-        'DH-RSA-AES128-SHA'     => [qw(medium SSLv3 AES   128 SHA1 RSA   DH         81 :)],
-        'DH-RSA-AES256-SHA'     => [qw(medium SSLv3 AES   256 SHA1 RSA   DH         81 :)],
-        'DHE-DSS-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 DSS   DH         80 :)],
-        'DHE-DSS-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 DSS   DH        100 :)],
-        'DHE-DSS-RC4-SHA'       => [qw(  weak SSLv3 RC4   128 SHA1 DSS   DH         20 :)],
-        'DHE-DSS-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 DSS   DH         81 OSX)],
-        'DHE-RSA-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   DH         80 :)],
-        'DHE-RSA-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   DH        100 :)],
-        'DHE-RSA-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 RSA   DH         81 OSX)],
-        'ECDH-ECDSA-AES128-SHA' => [qw(  HIGH SSLv3 AES   128 SHA1 ECDH  ECDH/ECDSA 91 :)],
-        'ECDH-ECDSA-AES256-SHA' => [qw(  HIGH SSLv3 AES   256 SHA1 ECDH  ECDH/ECDSA 91 :)],
-        'ECDH-ECDSA-DES-CBC3-SHA'=>[qw(  weak SSLv3 3DES  168 SHA1 ECDH  ECDH/ECDSA  0 :)],
-        'ECDH-ECDSA-RC4-SHA'    => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/ECDSA 81 :)],
-        'ECDH-ECDSA-NULL-SHA'   => [qw(  weak SSLv3 None    0 SHA1 ECDH  ECDH/ECDSA  0 :)],
-        'ECDH-RSA-AES128-SHA'   => [qw(  HIGH SSLv3 AES   128 SHA1 ECDH  ECDH/RSA   11 :)],
-        'ECDH-RSA-AES256-SHA'   => [qw(  HIGH SSLv3 AES   256 SHA1 ECDH  ECDH/RSA   11 :)],
-        'ECDH-RSA-DES-CBC3-SHA' => [qw(  weak SSLv3 3DES  168 SHA1 ECDH  ECDH/RSA    0 :)],
-        'ECDH-RSA-RC4-SHA'      => [qw(  weak SSLv3 RC4   128 SHA1 ECDH  ECDH/RSA   81 :)],
-        'ECDH-RSA-NULL-SHA'     => [qw(  weak SSLv3 None    0 SHA1 ECDH  ECDH/RSA    0 :)],
-        'ECDHE-ECDSA-AES128-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 ECDSA ECDH       11 :)],
-        'ECDHE-ECDSA-AES256-SHA'=> [qw(  HIGH SSLv3 AES   256 SHA1 ECDSA ECDH       11 :)],
-        'ECDHE-ECDSA-DES-CBC3-SHA'=> [qw(weak SSLv3 3DES  168 SHA1 ECDSA ECDH        0 :)],
-        'ECDHE-ECDSA-NULL-SHA'  => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH        0 :)],
-        'ECDHE-ECDSA-RC4-SHA'   => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)],
-        'ECDHE-RSA-AES128-SHA'  => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)],
-        'ECDHE-RSA-AES256-SHA'  => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   ECDH       11 :)],
-        'ECDHE-RSA-DES-CBC3-SHA'=> [qw(  weak SSLv3 3DES  168 SHA1 RSA   ECDH        0 :)],
-        'ECDHE-RSA-RC4-SHA'     => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)],
-        'ECDHE-RSA-NULL-SHA'    => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH        0 :)],
-        'EDH-DSS-DES-CBC3-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 DSS   DH          0 :)],
-        'EDH-DSS-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 DSS   DH          0 :)],
-        'EDH-RSA-DES-CBC3-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 RSA   DH          0 :)],
-        'EDH-RSA-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 RSA   DH          0 :)],
-        'EXP-ADH-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    40 SHA1 None  DH(512)     0 export)],
-        'EXP-ADH-RC4-MD5'       => [qw(  WEAK SSLv3 RC4    40 MD5  None  DH(512)     0 export)],
-        'EXP-DES-CBC-SHA'       => [qw(  WEAK SSLv3 DES    40 SHA1 RSA   RSA(512)    0 export)],
-        'EXP-EDH-DSS-DES-CBC-SHA'=>[qw(  weak SSLv3 DES    40 SHA1 DSS   DH(512)     0 export)],
-        'EXP-EDH-RSA-DES-CBC-SHA'=>[qw(  weak SSLv3 DES    40 SHA1 RSA   DH(512)     0 export)],
-        'EXP-RC2-CBC-MD5'       => [qw(  weak SSLv2 RC2    40 MD5  RSA   RSA(512)    0 export)],
-        'EXP-RC2-CBC-MD5'       => [qw(  weak SSLv3 RC2    40 MD5  RSA   RSA(512)    0 export)],
-        'EXP-RC4-MD5'           => [qw(  WEAK SSLv2 RC4    40 MD5  RSA   RSA(512)    2 export)],
-        'EXP-RC4-MD5'           => [qw(  WEAK SSLv3 RC4    40 MD5  RSA   RSA(512)    2 export)],
-        'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
-        'EXP-EDH-DSS-RC4-56-SHA'=> [qw(  WEAK SSLv3 RC4    56 SHA  DSS   DHE         2 :)],
-        'EXP1024-DES-CBC-SHA'   => [qw(  weak SSLv3 DES    56 SHA1 RSA   RSA(1024)   0 export)],
-        'EXP1024-DHE-DSS-RC4-SHA'=>[qw(  WEAK SSLv3 RC4    56 SHA1 DSS   DH(1024)    2 export)],
-        'EXP1024-DHE-DSS-DES-CBC-SHA' => [qw(weak SSLv3 DES 56 SHA1 DSS  DH(1024)    0 export)],
-        'EXP1024-RC2-CBC-MD5'   => [qw(  weak SSLv3 RC2    56 MD5  RSA   RSA(1024)   0 export)],
-        'EXP1024-RC4-MD5'       => [qw(  WEAK SSLv3 RC4    56 MD5  RSA   RSA(1024)   1 export)],
-        'EXP1024-RC4-SHA'       => [qw(  WEAK SSLv3 RC4    56 SHA1 RSA   RSA(1024)   2 export)],
-        'IDEA-CBC-MD5'          => [qw(  weak SSLv2 IDEA  128 MD5  RSA   RSA         0 :)],
-        'IDEA-CBC-SHA'          => [qw(  weak SSLv3 IDEA  128 SHA1 RSA   RSA         0 :)],
-        'NULL'                  => [qw(  weak SSLv2 None    0 MD5  None  RSA(512)    0 :)],
-        'NULL-NULL'             => [qw(  weak SSLv3 None    0 MD5  None  RSA         0 :)],
-        'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
-        'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA         0 export)], # FIXME: same hash key as before
-        'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
-        'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES256-SHA'    => [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
-        'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
-#       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
-        'PSK-3DES-EDE-CBC-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 PSK   PSK         0 :)],
-        'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 PSK   PSK         0 :)],
-        'PSK-AES256-CBC-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
-        'RSA-PSK-RC4-SHA'       => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSAPSK     80 :)],
-        'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA1 PSK   PSK        80 :)],
-        'RC2-CBC-MD5'           => [qw(  weak SSLv2 RC2   128 MD5  RSA   RSA         0 :)],
-        'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
-        'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA         8 :)],
-        'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA         8 :)],
-        'RC4-SHA'               => [qw(  weak SSLv3 RC4   128 SHA1 RSA   RSA         8 :)],
-        'SEED-SHA'              => [qw(MEDIUM SSLv3 SEED  128 SHA1 RSA   RSA        11 OSX)],
-        'ADH-CAMELLIA128-SHA'   => [qw(  weak SSLv3 CAMELLIA  128 SHA1 None  DH      0 :)],
-        'ADH-CAMELLIA256-SHA'   => [qw(  weak SSLv3 CAMELLIA  256 SHA1 None  DH      0 :)],
-        'CAMELLIA128-SHA'       => [qw(  HIGH SSLv3 CAMELLIA  128 SHA1 RSA   RSA    80 :)],
-        'CAMELLIA256-SHA'       => [qw(  HIGH SSLv3 CAMELLIA  256 SHA1 RSA   RSA   100 :)],
-        'DHE-DSS-CAMELLIA128-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  128 SHA1 DSS   DH     80 :)],
-        'DHE-DSS-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 DSS   DH    100 :)],
-        'DHE-RSA-CAMELLIA128-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  128 SHA1 RSA   DH     80 :)],
-        'DHE-RSA-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 RSA   DH    100 :)],
-        'GOST2001-GOST89-GOST89'=> [qw(  HIGH SSLv3 GOST89 256 GOST89  GOST01 GOST 100 :)],
-        'GOST94-GOST89-GOST89'  => [qw(  HIGH SSLv3 GOST89 256 GOST89  GOST94 GOST 100 :)],
-        'GOST-GOST89STREAM'     => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
-        'GOST-GOST89MAC'        => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
-        'GOST-GOST94'           => [qw(  HIGH SSLv3 GOST89 256 GOST94  RSA    RSA  100 :)],
-        'GOST-MD5'              => [qw(  weak SSLv3 GOST89 256 MD5     RSA    RSA    0 :)],
-        'GOST2001-NULL-GOST94'  => [qw(  weak SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
-        'GOST94-NULL-GOST94'    => [qw(  weak SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        # https://tools.ietf.org/id/draft-ietf-tls-openpgp-keys-00.txt
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        'DHE-DSS-CAST128-CBC-SHA'       => [qw(  weak SSLv3 CAST   128 SHA1   DSS   DH          0 :)],
-        'DHE-DSS-CAST128-CBC-RMD'       => [qw(  weak SSLv3 CAST   128 RMD    DSS   DH          0 :)],
-        'DHE-DSS-3DES-EDE-CBC-RMD'      => [qw(  weak SSLv3 3DES   128 RMD    DSS   DH          0 :)],
-        'DHE-DSS-AES128-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    DSS   DH          0 :)],
-        'DHE-DSS-AES256-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    DSS   DH          0 :)],
-        'DHE-RSA-CAST128-CBC-SHA'       => [qw(  weak SSLv3 CAST   128 SHA1   RSA   DH          0 :)],
-        'DHE-RSA-CAST128-CBC-RMD'       => [qw(  weak SSLv3 CAST   128 RMD    RSA   DH          0 :)],
-        'DHE-RSA-3DES-EDE-CBC-RMD'      => [qw(  weak SSLv3 3DES   128 RMD    RSA   DH          0 :)],
-        'DHE-RSA-AES128-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    RSA   DH          0 :)],
-        'DHE-RSA-AES256-CBC-RMD'        => [qw(  weak SSLv3 AES    128 RMD    RSA   DH          0 :)],
-        'RSA-CAST128-CBC-SHA'           => [qw(  weak SSLv3 CAST   128 SHA1   RSA   RSA         0 :)],
-        'RSA-CAST128-CBC-RMD'           => [qw(  weak SSLv3 CAST   128 RMD    RSA   RSA         0 :)],
-        'RSA-3DES-EDE-CBC-RMD'          => [qw(  weak SSLv3 3DES   128 RMD    RSA   RSA         0 :)],
-        'RSA-AES128-CBC-RMD'            => [qw(  weak SSLv3 AES    128 RMD    RSA   RSA         0 :)],
-        'RSA-AES256-CBC-RMD'            => [qw(  weak SSLv3 AES    128 RMD    RSA   RSA         0 :)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        # from openssl-1.0.1c
-        'SRP-AES-128-CBC-SHA'           => [qw(  HIGH SSLv3 AES    128 SHA1   None  SRP         0 :)],
-        'SRP-AES-256-CBC-SHA'           => [qw(  HIGH SSLv3 AES    256 SHA1   None  SRP         0 :)],
-        'SRP-DSS-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   DSS   SRP         0 :)],
-        'SRP-DSS-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   DSS   SRP         0 :)],
-        'SRP-DSS-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   DSS   SRP         0 :)],
-        'SRP-RSA-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   RSA   SRP         0 :)],
-        'SRP-RSA-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   RSA   SRP         0 :)],
-        'SRP-RSA-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   RSA   SRP         0 :)],
-        'SRP-3DES-EDE-CBC-SHA'          => [qw(  weak SSLv3 3DES   168 SHA1   None  SRP         0 :)],
-        'ADH-AES128-SHA256'             => [qw( weak TLSv12 AES    128 SHA256 None  DH         10 :)],
-        'ADH-AES128-GCM-SHA256'         => [qw( weak TLSv12 AESGCM 128 AEAD   None  DH         10 :)],
-        'ADH-AES256-GCM-SHA384'         => [qw( weak TLSv12 AESGCM 256 AEAD   None  DH         10 :)],
-        'ADH-AES256-SHA256'             => [qw( weak TLSv12 AES    256 SHA256 None  DH         10 :)],
-        'AES128-GCM-SHA256'             => [qw( HIGH TLSv12 AESGCM 128 AEAD   RSA   RSA        91 :)],
-        'AES128-SHA256'                 => [qw( HIGH TLSv12 AES    128 SHA256 RSA   RSA        91 :)],
-        'AES256-GCM-SHA384'             => [qw( HIGH TLSv12 AESGCM 256 AEAD   RSA   RSA        91 :)],
-        'AES256-SHA256'                 => [qw( HIGH TLSv12 AES    256 SHA256 RSA   RSA        91 :)],
-        'DHE-DSS-AES128-GCM-SHA256'     => [qw( HIGH TLSv12 AESGCM 128 AEAD   DSS   DH         91 :)],
-        'DHE-DSS-AES128-SHA256'         => [qw( HIGH TLSv12 AES    128 SHA256 DSS   DH         91 :)],
-        'DHE-DSS-AES256-GCM-SHA384'     => [qw( HIGH TLSv12 AESGCM 256 AEAD   DSS   DH         91 :)],
-        'DHE-DSS-AES256-SHA256'         => [qw( HIGH TLSv12 AES    256 SHA256 DSS   DH         91 :)],
-        'DHE-RSA-AES128-GCM-SHA256'     => [qw( HIGH TLSv12 AESGCM 128 AEAD   RSA   DH         91 :)],
-        'DHE-RSA-AES128-SHA256'         => [qw( HIGH TLSv12 AES    128 SHA256 RSA   DH         91 :)],
-        'DHE-RSA-AES256-GCM-SHA384'     => [qw( HIGH TLSv12 AESGCM 256 AEAD   RSA   DH         91 :)],
-        'DHE-RSA-AES256-SHA256'         => [qw( HIGH TLSv12 AES    256 SHA256 RSA   DH         91 :)],
-        'ECDH-ECDSA-AES128-GCM-SHA256'  => [qw( HIGH TLSv12 AESGCM 128 AEAD   ECDH  ECDH/ECDSA 91 :)],
-        'ECDH-ECDSA-AES128-SHA256'      => [qw( HIGH TLSv12 AES    128 SHA256 ECDH  ECDH/ECDSA 91 :)],
-        'ECDH-ECDSA-AES256-GCM-SHA384'  => [qw( HIGH TLSv12 AESGCM 256 AEAD   ECDH  ECDH/ECDSA 91 :)],
-        'ECDH-ECDSA-AES256-SHA384'      => [qw( HIGH TLSv12 AES    256 SHA384 ECDH  ECDH/ECDSA 91 :)],
-        'ECDHE-ECDSA-AES128-GCM-SHA256' => [qw( HIGH TLSv12 AESGCM 128 AEAD   ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES128-SHA256'     => [qw( HIGH TLSv12 AES    128 SHA256 ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES256-GCM-SHA384' => [qw( HIGH TLSv12 AESGCM 256 AEAD   ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES256-SHA384'     => [qw( HIGH TLSv12 AES    256 SHA384 ECDSA ECDH       91 :)],
-        'ECDHE-RSA-AES128-GCM-SHA256'   => [qw( HIGH TLSv12 AESGCM 128 AEAD   RSA   ECDH       91 :)],
-        'ECDHE-RSA-AES128-SHA256'       => [qw( HIGH TLSv12 AES    128 SHA256 RSA   ECDH       91 :)],
-        'ECDHE-RSA-AES256-GCM-SHA384'   => [qw( HIGH TLSv12 AESGCM 256 AEAD   RSA   ECDH       91 :)],
-        'ECDHE-RSA-AES256-SHA384'       => [qw( HIGH TLSv12 AES    256 SHA384 RSA   ECDH       91 :)],
-        'ECDH-RSA-AES128-GCM-SHA256'    => [qw( HIGH TLSv12 AESGCM 128 AEAD   ECDH  ECDH/RSA   91 :)],
-        'ECDH-RSA-AES128-SHA256'        => [qw( HIGH TLSv12 AES    128 SHA256 ECDH  ECDH/RSA   91 :)],
-        'ECDH-RSA-AES256-GCM-SHA384'    => [qw( HIGH TLSv12 AESGCM 256 AEAD   ECDH  ECDH/RSA   91 :)],
-        'ECDH-RSA-AES256-SHA384'        => [qw( HIGH TLSv12 AES    256 SHA384 ECDH  ECDH/RSA   91 :)],
-        'NULL-SHA256'                   => [qw( weak TLSv12 None     0 SHA256 RSA   RSA         0 :)],
-        'PSK-AES128-CBC-SHA256'         => [qw( HIGH TLSv1  AES     128 SHA256 PSK  PSK        80 :)],
-        'PSK-AES256-CBC-SHA384'         => [qw( HIGH TLSv1  AES     256 SHA384 PSK  PSK        80 :)],
-        'PSK-NULL-SHA256'               => [qw( weak TLSv1  None     0  SHA256 PSK  PSK         1 :)],
-        'PSK-NULL-SHA384'               => [qw( weak TLSv1  None     0  SHA384 PSK  PSK         1 :)],
-        'DHE-PSK-AES128-CBC-SHA256'     => [qw( HIGH TLSv1  AES     128 SHA256 PSK  DHEPSK     80 :)],
-        'DHE-PSK-AES256-CBC-SHA384'     => [qw( HIGH TLSv1  AES     256 SHA384 PSK  DHEPSK     80 :)],
-        'DHE-PSK-NULL-SHA256'           => [qw( weak TLSv1  None     0  SHA256 PSK  DHEPSK      1 :)],
-        'DHE-PSK-NULL-SHA384'           => [qw( weak TLSv1  None     0  SHA384 PSK  DHEPSK      1 :)],
-        'RSA-PSK-AES128-CBC-SHA256'     => [qw( HIGH TLSv1  AES     128 SHA256 PSK  RSAPSK      1 :)],
-        'RSA-PSK-AES256-CBC-SHA384'     => [qw( HIGH TLSv1  AES     256 SHA384 PSK  RSAPSK      1 :)],
-        'RSA-PSK-NULL-SHA256'           => [qw( weak TLSv1  None     0  SHA256 RSA  RSAPSK      1 :)],
-        'RSA-PSK-NULL-SHA384'           => [qw( weak TLSv1  None     0  SHA364 RSA  RSAPSK      1 :)],
-        'DHE-PSK-NULL-SHA'              => [qw( weak SSLv3  None     0  SHA1   PSK  DHEPSK      1 :)],
-        'DHE-PSK-AES128-CBC-SHA'        => [qw( HIGH SSLv3  AES     256 SHA1   PSK  DHEPSK      1 :)],
-        'DHE-PSK-AES256-CBC-SHA'        => [qw( HIGH TLSv1  AES     256 SHA    PSK  DHEPSK     80 :)],
-        'ECDHE-ECDSA-AES256-CCM8'       => [qw( HIGH TLSv12 AESCCM8 256  AEAD ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES256-CCM'        => [qw( HIGH TLSv12 AESCCM  256  AEAD ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES128-CCM8'       => [qw( HIGH TLSv12 AESCCM8 128  AEAD ECDSA ECDH       91 :)],
-        'ECDHE-ECDSA-AES128-CCM'        => [qw( HIGH TLSv12 AESCCM  128  AEAD ECDSA ECDH       91 :)],
-        'ECDHE-PSK-RC4-SHA'             => [qw( weak TLSv12 RC4    128 SHA1   PSK   ECDHEPSK    0 :)],
-        'ECDHE-PSK-3DES-EDE-CBC-SHA'    => [qw( high TLSv12 3DES   192 SHA1   PSK   ECDHEPSK   80 :)],
-        'ECDHE-PSK-AES128-CBC-SHA'      => [qw( high TLSv1  AES    128 SHA1   PSK   ECDHEPSK   80 :)],
-        'ECDHE-PSK-AES256-CBC-SHA'      => [qw( high TLSv12 AES    256 SHA1   PSK   ECDHEPSK   80 :)],
-        'ECDHE-PSK-AES128-CBC-SHA256'   => [qw( high TLSv1  AES    128 SHA256 PSK   ECDHEPSK   80 :)],
-        'ECDHE-PSK-AES256-CBC-SHA384'   => [qw( high TLSv1  AES    256 SHA384 PSK   ECDHEPSK   80 :)],
-        'ECDHE-PSK-NULL-SHA'            => [qw( weak TLSv1  None     0 SHA1   PSK   ECDHEPSK    0 :)],
-        'ECDHE-PSK-NULL-SHA256'         => [qw( weak TLSv1  None     0 SHA1   PSK   ECDHEPSK    0 :)],
-        'ECDHE-PSK-NULL-SHA384'         => [qw( weak TLSv1  None     0 SHA1   PSK   ECDHEPSK    0 :)],
-        #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        # from openssl-1.0.2d
-        'ADH-CAMELLIA128-SHA256'        => [qw( weak TLSv12 CAMELLIA 128 SHA256 None  DH        0 :)],
-        'ADH-CAMELLIA256-SHA256'        => [qw( weak TLSv12 CAMELLIA 256 SHA256 None  DH        0 :)],
-        'CAMELLIA128-SHA256'            => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   RSA      80 :)],
-        'CAMELLIA256-SHA256'            => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 RSA   RSA     100 :)],
-        'DHE-DSS-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 DSS   DH       80 :)],
-        'DHE-DSS-CAMELLIA256-SHA256'    => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DSS   DH      100 :)],
-        'DHE-RSA-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   DH       80 :)],
-        'DHE-RSA-CAMELLIA256-SHA256'    => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 RSA   DH      100 :)],
-        'DH-DSS-CAMELLIA128-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 128 SHA1   DSS   DH       90 :)],
-        'DH-RSA-CAMELLIA128-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 128 SHA1   RSA   DH       90 :)],
-        'DH-DSS-CAMELLIA128-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 DSS   DH       90 :)],
-        'DH-RSA-CAMELLIA128-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 128 SHA256 RSA   DH       90 :)],
-        'DH-DSS-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    DSS     100 :)],
-        'DH-RSA-CAMELLIA256-SHA'        => [qw( HIGH  SSLv3 CAMELLIA 256 SHA1   DH    RSA     100 :)],
-        'DH-DSS-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    DSS     100 :)],
-        'DH-RSA-CAMELLIA256-SHA256'     => [qw( HIGH TLSv12 CAMELLIA 256 SHA256 DH    RSA     100 :)],
-        'DHE-RSA-CHACHA20-POLY1305-SHA256'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-        'ECDHE-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
-        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
-        'DHE-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-        'ECDHE-RSA-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
-        'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
-        'DHE-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   DH    1 :)],
-        'DHE-RSA-CHACHA20-POLY1305-OLD'       => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-        'ECDHE-RSA-CHACHA20-POLY1305-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
-        'ECDHE-ECDSA-CHACHA20-POLY1305-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
-        'DHE-RSA-CHACHA20-POLY1305-SHA256-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-        'ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)],
-        'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        'RSA-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSA         1 :)],
-        'ECDHE-RSA-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
-        'ECDHE-ECDSA-CHACHA20-SHA'      => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
-        'DHE-RSA-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   DH          1 :)],
-        'DHE-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   DH          1 :)],
-        'PSK-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   PSK         1 :)],
-        'ECDHE-PSK-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
-        'RSA-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSAPSK      1 :)],
-        # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
-        'PSK-CHACHA20-POLY1305'         => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
-        'ECDHE-PSK-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
-        'RSA-PSK-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)],
-        # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
-        'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
-        'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
-        'DHE-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD DHE   DHEPSK 1 :)],
-        'RSA-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   RSAPSK 1 :)],
-        #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        # from http://tools.ietf.org/html/rfc6655
-        'AES128-CCM'                    => [qw( HIGH TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
-        'AES256-CCM'                    => [qw( HIGH TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
-        'DHE-RSA-AES128-CCM'            => [qw( HIGH TLSv12 AESCCM 128 AEAD   RSA   DH         91 :)],
-        'DHE-RSA-AES256-CCM'            => [qw( HIGH TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
-        'PSK-AES128-CCM'                => [qw( HIGH TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
-        'PSK-AES256-CCM'                => [qw( HIGH TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
-        'AES128-CCM8'                   => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   RSA        91 :)],
-        'AES256-CCM8'                   => [qw( HIGH TLSv12 AESCCM8 256 AEAD  RSA   RSA        91 :)],
-        'DHE-RSA-AES128-CCM8'           => [qw( HIGH TLSv12 AESCCM8 128 AEAD  RSA   DH         91 :)],
-        'DHE-RSA-AES256-CCM8'           => [qw( HIGH TLSv12 AESCCM8 256 AEAD  RSA   DH         91 :)],
-        'PSK-AES128-CCM8'               => [qw( HIGH TLSv12 AESCCM8 128 AEAD  PSK   PSK        91 :)],
-        'PSK-AES256-CCM8'               => [qw( HIGH TLSv12 AESCCM8 256 AEAD  PSK   PSK        91 :)],
-        #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        # from openssl-1.0.1g
-        'KRB5-DES-CBC3-MD5'             => [qw(  weak SSLv3 3DES   168 MD5    KRB5  KRB5        0 :)],
-        'KRB5-DES-CBC3-SHA'             => [qw(  weak SSLv3 3DES   168 SHA1   KRB5  KRB5        0 :)],
-        'KRB5-IDEA-CBC-MD5'             => [qw(  weak SSLv3 IDEA   128 MD5    KRB5  KRB5        0 :)],
-        'KRB5-IDEA-CBC-SHA'             => [qw(  weak SSLv3 IDEA   128 SHA1   KRB5  KRB5        0 :)],
-        'KRB5-RC4-MD5'                  => [qw(  weak SSLv3 RC4    128 MD5    KRB5  KRB5        0 :)],
-        'KRB5-RC4-SHA'                  => [qw(  weak SSLv3 RC4    128 SHA1   KRB5  KRB5        0 :)],
-        'KRB5-DES-CBC-MD5'              => [qw(  weak SSLv3 DES     56 MD5    KRB5  KRB5        0 :)],
-        'KRB5-DES-CBC-SHA'              => [qw(  weak SSLv3 DES     56 SHA1   KRB5  KRB5        0 :)],
-        'EXP-KRB5-DES-CBC-MD5'          => [qw(  weak SSLv3 DES     40 MD5    KRB5  KRB5        0 export)],
-        'EXP-KRB5-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     40 SHA1   KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC2-CBC-MD5'          => [qw(  weak SSLv3 RC2     40 MD5    KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC2-CBC-SHA'          => [qw(  weak SSLv3 RC2     40 SHA1   KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC4-MD5'              => [qw(  weak SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
-        'EXP-KRB5-RC4-SHA'              => [qw(  weak SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
-        # from ssl/s3_lib.c
-        'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   FZA   FZA        11 :)],
-        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA        81 :)],
-        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   FZA   FZA        11 :)],
-        'RSA-FIPS-3DES-EDE-SHA-2'       => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-DES-CBC-SHA-2'        => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
-        'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/DSS      0 export)],
-        'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DH    DH/RSA      0 export)],
-        # FIXME: all following {
-        'DH-DSS-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/DSS      0 :)],
-        'DH-RSA-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DH    DH/RSA      0 :)],
-        'DH-DSS-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DH    DH/DSS      0 :)],
-        'DH-RSA-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DH    DH/RSA      0 :)],
-        'DH-DSS-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DH    DH/DSS     91 :)],
-        'DH-RSA-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DH    DH/RSA     91 :)],
-        'DH-DSS-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DH    DH/DSS     91 :)],
-        'DH-RSA-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DH    DH/RSA     91 :)],
-        'DH-DSS-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DH    DH/DSS     81 :)],
-        'DH-RSA-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DH    DH/RSA     81 :)],
-        'DH-RSA-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DH    DH/RSA     91 :)],
-        'DH-RSA-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DH    DH/RSA     91 :)],
-        'DH-DSS-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DH    DH/DSS     91 :)],
-        'DH-DSS-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DH    DH/DSS     91 :)],
-        'DHE-PSK-NULL-SHA'              => [qw( weak SSLv3  None   0   SHA1   PSK   DHEPSK      1 :)],
-        'RSA-PSK-NULL-SHA'              => [qw( weak SSLv3  None   0   SHA1   PSK   RSAPSK      1 :)],
-        'DHE-PSK-RC4-SHA'               => [qw(medium TLSv12 RC4   128 SHA1   PSK   DHE         1 :)],
-        'DHE-PSK-3DES-SHA'              => [qw( weak TLSv12 3DES   168 SHA1   PSK   DHE         0 :)],
-        'DHE-PSK-AES128-SHA'            => [qw( high TLSv12 AES    128 SHA1   PSK   DHE         1 :)],
-        'DHE-PSK-AES256-SHA'            => [qw( high TLSv12 AES    256 SHA1   PSK   DHE         1 :)],
-        'DHE-PSK-AES128-CCM'            => [qw( high TLSv12 AESGCM 128 AEAD   RSA   DHE         1 :)],
-        'DHE-PSK-AES256-CCM'            => [qw( high TLSv12 AESGCM 256 AEAD   RSA   DHE         1 :)],
-        'DHE-PSK-AES128-CCM8'           => [qw( HIGH TLSv12 AESGCM8 128 AEAD  PSK   DHEPSK      1 :)],
-        'DHE-PSK-AES256-CCM8'           => [qw( HIGH TLSv12 AESGCM8 256 AEAD  PSK   DHEPSK      1 :)],
-        'DHE-PSK-AES128-GCM-SHA256'     => [qw( high TLSv12 AESGCM 128 SHA256 PSK   DHE         1 :)],
-        'DHE-PSK-AES256-GCM-SHA384'     => [qw( high TLSv12 AESGCM 256 SHA384 PSK   DHE         1 :)],
-        'RSA-PSK-AES128-GCM-SHA256'     => [qw( high TLSv12 AESGCM 128 SHA256 PSK   RSA         1 :)],
-        'RSA-PSK-AES256-GCM-SHA384'     => [qw( high TLSv12 AESGCM 256 SHA384 PSK   RSA         1 :)],
-        'PSK-AES128-GCM-SHA256'         => [qw( high TLSv12 AESGCM 128 SHA256 PSK   PSK         1 :)],
-        'PSK-AES256-GCM-SHA384'         => [qw( high TLSv12 AESGCM 256 SHA384 PSK   PSK         1 :)],
-        'PSK-AES128-SHA256'             => [qw( high TLSv12 AES    128 SHA256 PSK   PSK         1 :)],
-        'PSK-AES256-SHA384'             => [qw( high TLSv12 AES    256 SHA384 PSK   PSK         1 :)],
-        'DHE-PSK-AES128-SHA256'         => [qw( high TLSv1  AES    128 SHA256 PSK   DHE         1 :)],
-        'DHE-PSK-AES256-SHA384'         => [qw( high TLSv1  AES    256 SHA384 PSK   DHE         1 :)],
-        'DHE-PSK-SHA256'                => [qw( weak TLSv12 None   0   SHA256 PSK   DHE         1 :)],
-        'DHE-PSK-SHA384'                => [qw( weak TLSv12 None   0   SHA384 PSK   DHE         1 :)],
-        'RSA-PSK-AES128-SHA256'         => [qw( high TLSv12 AES    128 SHA256 PSK   RSA         1 :)],
-        'RSA-PSK-AES256-SHA384'         => [qw( high TLSv12 AES    256 SHA384 PSK   RSA         1 :)],
-        # }
-        #!#-----------------------------------+------+-----+------+-----+------+-----+--------+----+--------,
-        # from http://tools.ietf.org/html/rfc6367
-        #!# 'head'                      => [qw(  sec  ssl   enc        bits mac    auth  keyx    score tags)],
-        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
-        'ECDHE-ECDSA-CAMELLIA128-SHA256'=> [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDSA ECDH       100 : )],
-        'ECDHE-ECDSA-CAMELLIA256-SHA384'=> [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDSA ECDH       100 : )],
-        'ECDH-ECDSA-CAMELLIA128-SHA256' => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDH  ECDH/ECDSA 100 : )],
-        'ECDH-ECDSA-CAMELLIA256-SHA384' => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDH  ECDH/ECDSA 100 : )],
-        'ECDHE-RSA-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 RSA   ECDH       100 : )],
-        'ECDHE-RSA-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 RSA   ECDH       100 : )],
-        'ECDH-RSA-CAMELLIA128-SHA256'   => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDH  ECDH/RSA   100 : )],
-        'ECDH-RSA-CAMELLIA256-SHA384'   => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDH  ECDH/RSA   100 : )],
-        'RSA-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   RSA      100 : )],
-        'RSA-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   RSA      100 : )],
-        'DHE-RSA-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   RSA      100 : )],
-        'DHE-RSA-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   RSA      100 : )],
-        'DH-RSA-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    RSA      100 : )],
-        'DH-RSA-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    RSA      100 : )],
-        'DHE-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DHE   DSS      100 : )],
-        'DHE-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DHE   DSS      100 : )],
-        'DH-DSS-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 DH    DSS      100 : )],
-        'DH-DSS-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 DH    DSS      100 : )],
-        'ADH-DSS-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ADH   DSS      100 : )],
-        'ADH-DSS-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ADH   DSS      100 : )],
-        'ECDHE-ECDSA-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDHE ECDH 100 : )],
-        'ECDHE-ECDSA-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDHE ECDH 100 : )],
-        'ECDH-ECDSA-CAMELLIA128-GCM-SHA256' => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDH  ECDH 100 : )],
-        'ECDH-ECDSA-CAMELLIA256-GCM-SHA384' => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDH  ECDH 100 : )],
-        'ECDHE-RSA-CAMELLIA128-GCM-SHA256'  => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDHE RSA  100 : )],
-        'ECDHE-RSA-CAMELLIA256-GCM-SHA384'  => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDHE RSA  100 : )],
-        'ECDH-RSA-CAMELLIA128-GCM-SHA256'   => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 ECDH  RSA  100 : )],
-        'ECDH-RSA-CAMELLIA256-GCM-SHA384'   => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 ECDH  RSA  100 : )],
-        'PSK-CAMELLIA128-GCM-SHA256'    => [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK      100 : )],
-        'PSK-CAMELLIA256-GCM-SHA384'    => [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  RSA   PSK      100 : )],
-        'DHE-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA25  DHE   PSK      100 : )],
-        'DHE-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA38  DHE   PSK      100 : )],
-        'RSA-PSK-CAMELLIA128-GCM-SHA256'=> [qw( HIGH TLSv12 CAMELLIAGCM 128 SHA256 RSA   PSK      100 : )],
-        'RSA-PSK-CAMELLIA256-GCM-SHA384'=> [qw( HIGH TLSv12 CAMELLIAGCM 256 SHA384 RSA   PSK      100 : )],
-        'PSK-CAMELLIA128-SHA256'        => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 PSK   PSK      100 : )],
-        'PSK-CAMELLIA256-SHA384'        => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 PSK   PSK      100 : )],
-        'DHE-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 DHE   PSK      100 : )],
-        'DHE-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  DHE   PSK      100 : )],
-        'RSA-PSK-CAMELLIA128-SHA256'    => [qw( HIGH TLSv12 CAMELLIA    128 SHA25  RSA   PSK      100 : )],
-        'RSA-PSK-CAMELLIA256-SHA384'    => [qw( HIGH TLSv12 CAMELLIA    256 SHA38  RSA   PSK      100 : )],
-        'ECDHE-PSK-CAMELLIA128-SHA256'  => [qw( HIGH TLSv12 CAMELLIA    128 SHA256 ECDHE PSK      100 : )],
-        'ECDHE-PSK-CAMELLIA256-SHA384'  => [qw( HIGH TLSv12 CAMELLIA    256 SHA384 ECDHE PSK      100 : )],
-        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
-        # from http://tools.ietf.org/html/rfc6209
-        'RSA-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   RSA     11 :)],
-        'RSA-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   RSA     11 :)],
-        'DH-DSS-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA        128 SHA256 DSS   DH      11 :)],
-        'DH-DSS-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA        256 SHA384 DSS   DH      11 :)],
-        'DH-RSA-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   DH      11 :)],
-        'DH-RSA-ARIA256-SHA384'         => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   DH      11 :)],
-        'DHE-DSS-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 DSS   DHE     11 :)],
-        'DHE-DSS-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 DSS   DHE     11 :)],
-        'DHE-RSA-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   DHE     11 :)],
-        'DHE-RSA-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   DHE     11 :)],
-        'ADH-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA        128 SHA256 None  DH      11 :)],
-        'ADH-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA        256 SHA384 None  DH      11 :)],
-        'ECDHE-ECDSA-ARIA128-SHA256'    => [qw(  -?- TLSv12 ARIA        128 SHA256 ECDSA ECDHE   11 :)],
-        'ECDHE-ECDSA-ARIA256-SHA384'    => [qw(  -?- TLSv12 ARIA        256 SHA384 ECDSA ECDHE   11 :)],
-        'ECDH-ECDSA-ARIA128-SHA256'     => [qw(  -?- TLSv12 ARIA        128 SHA256 ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA256-SHA384'     => [qw(  -?- TLSv12 ARIA        256 SHA384 ECDSA ECDH    11 :)],
-        'ECDHE-RSA-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   ECDHE   11 :)],
-        'ECDHE-RSA-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   ECDHE   11 :)],
-        'ECDH-RSA-ARIA128-SHA256'       => [qw(  -?- TLSv12 ARIA        128 SHA256 RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA256-SHA384'       => [qw(  -?- TLSv12 ARIA        256 SHA384 RSA   ECDH    11 :)],
-        'ARIA128-GCM-SHA256'            => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   RSA     11 :)],
-        'ARIA256-GCM-SHA384'            => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   RSA     11 :)],
-        'DHE-RSA-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   DH      11 :)],
-        'DHE-RSA-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   DH      11 :)],
-        'DH-RSA-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   RSA   DH      11 :)],
-        'DH-RSA-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   RSA   DH      11 :)],
-        'DHE-DSS-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   DSS   DH      11 :)],
-        'DHE-DSS-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   DSS   DH      11 :)],
-        'DH-DSS-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   DSS   DH      11 :)],
-        'DH-DSS-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   DSS   DH      11 :)],
-        'ADH-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   None  DH      11 :)],
-        'ADH-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   None  DH      11 :)],
-        'ECDHE-ECDSA-ARIA128-GCM-SHA256'=> [qw( HIGH TLSv12 ARIAGCM     128 AEAD   ECDSA ECDH    11 :)],
-        'ECDHE-ECDSA-ARIA256-GCM-SHA384'=> [qw( HIGH TLSv12 ARIAGCM     256 AEAD   ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA128-GCM-SHA256' => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   ECDSA ECDH    11 :)],
-        'ECDH-ECDSA-ARIA256-GCM-SHA384' => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   ECDSA ECDH    11 :)],
-        'ECDHE-RSA-ARIA128-GCM-SHA256'  => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   ECDHE   11 :)],
-        'ECDHE-RSA-ARIA256-GCM-SHA384'  => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   ECDHE   11 :)],
-        'ECDHE-ARIA128-GCM-SHA256'      => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   ECDH    11 :)],
-        'ECDHE-ARIA256-GCM-SHA384'      => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA128-GCM-SHA256'   => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   RSA   ECDH    11 :)],
-        'ECDH-RSA-ARIA256-GCM-SHA384'   => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   RSA   ECDH    11 :)],
-        'PSK-ARIA128-SHA256'            => [qw( HIGH TLSv12 ARIA        128 SHA256 PSK   PSK     11 :)],
-        'PSK-ARIA256-SHA384'            => [qw( HIGH TLSv12 ARIA        256 SHA384 PSK   PSK     11 :)],
-        'DHE-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   DHE     11 :)],
-        'DHE-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   DHE     11 :)],
-        'RSA-PSK-ARIA128-SHA256'        => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   RSA     11 :)],
-        'RSA-PSK-ARIA256-SHA384'        => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   RSA     11 :)],
-        'PSK-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM     128 AEAD   PSK   PSK     11 :)],
-        'PSK-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM     256 AEAD   PSK   PSK     11 :)],
-        'DHE-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   PSK   DHEPSK  11 :)],
-        'DHE-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   PSK   DHEPSK  11 :)],
-        'RSA-PSK-ARIA128-GCM-SHA256'    => [qw( HIGH TLSv12 ARIAGCM     128 AEAD   RSA   RSAPSK  11 :)],
-        'RSA-PSK-ARIA256-GCM-SHA384'    => [qw( HIGH TLSv12 ARIAGCM     256 AEAD   PSK   RSAPSK  11 :)],
-        'ECDHE-PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA        128 SHA256 PSK   ECDHE   11 :)],
-        'ECDHE-PSK-ARIA256-SHA384'      => [qw(  -?- TLSv12 ARIA        256 SHA384 PSK   ECDHE   11 :)],
-        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
-        # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
-        'CECPQ1-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
-        'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
-        'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
-        'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
-        #!#-----------------------------------+------+-----+---------+-----+------+-----+--------+----+--------,
-	# from: https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
-        'TLS13-AES-128-GCM-SHA256'      => [qw( HIGH TLSv12 AESGCM      128 AEAD   any   any     91 :)],
-        'TLS13-AES-256-GCM-SHA384'      => [qw( HIGH TLSv12 AESGCM      256 AEAD   any   any     91 :)],
-        'TLS_AES_128_GCM_SHA256'        => [qw( HIGH TLSv13 AESGCM      128 AEAD   any   any     91 :)],
-        'TLS_AES_256_GCM_SHA384'        => [qw( HIGH TLSv13 AESGCM      256 AEAD   any   any     91 :)],
-        'TLS13-AES-128-CCM-SHA256'      => [qw( high TLSv12 AESCCM      128 AEAD   any   any     91 :)],
-        'TLS13-AES-128-CCM8-SHA256'     => [qw( high TLSv12 AESCCM      128 AEAD   any   any     91 :)],
-        'TLS13-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD any any   91 :)],
-        'TLS_CHACHA20_POLY1305_SHA256'  => [qw( HIGH TLSv13 ChaCha20-Poly1305 256 AEAD any any   91 :)],
-); # %ciphers
+# following defined in OSaft/Ciphers.pm
+#   %ciphers_desc();
+#   %ciphers();
+#   %cipher_results();
+#   %cipher_notes();
 
 our %text = (
     'separator'     => ":",# separator character between label and value
@@ -2269,6 +1820,24 @@ sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
 sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
 
+#| definitions: internal wrapper functions for OSaft/Ciphers.pm
+#| -------------------------------------
+# following wrappers are called with cipher suite name, while OSaft::Ciphers
+# methods need to be called with cipher hex key
+sub _cipher_get_sec     { return OSaft::Ciphers::get_sec(   OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_ssl     { return OSaft::Ciphers::get_ssl(   OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_keyx    { return OSaft::Ciphers::get_keyx(  OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_auth    { return OSaft::Ciphers::get_auth(  OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_enc     { return OSaft::Ciphers::get_enc(   OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_bits    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_mac     { return OSaft::Ciphers::get_mac(   OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_note    { return OSaft::Ciphers::get_note(  OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_names   { return OSaft::Ciphers::get_names( OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_notes   { return OSaft::Ciphers::get_notes( OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_consts  { return OSaft::Ciphers::get_consts(OSaft::Ciphers::get_key(shift)); }
+sub _cipher_get_desc    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
+sub _ciphers_get_all_names  { return OSaft::Ciphers::get_ciphernames(); }
+
 #| definitions: internal functions
 #| -------------------------------------
 sub __is_number         {
@@ -2311,7 +1880,7 @@ sub _load_modules       {
     }
     $err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
     if ("" ne $err) {
-        warn STR_ERROR, "010: $err";
+        warn STR_ERROR, "008: $err";
     }
 
     return if (0 < $osaft_standalone);  # SEE Note:Stand-alone
@@ -3219,10 +2788,13 @@ sub _cfg_set_init       {
 sub _cfg_set_cipher     {
     # set value for security of cipher in configuration %ciphers
     my ($typ, $arg) = @_;
-    my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
-    #dbx# _dbx "arg: $arg # key: $key # val: $val";
-    ${$ciphers{$key}}[0] = $val;
-    #dbx# _dbx @{$ciphers{$key}};
+    my ($txt, $val) = split(/=/, $arg, 2);  # left of first = is key
+# TODO $txt may be cipher suite name or cipher key; key not yet implemented
+    my $key = OSaft::Ciphers::get_key($txt);
+    return if not $key; # warning already printed
+    _dbx "key=$key :";
+    $OSaft::Ciphers::ciphers{$key}->{'sec'} = $val;
+    #dbx# print "$_\n" foreach values %{$OSaft::Ciphers::ciphers{$key}};
     return;
 } # _cfg_set_cipher
 
@@ -3585,7 +3157,7 @@ sub _is_tr03116_lazy    {
 sub _is_rfc7525         {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    my $bit = get_cipher_bits($cipher);
+    my $bit = _cipher_get_bits($cipher);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
    # /notRFC7525/;
     return $cipher if ($cipher =~ /NULL/);
@@ -3967,15 +3539,15 @@ sub _get_ciphers_list   {
         _v_print("cipher range: $range");
         foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
             my $key = sprintf("0x%08X",$c);
-            _trace($key,   get_cipher_suitename($key));
-            push(@ciphers, get_cipher_suitename($key));
+            #_trace($key,   OSaft::Ciphers::get_name($key));
+            push(@ciphers, OSaft::Ciphers::get_name($key));
         }
     }
     _trace(" got ciphers    = @ciphers");
     if (@ciphers <= 0) {      # empty list
         _warn("063: given pattern '$pattern' did not return cipher list");
         _y_CMD("  using private cipher list ...");
-        @ciphers = keys %ciphers;
+        @ciphers = _ciphers_get_all_names();
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
@@ -4008,8 +3580,8 @@ sub _get_default($$$$)  {
     my $version = "";   # returned protocol version
     my $cipher  = "";
     my @list = ();   # mode == default
-       @list =         sort_cipher_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
-       @list = reverse sort_cipher_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
+       @list =         OSaft::Ciphers::sort_cipher_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
+       @list = reverse OSaft::Ciphers::sort_cipher_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
     my $cipher_list = join(":", @list);
 
     if (0 == $cmd{'extciphers'}) {
@@ -4156,7 +3728,7 @@ sub ciphers_scan_raw    {
     my $total   = 0;
     my $enabled = 0;
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-    my @results = ();       # cipher list to be returned
+    my $results = {};       # hash with cipher list to be returned
     my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
     my $typ     = "raw";    # used for --trace only
        $typ     = "all" if (_is_cfg_do('cipher_intern'));
@@ -4175,7 +3747,7 @@ sub ciphers_scan_raw    {
             }
         }
         my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
-        my @accepted = ();  # accepted ciphers
+        my @accepted = [];  # accepted ciphers (cipher keys)
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
         if (_is_cfg_do('cipher_intern')) {
@@ -4185,22 +3757,21 @@ sub ciphers_scan_raw    {
         @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
         if (_is_cfg_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d",
-                         (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
+                         (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) )
+                    );
             # correct total number if first 2 ciphers are identical (this
-            # indicates cipher order by the server);  delete one when the
-            # first 2 ciphers are identical (this indicates an order by the server)
+            # indicates cipher order by the server);  delete first one
         }
 
         # prepare for printing, list, needed for summary checks
         my $last_a  = "";   # avoid duplicates
         foreach my $key (@accepted) {
-            # each entry looks like:  TLSv12  AES128-SHA256  yes
             next if ($last_a eq $key);
-            push(@results, [$ssl, get_cipher_suitename($key), "yes"]);
+            $results->{$ssl}{$key} = "yes";
             $last_a = $key;
         }
         if (0 < scalar @accepted) {
-            my $cipher = get_cipher_suitename($accepted[0]);
+            my $cipher = OSaft::Ciphers::get_name($accepted[0]);
             # SEE Note:+cipherall
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
@@ -4223,12 +3794,12 @@ sub ciphers_scan_raw    {
             }
         }
     } # $ssl
-    return @results;
+    return $results;
 } # ciphers_scan_raw
 
 sub ciphers_scan        {
     #? scan target for ciphers for all protocols
-    # returns array with accepted ciphers
+    # returns hash with accepted ciphers
     my ($host, $port) = @_;
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
 # Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
@@ -4236,7 +3807,7 @@ sub ciphers_scan        {
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
     my $cnt = scalar(@{$cfg{'ciphers'}});
-    my @results = ();       # cipher list to be returned
+    my $results = {};       # hash of cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'use'}->{'sni'};
@@ -4271,12 +3842,13 @@ sub ciphers_scan        {
         for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and Perl::Critic
             # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
             # but discarted by Perl::Critic, hence the less readable foreach
-        foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-            push(@results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
+        foreach my $cipher (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
+            my $key = OSaft::Ciphers::get_key($cipher);
+            $results->{$ssl}{$key} = ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no";
         }
         $cfg{'use'}->{'sni'} = $usesni;
     } # $ssl
-    return @results;
+    return $results;
 } # ciphers_scan
 
 sub check_certchars($$) {
@@ -4320,8 +3892,8 @@ sub check_certchars($$) {
     return;
 } # check_certchars
 
-sub check_dh($$)    {
-    #? check if target is vulnerable to Logjam attack; uses @cipher_results
+sub check_dh        {
+    #? check if target is vulnerable to Logjam attack; uses \$cipher_results
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
     $cfg{'done'}->{'check_dh'}++;
@@ -4332,7 +3904,7 @@ sub check_dh($$)    {
     my $txt = $data{'dh_parameter'}->{val}($host);
     if ($txt eq "") {
         $txt = "<<openssl did not return DH Paramter>>";
-        checkciphers($host, $port, @cipher_results); # need EXPORT ciphers fot logjam
+        checkciphers($host, $port, $cipher_results); # need EXPORT ciphers for logjam
         # TODO: calling checkciphers() is bad, it may even not contain ciphers
         my $exp = $checks{'logjam'}->{val};
         $checks{'logjam'}->{val}   .=  $txt;
@@ -4651,10 +4223,9 @@ sub checkpreferred  {
 
 sub checkcipher($$) {
     #? test given cipher and add result to %checks and %prot
-    my ($ssl, $c) = @_;
-    my $risk = get_cipher_sec($c);
-    # following checks add the "not compliant" or vulnerable ciphers
-
+    my ($ssl, $key) = @_;
+    my $c    = OSaft::Ciphers::get_name($key);  # $cipher = $c;
+    my $risk = OSaft::Ciphers::get_sec($key);
     # check weak ciphers
     $checks{'cipher_null'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
     $checks{'cipher_adh'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
@@ -4666,9 +4237,9 @@ sub checkcipher($$) {
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}      ->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_pci(    $ssl, $c));
-    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_fips(   $ssl, $c));
-    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _is_rfc7525($ssl, $c));
+    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_pci(  $ssl, $c));
+    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_fips( $ssl, $c));
+    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _is_rfc7525(  $ssl, $c));
     $checks{'tr_02102+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_strict($ssl, $c));
     $checks{'tr_02102-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_lazy(  $ssl, $c));
     $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
@@ -4700,7 +4271,7 @@ sub checkcipher($$) {
 } # checkcipher
 
 sub _checkcipher_init  {
-    # initialise $check{...}-{val} with empty string, because the will be
+    # initialise $check{...}-{val} with empty string, because they will be
     # extended per $ssl (protocol)
     foreach my $key (qw(
         cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
@@ -4715,8 +4286,7 @@ sub _checkcipher_init  {
 
 sub checkciphers    {
     #? test target if given ciphers are accepted, results stored in global %checks
-    # checks are done with information from @cipher_results
-    my ($host, $port, @results) = @_;
+    my ($host, $port, $results) = @_;
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
@@ -4724,7 +4294,7 @@ sub checkciphers    {
     _trace("checkciphers($host, $port){");
 
     _checkcipher_init();        # values are set to <<undefined>>, initialise with ""
-    if ($#results < 0) {        # no ciphers found; avoid misleading values
+    if (1 > scalar %$results) { # no ciphers found; avoid misleading values
         foreach my $key (@{$cfg{'need-cipher'}}) {
             if ($key =~ m/(drown|poodle|has(?:ssl|tls))/) {
                 # keep "disabled ..." message if corresponding -no-SSL option was used
@@ -4739,24 +4309,28 @@ sub checkciphers    {
         return;
     }
 
-    my $ssl     = "";
-    my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach my $c (@results) {  # check all accepted ciphers
-        next if not @{$c};      # defensive programming ..
-        next if ((scalar(@{$c})) =~ m/^\s*$/);  # -"-
-        # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
-        my $yn  = ${$c}[2];
-        $cipher = ${$c}[1];
-        $ssl    = ${$c}[0];
-        if ($yn =~ m/yes/i) {   # cipher accepted
+    foreach my $ssl (sort keys %$results) { # check all accepted ciphers
+      next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
+      foreach my $key (sort keys %{$results->{$ssl}}) {
+        # SEE Note:Testing, sort
+        next if not $results->{$ssl}{$key}; # defensive programming ..
+        my $yesno  = $results->{$ssl}{$key};
+        my $cipher = OSaft::Ciphers::get_name($key);
+        if (($cipher =~ m/^\s*$/) || ($yesno =~ m/^\s*$/)) {
+            # defensive programming .. probably programming error
+            _warn("420: empty value for $key => '$cipher: [$yesno]'; check ignored");
+            next;
+        }
+        if ($yesno =~ m/yes/i) {    # cipher accepted
             $prot{$ssl}->{'cnt'}++;
-            checkcipher($ssl, $cipher);
+            checkcipher($ssl, $key);
             $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _is_ssl_logjam($ssl, $cipher));
         }
         $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
+      }
     }
 
     # additional BEAST check: checks for vulnerable protocols are disabled?
@@ -5436,7 +5010,7 @@ sub check6125($$)   {
     return;
 } # check6125
 
-sub check7525($$)   {
+sub check7525       {
     #? check if target is RFC 7525 compliant
     my ($host, $port) = @_;
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
@@ -5899,8 +5473,8 @@ sub checkdest($$)   {
     checkprot($host, $port);
 
     # vulnerabilities
-    check_dh($host,$port);      # Logjam vulnerability
-    #$checks{'ccs'}->{val}       = _isccs($host, $port);
+    check_dh($host,$port);  # Logjam vulnerability
+    #$checks{'ccs'}->{val}       = _isccs($host, $port); # TODO:
     $checks{'ccs'}->{val}       = "<<NOT YET IMPLEMENTED>>";
     $key    = 'compression';
     $value  = $data{$key}->{val}($host);
@@ -6510,8 +6084,8 @@ sub print_cipherhead($) {
     if ($legacy eq 'cipher_dh') { printf("=   %-34s\t%s\n", $text{'cipher'}, $text{'dh_param'});
                                   print_cipherruler_dh(); }
     if ($legacy eq 'full')      {
-        # host:port protocol    supported   cipher    compliant security    description
-        printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Prot.', 'supp.', $text{'cipher'}, 'compliant', $text{'security'}, $text{'desc'});
+        # my @heads =  @{$ciphers_desc{'head'}};# not used because not all parts wanted
+        printf("= host:port\tsupport\tprot.\tsec\tkeyx\tauth\tenc      bits\tmac\tcipher key\tcipher name\tcomment\n");
     }
     # all others are empty, no need to do anything
     return;
@@ -6519,41 +6093,46 @@ sub print_cipherhead($) {
 
 sub print_cipherline($$$$$$) {
     #? print cipher check result according given legacy format
-    my ($legacy, $ssl, $host, $port, $cipher, $support) = @_;
-    # variables for better (human) readability
-    my $bit   = get_cipher_bits($cipher);
-    my $sec   = get_cipher_sec($cipher);
-       $sec   = get_cipher_owasp($cipher) if ('owasp' eq $legacy);
+    my ($legacy, $ssl, $host, $port, $key, $support) = @_;
+    my $cipher= OSaft::Ciphers::get_name($key);
+    my $bits  = OSaft::Ciphers::get_bits($key);
+    my $sec   = OSaft::Ciphers::get_sec($key); # will be changed for --legacy=owasp
+       $sec   = get_cipher_owasp($cipher)   if ('owasp' eq $legacy);
        $sec   = "-" if (('no' eq $support) and ('owasp' eq $legacy));
-    my $desc  =  join(" ", get_cipher_desc($cipher));
+    my $desc  = OSaft::Ciphers::get_desc($key);
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
     # first our own formats
-    my $value = "";
-    if ($legacy eq 'full') {
-        # host:port protocol    supported   cipher    compliant security    description
-        $desc =  join("\t", get_cipher_desc($cipher));
-        $desc =~ s/\s*:\s*$//;
-    }
     if ($legacy =~ m/compact|full|owasp|quick|simple|key/) {
-        my $k = sprintf("%s", get_cipher_hex($cipher));
-        print_line('_cipher', $host, $port, $k, $cipher, ""); # just host:port:#[key]:
+        my $k = sprintf("%s", OSaft::Ciphers::get_key($cipher));
+        print_line('_cipher', $host, $port, $key, $cipher, ""); # just host:port:#[key]:
         if ('key' eq $cfg{'label'}) {   # TODO: $cfg{'label'} should be a parameter
-            $k = "[$k]\t";
+            $k = "[$key]\t";
         } else {
             $k = "    ";
         }
-        printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'full');
+        #printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'full');
         printf("%s%-28s\t%s\n",         $k, $cipher, $sec        ) if ($legacy eq 'owasp');
-        printf("%s%-28s\t(%s)\t%s\n",   $k, $cipher, $bit,   $sec) if ($legacy eq 'quick');
+        printf("%s%-28s\t(%s)\t%s\n",   $k, $cipher, $bits,  $sec) if ($legacy eq 'quick');
         printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'simple');
         printf("%s %s %s\n",                $cipher, $yesno, $sec) if ($legacy eq 'compact');
-        printf("%s\t%s\t%s\t%s\t%s\t%s\n", $ssl, $yesno, $cipher, '-?-', $sec, $desc) if ($legacy eq 'full');
+        printf("%s%s:%s\t%s\t%s\t%s\t%s\t%s\t%s%7s\t%s\t%s\t%s\t%s\n",
+                $k, $host, $port, $yesno, $ssl, $sec,
+                OSaft::Ciphers::get_keyx($key),
+                OSaft::Ciphers::get_auth($key),
+                OSaft::Ciphers::get_enc( $key),
+                $bits,
+                OSaft::Ciphers::get_mac( $key),
+                $key,
+                $cipher,
+                OSaft::Ciphers::get_const($key),
+             ) if ($legacy eq 'full');
+        # TODO: check if  OSaft::Ciphers::get_ssl($key) matches $ssl
         return;
     }
     # now legacy formats  # TODO: should be moved to postprocessor
     if ($legacy eq 'sslyze')    {
         if ($support eq 'yes')  {
-            $support = sprintf("%4s bits", $bit) if ($support eq 'yes');
+            $support = sprintf("%4s bits", $bits) if ($support eq 'yes');
         } else {
             $support = $yesno;
         }
@@ -6570,43 +6149,46 @@ sub print_cipherline($$$$$$) {
         $sec = 'INTERMEDIATE:' if ($sec =~ /LOW/i);
         $sec = 'STRONG'        if ($sec =~ /high/i);
         $sec = 'WEAK'          if ($sec =~ /weak/i);
-        printf("   %s:%s - %s - %s %s bits\n", $ssl, $cipher, $yesno, $sec, $bit);
+        printf("   %s:%s - %s - %s %s bits\n", $ssl, $cipher, $yesno, $sec, $bits);
     }
     if ($legacy eq 'ssldiagnos') {
         # [+] Testing WEAK: SSL 2, DES-CBC3-MD5 (168 bits) ... FAILED
         # [+] Testing STRONG: SSL 3, AES256-SHA (256 bits) ... CONNECT_OK CERT_OK
         $sec = ($sec =~ /high/i) ? 'STRONG' : 'WEAK';
-        printf("[+] Testing %s: %s, %s (%s bits) ... %s\n", $sec, $ssl, $cipher, $bit, $yesno);
+        printf("[+] Testing %s: %s, %s (%s bits) ... %s\n", $sec, $ssl, $cipher, $bits, $yesno);
     }
     if ($legacy eq 'sslscan')   {
-        #    Rejected  SSLv3  256 bits  ADH-AES256-SHA
-        #    Accepted  SSLv3  128 bits  AES128-SHA
-        $bit = sprintf("%3s bits", $bit);
-        printf("    %s  %s  %s\n", $ssl, $bit, $cipher);
+        #    Rejected  SSLv3   256 bits  ADH-AES256-SHA
+        #    Accepted  TLSv1.2 256 bits  AES256-SHA256
+        $bits = sprintf("%3s bits", $bits);
+#        printf("    %s  %s  %s\n", $ssl, $bit, $cipher);
+# TODO: new format 1.11.0
+        printf("Accepted  %s    %s bits  %s\n", $ssl, $bits, $cipher);
     }
     if ($legacy eq 'thcsslcheck') {
         # AES256-SHA - 256 Bits -   supported
-        printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
+        printf("%30s - %3s Bits - %11s\n", $cipher, $bits, $yesno);
     }
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest')   {
         # cipher, description, (supported)
-        return if ("" eq $cipher);  # avoids perl's "Use of uninitialized value"
+        return if ("" eq $cipher);  # defensive programming ..
             # TODO: analyse when $cipher could be "", should not happen
-        my @arr = @{$ciphers{$cipher}};
-        pop(@arr);      # remove last value: tags
-        pop(@arr);      # remove last value: score
-        shift @arr;     # remove 1'st value: security
-        shift @arr;     # remove 2'nd value: ssl
-        $arr[1] .= ' bits';
-        $arr[2] .= ' MAC';
-        $arr[3] .= ' Auth';
-        $arr[4] .= ' Kx';
-        my $tmp = $arr[2]; $arr[2] = $arr[3]; $arr[3] = $tmp;
-        printf("   %s, %s (%s)\n",  $cipher, join (", ", @arr), $yesno);
+        printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx (%s)\n", $cipher,
+                OSaft::Ciphers::get_enc( $key), $bits,
+                OSaft::Ciphers::get_auth($key), OSaft::Ciphers::get_mac( $key),
+                OSaft::Ciphers::get_keyx($key), $yesno
+              );
     }
-    #if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
-    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s;%s\n", 'C', $host . ":" . $port, $ssl, $cipher, $desc); } # 'C' needs to be checked first
+    if ($legacy eq 'ssltest-g') {
+        return if ("" eq $cipher);  # defensive programming ..
+        printf("%s;%s;%s;%s;%s %s bits, %s Auth, %s MAC, %s Kx\n",
+                'C', $host . ":" . $port, $ssl, $cipher,
+                OSaft::Ciphers::get_enc( $key), $bits,
+                OSaft::Ciphers::get_auth($key), OSaft::Ciphers::get_mac( $key),
+                OSaft::Ciphers::get_keyx($key), 
+              );
+    }
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
     return;
 } # print_cipherline
@@ -6619,7 +6201,8 @@ sub print_cipherpreferred($$$$) {
     if ($legacy eq 'sslaudit')  {} # TODO: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    print_cipherline($legacy, $ssl, $host, $port, $data{'cipher_selected'}->{val}($host), $yesno);
+    my $key = OSaft::Ciphers::get_key($data{'cipher_selected'}->{val}($host)); # TODO use key
+    print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
     return;
 } # print_cipherpreferred
 
@@ -6654,14 +6237,16 @@ sub _is_print_cipher    {
     return 0;
 } # _is_print_cipher
 
+#branch # TODO move to Ciphers.pm
 sub _sort_cipher_results {
-    #? sort @results array according security of ciphers, most secure first
-    my @unsorted= @_;   # each line is array: ssl, cipher, yes-or-no
-    my @results;
+    #? sort hash %$unsorted according security of ciphers, most secure first
+    #  returns array with sorted cipher keys
+    my $unsorted= shift;    # hash with $key => yes-or-no
+    my @sorted;             # reference to hash to be returned
     my @tmp_arr;
-    foreach my $line (@unsorted) {
-        my $cipher    = ${$line}[1];
-        my $sec_osaft = lc(get_cipher_sec($cipher));# lower case
+    foreach my $key (keys %$unsorted) {
+        my $cipher    = OSaft::Ciphers::get_name($key);
+        my $sec_osaft = lc(OSaft::Ciphers::get_sec($key));# lower case
         my $sec_owasp = get_cipher_owasp($cipher);
            $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
         # Idea about sorting according severity/security risk of a cipher:
@@ -6706,41 +6291,43 @@ sub _sort_cipher_results {
         $weight -= 2  if ($cipher =~ /256.GCM/);
         $weight -= 1  if ($cipher =~ /128.GCM/);
         # TODO: need to "rate"  -CBC- and -RC4- and -DSS-
-        #push(@tmp_arr, ["$sec_owasp $sec_osaft", $cipher, ${$line}[0], ${$line}[2]]);
-        push(@tmp_arr, "$sec_owasp $weight $sec_osaft $cipher ${$line}[0] ${$line}[2]");
+        push(@tmp_arr, "$sec_owasp $weight $key"); #  $cipher ${$line}[0] ${$line}[2]");
     }
-    foreach my $line (sort @tmp_arr) {
-        #_dbx $line;
+    foreach my $line (sort @tmp_arr) {  # sorts according $sec_owasp
         my @arr = split(" ", $line);
-        push(@results, [$arr[4], $arr[3], $arr[5]]);#  convert back to original result: [ssl cipher yes-or-no]
+        push(@sorted, $arr[2]);
     }
-    return @results;
+    return @sorted;
 } # _sort_cipher_results
 
 #  NOTE: Perl::Critic's violation for next 2 subs are false positives
-sub _print_cipher_results       { ## no critic qw(Subroutines::RequireArgUnpacking)
-    #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
+sub _print_cipher_results       {
+    #? print all ciphers from %results of $ssl if match $yesno; returns number of checked ciphers for $ssl
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
-    my $yesno   = shift; # only print these results, all if empty
-    my @results = @_;
-    my $print   = 0; # default: do not print
+    my $yesno   = shift;    # only print these results, print all if empty
+    my $results = shift;    # reference to hash with cipher keys for $ssl
     my $total   = 0;
-    local    $\ = "\n";
-    foreach my $c (@results) {
-        # @{$c}: ssl cipher yes-or-no
-        next if  (${$c}[0] ne $ssl);
+    # list of ciphers in $results->{'sorted'} is sorted according strength
+    # most strong ciphers should be printed first, hence loop over list of
+    # keys in 'sorted' instead of (keys %$results).
+    foreach my $key (@{$results->{'sorted'}}) {
+        if (not $results->{$key}) { # defensive programming ..
+            _warn("862: unknown cipher key '$key'; key ignored");
+            next;
+        }
+        my $r_yesno = $results->{$key}; # [0];
         $total++;
-        next if ((${$c}[2] ne $yesno) and ($yesno  ne ""));
-        $print = _is_print_cipher(${$c}[2], $cfg{'out'}->{'disabled'}, $cfg{'out'}->{'enabled'});
-        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
+        next if (($r_yesno ne $yesno) and ("" ne $yesno));
+        next if not _is_print_cipher($r_yesno, $cfg{'out'}->{'disabled'}, $cfg{'out'}->{'enabled'});
+        print_cipherline($legacy, $ssl, $host, $port, $key, $r_yesno);
     }
     return $total;
 } # _print_cipher_results
 
-sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacking)
+sub printcipherall      { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results from Net::SSLhello::checkSSLciphers()
     #? returns number of unique (enabled) ciphers
     # FIXME: $legacy, --enabled and --disabled not fully supported
@@ -6748,16 +6335,14 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
-    my $outtitle= shift;# print title line if 0
-    my @results = @_;   # contains only accepted ciphers
-    my $unique  = 0;    # count unique ciphers
-    my $last_r  = "";   # avoid duplicates
-    local    $\ = "\n";
+    my $outtitle= shift;    # print title line if 0
+    my @results = @_;       # contains only accepted cipher keys
+    my $unique  = 0;        # count unique ciphers
+    my $last_r  = "";       # avoid duplicates (may be added by checkSSLciphers())
     print_cipherhead( $legacy) if ($outtitle == 0);
     foreach my $key (@results) {
         next if ($last_r eq $key);
-        my $cipher = get_cipher_suitename($key);
-        print_cipherline($legacy, $ssl, $host, $port, $cipher, "yes");
+        print_cipherline($legacy, $ssl, $host, $port, $key, "yes");
         $last_r = $key;
         $unique++;
     }
@@ -6766,22 +6351,23 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
     return $unique;
 } # printcipherall
 
-sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
+sub printciphercheck    {
     #? print all cipher check results for given $ssl according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
-    my $count   = shift;# print title line if 0
-    my @results = @_;
+    my $count   = shift;    # print title line if 0
+    my $results = shift;    # reference to hash with cipher keys for all $ssl
     my $total   = 0;
-    local    $\ = "\n";
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherpreferred($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
-    @results = _sort_cipher_results(@results); # sorting has no impact on severity
+    my @sorted  = _sort_cipher_results($results->{$ssl}); # sorting has no impact on severity
+    _trace2("printciphercheck: sorted $#sorted : @sorted");
+    $results->{$ssl}{'sorted'} = \@sorted;   # pass sorted list to subroutines
     if ($legacy ne 'sslyze') {
-        $total = _print_cipher_results($legacy, $ssl, $host, $port, "", @results);
+        $total = _print_cipher_results($legacy, $ssl, $host, $port, "", $results->{$ssl});
             # NOTE: $checks{'cnt_totals'}->{val}  is the number of all checked
             #       ciphers for all protocols, here only the number of ciphers
             #       for the protocol $ssl should be printed
@@ -6792,11 +6378,11 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
         print_cipherpreferred($legacy, $ssl, $host, $port);
         if (_is_cfg_out('enabled')  or (_is_cfg_out('disabled') == _is_cfg_out('enabled'))) {
             print "\n      Accepted Cipher Suites:";
-            $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", @results);
+            $total = _print_cipher_results($legacy, $ssl, $host, $port, "yes", $results->{$ssl});
         }
         if (_is_cfg_out('disabled') or (_is_cfg_out('disabled') == _is_cfg_out('enabled'))) {
             print "\n      Rejected Cipher Suites:";
-            $total = _print_cipher_results($legacy, $ssl, $host, $port, "no", @results);
+            $total = _print_cipher_results($legacy, $ssl, $host, $port, "no", $results->{$ssl});
         }
     }
     #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
@@ -6937,9 +6523,12 @@ sub printciphersummary  {
         printprotocols($legacy, $host, $port);
     }
     if (0 < $cfg{'need_netinfo'}) {
-        my $key = $data{'cipher_selected'}->{val}($host, $port);
+        my $key;
+        my $cipher = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+                   $data{'cipher_selected'}->{txt}, "$cipher "
+                   . _cipher_get_sec($cipher)
+                  );
     } else {
         _hint("'cipher_selected' temporarily disabled");  # TODO: adapte to new SSLhello (2/2021)
     }
@@ -6956,7 +6545,7 @@ sub printdata($$$)      {
     if (_is_cfg_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+                   $data{'cipher_selected'}->{txt}, "$key " . _cipher_get_sec($key));
     }
     foreach my $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}));
@@ -7183,7 +6772,8 @@ sub printversion        {
 
     print "= $me +cipher --ciphermode=intern =";
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
-    my @cnt = (eval($cfg{'cipherranges'}->{'rfc'}));
+    my @cnt = (eval($cfg{'cipherranges'}->{'rfc'})); ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+      ## dirty eval() ok here, as it is mainly for testing or information
     print "    number of supported ciphers      " . scalar @cnt;
     print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
     if ($cfg{'verbose'} > 0) {
@@ -7212,7 +6802,7 @@ sub printversion        {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     # TODO: following list should be same as in _check_modules()
-    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello Ciphers osaft)) {
+    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello OSaft::Ciphers osaft)) {
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
             # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
@@ -7254,172 +6844,26 @@ sub printciphers        {
     #? print cipher descriptions from internal database
     # uses settings from --legacy= and --format= options to select output format
     # implemented in VERSION 14.07.14
-
     #                                           # output looks like: openssl ciphers
     if ((($cfg{'opt-v'} + $cfg{'opt-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
         # TODO: filter ciphers not supported by openssl
         _trace("printciphers: +ciphers");
-        print join(":", (sort keys %ciphers));  # SEE Note:Testing, sort
+        print join(":", (OSaft::Ciphers::get_ciphernames()));   # SEE Note:Testing, sort
         return;
     }
-
     # anything else prints user-specified formats
     _trace("printciphers: +list");
-    my $sep = $text{'separator'};
-    my ($hex,  $ssl,  $tag,  $bit,  $aut,  $enc,  $key,  $mac);
-        $hex = $ssl = $tag = $bit = $aut = $enc = $key = $mac = "";
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
     _v_print("database version: $mainsid");
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
-    my $have_cipher = 0;
-    my $miss_cipher = 0;
-    my $ciphers     = "";
-       $ciphers     = Net::SSLinfo::cipher_openssl() if ($cfg{'verbose'} > 0);
-
-    print_header(_get_text('out_list', $0), "", "", $cfg{'out'}->{'header'});
-    # all following headers printed directly instead of using print_header()
-
-    if ($cfg{'legacy'} eq "ssltest") {  # output looks like: ssltest --list
-        _warn("861: not all ciphers listed");
-        foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
-          print "SSLv2 Ciphers Supported..."       if ($ssl eq 'SSLv2');
-          print "SSLv3/TLSv1 Ciphers Supported..." if ($ssl eq 'SSLv3');
-          foreach my $c (sort keys %ciphers) {
-            next if ($ssl ne get_cipher_ssl($c));
-            $aut =  get_cipher_auth($c); $aut =  "No" if ($aut =~ /none/i);
-            $key =  get_cipher_keyx($c); $key =~ s/[()]//g;
-            $mac =  get_cipher_mac($c);
-            $enc =  get_cipher_enc($c);
-            $bit =  get_cipher_bits($c);
-            if ($bit =~ m/\d+/) {       # avoid Perl warning "Argument isn't numeric"
-                $bit = sprintf("%03d", $bit);
-            } else {                    # pretty print
-                $bit = '-?-';
-                $bit = '000' if ($enc =~ m/None/i);
-            }
-            printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx\n",
-                $c, $enc, $bit, $aut, $mac, $key,
-            );
-          }
-        }
-    }
-
-    if ($cfg{'legacy'} eq "openssl") {  # output looks like: openssl ciphers -[v|V]
-        foreach my $c (sort keys %ciphers) {
-            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'opt-V'} > 0);
-            $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
-            $bit =  get_cipher_bits($c); $bit =  "($bit)" if ($bit ne ""); # avoid single :
-            $tag =  get_cipher_tags($c); $tag =~ s/^\s*:\s*$//;            # avoid single :
-            $aut =  get_cipher_auth($c);
-            $key =  get_cipher_keyx($c);
-            $mac =  get_cipher_mac($c);
-            $enc =  get_cipher_enc($c);
-            if ($sep eq " ") {
-                # spaces are the default separator in openssl's output
-                # spaces are the default separator for --legacy=openssl too if
-                # not explicitly specified with  --sep=
-                # if we use spaces, additonal formatting needs to be spaces too
-                $ssl = sprintf("%-5s", $ssl);
-                $aut = sprintf("%-4s", $aut);
-                $key = sprintf("%-8s", $key);
-                $mac = sprintf("%-4s", $mac);
-            }
-            printf("%s%-23s%s%s%sKx=%s%sAu=%s%sEnc=%s%s%sMac=%s%s%s\n",
-                $hex, $c, $sep, $ssl, $sep, $key, $sep, $aut, $sep,
-                $enc, $bit, $sep, $mac, $sep, $tag,
-            );
-        }
-        return;
-    }
-
-    if ($cfg{'legacy'} eq "owasp") {
-        # print ciphers with internal severity and OWASP severity
-        my $hh = "";
-        my $hl = "";
-        if ($cfg{'verbose'} > 0) {
-           $hh = "O-Saft";
-           $hl = "-------+";
-        }
-        if (_is_cfg_out('header')) {
-            printf("= %s\t%s\t%s\n", "OWASP", $hh, "cipher");
-            printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
-        }
-        foreach my $c (sort keys %ciphers) {
-            # following sequence is important, but OWASP_D must be last as it is weakest
-            my $sec_owasp = get_cipher_owasp($c);
-            my $sec_osaft = get_cipher_sec($c);
-               $sec_osaft = "" if (0 >= $cfg{'verbose'});
-            printf("  %s\t%s\t%s\n", $sec_owasp, $sec_osaft,  $c);
-        }
-        if (_is_cfg_out('header')) {
-            printf("=%s%s%s\n",    '------+', $hl, ('-' x 30));
-        }
-        return;
-    }
-
-    if ($cfg{'legacy'} eq "simple") {   # this format like for +list up to VERSION 14.07.14
-        $sep = "\t";
-        if (_is_cfg_out('header')) {
-            printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
-            printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
-        }
-        foreach my $c (sort keys %ciphers) {
-            printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
-        }
-        if (_is_cfg_out('header')) {
-            printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
-        }
-        return;
-    }
-
-    if ($cfg{'legacy'} eq "full") {     # internal format with leading hex number
-        $sep = $text{'separator'};
-        if (_is_cfg_out('header')) {
-            printf("= Constant$sep%s%-20s${sep}Aliases\n",   "Cipher", join($sep, @{$ciphers_desc{'text'}}));
-            printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
-            printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
-        }
-        foreach my $c (sort keys %ciphers) {
-            my $can = " "; # FIXME
-            if (0 < $cfg{'verbose'}) {
-                if (0 >= (grep{$_ eq $c} split(/:/, $ciphers))) {
-                    $can = "#";
-                    $miss_cipher++;
-                } else {
-                    $have_cipher++;
-                }
-            }
-            $hex = get_cipher_hex($c);
-            my $alias = "";
-               $alias = join(" ", @{$cipher_alias{$hex}}) if (defined $cipher_alias{$hex});
-            $hex = sprintf("%s$sep", ($hex || "    -?-"));
-            printf("%s %s%-30s$sep%s$sep%s\n", $can, $hex, $c, join($sep, @{$ciphers{$c}}), $alias);
-        }
-        if (_is_cfg_out('header')) {
-            printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
-        }
-        if (0 < $cfg{'verbose'}) {
-            my @miss = ();
-            my @test = ();
-            my $dupl = "";  # need to identify duplicates as we don't have List::MoreUtils
-            foreach my $c (split(/:/, $ciphers)) {
-                next if ($c eq $dupl);
-                push(@test, $c) if     defined $ciphers{$c};
-                push(@miss, $c) if not defined $ciphers{$c};
-                $dupl = $c;
-            }
-            # no customizable texts from %text, as it's for --v only
-            print "\n# Ciphers marked with # above are not supported by local SSL implementation.\n";
-            print "Supported Ciphers:        ",  $have_cipher;
-            print "Unsupported Ciphers:      ",  $miss_cipher;
-            print "Testable Ciphers:         ",  scalar(@test);
-            print "Ciphers missing in $cfg{'me'}: ",    scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
-            print "Ciphers in alias list:    ",  scalar(keys %cipher_alias); # FIXME: need to count values
-        }
-    }
-
+    OSaft::Ciphers::show_sorted()           if ('owasp'   eq $cfg{'legacy'});
+    OSaft::Ciphers::show_ciphers('dump')    if ('full'    eq $cfg{'legacy'});
+    OSaft::Ciphers::show_ciphers('simple')  if ('simple'  eq $cfg{'legacy'});
+    OSaft::Ciphers::show_ciphers('ssltest') if ('ssltest' eq $cfg{'legacy'});
+    OSaft::Ciphers::show_ciphers('openssl') if ('openssl' eq $cfg{'legacy'});
+       # output looks like: openssl ciphers -[v|V]
     return;
 } # printciphers
 
@@ -7538,9 +6982,9 @@ while ($#argv >= 0) {
         #  +---------+--------------+------------------------------------------
         #   argument to process   what to do
         #  +---------+--------------+------------------------------------------
-        if ($typ eq 'CFG_CIPHER')   { _cfg_set_cipher($typ, $arg);  }
-        if ($typ eq 'CFG_INIT')     { _cfg_set_init($typ, $arg);    }
-        if ($typ =~ m/^CFG/)        { _cfg_set($typ, $arg);         }
+        if ($typ eq 'CFG_INIT')     { _cfg_set_init(  $typ, $arg);  }
+        if ($typ eq 'CFG_CIPHER')   { _cfg_set_cipher($typ, $arg); $typ = 'HOST'; } # $typ set to avoid next match
+        if ($typ =~ m/^CFG/)        { _cfg_set(       $typ, $arg);  }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
         if ($typ eq 'LD_ENV')       { $cmd{'envlibvar'}   = $arg;   }
@@ -7550,7 +6994,7 @@ while ($#argv >= 0) {
         if ($typ eq 'OPENSSL_CNF')  { $cfg{'openssl_cnf'} = $arg;   }
         if ($typ eq 'OPENSSL_FIPS') { $cfg{'openssl_fips'}= $arg;   }
         if ($typ eq 'VERBOSE')      { $cfg{'verbose'}     = $arg;   }
-        if ($typ eq 'DO')           { push(@{$cfg{'do'}}, $arg);    } # treat as command,
+        if ($typ eq 'DO')           { push(@{$cfg{'do'}},   $arg);  } # treat as command,
         if ($typ eq 'EXE')          { push(@{$cmd{'path'}}, $arg);  }
         if ($typ eq 'LIB')          { push(@{$cmd{'libs'}}, $arg);  }
         if ($typ eq 'CALL')         { push(@{$cmd{'call'}}, $arg);  }
@@ -8815,13 +8259,19 @@ _yeast_TIME("ini}");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
-$test =~ s/^[+](test.*)/--$1/;  # _yeast_test() expects --test*
-if ($test !~ m/^\s*$/)        { _yeast_test($test); exit 0; } # SEE Note:--test-*
-if (_is_cfg_do('list'))       { printciphers();     exit 0; }
-if (_is_cfg_do('ciphers'))    { printciphers();     exit 0; }
-if (_is_cfg_do('version'))    { printversion();     exit 0; }
-if (_is_cfg_do('libversion')) { printopenssl();     exit 0; }
-if (_is_cfg_do('quit'))       { printquit();        exit 0; } # internal test command
+_trace(" --test= $test");
+# all --test-cipher* are special (need other data like %cfg or alike)
+$test =~ s/^(?:[+]|--)(test.*)/--$1/;   # SEE Note:--test-*
+if ($test =~ m/testciphers?list/)   { _yeast_test($test);   exit 0; }
+if ($test =~ m/testciphers?regex/)  { test_cipher_regex();  exit 0; }
+if ($test =~ m/^--testcipher/)      { OSaft::Ciphers::show($test); exit 0; }
+if ($test !~ m/^\s*$/)              { _yeast_test($test);   exit 0; }
+# interanl information commands
+if (_is_cfg_do('list'))             { printciphers();       exit 0; }
+if (_is_cfg_do('ciphers'))          { printciphers();       exit 0; }
+if (_is_cfg_do('version'))          { printversion();       exit 0; }
+if (_is_cfg_do('libversion'))       { printopenssl();       exit 0; }
+if (_is_cfg_do('quit'))             { printquit();          exit 0; }
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
@@ -9054,18 +8504,16 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
-        @cipher_results = ();           # new list for every host
-        @cipher_results = ciphers_scan_raw($host, $port);   # print ciphers also
-        $checks{'cnt_totals'}->{val} = scalar @cipher_results;  # FIXME: this is the number of enabled ciphers!
+        $cipher_results = {};           # new list for every host (array of arrays)
+        $cipher_results = ciphers_scan_raw($host, $port);   # print ciphers also
+        $checks{'cnt_totals'}->{val} = scalar %$cipher_results; # FIXME: this is the number of enabled ciphers!
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             $checks{'cnt_totals'}->{val} += _get_ciphers_range($ssl, $cfg{'cipherrange'});
         }
-        ###if ($_printtitle > 0) { # TODO: condition disabled when code moved to ciphers_scan_raw()
-            # SEE Note:+cipherall
-            my $total   = $checks{'cnt_totals'}->{val};
-            checkciphers($host, $port, @cipher_results);# necessary to compute 'out_summary'
-            printciphersummary($legacy, $host, $port, $total) if (_is_cfg_do('cipher'));
-        ###}
+        # SEE Note:+cipherall
+        my $total   = $checks{'cnt_totals'}->{val};
+        checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
+        printciphersummary($legacy, $host, $port, $total) if (_is_cfg_do('cipher'));
         _yeast_TIME("ciphermode=intern}");
         next if (_is_cfg_do('cipher') and (0 == $quick));
     } # ciphermode=intern
@@ -9123,10 +8571,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("  need_cipher ...");
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
         _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
-        @cipher_results = ();           # new list for every host
-        @cipher_results = ciphers_scan($host, $port);
-        $checks{'cnt_totals'}->{val} = scalar @cipher_results;
-        checkciphers($host, $port, @cipher_results); # necessary to compute 'out_summary'
+        $cipher_results = {};           # new list for every host
+        $cipher_results = ciphers_scan($host, $port);
+        $checks{'cnt_totals'}->{val} = scalar %$cipher_results;
+        checkciphers($host, $port, $cipher_results); # necessary to compute 'out_summary'
         _yeast_TIME("need_cipher}");
      }
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
@@ -9152,7 +8600,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             }
             # TODO: need to simplify above conditions
             printciphercheck($legacy, $ssl, $host, $port,
-                ($legacy eq "sslscan")?($_printtitle):0, @cipher_results);
+                ($legacy eq "sslscan")?($_printtitle):0, $cipher_results);
         }
         if ($legacy eq 'sslscan') {
             my $ssl = ${$cfg{'version'}}[4];
@@ -9164,7 +8612,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         if ($_printtitle > 0) { # if we checked for ciphers
             # SEE Note:+cipherall
-            printciphersummary($legacy, $host, $port, scalar @cipher_results);
+            printciphersummary($legacy, $host, $port, scalar %$cipher_results);
         }
         _yeast_TIME("ciphermode=ssleay}");
     } # cipher
@@ -9606,13 +9054,19 @@ loaded with `use', or at runtime if loaded with `require'.
 One goal is to be able to run on  ancient or incomplete configured systems
 too. Hence we try to load all modules with our own function  _load_file(),
 which uses `require' to load the module at runtime. This way it's possible
-to selectively disable just some functionality if loading of a module fails
-for various reasons (i.e. wrong version).
+that  some functionality is disabled selectively, if loading of the module
+fails for various reasons (i.e. wrong version).
 
 Perl's `use autouse' is also not possible, as to much functions need to be
 declared for that pragma then.
 Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
+
+
+=head2 Perl:EXPORT
+
+Perl modules may export their sombols using `EXPORT' or `EXPORT_OK'.
+TODO
 
 
 =head2 Perl:Undefined subroutine
