@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.123 22/02/27 22:48:36
+#?      @(#) Makefile 1.124 22/03/18 01:03:06
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.123
+_SID            = 1.124
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -79,14 +79,6 @@ OSD.txt         = \
 SRC.txt         = $(OSD.txt:%=$(OSD.dir)/%)
 NET.pm          = SSLinfo.pm \
 		  SSLhello.pm
-_CIPHER         = \
-		  _ciphers_osaft.pm \
-		  _ciphers_iana.pm \
-		  _ciphers_openssl_all.pm \
-		  _ciphers_openssl_low.pm \
-		  _ciphers_openssl_medium.pm \
-		  _ciphers_openssl_high.pm
-# add to SRC.pm  $(_CIPHER:%=OSaft/%)  when used
 OSAFT.pm        = Ciphers.pm error_handler.pm
 USR.pm          = \
 		  $(Project)-dbx.pm \
@@ -287,7 +279,7 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.text      = generated from Makefile 1.123
+_INST.text      = generated from Makefile 1.124
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -519,8 +511,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.123
-tar:     GREP_EDIT  = 1.123
+GREP_EDIT           = 1.124
+tar:     GREP_EDIT  = 1.124
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
