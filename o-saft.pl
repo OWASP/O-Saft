@@ -77,7 +77,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.1 22/03/18 08:03:14",
+    SID         => "@(#) yeast.pl 2.2 22/03/18 08:45:25",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -8785,11 +8785,12 @@ if (0 < $status) {
 }
 exit $status;
 
-__END__
-__DATA__
-public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
+# no  __END__   here, because it causes problems in generated gen_standalone.sh
+# no  __DATA__  here, because ...
 
-following annotations are avalable by using:  perldoc o-saft.pl
+# public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
+
+# following annotations are avalable by using:  perldoc o-saft.pl
 
 =pod
 
