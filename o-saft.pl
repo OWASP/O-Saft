@@ -1,13 +1,5 @@
 #!/usr/bin/perl
 
-# TODO Umbau #branch
-#	printciphers # TODO umbauen ; üblerlegen ob nach Ciphers.pm
-#	printcipherall	<-- erledigt    TODO: my @results = @_  umbauen zu $results
-# TODO print_cipherpreferred umstellen, wenn $data{'cipher_selected'}->{val}($host)
-#      den cipher key antsatt des cipper suite name enthält
-# TODO: print_cipherline: sslscan new format 1.11.0 (Option für altes Format)
-
-
 #!#############################################################################
 #!#             Copyright (c) 2022, Achim Hoffmann
 #!#----------------------------------------------------------------------------
@@ -73,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.3 22/03/18 12:15:10",
+    SID         => "@(#) yeast.pl 2.4 22/03/18 12:31:06",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -6838,12 +6830,10 @@ sub printversion        {
 
 sub printciphers        {
     #? print cipher descriptions from internal database
-    # uses settings from --legacy= and --format= options to select output format
-    # implemented in VERSION 14.07.14
-    #                                           # output looks like: openssl ciphers
+    # may use settings from --legacy= and option to select output format
     if ((($cfg{'opt-v'} + $cfg{'opt-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
-        # TODO: filter ciphers not supported by openssl
+        # output looks like: openssl ciphers
         _trace("printciphers: +ciphers");
         print join(":", (OSaft::Ciphers::get_ciphernames()));   # SEE Note:Testing, sort
         return;
