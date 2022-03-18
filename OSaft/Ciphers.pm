@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.1 22/03/18 00:38:16";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.2 22/03/18 02:08:06";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -997,7 +997,7 @@ sub _show_ciphers_ssltest {
                 $ciphers{$key}->{enc}, $bits, $auth, $ciphers{$key}->{mac}, $keyx);
     }
     return;
-} # _show_ciphers_ssltes {
+} # _show_ciphers_ssltes
 
 sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print internal list of ciphers in specified format
@@ -1348,7 +1348,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.1 2022/03/18
+2.2 2022/03/18
 
 =head1 AUTHOR
 
