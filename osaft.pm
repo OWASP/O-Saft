@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 1.271 22/03/18 00:43:16",
+    SID_osaft   => "@(#) osaft.pm 2.1 22/03/18 08:03:47",
 
 };
 
@@ -3427,7 +3427,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-1.271 2022/03/18
+2.1 2022/03/18
 
 =head1 AUTHOR
 
