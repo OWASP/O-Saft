@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.4 22/03/18 09:04:08";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.5 22/03/18 12:08:50";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -212,9 +212,10 @@ our @EXPORT = qw(
                 get_keys
                 get_cipherkeys
                 get_ciphernames
-                sort_cipher_names
+                set_sec
                 show
                 show_ciphers
+                sort_cipher_names
                 ciphers_done
 );
 
@@ -558,6 +559,10 @@ sub find_name   {   # TODO: not yet used
 
 =pod
 
+=head2 set_sec(   $cipher_key)
+
+Set value for 'security' in for specified cipher key.
+
 =head2 sort_cipher_names(@ciphers)
 
 Sort given list of C<@ciphers> according their strength, most strongest first,
@@ -566,6 +571,8 @@ returns sorted list of ciphers.
 C<@ciphers> is a list of cipher suite names. These names should be those used
 by  openssl(1)  .
 =cut
+
+sub set_sec     { my ($key, $val) = @_; %ciphers{$key}->{'sec'} = $val; return; }
 
 sub sort_cipher_names   {
     # cipher suites must be given as array
@@ -1342,7 +1349,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.4 2022/03/18
+2.5 2022/03/18
 
 =head1 AUTHOR
 
