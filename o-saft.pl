@@ -77,7 +77,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.1074 22/03/18 00:59:27",
+    SID         => "@(#) yeast.pl 2.1 22/03/18 08:03:14",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
