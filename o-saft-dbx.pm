@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 1.163 22/03/17 00:00:23";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.1 22/03/18 08:05:24";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -969,7 +969,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.163 2022/03/17
+2.1 2022/03/18
 
 =head1 AUTHOR
 
