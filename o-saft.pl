@@ -2,14 +2,10 @@
 
 # TODO Umbau #branch
 #	printciphers # TODO umbauen ; üblerlegen ob nach Ciphers.pm
-#	_cfg_set_cipher # TODO üblerlegen ob nach Ciphers.pm
-#	_sort_cipher_results # TODO move to Ciphers.pm
 #	printcipherall	<-- erledigt    TODO: my @results = @_  umbauen zu $results
-#	$cipher_alias{$hex}
 # TODO print_cipherpreferred umstellen, wenn $data{'cipher_selected'}->{val}($host)
-#      den cipher key antsatt des cipuer suite name enthält
+#      den cipher key antsatt des cipper suite name enthält
 # TODO: print_cipherline: sslscan new format 1.11.0 (Option für altes Format)
-# TODO: _cfg_set_cipher nach Ciphers.pm
 
 
 #!#############################################################################
@@ -77,7 +73,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.2 22/03/18 08:45:25",
+    SID         => "@(#) yeast.pl 2.3 22/03/18 12:15:10",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1838,6 +1834,18 @@ sub _cipher_get_consts  { return OSaft::Ciphers::get_consts(OSaft::Ciphers::get_
 sub _cipher_get_desc    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
 sub _ciphers_get_all_names  { return OSaft::Ciphers::get_ciphernames(); }
 
+sub _cipher_set_sec     {
+    # set cipher's security value in %ciphers; can be called with key or name
+    # parameter looks like: 0x030000BA=sec or CAMELLIA128-SHA=sec
+    my ($typ, $arg) = @_;
+    my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
+        $key = OSaft::Ciphers::get_key($key) if ($key !~ m/^0x[0-9a-fA-F]{8}$/);
+                # if is is not a key, try to get the key from a cipher name
+    return if not $key; # warning already printed
+    OSaft::Ciphers::set_sec($key, $val);
+    return;
+} # _cipher_set_sec
+
 #| definitions: internal functions
 #| -------------------------------------
 sub __is_number         {
@@ -2784,19 +2792,6 @@ sub _cfg_set_init       {
     } # SWITCH
     return;
 } # _cfg_set_init
-
-sub _cfg_set_cipher     {
-    # set value for security of cipher in configuration %ciphers
-    my ($typ, $arg) = @_;
-    my ($txt, $val) = split(/=/, $arg, 2);  # left of first = is key
-# TODO $txt may be cipher suite name or cipher key; key not yet implemented
-    my $key = OSaft::Ciphers::get_key($txt);
-    return if not $key; # warning already printed
-    _dbx "key=$key :";
-    $OSaft::Ciphers::ciphers{$key}->{'sec'} = $val;
-    #dbx# print "$_\n" foreach values %{$OSaft::Ciphers::ciphers{$key}};
-    return;
-} # _cfg_set_cipher
 
 #| definitions: check SSL functions
 #| -------------------------------------
@@ -6241,6 +6236,7 @@ sub _is_print_cipher    {
 sub _sort_cipher_results {
     #? sort hash %$unsorted according security of ciphers, most secure first
     #  returns array with sorted cipher keys
+    #  cannot be in Ciphers.pm because osaft::get_cipher_owasp() needed
     my $unsorted= shift;    # hash with $key => yes-or-no
     my @sorted;             # reference to hash to be returned
     my @tmp_arr;
@@ -6983,7 +6979,7 @@ while ($#argv >= 0) {
         #   argument to process   what to do
         #  +---------+--------------+------------------------------------------
         if ($typ eq 'CFG_INIT')     { _cfg_set_init(  $typ, $arg);  }
-        if ($typ eq 'CFG_CIPHER')   { _cfg_set_cipher($typ, $arg); $typ = 'HOST'; } # $typ set to avoid next match
+        if ($typ eq 'CFG_CIPHER')   { _cipher_set_sec($typ, $arg); $typ = 'HOST'; } # $typ set to avoid next match
         if ($typ =~ m/^CFG/)        { _cfg_set(       $typ, $arg);  }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
