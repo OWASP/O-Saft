@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.2 22/03/18 02:08:06";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.3 22/03/18 08:56:01";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -1190,7 +1190,7 @@ sub _ciphers_init   {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _main_usage     {
+sub _main_ciphers_usage     {
     #? print usage
     my $name = (caller(0))[1];
     print "# commands to show internal cipher tables:\n";
@@ -1213,9 +1213,9 @@ sub _main_usage     {
     }
     printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
     return;
-} # _main_usage
+} # _main_ciphers_usage
 
-sub _main           {
+sub _main_ciphers   {
     #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  see t/.perlcriticrc for detailed description of "no critic"
@@ -1227,11 +1227,11 @@ sub _main           {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help# print own help
-        _main_usage()       if ($arg eq '--usage');
+        _main_ciphers_usage()      if ($arg eq '--usage');
         # ----------------------------- options
-        $VERBOSE++          if ($arg eq '--v');
+        $VERBOSE++                 if ($arg eq '--v');
         # ----------------------------- commands
-        print "$VERSION\n"  if ($arg =~ /^version/i);
+        print "$VERSION\n"         if ($arg =~ /^version/i);
         # allow short option without --test-ciphers- prefix
         # (using multiple assignments for better human readability)
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(alias|const(?:ants?)?|desc|regex|rfc)/);
@@ -1242,7 +1242,7 @@ sub _main           {
         show($arg)          if ($arg =~ /^--test.?cipher/);
     }
     exit 0;
-} # _main
+} # _main_ciphers
 
 sub cipher_done {};         # dummy to check successful include
 
@@ -1348,7 +1348,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.2 2022/03/18
+2.3 2022/03/18
 
 =head1 AUTHOR
 
@@ -1361,9 +1361,11 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main(@ARGV) if (not defined caller);
+_main_ciphers(@ARGV) if (not defined caller);
 
 1;
+
+## CIPHERS {
 
 __DATA__
 
@@ -1847,4 +1849,6 @@ __DATA__
 # constant	OpenSSL	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,alias	const	comment
 
 __END__
+
+## CIPHERS }
 
