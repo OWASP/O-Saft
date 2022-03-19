@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.56 22/03/19 15:50:19
+#?      @(#) Makefile.dev 1.57 22/03/19 18:50:09
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.56
+_SID.dev           := 1.57
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -154,7 +154,7 @@ LIST.o-saft.notyet := \
 HELP-_dev1          = __________________________ testing internal documentations _
 HELP-test.dev       = test various internal documentation and functionality
 HELP-test.dev.log   = same as test.dev but store output in '$(TEST.logdir)/'
-HELP-test.dev.EXE_pod    = print POD of EXE using:    perldoc EXE
+HELP-test.dev.EXE_pod    = print POD of EXE using:    '$(EXE.gendoc.perldoc)'
 HELP-test.dev.EXE_--help = print documentation, using: EXE --help
 HELP-test.dev.help.all   = print all test.dev.EXE_--help
 HELP-test.dev.pod.all    = print all test.dev.EXE_pod
@@ -212,7 +212,9 @@ HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
 # Some of them are explicitly disabled, see "useless generated" below.
 #
 
-ifndef dev-macros-generated
+EXE.gendoc      := $(EXE.gendoc.perldoc)
+_EXE.gendoc-opt := $(_EXE.$(EXE.gendoc)-opt)
+ifndel dev-macros-generated
     # ifndef enforces execution of $(foreach ...) below
 
     # SEE Make:generating help
@@ -245,7 +247,7 @@ ifndef dev-macros-generated
     # EXE.pl and TEST.* variables for testarg-dev-* targets
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = perldoc $(_EXE.perldoc-opt) ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt) ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
     $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
