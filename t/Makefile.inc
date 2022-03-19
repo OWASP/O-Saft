@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.28 22/02/22 08:39:38
+#?      @(#) Makefile.inc 1.29 22/03/19 18:50:36
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.28
+_SID.inc       := 1.29
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -138,7 +138,11 @@ ifndef _EXE.sort-opt
 endif
 
 ifndef _EXE.perldoc-opt
-    _EXE.perldoc-opt   := -n nroff
+    _EXE.perldoc-opt   := -n nroff -T
+endif
+
+ifndef _EXE.pod2man-opt
+    _EXE.pod2man-opt   := --utf8 
 endif
 
 ifndef TAB
