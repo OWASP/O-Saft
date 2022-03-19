@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.346 22/02/27 23:14:57";
+my  $SID_man= "@(#) o-saft-man.pm 1.347 22/03/19 12:54:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,6 +77,8 @@ my  $cfg_header = 0;                    # we may be called from within parents B
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
+
+our $osaft_standalone = 0;              # SEE Note:Stand-alone
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
@@ -175,7 +177,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.346'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.347'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1639,6 +1641,9 @@ sub man_help        {
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
+    if (0 < $osaft_standalone) {    # FIXME dirty hack
+        @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version) if not @help;
+    }
     my $txt = join ('', @help);
         # = OSaft::Doc::Data::get("help.txt", $parent, $version);
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
@@ -1975,7 +1980,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.346 2022/02/27
+1.347 2022/03/19
 
 =head1 AUTHOR
 
