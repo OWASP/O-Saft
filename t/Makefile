@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.127 22/03/19 18:44:46
+#?      @(#) Makefile 1.128 22/03/19 19:52:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.127
+_SID.test          := 1.128
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -142,7 +142,7 @@ EXE.log-diff        = $(EXE.log-tkdiff)
     # chaneg EXE.log-diff to use another program
 
 # need a usable way to change generator for man-pages
-EXE.gendoc.perldoc := perl2doc
+EXE.gendoc.perldoc := perldoc
 EXE.gendoc.pod2man := pod2man
 EXE.gendoc         := $(EXE.gendoc.pod2man)
 
