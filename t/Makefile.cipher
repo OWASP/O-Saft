@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.12 22/03/19 09:19:40
+#?      @(#) Makefile.cipher 1.13 22/03/19 15:35:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.12
+_SID.cipher        := 1.13
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -92,7 +92,7 @@ endif
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cipher-+test-ciphers-list-%: TEST.init  = --trace-CLI --header +test-ciphers-list
 #testcmd-cipher+test-ciphers-list_%: TEST.args +=
-testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header +cipher
+testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher_%:           TEST.args  +=
 testcmd-cipher-+cipher--nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
