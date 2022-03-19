@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.25 22/02/25 16:37:32
+#?      @(#) Makefile.exit 1.26 22/03/19 12:02:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.25
+_SID.exit          := 1.26
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -48,62 +48,40 @@ HELP.test.exit.all  = # no special documentation yet
 
 # SEE Make:target name
 # SEE Make:target name prefix
-# using prefix testmsg- to avoid conflict with pattern rule testcmd-%
 
-testmsg-exit-%:         EXE.pl      = ../$(SRC.pl)
-testmsg-exit-%:         TEST.init   = --trace-CLI +cn $(TEST.host)
+testarg-exit-%:             EXE.pl      = ../$(SRC.pl)
+testarg-exit-%:             TEST.init   = --trace-CLI +cn $(TEST.host)
 
-testmsg-exit-000:       TEST.args  += --exit=invalid_label_to_show_failed-status
-testmsg-exit-BEGIN0:    TEST.args  += --exit=BEGIN0
-testmsg-exit-BEGIN1:    TEST.args  += --exit=BEGIN1
-testmsg-exit-INIT0:     TEST.args  += --exit=INIT0
-testmsg-exit-WARN:      TEST.args  += --exit=WARN   +force-warning
-testmsg-exit-CONF0:     TEST.args  += --exit=CONF0
-testmsg-exit-CONF1:     TEST.args  += --exit=CONF1
-testmsg-exit-INIT1:     TEST.args  += --exit=INIT1
-testmsg-exit-ARGS:      TEST.args  += --exit=ARGS
-testmsg-exit-MAIN:      TEST.args  += --exit=MAIN
-testmsg-exit-HOST0:     TEST.args  += --exit=HOST0
-testmsg-exit-HOST1:     TEST.args  += --exit=HOST1
-testmsg-exit-HOST2:     TEST.args  += --exit=HOST2
-testmsg-exit-HOST3:     TEST.args  += --exit=HOST3
-testmsg-exit-HOST4:     TEST.args  += --exit=HOST4
-testmsg-exit-HOST5:     TEST.args  += --exit=HOST5
-testmsg-exit-HOST6:     TEST.args  += --exit=HOST6
-#testmsg-exit-HOST7:     TEST.args  += --exit=HOST7
-testmsg-exit-HOST8:     TEST.args  += --exit=HOST8
-testmsg-exit-HOST9:     TEST.args  += --exit=HOST9
-testmsg-exit-END:       TEST.args  += --exit=END
+testarg-exit---exit-000:    TEST.args  += --exit=invalid_label_to_show_failed-status
+testarg-exit---exit-BEGIN0: TEST.args  += --exit=BEGIN0
+testarg-exit---exit-BEGIN1: TEST.args  += --exit=BEGIN1
+testarg-exit---exit-INIT0:  TEST.args  += --exit=INIT0
+testarg-exit---exit-WARN:   TEST.args  += --exit=WARN   +force-warning
+testarg-exit---exit-CONF0:  TEST.args  += --exit=CONF0
+testarg-exit---exit-CONF1:  TEST.args  += --exit=CONF1
+testarg-exit---exit-INIT1:  TEST.args  += --exit=INIT1
+testarg-exit---exit-ARGS:   TEST.args  += --exit=ARGS
+testarg-exit---exit-MAIN:   TEST.args  += --exit=MAIN
+testarg-exit---exit-HOST0:  TEST.args  += --exit=HOST0
+testarg-exit---exit-HOST1:  TEST.args  += --exit=HOST1
+testarg-exit---exit-HOST2:  TEST.args  += --exit=HOST2
+testarg-exit---exit-HOST3:  TEST.args  += --exit=HOST3
+testarg-exit---exit-HOST4:  TEST.args  += --exit=HOST4
+testarg-exit---exit-HOST5:  TEST.args  += --exit=HOST5
+testarg-exit---exit-HOST6:  TEST.args  += --exit=HOST6
+#testarg-exit---exit-HOST7:  TEST.args  += --exit=HOST7
+testarg-exit---exit-HOST8:  TEST.args  += --exit=HOST8
+testarg-exit---exit-HOST9:  TEST.args  += --exit=HOST9
+testarg-exit---exit-END:    TEST.args  += --exit=END
 
-ALL.test.exit       = $(shell awk -F: '/^testmsg-exit-%/{next} /^testmsg-exit/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.exit))
+ALL.testexit        = $(shell awk -F: '/^testarg-exit-%/{next} /^testarg-exit/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.exit))
 
-testmsg-exit-%: message-%
-	@$(TRACE.target)
+ALL.test.exit       = $(ALL.testexit)
+ALL.test.exit.log   = $(ALL.test.exit:%=%.log)
 
-_TEST.exit.log  = $(TEST.logdir)/test.exit.log-$(TEST.today)
-
-$(_TEST.exit.log):
-	@echo "# $(_MYSELF.exit) $(_SID.exit): $(MAKE) test.exit.log" > $@
-	@$(MAKE) test.exit >> $@ 2>&1
-
-# not yet needed: test.log-compare-hint
-# TODO: diff not yet working proper
-testmsg.exit.log: $(_TEST.exit.log) 
-	@$(TRACE.target)
-	@$(TRACE.target.log)
-	@diff $(TEST.logdir)/$@ $(_TEST.exit.log) \
-	    && rm $(_TEST.exit.log) \
-	    || mv $(_TEST.exit.log) $(TEST.logdir)/$@
-	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.exit.log) $(TEST.logdir)/$@
-	@ls -l    $(TEST.logdir)/$@*
-	@-$(EXE.log-compare-hint)
-# TODO: same target as test.warnings.log
-
-ALL.test.exit.log   = testmsg.exit.log
-
-test.exit.log-compare:  TEST.target_prefix  = test.exit
-test.exit.log-move:     TEST.target_prefix  = test.exit
+test.exit.log-compare:  TEST.target_prefix  = testarg-exit
+test.exit.log-move:     TEST.target_prefix  = testarg-exit
+test.exit.log:          TEST.target_prefix  = testarg-exit
 
 test.exit:          $(ALL.test.exit)
 test.exit.log:      $(ALL.test.exit.log)
-    # test.log-compare-hinz not yet used because we only have one .log file
