@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.125 22/02/22 09:27:40
+#?      @(#) Makefile 1.126 22/03/19 12:32:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.125
+_SID.test          := 1.126
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -316,7 +316,7 @@ help.test.targets:
 #_____________________________________________________ internal test target __|
 
 HELP-_internal  = _____________________________________ internal test target _
-HELP-help.test.internal = print GNU Make's internals and global project settings
+HELP-testcmd-test.internal = print GNU Make's internals and global project settings
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
@@ -327,7 +327,7 @@ HELP-help.test.internal = print GNU Make's internals and global project settings
 test.file-1:
 test,file-2:
 test_file-3:
-help.test.internal: test.file-1 test,file-2 test_file-3
+testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@$(TRACE.target)
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
@@ -410,6 +410,10 @@ help.test.internal: test.file-1 test,file-2 test_file-3
 	@echo '#                    use: make help.test.makevars'
 # not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
+
+# TODO (2022) not yet added to proper variables
+ALL.help.test      += testcmd-test.internal
+ALL.tests          += testcmd-test.internal
 
 help.test.makevars:
 	@echo '# $$(.VARIABLES)    = '
