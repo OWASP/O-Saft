@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.7 22/03/19 15:45:22";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.8 22/03/19 21:24:36";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -979,10 +979,12 @@ $txt_cols
 } # show_alias
 
 sub _show_ciphers_ssltest {
-    # special output for --legacy=ssltest: ciphers sorted by protocol
-    # %ciphers are sorted by protocol # TODO sorting cipher names not yet implemented
+    # special output for --legacy=ssltest:
+    # %ciphers are sorted by protocol and name  # SEE Note:Testing, sort
     my $last_k  = "";
-    foreach my $key (sort { $ciphers{$a}->{ssl} cmp $ciphers{$b}->{ssl} } keys %ciphers) {
+    foreach my $key (sort { $ciphers{$a}->{ssl}   cmp $ciphers{$b}->{ssl} ||
+                            $ciphers{$a}->{names} cmp $ciphers{$b}->{names}
+                          } keys %ciphers) {
         if ($last_k ne $ciphers{$key}->{ssl}) {
             $last_k =  $ciphers{$key}->{ssl};
             printf("%s Ciphers Supported...\n", $ciphers{$key}->{ssl});
@@ -1349,7 +1351,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.7 2022/03/19
+2.8 2022/03/19
 
 =head1 AUTHOR
 
