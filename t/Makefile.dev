@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.55 22/03/17 08:34:59
+#?      @(#) Makefile.dev 1.56 22/03/19 15:50:19
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.55
+_SID.dev           := 1.56
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -86,18 +86,20 @@ LIST.osaft-ciphers-cmd  := \
 	alias   const   rfc     regex   description sorted \
 	dump    openssl osaft   show    simple  ssltest
 
-# some command and options supported by Ciphers.pm are supported by $(SRC.pl)
-# too, but must be used there as  --test-ciphers-*
-LIST.osaft-ciphers--test := $(LIST.osaft-ciphers-cmd:%=--test-ciphers-%)
-
-# command/options for Ciphers.pm composed of previoues ones and some specials
+# command/options for Ciphers.pm composed of previous ones and some specials
 LIST.osaft-ciphers  := \
 	$(LIST.osaft-ciphers-cmd) \
 	getter=0x060040   getter=0x02060040 key=DES-CBC-MD5 \
 	getter=0xC0,0x2C  getter=0x0300C02C key=ECDHE-ECDSA-AES256-GCM-SHA384 \
 	getter=0xCC,0xA9  getter=0x0300CCA9 key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
+	key=DHE-PSK-AES128-SHA     key=DHE_PSK_WITH_AES_128_CBC_SHA \
+	key=DHE-PSK-AES128-SHA256  key=DHE-PSK-AES128-CBC-SHA256    \
     # only $(LIST.osaft-ciphers-cmd) is tested here, as they all produce the
     # same output as $(LIST.osaft-ciphers--test)
+
+# some command and options supported by Ciphers.pm are supported by $(SRC.pl)
+# too, but must be used there as  --test-ciphers-*
+LIST.osaft-ciphers--test := $(LIST.osaft-ciphers-cmd:%=--test-ciphers-%)
 
 LIST.o-saft-pl     += $(LIST.osaft-ciphers--test)
 
