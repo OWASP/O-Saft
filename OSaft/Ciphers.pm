@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.6 22/03/18 12:34:21";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.7 22/03/19 15:45:22";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -440,7 +440,7 @@ sub get_notes   { return  get_param(shift, 'notes');    }
 =head2 get_key(   $cipher_name)
 
 Get hex key for given cipher name; searches in cipher suite names and in cipher
-suite constants.
+suite constants. Given name must match exactly.
 
 =head2 get_keys(  $cipher_pattern)
 
@@ -469,18 +469,18 @@ Find cipher key(s) for given cipher name or cipher constant.
 sub get_key     {
     my $txt = shift;
     my $key = uc($txt);
-       $key =~ s/X/x/g;
+       $key =~ s/X/x/g; # 0X... -> 0x...
     return $key if defined $ciphers{$key};  # cipher's hex key itself
     foreach my $key (keys %ciphers) {
         my @names = get_names($key);
-        return $key if (0 < (grep{/^$txt/i} @names));
+        return $key if (0 < (grep{/^$txt$/i} @names));
     }
     # any other text, try to normalise ...      # example:  SSL_CK_NULL_WITH_MD5
     $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
     $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
     foreach my $key (keys %ciphers) {
         my @names = get_const($key);
-        return $key if (0 < (grep{/^$txt/i} @names));
+        return $key if (0 < (grep{/^$txt$/i} @names));
     }
     _warn("521: no key found for '$txt'");  # most likely a programming error %cfg or <DATA> herein
     return '';
@@ -1349,7 +1349,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.6 2022/03/18
+2.7 2022/03/19
 
 =head1 AUTHOR
 
