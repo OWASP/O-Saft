@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.13 22/03/19 15:35:44
+#?      @(#) Makefile.cipher 1.14 22/03/19 23:27:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.13
+_SID.cipher        := 1.14
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -66,40 +66,39 @@ _TEST.cipher-range := testcmd-cipher-+test-ciphers-list
 # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
 
 LIST.cipher-range  := \
-	range=c0xx    range=ccxx    range=ecc       range=SSLv2_long \
-	range=rfc     range=long    range=shifted   range=SSLv3_SSLv2 \
-	range=SSLv2   range=SSLv3   range=TLSv12    range=TLSv13
+	--range=c0xx    --range=ccxx    --range=ecc       --range=SSLv2_long \
+	--range=rfc     --range=long    --range=shifted   --range=SSLv3_SSLv2 \
+	--range=SSLv2   --range=SSLv3   --range=TLSv12    --range=TLSv13
 # --range=safe  and  --range=huge  disabled, because it takes a long time
-LIST.cipher        := dummy-no-arg  \
-	$(LIST.cipher-range) \
-	legacy=owasp  force-openssl \
-	cipher-alpn   cipher-npn    cipher-openssl  cipher-curves
+LIST.cipher        := \
+	--dummy-no-arg  $(LIST.cipher-range) \
+	--legacy=owasp  --force-openssl \
+	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.cipher),\
-	$(eval $(_TEST.cipher)-$(subst =,-,$(arg))_%:  TEST.args = --$(arg) ) \
+	$(eval $(_TEST.cipher)-$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
 	$(eval ALL.testcipher  += $(_TEST.cipher)-$(subst =,-,$(arg))_ ) \
     )
     $(foreach arg, $(LIST.cipher-range),\
-	$(eval $(_TEST.cipher-range)-$(subst =,-,$(arg))_%:  TEST.args = --$(arg) ) \
+	$(eval $(_TEST.cipher-range)-$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
 	$(eval ALL.testcipher  += $(_TEST.cipher-range)-$(subst =,-,$(arg))_ ) \
     )
 endif
 
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cipher-+test-ciphers-list-%: TEST.init  = --trace-CLI --header +test-ciphers-list
-#testcmd-cipher+test-ciphers-list_%: TEST.args +=
 testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
+testcmd-cipher-+cipher--%:          TEST.init   = --trace-CLI --header +cipher
 testcmd-cipher-+cipher_%:           TEST.args  +=
 testcmd-cipher-+cipher--nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
 ALL.testcipher += testcmd-cipher-+cipher--nossltls_
 
 # some more individual tests
-testcmd-cipher-+cipher%:            TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
