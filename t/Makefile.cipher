@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.11 22/03/17 10:26:46
+#?      @(#) Makefile.cipher 1.12 22/03/19 09:19:40
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.11
+_SID.cipher        := 1.12
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -60,8 +60,8 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-_TEST.cipher       := testcmd-cipher+cipher
-_TEST.cipher-range := testcmd-cipher+test-ciphers-list
+_TEST.cipher       := testcmd-cipher-+cipher
+_TEST.cipher-range := testcmd-cipher-+test-ciphers-list
 # +test-ciphers-list without --range=* not defined here,
 # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
 
@@ -89,14 +89,14 @@ ifndef cipher-macros-generated
     )
 endif
 
-testcmd-cipher%:                    EXE.pl      = ../$(SRC.pl)
-testcmd-cipher+test-ciphers-list-%: TEST.init   = --trace-CLI --header +test-ciphers-list
-#testcmd-cipher+test-ciphers-list_%: TEST.args  +=
-testcmd-cipher+cipher-%:            TEST.init   = --trace-CLI --header +cipher
-testcmd-cipher+cipher_%:            TEST.args  +=
-testcmd-cipher+cipher--nossltls_%:  TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
+testcmd-cipher-+test-ciphers-list-%: TEST.init  = --trace-CLI --header +test-ciphers-list
+#testcmd-cipher+test-ciphers-list_%: TEST.args +=
+testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header +cipher
+testcmd-cipher-+cipher_%:           TEST.args  +=
+testcmd-cipher-+cipher--nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
-ALL.testcipher += testcmd-cipher+cipher--nossltls_
+ALL.testcipher += testcmd-cipher-+cipher--nossltls_
 
 # some more individual tests
 testcmd-cipher-+cipher%:            TEST.init   = --trace-CLI --header
