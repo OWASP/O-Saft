@@ -41,14 +41,14 @@ in this project.
 
 =item L</O-Saft Makefile Annotations>
 
-The sub-headers in this in section are referenced from other Makefile* .
+The sub-headers in this section are referenced from other Makefile* .
 
 =back
 
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.45 22/02/22 09:07:41
+@(#) Makefile.pod 1.46 22/03/19 12:01:12
 
 =head1 AUTHOR
 
@@ -120,7 +120,7 @@ To get brief (mainly technical) information about the Makefile, use:
     make -f t/Makefile.cgi e-LIST.cgi.badIPv6
     make -f t/Makefile.cgi s-LIST.cgi.badIPv6
 
-(Makefile.cgi is an example, may be any other Makefile also).
+(Makefile.cgi is an example, may be any other Makefile* also).
 
 
 =head1 O-Saft Makefile Limitations
@@ -147,12 +147,13 @@ modules from  ./Net  and  ./OSaft.  This may result in perl warnings like:
 
 To avoid this, following symbolic links exist in  $(TEST.dir) :
 
-    ./t        -> .
-    ./Net      -> ../Net
-    ./OSaft    -> ../OSaft
-    ./osaft.pm -> ../osaft.pm
-    ./contrib  -> ../contrib
-    ./docs     -> ../docs
+    ./t             -> .
+    ./Net           -> ../Net
+    ./OSaft         -> ../OSaft
+    ./osaft.pm      -> ../osaft.pm
+    ./.o-saft.pl    -> ../.o-saft.pl
+    ./contrib       -> ../contrib
+    ./docs          -> ../docs
 
 
 =head1 O-Saft Makefile*
@@ -194,11 +195,11 @@ included by the main Makefile and organised as follows:
 
     Makefile
         include t/Makefile
-            include t/Makefile.help
             include t/Makefile.inc
+            include t/Makefile.help
             include t/Makefile.warnings
-            include t/Makefile.cmd
             include t/Makefile.cipher
+            include t/Makefile.cmd
             include t/Makefile.exit
             include t/Makefile.opt
             include t/Makefile.ext
@@ -207,10 +208,8 @@ included by the main Makefile and organised as follows:
             include t/Makefile.tcl
             include t/Makefile.etc
             include t/Makefile.dev
-            include t/Makefile.pod
             include t/Makefile.php
             include t/Makefile.init
-            include t/Makefile.make
             include t/Makefile.misc
             include t/Makefile.critic
             include t/Makefile.docker
@@ -231,6 +230,12 @@ option, for example::
 Therefore each  Makefile*  includes  t/Makefile  depending on existence of
 the  _SID.test  variable.
 
+Following Makefile* are not included and provide additional information:
+
+    Makefile.pod
+    Makefile.diffs
+    Makefile.examples
+
 
 =head2 O-Saft Makefile Variable and Target Names
 
@@ -238,7 +243,7 @@ General rules for our variable and target names in Makefile* are:
 
 * variable names start with uppercase characters or  _
 
-* names consist only of characters a-zA-Z0-9_.-
+* names consist only of characters a-zA-Z0-9_.+-
 
 * names starting with  _  are intended for internal use
 
@@ -246,7 +251,7 @@ General rules for our variable and target names in Makefile* are:
 
 * names may use variable suffixes which are separated by  _
 
-* target names use only lowercase characters and  .  and  -  and  _
+* target names use only lowercase characters and  .  and  +  and  -  and  _
 
 Examples:
 
@@ -369,7 +374,7 @@ Notes about some special variables:
                       with ALL.tests)
     ALL.includes    - dynamically generated list of all included Makefile*
     ALL.Makefiles   - static list of all source Makefile* of the project
-    ALL.test.TYP    - list of all targets from Makefile.TYP
+    ALL.test.TYP    - list of all targets from Makefile.TYP aka Makefile.*
     ALL.tests       - list of all targets for testing
     ALL.tests.log   - list of all targets for tests writing to logfiles
 
@@ -431,7 +436,6 @@ Example:
     \# some additional text with more than one line $(_NL)\
     \# other line
 
-These  variables (above) are used by the  help  and  doc  target.  Each of
 These  variables (above) are used by the  help  and  doc  target. They are
 printed as follows:
 
@@ -485,7 +489,7 @@ Some words about the terms and words used in GNU Make in this project.
 * Definition using ::=  immediate definition; macro expanded when defined.
 
 Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
-:=  is used.
+:=  is used in our Makefile*.
 
 
 =head2 GNU Make:include
@@ -544,7 +548,10 @@ Remember important variables:
     $(MAKEFILES)    - environment variable containing makefiles to be read
     $(MAKEFILE_LIST)- included Makefiles in the order they have been read
 
-For details use: make help.test.make
+For details use:
+
+    make help.test.make
+    make testarg-make-help.test.internal
 
 
 =head2 GNU Make:automatic variables
@@ -569,7 +576,7 @@ Use of $$ avoids evaluating $ .
 =head2 GNU Make:pattern-specific variables
 
 Processing pattern-specific variables changed in gmake, I guess with 3.81.
-Makefiles in this project rely on the behaviour of  gmake 3.81  and newer,
+Makefile* in this project rely on the behaviour of  gmake 3.81  and newer,
 which applies all pattern-specific variables from all matching patterns.
 
 If interested in the difference, read on.
