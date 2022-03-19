@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.57 22/03/19 18:50:09
+#?      @(#) Makefile.dev 1.58 22/03/19 22:32:57
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.57
+_SID.dev           := 1.58
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -212,9 +212,10 @@ HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
 # Some of them are explicitly disabled, see "useless generated" below.
 #
 
-EXE.gendoc      := $(EXE.gendoc.perldoc)
+#EXE.gendoc      := $(EXE.gendoc.perldoc)
+    # cannot be set here because it then will be part of LIST.program
 _EXE.gendoc-opt := $(_EXE.$(EXE.gendoc)-opt)
-ifndel dev-macros-generated
+ifndef dev-macros-generated
     # ifndef enforces execution of $(foreach ...) below
 
     # SEE Make:generating help
