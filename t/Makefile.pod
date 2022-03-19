@@ -48,7 +48,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.46 22/03/19 12:01:12
+@(#) Makefile.pod 1.47 22/03/19 12:34:29
 
 =head1 AUTHOR
 
@@ -551,7 +551,7 @@ Remember important variables:
 For details use:
 
     make help.test.make
-    make testarg-make-help.test.internal
+    make testcmd-test.internal
 
 
 =head2 GNU Make:automatic variables
