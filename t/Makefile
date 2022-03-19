@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.126 22/03/19 12:32:51
+#?      @(#) Makefile 1.127 22/03/19 18:44:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.126
+_SID.test          := 1.127
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -141,6 +141,11 @@ EXE.diff           := tkdiff
 EXE.log-diff        = $(EXE.log-tkdiff)
     # chaneg EXE.log-diff to use another program
 
+# need a usable way to change generator for man-pages
+EXE.gendoc.perldoc := perl2doc
+EXE.gendoc.pod2man := pod2man
+EXE.gendoc         := $(EXE.gendoc.pod2man)
+
 _EXE.grep-opt      := -q
     # grep (mainly used in message-% target) should not report matching lines
     # variable can be reset or redifined for more verbose output
@@ -150,9 +155,13 @@ _EXE.sort-opt      := -n -f
     # case-sensitivity, these options do the traditional sort
     # TODO: need to check first if sort supports these options
 
-_EXE.perldoc-opt   := -n nroff
+_EXE.perldoc-opt   := -n nroff -T
     # newer perldoc prints with plain text format by default
     # -n nroff enforced the traditional behaviour with ASCII-escapes
+
+_EXE.pod2man-opt   := --utf8
+    # --date=DATESTRING
+    # will be used for testing to avoid diff in generated files
 
 # define script or parts of it as variables, for better human readability
 # SEE Make:target matching
@@ -317,6 +326,7 @@ help.test.targets:
 
 HELP-_internal  = _____________________________________ internal test target _
 HELP-testcmd-test.internal = print GNU Make's internals and global project settings
+HELP-help.test.internal = testcmd-test.internal (used in Makefile.make)
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
@@ -410,6 +420,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '#                    use: make help.test.makevars'
 # not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
+help.test.internal: testcmd-test.internal
 
 # TODO (2022) not yet added to proper variables
 ALL.help.test      += testcmd-test.internal
