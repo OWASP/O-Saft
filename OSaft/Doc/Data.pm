@@ -31,7 +31,7 @@ BEGIN { # mainly required for testing ...
 }
 
 our $VERSION    = "22.02.13";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.45 22/02/18 20:57:31";
+my  $SID_data   = "@(#) Data.pm 1.46 22/03/20 19:45:23";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -407,7 +407,7 @@ sub list        {
     return join("\n", sort @txt);
 } # list
 
-sub _main_usage {
+sub _main_doc_usage {
     #? print usage
     my $name = (caller(0))[1];
     print "# various commands:\n";
@@ -421,9 +421,9 @@ sub _main_usage {
     }
     printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
     return;
-}; # _main_usage
+}; # _main_doc_usage
 
-sub _main       {
+sub _main_doc   {
     #? print own documentation or that from specified file
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  see t/.perlcriticrc for detailed description of "no critic"
@@ -436,7 +436,7 @@ sub _main       {
     while (my $cmd = shift @argv) {
         my $arg    = shift @argv; # get 2nd argument, which is filename
         print_pod($0, __PACKAGE__, $SID_data)   if ($cmd =~ /^--?h(?:elp)?$/);
-        _main_usage()           if ($cmd =~ /^--usage$/);
+        _main_doc_usage()       if ($cmd =~ /^--usage$/);
         # ----------------------------- commands
         print list() . "\n"     if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
@@ -448,7 +448,7 @@ sub _main       {
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
     }
     exit 0;
-} # _main
+} # _main_doc
 
 sub o_saft_help_done {};    # dummy to check successful include
 
@@ -595,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.45 2022/02/18
+1.46 2022/03/20
 
 =head1 AUTHOR
 
@@ -608,7 +608,7 @@ with these prefixes, all following commands and options are ignored.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main(@ARGV) if (not defined caller);
+_main_doc(@ARGV) if (not defined caller);
 
 1;
 
