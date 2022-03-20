@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 2.3 22/03/20 09:14:49",
+    SID_osaft   => "@(#) osaft.pm 2.4 22/03/20 22:49:06",
 
 };
 
@@ -2676,14 +2676,14 @@ our %cfg = (
         'notOWASP_B'    => '',
         'notOWASP_C'    => '',
         'notOWASP_D'    => '',
-# (?:DHE-PSK[_-]CHACHA)?
+
         # RegEx containing pattern to identify vulnerable ciphers
             #
             # In a perfect (perl) world we can use negative lokups like
             #     (ABC)(?!XYZ)
             # which means: contains `ABC' but not `XYZ' where `XYZ' could be to
             # the right or left of `ABC'.
-            # But in real world some perl implementations fail can't match such
+            # But in real world,  some perl implementations  fail to match such
             # pattern correctly. Hence we define two pattern:  one for positive
             # match and second for the negative (not) match. Both patterns must
             # be used programatically.
@@ -3432,7 +3432,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.3 2022/03/20
+2.4 2022/03/20
 
 =head1 AUTHOR
 
