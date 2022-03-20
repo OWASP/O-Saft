@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.129 22/03/20 08:25:56
+#?      @(#) Makefile 1.130 22/03/20 22:50:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.129
+_SID.test          := 1.130
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -332,6 +332,11 @@ HELP-testcmd-test.internal = print GNU Make's internals and global project setti
 # NOTE: $(_SID*) variables indicate if a sub-makefile was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
 #       the targets executes and not when the Makefile is read.
+# NOTE: when target testcmd-test.internal is called with  -n ; the command:
+#           @echo '# $$(MAKE)          = $(MAKE)'
+#       it will produce output:
+#           # $(MAKE)          = make
+#       SEE GNU Make:MAKE vs. MAKE_COMMAND
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
 test.file-1:
 test,file-2:
