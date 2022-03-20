@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.14 22/03/19 23:27:57
+#?      @(#) Makefile.cipher 1.16 22/03/20 08:24:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.14
+_SID.cipher        := 1.16
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -72,7 +72,7 @@ LIST.cipher-range  := \
 # --range=safe  and  --range=huge  disabled, because it takes a long time
 LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
-	--legacy=owasp  --force-openssl \
+	--legacy=owasp  --force-openssl --showhost  --trace-KEY \
 	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
@@ -80,12 +80,12 @@ LIST.cipher        := \
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.cipher),\
-	$(eval $(_TEST.cipher)-$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_TEST.cipher)-$(subst =,-,$(arg))_ ) \
+	$(eval $(_TEST.cipher)$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
+	$(eval ALL.testcipher  += $(_TEST.cipher)$(subst =,-,$(arg))_ ) \
     )
     $(foreach arg, $(LIST.cipher-range),\
-	$(eval $(_TEST.cipher-range)-$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_TEST.cipher-range)-$(subst =,-,$(arg))_ ) \
+	$(eval $(_TEST.cipher-range)$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
+	$(eval ALL.testcipher  += $(_TEST.cipher-range)$(subst =,-,$(arg))_ ) \
     )
 endif
 
@@ -103,9 +103,9 @@ testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
-testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
-testcmd-cipher-+cipher--showhost_%: TEST.args  += +cipher --showhost
-testcmd-cipher-+cipher--tracekey_%: TEST.args  += +cipher --trace-KEY
+testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
+#testcmd-cipher-+cipher--showhost_%: TEST.args  += +cipher --showhost
+#testcmd-cipher-+cipher--tracekey_%: TEST.args  += +cipher --trace-KEY
 testcmd-cipher-+cipher--trace-host_%:   TEST.args  += +cipher --showhost --trace-KEY
 # not yet implemented # TODO: hende missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
