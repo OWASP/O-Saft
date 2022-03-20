@@ -48,7 +48,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.47 22/03/19 12:34:29
+@(#) Makefile.pod 1.48 22/03/20 22:50:19
 
 =head1 AUTHOR
 
@@ -64,7 +64,7 @@ Please also  SEE Documentation  in o-saft.pl .
 
 All Makefile* provide a set of targets using a well defined naming convention.
 
-Examples (for makefile.tcl)  which provide help (documentation)  for available
+Examples (for Makefile.tcl)  which provide help (documentation)  for available
 targets:
 
     make
@@ -73,7 +73,11 @@ targets:
     make help.test.tcl
     make help.test.tcl.all
 
-To just get the list of all targets, following can be used:
+Get a list of (nearly) all targets:
+
+    make s-ALL.tests
+
+Just get a list of all targets for a specific type:
 
     make e-ALL.test.tcl
     make s-ALL.test.tcl
@@ -99,11 +103,15 @@ and following targets exist:
     test.Ext
     test.Ext.log
 
+Show what all targets will do (huge output):
+
+    make testarg-make-n
+
 
 =head2 O-Saft Makefile Example Usage
 
 To show readable (for humans) information about variables and targets from
-a Makefile* itself, see
+a Makefile* itself, see:
 
     make -f t/Makefile.help
 
@@ -643,6 +651,9 @@ t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
 
 When  $(MAKE)  is used in documentation (variables or texts),  make should 
 be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
+
+When using  $(MAKE)  is used in quoted texts, for example:  echo "$(MAKE)"
+GNU Make behaves strange and evaluates the line before printing).
 
 
 =head1 O-Saft Makefile Annotations
