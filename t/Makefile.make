@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.15 22/03/19 17:55:48
+#?      @(#) Makefile.make 1.16 22/03/20 08:27:08
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.15
+_SID.make          := 1.16
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -36,6 +36,7 @@ HELP-_makefile1 = _____________________________________ testing help targets _
 HELP-help.make.doc  = print documentation about available Makefile.*
 HELP-test.make      = test help* targets of our Makefiles
 HELP-test.make.log  = same as test.make but store output in '$(TEST.logdir)/'
+HELP-testarg-make-n = execute 'make tests -n'
 HELP-test.make.log-compare  = compare results of test.make.log (if any)
 
 HELP.make           = $(_NL)\
@@ -64,7 +65,7 @@ HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
 # special/individual help.* targets in Makefiles
 LIST.helpmake  := help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.makefiles.doc \
-		  help.test.internal help.test.makevars help.test.log-info
+		  testcmd-test.internal help.test.makevars help.test.log-info
 # Makefile-specific help.test.* targets
 # pod and template are missing in $(ALL.inc.type) because they are not included
 # help.test.%.all  is rarely used
@@ -80,9 +81,9 @@ ALL.help       += help.makefiles.doc
 
 # TODO: help.test.help, help.help  may exist twice
 
-ALL.test.make      += $(LIST.helpmake:%=testarg-make-%)
-ALL.test.make      += $(LIST.testmake:%=testarg-make-%)
-ALL.test.make.log  += $(ALL.test.make:%=%.log)
+ALL.testmake       += $(LIST.helpmake:%=testarg-make-%)
+ALL.testmake       += $(LIST.testmake:%=testarg-make-%)
+ALL.test.make      += $(ALL.testmake)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
@@ -90,6 +91,15 @@ testarg-make%:      TRACE.target= echo "\#$(EXE.pl) $(TEST.init) $(TEST.args)"
     # targets should print the command, the TRACE.target variable is misused
     # for that (assuming that all target use $(TRACE.target) ).
     # FIXME: prints  #make  at end, which is wrong
+testarg-make-n:     TEST.init   = tests -n
+testarg-make-n:
+	@$(TRACE.target)
+	@$(MAKE) -s tests -n  ALL.test.make=$(ALL.testmake)
+# setting ALL.test.make= in recursive call avoids endless recursion
+# might also be done by checking $(MAKELEVEL) > 2
+
+ALL.test.make      += testarg-make-n
+ALL.test.make.log  += $(ALL.test.make:%=%.log)
 
 $(foreach arg, $(LIST.helpmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
 $(foreach arg, $(LIST.testmake), $(eval testarg-make-$(arg): TEST.args = $(arg)) )
