@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 2.2 22/03/20 08:01:27",
+    SID_osaft   => "@(#) osaft.pm 2.3 22/03/20 09:14:49",
 
 };
 
@@ -2666,15 +2666,17 @@ our %cfg = (
         'OWASP_AA'      => '^(TLS(?:v?13)?[_-](?:AES|CHACHA20)[_-])',  # newer (2021 and later) openssl use strange names for TLSv1.3
         'OWASP_A'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
         'OWASP_B'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
-        'OWASP_C'       => '^(?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]',
+        'OWASP_C'       => '^((?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]|(?:(?:EC)?DHE-)?PSK[_-]CHACHA)',
+            # all ECDHE-PSK-CHACHA* DHE-PSK-CHACHA* and PSK-CHACHA* are C too
         'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
         'OWASP_NA'      => '(?:ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ)',
+            # PCT are not SSL/TLS; will produce 'miss' in internal tests
         # TODO: need exception, i.e. TLSv1 and TLSv11
         'notOWASP_A    '=> '^(?:TLSv11?)',
         'notOWASP_B'    => '',
         'notOWASP_C'    => '',
         'notOWASP_D'    => '',
-
+# (?:DHE-PSK[_-]CHACHA)?
         # RegEx containing pattern to identify vulnerable ciphers
             #
             # In a perfect (perl) world we can use negative lokups like
@@ -3430,7 +3432,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.2 2022/03/20
+2.3 2022/03/20
 
 =head1 AUTHOR
 
