@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.8 22/03/19 21:24:36";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.9 22/03/20 08:45:02";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -640,32 +640,35 @@ sub sort_cipher_names   {
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
         qw(ECDH[_-].*?128) ,
-        qw(AES)     ,                   # 5. all AES and specials
+        qw(ECCPWD[_-])  ,               # 6. unknown ecliptical curve
+        qw(AES)     ,                   # 7. all AES and specials
         qw(KRB5)    ,
         qw(SRP)     ,
         qw(PSK)     ,
         qw(GOST)    ,
+        qw((?:IANA|LEGACY)[_-]GOST2012),# 
         qw(FZA)     ,
         qw((?:PSK|RSA).*?CHACHA),
         qw(CHACHA)  ,
-        qw((?:EDH|DHE).*?CHACHA),       # 6. all DH
+        qw((?:EDH|DHE).*?CHACHA),       # 8. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
         qw((?:EDH|DHE).*?256) ,
         qw((?:EDH|DHE).*?128) ,
         qw((?:EDH|DHE).*?(?:RSA|DSS)) ,
-        qw(CAMELLIA) ,                  # 7. unknown strength
+        qw(CAMELLIA) ,                  # 9. unknown strength
         qw((?:SEED|IDEA|ARIA)),
-        qw(RSA[_-]) ,                   # 8.
+        qw(RSA[_-]) ,                   # 10.
         qw(DH[_-])  ,
         qw(RC)      ,
-        qw(EXP)     ,                   # 9. Export ...
+        qw(EXP)     ,                   # 11. Export ...
         qw(AEC.*?256) ,                 # insecure
         qw(AEC.*?128) ,
         qw(AEC)     ,
         qw(ADH.*?256) ,                 # no encryption
         qw(ADH.*?128) ,
         qw(ADH)     ,
+        qw(PCT_)    ,                   # not an SSL/TLS protocol, just to keep our checks quiet
     );
     foreach my $rex (@insecure) {               # remove all known insecure suites
         _trace2("sort_cipher_names: insecure regex\t= $rex }");
@@ -1351,7 +1354,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.8 2022/03/19
+2.9 2022/03/20
 
 =head1 AUTHOR
 
