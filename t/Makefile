@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.128 22/03/19 19:52:37
+#?      @(#) Makefile 1.129 22/03/20 08:25:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.128
+_SID.test          := 1.129
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -144,7 +144,7 @@ EXE.log-diff        = $(EXE.log-tkdiff)
 # need a usable way to change generator for man-pages
 EXE.gendoc.perldoc := perldoc
 EXE.gendoc.pod2man := pod2man
-EXE.gendoc         := $(EXE.gendoc.pod2man)
+EXE.gendoc         := $(EXE.gendoc.perldoc)
 
 _EXE.grep-opt      := -q
     # grep (mainly used in message-% target) should not report matching lines
@@ -326,7 +326,6 @@ help.test.targets:
 
 HELP-_internal  = _____________________________________ internal test target _
 HELP-testcmd-test.internal = print GNU Make's internals and global project settings
-HELP-help.test.internal = testcmd-test.internal (used in Makefile.make)
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
@@ -420,7 +419,6 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '#                    use: make help.test.makevars'
 # not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
-help.test.internal: testcmd-test.internal
 
 # TODO (2022) not yet added to proper variables
 ALL.help.test      += testcmd-test.internal
