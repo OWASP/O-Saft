@@ -26,7 +26,7 @@ use constant {
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
     STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 2.1 22/03/18 08:03:47",
+    SID_osaft   => "@(#) osaft.pm 2.2 22/03/20 08:01:27",
 
 };
 
@@ -3361,6 +3361,9 @@ sub _cmd_init   {
     foreach my $key (sort keys %cfg) {  # well-known "summary" commands
         push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
     }
+    # SEE Note:Testing, sort
+    @{$cfg{'commands_cmd'}} = sort(@{$cfg{'commands_cmd'}});
+    @{$cfg{'cmd-info--v'}}  = sort(@{$cfg{'cmd-info--v'}});
     return;
 } # _cmd_init
 
@@ -3427,7 +3430,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.1 2022/03/18
+2.2 2022/03/20
 
 =head1 AUTHOR
 
