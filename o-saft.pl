@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.7 22/04/02 12:28:59",
+    SID         => "@(#) yeast.pl 2.8 22/04/02 14:04:17",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -5922,12 +5922,8 @@ sub print_title     {
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {
-        print "=== Checking $ssl Ciphers ...";      # SEE Note:Cipher and Protocol
+        print_header($txt, "", "", 1);  # SEE Note:Cipher and Protocol
     }
-    if ($legacy eq 'quick')     { print_header($txt, "", "", $header); }
-    if ($legacy eq 'owasp')     { print_header($txt, "", "", $header); }
-    if ($legacy eq 'simple')    { print_header($txt, "", "", $header); }
-    if ($legacy eq 'full')      { print_header($txt, "", "", $header); }
     return;
 } # print_title
 
