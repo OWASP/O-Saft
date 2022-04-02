@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.4 22/03/18 12:31:06",
+    SID         => "@(#) yeast.pl 2.7 22/04/02 12:28:59",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -161,7 +161,7 @@ BEGIN {
 _yeast_TIME("BEGIN}");          # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 _yeast_EXIT("exit=INIT0 - initialisation start");
 
-our $osaft_standalone = 0;      # SEE Note:Stand-alone
+$::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
@@ -296,7 +296,7 @@ sub _load_file          {
     #{
     # # currently (2017) disabled, until all modules can be included with require
     #    no warnings qw(once);
-    #    return "" if (defined($osaft_standalone)); # SEE Note:Stand-alone
+    #    return "" if (defined($::osaft_standalone)); # SEE Note:Stand-alone
     #}
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or _warn("101: 'require $fil' failed");
@@ -1883,7 +1883,7 @@ sub _load_modules       {
         warn STR_ERROR, "008: $err";
     }
 
-    return if (0 < $osaft_standalone);  # SEE Note:Stand-alone
+    return if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
 
     $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $err) {
@@ -3360,7 +3360,7 @@ sub _useopenssl($$$$)   {
     if ($cipher =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
         $cipher =~ s#^.*[\r\n]+New,\s*##s;
         $cipher =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
-        my $dh  = get_dh_paramter($cipher, $data);
+        my $dh  = osaft::get_dh_paramter($cipher, $data);
         _trace1("_useopenssl()\t= $cipher $dh }");
         return $version, $cipher, $dh;
     }
@@ -4247,7 +4247,7 @@ sub checkcipher($$) {
     $prot{$ssl}->{'LOW'}++         if ($risk =~ /LOW/i);
     $prot{$ssl}->{'MEDIUM'}++      if ($risk =~ /MEDIUM/i);
     $prot{$ssl}->{'HIGH'}++        if ($risk =~ /HIGH/i);
-    $risk = get_cipher_owasp($c);
+    $risk = osaft::get_cipher_owasp($c);
     $prot{$ssl}->{'OWASP_miss'}++  if ($risk eq 'miss');
     $prot{$ssl}->{'OWASP_NA'}++    if ($risk eq '-?-');
     $prot{$ssl}->{'OWASP_D'}++     if ($risk eq 'D');
@@ -5124,7 +5124,7 @@ sub check7525       {
         $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
         # TODO: $check...{val} may already contain "<<...>>"; remove it
     }
-    # TODO: use get_dh_paramter() for more reliable check
+    # TODO: use osaft::get_dh_paramter() for more reliable check
 
     # 4.5.  Truncated HMAC
     #    Implementations MUST NOT use the Truncated HMAC extension, defined in
@@ -5921,7 +5921,9 @@ sub print_title     {
     if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
-    if ($legacy eq 'compact')   { print "=== Checking $ssl Ciphers ..."; }
+    if ($legacy =~ /(compact|full|owasp|quick|simple)/) {
+        print "=== Checking $ssl Ciphers ...";      # SEE Note:Cipher and Protocol
+    }
     if ($legacy eq 'quick')     { print_header($txt, "", "", $header); }
     if ($legacy eq 'owasp')     { print_header($txt, "", "", $header); }
     if ($legacy eq 'simple')    { print_header($txt, "", "", $header); }
@@ -6084,8 +6086,8 @@ sub print_cipherline($$$$$$) {
     my $cipher= OSaft::Ciphers::get_name($key);
     my $bits  = OSaft::Ciphers::get_bits($key);
     my $sec   = OSaft::Ciphers::get_sec($key); # will be changed for --legacy=owasp
-       $sec   = get_cipher_owasp($cipher)   if ('owasp' eq $legacy);
-       $sec   = "-" if (('no' eq $support) and ('owasp' eq $legacy));
+       $sec   = osaft::get_cipher_owasp($cipher) if ('owasp' eq $legacy);
+       $sec   = "-"    if (('no' eq $support)  and  ('owasp' eq $legacy));
     my $desc  = OSaft::Ciphers::get_desc($key);
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
     # first our own formats
@@ -6202,7 +6204,7 @@ sub print_ciphertotals($$$$) {
         printf("Intermediate: %s\n", $prot{$ssl}->{'MEDIUM'}); # MEDIUM
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
-    if ($legacy =~ /(full|compact|simple|owasp|quick)/) {
+    if ($legacy =~ /(compact|full|owasp|quick|simple)/) {
         print_header(_get_text('out_summary', $ssl), "", $cfg{'out'}->{'header'});
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
@@ -6235,7 +6237,7 @@ sub _sort_cipher_results {
     foreach my $key (keys %$unsorted) {
         my $cipher    = OSaft::Ciphers::get_name($key);
         my $sec_osaft = lc(OSaft::Ciphers::get_sec($key));# lower case
-        my $sec_owasp = get_cipher_owasp($cipher);
+        my $sec_owasp = osaft::get_cipher_owasp($cipher);
            $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
         # Idea about sorting according severity/security risk of a cipher:
         #   * sort first according OWASP rating A, B, C
@@ -6382,7 +6384,7 @@ sub printciphers_dh     {
     #? print ciphers and DH parameter from target (available with openssl only)
     # currently DH parameters requires openssl, check must be done in caller
     my ($legacy, $host, $port) = @_;
-    my $openssl_version = get_openssl_version($cmd{'openssl'});
+    my $openssl_version = osaft::get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version= $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes Perl can do this check  # TODO: move this check to _check_openssl()
         _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
@@ -6505,7 +6507,7 @@ sub printprotocols      {
 sub printciphersummary  {
     #? print summary of cipher check +cipher
     my ($legacy, $host, $port, $total) = @_;
-    if ($legacy =~ /(full|compact|simple|owasp|quick)/) {   # but only our formats
+    if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
         print_header("\n" . _get_text('out_summary', ""), "", "", $cfg{'out'}->{'header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
@@ -7895,18 +7897,18 @@ while ($#argv >= 0) {
             # if perlish programming
             # push(@{$cfg{'targets'}}, [$idx, $prot, $host, $port, $auth, $proxy, $path, $arg]);
             # elsif people expecting object-oriented programming
-            set_target_orig( $idx, $arg);
-            set_target_nr(   $idx, $idx);
-            set_target_prot( $idx, $prot);
-            set_target_host( $idx, $host);
-            set_target_port( $idx, $port);
-            set_target_auth( $idx, $auth);
-            set_target_proxy($idx, $proxy);
-            set_target_path( $idx, $path);
-            set_target_start($idx, 0);
-            set_target_open( $idx, 0);
-            set_target_stop( $idx, 0);
-            set_target_error($idx, 0);
+            osaft::set_target_orig( $idx, $arg);
+            osaft::set_target_nr(   $idx, $idx);
+            osaft::set_target_prot( $idx, $prot);
+            osaft::set_target_host( $idx, $host);
+            osaft::set_target_port( $idx, $port);
+            osaft::set_target_auth( $idx, $auth);
+            osaft::set_target_proxy($idx, $proxy);
+            osaft::set_target_path( $idx, $path);
+            osaft::set_target_start($idx, 0);
+            osaft::set_target_open( $idx, 0);
+            osaft::set_target_stop( $idx, 0);
+            osaft::set_target_error($idx, 0);
             # endif
         }
     } else {
@@ -7978,11 +7980,11 @@ if (2 == @{$cfg{'targets'}}) {
     # Latest given port can be found in  $cfg{'port'}. If it differs from the
     # port stored in the list @{$cfg{'targets'}}, redefine port for the host.
     # NOTE: the documentation always recommends to use --port first.
-    my $host = get_target_host(1);
-    my $port = get_target_port(1);
+    my $host = osaft::get_target_host(1);
+    my $port = osaft::get_target_port(1);
     if (defined $cfg{'port'}) {
         _warn("045: '--port' used with single host argument; using '$host:$cfg{'port'}'");
-        set_target_port(1, $cfg{'port'});
+        osaft::set_target_port(1, $cfg{'port'});
     }
 }
 
@@ -8084,7 +8086,7 @@ _yeast_TIME("inc{");
 
 #| import common and private modules
 #| -------------------------------------
-_load_modules();
+_load_modules() if (0 == $::osaft_standalone);
 
 _yeast_TIME("inc}");
 _yeast_TIME("mod{");
@@ -8360,8 +8362,8 @@ my $idx   = 0;
 foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if (0 == @{$target}[0]);       # first entry contains default settings
     $idx++;
-    $host = get_target_host($idx);
-    $port = get_target_port($idx);
+    $host = osaft::get_target_host($idx);
+    $port = osaft::get_target_port($idx);
     $cfg{'port'}    = $port;
     $cfg{'host'}    = $host;
     next if _yeast_NEXT("exit=HOST0 - host $host:$port");
@@ -8383,7 +8385,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     $Net::SSLinfo::use_https    = $cfg{'use'}->{'https'}; # reset
     $Net::SSLinfo::use_http     = $cfg{'use'}->{'http'};  # reset
-    $Net::SSLinfo::target_url   = get_target_path($idx);
+    $Net::SSLinfo::target_url   = osaft::get_target_path($idx);
     $Net::SSLinfo::target_url   =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
     print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out'}->{'header'});
@@ -8447,7 +8449,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     # print DNS stuff
     if (_is_cfg_do('host') or (($info + $check + $cmdsni) > 0)) {
         _y_CMD("+info || +check || +sni*");
-        if ($legacy =~ /(full|compact|simple|owasp)/) {
+        if ($legacy =~ /(compact|full|owasp|simple)/) {
             print_ruler();
             print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
             print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
@@ -9804,6 +9806,21 @@ example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
 
 
+=head2 Note:Cipher and Protocol
+
+Cipher suites names are not unique per SSL/TLS protocol and can be used in
+multiple protocols, for example SSLv3 and TLSv11. When ciphers are checked
+with  +cipher  or  +check , its not possible to map the reported cipher to
+the propper SSL/TLS protocol, unless the  --header option was used.
+
+As the the checks for cipher suites are done per protocol, the result will
+be pretended with a header line indicating the current SSL/TLS protocol.
+
+This additional header line is only printed for our own formats. If output
+format for other tools is requested by using  --legacy=* , these tools are
+responsible themself to print proper results.
+
+
 =head2 Note:Connection Test
 
 To avoid long timeouts, a quick connection check to the target is done. At
@@ -10065,6 +10082,8 @@ documentation  OSaft/Doc/help.txt  section "Version 19.11.19 and later".
 
 Internally, the commands  cipher_intern, cipher_openssl, cipher_ssleay and
 cipher_dump are used; the command cipher still remains in $cfg{do}.
+
+SEE L<Note:Cipher and Protocol>.
 
 
 =head2 Note:--enabled --disabled
