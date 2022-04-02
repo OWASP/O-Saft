@@ -525,7 +525,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.1 Spring Edition 2022
+#?      @(#) 2.2 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -625,10 +625,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.1 22/04/02 14:13:39"
+set cfg(SID)    "@(#) o-saft.tcl 2.2 22/04/02 17:45:43"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.1}
+set cfg(VERSION) {2.2}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -764,11 +764,14 @@ set cfg(max53)  4050           ;# max. size of text to be stored in table column
 set cfg(docs-exe)   0          ;# 0: read configuration of commands and options
                                 #    from static files in ./docs/
                                 # 1: read configuration using o-saft.pl
+set cfg(nbsp)   \u2007         ;# character used for non-breaking spaces
 
 set cfg(DESC)   {-- CONFIGURATION misc settings ------------------------------}
+set cfg(no-match)   {_NO_}     ;# text pattern used to avoid matching some text
 
 # RC-END }
 set cfg(docs-files) {}         ;# contains the read files from ./docs/
+set cfg(guiwidgets) {}         ;# contains the widgets of the GUI
 
 config_docker prg              ;# may initialise some docker-specific settings
 
@@ -904,16 +907,25 @@ array set cfg_texts "
     host        {Host\[:Port\]}
     hideline    {Hide complete line}
     c_toggle    {toggle visibility\nof various texts}
+    DESC_other  {-- CONFIGURATION texts used at various places ---------------}
+    win_colour  {Colour}
+    win_font    {Font}
+    win_help    {Help}
+    win_search  {Search ...}
+    win_search_results  {Search Results for:}
+    no_browser  {no browser found}
 "
 
 array set cfg_tipps "
     DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
     settings    {Open window with more settings}
+    open_browser {Open in browser:}
     layout      {Format used in result TAB}
     DESC_other  {-- CONFIGURATION texts used for tool tips on other objects --}
     choosen     {Choosen value for}
     hideline    {Hide complete line instead of pattern only}
-    show_hide   {show/hide: }
+    possible_values {possible values:}
+    show_hide   {show/hide:}
     tabMENU     {Select commands and options in ☰ menu.}
     tabCMD      {
 Select commands. All selected commands will be executed with the 'Start' button.
@@ -1258,7 +1270,7 @@ proc _dbx         {level txt} {
     # [info frame -1];           # better
     catch { dict get [info frame -1] proc } me; # name of procedure or error
     if {[regexp {not known in dictionary} $me]} { set me "." }; # is toplevel
-    puts stderr "#dbx \[$cfg(ICH)\]$me$txt"
+    puts stderr "#dbx# \[$cfg(ICH)\]$me$txt"
     return
 }; # _dbx
 
@@ -1780,7 +1792,7 @@ proc show_window       {w}          {
 proc www_browser       {url}        {
     #? open URL in browser, uses system's native browser
     global cfg prg
-    if {[string length $prg(BROWSER)] < 1} { pwarn "no browser found"; return }
+    if {[string length $prg(BROWSER)] < 1} { pwarn [_get_text no_browser]; return }
     #win32# [tk windowingsystem]  eq "win32"
     #win32# { does not work with ActiveTcl
     #win32# package require twapi_com
@@ -1815,8 +1827,8 @@ proc bind_browser      {w tagname}  {
         $w tag add    $tagname-$i  $a "$a + $e c"
         $w tag config $tagname-$i -foreground [_get_color link]
         $w tag bind   $tagname-$i <ButtonPress> "www_browser $t"
-        if {0==$cfg(TIP)} { tooltip::tooltip $w -tag $tagname-$i "Open in browser: $t" }
-            # cannot use guitip_set as we want to bind to $tagnmae and not $w
+        if {0==$cfg(TIP)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
+            # cannot use guitip_set as we want to bind to $tagname and not $w
     }
     return
 }; # bind_browser
@@ -1824,7 +1836,7 @@ proc bind_browser      {w tagname}  {
 proc create_selected   {title val}  {
     #? opens toplevel window with selectable text
     global cfg myX
-    global __var;   # must be global
+    global __var   ;# must be global
     set w    .selected
     toplevel $w
     wm title $w "$cfg(TITLE): $title"
@@ -1850,7 +1862,7 @@ proc create_window     {title size} {
     pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
     guitheme_set $this.f1.closewin $cfg(bstyle)
-    if {"Help" eq $title || "About" eq $title} { return $this }
+    if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
 
     # all other windows have a header line and a Save button
@@ -2051,7 +2063,7 @@ proc create_table {parent content}  {
             # NOTE: there my be values like "No other text ..."
             # these literal text should not match our yes|no condition, hence
             if {[regexp -nocase {^no\s+(alternate name|response sent)} $col1]} {
-                set col1 "_NO_$col1"               ;# add marker
+                set col1 "$cfg(no-match)$col1"         ;# add marker
             }
             if {[regexp -nocase {^(yes|no)} $col1]} {
                 # lines from +check
@@ -2060,8 +2072,9 @@ proc create_table {parent content}  {
                 set col1 [regsub -nocase {^(yes|no)\s.*} $col1 {\1}]
                 if {$col1 eq $col2} { set col2 "" };# if there is no col2
             }
-            if {[regexp {^_NO_} $col1]} {
-                set col1 [regsub {^_NO_} $col1 { }];# replace marker; space avoids later colouring
+            if {[regexp "^$cfg(no-match)" $col1]} {
+                # replace marker; space avoids later colouring
+                set col1 [regsub "^$cfg(no-match)" $col1 { }]
             }
             if {[regexp {^[!\*]+} $line]} {
                 # warning and hint lines
@@ -2085,7 +2098,7 @@ proc create_table {parent content}  {
             set line [regsub {^[ \t]+} $line {}]   ;# remove trailing spaces
             set line [regsub -all {([ \t])+} $line { }]
             set cols [split $line " "]
-            set line "$nr $ssl\u2007$cols"         ;# add nr and protocol
+            set line "$nr $ssl$cfg(nbsp)$cols"     ;# add nr and protocol
                 # quick&dirty hack to uniquely show the protocol where a cipher
                 # was used: using the non-breaking space (aka FIGURE SPACE, aka
                 # numeric non-breaking space) U+2007 avoids that tcl's tabletab
@@ -2262,12 +2275,12 @@ proc create_filtertab   {parent cmd}    {
     #if {"table" eq $cfg(gui-result)} { set tab [create_filtertable $this $cmd].t }
         # create_filter_* returns widget, which is same as $parent
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
-        tk fontchooser config -command {create_selected "Font"}; # what to do with selection
+        tk fontchooser config -command {create_selected [_get_text win_font]}; # what to do with selection
             # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
         pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
         guitheme_set $parent.tkfont $cfg(bstyle)
     }
-    pack [button $parent.tkcolor -command {create_selected "Color" [tk_chooseColor]} ] -side right
+    pack [button $parent.tkcolor -command {create_selected [_get_text win_colour] [tk_chooseColor]} ] -side right
     guitheme_set $parent.tkcolor $cfg(bstyle)
     return
 }; # create_filtertab
@@ -2812,7 +2825,7 @@ proc create_win   {parent title cmd} {
             if {[winfo exists $last_obj]} {
                 set txt "<text>"
                 if {[llength $values] > 0} { set txt [join $values { | }] }
-                guitip_set $last_obj "possible values: $txt"   ;# $tip may containing collected values
+                guitip_set $last_obj "[_get_tipp possible_values] $txt";# $tip may containing collected values
             }
             _dbx 4 " create: »$idx« »$val«"
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
@@ -3171,7 +3184,7 @@ proc search_more  {w search_text regex} {
     set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
     set txt  [create_text $this ""].t
     #{ adjust window, quick&dirty
-    create_window:title   $this "Search Results for: »$search_text«"
+    create_window:title   $this "[_get_text win_search_results] »$search_text«"
     create_window:nosave  $this    ;# no "Save" button needed here
     create_window:helpcmd $this {create_about; global cfg; $cfg(winA).t see 84.0}
         # redefine help button to show About and scroll to Help description
@@ -3335,7 +3348,7 @@ proc search_text  {w search_text} {
         # finally, the window will be destroyed after a few seconds.
         global myX
         set warn [create_window "[_get_text h_nomatch] »$search_text«" $myX(geo-)]
-        create_window:title   $warn "Search ..."
+        create_window:title   $warn [_get_text win_search]
         create_window:nosave  $warn    ;# no "Save" button needed here
         create_window:helpcmd $warn {create_about; global cfg; $cfg(winA).t see 84.0}
         set   auto_destroy_timeout wait
@@ -3425,7 +3438,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.1 22/04/02 14:13:39
+ #?      @(#) .o-saft.tcl generated by 2.2 22/04/02 17:45:43
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3643,7 +3656,7 @@ proc osaft_help   {}    {
               {regex}   { set head "Regular expressions used internally"
                           set txt [regsub -all -line {(\n)(\s*)([^ ]+)}  $txt {\1\2'\3'}]
                         }
-              {rfc}     { set head "List of RFC related to SSL, TLS" }
+              {rfc}     { set head "List of RFCs related to SSL, TLS" }
               {glossar} { set head "Glossar" }
               {text}    { set head "Texts used in various messages" }
               {ourstr}  { set head "Regular expressions to match our own strings" }
