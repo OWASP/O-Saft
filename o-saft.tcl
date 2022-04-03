@@ -88,7 +88,7 @@ exec wish "$0" ${1+"$@"}
 #?      can be customised in  .o-saft.tcl , which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
-#?      available in the contrib/ directory.
+#?      available in the contrib/ directory or can be created with  --rc .
 #?
 #?     Buttons
 #?      By default, an image will be used for  most buttons.  Images look more
@@ -114,6 +114,7 @@ exec wish "$0" ${1+"$@"}
 #?      <ButtonPress-1> is the "select button", usually the left mouse button.
 #?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
 #?      (which is most likely the <left click>).
+#?      This behaviour is disabled with the  --test-tcl  option.
 #?
 #?   Help / Search
 #?      The help [?] button opens a new window with the complete documentation
@@ -153,7 +154,7 @@ exec wish "$0" ${1+"$@"}
 #?
 #? OPTIONS
 #?   Options for information and help:
-#?      --h     print this text
+#?      --h         print this text
 #?      --help=opts print options (for compatibility with o-saft.pl)
 #?      --version   print version number
 #?      +VERSION    print version number (for compatibility with o-saft.pl)
@@ -165,12 +166,7 @@ exec wish "$0" ${1+"$@"}
 #?      --gen-docs  generate static files for configuration texts
 #?      --pod       use podviewer to show help text
 #?      --stdin     read data from STDIN and show in result TAB
-#?      --load=FILE read FILE and show in result TAB
-#?
-#?   Options passed through to o-saft.pl:
-#?      +*          any option starting with +
-#?      --*         any other option starting with --
-# TODO: --post=PRG  --post=  parameter passed to o-saft
+#?      --load=FILE read data from FILE and show in result TAB
 #?
 #?   Options for use with docker:
 #?      --docker    use o-saft-docker instead of o-saft.pl
@@ -215,6 +211,11 @@ exec wish "$0" ${1+"$@"}
 #?      --tip       --gui-tip
 #?      --id=ID     --docker-id=ID
 #?      --tag=TAG   --docker-tag=TAG
+#?
+#?   Options passed through to o-saft.pl:
+#?      +*          any option starting with +
+#?      --*         any other option starting with --
+# TODO: --post=PRG  --post=  parameter passed to o-saft
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -272,11 +273,11 @@ exec wish "$0" ${1+"$@"}
 #?      STDIN  and  _LOAD  as filenames can not be used to load data.
 #?
 #?      Not really a problem, but worth to mention:
-#?      In the table view of the results or in text view without the  --header
-#?      option, it is not possible to map cipher suites to the proper  SSL/TLS
-#?      protocol. Therefore the cipher suite is prepended by the protocol.
-#?      Due technical reasons,  the protocol and the cipher suite name will be
-#?      separated my the non-breaking space character U+2007.
+#?      It's not possible to map cipher suites to the proper  SSL/TLS protocol
+#?      in the results TAB in table view. Therefore the cipher suite names are
+#?      prepended by the protocol.
+#?      Due technical reasons, the protocol and the cipher suite name  will be
+#?      separated by the non-breaking space character U+2007.
 #?      Take care when processing saved results, [Save] and [STDOUT] button.
 #?
 #?
@@ -362,6 +363,8 @@ exec wish "$0" ${1+"$@"}
 #.             example of a filter
 #.
 #. LIMITATIONS
+#.      All help texts reference to the default hardcoded texts,  even if they
+#.      are changed in  .o-saft.tcl .
 #.
 #. HACKER's INFO
 #.   TODO (8/2016):
@@ -397,7 +400,7 @@ exec wish "$0" ${1+"$@"}
 #.
 #.      When building the complete documention (help window),  additional text
 #.      documentation (beside that provided by +help) will be added before the
-#.      ATTRIBUTION  section.  Hence ATTRIBUTION must exist as  section header
+#.      ATTRIBUTION  section. Hence  ATTRIBUTION  must exist as section header
 #.      in output of "o-saft.pl +help".
 #.
 #.      The tool will only work if o-saft.pl is available and executes without
@@ -446,7 +449,7 @@ exec wish "$0" ${1+"$@"}
 #.      See  Debugging Options  below also.
 #.
 #.   Coding (GUI)
-#.      Images (i.e.for buttons) are defined in  o-saft-img.tcl, which must be
+#.      Images (i.e. for buttons) are defined in o-saft-img.tcl, which must be
 #.      installed in same path as  o-saft.tcl  itself.  The definitions are in
 #.      a separate file to keep the code more clean herein.
 #.
@@ -488,7 +491,7 @@ exec wish "$0" ${1+"$@"}
 #.   Tracing and Debugging
 #.      All output for  --trace  and/or  --dbx  is printed on STDERR.
 #.      Trace messages are prefixed with:   #[$0]:
-#.      Debug messages are prefixed with:   #dbx [$0]:
+#.      Debug messages are prefixed with:   #dbx# [$0]:
 #.
 #.      --test=FILE
 #.      --test=FILE --gui-result=text
@@ -525,7 +528,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.3 Spring Edition 2022
+#?      @(#) 2.4 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -558,7 +561,7 @@ if {![regexp -- {--test-?tcl} $argv]} {
 # might be defined later in the code, but it must be done before any usage.
 # Hence it's defined right below.
 
-if {0==$cfg(testtcl)} {
+if {0<$cfg(testtcl)} {
     # do not bind in debug-only mode to avoid errors
     foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
                          TButton TCombobox TEntry TLabel TText Frame Menu \
@@ -625,10 +628,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.3 22/04/03 00:56:06"
+set cfg(SID)    "@(#) o-saft.tcl 2.4 22/04/03 02:02:03"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.3}
+set cfg(VERSION) {2.4}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1527,7 +1530,7 @@ proc guitheme_init  {theme} {
     # Search for all Tcl widgets (aka commands), then check if tail of command
     # (part right of right-most .) exists as key in array  cfg_buttons.  If it
     # exits, then use values defined in  cfg_buttons  to set attributes of the
-    # widget. First build a regex which matches all widget names of buttons.
+    # widget. First build a RegEx which matches all widget names of buttons.
     set rex [join [array names cfg_buttons] "|"]
     set rex [join [list {\.(} $rex {)$}]    "" ]
     _dbx 4 ": regex = $rex"
@@ -1690,8 +1693,8 @@ proc apply_filter_text  {w} {
 
 proc apply_filter_table {w} {
     #? apply filters for markup in output, data is in table widget $w
-    # FIXME: this is ugly code because the regex in f_rex are optimised for
-    # use in Tcls's text widget, the regex must be changed to match the values
+    # FIXME: this is ugly code because the RegEx in f_rex are optimised for
+    # use in Tcls's text widget, the RegEx must be changed to match the values
     # in Tcl's tablelist columns
     _dbx 2 "{$w}"
     global cfg
@@ -1729,7 +1732,7 @@ proc apply_filter_table {w} {
             if {"" eq $rex} { continue }   ;# -"-
             _dbx 4 " $key : /$rex/ bg=$bg, fg=$fg, fn=$fn"
             # finding the pattern in the  table's cells is not as simple as in
-            # texts (see apply_filter_text() above), that's why the regex must
+            # texts (see apply_filter_text() above), that's why the RegEx must
             # be applied to the proper column: $col and $matchtxt is needed
             switch -exact $key {
                 "no"        { continue }
@@ -1743,8 +1746,8 @@ proc apply_filter_table {w} {
                 "YES"       { set col 2; set matchtxt $value }
             }
             set rex [regsub {^(\*\*|\!\!)} $rex {\\\1}]
-                # regex are designed for Tcl's text search where we have the
-                # -exact or -regex option; this regex must be converted for
+                # RegEx are designed for Tcl's text search where we have the
+                # -exact or -regex option; this RegEx must be converted for
                 # use in Tcl's regexp: need to escape special characters
             if {[regexp         ^(A|B|C|D|-?-)$         $key]} { set col 2; set matchtxt $value }
             if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt }
@@ -2501,7 +2504,7 @@ proc create_help  {sect} {
     }
 
     _dbx 4 " 4. search for all references to section head lines in TOC and add click event"
-    # NOTE: used regex must be similar to the one used in 1. above !!
+    # NOTE: used RegEx must be similar to the one used in 1. above !!
     set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? '()=,:.-]+( |$)} 3.0 $nam]
     #dbx# puts "4. $anf\n$end"
     set i 0
@@ -3326,7 +3329,7 @@ proc search_text  {w search_text} {
                 _message warning [_get_text h_badregex] $err
                 return
             }
-            # else { regex OK }
+            # else { RegEx OK }
             }
     }
     _dbx 4 " regex sanitised= $regex"
@@ -3434,7 +3437,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.3 22/04/03 00:56:06
+ #?      @(#) .o-saft.tcl generated by 2.4 22/04/03 02:02:03
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
