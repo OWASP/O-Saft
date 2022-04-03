@@ -552,7 +552,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.6 Spring Edition 2022
+#?      @(#) 2.7 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -602,7 +602,7 @@ proc copy2clipboard {w shift} {
     set klasse [winfo class $w]
     set txt {}
     if {1==$shift} { set txt "$w $klasse: " }
-    # TODO: Spinbox not complete; some classes are missing
+    # TODO: Menu, Spinbox not complete; some classes are missing
     switch $klasse {
        Frame        { append dum "nothing to see in frames" }
        Button       -
@@ -613,6 +613,7 @@ proc copy2clipboard {w shift} {
        TButton      -
        TCombobox    -
        TLabel       -
+       Menubutton   -
        Checkbutton  -
        Radiobutton  { append txt [lindex [$w config -text] 4] }
        Entry        -
@@ -621,7 +622,11 @@ proc copy2clipboard {w shift} {
        TText        { append txt [string trim [$w get 1.0 end]] }
        default      { puts "** unknown class $klasse" }
     }
-    if {1==$shift} { append txt "\n -command [lindex [$w config -command] 4]" }
+    if {1==$shift} {
+        set cmd ""
+        catch {lindex [$w config -command] 4} cmd  ;# show error or command
+        append txt "\n -command $cmd"
+    }
     putv "copy2clipboard($w, $shift): {\n $txt\n#}"
     clipboard clear
     clipboard append -type STRING -format STRING -- $txt
@@ -652,10 +657,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.6 22/04/03 23:22:38"
+set cfg(SID)    "@(#) o-saft.tcl 2.7 22/04/04 01:50:52"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.6}
+set cfg(VERSION) {2.7}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -771,7 +776,7 @@ set myX(rpad)   15             ;# right padding in the lower right corner
 set myX(padx)   5              ;# padding to right border
 
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
-set cfg(bstyle) {image}        ;# button style:  image  or  text
+set cfg(gui-button) {image}    ;# button style:  image  or  text
                                 # used with --gui-layout=classic only
 set cfg(gui-layout) {tablet}   ;# tablet:  tool layout for tablet, smartphone
                                 # classic: tool layout for view on desktop
@@ -800,6 +805,8 @@ set cfg(no-match)   {_NO_}     ;# text pattern used to avoid matching some text
 # RC-END }
 set cfg(docs-files) {}         ;# contains the read files from ./docs/
 set cfg(guiwidgets) {}         ;# contains the widgets of the GUI
+set cfg(guimenus)   {}         ;# contains the widgets of the GUI's menus
+                                # debugging only for --gui-layout=tablet
 
 config_docker prg              ;# may initialise some docker-specific settings
 
@@ -811,7 +818,7 @@ catch {
 
 #| configure GUI
 
-set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
+set cfg(gui-tip)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
 set IMG(help) ::tk::icons::question
 #et IMG(...)                   ;#  other images are defined in cfg(IMG)
@@ -1040,8 +1047,8 @@ if {[regexp {indows} $tcl_platform(os)]} {
 }
 if {1==[info exists env(ANDROID_DATA)]} {
     # dirty hack to detect Android and adapt configuration
-    set cfg(bstyle)   "text" ;# text by default, because icons are too small
-    set prg(PERL)     /data/data/com.termux/files/usr/bin/perl
+    set cfg(gui-button) "text" ;# text by default, because icons are too small
+    set prg(PERL)       /data/data/com.termux/files/usr/bin/perl
         # FIXME: not working for all perl installations on Android
 }
 # NOTE:  as Tcl is picky about empty variables, we have to ensure later, that
@@ -1453,7 +1460,7 @@ proc update_cfg   {}    {
    return
 }; # update_cfg
 
-# if {1==$cfg(TIP)} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
+# if {1==$cfg(gui-tip)} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
 proc tooltip      {w help}  {
     bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
@@ -1513,7 +1520,7 @@ proc gui_set_readonly {w}   {
 proc guitip_set   {w txt}   {
     #? add tooltip message to given widget
     global cfg
-    if {1==$cfg(TIP)} {     # package tooltip not available, use own one
+    if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
         tooltip $w "$txt"
     } else {
         set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
@@ -1856,7 +1863,7 @@ proc bind_browser      {w tagname}  {
         $w tag add    $tagname-$i  $a "$a + $e c"
         $w tag config $tagname-$i -foreground [_get_color link]
         $w tag bind   $tagname-$i <ButtonPress> "www_browser $t"
-        if {0==$cfg(TIP)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
+        if {0==$cfg(gui-tip)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
             # cannot use guitip_set as we want to bind to $tagname and not $w
     }
     return
@@ -1872,7 +1879,7 @@ proc create_selected   {title val}  {
     wm geometry  $w 200x50
     pack [entry  $w.choosen  -textvariable __var -relief flat]
     pack [button $w.closewin -command "destroy $w"] -side right -padx $myX(rpad)
-    guitheme_set $w.closewin $cfg(bstyle)
+    guitheme_set $w.closewin $cfg(gui-button)
     guitip_set   $w.choosen "[_get_tipp choosen] $title"
     set __var "$val"
     return 1
@@ -1890,7 +1897,7 @@ proc create_window     {title size} {
     wm geometry  $this $size
     pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
-    guitheme_set $this.f1.closewin $cfg(bstyle)
+    guitheme_set $this.f1.closewin $cfg(gui-button)
     if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
 
@@ -1900,8 +1907,8 @@ proc create_window     {title size} {
     pack [button $this.f0.help_me     -command "create_help {$title}"] -side right
     pack [button $this.f1.saveconfig  -command {osaft_save "CFG" 0}]   -side left
     # FIXME: widget paremeter $tbl missing for osaft_save
-    guitheme_set $this.f1.saveconfig $cfg(bstyle)
-    guitheme_set $this.f0.help_me    $cfg(bstyle)
+    guitheme_set $this.f1.saveconfig $cfg(gui-button)
+    guitheme_set $this.f0.help_me    $cfg(gui-button)
     return $this
 }; # create_window
 
@@ -1949,15 +1956,15 @@ proc create_host  {parent host_nr}  {
          [button $this.host_del -command "remove_host $this; set hosts($host_nr) {}"] \
          [button $this.host_add -command "create_host {$parent} [array size hosts];"] \
 
-    guitheme_set $this.host_add $cfg(bstyle)
-    guitheme_set $this.host_del $cfg(bstyle)
+    guitheme_set $this.host_add $cfg(gui-button)
+    guitheme_set $this.host_del $cfg(gui-button)
     if {0==$nr} {
         # first line has no {-} but {About}
         grid forget  $this.host_del
         if {"classic" eq $cfg(gui-layout)} {
             grid [button $this.about -command "create_about"] -row 0
             grid config  $this.about -column 4 -sticky e -padx "1 $myX(padx)"
-            guitheme_set $this.about $cfg(bstyle)
+            guitheme_set $this.about $cfg(gui-button)
         }
     }
 
@@ -2302,10 +2309,10 @@ proc create_filtertab   {parent cmd}    {
         tk fontchooser config -command {create_selected [_get_text win_font]}; # what to do with selection
             # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
         pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
-        guitheme_set $parent.tkfont $cfg(bstyle)
+        guitheme_set $parent.tkfont $cfg(gui-button)
     }
     pack [button $parent.tkcolor -command {create_selected [_get_text win_colour] [tk_chooseColor]} ] -side right
-    guitheme_set $parent.tkcolor $cfg(bstyle)
+    guitheme_set $parent.tkcolor $cfg(gui-button)
     return
 }; # create_filtertab
 
@@ -2477,11 +2484,11 @@ proc create_help  {sect} {
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
     pack config  $this.f1.m  -padx 10
     pack config  $this.f1.help_home   $this.f1.help_help -padx $myX(rpad)
-    guitheme_set $this.f1.help_home   $cfg(bstyle)
-    guitheme_set $this.f1.help_prev   $cfg(bstyle)
-    guitheme_set $this.f1.help_next   $cfg(bstyle)
-    guitheme_set $this.f1.help_help   $cfg(bstyle)
-    guitheme_set $this.f1.helpreset   $cfg(bstyle)
+    guitheme_set $this.f1.help_home   $cfg(gui-button)
+    guitheme_set $this.f1.help_prev   $cfg(gui-button)
+    guitheme_set $this.f1.help_next   $cfg(gui-button)
+    guitheme_set $this.f1.help_help   $cfg(gui-button)
+    guitheme_set $this.f1.helpreset   $cfg(gui-button)
     guitip_set   $this.f1.m [_get_tipp help_mode]
     guitip_set   $this.f1.s [_get_tipp helpsearch]
     #guitip_set   $this.f1.help.rset  [_get_tipp helpreset]
@@ -2713,10 +2720,10 @@ proc create_tab   {parent layout cmd content} {
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
    set cfg(objT) $tab.ttyresult
-    guitheme_set $tab.closetab   $cfg(bstyle)
-    guitheme_set $tab.saveresult $cfg(bstyle)
-    guitheme_set $tab.ttyresult  $cfg(bstyle)
-    guitheme_set $tab.filter     $cfg(bstyle)
+    guitheme_set $tab.closetab   $cfg(gui-button)
+    guitheme_set $tab.saveresult $cfg(gui-button)
+    guitheme_set $tab.ttyresult  $cfg(gui-button)
+    guitheme_set $tab.filter     $cfg(gui-button)
     $cfg(objN) select $tab
     return $w
 }; # create_tab
@@ -2728,7 +2735,7 @@ proc create_cmd   {parent title} {
     set name [regsub {^\+} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
     pack [button $this -text $title -command "osaft_exec $parent $title"] -side left
-    guitheme_set $this $cfg(bstyle)
+    guitheme_set $this $cfg(gui-button)
     return $this
 }; # create_cmd
 
@@ -2948,7 +2955,7 @@ proc create_buttons     {parent cmd} {
             pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [_get_color button] ] \
                  [button $this.help_me -command "create_help {$txt}" ] \
                    -side left
-            guitheme_set $this.help_me $cfg(bstyle)
+            guitheme_set $this.help_me $cfg(gui-button)
             guitip_set   $this.b [_get_tipp settings]
     
             # argh, some command sections are missing in HELP, then disable help button
@@ -2982,6 +2989,7 @@ proc create_main_menu          {parent w} {
     set w_menu $w.main.m
     set w_cmds $w.cmds.m
     set w_opts $w.opts.m
+    lappend cfg(guimenus) $w_menu $w_cmds $w_opts
     $packman \
          [menubutton $w.main -text [_get_text menu_menu] -menu $w_menu -bg black -fg [_get_color menu_menu] -borderwidth 0] \
          [menubutton $w.cmds -text [_get_text menu_cmd ] -menu $w_cmds -bg black -fg [_get_color menu_cmd ]  -borderwidth 0 -width 5] \
@@ -3136,14 +3144,14 @@ proc create_main_exit_button   {parent w} {
         #pack [button $w.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
         # TODO: does not work proper 'cause passing --v fails
         pack [checkbutton $w.img_txt -variable cfg(img_txt) -command {
-            if {1==$cfg(img_txt)} { set cfg(bstyle) "image" }
-            if {0==$cfg(img_txt)} { set cfg(bstyle) "text"  }
-            _dbx 4 " toggle: $cfg(img_txt) # $cfg(bstyle) "
-            guitheme_init $cfg(bstyle)
+            if {1==$cfg(img_txt)} { set cfg(gui-button) "image" }
+            if {0==$cfg(img_txt)} { set cfg(gui-button) "text"  }
+            _dbx 4 " toggle: $cfg(img_txt) # $cfg(gui-button) "
+            guitheme_init $cfg(gui-button)
         } \
         ] -side right
-        if {"image" eq $cfg(bstyle)} { $w.img_txt select }
-        guitheme_set $w.img_txt $cfg(bstyle)
+        if {"image" eq $cfg(gui-button)} { $w.img_txt select }
+        guitheme_set $w.img_txt $cfg(gui-button)
     }
     return $w
 }; # create_main_exit_button
@@ -3164,6 +3172,7 @@ proc remove_main        {}  {
 proc create_main  {layout}  {
     #? create toplevel GUI, layout as classic or tablet; sets $cfg(gui-layout)
     _dbx 2 "{$layout}"
+    putv  " set   layout = $layout"
     global cfg
     set cfg(gui-layout) $layout
     remove_main    ;# does not harm
@@ -3183,7 +3192,7 @@ proc create_main  {layout}  {
             lappend cfg(guiwidgets) [create_main_note          $w note   ]
             lappend cfg(guiwidgets) [create_main_tabs          $w note   ]
             lappend cfg(guiwidgets) [create_main_exit_button   $w fq     ]
-            guitheme_init $cfg(bstyle) ;# apply themes
+            guitheme_init $cfg(gui-button) ;# apply themes
         }
     }
     lappend cfg(guiwidgets) [create_main_status_line $w fl ]
@@ -3508,7 +3517,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.6 22/04/03 23:22:38
+ #?      @(#) .o-saft.tcl generated by 2.7 22/04/04 01:50:52
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3615,7 +3624,7 @@ proc _get_data_file {mode}  {
 }; # _get_data_filename
 
 proc osaft_write_data   {}  {
-    #? get documentation and help texts from o-saft.pl and stor in file
+    #? get documentation and help texts from o-saft.pl and store in file
     # TODO: errors (file open etc.) are silently ignored; may result in empty files
     _dbx 2 "{}"
     global cfg prg
@@ -3849,6 +3858,7 @@ proc osaft_save   {tbl type nr} {
     _dbx 4 " file = $name"
     close $fid
     guistatus_set "TAB »$title« saved to $name"
+    putv          " saved $name "
     return
 }; # osaft_save
 
@@ -3872,6 +3882,7 @@ proc osaft_load   {cmd} {
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $results($nr)
     guistatus_set "loaded file: $name"
+    putv          " loaded $name "
     guicursor_set {}
     return
 }; # osaft_load
@@ -3938,10 +3949,10 @@ proc osaft_exec   {parent cmd}  {
     set exectxt $execcmd
     set exectxt [regsub {^\s*exec\s*.*?stdout\s*} $exectxt {}] ;# remove exec ..
     set exectxt [regsub -all {[\}\{]} $exectxt {'}]            ;# replace {}
-    guistatus_set "$exectxt"
     incr cfg(EXEC)
     set result  ""
     set status  0
+    guistatus_set "$exectxt"
     putv          " $execcmd "
     if {[catch { {*}$execcmd } result errors]} {
         # exited abnormaly, get status and sanitise result
@@ -3983,7 +3994,7 @@ proc config_read  {}    {
     if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
     update_cfg                     ;# update configuration as needed
     # read $cfg(IMG)               ;# must be read before any widget is created
-    read_images $cfg(bstyle)       ;# more precisely: before first use of guitheme_set
+    read_images $cfg(gui-button)   ;# more precisely: before first use of guitheme_set
     # read (get) data from prg(SAFT)
     # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
     #        will be empty if O-Saft's default Docker image is not (found) running
@@ -4026,7 +4037,7 @@ proc config_print {}    {
     # cfg(RCSID) set in RC-file
     set rc  "not found";    if {1  == [info exists cfg(RCSID)]} { set rc  "found" }
     set ini "not found";    if {"" ne $cfg(.CFG)}               { set ini "found" }
-    set tip "not used";     if {0  == $cfg(TIP) }               { set tip "used"  }
+    set tip "not used";     if {0  == $cfg(gui-tip) }           { set tip "used"  }
     set geo "";             if {1  == [info exists geometry]}   { set geo "$geometry" }
     set wmf "<<shown with --d only>>"
     set max "<<shown with --d only>>"
@@ -4036,7 +4047,7 @@ proc config_print {}    {
     if {0<[string length $cfg(objN)]} {
         set tab [$cfg(objN) tabs]
     }
-    if {1==[info exists env(OSAFT_MAKE)]} {
+    if {1==[info exists env(OSAFT_MAKE)]} {     # avoid diff
         set osv $str_make
     }
     # SEE Make:OSAFT_MAKE (in Makefile.pod)
@@ -4045,19 +4056,33 @@ proc config_print {}    {
         # use with --d only to avoid noisy output with "make test"
         set max [wm maxsize .]
         set wmf [wm frame   .] ;# returns a pointer
-        if {1==[info exists env(OSAFT_MAKE)]} {
+        if {1==[info exists env(OSAFT_MAKE)]} { # avoid diff
             set wmf $str_make
         }
     }
     #.CFG:      $cfg(.CFG)   # don't print, too much data
+
+    # collect important environment
+    set sys "env(...)"
+    foreach var [list HOME SHELL USER DISPLAY LANG PATH ANDROID_DATA OSAFT_MAKE \
+                      osaft_vm_build o_saft_docker_tag o_saft_docker_name] {
+        set spaces ""
+        set i [string length $var]
+        while {$i < 10} { append spaces " "; incr i; }
+        set val ""
+        if {1==[info exists env($var)]} { set val $env($var) }
+        append sys "\n |  $var$spaces= $val"
+    }
 
     set targets ""
     foreach {i host} [array get hosts] {
         set targets "$targets $host"
     }
     set tk_wm ""
-    if {0==[info exists env(ANDROID_DATA)]} {
+    if {1==[info exists env(ANDROID_DATA)]} {
         # some platforms are picky (i.e. Android's AndroWish)-:
+        set tk_wm "'Tk  version' and 'WM  frame' not shown on Android'"
+    } else {
         set tk_wm "\
 |  rcFileName= $tcl_rcFileName
 Tk  version   = $tk_patchLevel
@@ -4100,11 +4125,16 @@ ARG argv      = $argv
 CFG TITLE     = $cfg(TITLE)
  |  debug     = $cfg(DEBUG)
  |  trace     = $cfg(TRACE)
- |  tooltip   = tooltip package\t$tip
- |  bstyle    = $cfg(bstyle)
+GUI tooltip   = tooltip package\t$tip
+ |  gui-tip   = $cfg(gui-tip)
+ |  gui-button= $cfg(gui-button)
  |  gui-result= $cfg(gui-result)
  |  gui-layout= $cfg(gui-layout)
  |  docs-files= $cfg(docs-files)
+ |  menus     = $cfg(guimenus)
+ |  tabs      = $tab
+ |  tab count = $cfg(EXEC)
+SYS $sys
 TCL version   = $tcl_patchLevel
  |  library   = $tcl_library
  |  platform  = $tcl_platform(platform)
@@ -4113,8 +4143,6 @@ TCL version   = $tcl_patchLevel
  |  byteOrder = $tcl_platform(byteOrder)
  |  wordSize  = $tcl_platform(wordSize)
 $tk_wm
-TAB tabs      = $tab
- |  count     = $cfg(EXEC)
  |
 _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
     #          [tk windowingsystem] # we believe this is a window manager property
@@ -4170,7 +4198,7 @@ proc gui_init     {}    {
                       _message warning "(gui_init)" \
                           "using images for buttons is not recomended on Aqua systems"
                   } else {
-                      set cfg(bstyle) "text"; # text by default, because Aqua looks nice
+                      set cfg(gui-button) "text";# text by default, because Aqua looks nice
                   }
                   set myX(miny)   770;        # because fonts are bigger by default
                 }
@@ -4287,8 +4315,8 @@ foreach arg $argv {
         --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
         --stdin     { lappend cfg(files)    "STDIN";   }
 
-        options__for_runtime_behavior { set dumm "";   }
-        options__for_use_with_docker  { set dumm "";   }
+        options__for_runtime_behavior { set dumm "-----------"; }
+        options__for_use_with_docker  { set dumm "-----------"; }
          -docker        -
         --docker        { config_docker opt;           }
          -id=*          -
@@ -4304,15 +4332,15 @@ foreach arg $argv {
         --dockertag=*   -
         --docker-tag=*  { set   prg(docker-id)  [regsub {^--?(docker-?)?tag=} $arg {}]; }
 
-        options__for_GUI_behaviour    { set dumm "";   }
+        options__for_GUI_behaviour    { set dumm "-----------"; }
         --gui                { }
         --tip                -
-        --gui-tip            { set  cfg(TIP)         1;         }
+        --gui-tip            { set  cfg(gui-tip)     1;         }
         --img                -
         --image              -
-        --gui-button=image   { set  cfg(bstyle)      "image";   }
+        --gui-button=image   { set  cfg(gui-button)  "image";   }
         --text               -
-        --gui-button=text    { set  cfg(bstyle)      "text";    }
+        --gui-button=text    { set  cfg(gui-button)  "text";    }
         --gui-result=text    { set  cfg(gui-result)  "text" ;   }
         --gui-result=table   { set  cfg(gui-result)  "table";   }
         --gui-layout=note    -
@@ -4320,14 +4348,14 @@ foreach arg $argv {
         --gui-layout=tablet  { set  cfg(gui-layout)  "tablet" ; }
         --gui-layout=window  { set  cfg(gui-layout)  "window";  }
 
-        options__for_debugging__only  { set dumm "";   }
+        options__for_debugging__only  { set dumm "-----------"; }
         --dbx                -
         --d                  { set  cfg(DEBUG)  1;              }
         --d=*                { set  cfg(DEBUG)  [regsub {^--d=} $arg {}]; }
         --trace              { set  cfg(TRACE)  1;              }
         --v                  { set  cfg(VERB)   1;              }
 
-        options__for_testing__only    { set dumm "";   }
+        options__for_testing__only    { set dumm "-----------"; }
         +quit                { set  cfg(quit)   1;              }
         --test=*         { lappend  cfg(files)  [regsub {^--test=} $arg {}];
                                set  cfg(stdout) 1;
@@ -4339,7 +4367,7 @@ foreach arg $argv {
         --test-osaft         -
         --testosaft          { set  cfg(DEBUG)  99;             }
 
-        options__passed_to_o-saft     { set dumm "";   }
+        options__passed_to_o-saft     { set dumm "-----------"; }
         --*                  { set  exe($arg)   1;              }
         +*                   { set  exe($arg)   1; set doit 1;  }
         *                    { set  hosts([array size hosts]) $arg; }
