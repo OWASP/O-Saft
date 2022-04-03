@@ -180,8 +180,8 @@ exec wish "$0" ${1+"$@"}
 #?      --gui-button=text    use simple texts as labels for buttons
 #?      --gui-button=image   use images for buttons (see o-saft-img.tcl)
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
-#?      --gui-layout=classic tool layout for view on desktop; default: classic
-#?      --gui-layout=tablet  tool layout for tablet, smartphone
+#?      --gui-layout=classic tool layout for view on desktop
+#?      --gui-layout=tablet  tool layout for tablet, smartphone; default
 #?      --gui-result=text    print result of o-saft.pl as simple plain text
 #?      --gui-result=table   print result of o-saft.pl formated in a table
 #?
@@ -361,6 +361,31 @@ exec wish "$0" ${1+"$@"}
 #.       (F) - Filter settings
 #.             example of a filter
 #.
+#.      Main Workflow
+#.          config_read()
+#.          gui_main()
+#.              create_main()
+#.                  remove_main()
+#.                  if tablet:
+#.                      create_main_menu()
+#.                          menu MAIN
+#.                          menu Cmd
+#.                          menu Opt
+#.                      create_main_host_entries()
+#.                      create_main_note()
+#.                  if classic:
+#.                      create_main_host_entries()
+#.                      create_main_quick_buttons()
+#.                      create_main_quick_options()
+#.                      create_main_note()
+#.                      create_main_tabs()
+#.                         create_buttons(CMD)
+#.                         create_buttons(OPT)
+#.                         create_filtertab(FIL)
+#.                      create_main_exit_button()
+#.                  create_main_status_line()
+#.              osaft_init()
+#.
 #. LIMITATIONS
 #.      All help texts reference to the default hardcoded texts,  even if they
 #.      are changed in  .o-saft.tcl .
@@ -527,7 +552,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.5 Spring Edition 2022
+#?      @(#) 2.6 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -627,10 +652,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.5 22/04/03 18:16:22"
+set cfg(SID)    "@(#) o-saft.tcl 2.6 22/04/03 23:22:38"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.5}
+set cfg(VERSION) {2.6}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -747,7 +772,8 @@ set myX(padx)   5              ;# padding to right border
 
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
-set cfg(gui-layout) {classic}  ;# tablet:  tool layout for tablet, smartphone
+                                # used with --gui-layout=classic only
+set cfg(gui-layout) {tablet}   ;# tablet:  tool layout for tablet, smartphone
                                 # classic: tool layout for view on desktop
 set cfg(gui-result) {table}    ;# layout o-saft.pl's results:  text  or  table
                                 # see also comment in gui_init()
@@ -2949,6 +2975,7 @@ proc create_main_menu          {parent w} {
         menubar { set w ""         ;  set packman pack }
         normal  { set w $parent.$w ;  set packman grid;
                   pack [frame   $w -bg black ] -fill x -expand yes
+                  lappend cfg(guiwidgets) $w   ;# important! needs to be removed too
                 }
     }
     # create nenu line with button for: Menu, Commands and Options
@@ -3013,12 +3040,12 @@ proc create_main_host_entries  {parent w} {
     global cfg hosts
     set w $parent.$w
     pack [frame ${w}_1]            ;# create dummy frame to keep create_host() happy
+    lappend cfg(guiwidgets) ${w}_1 ;# required in remove_main()
     foreach {i host} [array get hosts] {    # display hosts
         if {5 < $i} { pwarn "only 6 hosts possible; »$host« ignored"; continue }
-        create_host $w $i
+        lappend cfg(guiwidgets) [create_host $w $i]
     }
-
-    return
+    return $w
 }; # create_main_host_entries
 
 proc create_main_quick_buttons {parent w} {
@@ -3121,28 +3148,45 @@ proc create_main_exit_button   {parent w} {
     return $w
 }; # create_main_exit_button
 
+proc remove_main        {}  {
+    #? destroy toplevel GUI, leave toplevel itself
+    _dbx 2 "{}"
+    global cfg
+    foreach w $cfg(guiwidgets) {
+        #if {[regexp {ft_} $w]} { } # frame for host
+        #dbx# puts "catch {destroy $w}"
+        catch {destroy $w}
+    }
+    set cfg(guiwidgets) {}
+    return
+}; # remove_main
+
 proc create_main  {layout}  {
-    #? create toplevel GUI, layout as classic or tablet
+    #? create toplevel GUI, layout as classic or tablet; sets $cfg(gui-layout)
     _dbx 2 "{$layout}"
     global cfg
+    set cfg(gui-layout) $layout
+    remove_main    ;# does not harm
     set w ""
     switch $layout {
         tablet  {
-            create_main_menu $w "menu"
-            create_main_host_entries  $w ft
-            create_main_note          $w note
+            lappend cfg(guiwidgets) [create_main_menu          $w "menu" ]
+            lappend cfg(guiwidgets) [create_main_host_entries  $w ft     ]
+            lappend cfg(guiwidgets) [create_main_note          $w note   ]
             pack [label $w.lm -text [_get_tipp tabMENU]]
+            lappend cfg(guiwidgets) $w.lm
         }
         classic {
-            create_main_host_entries  $w ft
-            create_main_quick_buttons $w fc
-            create_main_quick_options $w fo
-            create_main_note          $w note
-            create_main_tabs          $w note
-            create_main_exit_button   $w fq
+            lappend cfg(guiwidgets) [create_main_host_entries  $w ft     ]
+            lappend cfg(guiwidgets) [create_main_quick_buttons $w fc     ]
+            lappend cfg(guiwidgets) [create_main_quick_options $w fo     ]
+            lappend cfg(guiwidgets) [create_main_note          $w note   ]
+            lappend cfg(guiwidgets) [create_main_tabs          $w note   ]
+            lappend cfg(guiwidgets) [create_main_exit_button   $w fq     ]
+            guitheme_init $cfg(bstyle) ;# apply themes
         }
     }
-    create_main_status_line   $w fl
+    lappend cfg(guiwidgets) [create_main_status_line $w fl ]
     return $w
 }; # create_main
 
@@ -3464,7 +3508,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.5 22/04/03 18:16:22
+ #?      @(#) .o-saft.tcl generated by 2.6 22/04/03 23:22:38
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4180,7 +4224,6 @@ proc gui_main     {}    {
     set w [create_main $cfg(gui-layout)]
 
     osaft_init     ;# initialise options from .-osaft.pl (values shown in Options tab)
-    guitheme_init $cfg(bstyle) ;# apply themes
 
     #| load files, if any
     foreach f $cfg(files) {
