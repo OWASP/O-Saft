@@ -280,7 +280,6 @@ exec wish "$0" ${1+"$@"}
 #?      separated by the non-breaking space character U+2007.
 #?      Take care when processing saved results, [Save] and [STDOUT] button.
 #?
-#?
 #? ARGUMENTS
 #?      All arguments,  except the options described above,  are treated  as a
 #?      hostname to be checked.
@@ -528,7 +527,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.4 Spring Edition 2022
+#?      @(#) 2.5 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -628,10 +627,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.4 22/04/03 02:02:03"
+set cfg(SID)    "@(#) o-saft.tcl 2.5 22/04/03 18:16:22"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.4}
+set cfg(VERSION) {2.5}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -865,6 +864,7 @@ array set cfg_buttons "
     {menu_opts} {{-  All Options}  {}      {}   {Options submenu}}
     {menu_load} {{   Load Results} {}      {}   {Load results from file}}
     {menu_conf} {{  Confg Filter} {}      {}   {Show configuration for filtering results}}
+    {menu_mode} {{Change Layout}   {}      {}   {Toogle layout between classic and tablet}}
     {menu_help} {{ ? Help}         {}      help {Open window with complete help}}
     {menu_uber} {{ ❗  About}      {}      {!}  {About $cfg(ICH) $cfg(VERSION)}}
     {menu_exit} {{⏻  Quit}         orange  quit {Close program}}
@@ -1938,7 +1938,7 @@ proc create_host  {parent host_nr}  {
     grid config  $this.eh -column 1 -sticky ew
     grid columnconfigure    $this 1 -weight 1
     pack $this -fill x -before ${parent}_1
-    return
+    return $this
 }; # create_host
 
 proc remove_host  {parent}          {
@@ -2871,6 +2871,7 @@ proc create_buttons_opt {parent cmd} {
     pack [label $parent.of.l -text "Layout format of results:"] \
          [radiobutton $parent.of.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
          [radiobutton $parent.of.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
+         [button      $parent.of.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
          -padx 5 -anchor w -side left
     guitip_set   $parent.of [_get_tipp "layout"]
     return
@@ -2928,7 +2929,7 @@ proc create_buttons     {parent cmd} {
             if {1==[regexp $prg(rexOUT-show) $txt]} { $this.help_me config -state disable }
         }
     }
-    return
+    return $parent
 }; # create_buttons
 
 proc create_main_menu          {parent w} {
@@ -2984,6 +2985,7 @@ proc create_main_menu          {parent w} {
     $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
     $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
     $w_menu add command -label [_get_text menu_conf] -command "create_filterwin"
+    $w_menu add command -label [_get_text menu_mode] -command "create_main classic"
     $w_menu add command -label [_get_text menu_uber] -command "create_about"
     $w_menu add command -label [_get_text menu_help] -command "create_help {}"
     $w_menu add command -label [_get_text menu_exit] -command "exit"
@@ -3008,9 +3010,9 @@ proc create_main_host_entries  {parent w} {
     #? create host entries in main window
     # add hosts from command-line; line  with  +  and  -  or  !  button
     _dbx 2 "{$parent, $w}"
-    global hosts
+    global cfg hosts
     set w $parent.$w
-    pack [frame ${w}_1]        ;# create dummy frame to keep create_host() happy
+    pack [frame ${w}_1]            ;# create dummy frame to keep create_host() happy
     foreach {i host} [array get hosts] {    # display hosts
         if {5 < $i} { pwarn "only 6 hosts possible; »$host« ignored"; continue }
         create_host $w $i
@@ -3031,7 +3033,7 @@ proc create_main_quick_buttons {parent w} {
     }
     pack [button    $w.loadresult -command "osaft_load {_LOAD}"] -side left  -padx 11
     pack [button    $w.help       -command "create_help {}"]     -side right -padx $myX(padx)
-    return
+    return $w
 }; # create_main_quick_buttons
 
 proc create_main_quick_options {parent w} {
@@ -3048,7 +3050,7 @@ proc create_main_quick_options {parent w} {
         pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
         guitip_set  $w.dockerid [_get_tipp docker-id]
     }
-    return
+    return $w
 }; # create_main_quick_options
 
 proc create_main_note          {parent w} {
@@ -3061,7 +3063,7 @@ proc create_main_note          {parent w} {
     ttk::notebook   $w -padding 5
     ttk::notebook::enableTraversal $w
     pack $w -fill both -expand 1
-    return
+    return $w
 }; # create_main_note
 
 proc create_main_tabs          {parent w} {
@@ -3081,7 +3083,7 @@ proc create_main_tabs          {parent w} {
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
     pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
-    return
+    return $w
 }; # create_main_tabs
 
 proc create_main_status_line   {parent w} {
@@ -3093,7 +3095,7 @@ proc create_main_status_line   {parent w} {
     pack [frame     $w   -relief sunken -borderwidth 1] -fill x
     pack [text      $w.t -relief flat   -height 3 -background [_get_color status] ] -fill x
     gui_set_readonly $cfg(objS)
-    return
+    return $w
 }; # create_main_status_line
 
 proc create_main_exit_button   {parent w} {
@@ -3116,8 +3118,33 @@ proc create_main_exit_button   {parent w} {
         if {"image" eq $cfg(bstyle)} { $w.img_txt select }
         guitheme_set $w.img_txt $cfg(bstyle)
     }
-    return
+    return $w
 }; # create_main_exit_button
+
+proc create_main  {layout}  {
+    #? create toplevel GUI, layout as classic or tablet
+    _dbx 2 "{$layout}"
+    global cfg
+    set w ""
+    switch $layout {
+        tablet  {
+            create_main_menu $w "menu"
+            create_main_host_entries  $w ft
+            create_main_note          $w note
+            pack [label $w.lm -text [_get_tipp tabMENU]]
+        }
+        classic {
+            create_main_host_entries  $w ft
+            create_main_quick_buttons $w fc
+            create_main_quick_options $w fo
+            create_main_note          $w note
+            create_main_tabs          $w note
+            create_main_exit_button   $w fq
+        }
+    }
+    create_main_status_line   $w fl
+    return $w
+}; # create_main
 
 proc search_view  {w key}   {
     #? scroll given text widget according key
@@ -3437,7 +3464,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.4 22/04/03 02:02:03
+ #?      @(#) .o-saft.tcl generated by 2.5 22/04/03 18:16:22
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4150,25 +4177,8 @@ proc gui_main     {}    {
     #wm geometry     . $myX(geoS)   ;# use only for small screens
 
     #| create toplevel GUI
-    set w ""
+    set w [create_main $cfg(gui-layout)]
 
-    switch $cfg(gui-layout) {
-        tablet  {
-            create_main_menu $w "menu"
-            create_main_host_entries  $w ft
-            create_main_note          $w note
-            pack [label $w.lm -text [_get_tipp tabMENU]]
-        }
-        classic {
-            create_main_host_entries  $w ft
-            create_main_quick_buttons $w fc
-            create_main_quick_options $w fo
-            create_main_note          $w note
-            create_main_tabs          $w note
-            create_main_exit_button   $w fq
-        }
-    }
-    create_main_status_line   $w fl
     osaft_init     ;# initialise options from .-osaft.pl (values shown in Options tab)
     guitheme_init $cfg(bstyle) ;# apply themes
 
