@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.36 22/04/04 01:53:53
+#?      @(#) Makefile.tcl 1.37 22/04/05 00:16:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.36
+_SID.tcl           := 1.37
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -76,6 +76,7 @@ testcmd-tcl---v-host-host_%:TEST.args  += --v host1 host2 host3 host4 host5
 testcmd-tcl---gui-classic_%:TEST.args  += --gui-layout=classic
 testcmd-tcl---gui-tablet_% :TEST.args  += --gui-layout=tablet
 testcmd-tcl---test-osaft_%: TEST.args  += --test-osaft
+testcmd-tcl---test-docs_%:  TEST.args  += --test-docs
 # TODO:  to be implemented
 #testcmd-tcl---load-FILE_%:  TEST.args  += --load=EXAMPLE
 # TODO:  test with docker
