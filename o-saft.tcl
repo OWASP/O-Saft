@@ -532,7 +532,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.9 Spring Edition 2022
+#?      @(#) 2.10 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -637,10 +637,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.9 22/04/05 21:47:22"
+set cfg(SID)    "@(#) o-saft.tcl 2.10 22/04/05 22:50:25"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.9}
+set cfg(VERSION) {2.10}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -747,6 +747,7 @@ set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help      window
 set myX(geo-)   "400x80"       ;# geometry and position of no match  window
 set myX(geoS)   "700x720"      ;# geometry and position of O-Saft    window
 set myX(geoA)   "660x610"      ;# geometry and position of About     window
+set myX(geoC)   ""             ;# geometry and position of Config    window (computed dynamically)
 set myX(geoF)   "700x700"      ;# geometry and position of Filter    window (computed dynamically)
 set myX(geoT)   ""             ;#
 set myX(minx)   700            ;# O-Saft  window min. width
@@ -882,7 +883,8 @@ array set cfg_buttons "
     {menu_cmds} {{+ All Commands}  {}      {}   {Commands submenu}}
     {menu_opts} {{-  All Options}  {}      {}   {Options submenu}}
     {menu_load} {{   Load Results} {}      {}   {Load results from file}}
-    {menu_conf} {{  Confg Filter} {}      {}   {Show configuration for filtering results}}
+    {menu_filt} {{  Config Filter} {}     {}   {Show configuration for filtering results}}
+    {menu_conf} {{  Config GUI}   {}      {}   {Show configuration for GUI settings}}
     {menu_mode} {{Change Layout}   {}      {}   {Toogle layout between classic and tablet}}
     {menu_help} {{ ? Help}         {}      help {Open window with complete help}}
     {menu_uber} {{ ❗  About}      {}      {!}  {About $cfg(ICH) $cfg(VERSION)}}
@@ -930,9 +932,12 @@ array set cfg_texts "
     hideline    {Hide complete line}
     c_toggle    {toggle visibility\nof various texts}
     DESC_other  {-- CONFIGURATION texts used at various places ---------------}
+    win_about   {About}
     win_colour  {Colour}
     win_font    {Font}
     win_help    {Help}
+    win_config  {Config}
+    win_filter  {Filter}
     win_search  {Search ...}
     win_search_results  {Search Results for:}
     no_browser  {no browser found}
@@ -1887,6 +1892,7 @@ proc create_window     {title size} {
     guitheme_set $this.f1.closewin $cfg(gui-button)
     if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
+    if {[regexp {^Config} $title]}             { return $this }
 
     # all other windows have a header line and a Save button
     pack [frame  $this.f0    -borderwidth 1 -relief sunken]    -fill x -side top
@@ -2289,9 +2295,6 @@ proc create_filtertab   {parent cmd}    {
     set this $parent.g
     pack [frame $this] -side top -expand yes -fill both
     set tab [create_filtertext  $this $cmd].t
-    #if {"text"  eq $cfg(gui-result)} { set tab [create_filtertext  $this $cmd].t }
-    #if {"table" eq $cfg(gui-result)} { set tab [create_filtertable $this $cmd].t }
-        # create_filter_* returns widget, which is same as $parent
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
         tk fontchooser config -command {create_selected [_get_text win_font]}; # what to do with selection
             # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
@@ -2308,7 +2311,7 @@ proc create_filterwin   {}    {
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
     global myX
-    set win [create_window  {Filter} $myX(geoF)]
+    set win [create_window  [_get_text win_filter] $myX(geoF)]
     create_filtertab        $win {FIL}
     return
 }; # create_filterwin
@@ -2324,7 +2327,7 @@ proc create_filter      {parent cmd}    {
         # calculate new position: x(parent)+width(parent), y(parent)+100
         # most window managers are clever enough to position window
         # correctly if calculation is outside visible (screen) frame
-    set cfg(winF) [create_window "Filter:$cmd" $myX(geoF)]
+    set cfg(winF) [create_window "[_get_text win_filter]:$cmd" $myX(geoF)]
         # FIXME: only one variable for windows, need a variable for each window
         #        workaround see osaft_exec
     set this $cfg(winF)
@@ -2355,13 +2358,41 @@ proc create_filter      {parent cmd}    {
     return
 }; # create_filter
 
+proc create_configtab   {parent cmd}    {
+    #? create tab with config data
+    _dbx 2 "{$parent, $cmd}"
+    global cfg
+    set this $parent.of
+    pack [frame $this] -fill x -padx 5 -anchor w
+    pack [label $this.l -text "Layout format of results:"] \
+         [radiobutton $this.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
+         [radiobutton $this.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
+         [button      $this.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
+         -padx 5 -anchor w -side left
+    guitip_set   $this [_get_tipp "layout"]
+    if {"tablet" eq $cfg(gui-layout)} {
+        catch {destroy $this.v$cmd}
+    }
+    return
+}; # create_configtab
+
+proc create_configwin   {}    {
+    #? create tab with gui config data
+    #  used for --gui-layout=tablet only
+    _dbx 2 "{}"
+    global myX
+    set win [create_window  [_get_text win_config] $myX(geoC)]
+    create_configtab        $win {CFG}
+    return
+}; # create_configwin
+
 proc create_about {}     {
     #? create new window with About text; store widget in cfg(winA)
     #  Show the text starting with  #?  from this file.
     _dbx 2 "{}"
     global cfg myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return }
-    set cfg(winA) [create_window "About" $myX(geoA)]
+    set cfg(winA) [create_window [_get_text win_about] $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
     $txt config -bg [_get_color osaft]
 
@@ -2883,20 +2914,6 @@ proc create_win   {parent title cmd} {
     return
 }; # create_win
 
-proc create_buttons_opt {parent cmd} {
-    #? create special option buttons
-    #  used for --gui-layout=classic only (and version < 1.254)
-    _dbx 2 "{$parent, $cmd}"
-    pack [frame $parent.of] -fill x -padx 5 -anchor w
-    pack [label $parent.of.l -text "Layout format of results:"] \
-         [radiobutton $parent.of.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
-         [radiobutton $parent.of.s$cmd -variable cfg(gui-result) -value "text"  -text "text"] \
-         [button      $parent.of.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
-         -padx 5 -anchor w -side left
-    guitip_set   $parent.of [_get_tipp "layout"]
-    return
-}; # create_buttons_opt
-
 proc create_buttons     {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
@@ -2910,10 +2927,6 @@ proc create_buttons     {parent cmd} {
               set data $cfg(CMDS)
             }
       "OPT" { # add options for o-saft.tcl itself
-# TODO: radiobutton table und text für gui-layout=tablet implementieren
-              if {"tablet" ne $cfg(gui-layout)} {
-                  create_buttons_opt $parent $cmd
-              }
             }
       default { pwarn "create_buttons called with wrong command »$cmd«"; return }
     }
@@ -3006,7 +3019,8 @@ proc create_main_menu          {parent w} {
     $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
     $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
     $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
-    $w_menu add command -label [_get_text menu_conf] -command "create_filterwin"
+    $w_menu add command -label [_get_text menu_filt] -command "create_filterwin"
+    $w_menu add command -label [_get_text menu_conf] -command "create_configwin"
     $w_menu add command -label [_get_text menu_mode] -command "create_main classic"
     $w_menu add command -label [_get_text menu_uber] -command "create_about"
     $w_menu add command -label [_get_text menu_help] -command "create_help {}"
@@ -3098,10 +3112,12 @@ proc create_main_tabs          {parent w} {
     set tab_cmds    [create_note $w "Commands"]
     set tab_opts    [create_note $w "Options"]
     set tab_filt    [create_note $w "Filter"]
-    set cfg(EXEC) 2;# ttk::notebook's index counting starts at 0
+    set tab_conf    [create_note $w "Config"]
+    set cfg(EXEC) 3;# ttk::notebook's index counting starts at 0
     create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
     create_buttons  $tab_opts {OPT}    ;# fill Options pane
     create_filtertab $tab_filt {FIL}   ;# fill Filter pane
+    create_configtab $tab_conf {CFG}   ;# fill Config pane
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
     pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
@@ -3504,7 +3520,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.9 22/04/05 21:47:22
+ #?      @(#) .o-saft.tcl generated by 2.10 22/04/05 22:50:25
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
