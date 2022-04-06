@@ -532,7 +532,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.11 Spring Edition 2022
+#?      @(#) 2.12 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -637,10 +637,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.11 22/04/05 23:57:27"
+set cfg(SID)    "@(#) o-saft.tcl 2.12 22/04/06 09:38:29"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.11}
+set cfg(VERSION) {2.12}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -880,6 +880,7 @@ array set cfg_buttons "
     {menu_menu} {{☰}               orange  {}   {Main menu}}
     {menu_cmd}  {{Cmd}             white   {}   {Quick commands menu}}
     {menu_opt}  {{Opt}             white   {}   {Quick options menu}}
+    {menu_cfg}  {{Config}          white   {}   {GUI configurations menu}}
     {menu_cmds} {{+ All Commands}  {}      {}   {Commands submenu}}
     {menu_opts} {{-  All Options}  {}      {}   {Options submenu}}
     {menu_load} {{   Load Results} {}      {}   {Load results from file}}
@@ -2998,25 +2999,34 @@ proc create_main_menu          {parent w} {
     set w_menu $w.main.m
     set w_cmds $w.cmds.m
     set w_opts $w.opts.m
+    set w_conf $w.conf.m
     lappend cfg(guimenus) $w_menu $w_cmds $w_opts
     $packman \
          [menubutton $w.main -text [_get_text menu_menu] -menu $w_menu -bg black -fg [_get_color menu_menu] -borderwidth 0] \
          [menubutton $w.cmds -text [_get_text menu_cmd ] -menu $w_cmds -bg black -fg [_get_color menu_cmd ]  -borderwidth 0 -width 5] \
-         [menubutton $w.opts -text [_get_text menu_opt ] -menu $w_opts -bg black -fg [_get_color menu_opt ]  -borderwidth 0 -width 5]
+         [menubutton $w.opts -text [_get_text menu_opt ] -menu $w_opts -bg black -fg [_get_color menu_opt ]  -borderwidth 0 -width 5] \
+         [menubutton $w.conf -text [_get_text menu_cfg ] -menu $w_conf -bg black -fg [_get_color menu_cfg ]  -borderwidth 0 -width 5]
     menu $w_menu -type $menu_type  ;# complete menu
+    menu $w_conf -type $menu_type  ;# Quick Options menu
     menu $w_opts -type $menu_type  ;# Quick Options menu
     guitip_set   $w.main [_get_tipp menu_menu]
     guitip_set   $w.cmds [_get_tipp menu_cmd ]
     guitip_set   $w.opts [_get_tipp menu_opt ]
+    guitip_set   $w.conf [_get_tipp menu_cfg ]
+
     foreach opt $prg(Oopt) {
          $w_opts add checkbutton -label $opt -variable cfg($opt) -indicatoron yes
     }
     menu $w_cmds -type $menu_type  ;# Quick Commands menu
     foreach cmd "start $prg(Ocmd)" {
          $w_cmds add command     -label $cmd -command "osaft_exec $w.fc $cmd"
-         $w_menu add command     -label $cmd -command "osaft_exec $w.fc $cmd"
+         #$w_menu add command     -label $cmd -command "osaft_exec $w.fc $cmd"
     }
-    bind . <Key-m>  "$w_menu activate none"
+    $w_conf add command -label [_get_text menu_filt] -command "create_filterwin"
+    $w_conf add command -label [_get_text menu_conf] -command "create_configwin"
+    $w_conf add command -label [_get_text menu_mode] -command "create_main classic"
+    $w_conf clone $w_menu.configs
+
     # {1==$cfg(docker)}
     if {[regexp {\-docker$} $prg(SAFT)]} {
 # TODO: add to options tab, see create_main_quick_options()
@@ -3025,12 +3035,10 @@ proc create_main_menu          {parent w} {
 # TODO:  guitip_set  $w.dockerid [_get_tipp docker-id]
     }
     $w_menu add separator
-    $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
     $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
     $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
-    $w_menu add command -label [_get_text menu_filt] -command "create_filterwin"
-    $w_menu add command -label [_get_text menu_conf] -command "create_configwin"
-    $w_menu add command -label [_get_text menu_mode] -command "create_main classic"
+    $w_menu add cascade -label [_get_text menu_conf] -menu $w_menu.configs
+    $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
     $w_menu add command -label [_get_text menu_uber] -command "create_about"
     $w_menu add command -label [_get_text menu_help] -command "create_help {}"
     $w_menu add command -label [_get_text menu_exit] -command "exit"
@@ -3047,6 +3055,11 @@ proc create_main_menu          {parent w} {
     $w_menu.options add separator
     $w_menu.options add command -label [_get_text menu_rsave] -command {osaft_save "CFG" 0}
     $w_menu.options add command -label [_get_text menu_reset] -command {osaft_reset; osaft_init;}
+
+    # FIXME: menues are shown "tearoff" at position 0+0
+    bind . <Key-m>  "$w_menu invoke 0"
+    bind . <Key-c>  "$w_cmds invoke 0"
+    bind . <Key-o>  "$w_opts invoke 0"
 
     return $w.main
 }; # create_main_menu
@@ -3516,7 +3529,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.11 22/04/05 23:57:27
+ #?      @(#) .o-saft.tcl generated by 2.12 22/04/06 09:38:29
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
