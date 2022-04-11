@@ -293,7 +293,7 @@ exec wish "$0" ${1+"$@"}
 #. LAYOUT
 #.      --gui-layout=tablet
 #.           +---------------------------------------------------------------+
-#.       (M) | ☰  Cmd  Opt                                                   |
+#.       (M) | ☰  Cmd  Opt  Config                                           |
 #.           |---------------------------------------------------------------|
 #.       (H) | Host:Port [________________________________________]  [+] [-] |
 #.           |                                                               |
@@ -331,6 +331,7 @@ exec wish "$0" ${1+"$@"}
 #.        ☰  - menubutton for  all commands and options
 #.       Cmd - menubutton for  quick commands (most often used)
 #.       Opt - menubutton for  quick options (most often used)
+#.       Cfg - menubutton for  configuration settings
 #.       (C) - Buttons for most commonly used commands
 #.       (O) - CheckButtons for most commonly used options
 #.       (R) - Frame containing panes for results
@@ -532,7 +533,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.13 Spring Edition 2022
+#?      @(#) 2.14 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -637,10 +638,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.13 22/04/11 22:11:13"
+set cfg(SID)    "@(#) o-saft.tcl 2.14 22/04/12 00:36:24"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.13}
+set cfg(VERSION) {2.14}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -681,7 +682,7 @@ set prg(rexOUT-cmd)  {^(Commands|Options)} ;# match header lines for --help=cmd
 set prg(rexOUT-hide) {^Options\s*for\s*(help|compatibility) }  ;# match groups not shown here
 set prg(rexOUT-show) {^Commands to show }  ;# commands without explizit HELP section
 
-#set _me [regsub -all {^[./]*} $prg(SAFT) {}]   ;# remove ./ but prg(SAFT) later
+#set _me [regsub -all {^[./]*} $prg(SAFT) {}] ;# remove ./ but prg(SAFT) later
     # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
 set prg(rexCOMMANDS) "\(o-saft\(.pl|.tcl|-docker\)?|checkAllCiphers.pl|\(/usr/local/\)?openssl|docker|mkdir|ldd|ln|perlapp|perl2exe|pp\)"
     # most common tools used in help text...
@@ -887,6 +888,7 @@ array set cfg_buttons "
     {menu_load} {{   Load Results} {}      {}   {Load results from file}}
     {menu_filt} {{  Config Filter} {}     {}   {Show configuration for filtering results}}
     {menu_conf} {{  Config GUI}   {}      {}   {Show configuration for GUI settings}}
+    {menu_prog} {{  Config Tool}  {}      {}   {Show configuration for tool itself}}
     {menu_mode} {{Change Layout}   {}      {}   {Toogle layout between classic and tablet}}
     {menu_help} {{ ? Help}         {}      help {Open window with complete help}}
     {menu_uber} {{ ❗  About}      {}      {!}  {About $cfg(ICH) $cfg(VERSION)}}
@@ -934,12 +936,16 @@ array set cfg_texts "
     hideline    {Hide complete line}
     c_toggle    {toggle visibility\nof various texts}
     DESC_other  {-- CONFIGURATION texts used at various places ---------------}
+    cfg_progs   {Used programs:}
+    cfg_regex   {Used RegEx:}
+    cfg_docker  {Docker setting:}
     gui_layout  {Layout format of results:}
     gui_button  {Style of buttons:}
     win_about   {About}
     win_colour  {Colour}
     win_font    {Font}
     win_help    {Help}
+    win_prog    {Settings}
     win_config  {Config}
     win_filter  {Filter}
     win_search  {Search ...}
@@ -1897,6 +1903,7 @@ proc create_window     {title size} {
     if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
     if {[regexp {^Config} $title]}             { return $this }
+    if {[regexp {^Settin} $title]}             { return $this }
 
     # all other windows have a header line and a Save button
     pack [frame  $this.f0    -borderwidth 1 -relief sunken]    -fill x -side top
@@ -2311,7 +2318,7 @@ proc create_filtertab   {parent cmd}    {
 }; # create_filtertab
 
 proc create_filterwin   {}    {
-    #? create tab with filter data
+    #? create window with filter data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
     global myX
@@ -2389,7 +2396,7 @@ proc create_configtab   {parent cmd}    {
 }; # create_configtab
 
 proc create_configwin   {}    {
-    #? create tab with gui config data
+    #? create window with gui config data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
     global myX
@@ -2397,6 +2404,72 @@ proc create_configwin   {}    {
     create_configtab        $win {CFG}
     return
 }; # create_configwin
+
+proc create_progtab     {parent cmd}    {
+    #? create tab with tool config data
+    _dbx 2 "{$parent, $cmd}"
+    global cfg prg
+
+    set  this $parent.c
+    pack [frame $this   -relief sunken -borderwidth 1] -fill x -anchor w
+    pack [label $this.t -relief flat -text "Self:"] -fill x -anchor w
+    foreach var [list ME DIR O-Saft RC IMG] {
+        set  this $parent.cfg_$var
+        pack [frame $this] -fill x -padx 5 -anchor w
+        pack [label $this.l -text "cfg($var)" -width 15] \
+             [entry $this.e -textvariable cfg($var) -width 33] \
+             -padx 5 -anchor w -side left
+    }
+
+    set  this $parent.r
+    pack [frame $this   -relief sunken -borderwidth 1] -fill x -anchor w
+    pack [label $this.t -relief flat -text [_get_text cfg_regex]] -fill x -anchor w
+    foreach var [list rexOPT-cfg rexOPT-help rexOUT-head rexOUT-int rexOUT-cmd rexOUT-hide rexOUT-show] {
+        set  this $parent.regex_$var
+        pack [frame $this] -fill x -padx 5 -anchor w
+        pack [label $this.l -text "prg($var)" -width 15] \
+             [entry $this.e -textvariable prg($var) -width 33] \
+             -padx 5 -anchor w -side left
+    }
+
+    set  this $parent.p
+    pack [frame $this   -relief sunken -borderwidth 1] -fill x -anchor w
+    pack [label $this.t -relief flat -text [_get_text cfg_progs]] -fill x -anchor w
+    foreach var [list SAFT INIT PERL BROWSER TKPOD post] {
+        set  this $parent.progs_$var
+        pack [frame $this] -fill x -padx 5 -anchor w
+        pack [label $this.l -text "prg($var)" -width 15] \
+             [entry $this.e -textvariable prg($var) -width 33] \
+             -padx 5 -anchor w -side left
+    }
+
+    set  this $parent.d
+    pack [frame $this   -relief sunken -borderwidth 1] -fill x -anchor w
+    pack [label $this.t -relief flat -text [_get_text cfg_docker]] -fill x -anchor w
+    foreach var [list docker-id docker-tag] {
+        set  this $parent.docker_$var
+        pack [frame $this] -fill x -padx 5 -anchor w
+        pack [label $this.l -text "prg($var)" -width 15] \
+             [entry $this.e -textvariable prg($var) -width 33] \
+             -padx 5 -anchor w -side left
+    }
+    guitip_set  $this.e [_get_tipp docker-id]
+
+# prg: SAFT "o-saft-docker"  INIT PERL BROWSER TKPOD post
+# prg: rexCMD-int rexOPT-cfg rexOPT-help rexOUT-head rexOUT-int rexOUT-cmd rexOUT-hide rexOUT-show
+# prg: Ocmd Oopt
+    return
+}; # create_progtab
+
+proc create_progwin     {}    {
+    #? create window with tool config data
+    #  used for --gui-layout=tablet only
+    _dbx 2 "{}"
+    global myX
+    set win [create_window  [_get_text win_prog] $myX(geoT)]
+    create_progtab          $win {CFG}
+    return
+}; # create_progwin
 
 proc create_about {}     {
     #? create new window with About text; store widget in cfg(winA)
@@ -3038,10 +3111,13 @@ proc create_main_menu          {parent w} {
     menu $w_conf -type $menu_type
     $w_conf add command -label [_get_text menu_filt] -command "create_filterwin"
     $w_conf add command -label [_get_text menu_conf] -command "create_configwin"
+    if {0<$cfg(DEBUG)} {
+    $w_conf add command -label [_get_text menu_prog] -command "create_progwin"
+    }
     $w_conf add command -label [_get_text menu_mode] -command "create_main classic"
     $w_conf clone $w_menu.configs
 
-    # create submenues for ☰  , Cmd  and  Opt  menu
+    # create submenus for ☰  , Cmd  and  Opt  menu
     menu $w_menu.commands          ;# All Commands menu
     create_buttons $w_menu.commands {CMD}
     $w_menu.commands clone $w_cmds.cmds
@@ -3063,7 +3139,7 @@ proc create_main_menu          {parent w} {
 # TODO:  guitip_set  $w.dockerid [_get_tipp docker-id]
     }
 
-    # FIXME: menues are shown "tearoff" at position 0+0
+    # FIXME: menus are shown "tearoff" at position 0+0
     bind . <Key-m>  "$w_menu invoke 0"
     bind . <Key-c>  "$w_cmds invoke 0"
     bind . <Key-o>  "$w_opts invoke 0"
@@ -3143,11 +3219,15 @@ proc create_main_tabs          {parent w} {
     set tab_opts    [create_note $w "Options"]
     set tab_filt    [create_note $w "Filter"]
     set tab_conf    [create_note $w "Config"]
+    set tab_prog    [create_note $w "Settings"]
     set cfg(EXEC) 3;# ttk::notebook's index counting starts at 0
-    create_buttons  $tab_cmds {CMD}    ;# fill Commands pane
-    create_buttons  $tab_opts {OPT}    ;# fill Options pane
-    create_filtertab $tab_filt {FIL}   ;# fill Filter pane
-    create_configtab $tab_conf {CFG}   ;# fill Config pane
+    create_buttons    $tab_cmds {CMD}  ;# fill Commands pane
+    create_buttons    $tab_opts {OPT}  ;# fill Options pane
+    create_filtertab  $tab_filt {FIL}  ;# fill Filter pane
+    create_configtab  $tab_conf {CFG}  ;# fill Config pane
+    if {0<$cfg(DEBUG)} {
+    create_progtab    $tab_prog {PRG}  ;# fill Settings pane
+    }
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
     pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
@@ -3537,7 +3617,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.13 22/04/11 22:11:13
+ #?      @(#) .o-saft.tcl generated by 2.14 22/04/12 00:36:24
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
