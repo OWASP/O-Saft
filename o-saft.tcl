@@ -532,7 +532,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.12 Spring Edition 2022
+#?      @(#) 2.13 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -637,10 +637,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.12 22/04/06 09:38:29"
+set cfg(SID)    "@(#) o-saft.tcl 2.13 22/04/11 22:11:13"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.12}
+set cfg(VERSION) {2.13}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -755,6 +755,7 @@ set myX(miny)   850            ;# O-Saft  window min. height
 set myX(lenl)   15             ;# fixed width of labels in Options window
 set myX(rpad)   15             ;# right padding in the lower right corner
 set myX(padx)   5              ;# padding to right border
+set myX(maxS)   3              ;# height of status line
 
 set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(gui-button) {image}    ;# button style:  image  or  text
@@ -2370,7 +2371,6 @@ proc create_configtab   {parent cmd}    {
     pack [label $this.l -text [_get_text gui_layout] -width 20] \
          [radiobutton $this.s$cmd -variable cfg(gui-result) -value "text"  -text "text" ] \
          [radiobutton $this.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
-         [button      $this.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
          -padx 5 -anchor w -side left
     guitip_set  $this [_get_tipp "layout"]
     set this $parent.ob
@@ -2380,9 +2380,11 @@ proc create_configtab   {parent cmd}    {
          [radiobutton $this.i$cmd -variable cfg(gui-button) -value "image" -text "image"] \
          -padx 5 -anchor w -side left
     guitip_set  $this [_get_tipp "img_txt"]
-    if {"tablet" eq $cfg(gui-layout)} {
-        catch {destroy $this.v$cmd}
-    }
+    set this $parent.oc
+    pack [frame  $this] -fill x -padx 5 -anchor w
+    pack [button $this.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
+         -side left
+    guitip_set  $this [_get_btn_tip menu_mode]
     return
 }; # create_configtab
 
@@ -2995,7 +2997,7 @@ proc create_main_menu          {parent w} {
                   lappend cfg(guiwidgets) $w   ;# important! needs to be removed too
                 }
     }
-    # create nenu line with button for: Menu, Commands and Options
+    # create menu line with button for: Menu, Commands and Options
     set w_menu $w.main.m
     set w_cmds $w.cmds.m
     set w_opts $w.opts.m
@@ -3006,26 +3008,52 @@ proc create_main_menu          {parent w} {
          [menubutton $w.cmds -text [_get_text menu_cmd ] -menu $w_cmds -bg black -fg [_get_color menu_cmd ]  -borderwidth 0 -width 5] \
          [menubutton $w.opts -text [_get_text menu_opt ] -menu $w_opts -bg black -fg [_get_color menu_opt ]  -borderwidth 0 -width 5] \
          [menubutton $w.conf -text [_get_text menu_cfg ] -menu $w_conf -bg black -fg [_get_color menu_cfg ]  -borderwidth 0 -width 5]
-    menu $w_menu -type $menu_type  ;# complete menu
-    menu $w_conf -type $menu_type  ;# Quick Options menu
-    menu $w_opts -type $menu_type  ;# Quick Options menu
     guitip_set   $w.main [_get_tipp menu_menu]
     guitip_set   $w.cmds [_get_tipp menu_cmd ]
     guitip_set   $w.opts [_get_tipp menu_opt ]
     guitip_set   $w.conf [_get_tipp menu_cfg ]
 
+    # create ☰  menu
+    menu $w_menu -type $menu_type  ;# complete menu
+    $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
+    $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
+    $w_menu add cascade -label [_get_text menu_conf] -menu $w_menu.configs
+    $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
+    $w_menu add separator
+    $w_menu add command -label [_get_text menu_uber] -command "create_about"
+    $w_menu add command -label [_get_text menu_help] -command "create_help {}"
+    $w_menu add command -label [_get_text menu_exit] -command "exit"
+
+    # create Opt menu
+    menu $w_opts -type $menu_type
     foreach opt $prg(Oopt) {
          $w_opts add checkbutton -label $opt -variable cfg($opt) -indicatoron yes
     }
-    menu $w_cmds -type $menu_type  ;# Quick Commands menu
-    foreach cmd "start $prg(Ocmd)" {
-         $w_cmds add command     -label $cmd -command "osaft_exec $w.fc $cmd"
-         #$w_menu add command     -label $cmd -command "osaft_exec $w.fc $cmd"
+    # create Cmd menu
+    menu $w_cmds -type $menu_type
+    foreach cmd "Start $prg(Ocmd)" {
+         $w_cmds add command    -label $cmd -command "osaft_exec $w.fc $cmd"
     }
+    # create Config menu
+    menu $w_conf -type $menu_type
     $w_conf add command -label [_get_text menu_filt] -command "create_filterwin"
     $w_conf add command -label [_get_text menu_conf] -command "create_configwin"
     $w_conf add command -label [_get_text menu_mode] -command "create_main classic"
     $w_conf clone $w_menu.configs
+
+    # create submenues for ☰  , Cmd  and  Opt  menu
+    menu $w_menu.commands          ;# All Commands menu
+    create_buttons $w_menu.commands {CMD}
+    $w_menu.commands clone $w_cmds.cmds
+    $w_cmds add cascade -label [_get_text menu_cmds] -menu $w_cmds.cmds
+
+    menu $w_menu.options           ;# All Options menu
+    create_buttons $w_menu.options  {OPT}
+    $w_menu.options add separator
+    $w_menu.options add command -label [_get_text menu_rsave] -command {osaft_save "CFG" 0}
+    $w_menu.options add command -label [_get_text menu_reset] -command {osaft_reset; osaft_init;}
+    $w_menu.options clone $w_opts.opts
+    $w_opts add cascade -label [_get_text menu_opts] -menu $w_opts.opts
 
     # {1==$cfg(docker)}
     if {[regexp {\-docker$} $prg(SAFT)]} {
@@ -3034,32 +3062,12 @@ proc create_main_menu          {parent w} {
 # TODO:  pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
 # TODO:  guitip_set  $w.dockerid [_get_tipp docker-id]
     }
-    $w_menu add separator
-    $w_menu add cascade -label [_get_text menu_cmds] -menu $w_menu.commands
-    $w_menu add cascade -label [_get_text menu_opts] -menu $w_menu.options
-    $w_menu add cascade -label [_get_text menu_conf] -menu $w_menu.configs
-    $w_menu add command -label [_get_text menu_load] -command "osaft_load {_LOAD}"
-    $w_menu add command -label [_get_text menu_uber] -command "create_about"
-    $w_menu add command -label [_get_text menu_help] -command "create_help {}"
-    $w_menu add command -label [_get_text menu_exit] -command "exit"
-
-    # clone wäre einfach, dann sind die beiden Menüs aber identisch, was nicht gewollt ist
-    #$w.m.m clone $w_cmds;# jeder menubutton braucht eigenes Menu
-    #$w_cmds delete 10 13
-
-    menu $w_menu.commands          ;# All Commands menu
-    create_buttons $w_menu.commands {CMD}
-
-    menu $w_menu.options           ;# All Options menu
-    create_buttons $w_menu.options  {OPT}
-    $w_menu.options add separator
-    $w_menu.options add command -label [_get_text menu_rsave] -command {osaft_save "CFG" 0}
-    $w_menu.options add command -label [_get_text menu_reset] -command {osaft_reset; osaft_init;}
 
     # FIXME: menues are shown "tearoff" at position 0+0
     bind . <Key-m>  "$w_menu invoke 0"
     bind . <Key-c>  "$w_cmds invoke 0"
     bind . <Key-o>  "$w_opts invoke 0"
+    bind . <Key-s>  "$w_conf invoke 0"
 
     return $w.main
 }; # create_main_menu
@@ -3149,11 +3157,11 @@ proc create_main_tabs          {parent w} {
 proc create_main_status_line   {parent w} {
     #? create status line
     _dbx 2 "{$parent, $w}"
-    global cfg
+    global cfg myX
     set w   $parent.$w
     set cfg(objS)   $w.t
     pack [frame     $w   -relief sunken -borderwidth 1] -fill x
-    pack [text      $w.t -relief flat   -height 3 -background [_get_color status] ] -fill x
+    pack [text      $w.t -relief flat   -height $myX(maxS) -background [_get_color status] ] -fill x
     gui_set_readonly $cfg(objS)
     return $w
 }; # create_main_status_line
@@ -3529,7 +3537,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.12 22/04/06 09:38:29
+ #?      @(#) .o-saft.tcl generated by 2.13 22/04/11 22:11:13
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4052,17 +4060,16 @@ proc config_print {}    {
     set geo "";             if {1  == [info exists geometry]}   { set geo "$geometry" }
     set wmf "<<shown with --d only>>"
     set max "<<shown with --d only>>"
-    set osv $tcl_platform(osVersion)
-    set str_make "<<value not printed (OSAFT_MAKE exists)>>"
     set tab "<<no values>>"
-    if {0<[string length $cfg(objN)]} {
-        set tab [$cfg(objN) tabs]
-    }
-    if {1==[info exists env(OSAFT_MAKE)]} {     # avoid diff
-        set osv $str_make
-    }
+    set osv $tcl_platform(osVersion)
+    set sid $cfg(SID)
+    set str_make "<<value not printed (OSAFT_MAKE exists)>>"
     # SEE Make:OSAFT_MAKE (in Makefile.pod)
     # TODO: string should be STR_MAKEVAL from osaft.pm
+    if {1==[info exists env(OSAFT_MAKE)]} {     # avoid diff
+        set osv $str_make
+        set sid $str_make
+    }
     if {1==$cfg(DEBUG)} {
         # use with --d only to avoid noisy output with "make test"
         set max [wm maxsize .]
@@ -4070,6 +4077,9 @@ proc config_print {}    {
         if {1==[info exists env(OSAFT_MAKE)]} { # avoid diff
             set wmf $str_make
         }
+    }
+    if {0<[string length $cfg(objN)]} {
+        set tab [$cfg(objN) tabs]
     }
     #.CFG:      $cfg(.CFG)   # don't print, too much data
 
@@ -4113,7 +4123,7 @@ WM  frame     = $wmf
 
     puts [regsub -all -lineanchor {^} "
 ICH self      = $cfg(ICH)
- |  SID       = $cfg(SID)
+ |  SID       = $sid
  |  DIR       = $cfg(DIR)
  |  ME        = $cfg(ME)
  |  IMG       = $cfg(IMG)
@@ -4154,7 +4164,6 @@ TCL version   = $tcl_patchLevel
  |  byteOrder = $tcl_platform(byteOrder)
  |  wordSize  = $tcl_platform(wordSize)
 $tk_wm
- |
 _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
     #          [tk windowingsystem] # we believe this is a window manager property
 
@@ -4241,10 +4250,11 @@ proc gui_init     {}    {
         }
     }
 
-    bind . <Control-v>      {clipboard get}
+    bind . <Control-v>      {clipboard get  }
     bind . <Control-c>      {clipboard clear ; clipboard append [selection get]}
-    bind . <Key-exclam>     {create_about }
+    bind . <Key-exclam>     {create_about   }
     bind . <Key-question>   {create_help {} }
+    bind . <Key-h>          {create_help {} }
     bind . <Key-q>          {exit}
 
     return
@@ -4313,25 +4323,25 @@ switch $cfg(ICH) {
 #             --OPT=val --PREFIXOPT=val --PREFIX-OPT=val
 foreach arg $argv {
     switch -glob $arg {
-        --h         -
-        --help      { puts [osaft_about "HELP"]; exit; }
-        --help=opts { osaft_write_opts;          exit; }
-        +VERSION    { puts $cfg(VERSION);        exit; }
-        --version   { puts $cfg(mySID);          exit; }
-        --rc        { osaft_write_rc;            exit; }
-        --gen-docs  { osaft_write_data;          exit; }
-        --nodoc     -
-        --nodocs    -
-        --no-docs   { set   cfg(docs-exe) 1;           }
-        --post=*    { set   prg(post)   $arg;          }
-        --pod*      { set   prg(TKPOD)  "podviewer";   }
-        --load=*    { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
-        --stdin     { lappend cfg(files)    "STDIN";   }
+        +VERSION        { puts $cfg(VERSION);        exit;      }
+        --version       { puts $cfg(mySID);          exit;      }
+        --h             -
+        --help          { puts [osaft_about "HELP"]; exit;      }
+        --help=opts     { osaft_write_opts;          exit;      }
+        --rc            { osaft_write_rc;            exit;      }
+        --gen-docs      { osaft_write_data;          exit;      }
+        --nodoc         -
+        --nodocs        -
+        --no-docs       { set   cfg(docs-exe) 1;                }
+        --post=*        { set   prg(post)   $arg;               }
+        --pod*          { set   prg(TKPOD)  "podviewer";        }
+        --load=*        { lappend cfg(files)    [regsub {^--load=} $arg {}]; }
+        --stdin         { lappend cfg(files)    "STDIN";        }
 
         options__for_runtime_behavior { set dumm "-----------"; }
         options__for_use_with_docker  { set dumm "-----------"; }
          -docker        -
-        --docker        { config_docker opt;           }
+        --docker        { config_docker opt;                    }
          -id=*          -
          -dockerid=*    -
          -docker-id=*   -
@@ -4388,7 +4398,7 @@ foreach arg $argv {
         default              { pwarn "unknown parameter »$arg«; ignored" }
     }
 }
-if {0<$cfg(DEBUG)}  { set cfg(VERB) 1; }
+if {0<$cfg(DEBUG)}  { set cfg(VERB) 1; set myX(maxS) 10; }
 if {0<$cfg(TRACE)}  { trace_commands;  }
 if {0<$cfg(VERB)}   { lappend prg(Ocmd) {+quit} {+version}; }
 if {0<$cfg(docker)} { lappend prg(Ocmd) {docker_status};    }
