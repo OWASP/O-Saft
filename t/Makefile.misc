@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.64 22/03/18 00:23:26
+#?      @(#) Makefile.misc 1.65 22/04/16 19:53:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.64
+_SID.misc          := 1.65
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -38,9 +38,10 @@ help.test.misc-vv:    HELP_TYPE = misc
 # internal used tools and files (paths hardcoded!)
 EXE.bench          := t/o-saft_bench.sh
 EXE.test.bunt      := t/test-bunt.pl.txt
-TEST.args.misc     := +quit
-TEST.bench.times   := $(EXE.bench).times
 TEST.bench.host    := $(TEST.host)
+TEST.bench.times   := $(TEST.logdir)/o-saft_bench.sh.times
+TEST.bunt.log      := $(TEST.logdir)/test.bunt.log
+TEST.args.misc     := +quit
 
 TEST.opt.cloc      := \
 	--force-lang=Perl,pl \
@@ -111,14 +112,21 @@ test.bench:
 	@$(TRACE.target)
 	$(EXE.bench) $(TEST.bench.host)
 	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(TEST.bench.times)'"
-test.bench.log:
+$(TEST.bench.times):
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	$(EXE.bench) $(TEST.bench.host) >> $(TEST.bench.times)
+	$(EXE.bench) $(TEST.bench.host) >> $@
+test.bench.log: $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
 	-cat $(EXE.test.bunt) | $(SRC.contrib.dir)/bunt.pl
+$(TEST.bunt.log):
+	@$(TRACE.target)
+	@$(TRACE.target.log)
+	-cat $(EXE.test.bunt) | $(SRC.contrib.dir)/bunt.pl > $@
+test.bunt.log: $(TEST.bunt.log)
+# TODO: test.bunt.log should use testarg%log target
 
 ALL.testmisc       := test.bench test.bunt
 ALL.testmisc.log   := test.bench.log
@@ -158,7 +166,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.64: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.65: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -404,7 +412,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.64: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.65: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
