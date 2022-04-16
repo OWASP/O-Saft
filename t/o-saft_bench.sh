@@ -6,26 +6,24 @@
 #?      o-saft_bench.sh [target host]
 #? DESCRIPTION
 #?      Runs  o-saft.pl with most common commands and measures execution and
-#?      memory usage using system's  time  command.
-#?      Results are written to STDOUT, the caller is responsible appended it
-#?      to  o-saft_bench.times .
-#?      localhost is used as target for testing, can be passed as parameter. 
+#?      memory usage using system's  /usr/bin/time  command.
+#?      Results are written to STDOUT, the calling program is responsible to
 #? RESULTS                                                                     
 #?      Expected results are like:                                             
 #?
-#?#--------------------------------------+------+-----+--------+----+---+------+
-#?#                                      |        time         |    |  memory  |
-#?#         command                      |  user system   real | CPU| av.  max |
-#?#--------------------------------------+------+-----+--------+----+---+------+
-#?o-saft.pl --exit=BEGIN0                | 0.00  0.00  0:00.00  80%  0k  5272k  
-#?o-saft.pl +VERSION           --norc    | 0.00  0.00  0:00.00  80%  0k  5440k  
+#?#--------------------------------------+-----+-----+--------+----+---+-------+
+#?#                                      |    time            |    |  memory   |
+#?#         command                      | user system   real | CPU| av.   max |
+#?#--------------------------------------+-----+-----+--------+----+---+-------+
+#?o-saft.pl --exit=BEGIN0                | 0.00  0.00  0:00.00  80%  0k   5272k  
+#?o-saft.pl +VERSION           --norc    | 0.00  0.00  0:00.00  80%  0k   5440k  
 #?o-saft.pl +version                     | 0.14  0.01  0:00.17  92%  0k  29648k 
 #?...                                                                           
 #?o-saft.pl +cipher                $host | 4.60  0.23  0:05.35  90%  0k  45468k 
 #?o-saft.pl +cipherall             $host | 0.96  0.05  0:01.74  58%  0k  26696k 
-#?o-saft.pl +info                  $host | 0.18  0.04  0:02.38  9%   0k  25820k 
+#?o-saft.pl +info                  $host | 0.18  0.04  0:02.38   9%  0k  25820k 
 #?...                                                                           
-#?#--------------------------------------+------+-----+--------+----+---+------+
+#?#--------------------------------------+-----+-----+--------+----+---+-------+
 #?
 #?      Brief explanation (based on a 3 GHz CPU with 16 GB RAM):
 #?          * no ERRORs or WARNINGs should be printed
@@ -36,61 +34,63 @@
 #?          *   real time: 0:05.xx is good for +cipher command
 #?          *   real time: 0:01.xx is good for +cipherall command
 #?          *   real time: 0:07.xx is good for most check commands
-#?          * max. memory:  5000 kB is good for informational commands
-#?          * max. memory: 25000 kB is good for info command
+#?          * ca.  memory:  6000 kB is good for +VERSION command
+#?          * max. memory: 35000 kB is good for info command
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
 #? VERSION
-#?      @(#) o-saft_bench.sh 1.20 19/07/04 09:55:57
+#?      @(#) o-saft_bench.sh 1.21 22/04/16 19:26:26
 #? AUTHOR
 #?      07-jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench.sh 1.20 19/07/04 09:55:57"
+  SID="@(#) o-saft_bench.sh 1.21 22/04/16 19:26:26"
 
 
   ich=${0##*/}
-yeast=../o-saft.pl
+osaft=../o-saft.pl
  host=localhost
  time=/usr/bin/time
   out=./${ich}.times    # not used anymore, must be done by caller
+
+ LANG=C
+export LANG
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.20"; exit 0; ;;
+	'+VERSION')	echo "1.21"; exit 0; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
 done
 
-[ -x $yeast ] || yeast=o-saft.pl
-$yeast +quit > /dev/null
+[ -x $osaft ] || osaft=o-saft.pl
+$osaft +quit > /dev/null
 if [ $? != 0 ]; then
-	echo "**ERROR: $yeast failed; exit" && exit 2
+	echo "**ERROR: $osaft failed; exit" && exit 2
 fi
 
-(echo
- echo -n "# " && date
- echo    "# $SID"
- echo -n "# o-saft.pl +VERSION: " && $yeast +VERSION --norc
- echo -n "# System (uname -a):  " && uname -a
- echo -n "# Perl   (perl -v):   " && perl -v|grep This
- echo    "#"
- echo    "# testing with target: \$host = $host"
-)
-#dbx echo -n "# prepare ... "
-$yeast +check localhost --trace --user >/dev/null 2>&1 # dummy to load modules and alocate memory
-#dbx echo "done."
-t="%U  %S  %E  %P  %Kk  %Mk"
-line="#--------------------------------------+------+-----+--------+----+---+-------+"
-(
+echo
+echo -n "# " && date
+echo    "# $SID"
+echo -n "# o-saft.pl +VERSION: " && $osaft +VERSION --norc
+echo -n "# System (uname -a):  " && uname -s -v -r -m -o
+echo -n "# Perl   (perl -v):   " && perl -v|grep This
+echo    "#"
+echo    "# testing with target: \$host = $host"
+
+# dummy to load modules and alocate memory, otherwise first test results are misleading
+$osaft +check localhost --trace --user >/dev/null 2>&1
+
+   t="%U  %S  %E  %P  %Kk  %Mk" # format for time, improved by following awk
+line="#--------------------------------------+-----+-----+--------+----+---+-------+"
 echo $line
-echo "#                                      |        time         |    |  memory   |"
-echo "#         command                      |  user system   real | CPU| av.  max  |"
+echo "#                                      |    time            |    |  memory   |"
+echo "#         command                      | user system   real | CPU| av.   max |"
 echo $line
-)
+
 while read -r cmd ; do
 	[ -z "$cmd" ] && continue  # skip final emtpy line
 	#dbx# echo    "o-saft.pl $cmd "
@@ -98,11 +98,12 @@ while read -r cmd ; do
 		# we want a well formatted table, hence the real hostname is
 		# replaced by the fixed string $host
 	#dbx# echo "$txt #"
-	#echo -n "o-saft.pl $txt" | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
-	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $yeast $cmd 2>&1 >/dev/null
+	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $osaft $cmd 2>&1 >/dev/null \
+	| awk '{printf"%5s %5s %8s %4s %3s %7s\n",$1,$2,$3,$4,$5,$6}'
+		# awk is just for pretty printing
 		# NOTE: --exit=BEGIN0 is some kind of minimal (perl) resources
 		# NOTE: time writes on tty, hence redirect to STDOUT, the final
-		#       >/dev/null at end handles output from $yeast, crazy ...
+		#       >/dev/null at end handles output from $osaft, crazy ...
 done << EoT
 	--exit=BEGIN0                \ 
 	+VERSION           --norc    \ 
