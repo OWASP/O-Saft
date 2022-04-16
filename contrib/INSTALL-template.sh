@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  +ËwbU 1.77 22/04/16 21:02:39
+#?      @(#) `»ˆöU 1.78 22/04/16 22:02:12
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -237,6 +237,7 @@ text_miss=" missing, try installing with ";
 text_dev="did you run Â»$0 --cleanÂ«?"
 text_alt="file from previous installation, try running Â»$0 --cleanÂ« "
 text_old="ancient module found, try installing newer version, at least "
+text_tool="Note: podman is a tool to view pod files, it's not the container engine"
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
@@ -375,6 +376,8 @@ check_commands () {
 		is=`\command -v $c`
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
+	echo "#"
+	echo "# $text_tool"
 }
 
 # --------------------------------------------- arguments and options
@@ -410,7 +413,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.77 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.78 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -713,7 +716,7 @@ echo_foot
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
 # redirected to /dev/null
 
-echo_head "# check for installed Perl modules (started in '$inst_directory')"
+echo_head "# check for installed Perl modules (started in $inst_directory )"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
