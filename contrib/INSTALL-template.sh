@@ -59,7 +59,7 @@
 #=# /home/usr/.o-saft.tcl	missing, consider generating: o-saft.tcl --rc > /home/user/.o-saft.tcl
 #=#----------------------+---------------------------------------
 #=
-#=# check for installed Perl modules
+#=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
 #=#              Net::DNS	    1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.76 22/03/18 11:45:36
+#?      @(#)  +ËwbU 1.77 22/04/16 21:02:39
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -410,7 +410,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.76 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.77 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -713,7 +713,7 @@ echo_foot
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
 # redirected to /dev/null
 
-echo_head "# check for installed Perl modules"
+echo_head "# check for installed Perl modules (started in '$inst_directory')"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
 for m in $modules ; do
