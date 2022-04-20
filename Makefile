@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 1.126 22/04/05 00:40:42
+#?      @(#) Makefile 1.127 22/04/20 07:27:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.126
+_SID            = 1.127
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -279,8 +279,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 1.126 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 1.126
+_INST.genbytext = generated data by Makefile 1.127 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 1.127
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'\
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -294,6 +294,7 @@ EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'         \
 			-e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@' \
 			-e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@' \
+			-e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.docker)@'   \
 			-e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'         \
 			-e 's@INSERTED_BY_MAKE_FROM@$(_INST.genbytext)@'      \
 			-e 's@INSERTED_BY_MAKE@$(_INST.gen_text)@'
@@ -513,8 +514,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 1.126
-tar:     GREP_EDIT  = 1.126
+GREP_EDIT           = 1.127
+tar:     GREP_EDIT  = 1.127
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
