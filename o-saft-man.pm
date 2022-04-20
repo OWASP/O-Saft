@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.347 22/03/19 12:54:56";
+my  $SID_man= "@(#) o-saft-man.pm 1.349 22/04/20 10:26:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -78,7 +78,8 @@ my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for o
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
 
-our $osaft_standalone = 0;              # SEE Note:Stand-alone
+# SEE Note:Stand-alone
+$::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Variables::ProhibitPackageVars)
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
@@ -177,7 +178,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.347'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.349'; $v = STR_VERSION if (defined STR_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1641,7 +1642,8 @@ sub man_help        {
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
-    if (0 < $osaft_standalone) {    # FIXME dirty hack
+    if (0 < $::osaft_standalone) {  ## no critic qw(Variables::ProhibitPackageVars)
+        # FIXME dirty hack
         @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version) if not @help;
     }
     my $txt = join ('', @help);
@@ -1811,7 +1813,7 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __FILE__, $SID_man)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
+    osaft::print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
     # else
     $arg =  $ARGV[0];
     $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
@@ -1980,7 +1982,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.347 2022/03/19
+1.349 2022/04/20
 
 =head1 AUTHOR
 
