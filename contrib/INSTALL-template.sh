@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.79 22/04/20 07:47:28
+#?      @(#) Õ(ÚFV 1.80 22/04/20 08:20:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -330,6 +330,8 @@ osaft_subdirs="
 osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
+all_exe="$osaft_exe $osaft_gui $osaft_sh $osaft_dock"
+    # checking INSTALL.sh (myself) is pointless, somehow ...
 
 _line='----------------------+-----------------'
 _cols=0
@@ -415,7 +417,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.79 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.80 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -640,19 +642,22 @@ fi
 
 cnt=0
 gui=0
-echo_head "# check environment variable PATH"
+echo_head "# check for O-Saft programs found via environment variable PATH"
 for p in `echo $PATH|tr ':' ' '` ; do
-	o="$p/$osaft_exe"
-	if [ -e "$o" ]; then
-		cnt=`expr $cnt + 1`
-		echo_label "$osaft_exe" && echo_green "$p"
-	fi
-	w="$p/wish"     # wich hardcoded here
-	if [ -e "$w" ]; then
-		gui=`expr $gui + 1`
-		echo_label "wish" && echo_green "$p"
-	fi
+	for o in $all_exe wish ; do
+		exe="$p/$o"
+		if [ -e "$exe" ]; then
+			cnt=`expr $cnt + 1`
+			echo_label "$exe" && echo_green "$p"
+		fi
+		[ "$o" != "wish" ] && continue
+		if [ -e "$exe" ]; then
+			gui=`expr $gui + 1`
+			echo_label "wish" && echo_green "$p"
+		fi
+	done
 done
+[ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
 [ 0 -eq $gui ]  && echo_label  "wish" \
@@ -678,8 +683,8 @@ for f in $files_develop $files_info ; do
 done
 echo_foot
 
-echo_head "# check for installed O-Saft in $inst_directory"
-for o in $osaft_exe $osaft_gui $osaft_sh $osaft_dock ; do
+echo_head '# check for used O-Saft programs (according $PATH)'
+for o in $all_exe ; do
 	echo_label "$o"
 	e=`\command -v $o`
 	if [ -n "$e" ] ; then
