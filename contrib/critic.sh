@@ -82,7 +82,7 @@
 #?      .perlcriticrc
 #?
 #? VERSION
-#?      @(#) critic.sh 1.6 16/07/17 10:59:20
+#?      @(#) critic.sh 1.7 22/04/20 10:12:47
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -96,7 +96,9 @@ opts=""
 
 our_sources="\
     osaft.pm o-saft-dbx.pm o-saft-man.pm o-saft-usr.pm \
-    Net/SSLhello.pm Net/SSLinfo.pm checkAllCiphers.pl"
+    Net/SSLhello.pm Net/SSLinfo.pm checkAllCiphers.pl  \
+    OSaft/Ciphers.pm OSaft/Doc/Data.pm OSaft/error_handler.pm \
+"
 
 _isrepository () {
     #? check if path is a potentially a repository directory
