@@ -11,14 +11,14 @@
 #?      Replace  yes  and  no  values in output by   ✔  and  ❌ .
 #?
 # HACKER's INFO
-#       In following matching lines the substition takes place:
+#       In following matching lines the substitution takes place:
 #           Text used as label:     yes
 #           Text used as label:     no
 #           Text used as label:     no (some other text)
 #       where the value  "yes"  or  "no .*"  may be enclosed in ANSI characters.
 #?
 #? VERSION
-#?      @(#) symbol.pl 1.2 19/11/04 21:55:26
+#?      @(#) symbol.pl 1.3 22/04/20 08:37:13
 #?
 #? AUTHOR
 #?      19. October 2019 Achim Hoffmann
