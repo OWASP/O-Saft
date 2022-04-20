@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) `»ˆöU 1.78 22/04/16 22:02:12
+#?      @(#)  1.79 22/04/20 07:47:28
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -243,6 +243,7 @@ text_tool="Note: podman is a tool to view pod files, it's not the container engi
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
 osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
+osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
 inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
 
@@ -294,11 +295,12 @@ files_ancient="
 	"
 
 # first, dirty hack to make tests in development mode possible
-# remember the inserted " to avoid substitutions here
-[ "INSERTED_""BY_MAKE_OSAFT_SH"   = "$osaft_sh"    ]  && osaft_sh=o-saft
-[ "INSERTED_""BY_MAKE_OSAFT_PL"   = "$osaft_exe"   ]  && osaft_exe=o-saft.pl
-[ "INSERTED_""BY_MAKE_OSAFT_GUI"  = "$osaft_gui"   ]  && osaft_gui=o-saft.tcl
-[ "INSERTED_""BY_MAKE_CONTRIBDIR" = "$contrib_dir" ]  && contrib_dir=contrib
+# remember the inserted "" to avoid substitutions here
+[ "INSERTED_""BY_MAKE_OSAFT_SH"   = "$osaft_sh"     ] && osaft_sh=o-saft
+[ "INSERTED_""BY_MAKE_OSAFT_PL"   = "$osaft_exe"    ] && osaft_exe=o-saft.pl
+[ "INSERTED_""BY_MAKE_OSAFT_GUI"  = "$osaft_gui"    ] && osaft_gui=o-saft.tcl
+[ "INSERTED_""BY_MAKE_OSAFT_DOCKER" = "$osaft_dock" ] && osaft_dock=o-saft-docker
+[ "INSERTED_""BY_MAKE_CONTRIBDIR" = "$contrib_dir"  ] && contrib_dir=contrib
 
 # some files "not to be installed" are ancient, they are kept here in
 # $files_not_installed to ensure that outdated content is also handled
@@ -413,7 +415,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.78 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.79 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -677,7 +679,7 @@ done
 echo_foot
 
 echo_head "# check for installed O-Saft in $inst_directory"
-for o in $osaft_exe $osaft_gui $osaft_sh ; do
+for o in $osaft_exe $osaft_gui $osaft_sh $osaft_dock ; do
 	echo_label "$o"
 	e=`\command -v $o`
 	if [ -n "$e" ] ; then
