@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.8 21/02/27 19:41:25
+# SID   @(#) tools.txt 1.9 22/04/20 10:05:34
 
 NAME
 
@@ -23,9 +23,9 @@ SYNOPSIS
 
         o-saft-docker [OPTIONS ..] [COMMANDS ..] target [target target ...]
 
-        env  QUERY_STRING="--cgi&OPTIONS&COMMANDS&target" o-saft.cgi
+        env  QUERY_STRING="--cgi&OPTIONS&--cmd=CMD&--host=target" o-saft.cgi
 
-        https://o-saft.cgi?--cgi&OPTIONS&COMMANDS&target
+        https://o-saft.pl/o-saft.cgi?--cgi&OPTIONS&--cmd=CMD&--host=target
 
         checkAllCiphers.pl
 
@@ -102,7 +102,7 @@ TOOLS
 
           o-saft.tcl
           o-saft.tcl --docker
-          o-saft-docker -id=osawp/o-saft
+          o-saft-docker gui -id=osawp/o-saft
 
     CGI
         o-saft.cgi is a wrapper to start  o-saft.pl  via a webserver.
@@ -132,6 +132,8 @@ TOOLS
         of o-saft.pl's output. See the files itself what they do.
 
           contrib/bunt.pl
+          contrib/Cert-beautify.pl
+          contrib/symbol.pl
           contrib/*.awk
           contrib/* TBD
 
@@ -164,6 +166,7 @@ TOOLS
           contrib/install_perl_modules.pl
           contrib/distribution_install.sh
           contrib/*_completion_o-saft
+          contrib/zap_config.*
 
     Development
 
@@ -212,12 +215,12 @@ EXAMPLES
         Using postprocessors is done as usual:
           o-saft.pl       +check --header some.tld | contrib/bunt.pl
         which is the same as:
-          o-saft          -post=bunt.pl +check --header some.tl
+          o-saft          -post=bunt.pl +check --header some.tld
 
         Even if  o-saft.pl  runs in a container like docker,  its results can
         be postprocessed either in docker itself, like:
-          o-saft -docker  -post=bunt.pl +check --header some.tl
-          o-saft-docker   -post=bunt.pl +check --header some.tl
+          o-saft -docker  -post=bunt.pl +check --header some.tld
+          o-saft-docker   -post=bunt.pl +check --header some.tld
         or do it the traditional way with postprocessing on the calling host:
           o-saft -docker  +check --header some.tld | contrib/bunt.pl
           o-saft-docker   +check --header some.tld | contrib/bunt.pl
