@@ -65,7 +65,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.8 22/04/02 14:04:17",
+    SID         => "@(#) yeast.pl 2.9 22/04/20 10:18:31",
     STR_VERSION => "22.03.17",          # <== our official version number
 };
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -1852,53 +1852,53 @@ use IO::Socket::INET;
 sub _load_modules       {
     # load required modules
     # SEE Perl:import include
-    my $err = "";
+    my $_err = "";
     if (1 > 0) { # TODO: experimental code
-        $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "005: $err" if ("" ne $err);
+        $_err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+        warn STR_ERROR, "005: $_err" if ("" ne $_err);
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup:
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
-        #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "006: $err" if ("" ne $err);
+        #$_err = _load_file("IO/Socket/INET.pm", "IO INET module");
+        #warn STR_ERROR, "006: $_err" if ("" ne $_err);
     }
     if (0 < $cfg{'need_netdns'}) {
-        $err = _load_file("Net/DNS.pm", "Net module'");
-        if ("" ne $err) {
-            warn STR_ERROR, "007: $err";
+        $_err = _load_file("Net/DNS.pm", "Net module'");
+        if ("" ne $_err) {
+            warn STR_ERROR, "007: $_err";
             _warn("111: option '--mx disabled");
             $cfg{'use'}->{'mx'} = 0;
         }
     }
     if (0 < $cfg{'need_timelocal'}) {
-        $err = _load_file("Time/Local.pm", "Time module");
-        if ("" ne $err) {
-            warn STR_ERROR, "008: $err";
+        $_err = _load_file("Time/Local.pm", "Time module");
+        if ("" ne $_err) {
+            warn STR_ERROR, "008: $_err";
             _warn("112: value for '+sts_expired' not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
     }
-    $err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
-    if ("" ne $err) {
-        warn STR_ERROR, "008: $err";
+    $_err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
+    if ("" ne $_err) {
+        warn STR_ERROR, "008: $_err";
     }
 
     return if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
 
-    $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
-    if ("" ne $err) {
-        die  STR_ERROR, "010: $err"  if (not _is_cfg_do('version'));
-        warn STR_ERROR, "010: $err";# no reason to die for +version
+    $_err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+    if ("" ne $_err) {
+        die  STR_ERROR, "010: $_err"  if (not _is_cfg_do('version'));
+        warn STR_ERROR, "010: $_err";# no reason to die for +version
     }
     if ($cfg{'starttls'}) {
         $cfg{'use'}->{'http'} = 0;      # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
     return if (1 > $cfg{'need_netinfo'});
-    $err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
-    if ("" ne $err) {
-        die  STR_ERROR, "011: $err"  if (not _is_cfg_do('version'));
-        warn STR_ERROR, "011: $err";    # no reason to die for +version
+    $_err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
+    if ("" ne $_err) {
+        die  STR_ERROR, "011: $_err"  if (not _is_cfg_do('version'));
+        warn STR_ERROR, "011: $_err";    # no reason to die for +version
     }
     return;
 } # _load_modules
