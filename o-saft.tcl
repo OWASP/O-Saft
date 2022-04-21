@@ -533,7 +533,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.15 Spring Edition 2022
+#?      @(#) 2.16 Spring Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -638,10 +638,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.15 22/04/21 18:33:39"
+set cfg(SID)    "@(#) o-saft.tcl 2.16 22/04/21 18:47:51"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.15}
+set cfg(VERSION) {2.16}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1464,30 +1464,30 @@ proc update_cfg   {}        {
 
 # if {1==$cfg(gui-tip)} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
-	proc tooltip      {w help}  {
-		bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
-			bind $w <Any-Leave> "destroy %W.balloon"
-			return
-	}; # tooltip
+proc tooltip      {w help}  {
+    bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
+    bind $w <Any-Leave> "destroy %W.balloon"
+    return
+}; # tooltip
 
-	proc tooltip:show {w arg}   {
-		if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
-		set top $w.balloon
-			catch {destroy $top}
-		toplevel $top -bd 1 -bg black
-			wm overrideredirect $top 1
-			if {[string equal [tk windowingsystem] aqua]}  {
-				::tk::unsupported::MacWindowStyle style $top help none
-			}
-		pack [message $top.txt -aspect 10000 -bg lightyellow \
-			-font fixed -text $arg]
-			set wmx [winfo rootx $w]
-			set wmy [expr [winfo rooty $w]+[winfo height $w]]
-			wm geometry $top [winfo reqwidth $top.txt]x[
-			winfo reqheight $top.txt]+$wmx+$wmy
-				raise $top
-				return
-	}; # tooltip:show
+proc tooltip:show {w arg}   {
+    if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
+    set top $w.balloon
+    catch {destroy $top}
+    toplevel $top -bd 1 -bg black
+    wm overrideredirect $top 1
+    if {[string equal [tk windowingsystem] aqua]}  {
+        ::tk::unsupported::MacWindowStyle style $top help none
+    }
+    pack [message $top.txt -aspect 10000 -bg lightyellow \
+    -font fixed -text $arg]
+    set wmx [winfo rootx $w]
+    set wmy [expr [winfo rooty $w]+[winfo height $w]]
+    wm geometry $top [winfo reqwidth $top.txt]x[
+    winfo reqheight $top.txt]+$wmx+$wmy
+    raise $top
+    return
+}; # tooltip:show
 #
 # # Example:
 # button  .b -text Exit -command exit
@@ -1498,8 +1498,8 @@ proc update_cfg   {}        {
 
 proc gui_set_disabled {w}   {
 #? set widget to disabled state (mode)
-	$w config -state disabled
-		return
+    $w config -state disabled
+    return
 }; # gui_set_disabled
 
 proc gui_set_readonly {w}   {
@@ -1515,109 +1515,108 @@ proc gui_set_readonly {w}   {
 # Hence following workaround is used, which simply disables all functions
 # for events and sets them to do nothing.
 # This works on all platforms (*IX, Windows, Mac OS X Aqua).
-	foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
-	return
+    foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
+    return
 }; # gui_set_readonly
 
 proc guitip_set   {w txt}   {
 #? add tooltip message to given widget
-	global cfg
-		if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
-			tooltip $w "$txt"
-		} else {
-			set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
-				tooltip::tooltip $w "$txt"
-		}
-	return
+    global cfg
+    if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
+        tooltip $w "$txt"
+    } else {
+        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
+        tooltip::tooltip $w "$txt"
+    }
+    return
 }; # guitip_set
 
 proc guitheme_set {w theme} {
 #? set attributes for specified object
 # last part of the Tcl-widgets is key for array cfg_buttons
-	_dbx 2 "{$w, $theme}"
-		global cfg cfg_buttons IMG
-# text and tip are always configured
-		set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
-		set val [_get_tipp  $key];  if {"" ne $val} { guitip_set   $w  $val }
-	set val [_get_text  $key];  if {"" ne $val} { $w config -text  $val }
-	set val [_get_image $key];  if {![info exists IMG($val)]} { set theme "text" }
-	_dbx 4 " $w\t-> $key\t$theme\t-> $val"
-		if {"text"  eq $theme} {
-			set val [_get_color  $key]
-				if {"" ne $val} { $w config -bg    $val }
-			$w config -image {} -height 1 -relief raised
-		}
-	if {"image" eq $theme} {
-		if {"" ne $val} {
-			set h   30
-				if {![regexp {^::tk} $IMG($val)]} { set h 20 }
-			$w config -image $IMG($val) -relief flat
-				$w config -height $h;       # always set image height
-		}
-	}
-	return
+    _dbx 2 "{$w, $theme}"
+    global cfg cfg_buttons IMG
+    # text and tip are always configured
+    set key [regsub {.*\.([^.]*)$} $w {\1}];# get trailer of widget name
+    set val [_get_tipp  $key];  if {"" ne $val} { guitip_set   $w  $val }
+    set val [_get_text  $key];  if {"" ne $val} { $w config -text  $val }
+    set val [_get_image $key];  if {![info exists IMG($val)]} { set theme "text" }
+    _dbx 4 " $w\t-> $key\t$theme\t-> $val"
+    if {"text"  eq $theme} {
+        set val [_get_color  $key]
+        if {"" ne $val} { $w config -bg    $val }
+        $w config -image {} -height 1 -relief raised
+    }
+    if {"image" eq $theme} {
+        if {"" ne $val} {
+            set h   30
+            if {![regexp {^::tk} $IMG($val)]} { set h 20 }
+            $w config -image $IMG($val) -relief flat
+            $w config -height $h           ;# always set image height
+        }
+    }
+    return
 }; # guitheme_set
 
 proc guitheme_init  {theme} {
 #? configure buttons with simple text or graphics
-	_dbx 2 "{$theme}"
-		global cfg_buttons
-# Search for all Tcl widgets (aka commands), then check if tail of command
-# (part right of right-most .) exists as key in array  cfg_buttons.  If it
-# exits, then use values defined in  cfg_buttons  to set attributes of the
-# widget. First build a RegEx which matches all widget names of buttons.
-		set rex [join [array names cfg_buttons] "|"]
-		set rex [join [list {\.(} $rex {)$}]    "" ]
-		_dbx 4 ": regex = $rex"
-		foreach obj [info commands] {
-			if {![regexp {^\.}  $obj]}  { continue }
-			if {![regexp $rex   $obj]}  { continue }
-			if { [regexp {^\.$} $obj]}  { continue }
-			guitheme_set $obj $theme
-		}
-	return
+    _dbx 2 "{$theme}"
+    global cfg_buttons
+    # Search for all Tcl widgets (aka commands), then check if tail of command
+    # (part right of right-most .) exists as key in array  cfg_buttons.  If it
+    # exits, then use values defined in  cfg_buttons  to set attributes of the
+    # widget. First build a RegEx which matches all widget names of buttons.
+    set rex [join [array names cfg_buttons] "|"]
+    set rex [join [list {\.(} $rex {)$}]    "" ]
+    _dbx 4 ": regex = $rex"
+    foreach obj [info commands] {
+        if {![regexp {^\.}  $obj]}  { continue }
+        if {![regexp $rex   $obj]}  { continue }
+        if { [regexp {^\.$} $obj]}  { continue }
+        guitheme_set $obj $theme
+    }
+    return
 }; # guitheme_init
 
 proc guicursor_set {cursor} {
 #? set cursor for toplevel and tab widgets and all other windows
-	global cfg
-		foreach w [list . objN objS winA winF winO] {
-			if {"." ne $w} { set w $cfg($w) }
-			if {""  eq $w} { continue }
-# now get all children too
-			foreach c "$w [info commands $w.*]" {
-				if {"" eq $c}  { continue }
-				if {2<[regexp -all {\.} $c]} { continue }  ;# only first level
-#if {"" eq [lindex [$c config -cursor] 4]}
-					catch {  $c config -cursor $cursor }       ;# silently discard errors
-			}
-		}
-	return
+    global cfg
+    foreach w [list . objN objS winA winF winO] {
+        if {"." ne $w} { set w $cfg($w) }
+        if {""  eq $w} { continue }
+        # now get all children too
+        foreach c "$w [info commands $w.*]" {
+            if {"" eq $c}  { continue }
+            if {2<[regexp -all {\.} $c]} { continue }  ;# only first level
+            catch {  $c config -cursor $cursor }       ;# silently discard errors
+        }
+    }
+    return
 }; # guicursor_set
 
 proc guistatus_set    {val} {
 #? add text to status line
-	global cfg
-		if {1==$cfg(quit)} { return }          ;# no GUI update
-			$cfg(objS) config -state normal
-				$cfg(objS) insert end "$val\n"
-				$cfg(objS) see "end - 2 line"
-				gui_set_readonly $cfg(objS)
-				update idletasks                       ;# enforce display update
-				return
+    global cfg
+    if {1==$cfg(quit)} { return }          ;# no GUI update
+    $cfg(objS) config -state normal
+    $cfg(objS) insert end "$val\n"
+    $cfg(objS) see "end - 2 line"
+    gui_set_readonly $cfg(objS)
+    update idletasks                       ;# enforce display update
+    return
 }; # guistatus_set
 
 proc docker_args  {}        {
 #? if in "docker mode" pass image ID to Docker;
 # note that docker specific options must be before o-saft.pl commands or options
-	global prg
-		set do  {}
-	if {[regexp {\-docker$} $prg(SAFT)]} {
-		lappend do "-id=$prg(docker-id)"
+    global prg
+        set do  {}
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+        lappend do "-id=$prg(docker-id)"
 #lappend do "-tag=$prg(docker-tag)"
 # FIXME: need to distinguish if --id= or --tag= was specified
-	}
-	return $do
+    }
+    return $do
 }; # docker_args
 
 proc toggle_cfg          {w opt val}      {
@@ -3618,7 +3617,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.15 22/04/21 18:33:39
+ #?      @(#) .o-saft.tcl generated by 2.16 22/04/21 18:47:51
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
