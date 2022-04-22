@@ -261,7 +261,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.43 22/04/22 22:18:49
+#?       @(#) o-saft-docker 1.44 22/04/22 22:22:10
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -334,7 +334,7 @@ docker_usage () {
 
 		docker run --rm -it ${image_name} +info your.tld
 	or:
-		$me +info your.tld
+		$_me  +info your.tld
 	or:
 		o-saft -docker +info your.tld
 
