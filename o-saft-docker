@@ -28,7 +28,6 @@
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
 #?       -tag=23 use Docker image ID with tag; default: (empty)
 #?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
-#?       +VERSION print version
 #?       --      pass all remaining parameters to o-saft.pl in Docker image
 #?
 #? QUICKSTART
@@ -228,6 +227,8 @@
 #?       they should apply for this script.
 #?       These options can only be passed to  o-saft.pl  in the Docker image,
 #?       if they are preceeded by the  --  parameter.
+#?       The option  +VERSION  is not supported for this tool, it's passed to
+#?       the Docker image.
 #?       Unknown parameters to this script will be treated as arguments to be
 #?       passed to o-saft.pl and will terminate internal argument scanning in
 #?       this script.
@@ -260,7 +261,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.43 22/04/20 07:44:07
+#?       @(#) o-saft-docker 1.43 22/04/22 22:18:49
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -565,7 +566,6 @@ while [ $# -gt 0 ]; do
 	            ;;
 	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
 	  -OSAFT_VERSION=*)     OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
-	  +VERSION) echo "1.43"; exit 0; ;;
 	  *)        break;  ;;
 	esac
 	shift
