@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.9 22/03/20 08:45:02";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.10 22/05/22 16:56:01";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -274,7 +274,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # 
         ],
     'sample'        => { # example
-      '0x0300003D'  => [qw( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256;RSA_WITH_AES_256_CBC_SHA256 L )],
+      '0x0300003D'  => [q( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
         },
 ); # %ciphers_desc
 
@@ -513,12 +513,12 @@ sub get_desc    {
     );
 } # get_desc
 
-sub get_cipherkeys      {
+sub get_cipherkeys  {
     my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
     return wantarray ? @keys : join(' ', @keys);
 } # get_cipherkeys
 
-sub get_ciphernames     {
+sub get_ciphernames {
     my @list;
     foreach my $key (sort keys %ciphers) {      # SEE Note:Testing, sort
         next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
@@ -527,7 +527,7 @@ sub get_ciphernames     {
     return wantarray ? @list : join(' ', @list);
 } # get_ciphernames
 
-sub find_name   {   # TODO: not yet used
+sub find_name       {   # TODO: not yet used
     #? check if given cipher name is a known cipher
     #  checks in %ciphers, if not found search in all aliases and constants
     #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES256-SHA256
@@ -572,7 +572,7 @@ C<@ciphers> is a list of cipher suite names. These names should be those used
 by  openssl(1)  .
 =cut
 
-sub set_sec     { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
+sub set_sec         { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
 
 sub sort_cipher_names   {
     # cipher suites must be given as array
@@ -703,16 +703,16 @@ sub sort_cipher_names   {
 #_____________________________________________________________________________
 #_________________________________________________ internal/testing methods __|
 
-sub show_getter03 {
+sub show_getter03   {
     #? show hardcoded example for all getter functions for key 0x00,0x03
 
 #   0x00,0x03	RSA  40   N    RC4  RSA(512) MD5  4346,6347  0    WEAK SSLv3  export
 #   0x00,0x03   EXP-RC4-MD5    RSA_RC4_40_MD5
 # C,0x00,0x03   RSA_EXPORT_WITH_RC4_40_MD5
 
-    my $cipher = "0x00,0x03";
-    print "# testing example: $cipher ...\n";
+    my $cipher = "0x00,0x03";       # 0x03000003
     $cipher = text2key("0x00,0x03");# normalize cipher key
+    printf("# testing example: $cipher (aka 0x00,0x03) ...\n");
     printf("# %s(%s)\t%s\t%-14s\t# %s\n", "function", "cipher key", "key", "value", "(expected)");
     printf("#----------------------+-------+----------------+---------------\n");
     #printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls",  $cipher, "dtls", get_dtls( $cipher), "N");
@@ -731,10 +731,11 @@ sub show_getter03 {
     return;
 } # show_getter03
 
-sub show_getter {
+sub show_getter     {
     #? show example for all getter functions for specified cipher key
     my $key = shift;
     if ($key !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
+        printf("# unknown cipher key '$key'; using hardcoded default instead\n");
         show_getter03;
         return;
     }
@@ -766,7 +767,7 @@ sub show_getter {
     return;
 } # show_getter
 
-sub show_key    {
+sub show_key        {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
@@ -775,7 +776,7 @@ sub show_key    {
     return;
 } # show_key
 
-sub show_hex    {
+sub show_hex        {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
@@ -784,7 +785,7 @@ sub show_hex    {
     return;
 } # show_hex
 
-sub show_desc   {
+sub show_desc       {
     #? print textual description for columns %ciphers hash
     local $\ = "\n";
     print "
@@ -793,28 +794,29 @@ sub show_desc   {
 
     my $key = 0;
     print ("= %ciphers : example line:\n");
-#0x0300003D	HIGH	HIGH	TLSv12	RSA	RSA	AES	256	SHA256	5246	AES256-SHA256	RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256	L
+    # we should get the example $ciphers_desc{sample}
     printf("  '0x0300003D' -> ["); # TODO 0x00,0x3D
     foreach (@{$ciphers_desc{head}}) {
         printf("\t%s", $ciphers_desc{sample}->{'0x0300003D'}[$key]);
         $key++;
     }
-    printf(" ]\n");
-    print ("\n= %ciphers : tabular description of one (example) line:\n");
-    printf("=-------+--------------+-----------------------+--------\n");
+    print (" ]");
+    print ("\n= %ciphers : tabular description of above (example) line:\n");
+    print ("=-------+--------------+-----------------------+--------");
     printf("= [%s]\t%15s\t%16s\t%s\n", "nr", "key", "description", "example");
-    printf("=-------+--------------+-----------------------+--------\n");
+    print ("=-------+--------------+-----------------------+--------");
     $key = 0;
     foreach (@{$ciphers_desc{head}}) {
         printf("  [%s]\t%15s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
             $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x0300003D'}[$key]);
         $key++;
     }
-    printf("=-------+--------------+-----------------------+--------\n");
+    printf("=-------+--------------+-----------------------+--------");
 
-    print ("\n= %ciphers : description of one line as perl code:\n");
-    printf("= varname  %-23s\t# example\t# description\n", "%ciphers hash");
-    printf("=------+--------------------------------+---------------+---------------\n");
+    print ("\n\n= %ciphers : description of one line as perl code:\n");
+    print ("=------+--------------------------------+---------------+---------------");
+    printf("= varname  %-23s\t# example result# description\n", "%ciphers hash");
+    print ("=------+--------------------------------+---------------+---------------");
     my $idx = 0;
     foreach my $col (@{$ciphers_desc{head}}) {
         $col = "names" if $col =~ /cipher/;     # dirty hack
@@ -825,21 +827,21 @@ sub show_desc   {
             $ciphers_desc{sample}->{'0x0300003D'}[$idx], $ciphers_desc{text}[$idx]);
         $idx++;
     }
-    printf("=------+--------------------------------+---------------+---------------\n");
+    print ("=------+--------------------------------+---------------+---------------");
 
     print  "\n= \%cipher_results : description of hash:\n";
 # currently (12/2015)
-    printf("=--------------------------------------------+-------\n");
-    printf("=           %%hash{  ssl   }->{'cipher key'} = value;\n");
-    printf("=--------------------------------------------+-------\n");
-    printf("  %%cipher_results{'TLSv12'}->{'0x0300003D'} = 'yes';\n"); # AES256-SHA256
-    printf("  %%cipher_results{'SSLv3'} ->{'0x02FF0810'} = 'no'; \n"); # NULL-NULL
-    printf("=--------------------------------------------+-------\n");
+    print ("=-------------------------------------------+-------");
+    print ("=           %hash{  ssl   }->{'cipher key'} = value;");
+    print ("=-------------------------------------------+-------");
+    print ("  %cipher_results{'TLSv12'}->{'0x0300003D'} = 'yes';"); # AES256-SHA256
+    print ("  %cipher_results{'SSLv3'} ->{'0x02FF0810'} = 'no'; "); # NULL-NULL
+    print ("=-------------------------------------------+-------");
 
     return;
 } # show_desc
 
-sub show_sorted {
+sub show_sorted     {
     local $\ = "\n";
     my $head = "= OWASP openssl cipher suite";
     my $line = "=------+-------+----------------------------------------------";
@@ -853,9 +855,9 @@ sub show_sorted {
 =       openssl     - strength gven bei OpenSSL
 =       cipher suite- OpenSSL suite name
 ";
-    print($line);
-    print($head);
-    print($line);
+    print ($line);
+    print ($head);
+    print ($line);
     my @sorted;
     my @unsorted;
     push(@unsorted, get_name($_)) foreach sort keys %ciphers;
@@ -864,15 +866,15 @@ sub show_sorted {
         push(@sorted, sprintf("%4s\t%s\t%s", get_cipher_owasp($c), $sec, $c));
     }
     print foreach sort @sorted;
-    print($line);
-    print($head);
+    print ($line);
+    print ($head);
     printf("=\n");
     printf("= %4s sorted ciphers\n",  scalar @sorted);
     printf("= %4s ignored ciphers\n", ((keys %ciphers) - (scalar @sorted)));
     return;
 } # show_sorted
 
-sub show_overview {
+sub show_overview   {
     local $\ = "\n";
     print  "
 === internal data structure: information about ciphers ===
@@ -895,8 +897,8 @@ sub show_overview {
 =       miss security missing in data structure
 =
 = No perl or other warnings should be printed.
-= Note: following columns should have a *
-=       security, name, const, desc.
+= Note: following columns should have a  *  in columns
+=       security, name, const
 =
 ";
     my $line = sprintf("=%s+%s+%s+%s+%s+%s", "-" x 14, "-"x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 21);
@@ -908,7 +910,6 @@ sub show_overview {
     my $cnt = 0;
     foreach my $key (sort keys %ciphers) {
          $cnt++;
-         my $both   = "-";
          my $sec    = $ciphers{$key}->{'sec'};
          my $name   = "-";
          my $alias  = "-";
@@ -935,7 +936,7 @@ sub show_overview {
     return;
 } # show_overview
 
-sub show_alias  {
+sub show_alias      {
     #? show aliases for ciher suite names or constants depending on $type
     #  $type: name | const
     my $type = shift;
@@ -1154,7 +1155,7 @@ sub show            {
     }
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";
-        printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
+        printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
     }
     return;
 } # show
@@ -1215,10 +1216,11 @@ sub _main_ciphers_usage {
     }
     print "# various commands (examples):\n";
     printf("\t$name version\n");
-    printf("\t$name getter=0x0300CC0A9\n");  # avoid: Possible attempt to separate words with commas at ...
+    printf("\t$name getter=0x0300CCA9\n");  # avoid: Possible attempt to separate words with commas at ...
     foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 )) {
         printf("\t%s %s\n", $name, $cmd);
     }
+    print "#\n# all commands can also be used as '--test-ciphers-CMD\n";
     return;
 } # _main_ciphers_usage
 
@@ -1233,12 +1235,12 @@ sub _main_ciphers   {
     print_pod($0, __PACKAGE__, $SID_ciphers)     if (0 > $#argv);
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help# print own help
+        print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help
         _main_ciphers_usage()      if ($arg eq '--usage');
         # ----------------------------- options
         $VERBOSE++                 if ($arg eq '--v');
         # ----------------------------- commands
-        print "$VERSION\n"         if ($arg =~ /^version/i);
+        print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers-)?version/i);
         # allow short option without --test-ciphers- prefix
         # (using multiple assignments for better human readability)
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(alias|const(?:ants?)?|desc|regex|rfc)/);
@@ -1250,7 +1252,7 @@ sub _main_ciphers   {
     exit 0;
 } # _main_ciphers
 
-sub ciphers_done {};        # dummy to check successful include
+sub ciphers_done    {};     # dummy to check successful include
 
 # complete initialisations
 _ciphers_init();
@@ -1354,7 +1356,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.9 2022/03/20
+2.10 2022/05/22
 
 =head1 AUTHOR
 
