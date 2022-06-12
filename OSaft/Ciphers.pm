@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.10 22/05/22 16:56:01";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.11 22/06/12 20:58:54";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -234,6 +234,7 @@ our @EXPORT = qw(
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
+#no warnings 'qw';       # ugly :-(
 our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw( OpenSSL sec  ssl  keyx auth enc  bits mac  rfc  cipher;alias  const;const  comment )],
                             # abbreviations used by openssl:
@@ -274,7 +275,10 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # 
         ],
     'sample'        => { # example
-      '0x0300003D'  => [q( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
+      '0x0300003D'  => [split /\s+/, q( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
+                            # qw// would result in Perl warning:
+                            #   Possible attempt to separate words with commas
+                            # q// is one word, hence it must be splitted
         },
 ); # %ciphers_desc
 
@@ -792,24 +796,24 @@ sub show_desc       {
 === internal data structure: overview of %ciphers ===
 ";
 
-    my $key = 0;
+    my $idx = 0;
     print ("= %ciphers : example line:\n");
     # we should get the example $ciphers_desc{sample}
     printf("  '0x0300003D' -> ["); # TODO 0x00,0x3D
     foreach (@{$ciphers_desc{head}}) {
-        printf("\t%s", $ciphers_desc{sample}->{'0x0300003D'}[$key]);
-        $key++;
+        printf("\t%s", $ciphers_desc{sample}->{'0x0300003D'}[$idx]);
+        $idx++;
     }
     print (" ]");
     print ("\n= %ciphers : tabular description of above (example) line:\n");
     print ("=-------+--------------+-----------------------+--------");
     printf("= [%s]\t%15s\t%16s\t%s\n", "nr", "key", "description", "example");
     print ("=-------+--------------+-----------------------+--------");
-    $key = 0;
+    $idx = 0;
     foreach (@{$ciphers_desc{head}}) {
-        printf("  [%s]\t%15s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
-            $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x0300003D'}[$key]);
-        $key++;
+        printf("  [%s]\t%15s\t%-20s\t%s\n", $idx, $ciphers_desc{head}[$idx],
+            $ciphers_desc{text}[$idx], $ciphers_desc{sample}->{'0x0300003D'}[$idx]);
+        $idx++;
     }
     printf("=-------+--------------+-----------------------+--------");
 
@@ -817,7 +821,7 @@ sub show_desc       {
     print ("=------+--------------------------------+---------------+---------------");
     printf("= varname  %-23s\t# example result# description\n", "%ciphers hash");
     print ("=------+--------------------------------+---------------+---------------");
-    my $idx = 0;
+    $idx = 0;
     foreach my $col (@{$ciphers_desc{head}}) {
         $col = "names" if $col =~ /cipher/;     # dirty hack
         $col = "const" if $col =~ /const/;      # dirty hack
@@ -1356,7 +1360,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.10 2022/05/22
+2.11 2022/06/12
 
 =head1 AUTHOR
 
