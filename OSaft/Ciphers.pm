@@ -46,7 +46,7 @@ BEGIN {
 }
 
 our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.11 22/06/12 20:58:54";
+my  $SID_ciphers  = "@(#) Ciphers.pm 2.12 22/06/13 10:38:35";
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE  = 0;  # >1: option --v
@@ -234,7 +234,6 @@ our @EXPORT = qw(
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-#no warnings 'qw';       # ugly :-(
 our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw( OpenSSL sec  ssl  keyx auth enc  bits mac  rfc  cipher;alias  const;const  comment )],
                             # abbreviations used by openssl:
@@ -1360,7 +1359,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.11 2022/06/12
+2.12 2022/06/13
 
 =head1 AUTHOR
 
