@@ -15,20 +15,18 @@ use strict;
 use warnings;
 use utf8;
 
-use constant {
-    OSAFT_VERSION   => '22.03.17',  # official version number of this file
-  # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
-    STR_ERROR   => "**ERROR: ",
-    STR_WARN    => "**WARNING: ",
-    STR_HINT    => "!!Hint: ",
-    STR_USAGE   => "**USAGE: ",
-    STR_DBX     => "#dbx# ",
-    STR_UNDEF   => "<<undef>>",
-    STR_NOTXT   => "<<>>",
-    STR_MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>",
-    SID_osaft   => "@(#) osaft.pm 2.4 22/03/20 22:49:06",
-
-};
+our $SID_osaft  =  "@(#) osaft.pm 2.5 22/06/14 00:02:22";
+our $VERSION    =  "22.05.22",  # official version number of this file
+our %STR = (     # TODO: import from OSaft::Text
+    'ERROR'     => "**ERROR: ",
+    'WARN'      => "**WARNING: ",
+    'HINT'      => "!!Hint: ",
+    'USAGE'     => "**USAGE: ",
+    'DBX'       => "#dbx# ",
+    'UNDEF'     => "<<undef>>",
+    'NOTXT'     => "<<>>",
+    'MAKEVAL'   => "<<value not printed (OSAFT_MAKE exists)>>",
+);
 
 ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
 #  SEE Perl:binmode() (in o-saft.pl)
@@ -137,21 +135,21 @@ purpose of this module is defining variables. Hence we export them.
 
 =over 4
 
-=item STR_ERROR
+=item $STR{ERROR}
 
-=item STR_WARN
+=item $STR{WARN}
 
-=item STR_HINT
+=item $STR{HINT}
 
-=item STR_USAGE
+=item $STR{USAGE}
 
-=item STR_DBX
+=item $STR{DBX}
 
-=item STR_UNDEF
+=item $STR{UNDEF}
 
-=item STR_NOTXT
+=item $STR{NOTXT}
 
-=item STR_MAKEVAL
+=item $STR{MAKEVAL}
 
 =back
 
@@ -203,16 +201,8 @@ purpose of this module is defining variables. Hence we export them.
 use Exporter qw(import);
 use base qw(Exporter);
 #our @ISA        = qw(Exporter);
-our $VERSION    = OSAFT_VERSION;
 our @EXPORT     = qw(
-                STR_ERROR
-                STR_WARN
-                STR_HINT
-                STR_USAGE
-                STR_DBX
-                STR_UNDEF
-                STR_NOTXT
-                STR_MAKEVAL
+                %STR
                 %prot
                 %prot_txt
                 %tls_handshake_type
@@ -270,7 +260,7 @@ our @EXPORT     = qw(
 # insert above in vi with:
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
-# :r !sed -ne 's/^ *\(STR_[A-Z][^ ]*\).*/\t\t\1/p' %
+# :r !sed -ne 's/^ *\($STR_[A-Z][^ ]*\).*/\t\t\1/p' %
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -1820,7 +1810,7 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '1.3.6.1'                   => {'txt' => "Internet OID"},
 #   '1.3.6.1.5.5.7.1'           => {'txt' => "Private Extensions"},
     '1.3.6.1.5.5.7.1.1'         => {'txt' => "Authority Information Access"}, # authorityInfoAccess
-    '1.3.6.1.5.5.7.1.12'        => {'txt' => STR_UNDEF},
+    '1.3.6.1.5.5.7.1.12'        => {'txt' => $STR{UNDEF}},
     '1.3.6.1.5.5.7.1.14'        => {'txt' => "Proxy Certification Information"},
     '1.3.6.1.5.5.7.1.24'        => {'txt' => "id-pe-tlsfeature"},
     '1.3.6.1.5.5.7.3.1'         => {'txt' => "Server Authentication"},
@@ -1833,13 +1823,13 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.5.5.7.3.8'         => {'txt' => "Timestamping"},
     '1.3.6.1.5.5.7.48.1'        => {'txt' => "ocsp"},
     '1.3.6.1.5.5.7.48.2'        => {'txt' => "caIssuer"},
-    '1.3.6.1.4.1.11129.2.5.1'   => {'txt' => STR_UNDEF},    # Certificate Policy?
-    '1.3.6.1.4.1.14370.1.6'     => {'txt' => STR_UNDEF},    # Certificate Policy?
+    '1.3.6.1.4.1.11129.2.5.1'   => {'txt' => $STR{UNDEF}},  # Certificate Policy?
+    '1.3.6.1.4.1.14370.1.6'     => {'txt' => $STR{UNDEF}},  # Certificate Policy?
     '1.3.6.1.4.1.311.10.3.3'    => {'txt' => "Microsoft Server Gated Crypto"},
     '1.3.6.1.4.1.311.10.11'     => {'txt' => "Microsoft Server: EV additional Attributes"},
     '1.3.6.1.4.1.311.10.11.11'  => {'txt' => "Microsoft Server: EV ??friendly name??"},
     '1.3.6.1.4.1.311.10.11.83'  => {'txt' => "Microsoft Server: EV ??root program??"},
-    '1.3.6.1.4.1.4146.1.10'     => {'txt' => STR_UNDEF},    # Certificate Policy?
+    '1.3.6.1.4.1.4146.1.10'     => {'txt' => $STR{UNDEF}},  # Certificate Policy?
     '1.3.6.1.5.5.7.8.7'         => {'txt' => "otherName"},
     '2.16.840.1.113730.4.1'     => {'txt' => "Netscape SGC"},
     '1.2.840.113549.1.1.1'      => {'txt' => "SubjectPublicKeyInfo"}, # ???
@@ -1884,9 +1874,9 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '2.5.29.31'                 => {'txt' => "subject:crlDistributionPoints"},# CRL distribution points
     '2.5.29.32'                 => {'txt' => "subject:certificatePolicies"},  # Certificate Policies
     '2.5.29.37'                 => {'txt' => "subject:extendedKeyUsage"},     # Extended key usage
-    '2.16.840.1.113733.1.7.23.6'=> {'txt' => STR_UNDEF},    # Certificate Policy?
-    '2.16.840.1.113733.1.7.48.1'=> {'txt' => STR_UNDEF},    #  ''
-    '2.16.840.1.113733.1.7.54'  => {'txt' => STR_UNDEF},    #  ''
+    '2.16.840.1.113733.1.7.23.6'=> {'txt' => $STR{UNDEF}},  # Certificate Policy?
+    '2.16.840.1.113733.1.7.48.1'=> {'txt' => $STR{UNDEF}},  #  ''
+    '2.16.840.1.113733.1.7.54'  => {'txt' => $STR{UNDEF}},  #  ''
     '0.9.2342.19200300.100.1.3' => {'txt' => "subject:mail"},
     # TODO: see http://oidref.com/
     #'2.16.840.1.114028.10.1.2'  => {'txt' => "Entrust Extended Validation (EV) Certification Practice Statement (CPS)"},
@@ -2789,15 +2779,15 @@ our %cfg = (
     'ourstr' => {
         # RegEx to match strings of our own output, see OUTPUT in o-saft-man.pm
         # first all that match a line at beginning:
-        'error'     => qr(^\*\*ERR),            # see STR_ERROR
-        'warning'   => qr(^\*\*WARN),           # see STR_WARN
-        'hint'      => qr(^\!\!Hint),           # see STR_HINT
-        'dbx'       => qr(^#dbx#),              # see STR_DBX
+        'error'     => qr(^\*\*ERR),            # see STR{ERROR}
+        'warning'   => qr(^\*\*WARN),           # see STR{WARN}
+        'hint'      => qr(^\!\!Hint),           # see STR{HINT}
+        'dbx'       => qr(^#dbx#),              # see STR{DBX}
         'headline'  => qr(^={1,3} ),            # headlines
         'keyline'   => qr(^#\[),                # dataline prefixed with key
         'verbose'   => qr(^#[^[]),              # verbose output
         # matches somewhere in the line:
-        'undef'     => qr(\<\<undef),           # see STR_UNDEF
+        'undef'     => qr(\<\<undef),           # see STR{UNDEF}
         'yeast'     => qr(\<\<.*?\>\>),         # additional information
         'na'        => qr(N\/A),                # N/A
         'yes'       => qr(:\s*yes),             # good check result; # TODO: : needs to be $text{separator}
@@ -3214,7 +3204,7 @@ sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy pe
     #? Print hint for specified command.
     my $cmd  = shift;
     my @args = @_;
-    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
+    print $STR{HINT}, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
 
@@ -3319,10 +3309,10 @@ sub _prot_init_value    {
         $prot{$ssl}->{'OWASP_miss'}     = 0;    # for internal use
         $prot{$ssl}->{'protocol'}       = 0;
         $prot{$ssl}->{'ciphers_pfs'}    = [];
-        $prot{$ssl}->{'cipher_pfs'}     = STR_UNDEF;
-        $prot{$ssl}->{'default'}        = STR_UNDEF;
-        $prot{$ssl}->{'cipher_strong'}  = STR_UNDEF;
-        $prot{$ssl}->{'cipher_weak'}    = STR_UNDEF;
+        $prot{$ssl}->{'cipher_pfs'}     = $STR{UNDEF};
+        $prot{$ssl}->{'default'}        = $STR{UNDEF};
+        $prot{$ssl}->{'cipher_strong'}  = $STR{UNDEF};
+        $prot{$ssl}->{'cipher_weak'}    = $STR{UNDEF};
     }
     return;
 } # _prot_init_value
@@ -3406,7 +3396,7 @@ sub _main_lib       {
     binmode(STDERR, ":unix:utf8");
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, SID_osaft)   if ($arg =~ m/^--?h(?:elp)?$/); # print own help
+        print_pod($0, __PACKAGE__, $SID_osaft)  if ($arg =~ m/^--?h(?:elp)?$/); # print own help
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -3432,7 +3422,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.4 2022/03/20
+2.5 2022/06/14
 
 =head1 AUTHOR
 
