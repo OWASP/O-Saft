@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.2 22/06/14 00:04:10";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.3 22/06/14 10:14:29";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -190,8 +190,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _ynull();
     _yeast("#") if (3 > $cfg{'trace'});
     _yline("");
-    _yTRAC("$0", $SID_main);    # $0 is same as $ARG0
     _yTRAC("_yeast_init::SID", $SID_dbx) if (2 > $cfg{'trace'});
+    _yTRAC("$0", _VERSION());    # $0 is same as $ARG0
     # official VERSIONs, not those of the current files !
     _yTRAC("::osaft",  $osaft::VERSION);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
@@ -392,7 +392,7 @@ sub _vprintme   {
     #? write own version, command-line arguments and date and time
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
-    _yeast("$0 " . $SID_main);
+    _yeast("$0 " . _VERSION());
     _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
         _yeast("$0 dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
@@ -969,7 +969,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.2 2022/06/14
+2.3 2022/06/14
 
 =head1 AUTHOR
 
