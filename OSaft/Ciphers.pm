@@ -45,8 +45,8 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.13 22/06/14 00:10:09";
-my  $VERSION    = "22.05.22";   # official verion number of tis file
+my  $SID_ciphers= "@(#) Ciphers.pm 2.14 22/06/14 10:11:39";
+our $VERSION    = "22.05.22";   # official verion number of tis file
 
 our $VERBOSE    = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
@@ -695,7 +695,7 @@ sub sort_cipher_names   {
             push(@miss, $ciphers[$i]) unless grep {$_ eq $ciphers[$i]} @sorted;
         }
         @miss = sort @miss; # SEE Note:Testing, sort
-        warn $STR{UNDEF} . "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
+        warn $STR{WARN}, "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
     }
     @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
     _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
@@ -1358,7 +1358,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.13 2022/06/14
+2.14 2022/06/14
 
 =head1 AUTHOR
 
