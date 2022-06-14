@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.13 19/04/27 19:28:03
+#?      @(#) .perlcriticrc 1.14 22/06/14 10:18:52
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -450,14 +450,12 @@ verbose     = 8
 	# Workaround: disable selectively where appropriate with:
 
 
-[ValuesAndExpressions::ProhibitConstantPragma]
+#[ValuesAndExpressions::ProhibitConstantPragma]
 
     # Message
 	# Pragma "constant" used at line ...
 
     # CHECK ENABLED
-	# Readonly module not used, because it is missing on some
-	# systems, for example Mac OS X 10.x with perl 5.18
 
 
 [-ValuesAndExpressions::ProhibitEmptyQuotes]
