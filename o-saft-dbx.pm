@@ -51,7 +51,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.1 22/03/18 08:05:24";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.2 22/06/14 00:04:10";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -102,7 +102,7 @@ sub __trac      {
                         last SWITCH;
                       };
         # DEFAULT
-                        $data .= __yeast(STR_WARN . " user defined type '$_' skipped");
+                        $data .= __yeast($STR{WARN} . " user defined type '$_' skipped");
     } # SWITCH
 
     return $data;
@@ -190,7 +190,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _ynull();
     _yeast("#") if (3 > $cfg{'trace'});
     _yline("");
-    _yTRAC("$0", $mainsid);     # $0 is same as $ARG0
+    _yTRAC("$0", $SID_main);    # $0 is same as $ARG0
     _yTRAC("_yeast_init::SID", $SID_dbx) if (2 > $cfg{'trace'});
     # official VERSIONs, not those of the current files !
     _yTRAC("::osaft",  $osaft::VERSION);
@@ -265,7 +265,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                         # SEE Make:OSAFT_MAKE (in Makefile.pod)
                         #TODO: quick&dirty
                         my $t0 = $cfg{'time0'};
-                        $cfg{'time0'} = STR_MAKEVAL;
+                        $cfg{'time0'} = $STR{MAKEVAL};
                         _yeast_trac(\%cfg, $key);
                         $cfg{'time0'} = $t0;
                     } else {
@@ -392,7 +392,7 @@ sub _vprintme   {
     #? write own version, command-line arguments and date and time
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
-    _yeast("$0 " . $mainsid);
+    _yeast("$0 " . $SID_main);
     _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
         _yeast("$0 dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
@@ -937,7 +937,7 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 =over 4
 
 
-=item $mainsid
+=item $SID_main
 
 =item %data
 
@@ -969,7 +969,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.1 2022/03/18
+2.2 2022/06/14
 
 =head1 AUTHOR
 
