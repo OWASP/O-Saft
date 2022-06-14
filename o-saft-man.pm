@@ -62,7 +62,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 1.349 22/04/20 10:26:48";
+my  $SID_man= "@(#) o-saft-man.pm 1.350 22/06/14 00:09:07";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -85,9 +85,9 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn = sub { print(STR_WARN, join(" ", @_), "\n"); } if not defined &_warn;
-*_hint = sub { print(STR_HINT, join(" ", @_), "\n"); } if not defined &_hint;
-*_dbx  = sub { print(STR_DBX,  join(" ", @_), "\n"); } if not defined &_dbx;
+*_warn = sub { print($STR{WARN}, join(" ", @_), "\n"); } if not defined &_warn;
+*_hint = sub { print($STR{HINT}, join(" ", @_), "\n"); } if not defined &_hint;
+*_dbx  = sub { print($STR{DBX},  join(" ", @_), "\n"); } if not defined &_dbx;
 
 sub _get_filename   {
 # TODO: move to osaft.pm or alike
@@ -176,9 +176,9 @@ sub _man_squeeze    {   # break long lines of text; SEE Note:tty
 
 sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
 sub _man_get_version{
-    # ugly, but avoids global variable or passing as argument
+    # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '1.349'; $v = STR_VERSION if (defined STR_VERSION);
+    my $v = '1.350'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1269,7 +1269,7 @@ sub man_warnings    {
     # data is extracted from separate file, which could be created by make
     _man_dbx("man_warnings($parent) ...");
     my $txt  = "";
-    my $rex  = join('|', STR_ERROR, STR_WARN, STR_HINT, 'print ', 'STR\{WARN}');
+    my $rex  = join('|', $STR{ERROR}, $STR{WARN}, $STR{HINT}, 'print ', 'STR\{WARN}');
        $rex  =~ s/([*!])/\\$1/g;
        $rex  = qr($rex);        # match our own messages only
     my $fh   = undef;
@@ -1291,12 +1291,12 @@ sub man_warnings    {
     # following formats of a line are expected:
     #       **WARNING: 042: text ..."    -- _warn() called with only one parameter
     #       **WARNING: 091:", "text ..." -- _warn() called with two parameters
-    #       print STR_WARN, "text ..."   -- print used to print message
+    #       print $STR{WARN}, "text ..."  -- print used to print message
     while(<$fh>) {
         next if (m/^\s*#/);
         next if (m/^\s*$/);
         if (not m/$rex/) {
-            warn(STR_WARN, "092:", " help file '$doc' unknown syntax: '$_' ; ignored"); ## no critic qw(ErrorHandling::RequireCarping)
+            warn($STR{WARN}, "092:", " help file '$doc' unknown syntax: '$_' ; ignored"); ## no critic qw(ErrorHandling::RequireCarping)
             next;
         }
         my ($err, $nr, $msg)  = m/($rex\s*)([0-9]{3}:?)(.*)/;
@@ -1982,7 +1982,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-1.349 2022/04/20
+1.350 2022/06/14
 
 =head1 AUTHOR
 
