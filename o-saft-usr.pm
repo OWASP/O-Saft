@@ -24,7 +24,7 @@ BEGIN { # mainly required for testing ...
 
 use osaft qw(print_pod);
 
-my  $SID_usr= "@(#) o-saft-usr.pm 1.35 22/02/08 22:58:17";
+my  $SID_usr= "@(#) o-saft-usr.pm 2.1 22/06/14 10:41:06";
 
 
 #_____________________________________________________________________________
@@ -265,7 +265,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-1.35 2022/02/08
+2.1 2022/06/14
 
 =head1 AUTHOR
 
