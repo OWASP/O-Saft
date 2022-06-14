@@ -70,11 +70,10 @@ BEGIN {
     }
 }
 
-use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '22.02.13',
-    SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.48 22/06/14 00:10:47',
-};
+our $VERSION    = "22.05.22";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.49 22/06/14 10:29:44",
+my  $SSLHELLO   = "O-Saft::Net::SSLhello";
+
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
 #require IO::Select if ($Net::SSLhello::trace > 1);
@@ -122,7 +121,6 @@ our $my_error = ""; # global store for error message
 
 use Exporter qw(import);
 use base qw(Exporter);
-our $VERSION    = SSLHELLO_VERSION;
 our @EXPORT_OK  = qw(
         net_sslhello_done
         checkSSLciphers
@@ -434,13 +432,13 @@ sub _sprintf_hex_val        ($$;$);
 
 sub _y_ts      { if ($Net::SSLhello::traceTIME <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]) }
 
-sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $messages[0]                 if ($Net::SSLhello::trace > 0); return }
-sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                                if ($Net::SSLhello::trace > 0); return }
-sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)        if ($Net::SSLhello::trace > 1); return }
-sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace > 2); return }
-sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace ==3); return }
-sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 3); return }
-sub _trace5($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 4); return }
+sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . $SSLHELLO . "::" . $messages[0]                 if ($Net::SSLhello::trace > 0); return }
+sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . $SSLHELLO . "::"                                if ($Net::SSLhello::trace > 0); return }
+sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)        if ($Net::SSLhello::trace > 1); return }
+sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace > 2); return }
+sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace ==3); return }
+sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 3); return }
+sub _trace5($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 4); return }
 sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 0); return }
 sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 1); return }
 sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 2); return }
@@ -1783,7 +1781,7 @@ sub checkSSLciphers ($$$@) {
     printConstants ()  if ($Net::SSLhello::trace > 3);              # additional trace information
     printParameters () if ($Net::SSLhello::trace > 3);              # additional trace information
 
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
     if ($Net::SSLhello::trace > 0) {
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -1836,7 +1834,7 @@ sub checkSSLciphers ($$$@) {
             if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
                 $my_error = ""; # reset error message
                 # reset error_handler and set basic information for this sub
-                OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+                OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
                 $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round
 
                 if ($Net::SSLhello::trace > 1) { # print ciphers that are tested this round:
@@ -1915,7 +1913,7 @@ sub checkSSLciphers ($$$@) {
                         }
                         $my_error = ""; # reset error message
                         #reset error_handler and set basic information for this sub
-                        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+                        OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
                     } # else: no cipher accepted but no error
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
                 } # end: if 'no ciphers accepted'
@@ -2339,7 +2337,7 @@ sub openTcpSSLconnection ($$) {
 
     my %startTlsTypeHash;
     local $my_error = ""; # reset error message
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
     } else {
@@ -2403,7 +2401,7 @@ sub openTcpSSLconnection ($$) {
     }
 
     RETRY_TO_OPEN_SSL_CONNECTION: { do { # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
-        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+        OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
         if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
             _trace_ ("\n");
             _trace  ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
@@ -3029,7 +3027,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     local $my_error = ""; # reset error message
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
 
     unless ($isUdp) { # NO UDP = TCP
@@ -3317,7 +3315,7 @@ sub _readRecord ($$$;$$$$) {
     $select->add($socket) if ($Net::SSLhello::trace > 0);
 
     #reset error_handler and set basic information for this sub
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_readRecord', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => '_readRecord', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello)
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
@@ -5406,7 +5404,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
     }
 
     #reset error_handler and set basic information for this sub
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'parseHandshakeRecord', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'parseHandshakeRecord', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
     $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
     unless ($Net::SSLhello::use_sni_name) {
@@ -5929,7 +5927,7 @@ sub parseTLS_ServerHello {
     $serverHello{'extensions_len'} = 0;
 
     #reset error_handler and set basic information for this sub
-    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'parseTLS_ServerHello', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
+    OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'parseTLS_ServerHello', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
     if (defined $client_protocol) {
         _trace3("parseTLS_ServerHello: Server '$host:$port': (expected protocol=".sprintf ("%04X", $client_protocol).",\n     ".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
