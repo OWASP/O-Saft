@@ -73,7 +73,7 @@ BEGIN {
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     SSLHELLO_VERSION=> '22.02.13',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.47 22/02/21 23:11:15',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.48 22/06/14 00:10:47',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -453,7 +453,7 @@ sub _carp   {
     # don't print if --no-warning given
     my @txt = @_;
     return if ((grep{/(:?--no.?warn)/ix} @main::ARGV) > 0);
-    local $\ = "\n"; carp(STR_WARN, join(" ", @txt));
+    local $\ = "\n"; carp($STR{WARN}, join(" ", @txt));
     return;
 }
 
@@ -462,7 +462,7 @@ sub _hint   {
     # don't print if --no-hint given
     my @txt = @_;
     return if ((grep{/(:?--no.?hint)/ix} @main::ARGV) > 0);
-    local $\ = "\n"; print(STR_HINT, join(" ", @txt));
+    local $\ = "\n"; print($STR{HINT}, join(" ", @txt));
     return;
 }
 
