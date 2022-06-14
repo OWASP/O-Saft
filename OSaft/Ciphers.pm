@@ -45,11 +45,10 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-our $VERSION      = '22.03.03';     # official verion number of tis file
-my  $SID_ciphers  = "@(#) Ciphers.pm 2.12 22/06/13 10:38:35";
-my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
+my  $SID_ciphers= "@(#) Ciphers.pm 2.13 22/06/14 00:10:09";
+my  $VERSION    = "22.05.22";   # official verion number of tis file
 
-our $VERBOSE  = 0;  # >1: option --v
+our $VERBOSE    = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
 
 #use osaft qw(print_pod);
@@ -405,7 +404,7 @@ TBD alias is anything except first cipher name
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %ciphers table
 # see %ciphers_desc about description of the columns
-# returns STR_UNDEF if requested cipher (hex key) is missing
+# returns $STR{UNDEF} if requested cipher (hex key) is missing
 sub get_param   {
     #? internal method to return required value from %ciphers ($cipher is hex-key)
     #? returns array or string depending on calling context
@@ -418,7 +417,7 @@ sub get_param   {
     } else {
         return               $ciphers{$hex}->{$key};
     }
-    return $STR_UNDEF;
+    return $STR{UNDEF};
 } # get_param
 
 sub get_openssl { return  get_param(shift, 'OpenSSL');  }
@@ -497,7 +496,7 @@ sub get_keys    {
 
 sub get_desc    {
     my $key = shift;
-    return $STR_UNDEF if (not defined $ciphers{$key});
+    return $STR{UNDEF} if (not defined $ciphers{$key});
     # my @x = sort values %{$ciphers{$key}}; # lasy approach not used
     return join("\t", 
             get_param($key, 'OpenSSL'),
@@ -557,7 +556,7 @@ sub find_name       {   # TODO: not yet used
     }
     print "#name=$cipher : @list\n";
 # TODO: # $rex_name = s/([_-])/.?/g; $rex_name = s/DHE/EDH/;
-    return $STR_UNDEF;
+    return $STR{UNDEF};
 } # find_name
 
 =pod
@@ -696,7 +695,7 @@ sub sort_cipher_names   {
             push(@miss, $ciphers[$i]) unless grep {$_ eq $ciphers[$i]} @sorted;
         }
         @miss = sort @miss; # SEE Note:Testing, sort
-        warn STR_WARN . "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
+        warn $STR{UNDEF} . "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
     }
     @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
     _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
@@ -1359,7 +1358,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.12 2022/06/13
+2.13 2022/06/14
 
 =head1 AUTHOR
 
