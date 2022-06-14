@@ -61,13 +61,11 @@
 
 use strict;
 use warnings;
-use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    # NOTE: use Readonly instead of constant is not possible, because constants
-    #       are used  for example in the  BEGIN section.  Constants can be used
-    #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 2.9 22/04/20 10:18:31",
-    STR_VERSION => "22.03.17",          # <== our official version number
-};
+
+our $SID_main   = "@(#) yeast.pl 2.10 22/06/14 00:18:12"; # version of this file
+my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
+    # SEE Perl:constant
+    # see _VERSION() below for our official version number
 use autouse 'Data::Dumper' => qw(Dumper);
 #use Encode;    # see _load_modules()
 
@@ -130,7 +128,7 @@ sub _yeast_NEXT($)  {
     }
     return 0;
 } # _yeast_NEXT
-sub _version_exit   { print STR_VERSION . "\n"; exit 0; }
+sub _version_exit   { print _VERSION() . "\n"; exit 0; }
     # print VERSION and exit
 
 #$DB::single=1;          # for debugging; start with: PERL5OPT='-dt' $0
@@ -140,7 +138,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-    sub _VERSION() { return STR_VERSION; }
+    sub _VERSION { return "22.05.22"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
 
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
@@ -176,7 +174,6 @@ $cfg{'time0'}   = $time0;
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-our $mainsid= STR_VERSION;
 my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
@@ -202,7 +199,7 @@ sub _is_cfg_intern($);
 my  $cgi = 0;
     $cgi = 1 if ((grep{/(?:--cgi-?(?:exec|trace))/i} @ARGV) > 0);
 #if ($cfg{'me'} =~/\.cgi$/) { SEE Since VERSION 18.12.18
-    #die STR_ERROR, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
+    #die $STR{ERROR}, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
 #} # CGI
 
 #_____________________________________________________________________________
@@ -211,7 +208,7 @@ my  $cgi = 0;
 #| definitions: debug and tracing functions
 #| -------------------------------------
 # functions and variables used very early in main
-sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
+sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR $STR{DBX}, join(" ", @txt); return; }
     #? print line for debugging
 sub _dbx    { my @txt = @_; _dprint(@txt); return; }
     #? print line for debugging (alias for _dprint)
@@ -221,7 +218,7 @@ sub _hint   {
     # check must be done on ARGV, because $cfg{'out'}->{'hint_info'} may not yet set
     my @txt = @_;
     return if _is_argv('(?:--no.?hint)');
-    printf(STR_HINT . "%s\n", join(" ", @txt));
+    printf($STR{HINT} . "%s\n", join(" ", @txt));
     return;
 } # _hint
 sub _warn   {
@@ -237,7 +234,7 @@ sub _warn   {
         push(@{$cfg{out}->{'warnings_printed'}}, $_no);
     }
     local $\ = "\n";
-    print(STR_WARN, join(" ", @txt));
+    print($STR{WARN}, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     _yeast_EXIT("exit=WARN - exit on first warning");
     return;
@@ -252,7 +249,7 @@ sub _warn_and_exit      {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
-        printf(STR_WARN . "099: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
+        printf($STR{WARN} . "099: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
         exit(1);
     }
     return;
@@ -655,7 +652,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die STR_ERROR, "012: $err" unless (-e $arg);
+        die $STR{ERROR}, "012: $err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -1855,17 +1852,17 @@ sub _load_modules       {
     my $_err = "";
     if (1 > 0) { # TODO: experimental code
         $_err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "005: $_err" if ("" ne $_err);
+        warn $STR{ERROR}, "005: $_err" if ("" ne $_err);
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup:
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
         #$_err = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "006: $_err" if ("" ne $_err);
+        #warn $STR{ERROR}, "006: $_err" if ("" ne $_err);
     }
     if (0 < $cfg{'need_netdns'}) {
         $_err = _load_file("Net/DNS.pm", "Net module'");
         if ("" ne $_err) {
-            warn STR_ERROR, "007: $_err";
+            warn $STR{ERROR}, "007: $_err";
             _warn("111: option '--mx disabled");
             $cfg{'use'}->{'mx'} = 0;
         }
@@ -1873,22 +1870,22 @@ sub _load_modules       {
     if (0 < $cfg{'need_timelocal'}) {
         $_err = _load_file("Time/Local.pm", "Time module");
         if ("" ne $_err) {
-            warn STR_ERROR, "008: $_err";
+            warn $STR{ERROR}, "008: $_err";
             _warn("112: value for '+sts_expired' not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
     }
     $_err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
     if ("" ne $_err) {
-        warn STR_ERROR, "008: $_err";
+        warn $STR{ERROR}, "008: $_err";
     }
 
     return if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
 
     $_err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $_err) {
-        die  STR_ERROR, "010: $_err"  if (not _is_cfg_do('version'));
-        warn STR_ERROR, "010: $_err";# no reason to die for +version
+        die  $STR{ERROR}, "010: $_err"  if (not _is_cfg_do('version'));
+        warn $STR{ERROR}, "010: $_err"; # no reason to die for +version
     }
     if ($cfg{'starttls'}) {
         $cfg{'use'}->{'http'} = 0;      # makes no sense for starttls
@@ -1897,8 +1894,8 @@ sub _load_modules       {
     return if (1 > $cfg{'need_netinfo'});
     $_err = _load_file("Net/SSLinfo.pm", "O-Saft module");# must be found
     if ("" ne $_err) {
-        die  STR_ERROR, "011: $_err"  if (not _is_cfg_do('version'));
-        warn STR_ERROR, "011: $_err";    # no reason to die for +version
+        die  $STR{ERROR}, "011: $_err"  if (not _is_cfg_do('version'));
+        warn $STR{ERROR}, "011: $_err"; # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -1939,7 +1936,7 @@ sub _check_modules      {
         $version::VERSION = ""; # defensive programming ..
     }
     if ($have_version == 0) {
-        warn STR_WARN, "120: ancient perl has no 'version' module; version checks may not be accurate;";
+        warn $STR{WARN}, "120: ancient perl has no 'version' module; version checks may not be accurate;";
     }
     if ($cfg{verbose} > 1) {
         printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
@@ -1964,7 +1961,7 @@ sub _check_modules      {
         if ($v < $expect) {
             $ok = "no";
             $ok = "missing" if ($v == 0);
-            warn STR_WARN, "121: ancient $mod $v < $expect detected;";
+            warn $STR{WARN}, "121: ancient $mod $v < $expect detected;";
             # TODO: not sexy: warnings are inside tabular data for --v
         }
         if ($cfg{verbose} > 1) {
@@ -1997,10 +1994,10 @@ sub _enable_functions   {
     _y_CMD("  enable internal functionality ...");
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn STR_WARN, "122: ancient Net::SSLeay $version_ssleay cannot detect openssl version";
+        warn $STR{WARN}, "122: ancient Net::SSLeay $version_ssleay cannot detect openssl version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
-        warn STR_WARN, "123: ancient or unknown version of IO::Socket detected";
+        warn $STR{WARN}, "123: ancient or unknown version of IO::Socket detected";
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
@@ -2008,10 +2005,10 @@ sub _enable_functions   {
             $cfg{'use'}->{'sni'} = 0;
             my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
             if ($version_iosocket < 1.90) {
-                warn STR_WARN, "124: ancient version IO::Socket::SSL $version_iosocket < 1.90; $txt_buggysni";
+                warn $STR{WARN}, "124: ancient version IO::Socket::SSL $version_iosocket < 1.90; $txt_buggysni";
             }
             if ($version_openssl  < 0x01000000) {
-                warn STR_WARN, "125: $txo < 1.0.0; $txt_buggysni";
+                warn $STR{WARN}, "125: $txo < 1.0.0; $txt_buggysni";
             }
             _hint("use '--force-openssl' to disable this check");
         }
@@ -2023,12 +2020,12 @@ sub _enable_functions   {
         # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
         if (_is_cfg_use('alpn')) {
             $cfg{'use'}->{'alpn'} = 0;
-            warn STR_WARN, "126: $txt tests with/for ALPN disabled";
+            warn $STR{WARN}, "126: $txt tests with/for ALPN disabled";
             if ($version_ssleay   < 1.56) {  # is also < 1.46
-                warn STR_WARN, "127: $txs < 1.56"   if ($cfg{'verbose'} > 1);
+                warn $STR{WARN}, "127: $txs < 1.56"  if ($cfg{'verbose'} > 1);
             }
             if ($version_openssl  < 0x10002000) {
-                warn STR_WARN, "128: $txo < 1.0.2"  if ($cfg{'verbose'} > 1);
+                warn $STR{WARN}, "128: $txo < 1.0.2" if ($cfg{'verbose'} > 1);
             }
             _hint("use '--no-alpn' to disable this check");
         }
@@ -2039,12 +2036,12 @@ sub _enable_functions   {
         # warnings only if NPN functionality required
         if (_is_cfg_use('npn')) {
             $cfg{'use'}->{'npn'}  = 0;
-            warn STR_WARN, "129: $txt tests with/for NPN disabled";
+            warn $STR{WARN}, "129: $txt tests with/for NPN disabled";
             if ($version_ssleay   < 1.46) {
-                warn STR_WARN, "130: $txs < 1.46"   if ($cfg{'verbose'} > 1);
+                warn $STR{WARN}, "130: $txs < 1.46"  if ($cfg{'verbose'} > 1);
             }
             if ($version_openssl  < 0x10001000) {
-                warn STR_WARN, "132: $txo < 1.0.1"  if ($cfg{'verbose'} > 1);
+                warn $STR{WARN}, "132: $txo < 1.0.1" if ($cfg{'verbose'} > 1);
             }
             _hint("use '--no-npn' to disable this check");
         }
@@ -2052,12 +2049,12 @@ sub _enable_functions   {
     _trace("cfg{use}->{npn} = $cfg{'use'}->{'npn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  openssl 1.0.0
-        warn STR_WARN, "133: $txt tests for OCSP disabled";
+        warn $STR{WARN}, "133: $txt tests for OCSP disabled";
         #_hint("use '--no-ocsp' to disable this check");
     }
 
     if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {    # Net::SSLeay < 1.56
-        warn STR_WARN, "134: $txt setting curves disabled";
+        warn $STR{WARN}, "134: $txt setting curves disabled";
         #_hint("use '--no-cipher-ecdh' to disable this check");
     }
     return;
@@ -2080,7 +2077,7 @@ sub _check_functions    {
     _y_CMD("  check required modules ...");
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
         if ($cmd{'extopenssl'} == 0) {
-            die STR_ERROR, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool";
+            die $STR{ERROR}, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool";
         }
     } else {
         $version_ssleay   = $Net::SSLeay::VERSION;
@@ -2120,7 +2117,7 @@ sub _check_functions    {
 
     _y_CMD("  check if Net::SSLeay is usable ...");
     if ($version_ssleay  < 1.49) {
-        warn STR_WARN, "135: Net::SSLeay $version_ssleay < 1.49; may throw warnings and/or results may be missing;";
+        warn $STR{WARN}, "135: Net::SSLeay $version_ssleay < 1.49; may throw warnings and/or results may be missing;";
     } else {
         _v2print "$text_ssleay (OK)\tyes";
     }
@@ -2273,7 +2270,7 @@ sub _enable_sclient     {
     # SEE Note:OpenSSL s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
-    my $txt = $cfg{'openssl'}->{$opt}[1] || STR_UNDEF; # may be undefined
+    my $txt = $cfg{'openssl'}->{$opt}[1] || $STR{UNDEF}; # may be undefined
     my $val = $cfg{'openssl'}->{$opt}[0];# 1 if supported
     if ($val == 0) {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
@@ -2393,10 +2390,10 @@ sub _init_openssldir    {
         # NOTE: low memory affects external calls only, but not further control
         #       flow herein as Perl already managed to load the script.
         # For defensive programming  print()  is used insted of  _warn().
-        print STR_WARN, "002: perl returned error: '$error'\n";
+        print $STR{WARN}, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
-            print STR_WARN, "003: using external programs disabled.\n";
-            print STR_WARN, "003: data provided by external openssl may be shown as:  <<openssl>>\n";
+            print $STR{WARN}, "003: using external programs disabled.\n";
+            print $STR{WARN}, "003: data provided by external openssl may be shown as:  <<openssl>>\n";
         }
         _reset_openssl();
         $status = 0;  # avoid following warning below
@@ -2416,7 +2413,7 @@ sub _init_openssldir    {
     }
     if ($status != 0) {                 # on Windoze status may be 256
         $cmd{'openssl'}    = "";
-        print STR_WARN, "004: perl returned status: '$status' ('" . ($status>>8) . "')\n";
+        print $STR{WARN}, "004: perl returned status: '$status' ('" . ($status>>8) . "')\n";
             # no other warning here, see "some checks are missing" later,
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
@@ -3400,7 +3397,7 @@ sub _useopenssl($$$$)   {
 sub _can_connect        {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
-    if (not defined $sni) { $sni = STR_UNDEF; } # defensive programming
+    if (not defined $sni) { $sni = $STR{UNDEF}; } # defensive programming
     local $? = 0; local $! = undef;
     my $socket;
     _trace("_can_connect($host, $port', $sni, $timeout, $ssl)");
@@ -3538,7 +3535,7 @@ sub _get_ciphers_list   {
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
-        die STR_ERROR, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
+        die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
     _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
@@ -4436,7 +4433,7 @@ sub checkdates($$)  {
     MAXAGE_CHECK: {
         $txt = $text{'na_STS'};
         last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
-        $txt = STR_UNDEF;
+        $txt = $STR{UNDEF};
         last MAXAGE_CHECK if (not _is_cfg_do('sts_expired'));
         $txt = "";
         $now = time();  # we need epoch timestamp here
@@ -5931,8 +5928,8 @@ sub print_line($$$$$$)  {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
-        $text   = STR_NOTXT if not defined $text;   # defensive programming ..
-        $value  = STR_UNDEF if not defined $value;  # .. missing variable declaration
+        $text   = $STR{NOTXT} if not defined $text; # defensive programming ..
+        $value  = $STR{UNDEF} if not defined $value;# .. missing variable declaration
         $value  = Encode::decode("UTF-8", $value);
     # general format of a line is:
     #       host:port:#[key]:label: \tvalue
@@ -6469,8 +6466,8 @@ sub printprotocols      {
         my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};  # FIXME: fails for --ciphermode=intern
         if ($cfg{'trace'} <= 0) {
            # avoid internal strings, pretty print for humans
-           $cipher_strong = "" if (STR_UNDEF eq $cipher_strong);
-           $cipher_pfs    = "" if (STR_UNDEF eq $cipher_pfs);
+           $cipher_strong = "" if ($STR{UNDEF} eq $cipher_strong);
+           $cipher_pfs    = "" if ($STR{UNDEF} eq $cipher_pfs);
         }
         if ((@{$prot{$ssl}->{'ciphers_pfs'}}) and
             (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # something went wrong
@@ -6643,7 +6640,7 @@ sub __SSLeay_version    {
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
            $txt .= " cannot compare SSLeay with openssl version";
-        warn STR_WARN, "080: $txt";     # not _warn(), SEE Perl:warn
+        warn $STR{WARN}, "080: $txt";    # not _warn(), SEE Perl:warn
         return "$Net::SSLeay::VERSION";
     } else {
         return Net::SSLeay::SSLeay();
@@ -6673,9 +6670,9 @@ sub printversion        {
     print( "=== started in: $ENV{PWD} ===");    # avoid "use Cwd;" or `pwd`
     } # quick&dirty check, should rarely occour (i.e. when used as CGI)
     # SEE Note:OpenSSL Version
-    my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
+    my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || $STR{UNDEF};
     my $me = $cfg{'me'};
-    print( "=== $0 $mainsid ===");
+    print( "=== $0 " . _VERSION() . " ===");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
@@ -6702,7 +6699,7 @@ sub printversion        {
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
     print "    used environment variable (name) " . $cmd{'envlibvar'};
    #print "    used environment variable 3(name)" . $cmd{'envlibvar3'};
-    print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || STR_UNDEF);
+    print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || $STR{UNDEF});
     print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
     if (scalar @{$cmd{'libs'}} > 0) {
         foreach my $l (qw(libcrypto.a libcrypto.so libssl.a libssl.so)) {
@@ -6717,11 +6714,11 @@ sub printversion        {
            }
         }
     }
-    print "    full path to openssl.cnf file    " . ($cfg{'openssl_cnf'} || STR_UNDEF);
+    print "    full path to openssl.cnf file    " . ($cfg{'openssl_cnf'} || $STR{UNDEF});
     print "    common openssl.cnf files         " . join(" ", @{$cfg{'openssl_cnfs'}});
-    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || STR_UNDEF);
-    print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || STR_UNDEF);
-    print "    PEM format file with CAs         " . ($cfg{'ca_file'} || STR_UNDEF);
+    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}      || $STR{UNDEF});
+    print "    directory with PEM files for CAs " . ($cfg{'ca_path'}     || $STR{UNDEF});
+    print "    PEM format file with CAs         " . ($cfg{'ca_file'}     || $STR{UNDEF});
     print "    common paths to PEM files for CAs ". join(" ", @{$cfg{'ca_paths'}});
     if ($cfg{'verbose'} > 0) {
         foreach my $p (@{$cfg{'ca_paths'}}) {
@@ -6839,7 +6836,7 @@ sub printciphers        {
     # anything else prints user-specified formats
     _trace("printciphers: +list");
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
-    _v_print("database version: $mainsid");
+    _v_print("database version: ", _VERSION());
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
     OSaft::Ciphers::show_sorted()           if ('owasp'   eq $cfg{'legacy'});
@@ -6892,7 +6889,7 @@ sub printusage_exit     {
     #? print simple usage, first line with passed text
     my @txt = @_;
     local $\ = "\n";
-    print STR_USAGE, @txt;
+    print $STR{USAGE}, @txt;
     print "# most common usage:
   $cfg{'me'} +info     your.tld
   $cfg{'me'} +check    your.tld
@@ -7274,7 +7271,7 @@ while ($#argv >= 0) {
         }
         #my  $err = _load_file("o-saft-man.pm", "help file");
         #if ($err ne "") {
-        #    die STR_ERROR, "013: $err" unless (-e $arg);
+        #    die $STR{ERROR}, "013: $err" unless (-e $arg);
         #}
         # TODO: _load_file() does not yet work, hence following require
         require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
@@ -8464,7 +8461,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _y_CMD("test connect ...");
     _yeast_TIME("test connect{");# SEE Note:Connection Test
     my $connect_ssl = 1;
-    _trace("sni_name= " . ($cfg{'sni_name'} || STR_UNDEF));
+    _trace("sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
@@ -8636,7 +8633,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
            ) {
             my @errtxt = Net::SSLinfo::errors($host, $port);
             if (0 < $#errtxt) {
-                _v_print(join("\n".STR_ERROR, @errtxt));
+                _v_print(join("\n".$STR{ERROR}, @errtxt));
                 _warn("205: Can't make a connection to '$host:$port'; target ignored");
                 _hint("use '--v' to show more information");
                 _hint("use '--socket-reuse' it may help in some cases");
@@ -9074,7 +9071,7 @@ Following approach is used:
   - subroutines are defined where (mainly) needed
   - modules use Perl's named subroutines like following, example: _warn():
 
-    *_warn = sub { print(STR_WARN, @_); } if not defined &_warn;
+    *_warn = sub { print($STR{WARN}, @_); } if not defined &_warn;
 
 This ensures, that the definition is used only, if it doesn't exists. This
 also avoids use of Perl's eval(). The disadvantage is, that the subroutine
@@ -9140,7 +9137,38 @@ dirty code hacks and split the flow of processing into  different parts of
 the source.
 
 Also SEE L<Perl:BEGIN perlcritic>.
+Also SEE L<Perl:constant>.
 Also SEE L<Perl:Undefined subroutine>.
+
+
+=head2 Perl:constant
+
+Perl has no "real" concept and implementation  of constants.  Using Perl's
+pragma constant  declares in fact subroutines. Beside others, this has the
+disadvantage,  that such constants cannot be use in strings,  they are not
+interpolated there.
+
+Our texts are rather variables than real constants, because it is possible
+to overwrite them (beside some exceptions). Therefore it's more consequent
+to use variables anywhere.
+
+Perl's constants have the advantage that they are replaced at compile time
+and therefore the code may result in better performance. That's not really
+relevant for the tool's intended purpose.
+
+Unfortunately using Perl's  Readonly instead of constant  is not possible,
+because constants are used in the  BEGIN  section also.  Constants  can be
+used there but not Readonly variables.
+
+A hash is used for our texts. This has the advantage, that many values can
+be defined without the need to care about every value everywhere. This has
+the disadvantage,  that runtime errors like  "Undefined variable ..."  may
+occour.
+
+Instead of using  constant , the corrsponding  sub  are defined verbatim.
+
+
+Also SEE L<Perl:BEGIN perlcritic>.
 
 
 =head2 Perl:binmode()
@@ -10152,7 +10180,7 @@ They can be printed immediately (without being specified in  $cfg{hints} :
 
 It is not recommended to use:
 
-    print STR_HINT, "my text";
+    print $STR[HINT}, "my text";
 
 
 =head2 Note:tty
