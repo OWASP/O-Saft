@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) Õ(ÚFV 1.80 22/04/20 08:20:00
+#?      @(#)  ©2¥6V 1.81 22/06/16 01:18:23
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -349,7 +349,11 @@ fi
 # --------------------------------------------- internal functions
 echo_head   () {
 	echo ""
-	echo "$@"
+	if [ -z "$colour" ]; then
+		echo "$@"
+	else
+		\echo "\033[7;37m\033[1;30m$@"
+	fi
 	echo "#$_line"
 }
 echo_foot   () {
@@ -412,12 +416,13 @@ while [ $# -gt 0 ]; do
           '--color')            colour="34m"; ;; # alias
           '--color-blind')      colour="34m"; ;; # alias
           '--color-not-blind')  colour="32m"; ;; # alias
-          '---blind')           colour="34m"; ;; # alias
+          '--bunt')             colour="34m"; ;; # alias
+          '--blind')            colour="34m"; ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.80 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.81 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
