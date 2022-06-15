@@ -63,7 +63,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Text qw(print_pod);
 
-my  $SID_man= "@(#) o-saft-man.pm 2.3 22/06/15 12:31:05";
+my  $SID_man= "@(#) o-saft-man.pm 2.4 22/06/15 14:44:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -179,7 +179,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.3'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.4'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1645,14 +1645,15 @@ sub man_wiki        {
 
 sub man_help        {
     #? print complete user documentation for o-saft.pl as plain text (man-style)
+    # called when no special help, prints full help text or parts of it
     my $label   = lc(shift) || "";      # || to avoid uninitialised value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
-    # no special help, print full one or parts of it
     if (0 < $::osaft_standalone) {  ## no critic qw(Variables::ProhibitPackageVars)
         # FIXME dirty hack
-        @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version) if not @help;
+        # in standalone mode use $0 instead of $parent (which is "O-Saft")
+        @help   = OSaft::Doc::Data::get_markup("help.txt", $0, $version);
     }
     my $txt = join ('', @help);
         # = OSaft::Doc::Data::get("help.txt", $parent, $version);
@@ -1990,7 +1991,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.3 2022/06/15
+2.4 2022/06/15
 
 =head1 AUTHOR
 
