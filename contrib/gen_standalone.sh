@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  2.1 22/03/18 09:06:53
+#?       @(#)  2.2 22/06/15 14:52:24
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -139,27 +139,41 @@ fi
 
   # 3.
   \echo ''
-  \echo '$osaft_standalone = 1;'
+  \echo 'our $osaft_standalone = 1;'
   \echo ''
 
   # 4.
   # osaft.pm and OSaft/Ciphers.pm without brackets and no package
   f=osaft.pm ; [ -f $f ] || f=../$f
   \echo "# { # $f"
-  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
+  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))
+                    and not m(package osaft;)
+                    and not m(our .VERSION);
+                 ' $f \
+     | sed -e 's/our %ciphers /my %ciphers /'
   \echo "# } # $f"
   \echo ""
+#\echo "use Net::SSLhello;"
+#\echo "use Net::SSLinfo;"
+#\echo ""
 
   f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package OSaft::Ciphers;)' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))
+                    and not m(package OSaft::Ciphers;);
+                 ' $f
   \echo "} # $f"
   \echo ""
-  # 5.
-  \echo "package main;"
-  $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
-     | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
+  \echo ""
+  \echo "use Encode;"
+  \echo "use IO::Socket::SSL;"
+  \echo "use Net::DNS;"
+  \echo "use Time::Local;"
+  \echo ""
+
+  # ...
   ## TODO: OSaft/Doc/Data.pm
   f=OSaft/Doc/Data.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
@@ -207,12 +221,18 @@ fi
 
   ## TODO: Net/SSLhello.pm  fails
 	# Reasons: use of STR_HINT in _hint(); need: no strict 'subs'
-  #f=Net/SSLhello.pm
-  #\echo "{ # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f \
-  #   | \egrep -v  '^use (osaft|OSaft::error_handler)'
-  #\echo "} # $f"
-  #\echo ""
+  f=Net/SSLhello.pm
+  \echo "{ # $f"
+  \echo "no strict 'subs';"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f \
+     | \egrep -v  '^use (osaft|OSaft::error_handler)'
+  \echo "} # $f"
+  \echo ""
+
+  # 5.
+  \echo "package main;"
+  $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
+     | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
   # 6.
   f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
@@ -223,10 +243,17 @@ fi
 
 
 # 7.
+# to avoid duplicate definitions, "our @EXPORT" is replace by "my @EXPORT"
+# TODO: "use strict;" removed, as it complains about undef %STR
+
 ) \
   | $try \perl -pe '/^=head1 (NAME|Annotation)/ && do{print "=head1 "."_"x77 ."\n\n";};' \
   | $try \sed  -e  's/#\s*OSAFT_STANDALONE\s*//' \
+               -e  's/^use strict;//'    \
+               -e  's/^\s*our\(\s*@EXPORT\s*=\)/my \1/g'  \
 > $dst
+
+#              -e  's/our %cipher/our %::cipher/g' 
 
 # 8.
 ##TODO:
