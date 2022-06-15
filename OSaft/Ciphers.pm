@@ -45,13 +45,13 @@ BEGIN {
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.14 22/06/14 10:11:39";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.15 22/06/15 11:51:45";
 our $VERSION    = "22.05.22";   # official verion number of tis file
 
 our $VERBOSE    = 0;  # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
 
-#use osaft qw(print_pod);
+use OSaft::Text qw(print_pod);
 use osaft;
 
 #_____________________________________________________________________________
@@ -1358,7 +1358,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.14 2022/06/14
+2.15 2022/06/15
 
 =head1 AUTHOR
 
