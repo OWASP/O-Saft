@@ -11,18 +11,18 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_text   =  "@(#) Text.pm 1.2 22/06/15 10:49:45";
+my  $SID_text   =  "@(#) Text.pm 1.3 22/06/15 12:39:03";
 our $VERSION    =  "22.05.22";
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 our %STR = (
-    'ERROR'     => "**ERROR:",
-    'WARN'      => "**WARNING:",
-    'HINT'      => "!!Hint:",
-    'USAGE'     => "**USAGE:",
-    'DBX'       => "#dbx#",
+    'ERROR'     => "**ERROR: ",
+    'WARN'      => "**WARNING: ",
+    'HINT'      => "!!Hint: ",
+    'USAGE'     => "**USAGE: ",
+    'DBX'       => "#dbx# ",
     'UNDEF'     => "<<undef>>",
     'NOTXT'     => "<<>>",
     'MAKEVAL'   => "<<value not printed (OSAFT_MAKE exists)>>",
@@ -168,7 +168,7 @@ sub text_done  {};      # dummy to check successful include
 
 =head1 VERSION
 
-1.2 10:49:45
+1.3 12:39:03
 
 =head1 AUTHOR
 
