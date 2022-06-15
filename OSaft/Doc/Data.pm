@@ -31,11 +31,11 @@ BEGIN { # mainly required for testing ...
 }
 
 our $VERSION    = "22.02.13";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.47 22/06/14 00:12:45";
+my  $SID_data   = "@(#) Data.pm 1.48 22/06/15 11:54:57";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
-use osaft qw(print_pod %STR);
+use OSaft::Text qw(print_pod);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -595,7 +595,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.47 2022/06/14
+1.48 2022/06/15
 
 =head1 AUTHOR
 
