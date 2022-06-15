@@ -9,9 +9,8 @@ package OSaft::Text;
 
 use strict;
 use warnings;
-use utf8;
 
-my  $SID_text   =  "@(#) Text.pm 1.3 22/06/15 12:39:03";
+my  $SID_text   =  "@(#) Text.pm 1.4 22/06/15 13:10:31";
 our $VERSION    =  "22.05.22";
 
 #_____________________________________________________________________________
@@ -32,8 +31,7 @@ our %STR = (
 #        the purpose of this module is to do that. This may change in future.
 
 use Exporter qw(import);
-#use base qw(Exporter);
-our @ISA        = qw(Exporter);
+use base     qw(Exporter);
 our @EXPORT_OK  = qw( %STR print_pod );
 
 # SEE Perl:constant
@@ -140,12 +138,12 @@ sub print_pod       {
 sub _main_text      {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
+    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_text)   if ($arg =~ m/^--?h(?:elp)?$/); # print own help
-        if ($arg =~ m/^--(?:test[_.-]?)text/) {
+        print_pod($0, __PACKAGE__, $SID_text)   if ($arg =~ m/^--?h(?:elp)?$/x);# print own help
+        if ($arg =~ m/^--(?:test[_.-]?)text/x) {
             $arg = "--test-text";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
         }
@@ -168,7 +166,7 @@ sub text_done  {};      # dummy to check successful include
 
 =head1 VERSION
 
-1.3 12:39:03
+1.4 2022/06/15
 
 =head1 AUTHOR
 
