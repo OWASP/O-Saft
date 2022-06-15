@@ -22,9 +22,10 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".",  $_path);
 }
 
-use osaft qw(print_pod);
+use OSaft::Text qw(print_pod);
+use osaft;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 2.1 22/06/14 10:41:06";
+my  $SID_usr= "@(#) o-saft-usr.pm 2.2 22/06/15 12:29:26";
 
 
 #_____________________________________________________________________________
@@ -265,7 +266,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-2.1 2022/06/14
+2.2 2022/06/15
 
 =head1 AUTHOR
 
