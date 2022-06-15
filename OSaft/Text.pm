@@ -10,7 +10,7 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.4 22/06/15 13:10:31";
+my  $SID_text   =  "@(#) Text.pm 1.5 22/06/15 14:41:39";
 our $VERSION    =  "22.05.22";
 
 #_____________________________________________________________________________
@@ -26,9 +26,6 @@ our %STR = (
     'NOTXT'     => "<<>>",
     'MAKEVAL'   => "<<value not printed (OSAFT_MAKE exists)>>",
 );
-
-# FIXME: perlcritic complains to not declare (global) package variables, but
-#        the purpose of this module is to do that. This may change in future.
 
 use Exporter qw(import);
 use base     qw(Exporter);
@@ -166,7 +163,7 @@ sub text_done  {};      # dummy to check successful include
 
 =head1 VERSION
 
-1.4 2022/06/15
+1.5 2022/06/15
 
 =head1 AUTHOR
 
