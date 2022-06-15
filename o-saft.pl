@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.10 22/06/14 00:18:12"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.11 22/06/15 11:39:29"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6797,8 +6797,9 @@ sub printversion        {
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
         foreach my $m (sort keys %INC) {
-            printf("    %-22s %6s\n", $m, $INC{$m});
-            $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
+            $d = $INC{$m} || $STR{UNDEF};   # defensive progamming; sometimes undefined, reason unknown
+            printf("    %-22s %6s\n", $m, $d);
+            $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\n= Loaded Module Versions =";
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
