@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_text   =  "@(#) Text.pm 1.1 22/06/14 10:38:20";
+my  $SID_text   =  "@(#) Text.pm 1.2 22/06/15 10:49:45";
 our $VERSION    =  "22.05.22";
 
 #_____________________________________________________________________________
@@ -32,9 +32,8 @@ our %STR = (
 #        the purpose of this module is to do that. This may change in future.
 
 use Exporter qw(import);
-use base qw(Exporter);
-#our @ISA        = qw(Exporter);
-our $VERSION    = $SID_text;
+#use base qw(Exporter);
+our @ISA        = qw(Exporter);
 our @EXPORT_OK  = qw( %STR print_pod );
 
 # SEE Perl:constant
@@ -169,7 +168,7 @@ sub text_done  {};      # dummy to check successful include
 
 =head1 VERSION
 
-1.1 10:38:20
+1.2 10:49:45
 
 =head1 AUTHOR
 
