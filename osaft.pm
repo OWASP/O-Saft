@@ -15,18 +15,10 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.5 22/06/14 00:02:22";
-our $VERSION    =  "22.05.22",  # official version number of this file
-our %STR = (     # TODO: import from OSaft::Text
-    'ERROR'     => "**ERROR: ",
-    'WARN'      => "**WARNING: ",
-    'HINT'      => "!!Hint: ",
-    'USAGE'     => "**USAGE: ",
-    'DBX'       => "#dbx# ",
-    'UNDEF'     => "<<undef>>",
-    'NOTXT'     => "<<>>",
-    'MAKEVAL'   => "<<value not printed (OSAFT_MAKE exists)>>",
-);
+our $SID_osaft  =  "@(#) osaft.pm 2.6 22/06/15 12:22:22";
+our $VERSION    =  "22.05.22";  # official version number of this file
+
+use OSaft::Text qw(%STR print_pod);
 
 ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
 #  SEE Perl:binmode() (in o-saft.pl)
@@ -253,7 +245,6 @@ our @EXPORT     = qw(
                 tls_key2text
                 tls_text2key
                 printhint
-                print_pod
                 test_cipher_regex
 );
 # not yet exported: osaft_sleep osaft_done
@@ -3169,10 +3160,6 @@ Wrapper to simulate "sleep" with perl's select.
 
 Print hint for specified command, additionl text will be appended.
 
-=head2 osaft::print_pod($file)
-
-Print POD for specified file, exits program.
-
 =cut
 
 sub osaft_sleep {
@@ -3181,24 +3168,6 @@ sub osaft_sleep {
     select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
     return;
 } # osaft_sleep
-
-sub print_pod       {
-    #? print POD of specified file; exits program
-    my $file = shift;   # filename where to read POD from
-    my $pack = shift;   # package name
-    my $vers = shift;   # package version
-    printf("# %s %s\n", $pack, $vers);
-    if (eval {require Pod::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$file]) );
-    }
-    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
-            # may return:  You need to install the perl-doc package to use this program.
-            #exec "perldoc $0"; # scary ...
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $file\n");
-    }
-    exit 0;
-} # print_pod
 
 sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy perlcritic
     #? Print hint for specified command.
@@ -3422,7 +3391,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.5 2022/06/14
+2.6 2022/06/15
 
 =head1 AUTHOR
 
