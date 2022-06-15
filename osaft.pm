@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -I .
 
 # TODO: implement
 #    require "o-saft-lib" "full";  # or "raw"
@@ -15,7 +15,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.6 22/06/15 12:22:22";
+our $SID_osaft  =  "@(#) osaft.pm 2.7 22/06/15 14:38:27";
 our $VERSION    =  "22.05.22";  # official version number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -3391,7 +3391,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.6 2022/06/15
+2.7 2022/06/15
 
 =head1 AUTHOR
 
