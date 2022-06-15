@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -I . -I ..
 ## PACKAGE {
 
 #!#############################################################################
@@ -31,25 +31,16 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '22.02.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.277 22/02/26 15:07:24'
 };
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.279 22/06/15 12:18:56";
+our $VERSION        =  "22.02.12";  # official verion number of tis file
 
-my %STR = (     # TODO: import from OSaft::Text
-    ERROR   => "**ERROR:",
-    WARN    => "**wARNING:",
-    HINT    => "!!Hint:",
-    USAGE   => "**USAGE:",
-    DBX     => "#dbx#",
-    UNDEF   => "<<undef>>",
-    NOTXT   => "<<>>",
-    MAKEVAL => "<<value not printed (OSAFT_MAKE exists)>>"
-);
+use OSaft::Text qw(print_pod %STR);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -542,7 +533,6 @@ follow the rules describend above.
 
 use Exporter qw(import);
 use base qw(Exporter);
-our $VERSION   = SSLINFO_VERSION;
 our @EXPORT = qw(
         net_sslinfo_done
         ssleay_methods
@@ -1481,8 +1471,9 @@ sub datadump        {
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
     $data .= _dump('ciphers', " ", join(' ', @{$_SSLinfo{'ciphers'}}));
+    $data .= _dump('addr',    " ", join('.', unpack('W4', $_SSLinfo{'addr'})));  # pretty print IP
     foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
-        next if ($key =~ m/ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
+        next if ($key =~ m/addr|ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
         if ($key =~ m/$_SSLinfo_random/) {  # handled special
             if (defined $ENV{'OSAFT_MAKE'}) {
                 # SEE Make:OSAFT_MAKE (in Makefile.pod)
@@ -4080,21 +4071,6 @@ sub error           {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _main_help      {
-    #? print own help
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval{require Pod::Perldoc;}) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {  ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no Pod::Perldoc installed, please try:\n  perldoc $0\n");
-    }
-    exit 0;
-} # _main_help
-
 sub _main           {
     #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -4102,11 +4078,11 @@ sub _main           {
     my @argv = @_;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($#argv < 0) { _main_help(); exit 0; }
+    if ($#argv < 0) { print_pod($0, __PACKAGE__, $SID_sslinfo) }
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
+        if ($arg =~ /^--?h(?:elp)?$/)       { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
         if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
         if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
         if ($arg =~ /^--test.?sslmap/)      { print test_sslmap();  }
