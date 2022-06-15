@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  񝩔V 1.81 22/06/16 01:18:23
+#?      @(#) 郔M鬠 1.82 22/06/16 01:58:20
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -243,6 +243,7 @@ text_tool="Note: podman is a tool to view pod files, it's not the container engi
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
 osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
+osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
 inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
@@ -422,7 +423,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.81 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.82 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -562,7 +563,7 @@ if [ "$mode" = "dest" ]; then
 		# with --n continue, so we see what would be done
 	fi
 
-	files="$files_install $files_install_cgi $files_install_doc $files_contrib"
+	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
 	[ 0 -lt "$optx" ] && set -x
 	echo "# remove old files ..."
 	for f in $files ; do
@@ -577,6 +578,7 @@ if [ "$mode" = "dest" ]; then
 		$try \mkdir -p "$inst_directory/$d"
 	done
 	for f in $files ; do
+		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
 		$try \cp "$f" "$inst_directory/$f"  || exit 4
 	done
 	if [ -z "$try" ]; then
