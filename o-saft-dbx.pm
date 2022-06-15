@@ -49,9 +49,10 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".",  $_path);
 }
 
-use osaft qw(print_pod);
+use OSaft::Text qw(print_pod);
+use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.3 22/06/14 10:14:29";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.4 22/06/15 12:27:12";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -969,7 +970,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.3 2022/06/14
+2.4 2022/06/15
 
 =head1 AUTHOR
 
