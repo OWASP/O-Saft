@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.2 22/06/15 12:20:48
+#?      @(#) Makefile 2.3 22/06/16 02:46:14
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.2
+_SID            = 2.3
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -279,8 +279,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.2 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.2
+_INST.genbytext = generated data by Makefile 2.3 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.3
 EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'\
 			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
@@ -293,6 +293,7 @@ EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
 			-e 's@INSERTED_BY_MAKE_OSAFT_PL@$(SRC.pl)@'           \
 			-e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'         \
 			-e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@' \
+			-e 's@INSERTED_BY_MAKE_OSAFT_STAND@$(GEN.src)@'       \
 			-e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.docker)@'   \
 			-e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@' \
 			-e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'         \
@@ -515,8 +516,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.2
-tar:     GREP_EDIT  = 2.2
+GREP_EDIT           = 2.3
+tar:     GREP_EDIT  = 2.3
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
