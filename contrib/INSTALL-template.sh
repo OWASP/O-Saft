@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) àIMôU 1.82 22/06/16 01:58:20
+#?      @(#) ðC/ÿU 1.83 22/06/16 02:39:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -237,7 +237,9 @@ text_miss=" missing, try installing with ";
 text_dev="did you run Â»$0 --cleanÂ«?"
 text_alt="file from previous installation, try running Â»$0 --cleanÂ« "
 text_old="ancient module found, try installing newer version, at least "
+text_one="missing, consider generating with Â»make standaloneÂ«"
 text_tool="Note: podman is a tool to view pod files, it's not the container engine"
+text_path="Note: all found executables in PATH are listed"
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
@@ -331,7 +333,7 @@ osaft_subdirs="
 osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
 build_openssl="$contrib_dir/install_openssl.sh"
-all_exe="$osaft_exe $osaft_gui $osaft_sh $osaft_dock"
+all_exe="$osaft_exe $osaft_gui $osaft_sh $osaft_dock $osaft_one"
     # checking INSTALL.sh (myself) is pointless, somehow ...
 
 _line='----------------------+-----------------'
@@ -356,6 +358,7 @@ echo_head   () {
 		\echo "\033[7;37m\033[1;30m$@"
 	fi
 	echo "#$_line"
+	\echo -n "\033[0m"
 }
 echo_foot   () {
 	echo "#$_line"
@@ -423,7 +426,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.82 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.83 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -656,6 +659,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		if [ -e "$exe" ]; then
 			cnt=`expr $cnt + 1`
 			echo_label "$exe" && echo_green "$p"
+			#echo_label "$exe" && echo_yellow "missing"
 		fi
 		[ "$o" != "wish" ] && continue
 		if [ -e "$exe" ]; then
@@ -664,12 +668,14 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		fi
 	done
 done
+echo "# $text_path"
 [ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
 [ 0 -eq $gui ]  && echo_label  "wish" \
 		&& echo_yellow "not found in PATH, consider installing wish" \
 		&& osaft_gui=
+[ -e "$osaft_one" ] || ( echo_label "$osaft_one" && echo_yellow "$text_one" )
 echo_foot
 
 PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
@@ -850,7 +856,7 @@ check_commands $tools_optional
 echo_foot
 
 echo_head "# check for contributed files (in $inst_directory/$contrib_dir ):"
-for c in $files_contrib ; do
+for c in $files_contrib $osaft_one ; do
 	skip=0
 	for f in $files_not_installed $files_develop ; do
 		[ "$f" = "$c" ] && skip=1
