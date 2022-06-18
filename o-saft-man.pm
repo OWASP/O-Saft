@@ -7,7 +7,7 @@
 package main;   # ensure that main:: variables are used
 
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
-# FIXME: We have a lot of comman separated statements to simplify the code.
+# FIXME: We have a lot of comma separated statements to simplify the code.
 #        This needs to be changed in future to keep Perl::Critic happy.
 #        However, the code herein is just for our own documentation ...
 
@@ -63,7 +63,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Text qw(print_pod);
 
-my  $SID_man= "@(#) o-saft-man.pm 2.4 22/06/15 14:44:16";
+my  $SID_man= "@(#) o-saft-man.pm 2.5 22/06/18 22:32:57";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -179,7 +179,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.4'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.5'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1385,8 +1385,9 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
-    _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
-    # return; 
+    if ($typ =~ m/(abbr|link|rfc)/) {
+        _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
+    }
 
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
 
@@ -1424,7 +1425,6 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ =~ m/cmd/) {
         foreach my $key (sort keys %cfg) {
             next if ($key !~ m/^cmd-/);
-            next if ($key =~ m/^cmd-(?:check|info)/); # FIXME: currently disabled
             $txt =  $cfg{$key};
             if ('ARRAY' eq ref($cfg{$key})) {
                 $txt = join(" ", @{$cfg{$key}});
@@ -1651,7 +1651,6 @@ sub man_help        {
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
     if (0 < $::osaft_standalone) {  ## no critic qw(Variables::ProhibitPackageVars)
-        # FIXME dirty hack
         # in standalone mode use $0 instead of $parent (which is "O-Saft")
         @help   = OSaft::Doc::Data::get_markup("help.txt", $0, $version);
     }
@@ -1755,9 +1754,9 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return man_warnings()              if ($hlp =~ /^warnings?$/);
     return man_help_brief()            if ($hlp =~ /^help_brief$/); # --h
     # anything below requires data defined in parent
-    man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
-    man_table('links'),         return if ($hlp =~ /^links?$/);
-    man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/);
+    man_table('rfc'),           return if ($hlp =~ /^(gen-)?rfcs?$/);
+    man_table('links'),         return if ($hlp =~ /^(gen-)?links?$/);
+    man_table('abbr'),          return if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
     man_table('compl'),         return if ($hlp =~ /^compliance$/i);# alias
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl|pattern)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
@@ -1991,7 +1990,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.4 2022/06/15
+2.5 2022/06/18
 
 =head1 AUTHOR
 
