@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.11 22/06/15 11:39:29"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.13 22/06/19 01:50:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -163,6 +163,7 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
+use OSaft::Text qw(%STR print_pod);
 use OSaft::Ciphers; # not loaded with _load_modules() because always needed
 use osaft;          # get most of our configuration; it's ok to die if missing
 
@@ -290,20 +291,13 @@ sub _load_file          {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
-    #{
-    # # currently (2017) disabled, until all modules can be included with require
-    #    no warnings qw(once);
-    #    return "" if (defined($::osaft_standalone)); # SEE Note:Stand-alone
-    #}
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or _warn("101: 'require $fil' failed");
     $err = $@;
     chomp $err;
-    if ($err eq "") {
-        $txt = "$txt done";
-        $INC{$fil} = "." . $INC{$fil} if ("/$fil" eq $INC{$fil}); # fix ugly %INC
-        # FIXME: above fix fails for NET::SSL* and absolute path like --trace=/file
+    if ("" eq $err) {
         $fil = $INC{$fil};
+        $txt = "$txt done";
     } else {
         $txt = "$txt failed";
     }
@@ -495,7 +489,7 @@ sub __SSLinfo($$$)      {
             # FIXME: the RegEx should match OIDs also
             # FIXME: otherwise OID extensions are added as value to the
             #        preceding extension, see example above (4/2016)
-        # FIXME: replace following list of RegEx with a loop over the extensions
+        # TODO: replace following list of RegEx with a loop over the extensions
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
@@ -3245,9 +3239,9 @@ sub _usesocket($$$$)    {
     }
     # FIXME: use Net::SSLeay instead of IO::Socket::SSL
     if (eval {  # FIXME: use something better than eval()
-        # TODO: eval necessary to avoid Perl error like:
+        # NOTE: eval necessary to avoid Perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
-        # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
+        # NOTE: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
         #dbx# $IO::Socket::SSL::DEBUG = 1;
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
@@ -3268,7 +3262,7 @@ sub _usesocket($$$$)    {
                 SSL_ecdh_curve  => "prime256v1",# OID or NID; ecdh_x448, default is prime256v1, ecdh_x25519
                 #SSL_ecdh_curve  => $cfg{'ciphercurves'},# OID or NID; ecdh_x448, default is prime256v1,
                 #SSL_ecdh_curve  => [qw(sect163k1 x25519)],
-                #TODO: SSL_ecdh_curve  => undef, # TODO: cannot be selected by options
+                #SSL_ecdh_curve  => undef, # TODO: cannot be selected by options
                 SSL_alpn_protocols  => $alpns,
                 SSL_npn_protocols   => $npns,
                 #TODO: SSL_honor_cipher_order  => 1,   # useful for SSLv2 only
@@ -3825,7 +3819,8 @@ sub ciphers_scan        {
         #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
         for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and Perl::Critic
             # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
-            # but discarted by Perl::Critic, hence the less readable foreach
+            # but discarted by Perl::Critic, hence the less readable for loop
+        # now build line in %results
         foreach my $cipher (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             my $key = OSaft::Ciphers::get_key($cipher);
             $results->{$ssl}{$key} = ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no";
@@ -4192,7 +4187,7 @@ sub checkpreferred  {
         my $strong = $prot{$ssl}->{'cipher_strong'};
         my $weak   = $prot{$ssl}->{'cipher_weak'};
         my $txt = ($weak ne $strong) ? _prot_cipher($ssl, "$strong,$weak") : "";
-        $checks{'cipher_strong'}->{val} .= $txt;  # FIXME: assumtion wrong if only one cipher accepted
+        $checks{'cipher_strong'}->{val} .= $txt;  # assumtion wrong if only one cipher accepted
         $checks{'cipher_order'}->{val}  .= $txt;  # NOT YET USED
         $checks{'cipher_weak'}->{val}   .= $txt;  # remember: eq !
         if ($weak eq $strong) {
@@ -7606,7 +7601,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--envlibvar')         { $typ = 'LD_ENV';          }
     if ($arg eq  '--envlibvar3')        { $typ = 'LD_ENV3';         }
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
-    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
+    if ($arg =~ /^--cfg(cmd|check|data|hint|info|text)$/)   { $typ = 'CFG-' . $1; }
     if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG_CIPHER';      }
     if ($arg =~ /^--cfginit$/)          { $typ = 'CFG_INIT';        }
     if ($arg eq  '--call')              { $typ = 'CALL';            }
