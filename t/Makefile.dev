@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.58 22/03/19 22:32:57
+#?      @(#) Makefile.dev 1.59 22/06/18 22:31:18
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.58
+_SID.dev           := 1.59
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -112,7 +112,7 @@ LIST.osaft-man     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
-	toc     todo    tools   warning exit    \
+	toc     todo    tools   warning exit    abbr    \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
     # o-saft-man.pm allows any of the above listed arguments like:
@@ -160,6 +160,8 @@ HELP-test.dev.help.all   = print all test.dev.EXE_--help
 HELP-test.dev.pod.all    = print all test.dev.EXE_pod
 HELP-test.dev.help.log   = same as test.dev.help.all but store output in '$(TEST.logdir)/'
 HELP-test.dev.pod.log    = same as test.dev.help.all but store output in '$(TEST.logdir)/'
+HELP-test.dev.osaft-dbx.all     = test o-saft-dbx.pm
+HELP-test.dev.osaft-man.all     = test o-saft-man.pm
 
 _HELP-_dev2         = ______________ summary targets for internal documentations _
 HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
@@ -232,12 +234,15 @@ ifndef dev-macros-generated
     # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
-    # variables ALL:test.*.all, ALL:test.*.log
+    # variables ALL.test.*.all, ALL.test.*.log
     $(foreach prg, $(LIST.program),\
       $(foreach arg, $(LIST.$(prg)),\
-        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
+        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) ) \
+      ) \
       $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod ) \
       $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log) ) \
+      $(eval   test.dev.$(prg).all     :  $(ALL.test.dev.$(prg))         ) \
+      $(eval   test.dev.$(prg).all.log :  $(ALL.test.dev.$(prg).log)     ) \
     )
 
     # TEST.init for testarg-dev-* targets
@@ -250,12 +255,18 @@ ifndef dev-macros-generated
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt) ) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:  TEST.init = --help ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:   TEST.init = --help ) )
     $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
     $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg) ) )
     $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg) ) )
 
 endif
+
+# alias for program
+test.dev.o-saft-dbx.all:    test.dev.osaft-dbx.all
+test.dev.o-saft-man.all:    test.dev.osaft-man.all
+test.dev.o-saft-dbx.all.log:test.dev.osaft-dbx.all.log
+test.dev.o-saft-man.all.log:test.dev.osaft-man.all.log
 
 $(_TEST.dev.tmpfile):
 	@mkdir $@
