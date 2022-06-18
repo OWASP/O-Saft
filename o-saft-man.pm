@@ -63,7 +63,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Text qw(print_pod);
 
-my  $SID_man= "@(#) o-saft-man.pm 2.5 22/06/18 22:32:57";
+my  $SID_man= "@(#) o-saft-man.pm 2.6 22/06/18 22:58:20";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -179,7 +179,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.5'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.6'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1385,11 +1385,16 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
-    if ($typ =~ m/(abbr|link|rfc)/) {
+    TABLE: {
+    if ($typ =~ m/(abbr|links?|rfc)/) {
         _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
+        last;
     }
 
-    if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
+    if ($typ eq 'compl') {
+        _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}});
+        last;
+    }
 
     if ($typ eq 'intern') {
         # first list command with all internal commands_*
@@ -1401,6 +1406,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             next if ($key !~ m/^cmd-(.*)/);
             _man_opt("cmd-" . $1, $sep, "+" . join(' +', @{$cfg{$key}}));
         }
+        last;
     }
 
     # now all lists, which can be redefined with --cfg-*=
@@ -1421,6 +1427,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             }
             _man_cfg($typ, $key, $sep, $txt);
         }
+        last;
     }
     if ($typ =~ m/cmd/) {
         foreach my $key (sort keys %cfg) {
@@ -1434,6 +1441,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 # key in RC-FILE it looks like  --cfg_cmd=sni=   ...
             _man_cfg($typ, $key, $sep, $txt);
         }
+        last;
     }
     if ($typ =~ m/score/) {
         foreach my $key (sort keys %checks) {
@@ -1441,22 +1449,25 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             $txt =  $checks{$key}->{score} if ($typ =~ m/cfg/);
             _man_cfg($typ, $key, $sep, $txt);
         }
+        last;
     }
     if ($typ =~ m/check/) {
         foreach my $key (sort keys %checks) {
             $txt =  $checks{$key}->{txt};
             _man_cfg($typ, $key, $sep, $txt);
         }
+        last;
     }
     if ($typ =~ m/(?:data|info)/) {
         foreach my $key (sort keys %data) {
             $txt =  $data{$key}->{txt};
             _man_cfg($typ, $key, $sep, $txt);
         }
+        last;
     }
     if ($typ =~ m/text/) {
         foreach my $key (sort keys %text) {
-#_dbx "$key : " . ref($text{$key});
+            #_dbx "$key : " . ref($text{$key});
             if ('' eq ref($text{$key})) {   # string
                 $txt =  $text{$key};
                 _man_txt($typ, $key, $sep, $txt);
@@ -1469,7 +1480,9 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 #}
             }
         }
+        last;
     }
+    } # TABLE
     if ($typ !~ m/cfg/) {
         _man_foot(16);
     } else {
@@ -1990,7 +2003,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.5 2022/06/18
+2.6 2022/06/18
 
 =head1 AUTHOR
 
