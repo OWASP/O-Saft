@@ -15,7 +15,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.7 22/06/15 14:38:27";
+our $SID_osaft  =  "@(#) osaft.pm 2.8 22/06/19 01:58:04";
 our $VERSION    =  "22.05.22";  # official version number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -165,7 +165,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =item %TLS_EXTENSIONS
 
-=item %tls_curve_types
+=item %ec_curve_types
 
 =item %tls_curves
 
@@ -181,23 +181,21 @@ purpose of this module is defining variables. Hence we export them.
 
 =cut
 
-## no critic qw(Modules::ProhibitAutomaticExportation, Variables::ProhibitPackageVars)
-# FIXME: perlcritic complains to use @EXPORT_OK instead of @EXPORT, but that
-#        is not possible as long as constants are exported;
-#        also note that the caller may uses most symbols
-# FIXME: perlcritic complains to not declare (global) package variables, but
-#        the purpose of this module is to do that. This may change in future.
+## no critic qw(Modules::ProhibitAutomaticExportation)
+#  perlcritic complains to use @EXPORT_OK instead of @EXPORT, but we want any-
+#  thing exported.
 
 # See NOTES below also.
 
 use Exporter qw(import);
 use base qw(Exporter);
-#our @ISA        = qw(Exporter);
 our @EXPORT     = qw(
-                %STR
+                %ciphers
                 %prot
                 %prot_txt
+                %tls_compression_method
                 %tls_handshake_type
+                %tls_key_exchange_type
                 %tls_record_type
                 %tls_error_alerts
                 %TLS_EXTENSIONS
@@ -208,8 +206,10 @@ our @EXPORT     = qw(
                 %TLS_PSK_KEY_EXCHANGE_MODE
                 %TLS_SIGNATURE_SCHEME
                 %TLS_SUPPORTED_GROUPS
-                %tls_curve_types
+                %TLS_ID_TO_EXTENSIONS
+                %ec_curve_types
                 %tls_curves
+                %target_desc
                 @target_defaults
                 %data_oid
                 %dbx
@@ -3391,7 +3391,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.7 2022/06/15
+2.8 2022/06/19
 
 =head1 AUTHOR
 
