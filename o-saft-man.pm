@@ -63,7 +63,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Text qw(print_pod);
 
-my  $SID_man= "@(#) o-saft-man.pm 2.6 22/06/18 22:58:20";
+my  $SID_man= "@(#) o-saft-man.pm 2.7 22/06/18 23:29:23";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -179,7 +179,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.6'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.7'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -724,6 +724,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         next if (0 == $h);                          # ignore "out of scope"
         if (0 < $skip) { $skip--; next; }           # skip some texts
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
+m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special markup
         m/^=head1 (.*)/   && do {
                     printf("$p\n<h1>%s %s </h1>\n", _man_html_ankor($1),$1);
                     $p="";
@@ -783,7 +784,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;};
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
-        s!<<!&lt;&lt;!g;                            # encode special markup
+        s!<<!&lt;&lt;!g;                            # encode remaining special markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
         m/^\s*$/ && do { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     $a = "id='h$a'" if ('' ne $a);
@@ -2003,7 +2004,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.6 2022/06/18
+2.7 2022/06/18
 
 =head1 AUTHOR
 
