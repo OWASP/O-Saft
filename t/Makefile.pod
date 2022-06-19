@@ -19,6 +19,39 @@ just containing the user (developer) documentation.
 
 Please also  SEE Documentation  in o-saft.pl .
 
+
+=head1 ASTRACT
+
+While the main  Makefile  is intended for ordinary users to  perfom common
+task for maintaining the project's installation, all other t/Makefile* are
+intendend for development. However, as Makefile includes most t/Makefile*,
+all target for developemnt can be used there also.
+
+Most targets for development are named:
+
+    testarg-*
+    testcmd-*
+    test.*
+    help.*
+
+Where in general  testarg-*  is a target to test  one or more arguments of
+a tool, and  testcmd-*  is a target to test a command of  $(SRC.pl) .
+Most  test.*  targets are summary targets executing a list of the above.
+All  help.*  targets are for ducumentation of the makefile's targets.
+For more details on target names, please  SEE O-Saft Makefile Targets .
+
+To get a list of all target for testing, use:
+
+    make s-ALL.tests
+
+To get a list of help target, use:
+
+    make help.tests
+    make help.help
+
+
+=head2 Quick Overview
+
 This documentation here consist of following main sections:
 
 =over
@@ -48,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.48 22/03/20 22:50:19
+@(#) Makefile.pod 1.49 22/06/19 10:30:26
 
 =head1 AUTHOR
 
@@ -403,8 +436,21 @@ Naming conventions for targets:
     test.name.log   - same as  test.name  but store results in logfile
     test%ext        - pattern rule used instead of explicit target rule to
                       allow spelling variants, like tst.ext or tst-ext
+    testarg-TYP-*   - targets for testing tool arguments in Makefile.TYP
+    testcmd-TYP-*   - targets for testing tools commands in Makefile.TYP
+                      "tool" may be any of those defined in macro  ALL.exe
     testarg-name%   - pattern rule which finally uses testarg-% target
     testcmd-name_%  - pattern rule which finally uses testcmd-% target
+
+Examples:
+
+    testcmd-cmd-+check_localhost    - test command +check of $(SRC.pl) 
+                                      with parameter localhost
+                                      target can be found in Makefile.cmd
+
+    testarg-dev-install-sh_--check  - test tool INSTALL.sh  with argument
+                                      --check
+                                      target can be found in Makefile.dev
 
 Targets in the Makefile* are grouped, usually. Each group should be headed
 by the help texts for the targets using  HELP-  variables (see below).
