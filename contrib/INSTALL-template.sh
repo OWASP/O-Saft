@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) C/ˇU 1.83 22/06/16 02:39:00
+#?      @(#) ê&Lø§U 1.84 22/06/19 09:00:02
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -354,11 +354,11 @@ echo_head   () {
 	echo ""
 	if [ -z "$colour" ]; then
 		echo "$@"
+		echo "#$_line"
 	else
 		\echo "\033[7;37m\033[1;30m$@"
+		\echo "#$_line\033[0m"
 	fi
-	echo "#$_line"
-	\echo -n "\033[0m"
 }
 echo_foot   () {
 	echo "#$_line"
@@ -426,7 +426,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.83 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.84 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
