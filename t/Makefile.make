@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.16 22/03/20 08:27:08
+#?      @(#) Makefile.make 1.17 22/06/19 12:39:25
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.16
+_SID.make          := 1.17
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -87,10 +87,11 @@ ALL.test.make      += $(ALL.testmake)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
-testarg-make%:      TRACE.target= echo "\#$(EXE.pl) $(TEST.init) $(TEST.args)"
+testarg-make%:      TRACE.target= echo "\#\#$(EXE.pl) $(TEST.init) $(TEST.args)$(_NL)"
+testarg-make%.log:  TRACE.target=
     # targets should print the command, the TRACE.target variable is misused
     # for that (assuming that all target use $(TRACE.target) ).
-    # FIXME: prints  #make  at end, which is wrong
+    # $(TRACE.target) is empty for testarg-make%log to avoid double printing
 testarg-make-n:     TEST.init   = tests -n
 testarg-make-n:
 	@$(TRACE.target)
