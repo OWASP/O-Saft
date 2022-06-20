@@ -6,11 +6,6 @@
 
 package main;   # ensure that main:: variables are used
 
-## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
-# FIXME: We have a lot of comma separated statements to simplify the code.
-#        This needs to be changed in future to keep Perl::Critic happy.
-#        However, the code herein is just for our own documentation ...
-
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 # NOTE:  This often happens in comma separated statements, see above.
 #        It may also happen after postfix statements.
@@ -63,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.9 22/06/20 10:47:04";
+my  $SID_man= "@(#) o-saft-man.pm 2.10 22/06/20 22:43:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -77,6 +72,8 @@ my  $cfg_header = 0;                    # we may be called from within parents B
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
+our $VERBOSE    = 0;  # >1: option --v
+   # VERBOSE instead of verbose because of perlcritic
 local $\    = "";
 
 # SEE Note:Stand-alone
@@ -114,7 +111,7 @@ sub _man_dbx        {   # similar to _y_CMD
         $anf = "<!-- "; $end = " -->";
         # TODO: need to sanitise @txt : remove <!-- and/or -->
     }
-    if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)) {
+    if (0 < $VERBOSE) {
         print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
     }
     return;
@@ -179,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.9'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.10'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -194,22 +191,23 @@ sub _man_file_get   {
 
 sub _man_http_head  {
     #? print HTTP headers (for CGI mode)
-    return if (0 >= (grep{/--cgi.?trace/} @ARGV));
+    my $txt = "";
+    return $txt if (0 >= (grep{/--cgi.?trace/} @ARGV));
     # Checking @ARGV for --cgi-trace is ok, as this option is for simulating
     # CGI mode only, in o-saft.pl SEE Note:CGI mode
     # When called from o-saft.cgi, HTTP headers are already written.
-    print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-    print "Content-type: text/html; charset=utf-8\r\n";
-    print "\r\n";
-    _man_dbx("_man_http_head() ...");   # note that it must be after all HTTP headers
-    return;
+    $txt .= "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
+    $txt .= "Content-type: text/html; charset=utf-8\r\n";
+    $txt .= "\r\n";
+    $txt .= _man_dbx("_man_http_head() ...");   # note that it must be after all HTTP headers
+    return $txt;
 } # _man_http_head
 
 sub _man_html_head  {
     #? print footer of HTML page
     # SEE HTML:JavaScript
     _man_dbx("_man_html_head() ...");
-    print << 'EoHTML';
+    return << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -446,13 +444,12 @@ function toggle_handler(){
  <!-- also hides unwanted text before <body> tag -->
 EoHTML
     # TODO: need <input name=cgi value="/path/to/o-saft.cgi" />
-    return;
 } # _man_html_head
 
 sub _man_html_warn  {
     #? print "Note" text box for CGI usage; only visible with fragment #Note
     _man_dbx("_man_html_warn() ...");
-    print << 'EoHTML';
+    return << 'EoHTML';
  <style>
   /* message box "Note", if necessary # TODO: font-size not working in firefox */
   .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
@@ -472,7 +469,6 @@ sub _man_html_warn  {
   <p>The server may be slow and is short on memory, so please don't expect miracles.</p>
  </div> </div>
 EoHTML
-    return;
 } # _man_html_warn
 
 sub _man_help_button{
@@ -485,24 +481,26 @@ sub _man_help_button{
        $txt  =~ s/^--//;    # button text without --help
        $txt  =~ s/^help=//; # button text without --help
        $class = "class='$class'" if ($class !~ m/^\s*$/);
-    return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>', $class, $url, $cmd, $title, $txt);
+    return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>',
+                    $class, $url, $cmd, $title, $txt);
 } # _man_help_button
 
 sub _man_form_head  {
     #? print start of CGI form
     my $cgi_bin = shift;
+    my $txt;
     _man_dbx("_man_form_head() ...");
-    printf(" <div class=h ><b>Help:</b>\n");
-    printf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
-    printf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help (plain text)"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=command", 'b', "open window with help for commands"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  'b', "open window with help for checks"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=example", 'b', "open window with examples"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=opt",     'b', "open window with help for options"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     'b', "open window with FAQs"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    'b', "open window with the glossar"));
-    printf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    'b', "open window with help for ToDO"));
-    print << "EoHTML";
+    $txt .= sprintf(" <div class=h ><b>Help:</b>\n");
+    $txt .= sprintf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help (plain text)"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=command", 'b', "open window with help for commands"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  'b', "open window with help for checks"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=example", 'b', "open window with examples"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=opt",     'b', "open window with help for options"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     'b', "open window with FAQs"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    'b', "open window with the glossar"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    'b', "open window with help for ToDO"));
+    $txt .= << "EoHTML";
  </div>
  <form id="o-saft" action="$cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
   <noscript><div>
@@ -543,12 +541,12 @@ EoHTML
                      enabled disabled   legacy=owasp BR
                      traceKEY traceCMD  trace v     cgi-no-header BR
                  )) {
-        if ('BR' eq $key) { print "        <br>\n"; next; }
+        if ('BR' eq $key) { $txt .= "        <br>\n"; next; }
         my $tag_nam = '--' . $key;
-        print _man_html_cbox('cgi', "        ", "q$tag_nam", $tag_nam, "", $tag_nam) . "\n";
+        $txt .= _man_html_cbox('cgi', "        ", "q$tag_nam", $tag_nam, "", $tag_nam) . "\n";
     }
-    print _man_html_go("cgi");
-    print << "EoHTML";
+    $txt .= _man_html_go("cgi");
+    $txt .= << "EoHTML";
       </div><!-- class=n -->
     </div><!-- id="a" -->
     <div id="b" >
@@ -557,14 +555,14 @@ EoHTML
         <input type=text     name=--cmds size=55 title="type any command or option"/>/>
         -->
 EoHTML
-    return;
+    return $txt;
 } # _man_form_head
 
 sub _man_form_foot  {
     #? print end of CGI form
     my $cgi_bin = shift;
     _man_dbx("_man_form_foot() ...");
-    print << "EoHTML";
+    return << "EoHTML";
 </p>
         <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
@@ -588,7 +586,6 @@ sub _man_form_foot  {
   toggle_checked("o--no-tlsv13");   // .. also as option ..
  </script>
 EoHTML
-    return;
 } # _man_form_foot
 
 sub _man_html_foot  {
@@ -596,7 +593,7 @@ sub _man_html_foot  {
     _man_dbx("_man_html_foot() ...");
     my $title   = _man_get_title();
     my $vers    = _man_get_version();
-    print << "EoHTML";
+    return << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
  <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
@@ -608,7 +605,6 @@ sub _man_html_foot  {
  </script>
 </body></html>
 EoHTML
-    return;
 } # _man_html_foot
 
 sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
@@ -618,7 +614,7 @@ sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
        $title = 'experimental option' if ("--format=html" eq $cmd_txt); # TODO: experimental hack
     return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
     return sprintf("%s<label class=i for='%s'><input type=checkbox id='%s' name='%s' value='%s' title='%s' >%s</label>&#160;&#160;",
-        $prefix, $tag_id, $tag_id, $tag_nam, $tag_val, $title, $cmd_txt);
+                    $prefix, $tag_id, $tag_id, $tag_nam, $tag_val, $title, $cmd_txt);
 } # _man_html_cbox
 
 sub _man_html_chck  {
@@ -709,6 +705,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $url = shift;    # URL
     my $anf = shift;    # pattern where to start extraction
     my $end = shift;    # pattern where to stop extraction
+    my $txt;
     my $skip= 0;
     my $c   = 0;
     my $h   = 0;
@@ -726,7 +723,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
 m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special markup
         m/^=head1 (.*)/   && do {
-                    printf("$p\n<h1>%s %s </h1>\n", _man_html_ankor($1),$1);
+                    $txt .= sprintf("$p\n<h1>%s %s </h1>\n", _man_html_ankor($1),$1);
                     $p="";
                     next;
                 };
@@ -735,11 +732,11 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
                     if ($x =~ m/Discrete commands to test/) {
                         # SEE Help:Syntax
                         # command used for +info and +check have no description in @help
-                        print _man_html_cmds($key); # extract commands from dource code
+                        $txt .= _man_html_cmds($key); # extract commands from dource code
                     } else {
-                        print _man_html_go($key);
-                        print _man_html_ankor($x) . "\n";
-                        printf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
+                        $txt .= _man_html_go($key);
+                        $txt .= _man_html_ankor($x) . "\n";
+                        $txt .= sprintf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
                     }
                     next;
                 };
@@ -747,24 +744,24 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
                     # commands and options expected with =head3 only
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     if ('cgi' eq $key) {
-                        print _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
+                        $txt .= _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
                     }
-                    print _man_html_ankor($a) . "\n";
-                    printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
+                    $txt .= _man_html_ankor($a) . "\n";
+                    $txt .= sprintf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
                 };
         m/Discrete commands,/ && do { $skip=2; next; }; # skip next 3 lines; SEE Help:Syntax
         # encode special markup
         m/(--help=[A-Za-z0-9_.-]+)/ && do {         # add button for own help (must be first in sequence)
                     if ('cgi' eq $key) {
-                        print _man_help_button($url, $1, "b r", "open window with special help");
+                        $txt .= _man_help_button($url, $1, "b r", "open window with special help");
                     }
                 };
         m/^\s*S&([^&]*)&/ && do {
                     # code or example line
                     my $v=$1;
                     $v=~s!<<!&lt;&lt;!g;
-                    print "<div class=c >$v</div>\n";
+                    $txt .= "<div class=c >$v</div>\n";
                     next
                 };
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
@@ -781,42 +778,42 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
             # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
         s!^\s+($mytool .*)!<div class=c >$1</div>!; # example line
         # detect lists, very lazy ... # SEE HTML:Known Bugs
-        m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;};
-        m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
+        m/^=item +\* (.*)/    && do { $txt .= "<li>$1</li>\n";next;};
+        m/^=item +\*\* (.*)/  && do { $txt .= "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         s!<<!&lt;&lt;!g;                            # encode remaining special markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
         m/^\s*$/ && do { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     $a = "id='h$a'" if ('' ne $a);
-                    print "$p<p $a>";
+                    $txt .= "$p<p $a>";
                     $p = "</p>";
                     $a = '';
                 }; # SEE Perlcritic:LocalVars
         s!(^ {12}.*)!<li class="n">$1</li>!;        # 12 spaces are used in lists, mainly
-        print;
+        $txt .= $_;
     }
-    print "$p"; # if not empty, otherwise harmless
-    return;
+    $txt .= "$p"; # if not empty, otherwise harmless
+    return $txt;
 } # _man_html
 
 sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print table header line (dashes)
     my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
     my @args = @_;      # .. hence "no critic" pragma above
+    my $pod  = "";
     _man_dbx("_man_head(..) ...");
-    return if (1 > $cfg_header);
+    return $pod if (1 > $cfg_header);
     my $len0 = $len1 - 1;
-    printf("=%${len0}s | %s\n", @args);
-    printf("=%s+%s\n", '-'x  $len1, '-'x60);
-    return;
+    $pod .= sprintf("=%${len0}s | %s\n", @args);
+    $pod .= sprintf("=%s+%s\n", '-'x  $len1, '-'x60);
+    return $pod;
 } # _man_head
 
 sub _man_foot       {
     #? print table footer line (dashes)
     my $len1 = shift;   # expected length of first (left) string
-    return if (1 > $cfg_header);
-    printf("=%s+%s\n", '-'x $len1, '-'x60);
-    return;
+    return "" if (1 > $cfg_header);
+    return sprintf("=%s+%s\n", '-'x $len1, '-'x60);
 } # _man_foot
 
 sub _man_opt        {   ## no critic qw(Subroutines::RequireArgUnpacking)
@@ -825,8 +822,7 @@ sub _man_opt        {   ## no critic qw(Subroutines::RequireArgUnpacking)
     my $len  = 16;
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
     my $txt  = sprintf("%${len}s%s%s\n", @args);
-    print _man_squeeze((16+length($_[1])), $txt);
-    return;
+    return _man_squeeze((16+length($_[1])), $txt);
 } # _man_opt
 
 sub _man_cfg        {
@@ -834,8 +830,7 @@ sub _man_cfg        {
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg(?!_cmd)/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
-    _man_opt($key, $sep, $txt);
-    return;
+    return _man_opt($key, $sep, $txt);
 } # _man_cfg
 
 sub _man_txt        {
@@ -844,15 +839,13 @@ sub _man_txt        {
     $txt =~ s/(\n)/\\n/g;
     $txt =~ s/(\r)/\\r/g;
     $txt =~ s/(\t)/\\t/g;
-    _man_cfg($typ, $key, $sep, $txt);
-    return;
+    return _man_cfg($typ, $key, $sep, $txt);
 } # _man_txt
 
 sub _man_pod_item   {
     #? print line as POD =item
     my $line = shift;
-    print "=over\n\n$line\n=back\n";
-    return;
+    return "=over\n\n$line\n=back\n";
 } # _man_pod_item
 
 sub _man_usr_value  {
@@ -860,7 +853,7 @@ sub _man_usr_value  {
     # expecting something like  usr-action=/some.cgi  in $cfg{'usr_args'}
     my $key =  shift;
        $key =~ s/^(?:--|\+)//;  # strip leading chars
-    my @arg =  '';              # key, value # Note: value is anything right to leftmost = 
+    my @arg =  "";              # key, value # Note: value is anything right to leftmost = 
     map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); # does not allow multiple $key in 'usr_args'
     return $arg[1];
 } # _man_usr_value
@@ -870,8 +863,9 @@ sub _man_doc_opt    {
     #  type is:   abbr, links, rfc
     #  format is: opt, POD
     my ($typ, $sep, $format) = @_;  # format is POD or opt
-    my  $url  = '';
+    my  $url  = "";
     my  @txt  = _man_file_get($typ);
+    my  $opt;
     # OSaft::Doc::*::get()  returns one line for each term;  format is:
     #   term followd by TAB (aka \t) followed by description text
     foreach my $line (@txt) {
@@ -885,10 +879,10 @@ sub _man_doc_opt    {
             $val = $val . "\n\t\t\t$url/html/rfc$key";
             $key = "RFC $key";
         }
-        _man_opt($key, $sep, $val)          if ('opt' eq $format);
-        _man_pod_item("$key $sep $val\n")   if ('POD' eq $format);
+        $opt .= _man_opt($key, $sep, $val)          if ('opt' eq $format);
+        $opt .= _man_pod_item("$key $sep $val\n")   if ('POD' eq $format);
     }
-    return;
+    return $opt;
 } # _man_doc_opt
 
 sub _man_doc_pod    {
@@ -898,17 +892,22 @@ sub _man_doc_pod    {
     # print comment lines only, hence add # to each line
     my  $help = "@txt";
         $help =~ s/\n/\n#/g;
-    print "# begin $typ\n\n";
-    print "# =head1 $typ\n\n";
-    print $help;
     #_man_doc_opt($typ, $sep, "POD");   # if real POD should be printed
-    print "# end $typ\n";
-    return;
+    my  $pod  = <<"EoHelp";
+# begin $typ
+
+# =head1 $typ
+
+$help
+# end $typ
+
+EoHelp
+    return $pod;
 } # _man_doc_pod
 
 sub _man_pod_head   {
     #? print start of POD format
-    print <<'EoHelp';
+    my $txt = <<'EoHelp';
 #!/usr/bin/env perldoc
 #?
 # Generated by o-saft.pl .
@@ -920,25 +919,27 @@ sub _man_pod_head   {
 # Tested viewers: podviewer, perldoc, pod2usage, tkpod
 
 EoHelp
-    print "=pod\n\n=encoding utf8\n\n"; # SEE POD:Syntax
-    return;
+    $txt .= "=pod\n\n";             # must be variable to not confuse perldoc
+    $txt .= "=encoding utf8\n\n";   # for utf8  SEE POD:Syntax
+    return $txt;
 } # _man_pod_head
 
 sub _man_pod_text   {
     #? print text in POD format
     my $code  = 0;  # 1 if last printed line was `source code' format
     my $empty = 0;  # 1 if last printed line was empty
+    my $pod;
     while ($_ = shift @help) {          # @help already looks like POD
         last if m/^(?:=head[1] )?END\s+#/;# very last line in this file
         m/^$/ && do {  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-            if (0 == $empty)  { print; $empty++; }  # empty line, but only one
+            if (0 == $empty)  { $pod .= $_; $empty++; } # empty line, but only one
             next;
         };
         s/^(\s*(?:o-saft\.|checkAll|yeast\.).*)/S&$1&/; # dirty hack; adjust with 14 spaces
         s/^ {1,13}//;                   # remove leftmost spaces (they are invalid for POD); 14 and more spaces indicate a line with code or example
         s/^S&\s*([^&]*)&/\t$1/ && do {  # code or example line
-            print "\n" if (0 == ($empty + $code));
-            print; $empty = 0; $code++; next;   # no more changes
+            $pod .= "\n" if (0 == ($empty + $code));
+            $pod .= $_; $empty = 0; $code++; next; # no more changes
         };
         $code = 0;
         s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
@@ -952,31 +953,31 @@ sub _man_pod_text   {
         m/^=/ && do {                   # paragraph line
             # each paragraph line must be surrounded by empty lines
             # =item paragraph must be inside =over .. =back
-            print "\n"        if (0 == $empty);
-            print "$line"     if $line =~ m/^=[hovbefpc].*/;# any POD keyword
-            _man_pod_item "$line" if $line =~ m/^=item/;    # POD =item keyword
-            print "\n";
+            $pod .= "\n"        if (0 == $empty);
+            $pod .= "$line"     if $line =~ m/^=[hovbefpc].*/;  # any POD keyword
+            $pod .= _man_pod_item "$line" if $line =~ m/^=item/;# POD =item keyword
+            $pod .= "\n";
             $empty = 1;
             next;
         };
-        print "$line";
+        $pod .= "$line";
         $empty = 0;
     }
-    return;
+    return $pod;
 } # _man_pod_text
 
 sub _man_pod_foot   {
     #? print end of POD format
-    print <<'EoHelp';
+    my $pod = <<'EoHelp';
 Generated with:
 
         o-saft.pl --no-warnings --no-header --help=gen-pod > o-saft.pod
 
 EoHelp
-    print "=cut\n\n";           # SEE POD:Syntax
-    _man_doc_pod('abbr', "-");  # this is for voodoo, see below
-    _man_doc_pod('rfc',  "-");  # this is for voodoo, see below
-    print <<'EoHelp';
+    $pod .= "=cut\n\n";
+    $pod .= _man_doc_pod('abbr', "-");  # this is for voodoo, see below
+    $pod .= _man_doc_pod('rfc',  "-");  # this is for voodoo, see below
+    $pod .= <<'EoHelp';
 
 # begin voodoo
 
@@ -1002,16 +1003,16 @@ EoHelp
 # end voodoo
 
 EoHelp
-    return;
+    return $pod;
 } # _man_pod_foot
 
 sub _man_wiki_head  {
     #? print start of mediawiki format
-    print <<'EoHelp';
+    return <<'EoHelp';
 ==O-Saft==
 This is O-Saft's documentation as you get with:
  o-saft.pl --help
-<small>On Windows following must be used
+<small>On Windows following must be used:
  o-saft.pl --help --v
 </small>
 
@@ -1025,12 +1026,12 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
 [[Category:OWASP Project]]  [[Category:OWASP_Builders]]  [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]  [[Category:SSL]]  [[Category:Test]]
 ----
 EoHelp
-    return;
 } # _man_wiki_head
 
 sub _man_wiki_text  {
     #? print text of mediawiki format
     #  convert POD syntax to mediawiki syntax
+    my $pod;
     my $mode =  shift;
     while ($_ = shift @help) {
         last if/^=head1 TODO/;
@@ -1040,9 +1041,9 @@ sub _man_wiki_text  {
         s/^=item (\*\* .*)/$1/;         # list item, second level
         s/^=item (\* .*)/$1/;           # list item, first level
         s/^=[^= ]+ *//;                 # remove remaining markup and leading spaces
-        print, next if/^=/;             # no more changes in header lines
+        m/^=/ && do { $pod .= $_; next; };  # no more changes in header lines
         s:['`]([^']*)':<code>$1</code>:g;  # markup examples # dumm '
-        s/^S&([^&]*)&/  $1/ && do { print; next; }; # code or example line; no more changes
+        s/^S&([^&]*)&/  $1/ && do { $pod .= $_; next; }; # code or example line; no more changes
         s/X&([^&]*)&/[[#$1|$1]]/g;      # markup references inside help
         s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
         s/I&([^&]*)&/\'\'$1\'\'/g;      # markup commands and options
@@ -1054,14 +1055,14 @@ sub _man_wiki_text  {
         }
         s/^:?\s*($mytool)/  $1/;        # myself becomes wiki code line
         s/^:\s+$/\n/;                   # remove empty lines
-        print;
+        $pod .= $_;
     }
-    return;
+    return $pod;
 } # _man_wiki_text
 
 sub _man_wiki_foot  {
     #? print end of mediawiki format
-    print <<'EoHelp';
+    return <<'EoHelp';
 ----
 <small>
 Content of this wiki page generated with:
@@ -1069,7 +1070,6 @@ Content of this wiki page generated with:
 </small>
 
 EoHelp
-    return;
 } # _man_wiki_foot
 
 sub _man_cmd_from_source {
@@ -1092,7 +1092,7 @@ sub _man_cmd_from_source {
                 $txt .= "\n                  Commands to show results of checked $1\n";
                 next;
             }
-            $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
+            if (m/^\s*\)\s*;/) { $skip = 1; next; } # find end of data structure
             next if (1 == $skip);
             next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
             if (m/^\s+'([^']*)'.*"([^"]*)"/) {
@@ -1155,7 +1155,7 @@ sub man_docs_write  {
         open($fh, '>:encoding(UTF-8)', $doc) or do {
             _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
             next;
-        }
+        };
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
     return;
@@ -1199,27 +1199,25 @@ sub man_help_brief  {
         $line =  sprintf("\n%17s %s", " ", $line) if (defined $opts{$idx}->{'txt'});
         $opts{$idx}->{'txt'} .= $line;
     }
-    print "\n";
-    _man_head(15, "Option", "Description");
+    my $pod = "\n" . _man_head(15, "Option", "Description");
     foreach my $key (sort {$a <=> $b} keys %opts) {
-        printf("%-17s %s\n", $opts{$key}->{'opt'}, $opts{$key}->{'txt'}||"");
+       $pod .= sprintf("%-17s %s\n", $opts{$key}->{'opt'}, $opts{$key}->{'txt'}||"");
     }
-    _man_foot(15);
-    print "\n";
-    _man_head(15, "Command", "Description");
-    print <<"EoHelp";
+    $pod .=        _man_foot(15);
+    $pod .= "\n" . _man_head(15, "Command", "Description");
+    $pod .= <<"EoHelp";
 +info             Overview of most important details of the SSL connection.
 +cipher           Check target for ciphers (using libssl).
 +check            Check the SSL connection for security issues.
 +protocols        Check for protocols supported by target.
 +vulns            Check for various vulnerabilities.
 EoHelp
-    _man_foot(15);
+    $pod .= _man_foot(15);
     my $opt = "";
        $opt = " --header" if (0 < $cfg_header); # be nice to the user
-    printf("\nFor more options  see: $cfg{me}$opt --help=opt");
-    printf("\nFor more commands see: $cfg{me}$opt --help=commands\n\n");
-    return;
+    $pod .= sprintf("\nFor more options  see: $cfg{me}$opt --help=opt");
+    $pod .= sprintf("\nFor more commands see: $cfg{me}$opt --help=commands\n\n");
+    return $pod;
 } # man_help_brief
 
 sub man_commands    {
@@ -1229,8 +1227,7 @@ sub man_commands    {
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
     # SEE Help:Syntax
-    print "\n";
-    _man_head(15, "Command", "Description");
+    my $pod = "\n" . _man_head(15, "Command", "Description");
     my $txt = <<"EoHelp";
                   Commands for information about this tool
 +dump             Dumps internal data for SSL connection and target certificate.
@@ -1276,14 +1273,11 @@ sub man_commands    {
 +cipher-selected  Selected cipher.
 
 EoHelp
-
-    print _man_squeeze(18, $txt);
-
-    print _man_squeeze(18,_man_cmd_from_source());
-    print _man_cmd_from_rcfile();
-    _man_foot(15);
-    print "\n";
-    return;
+    $pod .= _man_squeeze(18, $txt);
+    $pod .= _man_squeeze(18,_man_cmd_from_source());
+    $pod .= _man_cmd_from_rcfile();
+    $pod .= _man_foot(15) . "\n";
+    return $pod;
 } # man_commands
 
 sub man_warnings    {
@@ -1291,6 +1285,7 @@ sub man_warnings    {
     #? recommended usage:   $0 --header --help=warnings
     # data is extracted from separate file, which could be created by make
     _man_dbx("man_warnings($parent) ...");
+    my $pod  = "";
     my $txt  = "";
     my $rex  = '.STR\{(?:ERROR|WARN|HINT)},|' . join('|', $STR{ERROR}, $STR{WARN}, $STR{HINT});
        $rex  =~ s/([*!])/\\$1/g;# escape meta chars in text
@@ -1303,7 +1298,7 @@ sub man_warnings    {
     if (not open($fh, '<:encoding(UTF-8)', $doc)) {
         _warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
         _hint($cfg{'hints'}->{'help=warnings'});
-        return;
+        return $pod;
     } # else
     # parse file and collect messages from there, print warnings while parsing
     # first,  otherwise it is difficult (for human readers) to distinguish the
@@ -1342,7 +1337,7 @@ sub man_warnings    {
     }
     close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     # print collected messages
-    print <<"EoHelp";
+    $pod .= <<"EoHelp";
 
 === Warning and error messages ===
 
@@ -1353,11 +1348,11 @@ sub man_warnings    {
 # TODO: some missing, i.e. 002: 003: 004:
 
 EoHelp
-    _man_head(15, "Error/Warning", "Message text");
-    print $txt;
-    _man_foot(15);
+    $pod .= _man_head(15, "Error/Warning", "Message text");
+    $pod .= $txt;
+    $pod .= _man_foot(15);
     # TODO: return if (($cfg{'out'}->{'warning'} + $cfg{'out'}->{'hint'}) < 2);
-    return;
+    return $pod;
 } # man_warnings
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
@@ -1366,6 +1361,8 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
+    my $pod =  "";
+    _man_dbx("man_table() ..");
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
@@ -1399,22 +1396,22 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
        } else {
            # this is a programming error, hence always printed on STDERR
            print STDERR "**WARNING: 510: unknown table type '$typ'; using 'text' instead.\n";
-           return; # avoid uninitialised value; return as no data for $typ is available
+           return $pod; # avoid uninitialised value; return as no data for $typ is available
        }
     }
     _man_dbx("man_table($typ) ...");
-    _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
+    $pod .= _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
     TABLE: {
     if ($typ =~ m/(abbr|links?|rfc)/) {
-        _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
+        $pod .= _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
         last;
     }
 
     if ($typ eq 'compl') {
-        _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}});
+        $pod .= _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}});
         last;
     }
 
@@ -1422,11 +1419,11 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # first list command with all internal commands_*
         foreach my $key (sort keys %cfg) {
             next if ($key !~ m/^commands_(?:.*)/);
-            _man_opt($key, $sep, "+" . join(' +', @{$cfg{$key}}));
+            $pod .= _man_opt($key,        $sep, "+" . join(' +', @{$cfg{$key}}));
         }
         foreach my $key (sort keys %cfg) {
             next if ($key !~ m/^cmd-(.*)/);
-            _man_opt("cmd-" . $1, $sep, "+" . join(' +', @{$cfg{$key}}));
+            $pod .= _man_opt("cmd-" . $1, $sep, "+" . join(' +', @{$cfg{$key}}));
         }
         last;
     }
@@ -1447,7 +1444,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             if ('ARRAY' eq ref($cfg{$list}->{$key})) {
                 $txt = join("\t", @{$cfg{$list}->{$key}});
             }
-            _man_cfg($typ, $key, $sep, $txt);
+            $pod .= _man_cfg($typ, $key, $sep, $txt);
         }
         last;
     }
@@ -1461,29 +1458,27 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             $key =~ s/^cmd.// if ($typ =~ m/cfg/);
                 # $key in %cfg looks like  cmd-sni, but when configuring the
                 # key in RC-FILE it looks like  --cfg_cmd=sni=   ...
-            _man_cfg($typ, $key, $sep, $txt);
+            $pod .= _man_cfg($typ, $key, $sep, $txt);
         }
         last;
     }
     if ($typ =~ m/score/) {
         foreach my $key (sort keys %checks) {
-            $txt =  $checks{$key}->{score} . "\t# " . $checks{$key}->{txt};
-            $txt =  $checks{$key}->{score} if ($typ =~ m/cfg/);
-            _man_cfg($typ, $key, $sep, $txt);
+            $txt  = $checks{$key}->{score} . "\t# " . $checks{$key}->{txt};
+            $txt  = $checks{$key}->{score} if ($typ =~ m/cfg/);
+            $pod .= _man_cfg($typ, $key, $sep, $txt);
         }
         last;
     }
     if ($typ =~ m/check/) {
         foreach my $key (sort keys %checks) {
-            $txt =  $checks{$key}->{txt};
-            _man_cfg($typ, $key, $sep, $txt);
+            $pod .= _man_cfg($typ, $key, $sep, $checks{$key}->{txt});
         }
         last;
     }
     if ($typ =~ m/(?:data|info)/) {
         foreach my $key (sort keys %data) {
-            $txt =  $data{$key}->{txt};
-            _man_cfg($typ, $key, $sep, $txt);
+            $pod .= _man_cfg($typ, $key, $sep, $data{$key}->{txt});
         }
         last;
     }
@@ -1491,14 +1486,13 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         foreach my $key (sort keys %text) {
             #_dbx "$key : " . ref($text{$key});
             if ('' eq ref($text{$key})) {   # string
-                $txt =  $text{$key};
-                _man_txt($typ, $key, $sep, $txt);
+                $pod .= _man_txt($typ, $key, $sep, $text{$key});
             }
             if ('HASH' eq ref($text{$key})) {
                 # TODO: not yet printed, as it may confuse the user
                 #foreach my $k (sort keys $text{$key}) {
-                #    $txt =  $text{$key}->{$k};
-                #    _man_txt($typ, "$key($k)", $sep, $txt);
+                #    $txt  = $text{$key}->{$k};
+                #    $pod .= _man_txt($typ, "$key($k)", $sep, $txt);
                 #}
             }
         }
@@ -1506,12 +1500,11 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     } # TABLE
     if ($typ !~ m/cfg/) {
-        _man_foot(16);
+        $pod .= _man_foot(16);
     } else {
         # additional message here is like a WARNING or Hint,
         # do not print it if any of them is disabled
-        return if (($cfg{'out'}->{'warning'} + $cfg{'out'}->{'hint'}) < 2);
-        print <<"EoHelp";
+        $pod .=  <<"EoHelp" if (($cfg{'out'}->{'warning'} + $cfg{'out'}->{'hint'}) > 1);
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
 = The string  @@  inside texts is used as placeholder.
@@ -1519,7 +1512,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 EoHelp
     }
-    return;
+    return $pod;
 } # man_table
 
 sub man_alias       {
@@ -1538,8 +1531,8 @@ sub man_alias       {
     #    if ($arg eq  '-c')                  { $arg = '--capath';        } # alias: ssldiagnose.exe
     #   #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     #
-    print "\n";
-    _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
+    _man_dbx("man_alias() ..");
+    my $pod = "\n" . _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
     my $txt =  "";
     my $fh  = undef;
     my $p   = '[._-]'; # regex for separators as used in o-saft.pl
@@ -1564,52 +1557,53 @@ sub man_alias       {
                 $alias = $commt if ($commt =~ m/^[+-]/);
             }
             if (29 > length($regex)) {
-                $txt = sprintf("%-29s%-21s# %s\n", $regex, $alias, $commt);
+                $txt  = sprintf("%-29s%-21s# %s\n", $regex, $alias, $commt);
             } else {
                 # pretty print if regex is to large for first column
                 $txt  = sprintf("%s\n", $regex);
                 $txt .= sprintf("%-29s%-21s# %s\n", "", $alias, $commt);
             }
-            print _man_squeeze(29, $txt);
+            $pod .= _man_squeeze(29, $txt);
         }
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
-    _man_foot(27);
-    print <<'EoHelp';
+    $pod .= _man_foot(27);
+    $pod .= <<'EoHelp';
 = Note for names in  Alias  column:
 =   For option names  - or _ characters are not shown, they are stripped anyway.
 =   For command names - or _ characters are also possible, but only - is shown.
 
 EoHelp
-    return;
+    return $pod
 } # man_alias
 
 sub man_toc         {
     #? print help table of contents
     my $typ     = lc(shift) || "";      # || to avoid uninitialised value
+    my $toc;
     _man_dbx("man_toc() ..");
     foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
         next if ($txt !~ m/^=head/);
         next if ($txt =~ m/^=head. *END/);  # skip last line
         if ($typ =~ m/cfg/) {
-            $txt =~ s/^=head1 *(.*)/{print "--help=$1\n"}/e;
+            $txt =~ s/^=head1 *(.*)/{ $toc .= "--help=$1\n"}/e;
         } else {
             # print =head1 and =head2
             # just =head1 is lame, =head1 and =head2 and =head3 is too much
-            $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
+            $txt =~ s/^=head([12]) *(.*)/{ $toc .= "  " x $1 . $2 . "\n"}/e; # use number from =head as ident
         }
-        # TODO:  _man_squeeze(6, $txt); # not really necessary
+        # TODO:  $toc = _man_squeeze(6, $txt); # not really necessary
     }
-    return;
+    return $toc;
 } # man_toc
 
 sub man_pod         {
     #? print complete POD page for o-saft.pl --help=gen-pod
     _man_dbx("man_pod() ...");
-    _man_pod_head();
-    _man_pod_text();
-    _man_pod_foot();
-    return;
+    return
+        _man_pod_head() .
+        _man_pod_text() .
+        _man_pod_foot();
 } # man_pod
 
 sub man_man         {
@@ -1630,11 +1624,11 @@ sub man_html        {
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
     # for concept and functionality of the generated page  SEE HTML:HTML
     _man_dbx("man_html() ...");
-    _man_http_head();
-    _man_html_head();
-    _man_html('html', '', 'NAME', 'TODO');  # print complete help
-    _man_html_foot();
-    return;
+    return
+        _man_http_head() .
+        _man_html_head() .
+        _man_html('html', '', 'NAME', 'TODO') . # print complete help
+        _man_html_foot();
 } # man_html
 
 sub man_cgi         {
@@ -1652,15 +1646,15 @@ sub man_cgi         {
     my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
         # get action from --usr-action= or set to default (defensive programming)
     _man_dbx("man_cgi() ...");
-    _man_http_head();
-    _man_html_head();
-    _man_form_head(  $cgi_bin);
-    _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
-    _man_form_foot(  $cgi_bin);
-    _man_html_warn();   # not exactly the place in HTML for this <div>, but syntactically ok
-    _man_html_foot();
+    return
+        _man_http_head() .
+        _man_html_head() .
+        _man_form_head(  $cgi_bin) .
+        _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY') . # print help starting at COMMANDS
+        _man_form_foot(  $cgi_bin) .
+        _man_html_warn() .  # not exactly the place in HTML for this <div>, but syntactically ok
+        _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
-    return;
 } # man_cgi
 
 sub man_wiki        {
@@ -1672,10 +1666,10 @@ sub man_wiki        {
         # leading : (colon). Some versions of mediawiki did not support :*
         # so we can switch this behavior now.
     _man_dbx("man_wiki($mode) ...");
-    _man_wiki_head();
-    _man_wiki_text($mode);
-    _man_wiki_foot();
-    return;
+    return
+        _man_wiki_head()      .
+        _man_wiki_text($mode) .
+        _man_wiki_foot();
 } # man_wiki
 
 sub man_help        {
@@ -1684,6 +1678,7 @@ sub man_help        {
     my $label   = lc(shift) || "";      # || to avoid uninitialised value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
+    my $hlp;
     _man_dbx("man_help($anf, $end) ...");
     if (0 < $::osaft_standalone) {  ## no critic qw(Variables::ProhibitPackageVars)
         # in standalone mode use $0 instead of $parent (which is "O-Saft")
@@ -1692,15 +1687,14 @@ sub man_help        {
     my $txt = join ('', @help);
         # = OSaft::Doc::Data::get("help.txt", $parent, $version);
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
-        print OSaft::Doc::Data::get_egg("help.txt");
-        return;
+        return OSaft::Doc::Data::get_egg("help.txt");
     }
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
     $txt =~ s/.*?\n=head1 $anf//ms;
     $txt =~ s/\n=head1 $end.*//ms;      # grep all data
-    $txt = "\n=head1 $anf" . $txt;
+    $txt =  "\n=head1 $anf" . $txt;
     $txt =~ s/\n=head2 ([^\n]*)/\n    $1/msg;
     $txt =~ s/\n=head3 ([^\n]*)/\n      $1/msg;
     $txt =~ s/\n=(?:[^ ]+ (?:\* )?)([^\n]*)/\n$1/msg;# remove inserted markup
@@ -1711,25 +1705,25 @@ sub man_help        {
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         print "**WARNING: using workaround to print large strings.\n\n";
-        print foreach split(//, $txt);  # print character by character :-((
+        $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
     } else {
-        print $txt;
+        $hlp .= $txt;
     }
     if ($label =~ m/^todo/i)    {
-        print "\n  NOT YET IMPLEMENTED\n";
+        $hlp .= "\n  NOT YET IMPLEMENTED\n";
         foreach my $label (sort keys %checks) {
             next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
-            print "        $label\t- " . $checks{$label}->{txt} . "\n";
+            $hlp .= "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
     }
-    return;
+    return $hlp;
 } # man_help
 
-sub src_grep        {
+sub man_src_grep    {
     #? search for given text in source file, then pretty print
     my $hlp = shift;
-    print "\n";
-    _man_head(14, "Option    ", "Description where program terminates");
+    my $pod = "\n";
+       $pod .= _man_head(14, "Option    ", "Description where program terminates");
     my $fh  = undef;
     if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
         # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
@@ -1744,30 +1738,29 @@ sub src_grep        {
                 $opt =~ s/^[^"]*"/--/;    $opt =~ s/ - .*$//s;
                 $comment =~ s/^[^-]*//; $comment =~ s/".*$//s;
             }
-            printf("%-15s%s\n", $opt, $comment);
+           $pod .= sprintf("%-15s%s\n", $opt, $comment);
         }
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
-    _man_foot(14);
-    return;
-} # src_grep
+    $pod .= _man_foot(14);
+    return $pod;
+} # man_src_grep
 
 sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
+    my $txt;
     _man_dbx("printhelp($hlp) ...");
     _man_use_tty();
     # NOTE: some lower case strings are special
-    man_help('NAME'),           return if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-    man_help('TODO'),           return if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-    man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|problem)s?$/i);
-    if ($hlp =~ /^faq/i) {
-        man_help('KNOWN PROBLEMS');
-        man_help('LIMITATIONS');
-        return
-    }
-    man_help($hlp),             return if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # not case-sensitive!
+    $txt = man_help('NAME')             if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+    $txt = man_help('TODO')             if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+    $txt = man_help('KNOWN PROBLEMS')   if ($hlp =~ /^(err(?:or)?|problem)s?$/i);
+    $txt  = man_help('KNOWN PROBLEMS')  if ($hlp =~ /^faq/i);
+    $txt .= man_help('LIMITATIONS')     if ($hlp =~ /^faq/i);
+    print  man_help($hlp)               if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # not case-sensitive!
+           return                       if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # ugly, but there is 'check' below
         # NOTE: bad design, as we have headlines in the documentation which
         #       are also used as spezial meaning (see below). In particular
         #       CHECKS  is a  headline for a section  in the documentation,
@@ -1777,93 +1770,91 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # However, note that  --help=check  already behaves the same way as
         # --help=CHECKS  while  --help=check  prints the labels. Means that
         # this special condition (match CHECKS) is just for commodity.
-    man_toc($1),                return if ($hlp =~ /^((?:toc|content)(?:.cfg)?)/i);
-    man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
-    man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
-    man_pod(),                  return if ($hlp =~ /^(gen-)?pod$/i);
-    man_man(),                  return if ($hlp =~ /^(gen-)?man$/i);
-    man_man(),                  return if ($hlp =~ /^(gen-)?[nt]roff$/i);
-    man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
-    man_alias(),                return if ($hlp =~ /^alias(es)?$/);
-    man_commands(),             return if ($hlp =~ /^commands?$/);
-    return man_warnings()              if ($hlp =~ /^warnings?$/);
-    return man_help_brief()            if ($hlp =~ /^help_brief$/); # --h
+    $txt = man_toc($1)                  if ($hlp =~ /^((?:toc|content)(?:.cfg)?)/i);
+    $txt = man_html()                   if ($hlp =~ /^(gen-)?html$/);
+    $txt = man_wiki('colon')            if ($hlp =~ /^(gen-)?wiki$/);
+    $txt = man_pod()                    if ($hlp =~ /^(gen-)?pod$/i);
+    $txt = man_man()                    if ($hlp =~ /^(gen-)?man$/i);
+    $txt = man_man()                    if ($hlp =~ /^(gen-)?[nt]roff$/i);
+    $txt = man_cgi()                    if ($hlp =~ /^(gen-)?cgi$/i);
+    $txt = man_alias()                  if ($hlp =~ /^alias(es)?$/);
+    $txt = man_commands()               if ($hlp =~ /^commands?$/);
+    $txt = man_warnings()               if ($hlp =~ /^warnings?$/);
+    $txt = man_help_brief()             if ($hlp =~ /^help_brief$/); # --h
     # anything below requires data defined in parent
-    man_table('rfc'),           return if ($hlp =~ /^(gen-)?rfcs?$/);
-    man_table('links'),         return if ($hlp =~ /^(gen-)?links?$/);
-    man_table('abbr'),          return if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
-    man_table('compl'),         return if ($hlp =~ /^compliance$/i);# alias
-    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl|pattern)s?$/i);
-    man_table(lc($1)),          return if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
-    man_table(lc($1)),          return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)[_-]?cfg$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(cmd|check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
+    $txt = man_table('rfc')             if ($hlp =~ /^(gen-)?rfcs?$/);
+    $txt = man_table('links')           if ($hlp =~ /^(gen-)?links?$/);
+    $txt = man_table('abbr')            if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
+    $txt = man_table('compl')           if ($hlp =~ /^compliance$/i);# alias
+    $txt = man_table(lc($1))            if ($hlp =~ /^(intern|compl|pattern)s?$/i);
+    $txt = man_table(lc($1))            if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
+    $txt = man_table(lc($1))            if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)$/i);
+    $txt = man_table('cfg_'.lc($1))     if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)[_-]?cfg$/i);
+    $txt = man_table('cfg_'.lc($1))     if ($hlp =~ /^cfg[_-]?(cmd|check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
         # we do not allow --help=cfg-cmds or --help=cfg-checks due to conflict
         #    with --help=cmds (see next condiftion);  since 19.01.19
+    $txt = man_src_grep("exit=")        if ($hlp =~ /^exit$/i);
     if ($hlp =~ /^cmds$/i)      { # print program's commands
+        $txt = "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
         # no need for _man_squeeze()
-        print "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
-        return;
     }
     if ($hlp =~ /^legacys?$/i)  { # print program's legacy options
+        $txt = "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
         # no need for _man_squeeze()
-        print "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
-        return;
     }
     if ($hlp =~ /^help$/) {
         #my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version); # already in @help
-        my $txt  = "";
+        $txt = "";
         foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
             # TODO: quick&dirty match against to fixed strings (=head lines)
         $txt =~ s/^=head.//msg;
         $txt =~ s/Options for all commands.*.//msg;
-        print _man_squeeze(undef, $txt);
-        #man_help('Options for help and documentation');
-        return;
+        $txt = _man_squeeze(undef, $txt);
+        #$txt .= man_help('Options for help and documentation');
     }
     if ($hlp =~ m/^opts?$/i)    { # print program's options
         my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
         foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
-        print join('', "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
+        $txt = join('', "OPTIONS\n", splice(@txt, 0, $end));    # print anything before end
         # no need for _man_squeeze()
-        return;
     }
     if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
         my @txt = OSaft::Doc::Data::get("tools.txt", $parent, $version);
-        #print _man_squeeze(undef, "@txt"); # TODO: does not work well here
-        print @txt;
-        return;
+        #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
+        $txt = join("", @txt);
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description
         my @txt = OSaft::Doc::Data::get("coding.txt", $parent, $version);
-        #print _man_squeeze(undef, "@txt"); # TODO: does not work well here
-        print @txt;
-        return;
+        #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
+        $txt = join("", @txt);
     }
-    src_grep("exit="),          return if ($hlp =~ /^exit$/i);
-    # nothing matched so far, try to find special section and only print that
-    _man_dbx("printhelp: " . uc($hlp));
-    man_help(uc($hlp));
+    if (not $txt) {
+        # nothing matched so far, try to find special section and only print that
+        _man_dbx("printhelp: " . uc($hlp));
+        $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
+    }
+    print $txt || "";
     return;
 } # printhelp
 
 sub _main_man       {   # needs not to be _main unless used as Perl package
-    my $arg = shift || "--help";    # without argument print own help
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
-    man_docs_write()                  if ($arg =~ m/--gen[_.=-]?docs/x);
-    # else
-    $arg =  $ARGV[0];
-    $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
-    $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
-        # testing this module is technically the same as getting the text
-    printhelp($arg);
+    while (my $arg = shift @ARGV) {
+        print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
+        man_docs_write()                  if ($arg =~ m/--gen[_.=-]?docs/x);
+        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
+        $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
+        $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
+           # testing this module is technically the same as getting the text
+        next if ($arg =~ m/^[+-]-?/);   # ignore other options
+        printhelp($arg);
+    }
     exit 0;
 } # _main_man
 
@@ -2026,7 +2017,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.9 2022/06/20
+2.10 2022/06/20
 
 =head1 AUTHOR
 
@@ -2039,6 +2030,7 @@ In a perfect world it would be extracted from there (or vice versa).
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
+push(@ARGV, "--help") if 1 > $#ARGV;    # without argument print own help
 _main_man(@ARGV) if (not defined caller);
 
 1;
