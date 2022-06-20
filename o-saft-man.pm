@@ -63,7 +63,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.8 22/06/19 09:06:22";
+my  $SID_man= "@(#) o-saft-man.pm 2.9 22/06/20 10:47:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -179,7 +179,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.8'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.9'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1140,6 +1140,27 @@ sub _man_cmd_from_rcfile {
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
+sub man_docs_write  {
+    #? generate all static help files
+    # this funcction writes to files, not to STDOUT
+    # TODO: anything hardcoded here, at least directory should be a parameter
+    _man_dbx("man_docs_write() ...");
+    my $dir = 'docs';
+    my @docs= qw(--help=alias --help=data --help=checks --help=regex +help
+                  --help=rfc   --help=glossar --help=commands --help=opts);
+    my $fh  = undef;
+    foreach my $mode (@docs) {
+        my $doc = "$dir/$cfg{me}.$mode";
+        #_dbx# print("doc=$doc\n");
+        open($fh, '>:encoding(UTF-8)', $doc) or do {
+            _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
+            next;
+        }
+        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+    }
+    return;
+} # man_docs_write
+
 sub man_help_brief  {
     #? print overview of help commands (invoked with --h)
     # TODO: get this data from internal data structure when it is ready ...
@@ -1836,6 +1857,7 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
+    man_docs_write()                  if ($arg =~ m/--gen[_.=-]?docs/x);
     # else
     $arg =  $ARGV[0];
     $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
@@ -2004,7 +2026,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.8 2022/06/19
+2.9 2022/06/20
 
 =head1 AUTHOR
 
