@@ -15,7 +15,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.8 22/06/19 01:58:04";
+our $SID_osaft  =  "@(#) osaft.pm 2.9 22/06/21 09:20:18";
 our $VERSION    =  "22.05.22";  # official version number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -2846,7 +2846,7 @@ our %cfg = (
         )
     ],
    #------------------+-----------------+--------------------------------------
-    'files' => {       # list of files used in the tool # NOT YET USED 2/2022
+    'files' => {       # list of files used in the tool
         'RC-FILE'   => "",              # computed at startup
         'SELF'      => "o-saft.pl",
         'coding'    => "coding.txt",
@@ -2855,7 +2855,18 @@ our %cfg = (
         'links'     => "links.txt",
         'rfc'       => "rfc.txt",
         'tools'     => "tools.txt",
-        'warnings'  => "docs/o-saft.pl.--help=warnings",
+        # following are used in o-saft.tcl, but are generate with o-saft-man.pm
+        # TODO: hardcoded  docs/  and  o-saft.pl  should be configurable
+        '+help'            => "docs/o-saft.pl.+help",
+        '--help=alias'     => "docs/o-saft.pl.--help=alias",
+        '--help=checks'    => "docs/o-saft.pl.--help=checks",
+        '--help=commands'  => "docs/o-saft.pl.--help=commands",
+        '--help=data'      => "docs/o-saft.pl.--help=data",
+        '--help=glossar'   => "docs/o-saft.pl.--help=glossar",
+        '--help=opts'      => "docs/o-saft.pl.--help=opts",
+        '--help=regex'     => "docs/o-saft.pl.--help=regex",
+        '--help=rfc'       => "docs/o-saft.pl.--help=rfc",
+        '--help=warnings'  => "docs/o-saft.pl.--help=warnings",
     }, # files
    #------------------+-----------------+--------------------------------------
     'done'      => {},          # defined in caller
@@ -3391,7 +3402,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.8 2022/06/19
+2.9 2022/06/21
 
 =head1 AUTHOR
 
