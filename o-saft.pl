@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.13 22/06/19 01:50:19"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.14 22/06/21 15:21:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -7263,16 +7263,16 @@ while ($#argv >= 0) {
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
-            $arg = $1 if ($1 !~ /^\s*$/);   # if it was --help=*
+            $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
-        #my  $err = _load_file("o-saft-man.pm", "help file");
-        #if ($err ne "") {
-        #    die $STR{ERROR}, "013: $err" unless (-e $arg);
-        #}
         # TODO: _load_file() does not yet work, hence following require
         require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
             # include if necessary only; dies if missing
-        printhelp($arg);
+        if ($arg =~ /^gen[._=-]?docs$/) {   # --help=gen-docs
+            man_docs_write($arg);
+        } else {
+            printhelp($arg);
+        }
         exit 0;
     }
 
