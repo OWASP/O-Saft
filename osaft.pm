@@ -15,7 +15,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.9 22/06/21 09:20:18";
+our $SID_osaft  =  "@(#) osaft.pm 2.10 22/06/21 22:01:54";
 our $VERSION    =  "22.05.22";  # official version number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -2856,8 +2856,9 @@ our %cfg = (
         'rfc'       => "rfc.txt",
         'tools'     => "tools.txt",
         # following are used in o-saft.tcl, but are generate with o-saft-man.pm
+        # the keys --help* are used as pattern
         # TODO: hardcoded  docs/  and  o-saft.pl  should be configurable
-        '+help'            => "docs/o-saft.pl.+help",
+        '--help'           => "docs/o-saft.pl.--help",
         '--help=alias'     => "docs/o-saft.pl.--help=alias",
         '--help=checks'    => "docs/o-saft.pl.--help=checks",
         '--help=commands'  => "docs/o-saft.pl.--help=commands",
@@ -3402,7 +3403,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.9 2022/06/21
+2.10 2022/06/21
 
 =head1 AUTHOR
 
