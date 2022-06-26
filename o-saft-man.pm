@@ -58,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.11 22/06/26 11:12:17";
+my  $SID_man= "@(#) o-saft-man.pm 2.12 22/06/26 11:14:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -176,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.11'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.12'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1153,7 +1153,7 @@ sub man_docs_write  {
     foreach my $mode (keys %{$cfg{'files'}}) {
         next if $mode !~ m/^--help/;
         next if $mode =~ m/^--help=warnings/;   # TODO:
-        my $doc = "$cfg{'files'}{$mode}.1";
+        my $doc = "$cfg{'files'}{$mode}";
         #_dbx# print("doc=$doc\n");
         open($fh, '>:encoding(UTF-8)', $doc) or do {
             _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
@@ -2033,7 +2033,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.11 2022/06/26
+2.12 2022/06/26
 
 =head1 AUTHOR
 
