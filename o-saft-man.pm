@@ -58,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.10 22/06/20 22:43:27";
+my  $SID_man= "@(#) o-saft-man.pm 2.11 22/06/26 11:12:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -176,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.10'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.11'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1145,19 +1145,33 @@ sub man_docs_write  {
     # this funcction writes to files, not to STDOUT
     # TODO: anything hardcoded here, at least directory should be a parameter
     _man_dbx("man_docs_write() ...");
-    my $dir = 'docs';
-    my @docs= qw(--help=alias --help=data --help=checks --help=regex +help
-                  --help=rfc   --help=glossar --help=commands --help=opts);
+    if ($ich eq $cfg{me}) {
+        _warn("094:", "'$parent' used as program name in generated files");
+        _hint("documentation files should be generated using '$cfg{files}{SELF} --help=gen-docs'");
+    }
     my $fh  = undef;
-    foreach my $mode (@docs) {
-        my $doc = "$dir/$cfg{me}.$mode";
+    foreach my $mode (keys %{$cfg{'files'}}) {
+        next if $mode !~ m/^--help/;
+        next if $mode =~ m/^--help=warnings/;   # TODO:
+        my $doc = "$cfg{'files'}{$mode}.1";
         #_dbx# print("doc=$doc\n");
         open($fh, '>:encoding(UTF-8)', $doc) or do {
             _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
             next;
         };
+        print $fh man_alias()           if ($mode =~ /alias$/);
+        print $fh man_commands()        if ($mode =~ /commands?$/);
+        print $fh man_options()         if ($mode =~ /opts$/);
+        print $fh man_help('NAME')      if ($mode =~ /help$/);
+        print $fh man_help('CHECKS')    if ($mode =~ /checks$/);
+        print $fh man_table('rfc')      if ($mode =~ /rfc$/);
+        print $fh man_table('regex')    if ($mode =~ /regex$/);
+        print $fh man_table('abbr')     if ($mode =~ /glossary?$/);
+        #print $fh man_table('data')     if ($mode =~ /data$/);
+        print $fh man_table('cfg_data') if ($mode =~ /data$/);
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
     }
+    exit(0);
     return;
 } # man_docs_write
 
@@ -1577,6 +1591,15 @@ EoHelp
     return $pod
 } # man_alias
 
+sub man_options     {
+    #? print program's options
+    my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
+    foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
+    my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
+    # no need for _man_squeeze()
+    return join('', "OPTIONS\n", splice(@txt, 0, $end));    # print anything before end
+} # man_options
+
 sub man_toc         {
     #? print help table of contents
     my $typ     = lc(shift) || "";      # || to avoid uninitialised value
@@ -1779,17 +1802,16 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_cgi()                    if ($hlp =~ /^(gen-)?cgi$/i);
     $txt = man_alias()                  if ($hlp =~ /^alias(es)?$/);
     $txt = man_commands()               if ($hlp =~ /^commands?$/);
+    $txt = man_options()                if ($hlp =~ /^opts?$/i);
     $txt = man_warnings()               if ($hlp =~ /^warnings?$/);
     $txt = man_help_brief()             if ($hlp =~ /^help_brief$/); # --h
-    # anything below requires data defined in parent
     $txt = man_table('rfc')             if ($hlp =~ /^(gen-)?rfcs?$/);
     $txt = man_table('links')           if ($hlp =~ /^(gen-)?links?$/);
     $txt = man_table('abbr')            if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
     $txt = man_table('compl')           if ($hlp =~ /^compliance$/i);# alias
     $txt = man_table(lc($1))            if ($hlp =~ /^(intern|compl|pattern)s?$/i);
-    $txt = man_table(lc($1))            if ($hlp =~ /^(cipher(?:pattern|range)?)s?$/i);
-    $txt = man_table(lc($1))            if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)$/i);
-    $txt = man_table('cfg_'.lc($1))     if ($hlp =~ /^(cmd|check|data|info|hint|text|range|regex|score|ourstr)[_-]?cfg$/i);
+    $txt = man_table(lc($1))            if ($hlp =~ /^(cipher[_-]?(?:pattern|range)?)s?$/i);
+    # anything below requires data defined in parent
     $txt = man_table('cfg_'.lc($1))     if ($hlp =~ /^cfg[_-]?(cmd|check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
@@ -1813,13 +1835,6 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $txt =~ s/Options for all commands.*.//msg;
         $txt = _man_squeeze(undef, $txt);
         #$txt .= man_help('Options for help and documentation');
-    }
-    if ($hlp =~ m/^opts?$/i)    { # print program's options
-        my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
-        foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
-        my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
-        $txt = join('', "OPTIONS\n", splice(@txt, 0, $end));    # print anything before end
-        # no need for _man_squeeze()
     }
     if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
         my @txt = OSaft::Doc::Data::get("tools.txt", $parent, $version);
@@ -1846,8 +1861,9 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     while (my $arg = shift @ARGV) {
+        # --help and --gen-docs is special, anything els handled in printhelp()
         print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
-        man_docs_write()                  if ($arg =~ m/--gen[_.=-]?docs/x);
+        man_docs_write()                  if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
         $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
@@ -2017,7 +2033,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.10 2022/06/20
+2.11 2022/06/26
 
 =head1 AUTHOR
 
