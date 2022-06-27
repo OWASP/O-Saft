@@ -58,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.13 22/06/27 12:15:51";
+my  $SID_man= "@(#) o-saft-man.pm 2.14 22/06/27 12:52:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -176,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.13'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.14'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -805,7 +805,7 @@ sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     return $pod if (1 > $cfg_header);
     my $len0 = $len1 - 1;
     $pod .= sprintf("=%${len0}s | %s\n", @args);
-    $pod .= sprintf("=%s+%s\n", '-'x  $len1, '-'x60);
+    $pod .= sprintf("=%s+%s\n", '-' x  $len1, '-'x60);
     return $pod;
 } # _man_head
 
@@ -1167,12 +1167,11 @@ sub man_docs_write  {
         print $fh man_table('rfc')      if ($mode =~ /rfc$/);
         print $fh man_table('regex')    if ($mode =~ /regex$/);
         print $fh man_table('abbr')     if ($mode =~ /glossary?$/);
-        #print $fh man_table('data')     if ($mode =~ /data$/);
-        print $fh man_table('cfg_data') if ($mode =~ /data$/);
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+        print $fh man_table('data')     if ($mode =~ /data$/);
+        close($fh);
     }
     exit(0);
-    return;
+    return; ##no critic qw(ControlStructures::ProhibitUnreachableCode)
 } # man_docs_write
 
 sub man_help_brief  {
@@ -2026,7 +2025,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.13 2022/06/27
+2.14 2022/06/27
 
 =head1 AUTHOR
 
