@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.37 22/04/05 00:16:56
+#?      @(#) Makefile.tcl 1.38 22/06/27 13:20:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.37
+_SID.tcl           := 1.38
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -70,7 +70,6 @@ testcmd-tcl---gui_%:        TEST.args  += --gui
 testcmd-tcl---v_%:          TEST.args  += --v
 testcmd-tcl---v--img_%:     TEST.args  += --v --img   --gui-layout=classic
 testcmd-tcl---v--text_%:    TEST.args  += --v --text  --gui-layout=classic
-testcmd-tcl---v--gen-docs_%:TEST.args  += --v --gen-docs
 testcmd-tcl---v-host_%:     TEST.args  += --v host1 host2
 testcmd-tcl---v-host-host_%:TEST.args  += --v host1 host2 host3 host4 host5
 testcmd-tcl---gui-classic_%:TEST.args  += --gui-layout=classic
@@ -82,6 +81,8 @@ testcmd-tcl---test-docs_%:  TEST.args  += --test-docs
 # TODO:  test with docker
 #testcmd-tcl---id%:          TEST.args  += --id=docker-ID
 #testcmd-tcl---tag%:         TEST.args  += --id=docker-Tag
+#testcmd-tcl---v--gen-docs_%:TEST.args  += --v --gen-docs
+    # --gen-docs should be used with o-saft.pl only, see Makefile.hlp
 
 # test command wich require user interaction (in GUI)
 testcmd-tclinteractive-%:   EXE.pl      = ../o-saft.tcl
