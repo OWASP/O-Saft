@@ -58,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.12 22/06/26 11:14:04";
+my  $SID_man= "@(#) o-saft-man.pm 2.13 22/06/27 12:15:51";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -176,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.12'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.13'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1369,6 +1369,18 @@ EoHelp
     return $pod;
 } # man_warnings
 
+sub man_opt_help    {
+    #? print program's --help* options
+    _man_dbx("man_opt_help() ..");
+    my $txt = "";
+    foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
+        # TODO: quick&dirty match against to fixed strings (=head lines)
+    $txt =~ s/^=head.//msg;
+    $txt =~ s/Options for all commands.*.//msg;
+    $txt = _man_squeeze(undef, $txt);
+    return $txt;
+} # man_opt_help
+
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
@@ -1376,11 +1388,10 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
     my $pod =  "";
-    _man_dbx("man_table() ..");
+    _man_dbx("man_table($typ) ..");
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
-        'score' => ["key",           " - ",  " SCORE\t# Description"],
         'regex' => ["key",           " - ",  " Regular Expressions used internally"],
         'ourstr'=> ["key",           " - ",  " Regular Expressions to match own output"],
         'abbr'  => ["Abbrevation",   " - ",  " Description"],
@@ -1414,7 +1425,9 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
        }
     }
     _man_dbx("man_table($typ) ...");
-    $pod .= _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
+    if ($typ !~ m/^cfg/) {
+        $pod .= _man_head(16, $types{$typ}->[0], $types{$typ}->[2]);
+    }
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
@@ -1472,14 +1485,6 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             $key =~ s/^cmd.// if ($typ =~ m/cfg/);
                 # $key in %cfg looks like  cmd-sni, but when configuring the
                 # key in RC-FILE it looks like  --cfg_cmd=sni=   ...
-            $pod .= _man_cfg($typ, $key, $sep, $txt);
-        }
-        last;
-    }
-    if ($typ =~ m/score/) {
-        foreach my $key (sort keys %checks) {
-            $txt  = $checks{$key}->{score} . "\t# " . $checks{$key}->{txt};
-            $txt  = $checks{$key}->{score} if ($typ =~ m/cfg/);
             $pod .= _man_cfg($typ, $key, $sep, $txt);
         }
         last;
@@ -1780,63 +1785,52 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_help('NAME')             if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     $txt = man_help('TODO')             if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     $txt = man_help('KNOWN PROBLEMS')   if ($hlp =~ /^(err(?:or)?|problem)s?$/i);
-    $txt  = man_help('KNOWN PROBLEMS')  if ($hlp =~ /^faq/i);
+    $txt = man_help('KNOWN PROBLEMS')   if ($hlp =~ /^faq/i);
     $txt .= man_help('LIMITATIONS')     if ($hlp =~ /^faq/i);
-    print  man_help($hlp)               if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # not case-sensitive!
+    print  man_help($hlp)               if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # case-sensitive!
            return                       if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # ugly, but there is 'check' below
         # NOTE: bad design, as we have headlines in the documentation which
         #       are also used as spezial meaning (see below). In particular
         #       CHECKS  is a  headline for a section  in the documentation,
-        #       while  checks  is used to print the labels of performed all
+        #       while  checks  is used to print the labels of all performed
         #       checks. Workaround is to treat all-uppercase words as head-
-        #       line of a section and anything else as special meaning.
-        # However, note that  --help=check  already behaves the same way as
-        # --help=CHECKS  while  --help=check  prints the labels. Means that
-        # this special condition (match CHECKS) is just for commodity.
-    $txt = man_toc($1)                  if ($hlp =~ /^((?:toc|content)(?:.cfg)?)/i);
-    $txt = man_html()                   if ($hlp =~ /^(gen-)?html$/);
-    $txt = man_wiki('colon')            if ($hlp =~ /^(gen-)?wiki$/);
-    $txt = man_pod()                    if ($hlp =~ /^(gen-)?pod$/i);
-    $txt = man_man()                    if ($hlp =~ /^(gen-)?man$/i);
-    $txt = man_man()                    if ($hlp =~ /^(gen-)?[nt]roff$/i);
-    $txt = man_cgi()                    if ($hlp =~ /^(gen-)?cgi$/i);
-    $txt = man_alias()                  if ($hlp =~ /^alias(es)?$/);
-    $txt = man_commands()               if ($hlp =~ /^commands?$/);
-    $txt = man_options()                if ($hlp =~ /^opts?$/i);
-    $txt = man_warnings()               if ($hlp =~ /^warnings?$/);
-    $txt = man_help_brief()             if ($hlp =~ /^help_brief$/); # --h
-    $txt = man_table('rfc')             if ($hlp =~ /^(gen-)?rfcs?$/);
-    $txt = man_table('links')           if ($hlp =~ /^(gen-)?links?$/);
-    $txt = man_table('abbr')            if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
-    $txt = man_table('compl')           if ($hlp =~ /^compliance$/i);# alias
-    $txt = man_table(lc($1))            if ($hlp =~ /^(intern|compl|pattern)s?$/i);
-    $txt = man_table(lc($1))            if ($hlp =~ /^(cipher[_-]?(?:pattern|range)?)s?$/i);
+        #       line of a section (see matches above), and anything else as
+        #       special meaning (see matches below).
+    # all following matches against $hlp are exact matches, see  ^  and  $
+    # hence exactly one match is expected
+    $hlp = lc($1);  # avoid i in regex
+    $txt = man_toc($1)          if ($hlp =~ /^((?:toc|content)(?:.cfg)?)$/);
+    $txt = man_html()           if ($hlp =~ /^(gen-)?html$/);
+    $txt = man_wiki('colon')    if ($hlp =~ /^(gen-)?wiki$/);
+    $txt = man_pod()            if ($hlp =~ /^(gen-)?pod$/);
+    $txt = man_man()            if ($hlp =~ /^(gen-)?man$/);
+    $txt = man_man()            if ($hlp =~ /^(gen-)?[nt]roff$/);
+    $txt = man_cgi()            if ($hlp =~ /^(gen-)?cgi$/);
+    $txt = man_alias()          if ($hlp =~ /^alias(es)?$/);
+    $txt = man_commands()       if ($hlp =~ /^commands?$/);
+    $txt = man_options()        if ($hlp =~ /^opts?$/);
+    $txt = man_warnings()       if ($hlp =~ /^warnings?$/);
+    $txt = man_opt_help()       if ($hlp =~ /^help$/);
+    $txt = man_help_brief()     if ($hlp =~ /^help[_.-]brief$/); # --h
+    $txt = man_table('rfc')     if ($hlp =~ /^(gen-)?rfcs?$/);
+    $txt = man_table('links')   if ($hlp =~ /^(gen-)?links?$/);
+    $txt = man_table('abbr')    if ($hlp =~ /^(gen-)?(abbr|abk|glossary?)$/);
+    $txt = man_table('compl')   if ($hlp =~ /^compliance$/);# alias
+    $txt = man_table($1)        if ($hlp =~ /^(compl|hint|intern|pattern|range|regex)s?$/);
+    $txt = man_table($1)        if ($hlp =~ /^(cipher[_.-]?(?:pattern|range|regex|ourstr)?)s?$/);
     # anything below requires data defined in parent
-    $txt = man_table('cfg_'.lc($1))     if ($hlp =~ /^cfg[_-]?(cmd|check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
-        # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
-        # we can simply switch from  --help=text  and/or  --cfg_text=*
-        # we do not allow --help=cfg-cmds or --help=cfg-checks due to conflict
-        #    with --help=cmds (see next condiftion);  since 19.01.19
-    $txt = man_src_grep("exit=")        if ($hlp =~ /^exit$/i);
-    if ($hlp =~ /^cmds$/i)      { # print program's commands
+    $txt = man_table($1)        if ($hlp =~ /^(cmd|check|data|info|ourstr|text)s?$/);
+    $txt = man_table('cfg_'.$1) if ($hlp =~ /^cfg[_.-]?(cmd|check|data|info|hint|text|range|regex|ourstr)s?$/);
+    $txt = man_src_grep("exit=")if ($hlp =~ /^exit$/);
+    if ($hlp =~ /^cmds$/)       { # print program's commands
         $txt = "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
         # no need for _man_squeeze()
     }
-    if ($hlp =~ /^legacys?$/i)  { # print program's legacy options
+    if ($hlp =~ /^legacys?$/)   { # print program's legacy options
         $txt = "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
         # no need for _man_squeeze()
     }
-    if ($hlp =~ /^help$/) {
-        #my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version); # already in @help
-        $txt = "";
-        foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
-            # TODO: quick&dirty match against to fixed strings (=head lines)
-        $txt =~ s/^=head.//msg;
-        $txt =~ s/Options for all commands.*.//msg;
-        $txt = _man_squeeze(undef, $txt);
-        #$txt .= man_help('Options for help and documentation');
-    }
-    if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
+    if ($hlp =~ m/^tools$/)     { # description for O-Saft tools
         my @txt = OSaft::Doc::Data::get("tools.txt", $parent, $version);
         #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
         $txt = join("", @txt);
@@ -1846,8 +1840,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
         $txt = join("", @txt);
     }
-    if (not $txt) {
-        # nothing matched so far, try to find special section and only print that
+    if (not $txt)               { # nothing matched so far, print special section from help
         _man_dbx("printhelp: " . uc($hlp));
         $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
     }
@@ -2033,7 +2026,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.12 2022/06/26
+2.13 2022/06/27
 
 =head1 AUTHOR
 
