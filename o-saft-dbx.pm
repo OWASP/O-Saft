@@ -52,7 +52,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.5 22/06/19 09:09:28";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.6 22/06/27 15:43:53";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -96,7 +96,6 @@ sub __trac      {
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});      # print hashes for full trace only
                         $data .= __yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$ref->{$key}}) {
-                            #__trac($ref, ${$ref->{$key}}{$k}); # FIXME:
                             $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: output needs to be improved
                         };
                         $data .= __yeast("# - - - - HASH: $key }");
@@ -131,9 +130,9 @@ sub _yeast_ciphers_list     {
        } else {
            # expand list
            @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
-              # FIXME: _get_ciphers_range() first arg is the SSL version, which
-              #        is usually unknown here, hence the first is passed
-              #        this my result in a wrong list; but its trace output only
+              # NOTE: _get_ciphers_range() first arg is the SSL version, which
+              #       is usually unknown here, hence the first is passed
+              #       this may result in a wrong list; but its trace output only
            $_cnt = scalar @range;
        }
        $ciphers = "@range";
@@ -247,7 +246,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
             if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
-                # FIXME: ugly data structures ... should be done by _yTRAC()
+                # TODO: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
                     if ($key =~ m/openssl/) {
@@ -264,7 +263,6 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 } else {
                     if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
                         # SEE Make:OSAFT_MAKE (in Makefile.pod)
-                        #TODO: quick&dirty
                         my $t0 = $cfg{'time0'};
                         $cfg{'time0'} = $STR{MAKEVAL};
                         _yeast_trac(\%cfg, $key);
@@ -735,7 +733,7 @@ sub _yeast_test_memory  {
 ";
     if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
         foreach my $k (keys %cfg) {
-	    printf "%6s\t%s\n",Devel::Size::total_size(\$cfg{$k}),"%cfg{$k}";
+	    printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}), "%cfg{$k}");
         }
     }
     my $bytes = 0;
@@ -970,7 +968,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.5 2022/06/19
+2.6 2022/06/27
 
 =head1 AUTHOR
 
