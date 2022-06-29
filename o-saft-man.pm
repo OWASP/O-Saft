@@ -58,7 +58,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.14 22/06/27 12:52:50";
+my  $SID_man= "@(#) o-saft-man.pm 2.16 22/06/29 10:47:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -176,7 +176,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.14'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.16'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1077,7 +1077,7 @@ sub _man_cmd_from_source {
     my $txt  = "";
     my $skip = 1;
     my $fh   = undef;
-    if (open($fh, '<:encoding(UTF-8)', _get_filename("o-saft.pl"))) { # need full path for $parent file here
+    if (open($fh, '<:encoding(UTF-8)', _get_filename("OSaft/Data.pm"))) { # need full path for $parent file here
         # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
             # find start of data structure
@@ -1106,6 +1106,8 @@ sub _man_cmd_from_source {
             }
         }
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+    } else {
+            $txt .= sprintf("%s cannot read '%s'; %s\n", $STR{ERROR}, _get_filename("o-saft.pl"), $!);
     }
     return $txt;
 } # _man_cmd_from_source
@@ -1133,6 +1135,8 @@ sub _man_cmd_from_rcfile {
             }
         }
         close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+    } else {
+            $txt .= sprintf("%s cannot read '%s'; %s\n", $STR{ERROR}, $cfg{'RC-FILE'}, $!);
     }
     return $txt;
 } # _man_cmd_from_rcfile
@@ -1287,8 +1291,8 @@ sub man_commands    {
 
 EoHelp
     $pod .= _man_squeeze(18, $txt);
-    $pod .= _man_squeeze(18,_man_cmd_from_source());
-    $pod .= _man_cmd_from_rcfile();
+    $pod .= _man_squeeze(18, _man_cmd_from_source());
+    $pod .= _man_squeeze(18, _man_cmd_from_rcfile());
     $pod .= _man_foot(15) . "\n";
     return $pod;
 } # man_commands
@@ -1797,7 +1801,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #       special meaning (see matches below).
     # all following matches against $hlp are exact matches, see  ^  and  $
     # hence exactly one match is expected
-    $hlp = lc($1);  # avoid i in regex
+    $hlp = lc($hlp);    # avoid i in regex
     $txt = man_toc($1)          if ($hlp =~ /^((?:toc|content)(?:.cfg)?)$/);
     $txt = man_html()           if ($hlp =~ /^(gen-)?html$/);
     $txt = man_wiki('colon')    if ($hlp =~ /^(gen-)?wiki$/);
@@ -1839,6 +1843,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
         $txt = join("", @txt);
     }
+    if (not $txt) { print STDERR " -- txt ist leer --\n"; }
     if (not $txt)               { # nothing matched so far, print special section from help
         _man_dbx("printhelp: " . uc($hlp));
         $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
@@ -2025,7 +2030,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.14 2022/06/27
+2.16 2022/06/29
 
 =head1 AUTHOR
 
