@@ -25,13 +25,16 @@ use strict;
 use warnings;
 
 BEGIN { # mainly required for testing ...
+    # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".",  $_path);
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
+    unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
 our $VERSION    = "22.02.13";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.48 22/06/15 11:54:57";
+my  $SID_data   = "@(#) Data.pm 1.49 22/06/29 12:15:47";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -595,7 +598,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.48 2022/06/15
+1.49 2022/06/29
 
 =head1 AUTHOR
 
