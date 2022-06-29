@@ -1,4 +1,4 @@
-#!/usr/bin/perl -I ..
+#!/usr/bin/perl
 
 ## PACKAGE {
 
@@ -20,7 +20,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.2 22/06/29 11:46:38";
+my  $SID_data   =  "@(#) Data.pm 1.3 22/06/29 12:02:32";
 our $VERSION    =  "22.05.22";
 
 BEGIN {
@@ -28,7 +28,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, $ENV{PWD})    if (defined $ENV{'PWD'});
+    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
     unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
@@ -858,7 +858,7 @@ sub _main_data      {
 
 =head1 VERSION
 
-1.2 2022/06/29
+1.3 2022/06/29
 
 =head1 AUTHOR
 
