@@ -20,7 +20,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.1 22/06/29 10:48:40";
+my  $SID_data   =  "@(#) Data.pm 1.2 22/06/29 11:46:38";
 our $VERSION    =  "22.05.22";
 
 BEGIN {
@@ -185,7 +185,7 @@ our %data   = (         # connection and certificate details
     'ext_constraints'   => {'val' => sub {  ::__SSLinfo('ext_constraints',  $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
     'ext_cps'           => {'val' => sub {  ::__SSLinfo('ext_cps',        $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
     'ext_cps_cps'       => {'val' => sub {  ::__SSLinfo('ext_cps_cps',    $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
-    'ext_cps_policy    '=> {'val' => sub {  ::__SSLinfo('ext_cps_policy', $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
+    'ext_cps_policy'    => {'val' => sub {  ::__SSLinfo('ext_cps_policy', $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
     'ext_cps_notice'    => {'val' => sub {  ::__SSLinfo('ext_cps_notice', $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: User Notice"},
     'ext_crl'           => {'val' => sub {  ::__SSLinfo('ext_crl',        $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
     'ext_subjectkeyid'  => {'val' => sub {  ::__SSLinfo('ext_subjectkeyid', $_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
@@ -858,7 +858,7 @@ sub _main_data      {
 
 =head1 VERSION
 
-1.1 2022/06/29
+1.2 2022/06/29
 
 =head1 AUTHOR
 
