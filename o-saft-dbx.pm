@@ -52,7 +52,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.6 22/06/27 15:43:53";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.7 22/06/29 09:29:33";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -569,14 +569,17 @@ sub _yeast_test_init    {
     foreach my $key (sort keys %data) { # ugly and slow code
         # use Dumper() to get code, returns something like:
         #     $VAR1 = sub {
+        #                 package OSaft::Data;
         #                 use warnings;
         #                 use strict;
         #                 Net::SSLinfo::version($_[0], $_[1]);
         #             };
+        # the line with "package" occours only if the data is in another namespace
         # we only want the code line, hence remove the others
         my $code = Dumper($data{$key}->{val});
         $code =~ s/^\$VAR.*//;
         $code =~ s/(?:};)?\s*$//g;
+        $code =~ s/package\s*.*;//g;
         $code =~ s/use\s*(?:strict|warnings);//g;
         $code =~ s/\n//g;
         $code =~ s/^\s*//g;
@@ -968,7 +971,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.6 2022/06/27
+2.7 2022/06/29
 
 =head1 AUTHOR
 
