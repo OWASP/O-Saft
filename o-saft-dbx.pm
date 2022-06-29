@@ -44,15 +44,18 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
 BEGIN { # mainly required for testing ...
+    # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".",  $_path);
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
+    unshift(@INC, $_path)       if ($_path !~ m#^/#);
 }
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.7 22/06/29 09:29:33";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.8 22/06/29 12:12:57";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -971,7 +974,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.7 2022/06/29
+2.8 2022/06/29
 
 =head1 AUTHOR
 
