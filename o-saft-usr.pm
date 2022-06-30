@@ -19,13 +19,15 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 BEGIN { # mainly required for testing ...
     # SEE Perl:BEGIN perlcritic
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, ".",  $_path);
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
+    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 2.3 22/06/19 09:07:27";
+my  $SID_usr= "@(#) o-saft-usr.pm 2.4 22/06/30 09:44:52";
 
 
 #_____________________________________________________________________________
@@ -266,7 +268,7 @@ sub o_saft_usr_done {};     # dummy to check successful include
 
 =head1 VERSION
 
-2.3 2022/06/19
+2.4 2022/06/30
 
 =head1 AUTHOR
 
