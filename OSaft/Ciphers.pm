@@ -37,15 +37,12 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "..")         if (__FILE__ eq $_me);  # allow call from within OSaft/
-    unshift(@INC, "lib");
-    unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
-    unshift(@INC, "bin");
-    unshift(@INC, "lib/$_path") if ($_path ne $_me);
-    unshift(@INC, $_path)       if ($_path !~ m#^/#);
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
+    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.16 22/06/19 01:49:44";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.18 22/06/30 09:43:43";
 our $VERSION    = "22.05.22";   # official verion number of tis file
 
 our $VERBOSE    = 0;  # >1: option --v
@@ -1358,7 +1355,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.16 2022/06/19
+2.18 2022/06/30
 
 =head1 AUTHOR
 
