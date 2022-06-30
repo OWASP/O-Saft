@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) &L¿¤U 1.84 22/06/19 09:00:02
+#?      @(#) P‡1júU 1.85 22/06/30 14:21:02
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -426,7 +426,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.84 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.85 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -842,9 +842,13 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 	o="$p/$osaft_exe"
 	r="$p/.$osaft_exe"
 	if [ -x "$o" ]; then
+		# first call program to check if it is starting properly
+		# if it fails with a status, the corresponding error is printed
+		# and the extraction of the openssl executable is not done
 		(
 		cd "$p" # ensure that $r is used
-		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '`
+		$o --no-warn +version >/dev/null && \
+		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '` && \
 		echo_label "$o" && echo_green "$openssl" || echo_red "missing"
 		)
 	fi
