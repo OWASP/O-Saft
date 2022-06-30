@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.90 22/03/16 23:18:22
+# SID   @(#) help.txt 1.91 22/06/30 10:26:43
 
 NAME
 
@@ -369,15 +369,11 @@ COMMANDS
       +list
 
           Show all ciphers supported by this tool. This includes cryptogrphic
-          details of the cipher and some internal details about the rating.
-
-          In contrast to the  +ciphers  command,  +list  uses  TAB characters
-          instead of spaces to seperate columns.  It also prints table header
-          lines by default.
+          details of the cipher and some internal details.
 
           Different output formats are used for the  --legacy=*  option:
-            * --legacy=simple   tabular output of cipher values
-            * --legacy=full     as  --legacy=simple  but more data
+            * --legacy=simple   simple space-separated output
+            * --legacy=full     TAB-separated output with more data
             * --legacy=openssl  output like with  +ciphers  command
             * --legacy=ssltest  output like "ssltest --list"
 
