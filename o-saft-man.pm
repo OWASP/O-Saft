@@ -47,19 +47,16 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
-    unshift(@INC, "bin");
-    unshift(@INC, "lib");
-    unshift(@INC, "lib/$_path") if ($_path ne $_me && $_path !~ m#^/#);
-    unshift(@INC, $_path)       if ($_path !~ m#^/#);
-    unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
+    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.18 22/06/29 12:19:29";
+my  $SID_man= "@(#) o-saft-man.pm 2.19 22/06/30 09:44:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -177,7 +174,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.18'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.19'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2030,7 +2027,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.18 2022/06/29
+2.19 2022/06/30
 
 =head1 AUTHOR
 
