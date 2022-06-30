@@ -48,14 +48,15 @@ BEGIN { # mainly required for testing ...
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
-    unshift(@INC, $_path)       if ($_path !~ m#^/#);
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
+    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.8 22/06/29 12:12:57";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.9 22/06/30 09:44:32";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -974,7 +975,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.8 2022/06/29
+2.9 2022/06/30
 
 =head1 AUTHOR
 
