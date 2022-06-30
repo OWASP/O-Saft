@@ -20,7 +20,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.3 22/06/29 12:02:32";
+my  $SID_data   =  "@(#) Data.pm 1.4 22/06/30 09:43:20";
 our $VERSION    =  "22.05.22";
 
 BEGIN {
@@ -28,8 +28,9 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "..")         if ($_path eq $_me || $_path eq "." || $_path =~ m#../#);
-    unshift(@INC, $_path)       if ($_path !~ m#^/#);
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
+    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
 use OSaft::Text qw(print_pod);
@@ -858,7 +859,7 @@ sub _main_data      {
 
 =head1 VERSION
 
-1.3 2022/06/29
+1.4 2022/06/30
 
 =head1 AUTHOR
 
