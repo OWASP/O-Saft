@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.20 22/06/30 13:49:38";
+my  $SID_man= "@(#) o-saft-man.pm 2.21 22/07/02 00:28:55";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.20'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.21'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1138,7 +1138,6 @@ sub _man_cmd_from_source {
     my $txt  = "";
     my $skip = 1;
     my $fh   = undef;
-$txt .= "## read OSaft/Data.pm\n";
     if (open($fh, '<:encoding(UTF-8)', _get_filename("OSaft/Data.pm"))) { # need full path for $parent file here
         # TODO: o-saft.pl hardcoded, need a better method to identify the proper file
         while(<$fh>) {
@@ -2038,7 +2037,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.20 2022/06/30
+2.21 2022/07/02
 
 =head1 AUTHOR
 
