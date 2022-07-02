@@ -210,7 +210,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) P‡1júU 1.85 22/06/30 14:21:02
+#?      @(#) à»öU 1.86 22/07/02 22:37:07
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -249,6 +249,11 @@ osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
 inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
+perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
+
+osaft_modules="
+	INSERTED_BY_MAKE_OSAFT_MODULES
+	"
 
 files_contrib="
 	INSERTED_BY_MAKE_CONTRIB
@@ -319,8 +324,6 @@ files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 
 files_info="CHANGES README o-saft.tgz"
 
-# important Perl modules # TODO: should be specified in/by Makefile
-perl_modules="Net::DNS Net::SSLeay IO::Socket::SSL"
 # HARDCODED }
 
 osaft_subdirs="
@@ -426,7 +429,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.85 ; exit;      ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.86 ; exit;      ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;      ;; # directory, last one wins
 	esac
 	shift
@@ -737,9 +740,7 @@ echo_foot
 # redirected to /dev/null
 
 echo_head "# check for installed Perl modules (started in $inst_directory )"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
-	 Net::SSLinfo Net::SSLhello osaft OSaft::error_handler OSaft::Doc::Data"
-for m in $modules ; do
+for m in $perl_modules $osaft_modules ; do
 	echo_label "$m"
 	# NOTE: -I . used to ensure that local ./Net is found
 	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
