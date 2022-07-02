@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.3 22/06/16 02:46:14
+#?      @(#) Makefile 2.5 22/07/02 22:36:00
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.3
+_SID            = 2.5
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -79,7 +79,7 @@ OSD.txt         = \
 SRC.txt         = $(OSD.txt:%=$(OSD.dir)/%)
 NET.pm          = SSLinfo.pm \
 		  SSLhello.pm
-OSAFT.pm        = Ciphers.pm Text.pm error_handler.pm
+OSAFT.pm        = Ciphers.pm Data.pm Text.pm error_handler.pm
 USR.pm          = \
 		  $(Project)-dbx.pm \
 		  $(Project)-man.pm \
@@ -264,8 +264,10 @@ EXE.office      = libreoffice
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
 ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod stty tput
+ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
+ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(OSAFT.pm:%.pm=OSaft::%) OSaft::Doc::Data
 
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
@@ -279,26 +281,28 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.3 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.3
-EXE.install     = sed   -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'    \
-			-e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'\
-			-e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'     \
-			-e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@' \
-			-e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@' \
-			-e 's@INSERTED_BY_MAKE_DEVTOOLSINT@$(_INST.tools_int)@' \
-			-e 's@INSERTED_BY_MAKE_DEVTOOLSEXT@$(_INST.tools_ext)@' \
-			-e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@' \
-			-e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'           \
-			-e 's@INSERTED_BY_MAKE_OSAFT_PL@$(SRC.pl)@'           \
-			-e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'         \
-			-e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@' \
-			-e 's@INSERTED_BY_MAKE_OSAFT_STAND@$(GEN.src)@'       \
-			-e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.docker)@'   \
-			-e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@' \
-			-e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'         \
-			-e 's@INSERTED_BY_MAKE_FROM@$(_INST.genbytext)@'      \
-			-e 's@INSERTED_BY_MAKE@$(_INST.gen_text)@'
+_INST.genbytext = generated data by Makefile 2.5 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.5
+EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
+		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
+		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
+		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
+		  -e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@'      \
+		  -e 's@INSERTED_BY_MAKE_DEVTOOLSINT@$(_INST.tools_int)@'    \
+		  -e 's@INSERTED_BY_MAKE_DEVTOOLSEXT@$(_INST.tools_ext)@'    \
+		  -e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@'    \
+		  -e 's@INSERTED_BY_MAKE_PERL_MODULES@$(ALL.perlmodules)@'   \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'                \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_PL@$(SRC.pl)@'                \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'              \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@'      \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_STAND@$(GEN.src)@'            \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.docker)@'        \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@'      \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_MODULES@$(ALL.osaftmodules)@' \
+		  -e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'              \
+		  -e 's@INSERTED_BY_MAKE_FROM@$(_INST.genbytext)@'           \
+		  -e 's@INSERTED_BY_MAKE@$(_INST.gen_text)@'
                 # note that the sequence of the -e commands is important
                 # last substitude is fallback to ensure everything is changed
 
@@ -516,8 +520,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.3
-tar:     GREP_EDIT  = 2.3
+GREP_EDIT           = 2.5
+tar:     GREP_EDIT  = 2.5
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
