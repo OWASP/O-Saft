@@ -29,13 +29,13 @@ BEGIN { # mainly required for testing ...
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
 our $VERSION    = "22.02.13";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.50 22/06/30 09:50:13";
+my  $SID_data   = "@(#) Data.pm 1.51 22/07/02 11:27:33";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -599,7 +599,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.50 2022/06/30
+1.51 2022/07/02
 
 =head1 AUTHOR
 
