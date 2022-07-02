@@ -223,7 +223,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.87 22/07/02 23:25:37
+#?      @(#)  1.88 22/07/02 23:37:09
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -444,7 +444,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.87 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.88 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -896,6 +896,8 @@ if [ $err -eq 0 ]; then
 	echo_green "passed"
 else
 	echo_red   "failed , $err error(s) detected"
+	[ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used;"
+	[ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
 fi
 
 # check mode }
