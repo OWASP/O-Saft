@@ -33,23 +33,28 @@
 #                         All lines starting with #= are the sample output.
 #?          --checkdev  - check system for development (make) requirements
 #=
-#=# check environment variable PATH
+#=# check for O-Saft programs found via environment variable PATH
 #=#--------------------------------------------------------------
 #=#                  wish	/usr/bin
 #=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
+#=#            o-saft.tcl	not found in PATH, consider adding /opt/o-saft to PATH
+#=#                o-saft	not found in PATH, consider adding /opt/o-saft to PATH
+#=# Note: all found executables in PATH are listed
 #=#--------------------------------------------------------------
 #=
 #=# check installation in /opt/o-saft
 #=#--------------------------------------------------------------
 #=# (warnings are ok if 'git clone' will be used for development)
 #=#            Dockerfile	found; did you run Â»INSTALL.sh --cleanÂ«?
+#=#              Makefile	found; did you run Â»INSTALL.sh --cleanÂ«?
 #=#--------------------------------------------------------------
 #=
-#=# check for installed O-Saft in /opt/o-saft
+#=# check for used O-Saft programs (according $PATH)
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	12.11.21 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	   1.257 /opt/o-saft/o-saft.tcl
+#=#             o-saft.pl	22.05.22 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	    2.23 /opt/o-saft/o-saft.tcl
 #=#                o-saft	    1.26 /opt/o-saft/o-saft
+#=# contrib/o-saft-standalone.pl 22.05.22 contrib/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -65,23 +70,28 @@
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
-#=#          Net::SSLinfo	20.06.05 Net/SSLinfo.pm
-#=#         Net::SSLhello	20.02.02 Net/SSLhello.pm
-#=#                 osaft	20.06.06 osaft.pm
+#=#                 osaft	22.05.22 osaft.pm
+#=#          Net::SSLinfo	22.02.12 Net/SSLinfo.pm
+#=#         Net::SSLhello	22.05.22 Net/SSLhello.pm
+#=#        OSaft::Ciphers	22.05.22 OSaft/Ciphers.pm
+#=#           OSaft::Data	22.05.22 OSaft/Data.pm
+#=#           OSaft::Text	22.05.22 OSaft/Text.pm
 #=#  OSaft::error_handler	19.11.19 OSaft/error_handler.pm
-#=#      OSaft::Doc::Data	20.02.29 OSaft/Doc/Data.pm
+#=#      OSaft::Doc::Data	22.02.13 OSaft/Doc/Data.pm
 #=#----------------------+---------------------------------------
 #=
 #=# check for important Perl modules used by installed O-Saft
 #=#----------------------+---------------------------------------
 #=# testing /opt/o-saft/o-saft.pl ...	
-#=#              Net::DNS     1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay     1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL    2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
-#=#              Net::DNS     1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay     1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL    2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=#----------------------+---------------------------------------
 #=
 #=# summary of warnings from installed O-Saft (should be empty)
@@ -91,7 +101,7 @@
 #=
 #=# check for openssl executable in PATH
 #=#----------------------+---------------------------------------
-#=#               openssl	/usr/bin/openssl (OpenSSL 1.1.d  10 Sep 2019)
+#=#               openssl	/usr/bin/openssl (OpenSSL 1.1.1n  15 Mar 2022)
 #=#----------------------+---------------------------------------
 #=
 #=# check for openssl executable used by O-Saft
@@ -111,8 +121,10 @@
 #=#                podman	missing
 #=#             podviewer	/usr/bin/podviewer
 #=#                  stty	/bin/stty
-#=#                 tkpod	missing
+#=#                 tkpod	/usr/bin/tkpod
 #=#                  tput	/usr/bin/tput
+#=#
+#=# Note: podman is a tool to view pod files, it's not the container engine
 #=#----------------------+---------------------------------------
 #=
 #=# check for contributed files (in /opt/o-saft/contrib )
@@ -140,6 +152,7 @@
 #=#        usage_examples	/opt/o-saft/contrib/usage_examples
 #=#         zap_config.sh	/opt/o-saft/contrib/zap_config.sh
 #=#        zap_config.xml	/opt/o-saft/contrib/zap_config.xml
+#=#  o-saft-standalone.pl	/opt/o-saft/contrib/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# checks	passed
@@ -210,7 +223,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) à»öU 1.86 22/07/02 22:37:07
+#?      @(#)  1.87 22/07/02 23:25:37
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -404,33 +417,35 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	 '-n' | '--n')          optn="--n"; try=echo; ;;
-	 '-x' | '--x')          optx=1;       ;;
-	  '--cgi')              mode=cgi;     ;;
-	  '--check')            mode=check;   ;;
-	  '--clean')            mode=clean;   ;;
-	  '--install')          mode=dest;    ;;
-	  '--openssl')          mode=openssl; ;;
-	  '--expected')         mode=expected; ;;
-	  '--checkdev')         mode=checkdev; ;;
-	  '--check-dev')        mode=checkdev; ;;
-	  '--force')            force=1;      ;;
-	  '--other')            other=1;      ;;
-          '--no-colour')        colour="";    ;;
-          '--colour')           colour="34m"; ;;
-          '--colour-blind')     colour="34m"; ;;
-          '--colour-not-blind') colour="32m"; ;;
-          '--no-color')         colour="";    ;; # alias
-          '--color')            colour="34m"; ;; # alias
-          '--color-blind')      colour="34m"; ;; # alias
-          '--color-not-blind')  colour="32m"; ;; # alias
-          '--bunt')             colour="34m"; ;; # alias
-          '--blind')            colour="34m"; ;; # alias
+	#			#	#	#
+	 '-x' | '--x')          optx=1;         ;;
+	  '--cgi')              mode=cgi;       ;;
+	  '--check')            mode=check;     ;;
+	  '--clean')            mode=clean;     ;;
+	  '--install')          mode=dest;      ;;
+	  '--openssl')          mode=openssl;   ;;
+	  '--expect')           mode=expected;  ;; # alias
+	  '--expected')         mode=expected;  ;;
+	  '--checkdev')         mode=checkdev;  ;;
+	  '--check-dev')        mode=checkdev;  ;;
+	  '--force')            force=1;        ;;
+	  '--other')            other=1;        ;;
+          '--no-colour')        colour="";      ;;
+          '--colour')           colour="34m";   ;;
+          '--colour-blind')     colour="34m";   ;;
+          '--colour-not-blind') colour="32m";   ;;
+          '--no-color')         colour="";      ;; # alias
+          '--color')            colour="34m";   ;; # alias
+          '--color-blind')      colour="34m";   ;; # alias
+          '--color-not-blind')  colour="32m";   ;; # alias
+          '--bunt')             colour="34m";   ;; # alias
+          '--blind')            colour="34m";   ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.86 ; exit;      ;; # for compatibility to $osaft_exe
-	  *)            new_dir="$1"   ;      ;; # directory, last one wins
+	  '+VERSION')   echo 1.87 ; exit;        ;; # for compatibility to $osaft_exe
+	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
 done
