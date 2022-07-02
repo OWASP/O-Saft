@@ -37,12 +37,12 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
+    unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.18 22/06/30 09:43:43";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.19 22/07/02 11:27:39";
 our $VERSION    = "22.05.22";   # official verion number of tis file
 
 our $VERBOSE    = 0;  # >1: option --v
@@ -1355,7 +1355,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.18 2022/06/30
+2.19 2022/07/02
 
 =head1 AUTHOR
 
