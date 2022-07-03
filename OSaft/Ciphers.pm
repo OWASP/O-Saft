@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.20 22/07/03 11:02:01";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.21 22/07/03 11:15:11";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -898,10 +898,9 @@ sub show_overview   {
 =       const       - cipher suite constant name exists
 =       cipher suite- cipher suite name (OpenSSL)
 =   description of values:
-=       *    value present
+=       *    value present (also if None for pseudo ciphers)
 =       -    value missing
 =       -?-  security unknown/undefined
-=       None security for pseudo ciphers like TLS_FALLBACK_SCSV
 =       miss security missing in data structure
 =
 = No perl or other warnings should be printed.
@@ -924,7 +923,7 @@ sub show_overview   {
          my $const  = "-";
          my $cipher = $ciphers{$key}->{'names'}[0];
          # TODO: compare direct access of %cipher* with results of method get_*
-         $sec   = "*" if ($sec =~ m/weak|low|medium|high/i); # TODO: $cfg{'regex'}->{'security'}/i);
+         $sec   = "*" if ($sec =~ m/None|weak|low|medium|high/i); # TODO: $cfg{'regex'}->{'security'}/i);
          $sec   = "-" if ($sec ne "*"); # anything else is -
          $name  = "*" if $ciphers{$key}->{'names'}[0] ne "";
          $alias = "*" if $ciphers{$key}->{'names'}    ne "-";
@@ -1368,7 +1367,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.20 2022/07/03
+2.21 2022/07/03
 
 =head1 AUTHOR
 
