@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.17 22/07/02 11:29:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.18 22/07/03 11:38:44"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -138,7 +138,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-    sub _VERSION { return "22.05.22"; } # <== our official version number
+    sub _VERSION { return "22.06.22"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
@@ -163,14 +163,14 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
-use OSaft::Text qw(%STR print_pod);
-use OSaft::Ciphers; # not loaded with _load_modules() because always needed
-use osaft;          # get most of our configuration; it's ok to die if missing
-use OSaft::Data qw(%checks %data %data0 %info %shorttexts
-                   %check_cert %check_conn %check_dest %check_http %check_size);
-
-#my %ciphers        = \%OSaft::Ciphers::ciphers;        # forward if Ciphers.pm not loaded
-#my $cipher_results = \$OSaft::Ciphers::cipher_results; # --''--
+#| include most of our configuration; it's ok to die if missing
+#| -------------------------------------
+use OSaft::Text     qw(%STR);
+use OSaft::Ciphers  qw(%ciphers %ciphers_desc %cipher_notes $cipher_results);
+    # not loaded with _load_modules() because always needed
+use osaft;
+use OSaft::Data     qw(%checks %data %data0 %info %shorttexts
+                       %check_cert %check_conn %check_dest %check_http %check_size);
 
 $cfg{'time0'}   = $time0;
 
