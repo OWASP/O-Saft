@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.18 22/07/03 11:38:44"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.19 22/07/03 13:48:57"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -163,7 +163,7 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
-#| include most of our configuration; it's ok to die if missing
+#| definitions: include configuration; it's ok to die if missing
 #| -------------------------------------
 use OSaft::Text     qw(%STR);
 use OSaft::Ciphers  qw(%ciphers %ciphers_desc %cipher_notes $cipher_results);
