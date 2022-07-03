@@ -6,6 +6,12 @@
 ## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
 #  We use perlish multiplication vor strings, like "'-' x 7", (severity 2 only).
 
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  We use /x as needed for human readability only.
+
+## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
+#  We use here documents as needed for human readability.
+
 # test resources with:
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
@@ -42,11 +48,8 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.19 22/07/02 11:27:39";
-our $VERSION    = "22.05.22";   # official verion number of tis file
-
-our $VERBOSE    = 0;  # >1: option --v
-   # VERBOSE instead of verbose because of perlcritic
+my  $SID_ciphers= "@(#) Ciphers.pm 2.20 22/07/03 11:02:01";
+our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
@@ -545,7 +548,7 @@ sub find_name       {   # TODO: not yet used
         next if $name =~ m/^\s*$/;
         if ($name !~ m/$cipher/i) {
             my @const = get_consts($key);
-# print "C = @const\n";
+#dbx print "C = @const\n";
         # TODO
         }
         _warn("513: partial match for cipher name found '$cipher'");
@@ -704,7 +707,7 @@ sub sort_cipher_names   {
 
 sub show_getter03   {
     #? show hardcoded example for all getter functions for key 0x00,0x03
-
+    _v_print((caller(0))[3]);
 #   0x00,0x03	RSA  40   N    RC4  RSA(512) MD5  4346,6347  0    WEAK SSLv3  export
 #   0x00,0x03   EXP-RC4-MD5    RSA_RC4_40_MD5
 # C,0x00,0x03   RSA_EXPORT_WITH_RC4_40_MD5
@@ -733,6 +736,7 @@ sub show_getter03   {
 sub show_getter     {
     #? show example for all getter functions for specified cipher key
     my $key = shift;
+    _v_print((caller(0))[3]);
     if ($key !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
         printf("# unknown cipher key '$key'; using hardcoded default instead\n");
         show_getter03;
@@ -770,6 +774,7 @@ sub show_key        {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     print "key for $txt : $key";
     return;
@@ -779,6 +784,7 @@ sub show_hex        {
     #? print hex key for cipher if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     print "key for $txt : $key";
     return;
@@ -786,6 +792,7 @@ sub show_hex        {
 
 sub show_desc       {
     #? print textual description for columns %ciphers hash
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     print "
 === internal data structure: overview of %ciphers ===
@@ -841,6 +848,7 @@ sub show_desc       {
 } # show_desc
 
 sub show_sorted     {
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     my $head = "= OWASP openssl cipher suite";
     my $line = "=------+-------+----------------------------------------------";
@@ -874,6 +882,7 @@ sub show_sorted     {
 } # show_sorted
 
 sub show_overview   {
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     print  "
 === internal data structure: information about ciphers ===
@@ -939,6 +948,7 @@ sub show_alias      {
     #? show aliases for ciher suite names or constants depending on $type
     #  $type: name | const
     my $type = shift;
+    _v_print((caller(0))[3]);
     my $text = $type;
        $text = "name"     if $type =~ /names/;  # lazy check
        $text = "constant" if $type =~ /const/;  # lazy check
@@ -984,6 +994,7 @@ $txt_cols
 sub _show_ciphers_ssltest {
     # special output for --legacy=ssltest:
     # %ciphers are sorted by protocol and name  # SEE Note:Testing, sort
+    _v_print((caller(0))[3]);
     my $last_k  = "";
     foreach my $key (sort { $ciphers{$a}->{ssl}   cmp $ciphers{$b}->{ssl} ||
                             $ciphers{$a}->{names} cmp $ciphers{$b}->{names}
@@ -1014,6 +1025,7 @@ sub _show_ciphers_ssltest {
 sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print internal list of ciphers in specified format
     my $format = shift;
+    _v_print((caller(0))[3]);
     local $\ = "\n";
     if ($format !~ m/(?:dump|osaft|openssl|simple|ssltest|show)/) {
         _warn("520: unknown format '$format'");
@@ -1129,6 +1141,7 @@ sub show            {
     #? dispatcher for various --test-cipher-* options; show information
     my $arg = shift;
        $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
+    #_v_print((caller(0))[3]);
     #_dbx("arg=$arg");
     show_overview()         if ($arg =~ m/^overview/        );
     show_alias('const')     if ($arg =~ m/^const(?:ants?)?/ );
@@ -1237,7 +1250,7 @@ sub _main_ciphers   {
         print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help
         _main_ciphers_usage()      if ($arg eq '--usage');
         # ----------------------------- options
-        $VERBOSE++                 if ($arg eq '--v');
+        $cfg{'verbose'}++          if ($arg eq '--v');
         # ----------------------------- commands
         print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers-)?version/i);
         # allow short option without --test-ciphers- prefix
@@ -1339,7 +1352,7 @@ as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
 
 =item --v
 
-- print verbose messages (in CLI mode only).
+- print verbose messages (in CLI mode only), must precede all commands
 
 =back
 
@@ -1355,7 +1368,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.19 2022/07/02
+2.20 2022/07/03
 
 =head1 AUTHOR
 
