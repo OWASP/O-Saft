@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "22.06.22";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.52 22/07/04 23:58:39",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.53 22/07/05 00:00:34",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -199,7 +199,7 @@ $Net::SSLhello::experimental        = 0;# 0: experimental functions are protecte
 $Net::SSLhello::max_ciphers         = _MY_SSL3_MAX_CIPHERS; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
 $Net::SSLhello::max_sslHelloLen     = 16388; # according RFC: 16383+5 bytes; max len of sslHello messages (some implementations had issues with packets longer than 256 bytes)
 $Net::SSLhello::noDataEqNoCipher    = 1; # 1= for some TLS intolerant servers 'NoData or timeout equals to no cipher' supported -> Do NOT abort to test next ciphers
-$Net::SSLhello::extensions_by_prot  = \%{$osaft::cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
+$Net::SSLhello::extensions_by_prot  = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
 $Net::SSLhello::check_extensions    = [ qw(supported_groups) ]; # List of extensions to be checked for all supported params
 $Net::SSLhello::extensions_max_values = 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions 
 
