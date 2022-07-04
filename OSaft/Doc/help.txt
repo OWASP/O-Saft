@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.91 22/06/30 10:26:43
+# SID   @(#) help.txt 1.92 22/07/04 13:05:57
 
 NAME
 
@@ -1749,11 +1749,10 @@ OPTIONS
 
           Get the screen width and then adapt  output of documentation to fit
           to that width. If the environment variable 'COLUMNS' is not set the
-          system's 'tput' or 'stty' command is used to get the screen width.
+          command 'tput' or 'stty' of system is used to get the screen width.
 
           It's a very simple approach to make texts better readable on narrow
           devices like tablets. For more details, please see:
-
 
               perdoc $0   # the section Note:tty  there
 
@@ -1910,8 +1909,8 @@ OPTIONS
 
       --cfg-cmd=CMD=LIST
 
-          Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-          can be written without the leading  '+'.
+          Redefine list of commands. Sets  '%cfg{cmd-CMD}'  to  'LIST'.
+          Commands can be written without the leading  '+'.
           If  CMD  is any of the known internal commands, it will be redifned.
           If  CMD  is a unknown command, it will be created.
 
@@ -1927,7 +1926,7 @@ OPTIONS
 # score will be removed, so don't anounce it
 #      --cfg-score=KEY=SCORE
 #
-#          Redefine value for scoring. Sets  %checks{KEY}{score}  to  'SCORE'.
+#          Redefine value for scoring. Sets '%checks{KEY}{score}' to  'SCORE'.
 #          Most score values are set to 10 by default. Values '0' .. '100' are
 #          allowed.
 #
@@ -1942,8 +1941,8 @@ OPTIONS
       --cfg-checks=KEY=TEXT
       --cfg-data=KEY=TEXT
 
-          Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
-          %checks{KEY}{txt}  to  'TEXT'.
+          Redefine texts used for labels in output. Sets '%data{KEY}{txt}'  or
+          '%checks{KEY}{txt}'  to  'TEXT'.
 
           To get a list of preconfigured labels, use:
               $0 --help=cfg-checks
@@ -1957,7 +1956,7 @@ OPTIONS
 
       --cfg-text=KEY=TEXT
 
-          Redefine general texts used in output. Sets  %text{KEY}  to  'TEXT'.
+          Redefine general texts used in output. Sets '%text{KEY}'  to  'TEXT'.
 
           To get a list of preconfigured texts, use:
               $0 --help=cfg-text
@@ -1967,18 +1966,18 @@ OPTIONS
 
       --cfg-text=FILE
 
-          Read definitions for  %text{KEY}="my text" from file  'FILE'.
+          Read definitions for  '%text{KEY}="my text"' from file  'FILE'.
 
       --cfg-hint=KEY=TEXT
 
-          Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  'TEXT'.
+          Redefine texts used for hints. Sets  '%cfg{hints}{KEY}'  to  'TEXT'.
 
           To get a list of preconfigured texts, use:
               $0 --help=cfg-hint
 
       --cfg-init=KEY=VALUE
 
-          Set the internal  %cfg  hash.  This options is intended for testing
+          Set the internal  '%cfg' hash. This options is intended for testing
           and debugging only. Please see  TESTING  below.
 
       --call=METHOD
@@ -3083,17 +3082,18 @@ CUSTOMISATION
             (mis-)used to redefine all settings. Please see USER-FILE  below.
 
         Customisation is done by redefining values in internal data structure
-        which are:  %cfg,  %data,  %checks,  %text,  %scores.
+        which are:  %cfg,  %data,  %checks,  %text.
 
         Unless used in  DEBUG-FILE  or  USER-FILE,  there is  no need to know
         these internal data structures or the names of variables; the options
         will set the  proper values.  The key names being part of the option,
         are printed in output with the  --trace-key  option.
 
-        I.g. texts (values) of keys in  %data are those used in output of the
-        "Information" section. Texts of keys in  %checks  are used for output
-        in "Performed Checks" section.  And texts of keys in  %text  are used
-        for additional information lines or texts (mainly beginning with '=').
+        Texts (values) of keys in  '%data'  are those  used in  output of the
+        "Information" section.  The texts of keys in  '%checks'  are used for
+        output in "Performed Checks" section.  Texts of keys in  '%text'  are
+        used for additional information lines or texts (mainly beginning with
+        '=').
 
      Configuration file vs. RC-FILE vs. DEBUG-FILE
 
@@ -4636,7 +4636,7 @@ TESTING
 
       --cfg-init=KEY=VALUE
 
-          With this option values in the internal  %cfg  hash can be set:
+          With this option values in the internal  '%cfg'  hash can be set:
 
               $cfg{KEY} = VALUE
 
