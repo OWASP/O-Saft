@@ -48,11 +48,14 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.22 22/07/03 11:19:36";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.24 22/07/05 00:47:02";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
+
+# SEE Note:Stand-alone
+$::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Variables::ProhibitPackageVars)
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -178,43 +181,17 @@ used with the full package name.
 
 =cut
 
-## no critic qw(Modules::ProhibitAutomaticExportation, Variables::ProhibitPackageVars)
-# FIXME: perlcritic complains to not declare (global) package variables, but
-#        the purpose of this module is to do that. This may change in future.
-# The caller may uses most symbols, hence we use @EXPORT and not @EXPORT_OK .
+## no critic qw(Variables::ProhibitPackageVars)
+#  perlcritic complains to not declare (global) package variables, but the
+#  purpose of this module is to do that.
 
 use Exporter qw(import);
 use base     qw(Exporter);
-our @EXPORT = qw(
+our @EXPORT_OK = qw(
                 %ciphers
                 %ciphers_desc
                 %cipher_notes
                 $cipher_results
-                get_param
-                get_ssl
-                get_sec
-                get_keyx
-                get_auth
-                get_enc
-                get_bits
-                get_mac
-                get_dtls
-                get_rfc
-                get_desc
-                get_name
-                get_names
-                get_const
-                get_consts
-                get_note
-                get_notes
-                get_key
-                get_keys
-                get_cipherkeys
-                get_ciphernames
-                set_sec
-                show
-                show_ciphers
-                sort_cipher_names
                 ciphers_done
 );
 
@@ -1178,7 +1155,9 @@ sub _ciphers_init   {
     #? initialisations of %cihers data structures from <DATA>
     # example:   #0     #1      #3      #4      #5          #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
-    while (my $line = <DATA>) {
+    my $fh = *DATA;
+       $fh = *main::DATA if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
+    while (my $line = <$fh>) {
         chomp $line;
         next if ($line =~ m/^\s*$/);
         next if ($line =~ m/^\s*#/);
@@ -1367,7 +1346,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.22 2022/07/03
+2.24 2022/07/05
 
 =head1 AUTHOR
 
