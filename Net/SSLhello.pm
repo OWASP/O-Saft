@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "22.05.22";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.50 22/06/19 01:48:55",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.51 22/07/04 23:54:39",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -81,7 +81,7 @@ use Carp;
 use OSaft::error_handler qw (:sslhello_contants);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung OSaft::error_handler-><sub>)
-use OSaft::Text qw(%STR print_pod);
+use OSaft::Text qw(%STR);
 use osaft       qw(%TLS_EXTENSIONS);
 ######################################################## public documentation #
 
