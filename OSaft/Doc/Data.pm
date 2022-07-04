@@ -34,8 +34,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-our $VERSION    = "22.02.13";  # official verion number of tis file
-my  $SID_data   = "@(#) Data.pm 1.51 22/07/02 11:27:33";
+our $VERSION    = "22.06.22";   # official verion number of this file
+my  $SID_data   = "@(#) Data.pm 1.53 22/07/04 23:46:21";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -95,6 +95,7 @@ sub _get_standalone {
     $file =~ s#contrib/##;              # remove if in path
     $file =  "OSaft/Doc/$file";         # try this one ..
     $file =  "../$file" if (not -e $file);  # .. or this one
+    $file =  ""         if (not -e $file);
     return $file;
 } # _get_standalone
 
@@ -192,6 +193,7 @@ sub get_markup    {
     my $version = shift || $VERSION;
     my @txt;
     my $fh      = _get_filehandle($file);
+    return "" if ("" ne $fh);           # defensive programming
     # Preformat plain text with markup for further simple substitutions. We
     # use a modified  &  instead of < >  POD markup as it is easy to parse.
     # &  was choosen because it rarely appears in texts and  is not  a meta
@@ -599,7 +601,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.51 2022/07/02
+1.53 2022/07/04
 
 =head1 AUTHOR
 
@@ -616,10 +618,12 @@ _main_doc(@ARGV) if (not defined caller);
 
 1;
 
+# __END__
+    # __end__ not possible, because we may get
+    # readline() on unopened filehandle DATA at OSaft/Doc/Data.pm line 139.
+
 # SEE Note:Documentation
 # All public (user) documentation is in plain ASCII format (see help.txt).
-
-__END__
 
 =pod
 
