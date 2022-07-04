@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.19 22/07/03 13:48:57"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.20 22/07/04 14:49:41"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -169,8 +169,8 @@ use OSaft::Text     qw(%STR);
 use OSaft::Ciphers  qw(%ciphers %ciphers_desc %cipher_notes $cipher_results);
     # not loaded with _load_modules() because always needed
 use osaft;
-use OSaft::Data     qw(%checks %data %data0 %info %shorttexts
-                       %check_cert %check_conn %check_dest %check_http %check_size);
+use OSaft::Data     qw(%checks %data %data0 %info %shorttexts %check_cert %check_conn %check_dest %check_http %check_size);
+    # must be one line, otherwise contrib/gen_standalone.sh fails
 
 $cfg{'time0'}   = $time0;
 
