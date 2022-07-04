@@ -70,8 +70,8 @@ BEGIN {
     }
 }
 
-our $VERSION    = "22.05.22";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.51 22/07/04 23:54:39",
+our $VERSION    = "22.06.22";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.52 22/07/04 23:58:39",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -82,7 +82,7 @@ use OSaft::error_handler qw (:sslhello_contants);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung OSaft::error_handler-><sub>)
 use OSaft::Text qw(%STR);
-use osaft       qw(%TLS_EXTENSIONS);
+use osaft;  # main parameters, lists and functions that are used by o-saft and SSLhello
 ######################################################## public documentation #
 
 =pod
@@ -158,9 +158,6 @@ our $HAVE_XS = eval {
         };
 
     } ? 1 : 0;
-
-# All main parameters, constants, lists and functions that are used by o-saft and SSLhello
-use osaft; # TBD add "raw";
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
