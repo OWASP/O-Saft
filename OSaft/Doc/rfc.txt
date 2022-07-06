@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.13 19/03/28 22:31:50
+# SID	@(#) rfc.txt 1.14 22/07/06 10:18:04
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -97,6 +97,8 @@ url	http://tools.ietf.org/
 4418	UMAC: Message Authentication Code using Universal Hashing
 4490	Using the GOST 28147-89, GOST R 34.11-94, GOST R 34.10-94, and GOST R 34.10-2001 Algorithms with Cryptographic Message Syntax (CMS)
 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
+4634	US Secure Hash Algorithms (SHA, SHA-based HMAC and HKDF)
+5869	HMAC-based Extract-and-Expand Key Derivation Function
 5830	GOST 28147-89: Encryption, Decryption, and Message Authentication Code (MAC) Algorithms
 5831	GOST R 34.11-94: Hash Function Algorithm
 5832	GOST R 34.10-2001: Digital Signature Algorithm
@@ -127,6 +129,8 @@ url	http://tools.ietf.org/
 5741	RFC Streams, Headers, and Boilerplates
 5794	Description of the ARIA Encryption Algorithm
 5932	Camellia Cipher Suites for TLS
+6151	Updated Security for MD5 and HMAC-MD5
+6234	US Secure Hash Algorithms (SHA, SHA-based HMAC and HKDF)
 6209	Addition of the ARIA Cipher Suites to TLS
 6367	Addition of the Camellia Cipher Suites to TLS
 6655	AES-CCM Cipher Suites for TLS
@@ -146,8 +150,9 @@ url	http://tools.ietf.org/
 7525	Recommendations for Secure Use of TLS and DTLS
 7539	ChaCha20 and Poly1305 for IETF Protocols (obsolete)
 8439	ChaCha20 and Poly1305 for IETF Protocols
-7627	TLS Session Hash and Extended Master Secret Extension
 7905	ChaCha20-Poly1305 Cipher Suites for TLS
+7627	TLS Session Hash and Extended Master Secret Extension
+7693	The BLAKE2 Cryptographic Hash and Message Authentication Code
 7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
 1135	The Helminthiasis of the Internet
 6698	DNS-Based Authentication of Named Entities (DANE)
@@ -163,4 +168,5 @@ url	http://tools.ietf.org/
 8467	Padding for DoH und DoT
 1918	Address Allocation for Private Internets
 6598	IANA-Reserved IPv4 Prefix for Shared Address Space
+9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
 
