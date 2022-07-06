@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.22 22/02/14 16:19:41
+# SID	@(#) glossary.txt 1.23 22/07/06 08:38:25
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -26,6 +26,10 @@ ALPN	Application Layer Protocol Negotiation
 AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
+Argon2	Password hashing function (J. Aumasson, 2014)
+Argon2d	variant of Argon2
+Argon2i	variant of Argon2
+Argon2id	variant of Argon2
 ARIA	128-bit symmetric block cipher
 ARX	add–rotate–xor
 ASN	Autonomous System Number
@@ -41,7 +45,10 @@ Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
-BLAKE2b	see BLAKE (32 bit)
+BLAKE2b	see BLAKE (64 bit)
+BLAKE2s-128	see BLAKE (32 bit)
+BLAKE3	fast secure hashing function (20??)
+BLAKE3	??
 BLAKE-32	see BLAKE (32 bit)
 BLAKE-64	see BLAKE (64 bit)
 BLAKE-224	see BLAKE (224 bit)
@@ -544,6 +551,7 @@ SIA	Subject Information Access (certificate extension)
 SIC	Segmented Integer Counter (alias for CTR)
 SIMON	block cipher combining
 SIMON	block cipher combining (NSA algorithm, questionable security)
+SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 Skein-256-256	see Skein (256 bits)
 Skein-512-256	see Skein (256 bits)
@@ -633,7 +641,7 @@ Twofish	symmetric key block cipher (128 bit)
 UC 	Unified Capabilities
 UC	Unified Communications (SSL Certificate using SAN)
 UCC	Unified Communications Certificate (rarley used)
-UMAC	message authentication code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
+UMAC	Message Authentication Code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
 VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
