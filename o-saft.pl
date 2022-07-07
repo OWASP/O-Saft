@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.22 22/07/07 20:59:17"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.23 22/07/07 21:05:21"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5366,7 +5366,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if (_is_cfg_out('hint_info'));   # SEE Note:hints
+    osaft::printhint($key) if (_is_cfg_out('hint_info'));   # SEE Note:hints
     return;
 } # print_data
 
@@ -5377,7 +5377,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
-    printhint($key) if (_is_cfg_out('hint_check'));  # SEE Note:hints
+    osaft::printhint($key) if (_is_cfg_out('hint_check'));  # SEE Note:hints
     return;
 } # print_check
 
