@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.20 22/07/04 14:49:41"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.22 22/07/07 20:59:17"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -169,8 +169,19 @@ use OSaft::Text     qw(%STR);
 use OSaft::Ciphers  qw(%ciphers %ciphers_desc %cipher_notes $cipher_results);
     # not loaded with _load_modules() because always needed
 use osaft;
-use OSaft::Data     qw(%checks %data %data0 %info %shorttexts %check_cert %check_conn %check_dest %check_http %check_size);
-    # must be one line, otherwise contrib/gen_standalone.sh fails
+use OSaft::Data;
+# simplify use of variables (because importing fails in o-saft-standalone.pl)
+#our %cfg        = %OSaft::Cfg::cfg;
+our %checks     = %OSaft::Data::checks;
+our %data       = %OSaft::Data::data;
+our %data0      = %OSaft::Data::data0;
+our %info       = %OSaft::Data::info;
+our %shorttexts = %OSaft::Data::shorttexts;
+our %check_cert = %OSaft::Data::check_cert;
+our %check_conn = %OSaft::Data::check_conn;
+our %check_dest = %OSaft::Data::check_dest;
+our %check_http = %OSaft::Data::check_http;
+our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
 
