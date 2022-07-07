@@ -35,7 +35,7 @@ BEGIN { # mainly required for testing ...
 }
 
 our $VERSION    = "22.06.22";   # official verion number of this file
-my  $SID_data   = "@(#) Data.pm 1.53 22/07/04 23:46:21";
+my  $SID_data   = "@(#) Data.pm 1.54 22/07/07 19:01:43";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -193,7 +193,7 @@ sub get_markup    {
     my $version = shift || $VERSION;
     my @txt;
     my $fh      = _get_filehandle($file);
-    return "" if ("" ne $fh);           # defensive programming
+    return "" if ("" eq $fh);           # defensive programming
     # Preformat plain text with markup for further simple substitutions. We
     # use a modified  &  instead of < >  POD markup as it is easy to parse.
     # &  was choosen because it rarely appears in texts and  is not  a meta
@@ -601,7 +601,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.53 2022/07/04
+1.54 2022/07/07
 
 =head1 AUTHOR
 
