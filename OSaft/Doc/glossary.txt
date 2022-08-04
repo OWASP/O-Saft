@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.24 22/08/04 12:45:13
+# SID	@(#) glossary.txt 1.25 22/08/05 00:15:07
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -160,6 +160,10 @@ DESX	extended DES
 D5	Verhoeff's Dihedral Group D5 Check
 DH	Diffie-Hellman
 DHE	Diffie-Hellman ephemeral (historic acronym, often used, mainly in openssl)
+Dilithium	digital signature scheme
+Dilithium2-AES	alias for Dilithium
+Dilithium3-AES	alias for Dilithium
+Dilithium5-AES	alias for Dilithium
 DLIES	Discrete Logarithm Integrated Encryption Scheme
 DLP	Discrete Logarithm Problem
 DN	Distinguished Name
@@ -171,6 +175,7 @@ DRBG	Deterministic Random Bit Generator
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
 DSCP	Differentiated Services Code Point
+DSPR	?
 DSS	Digital Signature Standard
 DTLS	Datagram TLS
 DTLSv1	Datagram TLS 1.0
@@ -236,7 +241,7 @@ ETS	Enterprise Transport Security (renamed from eTLS)
 ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
-Falcon	post-quantum hash function, signature
+FALCON	Fast-Fourier Lattice-based Compact Signatures over NTRU; post-quantum signature
 FEAL	Fast Data Encryption Algorithm
 FFC	Finite Field Cryptography
 FFT	Fast Fourier Transform
@@ -391,6 +396,7 @@ NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
 NTRU	asymetric cipher algorithm using lattice reduction
+NTRUEncrypt	alias for NTRU
 NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
 NULL	no encryption
 NUMS	nothing up my sleeve numbers
@@ -592,8 +598,10 @@ Speck256-XTS	see Speck
 SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
 SPECK	block cipher combining
-SPHINCS	post-quantum hash function, signature
+SPHINCS	Stateless hash-based signatures, post-quantum hash function, signature
 SPHINCS-256	alias for SPHINCS
+SPHINCS-SHAKE256	alias for SPHINCS
+SPHINCS-SHA-256	alias for SPHINCS
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
