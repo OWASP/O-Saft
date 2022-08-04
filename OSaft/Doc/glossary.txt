@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.23 22/07/06 08:38:25
+# SID	@(#) glossary.txt 1.24 22/08/04 12:45:13
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -124,6 +124,9 @@ CRAM	Challenge Response Authentication Mechanism
 CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
 CRL	Certificate Revocation List
 CRYPTREC	Cryptography Research and Evaluation Committees
+CRYSTALS	post-quantum hash function, signature
+CRYSTALS-Dilithium	post-quantum hash function, signature
+CRYSTALS-Kyber	post-quantum hash function, signature
 CSP	Certificate Service Provider
 CSP 	Cryptographic Service Provider
 CSP  	Critical Security Parameter (used in FIPS 140-2)
@@ -233,6 +236,7 @@ ETS	Enterprise Transport Security (renamed from eTLS)
 ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
+Falcon	post-quantum hash function, signature
 FEAL	Fast Data Encryption Algorithm
 FFC	Finite Field Cryptography
 FFT	Fast Fourier Transform
@@ -473,6 +477,7 @@ RA	Registration Authority (aka Registration CA)
 Rabbit	stream cipher algorithm
 RADIUS	Remote Authentication Dial-In User Service
 Radix-64	alias for Base-64
+RAINBOW	post-quantum signature (broken 2/2022)
 RBG	Random Bit Generator
 RC2	Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)
 RC4	Rivest Cipher 4, stream cipher (aka Ron's Code)
@@ -549,6 +554,12 @@ SHAvite-3	hash function (Eli Biham, Orr Dunkelman, 2009)
 SHS	Secure Hash Standard
 SIA	Subject Information Access (certificate extension)
 SIC	Segmented Integer Counter (alias for CTR)
+SIDH	Supersingular Isogeny Diffie-Hellman (key exchange)
+SIKE	post-quantum hash function, signature (broken 7/2022)
+SIKEp434	post-quantum hash function, signature (broken 7/2022)
+SIKEp503	post-quantum hash function, signature (broken 7/2022)
+SIKEp610	post-quantum hash function, signature (broken 7/2022)
+SIKEp751	post-quantum hash function, signature (broken 7/2022)
 SIMON	block cipher combining
 SIMON	block cipher combining (NSA algorithm, questionable security)
 SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
@@ -581,7 +592,7 @@ Speck256-XTS	see Speck
 SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
 SPECK	block cipher combining
-SPHINCS	post-quantum hash function
+SPHINCS	post-quantum hash function, signature
 SPHINCS-256	alias for SPHINCS
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
