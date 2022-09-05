@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.25 22/08/05 00:15:07
+# SID	@(#) glossary.txt 1.26 22/09/05 20:00:19
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -100,6 +100,7 @@ ChaCha12	see ChaCha (aka 12-round ChaCha)
 ChaCha20	see ChaCha (aka 20-round ChaCha)
 ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 CHAP	Challenge Handshake Authentication Protocol
+CLEFIA	lightweight block cipher algorithm
 CKA	(PKCS#11)
 CKK	(PKCS#11)
 CKM	(PKCS#11)
@@ -335,12 +336,16 @@ JH-224	see JH (224 bits)
 JH-256	see JH (256 bits)
 JH-384	see JH (384 bits)
 JH-512	see JH (512 bits)
+Jolkit-BC	tweakable block cipher
 JSSE	Java Secure Socket Extension
+KATAN	lightweight block cipher algorithm
+KLEIN	lightweight block cipher algorithm
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 KCI	Key Compromise Impersonation
 KDF	Key Derivation Function
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
+KEM	Key Encapsulation Mechanisms
 KMS	Key Management Service
 KPAK	KMS Public Authentication Key
 KSAK	KMS Secret Authentication Key
@@ -351,6 +356,7 @@ LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 200
 LEA	? algorithm
 LEA-128	see LEA
 LEA-256	see LEA
+LED	lightweight block cipher algorithm
 LEXv2	stream cipher algorithm
 LFSR	Linear Feedback Shift Register
 LION	block cipher combining stream cipher and hash function
@@ -363,6 +369,7 @@ LRW	Liskov, Rivest, and Wagner (blok encryption)
 Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky 13	Break SSL/TLS Protocol
 Lucky Thirteen	see Lucky 13
+MANTIS	block cipher, low-latency variant of SKINNY
 MARS	128-bit block cipher (developed at IBM)
 MAC	Message Authentication Code
 MCF	Modular Crypt Format
@@ -376,13 +383,17 @@ MEE	MAC-then-Encode-then-Encrypt (see also MtE, AtE)
 MEK	Message Encryption Key
 MECAI	Mutually Endorsing CA Infrastrukture
 MGF	Mask Generation Function
+MIDORI	lightweight block cipher algorithm (64 or 128 bit) (2015)
+Midori64	see MIDORI
+Midori128	see MIDORI
 MISTY1	block cipher algorithm
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MS-SSTP	see SSTP
 MtE	MAC-then-encrypt (see also AtE)
 NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 NCP	Normalized Certification Policy (according TS 102 042)
-Neokeon	symmetric block cipher algorithm
+NOEKEON	symmetric block cipher algorithm
+Neokeon	see NOEKEON (probaly typo)
 NewHope	post-quantum key exchange
 nistp192	alias for P-192
 nistp224	alias for P-224
@@ -443,6 +454,7 @@ PFS	Perfect Forward Secrecy
 PFX	see PKCS#12 (Personal Information Exchange)
 PGP	Pretty Good Privacy
 PII	Personally Identifiable Information
+Picollo	lightweight block cipher algorithm
 PKCS	Public Key Cryptography Standards
 PKCS1	PKCS #1: RSA Encryption Standard
 PKCS3	PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol
@@ -465,8 +477,10 @@ Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption
 PQC	Post-Quantum Crypto
+PRESENT	block cipher algorithm (80 or 128 bit) (2007)
 PRF	Pseudo-Random Function
 PRP	Pseudo-Random Permutation
+PRINCE	low-latency block cipher algorithm (64 bit) (2012)
 prime192v1	alias for P-192
 prime224v1	alias for P-224
 prime256v1	alias for P-256
@@ -522,6 +536,7 @@ SAX	Symmetric Authenticated eXchange
 SBCS	single-byte character set
 SCA	Selfsigned CA signature
 SCEP	Simple Certificate Enrollment Protocol
+SCREAM	tweakable word-based stream cipher (2002)
 scrypt	password based key derivation function (Colin Percival)
 SCSU	Standard Compression Scheme for Unicode (compressed UTF-16)
 SCSV	Signaling Cipher Suite Value
@@ -533,7 +548,8 @@ secp224r1	alias for P-224
 secp256r1	alias for P-256
 secp384r1	alias for P-384
 secp521r1	alias for P-521
-SEED	128-bit Symmetric block cipher
+SEAL	Software-Optimized Encryption Algorithm; 32-bit word stream cipher (1994)
+SEED	128-bit symmetric block cipher
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
@@ -566,8 +582,7 @@ SIKEp434	post-quantum hash function, signature (broken 7/2022)
 SIKEp503	post-quantum hash function, signature (broken 7/2022)
 SIKEp610	post-quantum hash function, signature (broken 7/2022)
 SIKEp751	post-quantum hash function, signature (broken 7/2022)
-SIMON	block cipher combining
-SIMON	block cipher combining (NSA algorithm, questionable security)
+SIMON	lightweight block cipher (NSA algorithm, questionable security)
 SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 Skein-256-256	see Skein (256 bits)
@@ -575,6 +590,8 @@ Skein-512-256	see Skein (256 bits)
 Skein-512-512	see Skein (512 bits)
 Skein-1024-1024	see Skein (1024 bits)
 SKID	Subject Key ID (certificate extension)
+SKINNY	SPN tweakable block cipher
+SKINNY-128-256	see SLINNY
 SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
@@ -590,7 +607,7 @@ Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
 Sosemanuk	stream cipher algorithm
 SPARX	? algorithm
-Speck	block cipher algorithm (NSA algorithm, questionable security)
+SPECK	lightweight block cipher algorithm (NSA algorithm, questionable security)
 Speck64	see Speck
 Speck128	see Speck
 Speck256	see Speck
