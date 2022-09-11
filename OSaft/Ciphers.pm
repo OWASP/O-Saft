@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.24 22/07/05 00:47:02";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.25 22/09/11 12:19:17";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -253,8 +253,20 @@ our %ciphers_desc = (   # description of following %ciphers table
       '0x0300003D'  => [split /\s+/, q( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
                             # qw// would result in Perl warning:
                             #   Possible attempt to separate words with commas
-                            # q// is one word, hence it must be splitted
+                            # q// is one word, hence it must be splitted to become an array
         },
+    'additional_notes'  => '
+Note about Constant names:
+  Depending on the source of the constant, a different prefix in the name is
+  used, such as TLS_ SSL_ SSL_CK_ SSL3_CK_ TLS1_CK_
+  Hence no prefix at all is used here.
+Note about TLS version:
+  Usually the lowest/oldest protocol version is shown. But this cipher suite
+  may also be used in a newer protocol version also.
+  Following normalised strings are used for protocol versions:
+      SSLv2, SSLv3, DTLS0.9, DTLS1.0, TLSv10, TLSv11, TLSv12, TLSv13, PCT
+  SSL/TLS  is used for pseudo cipher suites.
+        ',
 ); # %ciphers_desc
 
 our %ciphers = (
@@ -1346,7 +1358,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.24 2022/07/05
+2.25 2022/09/11
 
 =head1 AUTHOR
 
