@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.22 22/07/02 11:28:59";
+my  $SID_man= "@(#) o-saft-man.pm 2.23 22/09/11 12:33:24";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.22'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.23'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1392,6 +1392,67 @@ sub man_opt_help    {
     return $txt;
 } # man_opt_help
 
+sub man_ciphers     {
+    #? print ciphers, $typ denotes type of output: text or html
+    my $typ = shift;# text or html
+    my $txt = "";
+    _man_dbx("man_ciphers($typ) ..");
+    #_dbx "typ : $typ\n";
+    # _man_head() and _man_head() doesn't make sense here
+    foreach my $key (sort keys %ciphers) {
+        my $name  = OSaft::Ciphers::get_name ($key);
+        next if not $name;              # defensive programming
+        next if $name =~ m/^\s*$/;      # defensive programming
+        my $sec   = OSaft::Ciphers::get_sec  ($key);
+        my $hex   = OSaft::Ciphers::key2text ($key);
+        my @alias = OSaft::Ciphers::get_names($key);
+        my @keep  = grep { $alias[$_] ne $name } 0..$#alias;
+           @alias = @alias[@keep];      # remove names, which equal $name
+        my $rfc   = OSaft::Ciphers::get_rfc($key);
+        my $rfcs  = "";
+        foreach my $key (split(/,/, $rfc)) {
+            # replace RFC-number, if any, with URL
+            my $num = $key;
+               $num =~ s/[^0-9]//g;
+            if ("" eq $num) {
+                $rfcs .= $key;
+            } else {
+                # TODO: also make URL for something like:  6655?
+                $rfcs .= "https://www.rfc-editor.org/rfc/rfc$num";
+                # old style URL ('til 2020):
+                #   https://tools.ietf.org/html/rfcXXXX
+                #   https://tools.ietf.org/rfc/rfcXXXX.txt
+                # modern style URL (2022 ...):
+                #   https://www.rfc-editor.org/rfc/rfcXXXX
+                #   https://www.rfc-editor.org/rfc/rfcXXXX.txt
+            }
+            $rfcs .= " , ";
+        }
+        $rfcs =~ s/ , $//;   # remove trailing ,
+#             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
+#             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
+        $txt .= "\n$hex\t$sec\t$name"
+             .  "\n\tOpenSSL name:\t"   . $name
+             .  "\n\tName aliases:\t"   . join(', ', @alias)
+             .  "\n\tConstant names:\t" . join(', ', OSaft::Ciphers::get_consts($key))
+             .  "\n\tOpenSSL STRENGTH:\t"   . OSaft::Ciphers::get_openssl($key)
+             .  "\n\tTLS version:\t"    . OSaft::Ciphers::get_ssl  ($key)
+             .  "\n\tKey exchange:\t"   . OSaft::Ciphers::get_keyx ($key)
+             .  "\n\tAuthentication:\t" . OSaft::Ciphers::get_auth ($key)
+             .  "\n\tEncryption:\t"     . OSaft::Ciphers::get_enc  ($key)
+             .  "\n\tMAC / Hash:\t"     . OSaft::Ciphers::get_mac  ($key)
+             .  "\n\tRFC(s) URL:\t"     . $rfcs
+             .  "\n\tComments/Notes:\t" . OSaft::Ciphers::get_notes($key)
+             .  "\n"
+             ;
+    }
+    my $note = $OSaft::Ciphers::ciphers_desc{'additional_notes'};
+       $note =~ s/\n/\n= /g;    # add text for note with usual = prefix
+       # see also %ciphers_desc in OSaft::Ciphers.pm;
+    $txt .= $note;
+    return "$txt\n";
+} # man_ciphers
+
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
@@ -1817,6 +1878,8 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_man()            if ($hlp =~ /^(gen-)?man$/);
     $txt = man_man()            if ($hlp =~ /^(gen-)?[nt]roff$/);
     $txt = man_cgi()            if ($hlp =~ /^(gen-)?cgi$/);
+    $txt = man_ciphers('text')  if ($hlp =~ /^(gen-)?-?ciphers([_.-]text)?$/);
+    $txt = man_ciphers('html')  if ($hlp =~ /^(gen-)?-?ciphers[_.-]?html$/);
     $txt = man_alias()          if ($hlp =~ /^alias(es)?$/);
     $txt = man_commands()       if ($hlp =~ /^commands?$/);
     $txt = man_options()        if ($hlp =~ /^opts?$/);
@@ -1964,6 +2027,10 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * NAME    -> all documentation in plain text (man-style) format
 
+=item * ciphers-text -> list all ciphers with all information in text format
+
+=item * ciphers-html -> list all ciphers with all information in HTML format
+
 =item * contents
 
 =item * toc     -> table of contents for documentation as plain text
@@ -2037,7 +2104,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.22 2022/07/02
+2.23 2022/09/11
 
 =head1 AUTHOR
 
