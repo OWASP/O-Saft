@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.23 22/09/11 12:33:24";
+my  $SID_man= "@(#) o-saft-man.pm 2.24 22/09/11 12:48:22";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.23'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.24'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1392,13 +1392,31 @@ sub man_opt_help    {
     return $txt;
 } # man_opt_help
 
+sub man_ciphers_text{
+    #? print ciphers in simple line-based text format
+    my $txt = shift;
+    _man_dbx("man_ciphers_text() ..");
+    # _man_head() and _man_head() doesn't make sense here
+    my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
+       $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
+       # see also %ciphers_desc in OSaft::Ciphers.pm;
+    return "$txt$note\n";
+} # man_ciphers_text
+
+sub man_ciphers_html{
+    #? print ciphers in HTML format
+    my $typ = shift;# text or html
+    my $txt = "HTML ...";
+    _man_dbx("man_ciphers_html() ..");
+    #_dbx "typ : $typ\n";
+    return $txt;
+} # man_ciphers_html
+
 sub man_ciphers     {
     #? print ciphers, $typ denotes type of output: text or html
     my $typ = shift;# text or html
     my $txt = "";
     _man_dbx("man_ciphers($typ) ..");
-    #_dbx "typ : $typ\n";
-    # _man_head() and _man_head() doesn't make sense here
     foreach my $key (sort keys %ciphers) {
         my $name  = OSaft::Ciphers::get_name ($key);
         next if not $name;              # defensive programming
@@ -1446,11 +1464,9 @@ sub man_ciphers     {
              .  "\n"
              ;
     }
-    my $note = $OSaft::Ciphers::ciphers_desc{'additional_notes'};
-       $note =~ s/\n/\n= /g;    # add text for note with usual = prefix
-       # see also %ciphers_desc in OSaft::Ciphers.pm;
-    $txt .= $note;
-    return "$txt\n";
+    return man_ciphers_html($txt) if ('html' eq $typ);
+    return man_ciphers_text($txt) if ('text' eq $typ);
+    return "";
 } # man_ciphers
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
@@ -2104,7 +2120,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.23 2022/09/11
+2.24 2022/09/11
 
 =head1 AUTHOR
 
