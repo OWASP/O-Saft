@@ -82,9 +82,11 @@ Must be used as first parameter, otherwise dies.
 
 =item --format=html
 
-Convert output to HTML format. Sends HTTP header:
+Sends HTTP header:
 
   Content-type: text/html;charset=utf-8
+
+and convert output to HTML format using contrib/HTML-table.awk .
 
 =item --cgi-no-header
 
@@ -131,8 +133,8 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.63 22/02/08 23:18:55";
-my $VERSION = '21.01.12';
+my $SID_cgi = "@(#) o-saft.cgi 1.64 22/09/12 14:29:53";
+my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -224,7 +226,7 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.63\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.64\r\n";
 		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
