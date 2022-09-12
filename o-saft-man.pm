@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.29 22/09/12 20:39:52";
+my  $SID_man= "@(#) o-saft-man.pm 2.30 22/09/12 22:58:19";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -84,12 +84,15 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 # description of ciphers from %ciphers. The corresponding texts from the
 # %ciphers_desc hash are not used.
 my %cipher_text_map = (
-    'name'     => "OpenSSL name:",
-    'alias'    => "Name aliases:",
-    'consts'   => "Constant names:",
+    'hex'      => "Hex Code:",
+    'sec'      => "Security:",
+    'suite'    => "Cipher Suite:",
+    'name'     => "OpenSSL Name:",
+    'alias'    => "Name Aliases:",
+    'consts'   => "Constant Names:",
     'openssl'  => "OpenSSL STRENGTH:",
-    'ssl'      => "TLS version:",
-    'keyx'     => "Key exchange:",
+    'ssl'      => "TLS Version:",
+    'keyx'     => "Key Exchange:",
     'auth'     => "Authentication:",
     'enc'      => "Encryption:",
     'bits'     => "Bits      :",
@@ -280,7 +283,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.29'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.30'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1287,6 +1290,52 @@ sub _man_ciphers_html_ul {
     return "$ul\n  </ul>\n";
 } # _man_ciphers_html_ul
 
+sub _man_ciphers_html_tb {
+    #? helper function for man_ciphers_html(): return TABLE tag with content
+    #  generate html table with all columns
+    my  $txt  = shift;
+    my  $tab  = '  <table id="table"><thead>';
+        $tab .= "\n    <tr>\n";
+    # following not yet working
+#      <colgroup>
+#        <col style="width: 10%;">
+#        <col style="width: 10%;">
+#        <col style="width: 10%;">
+#        ...
+#      </colgroup>
+#
+    # build table header; cannot use "keys %cipher_text_map" because it's random
+    # take care for sequence!
+    foreach my $key (qw(hex sec suite name alias consts openssl ssl keyx auth enc bits mac rfcs notes)) {
+        $tab .= "      <th>$cipher_text_map{$key}</th>\n";
+    }
+    $tab .= "    </tr></thead><tbody>\n";
+    # build table lines
+    my ($hex, $sec, $name, $td); $td = "";
+    foreach my $line (split(/\n/, $txt)) {
+        chomp($line);
+        next if $line =~ m/^\s*$/;
+        $line =~ s/^\s*//;              # remove leading whitespace
+        if ($line =~ m/^0x/) {
+            if ("" ne $td) {            # new cipher, print previous one
+                $tab .= "    <tr>\n$td    </tr>\n";
+                $td   = "";
+            }
+            ($hex, $sec, $name) = split(/\t/, $line);
+            $td .= "        <td>$hex</td>\n";
+            $td .= "        <td><span sec='$sec'>$sec</span></td>\n";
+            $td .= "        <td>$name</td>\n";
+            next;
+        }
+        my ($key, $val) = split(/\t/, $line);
+            $val = "<span sec='$val'>$val</span>" if ("openssl" eq $key); # OpenSSL SRENGTH should also be marked
+        $td .= "        <td typ='$key'>$val</td>\n";
+    }
+    # print last cipher
+    $tab .= "    <tr>\n$td    </tr>\n" if ("" ne $td);
+    return "$tab\n  </tbody></table>\n";
+} # _man_ciphers_html_tb
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -1494,6 +1543,13 @@ function toggle_display(obj){
 	obj.display = (obj.display=='block')?'none':'block';
 	return false;
 }
+function toggle_format(){
+	obj = $('list').style;
+	obj.display = (obj.display=='block')?'none':'block';
+	obj = $('table').style
+	obj.display = (obj.display=='block')?'none':'block';
+	return false;
+}
 function osaft_title(txt){
 	document.title      = ". : " + txt + " : .";
 	$("title").title    = txt;
@@ -1503,7 +1559,7 @@ function osaft_title(txt){
 </script>
 <style>
 body                 {padding:   1em;       }
-body > h1            {padding:   1em;   margin-top:1em; }
+body > h1            {padding-top:1em;  margin-top:1em; }
 body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
 ul                   {padding:   0px;       }
 ul li                {padding:   0.5em; list-style-type:none;}
@@ -1545,6 +1601,15 @@ span[sec]::after     {content:attr(sec);     }
   dd[ssl]::after     {content:attr(ssl);     }
   dd[mac="SHA"]      {title:"Secure Hash Algorithm"; }
  */
+/*
+ */
+/* table { border-collapse: collapse; } * nicht nicht verwenden */
+/* table { table-layout: fixed;       } * geht nicht */
+table                {display: none;         }
+table th             {background:#aaa;       }
+tbody tr:nth-child(even){background:#fff;    }
+tbody tr:nth-child(odd) {background:#eee;    }
+tbody td {width: 5em;    }
 </style>
 </head>
 <body>
@@ -1552,13 +1617,17 @@ span[sec]::after     {content:attr(sec);     }
 EoHTML
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
+  Toggle Layout: <button onclick="toggle_format();">table <> list</button>
 EoHTML
 
+    $htm .= _man_ciphers_html_tb($txt);
     $htm .= _man_ciphers_html_ul($txt);
     $htm .= << 'EoHTML';
 
 <script>
 osaft_title("O - S a f t -- OWASP - SSL advanced forensic tool: Cipher Suites");
+$('list' ).style.display='block';   /* keep JavaScript's DOM happy */
+$('table').style.display='none';    /* keep JavaScript's DOM happy */
 </script>
 </body></html>
 EoHTML
@@ -1613,6 +1682,9 @@ sub _man_ciphers_get{
             }
             $rfcs .= " , ";
         }
+        # keep in mind that the code marked with following comment:
+            # take care for sequence!
+        # relies on the sequence of line in following $txt
         $rfcs =~ s/ , $//;   # remove trailing ,
 #             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
 #             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
@@ -2296,7 +2368,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.29 2022/09/12
+2.30 2022/09/12
 
 =head1 AUTHOR
 
