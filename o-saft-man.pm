@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.30 22/09/12 22:58:19";
+my  $SID_man= "@(#) o-saft-man.pm 2.31 22/09/12 23:06:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -283,7 +283,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.30'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.31'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1244,7 +1244,7 @@ sub _man_ciphers_html_li {
        $dl =~ s/\n$//;  # remove trailing \n
     return << "EoHTML";
 
-    <li onclick="toggle_display(this);" title="show details">
+    <li onclick="toggle_display(this.lastElementChild);" title="show details">
       <span>$hex</span>
       <span sec="$sec">$sec</span>
       $name
@@ -1539,15 +1539,13 @@ sub man_ciphers_html{
 <script>
 function $(id){return document.getElementById(id);}
 function toggle_display(obj){
-	obj = obj.lastElementChild.style;
+	obj = obj.style;
 	obj.display = (obj.display=='block')?'none':'block';
 	return false;
 }
 function toggle_format(){
-	obj = $('list').style;
-	obj.display = (obj.display=='block')?'none':'block';
-	obj = $('table').style
-	obj.display = (obj.display=='block')?'none':'block';
+	toggle_display($('list'));
+	toggle_display($('table'));
 	return false;
 }
 function osaft_title(txt){
@@ -2368,7 +2366,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.30 2022/09/12
+2.31 2022/09/12
 
 =head1 AUTHOR
 
