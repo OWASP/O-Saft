@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.27 22/09/12 18:17:56";
+my  $SID_man= "@(#) o-saft-man.pm 2.28 22/09/12 18:26:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.27'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.28'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1556,11 +1556,10 @@ sub man_ciphers_text{
     return "$txt$note\n";
 } # man_ciphers_text
 
-sub man_ciphers     {
-    #? print ciphers, $typ denotes type of output: text or html
-    my $typ = shift;# text or html
+sub _man_ciphers_get{
+    #? helper function for man_ciphers(): return %ciphers as simple line-oriented text
+    _man_dbx("_man_ciphers_get() ..");
     my $txt = "";
-    _man_dbx("man_ciphers($typ) ..");
     foreach my $key (sort keys %ciphers) {
         my $name  = OSaft::Ciphers::get_name ($key);
         next if not $name;              # defensive programming
@@ -1608,6 +1607,14 @@ sub man_ciphers     {
              .  "\n"
              ;
     }
+    return $txt;
+} # _man_ciphers_get
+
+sub man_ciphers     {
+    #? print ciphers, $typ denotes type of output: text or html
+    my $typ = shift;# text or html
+    _man_dbx("man_ciphers($typ) ..");
+    my $txt = _man_ciphers_get();
     return man_ciphers_html($txt) if ('html' eq $typ);
     return man_ciphers_text($txt) if ('text' eq $typ);
     return "";
@@ -2264,7 +2271,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.27 2022/09/12
+2.28 2022/09/12
 
 =head1 AUTHOR
 
