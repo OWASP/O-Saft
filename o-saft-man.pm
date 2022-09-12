@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.24 22/09/11 12:48:22";
+my  $SID_man= "@(#) o-saft-man.pm 2.25 22/09/12 14:02:35";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.24'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.25'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1396,20 +1396,154 @@ sub man_ciphers_text{
     #? print ciphers in simple line-based text format
     my $txt = shift;
     _man_dbx("man_ciphers_text() ..");
-    # _man_head() and _man_head() doesn't make sense here
+    # _man_head() and _man_food() doesn't make sense here
     my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
        # see also %ciphers_desc in OSaft::Ciphers.pm;
     return "$txt$note\n";
 } # man_ciphers_text
 
+sub _html_dl  {
+    my $dl = shift;
+       $dl =~ s/\n$//;  # remove trailing \n
+    return << "EoHTML";
+      <div id="a">
+        <dl>
+$dl
+        </dl>
+      </div>
+EoHTML
+} # _html_dl
+
+sub _html_li  {
+    my ($hex, $sec, $name, $dl) = @_;
+       $dl =~ s/\n$//;  # remove trailing \n
+    return << "EoHTML";
+
+    <li onclick="toggle_display(this);" title="show details">
+      <span>$hex</span>
+      <span sec="$sec">$sec</span>
+      $name
+$dl
+    </li>
+EoHTML
+} # _html_li
+
 sub man_ciphers_html{
     #? print ciphers in HTML format
-    my $typ = shift;# text or html
-    my $txt = "HTML ...";
+    my $txt = shift;
     _man_dbx("man_ciphers_html() ..");
-    #_dbx "typ : $typ\n";
-    return $txt;
+    my $cnt = scalar(keys %ciphers);
+    my $htm = << 'EoHTML';
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title><!-- inserted by osaft_title() --></title>
+<script>
+function $(id){return document.getElementById(id);}
+function toggle_display(obj){
+	obj = obj.lastElementChild.style;
+	obj.display = (obj.display=='block')?'none':'block';
+	return false;
+}
+function osaft_title(txt){
+	document.title      = ". : " + txt + " : .";
+	$("title").title    = txt;
+	$("txt").innerText  = txt;
+	return false;
+}
+</script>
+<style>
+body                 {padding:   1em;       }
+body > h1            {padding:   1em;   margin-top:1em; }
+body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
+ul                   {padding:   0px;       }
+ul li                {padding:   0.5em; list-style-type:none;}
+ul li:nth-child(even){background:#fff;      }
+ul li:nth-child(odd) {background:#eee;      }
+ul li:hover          {background:#ffd700;   }
+ul span:first-child  {                  display:none;         }
+ul li span           {padding:   0.2em; display:inline-block; min-width:6em; border-radius:4px 4px 4px 4px; }
+ul li div            {margin-top:1ex;   display:none; font-size:90%; border:1px solid #000; border-top:0px solid #000; border-radius:0px 0px 10px 10px; }
+ul li dl             {padding:   0.2em; display:block;        }
+ul li dt,dd          {padding:   0.5ex; display:inline-block; }
+ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
+span[sec^="-"]       {background-color:#ff0; }
+//span[sec^="weak"]    {background-color:#51c8c8; }
+span[sec^="weak"]    {background-color:#f00; }
+span[sec^="WEAK"]    {background-color:#f00; }
+span[sec^="high"]    {background-color:#4f4; }
+span[sec^="HIGH"]    {background-color:#3f3; }
+span[sec^="medium"]  {background-color:#ff4; }
+span[sec^="MEDIUM"]  {background-color:#ff4; }
+  dd[sec^="-"]       {background-color:#ff0; }
+  dd[sec^="weak"]    {background-color:#f00; }
+  dd[sec^="WEAK"]    {background-color:#f00; }
+  dd[sec^="LOW"]     {background-color:#fd8; }
+  dd[sec^="high"]    {background-color:#4f4; }
+  dd[sec^="HIGH"]    {background-color:#3f3; }
+  dd[sec^="medium"]  {background-color:#ff4; }
+  dd[sec^="MEDIUM"]  {background-color:#ff4; }
+/* TODO: to automatically generate a tag's content based on an attribute, we
+ * need another parser, which knows the type of value
+span[sec]::after     {content:attr(sec);     }
+  dd[hex]::after     {content:attr(hex);     }
+  dd[sec]::after     {content:attr(sec);     }
+  dd[mac]::after     {content:attr(mac);     }
+  dd[keyx]::after    {content:attr(keyx);    }
+  dd[auth]::after    {content:attr(auth);    }
+  dd[bits]::after    {content:attr(bits);    }
+  dd[enc]::after     {content:attr(enc);     }
+  dd[ssl]::after     {content:attr(ssl);     }
+  dd[mac="SHA"]      {title:"Secure Hash Algorithm"; }
+ */
+</style>
+</head>
+<body>
+  <h2 id="title" title="" ><span id="txt" ></span></h2>
+EoHTML
+    $htm .= << "EoHTML";
+  <h1> $cnt Cipher Suites</h1>
+  <ul id="list">
+EoHTML
+
+# <li onclick="toggle_display(this);return false;" title="show details">
+# <li><a href="#" onclick="toggle_display(d('a'));return false;" title="show details">
+#         <span>weak</span>
+#             cipher
+#         <div id="a">
+#             <dl><dt>name:</dt><dd>RC4-MD5</dd><dl>
+#         </div>
+#     </a>
+    my ($hex, $sec, $name, $dl); $dl = "";
+    foreach my $line (split(/\n/, $txt)) {
+        chomp($line);
+        next if $line =~ m/^\s*$/;
+        $line =~ s/^\s*//;              # remove leading whitespace
+        if ($line =~ m/^0x/) {
+            if ("" ne $dl) {            # new cipher, print previous one
+                $htm .= _html_li($hex, $sec, $name, _html_dl($dl));
+                $dl   = "";
+            }
+            ($hex, $sec, $name) = split(/\t/, $line);
+            next;
+        }
+        my ($key, $val) = split(/\t/, $line);
+        my $typ = "x";
+           $typ = $val if ($key =~ m/STRENGTH/); # OpenSSL SRENGTH should also be marked
+        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n"
+    }
+    $htm .= _html_li($hex, $sec, $name, _html_dl($dl)) if ("" ne $dl); # print last cipher
+
+    $htm .= << 'EoHTML';
+
+  </ul>
+<script>
+osaft_title("O - S a f t -- OWASP - SSL advanced forensic tool: Cipher Suites");
+</script>
+</body></html>
+EoHTML
+    return $htm;
 } # man_ciphers_html
 
 sub man_ciphers     {
@@ -2120,7 +2254,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.24 2022/09/11
+2.25 2022/09/12
 
 =head1 AUTHOR
 
