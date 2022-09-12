@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.31 22/09/12 23:06:48";
+my  $SID_man= "@(#) o-saft-man.pm 2.32 22/09/12 23:14:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -283,7 +283,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.31'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.32'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1707,6 +1707,7 @@ sub _man_ciphers_get{
 
 sub man_ciphers     {
     #? print ciphers, $typ denotes type of output: text or html
+    #  see also https://ciphersuite.info/cs/
     my $typ = shift;# text or html
     _man_dbx("man_ciphers($typ) ..");
     my $txt = _man_ciphers_get();
@@ -2366,7 +2367,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.31 2022/09/12
+2.32 2022/09/12
 
 =head1 AUTHOR
 
