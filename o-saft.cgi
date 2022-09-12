@@ -88,6 +88,12 @@ Sends HTTP header:
 
 and convert output to HTML format using contrib/HTML-table.awk .
 
+=item --content-type=html
+
+Forces to sends HTTP header:
+
+  Content-type: text/html;charset=utf-8
+
 =item --cgi-no-header
 
 Omit all HTTP headers (useful if headers are added by web server).
@@ -133,7 +139,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.64 22/09/12 14:29:53";
+my $SID_cgi = "@(#) o-saft.cgi 1.65 22/09/12 14:37:33";
 my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -225,9 +231,11 @@ if ($me =~/\.cgi$/) {
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
 	if (0 < $header) {
+	        my $_typ = $typ;    # check if force using text/html
+	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.64\r\n";
-		print "Content-type: text/$typ; charset=utf-8\r\n";# for --usr* only
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.65\r\n";
+		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
 
