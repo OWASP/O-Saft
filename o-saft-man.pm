@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.26 22/09/12 14:45:47";
+my  $SID_man= "@(#) o-saft-man.pm 2.27 22/09/12 18:17:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.26'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.27'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -491,6 +491,7 @@ function toggle_handler(){
  p              {margin-left:     2em;margin-top:0;}
  td             {                     padding-left:    1em;}
  h2             {margin:       -0.3em;margin-bottom: 0.5em;height:1.5em;padding:1em;background:var(--bg-head);color:white;border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0; }
+ h2 > span      {                                    border:var(--border-0);}
  h3, h4, h5     {margin-bottom: 0.2em;}
  body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
  body > h4      {margin-left:     1em;}
@@ -503,7 +504,6 @@ function toggle_handler(){
  form           {font-size:       20px; }   /* chromium hack */
  form           {                     padding:1em;}
  span           {margin-bottom:   2em;font-size:120%;border:var(--border-1);}
- h2 > span      {                                    border:var(--border-0);}
  label[class=i] {margin-right:    1em;min-width:8em; border:var(--border-w);display:inline-block;}
  label[class=i]:hover           {background:var(--bg-hover);border-bottom:var(--border-1);}
  input[type=submit]             {background:var(--bg-start);min-width:8em;text-align:left;}
@@ -1204,6 +1204,69 @@ sub _man_cmd_from_rcfile {
     return $txt;
 } # _man_cmd_from_rcfile
 
+sub _man_ciphers_html_dl {
+    #? helper function for man_ciphers_html(): return DL tag with content
+    my $dl = shift;
+       $dl =~ s/\n$//;  # remove trailing \n
+    return << "EoHTML";
+      <div id="a">
+        <dl>
+$dl
+        </dl>
+      </div>
+EoHTML
+} # _man_ciphers_html_dl
+
+sub _man_ciphers_html_li {
+    #? helper function for man_ciphers_html(): return LI tag with content
+    my ($hex, $sec, $name, $dl) = @_;
+       $dl =~ s/\n$//;  # remove trailing \n
+    return << "EoHTML";
+
+    <li onclick="toggle_display(this);" title="show details">
+      <span>$hex</span>
+      <span sec="$sec">$sec</span>
+      $name
+$dl
+    </li>
+EoHTML
+} # _man_ciphers_html_li
+
+sub _man_ciphers_html_ul {
+    #? helper function for man_ciphers_html(): return UL tag with content
+    #  generate simple list with UL and LI tags from given text
+    my $txt = shift;
+    my $ul  = '  <ul id="list">';
+    #
+    # <li onclick="toggle_display(this);return false;" title="show details">
+    #         <span sec=weak>weak</span>
+    #             cipher
+    #         <div id="a">
+    #             <dl><dt>name:</dt><dd>RC4-MD5</dd><dl>
+    #         </div>
+    #     </li>
+    my ($hex, $sec, $name, $dl); $dl = "";
+    foreach my $line (split(/\n/, $txt)) {
+        chomp($line);
+        next if $line =~ m/^\s*$/;
+        $line =~ s/^\s*//;              # remove leading whitespace
+        if ($line =~ m/^0x/) {
+            if ("" ne $dl) {            # new cipher, print previous one
+                $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl));
+                $dl  = "";
+            }
+            ($hex, $sec, $name) = split(/\t/, $line);
+            next;
+        }
+        my ($key, $val) = split(/\t/, $line);
+        my $typ = "x";
+           $typ = $val if ($key =~ m/STRENGTH/); # OpenSSL SRENGTH should also be marked
+        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n"
+    }
+    $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl); # print last cipher
+    $ul .= "\n  </ul>\n";
+} # _man_ciphers_html_ul
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -1394,43 +1457,6 @@ sub man_opt_help    {
     return $txt;
 } # man_opt_help
 
-sub man_ciphers_text{
-    #? print ciphers in simple line-based text format
-    my $txt = shift;
-    _man_dbx("man_ciphers_text() ..");
-    # _man_head() and _man_food() doesn't make sense here
-    my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
-       $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
-       # see also %ciphers_desc in OSaft::Ciphers.pm;
-    return "$txt$note\n";
-} # man_ciphers_text
-
-sub _html_dl  {
-    my $dl = shift;
-       $dl =~ s/\n$//;  # remove trailing \n
-    return << "EoHTML";
-      <div id="a">
-        <dl>
-$dl
-        </dl>
-      </div>
-EoHTML
-} # _html_dl
-
-sub _html_li  {
-    my ($hex, $sec, $name, $dl) = @_;
-       $dl =~ s/\n$//;  # remove trailing \n
-    return << "EoHTML";
-
-    <li onclick="toggle_display(this);" title="show details">
-      <span>$hex</span>
-      <span sec="$sec">$sec</span>
-      $name
-$dl
-    </li>
-EoHTML
-} # _html_li
-
 sub man_ciphers_html{
     #? print ciphers in HTML format
     my $txt = shift;
@@ -1506,40 +1532,11 @@ span[sec]::after     {content:attr(sec);     }
 EoHTML
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
-  <ul id="list">
 EoHTML
 
-# <li onclick="toggle_display(this);return false;" title="show details">
-# <li><a href="#" onclick="toggle_display(d('a'));return false;" title="show details">
-#         <span>weak</span>
-#             cipher
-#         <div id="a">
-#             <dl><dt>name:</dt><dd>RC4-MD5</dd><dl>
-#         </div>
-#     </a>
-    my ($hex, $sec, $name, $dl); $dl = "";
-    foreach my $line (split(/\n/, $txt)) {
-        chomp($line);
-        next if $line =~ m/^\s*$/;
-        $line =~ s/^\s*//;              # remove leading whitespace
-        if ($line =~ m/^0x/) {
-            if ("" ne $dl) {            # new cipher, print previous one
-                $htm .= _html_li($hex, $sec, $name, _html_dl($dl));
-                $dl   = "";
-            }
-            ($hex, $sec, $name) = split(/\t/, $line);
-            next;
-        }
-        my ($key, $val) = split(/\t/, $line);
-        my $typ = "x";
-           $typ = $val if ($key =~ m/STRENGTH/); # OpenSSL SRENGTH should also be marked
-        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n"
-    }
-    $htm .= _html_li($hex, $sec, $name, _html_dl($dl)) if ("" ne $dl); # print last cipher
-
+    $htm .= _man_ciphers_html_ul($txt);
     $htm .= << 'EoHTML';
 
-  </ul>
 <script>
 osaft_title("O - S a f t -- OWASP - SSL advanced forensic tool: Cipher Suites");
 </script>
@@ -1547,6 +1544,17 @@ osaft_title("O - S a f t -- OWASP - SSL advanced forensic tool: Cipher Suites");
 EoHTML
     return $htm;
 } # man_ciphers_html
+
+sub man_ciphers_text{
+    #? print ciphers in simple line-based text format
+    my $txt = shift;
+    _man_dbx("man_ciphers_text() ..");
+    # _man_head() and _man_food() doesn't make sense here
+    my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
+       $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
+       # see also %ciphers_desc in OSaft::Ciphers.pm;
+    return "$txt$note\n";
+} # man_ciphers_text
 
 sub man_ciphers     {
     #? print ciphers, $typ denotes type of output: text or html
@@ -2256,7 +2264,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.26 2022/09/12
+2.27 2022/09/12
 
 =head1 AUTHOR
 
