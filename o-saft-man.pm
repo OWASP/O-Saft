@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.25 22/09/12 14:02:35";
+my  $SID_man= "@(#) o-saft-man.pm 2.26 22/09/12 14:45:47";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -262,7 +262,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.25'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.26'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -564,8 +564,8 @@ sub _man_help_button{
     my $class = shift;      # value for class= attribute (if not empty)
     my $title = shift;      # value for title= attribute
     my $txt   = $cmd;       # 
-       $txt  =~ s/^--//;    # button text without --help
-       $txt  =~ s/^help=//; # button text without --help
+       $txt  =~ s/^--.*help=//; # button text without --help and other options
+       #$txt  =~ s/^help=//; # button text without --help
        $class = "class='$class'" if ($class !~ m/^\s*$/);
     return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>',
                     $class, $url, $cmd, $title, $txt);
@@ -586,6 +586,8 @@ sub _man_form_head  {
     $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     'b', "open window with FAQs"));
     $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    'b', "open window with the glossar"));
     $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    'b', "open window with help for ToDO"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=ciphers-text", 'b', "open window with list of cipher suites (text format)"));
+    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--content-type=html&--help=ciphers-html", 'b', "open window with list of cipher suites (HTML format)"));
     $txt .= << "EoHTML";
  </div>
  <form id="o-saft" action="$cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
@@ -2254,7 +2256,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.25 2022/09/12
+2.26 2022/09/12
 
 =head1 AUTHOR
 
