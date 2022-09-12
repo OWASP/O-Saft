@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.28 22/09/12 18:26:02";
+my  $SID_man= "@(#) o-saft-man.pm 2.29 22/09/12 20:39:52";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -79,6 +79,24 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 #_____________________________________________________________________________
 #_____________________________________________ texts for user documentation __|
+
+# Following texts are used to map internal key to human redable text for
+# description of ciphers from %ciphers. The corresponding texts from the
+# %ciphers_desc hash are not used.
+my %cipher_text_map = (
+    'name'     => "OpenSSL name:",
+    'alias'    => "Name aliases:",
+    'consts'   => "Constant names:",
+    'openssl'  => "OpenSSL STRENGTH:",
+    'ssl'      => "TLS version:",
+    'keyx'     => "Key exchange:",
+    'auth'     => "Authentication:",
+    'enc'      => "Encryption:",
+    'bits'     => "Bits      :",
+    'mac'      => "MAC / Hash:",
+    'rfcs'     => "RFC(s) URL:",
+    'notes'    => "Comments/Notes:",
+);
 
 # Following texts are excerpts or abstracts of the user documentation defined
 # in   OSAFT/Doc/help.txt .
@@ -262,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.28'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.29'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1259,12 +1277,14 @@ sub _man_ciphers_html_ul {
             next;
         }
         my ($key, $val) = split(/\t/, $line);
-        my $typ = "x";
-           $typ = $val if ($key =~ m/STRENGTH/); # OpenSSL SRENGTH should also be marked
-        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n"
+        my  $typ = "x";
+            $typ = $val if ("openssl" eq $key);     # OpenSSL SRENGTH should also be marked
+            $key =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
+        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n";
     }
-    $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl); # print last cipher
-    $ul .= "\n  </ul>\n";
+    # print last cipher
+    $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl);
+    return "$ul\n  </ul>\n";
 } # _man_ciphers_html_ul
 
 #_____________________________________________________________________________
@@ -1550,6 +1570,10 @@ sub man_ciphers_text{
     my $txt = shift;
     _man_dbx("man_ciphers_text() ..");
     # _man_head() and _man_food() doesn't make sense here
+    foreach my $key (keys %cipher_text_map) {
+        # convert internal keys to human readable text
+        $txt =~ s/\n$key/\n\t$cipher_text_map{$key}\t/g;
+    }
     my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
        # see also %ciphers_desc in OSaft::Ciphers.pm;
@@ -1593,17 +1617,18 @@ sub _man_ciphers_get{
 #             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
 #             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
         $txt .= "\n$hex\t$sec\t$name"
-             .  "\n\tOpenSSL name:\t"   . $name
-             .  "\n\tName aliases:\t"   . join(', ', @alias)
-             .  "\n\tConstant names:\t" . join(', ', OSaft::Ciphers::get_consts($key))
-             .  "\n\tOpenSSL STRENGTH:\t"   . OSaft::Ciphers::get_openssl($key)
-             .  "\n\tTLS version:\t"    . OSaft::Ciphers::get_ssl  ($key)
-             .  "\n\tKey exchange:\t"   . OSaft::Ciphers::get_keyx ($key)
-             .  "\n\tAuthentication:\t" . OSaft::Ciphers::get_auth ($key)
-             .  "\n\tEncryption:\t"     . OSaft::Ciphers::get_enc  ($key)
-             .  "\n\tMAC / Hash:\t"     . OSaft::Ciphers::get_mac  ($key)
-             .  "\n\tRFC(s) URL:\t"     . $rfcs
-             .  "\n\tComments/Notes:\t" . OSaft::Ciphers::get_notes($key)
+             .  "\nname\t"    . $name
+             .  "\nalias\t"   . join(', ', @alias)
+             .  "\nconsts\t"  . join(', ', OSaft::Ciphers::get_consts($key))
+             .  "\nopenssl\t" . OSaft::Ciphers::get_openssl($key)
+             .  "\nssl\t"     . OSaft::Ciphers::get_ssl  ($key)
+             .  "\nkeyx\t"    . OSaft::Ciphers::get_keyx ($key)
+             .  "\nauth\t"    . OSaft::Ciphers::get_auth ($key)
+             .  "\nenc\t"     . OSaft::Ciphers::get_enc  ($key)
+             .  "\nbits\t"    . OSaft::Ciphers::get_bits ($key)
+             .  "\nmac\t"     . OSaft::Ciphers::get_mac  ($key)
+             .  "\nrfcs\t"    . $rfcs
+             .  "\nnotes\t"   . OSaft::Ciphers::get_notes($key)
              .  "\n"
              ;
     }
@@ -2271,7 +2296,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.28 2022/09/12
+2.29 2022/09/12
 
 =head1 AUTHOR
 
