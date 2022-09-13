@@ -56,7 +56,7 @@ use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
 
-my  $SID_man= "@(#) o-saft-man.pm 2.32 22/09/12 23:14:21";
+my  $SID_man= "@(#) o-saft-man.pm 2.33 22/09/13 17:03:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -80,9 +80,7 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 #_____________________________________________________________________________
 #_____________________________________________ texts for user documentation __|
 
-# Following texts are used to map internal key to human redable text for
-# description of ciphers from %ciphers. The corresponding texts from the
-# %ciphers_desc hash are not used.
+# SEE Cipher:text and Cipher:HTML
 my %cipher_text_map = (
     'hex'      => "Hex Code:",
     'sec'      => "Security:",
@@ -283,7 +281,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.32'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.33'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1225,6 +1223,65 @@ sub _man_cmd_from_rcfile {
     return $txt;
 } # _man_cmd_from_rcfile
 
+sub _man_ciphers_get     {
+    #? helper function for man_ciphers(): return %ciphers as simple line-oriented text
+    # SEE Cipher:text  for detaiiled description and generated data format
+    _man_dbx("_man_ciphers_get() ..");
+    my $txt = "";
+    foreach my $key (sort keys %ciphers) {
+        my $name  = OSaft::Ciphers::get_name ($key);
+        next if not $name;              # defensive programming
+        next if $name =~ m/^\s*$/;      # defensive programming
+        my $sec   = OSaft::Ciphers::get_sec  ($key);
+        my $hex   = OSaft::Ciphers::key2text ($key);
+        my @alias = OSaft::Ciphers::get_names($key);
+        my @keep  = grep { $alias[$_] ne $name } 0..$#alias;
+           @alias = @alias[@keep];      # remove names, which equal $name
+        my $rfc   = OSaft::Ciphers::get_rfc  ($key);
+        my $rfcs  = "";
+        foreach my $key (split(/,/, $rfc)) {
+            # replace RFC-number, if any, with URL
+            my $num = $key;
+               $num =~ s/[^0-9]//g;
+            if ("" eq $num) {
+                $rfcs .= $key;
+            } else {
+                # TODO: also make URL for something like:  6655?
+                $rfcs .= "https://www.rfc-editor.org/rfc/rfc$num";
+                # old style URL ('til 2020):
+                #   https://tools.ietf.org/html/rfcXXXX
+                #   https://tools.ietf.org/rfc/rfcXXXX.txt
+                # modern style URL (2022 ...):
+                #   https://www.rfc-editor.org/rfc/rfcXXXX
+                #   https://www.rfc-editor.org/rfc/rfcXXXX.txt
+            }
+            $rfcs .= " , ";
+        }
+        # keep in mind that the code marked with following comment:
+            # take care for sequence!
+        # relies on the sequence of line in following $txt
+        $rfcs =~ s/ , $//;   # remove trailing ,
+#             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
+#             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
+        $txt .= "\n$hex\t$sec\t$name"
+             .  "\nname\t"    . $name
+             .  "\nalias\t"   . join(', ', @alias)
+             .  "\nconsts\t"  . join(', ', OSaft::Ciphers::get_consts($key))
+             .  "\nopenssl\t" . OSaft::Ciphers::get_openssl($key)
+             .  "\nssl\t"     . OSaft::Ciphers::get_ssl  ($key)
+             .  "\nkeyx\t"    . OSaft::Ciphers::get_keyx ($key)
+             .  "\nauth\t"    . OSaft::Ciphers::get_auth ($key)
+             .  "\nenc\t"     . OSaft::Ciphers::get_enc  ($key)
+             .  "\nbits\t"    . OSaft::Ciphers::get_bits ($key)
+             .  "\nmac\t"     . OSaft::Ciphers::get_mac  ($key)
+             .  "\nrfcs\t"    . $rfcs
+             .  "\nnotes\t"   . OSaft::Ciphers::get_notes($key)
+             .  "\n"
+             ;
+    }
+    return $txt;
+} # _man_ciphers_get
+
 sub _man_ciphers_html_dl {
     #? helper function for man_ciphers_html(): return DL tag with content
     my $dl = shift;
@@ -1293,6 +1350,7 @@ sub _man_ciphers_html_ul {
 sub _man_ciphers_html_tb {
     #? helper function for man_ciphers_html(): return TABLE tag with content
     #  generate html table with all columns
+    # SEE Cipher:text and Cipher:HTML
     my  $txt  = shift;
     my  $tab  = '  <table id="table"><thead>';
         $tab .= "\n    <tr>\n";
@@ -1646,64 +1704,6 @@ sub man_ciphers_text{
        # see also %ciphers_desc in OSaft::Ciphers.pm;
     return "$txt$note\n";
 } # man_ciphers_text
-
-sub _man_ciphers_get{
-    #? helper function for man_ciphers(): return %ciphers as simple line-oriented text
-    _man_dbx("_man_ciphers_get() ..");
-    my $txt = "";
-    foreach my $key (sort keys %ciphers) {
-        my $name  = OSaft::Ciphers::get_name ($key);
-        next if not $name;              # defensive programming
-        next if $name =~ m/^\s*$/;      # defensive programming
-        my $sec   = OSaft::Ciphers::get_sec  ($key);
-        my $hex   = OSaft::Ciphers::key2text ($key);
-        my @alias = OSaft::Ciphers::get_names($key);
-        my @keep  = grep { $alias[$_] ne $name } 0..$#alias;
-           @alias = @alias[@keep];      # remove names, which equal $name
-        my $rfc   = OSaft::Ciphers::get_rfc($key);
-        my $rfcs  = "";
-        foreach my $key (split(/,/, $rfc)) {
-            # replace RFC-number, if any, with URL
-            my $num = $key;
-               $num =~ s/[^0-9]//g;
-            if ("" eq $num) {
-                $rfcs .= $key;
-            } else {
-                # TODO: also make URL for something like:  6655?
-                $rfcs .= "https://www.rfc-editor.org/rfc/rfc$num";
-                # old style URL ('til 2020):
-                #   https://tools.ietf.org/html/rfcXXXX
-                #   https://tools.ietf.org/rfc/rfcXXXX.txt
-                # modern style URL (2022 ...):
-                #   https://www.rfc-editor.org/rfc/rfcXXXX
-                #   https://www.rfc-editor.org/rfc/rfcXXXX.txt
-            }
-            $rfcs .= " , ";
-        }
-        # keep in mind that the code marked with following comment:
-            # take care for sequence!
-        # relies on the sequence of line in following $txt
-        $rfcs =~ s/ , $//;   # remove trailing ,
-#             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
-#             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
-        $txt .= "\n$hex\t$sec\t$name"
-             .  "\nname\t"    . $name
-             .  "\nalias\t"   . join(', ', @alias)
-             .  "\nconsts\t"  . join(', ', OSaft::Ciphers::get_consts($key))
-             .  "\nopenssl\t" . OSaft::Ciphers::get_openssl($key)
-             .  "\nssl\t"     . OSaft::Ciphers::get_ssl  ($key)
-             .  "\nkeyx\t"    . OSaft::Ciphers::get_keyx ($key)
-             .  "\nauth\t"    . OSaft::Ciphers::get_auth ($key)
-             .  "\nenc\t"     . OSaft::Ciphers::get_enc  ($key)
-             .  "\nbits\t"    . OSaft::Ciphers::get_bits ($key)
-             .  "\nmac\t"     . OSaft::Ciphers::get_mac  ($key)
-             .  "\nrfcs\t"    . $rfcs
-             .  "\nnotes\t"   . OSaft::Ciphers::get_notes($key)
-             .  "\n"
-             ;
-    }
-    return $txt;
-} # _man_ciphers_get
 
 sub man_ciphers     {
     #? print ciphers, $typ denotes type of output: text or html
@@ -2367,7 +2367,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.32 2022/09/12
+2.33 2022/09/13
 
 =head1 AUTHOR
 
@@ -2441,12 +2441,73 @@ Hence these keywords need to be printed in a separate statement.
 POD's  =head2  cannot contain  ()  literally,  it needs at least one space
 between  (  and  ) , otherwise formatting will be wrong.
 
-POD's  CE<lt>$somethingE<gt>  Does not print  "$something"  but simply  $something
+POD's  CE<lt>$somethingE<gt>  does not print  "$something"  but simply  $something
 unless  $somthing  contains  =  or  *  character, i.e.  $some=thing. Hence
 we use  IE<lt>$somethingE<gt>  instead.
 
 POD does not support nested formatting, at least no prober syntax could be
 found.
+
+
+=head2 Cipher:text
+
+The list of available ciphers is defined in  %ciphers . In that hash texts
+and values may have some special syntax optimised for programmatic use.
+For human readability the ciphers and their descriptions can be printed in
+a simple line-based format as text or HTML, and can be printed as table in
+HTML format.
+
+Before printing the required format, the  %ciphers  hash will be converted
+to a simple (intermediate) format. The result is plain text which contains
+the data for each cipher and looks like for example:
+
+  0x00,0x3D     HIGH    AES256-SHA256
+    name    AES256-SHA256
+    alias   
+    consts  RSA_WITH_AES_256_SHA256, RSA_WITH_AES_256_CBC_SHA256
+    openssl HIGH
+    ssl     TLSv12
+    keyx    RSA
+    auth    RSA
+    enc     AES
+    bits    256
+    mac     SHA256
+    rfcs    https://www.rfc-editor.org/rfc/rfc5246
+    notes   L
+
+Here the first line contains the hex code, security and cipher suite name,
+while all following consist of a tab-seperated key-value pair.
+
+This intermediate data then can be converted to the final output data. For
+example as plain text:
+
+  0x00,0x3D     HIGH    AES256-SHA256
+    OpenSSL Name:       AES256-SHA256
+    Name Aliases:       
+    Constant Names:     RSA_WITH_AES_256_SHA256, RSA_WITH_AES_256_CBC_SHA256
+    OpenSSL STRENGTH:   HIGH
+    TLS Version:        TLSv12
+    Key Exchange:       RSA
+    Authentication:     RSA
+    Encryption:         AES
+    Bits      :         256
+    MAC / Hash:         SHA256
+    RFC(s) URL:         https://www.rfc-editor.org/rfc/rfc5246
+    Comments/Notes:     L
+
+In the hash  %cipher_text_map  the keys of the intermediate data are to human redable text the hash  %cipher_text_map
+The hash  %cipher_text_map is used to convert the keys of the intermediate
+data to human redable text.  This hash should be similar to  %ciphers_desc
+from OSaft/Ciphers.pm .
+
+
+=head2 Cipher:HTML
+
+As explained in L<Cipher:text> above, the intermediate data of ciphers can
+also be used to convert to HTML format.
+
+The generated output contains the ciphers as simple list and as table with
+one cipher suite per row. It is possible to toggle between these formats.
 
 
 =head2 HTML:HTML
