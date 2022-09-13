@@ -547,7 +547,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.26 Summer Edition 2022
+#?      @(#) 2.27 Summer Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -655,10 +655,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.26 22/09/13 23:48:33"
+set cfg(SID)    "@(#) o-saft.tcl 2.27 22/09/14 01:29:03"
 set cfg(mySID)  "$cfg(SID) Summer Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.26}
+set cfg(VERSION) {2.27}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -766,6 +766,7 @@ set myX(geo-)   "400x80"       ;# geometry and position of no match  window
 set myX(geoS)   "700x720"      ;# geometry and position of O-Saft    window
 set myX(geoA)   "660x610"      ;# geometry and position of About     window
 set myX(geoC)   ""             ;# geometry and position of Config    window (computed dynamically)
+set myX(geoD)   "700x700"      ;# geometry and position of Cipher    window
 set myX(geoF)   "700x700"      ;# geometry and position of Filter    window (computed dynamically)
 set myX(geoT)   ""             ;#
 set myX(minx)   700            ;# O-Saft  window min. width
@@ -1129,7 +1130,7 @@ set cfg(winO)   "" ;# object name of Help   window
 set cfg(win-)   "" ;# (reserved for future use)
 set cfg(winS)   ".";# object name of main   window (usually not used as just .)
 set cfg(winA)   "" ;# object name of About  window
-set cfg(winC)   "" ;# object name of Cipher window
+set cfg(winD)   "" ;# object name of Cipher window
 set cfg(winF)   "" ;# object name of Filter window
 set cfg(winT)   "" ;# (reserved for future use)
 set cfg(objN)   "" ;# object name of notebook; needed to add more note TABS
@@ -1603,7 +1604,7 @@ proc guitheme_init  {theme} {
 proc guicursor_set {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
     global cfg
-    foreach w [list . objN objS winA winC winF winO] {
+    foreach w [list . objN objS winA winD winF winO] {
         if {"." ne $w} { set w $cfg($w) }
         if {""  eq $w} { continue }
         # now get all children too
@@ -2052,7 +2053,11 @@ proc create_table {parent header}   {
              -stretch             2 \
          ] -side left -fill both -expand yes
     # insert header line
-    foreach f $header { lappend titles 0 [_get_text $f] }
+    foreach f $header {
+        # silently use given keyas text if not defined properly
+        if {[catch { set txt [_get_text $f]}]} { set txt $f }
+        lappend titles 0 $txt
+    }
     $this.t config -columns $titles
     return $this.t
 }; # create_table
@@ -2475,14 +2480,52 @@ proc create_progwin     {}  {
 }; # create_progwin
 
 proc create_ciphers     {}  {
-    #? create new window with Cipher Suites; store widget in cfg(winC)
+    #? create new window with Cipher Suites; store widget in cfg(winD)
+    # SEE Cipher:text (in o-saft-man.pm) for expected data
     _dbx 2 "{}"
     global cfg myX
-    if {[winfo exists $cfg(winC)]}  { show_window $cfg(winC); return }
-    set cfg(winC) [create_window [_get_text win_about] $myX(geoA)]
-    #set txt [create_table $cfg(winC) [osaft_ciphers]].t
-    # TODO redesign create_table, then use table layout
-    set txt [create_text $cfg(winC) [osaft_ciphers]].t
+    if {[winfo exists $cfg(winD)]}  { show_window $cfg(winD); return }
+    set cfg(winD) [create_window [_get_text win_about] $myX(geoD)]
+    set data  [osaft_ciphers]]
+    # extract column headers from data and convert data to array
+    set head    1
+    set row     ""
+    set header  ""
+    set content ""
+    foreach l [split $data "\r\n"] {
+        if { [regexp {^\s*$} $l]} { continue }
+        if { [regexp {^[=#]} $l]} { continue }
+        set l [string trim $l]
+        set l [regsub {\t\t} $l "\t"]  ;# squeeze TABs
+        set key  [lindex [split $l "\t"] 0]
+        set val  [lindex [split $l "\t"] 1]
+        if { [regexp {^0x}   $key]} {
+            if {0 <  [llength $row]} { append content "$row\n" }
+            if {0 >= [llength $header]} {
+                set header [list "Hex Code" "Security" "Cipher Suite"]
+            } else {
+                set head 0
+            }
+            set name [lindex [split $l "\t"] 2]
+            set row  [list $key $val $name]
+            continue
+        }
+        if {0 < $head} {
+            lappend header [regsub {\s*:\s*$} $key ""];# remove trailing spaces
+        }
+        lappend row $val
+    }
+    set table [create_table $cfg(winD) $header]
+    $table columnconfigure  0 -width 14 ;# hex
+    $table columnconfigure  1 -width  7 ;# sec
+    $table columnconfigure  2 -width 30 ;# suite name
+    $table columnconfigure  3 -width 30 ;# OpenSSL name
+    $table columnconfigure  6 -width  7 ;# openssl
+    $table columnconfigure  7 -width  7 ;# ssl
+    $table columnconfigure  8 -width  8 ;# keyx
+    $table columnconfigure  9 -width  7 ;# auth
+    $table columnconfigure 10 -width 15 ;# enc
+    foreach row [split $content "\n"] { $table insert end $row }
     return
 }; # create_ciphers
 
@@ -3631,7 +3674,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.26 22/09/13 23:48:33
+ #?      @(#) .o-saft.tcl generated by 2.27 22/09/14 01:29:03
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
