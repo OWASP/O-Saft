@@ -286,6 +286,19 @@ exec wish "$0" ${1+"$@"}
 #?      All arguments,  except the options described above,  are treated  as a
 #?      hostname to be checked.
 #?
+#? ADDITIONAL SYNOPSIS
+#?      On some systems (i.e. Android) it could be difficult to pass arguments
+#?      and/or options to this script.  To simulate passing options, following
+#?      alias names are provided:
+#?          o-saft--testtcl.tcl
+#?          o-saft--test-docs.tcl
+#?          o-saft--trace.tcl
+#?          o-saft--d.tcl
+#?          osaft--testtcl.tcl
+#?          osaft--test-docs.tcl
+#?          osaft--trace.tcl
+#?          osaft--d.tcl
+#?
 #? SEE ALSO
 #?      o-saft
 #?      o-saft.pl
@@ -534,7 +547,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.25 Summer Edition 2022
+#?      @(#) 2.26 Summer Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -617,6 +630,9 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
+# this section mainly contains variable initialisations, it also defines some
+# functions for easy acces to configurations
+
 proc config_docker  {mode}  {
     #? initilise configuration for use with Docker image
     #  may be called with $mode=opt for --docker option or with $mode=prg to
@@ -639,10 +655,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.25 22/09/13 21:51:33"
+set cfg(SID)    "@(#) o-saft.tcl 2.26 22/09/13 23:48:33"
 set cfg(mySID)  "$cfg(SID) Summer Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.25}
+set cfg(VERSION) {2.26}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -846,58 +862,60 @@ catch { set my_bg "[lindex [.i config -bg] 4]" }
     # name      -text       -bg     -image      guitip_set()
     #----------+-----------+-------+-----------+-------------------------------
 array set cfg_buttons "
-    {about}     {{!}        $my_bg  {!}         {About $cfg(ICH) $cfg(VERSION)}}
-    {help}      {{?}        $my_bg  help        {Open window with complete help}}
-    {help_me}   {{?}        $my_bg  {?}         {Open window with help for these settings}}
-    {closeme}   {{Quit}     orange  quit        {Close program}}
-    {closewin}  {{Close}    orange  close       {Close window}}
-    {closetab} {{Close Tab} orange  closetab    {Close this TAB}}
-    {loadresult}  {{Load}   lightgreen load     {Load results from file}}
-    {saveresult}  {{Save}   lightgreen save     {Save results to file}}
-    {saveconfig}  {{Save}   lightgreen save     {Save configuration to file  }}
-    {ttyresult}   {{STDOUT} lightgreen stdout   {Print results on systems STDOUT}}
-    {reset}     {{Reset}    $my_bg  reset       {Reset configuration to defaults}}
-    {filter}    {{Filter}   $my_bg  filter      {Show configuration for filtering results}}
-    {tkcolor} {{Color Chooser}  $my_bg tkcolor  {Open window to choose a color}}
-    {tkfont}  {{Font Chooser}   $my_bg tkfont   {Open window to choose a font}}
-    {host_add}  {{+}        $my_bg  {+}         {Add new line for a host}}
-    {host_del}  {{-}        $my_bg  {-}         {Remove this line for a host }}
-    {help_home} {{^}        $my_bg  help_home   {Go to top of page (start next search from there)}}
-    {help_prev} {{<}        $my_bg  help_prev   {Search baskward for text}}
-    {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
-    {help_help} {{?}        $my_bg  {?}         {Show help about search functionality}}
-    {helpreset} {{Reset}    $my_bg  reset       {Reset/clear list of search texts}}
-    {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
-    {cmdstart}  {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with commands selected in 'Commands' tab}}
-    {cmdcheck}  {{+check}   #ffd800 +check      {Execute $prg(SAFT) +check   }}
-    {cmdcipher} {{+cipher}  #ffd000 +cipher     {Execute $prg(SAFT) +cipher  }}
-    {cmdinfo}   {{+info}    #ffc800 +info       {Execute $prg(SAFT) +info    }}
-    {cmdquit}   {{+quit}    #ffc800 +quit       {Execute $prg(SAFT) +quit (debugging only)}}
-    {cmdquick}  {{+quick}   #ffc000 +quick      {Execute $prg(SAFT) +quick   }}
-    {cmdprotocols} {{+protocols} #ffb800 +protocols {Execute $prg(SAFT) +protocols }}
-    {cmdvulns}  {{+vulns}   #ffb000 +vulns      {Execute $prg(SAFT) +vulns   }}
-    {cmdversion} {{+version} #fffa00 +version   {Execute $prg(SAFT) +version }}
-    {docker_status} {{docker status} #00faff docker_status {Execute $prg(SAFT) status   }}
-    {img_txt}   {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
-    {----_----} {-- for following rows, colour is the forground colour of the objekt --}
-    {menu_menu} {{☰}               orange  {}   {Main menu}}
-    {menu_cmd}  {{Cmd}             white   {}   {Quick commands menu}}
-    {menu_opt}  {{Opt}             white   {}   {Quick options menu}}
-    {menu_cfg}  {{Config}          white   {}   {GUI configurations menu}}
-    {menu_cmds} {{+ All Commands}  {}      {}   {Commands submenu}}
-    {menu_opts} {{-  All Options}  {}      {}   {Options submenu}}
-    {menu_load} {{   Load Results} {}      {}   {Load results from file}}
-    {menu_filt} {{  Config Filter} {}     {}   {Show configuration for filtering results}}
-    {menu_conf} {{  Config GUI}   {}      {}   {Show configuration for GUI settings}}
-    {menu_prog} {{  Config Tool}  {}      {}   {Show configuration for tool itself}}
-    {menu_mode} {{Change Layout}   {}      {}   {Toogle layout between classic and tablet}}
-    {menu_help} {{ ? Help}         {}      help {Open window with complete help}}
-    {menu_list} {{   Cipher Suites}  {}   {&}  {Open window with list of cipher suites}}
-    {menu_uber} {{ ❗  About}      {}      {!}  {About $cfg(ICH) $cfg(VERSION)}}
-    {menu_exit} {{⏻  Quit}         orange  quit {Close program}}
-    {menu_rsave}  {{Save}          {}      save {Save results to file}}
-    {menu_reset}  {{Reset}         {}     reset {Reset configuration to defaults}}
+    about       {{!}        $my_bg  {!}         {About $cfg(ICH) $cfg(VERSION)}}
+    help        {{?}        $my_bg  help        {Open window with complete help}}
+    help_me     {{?}        $my_bg  {?}         {Open window with help for these settings}}
+    closeme     {{Quit}     orange  quit        {Close program}}
+    closewin    {{Close}    orange  close       {Close window}}
+    closetab   {{Close Tab} orange  closetab    {Close this TAB}}
+    loadresult    {{Load}   lightgreen load     {Load results from file}}
+    saveresult    {{Save}   lightgreen save     {Save results to file}}
+    saveconfig    {{Save}   lightgreen save     {Save configuration to file  }}
+    ttyresult     {{STDOUT} lightgreen stdout   {Print results on systems STDOUT}}
+    reset       {{Reset}    $my_bg  reset       {Reset configuration to defaults}}
+    filter      {{Filter}   $my_bg  filter      {Show configuration for filtering results}}
+    tkcolor   {{Color Chooser}  $my_bg tkcolor  {Open window to choose a color}}
+    tkfont    {{Font Chooser}   $my_bg tkfont   {Open window to choose a font}}
+    host_add    {{+}        $my_bg  {+}         {Add new line for a host}}
+    host_del    {{-}        $my_bg  {-}         {Remove this line for a host }}
+    help_home   {{^}        $my_bg  help_home   {Go to top of page (start next search from there)}}
+    help_prev   {{<}        $my_bg  help_prev   {Search baskward for text}}
+    help_next   {{>}        $my_bg  help_next   {Search forward for text}}
+    help_help   {{?}        $my_bg  {?}         {Show help about search functionality}}
+    helpreset   {{Reset}    $my_bg  reset       {Reset/clear list of search texts}}
+    helpsearch  {{??}       $my_bg  helpsearch  {Text to be searched}}
+    cmdstart    {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with commands selected in 'Commands' tab}}
+    cmdcheck    {{+check}   #ffd800 +check      {Execute $prg(SAFT) +check   }}
+    cmdcipher   {{+cipher}  #ffd000 +cipher     {Execute $prg(SAFT) +cipher  }}
+    cmdinfo     {{+info}    #ffc800 +info       {Execute $prg(SAFT) +info    }}
+    cmdquit     {{+quit}    #ffc800 +quit       {Execute $prg(SAFT) +quit (debugging only)}}
+    cmdquick    {{+quick}   #ffc000 +quick      {Execute $prg(SAFT) +quick   }}
+    cmdprotocols   {{+protocols} #ffb800 +protocols {Execute $prg(SAFT) +protocols }}
+    cmdvulns    {{+vulns}   #ffb000 +vulns      {Execute $prg(SAFT) +vulns   }}
+    cmdversion  {{+version} #fffa00 +version    {Execute $prg(SAFT) +version }}
+    docker_status  {{docker status} #00faff docker_status {Execute $prg(SAFT) status   }}
+    img_txt     {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
+    DESC_menu   {-- for following rows, colour is the forground colour of the objekt --}
+    menu_menu   {{☰}        orange         {}   {Main menu}}
+    menu_cmd    {{Cmd}      white          {}   {Quick commands menu}}
+    menu_opt    {{Opt}      white          {}   {Quick options menu}}
+    menu_cfg    {{Config}   white          {}   {GUI configurations menu}}
+    menu_cmds   {{ + All Commands}  {}     {}   {Commands submenu}}
+    menu_opts   {{ -  All Options}  {}     {}   {Options submenu}}
+    menu_load   {{    Load Results} {}     {}   {Load results from file}}
+    menu_filt   {{  Config Filter} {}     {}   {Show configuration for filtering results}}
+    menu_conf   {{  Config GUI}    {}     {}   {Show configuration for GUI settings}}
+    menu_prog   {{  Config Tool}   {}     {}   {Show configuration for tool itself}}
+    menu_mode   {{Change Layout}    {}     {}   {Toogle layout between classic and tablet}}
+    menu_help   {{ ?  Help}         {}     help {Open window with complete help}}
+    menu_list   {{  Cipher Suites} {}     {&}  {Open window with list of cipher suites}}
+    menu_uber   {{❗  About}        {}     {!}  {About $cfg(ICH) $cfg(VERSION)}}
+    menu_exit   {{⏻  Quit}          orange quit {Close program}}
+    menu_rsave  {{Save}             {}     save {Save results to file}}
+    menu_reset  {{Reset}            {}    reset {Reset configuration to defaults}}
 ";  #----------+-----------+-------+-----------+-------------------------------
+    # name      -text           -bg     -image  guitip_set()
+    #----------+-----------+-------+-----------+-------------------------------
 
     # Note: all buttons as described above,  can be configured also by the user
     # using  cfg(RC).  Configurable are:  text (-text), background colour (-bg)
@@ -933,7 +951,7 @@ array set cfg_texts "
     h_min4chars {Pattern should have more than 3 characters.}
     h_nomatch   {No matches found for}
     h_badregex  {Invalid RegEx pattern}
-    DESC        {-- CONFIGURATION texts used in GUI for buttons or labels ----}
+    DESC_texts  {-- CONFIGURATION texts used in GUI for buttons or labels ----}
     host        {Host\[:Port\]}
     hideline    {Hide complete line}
     c_toggle    {toggle visibility\nof various texts}
@@ -941,7 +959,7 @@ array set cfg_texts "
     t_nr        Nr
     t_label     Label
     t_value     Value
-    t_omment    Comment
+    t_comment   Comment
     t_key       Key
     t_moder     r
     t_modee     e
@@ -999,7 +1017,17 @@ Configure filter for text markup: r, e and # specify how the RegEx should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
 Changes apply to next +command.
 }
-    DESC_misc   {-- CONFIGURATION texts used in GUI for various other texts --}
+    DESC_filter {-- CONFIGURATION texts used in Filter tab -------------------}
+    t_key       {Unique key for regex}
+    t_moder     {Modifier: use regex with regex pattern (-regexp)}
+    t_modee     {Modifier: use regex with exact pattern (-exact)}
+    t_chars     {Length to be matched (0: all text; -1: complete line to right end)}
+    t_regex     {RegEx to match text}
+    t_bg        {Background color used for matching text (empty: don't change)}
+    t_fg        {Foreground color used for matching text (empty: don't change)}
+    t_font      {Font used for matching text (empty: don't change)}
+    t_u         {Underline matching text (0 or 1)}
+    t_cmt       {Description of regex}
     DESC_opts   {-- CONFIGURATION texts used in GUI for option checkbuttons --}
     --header    {print header line}
     --enabled   {print only enabled ciphers}
@@ -1086,7 +1114,7 @@ $usage
 check PATH environment variable."
 
     } else {
-        set prg(SAFT) $osaft               ;# found
+        set prg(SAFT) $osaft           ;# found
     }
 }
 
@@ -1131,16 +1159,16 @@ set search(mode)    "regex";# search pattern is exact text, or regex, or fuzzy
     # HELP-search-pos   tag contaning matching text positions (tuple: start end)
     # HELP-search-mark  tag assigned to currently marked search text
     # HELP-search-box   tag assigned to currently paragraph with search text
-    # HELP-LNK      tag assigned to all link texts in text
-    # HELP-TOC-*    individual tag for a linked line
-    # HELP-LNK-T    tag assigned to top of text
-    # HELP-HEAD     tag assigned to all header texts (lines)
-    # HELP-HEAD-*   individual tag for a header text
-    # HELP-TOC      tag assigned to all lines in table of content
-    # HELP-TOC-*    individual tag for a TOC line
-    # HELP-REF      tag assigned to all TOC reference
+    # HELP-LNK          tag assigned to all link texts in text
+    # HELP-TOC-*        individual tag for a linked line
+    # HELP-LNK-T        tag assigned to top of text
+    # HELP-HEAD         tag assigned to all header texts (lines)
+    # HELP-HEAD-*       individual tag for a header text
+    # HELP-TOC          tag assigned to all lines in table of content
+    # HELP-TOC-*        individual tag for a TOC line
+    # HELP-REF          tag assigned to all TOC reference
     # HELP-XXX-*
-    # HELP-CODE     tag assigned to all code texts
+    # HELP-CODE         tag assigned to all code texts
 
 set hosts(0)    ""; # array containing host:port
 set results(0)  ""; # contains raw results of prg(SAFT); results(0) is empty
@@ -1148,16 +1176,7 @@ set results(0)  ""; # contains raw results of prg(SAFT); results(0) is empty
 #_____________________________________________________________________________
 #_______________________________________________________ filter definitions __|
 
-#   array name  {description of element used in header line in Filter tab}
-set f_key(0)    {Unique key for regex}
-set f_mod(0)    {Modifier how to use regex}
-set f_len(0)    {Length to be matched (0: all text; -1: complete line to right end)}
-set f_bg(0)     {Background color used for matching text (empty: don't change)}
-set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
-set f_fn(0)     {Font used for matching text (empty: don't change)}
-set f_un(0)     {Underline matching text (0 or 1)}
-set f_rex(0)    {RegEx to match text}
-set f_cmt(0)    {Description of regex}
+# arrays created dynamically: f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt
 
 proc _txt2arr     {str} {
     #? convert string with filter definitions to arrays
@@ -1205,7 +1224,7 @@ _txt2arr [string map "
 # syntax in following table:
 #   - lines starting with # as very first character are comments and ignored
 #     a # anywhere else is part of the string in corresponding column
-#   - columns *must* be separated by exactly one TAB
+#   - columns *must* be separated by *exactly one* TAB
 #   - empty strings in columns must be written as {}
 #   - strings *must not* be enclosed in "" or {}
 #   - variables must be defined in map above and used accordingly
@@ -1479,13 +1498,20 @@ proc update_cfg   {}        {
 
 # if {1==$cfg(gui-tip)} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
-proc tooltip      {w help}  {
-    bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
-    bind $w <Any-Leave> "destroy %W.balloon"
+proc guitip_set     {w txt} {
+    #? add tooltip message to given widget
+    global cfg
+    if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
+        bind $w <Any-Enter> "after 1000 [list _show_tooltip %W [list $txt]]"
+        bind $w <Any-Leave> "destroy %W.balloon"
+    } else {
+        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
+        tooltip::tooltip $w "$txt"
+    }
     return
-}; # tooltip
+}; # guitip_set
 
-proc tooltip:show {w arg}   {
+proc _show_tooltip  {w txt} {
     if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
     set top $w.balloon
     catch {destroy $top}
@@ -1495,21 +1521,14 @@ proc tooltip:show {w arg}   {
         ::tk::unsupported::MacWindowStyle style $top help none
     }
     pack [message $top.txt -aspect 10000 -bg lightyellow \
-    -font fixed -text $arg]
+    -font fixed -text $txt]
     set wmx [winfo rootx $w]
     set wmy [expr [winfo rooty $w]+[winfo height $w]]
     wm geometry $top [winfo reqwidth $top.txt]x[
     winfo reqheight $top.txt]+$wmx+$wmy
     raise $top
     return
-}; # tooltip:show
-#
-# # Example:
-# button  .b -text Exit -command exit
-# tootip  .b "Push me if you're done with this"
-# pack    .b
-#
-# }
+}; # _show_tooltip
 
 proc gui_set_disabled {w}   {
     #? set widget to disabled state (mode)
@@ -1533,18 +1552,6 @@ proc gui_set_readonly {w}   {
     foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
     return
 }; # gui_set_readonly
-
-proc guitip_set   {w txt}   {
-    #? add tooltip message to given widget
-    global cfg
-    if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
-        tooltip $w "$txt"
-    } else {
-        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
-        tooltip::tooltip $w "$txt"
-    }
-    return
-}; # guitip_set
 
 proc guitheme_set {w theme} {
     #? set attributes for specified object
@@ -2072,7 +2079,7 @@ proc create_resulttable {parent content} {
     global  cfg prg
     set this    $parent.ft
     frame $this
-    set table [create_table $this [list t_nr t_label t_value t_omment]]
+    set table [create_table $this [list t_nr t_label t_value t_comment]]
     # configure columns
     $table columnconfigure 0 -width  3 ;# -hide true ;# line nr
     $table columnconfigure 1 -width 50 ;# label
@@ -2177,15 +2184,13 @@ proc create_resulttable {parent content} {
     return $this
 }; # create_resulttable
 
-proc create_filterhead  {parent txt tip col} {
+proc create_filterhead  {parent key col} {
     #? create a cell for header line in the filter grid
-    # note: txt must be the index to cfg_texts array, we cannot pass the value
-    #       directly because it then must be converted to an object name also,
-    #       see next setting of $this
+    # note: key must be the index to cfg_texts and cfg_tipps array
     _dbx 2 "{$parent, ...}"
-    set this $parent.$txt
-    grid [label $this -text [_get_text $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
-    guitip_set  $this $tip
+    set this $parent.$key
+    grid [label $this -text [_get_text $key] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
+    guitip_set  $this       [_get_tipp $key]
     return
 }; # create_filterhead
 
@@ -2197,15 +2202,15 @@ proc create_filtertext  {parent cmd}    {
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt ;# filters
     set this $parent
     # { set header line with descriptions
-        create_filterhead $this t_key    $f_key(0) 0
-        create_filterhead $this t_moder "$f_mod(0) (-regexp)" 1
-        create_filterhead $this t_modee "$f_mod(0) (-exact)"  2
-        create_filterhead $this t_chars  $f_len(0) 3
-        create_filterhead $this t_regex  $f_rex(0) 4
-        create_filterhead $this t_fg     $f_fg(0)  5
-        create_filterhead $this t_bg     $f_bg(0)  6
-        create_filterhead $this t_font   $f_fn(0)  7
-        create_filterhead $this t_u      $f_un(0)  8
+        create_filterhead $this t_key   0
+        create_filterhead $this t_moder 1
+        create_filterhead $this t_modee 2
+        create_filterhead $this t_chars 3
+        create_filterhead $this t_regex 4
+        create_filterhead $this t_fg    5
+        create_filterhead $this t_bg    6
+        create_filterhead $this t_font  7
+        create_filterhead $this t_u     8
     # }
     foreach {k key} [array get f_key] { # set all filter lines
         if {0 eq $k} { continue }
@@ -2347,7 +2352,7 @@ proc create_filter      {parent cmd}    {
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
     pack [label $this.f.t -relief flat -text [_get_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [_get_text hideline] -variable filter_bool($obj,line)] -anchor w
-    guitip_set $this.f.c [_get_tipp hideline]
+    guitip_set  $this.f.c [_get_tipp hideline]
     gui_set_readonly $this.f.c
     foreach {k key} [array get f_key] {
         if {0 eq $k} { continue }
@@ -3626,7 +3631,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.25 22/09/13 21:51:33
+ #?      @(#) .o-saft.tcl generated by 2.26 22/09/13 23:48:33
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4459,8 +4464,7 @@ proc gui_main       {}  {
 #_____________________________________________________________________ main __|
 
 set doit    0
-# On some systems (i.e. Android) it could be difficult to pass arguments to
-# this script. Hence we provide alias names to simulate passing options.
+# see ADDITIONAL SYNOPSIS above
 switch $cfg(ICH) {
     osaft--testtcl.tcl  -
     o-saft--testtcl.tcl { set cfg(DEBUG)    97; set cfg(quit) 1; set cfg(testtcl) 1 }
