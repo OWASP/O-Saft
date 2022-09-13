@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.23 22/07/07 21:05:21"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.24 22/09/13 11:23:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5068,6 +5068,7 @@ sub checkssl($$)    {
 sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
     # SEE Note:--exitcode
+    _y_CMD("check_exitcode()");
     my $exitcode   = 0; # total count
     my $cnt_prot   = 0; # number of insecure protocol versions
                         # only TLSv12 is considered secure
@@ -5849,13 +5850,20 @@ sub printciphersummary  {
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
+    _y_CMD("printciphersummary() ");
     if (0 < $cfg{'need_netinfo'}) {
         my $key;
+        my $_verbose = $Net::SSLinfo::verbose;  # save
+        if (2 > $_verbose) {    # avoid huge verbosity in simple cases
+            $Net::SSLinfo::verbose = 0 if 2 > $_verbose;
+            _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
+        }
         my $cipher = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
                    $data{'cipher_selected'}->{txt}, "$cipher "
                    . _cipher_get_sec($cipher)
                   );
+        $Net::SSLinfo::verbose = $_verbose;     # restore
     } else {
         _hint("'cipher_selected' temporarily disabled");  # TODO: adapte to new SSLhello (2/2021)
     }
