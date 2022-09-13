@@ -534,7 +534,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.24 Summer Edition 2022
+#?      @(#) 2.25 Summer Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -639,10 +639,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.24 22/09/12 23:51:19"
+set cfg(SID)    "@(#) o-saft.tcl 2.25 22/09/13 21:51:33"
 set cfg(mySID)  "$cfg(SID) Summer Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.24}
+set cfg(VERSION) {2.25}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -937,6 +937,20 @@ array set cfg_texts "
     host        {Host\[:Port\]}
     hideline    {Hide complete line}
     c_toggle    {toggle visibility\nof various texts}
+    DESC_table  {-- CONFIGURATION texts used for table headers ---------------}
+    t_nr        Nr
+    t_label     Label
+    t_value     Value
+    t_omment    Comment
+    t_key       Key
+    t_moder     r
+    t_modee     e
+    t_chars     {#}
+    t_regex     RegEx
+    t_fg        Foreground
+    t_bg        Background
+    t_font      Font
+    t_u         u
     DESC_other  {-- CONFIGURATION texts used at various places ---------------}
     cfg_progs   {Used programs:}
     cfg_regex   {Used RegEx:}
@@ -986,15 +1000,6 @@ Forground, Background, Font and u  specify the markup to apply to matched text.
 Changes apply to next +command.
 }
     DESC_misc   {-- CONFIGURATION texts used in GUI for various other texts --}
-    f_key       Key
-    f_moder     r
-    f_modee     e
-    f_chars     {#}
-    f_regex     RegEx
-    f_fg        Foreground
-    f_bg        Background
-    f_font      Font
-    f_u         u
     DESC_opts   {-- CONFIGURATION texts used in GUI for option checkbuttons --}
     --header    {print header line}
     --enabled   {print only enabled ciphers}
@@ -2009,7 +2014,48 @@ proc create_text  {parent content}  {
     return $this
 }; # create_text
 
-proc create_table {parent content}  {
+proc create_table {parent header}   {
+    #? create scrollable table widget with given header lines; returns table widget
+    _dbx 2 "{$parent, ...}"
+    set this $parent
+    global cfg
+    pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
+    pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
+    pack [tablelist::tablelist $this.t    \
+             -exportselection   true      \
+             -selectmode        extended  \
+             -selecttype        row       \
+             -arrowcolor        black     \
+             -background        white     \
+             -borderwidth       1         \
+             -stripebackground  lightgray \
+             -arrowstyle      $cfg(tfont) \
+             -labelrelief       solid     \
+             -labelfont         osaftBold \
+             -labelpady         3         \
+             -labelcommand      tablelist::sortByColumn -showarrow true \
+             -movablecolumns    true      \
+             -movablerows       false     \
+             -xscrollcommand    [list $this.x set] \
+             -yscrollcommand    [list $this.y set] \
+             -font              TkFixedFont \
+             -spacing             1 \
+             -height             25 \
+             -width             150 \
+             -stretch             2 \
+         ] -side left -fill both -expand yes
+    # insert header line
+    foreach f $header { lappend titles 0 [_get_text $f] }
+    $this.t config -columns $titles
+    return $this.t
+}; # create_table
+
+proc create_resulttext  {parent content} {
+    #? create scrollable text widget and insert given text; returns widget
+    return [create_text $parent $content]
+}; # create_resulttext
+
+proc create_resulttable {parent content} {
     #? create scrollable table widget and insert given text; returns widget
     #
     # create a table with 4 columns: Nr Label Value Comment
@@ -2026,38 +2072,11 @@ proc create_table {parent content}  {
     global  cfg prg
     set this    $parent.ft
     frame $this
-    pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
-    pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
-    pack [tablelist::tablelist $this.t   \
-             -exportselection true \
-             -selectmode extended  \
-             -selecttype row    \
-             -arrowcolor black  \
-             -background white  \
-             -borderwidth 1     \
-             -stripebackground lightgray \
-             -arrowstyle $cfg(tfont) \
-             -labelrelief solid   \
-             -labelfont osaftBold \
-             -labelpady   3     \
-             -labelcommand tablelist::sortByColumn -showarrow true \
-             -movablecolumns true \
-             -movablerows    true \
-             -xscrollcommand [list $this.x set] \
-             -yscrollcommand [list $this.y set] \
-             -font  TkFixedFont \
-             -spacing 1 \
-             -height 25 \
-             -width 150 \
-             -stretch 2 \
-         ] -side left -fill both -expand yes
-    # insert header line
-    set head [list Nr Label Value Comment]
-    foreach f $head { lappend titles 0 $f }
-    $this.t config -columns $titles
-    $this.t columnconfigure 0 -width  3 ;# -hide true ;# line nr
-    $this.t columnconfigure 1 -width 50            ;# label
-    $this.t columnconfigure 2 -width 25            ;# value
+    set table [create_table $this [list t_nr t_label t_value t_omment]]
+    # configure columns
+    $table columnconfigure 0 -width  3 ;# -hide true ;# line nr
+    $table columnconfigure 1 -width 50 ;# label
+    $table columnconfigure 2 -width 25 ;# value
     # insert content
     set i 0        ;# count line numbers; for debuging and warning message
     set n 1        ;# add unique number to each line, for initial sorting
@@ -2078,9 +2097,9 @@ proc create_table {parent content}  {
         set stretch 0
         set line [regsub {^(=+)} $line {\1:}];  # simulate label: value
         if {[regexp {^[=#]+} $line]} {
-            $this.t insert end [list $nr $line]
-            $this.t togglerowhide end
-            $this.t cellconfigure end,0 -stretch 1 ;# FIXME: does not work
+            $table insert end [list $nr $line]
+            $table togglerowhide end
+            $table cellconfigure end,0 -stretch 1 ;# FIXME: does not work
             if {[regexp {Ciphers:\sChecking} $line]} {
                 # +cipher header line containing protocol, like:
                 # === Ciphers: Checking TLSv12 ===
@@ -2094,9 +2113,9 @@ proc create_table {parent content}  {
             continue
         }
         if {[regexp $prg(SAFT).* $line]} {
-            $this.t insert end [list $nr $line]
-            $this.t togglerowhide end
-            $this.t cellconfigure end,0 -stretch 1 ;# FIXME: does not work
+            $table insert end [list $nr $line]
+            $table togglerowhide end
+            $table cellconfigure end,0 -stretch 1 ;# FIXME: does not work
             # tablelist does not support "colspan", hence lines are ignored
             continue
         }
@@ -2150,13 +2169,13 @@ proc create_table {parent content}  {
                 # FIXME: see KNOWN PROBLEMS
         }
         set line [regsub -all \t $line {}] ;# remove tabs in line
-        $this.t insert end $line
+        $table insert end $line
         set tsize [expr $tsize + [string length $line]]
     }
     #_dbx 16 " tsize  = $tsize"
     pack $this -side top
     return $this
-}; # create_table
+}; # create_resulttable
 
 proc create_filterhead  {parent txt tip col} {
     #? create a cell for header line in the filter grid
@@ -2165,27 +2184,28 @@ proc create_filterhead  {parent txt tip col} {
     #       see next setting of $this
     _dbx 2 "{$parent, ...}"
     set this $parent.$txt
-    grid [label $this -text [_get_tipp $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
+    grid [label $this -text [_get_text $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
     guitip_set  $this $tip
     return
 }; # create_filterhead
 
 proc create_filtertext  {parent cmd}    {
     #? create table with filter data
+    # TODO: should be replaced by create_filtertable()
     _dbx 2 "{$parent, $cmd}"
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt ;# filters
     set this $parent
     # { set header line with descriptions
-        create_filterhead $this f_key    $f_key(0) 0
-        create_filterhead $this f_moder "$f_mod(0) (-regexp)" 1
-        create_filterhead $this f_modee "$f_mod(0) (-exact)"  2
-        create_filterhead $this f_chars  $f_len(0) 3
-        create_filterhead $this f_regex  $f_rex(0) 4
-        create_filterhead $this f_fg     $f_fg(0)  5
-        create_filterhead $this f_bg     $f_bg(0)  6
-        create_filterhead $this f_font   $f_fn(0)  7
-        create_filterhead $this f_u      $f_un(0)  8
+        create_filterhead $this t_key    $f_key(0) 0
+        create_filterhead $this t_moder "$f_mod(0) (-regexp)" 1
+        create_filterhead $this t_modee "$f_mod(0) (-exact)"  2
+        create_filterhead $this t_chars  $f_len(0) 3
+        create_filterhead $this t_regex  $f_rex(0) 4
+        create_filterhead $this t_fg     $f_fg(0)  5
+        create_filterhead $this t_bg     $f_bg(0)  6
+        create_filterhead $this t_font   $f_fn(0)  7
+        create_filterhead $this t_u      $f_un(0)  8
     # }
     foreach {k key} [array get f_key] { # set all filter lines
         if {0 eq $k} { continue }
@@ -2236,7 +2256,7 @@ proc create_filtertext  {parent cmd}    {
 
 proc create_filtertable {parent cmd}    {
     #? create scrollable table widget with filter data
-    #################### experimental, not yet ready #################
+#################### experimental, not yet ready #################
     ##### table ok, but missing:
     #####    radiobutton for column r und e ; probaly needs to use checkbutton
     #####    set variablen in all columns
@@ -2247,40 +2267,12 @@ proc create_filtertable {parent cmd}    {
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
     set this $parent
-    font create osaftBig    {*}[font config TkFixedFont] -size 9
-    pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
-    pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
-    pack [tablelist::tablelist $this.t   \
-             -exportselection true \
-             -selectmode    extended  \
-             -selecttype    cell   \
-             -arrowcolor    black  \
-             -background    white  \
-             -borderwidth   2     \
-             -stripebackground #e7e7e7 \
-             -arrowstyle    $cfg(tfont) \
-             -labelrelief   solid   \
-             -labelfont     osaftBold \
-             -labelpady     3     \
-             -labelcommand  tablelist::sortByColumn -showarrow true \
-             -movablecolumns true  \
-             -movablerows    false \
-             -showseparators true  \
-             -xscrollcommand [list $this.x set] \
-             -yscrollcommand [list $this.y set] \
-             -font  osaftBig \
-             -spacing 1 \
-             -height 16 \
-             -width 150 \
-             -stretch 4 \
-         ] -side left -fill both -expand yes
-    # insert header line
-    set head [list f_key f_moder f_modee f_chars f_regex f_fg f_bg f_font f_u ]
-    foreach f $head { lappend titles 0 [_get_tipp $f] }
+    set table [create_table $this [list t_key t_moder t_modee t_chars t_regex t_fg t_bg t_font t_u ]]
+    # configure columns
 # TODO: -tooltipaddcommand,
-    $this.t config -columns $titles
-    $this.t columnconfigure 0 -width  10;#
-    $this.t columnconfigure 7 -width  10;#
+    $table config -columns $titles
+    $table columnconfigure 0 -width  10;#
+    $table columnconfigure 7 -width  10;#
     # insert lines
     set row -1
     foreach {k key} [array get f_key] { # set all filter lines
@@ -2326,7 +2318,7 @@ proc create_filtertab   {parent cmd}    {
     return
 }; # create_filtertab
 
-proc create_filterwin   {}    {
+proc create_filterwin   {}  {
     #? create window with filter data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
@@ -2365,8 +2357,8 @@ proc create_filter      {parent cmd}    {
         set key [_str2obj [string trim $key]]
         set filter_bool($obj,HELP-$key) 1;  # default: text is visible
         pack [checkbutton $this.x$key \
-                    -text $f_key($k) -variable filter_bool($obj,HELP-$key) \
-                    -command "toggle_filter $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
+                -text $f_key($k) -variable filter_bool($obj,HELP-$key) \
+                -command "toggle_filter $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
              ] -anchor w
         # note: using $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
@@ -2404,7 +2396,7 @@ proc create_configtab   {parent cmd}    {
     return
 }; # create_configtab
 
-proc create_configwin   {}    {
+proc create_configwin   {}  {
     #? create window with gui config data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
@@ -2467,7 +2459,7 @@ proc create_progtab     {parent cmd}    {
     return
 }; # create_progtab
 
-proc create_progwin     {}    {
+proc create_progwin     {}  {
     #? create window with tool config data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
@@ -2477,7 +2469,7 @@ proc create_progwin     {}    {
     return
 }; # create_progwin
 
-proc create_ciphers {}   {
+proc create_ciphers     {}  {
     #? create new window with Cipher Suites; store widget in cfg(winC)
     _dbx 2 "{}"
     global cfg myX
@@ -2489,7 +2481,7 @@ proc create_ciphers {}   {
     return
 }; # create_ciphers
 
-proc create_about {}     {
+proc create_about       {}  {
     #? create new window with About text; store widget in cfg(winA)
     #  Show the text starting with  #?  from this file.
     _dbx 2 "{}"
@@ -2828,8 +2820,8 @@ proc create_tab   {parent layout cmd content} {
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"]
     switch $layout {
-        text    { set w [create_text  $tab $content].t }
-        table   { set w [create_table $tab $content].t }
+        text    { set w [create_resulttext  $tab $content].t }
+        table   { set w [create_resulttable $tab $content].t }
     }
         # ugly hardcoded .t from .note
     pack [button $tab.saveresult -command "osaft_save $w {TAB} $cfg(EXEC)"] \
@@ -3378,7 +3370,7 @@ proc search_more  {w search_text regex} {
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [_count_tuples $matches]
     set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
-    set txt  [create_text $this ""].t
+    set txt  [create_resulttext $this ""].t
     #{ adjust window, quick&dirty
     create_window:title   $this "[_get_text win_search_results] »$search_text«"
     create_window:nosave  $this    ;# no "Save" button needed here
@@ -3634,7 +3626,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.24 22/09/12 23:51:19
+ #?      @(#) .o-saft.tcl generated by 2.25 22/09/13 21:51:33
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4357,9 +4349,10 @@ proc gui_init:fonts {}  {
     # configure fonts
     _dbx 2 "{}"
     global cfg prg
-    font create osaftHead   {*}[font config TkFixedFont  ] -weight bold
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
+    font create osaftHead   {*}[font config TkFixedFont  ] -weight bold
     font create osaftSlant  {*}[font config TkFixedFont  ] -slant italic
+    font create osaftBig    {*}[font config TkFixedFont]   -size 9
     if {0==$prg(option)} {  # only if not done in RC-file
         option add *Button.font osaftBold  ;# if we want buttons more exposed
         option add *Label.font  osaftBold  ;# ..
