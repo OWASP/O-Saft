@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.11 22/07/03 13:03:27";
+our $SID_osaft  =  "@(#) osaft.pm 2.12 22/09/14 09:16:34";
 our $VERSION    =  "22.06.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2123,7 +2123,7 @@ our %cfg = (
         'SSLv3'     =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
                        "0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
                         0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
-                        0x0300C000 .. 0x0300C022. 0x0300FEE0 .. 0x0300FEFF,
+                        0x0300C000 .. 0x0300C022, 0x0300FEE0 .. 0x0300FEFF,
                         0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
                        ",
         'SSLv3_SSLv2' =>        # constants for SSLv3 ciphers (with SSLv2 ciphers)
@@ -2132,7 +2132,7 @@ our %cfg = (
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,
                         0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
                         0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
-                        0x0300C000 .. 0x0300C0FF. 0x0300FEE0 .. 0x0300FEFF,
+                        0x0300C000 .. 0x0300C0FF, 0x0300FEE0 .. 0x0300FEFF,
                         0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
                        ",
 # TODO: 'SSLv3_old' =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
@@ -2142,7 +2142,7 @@ our %cfg = (
         'TLSv12'    =>          # constants for TLSv1.2 ciphers
                        "0x0300003B .. 0x03000040, 0x03000067 .. 0x0300006D,
                         0x0300009C .. 0x030000A7, 0x030000BA .. 0x030000C5,
-                        0x0300C023 .. 0x0300C032. 0x0300C072 .. 0x0300C079,
+                        0x0300C023 .. 0x0300C032, 0x0300C072 .. 0x0300C079,
                         0x0300CC13 .. 0x0300CC15, 0x0300FFFF,
                        ",
         'TLSv13'    => "0x03001301 .. 0x03001305, 0x0300FF85, 0x0300FF87",
@@ -3418,7 +3418,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.11 2022/07/03
+2.12 2022/09/14
 
 =head1 AUTHOR
 
