@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.92 22/07/04 13:05:57
+# SID   @(#) help.txt 1.93 22/09/14 10:14:06
 
 NAME
 
@@ -52,7 +52,6 @@ QUICKSTART
           $0 +vulns example.tld
 
         * Check for all known ciphers (independant of SSL library):
-          $0 +cipherraw example.tld --range=full
           checkAllCiphers.pl example.tld
           checkAllCiphers.pl example.tld --range=full --v
 
@@ -203,8 +202,8 @@ TECHNICAL INFORMATION
           * --openssl=TOOL  TOOL only used for  +cipher  --ciphermode=openssl
           * --legacy=owasp  option obsolete
 
-        The commands  +cipherall  and  +cipherraw  are "converted" to the new
-        syntax, as follows:
+        The historic commands  +cipherall  and  +cipherraw should be replaced
+        with the new syntax, as follows:
 
               VERSION < 19.11.19           VERSION > 19.11.19
              #----------------------------+---------------------------------
@@ -516,20 +515,6 @@ COMMANDS
           with  --cipher=CIPHER  option.
 
           Use  --v  option to see all ciphers being checked.
-
-      +cipherall
-
-          Option is obsolete.
-
-      +cipherraw
-
-          Check target for all possible ciphers.
-          Does not depend on local SSL implementation.
-
-          In contrast to  +cipher  this command has some options to tweak the
-          cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for  +cipherall and +cipherraw  command&  for
-          details.
 
       +cipher-default
 
@@ -1515,12 +1500,10 @@ OPTIONS
           Note:  setting empty list or element most likely does not work with
           openssl executable (for example  --force-openssl).
 
-    Options for  +cipherall and +cipherraw  command
-
       --range=RANGE
       --cipherrange=RANGE
 
-          Specify range of cipher constants to be tested by  +cipherall.
+          Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
           * 'rfc'               all ciphers defined in various RFCs
           * 'shifted'           'rfc', shifted by 64 bytes to the right
@@ -3529,7 +3512,6 @@ KNOWN PROBLEMS
           * DNS:             1 -  10 sec
           * need_default:    <5 sec
           * need_cipher:     1 - 299 sec (+cipher with socket)
-          * need_cipher:     1 -  20 sec (+cipherraw)
           * no SNI:          1 -  10 sec
           * connection test: 1 -   5 sec
           * prepare checks:  2 -  20 sec
@@ -4987,7 +4969,7 @@ ATTRIBUTION
         * O-Saft - OWASP SSL advanced forensic tool
             Thanks to Gregor Kuznik for this title.
 
-        * +cipherraw and some proxy functionality implemented by Torsten Gigler.
+        * Basic cipher check and some proxy functionality implemented by Torsten Gigler.
 
         * For re-writing some docs in proper English, thanks to Robb Watson.
 
