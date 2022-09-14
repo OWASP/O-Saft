@@ -12,7 +12,6 @@ package main;   # ensure that main:: variables are used, if not defined herein
 #       _is_cfg_intern()
 #       _is_member()
 #       _need_cipher()
-#       _get_ciphers_range()
 
 ## no critic qw(Subroutines::RequireArgUnpacking)
 #        Parameters are ok for trace output.
@@ -56,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.10 22/07/02 11:29:15";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.11 22/09/14 09:45:54";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -133,9 +132,9 @@ sub _yeast_ciphers_list     {
            $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
        } else {
            # expand list
-           @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
-              # NOTE: _get_ciphers_range() first arg is the SSL version, which
-              #       is usually unknown here, hence the first is passed
+           @range = osaft::get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
+              # NOTE: osaft::get_ciphers_range() first arg is the SSL version,
+              #       which is usually unknown here, hence the first is passed
               #       this may result in a wrong list; but its trace output only
            $_cnt = scalar @range;
        }
@@ -975,7 +974,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.10 2022/07/02
+2.11 2022/09/14
 
 =head1 AUTHOR
 
