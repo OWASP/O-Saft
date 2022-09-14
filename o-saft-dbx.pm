@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.13 22/09/14 10:05:14";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.14 22/09/14 22:36:44";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -122,6 +122,7 @@ sub _yeast_ciphers_list     {
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
     my $ciphers = "@{$cfg{'ciphers'}}";
+print "do: @{$cfg{do}}";
     _yeast("  _need_cipher= $need");
     if (0 < $need) {
         # avoid printing huge lists
@@ -772,7 +773,7 @@ sub _yeast_test_memory  {
 
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
-    my $arg = shift;    # normalised option, like --testinit
+    my $arg = shift;    # normalised option, like --testinit, --testcipherlist
     _yeast($arg);
     OSaft::Ciphers::show($arg)  if ($arg =~ /^--test[._-]?cipher/);
     _yeast_test_help()          if ('--test'          eq $arg);
@@ -792,7 +793,11 @@ sub _yeast_test {
     OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
     if ('list' eq $arg) {
         # _yeast_ciphers_list() relies on some special $cfg{} settings
+        # enforce printing cipher information by adding  +cipher, this
+        # should not harm other functionality, as _yeast_test() is for
+        # debugging only and will exit then
         $cfg{'verbose'} = 1;
+        push(@{$cfg{'do'}}, 'cipher'); # enforce printing cipher informations
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
     }
@@ -971,7 +976,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.13 2022/09/14
+2.14 2022/09/14
 
 =head1 AUTHOR
 
