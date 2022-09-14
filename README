@@ -57,7 +57,7 @@
 (          INSTALL.sh     /path/to/install --force
  )
 (       There're no dependencies to other perl modules for checkAllCiphers.pl
- )      so the test of all ciphers (aka +cipherall) will work with it.
+ )      so the test of all ciphers will work with it.
 (       The modules Net::SSLinfo, Net::SSLhello are part of O-Saft and should
  )      be installed in ./Net .
 (
@@ -68,7 +68,7 @@
  )          o-saft-usr.pm        (private functions, some kind of API)
 (           o-saft-man.pm        (documentation and generation functions)
  )          o-saft.pod           (documentation in POD format)
-(           checkAllCiphers.pl   (simple script for +cipherall option)
+(           checkAllCiphers.pl   (simple script for checking all ciphers)
  )          .o-saft.tcl          (private user configuration for GUI)
 (           o-saft-img.tcl       (images for buttons in GUI)
  )          contrib/*            (additional programs and tools)
@@ -79,7 +79,6 @@
 (       o-saft.pl +info  your.tld
  )      o-saft.pl +quick your.tld
 (       o-saft.pl +cipher    your.tld
- )      o-saft.pl +cipherall your.tld
 (       o-saft.pl --help=commands
  )
 (       o-saft.tcl      (simple GUI; requires Tcl/Tk 8.5 or newer)
