@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.33 22/06/27 13:00:35
+#?      @(#) Makefile.hlp 1.34 22/09/14 13:39:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.33
+_SID.hlp           := 1.34
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -122,6 +122,8 @@ testarg-hlp---help-cfg-text:    TEST.args  += --help=cfg-text
 testarg-hlp---help-cfg-ourstr:  TEST.args  += --help=cfg-ourstr
 testarg-hlp---help-cfg-range:   TEST.args  += --help=cfg-range
 testarg-hlp---help-cfg-regex:   TEST.args  += --help=cfg-regex
+testarg-hlp---help-ciphers-text: TEST.args += --help=ciphers-text
+testarg-hlp---help-ciphers-html: TEST.args += --help=ciphers-html
 testarg-hlp---help-gen-docs:    TEST.args  += --help=gen-docs
 testarg-hlp---help-gen-wiki:    TEST.args  += --help=gen-wiki
 testarg-hlp---help-gen-html:    TEST.args  += --help=gen-html
