@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.11 22/09/14 09:45:54";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.12 22/09/14 10:00:29";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -122,26 +122,24 @@ sub _yeast_ciphers_list     {
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
     my $ciphers = "@{$cfg{'ciphers'}}";
-    if (_is_cfg_do('cipherraw')) {
-       $need = 1;
-       my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
-       if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
-           # avoid huge (useless output)
-           $_cnt = 0xffffff;
-           $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
-           $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
-       } else {
-           # expand list
-           @range = osaft::get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
-              # NOTE: osaft::get_ciphers_range() first arg is the SSL version,
-              #       which is usually unknown here, hence the first is passed
-              #       this may result in a wrong list; but its trace output only
-           $_cnt = scalar @range;
-       }
-       $ciphers = "@range";
-    }
     _yeast("  _need_cipher= $need");
     if (0 < $need) {
+        # avoid printing huge lists
+        my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
+        if ($cfg{'cipherrange'} =~ m/(full|huge|safe|rfc)/i) {
+            # avoid huge (useless output)
+            $_cnt = 0xffffff;
+            $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
+            $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
+            $_cnt = 2051     if ($cfg{'cipherrange'} =~ m/rfc/i);  # estimated count
+        } else {
+            # expand smaller list
+            @range = osaft::get_ciphers_range('TLSv13', $cfg{'cipherrange'});
+               # NOTE: osaft::get_ciphers_range() first arg is the SSL version,
+               #       which is usually unknown here, hence TLSv13 is passed
+            $_cnt = scalar @range;
+        }
+        $ciphers = "@range";
         $_cnt = sprintf("%5s", $_cnt);  # format count
         _yeast("      starttls= " . $cfg{'starttls'});
         _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_is_cfg_do('cipherraw')) {
@@ -792,10 +790,9 @@ sub _yeast_test {
     _yeast_test_prot()          if ('prot'            eq $arg);
     $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
     OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
-    if ('list'     eq $arg) {
+    if ('list' eq $arg) {
         # _yeast_ciphers_list() relies on some special $cfg{} settings
         $cfg{'verbose'} = 1;
-        push(@{$cfg{'do'}},      'cipherraw');
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
     }
@@ -974,7 +971,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.11 2022/09/14
+2.12 2022/09/14
 
 =head1 AUTHOR
 
