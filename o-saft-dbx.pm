@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.12 22/09/14 10:00:29";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.13 22/09/14 10:05:14";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -116,7 +116,7 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
     #  avoids printing of empty lines
 
 sub _yeast_ciphers_list     {
-    #? print ciphers fromc %cfg (output optimised for +cipher and +cipherraw)
+    #? print ciphers fromc %cfg (output optimised for +cipher)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
@@ -142,7 +142,7 @@ sub _yeast_ciphers_list     {
         $ciphers = "@range";
         $_cnt = sprintf("%5s", $_cnt);  # format count
         _yeast("      starttls= " . $cfg{'starttls'});
-        _yeast("   cipherrange= " . $cfg{'cipherrange'});   # used only if (_is_cfg_do('cipherraw')) {
+        _yeast("   cipherrange= " . $cfg{'cipherrange'});
         _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
         _yeast("use cipher from openssl= " . $cmd{'extciphers'});
         _yeast(" $_cnt ciphers= $ciphers");
@@ -971,7 +971,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.12 2022/09/14
+2.13 2022/09/14
 
 =head1 AUTHOR
 
