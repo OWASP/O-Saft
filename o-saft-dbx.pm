@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.14 22/09/14 22:36:44";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.15 22/09/14 23:54:03";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -122,7 +122,6 @@ sub _yeast_ciphers_list     {
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
     my $ciphers = "@{$cfg{'ciphers'}}";
-print "do: @{$cfg{do}}";
     _yeast("  _need_cipher= $need");
     if (0 < $need) {
         # avoid printing huge lists
@@ -976,7 +975,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.14 2022/09/14
+2.15 2022/09/14
 
 =head1 AUTHOR
 
