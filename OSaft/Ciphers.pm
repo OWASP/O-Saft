@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.25 22/09/11 12:19:17";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.26 22/09/14 14:43:03";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1169,6 +1169,7 @@ sub _ciphers_init   {
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $fh = *DATA;
        $fh = *main::DATA if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
+    my $du = *main::DATA; # avoid perl warning "... used only once: possible typo ..."
     while (my $line = <$fh>) {
         chomp $line;
         next if ($line =~ m/^\s*$/);
@@ -1358,7 +1359,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.25 2022/09/11
+2.26 2022/09/14
 
 =head1 AUTHOR
 
