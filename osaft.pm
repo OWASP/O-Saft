@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.12 22/09/14 09:16:34";
+our $SID_osaft  =  "@(#) osaft.pm 2.13 22/09/14 09:41:32";
 our $VERSION    =  "22.06.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -226,6 +226,7 @@ our @EXPORT     = qw(
                 %data_oid
                 %dbx
                 %cfg
+                get_ciphers_range
                 get_cipher_owasp
                 get_openssl_version
                 get_dh_paramter
@@ -2971,11 +2972,35 @@ sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
 
 =pod
 
+=head2 get_ciphers_range($range)
+
+Get cipher suite hex values for given C<$range>.
+
 =head2 get_cipher_owasp($cipher)
 
 Get OWASP rating of given C<%cipher>.
 
+=head2 get_openssl_version($cmd)
+
+Call external $cmd (which is a full path for L<openssl|openssl>, usually) executable
+to retrive its version. Returns version string.
 =cut
+
+sub get_ciphers_range   {
+    #? retrun array of cipher-suite hex values for given range
+    my $ssl   = shift;
+    my $range = shift;
+       $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
+    my @all;
+    _trace("get_ciphers_range($ssl, $range");
+    #  NOTE: following eval must not use the block form because the value
+    #        needs to be evaluated
+    foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+        push(@all, sprintf("0x%08X",$c));
+    }
+    _trace2("get_ciphers_range()\t= @all");
+    return @all;
+} # get_ciphers_range
 
 sub get_cipher_owasp    {
     #? return OWASP rating for cipher suite name (see $cfg{regex}->{{OWASP_*}
@@ -2994,14 +3019,6 @@ sub get_cipher_owasp    {
     # TODO: implement when necessary: notOWASP_A, notOWASP_B, notOWASP_C, notOWASP_D
     return $sec;
 } # get_cipher_owasp
-
-=pod
-
-=head2 get_openssl_version($cmd)
-
-Call external $cmd (which is a full path for L<openssl|openssl>, usually) executable
-to retrive its version. Returns version string.
-=cut
 
 sub get_openssl_version {
     # we do a simple call, no checks, should work on all platforms
@@ -3418,7 +3435,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.12 2022/09/14
+2.13 2022/09/14
 
 =head1 AUTHOR
 
