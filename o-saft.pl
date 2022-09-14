@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.25 22/09/14 09:43:34"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.26 22/09/14 13:45:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5839,7 +5839,9 @@ sub printciphersummary  {
         my $_verbose = $Net::SSLinfo::verbose;  # save
         if (2 > $_verbose) {    # avoid huge verbosity in simple cases
             $Net::SSLinfo::verbose = 0 if 2 > $_verbose;
-            _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
+            if (0 < $_verbose) {
+                _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
+            }
         }
         my $cipher = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
