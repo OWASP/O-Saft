@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.24 22/09/13 11:23:45"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.25 22/09/14 09:43:34"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2824,23 +2824,6 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
-sub _get_ciphers_range  {
-    #? retrun array of cipher-suite hex values for given range
-    #  uses $cfg{'cipherranges'}->{$range}
-    my $ssl   = shift;
-    my $range = shift;
-       $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
-    my @all;
-    _trace("_get_ciphers_range($ssl, $range");
-    #  NOTE: following eval must not use the block form because the value
-    #        needs to be evaluated
-    foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-        push(@all, sprintf("0x%08X",$c));
-    }
-    _trace2("_get_ciphers_range: @all");
-    return @all;
-} # _get_ciphers_range
-
 sub _get_ciphers_list   {
     #? return space-separated list of cipher suites according command-line options
     _trace("_get_ciphers_list(){");
@@ -3073,7 +3056,7 @@ sub ciphers_scan_raw    {
                 $Net::SSLhello::usesni = 0;
             }
         }
-        my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
+        my @all = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
         my @accepted = [];  # accepted ciphers (cipher keys)
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
@@ -7842,7 +7825,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         $cipher_results = ciphers_scan_raw($host, $port);   # print ciphers also
         $checks{'cnt_totals'}->{val} = scalar %$cipher_results; # FIXME: this is the number of enabled ciphers!
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            $checks{'cnt_totals'}->{val} += _get_ciphers_range($ssl, $cfg{'cipherrange'});
+            $checks{'cnt_totals'}->{val} += osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
         }
         # SEE Note:+cipherall
         my $total   = $checks{'cnt_totals'}->{val};
