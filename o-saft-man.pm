@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.37 22/09/15 16:18:07";
+my  $SID_man= "@(#) o-saft-man.pm 2.38 22/09/15 18:47:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.37'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.38'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -320,21 +320,21 @@ sub _man_html_head  {
 <title><!-- inserted by osaft_title() --></title>
 
 <script nonce="4f2d53616674">
-function $(id){return document.getElementById(id);}
-function d(id){return $(id).style;}
-function toggle_checked(id){id=$(id);id.checked=(id.checked=='false')?'true':'false';;}
+function _i(id){return document.getElementById(id);}
+function d(id){return _i(id).style;}
+function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';;}
 function toggle_display(id){id.display=(id.display=='none')?'block':'none';}
 function osaft_title(txt, tip){
         document.title      = ". : " + txt + " : .";
-        $("title").title    = tip;
-        $("txt").innerText  = txt;
+        _i("title").title    = tip;
+        _i("txt").innerText  = txt;
         return;
 }
 
 function osaft_buttons(){
 // generated buttons for most common commands in <table id="osaft_buttons">
         var buttons = ['+quick', '+check', '+cipher', '+info', '+protocols', '+vulns' ];
-        var table   = $('osaft_buttons');
+        var table   = _i('osaft_buttons');
         for (var b in buttons) {
                 // <input type=submit name="--cmd" value="+check" ><div class=q
                 // id='c+check'></div><br>
@@ -365,9 +365,9 @@ function osaft_commands(){
         for (var p=0; p<arr.length; p++) {
             if (/^h./.test(arr[p].id)===true) {
                 var id = arr[p].id.replace(/^h/, 'q');
-                if ($(id) != undefined) {
+                if (_i(id) != undefined) {
                     // button exists, add help text
-                    $(id).innerHTML = $(arr[p].id).innerHTML;
+                    _i(id).innerHTML = _i(arr[p].id).innerHTML;
                 }
             }
         }
@@ -384,12 +384,12 @@ function osaft_options(){
             if (/^h./.test(arr[p].id)===true) {
                 var id = arr[p].id.replace(/^h/, 'q');
                 // TODO: *ssl and *tls must use *SSL
-                if ($(id) != undefined) {
-                    obj = $(id).parentNode;
+                if (_i(id) != undefined) {
+                    obj = _i(id).parentNode;
                     if (/^LABEL$/.test(obj.nodeName)===true) {
                         // checkbox exists, add help text to surrounding
                         // LABEL
-                        obj.title = $(arr[p].id).innerHTML;
+                        obj.title = _i(arr[p].id).innerHTML;
                     }
                 }
             }
@@ -1601,21 +1601,16 @@ sub man_ciphers_html{
 <title><!-- inserted by osaft_title() --></title>
 
 <script nonce="4f2d53616674">
-function $(id){return document.getElementById(id);}
+function _i(id){return document.getElementById(id);}
 function toggle_display(obj){
 	obj = obj.style;
 	obj.display = (obj.display=='block')?'none':'block';
 	return false;
 }
-function toggle_format(){
-	toggle_display($('list'));
-	toggle_display($('table'));
-	return false;
-}
 function osaft_title(txt, tip){
 	document.title      = ". : " + txt + " : .";
-	$("title").title    = tip;
-	$("txt").innerText  = txt;
+	_i("title").title    = tip;
+	_i("txt").innerText  = txt;
 	return false;
 }
 </script>
@@ -1679,7 +1674,7 @@ tbody td {width: 5em;    }
 EoHTML
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
-  Toggle Layout: <button onclick="toggle_format();">table <> list</button>
+  Toggle Layout: <button onclick="toggle_display(_i('list'));toggle_display(_i('table'));">table <> list</button>
 EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
@@ -1692,8 +1687,8 @@ EoHTML
   osaft_title("$title","$title");
 EoHTML
     $htm .= << 'EoHTML';
-  $('list' ).style.display='block';   /* keep JavaScript's DOM happy */
-  $('table').style.display='none';    /* keep JavaScript's DOM happy */
+  _i('list' ).style.display='block';   /* keep JavaScript's DOM happy */
+  _i('table').style.display='none';    /* keep JavaScript's DOM happy */
 </script>
 </body></html>
 EoHTML
@@ -2377,7 +2372,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.37 2022/09/15
+2.38 2022/09/15
 
 =head1 AUTHOR
 
