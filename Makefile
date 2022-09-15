@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.5 22/07/02 22:36:00
+#?      @(#) Makefile 2.7 22/09/15 12:33:59
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.5
+_SID            = 2.7
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -103,7 +103,7 @@ SRC.docker      = \
 SRC.rc          = .$(SRC.pl)
 
 SRC.make        = Makefile
-SRC.misc        = README CHANGES
+SRC.misc        = README.md CHANGES
 SRC.inst        = $(SRC.contrib.dir)/INSTALL-template.sh
 
 # contrib files
@@ -281,8 +281,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.5 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.5
+_INST.genbytext = generated data by Makefile 2.7 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.7
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -383,7 +383,11 @@ help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
 #doc.all-v doc.all-vv: help.all     # TODO: not implemented yet
 
-.PHONY: help help.all doc doc.all
+# same target as testarg-hlp---help-gen-docs in t/Makefile.dev
+static.docs:
+	$(SRC.pl) --header --no-rc --help=gen-docs
+
+.PHONY: help help.all doc doc.all static.docs
 
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
@@ -431,7 +435,7 @@ release: $(GEN.tgz)
 	mv $(GEN.tgz).asc $(_RELEASE)/
 	mv $(GEN.tgz)     $(_RELEASE)/
 	@echo "# don't forget:"
-	@echo "#   # change digest: sha256:... in README; upload to github"
+	@echo "#   # change digest: sha256:... in README.md; upload to github"
 	@echo "#   # change digest: sha256:... in Dockerfile; upload to github"
 	@echo "#   make docker"
 	@echo "#   make test.docker"
@@ -517,11 +521,11 @@ pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
 wiki:   $(GEN.wiki)
-docs:   $(GEN.docs)
+docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.5
-tar:     GREP_EDIT  = 2.5
+GREP_EDIT           = 2.7
+tar:     GREP_EDIT  = 2.7
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -547,7 +551,7 @@ docker.build:
 	@$(TRACE.target)
 	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
 	$(EXE.docker) cp Dockerfile
-	$(EXE.docker) cp README
+	$(EXE.docker) cp README.md
 docker: docker.build
 
 docker.rm:
