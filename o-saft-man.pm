@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.35 22/09/15 12:06:50";
+my  $SID_man= "@(#) o-saft-man.pm 2.36 22/09/15 16:14:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.35'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.36'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -312,18 +312,21 @@ sub _man_html_head  {
     # SEE HTML:JavaScript
     _man_dbx("_man_html_head() ...");
     return << 'EoHTML';
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title><!-- set below --></title>
-<script>
+<!-- CSP in meta tag is not recommended, but it servs as hint how to set the HTTP header Content-Security-Policy -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'nonce-4f2d53616674'">
+<title><!-- inserted by osaft_title() --></title>
+
+<script nonce="4f2d53616674">
 function $(id){return document.getElementById(id);}
 function d(id){return $(id).style;}
 function toggle_checked(id){id=$(id);id.checked=(id.checked=='false')?'true':'false';;}
 function toggle_display(id){id.display=(id.display=='none')?'block':'none';}
-function osaft_title(txt, ver){
+function osaft_title(txt, tip){
         document.title      = ". : " + txt + " : .";
-        $("title").title    = ver;
+        $("title").title    = tip;
         $("txt").innerText  = txt;
         return;
 }
@@ -676,7 +679,7 @@ sub _man_form_foot  {
   </fieldset>
  </form>
  <hr>
- <script>
+ <script nonce="4f2d53616674">
   var osaft_action_http="$cgi_bin"; // default action used in FORM and A tags; see osaft_handler()
   var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
   osaft_commands("a");              // generate quick buttons
@@ -697,6 +700,7 @@ EoHTML
 sub _man_html_foot  {
     #? print footer of HTML page
     _man_dbx("_man_html_foot() ...");
+    my $nonce   = '4f2d53616674';
     my $title   = _man_get_title();
     my $vers    = _man_get_version();
     return << "EoHTML";
@@ -705,8 +709,8 @@ sub _man_html_foot  {
  <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
  <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
  <hr><p><span style="display:none">&copy; Achim Hoffmann 2022</span></p>
- <script>
-  osaft_title("$title", "$vers");
+ <script nonce="$nonce">
+  osaft_title("$title","$vers");
   if (schema_is_file()===true) { osaft_disable_help(); }
  </script>
 </body></html>
@@ -1592,8 +1596,11 @@ sub man_ciphers_html{
 <!DOCTYPE html>
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- CSP in meta tag is not recommended, but it servs as hint how to set the HTTP header Content-Security-Policy -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
 <title><!-- inserted by osaft_title() --></title>
-<script>
+
+<script nonce="4f2d53616674">
 function $(id){return document.getElementById(id);}
 function toggle_display(obj){
 	obj = obj.style;
@@ -1605,9 +1612,9 @@ function toggle_format(){
 	toggle_display($('table'));
 	return false;
 }
-function osaft_title(txt){
+function osaft_title(txt, tip){
 	document.title      = ". : " + txt + " : .";
-	$("title").title    = txt;
+	$("title").title    = tip;
 	$("txt").innerText  = txt;
 	return false;
 }
@@ -1677,12 +1684,16 @@ EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
     $htm .= _man_ciphers_html_ul($txt);
-    $htm .= << 'EoHTML';
+    my $nonce   = '4f2d53616674';
+    my $title   = _man_get_title();
+    $htm .= << "EoHTML";
 
-<script>
-osaft_title("O - S a f t -- OWASP - SSL advanced forensic tool: Cipher Suites");
-$('list' ).style.display='block';   /* keep JavaScript's DOM happy */
-$('table').style.display='none';    /* keep JavaScript's DOM happy */
+<script nonce="$nonce">
+  osaft_title("$title","$title");
+EoHTML
+    $htm .= << 'EoHTML';
+  $('list' ).style.display='block';   /* keep JavaScript's DOM happy */
+  $('table').style.display='none';    /* keep JavaScript's DOM happy */
 </script>
 </body></html>
 EoHTML
@@ -2366,7 +2377,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.35 2022/09/15
+2.36 2022/09/15
 
 =head1 AUTHOR
 
