@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.38 22/09/15 18:47:16";
+my  $SID_man= "@(#) o-saft-man.pm 2.39 22/09/15 19:56:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.38'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.39'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -321,9 +321,8 @@ sub _man_html_head  {
 
 <script nonce="4f2d53616674">
 function _i(id){return document.getElementById(id);}
-function d(id){return _i(id).style;}
 function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';;}
-function toggle_display(id){id.display=(id.display=='none')?'block':'none';}
+function toggle_display(id){id=_i(id).style;id.display=(id.display=='none')?'block':'none';}
 function osaft_title(txt, tip){
         document.title      = ". : " + txt + " : .";
         _i("title").title    = tip;
@@ -477,7 +476,7 @@ function schema_is_file(){
 function toggle_handler(){
 // toggle display of "schema" button
         if (schema_is_file()===true) { return; }
-        toggle_display(d("schema"));
+        toggle_display("schema");
         return;
 }
 </script>
@@ -569,7 +568,7 @@ sub _man_html_warn  {
   .m > div > h3:before{content:"\00a0\00a0\00a0" }
  </style>
  <div id="warn" class="m"> <div>
-  <a  id="seen" href="" onclick="toggle_display(d('warn'));return false;" title="I understand">X</a>
+  <a  id="seen" href="" onclick="toggle_display('warn');return false;" title="I understand">X</a>
   <h3>O-Saft as CGI </h3>
   <p>This is a sample implementation to show O-Saft's functionality.</p>
   <p>It is not intended to be used for regular tests of foreign servers.</p>
@@ -626,9 +625,9 @@ All options with values are passed to $cgi_bin .
     <table id="osaft_buttons">
     </table><br>
     <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-    <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
+    <button onclick="toggle_display('a');return false;" title="show options">Commands & Options</button>
     <div id="a" >
-        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
+        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
     <br>
       <div class=n>
 EoHTML
@@ -659,7 +658,7 @@ EoHTML
       </div><!-- class=n -->
     </div><!-- id="a" -->
     <div id="b" >
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
+        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
         <!-- not yet working properly
         <input type=text     name=--cmds size=55 title="type any command or option"/>/>
         -->
@@ -674,7 +673,7 @@ sub _man_form_foot  {
     return << "EoHTML";
 </p>
         <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
+        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
     </div><!-- id="b" -->
   </fieldset>
  </form>
@@ -684,8 +683,8 @@ sub _man_form_foot  {
   var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
   osaft_commands("a");              // generate quick buttons
   osaft_options();                  // generate title for quick options
-  d("a").display="none";            // hide
-  d("b").display="none";            // hide
+  _i("a").style.display="none";     // hide
+  _i("b").style.display="none";     // hide
   toggle_handler();                 // show "change schema" button if file:
   toggle_checked("q--header");      // want nice output
   toggle_checked("q--enabled");     // avoid huge cipher lists
@@ -2372,7 +2371,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.38 2022/09/15
+2.39 2022/09/15
 
 =head1 AUTHOR
 
