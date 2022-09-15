@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.34 22/09/15 00:32:48";
+my  $SID_man= "@(#) o-saft-man.pm 2.35 22/09/15 12:06:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -144,8 +144,6 @@ my $_commands   = <<'EoCmds';
                   Commands to test ciphers provided by target
 +cipher           Check target for ciphers (using libssl).
 +cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
-+cipherall        Check target for all possible ciphers (same format as +cipher).
-+cipherraw        Check target for all possible ciphers (special format).
 +cipher-default   Check target for (default) selected cipher for each protocol.
 +cipher-null      Check if target accepts NULL ciphers.
 +cipher-adh       Check if target accepts ciphers with anonymous key exchange.
@@ -282,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.34'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.35'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -332,7 +330,7 @@ function osaft_title(txt, ver){
 
 function osaft_buttons(){
 // generated buttons for most common commands in <table id="osaft_buttons">
-        var buttons = ['+quick', '+check', '+cipher', '+cipherall', '+info', '+protocols', '+vulns' ];
+        var buttons = ['+quick', '+check', '+cipher', '+info', '+protocols', '+vulns' ];
         var table   = $('osaft_buttons');
         for (var b in buttons) {
                 // <input type=submit name="--cmd" value="+check" ><div class=q
@@ -2368,7 +2366,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.34 2022/09/15
+2.35 2022/09/15
 
 =head1 AUTHOR
 
