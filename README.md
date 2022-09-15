@@ -6,7 +6,7 @@
 |   |
 ----
 
-# [![OWASP Logo](./images/owasp_logo.png) O-Saft - OWASP SSL advanced forensic tool](https://owasp.org/www-project-o-saft/)
+# [ O-Saft - OWASP SSL advanced forensic tool](https://owasp.org/www-project-o-saft/)
 
 
 ## DESCRIPTION
@@ -101,10 +101,9 @@ o-saft.tcl      # (simple GUI; requires Tcl/Tk 8.5 or newer)
 o-saft-docker   # (simple wrapper to call o-saft.pl in docker image)
 ```
 
-Project home is https://www.owasp.org/index.php/O-Saft
-Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
-
-Historic Project home https://www.owasp.org/index.php/Projects/O-Saft
+* Project home is https://www.owasp.org/index.php/O-Saft
+* Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
+* Historic Project home https://www.owasp.org/index.php/Projects/O-Saft
 
 Get a Copy (latest stable release)
 ```
