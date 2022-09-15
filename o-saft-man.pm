@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.40 22/09/15 21:59:31";
+my  $SID_man= "@(#) o-saft-man.pm 2.41 22/09/15 22:17:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.40'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.41'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -325,6 +325,7 @@ function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'f
 function toggle_display(id){
 	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
 	id.display=(id.display=='none')?'block':'none';
+	return false;
 }
 function osaft_title(txt, tip){
         document.title      = ". : " + txt + " : .";
@@ -1608,9 +1609,9 @@ sub man_ciphers_html{
 
 <script nonce="4f2d53616674">
 function _i(id){return document.getElementById(id);}
-function toggle_display(obj){
-	obj = obj.style;
-	obj.display = (obj.display=='block')?'none':'block';
+function toggle_display(id){
+	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
+	id.display = (id.display=='none')?'block':'none';
 	return false;
 }
 function osaft_title(txt, tip){
@@ -1680,7 +1681,7 @@ tbody td {width: 5em;    }
 EoHTML
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
-  Toggle Layout: <button onclick="toggle_display(_i('a'));toggle_display(_i('b'));">table <> list</button>
+  Toggle Layout: <button onclick="toggle_display('a');toggle_display('b');">table <> list</button>
 EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
@@ -2378,7 +2379,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.40 2022/09/15
+2.41 2022/09/15
 
 =head1 AUTHOR
 
