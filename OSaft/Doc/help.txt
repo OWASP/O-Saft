@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.93 22/09/14 10:14:06
+# SID   @(#) help.txt 1.94 22/09/15 13:14:39
 
 NAME
 
@@ -3735,8 +3735,8 @@ DEPENDENCIES
         * o-saft-dbx.pm
         * o-saft-man.pm
         * o-saft-usr.pm
-        * o-saft-README
         * o-saft-docker
+        * o-saft-README
 
 
 INSTALLATION
