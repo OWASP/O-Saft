@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.36 22/09/15 16:14:44";
+my  $SID_man= "@(#) o-saft-man.pm 2.37 22/09/15 16:18:07";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.36'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.37'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -316,7 +316,7 @@ sub _man_html_head  {
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- CSP in meta tag is not recommended, but it servs as hint how to set the HTTP header Content-Security-Policy -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'nonce-4f2d53616674'">
+<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
 <title><!-- inserted by osaft_title() --></title>
 
 <script nonce="4f2d53616674">
@@ -2377,7 +2377,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.36 2022/09/15
+2.37 2022/09/15
 
 =head1 AUTHOR
 
