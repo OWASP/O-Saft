@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.39 22/09/15 19:56:02";
+my  $SID_man= "@(#) o-saft-man.pm 2.40 22/09/15 21:59:31";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.39'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.40'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -322,7 +322,10 @@ sub _man_html_head  {
 <script nonce="4f2d53616674">
 function _i(id){return document.getElementById(id);}
 function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';;}
-function toggle_display(id){id=_i(id).style;id.display=(id.display=='none')?'block':'none';}
+function toggle_display(id){
+	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
+	id.display=(id.display=='none')?'block':'none';
+}
 function osaft_title(txt, tip){
         document.title      = ". : " + txt + " : .";
         _i("title").title    = tip;
@@ -519,6 +522,7 @@ function toggle_handler(){
  li             {margin-left:     3em;}
  li.n           {list-style-type: none; }
  div            {                     padding:0.5em; border:var(--border-1);}
+ div[id=c]      {                     padding:0px;   border:var(--border-0);}
  div[class=c]   {margin-left:     4em;padding:0.1em; border:var(--border-0);}
  div[class=n]   {                                    border:var(--border-0);}
  form           {font-size:       20px; }   /* chromium hack */
@@ -625,10 +629,11 @@ All options with values are passed to $cgi_bin .
     <table id="osaft_buttons">
     </table><br>
     <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-    <button onclick="toggle_display('a');return false;" title="show options">Commands & Options</button>
-    <div id="a" >
-        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
-    <br>
+    <button onclick="toggle_display('c');return false;" title="show options">Commands & Options</button>
+    <div id="c" >
+     <div id="a" >
+      <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
+      <br>
       <div class=n>
 EoHTML
         # Above HTML contains <div class=n> which contains checkboxes for some
@@ -656,8 +661,8 @@ EoHTML
     $txt .= _man_html_go("cgi");
     $txt .= << "EoHTML";
       </div><!-- class=n -->
-    </div><!-- id="a" -->
-    <div id="b" >
+     </div><!-- id="a" -->
+     <div id="b" >
         <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
         <!-- not yet working properly
         <input type=text     name=--cmds size=55 title="type any command or option"/>/>
@@ -674,7 +679,8 @@ sub _man_form_foot  {
 </p>
         <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
         <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-    </div><!-- id="b" -->
+     </div><!-- id="b" -->
+    </div><!-- id="c" -->
   </fieldset>
  </form>
  <hr>
@@ -683,8 +689,9 @@ sub _man_form_foot  {
   var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
   osaft_commands("a");              // generate quick buttons
   osaft_options();                  // generate title for quick options
-  _i("a").style.display="none";     // hide
+  _i("a").style.display="block";    // hide
   _i("b").style.display="none";     // hide
+  _i("c").style.display="none";     // hide
   toggle_handler();                 // show "change schema" button if file:
   toggle_checked("q--header");      // want nice output
   toggle_checked("q--enabled");     // avoid huge cipher lists
@@ -1289,7 +1296,7 @@ sub _man_ciphers_html_dl {
     my $dl = shift;
        $dl =~ s/\n$//;  # remove trailing \n
     return << "EoHTML";
-      <div id="a">
+      <div>
         <dl>
 $dl
         </dl>
@@ -1316,7 +1323,7 @@ sub _man_ciphers_html_ul {
     #? helper function for man_ciphers_html(): return UL tag with content
     #  generate simple list with UL and LI tags from given text
     my $txt = shift;
-    my $ul  = '  <ul id="list">';
+    my $ul  = '  <ul id="a">';
     #
     # <li onclick="toggle_display(this);return false;" title="show details">
     #         <span sec=weak>weak</span>
@@ -1354,7 +1361,7 @@ sub _man_ciphers_html_tb {
     #  generate html table with all columns
     # SEE Cipher:text and Cipher:HTML
     my  $txt  = shift;
-    my  $tab  = '  <table id="table"><thead>';
+    my  $tab  = '  <table id="b"><thead>';
         $tab .= "\n    <tr>\n";
     # following not yet working
 #      <colgroup>
@@ -1673,7 +1680,7 @@ tbody td {width: 5em;    }
 EoHTML
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
-  Toggle Layout: <button onclick="toggle_display(_i('list'));toggle_display(_i('table'));">table <> list</button>
+  Toggle Layout: <button onclick="toggle_display(_i('a'));toggle_display(_i('b'));">table <> list</button>
 EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
@@ -1686,8 +1693,8 @@ EoHTML
   osaft_title("$title","$title");
 EoHTML
     $htm .= << 'EoHTML';
-  _i('list' ).style.display='block';   /* keep JavaScript's DOM happy */
-  _i('table').style.display='none';    /* keep JavaScript's DOM happy */
+  _i('a').style.display='block';    /* keep JavaScript's DOM happy */
+  _i('b').style.display='none';     /* keep JavaScript's DOM happy */
 </script>
 </body></html>
 EoHTML
@@ -2371,7 +2378,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.39 2022/09/15
+2.40 2022/09/15
 
 =head1 AUTHOR
 
