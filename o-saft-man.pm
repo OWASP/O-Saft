@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.41 22/09/15 22:17:21";
+my  $SID_man= "@(#) o-saft-man.pm 2.42 22/09/16 13:00:58";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -280,7 +280,7 @@ sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic too
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.41'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.42'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -324,6 +324,7 @@ function _i(id){return document.getElementById(id);}
 function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';;}
 function toggle_display(id){
 	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
+	if("" === id.display){ id.display='none';} /* Chrome hack */
 	id.display=(id.display=='none')?'block':'none';
 	return false;
 }
@@ -2379,7 +2380,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.41 2022/09/15
+2.42 2022/09/16
 
 =head1 AUTHOR
 
