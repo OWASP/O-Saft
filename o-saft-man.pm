@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.42 22/09/16 13:00:58";
+my  $SID_man= "@(#) o-saft-man.pm 2.44 22/09/17 21:02:23";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -184,156 +184,55 @@ my $_voodoo     = <<'EoHelp';
 EoHelp
 
 #_____________________________________________________________________________
-#_________________________________________________________ internal methods __|
+#____________________________________________________________ HTML snippets __|
 
-# SEE Perl:Undefined subroutine
-*_warn = sub { print($STR{WARN}, join(" ", @_), "\n"); } if not defined &_warn;
-*_hint = sub { print($STR{HINT}, join(" ", @_), "\n"); } if not defined &_hint;
-*_dbx  = sub { print($STR{DBX},  join(" ", @_), "\n"); } if not defined &_dbx;
+my %html = (
+    'title'         => 'O - S a f t  --  OWASP - SSL advanced forensic tool',
 
-sub _get_filename   {
-# TODO: move to osaft.pm or alike
-    my $src = shift || "o-saft.pl";
-    foreach my $dir (@INC) {    # find the proper file
-        if (-e "$dir/$src") {
-            $src = "$dir/$src";
-            last;
-        }
-    }
-    return $src;
-} # _get_filename
+    'nonce'         => '4f2d53616674',
+    'script_nonce'  => '<script nonce="4f2d53616674">',
 
-sub _man_dbx        {   # similar to _y_CMD
-    # When called from within parent's BEGIN{} section, options are not yet
-    # parsed, and so not available in %cfg. Hence we use @ARGV to check for
-    # options, which is not performant, but fast enough here.
-    my @txt = @_;
-    my $anf = "";
-    my $end = "";
-    if (0 < (grep{/^--help=gen.cgi/i} @ARGV)) {
-        # debug messages should be HTML comments when generating HTML
-        $anf = "<!-- "; $end = " -->";
-        # TODO: need to sanitise @txt : remove <!-- and/or -->
-    }
-    if (0 < $VERBOSE) {
-        print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
-    }
-    return;
-} # _man_dbx
+    'doctype'       => "<!DOCTYPE html>\n",
 
-sub _man_use_tty    {   # break long lines of text; SEE Note:tty
-    # set screen width in $cfg{'tty'}->{'width'}
-    _man_dbx("_man_use_tty() ...");
-    return if not defined $cfg{'tty'}->{'width'};
-    my $_len = 80;
-    my $cols = $cfg{'tty'}->{'width'};
-    if (10 > $cols) {   # size smaller 10 doesn't make sense
-        $cols = $ENV{COLUMNS} || 0;  # ||0 avoids perl's "Use of uninitialized value"
-        if ($cols =~ m/^[1-9][0-9]+$/) {    # ensure that we get numbers
-            $cfg{'tty'}->{'width'} = $cols;
-            return;
-        }
-        # try with tput, if it fails try with stty; errors silently ignored
-        $cols = qx(\\tput cols 2>/dev/null) || undef; ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        if (not defined $cols) {    # tput failed or missing
-            $cols =  qx(\\stty size 2>/dev/null)      ## no critic qw(InputOutput::ProhibitBacktickOperators)
-                     || $_len; # default if stty fails
-            $cols =~ s/^[^ ]* //;   # stty returns:  23 42  ; extract 42
-        }
-        $cfg{'tty'}->{'width'} = $cols;
-    }
-    $cfg{'tty'}->{'width'} = 80 if (10 > $cfg{'tty'}->{'width'});   # safe fallback
-    _man_dbx("_man_use_tty: " . $cfg{'tty'}->{'width'});
-    return;
-} # _man_use_tty
+    'copyright'     => << 'EoCOPY',
+ <hr><p><span style="display:none">&copy; Achim Hoffmann 2022</span></p>
+EoCOPY
 
-sub _man_squeeze    {   # break long lines of text; SEE Note:tty
-    # if len is undef, default from %cfg is used
-    my $len   = shift;
-    my $txt   = shift;
-    return $txt if not defined $cfg{'tty'}->{'width'};
-    # if a width is defined, --tty  was used
-    # Keep in mind that  help.txt  is formatted to fit in 80 columns,  hence a
-    # width > 80 does not change the total length of the line (which is always
-    # < 80), but changes the number of left most spaces.
-    $txt =~ s/[\t]/    /g;    # replace all TABs
-    my $max   = $cfg{'tty'}->{'width'} - 2;     # let's have one space right
-    my $ident = ' ' x $cfg{'tty'}->{'ident'};   # default ident spaces
-    if (defined $len) {
-        # break long lines at max size and ident remaining with len
-        $ident = "$cfg{'tty'}->{'arrow'}\n" . ' ' x $len;
-        $txt =~ s/(.{$max})/$1$ident/g;
-    } else {
-        # change left most 8 spaces to specified number of spaces
-        # break long lines at max size
-        # break long lines at max size and ident with specified number of spaces
-        $txt =~ s/\n {8}/$ident/g;              # reduced existing identation
-        $ident = "$cfg{'tty'}->{'arrow'}\n" . $ident;
-        $max--;
-    }
-    #$max--;
-    $txt =~ s/(.{$max})/$1$ident/g;             # squeeze line length
-    return $txt;
-} # _man_squeeze
+    'action'        => 'HTML_cgi_bin',
 
-sub _man_get_title  { return 'O - S a f t  --  OWASP - SSL advanced forensic tool'; }
-sub _man_get_version{
-    # ugly, but avoids global variable elsewhere or passing as argument
-    no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.42'; $v = _VERSION() if (defined &_VERSION);
-    return $v;
-} # _man_get_version
+    'meta'          => << 'EoMETA',
 
-sub _man_file_get   {
-    #? get filename containing text for specified keyword
-    my $typ = shift;
-    return OSaft::Doc::Data::get_as_text('glossary.txt')    if ('abbr'  eq $typ);
-    return OSaft::Doc::Data::get_as_text('links.txt')       if ('links' eq $typ);
-    return OSaft::Doc::Data::get_as_text('rfc.txt')         if ('rfc'   eq $typ);
-    return '';
-} # _man_file_get
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
+  <!-- CSP in meta tag is not recommended, but it servs as hint how to set
+       the HTTP header Content-Security-Policy -->
+  <title><!-- inserted by osaft_title() --></title>
+EoMETA
 
-sub _man_http_head  {
-    #? print HTTP headers (for CGI mode)
-    my $txt = "";
-    return $txt if (0 >= (grep{/--cgi.?trace/} @ARGV));
-    # Checking @ARGV for --cgi-trace is ok, as this option is for simulating
-    # CGI mode only, in o-saft.pl SEE Note:CGI mode
-    # When called from o-saft.cgi, HTTP headers are already written.
-    $txt .= "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-    $txt .= "Content-type: text/html; charset=utf-8\r\n";
-    $txt .= "\r\n";
-    $txt .= _man_dbx("_man_http_head() ...");   # note that it must be after all HTTP headers
-    return $txt;
-} # _man_http_head
+    'script_func1'  => << 'EoFUNC',
 
-sub _man_html_head  {
-    #? print footer of HTML page
-    # SEE HTML:JavaScript
-    _man_dbx("_man_html_head() ...");
-    return << 'EoHTML';
-<!DOCTYPE html>
-<html><head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- CSP in meta tag is not recommended, but it servs as hint how to set the HTTP header Content-Security-Policy -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
-<title><!-- inserted by osaft_title() --></title>
-
-<script nonce="4f2d53616674">
-function _i(id){return document.getElementById(id);}
-function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';;}
-function toggle_display(id){
+  function _i(id){return document.getElementById(id);}
+  function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';}
+  function toggle_display(id){
 	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
 	if("" === id.display){ id.display='none';} /* Chrome hack */
-	id.display=(id.display=='none')?'block':'none';
+	id.display = (id.display=='none')?'block':'none';
 	return false;
-}
-function osaft_title(txt, tip){
-        document.title      = ". : " + txt + " : .";
-        _i("title").title    = tip;
-        _i("txt").innerText  = txt;
-        return;
-}
+  }
+  function osaft_title(txt, tip){
+	document.title      = ". : " + txt + " : .";
+	_i("title").title   = tip; /* window title */
+	_i("txt").innerText = txt; /* page   title */
+	return;
+  }
+  function schema_is_file(){
+        if (/^file:/.test(location.protocol)===true) { return true; }
+        return false;
+  }
+
+EoFUNC
+
+    'script_func2'  => << 'EoFUNC',
 
 function osaft_buttons(){
 // generated buttons for most common commands in <table id="osaft_buttons">
@@ -474,18 +373,46 @@ function osaft_disable_help(){
         }
         return;
 }
-function schema_is_file(){
-        if (/^file:/.test(location.protocol)===true) { return true; }
-        return false;
-}
 function toggle_handler(){
 // toggle display of "schema" button
         if (schema_is_file()===true) { return; }
         toggle_display("schema");
         return;
 }
-</script>
-<style>
+EoFUNC
+
+    'script_endall' => << 'EoFUNC',
+
+ <script nonce="4f2d53616674">
+  osaft_title("JS_title","JS_tipp");
+  if (_i('a')){ _i('a').style.display='block'; }  /* keep JavaScript's DOM happy */
+  if (_i('b')){ _i('b').style.display='none';  }
+  if (_i('c')){ _i('c').style.display='none';  }
+  if ("function" === typeof osaft_disable_help) {
+    if (true === schema_is_file()) { osaft_disable_help(); }
+  }
+ </script>
+EoFUNC
+
+    'script_endcgi' => << 'EoFUNC',
+
+ <script nonce="4f2d53616674">
+  var osaft_action_http="HTML_cgi_bin"; // default action used in FORM and A tags; see osaft_handler()
+  var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
+  osaft_commands("a");              // generate quick buttons
+  osaft_options();                  // generate title for quick options
+  toggle_handler();                 // show "change schema" button if file:
+  toggle_checked("q--header");      // want nice output
+  toggle_checked("q--enabled");     // avoid huge cipher lists
+  toggle_checked("q--no-tlsv13");   // most likely not yet implemented
+  toggle_checked("o--header");      // .. also as option ..
+  toggle_checked("o--enabled");     // .. also as option ..
+  toggle_checked("o--no-tlsv13");   // .. also as option ..
+ </script>
+EoFUNC
+
+    'style'         => << 'EoSTYLE',
+
   /* variable definitions */
   :root {
     /* color and background */
@@ -547,21 +474,53 @@ function toggle_handler(){
     border: 2px solid darkgrey; border-radius:2px;
     background-color:rgba(0,0,0,0.8); color:white;
     font-weight:normal; padding:0.3em; }
-</style>
-</head>
+EoSTYLE
+
+    'body_anf'      => << 'EoBODY',
 <body>
- <h2 id="title" title="" ><span id="txt" ></span>
+ <h2 id="title" title="" ><span id="txt" ></span><!-- inserted by osaft_title() -->
      <button id="schema" style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all&#13;action and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
-EoHTML
-    # TODO: need <input name=cgi value="/path/to/o-saft.cgi" />
-} # _man_html_head
+EoBODY
 
-sub _man_html_warn  {
-    #? print "Note" text box for CGI usage; only visible with fragment #Note
-    _man_dbx("_man_html_warn() ...");
-    return << 'EoHTML';
+    'form_anf'      => << 'EoFORM',
+
+ <form id="o-saft" action="HTML_cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
+  <noscript><div>
+JavaScript disabled. The buttons for most common commands are missing.<br>
+The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
+All options with values are passed to HTML_cgi_bin .
+  </div><br></noscript>
+  <input  type=hidden name="--cgi" value="" >
+  <fieldset>
+    <p>
+    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
+    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
+    </p>
+    <table id="osaft_buttons">
+    </table><br>
+    <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
+    <button onclick="toggle_display('a');return false;" title="show options">Commands & Options</button>
+    <div id="c" >
+     <div id="a" >
+       <button class=r onclick="toggle_display('c');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
+      <br>
+EoFORM
+
+    'form_end'      => << 'EoFORM',
+</p>
+        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
+        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
+     </div><!-- id="b" -->
+    </div><!-- id="c" -->
+  </fieldset>
+ </form>
+ <hr>
+EoFORM
+
+    'warning_box'   => << 'EoWARN',
+ <!-- print "Note" text box for CGI usage; only visible with fragment #Note -->
  <style>
   /* message box "Note", if necessary # TODO: font-size not working in firefox */
   .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
@@ -580,66 +539,215 @@ sub _man_html_warn  {
   <p>It is not intended to be used for regular tests of foreign servers.</p>
   <p>The server may be slow and is short on memory, so please don't expect miracles.</p>
  </div> </div>
-EoHTML
-} # _man_html_warn
+EoWARN
+
+    'links'         => << 'EoLINK',
+ <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
+ <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
+ <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
+ <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
+EoLINK
+
+);
+
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn = sub { print($STR{WARN}, join(" ", @_), "\n"); } if not defined &_warn;
+*_hint = sub { print($STR{HINT}, join(" ", @_), "\n"); } if not defined &_hint;
+*_dbx  = sub { print($STR{DBX},  join(" ", @_), "\n"); } if not defined &_dbx;
+
+sub _get_filename   {
+# TODO: move to osaft.pm or alike
+    my $src = shift || "o-saft.pl";
+    foreach my $dir (@INC) {    # find the proper file
+        if (-e "$dir/$src") {
+            $src = "$dir/$src";
+            last;
+        }
+    }
+    return $src;
+} # _get_filename
+
+sub _man_dbx        {   # similar to _y_CMD
+    # When called from within parent's BEGIN{} section, options are not yet
+    # parsed, and so not available in %cfg. Hence we use @ARGV to check for
+    # options, which is not performant, but fast enough here.
+    my @txt = @_;
+    my $anf = "";
+    my $end = "";
+    if (0 < (grep{/^--help=gen.cgi/i} @ARGV)) {
+        # debug messages should be HTML comments when generating HTML
+        $anf = "<!-- "; $end = " -->";
+        # TODO: need to sanitise @txt : remove <!-- and/or -->
+    }
+    if (0 < $VERBOSE) {
+        print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
+    }
+    return;
+} # _man_dbx
+
+sub _man_use_tty    {   # break long lines of text; SEE Note:tty
+    # set screen width in $cfg{'tty'}->{'width'}
+    _man_dbx("_man_use_tty() ...");
+    return if not defined $cfg{'tty'}->{'width'};
+    my $_len = 80;
+    my $cols = $cfg{'tty'}->{'width'};
+    if (10 > $cols) {   # size smaller 10 doesn't make sense
+        $cols = $ENV{COLUMNS} || 0;  # ||0 avoids perl's "Use of uninitialized value"
+        if ($cols =~ m/^[1-9][0-9]+$/) {    # ensure that we get numbers
+            $cfg{'tty'}->{'width'} = $cols;
+            return;
+        }
+        # try with tput, if it fails try with stty; errors silently ignored
+        $cols = qx(\\tput cols 2>/dev/null) || undef; ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        if (not defined $cols) {    # tput failed or missing
+            $cols =  qx(\\stty size 2>/dev/null)      ## no critic qw(InputOutput::ProhibitBacktickOperators)
+                     || $_len; # default if stty fails
+            $cols =~ s/^[^ ]* //;   # stty returns:  23 42  ; extract 42
+        }
+        $cfg{'tty'}->{'width'} = $cols;
+    }
+    $cfg{'tty'}->{'width'} = 80 if (10 > $cfg{'tty'}->{'width'});   # safe fallback
+    _man_dbx("_man_use_tty: " . $cfg{'tty'}->{'width'});
+    return;
+} # _man_use_tty
+
+sub _man_squeeze    {   # break long lines of text; SEE Note:tty
+    # if len is undef, default from %cfg is used
+    my $len   = shift;
+    my $txt   = shift;
+    return $txt if not defined $cfg{'tty'}->{'width'};
+    # if a width is defined, --tty  was used
+    # Keep in mind that  help.txt  is formatted to fit in 80 columns,  hence a
+    # width > 80 does not change the total length of the line (which is always
+    # < 80), but changes the number of left most spaces.
+    $txt =~ s/[\t]/    /g;    # replace all TABs
+    my $max   = $cfg{'tty'}->{'width'} - 2;     # let's have one space right
+    my $ident = ' ' x $cfg{'tty'}->{'ident'};   # default ident spaces
+    if (defined $len) {
+        # break long lines at max size and ident remaining with len
+        $ident = "$cfg{'tty'}->{'arrow'}\n" . ' ' x $len;
+        $txt =~ s/(.{$max})/$1$ident/g;
+    } else {
+        # change left most 8 spaces to specified number of spaces
+        # break long lines at max size
+        # break long lines at max size and ident with specified number of spaces
+        $txt =~ s/\n {8}/$ident/g;              # reduced existing identation
+        $ident = "$cfg{'tty'}->{'arrow'}\n" . $ident;
+        $max--;
+    }
+    #$max--;
+    $txt =~ s/(.{$max})/$1$ident/g;             # squeeze line length
+    return $txt;
+} # _man_squeeze
+
+sub _man_usr_value  {
+    #? return value of argument $_[0] from @{$cfg{'usr_args'}}
+    # expecting something like  usr-action=/some.cgi  in $cfg{'usr_args'}
+    my $key =  shift;
+       $key =~ s/^(?:--|\+)//;  # strip leading chars
+    my @arg =  "";              # key, value # Note: value is anything right to leftmost = 
+    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); # does not allow multiple $key in 'usr_args'
+    return $arg[1];
+} # _man_usr_value
+
+sub _man_get_version{
+    # ugly, but avoids global variable elsewhere or passing as argument
+    no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+    my $v = '2.44'; $v = _VERSION() if (defined &_VERSION);
+    return $v;
+} # _man_get_version
+
+sub _man_html_init  {
+    #? initialise %html hash
+    my $tipp    = _man_get_version();
+    my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
+        # get action from --usr-action= or set to default (defensive programming)
+    $html{'action'}         =~ s/HTML_cgi_bin/$cgi_bin/g;
+    $html{'form_anf'}       =~ s/HTML_cgi_bin/$cgi_bin/g;
+    $html{'script_endcgi'}  =~ s/HTML_cgi_bin/$cgi_bin/g;
+    $html{'script_endall'}  =~ s/JS_title/$html{'title'}/g;
+    $html{'script_endall'}  =~ s/JS_tipp/$tipp/g;
+    return;
+} # _man_html_init
+
+sub _man_file_get   {
+    #? get filename containing text for specified keyword
+    my $typ = shift;
+    return OSaft::Doc::Data::get_as_text('glossary.txt')    if ('abbr'  eq $typ);
+    return OSaft::Doc::Data::get_as_text('links.txt')       if ('links' eq $typ);
+    return OSaft::Doc::Data::get_as_text('rfc.txt')         if ('rfc'   eq $typ);
+    return '';
+} # _man_file_get
+
+sub _man_http_head  {
+    #? print HTTP headers (for CGI mode)
+    return "" if (0 >= (grep{/--cgi.?trace/} @ARGV));
+    # Checking @ARGV for --cgi-trace is ok, as this option is for simulating
+    # CGI mode only, in o-saft.pl SEE Note:CGI mode
+    # When called from o-saft.cgi, HTTP headers are already written.
+    return "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n"
+         . "Content-type: text/html; charset=utf-8\r\n"
+         . "\r\n"
+         . _man_dbx("_man_http_head() ...")  # note that it must be after all HTTP headers
+    ;
+} # _man_http_head
+
+sub _man_html_head  {
+    #? print footer of HTML page
+    # SEE HTML:JavaScript
+    _man_dbx("_man_html_head() ...");
+    return $html{'doctype'}
+         . '<html><head>'
+         . $html{'meta'}
+         . $html{'script_nonce'}
+         . $html{'script_func1'}
+         . $html{'script_func2'}
+         . '</script>' . "\n"
+         . '<style>'
+         . $html{'style'}
+         . '</style>' . "\n"
+         . '</head>'  . "\n"
+         . $html{'body_anf'}
+    ;
+} # _man_html_head
 
 sub _man_help_button{
     #? return href tag for a help button
-    my $url   = shift;
     my $cmd   = shift;      # must be --help=* option; also used for button text
     my $class = shift;      # value for class= attribute (if not empty)
     my $title = shift;      # value for title= attribute
+    my $href  = $html{'action'};
     my $txt   = $cmd;       # 
        $txt  =~ s/^--.*help=//; # button text without --help and other options
        #$txt  =~ s/^help=//; # button text without --help
        $class = "class='$class'" if ($class !~ m/^\s*$/);
     return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>',
-                    $class, $url, $cmd, $title, $txt);
+                    $class, $href, $cmd, $title, $txt);
 } # _man_help_button
 
 sub _man_form_head  {
     #? print start of CGI form
-    my $cgi_bin = shift;
+    my $cgi_bin = $html{'action'};
     my $txt;
     _man_dbx("_man_form_head() ...");
     $txt .= sprintf(" <div class=h ><b>Help:</b>\n");
     $txt .= sprintf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help",         'b', "open window with complete help (plain text)"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=command", 'b', "open window with help for commands"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=checks",  'b', "open window with help for checks"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=example", 'b', "open window with examples"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=opt",     'b', "open window with help for options"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=FAQ",     'b', "open window with FAQs"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=abbr",    'b', "open window with the glossar"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=todo",    'b', "open window with help for ToDO"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--help=ciphers-text", 'b', "open window with list of cipher suites (text format)"));
-    $txt .= sprintf("  %s\n", _man_help_button($cgi_bin, "--content-type=html&--help=ciphers-html", 'b', "open window with list of cipher suites (HTML format)"));
-    $txt .= << "EoHTML";
- </div>
- <form id="o-saft" action="$cgi_bin" method="GET" onsubmit="return osaft_submit()" target="cmd" >
-  <noscript><div>
-JavaScript disabled. The buttons for most common commands are missing.<br>
-The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
-All options with values are passed to $cgi_bin .
-  </div><br></noscript>
-  <input  type=hidden name="--cgi" value="" >
-  <fieldset>
-    <p>
-    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
-    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
-    </p>
-    <table id="osaft_buttons">
-    </table><br>
-    <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-    <button onclick="toggle_display('c');return false;" title="show options">Commands & Options</button>
-    <div id="c" >
-     <div id="a" >
-      <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
-      <br>
-      <div class=n>
-EoHTML
-        # Above HTML contains <div class=n> which contains checkboxes for some
-        # options. These checkboxes are added in following  foreach loop.
+    $txt .= sprintf("  %s\n", _man_help_button("--help",         'b', "open window with complete help (plain text)"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=command", 'b', "open window with help for commands"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=checks",  'b', "open window with help for checks"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=example", 'b', "open window with examples"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=opt",     'b', "open window with help for options"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=FAQ",     'b', "open window with FAQs"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=abbr",    'b', "open window with the glossar"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=todo",    'b', "open window with help for ToDO"));
+    $txt .= sprintf("  %s\n", _man_help_button("--help=ciphers-text", 'b', "open window with list of cipher suites (text format)"));
+    $txt .= sprintf("  %s\n", _man_help_button("--content-type=html&--help=ciphers-html", 'b', "open window with list of cipher suites (HTML format)"));
+    $txt .= ' </div>' . $html{'form_anf'} . "      <div class=n>\n";
+        # <div class=n> contains checkboxes for some options.These checkboxes
+        # are added in following  foreach loop.
         # Above HTML contains  <table id="osaft_buttons">  which contains the
         # quick buttons for some commands. These quick buttons should get the
         # description from the later generated help text in this page,  hence
@@ -675,54 +783,18 @@ EoHTML
 
 sub _man_form_foot  {
     #? print end of CGI form
-    my $cgi_bin = shift;
     _man_dbx("_man_form_foot() ...");
-    return << "EoHTML";
-</p>
-        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-     </div><!-- id="b" -->
-    </div><!-- id="c" -->
-  </fieldset>
- </form>
- <hr>
- <script nonce="4f2d53616674">
-  var osaft_action_http="$cgi_bin"; // default action used in FORM and A tags; see osaft_handler()
-  var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
-  osaft_commands("a");              // generate quick buttons
-  osaft_options();                  // generate title for quick options
-  _i("a").style.display="block";    // hide
-  _i("b").style.display="none";     // hide
-  _i("c").style.display="none";     // hide
-  toggle_handler();                 // show "change schema" button if file:
-  toggle_checked("q--header");      // want nice output
-  toggle_checked("q--enabled");     // avoid huge cipher lists
-  toggle_checked("q--no-tlsv13");   // most likely not yet implemented
-  toggle_checked("o--header");      // .. also as option ..
-  toggle_checked("o--enabled");     // .. also as option ..
-  toggle_checked("o--no-tlsv13");   // .. also as option ..
- </script>
-EoHTML
+    return $html{'form_end'} . $html{'script_endcgi'};
 } # _man_form_foot
 
 sub _man_html_foot  {
     #? print footer of HTML page
     _man_dbx("_man_html_foot() ...");
-    my $nonce   = '4f2d53616674';
-    my $title   = _man_get_title();
-    my $vers    = _man_get_version();
-    return << "EoHTML";
- <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
- <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
- <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
- <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
- <hr><p><span style="display:none">&copy; Achim Hoffmann 2022</span></p>
- <script nonce="$nonce">
-  osaft_title("$title","$vers");
-  if (schema_is_file()===true) { osaft_disable_help(); }
- </script>
-</body></html>
-EoHTML
+    return $html{'links'}
+         . $html{'copyright'}
+         . $html{'script_endall'}
+         . '</body></html>'
+    ;
 } # _man_html_foot
 
 sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
@@ -820,7 +892,6 @@ sub _man_html_cmds  {
 sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print text in HTML format
     my $key = shift;    # cgi or html
-    my $url = shift;    # URL
     my $anf = shift;    # pattern where to start extraction
     my $end = shift;    # pattern where to stop extraction
     my $txt;
@@ -862,7 +933,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
                     # commands and options expected with =head3 only
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     if ('cgi' eq $key) {
-                        $txt .= _man_help_button($url, $a, "b r", "open window with special help") if ($a =~ m/--help/);
+                        $txt .= _man_help_button($a, "b r", "open window with special help") if ($a =~ m/--help/);
                     }
                     $txt .= _man_html_ankor($a) . "\n";
                     $txt .= sprintf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
@@ -872,7 +943,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
         # encode special markup
         m/(--help=[A-Za-z0-9_.-]+)/ && do {         # add button for own help (must be first in sequence)
                     if ('cgi' eq $key) {
-                        $txt .= _man_help_button($url, $1, "b r", "open window with special help");
+                        $txt .= _man_help_button($1, "b r", "open window with special help");
                     }
                 };
         m/^\s*S&([^&]*)&/ && do {
@@ -918,13 +989,11 @@ sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print table header line (dashes)
     my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
     my @args = @_;      # .. hence "no critic" pragma above
-    my $pod  = "";
     _man_dbx("_man_head(..) ...");
-    return $pod if (1 > $cfg_header);
     my $len0 = $len1 - 1;
-    $pod .= sprintf("=%${len0}s | %s\n", @args);
-    $pod .= sprintf("=%s+%s\n", '-' x  $len1, '-'x60);
-    return $pod;
+    return "" if (1 > $cfg_header);
+    return sprintf("=%${len0}s | %s\n", @args)
+         . sprintf("=%s+%s\n", '-' x  $len1, '-'x60);
 } # _man_head
 
 sub _man_foot       {
@@ -966,16 +1035,6 @@ sub _man_pod_item   {
     return "=over\n\n$line\n=back\n";
 } # _man_pod_item
 
-sub _man_usr_value  {
-    #? return value of argument $_[0] from @{$cfg{'usr_args'}}
-    # expecting something like  usr-action=/some.cgi  in $cfg{'usr_args'}
-    my $key =  shift;
-       $key =~ s/^(?:--|\+)//;  # strip leading chars
-    my @arg =  "";              # key, value # Note: value is anything right to leftmost = 
-    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); # does not allow multiple $key in 'usr_args'
-    return $arg[1];
-} # _man_usr_value
-
 sub _man_doc_opt    {
     #? print text from file $typ in  "KEY - VALUE"  format
     #  type is:   abbr, links, rfc
@@ -1011,7 +1070,7 @@ sub _man_doc_pod    {
     my  $help = "@txt";
         $help =~ s/\n/\n#/g;
     #_man_doc_opt($typ, $sep, "POD");   # if real POD should be printed
-    my  $pod  = <<"EoHelp";
+    return << "EoHelp";
 # begin $typ
 
 # =head1 $typ
@@ -1020,7 +1079,6 @@ $help
 # end $typ
 
 EoHelp
-    return $pod;
 } # _man_doc_pod
 
 sub _man_pod_head   {
@@ -1238,7 +1296,7 @@ sub _man_ciphers_get     {
     #? helper function for man_ciphers(): return %ciphers as simple line-oriented text
     # SEE Cipher:text  for detaiiled description and generated data format
     _man_dbx("_man_ciphers_get() ..");
-    my $txt = "";
+    my $ciphers = "";
     foreach my $key (sort keys %ciphers) {
         my $name  = OSaft::Ciphers::get_name ($key);
         next if not $name;              # defensive programming
@@ -1270,11 +1328,11 @@ sub _man_ciphers_get     {
         }
         # keep in mind that the code marked with following comment:
             # take care for sequence!
-        # relies on the sequence of line in following $txt
+        # relies on the sequence of line in following $ciphers
         $rfcs =~ s/ , $//;   # remove trailing ,
 #             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
 #             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
-        $txt .= "\n$hex\t$sec\t$name"
+        $ciphers .= "\n$hex\t$sec\t$name"
              .  "\nname\t"    . $name
              .  "\nalias\t"   . join(', ', @alias)
              .  "\nconsts\t"  . join(', ', OSaft::Ciphers::get_consts($key))
@@ -1290,7 +1348,7 @@ sub _man_ciphers_get     {
              .  "\n"
              ;
     }
-    return $txt;
+    return $ciphers;
 } # _man_ciphers_get
 
 sub _man_ciphers_html_dl {
@@ -1298,7 +1356,7 @@ sub _man_ciphers_html_dl {
     my $dl = shift;
        $dl =~ s/\n$//;  # remove trailing \n
     return << "EoHTML";
-      <div>
+      <div id="a">
         <dl>
 $dl
         </dl>
@@ -1324,7 +1382,7 @@ EoHTML
 sub _man_ciphers_html_ul {
     #? helper function for man_ciphers_html(): return UL tag with content
     #  generate simple list with UL and LI tags from given text
-    my $txt = shift;
+    my $ciphers = shift;
     my $ul  = '  <ul id="a">';
     #
     # <li onclick="toggle_display(this);return false;" title="show details">
@@ -1335,7 +1393,7 @@ sub _man_ciphers_html_ul {
     #         </div>
     #     </li>
     my ($hex, $sec, $name, $dl); $dl = "";
-    foreach my $line (split(/\n/, $txt)) {
+    foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
         $line =~ s/^\s*//;              # remove leading whitespace
@@ -1348,10 +1406,10 @@ sub _man_ciphers_html_ul {
             next;
         }
         my ($key, $val) = split(/\t/, $line);
-        my  $typ = "x";
-            $typ = $val if ("openssl" eq $key);     # OpenSSL SRENGTH should also be marked
-            $key =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
-        $dl .= "        <dt>$key</dt><dd sec='$typ'>$val</dd><br />\n";
+            $key =  'sec' if ("openssl" eq $key);     # OpenSSL SRENGTH should also be marked
+        my  $txt =  $key;
+            $txt =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
+        $dl .= "        <dt>$txt</dt><dd $key='$val'></dd><br />\n";
     }
     # print last cipher
     $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl);
@@ -1362,7 +1420,7 @@ sub _man_ciphers_html_tb {
     #? helper function for man_ciphers_html(): return TABLE tag with content
     #  generate html table with all columns
     # SEE Cipher:text and Cipher:HTML
-    my  $txt  = shift;
+    my  $ciphers  = shift;
     my  $tab  = '  <table id="b"><thead>';
         $tab .= "\n    <tr>\n";
     # following not yet working
@@ -1381,7 +1439,7 @@ sub _man_ciphers_html_tb {
     $tab .= "    </tr></thead><tbody>\n";
     # build table lines
     my ($hex, $sec, $name, $td); $td = "";
-    foreach my $line (split(/\n/, $txt)) {
+    foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
         $line =~ s/^\s*//;              # remove leading whitespace
@@ -1600,28 +1658,15 @@ sub man_ciphers_html{
     my $txt = shift;
     _man_dbx("man_ciphers_html() ..");
     my $cnt = scalar(keys %ciphers);
-    my $htm = << 'EoHTML';
-<!DOCTYPE html>
-<html><head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- CSP in meta tag is not recommended, but it servs as hint how to set the HTTP header Content-Security-Policy -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
-<title><!-- inserted by osaft_title() --></title>
+    my $htm = 
+            $html{'doctype'}
+          . '<html><head>'
+          . $html{'meta'}
+          . $html{'script_nonce'}
+          . $html{'script_func1'}
+          . '</script>'
+          . << 'EoHTML';
 
-<script nonce="4f2d53616674">
-function _i(id){return document.getElementById(id);}
-function toggle_display(id){
-	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
-	id.display = (id.display=='none')?'block':'none';
-	return false;
-}
-function osaft_title(txt, tip){
-	document.title      = ". : " + txt + " : .";
-	_i("title").title    = tip;
-	_i("txt").innerText  = txt;
-	return false;
-}
-</script>
 <style>
 body                 {padding:   1em;       }
 body > h1            {padding-top:1em;  margin-top:1em; }
@@ -1638,7 +1683,7 @@ ul li dl             {padding:   0.2em; display:block;        }
 ul li dt,dd          {padding:   0.5ex; display:inline-block; }
 ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
 span[sec^="-"]       {background-color:#ff0; }
-//span[sec^="weak"]    {background-color:#51c8c8; }
+/* automatically generate a tag's colour based on the sec attribute */
 span[sec^="weak"]    {background-color:#f00; }
 span[sec^="WEAK"]    {background-color:#f00; }
 span[sec^="high"]    {background-color:#4f4; }
@@ -1653,9 +1698,8 @@ span[sec^="MEDIUM"]  {background-color:#ff4; }
   dd[sec^="HIGH"]    {background-color:#3f3; }
   dd[sec^="medium"]  {background-color:#ff4; }
   dd[sec^="MEDIUM"]  {background-color:#ff4; }
-/* TODO: to automatically generate a tag's content based on an attribute, we
- * need another parser, which knows the type of value
-span[sec]::after     {content:attr(sec);     }
+/* automatically generate a tag's content based on an attribute */
+  dd[sec]::after     {content:attr(sec);     }
   dd[hex]::after     {content:attr(hex);     }
   dd[sec]::after     {content:attr(sec);     }
   dd[mac]::after     {content:attr(mac);     }
@@ -1664,10 +1708,17 @@ span[sec]::after     {content:attr(sec);     }
   dd[bits]::after    {content:attr(bits);    }
   dd[enc]::after     {content:attr(enc);     }
   dd[ssl]::after     {content:attr(ssl);     }
-  dd[mac="SHA"]      {title:"Secure Hash Algorithm"; }
- */
-/*
- */
+/* automatically generate a tag's title based on an attribute */
+  dd[mac*="MD2"]     {title:"Message Digest 2"; }
+  dd[mac*="MD4"]     {title:"Message Digest 4"; }
+  dd[mac*="MD5"]     {title:"Message Digest 5"; }
+  dd[mac*="SHA"]     {title:"Secure Hash Algorithm"; }
+  dd[enc*="DES"]     {title:"Data Encryption Standard"; }
+  dd[enc*="3DES"]    {title:"Tripple Data Encryption Standard"; }
+  dd[mac*="TLSv10"]  {title:"Transport Level Secure 1.0"; }
+  dd[mac*="TLSv11"]  {title:"Transport Level Secure 1.1"; }
+  dd[mac*="TLSv12"]  {title:"Transport Level Secure 1.2"; }
+  dd[mac*="TLSv13"]  {title:"Transport Level Secure 1.3"; }
 /* table { border-collapse: collapse; } * nicht nicht verwenden */
 /* table { table-layout: fixed;       } * geht nicht */
 table                {display: none;         }
@@ -1680,6 +1731,7 @@ tbody td {width: 5em;    }
 <body>
   <h2 id="title" title="" ><span id="txt" ></span></h2>
 EoHTML
+
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
   Toggle Layout: <button onclick="toggle_display('a');toggle_display('b');">table <> list</button>
@@ -1687,19 +1739,8 @@ EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
     $htm .= _man_ciphers_html_ul($txt);
-    my $nonce   = '4f2d53616674';
-    my $title   = _man_get_title();
-    $htm .= << "EoHTML";
-
-<script nonce="$nonce">
-  osaft_title("$title","$title");
-EoHTML
-    $htm .= << 'EoHTML';
-  _i('a').style.display='block';    /* keep JavaScript's DOM happy */
-  _i('b').style.display='none';     /* keep JavaScript's DOM happy */
-</script>
-</body></html>
-EoHTML
+    $htm .= $html{'script_endall'};
+    $htm .= '</body></html>';
     return $htm;
 } # man_ciphers_html
 
@@ -2003,7 +2044,7 @@ sub man_html        {
     return
         _man_http_head() .
         _man_html_head() .
-        _man_html('html', '', 'NAME', 'TODO') . # print complete help
+        _man_html('html', 'NAME', 'TODO') . # print complete help
         _man_html_foot();
 } # man_html
 
@@ -2019,16 +2060,15 @@ sub man_cgi         {
     # <from action= > and <a href= > values (link) must be specified using the
     # option  --usr-action=  at script start.
     #
-    my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
-        # get action from --usr-action= or set to default (defensive programming)
+    #my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
     _man_dbx("man_cgi() ...");
     return
         _man_http_head() .
         _man_html_head() .
-        _man_form_head(  $cgi_bin) .
-        _man_html('cgi', $cgi_bin, 'COMMANDS', 'LAZY') . # print help starting at COMMANDS
-        _man_form_foot(  $cgi_bin) .
-        _man_html_warn() .  # not exactly the place in HTML for this <div>, but syntactically ok
+        _man_form_head() .
+        _man_html('cgi', 'COMMANDS', 'LAZY') . # print help starting at COMMANDS
+        _man_form_foot() .
+        $html{'warning_box'} .  # not exactly the place in HTML for this <div>, but syntactically ok
         _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
 } # man_cgi
@@ -2129,6 +2169,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $txt;
     _man_dbx("printhelp($hlp) ...");
     _man_use_tty();
+    _man_html_init();   # must be called here, because function may be call anywhere
     # NOTE: some lower case strings are special
     $txt = man_help('NAME')             if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     $txt = man_help('TODO')             if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
@@ -2380,7 +2421,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.42 2022/09/16
+2.44 2022/09/17
 
 =head1 AUTHOR
 
