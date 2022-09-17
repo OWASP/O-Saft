@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.44 22/09/17 21:02:23";
+my  $SID_man= "@(#) o-saft-man.pm 2.45 22/09/17 23:29:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -501,10 +501,10 @@ All options with values are passed to HTML_cgi_bin .
     <table id="osaft_buttons">
     </table><br>
     <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-    <button onclick="toggle_display('a');return false;" title="show options">Commands & Options</button>
+    <button onclick="toggle_display('c');return false;" title="show options">Commands & Options</button>
     <div id="c" >
      <div id="a" >
-       <button class=r onclick="toggle_display('c');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
+       <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
       <br>
 EoFORM
 
@@ -656,7 +656,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.44'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.45'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2421,7 +2421,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.44 2022/09/17
+2.45 2022/09/17
 
 =head1 AUTHOR
 
