@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.47 22/09/17 23:33:17";
+my  $SID_man= "@(#) o-saft-man.pm 2.48 22/09/17 23:49:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -375,7 +375,7 @@ function osaft_disable_help(){
 }
 function toggle_handler(){
 // toggle display of "schema" button
-        if (schema_is_file()===true) { return; }
+        if (true===schema_is_file()) { return; }
         toggle_display("schema");
         return;
 }
@@ -385,13 +385,16 @@ EoFUNC
 
  <script nonce="4f2d53616674">
   osaft_title("JS_title","JS_tipp");
-  if (_i('a')){ _i('a').style.display='block'; }  /* keep JavaScript's DOM happy */
+  /* keep JavaScript's DOM happy */
+  if (_i('a')){ _i('a').style.display='block'; }
   if (_i('b')){ _i('b').style.display='none';  }
   if (_i('c')){ _i('c').style.display='none';  }
   if (_i('warn')){ _i('warn').style.display='block'; }
+  /* adapt display of some buttons (if corresponding function exists) */
   if ("function" === typeof osaft_disable_help) {
     if (true === schema_is_file()) { osaft_disable_help(); }
   }
+  if ("function" === typeof toggle_handler) { toggle_handler(); }
  </script>
 EoFUNC
 
@@ -657,7 +660,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.47'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.48'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2422,7 +2425,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.47 2022/09/17
+2.48 2022/09/17
 
 =head1 AUTHOR
 
