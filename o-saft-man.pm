@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.45 22/09/17 23:29:16";
+my  $SID_man= "@(#) o-saft-man.pm 2.46 22/09/17 23:32:13";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -388,6 +388,7 @@ EoFUNC
   if (_i('a')){ _i('a').style.display='block'; }  /* keep JavaScript's DOM happy */
   if (_i('b')){ _i('b').style.display='none';  }
   if (_i('c')){ _i('c').style.display='none';  }
+  if (_i('warn')){ _i('warn').style.display='none'; }
   if ("function" === typeof osaft_disable_help) {
     if (true === schema_is_file()) { osaft_disable_help(); }
   }
@@ -656,7 +657,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.45'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.46'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2421,7 +2422,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.45 2022/09/17
+2.46 2022/09/17
 
 =head1 AUTHOR
 
