@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.31 22/09/18 18:14:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.32 22/09/18 22:17:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2850,7 +2850,6 @@ sub _get_ciphers_list   {
         _v_print("cipher range: $range");
         foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
             my $key = sprintf("0x%08X",$c);
-            #_trace($key,   OSaft::Ciphers::get_name($key));
             push(@ciphers, OSaft::Ciphers::get_name($key));
         }
     }
@@ -5549,75 +5548,6 @@ sub _is_print_cipher    {
     return 0;
 } # _is_print_cipher
 
-#branch # TODO move to Ciphers.pm
-sub _sort_cipher_results {
-    #? sort hash %$unsorted according security of ciphers, most secure first
-    #  returns array with sorted cipher keys
-    #  cannot be in Ciphers.pm because osaft::get_cipher_owasp() needed
-    my $unsorted= shift;    # hash with $key => yes-or-no
-    my @sorted;             # reference to hash to be returned
-    my @tmp_arr;
-    foreach my $key (keys %$unsorted) {
-        next if ($key =~ m/^\s*$/);         # defensive programming ..
-        my $cipher    = OSaft::Ciphers::get_name($key);
-        if (not defined $cipher) {  # defensive programming ..
-            _warn("862: unknown cipher key '$key'; key ignored");
-            next;
-        }
-        my $sec_osaft = lc(OSaft::Ciphers::get_sec($key));# lower case
-        my $sec_owasp = osaft::get_cipher_owasp($cipher);
-           $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
-        # Idea about sorting according severity/security risk of a cipher:
-        #   * sort first according OWASP rating A, B, C
-        #   then use a weight for each cipher:
-        #   * most secure cipher first
-        #   * prefer ECDHE over DHE over ECDH
-        #   * prefer SHA384 over /SHA256 over SHA
-        #   * prefer CHACHA over AES
-        #   * prefer AES265 over AES128
-        #   * sort any anon (ADH, DHA, ..) and EXPort at end
-        #   * NULL is last
-        # then use OpenSSL/O-Saft rating, hence the string to be sorted looks
-        # like:
-        #       # A 20 high ...
-        #       # A 23 high ...
-        #       # B 33 high ...
-        #       # B 37 medium ...
-        # One line in incomming array in @unsorted:
-        #       # TLSv12, ECDHE-RSA-AES128-GCM-SHA256, yes
-        # will be converted to following line:
-        #       # A 20 HIGH ECDHE-RSA-AES128-GCM-SHA256 TLSv12 yes
-        my $weight = 50; # default if nothing below matches
-        $weight  = 19 if ($cipher =~ /^ECDHE/i);
-        $weight  = 25 if ($cipher =~ /^ECDHE.ECDS/i);
-        $weight  = 29 if ($cipher =~ /^(?:DHE|EDH)/i);
-        $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
-        $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
-        $weight  = 69 if ($cipher =~ /^EXP/i);
-        $weight  = 89 if ($cipher =~ /^A/i);    # NOTE: must be before ^AEC
-        $weight  = 79 if ($cipher =~ /^AEC/i);  # NOTE: must be after ^A
-        $weight  = 99 if ($cipher =~ /^NULL/i);
-        $weight -= 10 if ($cipher =~ /^TLS_/);  # some TLSv1.3 start with TLS_*
-        $weight -= 10 if ($cipher =~ /^TLS13-/);# some TLSv1.3 start or TLS13_*
-        $weight -= 5  if ($cipher =~ /SHA512$/);
-        $weight -= 4  if ($cipher =~ /SHA384$/);
-        $weight -= 3  if ($cipher =~ /SHA256$/);
-        $weight -= 3  if ($cipher =~ /SHA128$/);
-        $weight -= 2  if ($cipher =~ /256.SHA$/);
-        $weight -= 1  if ($cipher =~ /128.SHA$/);
-        $weight -= 3  if ($cipher =~ /CHACHA/);
-        $weight -= 2  if ($cipher =~ /256.GCM/);
-        $weight -= 1  if ($cipher =~ /128.GCM/);
-        # TODO: need to "rate"  -CBC- and -RC4- and -DSS-
-        push(@tmp_arr, "$sec_owasp $weight $key"); #  $cipher ${$line}[0] ${$line}[2]");
-    }
-    foreach my $line (sort @tmp_arr) {  # sorts according $sec_owasp
-        my @arr = split(" ", $line);
-        push(@sorted, $arr[2]);
-    }
-    return @sorted;
-} # _sort_cipher_results
-
 #  NOTE: Perl::Critic's violation for next 2 subs are false positives
 sub _print_cipher_results       {
     #? print all ciphers from %results of $ssl if match $yesno; returns number of checked ciphers for $ssl
@@ -5681,7 +5611,7 @@ sub printciphercheck    {
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherpreferred($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
-    my @sorted  = _sort_cipher_results($results->{$ssl}); # sorting has no impact on severity
+    my @sorted  = OSaft::Ciphers::sort_cipher_results($results->{$ssl}); # sorting has no impact on severity
     _trace2("printciphercheck: sorted $#sorted : @sorted");
     $results->{$ssl}{'sorted'} = \@sorted;   # pass sorted list to subroutines
     if ($legacy ne 'sslyze') {
