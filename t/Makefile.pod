@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.50 22/09/18 20:51:16
+@(#) Makefile.pod 1.51 22/09/18 20:58:46
 
 =head1 AUTHOR
 
@@ -384,6 +384,11 @@ More variables and targets are defined in following included files:
     t/Makefile.inc
 
 Where  t/Makefile  may include more files.
+
+=head3 O-Saft Makefile internal Variables
+
+When internal variables, those staring with _, are defined, they should be
+removed when possible using Make's  'undefine'.
 
 
 =head2 O-Saft Makefile Variables
