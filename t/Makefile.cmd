@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.56 22/02/25 16:07:40
+#?      @(#) Makefile.cmd 1.57 22/09/18 19:22:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.56
+_SID.cmd           := 1.57
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -87,29 +87,32 @@ LIST.cmd.trace-opt := --tracearg --tracecmd --tracekey --tracetime --traceme --t
     # --trace* options used instead --trace-*; make nicer target names
     # Note that  --tracecmd is same as --traceCMD is same as --trace-CMD
 
-_TEST.cmd          := testcmd-cmd
-
 # SEE Make:target name
 # SEE Make:target name prefix
 
 ifndef cmd-targets-generated
+    _TEST.cmd      := testcmd-cmd
     # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
     # target foreach command
     $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summ),\
-	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))_%:  TEST.args += $(cmd) ) \
-	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))_ ) \
+	$(eval _target=$(_TEST.cmd)-$(subst =,-,$(cmd))) \
+	$(eval $(_target)_%:  TEST.args += $(cmd) ) \
+	$(eval ALL.testcmd  += $(_target)_ ) \
     )
     # targets without --trace* options
     $(foreach cmd, $(LIST.cmd.withtrace),\
 	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_%:  TEST.args += $(cmd) $(LIST.no-out.opt) ) \
 	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_ ) \
       $(foreach opt, $(LIST.cmd.trace-opt),\
-	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
-	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))_ ) \
+	$(eval _target=$(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))) \
+	$(eval $(_target)_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
+	$(eval ALL.testcmd  += $(_target)_ ) \
       ) \
     )
+    undefine _target
+    undefine _TEST.cmd
 endif
 
 # TODO: need generic target which compares results of initial command
