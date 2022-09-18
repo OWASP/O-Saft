@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.48 22/09/17 23:49:17";
+my  $SID_man= "@(#) o-saft-man.pm 2.49 22/09/18 14:30:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -660,7 +660,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.48'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.49'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1410,9 +1410,9 @@ sub _man_ciphers_html_ul {
             next;
         }
         my ($key, $val) = split(/\t/, $line);
-            $key =  'sec' if ("openssl" eq $key);     # OpenSSL SRENGTH should also be marked
         my  $txt =  $key;
             $txt =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
+            $key =  'sec' if ("openssl" eq $key);   # OpenSSL SRENGTH should also be marked
         $dl .= "        <dt>$txt</dt><dd $key='$val'></dd><br />\n";
     }
     # print last cipher
@@ -2425,7 +2425,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.48 2022/09/17
+2.49 2022/09/18
 
 =head1 AUTHOR
 
