@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.17 22/03/20 14:44:15
+#?      @(#) Makefile.cipher 1.18 22/09/18 15:47:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.17
+_SID.cipher        := 1.18
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -60,10 +60,14 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-_TEST.cipher       := testcmd-cipher-+cipher
-_TEST.cipher-range := testcmd-cipher-+test-ciphers-list
+_TEST.cipher           := testcmd-cipher-+cipher
+_TEST.cipher-pattern   := testcmd-cipher-+cipher-
+_TEST.cipher-range     := testcmd-cipher-+test-ciphers-list
 # +test-ciphers-list without --range=* not defined here,
 # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
+
+LIST.cipher-legacy     := --legacy=intern     --legacy=openssl
+LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=is_invalid
 
 LIST.cipher-range  := \
 	--range=c0xx    --range=ccxx    --range=ecc       --range=SSLv2_long \
@@ -80,12 +84,21 @@ LIST.cipher        := \
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.cipher),\
-	$(eval $(_TEST.cipher)$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_TEST.cipher)$(subst =,-,$(arg))_ ) \
+	$(eval _target=$(_TEST.cipher)$(subst =,-,$(arg))) \
+	$(eval $(_target)_%:  TEST.args = $(arg) ) \
+	$(eval ALL.testcipher  += $(_target)_ ) \
     )
     $(foreach arg, $(LIST.cipher-range),\
-	$(eval $(_TEST.cipher-range)$(subst =,-,$(arg))_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_TEST.cipher-range)$(subst =,-,$(arg))_ ) \
+	$(eval _target=$(_TEST.cipher-range)$(subst =,-,$(arg))) \
+	$(eval $(_target)_%:  TEST.args = $(arg) ) \
+	$(eval ALL.testcipher  += $(_target)_ ) \
+    )
+    $(foreach legacy, $(LIST.cipher-legacy),\
+      $(foreach arg, $(LIST.cipher-pattern),\
+	$(eval _target=$(_TEST.cipher-pattern)$(subst =,-,$(arg))$(subst =,-,$(legacy))) \
+	$(eval $(_target)_%:  TEST.args = $(arg) $(legacy) ) \
+	$(eval ALL.testcipher  += $(_target)_ ) \
+      ) \
     )
 endif
 
