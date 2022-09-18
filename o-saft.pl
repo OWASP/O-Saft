@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.27 22/09/18 11:10:51"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.28 22/09/18 11:31:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6685,6 +6685,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(e|-each-?cipher)$/) { $arg = '+cipher';         } # alias: testssl.sh
     if ($arg =~ /^-(E|-cipher-?perproto)$/) { $arg = '+cipher';     } # alias: testssl.sh
     if ($arg =~ /^-(f|-ciphers)$/)      { $arg = '+ciphercheck';    } # alias: testssl.sh (+ciphercheck defined in .o-saft.pl)
+    if ($arg =~ /^-(x|-single-cipher)$/){ $typ = 'CIPHER_ITEM';     } # alias: testssl.sh (must be used together with +cipher)
     if ($arg =~ /^-(p|-protocols)$/)    { $arg = '+protocols';      } # alias: testssl.sh
     if ($arg =~ /^-(y|-spdy)$/)         { $arg = '+spdy';           } # alias: testssl.sh
     if ($arg =~ /^-(Y|-http2)$/)        { $arg = '+spdy';           } # alias: testssl.sh
@@ -6700,6 +6701,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(BB|-robot)$/)       { $arg = '+robot';          } # alias: testssl.sh
     if ($arg =~ /^-(J|-logjam)$/)       { $arg = '+logjam';         } # alias: testssl.sh
     if ($arg =~ /^-(D|-drown)$/)        { $arg = '+drown';          } # alias: testssl.sh
+    if ($arg =~ /^-(Z|-tls-fallback)$/) { $arg = '+fallback_protocol';  } # alias: testssl.sh
+    if ($arg =~ /^-(s|4)$/)             { $arg = '+pfs';            } # alias: testssl.sh
     if ($arg =~ /^--(p?fs|nsa)$/)       { $arg = '+pfs';            } # alias: testssl.sh
     if ($arg =~ /^--(?:rc4|appelbaum)$/){ $arg = '+pfs';            } # alias: testssl.sh
     if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # alias: testssl.sh
