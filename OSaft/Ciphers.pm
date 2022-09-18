@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.31 22/09/18 22:16:33";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.32 22/09/18 22:19:49";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -584,7 +584,6 @@ sub sort_cipher_names   {
     # all ciphers classified "insecure" are added to end of the result list,
     # these (insecure) ciphers are not sorted according their strength as it
     # doesn't make much sense to distinguish "more" or "less" insecure
-print "sort_cipher_names";
     my @ciphers = @_;
     my @sorted  ;
     my @latest  ;
@@ -1441,7 +1440,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.31 2022/09/18
+2.32 2022/09/18
 
 =head1 AUTHOR
 
