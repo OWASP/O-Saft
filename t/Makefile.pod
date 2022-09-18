@@ -25,7 +25,7 @@ Please also  SEE Documentation  in o-saft.pl .
 While the main  Makefile  is intended for ordinary users to  perfom common
 task for maintaining the project's installation, all other t/Makefile* are
 intendend for development. However, as Makefile includes most t/Makefile*,
-all target for developemnt can be used there also.
+all targets for developemnt can be used there also.
 
 Most targets for development are named:
 
@@ -37,7 +37,7 @@ Most targets for development are named:
 Where in general  testarg-*  is a target to test  one or more arguments of
 a tool, and  testcmd-*  is a target to test a command of  $(SRC.pl) .
 Most  test.*  targets are summary targets executing a list of the above.
-All  help.*  targets are for ducumentation of the makefile's targets.
+All  help.*  targets are for documentation of the makefile's targets.
 For more details on target names, please  SEE O-Saft Makefile Targets .
 
 To get a list of all target for testing, use:
@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.49 22/06/19 10:30:26
+@(#) Makefile.pod 1.50 22/09/18 20:51:16
 
 =head1 AUTHOR
 
@@ -322,6 +322,7 @@ Most targets and variables are named with one of following prefixes:
    GEN
    HELP
    SRC
+   LIST
    TEST
    _HELP
    _TEST
@@ -437,7 +438,7 @@ Naming conventions for targets:
     test%ext        - pattern rule used instead of explicit target rule to
                       allow spelling variants, like tst.ext or tst-ext
     testarg-TYP-*   - targets for testing tool arguments in Makefile.TYP
-    testcmd-TYP-*   - targets for testing tools commands in Makefile.TYP
+    testcmd-TYP-*   - targets for testing tool  commands in Makefile.TYP
                       "tool" may be any of those defined in macro  ALL.exe
     testarg-name%   - pattern rule which finally uses testarg-% target
     testcmd-name_%  - pattern rule which finally uses testcmd-% target
@@ -550,11 +551,11 @@ Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 
 GNU Make's include directive  doesn't understand  variables, the used path
 must be verbatim. Multiple makefiles are used to keep make's functionality
-(targets) maintainable. They are all named  Makefile  or  Makefile.SUFFIX,
-where  SUFFIX  describes the content, somehow.  I.g. it should be possible
-to use each of these Makefile* by its own, like:
+(targets) maintainable. Beside  Makefile  they are all named  Makefile.TYP
+where  TYP  describes the content, somehow. I. g. it should be possible to
+use each of these Makefile* by its own, like:
 
-    make -f Makefile.SUFFIX target
+    make -f Makefile.TYP target
 
 GNU Make's include functionality, in particular when including files  sub-
 directories, is difficult to use. Hence following trick is used:
@@ -577,13 +578,14 @@ This avoids sophistcated syntax in the files itself, like:
 
 GNU Make also cannot manage recursive includes of the same file. This must
 be checked before including. The private  _SID.* variable, which is set in
-all Makefile*, is used, example:
+all Makefile*, is used. Example:
 
     ifeq (,$(_SID.test))
         -include t/Makefile
     endif
 
-Missing the required file is silently ignored using  -include  directive.
+It's silently ignored if the file required by the  --include  directive is
+missing.
 
 
 =head2 GNU Make:important variables
