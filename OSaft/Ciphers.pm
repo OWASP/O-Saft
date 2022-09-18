@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.29 22/09/18 14:21:05";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.30 22/09/18 18:16:22";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -469,6 +469,8 @@ sub get_key     {
     foreach my $key (keys %ciphers) {
         my @names = get_names($key);
         return $key if (0 < (grep{/^$txt$/i} @names));
+            # TODO above grep my return "Use of uninitialized value $_"
+            #      if the passed key is not found in @names
     }
     # any other text, try to normalise ...      # example:  SSL_CK_NULL_WITH_MD5
     $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
@@ -1366,7 +1368,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.29 2022/09/18
+2.30 2022/09/18
 
 =head1 AUTHOR
 
@@ -1570,8 +1572,8 @@ __DATA__
 0x0300008D	HIGH	HIGH	SSLv3	PSK	PSK	AES	256	SHA1	4279	PSK-AES256-CBC-SHA	PSK_WITH_AES_256_CBC_SHA	-
 0x0300008E	-?-	medium	TLSv12	DHE	PSK	RC4	128	SHA1	4279,6347	DHE-PSK-RC4-SHA	DHE_PSK_WITH_RC4_128_SHA	FIXME
 0x0300008F	-?-	weak	TLSv12	DHE	PSK	3DES	168	SHA1	4279	DHE-PSK-3DES-SHA	DHE_PSK_WITH_3DES_EDE_CBC_SHA	FIXME
-0x03000090	HIGH	high	TLSv12	DHE	PSK	AES	128	SHA1	4279	DHE-PSK-AES128-SHA	DHE_PSK_WITH_AES_128_CBC_SHA	FIXME
-0x03000091	HIGH	high	TLSv12	DHE	PSK	AES	256	SHA1	4279	DHE-PSK-AES256-SHA	DHE_PSK_WITH_AES_256_CBC_SHA	FIXME
+0x03000090	HIGH	high	TLSv12	DHE	PSK	AES	128	SHA1	4279	DHE-PSK-AES128-CBC-SHA,DHE-PSK-AES128-SHA	DHE_PSK_WITH_AES_128_CBC_SHA	-
+0x03000091	HIGH	high	TLSv12	DHE	PSK	AES	256	SHA1	4279	DHE-PSK-AES256-CBC-SHA,DHE-PSK-AES256-SHA	DHE_PSK_WITH_AES_256_CBC_SHA	-
 0x03000092	MEDIUM	MEDIUM	SSLv3	RSAPSK	RSA	RC4	128	SHA1	4279,6347	RSA-PSK-RC4-SHA	RSA_PSK_WITH_RC4_128_SHA	-
 0x03000093	-?-	weak	SSLv3	RSAPSK	RSA	3DES	168	SHA1	4279	RSA-PSK-3DES-EDE-CBC-SHA,RSA-PSK-3DES-SHA	RSA_PSK_WITH_3DES_EDE_CBC_SHA	-
 0x03000094	HIGH	HIGH	SSLv3	RSAPSK	AES	AES	128	SHA1	4279	RSA-PSK-AES128-CBC-SHA,RSA-PSK-AES128-SHA	RSA_PSK_WITH_AES_128_CBC_SHA	-
