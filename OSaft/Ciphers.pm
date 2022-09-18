@@ -27,7 +27,7 @@
 
 =head1 NAME
 
-OSaft::Ciphers - common perl module to define cipher suites for O-Saft
+OSaft::Ciphers - common Perl module to define cipher suites for O-Saft
 
 =cut
 
@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.26 22/09/14 14:43:03";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.27 22/09/18 08:30:28";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -68,7 +68,7 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 =over 2
 
-=item  use OSaft::Ciphers;     # from within perl code
+=item  use OSaft::Ciphers;     # from within Perl code
 
 =item  OSaft::Ciphers.pm       # on command line will print help
 
@@ -76,16 +76,16 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 =head1 DESCRIPTION
 
-Utility package for O-Saft (o-saft.pl and related tools). This package declares
-and defines common L</VARIABLES> and L</METHODS> to be used in the calling tool.
-It contains the primary data structure for cipher suites.
+Utility package for O-Saft (o-saft.pl and related tools). This package contains
+the primary data structure for cipher suites. Common L</VARIABLES> and L</METHODS>
+are declares and defined to be used in the calling tool.
 
 The documentation is intended for developers. Users should read any of the help
 texts for example provided by O-Saft, i.e. C<o-saft.pl --help>.
 
 This module provides  additional functionality  to list and check the used data
-structures for the cipher suites. All  L</COMMANDS> and L</OPTIONS>  are only for
-this additional functionality, please read descriptions there.
+structures for the cipher suites. All  L</COMMANDS> and L</OPTIONS>  of this tool
+are only for this additional functionality, please read descriptions there.
 
 =head2 Used Functions
 
@@ -96,7 +96,7 @@ None (03/2022).
 =head1 CONCEPT
 
 The main data structure is  C<%ciphers>, which will be defined herein.
-Ciphers (more precisely: cipher suites) are defined statically as perl __DATA__
+Ciphers (more precisely: cipher suites) are defined statically as Perl __DATA__
 herein. Each cipher is defined statically in one line with TAB-separated values
 for example:
 
@@ -104,7 +104,8 @@ for example:
 
 For a more detailed description, please use:
 
-    OSaft/Ciphers.pm ciphers_description
+    OSaft/Ciphers.pm description
+    OSaft/Ciphers.pm --test-ciphers-description
 
 or consult the source code directly, in particular  C<%ciphers_desc>.
 
@@ -112,8 +113,8 @@ The main key -aka ID- to identify a cipher suite is a 32-bit key where the last
 16 bits are the numbers as defined by IANA and/or various RFCs.
 This key is also used in all other data structures related to ciphers.
 
-Each cipher suite is defined as a perl array (see above)  and will be converted
-to a perl hash at initialisation like:
+Each cipher suite is defined as a Perl array (see above)  and will be converted
+to a Perl hash at initialisation like:
 
     '0x0300003D' => { ssl=>"TLSv12", keyx=>"RSA", enc=>"AES", ... },
 
@@ -139,7 +140,9 @@ is no need to change them in the calling program.
 
 =head2 Methods
 
-Because all variables are constants, we only provide getter methods for them.
+Because all variables are constants, mainly getter methods are provided.
+The only setter method is C<set_sec> which is used to redefine the security value
+of an cipher by the user with the option  "--cfg-cipher=CIPHER=value"
 
 =head2 Testing
 
@@ -166,7 +169,7 @@ Describes the data structure in C<%ciphers>.
 =item %ciphers_notes
 
 Notes and comments for a specific cipher, documentation only.
-Will be used in C<%ciphers>.
+Will be referenced in C<%ciphers>.
 
 =item $cipher_results
 
@@ -176,8 +179,8 @@ Pointer to hash with all checked ciphers.
 
 =head1 METHODS
 
-Only getter, setter and print methods are exported. All other methods must be
-used with the full package name.
+No methods are exported. The full package name must be used, which improves the
+readability of the program code. Methods intended for external use are:
 
 =cut
 
@@ -194,6 +197,7 @@ our @EXPORT_OK = qw(
                 $cipher_results
                 ciphers_done
 );
+#   methods not exported, see METHODS description above
 
 #_____________________________________________________________________________
 #_______________________________________________________ internal functions __|
@@ -677,7 +681,7 @@ sub sort_cipher_names   {
     my $cnt_out = scalar @sorted;
     if ($cnt_in != $cnt_out) {
         # print warning if above algorithm misses ciphers;
-        # uses perl's warn() instead of our _warn() to clearly inform the user
+        # uses Perl's warn() instead of our _warn() to clearly inform the user
         # that the code here needs to be fixed
         my @miss;
         for my $i (0..$#ciphers) {
@@ -808,7 +812,7 @@ sub show_desc       {
     }
     printf("=-------+--------------+-----------------------+--------");
 
-    print ("\n\n= %ciphers : description of one line as perl code:\n");
+    print ("\n\n= %ciphers : description of one line as Perl code:\n");
     print ("=------+--------------------------------+---------------+---------------");
     printf("= varname  %-23s\t# example result# description\n", "%ciphers hash");
     print ("=------+--------------------------------+---------------+---------------");
@@ -892,7 +896,7 @@ sub show_overview   {
 =       -?-  security unknown/undefined
 =       miss security missing in data structure
 =
-= No perl or other warnings should be printed.
+= No Perl or other warnings should be printed.
 = Note: following columns should have a  *  in columns
 =       security, name, const
 =
@@ -1169,7 +1173,7 @@ sub _ciphers_init   {
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $fh = *DATA;
        $fh = *main::DATA if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
-    my $du = *main::DATA; # avoid perl warning "... used only once: possible typo ..."
+    my $du = *main::DATA; # avoid Perl warning "... used only once: possible typo ..."
     while (my $line = <$fh>) {
         chomp $line;
         next if ($line =~ m/^\s*$/);
@@ -1359,7 +1363,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.26 2022/09/14
+2.27 2022/09/18
 
 =head1 AUTHOR
 
