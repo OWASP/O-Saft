@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.13 22/09/14 09:41:32";
+our $SID_osaft  =  "@(#) osaft.pm 2.14 22/09/18 17:32:21";
 our $VERSION    =  "22.06.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3006,6 +3006,8 @@ sub get_cipher_owasp    {
     #? return OWASP rating for cipher suite name (see $cfg{regex}->{{OWASP_*}
     my $cipher  = shift;
     my $sec     = "miss";
+    return  $sec if not defined $cipher;    # defensive programming (key missing in %ciphers)
+    return  $sec if ($cipher =~ m/^\s*$/);  # ..
     # following sequence is important:
     $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/); # unrated in OWASP TLS Cipher Cheat Sheet (2018)
     $sec = "C"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_C'}/);  # 1st legacy
@@ -3435,7 +3437,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.13 2022/09/14
+2.14 2022/09/18
 
 =head1 AUTHOR
 
