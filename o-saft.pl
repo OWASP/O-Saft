@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.30 22/09/18 17:48:05"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.31 22/09/18 18:14:22"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5558,7 +5558,12 @@ sub _sort_cipher_results {
     my @sorted;             # reference to hash to be returned
     my @tmp_arr;
     foreach my $key (keys %$unsorted) {
+        next if ($key =~ m/^\s*$/);         # defensive programming ..
         my $cipher    = OSaft::Ciphers::get_name($key);
+        if (not defined $cipher) {  # defensive programming ..
+            _warn("862: unknown cipher key '$key'; key ignored");
+            next;
+        }
         my $sec_osaft = lc(OSaft::Ciphers::get_sec($key));# lower case
         my $sec_owasp = osaft::get_cipher_owasp($cipher);
            $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
@@ -5628,7 +5633,7 @@ sub _print_cipher_results       {
     # keys in 'sorted' instead of (keys %$results).
     foreach my $key (@{$results->{'sorted'}}) {
         if (not $results->{$key}) { # defensive programming ..
-            _warn("862: unknown cipher key '$key'; key ignored");
+            _warn("863: unknown cipher key '$key'; key ignored");
             next;
         }
         my $r_yesno = $results->{$key}; # [0];
