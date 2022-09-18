@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.6 20/10/31 11:52:13
+#?      @(#) Makefile.legacy 1.7 22/09/18 21:03:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.6
+_SID.legacy        := 1.7
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -65,7 +65,6 @@ _TEST.tools.windows = \
 ALL.tools.ssl       = $(_TEST.tools.ssl) $(_TEST.tools.vulns) $(_TEST.tools.cert) \
 		      $(_TEST.tools.cipher) $(_TEST.tools.unix) $(_TEST.tools.windows)
 
-_TEST.legacy       := testarg-legacy-+cipher--legacy
 LIST.legacy        := \
 	cnark   openssl   sslaudit  sslcipher   ssldiagnos  sslscan \
 	ssltest ssltest-g sslyze testsslserver  thcsslcheck \
@@ -78,12 +77,16 @@ testarg-legacy-+cipher%:    EXE.pl      = ../$(SRC.pl)
 testarg-legacy-+cipher%:    TEST.init   = --trace-CLI --header --enabled +cipher $(TEST.legacy.hosts)
 
 ifndef legacy-macros-generated
+    _TEST.legacy   := testarg-legacy-+cipher--legacy
     $(foreach arg, $(LIST.legacy),\
-	$(eval $(_TEST.legacy)-$(arg)_%:        TEST.args = --legacy=$(arg) )\
-	$(eval $(_TEST.legacy)-$(arg)--norc_%:  TEST.args = --legacy=$(arg) --norc )\
-	$(eval ALL.testlegacy  += $(_TEST.legacy)-$(arg)_ )       \
-	$(eval ALL.testlegacy  += $(_TEST.legacy)-$(arg)--norc_ ) \
+	$(eval _target=$(_TEST.legacy)-$(arg)) \
+	$(eval $(_target)_%:        TEST.args = --legacy=$(arg) )\
+	$(eval $(_target)--norc_%:  TEST.args = --legacy=$(arg) --norc )\
+	$(eval ALL.testlegacy  += $(_target)_ )       \
+	$(eval ALL.testlegacy  += $(_target)--norc_ ) \
     )
+    undefine _target
+    undefine _TEST.legacy
 endif
 
 ALL.test.legacy     = $(foreach host,$(TEST.legacy.hosts),$(ALL.testlegacy:%=%$(host)))
