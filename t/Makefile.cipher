@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.19 22/09/18 15:49:30
+#?      @(#) Makefile.cipher 1.20 22/09/18 19:12:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.19
+_SID.cipher        := 1.20
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -60,12 +60,6 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-_TEST.cipher           := testcmd-cipher-+cipher
-_TEST.cipher-pattern   := testcmd-cipher-+cipher-
-_TEST.cipher-range     := testcmd-cipher-+test-ciphers-list
-# +test-ciphers-list without --range=* not defined here,
-# see target testarg-opt-alias--test-ciphers-list in Makefile.opt
-
 LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=is_invalid
 
@@ -83,6 +77,11 @@ LIST.cipher        := \
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
 
 ifndef cipher-macros-generated
+    _TEST.cipher           := testcmd-cipher-+cipher
+    _TEST.cipher-pattern   := testcmd-cipher-+cipher-
+    _TEST.cipher-range     := testcmd-cipher-+test-ciphers-list
+    # +test-ciphers-list without --range=* not defined here,
+    # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
     $(foreach arg, $(LIST.cipher),\
 	$(eval _target=$(_TEST.cipher)$(subst =,-,$(arg))) \
 	$(eval $(_target)_%:  TEST.args = $(arg) ) \
@@ -100,6 +99,10 @@ ifndef cipher-macros-generated
 	$(eval ALL.testcipher  += $(_target)_ ) \
       ) \
     )
+    undefine _target
+    undefine _TEST.cipher
+    undefine _TEST.cipher-pattern
+    undefine _TEST.cipher-range
 endif
 
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
