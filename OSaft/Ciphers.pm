@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.27 22/09/18 08:30:28";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.28 22/09/18 10:45:57";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1019,7 +1019,7 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $format = shift;
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    if ($format !~ m/(?:dump|osaft|openssl|simple|ssltest|show)/) {
+    if ($format !~ m/(?:dump|osaft|openssl|simple|show)/) {
         _warn("520: unknown format '$format'");
         return;
     }
@@ -1053,9 +1053,9 @@ $txt_head
 EoT
     my @columns = @{$ciphers_desc{head}}; # cannot be used because we want specific order
     @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|osaft)/);
+    @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
     @columns = qw(ssl keyx auth enc bits mac sec) if ($format =~ m/^(?:show)/);
     @columns = qw(sec ssl keyx auth enc bits mac) if ($format =~ m/^(?:simple)/);
-    @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
 
     # table head
     my $line    = sprintf("=%s\n", "-" x 77 );
@@ -1131,7 +1131,7 @@ EoT
 
 sub show            {
     #? dispatcher for various --test-cipher-* options; show information
-    my $arg = shift;
+    my $arg = shift;    # any --test-cipher-*
        $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
     #_v_print((caller(0))[3]);
     #_dbx("arg=$arg");
@@ -1147,7 +1147,6 @@ sub show            {
     show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
     find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
-#   $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
     show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
     if ($arg =~ m/get_cipherkeys/   ) {
         my $list = get_cipherkeys();    # enforce string value
@@ -1158,7 +1157,7 @@ sub show            {
         print $list;
     }
     if ($arg =~ m/^regex/) {
-        $arg = "--test-ciphers-regex";
+        $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
     }
     return;
@@ -1289,7 +1288,7 @@ this modules provides following commands:
 
 =item overview
 
-- print overview of various checks according cipher definitions
+- print overview of various (internal) checks according cipher definitions
 
 =item alias
 
@@ -1314,6 +1313,10 @@ this modules provides following commands:
 =item simple
 
 - print internal lists of ciphers (simple space-separated format)
+
+=item sorted
+
+- print internal lists of ciphers (sorted according OWASP scoring)
 
 =item openssl
 
@@ -1363,7 +1366,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.27 2022/09/18
+2.28 2022/09/18
 
 =head1 AUTHOR
 
