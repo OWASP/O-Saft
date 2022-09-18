@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.30 22/09/18 18:16:22";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.31 22/09/18 22:16:33";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -567,6 +567,11 @@ returns sorted list of ciphers.
 
 C<@ciphers> is a list of cipher suite names. These names should be those used
 by  openssl(1)  .
+
+=head2 sort_cipher_results(%unsorted)
+
+Sort hash C<%unsorted> (which must be a reference to a hash) according security
+of ciphers, most secure cipher first, returns sorted array of ciphers.
 =cut
 
 sub set_sec         { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
@@ -579,6 +584,7 @@ sub sort_cipher_names   {
     # all ciphers classified "insecure" are added to end of the result list,
     # these (insecure) ciphers are not sorted according their strength as it
     # doesn't make much sense to distinguish "more" or "less" insecure
+print "sort_cipher_names";
     my @ciphers = @_;
     my @sorted  ;
     my @latest  ;
@@ -696,6 +702,73 @@ sub sort_cipher_names   {
     _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
     return @sorted;
 } # sort_cipher_names
+
+sub sort_cipher_results {
+    # returns array with sorted cipher keys
+    my $unsorted= shift;    # hash with $key => yes-or-no
+    my @sorted;             # array to be returned
+    my @tmp_arr;
+    foreach my $key (keys %$unsorted) {
+        next if ($key =~ m/^\s*$/);         # defensive programming ..
+        my $cipher    = get_name($key);
+        if (not defined $cipher) {  # defensive programming ..
+            _warn("862: unknown cipher key '$key'; key ignored");
+            next;
+        }
+        my $sec_osaft = lc(get_sec($key));# lower case
+        my $sec_owasp = osaft::get_cipher_owasp($cipher);
+           $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
+        # Idea about sorting according severity/security risk of a cipher:
+        #   * sort first according OWASP rating A, B, C
+        #   then use a weight for each cipher:
+        #   * most secure cipher first
+        #   * prefer ECDHE over DHE over ECDH
+        #   * prefer SHA384 over /SHA256 over SHA
+        #   * prefer CHACHA over AES
+        #   * prefer AES265 over AES128
+        #   * sort any anon (ADH, DHA, ..) and EXPort at end
+        #   * NULL is last
+        # then use OpenSSL/O-Saft rating, hence the string to be sorted looks
+        # like:
+        #       # A 20 high ...
+        #       # A 23 high ...
+        #       # B 33 high ...
+        #       # B 37 medium ...
+        # One line in incomming array in @unsorted:
+        #       # TLSv12, ECDHE-RSA-AES128-GCM-SHA256, yes
+        # will be converted to following line:
+        #       # A 20 HIGH ECDHE-RSA-AES128-GCM-SHA256 TLSv12 yes
+        my $weight = 50; # default if nothing below matches
+        $weight  = 19 if ($cipher =~ /^ECDHE/i);
+        $weight  = 25 if ($cipher =~ /^ECDHE.ECDS/i);
+        $weight  = 29 if ($cipher =~ /^(?:DHE|EDH)/i);
+        $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
+        $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
+        $weight  = 69 if ($cipher =~ /^EXP/i);
+        $weight  = 89 if ($cipher =~ /^A/i);    # NOTE: must be before ^AEC
+        $weight  = 79 if ($cipher =~ /^AEC/i);  # NOTE: must be after ^A
+        $weight  = 99 if ($cipher =~ /^NULL/i);
+        $weight -= 10 if ($cipher =~ /^TLS_/);  # some TLSv1.3 start with TLS_*
+        $weight -= 10 if ($cipher =~ /^TLS13-/);# some TLSv1.3 start or TLS13_*
+        $weight -= 5  if ($cipher =~ /SHA512$/);
+        $weight -= 4  if ($cipher =~ /SHA384$/);
+        $weight -= 3  if ($cipher =~ /SHA256$/);
+        $weight -= 3  if ($cipher =~ /SHA128$/);
+        $weight -= 2  if ($cipher =~ /256.SHA$/);
+        $weight -= 1  if ($cipher =~ /128.SHA$/);
+        $weight -= 3  if ($cipher =~ /CHACHA/);
+        $weight -= 2  if ($cipher =~ /256.GCM/);
+        $weight -= 1  if ($cipher =~ /128.GCM/);
+        # TODO: need to "rate"  -CBC- and -RC4- and -DSS-
+        push(@tmp_arr, "$sec_owasp $weight $key"); #  $cipher ${$line}[0] ${$line}[2]");
+    }
+    foreach my $line (sort @tmp_arr) {  # sorts according $sec_owasp
+        my @arr = split(" ", $line);
+        push(@sorted, $arr[2]);
+    }
+    return @sorted;
+} # _sort_cipher_results
+
 
 #_____________________________________________________________________________
 #_________________________________________________ internal/testing methods __|
@@ -1368,7 +1441,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.30 2022/09/18
+2.31 2022/09/18
 
 =head1 AUTHOR
 
