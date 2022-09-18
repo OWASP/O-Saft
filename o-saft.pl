@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.28 22/09/18 11:31:32"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.29 22/09/18 11:42:24"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6370,7 +6370,7 @@ while ($#argv >= 0) {
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
-                if ($arg !~ m/^[A-Z0-9-]+/) {   # must be upper case
+                if ($arg !~ m/^[A-Z0-9-]+$/) {   # must be upper case
                     _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
                     $arg = "";
                 }
