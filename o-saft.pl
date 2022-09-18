@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.29 22/09/18 11:42:24"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.30 22/09/18 17:48:05"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2826,6 +2826,7 @@ sub _get_target         {
 
 sub _get_ciphers_list   {
     #? return space-separated list of cipher suites according command-line options
+    #  this is usefull for display only or for use with openssl
     _trace("_get_ciphers_list(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default is 'rfc'
@@ -3626,6 +3627,7 @@ sub checkciphers    {
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
       foreach my $key (sort keys %{$results->{$ssl}}) {
         # SEE Note:Testing, sort
+        next if ($key =~ m/^\s*$/);         # defensive programming (key missing in %ciphers)
         next if not $results->{$ssl}{$key}; # defensive programming ..
         my $yesno  = $results->{$ssl}{$key};
         my $cipher = OSaft::Ciphers::get_name($key);
