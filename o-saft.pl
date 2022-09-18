@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.26 22/09/14 13:45:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.27 22/09/18 11:10:51"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6177,12 +6177,9 @@ sub printciphers        {
     _v_print("database version: ", _VERSION());
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
-    OSaft::Ciphers::show_sorted()           if ('owasp'   eq $cfg{'legacy'});
-    OSaft::Ciphers::show_ciphers('dump')    if ('full'    eq $cfg{'legacy'});
-    OSaft::Ciphers::show_ciphers('simple')  if ('simple'  eq $cfg{'legacy'});
-    OSaft::Ciphers::show_ciphers('ssltest') if ('ssltest' eq $cfg{'legacy'});
-    OSaft::Ciphers::show_ciphers('openssl') if ('openssl' eq $cfg{'legacy'});
-       # output looks like: openssl ciphers -[v|V]
+    OSaft::Ciphers::show('sorted')  if ('owasp'   eq $cfg{'legacy'});
+    OSaft::Ciphers::show('dump')    if ('full'    eq $cfg{'legacy'});  # legacy ...
+    OSaft::Ciphers::show($cfg{'legacy'});
     return;
 } # printciphers
 
