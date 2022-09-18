@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.28 22/09/18 10:45:57";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.29 22/09/18 14:21:05";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1019,7 +1019,7 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $format = shift;
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    if ($format !~ m/(?:dump|osaft|openssl|simple|show)/) {
+    if ($format !~ m/(?:dump|osaft|openssl|simple|show|ssltest)/) {
         _warn("520: unknown format '$format'");
         return;
     }
@@ -1366,7 +1366,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.28 2022/09/18
+2.29 2022/09/18
 
 =head1 AUTHOR
 
