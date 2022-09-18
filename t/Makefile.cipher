@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.18 22/09/18 15:47:06
+#?      @(#) Makefile.cipher 1.19 22/09/18 15:49:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.18
+_SID.cipher        := 1.19
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -66,7 +66,7 @@ _TEST.cipher-range     := testcmd-cipher-+test-ciphers-list
 # +test-ciphers-list without --range=* not defined here,
 # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
 
-LIST.cipher-legacy     := --legacy=intern     --legacy=openssl
+LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=is_invalid
 
 LIST.cipher-range  := \
@@ -93,10 +93,10 @@ ifndef cipher-macros-generated
 	$(eval $(_target)_%:  TEST.args = $(arg) ) \
 	$(eval ALL.testcipher  += $(_target)_ ) \
     )
-    $(foreach legacy, $(LIST.cipher-legacy),\
+    $(foreach mode, $(LIST.cipher-mode),\
       $(foreach arg, $(LIST.cipher-pattern),\
-	$(eval _target=$(_TEST.cipher-pattern)$(subst =,-,$(arg))$(subst =,-,$(legacy))) \
-	$(eval $(_target)_%:  TEST.args = $(arg) $(legacy) ) \
+	$(eval _target=$(_TEST.cipher-pattern)$(subst =,-,$(arg))$(subst =,-,$(mode))) \
+	$(eval $(_target)_%:  TEST.args = $(arg) $(mode) ) \
 	$(eval ALL.testcipher  += $(_target)_ ) \
       ) \
     )
