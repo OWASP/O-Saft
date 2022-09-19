@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.35 22/09/19 08:53:50";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.36 22/09/19 08:56:43";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -769,9 +769,6 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return @sorted;
 } # sort_results
 
-sub sort_cipher_names   { return sort_names(@_);   } # wrapper for o-saft.pl
-sub sort_cipher_results { return sort_results(@_); } # wrapper for o-saft.pl
-
 
 #_____________________________________________________________________________
 #_________________________________________________ internal/testing methods __|
@@ -1437,7 +1434,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.35 2022/09/19
+2.36 2022/09/19
 
 =head1 AUTHOR
 
