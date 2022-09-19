@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.35 22/09/19 14:33:47
+#?      @(#) Makefile.hlp 1.36 22/09/19 18:46:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.35
+_SID.hlp           := 1.36
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -73,8 +73,8 @@ testarg-hlp---h:                TEST.args  += --h
 # +ciphers ...
 testarg-hlp-+ciphers%:          TEST.init  += --trace-CLI +ciphers
 LIST.ciphers-legacy    := \
-	--legacy=simple --legacy=dump   --legacy=openssl \
-	--legacy=owasp  --legacy=ssltest -V
+	--dummy-no-arg  --legacy=simple  --legacy=dump \
+	--legacy=owasp  --legacy=openssl --legacy=ssltest -V
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.ciphers-legacy),\
