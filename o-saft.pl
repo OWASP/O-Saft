@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.35 22/09/19 12:10:46"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.36 22/09/19 19:25:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -7527,6 +7527,7 @@ if (_is_cfg_do('quit'))             { printquit();          exit 0; }
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
 }
+_y_CMD("dbx init ...");
 _yeast_init();  # call in printquit() also!
 
 if (0 > $#{$cfg{'do'}}) {
