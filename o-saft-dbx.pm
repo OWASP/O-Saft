@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.15 22/09/14 23:54:03";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.16 22/09/19 18:10:05";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -121,17 +121,19 @@ sub _yeast_ciphers_list     {
     _yline(" ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
-    my $ciphers = "@{$cfg{'ciphers'}}";
+    my $ciphers = "@{$cfg{'ciphers'}}"; # not yet used
     _yeast("  _need_cipher= $need");
     if (0 < $need) {
         # avoid printing huge lists
-        my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
-        if ($cfg{'cipherrange'} =~ m/(full|huge|safe|rfc)/i) {
+        my @range;
+        if ($cfg{'cipherrange'} =~ m/(full|huge|long|safe|rfc)/i) {
             # avoid huge (useless output)
             $_cnt = 0xffffff;
             $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
+            $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/long/i);
             $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
             $_cnt = 2051     if ($cfg{'cipherrange'} =~ m/rfc/i);  # estimated count
+            @range = qw"<<huge list not printed>>";
         } else {
             # expand smaller list
             @range = osaft::get_ciphers_range('TLSv13', $cfg{'cipherrange'});
@@ -139,13 +141,18 @@ sub _yeast_ciphers_list     {
                #       which is usually unknown here, hence TLSv13 is passed
             $_cnt = scalar @range;
         }
-        $ciphers = "@range";
         $_cnt = sprintf("%5s", $_cnt);  # format count
-        _yeast("      starttls= " . $cfg{'starttls'});
-        _yeast("   cipherrange= " . $cfg{'cipherrange'});
-        _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
         _yeast("use cipher from openssl= " . $cmd{'extciphers'});
-        _yeast(" $_cnt ciphers= $ciphers");
+        _yeast("      starttls= " . $cfg{'starttls'});
+        _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
+        _yeast("   cipherrange= " . $cfg{'cipherrange'});
+        # format range text
+        foreach my $txt (split(/\n/, $cfg{'cipherranges'}->{$cfg{'cipherrange'}})) {
+            next if $txt =~ m/^\s*$/;
+            $txt =~ s/^\s*/                /;
+            _yeast($txt);
+        }
+        _yeast(" $_cnt ciphers= @range");
     }
     _yline(" ciphers }");
     return;
@@ -975,7 +982,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.15 2022/09/14
+2.16 2022/09/19
 
 =head1 AUTHOR
 
