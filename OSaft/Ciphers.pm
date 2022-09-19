@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.36 22/09/19 08:56:43";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.37 22/09/19 10:41:25";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -924,7 +924,7 @@ sub show_sorted     {
 
 === internal data structure: ciphers sorted according strength ===
 =
-= Print overview of all available cipher names sorted according OWASP scoring.
+= Show overview of all available ciphers sorted according OWASP scoring.
 =
 =   description of columns:
 =       OWASP       - OWASP scoring (A, B, C, D)
@@ -968,7 +968,7 @@ sub show_overview   {
 =       const       - cipher suite constant name exists
 =       cipher suite- cipher suite name (OpenSSL)
 =   description of values:
-=       *    value present (also if None for pseudo ciphers)
+=       *    value present (also if None or for pseudo ciphers)
 =       -    value missing
 =       -?-  security unknown/undefined
 =       miss security missing in data structure
@@ -1096,7 +1096,7 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $format = shift;
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    if ($format !~ m/(?:dump|osaft|openssl|simple|show)/) {
+    if ($format !~ m/(?:dump|full|osaft|openssl|simple|show)/) {
         _warn("520: unknown format '$format'");
         return;
     }
@@ -1112,7 +1112,8 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $idx++;
     }
 
-    print  << "EoT";
+    printf "%s", << "EoT";  # printf to avoid trailing \n
+
 === internal %ciphers data ===
 =
 = Show a full overview of all available ciphers.
@@ -1125,7 +1126,7 @@ $txt_openssl
 $txt_head
 EoT
     my @columns = @{$ciphers_desc{head}}; # cannot be used because we want specific order
-    @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|osaft)/);
+    @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|full|osaft)/);
     @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
     @columns = qw(ssl keyx auth enc bits mac sec) if ($format =~ m/^(?:show)/);
     @columns = qw(sec ssl keyx auth enc bits mac) if ($format =~ m/^(?:simple)/);
@@ -1133,7 +1134,7 @@ EoT
     # table head
     my $line    = sprintf("=%s\n", "-" x 77 );
     my $head    = "";
-    if ($format =~ m/^(?:dump|osaft)/) {
+    if ($format =~ m/^(?:dump|full|osaft)/) {
 # 0x02000000    weak   SSLv2   RSA(512) RSA    None    Mac     -?-     NULL-MD5 NULL_WITH_MD5 -
         $line = sprintf("=%9s%s%s\n", "-" x 14, "+-------" x 9, "+---------------" x 3 );
         $head = sprintf("= %-13s\t%9s\n", "key",    join("\t", @columns));
@@ -1145,7 +1146,8 @@ EoT
     }
     if ($format =~ m/^(?:simple)/) {
 # 0x02000000    weak SSLv2 RSA(512) RSA None 0 Mac NULL-MD5
-        # no header just a line
+        # no fomated header just a line
+        $head = sprintf("= %-13s\t%s\t%s\n", "key", join(" ",  @columns), "cipher name");
     }
     if ($format =~ m/^openssl/) {
 #         0x00,0x3D - AES256-SHA256           TLSv1.2 Kx=RSA      Au=RSA  Enc=AES(256)  Mac=SHA256
@@ -1168,7 +1170,7 @@ EoT
         my $const   = $ciphers{$key}->{'const'}[0]; # special value
         my $note    = $ciphers{$key}->{'notes'}[0]; # special value
         my @values;
-        if ($format =~ m/^(?:dump|osaft)/) {
+        if ($format =~ m/^(?:dump|full|osaft)/) {
             push(@values, $key);
             push(@values, $ciphers{$key}->{$_}) foreach @columns[0..8];
            #push(@values, join(",", @{$ciphers{$key}->{$_}})) foreach @columns[9..11];
@@ -1217,7 +1219,7 @@ sub show            {
     show_ssltest()          if ($arg eq 'ssltest');
     show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    show_ciphers($1)        if ($arg =~ m/^(dump|osaft|openssl|show|simple)/);
+    show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl|show|simple)/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/    );
     show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
@@ -1314,14 +1316,10 @@ sub _main_ciphers   {
         # ----------------------------- options
         $cfg{'verbose'}++          if ($arg eq '--v');
         # ----------------------------- commands
-        print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers-)?version/i);
+        print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers?-)?version/i);
+        show_sorted()              if ($arg =~ /^(?:--test-ciphers?-)?(?:owasp|sort)/i);
         # allow short option without --test-ciphers- prefix
-        # (using multiple assignments for better human readability)
-        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(alias|const(?:ants?)?|desc|regex|rfc)/);
-        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(dump|openssl|osaft|simple|ssltest)/);
-        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(overview|show|sort(?:ed))/);
-        $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?((?:get|hex=|key=).*)/);
-        show($arg)  if ($arg =~ /^--test.?cipher/);
+        show("--test-ciphers-$arg");
     }
     exit 0;
 } # _main_ciphers
@@ -1434,7 +1432,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.36 2022/09/19
+2.37 2022/09/19
 
 =head1 AUTHOR
 
@@ -1917,10 +1915,10 @@ __DATA__
 0x0300CCAC	HIGH	HIGH	TLSv12	ECDHEPSK	ECDHE	ChaCha20-Poly1305	256	AEAD	7905	ECDHE-PSK-CHACHA20-POLY1305-SHA256	ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256	C
 0x0300CCAD	HIGH	HIGH	TLSv12	DHEPSK	DHE	ChaCha20-Poly1305	256	AEAD	7905	DHE-PSK-CHACHA20-POLY1305-SHA256	DHE_PSK_WITH_CHACHA20_POLY1305_SHA256	C
 0x0300CCAE	HIGH	HIGH	TLSv12	RSAPSK	RSA	ChaCha20-Poly1305	256	AEAD	7905	RSA-PSK-CHACHA20-POLY1305-SHA256	RSA_PSK_WITH_CHACHA20_POLY1305_SHA256	C
-0x0300D001	-?-	-?-	TLSv12	ECDH	PSK	AESGCM	128	AEAD	6655?	ECDHE-PSK-AES128-GCM-SHA256	ECDHE_PSK_WITH_AES_128_GCM_SHA256	R
-0x0300D002	-?-	-?-	TLSv12	ECDH	PSK	AESGCM	256	AEAD	6655?	ECDHE-PSK-AES256-GCM-SHA384	ECDHE_PSK_WITH_AES_256_GCM_SHA384	R
-0x0300D003	-?-	-?-	TLSv12	ECDH	PSK	AESCCM8	128	AEAD	6655?	ECDHE-PSK-AES256-CCM8-SHA256	ECDHE_PSK_WITH_AES_128_CCM_8_SHA256	R
-0x0300D005	-?-	-?-	TLSv12	ECDH	PSK	AESCCM	128	AEAD	6655?	ECDHE-PSK-AES256-CCM-SHA256	ECDHE_PSK_WITH_AES_128_CCM_SHA256	R
+0x0300D001	-?-	high	LSv12	ECDH	PSK	AESGCM	128	AEAD	6655?	ECDHE-PSK-AES128-GCM-SHA256	ECDHE_PSK_WITH_AES_128_GCM_SHA256	R
+0x0300D002	-?-	high	LSv12	ECDH	PSK	AESGCM	256	AEAD	6655?	ECDHE-PSK-AES256-GCM-SHA384	ECDHE_PSK_WITH_AES_256_GCM_SHA384	R
+0x0300D003	-?-	high	LSv12	ECDH	PSK	AESCCM8	128	AEAD	6655?	ECDHE-PSK-AES256-CCM8-SHA256	ECDHE_PSK_WITH_AES_128_CCM_8_SHA256	R
+0x0300D005	-?-	high	LSv12	ECDH	PSK	AESCCM	128	AEAD	6655?	ECDHE-PSK-AES256-CCM-SHA256	ECDHE_PSK_WITH_AES_128_CCM_SHA256	R
 0x0300FEE0	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	3DES	168	SHA1	-?-	RSA-FIPS-3DES-EDE-SHA-2	RSA_FIPS_WITH_3DES_EDE_CBC_SHA_2	M
 0x0300FEE1	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	DES	56	SHA1	-?-	RSA-FIPS-DES-CBC-SHA-2	RSA_FIPS_WITH_DES_CBC_SHA_2	M
 0x0300FEFE	-?-	weak	SSLv3	RSA_FIPS	RSA_FIPS	DES	56	SHA1	-?-	RSA-FIPS-DES-CBC-SHA	RSA_FIPS_WITH_DES_CBC_SHA	N
