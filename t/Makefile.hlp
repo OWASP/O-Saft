@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.34 22/09/14 13:39:26
+#?      @(#) Makefile.hlp 1.35 22/09/19 14:33:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.34
+_SID.hlp           := 1.35
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -69,12 +69,21 @@ testarg-hlp-+help-commands:     TEST.args  += +help=commands
 testarg-hlp---h:                TEST.args  += --h
 
 # all other commands with --trace-CLI
-testarg-hlp-+cipher%:           TEST.init  += --trace-CLI
-testarg-hlp-+ciphers:                TEST.args  += +ciphers --V
-testarg-hlp-+ciphers-legacy-full:    TEST.args  += +ciphers --legacy=full
-testarg-hlp-+ciphers-legacy-openssl: TEST.args  += +ciphers --legacy=openssl
-testarg-hlp-+ciphers-legacy-owasp:   TEST.args  += +ciphers --legacy=owasp
-    # TODO: --legacy=owasp may change in future
+
+# +ciphers ...
+testarg-hlp-+ciphers%:          TEST.init  += --trace-CLI +ciphers
+LIST.ciphers-legacy    := \
+	--legacy=simple --legacy=dump   --legacy=openssl \
+	--legacy=owasp  --legacy=ssltest -V
+
+ifndef cipher-macros-generated
+    $(foreach arg, $(LIST.ciphers-legacy),\
+        $(eval _target=testarg-hlp-+ciphers-$(subst =,-,$(arg))) \
+        $(eval $(_target):  TEST.args = $(arg) ) \
+        $(eval ALL.testhlp  += $(_target) ) \
+    )
+    undefine _target
+endif
 
 # --help
 testarg-hlp---help%:            TEST.init  += --trace-CLI
@@ -137,7 +146,7 @@ testarg-hlp---help-why--format-width:   TEST.args  += --format-width=54 --help=w
 #testarg-hlp---help-cmd--tty:    TEST.args  += --tty --help=cmd # alias
     # --tty does not produce different output, except on special devices
 
-ALL.testhlp         = $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.hlp))
+ALL.testhlp        += $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.hlp))
 ALL.test.hlp        = $(ALL.testhlp)
 ALL.test.hlp.log    = $(ALL.test.hlp:%=%.log)
 
