@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.37 22/09/19 10:41:25";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.38 22/09/19 11:02:06";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -240,7 +240,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # last column is a : separated list (only export from openssl)
                             # different versions of openssl report  ECDH or ECDH/ECDSA
         'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
-        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED, GOST89
+        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, ARIA, CAMELLIA, DES, 3DES, FZA, GOST89, IDEA, RC4, RC2, SEED
         'Key Size',         # in bits
         'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
 #        'DTLS OK',          # Y  if cipher is compatible for DTLS, N  otherwise
@@ -1432,7 +1432,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.37 2022/09/19
+2.38 2022/09/19
 
 =head1 AUTHOR
 
@@ -1455,7 +1455,7 @@ __DATA__
 
 # Format of following data lines:
 #   <empty>     - empty lines are ignored
-#   comments    - all line beginning with a # (hash); lines are ignored
+#   comments    - line beginning with a # (hash); lines are ignored
 #   0xhhhhhhhh  - data line containing a cipher suite; used columns are:
 #       OpenSSL - security value (STRENGTH) used by openssl
 #       sec     - security value used by o-saft.pl
@@ -1472,10 +1472,11 @@ __DATA__
 #   All columns must be separated by TABs (0x9 aka \t), no spaces are allowed.
 #   The left-most column must not preceded by white spaces. It must begin with
 #   the cipher suite hex key, like:  0x  followed by exactly  8 hex characters
-#   [0-9A-F]. Only the lines are used for ciphers.
-#   If additional characters  [a-zA-Z-]  are used in the hex key and then does
-#   does't match  ^0x[0-9a-fA-F]{8}  , the definition is stored in  %ciphers ,
-#   but will not be used anywhere (except informational lists).
+#   [0-9A-F]. Only such lines are used for ciphers.
+#   If additional characters  [a-zA-Z-]  are used in the hex key  it then does
+#   not match  ^0x[0-9a-fA-F]{8} . The definition is stored in  %ciphers , but
+#   will not be used anywhere (except informational lists).  These definitions
+#   are mainly used for documentation, for example ancient cipher definitions.
 #   
 #   Values in left-most column (the cipher's hex key) must be unique.
 #
@@ -1806,8 +1807,8 @@ __DATA__
 0x0300C067	-?-	-?-	TLSv12	DHE	PSK	ARIA	256	SHA384	6209	DHE-PSK-ARIA256-SHA384	DHE_PSK_WITH_ARIA_256_CBC_SHA384	-
 0x0300C068	-?-	-?-	TLSv12	RSA	PSK	ARIA	128	SHA256	6209	RSA-PSK-ARIA128-SHA256	RSA_PSK_WITH_ARIA_128_CBC_SHA256	-
 0x0300C069	-?-	-?-	TLSv12	RSA	PSK	ARIA	256	SHA384	6209	RSA-PSK-ARIA256-SHA384	RSA_PSK_WITH_ARIA_256_CBC_SHA384	-
-0x0300C06A	HIGH	-?-	TLSv12	PSK	PSK	ARIAGCM	128	AEAD	6209	PSK-ARIA128-GCM-SHA256	PSK_WITH_ARIA_128_GCM_SHA256	-
-0x0300C06B	HIGH	-?-	TLSv12	PSK	PSK	ARIAGCM	256	AEAD	6209	PSK-ARIA256-GCM-SHA384	PSK_WITH_ARIA_256_GCM_SHA384	-
+0x0300C06A	HIGH	HIGH	TLSv12	PSK	PSK	ARIAGCM	128	AEAD	6209	PSK-ARIA128-GCM-SHA256	PSK_WITH_ARIA_128_GCM_SHA256	-
+0x0300C06B	HIGH	HIGH	TLSv12	PSK	PSK	ARIAGCM	256	AEAD	6209	PSK-ARIA256-GCM-SHA384	PSK_WITH_ARIA_256_GCM_SHA384	-
 0x0300C06C	HIGH	HIGH	TLSv12	DHEPSK	PSK	ARIAGCM	128	AEAD	6209	DHE-PSK-ARIA128-GCM-SHA256	DHE_PSK_WITH_ARIA_128_GCM_SHA256	-
 0x0300C06D	HIGH	HIGH	TLSv12	DHEPSK	PSK	ARIAGCM	256	AEAD	6209	DHE-PSK-ARIA256-GCM-SHA384	DHE_PSK_WITH_ARIA_256_GCM_SHA384	-
 0x0300C06E	HIGH	HIGH	TLSv12	RSAPSK	RSA	ARIAGCM	128	AEAD	6209	RSA-PSK-ARIA128-GCM-SHA256	RSA_PSK_WITH_ARIA_128_GCM_SHA256	-
