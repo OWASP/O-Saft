@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.12 19/12/15 16:26:08
+#?      @(#) Makefile.etc 1.13 22/09/19 20:23:12
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.12
+_SID.etc           := 1.13
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -54,6 +54,12 @@ TEST.init          :=
 TEST.args          :=
 TEST.hosts          = $(TEST.etc.hosts)
 
+# sslyze    may have problems due to python2 vs. python3
+# sslmap.py may have problems due to python2 vs. python3
+# manyssl   may have problems due to missing modules
+# tls-scan  may have problems due to missing modules
+# 
+
 # testcmd-etc-sslscan* are defined as static targets, similar to testcmd-% , they
 # can be used in the corresponding *.log target (pattern rule) automatically
 # errors in these targets are ignored (because they may be missing too)
@@ -63,15 +69,47 @@ testcmd-etc-sslscan1.8:  TEST.args = --no-failed
 testcmd-etc-sslscan1.8:
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-etc-sslscan1.11: EXE.pl    = /opt/bin/sslscan-1.11.9
-testcmd-etc-sslscan1.11: TEST.args = --no-failed --no-check-certificate --no-heartbleed
+testcmd-etc-sslscan1.11%: EXE.pl    = /opt/bin/sslscan-1.11.9
+testcmd-etc-sslscan1.11%: TEST.args = --no-colour --no-failed --no-check-certificate --no-heartbleed
 testcmd-etc-sslscan1.11:
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-etc-testssl.sh:  EXE.pl    = testssl.sh
-testcmd-etc-testssl.sh:  TEST.args = -e --color 0
+testcmd-etc-testssl.sh%: EXE.pl    = testssl.sh
+testcmd-etc-testssl.sh%: TEST.args  = -e --color 0
+#testcmd-etc-testssl.sh%: TEST.args += --openssl /usr/local/openssl/bin/openssl
 testcmd-etc-testssl.sh: 
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
+
+# get supported ciphers from each tool
+testcmd-etc-ssltest.pl%:        EXE.pl      = ssltest.pl
+testcmd-etc-ssltest.pl-count:   TEST.args  += --list
+testcmd-etc-ssltest.pl-count:
+	@$(EXE.echo) -n "# $(EXE.pl)\t "
+	@-cd $(TEST.dir) \
+	&& $(EXE.pl) $(TEST.args) $(TEST.hosts) \
+	|  awk '/iphers/{next}{c[$$2]++}END{print length(c)" ciphers"}'
+
+testcmd-etc-sslscan1.11-count:  TEST.args  += --show-ciphers
+testcmd-etc-sslscan1.11-count:
+	@$(EXE.echo) -n "# sslscan1.11\t "
+	@-cd $(TEST.dir) \
+	&& $(EXE.pl) $(TEST.args) $(TEST.hosts) \
+	|  awk '(0==NF){if(1==count){print length(c)" ciphers";exit;}}(1==count){c[$$1]++;}/Supported Client Cipher/{count=1}'
+
+testcmd-etc-testssl.sh-count: 
+	@$(EXE.echo) -n "# $(EXE.pl)\t "
+	@-cd $(TEST.dir) \
+	&& $(EXE.pl) $(TEST.args) $(TEST.hosts) | awk '/esting all/{print $$3" ciphers"}'
+
+ALL.testetc-count   = \
+	testcmd-etc-sslscan1.11-count \
+	testcmd-etc-ssltest.pl-count \
+	testcmd-etc-testssl.sh-count
+
+_testcmd-etc-count-head:
+	@$(EXE.echo) "# number of known ciphers supported by various tools"
+testcmd-etc-count: _testcmd-etc-count-head $(ALL.testetc-count)
+	@$(TRACE.target)
 
 # use testcmd-% pattern rule for all o-saft.pl +cipher tests
 testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint $(TEST.hosts)
@@ -112,7 +150,7 @@ LIST.ciphers   := DES-CBC3-SHA AES256-SHA ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-
 #    o-saft.pl --tracecmd         --cipher=$(_LIST.ciphers) +cipher    $host
 #    o-saft.pl --tracecmd --trace --cipher=$(_LIST.ciphers) +cipher    $host
 
-ALL.test.etc       += $(ALL.test.etc-cipher)
+ALL.test.etc       += $(ALL.test.etc-cipher) $(ALL.testetc-count) testcmd-etc-count
 ALL.test.etc.log   += $(ALL.test.etc-cipher.log)
 
 test.etc.log-compare:   TEST.target_prefix  = testcmd-etc
