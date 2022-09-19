@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.33 22/09/19 08:02:21";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.34 22/09/19 08:47:45";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -562,16 +562,16 @@ Set value for 'security' in for specified cipher key.
 
 =head2 sort_cipher_names(@ciphers)
 
-Sort given list of C<@ciphers> according their strength, most strongest first,
-returns sorted list of ciphers.
+Sort ciphers according their strength. Returns list with most strongest first. 
 
-C<@ciphers> is a list of cipher suite names. These names should be those used
-by  openssl(1)  .
+C<@ciphers> is a list of cipher suite names. These names should be those used by
+openssl(1)  .
 
 =head2 sort_cipher_results(%unsorted)
 
-Sort hash C<%unsorted> (which must be a reference to a hash) according security
-of ciphers, most secure cipher first, returns sorted array of ciphers.
+Sort ciphers according their strength. Returns list with most strongest first. 
+
+C<%unsorted> is a reference to a hash) of cipher suite hex keys.
 =cut
 
 sub set_sec         { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
@@ -704,6 +704,7 @@ sub sort_cipher_names   {
 
 sub sort_cipher_results {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # returns array with sorted cipher keys
+    # only used when ckecking for ciphers with openssl
     my $unsorted= shift;    # hash with $key => yes-or-no
     my @sorted;             # array to be returned
     my @tmp_arr;
@@ -1433,7 +1434,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.33 2022/09/19
+2.34 2022/09/19
 
 =head1 AUTHOR
 
