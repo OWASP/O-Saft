@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.32 22/09/18 22:17:20"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.33 22/09/19 08:55:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2890,8 +2890,8 @@ sub _get_default($$$$)  {
     my $version = "";   # returned protocol version
     my $cipher  = "";
     my @list = ();   # mode == default
-       @list =         OSaft::Ciphers::sort_cipher_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
-       @list = reverse OSaft::Ciphers::sort_cipher_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
+       @list =         OSaft::Ciphers::sort_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
+       @list = reverse OSaft::Ciphers::sort_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
     my $cipher_list = join(":", @list);
 
     if (0 == $cmd{'extciphers'}) {
@@ -5611,7 +5611,7 @@ sub printciphercheck    {
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherpreferred($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
-    my @sorted  = OSaft::Ciphers::sort_cipher_results($results->{$ssl}); # sorting has no impact on severity
+    my @sorted  = OSaft::Ciphers::sort_results($results->{$ssl}); # sorting has no impact on severity
     _trace2("printciphercheck: sorted $#sorted : @sorted");
     $results->{$ssl}{'sorted'} = \@sorted;   # pass sorted list to subroutines
     if ($legacy ne 'sslyze') {
