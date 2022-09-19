@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.33 22/09/19 08:55:43"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.34 22/09/19 12:04:22"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -1180,6 +1180,14 @@ sub _cipher_set_sec     {
 
 #| definitions: internal functions
 #| -------------------------------------
+sub _eval_cipherranges  {
+    #? return array of cipher suite hex key, securely evaluated from given range
+    # invalid; avoid injection attempts
+    my $key = shift;
+    return [] if $cfg{'cipherranges'}->{$key} !~ m/^[x0-9A-Fa-f,.\s]+$/; # see osaft.pm
+    return (eval($cfg{'cipherranges'}->{$key})); ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+} # _eval_cipherranges
+
 sub __is_number         {
     # return 1 if given parameter is a number; return 0 otherwise
     my $val = shift;
@@ -2848,9 +2856,9 @@ sub _get_ciphers_list   {
         # cipher range specified with --cipher-range=* option
         # ranges are defined as numbers, need to get the cipher suite name
         _v_print("cipher range: $range");
-        foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+        foreach my $c (_eval_cipherranges($range)) {
             my $key = sprintf("0x%08X",$c);
-            push(@ciphers, OSaft::Ciphers::get_name($key));
+            push(@ciphers, OSaft::Ciphers::get_name($key)||""); # "" avoids some undef
         }
     }
     _trace(" got ciphers    = @ciphers");
@@ -3081,7 +3089,7 @@ sub ciphers_scan_raw    {
             $last_a = $key;
         }
         if (0 < scalar @accepted) {
-            my $cipher = OSaft::Ciphers::get_name($accepted[0]);
+            my $cipher = OSaft::Ciphers::get_name($accepted[0]) || $STR{UNDEF}; # may return undef
             # SEE Note:+cipherall
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
@@ -6029,8 +6037,7 @@ sub printversion        {
 
     print "= $me +cipher --ciphermode=intern =";
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
-    my @cnt = (eval($cfg{'cipherranges'}->{'rfc'})); ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-      ## dirty eval() ok here, as it is mainly for testing or information
+    my @cnt = (_eval_cipherranges('rfc'));
     print "    number of supported ciphers      " . scalar @cnt;
     print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
     if ($cfg{'verbose'} > 0) {
