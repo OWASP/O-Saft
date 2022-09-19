@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.20 22/09/18 19:12:35
+#?      @(#) Makefile.cipher 1.21 22/09/19 18:16:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.20
+_SID.cipher        := 1.21
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -64,6 +64,7 @@ LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=is_invalid
 
 LIST.cipher-range  := \
+	--dummy-no-arg  \
 	--range=c0xx    --range=ccxx    --range=ecc       --range=SSLv2_long \
 	--range=rfc     --range=long    --range=shifted   --range=SSLv3_SSLv2 \
 	--range=SSLv2   --range=SSLv3   --range=TLSv12    --range=TLSv13
@@ -77,36 +78,33 @@ LIST.cipher        := \
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
 
 ifndef cipher-macros-generated
-    _TEST.cipher           := testcmd-cipher-+cipher
-    _TEST.cipher-pattern   := testcmd-cipher-+cipher-
-    _TEST.cipher-range     := testcmd-cipher-+test-ciphers-list
-    # +test-ciphers-list without --range=* not defined here,
-    # see target testarg-opt-alias--test-ciphers-list in Makefile.opt
     $(foreach arg, $(LIST.cipher),\
-	$(eval _target=$(_TEST.cipher)$(subst =,-,$(arg))) \
-	$(eval $(_target)_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_target)_ ) \
-    )
-    $(foreach arg, $(LIST.cipher-range),\
-	$(eval _target=$(_TEST.cipher-range)$(subst =,-,$(arg))) \
+	$(eval _target=testcmd-cipher-+cipher-$(subst =,-,$(arg))) \
 	$(eval $(_target)_%:  TEST.args = $(arg) ) \
 	$(eval ALL.testcipher  += $(_target)_ ) \
     )
     $(foreach mode, $(LIST.cipher-mode),\
       $(foreach arg, $(LIST.cipher-pattern),\
-	$(eval _target=$(_TEST.cipher-pattern)$(subst =,-,$(arg))$(subst =,-,$(mode))) \
+	$(eval _target=testcmd-cipher-+cipher-$(subst =,-,$(arg))$(subst =,-,$(mode))) \
 	$(eval $(_target)_%:  TEST.args = $(arg) $(mode) ) \
 	$(eval ALL.testcipher  += $(_target)_ ) \
       ) \
     )
+    # for --test-ciphers-list see Makefile.opt
+    $(foreach arg, $(LIST.cipher-range),\
+	$(eval _target=testcmd-cipher-+test-ciphers-list-$(subst =,-,$(arg))) \
+	$(eval $(_target):    TEST.args = $(arg) ) \
+	$(eval ALL.testciphers += $(_target) ) \
+    )
     undefine _target
-    undefine _TEST.cipher
-    undefine _TEST.cipher-pattern
-    undefine _TEST.cipher-range
 endif
 
+# testcmd-cipher-+test-ciphers-list-* do not need a target for testing,  hence
+# they are added to ALL.testciphers instead of ALL.testciphers to avoid adding
+# the TEST.cipher.hosts below
+
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
-testcmd-cipher-+test-ciphers-list-%: TEST.init  = --trace-CLI --header +test-ciphers-list
+testcmd-cipher-+test-ciphers-list-%: TEST.init  = --test-ciphers-list
 testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher--%:          TEST.init   = --trace-CLI --header +cipher
 testcmd-cipher-+cipher_%:           TEST.args  +=
@@ -119,9 +117,9 @@ testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
-testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
 testcmd-cipher-+cipher--trace-host_%:   TEST.args  += +cipher --showhost --trace-KEY
-# not yet implemented # TODO: hende missing in ALL.testciphermisc below
+testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
+# not yet implemented # TODO: hence missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
 testcmd-cipher-+cipher-weak_%:      TEST.args  += +cipher-weak
 ALL.testciphermisc     = \
@@ -134,6 +132,7 @@ ALL.testciphermisc     = \
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
+ALL.test.cipher       += $(ALL.testciphers)
 ALL.test.cipher.log   += $(ALL.test.cipher:%=%.log)
 
 test.cipher.log-compare:   TEST.target_prefix  = testcmd-cipher
