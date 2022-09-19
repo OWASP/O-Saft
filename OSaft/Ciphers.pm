@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.34 22/09/19 08:47:45";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.35 22/09/19 08:53:50";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -560,14 +560,14 @@ sub find_name       {   # TODO: not yet used
 
 Set value for 'security' in for specified cipher key.
 
-=head2 sort_cipher_names(@ciphers)
+=head2 sort_names(@ciphers)
 
 Sort ciphers according their strength. Returns list with most strongest first. 
 
 C<@ciphers> is a list of cipher suite names. These names should be those used by
 openssl(1)  .
 
-=head2 sort_cipher_results(%unsorted)
+=head2 sort_results(%unsorted)
 
 Sort ciphers according their strength. Returns list with most strongest first. 
 
@@ -576,7 +576,7 @@ C<%unsorted> is a reference to a hash) of cipher suite hex keys.
 
 sub set_sec         { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
 
-sub sort_cipher_names   {
+sub sort_names      {
     # cipher suites must be given as array
     # NOTE: the returned list may not be exactly sorted according the cipher's
     #       strength, just roughly
@@ -589,7 +589,7 @@ sub sort_cipher_names   {
     my @latest  ;
     my $cnt_in  = scalar @ciphers;  # number of passed ciphers; see check at end
 
-    _trace("sort_cipher_names(){ $cnt_in ciphers: @ciphers }");
+    _trace("sort_names(){ $cnt_in ciphers: @ciphers }");
 
     # Algorithm:
     #  1. remove all known @insecure ciphers from given list
@@ -673,13 +673,13 @@ sub sort_cipher_names   {
         qw(PCT_)    ,                   # not an SSL/TLS protocol, just to keep our checks quiet
     );
     foreach my $rex (@insecure) {               # remove all known insecure suites
-        _trace2("sort_cipher_names: insecure regex\t= $rex }");
+        _trace2("sort_names: insecure regex\t= $rex }");
         push(@latest, grep{ /$rex/} @ciphers);  # add matches to result
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
     }
     foreach my $rex (@strength) {               # sort according strength
         $rex = qr/^(?:(?:SSL|TLS)[_-])?$rex/;   # allow IANA constant names too
-        _trace2("sort_cipher_names(): regex\t= $rex }");
+        _trace2("sort_names(): regex\t= $rex }");
         push(@sorted, grep{ /$rex/} @ciphers);  # add matches to result
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
     }
@@ -698,11 +698,11 @@ sub sort_cipher_names   {
         warn $STR{WARN}, "412: missing ciphers in sorted list ($cnt_out < $cnt_in): @miss"; ## no critic qw(ErrorHandling::RequireCarping)
     }
     @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
-    _trace("sort_cipher_names(){ $cnt_out ciphers\t= @sorted }");
+    _trace("sort_names(){ $cnt_out ciphers\t= @sorted }");
     return @sorted;
-} # sort_cipher_names
+} # sort_names
 
-sub sort_cipher_results {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # returns array with sorted cipher keys
     # only used when ckecking for ciphers with openssl
     my $unsorted= shift;    # hash with $key => yes-or-no
@@ -767,7 +767,10 @@ sub sort_cipher_results {   ## no critic qw(Subroutines::ProhibitExcessComplexit
         push(@sorted, $arr[2]);
     }
     return @sorted;
-} # sort_cipher_results
+} # sort_results
+
+sub sort_cipher_names   { return sort_names(@_);   } # wrapper for o-saft.pl
+sub sort_cipher_results { return sort_results(@_); } # wrapper for o-saft.pl
 
 
 #_____________________________________________________________________________
@@ -937,7 +940,7 @@ EoT
     my @sorted;
     my @unsorted;
     push(@unsorted, get_name($_)) foreach sort keys %ciphers;
-    foreach my $c (sort_cipher_names(@unsorted)) {
+    foreach my $c (sort_names(@unsorted)) {
         my $sec = get_sec(get_key($c));
         push(@sorted, sprintf("%4s\t%s\t%s", get_cipher_owasp($c), $sec, $c));
     }
@@ -1434,7 +1437,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.34 2022/09/19
+2.35 2022/09/19
 
 =head1 AUTHOR
 
