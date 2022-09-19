@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.32 22/09/18 22:19:49";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.33 22/09/19 08:02:21";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -702,7 +702,7 @@ sub sort_cipher_names   {
     return @sorted;
 } # sort_cipher_names
 
-sub sort_cipher_results {
+sub sort_cipher_results {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # returns array with sorted cipher keys
     my $unsorted= shift;    # hash with $key => yes-or-no
     my @sorted;             # array to be returned
@@ -766,7 +766,7 @@ sub sort_cipher_results {
         push(@sorted, $arr[2]);
     }
     return @sorted;
-} # _sort_cipher_results
+} # sort_cipher_results
 
 
 #_____________________________________________________________________________
@@ -919,7 +919,8 @@ sub show_sorted     {
     local $\ = "\n";
     my $head = "= OWASP openssl cipher suite";
     my $line = "=------+-------+----------------------------------------------";
-    print "
+    print << 'EoT';
+
 === internal data structure: ciphers sorted according strength ===
 =
 = Print overview of all available cipher names sorted according OWASP scoring.
@@ -928,7 +929,7 @@ sub show_sorted     {
 =       OWASP       - OWASP scoring (A, B, C, D)
 =       openssl     - strength gven bei OpenSSL
 =       cipher suite- OpenSSL suite name
-";
+EoT
     print ($line);
     print ($head);
     print ($line);
@@ -951,7 +952,8 @@ sub show_sorted     {
 sub show_overview   {
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    print  "
+    print << 'EoT';
+
 === internal data structure: information about ciphers ===
 =
 = This function prints a simple overview of all available ciphers. The purpose
@@ -973,8 +975,8 @@ sub show_overview   {
 = No Perl or other warnings should be printed.
 = Note: following columns should have a  *  in columns
 =       security, name, const
-=
-";
+EoT
+
     my $line = sprintf("=%s+%s+%s+%s+%s+%s", "-" x 14, "-"x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 21);
     my $head = sprintf("= %-13s%s\t%s\t%s\t%s\t%s", "key", "security", "name", "aliases", "const", "cipher suite");
     print($line);
@@ -1057,8 +1059,8 @@ $txt_cols
     return;
 } # show_alias
 
-sub _show_ciphers_ssltest {
-    # special output for --legacy=ssltest:
+sub show_ssltest    {
+    #? print internal list of ciphers in format like ssltest
     # %ciphers are sorted by protocol and name  # SEE Note:Testing, sort
     _v_print((caller(0))[3]);
     my $last_k  = "";
@@ -1086,19 +1088,15 @@ sub _show_ciphers_ssltest {
                 $ciphers{$key}->{enc}, $bits, $auth, $ciphers{$key}->{mac}, $keyx);
     }
     return;
-} # _show_ciphers_ssltes
+} # show_ssltest
 
 sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print internal list of ciphers in specified format
     my $format = shift;
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    if ($format !~ m/(?:dump|osaft|openssl|simple|show|ssltest)/) {
+    if ($format !~ m/(?:dump|osaft|openssl|simple|show)/) {
         _warn("520: unknown format '$format'");
-        return;
-    }
-    if ($format =~ m/^(?:ssltest)/) {
-        _show_ciphers_ssltest();
         return;
     }
 
@@ -1207,29 +1205,24 @@ sub show            {
     #? dispatcher for various --test-cipher-* options; show information
     my $arg = shift;    # any --test-cipher-*
        $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
-    #_v_print((caller(0))[3]);
+    _v_print((caller(0))[3]);
     #_dbx("arg=$arg");
-    show_overview()         if ($arg =~ m/^overview/        );
     show_alias('const')     if ($arg =~ m/^const(?:ants?)?/ );
     show_alias('names')     if ($arg =~ m/^alias(?:es)?/    );
     show_alias('rfc')       if ($arg =~ m/^rfc/i            );
     show_desc()             if ($arg =~ m/^desc(?:ription)?/);
     show_desc()             if ($arg =~ m/^ciphers.?desc(?:ription)?/);
+    show_overview()         if ($arg eq 'overview');
+    show_ssltest()          if ($arg eq 'ssltest');
+    show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    show_ciphers($1)        if ($arg =~ m/^(dump|osaft|openssl|show|simple|ssltest)/);
+    show_ciphers($1)        if ($arg =~ m/^(dump|osaft|openssl|show|simple)/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/    );
     show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
     find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
-    show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
-    if ($arg =~ m/get_cipherkeys/   ) {
-        my $list = get_cipherkeys();    # enforce string value
-        print $list;
-    }
-    if ($arg =~ m/get_ciphernames/   ) {
-        my $list = get_ciphernames();   # enforce string value
-        print $list;
-    }
+    print get_cipherkeys()  if ($arg =~ m/get_cipherkeys/   ); # enforce string value
+    print get_ciphernames() if ($arg =~ m/get_ciphernames/  ); # enforce string value
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
@@ -1327,7 +1320,7 @@ sub _main_ciphers   {
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(dump|openssl|osaft|simple|ssltest)/);
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?(overview|show|sort(?:ed))/);
         $arg = "--test-ciphers-$1" if ($arg =~ m/^[+]?((?:get|hex=|key=).*)/);
-        show($arg)          if ($arg =~ /^--test.?cipher/);
+        show($arg)  if ($arg =~ /^--test.?cipher/);
     }
     exit 0;
 } # _main_ciphers
@@ -1440,7 +1433,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.32 2022/09/18
+2.33 2022/09/19
 
 =head1 AUTHOR
 
