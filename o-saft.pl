@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.34 22/09/19 12:04:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.35 22/09/19 12:10:46"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -1152,20 +1152,8 @@ sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
 #| -------------------------------------
 # following wrappers are called with cipher suite name, while OSaft::Ciphers
 # methods need to be called with cipher hex key
-sub _cipher_get_sec     { return OSaft::Ciphers::get_sec(   OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_ssl     { return OSaft::Ciphers::get_ssl(   OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_keyx    { return OSaft::Ciphers::get_keyx(  OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_auth    { return OSaft::Ciphers::get_auth(  OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_enc     { return OSaft::Ciphers::get_enc(   OSaft::Ciphers::get_key(shift)); }
 sub _cipher_get_bits    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_mac     { return OSaft::Ciphers::get_mac(   OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_note    { return OSaft::Ciphers::get_note(  OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_names   { return OSaft::Ciphers::get_names( OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_notes   { return OSaft::Ciphers::get_notes( OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_consts  { return OSaft::Ciphers::get_consts(OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_desc    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
-sub _ciphers_get_all_names  { return OSaft::Ciphers::get_ciphernames(); }
-
+sub _cipher_get_sec     { return OSaft::Ciphers::get_sec(   OSaft::Ciphers::get_key(shift)); }
 sub _cipher_set_sec     {
     # set cipher's security value in %ciphers; can be called with key or name
     # parameter looks like: 0x030000BA=sec or CAMELLIA128-SHA=sec
@@ -2865,7 +2853,7 @@ sub _get_ciphers_list   {
     if (@ciphers <= 0) {      # empty list
         _warn("063: given pattern '$pattern' did not return cipher list");
         _y_CMD("  using private cipher list ...");
-        @ciphers = _ciphers_get_all_names();
+        @ciphers = OSaft::Ciphers::get_ciphernames();
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
