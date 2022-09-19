@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.13 22/09/19 20:23:12
+#?      @(#) Makefile.etc 1.14 22/09/19 20:32:28
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.13
+_SID.etc           := 1.14
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -101,11 +101,22 @@ testcmd-etc-testssl.sh-count:
 	@-cd $(TEST.dir) \
 	&& $(EXE.pl) $(TEST.args) $(TEST.hosts) | awk '/esting all/{print $$3" ciphers"}'
 
+testcmd-etc-osaft.pl%:          EXE.pl      = o-saft.pl
+testcmd-etc-osaft.pl-count:     TEST.args  += ciphers
+testcmd-etc-osaft.pl-count:
+	@$(EXE.echo) -n "# $(EXE.pl)\t "
+	@-cd $(TEST.dir) \
+	&& $(EXE.pl) $(TEST.args) $(TEST.hosts) \
+	|  awk '("ciphers"==$$3){sub(/= /,"");print}'
+
 ALL.testetc-count   = \
 	testcmd-etc-sslscan1.11-count \
 	testcmd-etc-ssltest.pl-count \
-	testcmd-etc-testssl.sh-count
+	testcmd-etc-testssl.sh-count \
+	testcmd-etc-osaft.pl-count
 
+# testcmd-etc-count is a slow target, as most tools test for the ciphers
+# to print the used/available ciphers
 _testcmd-etc-count-head:
 	@$(EXE.echo) "# number of known ciphers supported by various tools"
 testcmd-etc-count: _testcmd-etc-count-head $(ALL.testetc-count)
