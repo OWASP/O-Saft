@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.94 22/09/15 13:14:39
+# SID   @(#) help.txt 1.95 22/09/19 12:16:43
 
 NAME
 
@@ -358,7 +358,7 @@ COMMANDS
 
       +ciphers
 
-          Show ciphers offered by local SSL implementation.
+          Show known ciphers.
 
           This commands prints the ciphers in a format like "openssl ciphers"
           does. It also accepts the  -v  and  -V  option. The  --legacy=TYPE
@@ -373,6 +373,7 @@ COMMANDS
           Different output formats are used for the  --legacy=*  option:
             * --legacy=simple   simple space-separated output
             * --legacy=full     TAB-separated output with more data
+            * --legacy=owasp    simple output sorted according OWASP scoring
             * --legacy=openssl  output like with  +ciphers  command
             * --legacy=ssltest  output like "ssltest --list"
 
@@ -4658,9 +4659,6 @@ TESTING
           Print results for applying various texts to defined regex.
 
       --test-ciphers-dump
-      --test-ciphers-hex=*
-      --test-ciphers-key=*
-      --test-ciphers-list
       --test-ciphers-overview
       --test-ciphers-openssl
       --test-ciphers-show
@@ -4668,8 +4666,14 @@ TESTING
       --test-ciphers-sorted
       --test-ciphers-ssltest
 
-          Print ciphers in variou formats, please see: OSaft/Ciphers.pm .
+          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+          These options are aliases for:  +list --legacy=TYP  .
 
+      --test-ciphers-hex=*
+      --test-ciphers-key=*
+      --test-ciphers-list
+
+          Print some special information, please see: OSaft/Ciphers.pm .
 
       --test-init
 
