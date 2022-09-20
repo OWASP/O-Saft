@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.42 22/09/20 10:02:27";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.43 22/09/20 14:57:25";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1103,30 +1103,27 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
 
-    my $txt_openssl = "=";
-       $txt_openssl =
-"= Output is similar (order of columns) but not identical to result of
-= 'openssl ciphers -V' command." if ($format =~ m/openssl/);
+    my $out_header  = 1;
     my $txt_head    = "";
-    my $idx = 0;
-    foreach (@{$ciphers_desc{head}}) {  # build description from %ciphers_desc
-        $txt_head .= sprintf("=      %-12s - %s\n", $ciphers_desc{head}[$idx], $ciphers_desc{text}[$idx]);
-        $idx++;
+    if ($format eq "openssl") { # like 'openssl ciphers'
+        print join(":", get_ciphernames());
+        return;
+    }
+    if ($format =~ m/openssl/) {
+        print << "EoT";
+# Output is similar (order of columns) but not identical to result of
+# 'openssl ciphers -[vV]' command.
+EoT
+        $out_header = 0;
+        $txt_head   = "";
+    } else {
+        my $idx = 0;
+        foreach (@{$ciphers_desc{head}}) {  # build description from %ciphers_desc
+            $txt_head .= sprintf("=      %-12s - %s\n", $ciphers_desc{head}[$idx], $ciphers_desc{text}[$idx]);
+            $idx++;
+        }
     }
 
-    printf "%s", << "EoT";  # printf to avoid trailing \n
-
-=== internal %ciphers data ===
-=
-= Show a full overview of all available ciphers.
-$txt_openssl
-=
-=   description of columns (if available):
-=      key          - internal hex key for cipher suite
-=      hex          - hex key for cipher suite (like opnssl)
-=      cipher name  - OpenSSL suite name
-$txt_head
-EoT
     my @columns = @{$ciphers_desc{head}}; # cannot be used because we want specific order
     @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|full|osaft)/);
     @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
@@ -1151,7 +1148,7 @@ EoT
         # no fomated header just a line
         $head = sprintf("= %-13s\t%s\t%s\n", "key", join(" ",  @columns), "cipher name");
     }
-    if ($format =~ m/^openssl/) {
+    if ($format =~ m/^openssl-V/) {
 #         0x00,0x3D - AES256-SHA256           TLSv1.2 Kx=RSA      Au=RSA  Enc=AES(256)  Mac=SHA256
 #    0x00,0x00,0x00 - NULL-MD5                SSLv2   Kx=RSA(512) Au=RSA  Enc=None(0)   Mac
         $line = sprintf("=%s+%s+%s+%s+%s+%s+%s\n",
@@ -1159,9 +1156,23 @@ EoT
         $head = sprintf("=% 18s - %-23s %-5s %-11s %-7s %-11s %s\n",
                "key", "name", @columns[0..2], "enc(bit)", "mac");
     }
-    printf($line);
-    printf($head);
-    printf($line);
+    if (0 < $out_header) {
+        printf("%s", << "EoT"); # printf to avoid trailing \n
+
+=== internal %ciphers data ===
+=
+= Show a full overview of all available ciphers.
+=
+=   description of columns (if available):
+=      key          - internal hex key for cipher suite
+=      hex          - hex key for cipher suite (like opnssl)
+=      cipher name  - OpenSSL suite name
+$txt_head
+EoT
+       printf($line);
+       printf($head);
+       printf($line);
+    }
 
     # table data (format should be same as for table head above)
     my $cnt = 0;
@@ -1192,7 +1203,12 @@ EoT
             push(@values, $name);
             printf("%s\t%s\n", $key, join(" ", @values));
         }
-        if ($format =~ m/^(?:openssl)/) {
+        if ($format =~ m/^(?:openssl-v)/) {
+            push(@values, $name);
+            push(@values, $ciphers{$key}->{$_}) foreach @columns;
+            printf("%-23s %-6s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%s\n", @values);
+        }
+        if ($format =~ m/^(?:openssl-V)/) {
             push(@values, $hex, $name);
             push(@values, $ciphers{$key}->{$_}) foreach @columns;
             printf("%19s - %-23s %-6s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%s\n", @values);
@@ -1200,9 +1216,11 @@ EoT
     } # keys
 
     # table footer
-    printf($line);
-    printf($head);
-    printf("=\n= %s ciphers\n", $cnt);
+    if (0 < $out_header) {
+        printf($line);
+        printf($head);
+        printf("=\n= %s ciphers\n", $cnt);
+    }
     return;
 } # show_ciphers
 
@@ -1217,24 +1235,18 @@ sub show            {
     show_alias('rfc')       if ($arg =~ m/^rfc/i            );
     show_desc()             if ($arg =~ m/^desc(?:ription)?/);
     show_desc()             if ($arg =~ m/^ciphers.?desc(?:ription)?/);
-    show_overview()         if ($arg eq 'overview');
-    show_ssltest()          if ($arg eq 'ssltest');
-    show_sorted()           if ($arg =~ m/^sort(?:ed)?/     );
+    show_overview()         if ($arg eq 'overview'          );
+    show_ssltest()          if ($arg eq 'ssltest'           );
+    show_sorted()           if ($arg =~ m/^(owasp|sort(?:ed)?)/);
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl|show|simple)/);
+    show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?|show|simple)/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/    );
     show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
     find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
     # enforce string value
-    if ($arg =~ m/^get_cipherkeys/) {
-        my $txt = get_cipherkeys();
-        printf("%s\n", $txt );
-    }
-    if ($arg =~ m/^get_ciphernames/) {
-        my $txt = get_ciphernames();
-        printf("%s\n", $txt );
-    }
+    print join(" ", get_cipherkeys())  . "\n" if ($arg =~ m/^get_cipherkeys/);
+    print join(" ", get_ciphernames()) . "\n" if ($arg =~ m/^get_ciphernames/);
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
@@ -1326,7 +1338,6 @@ sub _main_ciphers   {
         $cfg{'verbose'}++          if ($arg eq '--v');
         # ----------------------------- commands
         print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers?-)?version/i);
-        show_sorted()              if ($arg =~ /^(?:--test-ciphers?-)?(?:owasp|sort)/i);
         # allow short option without --test-ciphers- prefix
         show("--test-ciphers-$arg");
     }
@@ -1441,7 +1452,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.42 2022/09/20
+2.43 2022/09/20
 
 =head1 AUTHOR
 
