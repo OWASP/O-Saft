@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.15 22/09/20 23:16:01
+#?      @(#) Makefile.etc 1.16 22/09/20 23:20:19
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.15
+_SID.etc           := 1.16
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -75,8 +75,8 @@ testcmd-etc-sslscan1.1%: TEST.args = --no-colour --no-failed --no-check-certific
 testcmd-etc-sslscan1.11:
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-etc-testssl.sh%: EXE.pl    = testssl.sh
-testcmd-etc-testssl.sh%: TEST.args  = -e --color 0
+testcmd-etc-testssl.s%:  EXE.pl    = testssl.sh
+testcmd-etc-testssl.s%:  TEST.args  = -e --color 0
 #testcmd-etc-testssl.sh%: TEST.args += --openssl /usr/local/openssl/bin/openssl
 testcmd-etc-testssl.sh: 
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
