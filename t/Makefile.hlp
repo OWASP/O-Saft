@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.36 22/09/19 18:46:19
+#?      @(#) Makefile.hlp 1.37 22/09/20 23:32:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.36
+_SID.hlp           := 1.37
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -70,8 +70,8 @@ testarg-hlp---h:                TEST.args  += --h
 
 # all other commands with --trace-CLI
 
-# +ciphers ...
-testarg-hlp-+ciphers%:          TEST.init  += --trace-CLI +ciphers
+# +list ...
+testarg-hlp-+ciphers%:          TEST.init  += --trace-CLI +list
 LIST.ciphers-legacy    := \
 	--dummy-no-arg  --legacy=simple  --legacy=dump \
 	--legacy=owasp  --legacy=openssl --legacy=ssltest -V
@@ -84,6 +84,12 @@ ifndef cipher-macros-generated
     )
     undefine _target
 endif
+
+# +ciphers ...
+testarg-hlp-+ciphers-%:         TEST.init  += --trace-CLI +ciphers
+testarg-hlp-+ciphers---dummy:   TEST.args  += 
+testarg-hlp-+ciphers---v:       TEST.args  += -v
+testarg-hlp-+ciphers---V:       TEST.args  += -V
 
 # --help
 testarg-hlp---help%:            TEST.init  += --trace-CLI
