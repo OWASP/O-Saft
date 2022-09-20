@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 1.2 19/12/15 16:30:21
+#?      @(#) Makefile.docker 1.3 22/09/20 22:46:26
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(Project)-docker
 
-_SID.docker        := 1.2
+_SID.docker        := 1.3
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -62,14 +62,15 @@ LIST.docker.tool    = +VERSION  +version    +quit=--traceARG=localhost
 # SEE Make:target name
 # SEE Make:target name prefix
 
-_LIST.docker.all    = $(LIST.docker.opts) $(LIST.docker.call) $(LIST.docker.tool)
 ifndef docker-macros-generated
-    $(foreach arg, $(_LIST.docker.all),$(eval \
-	testarg-docker-$(subst =,-,$(arg)): TEST.args = $(subst =, ,$(arg)) \
-    ))
-    $(foreach arg, $(_LIST.docker.all),$(eval \
-	ALL.test.docker += testarg-docker-$(subst =,-,$(arg)) \
-    ))
+    _LIST.docker.all = $(LIST.docker.opts) $(LIST.docker.call) $(LIST.docker.tool)
+    _target=testarg-docker-$(subst =,-,$(arg))
+    $(foreach arg, $(_LIST.docker.all),\
+        $(eval $(_target): TEST.args = $(subst =, ,$(arg)) )\
+        $(eval ALL.test.docker += $(_target) ) \
+    )
+    undefine _target
+    undefine _LIST.docker.all
 endif
 
 testarg-docker-%:       EXE.pl      = ../$(EXE.docker)
