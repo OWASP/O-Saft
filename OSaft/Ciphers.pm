@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.39 22/09/19 13:51:51";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.40 22/09/20 09:26:26";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1224,8 +1224,9 @@ sub show            {
     show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
     find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
-    print get_cipherkeys()  if ($arg =~ m/get_cipherkeys/   ); # enforce string value
-    print get_ciphernames() if ($arg =~ m/get_ciphernames/  ); # enforce string value
+    # enforce string value
+    print join(" ", get_cipherkeys() )  if ($arg =~ m/get_cipherkeys/   );
+    print join(" ", get_ciphernames())  if ($arg =~ m/get_ciphernames/  );
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
@@ -1432,7 +1433,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.39 2022/09/19
+2.40 2022/09/20
 
 =head1 AUTHOR
 
