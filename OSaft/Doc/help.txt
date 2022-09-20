@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.95 22/09/19 12:16:43
+# SID   @(#) help.txt 1.96 22/09/20 15:03:59
 
 NAME
 
@@ -358,11 +358,8 @@ COMMANDS
 
       +ciphers
 
-          Show known ciphers.
-
-          This commands prints the ciphers in a format like "openssl ciphers"
-          does. It also accepts the  -v  and  -V  option. The  --legacy=TYPE
-          option can be used as described for  +list  command.
+          Show known ciphers in format like "openssl ciphers".
+          It also accepts the  -v  and  -V  option.
           Use  +list  command for more information according ciphers.
 
       +list
