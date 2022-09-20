@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.41 22/09/20 09:33:22";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.42 22/09/20 10:02:27";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -512,7 +512,8 @@ sub get_desc    {
 
 sub get_cipherkeys  {
     my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
-    return wantarray ? @keys : join(' ', @keys);
+    return wantarray ? (sort @keys) : join(' ', (sort @keys));
+    # SEE Note:Testing, sort
 } # get_cipherkeys
 
 sub get_ciphernames {
@@ -521,7 +522,8 @@ sub get_ciphernames {
         next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
         push(@list, get_name($key));
     }
-    return wantarray ? @list : join(' ', @list);
+    return wantarray ? (sort @list) : join(' ', (sort @list));
+    # SEE Note:Testing, sort
 } # get_ciphernames
 
 sub find_name       {   # TODO: not yet used
@@ -1225,8 +1227,14 @@ sub show            {
     show_key($1)            if ($arg =~ m/^key=(.*)/        );
     find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
     # enforce string value
-    print join(" ", get_cipherkeys() ) ."\n" if ($arg =~ m/get_cipherkeys/   );
-    print join(" ", get_ciphernames()) ."\n" if ($arg =~ m/get_ciphernames/  );
+    if ($arg =~ m/^get_cipherkeys/) {
+        my $txt = get_cipherkeys();
+        printf("%s\n", $txt );
+    }
+    if ($arg =~ m/^get_ciphernames/) {
+        my $txt = get_ciphernames();
+        printf("%s\n", $txt );
+    }
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
@@ -1433,7 +1441,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.41 2022/09/20
+2.42 2022/09/20
 
 =head1 AUTHOR
 
