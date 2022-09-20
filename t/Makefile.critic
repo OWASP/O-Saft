@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.26 22/02/22 09:05:23
+#?      @(#) Makefile.critic 1.27 22/09/20 22:59:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.26
+_SID.critic        := 1.27
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -53,13 +53,13 @@ ALL.critic              = $(SRC.pl) $(ALL.pm) $(GEN.pod)
 _ALL.devtools.extern   += $(EXE.critic)
 
 # using perlcritic's --verbose options without ( and ) ; see: man perlcritic
-_TEST.c.verb8      := '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
-_TEST.c.verb10     := '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
+TEST.opt.verb8     := '%f: [%p] %m at line %l, column %c.  Severity: %s\\n'
+TEST.opt.verb10    := '%f: %m at line %l, column %c.\n  %p Severity: %s\n%d\\n'
 # same options, but output prefixed with filename
-_TEST.c.verb8o     := --verbose $(_TEST.c.verb8)
-_TEST.c.verb10o    := --verbose $(_TEST.c.verb10)
+TEST.opt.verb8o    := --verbose $(TEST.opt.verb8)
+TEST.opt.verb10o   := --verbose $(TEST.opt.verb10)
 
-TEST.critic.opt     = $(_TEST.c.verb8o)
+TEST.critic.opt     = $(TEST.opt.verb8o)
     # perlcritic --verbose 8 is default ; hence we use this modified
 
 # some aliases
@@ -175,7 +175,7 @@ c5-% c4-% c3-% c2-%:
 
 c5v-% c4v-% c3v-% c2v-%:
 	@$(TRACE.target)
-	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity) TEST.critic.opt="$(_TEST.c.verb10o)"
+	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity) TEST.critic.opt="$(TEST.opt.verb10o)"
 
 _TEST.critic-3.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-3.txt
 _TEST.critic-4.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-4.txt
