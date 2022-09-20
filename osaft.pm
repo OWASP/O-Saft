@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.15 22/09/19 09:09:47";
+our $SID_osaft  =  "@(#) osaft.pm 2.16 22/09/20 14:28:23";
 our $VERSION    =  "22.06.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2557,7 +2557,7 @@ our %cfg = (
    #----------------------+-----+----------------------------------------------
     'legacy'            => "simple",
     'legacys'           => [    # list of known values
-                            qw(cnark sslaudit sslcipher ssldiagnos sslscan
+                            qw(cnark sslaudit sslcipher ssldiagnos sslscan dump
                             ssltest ssltest-g sslyze testsslserver thcsslcheck
                             openssl simple full compact quick owasp osaft o-saft)
                            ],
@@ -3440,7 +3440,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.15 2022/09/19
+2.16 2022/09/20
 
 =head1 AUTHOR
 
