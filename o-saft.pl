@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.36 22/09/19 19:25:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.37 22/09/20 15:06:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6095,22 +6095,21 @@ sub printversion        {
 
 sub printciphers        {
     #? print cipher descriptions from internal database
-    # may use settings from --legacy= and option to select output format
-    if ((($cfg{'opt-v'} + $cfg{'opt-V'}) <= 0)
-     and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
+    # uses settings from --legacy= and option -v or -V to select output format
+    if (_is_cfg_do('ciphers')) {
         # output looks like: openssl ciphers
-        _trace("printciphers: +ciphers");
-        print join(":", (OSaft::Ciphers::get_ciphernames()));   # SEE Note:Testing, sort
-        return;
+       _y_CMD("simulate 'openssl ciphers'");
+        $cfg{'out'}->{'header'} = 0;
+        $cfg{'legacy'} = 'openssl';
+        $cfg{'legacy'} = 'openssl-v' if (0 < $cfg{'opt-v'});
+        $cfg{'legacy'} = 'openssl-V' if (0 < $cfg{'opt-V'});
     }
     # anything else prints user-specified formats
-    _trace("printciphers: +list");
+    _trace("printciphers: +list");  # late, to not disturb output of plain "ciphers"
     _v_print("command: " . join(" ", @{$cfg{'do'}}));
     _v_print("database version: ", _VERSION());
     _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
-    OSaft::Ciphers::show('sorted')  if ('owasp'   eq $cfg{'legacy'});
-    OSaft::Ciphers::show('dump')    if ('full'    eq $cfg{'legacy'});  # legacy ...
     OSaft::Ciphers::show($cfg{'legacy'});
     return;
 } # printciphers
@@ -6723,7 +6722,7 @@ while ($#argv >= 0) {
 #   if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out->header, # TODO not supported
     if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, ssl-cert-check
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, ssl-cert-check
-    if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # for lazy people, not documented
+    if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # alias: for lazy people, not documented
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^--checks?$/)          { $typ = 'DO';              } # tls-check.pl
     if ($arg =~ /^--(fips|ism|pci)$/i)  {}
@@ -7202,18 +7201,7 @@ if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     $cfg{'use'}->{'dns'}    = 0;
     _hint($cfg{'hints'}->{'cipher'});
 }
-if (_is_cfg_do('ciphers')) {
-    # +ciphers command is special:
-    #   simulates openssl's ciphers command and accepts -v or -V option
-    #_set_cfg_out('header', 0) if ((grep{/--header/} @argv) <= 0);
-    $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
-    $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
-} else {
-    # not +ciphers command, then  -V  is for compatibility
-    if (not _is_cfg_do('list')) {
-        _set_cfg_out('header', $cfg{'opt-V'}) if (not _is_cfg_out('header'));
-    }
-}
+
 if (_is_cfg_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
     _set_cfg_out('header', 1)  if ((grep{/--no.?header/} @argv) <= 0);
