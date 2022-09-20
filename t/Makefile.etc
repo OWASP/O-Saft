@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.14 22/09/19 20:32:28
+#?      @(#) Makefile.etc 1.15 22/09/20 23:16:01
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.14
+_SID.etc           := 1.15
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -69,8 +69,9 @@ testcmd-etc-sslscan1.8:  TEST.args = --no-failed
 testcmd-etc-sslscan1.8:
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
-testcmd-etc-sslscan1.11%: EXE.pl    = /opt/bin/sslscan-1.11.9
-testcmd-etc-sslscan1.11%: TEST.args = --no-colour --no-failed --no-check-certificate --no-heartbleed
+#testcmd-etc-sslscan1.11: GNU make does not honor empty pattern
+testcmd-etc-sslscan1.1%: EXE.pl    = /opt/bin/sslscan-1.11.9
+testcmd-etc-sslscan1.1%: TEST.args = --no-colour --no-failed --no-check-certificate --no-heartbleed
 testcmd-etc-sslscan1.11:
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.args) $(TEST.hosts)
 
