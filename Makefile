@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.7 22/09/15 12:33:59
+#?      @(#) Makefile 2.8 22/09/21 21:19:44
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.7
+_SID            = 2.8
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -208,9 +208,10 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 # TODO: because make does not allow = in target names, the generated targets
 #       should use - instead
 _HELP.opt_data  = +help --help=opts --help=commands --help=glossar --help=alias \
-		  --help=data --help=checks --help=regex --help=rfc \
-                  --help=warnings
+		  --help=data --help=checks --help=regex --help=rfc
+# --help=warnings  uses a different command to be generated
 GEN.DOC.data    = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
+GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).help-warnings
 
 # summary variables
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
@@ -281,8 +282,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.7 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.7
+_INST.genbytext = generated data by Makefile 2.8 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.8
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -524,8 +525,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.7
-tar:     GREP_EDIT  = 2.7
+GREP_EDIT           = 2.8
+tar:     GREP_EDIT  = 2.8
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -653,13 +654,13 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # hence make is called recursively for this special file
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 # most files could also be generated with: $(SRC.pl) --gen-docs
+$(DOC.dir)/$(SRC.pl).help-warnings: $(SRC.pl)
+	@$(TRACE.target)
+	$(MAKE_COMMAND) -s warnings-info > $(DOC.dir)/$(SRC.pl).help=warnings
+
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	@$(TRACE.target)
-	@-if expr "$@" ":" ".*help=warnings" >/dev/null ; then \
-	    $(MAKE_COMMAND) -s warnings-info > $@  ; \
-	else \
-	    $(SRC.pl) --no-rc $* > $@ ; \
-	fi
+	$(SRC.pl) --no-rc $* > $@
 
 
 # use libreoffice to generate PDF from .odg
