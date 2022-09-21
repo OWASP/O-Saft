@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.52 22/09/21 09:48:35
+@(#) Makefile.pod 1.53 22/09/21 22:43:42
 
 =head1 AUTHOR
 
@@ -696,6 +696,17 @@ and the dependency have to be written as "escaped" variable, like:
 
 If the used make does not support  .SECONDEXPANSION: , the targets must be
 rewritten with the real target name instead of the escaped variable.
+
+
+=head2 GNU Make:Pattern Rule
+
+GNU Make's >3.81 documentation states that the first matching pattern rule
+will be used and others are not executed. First means: the first appearing
+rule in the Makefile. On some systems the last defined  pattern rule  will 
+be executed, unfortunately.
+This behaviour inhibits that  the sequence of rules  can be used to ensure
+the execution of a special rule.
+As workaround a more specific pattern rule is defined in such cases.
 
 
 =head2 GNU Make:MAKE vs. MAKE_COMMAND
