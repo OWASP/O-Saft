@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 1.16 22/09/20 23:20:19
+#?      @(#) Makefile.etc 1.17 22/09/21 09:56:39
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 1.16
+_SID.etc           := 1.17
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
 ALL.inc.type       += etc
 ALL.help.tests     += help.test.etc
+
+first-etc-target-is-default: help.test.etc
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.etc.hosts      = localhost
 ifdef TEST.hosts
     TEST.etc.hosts  = $(TEST.hosts)
 endif
-
-first-etc-target-is-default: help.test.etc
 
 help.test.etc:        HELP_TYPE = etc
 help.test.etc-v:      HELP_TYPE = etc
