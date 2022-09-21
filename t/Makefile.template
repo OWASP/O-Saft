@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#)  1.25 22/02/21 17:33:53
+#?      @(#) Makefile.template 1.26 22/09/21 12:01:24
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 1.25
+_SID.TEMPL     := 1.26
 
 _MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -30,13 +30,13 @@ ALL.inc.type   += TEMPL
                 # add our type to list of all included types
 ALL.help.tests += help.test.TEMPL
 
+first-TEMPL-target-is-default: help.test.TEMPL
+    # otherwise the first target from other included files would be used
+
 ifeq (,$(_SID.test))
     -include t/Makefile
     # get general macros for testing from master makefile
 endif
-
-first-TEMPL-target-is-default: help.test.TEMPL
-    # otherwise the first target from other included files would be used
 
 help.test.TEMPL:          HELP_TYPE = TEMPL
 help.test.TEMPL-v:        HELP_TYPE = TEMPL
