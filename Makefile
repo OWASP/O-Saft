@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.8 22/09/21 21:19:44
+#?      @(#) Makefile 2.9 22/09/21 21:47:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.8
+_SID            = 2.9
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -211,7 +211,7 @@ _HELP.opt_data  = +help --help=opts --help=commands --help=glossar --help=alias 
 		  --help=data --help=checks --help=regex --help=rfc
 # --help=warnings  uses a different command to be generated
 GEN.DOC.data    = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
-GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).help-warnings
+GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).help=warnings
 
 # summary variables
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
@@ -282,8 +282,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.8 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.8
+_INST.genbytext = generated data by Makefile 2.9 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.9
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -525,8 +525,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.8
-tar:     GREP_EDIT  = 2.8
+GREP_EDIT           = 2.9
+tar:     GREP_EDIT  = 2.9
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -541,8 +541,8 @@ clear.all:  clean.tar clean
 clean.all:  clean.tar clean
 tgz:        tar
 gen.all:    $(ALL.gen)
-doc.data:   $(GEN.DOC.data)
-docdata:    $(GEN.DOC.data)
+doc.data:   $(GEN.DOC.data) $(DOC.dir)/$(SRC.pl).help=warnings
+docdata:    $(GEN.DOC.data) $(DOC.dir)/$(SRC.pl).help=warnings
 tcl.data:
 	@echo "**ERROR: ancient target; please use 'doc.data'"
 tcldata:    tcl.data
@@ -650,18 +650,20 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
 
-# generating file containing our messages uses target from t/Makefile.warnings
-# hence make is called recursively for this special file
-# TODO: this is a dirty hack, because no Makefiles from t/ should be used here
-# most files could also be generated with: $(SRC.pl) --gen-docs
-$(DOC.dir)/$(SRC.pl).help-warnings: $(SRC.pl)
-	@$(TRACE.target)
-	$(MAKE_COMMAND) -s warnings-info > $(DOC.dir)/$(SRC.pl).help=warnings
-
 $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc $* > $@
 
+# generating file containing our messages uses target from t/Makefile.warnings
+# hence make is called recursively for this special file
+# TODO: this is a dirty hack, because no Makefiles from t/ should be used here
+# most files could also be generated with: $(SRC.pl) --gen-docs
+# target filename and hence the target itself contains  =  which is an invalid
+# character in a target name; workaround with GNUMAKE_INVALID_CHAR variable
+GNUMAKE_INVALID_CHAR = =
+$(DOC.dir)/$(SRC.pl).help$(GNUMAKE_INVALID_CHAR)warnings: $(SRC.pl)
+	@$(TRACE.target)
+	$(MAKE_COMMAND) -s warnings-info > $(DOC.dir)/$(SRC.pl).help=warnings
 
 # use libreoffice to generate PDF from .odg
 # unfortunately  libreoffice has no option to specify the name of the output,
