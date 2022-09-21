@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.7 22/09/18 21:03:58
+#?      @(#) Makefile.legacy 1.8 22/09/21 10:01:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.7
+_SID.legacy        := 1.8
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
 ALL.inc.type       += legacy
 ALL.help.tests     += help.test.legacy
+
+first-legacy-target-is-default: help.test.legacy
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.legacy.hosts   = localhost
 ifdef TEST.hosts
     TEST.legacy.hosts  = $(TEST.hosts)
 endif
-
-first-legacy-target-is-default: help.test.legacy
 
 help.test.legacy:   HELP_TYPE = legacy
 help.test.legacy-v: HELP_TYPE = legacy
