@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.57 22/09/18 19:22:22
+#?      @(#) Makefile.cmd 1.58 22/09/21 09:53:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.57
+_SID.cmd           := 1.58
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
 ALL.inc.type       += cmd
 ALL.help.tests     += help.test.cmd
+
+first-cmd-target-is-default: help.test.cmd
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.cmd.hosts      = localhost
 ifdef TEST.hosts
     TEST.cmd.hosts  = $(TEST.hosts)
 endif
-
-first-cmd-target-is-default: help.test.cmd
 
 help.test.cmd:        HELP_TYPE = cmd
 help.test.cmd-v:      HELP_TYPE = cmd
