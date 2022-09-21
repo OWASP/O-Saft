@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.51 22/09/18 20:58:46
+@(#) Makefile.pod 1.52 22/09/21 09:48:35
 
 =head1 AUTHOR
 
@@ -203,7 +203,8 @@ The purpose of the targets in the Makefile* --the make system-- is testing
 O-Saft functionality, code quality, and performance.
 The Makefile* are located in the  $(TEST.dir)  directory (usually ./t ).
 
-The default target in each Makefile* simply prints a brief help.
+The default target in each Makefile* simply prints a brief help. Note that
+the default target (the very frst one) must preceed any include directive.
 
 Most included t/Makefiles.*  contain very limited comments. The details of
 their functionality is mainly described in this documentation here.
