@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.22 22/09/19 18:28:49
+#?      @(#) Makefile.cipher 1.23 22/09/21 09:53:07
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.22
+_SID.cipher        := 1.23
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
 ALL.inc.type       += cipher
 ALL.help.tests     += help.test.cipher
+
+first-cipher-target-is-default: help.test.cipher
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.cipher.hosts      = localhost
 ifdef TEST.hosts
     TEST.cipher.hosts  = $(TEST.hosts)
 endif
-
-first-cipher-target-is-default: help.test.cipher
 
 help.test.cipher:        HELP_TYPE = cipher
 help.test.cipher-v:      HELP_TYPE = cipher
