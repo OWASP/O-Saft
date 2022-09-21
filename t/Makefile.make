@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.17 22/06/19 12:39:25
+#?      @(#) Makefile.make 1.18 22/09/21 12:10:39
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,18 +15,18 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.17
+_SID.make          := 1.18
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
 ALL.inc.type       += make
 ALL.help.tests     += help.test.make
 
+first-make-target-is-default: help.test.make
+
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
-
-first-make-target-is-default: help.test.make
 
 help.test.make:     HELP_TYPE = make
 help.test.make-v:   HELP_TYPE = make
