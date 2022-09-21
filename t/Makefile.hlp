@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.37 22/09/20 23:32:20
+#?      @(#) Makefile.hlp 1.39 22/09/21 09:44:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.37
+_SID.hlp           := 1.39
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -71,16 +71,16 @@ testarg-hlp---h:                TEST.args  += --h
 # all other commands with --trace-CLI
 
 # +list ...
-testarg-hlp-+ciphers%:          TEST.init  += --trace-CLI +list
-LIST.ciphers-legacy    := \
+testarg-hlp-+list%:             TEST.init  += --trace-CLI +list
+LIST.list-legacy    := \
 	--dummy-no-arg  --legacy=simple  --legacy=dump \
-	--legacy=owasp  --legacy=openssl --legacy=ssltest -V
+	--legacy=owasp  --legacy=openssl --legacy=ssltest
 
 ifndef cipher-macros-generated
-    $(foreach arg, $(LIST.ciphers-legacy),\
-        $(eval _target=testarg-hlp-+ciphers-$(subst =,-,$(arg))) \
+    $(foreach arg, $(LIST.list-legacy),\
+        $(eval _target=testarg-hlp-+list-$(subst =,-,$(arg))) \
         $(eval $(_target):  TEST.args = $(arg) ) \
-        $(eval ALL.testhlp  += $(_target) ) \
+        $(eval ALL.test.hlp += $(_target) ) \
     )
     undefine _target
 endif
@@ -88,72 +88,47 @@ endif
 # +ciphers ...
 testarg-hlp-+ciphers-%:         TEST.init  += --trace-CLI +ciphers
 testarg-hlp-+ciphers---dummy:   TEST.args  += 
-testarg-hlp-+ciphers---v:       TEST.args  += -v
-testarg-hlp-+ciphers---V:       TEST.args  += -V
+testarg-hlp-+ciphers--v:        TEST.args  += -v
+testarg-hlp-+ciphers--V:        TEST.args  += -V
+ALL.test.hlp += testarg-hlp-+ciphers---dummy testarg-hlp-+ciphers--v testarg-hlp-+ciphers--V
 
 # --help
 testarg-hlp---help%:            TEST.init  += --trace-CLI
-testarg-hlp---help-FAQ:         TEST.args  += --help=FAQ
-testarg-hlp---help-WHY:         TEST.args  += --help=WHY
-testarg-hlp---help-CHECK:       TEST.args  += --help=CHECK
-testarg-hlp---help-security:    TEST.args  += --help=SECURITY
-testarg-hlp---help-alias:       TEST.args  += --help=alias
-testarg-hlp---help-check:       TEST.args  += --help=check
-testarg-hlp---help-cmd:         TEST.args  += --help=cmd
-testarg-hlp---help-commands:    TEST.args  += --help=commands
-testarg-hlp---help-compliance:  TEST.args  += --help=compliance
-testarg-hlp---help-content:     TEST.args  += --help=content
-testarg-hlp---help-data:        TEST.args  += --help=data
-testarg-hlp---help-examples:    TEST.args  += --help=examples
-testarg-hlp---help-exit:        TEST.args  += --help=exit
-testarg-hlp---help-glossar:     TEST.args  += --help=glossar
-testarg-hlp---help-intern:      TEST.args  += --help=intern
-testarg-hlp---help-help:        TEST.args  += --help=help
-testarg-hlp---help-hint:        TEST.args  += --help=hint
-testarg-hlp---help-legacy:      TEST.args  += --help=legacy
-testarg-hlp---help-links:       TEST.args  += --help=links
-testarg-hlp---help-opt:         TEST.args  += --help=opt
-testarg-hlp---help-options:     TEST.args  += --help=options
-testarg-hlp---help-ourstr:      TEST.args  += --help=ourstr
-testarg-hlp---help-pattern:     TEST.args  += --help=pattern
-#testarg-hlp---help-problem:    TEST.args  += --help=error     # alias
-testarg-hlp---help-program.code: TEST.args += --help=program.code
-testarg-hlp---help-range:       TEST.args  += --help=range
-testarg-hlp---help-regex:       TEST.args  += --help=regex
-testarg-hlp---help-rfc:         TEST.args  += --help=rfc
-testarg-hlp---help-text:        TEST.args  += --help=text
-testarg-hlp---help-toc:         TEST.args  += --help=toc
-testarg-hlp---help-todo:        TEST.args  += --help=todo
-testarg-hlp---help-tools:       TEST.args  += --help=tools
-testarg-hlp---help-warnings:    TEST.args  += --help=warnings
-testarg-hlp---help-error:       TEST.args  += --help=error
-#testarg-hlp---help-known:      TEST.args  += --help=known     # alias
-testarg-hlp---help-cfg-check:   TEST.args  += --help=cfg-check
-testarg-hlp---help-cfg-cmd:     TEST.args  += --help=cfg-cmd
-testarg-hlp---help-cfg-data:    TEST.args  += --help=cfg-data
-testarg-hlp---help-cfg-hint:    TEST.args  += --help=cfg-hint
-testarg-hlp---help-cfg-info:    TEST.args  += --help=cfg-info
-testarg-hlp---help-cfg-text:    TEST.args  += --help=cfg-text
-testarg-hlp---help-cfg-ourstr:  TEST.args  += --help=cfg-ourstr
-testarg-hlp---help-cfg-range:   TEST.args  += --help=cfg-range
-testarg-hlp---help-cfg-regex:   TEST.args  += --help=cfg-regex
-testarg-hlp---help-ciphers-text: TEST.args += --help=ciphers-text
-testarg-hlp---help-ciphers-html: TEST.args += --help=ciphers-html
-testarg-hlp---help-gen-docs:    TEST.args  += --help=gen-docs
-testarg-hlp---help-gen-wiki:    TEST.args  += --help=gen-wiki
-testarg-hlp---help-gen-html:    TEST.args  += --help=gen-html
-testarg-hlp---help-gen-cgi:     TEST.args  += --help=gen-cgi
-testarg-hlp---help-gen-pod:     TEST.args  += --help=gen-pod
-testarg-hlp---help-exit:        TEST.args  += --help=exit
+LIST.help-section  := \
+	--dummy-no-arg  --legacy=simple  --legacy=dump \
+	--help=FAQ   --help=WHY   --help=CHECK   --help=SECURITY    \
+	--help=alias --help=check --help=cmd     --help=commands    \
+	--help=data  --help=exit  --help=content --help=compliance  \
+	--help=help  --help=links --help=glossar --help=examples    \
+	--help=hint  --help=opt   --help=intern  --help=legacy      \
+	--help=range --help=regex --help=options --help=pattern     \
+	--help=text  --help=rfc   --help=ourstr  --help=program.code \
+	--help=toc   --help=todo  --help=tools   --help=warnings    \
+	--help=error --help=exit \
+	--help=cfg-cmd  --help=cfg-check --help=cfg-data  --help=cfg-hint   \
+	--help=cfg-info --help=cfg-range --help=cfg-regex --help=cfg-ourstr \
+	--help=cfg-text --help=ciphers-text --help=ciphers-html     \
+	--help=gen-docs --help=gen-wiki  --help=gen-html  --help=gen-cgi --help=gen-pod
+# --help=* aliases (not yet tested)
+#	---help-problem:    TEST.args  += --help=error
+
+ifndef cipher-macros-generated
+    $(foreach arg, $(LIST.help-section),\
+        $(eval _target=testarg-$(subst =,-,$(arg))) \
+        $(eval $(_target):  TEST.args = $(arg) ) \
+        $(eval ALL.test.hlp += $(_target) ) \
+    )
+    undefine _target
+endif
+
+# --help=* with special options, which must preceed --help=*
 testarg-hlp---help-cmd--format-width:   TEST.args  += --format-width=54 --help=cmd
 testarg-hlp---help-why--format-width:   TEST.args  += --format-width=54 --help=why
-    # NOTE: options mus preceed --help=* option
-#testarg-hlp---help-cmd--tty:    TEST.args  += --format-tty --help=cmd
-#testarg-hlp---help-cmd--tty:    TEST.args  += --tty --help=cmd # alias
+#testarg-hlp---help-cmd--tty:            TEST.args  += --format-tty --help=cmd
+#testarg-hlp---help-cmd--tty:            TEST.args  += --tty --help=cmd # alias
     # --tty does not produce different output, except on special devices
+ALL.test.hlp += testarg-hlp---help-cmd--format-width testarg-hlp---help-why--format-width
 
-ALL.testhlp        += $(shell awk -F: '/^testarg-hlp-.*%/{next} /^testarg-hlp-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.hlp))
-ALL.test.hlp        = $(ALL.testhlp)
 ALL.test.hlp.log    = $(ALL.test.hlp:%=%.log)
 
 test.hlp.log-compare:   TEST.target_prefix  = testarg-hlp
