@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.39 22/09/21 09:44:24
+#?      @(#) Makefile.hlp 1.40 22/09/21 09:50:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,12 +19,14 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.39
+_SID.hlp           := 1.40
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
 ALL.inc.type       += hlp
 ALL.help.tests     += help.test.hlp
+
+first-hlp-target-is-default: help.test.hlp
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -34,8 +36,6 @@ TEST.hlp.hosts      =
 ifdef TEST.hosts
     TEST.hlp.hosts = $(TEST.hosts)
 endif
-
-first-hlp-target-is-default: help.test.hlp
 
 help.test.hlp:        HELP_TYPE = hlp
 help.test.hlp-v:      HELP_TYPE = hlp
