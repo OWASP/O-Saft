@@ -6,7 +6,7 @@
 #?      make help.test.examples
 #?
 #? VERSION
-#?      @(#)  1.8 22/02/21 17:33:51
+#?      @(#)  1.9 22/09/21 09:58:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,18 +15,18 @@
 
 HELP-help.test.examples = print targets for testing documented examples
 
-_SID.examples      := 1.8
+_SID.examples      := 1.9
 
 _MYSELF.examples   := t/Makefile.examples
 ALL.includes       += $(_MYSELF.examples)
 ALL.inc.type       += examples
 ALL.help.tests     += help.test.examples
 
+first-examples-target-is-default: help.test.examples
+
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
-
-first-examples-target-is-default: help.test.examples
 
 help.test.examples:     HELP_TYPE = examples
 help.test.examples-v:   HELP_TYPE = examples
