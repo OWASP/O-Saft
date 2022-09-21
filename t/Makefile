@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.130 22/03/20 22:50:53
+#?      @(#) Makefile 1.131 22/09/21 12:12:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.130
+_SID.test          := 1.131
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -69,12 +69,12 @@ ALL.help.tests     += help.test
 
 export OSAFT_MAKE  := avoid writing random data (like date and time string)
 
+first-test-target-is-default: help.test
+
 ifndef ALL.Makefiles
     -include t/Makefile.inc
     # defines variables if called directly (not from ../Makefile)
 endif
-
-first-test-target-is-default: help.test
 
 help.test:            HELP_TYPE = test
 help.test-v:          HELP_TYPE = test
