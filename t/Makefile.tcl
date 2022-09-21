@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.38 22/06/27 13:20:42
+#?      @(#) Makefile.tcl 1.39 22/09/21 11:43:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.38
+_SID.tcl           := 1.39
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
 ALL.inc.type       += tcl
 ALL.help.tests     += help.test.tcl
+
+first-tcl-target-is-default: help.test.tcl
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.tcl.hosts      = localhost
 ifdef TEST.hosts
     TEST.tcl.hosts  = $(TEST.hosts)
 endif
-
-first-tcl-target-is-default: help.test.tcl
 
 help.test.tcl:        HELP_TYPE = tcl
 help.test.tcl-v:      HELP_TYPE = tcl
