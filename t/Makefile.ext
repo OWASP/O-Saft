@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 1.28 22/02/21 17:33:48
+#?      @(#) Makefile.ext 1.29 22/09/21 09:59:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 1.28
+_SID.ext           := 1.29
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
 ALL.inc.type       += ext
 ALL.help.tests     += help.test.ext
+
+first-ext-target-is-default: help.test.ext
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -33,8 +35,6 @@ ifdef TEST.hosts
 else
     TEST.ext.hosts  = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
 endif
-
-first-ext-target-is-default: help.test.ext
 
 help.test.ext:        HELP_TYPE = ext
 help.test.ext-v:      HELP_TYPE = ext
