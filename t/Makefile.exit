@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.26 22/03/19 12:02:33
+#?      @(#) Makefile.exit 1.27 22/09/21 09:56:07
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,12 +15,14 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.26
+_SID.exit          := 1.27
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
 ALL.inc.type       += exit
 ALL.help.tests     += help.test.exit
+
+first-exit-target-is-default: help.test.exit
 
 ifeq (,$(_SID.test))
     -include t/Makefile
@@ -30,8 +32,6 @@ TEST.exit.hosts     = localhost
 ifdef TEST.hosts
     TEST.exit.hosts = $(TEST.hosts)
 endif
-
-first-exit-target-is-default: help.test.exit
 
 help.test.exit:       HELP_TYPE = exit
 help.test.exit-v:     HELP_TYPE = exit
