@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.27 22/09/20 22:59:47
+#?      @(#) Makefile.critic 1.28 22/09/21 09:55:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,18 +15,18 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.27
+_SID.critic        := 1.28
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
 ALL.inc.type       += critic
 ALL.help.tests     += help.test.critic
 
+first-critic-target-is-default: help.test.critic
+
 ifeq (,$(_SID.test))
     -include t/Makefile
 endif
-
-first-critic-target-is-default: help.test.critic
 
 help.critic:              HELP_TYPE = critic
 help.critic-v:            HELP_TYPE = critic
