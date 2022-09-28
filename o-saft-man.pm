@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.49 22/09/18 14:30:21";
+my  $SID_man= "@(#) o-saft-man.pm 2.50 22/09/29 00:26:36";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -660,7 +660,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.49'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.50'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2425,7 +2425,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.49 2022/09/18
+2.50 2022/09/29
 
 =head1 AUTHOR
 
@@ -2438,7 +2438,7 @@ In a perfect world it would be extracted from there (or vice versa).
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-push(@ARGV, "--help") if 1 > $#ARGV;    # without argument print own help
+push(@ARGV, "--help") if 0 > $#ARGV;    # without argument print own help
 _main_man(@ARGV) if (not defined caller);
 
 1;
