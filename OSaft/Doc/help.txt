@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.96 22/09/20 15:03:59
+# SID   @(#) help.txt 1.97 22/09/28 21:02:14
 
 NAME
 
@@ -4555,9 +4555,9 @@ DEBUG
 TESTING
 
         What is "testing"?
-        This tool itself is for testing something,  so it needs to be explain
-        what testing here is about. Following testing types are distinguished
-        and then described:
+        This tool itself is for testing something (TLS etc.),  so it needs to
+        be explained what testing here is about.  Following testing types are
+        distinguished and then described:
 
         * User testing
         * Functional testing
