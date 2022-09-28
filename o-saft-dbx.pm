@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.16 22/09/19 18:10:05";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.17 22/09/28 20:02:32";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -301,6 +301,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     foreach my $key (qw(format legacy starttls starttls_delay slow_server_delay cipherrange)) {
         _yTRAC($key, $cfg{$key});
     }
+    _yeast("        cipher= " . ___ARR(@{$cfg{'cipher'}}));
     foreach my $key (qw(starttls_phase starttls_error)) {
         _yeast(      "$key= " . ___ARR(@{$cfg{$key}}));
     }
@@ -982,7 +983,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.16 2022/09/19
+2.17 2022/09/28
 
 =head1 AUTHOR
 
