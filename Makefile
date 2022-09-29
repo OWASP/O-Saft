@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.11 22/09/29 21:52:13
+#?      @(#) Makefile 2.12 22/09/29 22:06:00
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.11
+_SID            = 2.12
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -265,7 +265,7 @@ EXE.office      = libreoffice
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
 ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod stty tput
-ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
+ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::INET IO::Socket::SSL Time::Local
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 #                 defined in t/Makefile.misc
@@ -283,8 +283,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.11 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.11
+_INST.genbytext = generated data by Makefile 2.12 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.12
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -526,8 +526,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.11
-tar:     GREP_EDIT  = 2.11
+GREP_EDIT           = 2.12
+tar:     GREP_EDIT  = 2.12
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
