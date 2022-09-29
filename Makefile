@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.12 22/09/29 22:06:00
+#?      @(#) Makefile 2.13 22/09/29 22:28:49
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.12
+_SID            = 2.13
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -207,10 +207,11 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 # generated files for internal use, i.e. $(SRC.tcl)
 # TODO: because make does not allow = in target names, the generated targets
 #       should use - instead
-_HELP.opt_data  = +help --help=opts --help=commands --help=glossar --help=alias \
-		  --help=data --help=checks --help=regex --help=rfc
+LIST.opt_data   = +help --help=opts --help=commands --help=glossar --help=alias \
+		  --help=data --help=data --help=checks --help=regex --help=rfc \
+		  --help=ciphers-html --help=ciphers-text
 # --help=warnings  uses a different command to be generated
-GEN.DOC.data    = $(_HELP.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
+GEN.DOC.data    = $(LIST.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
@@ -283,8 +284,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.12 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.12
+_INST.genbytext = generated data by Makefile 2.13 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.13
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -526,8 +527,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.12
-tar:     GREP_EDIT  = 2.12
+GREP_EDIT           = 2.13
+tar:     GREP_EDIT  = 2.13
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
