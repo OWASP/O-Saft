@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.10 22/09/21 22:48:12
+#?      @(#) Makefile 2.11 22/09/29 21:52:13
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.10
+_SID            = 2.11
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -268,6 +268,7 @@ ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman 
 ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::SSL Time::Local
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
+#                 defined in t/Makefile.misc
 ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(OSAFT.pm:%.pm=OSaft::%) OSaft::Doc::Data
 
 # INSTALL.sh must not contain duplicate files, hence the variable's content
@@ -282,8 +283,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.10 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.10
+_INST.genbytext = generated data by Makefile 2.11 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.11
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -525,8 +526,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.10
-tar:     GREP_EDIT  = 2.10
+GREP_EDIT           = 2.11
+tar:     GREP_EDIT  = 2.11
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
