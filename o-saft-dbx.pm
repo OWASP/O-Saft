@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.17 22/09/28 20:02:32";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.18 22/09/29 21:35:31";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -742,6 +742,8 @@ sub _yeast_test_memory  {
     print "
 === memory usage of internal variables ===
 =
+= Use  --v  to get more details.
+=
 ";
     if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
         foreach my $k (keys %cfg) {
@@ -864,6 +866,8 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =item --tests
 
+List available commands or options for internal testing.
+
 =item --test-ciphers-list
 
 =item --test-ciphers-show
@@ -882,12 +886,14 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =item --test-prot
 
+See  I<--tests>  for description of these options.
+
 =back
 
 
 =head1 DESCRIPTION
 
-Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl>.
+Defines all functions needed for trace and debug output in  L<o-saft.pl|o-saft.pl>.
 
 
 =head1 METHODS
@@ -965,7 +971,7 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =back
 
-Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
+Functions being used in L<o-saft.pl|o-saft.pl> should be defined as empty stub there.
 For example:
 
     sub _yeast_init() {}
@@ -983,7 +989,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.17 2022/09/28
+2.18 2022/09/29
 
 =head1 AUTHOR
 
