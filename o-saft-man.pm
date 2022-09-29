@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.51 22/09/29 00:31:26";
+my  $SID_man= "@(#) o-saft-man.pm 2.52 22/09/29 21:17:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.51'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.52'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2194,7 +2194,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # all following matches against $hlp are exact matches, see  ^  and  $
     # hence exactly one match is expected
     $hlp = lc($hlp);    # avoid i in regex
-    $txt = man_toc($1)          if ($hlp =~ /^((?:toc|content)(?:.cfg)?)$/);
+    $txt = man_toc($1)          if ($hlp =~ /^((?:toc|contents?)(?:.cfg)?)$/);
     $txt = man_html()           if ($hlp =~ /^(gen-)?html$/);
     $txt = man_wiki('colon')    if ($hlp =~ /^(gen-)?wiki$/);
     $txt = man_pod()            if ($hlp =~ /^(gen-)?pod$/);
@@ -2408,7 +2408,7 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * warnings -> show used message texts for warnings and errors
 
-=item * intern  -> some internal documentations
+=item * intern  -> show internal grouped commands
 
 =item * Program.Code  -> description of coding style, conventions, etc.
 
@@ -2427,7 +2427,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.51 2022/09/29
+2.52 2022/09/29
 
 =head1 AUTHOR
 
@@ -2459,8 +2459,8 @@ For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 
 =head2 Perlcritic:LocalVars
 
-Perl::Critic  complains that the variable $a should be localised in of the
-code, this is wrong,  because it is exactly the purpose to find this value
+Perl::Critic complains that variables (like $a) should be localised in the
+code. This is wrong, because it is exactly the purpose  to find this value
 (other settings) in other lines.
 Hence  "no critic Variables::RequireLocalizedPunctuationVars"  needs to be
 set in each line using $a.
@@ -2468,13 +2468,13 @@ set in each line using $a.
 
 =head2 Help:Syntax
 
-The text for documentation is derivied from "help.txt" aka @help using:
+The text for documentation is derived from "help.txt" aka @help using:
 
     OSaft::Doc::Data::get_markup("help.txt")
 
 This text contains some  simple (intermediate) markup,  which then will be
 transformed to the final markup, such as HTML, POD, wiki.
-Some sections in that text are handled special or needs to be completed.
+Some sections in that text are handled special or need to be completed.
 These special sections are mainly identified by lines starting as follows:
 
     Commands for ...
@@ -2486,7 +2486,7 @@ These special sections are mainly identified by lines starting as follows:
 These strings are hardcoded here. Take care when changing "help.txt".
 See also "OSaft/Doc/Data.pm".
 
-NOTE also that  o-saft.tcl  mainly uses the same texts for extra handling.
+Note also that  o-saft.tcl  mainly uses the same texts for extra handling.
 
 
 =head2 POD:Syntax
@@ -2555,7 +2555,6 @@ example as plain text:
     RFC(s) URL:         https://www.rfc-editor.org/rfc/rfc5246
     Comments/Notes:     L
 
-In the hash  %cipher_text_map  the keys of the intermediate data are to human redable text the hash  %cipher_text_map
 The hash  %cipher_text_map is used to convert the keys of the intermediate
 data to human redable text.  This hash should be similar to  %ciphers_desc
 from OSaft/Ciphers.pm .
@@ -2586,7 +2585,7 @@ HTML:
 
 Data (text) in this format is returned by  OSaft::Doc::Data::get_markup().
 
-NOTE most functions use following global variables:
+Note that most functions use following global variables:
 
   * @help
   * $parent
@@ -2601,7 +2600,7 @@ The HTML page with the form for the CGI should look as follows:
  | O - S a f t   — ...                                                   T
  +-----------------------------------------------------------------------+
  | Help: [help] [commands] [checks] [options] [FAQ] [Glossar] [ToDo]     H
- |+--------------------------------------------------------------------+ H
+ |+--------------------------------------------------------------------+ |
  || Hostname: [_________________________________] [+check]             c |
  ||                                                                    c |
  ||   [+check]  Check SSL connection ...                               c |
@@ -2630,7 +2629,8 @@ Additional to the hostname or URL,  all selected commands and options will
 be passed as QUERY_STRING to o-saft.cgi (which is the form's action), when
 [start]  button is clicked.
 
-The Interfase (web page) consist of following sections:
+The interface (form in the web page) consist of following sections, marked
+with a single character:
 
   T    title
   H    line with buttons opening a new TAB with corresponding help text
@@ -2648,7 +2648,7 @@ The Interfase (web page) consist of following sections:
 Options are  --opt  or  --opt=VALUE .  A simple checkbox is sufficient for
 options without a value:
 
-    <input type=checkbox name='--opt' value='' >--opt
+    <input type=checkbox name='--opt' value='' >--opt</input>
 
 Options with a value need an input field for the value, and a reset button
 to undo changes. Additionally, the key=value should only be send on submit
@@ -2662,12 +2662,17 @@ The generated HTML looks like:
 The input field's name is the option itself, and the value is the option's
 value. 
 
-NOTE:  there may be the options  --opt  and  --opt=val  that's why input's
-id attribute is set to  --opt=val instead of just  --opt ; all ids must be
-unique!
+Note that there may be the options  --opt  and  --opt=val . That's why the
+input's id attribute is set to  --opt=val instead of just  --opt ; all ids
+must be unique!
 
 
 =head2 HTML:p
+
+For formatting HTML with CSS, the paragraph tag '<p>' is used for all text
+blocks enclosed in empty lines. As RegEx are used to substitute the markup
+text to HTML, empty paragraphs may be generated.  Browsers will not render
+empty paragraphs.
 
 For HTML format a paragraph tag '<p>' is used for all text blocks enclosed
 in empty lines.  As RegEx are used to substitute the  markup text to HTML,
@@ -2675,7 +2680,7 @@ empty paragraphs may be generated. This is harmless,  as browsers will not
 render empty paragraphs.
 
 Old-style '<p>' is used even we know that '<div>' is the modern standard.
-This simplifies formating with CSS.
+This simplifies formatting with CSS.
 
 
 =head2 HTML:JavaScript
@@ -2687,8 +2692,9 @@ is prefixed with the letter 'h'. Example: the description of the '+cipher'
 command is placed in a paragraph like: <p id='h+cipher'> ... </p>.
 These paragraphs are generated in  '_man_html()'.
 
-This allows to extract the desciption text after generating the page using
-JavaScript. See JavaScript function  'osaft_buttons()'.
+This allows to extract the description text stored in the paragraph, using
+JavaScript after generating the page.
+See JavaScript function  'osaft_buttons()'.
 
 
 =head2 HTML:start
