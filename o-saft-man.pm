@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.52 22/09/29 21:17:54";
+my  $SID_man= "@(#) o-saft-man.pm 2.53 22/09/30 10:49:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.52'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.53'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1414,8 +1414,11 @@ sub _man_ciphers_html_ul {
         my ($key, $val) = split(/\t/, $line);
         my  $txt =  $key;
             $txt =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
-            $key =  'sec' if ("openssl" eq $key);   # OpenSSL SRENGTH should also be marked
-        $dl .= "        <dt>$txt</dt><dd $key='$val'></dd><br />\n";
+        my  $sec =  "";
+            $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL SRENGTH should also be marked
+            $sec =  "sec='$val'" if ("sec"     eq $key);
+        $dl .= "        <dt>$txt</dt><dd $sec typ='$val' ><t> </t></dd><br />\n";
+        # <t> tag necessary, otherwise dd::after will not work
     }
     # print last cipher
     $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl);
@@ -1461,8 +1464,11 @@ sub _man_ciphers_html_tb {
             next;
         }
         my ($key, $val) = split(/\t/, $line);
-            $val = "<span sec='$val'>$val</span>" if ("openssl" eq $key); # OpenSSL SRENGTH should also be marked
-        $td .= "        <td typ='$key'>$val</td>\n";
+        my  $sec = "";
+            $sec = "sec='$val'" if ("openssl" eq $key); # OpenSSL SRENGTH should also be marked
+            $sec = "sec='$val'" if ("sec" eq $key); # OpenSSL SRENGTH should also be marked
+        $td .= "        <td $sec typ='$val'><t> </t></td>\n";
+        # <t> tag necessary, otherwise td::after will not work
     }
     # print last cipher
     $tab .= "    <tr>\n$td    </tr>\n" if ("" ne $td);
@@ -1688,44 +1694,67 @@ ul li div            {margin-top:1ex;   display:none; font-size:90%; border:1px 
 ul li dl             {padding:   0.2em; display:block;        }
 ul li dt,dd          {padding:   0.5ex; display:inline-block; }
 ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
-span[sec^="-"]       {background-color:#ff0; }
 /* automatically generate a tag's colour based on the sec attribute */
-span[sec^="weak"]    {background-color:#f00; }
-span[sec^="WEAK"]    {background-color:#f00; }
-span[sec^="high"]    {background-color:#4f4; }
-span[sec^="HIGH"]    {background-color:#3f3; }
-span[sec^="medium"]  {background-color:#ff4; }
-span[sec^="MEDIUM"]  {background-color:#ff4; }
-  dd[sec^="-"]       {background-color:#ff0; }
-  dd[sec^="weak"]    {background-color:#f00; }
-  dd[sec^="WEAK"]    {background-color:#f00; }
-  dd[sec^="LOW"]     {background-color:#fd8; }
-  dd[sec^="high"]    {background-color:#4f4; }
-  dd[sec^="HIGH"]    {background-color:#3f3; }
-  dd[sec^="medium"]  {background-color:#ff4; }
-  dd[sec^="MEDIUM"]  {background-color:#ff4; }
-/* automatically generate a tag's content based on an attribute */
-  dd[sec]::after     {content:attr(sec);     }
-  dd[hex]::after     {content:attr(hex);     }
-  dd[sec]::after     {content:attr(sec);     }
-  dd[mac]::after     {content:attr(mac);     }
-  dd[keyx]::after    {content:attr(keyx);    }
-  dd[auth]::after    {content:attr(auth);    }
-  dd[bits]::after    {content:attr(bits);    }
-  dd[enc]::after     {content:attr(enc);     }
-  dd[ssl]::after     {content:attr(ssl);     }
-/* automatically generate a tag's title based on an attribute */
-  dd[mac*="MD2"]     {title:"Message Digest 2"; }
-  dd[mac*="MD4"]     {title:"Message Digest 4"; }
-  dd[mac*="MD5"]     {title:"Message Digest 5"; }
-  dd[mac*="SHA"]     {title:"Secure Hash Algorithm"; }
-  dd[enc*="DES"]     {title:"Data Encryption Standard"; }
-  dd[enc*="3DES"]    {title:"Tripple Data Encryption Standard"; }
-  dd[mac*="TLSv10"]  {title:"Transport Level Secure 1.0"; }
-  dd[mac*="TLSv11"]  {title:"Transport Level Secure 1.1"; }
-  dd[mac*="TLSv12"]  {title:"Transport Level Secure 1.2"; }
-  dd[mac*="TLSv13"]  {title:"Transport Level Secure 1.3"; }
-/* table { border-collapse: collapse; } * nicht nicht verwenden */
+  [sec="-"]          {background-color:#f00; }
+  [sec^="weak"]      {background-color:#f00; }
+  [sec^="WEAK"]      {background-color:#f00; }
+  [sec="-?-"]        {background-color:#ff0; }
+  [sec^="LOW"]       {background-color:#fd8; }
+  [sec^="medium"]    {background-color:#ff4; }
+  [sec^="MEDIUM"]    {background-color:#ff4; }
+  [sec^="high"]      {background-color:#4f4; }
+  [sec^="HIGH"]      {background-color:#3f3; }
+/* automatically generate a tag's content from attribute typ= */
+  [typ]::before      {content:attr(typ);     }
+/* following definitons should be generated from OSaft/Doc/glossar.txt */
+  [typ]       > b    {padding-left:1em;      }
+  [typ]:hover          ::after  {font-size:90%; }
+  [typ="-"]:hover      ::after  {content:"\2014  none / null / nothing"; }
+  [typ="-?-"]:hover    ::after  {content:"\2014  unknown"; }
+  [typ*="ADH"]:hover   ::after  {content:"\2014  Anonymous Diffie-Hellman"; }
+  [typ="AEAD"]:hover   ::after  {content:"\2014  Authenticated Encryption with Additional Data"; }
+  [typ^="AES"]:hover   ::after  {content:"\2014  Advanced Encryption Standard"; }
+  [typ="ARIA"]:hover   ::after  {content:"\2014  128-bit symmetric block cipher"; }
+  [typ="CAMELLIA"]:hover ::after {content:"\2014  symmetric key block cipher encryption algorithm"; }
+  [typ="CAST"]:hover   ::after  {content:"\2014  Carlisle Adams and Stafford Tavares, block cipher"; }
+  [typ="CBC"]:hover    ::after  {content:"\2014  Cyclic Block Chaining (aka Cypher Block Chaining)"; }
+  [typ^="CECPG"]:hover ::after  {content:"\2014  Combined elliptic Curve and Post-Quantum Cryptography Key Exchange"; }
+  [typ^="ChaCha"]:hover ::after {content:"\2014  stream cipher algorithm (with 256-bit key)"; }
+  [typ="DSS"]:hover    ::after  {content:"\2014  Digital Signature Standard"; }
+  [typ^="DH"]:hover    ::after  {content:"\2014  Diffie-Hellman"; }
+  [typ*="ECDH"]:hover  ::after  {content:"\2014  Elliptic Curve Diffie-Hellman"; }
+  [typ*="ECDHE"]:hover ::after  {content:"\2014  Ephemeral Elliptic Curve Diffie-Hellman"; }
+  [typ*="ECDSA"]:hover ::after  {content:"\2014  Elliptic Curve Digital Signature Algorithm"; }
+  [typ*="EDH"]:hover   ::after  {content:"\2014  Ephemeral Diffie-Hellman"; }
+  [typ="GOST"]:hover   ::after  {content:"\2014  Gossudarstwenny Standard, block cipher"; }
+  [typ="IDEA"]:hover   ::after  {content:"\2014  International Data Encryption Algorithm"; }
+  [typ="KRB"]:hover    ::after  {content:"\2014  Key Exchange Kerberos"; }
+  [typ="KRB5"]:hover   ::after  {content:"\2014  Key Exchange Kerberos 5"; }
+  [typ="MD2"]:hover    ::after  {content:"\2014  Message Digest 2"; }
+  [typ="MD4"]:hover    ::after  {content:"\2014  Message Digest 4"; }
+  [typ="MD5"]:hover    ::after  {content:"\2014  Message Digest 5"; }
+  [typ^="SHA"]:hover   ::after  {content:"\2014  Secure Hash Algorithm"; }
+  [typ="DES"]:hover    ::after  {content:"\2014  Data Encryption Standard"; }
+  [typ="3DES"]:hover   ::after  {content:"\2014  Tripple Data Encryption Standard"; }
+  [typ="None"]:hover   ::after  {content:"\2014  no encryption / plain text"; }
+  [typ="RC2"]:hover    ::after  {content:"\2014  Rivest Cipher 2, block cipher"; }
+  [typ="RC4"]:hover    ::after  {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; }
+  [typ="RC5"]:hover    ::after  {content:"\2014  Rivest Cipher 5, block cipher"; }
+  [typ^="RSA"]:hover   ::after  {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
+  [typ="PCT"]:hover    ::after  {content:"\2014  Private Communications Transport"; }
+  [typ="PSK"]:hover    ::after  {content:"\2014  Pre-shared Key"; }
+  [typ="SEED"]:hover   ::after  {content:"\2014  128-bit symmetric block cipher"; }
+  [typ="SRP"]:hover    ::after  {content:"\2014  Secure Remote Password protocol"; }
+  [typ="SSLv2"]:hover  ::after  {content:"\2014  Secure Socket Layer 2"; }
+  [typ="SSLv3"]:hover  ::after  {content:"\2014  Secure Socket Layer 3"; }
+  [typ="TLSv10"]:hover ::after  {content:"\2014  Transport Level Secure 1.0"; }
+  [typ="TLSv11"]:hover ::after  {content:"\2014  Transport Level Secure 1.1"; }
+  [typ="TLSv12"]:hover ::after  {content:"\2014  Transport Level Secure 1.2"; }
+  [typ="TLSv13"]:hover ::after  {content:"\2014  Transport Level Secure 1.3"; }
+/* not yet working: setting CSS variables and then use them
+  dd[val]            {--data: attr(val); --index: var(--data); }
+*/
+/* table { border-collapse: collapse; } * nicht verwenden */
 /* table { table-layout: fixed;       } * geht nicht */
 table                {display: none;         }
 table th             {background:#aaa;       }
@@ -2427,7 +2456,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.52 2022/09/29
+2.53 2022/09/30
 
 =head1 AUTHOR
 
