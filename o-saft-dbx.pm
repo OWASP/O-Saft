@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.18 22/09/29 21:35:31";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.19 22/09/30 10:51:23";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -747,8 +747,20 @@ sub _yeast_test_memory  {
 ";
     if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
         foreach my $k (keys %cfg) {
-	    printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}), "%cfg{$k}");
+	    printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
         }
+        foreach my $k (keys %checks) {
+	    printf("%6s\t%s\n", Devel::Size::total_size(\$checks{$k}), "%checks{$k}");
+        }
+        #foreach my $k (keys %ciphers) {    # useless, as each entry is about 2k
+	#    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%ciphers{$k}");
+        #}
+        foreach my $k (keys %dbx) {
+	    printf("%6s\t%s\n", Devel::Size::total_size(\$dbx{$k}),    "%dbx{$k}");
+        }
+        #foreach my $k (keys %data) {       # most entries report 42k, which is wrong
+	#    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
+        #}
     }
     my $bytes = 0;
     my $line  = "=------+----------------";
@@ -989,7 +1001,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.18 2022/09/29
+2.19 2022/09/30
 
 =head1 AUTHOR
 
