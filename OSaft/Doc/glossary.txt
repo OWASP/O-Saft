@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.26 22/09/05 20:00:19
+# SID	@(#) glossary.txt 1.27 22/09/30 10:40:54
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -67,6 +67,7 @@ Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
 Bullrun	NSA program to break encrypted communication
 CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
+CAST	Carlisle Adams and Stafford Tavares, block cipher
 CAST-128	Carlisle Adams and Stafford Tavares, block cipher
 CAST5	alias for CAST-128
 CAST-256	Carlisle Adams and Stafford Tavares, block cipher
@@ -229,7 +230,8 @@ ElGamal	asymmetric block cipher
 ENCIPHER	synonym for encryption
 EME	ECB-mask-ECB
 EME 	Encoding Method for Encryption
-EMS 	Extended Master Secret
+EMS 	Extended Master Secret (sometimes)
+EMS 	Encrypted Master Secret
 ESNI	Encrypted Server Name Indication
 ESP	Encapsulating Security Payload
 ESSIV	Encrypted salt-sector initialization vector
@@ -266,7 +268,7 @@ GHASH	Hash funtion used in GCM
 GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
 Goldilocks	see Curve448
-GOST	Gossudarstwenny Standard (block cipher)
+GOST	Gossudarstwenny Standard, block cipher
 GOST 	hash function (used in GOST cipher suite)
 GOST28147-89	block cipher
 GOST3410-2012	signature algorithm
@@ -342,12 +344,15 @@ KATAN	lightweight block cipher algorithm
 KLEIN	lightweight block cipher algorithm
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 KCI	Key Compromise Impersonation
+KDC	Key Distribution Center (mainly Kerberos)
 KDF	Key Derivation Function
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
 KEM	Key Encapsulation Mechanisms
 KMS	Key Management Service
 KPAK	KMS Public Authentication Key
+KRB	Key Exchange Kerberos
+KRB5	Key Exchange Kerberos 5
 KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
@@ -549,7 +554,7 @@ secp256r1	alias for P-256
 secp384r1	alias for P-384
 secp521r1	alias for P-521
 SEAL	Software-Optimized Encryption Algorithm; 32-bit word stream cipher (1994)
-SEED	128-bit symmetric block cipher
+SEED	128-bit symmetric block cipher (1998)
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
@@ -654,6 +659,8 @@ TDEA	Tripple DEA
 TEA	Tiny Encryption Algorithm
 TEK	Traffic Encryption Key
 TET	?
+TGS	Ticket Granting Service (mainly Kerberos)
+TGT	Ticket Granting Ticket (mainly Kerberos)
 Tiger	hash function
 TIME	Timing Info-leak Made Easy (Exploit SSL/TLS)
 TIME 	A Perfect CRIME? TIME Will Tell
