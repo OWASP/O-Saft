@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.56 22/09/30 23:04:28";
+my  $SID_man= "@(#) o-saft-man.pm 2.57 22/09/30 23:33:13";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.56'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.57'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1686,6 +1686,7 @@ sub man_ciphers_html{
 body                 {padding:   1em;       }
 body > h1            {padding-top:1em;  margin-top:1em; }
 body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
+body > h2 > button   {float:right;      margin-top:1em; display:inline; }
 ul                   {padding:   0px;       }
 ul li                {padding:   0.5em; list-style-type:none;}
 ul li:nth-child(even){background:#fff;      }
@@ -1780,21 +1781,22 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   dd[val]            {--data: attr(val); --index: var(--data); }
 */
 /* table { border-collapse: collapse; } * nicht verwenden */
-/* table { table-layout: fixed;       } * geht nicht */
-table                {display: none;         }
-table th             {background:#aaa;       }
+/* table { table-layout: fixed;       } * geht nicht      */
+table       {display: none;     }
+table th    {background:#aaa;   }
 tbody tr:nth-child(even){background:#fff;    }
 tbody tr:nth-child(odd) {background:#eee;    }
-tbody td {width: 5em;    }
+tbody td    {width: 5em; }
 </style>
 </head>
 <body>
-  <h2 id="title" title="" ><span id="txt" ></span></h2>
+  <h2 id="title" title="" ><span id="txt" ></span>
+  <button title="Toggle Layout: table or list" onclick="toggle_display('a');toggle_display('b');">table <> list</button>
+  </h2>
 EoHTML
 
     $htm .= << "EoHTML";
   <h1> $cnt Cipher Suites</h1>
-  Toggle Layout: <button onclick="toggle_display('a');toggle_display('b');">table <> list</button>
 EoHTML
 
     $htm .= _man_ciphers_html_tb($txt);
@@ -2481,7 +2483,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.56 2022/09/30
+2.57 2022/09/30
 
 =head1 AUTHOR
 
