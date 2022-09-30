@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.55 22/09/30 19:24:08";
+my  $SID_man= "@(#) o-saft-man.pm 2.56 22/09/30 23:04:28";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.55'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.56'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1708,69 +1708,74 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [sec^="high"]      {background-color:#4f4; }
   [sec^="HIGH"]      {background-color:#3f3; }
 /* automatically generate a tag's content from attribute typ= */
-  [typ]::before      {content:attr(typ);     }
-/* following definitons should be generated from OSaft/Doc/glossar.txt */
-  [typ]       > b    {padding-left:1em;      }
-  [typ]:hover          ::after  {font-size:90%; }
-  [typ="-"]:hover      ::after  {content:"\2014  none / null / nothing"; }
-  [typ="-?-"]:hover    ::after  {content:"\2014  unknown"; }
-  [typ*="ADH"]:hover   ::after  {content:"\2014  Anonymous Diffie-Hellman"; }
-  [typ="AEAD"]:hover   ::after  {content:"\2014  Authenticated Encryption with Additional Data"; }
-  [typ^="AES"]:hover   ::after  {content:"\2014  Advanced Encryption Standard"; }
-  [typ="AESGCM"]:hover ::after  {content:"\2014  Advanced Encryption Standard with GCM"; }
-  [typ^="ARIA"]:hover  ::after  {content:"\2014  128-bit symmetric block cipher"; }
-  [typ="ARIAGCM"]:hover  ::after {content:"\2014  symmetric key block cipher encryption algorithm with GCM"; }
-  [typ="CAMELLIA"]:hover ::after {content:"\2014  symmetric key block cipher encryption algorithm"; }
+  [typ]::before         {content:attr(typ);  }
+  dd[typ]               {border:1px solid #ffd700;}
+  td[typ]               {border:1px solid #fff; }
+  [typ]:hover           {border:1px solid #aaa; }
+  [typ]:hover ::after   {border:1px solid #000; border-radius:3px; position:absolute; margin-left:0.5em; background:#fd8; min-width:19em; }
+/* following definitons should be generated from OSaft/Doc/glossar.txt  */
+/* sequence of following definitions important: more lacy pattern first */
+  [typ="-"]:hover       ::after {content:"\2014  none / null / nothing"; }
+  [typ="-?-"]:hover     ::after {content:"\2014  unknown"; }
+  [typ^="ADH"]:hover    ::after {content:"\2014  Anonymous Diffie-Hellman"; }
+  [typ="AEAD"]:hover    ::after {content:"\2014  Authenticated Encryption with Additional Data"; }
+  [typ^="AES"]:hover    ::after {content:"\2014  Advanced Encryption Standard"; }
+  [typ="AESGCM"]:hover  ::after {content:"\2014  Advanced Encryption Standard with GCM"; }
+  [typ^="ARIA"]:hover   ::after {content:"\2014  128-bit symmetric block cipher"; }
+  [typ="ARIAGCM"]:hover ::after {content:"\2014  symmetric key block cipher encryption algorithm with GCM"; }
+  [typ="CAMELLIA"]:hover    ::after {content:"\2014  symmetric key block cipher encryption algorithm"; }
   [typ="CAMELLIAGCM"]:hover ::after {content:"\2014  CAMELLIA with GCM"; }
-  [typ="CAST"]:hover   ::after  {content:"\2014  Carlisle Adams and Stafford Tavares, block cipher"; }
-  [typ="CBC"]:hover    ::after  {content:"\2014  Cyclic Block Chaining (aka Cypher Block Chaining)"; }
-  [typ^="CECPQ"]:hover ::after  {content:"\2014  Combined elliptic Curve and Post-Quantum Cryptography Key Exchange"; }
+  [typ="CAST"]:hover    ::after {content:"\2014  Carlisle Adams and Stafford Tavares, block cipher"; }
+  [typ="CBC"]:hover     ::after {content:"\2014  Cyclic Block Chaining (aka Cypher Block Chaining)"; }
+  [typ^="CECPQ"]:hover  ::after {content:"\2014  Combined elliptic Curve and Post-Quantum Cryptography Key Exchange"; }
   [typ^="ChaCha"]:hover ::after {content:"\2014  stream cipher algorithm (with 256-bit key)"; }
-  [typ="DES"]:hover    ::after  {content:"\2014  Data Encryption Standard"; }
-  [typ="3DES"]:hover   ::after  {content:"\2014  Tripple Data Encryption Standard"; }
-  [typ="DSS"]:hover    ::after  {content:"\2014  Digital Signature Standard"; }
-  [typ^="DH"]:hover    ::after  {content:"\2014  Diffie-Hellman"; }
-  [typ^="DHE"]:hover   ::after  {content:"\2014  Diffie-Hellman ephemeral (same as EDH)"; }
-  [typ="DHEPSK"]:hover ::after  {content:"\2014  Diffie-Hellman ephemeral with pre-shared key"; }
-  [typ="DH/DSS"]:hover ::after  {content:"\2014  Diffie-Hellman with DSS"; }
-  [typ="DH/RSA"]:hover ::after  {content:"\2014  Diffie-Hellman with RSA"; }
-  [typ="ECCPWD"]:hover ::after  {content:"\2014  Elliptic Curve Cryptography (with password?)"; }
-  [typ*="ECDH"]:hover  ::after  {content:"\2014  Elliptic Curve Diffie-Hellman"; }
-  [typ*="ECDHE"]:hover ::after  {content:"\2014  Ephemeral Elliptic Curve Diffie-Hellman"; }
-  [typ="ECDH/ECDSA"]:hover ::after {content:"\2014  Elliptic Curve Diffie-Hellman with ECDSA"; }
-  [typ="ECDH/RSA"]:hover   ::after {content:"\2014  Elliptic Curve Diffie-Hellman with RSA"; }
-  [typ="ECDHEPSK"]:hover   ::after {content:"\2014  Elliptic Curve Diffie-Hellman with pre-shared key"; }
-  [typ="ECDSA"]:hover  ::after  {content:"\2014  Elliptic Curve Digital Signature Algorithm"; }
-  [typ*="EDH"]:hover   ::after  {content:"\2014  Ephemeral Diffie-Hellman"; }
-  [typ="FZA"]:hover    ::after  {content:"\2014  Fortezza encryption"; }
-  [typ^="GOST"]:hover  ::after  {content:"\2014  Gossudarstwenny Standard, block cipher"; }
-  [typ="IDEA"]:hover   ::after  {content:"\2014  International Data Encryption Algorithm"; }
-  [typ="KRB"]:hover    ::after  {content:"\2014  Key Exchange Kerberos"; }
-  [typ="KRB5"]:hover   ::after  {content:"\2014  Key Exchange Kerberos 5"; }
-  [typ="MD2"]:hover    ::after  {content:"\2014  Message Digest 2"; }
-  [typ="MD4"]:hover    ::after  {content:"\2014  Message Digest 4"; }
-  [typ="MD5"]:hover    ::after  {content:"\2014  Message Digest 5"; }
-  [typ="None"]:hover   ::after  {content:"\2014  no encryption / plain text"; }
-  [typ="RC2"]:hover    ::after  {content:"\2014  Rivest Cipher 2, block cipher"; }
-  [typ="RC4"]:hover    ::after  {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; }
-  [typ="RC5"]:hover    ::after  {content:"\2014  Rivest Cipher 5, block cipher"; }
-  [typ="RMD"]:hover    ::after  {content:"\2014  ?"; }
-  [typ^="RSA"]:hover   ::after  {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
-  [typ="RSAPSK"]:hover ::after  {content:"\2014  Rivest Sharmir Adelman with pre-shared key"; }
-  [typ="PCT"]:hover    ::after  {content:"\2014  Private Communications Transport"; }
-  [typ="PSK"]:hover    ::after  {content:"\2014  Pre-shared Key"; }
-  [typ="SEED"]:hover   ::after  {content:"\2014  128-bit symmetric block cipher"; }
-  [typ^="SHA"]:hover   ::after  {content:"\2014  Secure Hash Algorithm"; }
-  [typ="SHA256"]:hover ::after  {content:"\2014  Secure Hash Algorithm (256 bit)"; }
-  [typ="SHA384"]:hover ::after  {content:"\2014  Secure Hash Algorithm (384 bit)"; }
-  [typ="SHA512"]:hover ::after  {content:"\2014  Secure Hash Algorithm (512 bit)"; }
-  [typ="SRP"]:hover    ::after  {content:"\2014  Secure Remote Password protocol"; }
-  [typ="SSLv2"]:hover  ::after  {content:"\2014  Secure Socket Layer 2"; }
-  [typ="SSLv3"]:hover  ::after  {content:"\2014  Secure Socket Layer 3"; }
-  [typ="TLSv10"]:hover ::after  {content:"\2014  Transport Level Secure 1.0"; }
-  [typ="TLSv11"]:hover ::after  {content:"\2014  Transport Level Secure 1.1"; }
-  [typ="TLSv12"]:hover ::after  {content:"\2014  Transport Level Secure 1.2"; }
-  [typ="TLSv13"]:hover ::after  {content:"\2014  Transport Level Secure 1.3"; }
+  [typ="DES"]:hover     ::after {content:"\2014  Data Encryption Standard"; }
+  [typ="3DES"]:hover    ::after {content:"\2014  Tripple Data Encryption Standard"; }
+  [typ="DSS"]:hover     ::after {content:"\2014  Digital Signature Standard"; }
+  [typ="DH"]:hover      ::after {content:"\2014  Diffie-Hellman"; }
+  [typ^="DHE"]:hover    ::after {content:"\2014  Diffie-Hellman ephemeral (same as EDH)"; }
+  [typ="DHEPSK"]:hover  ::after {content:"\2014  Diffie-Hellman ephemeral with pre-shared key"; }
+  [typ="DH/DSS"]:hover  ::after {content:"\2014  Diffie-Hellman with DSS"; }
+  [typ="DH/RSA"]:hover  ::after {content:"\2014  Diffie-Hellman with RSA"; }
+  [typ="DH(512)"]:hover ::after {content:"\2014  Diffie-Hellman (512 bit)"; }
+  [typ="ECCPWD"]:hover  ::after {content:"\2014  Elliptic Curve Cryptography (with password?)"; }
+  [typ^="ECDH"]:hover   ::after {content:"\2014  Elliptic Curve Diffie-Hellman"; }
+  [typ^="ECDHE"]:hover  ::after {content:"\2014  Ephemeral Elliptic Curve Diffie-Hellman"; }
+  [typ="ECDH/ECDSA"]:hover  ::after {content:"\2014  Elliptic Curve Diffie-Hellman with ECDSA"; }
+  [typ="ECDH/RSA"]:hover    ::after {content:"\2014  Elliptic Curve Diffie-Hellman with RSA"; }
+  [typ="ECDHEPSK"]:hover    ::after {content:"\2014  Elliptic Curve Diffie-Hellman with pre-shared key"; }
+  [typ="ECDSA"]:hover   ::after {content:"\2014  Elliptic Curve Digital Signature Algorithm"; }
+  [typ^="EDH"]:hover    ::after {content:"\2014  Ephemeral Diffie-Hellman"; }
+  [typ="FZA"]:hover     ::after {content:"\2014  Fortezza encryption"; }
+  [typ^="GOST"]:hover   ::after {content:"\2014  Gossudarstwenny Standard, block cipher"; }
+  [typ="IDEA"]:hover    ::after {content:"\2014  International Data Encryption Algorithm"; }
+  [typ="KRB"]:hover     ::after {content:"\2014  Key Exchange Kerberos"; }
+  [typ="KRB5"]:hover    ::after {content:"\2014  Key Exchange Kerberos 5"; }
+  [typ="MD2"]:hover     ::after {content:"\2014  Message Digest 2"; }
+  [typ="MD4"]:hover     ::after {content:"\2014  Message Digest 4"; }
+  [typ="MD5"]:hover     ::after {content:"\2014  Message Digest 5"; }
+  [typ="None"]:hover    ::after {content:"\2014  no encryption / plain text"; }
+  [typ="RC2"]:hover     ::after {content:"\2014  Rivest Cipher 2, block cipher"; }
+  [typ="RC4"]:hover     ::after {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; }
+  [typ="RC5"]:hover     ::after {content:"\2014  Rivest Cipher 5, block cipher"; }
+  [typ="RMD"]:hover     ::after {content:"\2014  ?"; }
+  [typ="RSA"]:hover     ::after {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
+  [typ="RSAPSK"]:hover  ::after {content:"\2014  Rivest Sharmir Adelman with pre-shared key"; }
+  [typ="RSA(512)"]:hover ::after {content:"\2014  Rivest Sharmir Adelman (512 bit)"; }
+  [typ="PCT"]:hover     ::after {content:"\2014  Private Communications Transport"; }
+  [typ="PSK"]:hover     ::after {content:"\2014  Pre-shared Key"; }
+  [typ="SEED"]:hover    ::after {content:"\2014  128-bit symmetric block cipher"; }
+  [typ="SHA"]:hover     ::after {content:"\2014  Secure Hash Algorithm"; }
+  [typ="SHA256"]:hover  ::after {content:"\2014  Secure Hash Algorithm (256 bit)"; }
+  [typ="SHA384"]:hover  ::after {content:"\2014  Secure Hash Algorithm (384 bit)"; }
+  [typ="SHA512"]:hover  ::after {content:"\2014  Secure Hash Algorithm (512 bit)"; }
+  [typ="SRP"]:hover     ::after {content:"\2014  Secure Remote Password protocol"; }
+  [typ="SSLv2"]:hover   ::after {content:"\2014  Secure Socket Layer 2"; }
+  [typ="SSLv3"]:hover   ::after {content:"\2014  Secure Socket Layer 3"; }
+  [typ="TLSv10"]:hover  ::after {content:"\2014  Transport Level Secure 1.0"; }
+  [typ="TLSv11"]:hover  ::after {content:"\2014  Transport Level Secure 1.1"; }
+  [typ="TLSv12"]:hover  ::after {content:"\2014  Transport Level Secure 1.2"; }
+  [typ="TLSv13"]:hover  ::after {content:"\2014  Transport Level Secure 1.3"; }
 /* not yet working: setting CSS variables and then use them
   dd[val]            {--data: attr(val); --index: var(--data); }
 */
@@ -2476,7 +2481,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.55 2022/09/30
+2.56 2022/09/30
 
 =head1 AUTHOR
 
