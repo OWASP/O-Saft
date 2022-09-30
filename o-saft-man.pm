@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.53 22/09/30 10:49:25";
+my  $SID_man= "@(#) o-saft-man.pm 2.54 22/09/30 11:32:00";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.53'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.54'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2456,7 +2456,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.53 2022/09/30
+2.54 2022/09/30
 
 =head1 AUTHOR
 
@@ -2702,11 +2702,6 @@ For formatting HTML with CSS, the paragraph tag '<p>' is used for all text
 blocks enclosed in empty lines. As RegEx are used to substitute the markup
 text to HTML, empty paragraphs may be generated.  Browsers will not render
 empty paragraphs.
-
-For HTML format a paragraph tag '<p>' is used for all text blocks enclosed
-in empty lines.  As RegEx are used to substitute the  markup text to HTML,
-empty paragraphs may be generated. This is harmless,  as browsers will not
-render empty paragraphs.
 
 Old-style '<p>' is used even we know that '<div>' is the modern standard.
 This simplifies formatting with CSS.
