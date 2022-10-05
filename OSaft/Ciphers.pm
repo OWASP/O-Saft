@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.45 22/10/05 08:36:43";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.46 22/10/05 21:58:16";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1288,7 +1288,7 @@ sub _ciphers_init   {
         $ciphers{$key}->{'keyx'}    = $fields[4]  || '';
         $ciphers{$key}->{'auth'}    = $fields[5]  || '';
         $ciphers{$key}->{'enc'}     = $fields[6]  || '';
-        $ciphers{$key}->{'bits'}    = $fields[7]  || '';
+        $ciphers{$key}->{'bits'}    = ($fields[7] || '0'); # our values are strings, but perl cast to int, which renders 0 as ''
         $ciphers{$key}->{'mac'}     = $fields[8]  || '';
         $ciphers{$key}->{'rfc'}     = $fields[9]  || '';
         @{$ciphers{$key}->{'names'}}= split(/,/, $fields[10]);
@@ -1453,7 +1453,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.45 2022/10/05
+2.46 2022/10/05
 
 =head1 AUTHOR
 
