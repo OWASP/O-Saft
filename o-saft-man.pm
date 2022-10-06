@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.58 22/10/06 12:12:58";
+my  $SID_man= "@(#) o-saft-man.pm 2.59 22/10/06 16:18:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -666,7 +666,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.58'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.59'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1482,6 +1482,7 @@ sub _man_ciphers_html_tb {
         next if $line =~ m/^\s*$/;
         next if $line =~ m/^enc_/;
         next if $line =~ m/^mac_/;
+        #print "L $line" if $line =~ m/^mac_/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $td) {            # new cipher, print previous one
@@ -1729,7 +1730,7 @@ ul li div            {margin-top:1ex;   display:none; font-size:90%; border:1px 
 ul li dl             {padding:   0.2em; display:block;        }
 ul li dt,dd          {padding:   0.5ex; display:inline-block; }
 ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
-/* automatically generate a tag's colour based on the sec attribute */
+/* automatically generate colour of tag based on the sec attribute */
   [sec="-"]          {background-color:#f00; }
   [sec^="weak"]      {background-color:#f00; }
   [sec^="WEAK"]      {background-color:#f00; }
@@ -1739,7 +1740,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [sec^="MEDIUM"]    {background-color:#ff4; }
   [sec^="high"]      {background-color:#4f4; }
   [sec^="HIGH"]      {background-color:#3f3; }
-/* automatically generate a tag's content from attribute typ= */
+/* automatically generate content if tag from attribute typ= */
   [typ]::before         {content:attr(typ);  }
   dd[typ]               {border:1px solid #ffd700;}
   td[typ]               {border:1px solid #fff; }
@@ -1788,7 +1789,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [typ="MD5"]:hover     ::after {content:"\2014  Message Digest 5"; }
   [typ="None"]:hover    ::after {content:"\2014  no encryption / plain text"; }
   [typ="RC2"]:hover     ::after {content:"\2014  Rivest Cipher 2, block cipher"; }
-  [typ="RC4"]:hover     ::after {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; }
+  [typ="RC4"]:hover     ::after {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; } # dumm '
   [typ="RC5"]:hover     ::after {content:"\2014  Rivest Cipher 5, block cipher"; }
   [typ="RIPEMD"]:hover  ::after {content:"\2014  RACE Integrity Primitives Evaluation Message Digest"; }
   [typ="RSA"]:hover     ::after {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
@@ -1845,7 +1846,8 @@ sub man_ciphers_text{
     # _man_head() and _man_food() doesn't make sense here
     foreach my $key (keys %cipher_text_map) {
         # convert internal keys to human readable text
-        $txt =~ s/\n$key/\n\t$cipher_text_map{$key}\t/g;
+	# $key must be followed by white space
+        $txt =~ s/\n$key\s/\n\t$cipher_text_map{$key}\t/g;
     }
     my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
@@ -2515,7 +2517,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.58 2022/10/06
+2.59 2022/10/06
 
 =head1 AUTHOR
 
@@ -2637,9 +2639,10 @@ example as plain text:
     TLS Version:        TLSv12
     Key Exchange:       RSA
     Authentication:     RSA
-    Encryption:         AES
-    Bits      :         256
-    MAC / Hash:         SHA256
+    Encryption Type:    AES
+    Encryption Size:    256
+    MAC / Hash Type:    SHA256
+    MAC / Hash Size:    256
     RFC(s) URL:         https://www.rfc-editor.org/rfc/rfc5246
     Comments/Notes:     L
 
