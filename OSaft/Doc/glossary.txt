@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.27 22/09/30 10:40:54
+# SID	@(#) glossary.txt 1.28 22/10/06 12:10:07
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -17,7 +17,15 @@ AE	Authenticated Encryption
 AEAD	Authenticated Encryption with Additional Data
 AECDHE	Anonymous Ephemeral ECDH
 AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
-AES	Advanced Encryption Standard
+AES	Advanced Encryption Standard, block cipher
+AESCCM	AES with CCM
+AESCCM8	AES with CCM8
+AESGCM	AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM
+AES-CCM	alias for AESCCM
+AES-GCM	alias for AESGCM
+# AES-GCM	AES-GCM is an authenticated encryption mode that uses the AES block cipher in counter mode with a polynomial MAC based on Galois field multiplication.
+AES-GCM-SIV	Nonce Misuse-Resistant Authenticated Encryption (RFC8452)
+AES-CTR	?
 AES-XTS	?
 AIA	Authority Information Access (certificate extension)
 AKC	Agreement with Key Confirmation
@@ -42,6 +50,12 @@ BADA55-VR-224	curve using the same prime as NIST P-224
 BADA55-VR-256	curve using the same prime as NIST P-256
 BADA55-VR-384	curve using the same prime as NIST P-384
 Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
+BDH	Bilinear Diffie-Hellman
+BEAR	block cipher combining stream cipher and hash function
+BEAST	Browser Exploit Against SSL/TLS
+BEAST .	fast block cipher for arbitrary blocksizes
+BER	Basic Encoding Rules
+BGP	Boorder Gateway Protocol
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
@@ -55,14 +69,9 @@ BLAKE-224	see BLAKE (224 bit)
 BLAKE-256	see BLAKE (256 bit)
 BLAKE-384	see BLAKE (384 bit)
 BLAKE-512	see BLAKE (512 bit)
-BEAR	block cipher combining stream cipher and hash function
-BDH	Bilinear Diffie-Hellman
-BEAST	Browser Exploit Against SSL/TLS
-BEAST .	fast block cipher for arbitrary blocksizes
-BER	Basic Encoding Rules
-BGP	Boorder Gateway Protocol
 Blowfish	symmetric block cipher
 boomerang attack	attack on BLAKE
+BPA	Branch Prediction Analysis
 Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
 Bullrun	NSA program to break encrypted communication
@@ -81,9 +90,10 @@ CBC 	Cipher Block Chaining (sometimes)
 CBC  	Ciplier Block Chaining (sometimes)
 CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
+CBC3	alias for Tripple DES (sometimes, used in cipher suite names)
 CCA	chosen-ciphertext attack
-CCM	CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
-CCM-8	CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
+CCM	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
+CCM-8	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
 CCS	Change Cipher Spec (protocol)
 CDH	?  Diffie-Hellman
 CDP	CRL Distribution Points
@@ -125,6 +135,7 @@ CRC64	CRC with polynomial length 64
 CRAM	Challenge Response Authentication Mechanism
 CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
 CRL	Certificate Revocation List
+CRYPTON	128 bit block cipher (1998)
 CRYPTREC	Cryptography Research and Evaluation Committees
 CRYSTALS	post-quantum hash function, signature
 CRYSTALS-Dilithium	post-quantum hash function, signature
@@ -149,6 +160,7 @@ DACL	Discretionary Access Control List
 DANE	DNS-based Authentication of Named Entities
 DDH	Decisional Diffie-Hellman (Problem)
 DEA	Data Encryption Algorithm (sometimes a synonym for DES)
+DEAL	128, 192, 256 bit block cipher (Lars Knudsen, 1998)
 DECIPHER	synonym for decryption
 DEK	Data Encryption Key
 DER	Distinguished Encoding Rules
@@ -370,7 +382,7 @@ LM hash	LAN Manager hash aka LanMan hash
 Logjam	Attack to force server to downgrade to export ciphers
 LRA	Local Registration Authority
 LSN	large-scale NAT (same as CGN)
-LRW	Liskov, Rivest, and Wagner (blok encryption)
+LRW	Liskov, Rivest, and Wagner (block encryption)
 Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky 13	Break SSL/TLS Protocol
 Lucky Thirteen	see Lucky 13
@@ -392,6 +404,7 @@ MIDORI	lightweight block cipher algorithm (64 or 128 bit) (2015)
 Midori64	see MIDORI
 Midori128	see MIDORI
 MISTY1	block cipher algorithm
+MPQS	Multiple Polynomial Quadratic Sieve
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MS-SSTP	see SSTP
 MtE	MAC-then-encrypt (see also AtE)
@@ -513,8 +526,10 @@ RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 RFC	Request for Comments
 Rijndael	symmetric block cipher algorithm (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
+RIPE-MD	alias for RIPEMD
 RLWE	Ring Learning-with-Errors
 RMAC	Randomized MAC (block cipher authentication mode)
+RMD	
 RNG	Random Number Generator
 ROCA	Return of the Coppersmith Attack
 ROT-13	see XOR
@@ -530,7 +545,7 @@ SACL	System Access Control List
 SAD	Security Association Database
 SAE	Simultaneous Authentication of Equals
 SAFER	Secure And Fast Encryption Routine, block cipher
-Salsa20	stream cipher (by D. Bernstein, 2005)
+Salsa20	stream cipher (by D. Bernstein, 2005), see ChaCha20
 Salsa20/8	see scrypt
 Salsa20/12	see Salsa20
 Salsa20/20	see Salsa20
@@ -539,6 +554,7 @@ SAN	Subject Alternate Name
 Sarmal	hash function
 SAX	Symmetric Authenticated eXchange
 SBCS	single-byte character set
+SBPA	Simple Branch Prediction Analysis
 SCA	Selfsigned CA signature
 SCEP	Simple Certificate Enrollment Protocol
 SCREAM	tweakable word-based stream cipher (2002)
@@ -558,17 +574,19 @@ SEED	128-bit symmetric block cipher (1998)
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
+SIV	Synthetic Initialization Vector
 SHA	Secure Hash Algorithm
 SHA-0	Secure Hash Algorithm (insecure version before 1995)
 SHA-1	Secure Hash Algorithm (since 1995)
 SHA-2	Secure Hash Algorithm (since 2002)
 SHA-3	Secure Hash Algorithm (since 2015), see Keccak also
+SHA-128	Secure Hash Algorithm (128 bit)
 SHA-224	Secure Hash Algorithm (224 bit)
 SHA-256	Secure Hash Algorithm (256 bit)
 SHA-384	Secure Hash Algorithm (384 bit)
 SHA-512	Secure Hash Algorithm (512 bit)
 SHA1	alias for SHA-1 (160 bit)
-SHA2	alias for SHA-2 (224, 256, 384 or 512 bit)
+SHA2	alias for SHA-2 (128, 224, 256, 384 or 512 bit)
 SHA3	alias for SHA-3 (224, 256, 384 or 512 bit)
 SHA3256	alias for SHA3-256
 SHA3-224	Secure Hash Algorithm (224 bit)
@@ -601,6 +619,7 @@ SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
+SM3	block cipher algorithm?
 SM4	block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
 SMS4	see SM4
 SMACK	State Machine AttaCKs
@@ -704,8 +723,9 @@ X509	X.509: The Directory - Authentication Framework
 X3DH	Extended Triple Diffie-Hellman
 XCBC	eXtended CBC-MAC
 XCBC-MAC	same as XCBC
-XChaCha12	stream cipher algorithm
-XChaCha20	stream cipher algorithm
+XChaCha	stream cipher algorithm (with 512-bit key)
+XChaCha12	see ChaCha (aka 12-round XChaCha)
+XChaCha20	see ChaCha (aka 20-round XChaCha)
 XEX	XOR Encrypt XOR
 XKMS	XML Key Management Specification
 XMACC	counter-based XOR-MAC
