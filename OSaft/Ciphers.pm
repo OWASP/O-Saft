@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.48 22/10/06 12:20:14";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.50 22/10/06 22:12:26";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -215,46 +215,50 @@ our @EXPORT_OK = qw(
 #________________________________________________________________ variables __|
 
 our %ciphers_desc = (   # description of following %ciphers table
-    'head'          => [qw( OpenSSL sec  ssl  keyx auth enc  bits mac  rfc  cipher;alias  const;const  comment )],
+    'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
                             # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
                             # Kx=  key exchange (DH is diffie-hellman)
                             # Au=  authentication
                             # Enc= encryption with bit size
                             # Mac= mac encryption algorithm
-    'text'          => [ # full description of each column in 'ciphers' below
+                            # 
+    'hex'      => 'Hex Code',       # hex key for cipher suite
                             #
-        'OpenSSL Security', # LOW, MEDIUM, HIGH as reported by openssl 0.9.8 .. 1.0.1h
+    'openssl'  => 'OpenSSL STRENGTH', # LOW, MEDIUM, HIGH as reported by openssl 0.9.8 .. 1.0.1h
                             # WEAK as reported by openssl 0.9.8 as EXPORT
                             # weak unqualified by openssl or known vulnerable
                             # NOTE: weak includes NONE (no security at all)
                             # high unqualified by openssl, but considerd secure
-        'Security',         # weak, medium, high
+    'sec'      => 'Security',       # weak, medium, high
                             # weak unqualified by openssl or known vulnerable
                             # high unqualified by openssl, but considerd secure
-        'SSL/TLS version',  # Protocol Version:
+    'ssl'      => 'SSL/TLS Version',# Protocol Version:
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
-        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST, ECCPWD
+    'keyx'     => 'Key Exchange',   # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST, ECCPWD
                             # last column is a : separated list (only export from openssl)
                             # different versions of openssl report  ECDH or ECDH/ECDSA
-        'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
-        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, ARIA, CAMELLIA, DES, 3DES, FZA, GOST89, IDEA, RC4, RC2, SEED
-        'Key Size',         # in bits
-        'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
-#        'DTLS OK',          # Y  if cipher is compatible for DTLS, N  otherwise
+    'auth'     => 'Authentication', # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
+    'enc'      => 'Encryption Type',# Algorithm: None, AES, AESCCM, AESGCM, ARIA, CAMELLIA, DES, 3DES, FZA, GOST89, IDEA, RC4, RC2, SEED
+    'bits'     => 'Encryption Size',# Key size in bits
+    'enc_size' => 'Block Size',     # encryption block size in bits
+    'mac'      => 'MAC/Hash Type',  # Algorithm: MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
+    'mac_size' => 'MAC/Hash Size',  # size of MAC in bits (usually coded in its name (type)
+#   'dtls'     => 'DTLS OK', # Y  if cipher is compatible for DTLS, N  otherwise
 #                            # (information from IANA)
-        'RFC',              # RFC number where cipher was defined
-        'Names, Aliases',   # Comma-separated list of cipher suite names and aliases
-        'Constants',        # Comma-separated list of cipher suite constants
-        'Notes, Comments',  # Comma-separated list of notes and comments for
-                            # this cipher suite; for eaxmple: EXPORT, OSX
+    'rfc'      => 'RFC(s)',         # RFC number where cipher was defined
+    'suite'    => 'Cipher Suite',   # cipher suite name, mainly those used by OpenSSL
+    'name'     => 'OpenSSL Name',   # cipher suite name used by OpenSSL
+    'names'    => '(Alias) Names',  # Comma-separated list of cipher suite name and aliases
+    'const'    => 'Constant Names', # Comma-separated list of cipher suite constants
+    'notes'    => 'Notes/Comments', # Comma-separated list of notes and comments
+                            # for this cipher suite; for eaxmple: EXPORT, OSX
                             # each value is used as key to %ciphers_notes
                             # 
-        ],
     'sample'        => { # example
-      '0x0300003D'  => [split /\s+/, q( HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256 RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
+      '0x0300003D'  => [split /\s+/, q(HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256,Alias RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
                             # qw// would result in Perl warning:
                             #   Possible attempt to separate words with commas
                             # q// is one word, hence it must be splitted to become an array
@@ -276,7 +280,7 @@ Note about TLS version:
 our %ciphers = (
     #? list of all ciphers, will be generated in _ciphers_init() from <DATA>
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
-    # key       => [qw( OpenSSL sec ssl  keyx auth enc  bits mac  rfc  cipher;alias const;const comment )],
+    # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
 # ...
@@ -382,7 +386,7 @@ sub key2text    {
 
 =head2 get_alias( $cipher_key)
 
-TBD alias is anything except first cipher name
+Return all copher suite names except the first cipher suite name.
 
 =head2 get_const( $cipher_key)
 
@@ -413,7 +417,7 @@ sub get_param   {
     return $STR{UNDEF};
 } # get_param
 
-sub get_openssl { return  get_param(shift, 'OpenSSL');  }
+sub get_openssl { return  get_param(shift, 'openssl');  }
 sub get_sec     { return  get_param(shift, 'sec'  );    }
 sub get_ssl     { return  get_param(shift, 'ssl'  );    }
 sub get_keyx    { return  get_param(shift, 'keyx' );    }
@@ -425,6 +429,8 @@ sub get_rfc     { return  get_param(shift, 'rfc'  );    }
 sub get_name    { return (get_param(shift, 'names'))[0];}
 #sub get_name    { my @n = get_param(shift, 'names'); print "# get_name: $n[0]"; return $n[0];}
 sub get_names   { return  get_param(shift, 'names');    }
+sub get_aliases { my @a = get_names(shift); return @a[1 .. $#a]; }
+#or get_aliases { my @a = get_names(shift); shift @a; return @a; }
 sub get_const   { return (get_param(shift, 'const'))[0];}
 sub get_consts  { return  get_param(shift, 'const');    }
 sub get_note    { return (get_param(shift, 'notes'))[0];}
@@ -494,7 +500,7 @@ sub get_desc    {
     return $STR{UNDEF} if (not defined $ciphers{$key});
     # my @x = sort values %{$ciphers{$key}}; # lasy approach not used
     return join("\t", 
-            get_param($key, 'OpenSSL'),
+            get_param($key, 'openssl'),
             get_param($key, 'sec'  ),
             get_param($key, 'ssl'  ),
             get_param($key, 'keyx' ),
@@ -868,12 +874,13 @@ sub show_desc       {
 === internal data structure: overview of %ciphers ===
 ";
 
+    my $hex = '0x0300003D'; # our sample
     my $idx = 0;
     print ("= %ciphers : example line:\n");
     # we should get the example $ciphers_desc{sample}
-    printf("  '0x0300003D' -> ["); # TODO 0x00,0x3D
+    printf("  '$hex' -> ["); # TODO 0x00,0x3D
     foreach (@{$ciphers_desc{head}}) {
-        printf("\t%s", $ciphers_desc{sample}->{'0x0300003D'}[$idx]);
+        printf("\t%s", $ciphers_desc{sample}->{$hex}[$idx]);
         $idx++;
     }
     print (" ]");
@@ -883,8 +890,9 @@ sub show_desc       {
     print ("=-------+--------------+-----------------------+--------");
     $idx = 0;
     foreach (@{$ciphers_desc{head}}) {
+        my $txt = $ciphers_desc{$ciphers_desc{head}[$idx]}; # quick dirty
         printf("  [%s]\t%15s\t%-20s\t%s\n", $idx, $ciphers_desc{head}[$idx],
-            $ciphers_desc{text}[$idx], $ciphers_desc{sample}->{'0x0300003D'}[$idx]);
+            $txt, $ciphers_desc{sample}->{$hex}[$idx]);
         $idx++;
     }
     printf("=-------+--------------+-----------------------+--------");
@@ -895,14 +903,17 @@ sub show_desc       {
     print ("=------+--------------------------------+---------------+---------------");
     $idx = 0;
     foreach my $col (@{$ciphers_desc{head}}) {
-        $col = "names" if $col =~ /cipher/;     # dirty hack
-        $col = "const" if $col =~ /const/;      # dirty hack
-        $col = "notes" if $col =~ /comment/;    # dirty hack
-        printf("%6s = \$ciphers{'0x0300003D'}{%s};\t# %-7s\t# %s\n",
-            '$' . $ciphers_desc{head}[$idx], $col,
-            $ciphers_desc{sample}->{'0x0300003D'}[$idx], $ciphers_desc{text}[$idx]);
+        my $var = $ciphers_desc{head}[$idx];    # quick dirty
+        my $txt = $ciphers_desc{$var};
+        printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
+            '$' . $var, $hex, $col, $ciphers_desc{sample}->{$hex}[$idx], $txt);
         $idx++;
     }
+    print ("= additional following methods are available:");
+    printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
+            '$' . 'name', $hex, 'name', 'AES256-SHA256', $ciphers_desc{'name'});
+    printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
+            '$' . 'alias', $hex, 'alias', 'Alias', $ciphers_desc{'names'});
     print ("=------+--------------------------------+---------------+---------------");
 
     print  "\n= \%cipher_results : description of hash:\n";
@@ -1111,21 +1122,22 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     if ($format =~ m/openssl/) {
         print << "EoT";
-# Output is similar (order of columns) but not identical to result of
-# 'openssl ciphers -[vV]' command.
+= Output is similar (order of columns) but not identical to result of
+= 'openssl ciphers -[vV]' command.
 EoT
         $out_header = 0;
         $txt_head   = "";
     } else {
         my $idx = 0;
         foreach (@{$ciphers_desc{head}}) {  # build description from %ciphers_desc
-            $txt_head .= sprintf("=      %-12s - %s\n", $ciphers_desc{head}[$idx], $ciphers_desc{text}[$idx]);
+            my $txt = $ciphers_desc{$ciphers_desc{head}[$idx]}; # quick dirty
+            $txt_head .= sprintf("=      %-12s - %s\n", $ciphers_desc{head}[$idx], $txt);
             $idx++;
         }
     }
 
     my @columns = @{$ciphers_desc{head}}; # cannot be used because we want specific order
-    @columns = qw(OpenSSL sec ssl keyx auth enc bits mac rfc cipher;alias const;const comment) if ($format =~ m/^(?:dump|full|osaft)/);
+    @columns = qw(openssl sec ssl keyx auth enc bits mac rfc names const notes) if ($format =~ m/^(?:dump|full|osaft)/);
     @columns = qw(ssl keyx auth enc bits mac)     if ($format =~ m/^(?:openssl)/);
     @columns = qw(ssl keyx auth enc bits mac sec) if ($format =~ m/^(?:show)/);
     @columns = qw(sec ssl keyx auth enc bits mac) if ($format =~ m/^(?:simple)/);
@@ -1165,7 +1177,7 @@ EoT
 =
 =   description of columns (if available):
 =      key          - internal hex key for cipher suite
-=      hex          - hex key for cipher suite (like opnssl)
+=      hex          - hex key for cipher suite (like openssl)
 =      cipher name  - OpenSSL suite name
 $txt_head
 EoT
@@ -1259,7 +1271,7 @@ sub show            {
 
 sub _ciphers_init   {
     #? initialisations of %cihers data structures from <DATA>
-    # example:   #0     #1      #3      #4      #5          #6      #7 ...
+    # example:   #0     #1      #2      #3      #4          #5      #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $du = *DATA; # avoid Perl warning "... used only once: possible typo ..."
        $du = *main::DATA; # ...
@@ -1281,8 +1293,8 @@ sub _ciphers_init   {
             _warn(sprintf("505: DATA line%4d: wrong number of TAB-separated fields '%s' != 13\n", $., $len));
             next;
         }
-        # now loop over @fields, but assign each to the hash
-        $ciphers{$key}->{'OpenSSL'} = $fields[1]  || '';
+        # now loop over @fields, but assign each to the hash; keys see %ciphers_desc
+        $ciphers{$key}->{'openssl'} = $fields[1]  || '';
         $ciphers{$key}->{'sec'}     = $fields[2]  || '';
         $ciphers{$key}->{'ssl'}     = $fields[3]  || '';
         $ciphers{$key}->{'keyx'}    = $fields[4]  || '';
@@ -1294,6 +1306,7 @@ sub _ciphers_init   {
         @{$ciphers{$key}->{'names'}}= split(/,/, $fields[10]);
         @{$ciphers{$key}->{'const'}}= split(/,/, $fields[11]);
         @{$ciphers{$key}->{'notes'}}= split(/,/, $fields[12]);
+       #$ciphers{$key}->{'suite'}   = # is first in $fields[10], 
     }
     return;
 } # _ciphers_init
@@ -1453,7 +1466,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.48 2022/10/06
+2.50 2022/10/06
 
 =head1 AUTHOR
 
@@ -1478,7 +1491,8 @@ __DATA__
 #   <empty>     - empty lines are ignored
 #   comments    - line beginning with a # (hash); lines are ignored
 #   0xhhhhhhhh  - data line containing a cipher suite; used columns are:
-#       OpenSSL - security value (STRENGTH) used by openssl
+#       hex     - hex constant for the cipher suite
+#       openssl - security value (STRENGTH) used by openssl
 #       sec     - security value used by o-saft.pl
 #       ssl     - protocol where the cipher is used (PCT just for information)
 #       keyx    - key exchange of the cipher suite (Kx= in openssl)
@@ -1486,9 +1500,9 @@ __DATA__
 #       enc     - encryption of the cipher suite (Enc= in openssl)
 #       bits    - bits for encryption of the cipher suite (Enc= in openssl)
 #       mac     - Mac of the cipher suite (Mac= in openssl)
-#       cipher, - list of known cipher suite names, most common first
+#       cipher  - list of known cipher suite names, most common first
 #       const   - list of known cipher suite constants, most common first
-#       comment - list of notes and comments
+#       notes   - list of notes and comments
 #
 #   All columns must be separated by TABs (0x9 aka \t), no spaces are allowed.
 #   The left-most column must not preceded by white spaces. It must begin with
@@ -1512,7 +1526,7 @@ __DATA__
 #
 #   This table will be read in _ciphers_init() and converted to %ciphers .
 
-# constant	OpenSSL	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,alias	const	comment
+# hex const	openssl	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,aliases	const	comment
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+---------------+-------+---------------+
 0x03005600	-	None	SSL/TLS	None	None	-	0	None	7507	SCSV,TLS_FALLBACK_SCSV	TLS_FALLBACK_SCSV	SCSV
 0x030000FF	-	None	SSL/TLS	None	None	-	0	None	5746	INFO_SCSV	EMPTY_RENEGOTIATION_INFO_SCSV	DOC
@@ -1952,7 +1966,7 @@ __DATA__
 0x0300FF85	HIGH	HIGH	TLSv13	GOST	GOST	GOST89	256	GOST89	-?-	LEGACY-GOST2012-GOST8912-GOST8912,GOST2012-GOST8912-GOST891	GOSTR341112_256_WITH_28147_CNT_IMIT	FIXME
 0x0300FF87	-?-	weak	TLSv13	GOST	GOST	None	0	GOST89	-?-	GOST2012-NULL-GOST12	GOSTR341112_256_WITH_NULL_GOSTR3411	FIXME
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+---------------+-------+---------------+
-# constant	OpenSSL	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,alias	const	comment
+# hex const	openssl	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,aliases	const	comment
 
 __END__
 
