@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.14 22/07/06 10:18:04
+# SID	@(#) rfc.txt 1.15 22/10/06 12:11:57
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -24,6 +24,10 @@ url	http://tools.ietf.org/
 7233	HTTP/1.1: Range Requests
 7234	HTTP/1.1: Caching
 7235	HTTP/1.1: Authentication
+2144	CAST-128 Encryption Algorithms
+2612	CAST-256 Encryption Algorithms
+2950	Telnet Encryption: CAST-128 64 bit Cipher Feedback
+2984	Use of the CAST-128 Encryption Algorithm in CMS
 3490	Internationalizing Domain Names in Applications (IDNA)
 3987	Internationalized Resource Identifiers (IRIs)
 4518	Internationalized String Preparation in LDAP
@@ -31,6 +35,7 @@ url	http://tools.ietf.org/
 2104	HMAC: Keyed-Hashing for Message Authentication
 2405	The ESP DES-CBC Cipher Algorithm With Explicit IV
 2406	IP Encapsulating Security Payload (ESP)
+4303	IP Encapsulating Security Payload (ESP)
 2407	The Internet IP Security Domain of Interpretation for ISAKMP
 2408	Internet Security Association and Key Management Protocol (ISAKMP)
 2409	The Internet Key Exchange (IKE) - 1998
@@ -55,6 +60,7 @@ url	http://tools.ietf.org/
 6091	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2011
 3711	The Secure Real-time Transport Protocol (SRTP)
 6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
+4106	Use of Galois/Counter Mode (GCM) in IPsec Encapsulating Security Payload (ESP)
 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
 3749	TLS Compression Method (obsolete)
@@ -125,6 +131,8 @@ url	http://tools.ietf.org/
 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 7748	Elliptic Curve for Security
 8422	Elliptic Curve Cryptography (ECC) Cipher Suites for TLS Versions 1.2 and Earlier
+5297	Synthetic Initialization Vector (SIV) Authenticated Encryption Using the Advanced Encryption Standard (AES)
+8452	AES-GCM-SIV: Nonce Misuse-Resistant Authenticated Encryption 
 5528	Camellia Counter Mode and Camellia Counter with CBC-MAC Mode Algorithms
 5741	RFC Streams, Headers, and Boilerplates
 5794	Description of the ARIA Encryption Algorithm
