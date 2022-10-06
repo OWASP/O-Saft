@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if calledd standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.57 22/09/30 23:33:13";
+my  $SID_man= "@(#) o-saft-man.pm 2.58 22/10/06 12:12:58";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -85,21 +85,25 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 # SEE Cipher:text and Cipher:HTML
 my %cipher_text_map = (
-    'hex'      => "Hex Code:",
-    'sec'      => "Security:",
-    'suite'    => "Cipher Suite:",
-    'name'     => "OpenSSL Name:",
-    'alias'    => "Name Aliases:",
-    'consts'   => "Constant Names:",
-    'openssl'  => "OpenSSL STRENGTH:",
-    'ssl'      => "TLS Version:",
-    'keyx'     => "Key Exchange:",
-    'auth'     => "Authentication:",
-    'enc'      => "Encryption:",
-    'bits'     => "Bits      :",
-    'mac'      => "MAC / Hash:",
-    'rfcs'     => "RFC(s) URL:",
-    'notes'    => "Comments/Notes:",
+    'hex'      => "Hex Code",
+    'sec'      => "Security",
+    'suite'    => "Cipher Suite",
+    'name'     => "OpenSSL Name",
+    'alias'    => "Name Aliases",
+    'consts'   => "Constant Names",
+    'openssl'  => "OpenSSL STRENGTH",
+    'ssl'      => "TLS Version",
+    'keyx'     => "Key Exchange",
+    'auth'     => "Authentication",
+    'enc'      => "Encryption Type",
+    'bits'     => "Encryption Size", # encryption
+    'enc_size' => "Encryption Block Size",
+    'enc_mode' => "Encryption Mode",
+    'mac'      => "MAC/Hash Type",
+    'mac_size' => "MAC/Hash Size",
+    'pfs'      => "PFS",
+    'rfcs'     => "RFC(s) URL",
+    'notes'    => "Comments/Notes",
 );
 
 # Following texts are excerpts or abstracts of the user documentation defined
@@ -662,7 +666,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.57'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.58'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1309,6 +1313,7 @@ sub _man_ciphers_get     {
         next if $name =~ m/^\s*$/;      # defensive programming
         my $sec   = OSaft::Ciphers::get_sec  ($key);
         my $hex   = OSaft::Ciphers::key2text ($key);
+        my $mac   = OSaft::Ciphers::get_mac  ($key);
         my @alias = OSaft::Ciphers::get_names($key);
         my @keep  = grep { $alias[$_] ne $name } 0..$#alias;
            @alias = @alias[@keep];      # remove names, which equal $name
@@ -1339,18 +1344,19 @@ sub _man_ciphers_get     {
 #             .  "\n\tIANA name:\t"      . OSaft::Ciphers::get_iana  ($key)
 #             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
         $ciphers .= "\n$hex\t$sec\t$name"
-             .  "\nname\t"    . $name
-             .  "\nalias\t"   . join(', ', @alias)
-             .  "\nconsts\t"  . join(', ', OSaft::Ciphers::get_consts($key))
-             .  "\nopenssl\t" . OSaft::Ciphers::get_openssl($key)
-             .  "\nssl\t"     . OSaft::Ciphers::get_ssl  ($key)
-             .  "\nkeyx\t"    . OSaft::Ciphers::get_keyx ($key)
-             .  "\nauth\t"    . OSaft::Ciphers::get_auth ($key)
-             .  "\nenc\t"     . OSaft::Ciphers::get_enc  ($key)
-             .  "\nbits\t"    . OSaft::Ciphers::get_bits ($key)
-             .  "\nmac\t"     . OSaft::Ciphers::get_mac  ($key)
-             .  "\nrfcs\t"    . $rfcs
-             .  "\nnotes\t"   . OSaft::Ciphers::get_notes($key)
+             .  "\nname\t"      . $name
+             .  "\nalias\t"     . join(', ', @alias)
+             .  "\nconsts\t"    . join(', ', OSaft::Ciphers::get_consts($key))
+             .  "\nopenssl\t"   . OSaft::Ciphers::get_openssl($key)
+             .  "\nssl\t"       . OSaft::Ciphers::get_ssl  ($key)
+             .  "\nkeyx\t"      . OSaft::Ciphers::get_keyx ($key)
+             .  "\nauth\t"      . OSaft::Ciphers::get_auth ($key)
+             .  "\nenc\t"       . OSaft::Ciphers::get_enc  ($key)
+             .  "\nbits\t"      . OSaft::Ciphers::get_bits ($key)
+             .  "\nmac\t"       . $mac
+             .  "\nmac_size\t"  . OSaft::Ciphers::get_mac  ($key)
+             .  "\nrfcs\t"      . $rfcs
+             .  "\nnotes\t"     . OSaft::Ciphers::get_notes($key)
              .  "\n"
              ;
     }
@@ -1402,6 +1408,8 @@ sub _man_ciphers_html_ul {
     foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
+        next if $line =~ m/^enc_/;
+        next if $line =~ m/^mac_/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $dl) {            # new cipher, print previous one
@@ -1414,10 +1422,13 @@ sub _man_ciphers_html_ul {
         my ($key, $val) = split(/\t/, $line);
         my  $txt =  $key;
             $txt =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
+            #$txt = "Encryption $txt" if $key =~ m/^bits/;
+            #$txt = "Encryption $txt" if $key =~ m/^enc/;
+            #$txt = "MAC / HASH $txt" if $key =~ m/^mac/;
         my  $sec =  "";
             $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL SRENGTH should also be marked
             $sec =  "sec='$val'" if ("sec"     eq $key);
-        $dl .= "        <dt>$txt</dt><dd $sec typ='$val' ><t> </t></dd><br />\n";
+        $dl .= "        <dt>${txt}:</dt><dd $sec typ='$val' ><t> </t></dd><br />\n";
         # <t> tag necessary, otherwise dd::after will not work
     }
     # print last cipher
@@ -1441,9 +1452,27 @@ sub _man_ciphers_html_tb {
 #      </colgroup>
 #
     # build table header; cannot use "keys %cipher_text_map" because it's random
+    # and we also want mixed rowspan and colspan
     # take care for sequence!
-    foreach my $key (qw(hex sec suite name alias consts openssl ssl keyx auth enc bits mac rfcs notes)) {
-        $tab .= "      <th>$cipher_text_map{$key}</th>\n";
+    $tab .= "      <th rowspan=2>$cipher_text_map{'hex'}</th>\n";
+    $tab .= "      <th rowspan=2>$cipher_text_map{'sec'}</th>\n";
+    $tab .= "      <th colspan=4>Names</th>\n";
+    $tab .= "      <th rowspan=2>$cipher_text_map{'openssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$cipher_text_map{'ssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$cipher_text_map{'keyx'}</th>\n";
+    $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $cipher_text_map{'auth'};
+    $tab .= "      <th colspan=2>$cipher_text_map{'enc'}</th>\n";
+    $tab .= "      <th colspan=1>MAC</th>\n";
+    $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $cipher_text_map{'rfc'};
+    $tab .= "      <th rowspan=2>$cipher_text_map{'notes'}</th>\n";
+    $tab .= "    </tr>\n";
+    $tab .= "\n    <tr>\n";
+    # second header line (for those with colpan= above
+    foreach my $key (qw(suite name alias consts enc bits mac )) {
+        my $txt =  $cipher_text_map{$key};
+           $txt =~ s|^Encryption ||;
+           $txt =~ s|MAC\s*/\s*HASH||i;
+        $tab .= "      <th>$txt</th>\n";
     }
     $tab .= "    </tr></thead><tbody>\n";
     # build table lines
@@ -1451,6 +1480,8 @@ sub _man_ciphers_html_tb {
     foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
+        next if $line =~ m/^enc_/;
+        next if $line =~ m/^mac_/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $td) {            # new cipher, print previous one
@@ -1721,7 +1752,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [typ^="ADH"]:hover    ::after {content:"\2014  Anonymous Diffie-Hellman"; }
   [typ="AEAD"]:hover    ::after {content:"\2014  Authenticated Encryption with Additional Data"; }
   [typ^="AES"]:hover    ::after {content:"\2014  Advanced Encryption Standard"; }
-  [typ="AESGCM"]:hover  ::after {content:"\2014  Advanced Encryption Standard with GCM"; }
+  [typ="AESGCM"]:hover  ::after {content:"\2014  AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM"; }
   [typ^="ARIA"]:hover   ::after {content:"\2014  128-bit symmetric block cipher"; }
   [typ="ARIAGCM"]:hover ::after {content:"\2014  symmetric key block cipher encryption algorithm with GCM"; }
   [typ="CAMELLIA"]:hover    ::after {content:"\2014  symmetric key block cipher encryption algorithm"; }
@@ -1759,7 +1790,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [typ="RC2"]:hover     ::after {content:"\2014  Rivest Cipher 2, block cipher"; }
   [typ="RC4"]:hover     ::after {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; }
   [typ="RC5"]:hover     ::after {content:"\2014  Rivest Cipher 5, block cipher"; }
-  [typ="RMD"]:hover     ::after {content:"\2014  ?"; }
+  [typ="RIPEMD"]:hover  ::after {content:"\2014  RACE Integrity Primitives Evaluation Message Digest"; }
   [typ="RSA"]:hover     ::after {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
   [typ="RSAPSK"]:hover  ::after {content:"\2014  Rivest Sharmir Adelman with pre-shared key"; }
   [typ="RSA(512)"]:hover ::after {content:"\2014  Rivest Sharmir Adelman (512 bit)"; }
@@ -1787,6 +1818,7 @@ table th    {background:#aaa;   }
 tbody tr:nth-child(even){background:#fff;    }
 tbody tr:nth-child(odd) {background:#eee;    }
 tbody td    {width: 5em; }
+thead       {position: sticky; top:3em; }
 </style>
 </head>
 <body>
@@ -2483,7 +2515,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.57 2022/09/30
+2.58 2022/10/06
 
 =head1 AUTHOR
 
