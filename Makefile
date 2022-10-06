@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.13 22/09/29 22:28:49
+#?      @(#) Makefile 2.14 22/10/06 09:00:21
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.13
+_SID            = 2.14
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -265,12 +265,15 @@ EXE.office      = libreoffice
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
-ALL.tools.optional     = aha perldoc pod2html pod2man pod2text pod2usage podman podviewer tkpod stty tput
+ALL.tools.optional     = aha perldoc pod2html pod2man pod2pdf pod2text pod2usage podman podviewer tkpod stty tput
 ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::INET IO::Socket::SSL Time::Local
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 #                 defined in t/Makefile.misc
 ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(OSAFT.pm:%.pm=OSaft::%) OSaft::Doc::Data
+
+# following for documentation, not yet used (2022)
+#_ALL.tools.dbian.pkg  = aha libtk-pod-perl perl-doc perl-doc-html pod2pdf
 
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
@@ -284,8 +287,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.13 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.13
+_INST.genbytext = generated data by Makefile 2.14 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.14
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -527,8 +530,8 @@ wiki:   $(GEN.wiki)
 docs:   $(GEN.docs) static.docs
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.13
-tar:     GREP_EDIT  = 2.13
+GREP_EDIT           = 2.14
+tar:     GREP_EDIT  = 2.14
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
