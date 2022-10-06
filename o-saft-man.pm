@@ -55,9 +55,9 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 use OSaft::Doc::Data;
-use OSaft::Ciphers; # required if calledd standalone only
+use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.59 22/10/06 16:18:38";
+my  $SID_man= "@(#) o-saft-man.pm 2.60 22/10/06 22:40:47";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -82,29 +82,6 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 #_____________________________________________________________________________
 #_____________________________________________ texts for user documentation __|
-
-# SEE Cipher:text and Cipher:HTML
-my %cipher_text_map = (
-    'hex'      => "Hex Code",
-    'sec'      => "Security",
-    'suite'    => "Cipher Suite",
-    'name'     => "OpenSSL Name",
-    'alias'    => "Name Aliases",
-    'consts'   => "Constant Names",
-    'openssl'  => "OpenSSL STRENGTH",
-    'ssl'      => "TLS Version",
-    'keyx'     => "Key Exchange",
-    'auth'     => "Authentication",
-    'enc'      => "Encryption Type",
-    'bits'     => "Encryption Size", # encryption
-    'enc_size' => "Encryption Block Size",
-    'enc_mode' => "Encryption Mode",
-    'mac'      => "MAC/Hash Type",
-    'mac_size' => "MAC/Hash Size",
-    'pfs'      => "PFS",
-    'rfcs'     => "RFC(s) URL",
-    'notes'    => "Comments/Notes",
-);
 
 # Following texts are excerpts or abstracts of the user documentation defined
 # in   OSAFT/Doc/help.txt .
@@ -666,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.59'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.60'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1345,8 +1322,8 @@ sub _man_ciphers_get     {
 #             .  "\n\tGnuTLS name:\t"    . OSaft::Ciphers::get_gnutls($key)
         $ciphers .= "\n$hex\t$sec\t$name"
              .  "\nname\t"      . $name
-             .  "\nalias\t"     . join(', ', @alias)
-             .  "\nconsts\t"    . join(', ', OSaft::Ciphers::get_consts($key))
+             .  "\nnames\t"     . join(', ', @alias)
+             .  "\nconst\t"     . join(', ', OSaft::Ciphers::get_consts($key))
              .  "\nopenssl\t"   . OSaft::Ciphers::get_openssl($key)
              .  "\nssl\t"       . OSaft::Ciphers::get_ssl  ($key)
              .  "\nkeyx\t"      . OSaft::Ciphers::get_keyx ($key)
@@ -1355,7 +1332,7 @@ sub _man_ciphers_get     {
              .  "\nbits\t"      . OSaft::Ciphers::get_bits ($key)
              .  "\nmac\t"       . $mac
              .  "\nmac_size\t"  . OSaft::Ciphers::get_mac  ($key)
-             .  "\nrfcs\t"      . $rfcs
+             .  "\nrfc\t"       . $rfcs
              .  "\nnotes\t"     . OSaft::Ciphers::get_notes($key)
              .  "\n"
              ;
@@ -1421,7 +1398,7 @@ sub _man_ciphers_html_ul {
         }
         my ($key, $val) = split(/\t/, $line);
         my  $txt =  $key;
-            $txt =~ s/$key/$cipher_text_map{$key}/; # convert internal key to human readable text
+            $txt =~ s/$key/$OSaft::Ciphers::ciphers_desc{$key}/; # convert internal key to human readable text
             #$txt = "Encryption $txt" if $key =~ m/^bits/;
             #$txt = "Encryption $txt" if $key =~ m/^enc/;
             #$txt = "MAC / HASH $txt" if $key =~ m/^mac/;
@@ -1451,25 +1428,25 @@ sub _man_ciphers_html_tb {
 #        ...
 #      </colgroup>
 #
-    # build table header; cannot use "keys %cipher_text_map" because it's random
+    # build table header; cannot use "keys %ciphers_desc" because it's random
     # and we also want mixed rowspan and colspan
     # take care for sequence!
-    $tab .= "      <th rowspan=2>$cipher_text_map{'hex'}</th>\n";
-    $tab .= "      <th rowspan=2>$cipher_text_map{'sec'}</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'hex'}</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'sec'}</th>\n";
     $tab .= "      <th colspan=4>Names</th>\n";
-    $tab .= "      <th rowspan=2>$cipher_text_map{'openssl'}</th>\n";
-    $tab .= "      <th rowspan=2>$cipher_text_map{'ssl'}</th>\n";
-    $tab .= "      <th rowspan=2>$cipher_text_map{'keyx'}</th>\n";
-    $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $cipher_text_map{'auth'};
-    $tab .= "      <th colspan=2>$cipher_text_map{'enc'}</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'openssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'ssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'keyx'}</th>\n";
+    $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $OSaft::Ciphers::ciphers_desc{'auth'};
+    $tab .= "      <th colspan=2>$OSaft::Ciphers::ciphers_desc{'enc'}</th>\n";
     $tab .= "      <th colspan=1>MAC</th>\n";
-    $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $cipher_text_map{'rfc'};
-    $tab .= "      <th rowspan=2>$cipher_text_map{'notes'}</th>\n";
+    $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $OSaft::Ciphers::ciphers_desc{'rfc'};
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'notes'}</th>\n";
     $tab .= "    </tr>\n";
     $tab .= "\n    <tr>\n";
     # second header line (for those with colpan= above
-    foreach my $key (qw(suite name alias consts enc bits mac )) {
-        my $txt =  $cipher_text_map{$key};
+    foreach my $key (qw(suite name names const enc bits mac )) {
+        my $txt =  $OSaft::Ciphers::ciphers_desc{$key};
            $txt =~ s|^Encryption ||;
            $txt =~ s|MAC\s*/\s*HASH||i;
         $tab .= "      <th>$txt</th>\n";
@@ -1844,10 +1821,11 @@ sub man_ciphers_text{
     my $txt = shift;
     _man_dbx("man_ciphers_text() ..");
     # _man_head() and _man_food() doesn't make sense here
-    foreach my $key (keys %cipher_text_map) {
+    foreach my $key (keys %OSaft::Ciphers::ciphers_desc) {
+        #next if $key =~ m/(head|sample|additional_notes|alias|mac_size)/;
         # convert internal keys to human readable text
 	# $key must be followed by white space
-        $txt =~ s/\n$key\s/\n\t$cipher_text_map{$key}\t/g;
+        $txt =~ s/\n$key\s/\n\t$OSaft::Ciphers::ciphers_desc{$key}\t/g;
     }
     my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
@@ -2517,7 +2495,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.59 2022/10/06
+2.60 2022/10/06
 
 =head1 AUTHOR
 
@@ -2645,10 +2623,6 @@ example as plain text:
     MAC / Hash Size:    256
     RFC(s) URL:         https://www.rfc-editor.org/rfc/rfc5246
     Comments/Notes:     L
-
-The hash  %cipher_text_map is used to convert the keys of the intermediate
-data to human redable text.  This hash should be similar to  %ciphers_desc
-from OSaft/Ciphers.pm .
 
 
 =head2 Cipher:HTML
