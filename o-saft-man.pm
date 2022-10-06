@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.60 22/10/06 22:40:47";
+my  $SID_man= "@(#) o-saft-man.pm 2.61 22/10/06 23:25:01";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -643,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.60'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.61'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1387,6 +1387,7 @@ sub _man_ciphers_html_ul {
         next if $line =~ m/^\s*$/;
         next if $line =~ m/^enc_/;
         next if $line =~ m/^mac_/;
+        next if $line =~ m/^name\s/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $dl) {            # new cipher, print previous one
@@ -1399,9 +1400,6 @@ sub _man_ciphers_html_ul {
         my ($key, $val) = split(/\t/, $line);
         my  $txt =  $key;
             $txt =~ s/$key/$OSaft::Ciphers::ciphers_desc{$key}/; # convert internal key to human readable text
-            #$txt = "Encryption $txt" if $key =~ m/^bits/;
-            #$txt = "Encryption $txt" if $key =~ m/^enc/;
-            #$txt = "MAC / HASH $txt" if $key =~ m/^mac/;
         my  $sec =  "";
             $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL SRENGTH should also be marked
             $sec =  "sec='$val'" if ("sec"     eq $key);
@@ -1433,7 +1431,7 @@ sub _man_ciphers_html_tb {
     # take care for sequence!
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'hex'}</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'sec'}</th>\n";
-    $tab .= "      <th colspan=4>Names</th>\n";
+    $tab .= "      <th colspan=3>Names</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'openssl'}</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'ssl'}</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'keyx'}</th>\n";
@@ -1445,7 +1443,7 @@ sub _man_ciphers_html_tb {
     $tab .= "    </tr>\n";
     $tab .= "\n    <tr>\n";
     # second header line (for those with colpan= above
-    foreach my $key (qw(suite name names const enc bits mac )) {
+    foreach my $key (qw(suite names const enc bits mac )) {
         my $txt =  $OSaft::Ciphers::ciphers_desc{$key};
            $txt =~ s|^Encryption ||;
            $txt =~ s|MAC\s*/\s*HASH||i;
@@ -1459,6 +1457,7 @@ sub _man_ciphers_html_tb {
         next if $line =~ m/^\s*$/;
         next if $line =~ m/^enc_/;
         next if $line =~ m/^mac_/;
+        next if $line =~ m/^name\s/;
         #print "L $line" if $line =~ m/^mac_/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
@@ -2495,7 +2494,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.60 2022/10/06
+2.61 2022/10/06
 
 =head1 AUTHOR
 
