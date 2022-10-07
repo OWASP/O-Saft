@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.64 22/10/07 22:30:18";
+my  $SID_man= "@(#) o-saft-man.pm 2.65 22/10/07 23:43:00";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -643,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.64'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.65'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1350,7 +1350,7 @@ sub _man_ciphers_html_dl {
     my $dl = shift;
        $dl =~ s/\n$//;  # remove trailing \n
     return << "EoHTML";
-      <div id="a">
+      <div>
         <dl>
 $dl
         </dl>
@@ -1364,12 +1364,10 @@ sub _man_ciphers_html_li {
        $dl =~ s/\n$//;  # remove trailing \n
     return << "EoHTML";
 
-    <li onclick="toggle_display(this.lastElementChild);" title="show details">
-      <span>$hex</span>
-      <span sec="$sec">$sec</span>
-      $name
+    <details title="show details">
+      <summary> <span>$hex</span> <span sec="$sec">$sec</span> $name </summary>
 $dl
-    </li>
+    </details>
 EoHTML
 } # _man_ciphers_html_li
 
@@ -1377,7 +1375,7 @@ sub _man_ciphers_html_ul {
     #? helper function for man_ciphers_html(): return UL tag with content
     #  generate simple list with UL and LI tags from given text
     my $ciphers = shift;
-    my $ul  = '  <ul id="a">';
+    my $ul  = '  <p id="a">';
     #
     # <li onclick="toggle_display(this);return false;" title="show details">
     #         <span sec=weak>weak</span>
@@ -1410,7 +1408,7 @@ sub _man_ciphers_html_ul {
     }
     # print last cipher
     $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl)) if ("" ne $dl);
-    return "$ul\n  </ul>\n";
+    return "$ul\n  </p>\n";
 } # _man_ciphers_html_ul
 
 sub _man_ciphers_html_tb {
@@ -1696,17 +1694,25 @@ body                 {padding:   1em;       }
 body > h1            {padding-top:1em;  margin-top:1em; }
 body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
 body > h2 > button   {float:right;      margin-top:1em; display:inline; }
-ul                   {padding:   0px;       }
-ul li                {padding:   0.5em; list-style-type:none;}
-ul li:nth-child(even){background:#fff;      }
-ul li:nth-child(odd) {background:#eee;      }
-ul li:hover          {background:#ffd700;   }
-ul span:first-child  {                  display:none;         }
-ul li span           {padding:   0.2em; display:inline-block; min-width:6em; border-radius:4px 4px 4px 4px; }
-ul li div            {margin-top:1ex;   display:none; font-size:90%; border:1px solid #000; border-top:0px solid #000; border-radius:0px 0px 10px 10px; }
-ul li dl             {padding:   0.2em; display:block;        }
-ul li dt,dd          {padding:   0.5ex; display:inline-block; }
-ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
+/* table { border-collapse: collapse; } * nicht verwenden */
+/* table { table-layout: fixed;       } * geht nicht      */
+table       {display: none;     }
+table th    {background:#aaa;   }
+tbody tr:nth-child(even){background:#fff;    }
+tbody tr:nth-child(odd) {background:#eee;    }
+tbody td:first-child    {text-align:right;   }
+tbody td    {width: 5em; }
+thead       {position: sticky; top:3em; }
+details                {padding: 0.2em; font-weight:bold;     }
+details:nth-child(even){background:#fff;     }
+details:nth-child(odd) {background:#eee;     }
+details summary:hover  {background:#ffd700;  }
+details span:first-child  {text-align:right; min-width:15em;  }
+details span         {padding:   0.2em; display:inline-block; min-width:6em; border-radius:4px 4px 4px 4px; }
+details div          {margin-top:0.5ex; font-size:90%; border:1px solid #000; border-top:0px solid #000; border-radius:0px 0px 10px 10px; }
+details dl           {padding:   0.2em; display:block;        }
+details dt,dd        {padding:   0.5ex; display:inline-block; }
+details dt           {min-width: 12em;  text-align:left;font-weight:bold;}
 /* automatically generate colour of tag based on the sec attribute */
   [sec="-"]          {background-color:#f00; }
   [sec^="weak"]      {background-color:#f00; }
@@ -1791,15 +1797,6 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
 /* not yet working: setting CSS variables and then use them
   dd[val]            {--data: attr(val); --index: var(--data); }
 */
-/* table { border-collapse: collapse; } * nicht verwenden */
-/* table { table-layout: fixed;       } * geht nicht      */
-table       {display: none;     }
-table th    {background:#aaa;   }
-tbody tr:nth-child(even){background:#fff;    }
-tbody tr:nth-child(odd) {background:#eee;    }
-tbody td:first-child    {text-align:right;   }
-tbody td    {width: 5em; }
-thead       {position: sticky; top:3em; }
 </style>
 </head>
 <body>
@@ -2497,7 +2494,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.64 2022/10/07
+2.65 2022/10/07
 
 =head1 AUTHOR
 
