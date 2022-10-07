@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.50 22/10/06 22:12:26";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.51 22/10/07 10:12:05";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -396,6 +396,10 @@ Return all copher suite names except the first cipher suite name.
 
 =head2 get_notes( $cipher_key)
 
+=head2 get_encsize( $cipher_key)
+
+Return encryption block size of cipher suite.
+
 =cut
 
 # some people prefer to use a getter function to get data from objects
@@ -435,6 +439,112 @@ sub get_const   { return (get_param(shift, 'const'))[0];}
 sub get_consts  { return  get_param(shift, 'const');    }
 sub get_note    { return (get_param(shift, 'notes'))[0];}
 sub get_notes   { return  get_param(shift, 'notes');    }
+
+sub _get_name   {
+    #? internal method to return cipher suite name when paramater is hex-key or cipher suite name
+    # simple check: asumes a key, if it matches 0x
+    my $txt = shift;
+    return $txt if ($txt !~ m/0x/);
+    return get_name($txt);
+} # _get_name
+
+sub get_encsize {
+    #? return encryption block size, based on (OpenSSL's) cipher suite name
+    #? $cipher is hex-key or cipher suite name
+    my $name= _get_name(shift);
+    return '128'        if ($name =~ m/AES/);
+    return '64'         if ($name =~ m/Blowfish/i);
+    return '128'        if ($name =~ m/CAMELLIA/);
+    return '-'          if ($name =~ m/-CHACHA/);
+    return '64'         if ($name =~ m/-CBC3/);
+    return '64'         if ($name =~ m/-3DES/);
+    return '-'          if ($name =~ m/DES-CBC/);   # 3DES and CBC3 matched before
+    return '-?-'        if ($name =~ m/DES-CFB/);
+    return '-?-'        if ($name =~ m/GOST/);
+    return '64'         if ($name =~ m/IDEA/);
+    return '-'          if ($name =~ m/NULL/);
+    return '64'         if ($name =~ m/RC2-/);
+    return '-'          if ($name =~ m/RC4/);
+    return '128'        if ($name =~ m/SEED/);
+    return '-?-';   # shoud be $STR{UNDEF}, but that's nasty in HTML
+} # get_encsize
+
+# following not yet used, as this information is defined in %ciphers
+#
+# =pod
+# 
+# =head2 get_encmode( $cipher_key)
+# 
+# Return type of encryption mode of cipher suite.
+# 
+# =head2 get_enctype( $cipher_key)
+# 
+# Return type of encryption of cipher suite.
+# 
+# =head2 get_mactype( $cipher_key)
+# 
+# Return type of MAC of cipher suite.
+# 
+# =cut
+# 
+# sub get_encmode {
+#     #? return encryption mode, based on (OpenSSL's) cipher suite name
+#     #? $cipher is hex-key or cipher suite name
+#     # NOTE: use get_enc() instead
+#     my $name= _get_name(shift);
+#     return 'GCM'        if ($name =~ m/-GCM/);
+#     return 'CBC'        if ($name =~ m/-CBC/);
+#     return 'CBC'        if ($name =~ m/-CAMELLIA/);
+#     return 'CBC'        if ($name =~ m/-IDEA/);
+#     return 'CBC'        if ($name =~ m/-SEED/);
+#     return 'CBC'        if ($name =~ m/-RC2/);
+#     return '-'          if ($name =~ m/-RC4/);
+#     return '-'          if ($name =~ m/-CHACHA20/);
+#     return '-'          if ($name =~ m/-NULL/);
+#     return 'CBC';   # anything else is CBC (i.e. if CBC is not part of the suite name)
+# } # get_encmode
+# 
+# sub get_enctype {
+#     #? return encryption type, based on (OpenSSL's) cipher suite name
+#     #? $cipher is hex-key or cipher suite name
+#     my $name= _get_name(shift);
+#     return 'AES'        if ($name =~ m/-AES/);  # matches: -AES128 -AES256 -AES-
+#     return 'AES'        if ($name =~ m/AES/);   # matches: AES128- AES256-
+#     return 'ARIA'       if ($name =~ m/-ARIA/);
+#     return 'CCM8'       if ($name =~ m/-CCM8/);
+#     return 'CCM'        if ($name =~ m/-CCM/);
+#     return 'CAMELLIA'   if ($name =~ m/-CAMELLIA/);
+#     return 'CHACHA20'   if ($name =~ m/-CHACHA20/);
+#     return 'CAST'       if ($name =~ m/-CAST/);
+#     return 'GOST'       if ($name =~ m/-GOST/); # TODO: GOST01 and GOST89 and GOST94?
+#     return 'IDEA'       if ($name =~ m/-IDEA/);
+#     return 'SEED'       if ($name =~ m/-SEED/);
+#     return '3DES'       if ($name =~ m/-CBC3/);
+#     return '3DES'       if ($name =~ m/-3DES/);
+#     return 'DES'        if ($name =~ m/-DES/);
+#     return 'RC4'        if ($name =~ m/-RC4/);
+#     return 'RC2'        if ($name =~ m/-RC2/);
+#     return 'None'       if ($name =~ m/-NULL/);
+#     return '-?-';   # shoud be $STR{UNDEF}, but that's nasty in HTML
+# } # get_enctype
+# 
+# sub get_mactype {
+#     #? return encryption key, based on (OpenSSL's) cipher suite name
+#     #? $cipher is hex-key or cipher suite name
+#     my $name= _get_name(shift);
+#     return 'SHA384'     if ($name =~ m/-SHA384/);
+#     return 'SHA256'     if ($name =~ m/-SHA256/);
+#     return 'SHA128'     if ($name =~ m/-SHA128/);
+#     return 'SHA'        if ($name =~ m/-SHA1/); # matches: -SHA1$
+#     return 'SHA'        if ($name =~ m/-SHA/);  # matches: -SHA$
+#     return 'MD5'        if ($name =~ m/-MD5/);
+#     return 'MD4'        if ($name =~ m/-MD4/);
+#     return 'RMD'        if ($name =~ m/-RMD/);
+#     return 'POLY1305'   if ($name =~ m/-POLY1305/);
+#     return 'GOST'       if ($name =~ m/-GOST/); # TODO: GOST01 and GOST89 and GOST94?
+#     return 'AEAD'       if ($name =~ m/-GCM/);
+#     return '-?-';   # shoud be $STR{UNDEF}, but that's nasty in HTML
+# } # get_mactype
 
 =pod
 
@@ -1466,7 +1576,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.50 2022/10/06
+2.51 2022/10/07
 
 =head1 AUTHOR
 
