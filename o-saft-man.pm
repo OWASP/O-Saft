@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.62 22/10/07 10:23:34";
+my  $SID_man= "@(#) o-saft-man.pm 2.63 22/10/07 22:00:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -643,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.62'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.63'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1292,10 +1292,13 @@ sub _man_ciphers_get     {
         my $hex   = OSaft::Ciphers::key2text ($key);
         my $mac   = OSaft::Ciphers::get_mac  ($key);
         my @alias = OSaft::Ciphers::get_names($key);
-        my @keep  = grep { $alias[$_] ne $name } 0..$#alias;
-           @alias = @alias[@keep];      # remove names, which equal $name
+        my @_keep = grep { $alias[$_] ne $name } 0..$#alias;
+           @alias = @alias[@_keep];      # remove names, which equal $name
         my $rfc   = OSaft::Ciphers::get_rfc  ($key);
         my $rfcs  = "";
+        my $pfs   = "-";
+           $pfs   = "PFS" if $name =~ m/^(?:EC)?DHE/;
+           $pfs   = "PFS" if $name =~ m/^(?:EXP-)?EDH-/;# EDH- and EXP-EDH- for ancient names
         foreach my $key (split(/,/, $rfc)) {
             # replace RFC-number, if any, with URL
             my $num = $key;
@@ -1333,6 +1336,7 @@ sub _man_ciphers_get     {
              .  "\nenc_size\t"  . OSaft::Ciphers::get_encsize($key)
              .  "\nmac\t"       . $mac
              .  "\nmac_size\t"  . ''
+             .  "\npfs\t"       . $pfs
              .  "\nrfc\t"       . $rfcs
              .  "\nnotes\t"     . OSaft::Ciphers::get_notes($key)
              .  "\n"
@@ -1434,8 +1438,9 @@ sub _man_ciphers_html_tb {
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'ssl'}</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'keyx'}</th>\n";
     $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $OSaft::Ciphers::ciphers_desc{'auth'};
-    $tab .= "      <th colspan=3>$OSaft::Ciphers::ciphers_desc{'enc'}</th>\n";
+    $tab .= "      <th colspan=3>Encryption</th>\n";        # $OSaft::Ciphers::ciphers_desc{'enc'}
     $tab .= "      <th colspan=1>MAC</th>\n";
+    $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'pfs'}</th>\n";
     $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $OSaft::Ciphers::ciphers_desc{'rfc'};
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'notes'}</th>\n";
     $tab .= "    </tr>\n";
@@ -1471,7 +1476,7 @@ sub _man_ciphers_html_tb {
         my  $sec = "";
             $sec = "sec='$val'" if ("openssl" eq $key); # OpenSSL SRENGTH should also be marked
             $sec = "sec='$val'" if ("sec" eq $key); # OpenSSL SRENGTH should also be marked
-        $td .= "        <td $sec typ='$val'><t> </t></td>\n";
+        $td .= "        <td typ='$val' $sec><t> </t></td>\n";
         # <t> tag necessary, otherwise td::after will not work
     }
     # print last cipher
@@ -1712,6 +1717,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [sec^="MEDIUM"]    {background-color:#ff4; }
   [sec^="high"]      {background-color:#4f4; }
   [sec^="HIGH"]      {background-color:#3f3; }
+  [typ="PFS"]        {background-color:#4f4; }
 /* automatically generate content if tag from attribute typ= */
   [typ]::before         {content:attr(typ);  }
   dd[typ]               {border:1px solid #ffd700;}
@@ -2490,7 +2496,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.62 2022/10/07
+2.63 2022/10/07
 
 =head1 AUTHOR
 
