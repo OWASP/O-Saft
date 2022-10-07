@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.52 22/10/07 21:16:49";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.53 22/10/07 21:23:43";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -251,7 +251,7 @@ our %ciphers_desc = (   # description of %ciphers table
 #   'dtls'     => 'DTLS OK', # Y  if cipher is compatible for DTLS, N  otherwise
 #                            # (information from IANA)
     'rfc'      => 'RFC(s)',         # RFC number where cipher was defined
-    'pfs'      => 'PRF',            # )f cipher ha perfect forward secrecy
+    'pfs'      => 'PFS',            # )f cipher ha perfect forward secrecy
     'suite'    => 'Cipher Suite',   # cipher suite name, mainly those used by OpenSSL
     'name'     => 'OpenSSL Name',   # cipher suite name used by OpenSSL
     'names'    => '(Alias) Names',  # Comma-separated list of cipher suite name and aliases
@@ -1579,7 +1579,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.52 2022/10/07
+2.53 2022/10/07
 
 =head1 AUTHOR
 
