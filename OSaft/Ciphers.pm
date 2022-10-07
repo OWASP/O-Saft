@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.51 22/10/07 10:12:05";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.52 22/10/07 21:16:49";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -214,8 +214,10 @@ our @EXPORT_OK = qw(
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-our %ciphers_desc = (   # description of following %ciphers table
+our %ciphers_desc = (   # description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
+                            # array of all culumns used most tables (including
+                            # the definition below in DATA);
                             # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
                             # Kx=  key exchange (DH is diffie-hellman)
@@ -249,6 +251,7 @@ our %ciphers_desc = (   # description of following %ciphers table
 #   'dtls'     => 'DTLS OK', # Y  if cipher is compatible for DTLS, N  otherwise
 #                            # (information from IANA)
     'rfc'      => 'RFC(s)',         # RFC number where cipher was defined
+    'pfs'      => 'PRF',            # )f cipher ha perfect forward secrecy
     'suite'    => 'Cipher Suite',   # cipher suite name, mainly those used by OpenSSL
     'name'     => 'OpenSSL Name',   # cipher suite name used by OpenSSL
     'names'    => '(Alias) Names',  # Comma-separated list of cipher suite name and aliases
@@ -1576,7 +1579,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.51 2022/10/07
+2.52 2022/10/07
 
 =head1 AUTHOR
 
