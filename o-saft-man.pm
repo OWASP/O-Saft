@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.61 22/10/06 23:25:01";
+my  $SID_man= "@(#) o-saft-man.pm 2.62 22/10/07 10:23:34";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -643,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.61'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.62'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1325,13 +1325,14 @@ sub _man_ciphers_get     {
              .  "\nnames\t"     . join(', ', @alias)
              .  "\nconst\t"     . join(', ', OSaft::Ciphers::get_consts($key))
              .  "\nopenssl\t"   . OSaft::Ciphers::get_openssl($key)
-             .  "\nssl\t"       . OSaft::Ciphers::get_ssl  ($key)
-             .  "\nkeyx\t"      . OSaft::Ciphers::get_keyx ($key)
-             .  "\nauth\t"      . OSaft::Ciphers::get_auth ($key)
-             .  "\nenc\t"       . OSaft::Ciphers::get_enc  ($key)
-             .  "\nbits\t"      . OSaft::Ciphers::get_bits ($key)
+             .  "\nssl\t"       . OSaft::Ciphers::get_ssl    ($key)
+             .  "\nkeyx\t"      . OSaft::Ciphers::get_keyx   ($key)
+             .  "\nauth\t"      . OSaft::Ciphers::get_auth   ($key)
+             .  "\nenc\t"       . OSaft::Ciphers::get_enc    ($key)
+             .  "\nbits\t"      . OSaft::Ciphers::get_bits   ($key)
+             .  "\nenc_size\t"  . OSaft::Ciphers::get_encsize($key)
              .  "\nmac\t"       . $mac
-             .  "\nmac_size\t"  . OSaft::Ciphers::get_mac  ($key)
+             .  "\nmac_size\t"  . ''
              .  "\nrfc\t"       . $rfcs
              .  "\nnotes\t"     . OSaft::Ciphers::get_notes($key)
              .  "\n"
@@ -1385,9 +1386,6 @@ sub _man_ciphers_html_ul {
     foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
-        next if $line =~ m/^enc_/;
-        next if $line =~ m/^mac_/;
-        next if $line =~ m/^name\s/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $dl) {            # new cipher, print previous one
@@ -1436,14 +1434,14 @@ sub _man_ciphers_html_tb {
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'ssl'}</th>\n";
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'keyx'}</th>\n";
     $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $OSaft::Ciphers::ciphers_desc{'auth'};
-    $tab .= "      <th colspan=2>$OSaft::Ciphers::ciphers_desc{'enc'}</th>\n";
+    $tab .= "      <th colspan=3>$OSaft::Ciphers::ciphers_desc{'enc'}</th>\n";
     $tab .= "      <th colspan=1>MAC</th>\n";
     $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $OSaft::Ciphers::ciphers_desc{'rfc'};
     $tab .= "      <th rowspan=2>$OSaft::Ciphers::ciphers_desc{'notes'}</th>\n";
     $tab .= "    </tr>\n";
     $tab .= "\n    <tr>\n";
     # second header line (for those with colpan= above
-    foreach my $key (qw(suite names const enc bits mac )) {
+    foreach my $key (qw(suite names const enc bits enc_size mac)) {
         my $txt =  $OSaft::Ciphers::ciphers_desc{$key};
            $txt =~ s|^Encryption ||;
            $txt =~ s|MAC\s*/\s*HASH||i;
@@ -1455,10 +1453,8 @@ sub _man_ciphers_html_tb {
     foreach my $line (split(/\n/, $ciphers)) {
         chomp($line);
         next if $line =~ m/^\s*$/;
-        next if $line =~ m/^enc_/;
         next if $line =~ m/^mac_/;
         next if $line =~ m/^name\s/;
-        #print "L $line" if $line =~ m/^mac_/;
         $line =~ s/^\s*//;              # remove leading whitespace
         if ($line =~ m/^0x/) {
             if ("" ne $td) {            # new cipher, print previous one
@@ -1775,6 +1771,7 @@ ul li dt             {min-width: 12em;  text-align:left;font-weight:bold;}
   [typ="PSK"]:hover     ::after {content:"\2014  Pre-shared Key"; }
   [typ="SEED"]:hover    ::after {content:"\2014  128-bit symmetric block cipher"; }
   [typ="SHA"]:hover     ::after {content:"\2014  Secure Hash Algorithm"; }
+  [typ="SHA1"]:hover    ::after {content:"\2014  Secure Hash Algorithm"; }
   [typ="SHA256"]:hover  ::after {content:"\2014  Secure Hash Algorithm (256 bit)"; }
   [typ="SHA384"]:hover  ::after {content:"\2014  Secure Hash Algorithm (384 bit)"; }
   [typ="SHA512"]:hover  ::after {content:"\2014  Secure Hash Algorithm (512 bit)"; }
@@ -1821,7 +1818,6 @@ sub man_ciphers_text{
     _man_dbx("man_ciphers_text() ..");
     # _man_head() and _man_food() doesn't make sense here
     foreach my $key (keys %OSaft::Ciphers::ciphers_desc) {
-        #next if $key =~ m/(head|sample|additional_notes|alias|mac_size)/;
         # convert internal keys to human readable text
 	# $key must be followed by white space
         $txt =~ s/\n$key\s/\n\t$OSaft::Ciphers::ciphers_desc{$key}\t/g;
@@ -2494,7 +2490,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.61 2022/10/06
+2.62 2022/10/07
 
 =head1 AUTHOR
 
