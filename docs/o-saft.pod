@@ -91,7 +91,6 @@ here are some examples of the most common use cases:
 
 =back
 
-	o-saft.pl +cipherraw example.tld --range=full
 	checkAllCiphers.pl example.tld
 	checkAllCiphers.pl example.tld --range=full --v
 
@@ -363,8 +362,8 @@ Therefore following commands and options changed:
 
 =back
 
-The commands  I<+cipherall>  and  I<+cipherraw>  are "converted" to the new
-syntax, as follows:
+The historic commands  I<+cipherall>  and  I<+cipherraw> should be replaced
+with the new syntax, as follows:
 
 	VERSION < 19.11.19           VERSION > 19.11.19
 #----------------------------+---------------------------------
@@ -664,33 +663,32 @@ with other commands).
 
 =head3 +ciphers
 
-Show ciphers offered by local SSL implementation.
-
-This commands prints the ciphers in a format like "openssl ciphers"
-does. It also accepts the  -v  and  -V  option. The  I<--legacy=TYPE>
-option can be used as described for  I<+list>  command.
+Show known ciphers in format like "openssl ciphers".
+It also accepts the  -v  and  -V  option.
 Use  I<+list>  command for more information according ciphers.
 
 =head3 +list
 
 Show all ciphers supported by this tool. This includes cryptogrphic
-details of the cipher and some internal details about the rating.
-
-In contrast to the  I<+ciphers>  command,  I<+list>  uses  TAB characters
-instead of spaces to seperate columns.  It also prints table header
-lines by default.
+details of the cipher and some internal details.
 
 Different output formats are used for the  I<--legacy=*>  option:
 
 =over
 
-=item * --legacy=simple   tabular output of cipher values
+=item * --legacy=simple   simple space-separated output
 
 =back
 
 =over
 
-=item * --legacy=full     as  --legacy=simple  but more data
+=item * --legacy=full     TAB-separated output with more data
+
+=back
+
+=over
+
+=item * --legacy=owasp    simple output sorted according OWASP scoring
 
 =back
 
@@ -842,20 +840,6 @@ Check target for ciphers,  either all ciphers, or ciphers specified
 with  I<--cipher=CIPHER>  option.
 
 Use  I<--v>  option to see all ciphers being checked.
-
-=head3 +cipherall
-
-Option is obsolete.
-
-=head3 +cipherraw
-
-Check target for all possible ciphers.
-Does not depend on local SSL implementation.
-
-In contrast to  I<+cipher>  this command has some options to tweak the
-cipher tests, connection results and some strange behaviours of the
-target. See  L</Options for  +cipherall and +cipherraw  command>  for
-details.
 
 =head3 +cipher-default
 
@@ -2039,13 +2023,11 @@ I<--cipher-curve=>,,  sets list to empty element "".
 Note:  setting empty list or element most likely does not work with
 openssl executable (for example  I<--force-openssl>).
 
-=head2 Options for  +cipherall and +cipherraw  command
-
 =head3 --range=RANGE
 
 =head3 --cipherrange=RANGE
 
-Specify range of cipher constants to be tested by  I<+cipherall>.
+Specify range of cipher constants to be tested with  I<+cipher>  .
 Following C<RANGE>s are supported:
 
 =over
@@ -2405,7 +2387,7 @@ to "read" the printed data.
 
 Get the screen width and then adapt  output of documentation to fit
 to that width. If the environment variable C<COLUMNS> is not set the
-systemC<s >tputC< or >stty' command is used to get the screen width.
+command C<tput> or C<stty> of system is used to get the screen width.
 
 It's a very simple approach to make texts better readable on narrow
 devices like tablets. For more details, please see:
@@ -2654,8 +2636,8 @@ For general descriptions please see  L</CUSTOMISATION>  section below.
 
 =head3 --cfg-cmd=CMD=LIST
 
-Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-can be written without the leading  C<+>.
+Redefine list of commands. Sets  C<%cfg{cmd-CMD}>  to  C<LIST>.
+Commands can be written without the leading  C<+>.
 If  CMD  is any of the known internal commands, it will be redifned.
 If  CMD  is a unknown command, it will be created.
 
@@ -2674,8 +2656,8 @@ Main purpose is to reduce list of commands or to print them sorted.
 
 =head3 --cfg-data=KEY=TEXT
 
-Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
-%checks{KEY}{txt}  to  C<TEXT>.
+Redefine texts used for labels in output. Sets C<%data{KEY}{txt}>  or
+C<%checks{KEY}{txt}>  to  C<TEXT>.
 
 To get a list of preconfigured labels, use:
 
@@ -2691,7 +2673,7 @@ Example:
 
 =head3 --cfg-text=KEY=TEXT
 
-Redefine general texts used in output. Sets  %text{KEY}  to  C<TEXT>.
+Redefine general texts used in output. Sets C<%text{KEY}>  to  C<TEXT>.
 
 To get a list of preconfigured texts, use:
 
@@ -2702,11 +2684,11 @@ when read from L</RC-FILE>.
 
 =head3 --cfg-text=FILE
 
-Read definitions for  %text{KEY}="my text" from file  C<FILE>.
+Read definitions for  C<%text{KEY}="my text"> from file  C<FILE>.
 
 =head3 --cfg-hint=KEY=TEXT
 
-Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  C<TEXT>.
+Redefine texts used for hints. Sets  C<%cfg{hints}{KEY}>  to  C<TEXT>.
 
 To get a list of preconfigured texts, use:
 
@@ -2714,7 +2696,7 @@ To get a list of preconfigured texts, use:
 
 =head3 --cfg-init=KEY=VALUE
 
-Set the internal  %cfg  hash.  This options is intended for testing
+Set the internal  C<%cfg> hash. This options is intended for testing
 and debugging only. Please see  L</TESTING>  below.
 
 =head3 --call=METHOD
@@ -4314,17 +4296,18 @@ This file contains  user specified  program code.  It can also be
 (mis-)used to redefine all settings. Please see L</USER-FILE>  below.
 
 Customisation is done by redefining values in internal data structure
-which are:  %cfg,  %data,  %checks,  %text,  %scores.
+which are:  %cfg,  %data,  %checks,  %text.
 
 Unless used in  L</DEBUG-FILE>  or  L</USER-FILE>,  there is  no need to know
 these internal data structures or the names of variables; the options
 will set the  proper values.  The key names being part of the option,
 are printed in output with the  I<--trace-key>  option.
 
-I.g. texts (values) of keys in  %data are those used in output of the
-"Information" section. Texts of keys in  %checks  are used for output
-in "Performed Checks" section.  And texts of keys in  %text  are used
-for additional information lines or texts (mainly beginning with C<=>).
+Texts (values) of keys in  C<%data>  are those  used in  output of the
+"Information" section.  The texts of keys in  C<%checks>  are used for
+output in "Performed Checks" section.  Texts of keys in  C<%text>  are
+used for additional information lines or texts (mainly beginning with
+C<=>).
 
 Configuration file vs. L</RC-FILE> vs. L</DEBUG-FILE>
 
@@ -4914,12 +4897,6 @@ Using  I<--trace-time>   should show following times:
 
 =over
 
-=item * need_cipher:     1 -  20 sec (+cipherraw)
-
-=back
-
-=over
-
 =item * no SNI:          1 -  10 sec
 
 =back
@@ -5382,13 +5359,13 @@ Perl modules loaded and used for some options only:
 
 =over
 
-=item * L<o-saft-README|o-saft-README>
+=item * o-saft-docker
 
 =back
 
 =over
 
-=item * o-saft-docker
+=item * L<o-saft-README|o-saft-README>
 
 =back
 
@@ -6559,9 +6536,9 @@ be shown. The warnings depend on the installed version of the module.
 =head1 TESTING
 
 What is "testing"?
-This tool itself is for testing something,  so it needs to be explain
-what testing here is about. Following testing types are distinguished
-and then described:
+This tool itself is for testing something (TLS etc.),  so it needs to
+be explained what testing here is about.  Following testing types are
+distinguished and then described:
 
 =over
 
@@ -6635,7 +6612,7 @@ Terminate tool at specified C<KEY>. For available C<KEY>, please see:
 
 =head3 --cfg-init=KEY=VALUE
 
-With this option values in the internal  %cfg  hash can be set:
+With this option values in the internal  C<%cfg>  hash can be set:
 
 	$cfg{KEY} = VALUE
 
@@ -6666,7 +6643,7 @@ Print overview of all available commands and checks.
 
 =head3 --test-maps
 
-Print internal data strucures C<%cfg{openssl}>, C<%cfg{ssleay}>.
+Print internal data strucures  C<%cfg{openssl}>,  C<%cfg{ssleay}>.
 
 =head3 --test-prot
 
@@ -6676,28 +6653,37 @@ Print internal data according protocols.
 
 Print results for applying various texts to defined regex.
 
-=head3 --test-ciphers-list
-
-Print list of hex keys of known ciphers.
-
-=head3 --test-ciphers-show
-
-Print complete list of ciphers.
-
-=head3 --test-cipher-sorted
-
-Print list of ciphers sorted according strength.
+=head3 --test-ciphers-dump
 
 =head3 --test-ciphers-overview
 
-Print overview of all available ciphers with all attributes.
+=head3 --test-ciphers-openssl
+
+=head3 --test-ciphers-show
+
+=head3 --test-ciphers-simple
+
+=head3 --test-ciphers-sorted
+
+=head3 --test-ciphers-ssltest
+
+Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+These options are aliases for:  I<+list> I<--legacy=TYP>  .
+
+=head3 --test-ciphers-hex=*
+
+=head3 --test-ciphers-key=*
+
+=head3 --test-ciphers-list
+
+Print some special information, please see: OSaft/Ciphers.pm .
 
 =head3 --test-init
 
-Print parts of the data structure  %cfg. In contrast to the options
+Print parts of  data structure  C<%cfg>.  In contrast to the options
 described above,  I<--test-init>  exits straight before performing the
 specified commands on the target.  Therefore it prints the settings
-in  %cfg  containing all applied commands and options.
+in  C<%cfg>  containing all applied commands and options.
 
 =head3 --test-memory
 
@@ -7161,7 +7147,7 @@ Thanks to Gregor Kuznik for this title.
 
 =over
 
-=item * +cipherraw and some proxy functionality implemented by Torsten Gigler.
+=item * Basic cipher check and some proxy functionality implemented by Torsten Gigler.
 
 =back
 
@@ -7188,7 +7174,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 22.02.22
+@(#) 22.06.22
 
 =head1 AUTHOR
 
@@ -7538,7 +7524,7 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.22 22/02/14 16:19:41
+# # SID	@(#) glossary.txt 1.28 22/10/06 12:10:07
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
@@ -7556,7 +7542,15 @@ Generated with:
 # AEAD	Authenticated Encryption with Additional Data
 # AECDHE	Anonymous Ephemeral ECDH
 # AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
-# AES	Advanced Encryption Standard
+# AES	Advanced Encryption Standard, block cipher
+# AESCCM	AES with CCM
+# AESCCM8	AES with CCM8
+# AESGCM	AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM
+# AES-CCM	alias for AESCCM
+# AES-GCM	alias for AESGCM
+# # AES-GCM	AES-GCM is an authenticated encryption mode that uses the AES block cipher in counter mode with a polynomial MAC based on Galois field multiplication.
+# AES-GCM-SIV	Nonce Misuse-Resistant Authenticated Encryption (RFC8452)
+# AES-CTR	?
 # AES-XTS	?
 # AIA	Authority Information Access (certificate extension)
 # AKC	Agreement with Key Confirmation
@@ -7565,6 +7559,10 @@ Generated with:
 # AMASTRID	stream cipher algorithm
 # ARC4	Alleged RC4 (see RC4)
 # ARCFOUR	alias for ARC4
+# Argon2	Password hashing function (J. Aumasson, 2014)
+# Argon2d	variant of Argon2
+# Argon2i	variant of Argon2
+# Argon2id	variant of Argon2
 # ARIA	128-bit symmetric block cipher
 # ARX	add–rotate–xor
 # ASN	Autonomous System Number
@@ -7577,28 +7575,33 @@ Generated with:
 # BADA55-VR-256	curve using the same prime as NIST P-256
 # BADA55-VR-384	curve using the same prime as NIST P-384
 # Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
+# BDH	Bilinear Diffie-Hellman
+# BEAR	block cipher combining stream cipher and hash function
+# BEAST	Browser Exploit Against SSL/TLS
+# BEAST .	fast block cipher for arbitrary blocksizes
+# BER	Basic Encoding Rules
+# BGP	Boorder Gateway Protocol
 # bcrypt	hash function (Niels Provos, David Mazières, 1999)
 # BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 # BLAKE2	fast secure hashing function (2012)
-# BLAKE2b	see BLAKE (32 bit)
+# BLAKE2b	see BLAKE (64 bit)
+# BLAKE2s-128	see BLAKE (32 bit)
+# BLAKE3	fast secure hashing function (20??)
+# BLAKE3	??
 # BLAKE-32	see BLAKE (32 bit)
 # BLAKE-64	see BLAKE (64 bit)
 # BLAKE-224	see BLAKE (224 bit)
 # BLAKE-256	see BLAKE (256 bit)
 # BLAKE-384	see BLAKE (384 bit)
 # BLAKE-512	see BLAKE (512 bit)
-# BEAR	block cipher combining stream cipher and hash function
-# BDH	Bilinear Diffie-Hellman
-# BEAST	Browser Exploit Against SSL/TLS
-# BEAST .	fast block cipher for arbitrary blocksizes
-# BER	Basic Encoding Rules
-# BGP	Boorder Gateway Protocol
 # Blowfish	symmetric block cipher
 # boomerang attack	attack on BLAKE
+# BPA	Branch Prediction Analysis
 # Brainpool	signature algorithm, from BSI
 # BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
 # Bullrun	NSA program to break encrypted communication
 # CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
+# CAST	Carlisle Adams and Stafford Tavares, block cipher
 # CAST-128	Carlisle Adams and Stafford Tavares, block cipher
 # CAST5	alias for CAST-128
 # CAST-256	Carlisle Adams and Stafford Tavares, block cipher
@@ -7612,9 +7615,10 @@ Generated with:
 # CBC  	Ciplier Block Chaining (sometimes)
 # CBC-MAC	Cipher Block Chaining - Message Authentication Code
 # CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
+# CBC3	alias for Tripple DES (sometimes, used in cipher suite names)
 # CCA	chosen-ciphertext attack
-# CCM	CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
-# CCM-8	CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
+# CCM	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
+# CCM-8	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
 # CCS	Change Cipher Spec (protocol)
 # CDH	?  Diffie-Hellman
 # CDP	CRL Distribution Points
@@ -7632,6 +7636,7 @@ Generated with:
 # ChaCha20	see ChaCha (aka 20-round ChaCha)
 # ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 # CHAP	Challenge Handshake Authentication Protocol
+# CLEFIA	lightweight block cipher algorithm
 # CKA	(PKCS#11)
 # CKK	(PKCS#11)
 # CKM	(PKCS#11)
@@ -7655,7 +7660,11 @@ Generated with:
 # CRAM	Challenge Response Authentication Mechanism
 # CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
 # CRL	Certificate Revocation List
+# CRYPTON	128 bit block cipher (1998)
 # CRYPTREC	Cryptography Research and Evaluation Committees
+# CRYSTALS	post-quantum hash function, signature
+# CRYSTALS-Dilithium	post-quantum hash function, signature
+# CRYSTALS-Kyber	post-quantum hash function, signature
 # CSP	Certificate Service Provider
 # CSP 	Cryptographic Service Provider
 # CSP  	Critical Security Parameter (used in FIPS 140-2)
@@ -7676,6 +7685,7 @@ Generated with:
 # DANE	DNS-based Authentication of Named Entities
 # DDH	Decisional Diffie-Hellman (Problem)
 # DEA	Data Encryption Algorithm (sometimes a synonym for DES)
+# DEAL	128, 192, 256 bit block cipher (Lars Knudsen, 1998)
 # DECIPHER	synonym for decryption
 # DEK	Data Encryption Key
 # DER	Distinguished Encoding Rules
@@ -7689,6 +7699,10 @@ Generated with:
 # D5	Verhoeff's Dihedral Group D5 Check
 # DH	Diffie-Hellman
 # DHE	Diffie-Hellman ephemeral (historic acronym, often used, mainly in openssl)
+# Dilithium	digital signature scheme
+# Dilithium2-AES	alias for Dilithium
+# Dilithium3-AES	alias for Dilithium
+# Dilithium5-AES	alias for Dilithium
 # DLIES	Discrete Logarithm Integrated Encryption Scheme
 # DLP	Discrete Logarithm Problem
 # DN	Distinguished Name
@@ -7700,6 +7714,7 @@ Generated with:
 # DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
 # DSA	Digital Signature Algorithm
 # DSCP	Differentiated Services Code Point
+# DSPR	?
 # DSS	Digital Signature Standard
 # DTLS	Datagram TLS
 # DTLSv1	Datagram TLS 1.0
@@ -7752,7 +7767,8 @@ Generated with:
 # ENCIPHER	synonym for encryption
 # EME	ECB-mask-ECB
 # EME 	Encoding Method for Encryption
-# EMS 	Extended Master Secret
+# EMS 	Extended Master Secret (sometimes)
+# EMS 	Encrypted Master Secret
 # ESNI	Encrypted Server Name Indication
 # ESP	Encapsulating Security Payload
 # ESSIV	Encrypted salt-sector initialization vector
@@ -7765,6 +7781,7 @@ Generated with:
 # ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 # EV	Extended Validation
 # EV-SSL	Extended Validation Certificate
+# FALCON	Fast-Fourier Lattice-based Compact Signatures over NTRU; post-quantum signature
 # FEAL	Fast Data Encryption Algorithm
 # FFC	Finite Field Cryptography
 # FFT	Fast Fourier Transform
@@ -7788,7 +7805,7 @@ Generated with:
 # GMAC	MAC for GCM
 # Grøstl	hash function (Lars Knudsen, 2010)
 # Goldilocks	see Curve448
-# GOST	Gossudarstwenny Standard (block cipher)
+# GOST	Gossudarstwenny Standard, block cipher
 # GOST 	hash function (used in GOST cipher suite)
 # GOST28147-89	block cipher
 # GOST3410-2012	signature algorithm
@@ -7858,14 +7875,21 @@ Generated with:
 # JH-256	see JH (256 bits)
 # JH-384	see JH (384 bits)
 # JH-512	see JH (512 bits)
+# Jolkit-BC	tweakable block cipher
 # JSSE	Java Secure Socket Extension
+# KATAN	lightweight block cipher algorithm
+# KLEIN	lightweight block cipher algorithm
 # Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 # KCI	Key Compromise Impersonation
+# KDC	Key Distribution Center (mainly Kerberos)
 # KDF	Key Derivation Function
 # KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 # KEK	Key Encryption Key
+# KEM	Key Encapsulation Mechanisms
 # KMS	Key Management Service
 # KPAK	KMS Public Authentication Key
+# KRB	Key Exchange Kerberos
+# KRB5	Key Exchange Kerberos 5
 # KSAK	KMS Secret Authentication Key
 # KSK	Key Signing Key (DNSSEC)
 # KU	Key Usage
@@ -7874,6 +7898,7 @@ Generated with:
 # LEA	? algorithm
 # LEA-128	see LEA
 # LEA-256	see LEA
+# LED	lightweight block cipher algorithm
 # LEXv2	stream cipher algorithm
 # LFSR	Linear Feedback Shift Register
 # LION	block cipher combining stream cipher and hash function
@@ -7882,10 +7907,11 @@ Generated with:
 # Logjam	Attack to force server to downgrade to export ciphers
 # LRA	Local Registration Authority
 # LSN	large-scale NAT (same as CGN)
-# LRW	Liskov, Rivest, and Wagner (blok encryption)
+# LRW	Liskov, Rivest, and Wagner (block encryption)
 # Lucifer	block cipher (developed at IBM in the 1970s)
 # Lucky 13	Break SSL/TLS Protocol
 # Lucky Thirteen	see Lucky 13
+# MANTIS	block cipher, low-latency variant of SKINNY
 # MARS	128-bit block cipher (developed at IBM)
 # MAC	Message Authentication Code
 # MCF	Modular Crypt Format
@@ -7899,13 +7925,18 @@ Generated with:
 # MEK	Message Encryption Key
 # MECAI	Mutually Endorsing CA Infrastrukture
 # MGF	Mask Generation Function
+# MIDORI	lightweight block cipher algorithm (64 or 128 bit) (2015)
+# Midori64	see MIDORI
+# Midori128	see MIDORI
 # MISTY1	block cipher algorithm
+# MPQS	Multiple Polynomial Quadratic Sieve
 # MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 # MS-SSTP	see SSTP
 # MtE	MAC-then-encrypt (see also AtE)
 # NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 # NCP	Normalized Certification Policy (according TS 102 042)
-# Neokeon	symmetric block cipher algorithm
+# NOEKEON	symmetric block cipher algorithm
+# Neokeon	see NOEKEON (probaly typo)
 # NewHope	post-quantum key exchange
 # nistp192	alias for P-192
 # nistp224	alias for P-224
@@ -7919,6 +7950,7 @@ Generated with:
 # NTG	none-Deterministic Random Generator
 # NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
 # NTRU	asymetric cipher algorithm using lattice reduction
+# NTRUEncrypt	alias for NTRU
 # NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
 # NULL	no encryption
 # NUMS	nothing up my sleeve numbers
@@ -7965,6 +7997,7 @@ Generated with:
 # PFX	see PKCS#12 (Personal Information Exchange)
 # PGP	Pretty Good Privacy
 # PII	Personally Identifiable Information
+# Picollo	lightweight block cipher algorithm
 # PKCS	Public Key Cryptography Standards
 # PKCS1	PKCS #1: RSA Encryption Standard
 # PKCS3	PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol
@@ -7987,8 +8020,10 @@ Generated with:
 # POP	Proof of Possession
 # POODLE	Padding Oracle On Downgraded Legacy Encryption
 # PQC	Post-Quantum Crypto
+# PRESENT	block cipher algorithm (80 or 128 bit) (2007)
 # PRF	Pseudo-Random Function
 # PRP	Pseudo-Random Permutation
+# PRINCE	low-latency block cipher algorithm (64 bit) (2012)
 # prime192v1	alias for P-192
 # prime224v1	alias for P-224
 # prime256v1	alias for P-256
@@ -8005,6 +8040,7 @@ Generated with:
 # Rabbit	stream cipher algorithm
 # RADIUS	Remote Authentication Dial-In User Service
 # Radix-64	alias for Base-64
+# RAINBOW	post-quantum signature (broken 2/2022)
 # RBG	Random Bit Generator
 # RC2	Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)
 # RC4	Rivest Cipher 4, stream cipher (aka Ron's Code)
@@ -8015,8 +8051,10 @@ Generated with:
 # RFC	Request for Comments
 # Rijndael	symmetric block cipher algorithm (AES)
 # RIPEMD	RACE Integrity Primitives Evaluation Message Digest
+# RIPE-MD	alias for RIPEMD
 # RLWE	Ring Learning-with-Errors
 # RMAC	Randomized MAC (block cipher authentication mode)
+# RMD	
 # RNG	Random Number Generator
 # ROCA	Return of the Coppersmith Attack
 # ROT-13	see XOR
@@ -8032,7 +8070,7 @@ Generated with:
 # SAD	Security Association Database
 # SAE	Simultaneous Authentication of Equals
 # SAFER	Secure And Fast Encryption Routine, block cipher
-# Salsa20	stream cipher (by D. Bernstein, 2005)
+# Salsa20	stream cipher (by D. Bernstein, 2005), see ChaCha20
 # Salsa20/8	see scrypt
 # Salsa20/12	see Salsa20
 # Salsa20/20	see Salsa20
@@ -8041,8 +8079,10 @@ Generated with:
 # Sarmal	hash function
 # SAX	Symmetric Authenticated eXchange
 # SBCS	single-byte character set
+# SBPA	Simple Branch Prediction Analysis
 # SCA	Selfsigned CA signature
 # SCEP	Simple Certificate Enrollment Protocol
+# SCREAM	tweakable word-based stream cipher (2002)
 # scrypt	password based key derivation function (Colin Percival)
 # SCSU	Standard Compression Scheme for Unicode (compressed UTF-16)
 # SCSV	Signaling Cipher Suite Value
@@ -8054,21 +8094,24 @@ Generated with:
 # secp256r1	alias for P-256
 # secp384r1	alias for P-384
 # secp521r1	alias for P-521
-# SEED	128-bit Symmetric block cipher
+# SEAL	Software-Optimized Encryption Algorithm; 32-bit word stream cipher (1994)
+# SEED	128-bit symmetric block cipher (1998)
 # Serpent	symmetric key block cipher (128 bit)
 # SGC	Server-Gated Cryptography
 # SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
+# SIV	Synthetic Initialization Vector
 # SHA	Secure Hash Algorithm
 # SHA-0	Secure Hash Algorithm (insecure version before 1995)
 # SHA-1	Secure Hash Algorithm (since 1995)
 # SHA-2	Secure Hash Algorithm (since 2002)
 # SHA-3	Secure Hash Algorithm (since 2015), see Keccak also
+# SHA-128	Secure Hash Algorithm (128 bit)
 # SHA-224	Secure Hash Algorithm (224 bit)
 # SHA-256	Secure Hash Algorithm (256 bit)
 # SHA-384	Secure Hash Algorithm (384 bit)
 # SHA-512	Secure Hash Algorithm (512 bit)
 # SHA1	alias for SHA-1 (160 bit)
-# SHA2	alias for SHA-2 (224, 256, 384 or 512 bit)
+# SHA2	alias for SHA-2 (128, 224, 256, 384 or 512 bit)
 # SHA3	alias for SHA-3 (224, 256, 384 or 512 bit)
 # SHA3256	alias for SHA3-256
 # SHA3-224	Secure Hash Algorithm (224 bit)
@@ -8081,18 +8124,27 @@ Generated with:
 # SHS	Secure Hash Standard
 # SIA	Subject Information Access (certificate extension)
 # SIC	Segmented Integer Counter (alias for CTR)
-# SIMON	block cipher combining
-# SIMON	block cipher combining (NSA algorithm, questionable security)
+# SIDH	Supersingular Isogeny Diffie-Hellman (key exchange)
+# SIKE	post-quantum hash function, signature (broken 7/2022)
+# SIKEp434	post-quantum hash function, signature (broken 7/2022)
+# SIKEp503	post-quantum hash function, signature (broken 7/2022)
+# SIKEp610	post-quantum hash function, signature (broken 7/2022)
+# SIKEp751	post-quantum hash function, signature (broken 7/2022)
+# SIMON	lightweight block cipher (NSA algorithm, questionable security)
+# SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
 # Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 # Skein-256-256	see Skein (256 bits)
 # Skein-512-256	see Skein (256 bits)
 # Skein-512-512	see Skein (512 bits)
 # Skein-1024-1024	see Skein (1024 bits)
 # SKID	Subject Key ID (certificate extension)
+# SKINNY	SPN tweakable block cipher
+# SKINNY-128-256	see SLINNY
 # SKIP	Message Skipping Attacks on TLS
 # SKIP-TLS	see SKIP
 # Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 # SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
+# SM3	block cipher algorithm?
 # SM4	block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
 # SMS4	see SM4
 # SMACK	State Machine AttaCKs
@@ -8104,7 +8156,7 @@ Generated with:
 # Snuffle 2008	see ChaCha
 # Sosemanuk	stream cipher algorithm
 # SPARX	? algorithm
-# Speck	block cipher algorithm (NSA algorithm, questionable security)
+# SPECK	lightweight block cipher algorithm (NSA algorithm, questionable security)
 # Speck64	see Speck
 # Speck128	see Speck
 # Speck256	see Speck
@@ -8112,8 +8164,10 @@ Generated with:
 # SPD	Security Policy Database
 # SPDY	Google's application-layer protocol on top of SSL
 # SPECK	block cipher combining
-# SPHINCS	post-quantum hash function
+# SPHINCS	Stateless hash-based signatures, post-quantum hash function, signature
 # SPHINCS-256	alias for SPHINCS
+# SPHINCS-SHAKE256	alias for SPHINCS
+# SPHINCS-SHA-256	alias for SPHINCS
 # SPI	Security Parameters Index
 # SPKI	Subject Public Key Infrastructure
 # SPN	Substitution-Permutation Network
@@ -8149,6 +8203,8 @@ Generated with:
 # TEA	Tiny Encryption Algorithm
 # TEK	Traffic Encryption Key
 # TET	?
+# TGS	Ticket Granting Service (mainly Kerberos)
+# TGT	Ticket Granting Ticket (mainly Kerberos)
 # Tiger	hash function
 # TIME	Timing Info-leak Made Easy (Exploit SSL/TLS)
 # TIME 	A Perfect CRIME? TIME Will Tell
@@ -8172,7 +8228,7 @@ Generated with:
 # UC 	Unified Capabilities
 # UC	Unified Communications (SSL Certificate using SAN)
 # UCC	Unified Communications Certificate (rarley used)
-# UMAC	message authentication code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
+# UMAC	Message Authentication Code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 # URI	Uniform Resource Identifier
 # URL	Uniform Resource Locator
 # VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
@@ -8192,8 +8248,9 @@ Generated with:
 # X3DH	Extended Triple Diffie-Hellman
 # XCBC	eXtended CBC-MAC
 # XCBC-MAC	same as XCBC
-# XChaCha12	stream cipher algorithm
-# XChaCha20	stream cipher algorithm
+# XChaCha	stream cipher algorithm (with 512-bit key)
+# XChaCha12	see ChaCha (aka 12-round XChaCha)
+# XChaCha20	see ChaCha (aka 20-round XChaCha)
 # XEX	XOR Encrypt XOR
 # XKMS	XML Key Management Specification
 # XMACC	counter-based XOR-MAC
@@ -8210,13 +8267,15 @@ Generated with:
 # ZRTP	SRTP for VoIP
 # ZSK	Zone Signing Key (DNSSEC)
 # 
-## end abbr
+#
+# end abbr
+
 # begin rfc
 
 # =head1 rfc
 
 
-# # SID	@(#) rfc.txt 1.13 19/03/28 22:31:50
+# # SID	@(#) rfc.txt 1.15 22/10/06 12:11:57
 # 
 # # number| title / description
 # #------+----------------------------------------------------------------------+
@@ -8241,6 +8300,10 @@ Generated with:
 # 7233	HTTP/1.1: Range Requests
 # 7234	HTTP/1.1: Caching
 # 7235	HTTP/1.1: Authentication
+# 2144	CAST-128 Encryption Algorithms
+# 2612	CAST-256 Encryption Algorithms
+# 2950	Telnet Encryption: CAST-128 64 bit Cipher Feedback
+# 2984	Use of the CAST-128 Encryption Algorithm in CMS
 # 3490	Internationalizing Domain Names in Applications (IDNA)
 # 3987	Internationalized Resource Identifiers (IRIs)
 # 4518	Internationalized String Preparation in LDAP
@@ -8248,6 +8311,7 @@ Generated with:
 # 2104	HMAC: Keyed-Hashing for Message Authentication
 # 2405	The ESP DES-CBC Cipher Algorithm With Explicit IV
 # 2406	IP Encapsulating Security Payload (ESP)
+# 4303	IP Encapsulating Security Payload (ESP)
 # 2407	The Internet IP Security Domain of Interpretation for ISAKMP
 # 2408	Internet Security Association and Key Management Protocol (ISAKMP)
 # 2409	The Internet Key Exchange (IKE) - 1998
@@ -8272,6 +8336,7 @@ Generated with:
 # 6091	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2011
 # 3711	The Secure Real-time Transport Protocol (SRTP)
 # 6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
+# 4106	Use of Galois/Counter Mode (GCM) in IPsec Encapsulating Security Payload (ESP)
 # 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
 # 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
 # 3749	TLS Compression Method (obsolete)
@@ -8314,6 +8379,8 @@ Generated with:
 # 4418	UMAC: Message Authentication Code using Universal Hashing
 # 4490	Using the GOST 28147-89, GOST R 34.11-94, GOST R 34.10-94, and GOST R 34.10-2001 Algorithms with Cryptographic Message Syntax (CMS)
 # 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
+# 4634	US Secure Hash Algorithms (SHA, SHA-based HMAC and HKDF)
+# 5869	HMAC-based Extract-and-Expand Key Derivation Function
 # 5830	GOST 28147-89: Encryption, Decryption, and Message Authentication Code (MAC) Algorithms
 # 5831	GOST R 34.11-94: Hash Function Algorithm
 # 5832	GOST R 34.10-2001: Digital Signature Algorithm
@@ -8340,10 +8407,14 @@ Generated with:
 # 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 # 7748	Elliptic Curve for Security
 # 8422	Elliptic Curve Cryptography (ECC) Cipher Suites for TLS Versions 1.2 and Earlier
+# 5297	Synthetic Initialization Vector (SIV) Authenticated Encryption Using the Advanced Encryption Standard (AES)
+# 8452	AES-GCM-SIV: Nonce Misuse-Resistant Authenticated Encryption 
 # 5528	Camellia Counter Mode and Camellia Counter with CBC-MAC Mode Algorithms
 # 5741	RFC Streams, Headers, and Boilerplates
 # 5794	Description of the ARIA Encryption Algorithm
 # 5932	Camellia Cipher Suites for TLS
+# 6151	Updated Security for MD5 and HMAC-MD5
+# 6234	US Secure Hash Algorithms (SHA, SHA-based HMAC and HKDF)
 # 6209	Addition of the ARIA Cipher Suites to TLS
 # 6367	Addition of the Camellia Cipher Suites to TLS
 # 6655	AES-CCM Cipher Suites for TLS
@@ -8363,8 +8434,9 @@ Generated with:
 # 7525	Recommendations for Secure Use of TLS and DTLS
 # 7539	ChaCha20 and Poly1305 for IETF Protocols (obsolete)
 # 8439	ChaCha20 and Poly1305 for IETF Protocols
-# 7627	TLS Session Hash and Extended Master Secret Extension
 # 7905	ChaCha20-Poly1305 Cipher Suites for TLS
+# 7627	TLS Session Hash and Extended Master Secret Extension
+# 7693	The BLAKE2 Cryptographic Hash and Message Authentication Code
 # 7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
 # 1135	The Helminthiasis of the Internet
 # 6698	DNS-Based Authentication of Named Entities (DANE)
@@ -8380,8 +8452,10 @@ Generated with:
 # 8467	Padding for DoH und DoT
 # 1918	Address Allocation for Private Internets
 # 6598	IANA-Reserved IPv4 Prefix for Shared Address Space
+# 9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
 # 
-## end rfc
+#
+# end rfc
 
 # begin voodoo
 
@@ -8389,7 +8463,7 @@ Generated with:
 # it  is  not detected as source,  not as comment,  and  not as documentation
 # by most tools analyzing the source code.
 # O-Saft's public user documentation is plain text stored in  separate files.
-# The files are  usually also not counted as source.
+# These files are usually also not counted as source.
 # Unfortunately, some people solely believe in statistics generated by  magic
 # tools. They use such statistics to measure for example code quality without
 # looking themself at the code.
@@ -8405,4 +8479,3 @@ Generated with:
 # generated statistics!
 
 # end voodoo
-
