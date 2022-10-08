@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  2.2 22/06/15 14:52:24
+#?       @(#)  2.3 22/10/08 22:48:58
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -57,6 +57,7 @@ fi
 
 _o_saft="
 	osaft.pm
+	OSaft/Text.pm
 	OSaft/error_handler.pm
 	OSaft/Doc/Data.pm
 	Net/SSLhello.pm
@@ -65,6 +66,7 @@ _o_saft="
 	o-saft-usr.pm
 	o-saft-man.pm
 	OSaft/Ciphers.pm
+	OSaft/Data.pm
 "
 o_saft=""
 for f in $_o_saft ; do
@@ -142,35 +144,42 @@ fi
   \echo 'our $osaft_standalone = 1;'
   \echo ''
 
-  # 4.
-  # osaft.pm and OSaft/Ciphers.pm without brackets and no package
-  f=osaft.pm ; [ -f $f ] || f=../$f
-  \echo "# { # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
-  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))
-                    and not m(package osaft;)
-                    and not m(our .VERSION);
-                 ' $f \
-     | sed -e 's/our %ciphers /my %ciphers /'
-  \echo "# } # $f"
-  \echo ""
-#\echo "use Net::SSLhello;"
-#\echo "use Net::SSLinfo;"
-#\echo ""
-
-  f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
-  \echo "{ # $f"
-  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))
-                    and not m(package OSaft::Ciphers;);
-                 ' $f
-  \echo "} # $f"
-  \echo ""
-
   \echo ""
   \echo "use Encode;"
   \echo "use IO::Socket::SSL;"
   \echo "use Net::DNS;"
   \echo "use Time::Local;"
+  \echo ""
+
+  # 4.
+  # our modules without brackets
+
+  f=osaft.pm ; [ -f $f ] || f=../$f
+  \echo "# { # $f"
+  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE })) and not m(package osaft;)' $f
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))
+                    and not m(our .VERSION);
+                 ' $f \
+     | sed -e 's/our %ciphers /my %ciphers /'
+  \echo "# } # $f"
+  \echo ""
+
+  f=OSaft/Text.pm ; [ -f $f ] || f=../$f
+  \echo "{ # $f"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
+  \echo "} # $f"
+  \echo ""
+
+  f=OSaft/Ciphers.pm ; [ -f $f ] || f=../$f
+  \echo "{ # $f"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
+  \echo "} # $f"
+  \echo ""
+
+  f=OSaft/Data.pm ; [ -f $f ] || f=../$f
+  \echo "{ # $f"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
+  \echo "} # $f"
   \echo ""
 
   # ...
@@ -181,20 +190,13 @@ fi
   \echo "} # $f"
   \echo ""
 
-  # TODO: o-saft-usr.pm  works, but not yet perfect
+  ## TODO: o-saft-usr.pm  works, but not yet perfect
   f=o-saft-usr.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
   $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   #$try \cat $f
   \echo "} # $f"
   \echo ""
-
-  ## TODO: o-saft-dbx.pm  still with errors
-  #f=o-saft-dbx.pm
-  #\echo "{ # $f"
-  #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
-  #\echo "} # $f"
-  #\echo ""
 
   ## TODO: o-saft-man  fails to include properly
   f=o-saft-man.pm ; [ -f $f ] || f=../$f
@@ -204,12 +206,21 @@ fi
   \echo "} # $f"
   \echo ""
 
+  ## TODO: o-saft-dbx.pm  still with errors
+  f=o-saft-dbx.pm
+  \echo "{ # $f"
+  $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
+  \echo "} # $f"
+  \echo ""
+
   f=OSaft/error_handler.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
   #$try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   $try \cat $f
   \echo "} # $f"
   \echo ""
+
+  \echo "package main;"
 
   f=Net/SSLinfo.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
@@ -227,10 +238,10 @@ fi
   $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f \
      | \egrep -v  '^use (osaft|OSaft::error_handler)'
   \echo "} # $f"
+  \echo "package main;"
   \echo ""
 
   # 5.
-  \echo "package main;"
   $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
      | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
@@ -241,6 +252,8 @@ fi
   #$try \perl -ne 'print if (m(^__DATA__)..m(__END__))' $f
   \echo ""
 
+  \echo "package main;"
+
 
 # 7.
 # to avoid duplicate definitions, "our @EXPORT" is replace by "my @EXPORT"
@@ -250,9 +263,14 @@ fi
   | $try \perl -pe '/^=head1 (NAME|Annotation)/ && do{print "=head1 "."_"x77 ."\n\n";};' \
   | $try \sed  -e  's/#\s*OSAFT_STANDALONE\s*//' \
                -e  's/^use strict;//'    \
+               -e  's/$STR/$OSaft::Text::STR/'   \
+               -e  '/^use osaft/d'       \
+               -e  's/^use OSaft::.*/#-# &/' \
                -e  's/^\s*our\(\s*@EXPORT\s*=\)/my \1/g'  \
+               -e  '/^    sub .*{}\s*$/s/^ /#/'  \
 > $dst
 
+#               -e  's/^\(use OSaft::Text\)/# &/' \
 #              -e  's/our %cipher/our %::cipher/g' 
 
 # 8.
