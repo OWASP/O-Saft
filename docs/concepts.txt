@@ -1,19 +1,17 @@
 
 ###############################################################################
 ##                                                                           ##
-##  This file/text is still a draft (Januar 2017).                           ##
+##  This file/text is still a draft (Januar 2022).                           ##
 ##  It describes the main concepts used for programming O-Saft               ##
 ##                                                                           ##
 ###############################################################################
 
+Zeilen, die mit # beginnen, sind in OSaft/Doc/help.txt schon eingetragen
+
 
 === Concepts ===
 
-The purpose of this tool is to do the work, not to tell the user what to do
-to get the tool working!
-
-The purpose of ''O-Saft'' is to do the work, not to force the user to learn
-a new tool or to install "newer" software first.
+See OSaft/Doc/help.txt .
 
 It follows the perl principle "Perl is a language for getting your job done."
 
@@ -23,10 +21,10 @@ command line options and arguments).
 
 The design of O-Saft's commands and options is very much influenced by
 linguistic principles. For examples, most options can be abrevated in
-various ways. Also, common things should be short and easy to remember, aka
-"concise and natural for humans".
-In the documentation important information should come first, details
-will follow.
+various ways. Also, common things should be short and easy to remember,
+aka "concise and natural for humans".
+In the documentation important information should come first, details will
+follow.
   include Huffman coding (common constructions should be short), good
   end-weighting (the important information should come first), and a
   large collection of language primitives.
@@ -35,12 +33,9 @@ It's often a matter of opinion and taste how something should be done,
 for example command line arguments. So we try to allow all options and
 arguments a user might be used to (i.e. from other tools).
 
-It'also often a matter of opinion and taste how results should be presented.
+It's also often a matter of opinion and taste how results should be presented.
 O-Saft strictly follows the rule: one check result in one line of output.
 It should be very easy to postprocess output. Think the UNIX pipe model.
-
-Results (checks) are marked "yes" or "no". 
-It leaves the interpretation, if the result is "good" or "bad", to the user.
 
 This tool should run on older systems too.
 Background:
@@ -60,7 +55,7 @@ just to keep you -the user- informed, that not everything is possible.
   options. This means that unknown options are silently ignored, a misspelled
   option is unknown. If unknown option are used with parameters, like
   -legacy=compact  then the parameter (compact here) is treated as hostname.
-  (may change in future)
+  (may change in future).
 
 --> HACKER's INFO
   Because of our goal to support running on old systems too (see  CONCEPTS),
@@ -92,10 +87,14 @@ This is a tool to check security accurate, not to give a "good feeling".
 
 == Programming: Cipher ==
 
-There are to modes (technically spoken) to detect the ciphers supported
-by the server:
-  +cipher     - using perl's IO::Socket:SSL module (mainly based on openssl)
-  +cipherall  - private implementation without using other perl modules
+There are three modes (technically spoken) to detect the ciphers supported by
+the server:
+  +cipher --ciphermode=intern
+            - private implementation without using other perl modules
+  +cipher --ciphermode=ssleay
+            - using perl's IO::Socket:SSL module (mainly based on openssl)
+  +cipher --ciphermode=openssl
+            - using external openssl
 
 
 == Programming: +cipher ==
@@ -112,16 +111,10 @@ laying libssl), which has proper fallbacks to older protocols (like
 TLSv1 or even SSLv3).
 
 
-== Programming: +cipherall ==
-
-In this mode, all checks to get the server's cipher is done using core
-perl without additional modules.
-
-
 == Programming: +info ==
 
-All other commands, beside +cipher and +cipherall, use Net::SSLeay to
-connect to the server. However, Net::SSLeay uses IO::Socket:SSL underneath.
+All other commands, beside +cipher use Net::SSLeay to connect to the
+server. However, Net::SSLeay uses IO::Socket:SSL underneath.
 In this case, the connection must succeed. We encounter the same
 problems as described for +cipher, in particular the server expects
 modern protocols (TLS instead of SSL) and SNI.
@@ -131,31 +124,16 @@ the next method is used, until the connection is established or failed
 at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
 
 
-
 === Results ===
-The purpose of this tool is to do the work, not to tell the user what to do!
 
 Results (checks) are marked "yes" or "no". 
 It leaves the interpretation, if the result is "good" or "bad", to the user.
 
-However, for the reults of the checks, it is not always possible to rate
-the result as "good" or "bad" or "insecure" or whatever. Hence O-Saft can
-not give "the best" recomendation, or a "proper" recomendation. In practice
-it depends on the context what a recomendation, or countermesure should be.
-Hence, most results are marked "yes" if considered good, and "no" if 
-considered "questionable" or "not good" (i.e. according other checks).
-
 
 == Results: Status Code ==
-Wha does O-Saft not support a  --fail  option?
+Why does O-Saft not support a  --fail  option?
 
 Long answer: 
-
-As said before, the functionality is implemented now, 'cause I see the practical
-use-case. However, it's experimental for now (means option and functionality may
-change slightly in near furure), please check when new versions are used.
-
-Clone from github, and everything should work as requested.
 
 Background: one of O-Saft's concepts is to "show important information" and to
 inform about the performed checks based on these informations. The check results
@@ -176,9 +154,9 @@ difficult.
 Now, I see the practical use in a pipe or process chain, which simplifies the
 handling of the results, sometimes. 
 So, the requirement makes sense, but throws a couple of questions to be
-answered. The requirement, as descibed in this issue, is to return a status code
-other than 0, if any check reports "no". Could be done (is done 11oct2016:), but
-is not the complete truth.
+answered. The requirement, as described in this issue, is to return a status
+code other than 0, if any check reports "no". Could be done (is done 11oct2016:),
+but is not the complete truth.
 What about the other checks
   * like the sizes?
   * the DNS checks?
@@ -190,10 +168,10 @@ What about the other checks
 
 These are the same questions as for scoring the results (like other tools do).
 It's a matter of personal opinion and/or the attributes of the tested
-enviroinment, if "something" should be considered "good" or "bad".
+environment, if "something" should be considered "good" or "bad".
 However, if a user is aware of such problems, she can configure O-Saft to do
 only the relevant checks. Other tools cannot do this, and hence score
-everything, wether important, usefull, practical, ... or not.
+everything, wether important, useful, practical, ... or not.
 Please see next comment for a practical example.
 
 How to deal with these questions?
@@ -212,7 +190,8 @@ code.
 With this concepts, it's up to the user to configure O-Saft to return a proper
 exit code. This should not be difficult for experianced users with special
 requirements ;-)
-For now, --exitcode just counting the "no" checks is the starting points.
+For now, the option --exitcode does the trick, there are also some more
+options  --exitcode-*  for fine tuning. Please see  `o-saft.pl --help`.
 
 Here we go, this desciption is subject for discussion. Please provide you
 opinions.
