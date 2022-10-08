@@ -1,4 +1,75 @@
 
+Version: 22.06.22
+  BUGFIX
+    * o-saft-man.pm: BF: check if no parameter given corrected
+    * osaft.pm: BF: avoid "Use of uninitialized value $cipher" in get_cipher_owasp()
+    * osaft.pm: BF: syntax (, instead of .) in cipheranges corrected
+    * o-saft.pl: BF: avoid "Use of uninitialized value $cipher" in _sort_cipher_results()
+    * o-saft.pl: BF: avoid "Use of uninitialized value $key" in checkciphers()
+    * o-saft.pl: BF: match for valid --cipher-pattern corrected
+    * o-saft.pl: BF: my -> our for simplified variables
+    * o-saft.pl: BF: printversion() improved (avoid "Use uninitialized value")
+    * o-saft.tcl: BF: add and delete of entry widgets for target names corrected
+    * OSaft/Ciphers.pm: BF: missing cipher suite names DHE-PSK-AES18-CBC-SHA and DHE-PSK-AES256-CBC-SHA added
+    * OSaft/Ciphers.pm: BF: missing ciphers in sequence of sort_cipher_names() added
+    * contrib/INSTALL-template.sh: BF: "check for openssl executable used by O-Saft" improved
+  CHANGES
+    * o-saft.pl: EF: use _eval_cipherranges() instead of eval() directly
+    * o-saft.pl: EF: more compatibility options from testssl.sh added
+    * o-saft.pl: EF: _get_ciphers_range --> osaft::get_ciphers_range
+    * o-saft.pl: EF: verbosity for cipher_selected with +cipher improved
+    * o-saft.pl: EF: printing header line for all +cipher checks improved
+    * o-saft.pl, *.pm: EF: @INC improved
+    * o-saft.pl, *pm: EF: use OSaft::Text
+    * o-saft-man.pm: EF: honor --v from caller
+    * o-saft-man.pm: EF: JavaScript in man_ciphers() improved
+    * o-saft-man.pm: EF: o-saft.cgi.html improved
+    * o-saft-man.pm: ED: man_warnings() improved
+    * contrib/INSTALL-template.sh: EF: check for O-Saft programs improved
+    * contrib/o-saft_bench.sh: ED: pretty printed results
+    * o-saft.tcl: EF: improved for AndroidWish
+    * o-saft.tcl: EF: detect header line for SSL/TLS protocol od ciphers
+    * o-saft.pl: EF: print header line for all +cipher checks (to map cipher suite names properly to pprotocols)
+    * o-saft.pl: EF: redisign OSaft/Ciphers.pm: branch moved to trunk
+    * osaft.pm: EF: get_ciphers_range() (moved from o-saft.pl)
+    * osaft.pm: EF: redisign OSaft/Ciphers.pm: branch 1.270.1.4 moved to trunk
+    * OSaft/Ciphers.pm: BF: all ciphers with 3DES are 112 bits only
+    * OSaft/Ciphers.pm: BF: RMD replaced by RIPEMD for cipher MACs
+    * OSaft/Ciphers.pm: EF: sort_cipher_results() moved from o-saft.pl
+    * OSaft/Ciphers.pm: EF: set_sec() implemented
+    * OSaft/Ciphers.pm: EF: redisign OSaft/Ciphers.pm: branch moved to trunk
+    * OSaft/Doc/glossary.txt: EF: formal changes, some typos fixed; new XChaCha*, AESCCM*
+    * OSaft/Doc/help.txt: ED: only historic references to +cipherall  and  +cipherraw
+    * OSaft/Doc/help.txt: ED: documentation of --test-ciphers-* options improved
+    * OSaft/Doc/rfc.txt: 
+    * o-saft-dbx.pm: ED: documentation for --test-ciphers-* options improved
+    * o-saft-dbx.pm: EF: unused methods removed; some methods moved to Ciphers.pm
+    * contrib/INSTALL-template.sh: ED: text about generation improved
+    * Makefile*: ET: generated target names improved; more targets for --test-*
+    * Makefile: EF: README replaced by README.md
+    * Makefile: ED: text about generation improved
+    * Makefile: EF: _CIPHER and related sources removed
+    * Makefile.dev: ET: some summary target added
+    * Makefile.dev: ET: --test-regex moved from osaft.pm to o-saft.pl
+    * Makefile.dev: ET: adapted to new --test-ciphers* options in various tools
+    * Makefile.dev: ET: adapted to changes in Ciphers.dev; more tests for Ciphers.pm
+    * Makefile.dev: ET: *osaft-cipher --> *.osaft-ciphers
+    * Makefile.opt: ET: target testarg-opt-alias--test-ciphers-list added
+    * Makefile.misc: ET: redesign OSaft/Ciphers.pm: target keys.* and values.* are no longer needed; removed
+    * Makefile.misc: ET: target cloc.stat.log added
+    * Makefile.cipher: ET: targets added for: +test-ciphers-list --range=*
+    * Makefile.cipher: ET: more --range= checks added
+    * Makefile.warnings: ET: target warning-009 removed
+    * Makefile.warnings: ET: warning-521, warning-522, warning-504, warning-505, warning-862 added
+  NEW
+    * o-saft-man.pm: EF: man_ciphers() implemented; options --help=gen-cipher-text --help=gen-cipher-html
+    * Makefile: EF: o-saft-docker added to INSTALL.sh
+    * o-saft.tcl: EF: "Open window with list of cipher suites" implemeted
+    * o-saft.tcl: EF: --tkpod added
+    * o-saft.tcl: EF: menu/window for configuration settings added
+    * o-saft.tcl: EF: tool layout optimized for use on tablet; --gui-layout=tables is default now
+    * o-saft-docker: EF: option +VERSION added for compatibility with other tools
+
 Version: 22.02.22
   BUGFIX
     * Net/SSLhello.pm: BF: avoid "Use of uninitialized value $ENV{"PWD"} in ..."
