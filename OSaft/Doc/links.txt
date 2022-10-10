@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.7 19/03/04 01:45:07
+# SID	@(#) links.txt 1.8 22/10/10 20:00:20
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -67,7 +67,9 @@ Elliptic Curve      	http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pd
 Elliptic Curve       	https://datatracker.ietf.org/doc/draft-harkins-ikev3/
 XMSS	https://eprint.iacr.org/2011/484.pdf
 
+Attacks	https://tls-scanner.cs.uni-paderborn.de/wiki
 3SHAKE	https://mitls.org/pages/attacks/3SHAKE
+ALPACA	?
 Bar Mitzvah	https://www.blackhat.com/docs/asia-15/materials/asia-15-Mantin-Bar-Mitzvah-Attack-Breaking-SSL-With-13-Year-Old-RC4-Weakness-wp.pdf
 BEAST	https://vnhacker.blogspot.com/2011/09/beast.html https://nerdoholic.org/uploads/dergln/beast_part2/ssl_jun21.pdf
 BREACH	http://www.breachattack.com/
@@ -77,14 +79,16 @@ DROWN	https://drownattack.com/
 EFAIL	https://efail.de/ https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-poddebniak.pdf
 FREAK	https://freakattack.com/
 FREAK	https://mitls.org/pages/attacks/SMACK#freak
-Lucky 13	?
+Lucky 13	http://www.isg.rhul.ac.uk/tls/Lucky13.html
 Lucky 13 Microseconds	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.738.4741&rep=rep1&type=pdf
 Lucky 13 Strickes Back	http://v.wpi.edu/wp-content/uploads/Papers/Publications/asiaccs2015_lucky.pdf
 LogJam	https://weakdh.org/
 NOMORE	https://www.rc4nomore.com/
 POODLE	https://www.openssl.org/~bodo/ssl-poodle.pdf  https://www.imperialviolet.org/2014/10/14/poodle.html  https://www.imperialviolet.org/2014/12/08/poodleagain.html
+RACCOON	?
 ROCA	https://crocs.fi.muni.cz/public/papers/rsa_ccs17
 ROBOT	https://robotattack.org/
+SHAttered	https://shattered.io
 SLOTH	https://www.mitls.org/pages/attacks/SLOTH
 SKIP	https://mitls.org/pages/attacks/SMACK
 SMACK	https://mitls.org/pages/attacks/SMACK  https://www.smacktls.com/
