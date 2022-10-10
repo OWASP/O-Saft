@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.28 22/10/06 12:10:07
+# SID	@(#) glossary.txt 1.29 22/10/10 21:19:33
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -31,6 +31,7 @@ AIA	Authority Information Access (certificate extension)
 AKC	Agreement with Key Confirmation
 AKID	Authority Key IDentifier
 ALPN	Application Layer Protocol Negotiation
+ALPACA	Application Layer and Content Confusion Attack	(Exploit SSL/TLS)
 AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
@@ -52,7 +53,7 @@ BADA55-VR-384	curve using the same prime as NIST P-384
 Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
 BDH	Bilinear Diffie-Hellman
 BEAR	block cipher combining stream cipher and hash function
-BEAST	Browser Exploit Against SSL/TLS
+BEAST	Browser Exploit Against SSL/TLS	(Exploit SSL/TLS)
 BEAST .	fast block cipher for arbitrary blocksizes
 BER	Basic Encoding Rules
 BGP	Boorder Gateway Protocol
@@ -73,7 +74,7 @@ Blowfish	symmetric block cipher
 boomerang attack	attack on BLAKE
 BPA	Branch Prediction Analysis
 Brainpool	signature algorithm, from BSI
-BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)
+BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext; a variant of CRIME	(Exploit SSL/TLS)
 Bullrun	NSA program to break encrypted communication
 CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
 CAST	Carlisle Adams and Stafford Tavares, block cipher
@@ -133,7 +134,7 @@ CRC16	CRC with polynomial length 16
 CRC32	CRC with polynomial length 32
 CRC64	CRC with polynomial length 64
 CRAM	Challenge Response Authentication Mechanism
-CRIME	Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)
+CRIME	Compression Ratio Info-leak Made Easy	(Exploit SSL/TLS)
 CRL	Certificate Revocation List
 CRYPTON	128 bit block cipher (1998)
 CRYPTREC	Cryptography Research and Evaluation Committees
@@ -186,7 +187,7 @@ DPA	Dynamic Passcode Authentication (see CAP)
 DRAGON	stream cipher algorithm
 DRG	Deterministic Random Generator
 DRBG	Deterministic Random Bit Generator
-DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
+DROWN	Decrypting RSA with Obsolete and Weakened eNcryption	(Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
 DSCP	Differentiated Services Code Point
 DSPR	?
@@ -269,7 +270,7 @@ FIPS180-3	FIPS Secure Hash Standard
 FIPS186-3	FIPS Digital Signature Standard (DSS)
 FIPS197	FIPS Advanced Encryption Standard (AES)
 FIPS198-1	FIPS The Keyed-Hash Message Authentication Code (HMAC)
-FREAK	Factoring Attack on RSA-EXPORT Keys
+FREAK	Factoring Attack on RSA-EXPORT Keys	(Exploit SSL/TLS)
 FQDN	Fully-qualified Domain Name
 FSB	Fast Syndrome Based Hash
 FSM	Finite State Machine
@@ -379,12 +380,14 @@ LFSR	Linear Feedback Shift Register
 LION	block cipher combining stream cipher and hash function
 LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
 LM hash	LAN Manager hash aka LanMan hash
-Logjam	Attack to force server to downgrade to export ciphers
+LogJam	Attack to force server to downgrade to export ciphers	(Exploit SSL/TLS)
+Logjam	see LogJam
 LRA	Local Registration Authority
-LSN	large-scale NAT (same as CGN)
 LRW	Liskov, Rivest, and Wagner (block encryption)
+LSN	large-scale NAT (same as CGN)
 Lucifer	block cipher (developed at IBM in the 1970s)
-Lucky 13	Break SSL/TLS Protocol
+Lucky13	Break SSL/TLS Protocol with ciphers using CBC-mode	(Exploit SSL/TLS)
+Lucky 13	Break SSL/TLS Protocol	(Exploit SSL/TLS)
 Lucky Thirteen	see Lucky 13
 MANTIS	block cipher, low-latency variant of SKINNY
 MARS	128-bit block cipher (developed at IBM)
@@ -493,7 +496,7 @@ PMS	Pre-Master Secret
 Poly1305	Authenticator (MAC)
 Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
-POODLE	Padding Oracle On Downgraded Legacy Encryption
+POODLE	Padding Oracle On Downgraded Legacy Encryption	(Exploit SSL/TLS)
 PQC	Post-Quantum Crypto
 PRESENT	block cipher algorithm (80 or 128 bit) (2007)
 PRF	Pseudo-Random Function
@@ -513,6 +516,7 @@ PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
 QUIC	Quick UDP Internet Connection
 RA	Registration Authority (aka Registration CA)
 Rabbit	stream cipher algorithm
+RACCOON	Timing vulnerability in TLS' DH key exchange	(Exploit SSL/TLS)
 RADIUS	Remote Authentication Dial-In User Service
 Radix-64	alias for Base-64
 RAINBOW	post-quantum signature (broken 2/2022)
@@ -531,9 +535,9 @@ RLWE	Ring Learning-with-Errors
 RMAC	Randomized MAC (block cipher authentication mode)
 RMD	
 RNG	Random Number Generator
-ROCA	Return of the Coppersmith Attack
+ROCA	Return of the Coppersmith Attack	(Exploit SSL/TLS)
 ROT-13	see XOR
-ROBOT	Return Of Bleichenbacher's Oracle Threat
+ROBOT	Return Of Bleichenbacher's Oracle Threat	(Exploit SSL/TLS)
 RTP	Real-time Transport Protocol
 RSASSA-PSS	RSA Probabilistic Signature Scheme
 RSA	Rivest Sharmir Adelman (public key cryptographic algorithm)
@@ -595,6 +599,7 @@ SHA3-384	Secure Hash Algorithm (384 bit)
 SHA3-512	Secure Hash Algorithm (512 bit)
 SHAKE128	Secure Hash Algorithm (variable bit)
 SHAKE256	Secure Hash Algorithm (variable bit)
+SHAttered	The first concrete collision attack against SHA1	(Exploit SSL/TLS)
 SHAvite-3	hash function (Eli Biham, Orr Dunkelman, 2009)
 SHS	Secure Hash Standard
 SIA	Subject Information Access (certificate extension)
@@ -615,14 +620,14 @@ Skein-1024-1024	see Skein (1024 bits)
 SKID	Subject Key ID (certificate extension)
 SKINNY	SPN tweakable block cipher
 SKINNY-128-256	see SLINNY
-SKIP	Message Skipping Attacks on TLS
+SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
-SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
+SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 SM3	block cipher algorithm?
 SM4	block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
 SMS4	see SM4
-SMACK	State Machine AttaCKs
+SMACK	State Machine AttaCKs	(Exploit SSL/TLS)
 Snefu	hash function
 Snow20	stream cipher algorithm
 SNI	Server Name Indication
@@ -668,7 +673,7 @@ Streebog-512	see Streebog
 STS	Strict Transport Security
 STS 	Station-to-Station protocol
 SUF-CMA	Strong UnForgeability against Chosen-Message Attacks
-Sweet32	Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
+Sweet32	Birthday attacks on 64-bit block ciphers in TLS and OpenVPN	(Exploit SSL/TLS)
 SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
 SWIFFTX	see SWIFFT
 TA	Trust Agent
@@ -681,7 +686,7 @@ TET	?
 TGS	Ticket Granting Service (mainly Kerberos)
 TGT	Ticket Granting Ticket (mainly Kerberos)
 Tiger	hash function
-TIME	Timing Info-leak Made Easy (Exploit SSL/TLS)
+TIME	Timing Info-leak Made Easy	(Exploit SSL/TLS)
 TIME 	A Perfect CRIME? TIME Will Tell
 Threefish	hash function
 TLS	Transport Layer Security
