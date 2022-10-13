@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.14 22/10/06 09:00:21
+#?      @(#) Makefile 2.15 22/10/14 00:14:28
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.14
+_SID            = 2.15
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -207,7 +207,7 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 # generated files for internal use, i.e. $(SRC.tcl)
 # TODO: because make does not allow = in target names, the generated targets
 #       should use - instead
-LIST.opt_data   = +help --help=opts --help=commands --help=glossar --help=alias \
+LIST.opt_data   = --help --help=opts --help=commands --help=glossar --help=alias \
 		  --help=data --help=data --help=checks --help=regex --help=rfc \
 		  --help=ciphers-html --help=ciphers-text
 # --help=warnings  uses a different command to be generated
@@ -287,8 +287,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.14 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.14
+_INST.genbytext = generated data by Makefile 2.15 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.15
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -390,6 +390,7 @@ help.all-v help.all-vv: help.all
 #doc.all-v doc.all-vv: help.all     # TODO: not implemented yet
 
 # same target as testarg-hlp---help-gen-docs in t/Makefile.dev
+# same files are also generated with target doc.data and docs
 static.docs:
 	$(SRC.pl) --header --no-rc --help=gen-docs
 
@@ -527,11 +528,11 @@ pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
 wiki:   $(GEN.wiki)
-docs:   $(GEN.docs) static.docs
+docs:   $(GEN.docs) $(GEN.DOC.data)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.14
-tar:     GREP_EDIT  = 2.14
+GREP_EDIT           = 2.15
+tar:     GREP_EDIT  = 2.15
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -546,8 +547,8 @@ clear.all:  clean.tar clean
 clean.all:  clean.tar clean
 tgz:        tar
 gen.all:    $(ALL.gen)
-doc.data:   $(GEN.DOC.data) $(DOC.dir)/$(SRC.pl).--help=warnings
-docdata:    $(GEN.DOC.data) $(DOC.dir)/$(SRC.pl).--help=warnings
+doc.data:   $(GEN.DOC.data)
+docdata:    $(GEN.DOC.data)
 tcl.data:
 	@echo "**ERROR: ancient target; please use 'doc.data'"
 tcldata:    tcl.data
