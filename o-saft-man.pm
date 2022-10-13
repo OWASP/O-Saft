@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.65 22/10/07 23:43:00";
+my  $SID_man= "@(#) o-saft-man.pm 2.66 22/10/14 00:21:05";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -643,7 +643,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.65'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.66'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1490,8 +1490,9 @@ sub _man_ciphers_html_tb {
 
 sub man_docs_write  {
     #? generate all static help files
-    # this funcction writes to files, not to STDOUT
+    # this function writes to files, not to STDOUT
     # TODO: anything hardcoded here, at least directory should be a parameter
+    # NOTE: $cfg{'files'} should be same as $cfg(docs-help-all) in o-saft.tcl
     _man_dbx("man_docs_write() ...");
     if ($ich eq $cfg{me}) {
         _warn("094:", "'$parent' used as program name in generated files");
@@ -1510,6 +1511,7 @@ sub man_docs_write  {
         print $fh man_alias()           if ($mode =~ /alias$/);
         print $fh man_commands()        if ($mode =~ /commands?$/);
         print $fh man_options()         if ($mode =~ /opts$/);
+        print $fh man_ciphers('text')   if ($mode =~ /ciphers.?text$/);
         print $fh man_help('NAME')      if ($mode =~ /help$/);
         print $fh man_help('CHECKS')    if ($mode =~ /checks$/);
         print $fh man_table('rfc')      if ($mode =~ /rfc$/);
@@ -1819,7 +1821,14 @@ EoHTML
 sub man_ciphers_text{
     #? print ciphers in simple line-based text format
     my $txt = shift;
+    my $keys= "";
     _man_dbx("man_ciphers_text() ..");
+    if (0 < $VERBOSE) {
+        foreach my $key (keys %OSaft::Ciphers::ciphers_desc) {
+            next if "additional_notes" eq $key;
+            $keys .= "#\t$key\t$OSaft::Ciphers::ciphers_desc{$key}\n";
+        }
+    }
     # _man_head() and _man_food() doesn't make sense here
     foreach my $key (keys %OSaft::Ciphers::ciphers_desc) {
         # convert internal keys to human readable text
@@ -1829,7 +1838,7 @@ sub man_ciphers_text{
     my $note= $OSaft::Ciphers::ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
        # see also %ciphers_desc in OSaft::Ciphers.pm;
-    return "$txt$note\n";
+    return "$keys$txt$note\n";
 } # man_ciphers_text
 
 sub man_ciphers     {
@@ -2494,7 +2503,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.65 2022/10/07
+2.66 2022/10/14
 
 =head1 AUTHOR
 
@@ -2590,15 +2599,18 @@ the data for each cipher and looks like for example:
 
   0x00,0x3D     HIGH    AES256-SHA256
     name    AES256-SHA256
-    alias   
-    consts  RSA_WITH_AES_256_SHA256, RSA_WITH_AES_256_CBC_SHA256
+    names   
+    const   RSA_WITH_AES_256_SHA256, RSA_WITH_AES_256_CBC_SHA256
     openssl HIGH
     ssl     TLSv12
     keyx    RSA
     auth    RSA
     enc     AES
     bits    256
+    enc_size 128
     mac     SHA256
+    mac_size
+    PFS     -
     rfcs    https://www.rfc-editor.org/rfc/rfc5246
     notes   L
 
