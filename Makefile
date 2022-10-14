@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.15 22/10/14 00:14:28
+#?      @(#) Makefile 2.16 22/10/14 10:06:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.15
+_SID            = 2.16
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -287,8 +287,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.15 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.15
+_INST.genbytext = generated data by Makefile 2.16 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.16
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -389,12 +389,7 @@ help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
 #doc.all-v doc.all-vv: help.all     # TODO: not implemented yet
 
-# same target as testarg-hlp---help-gen-docs in t/Makefile.dev
-# same files are also generated with target doc.data and docs
-static.docs:
-	$(SRC.pl) --header --no-rc --help=gen-docs
-
-.PHONY: help help.all doc doc.all static.docs
+.PHONY: help help.all doc doc.all
 
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
@@ -493,7 +488,7 @@ HELP-pod        = generate POD format help '$(GEN.pod)'
 HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
-HELP-docs       = generate '$(GEN.docs)'
+HELP-docs       = generate '$(GEN.docs)'; see also target doc.data
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-doc.data   = generate '$(GEN.DOC.data)' for $(SRC.tcl)
@@ -528,11 +523,11 @@ pod:    $(GEN.pod)
 html:   $(GEN.html)
 text:   $(GEN.text)
 wiki:   $(GEN.wiki)
-docs:   $(GEN.docs) $(GEN.DOC.data)
+docs:   $(GEN.docs)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT           = 2.15
-tar:     GREP_EDIT  = 2.15
+GREP_EDIT           = 2.16
+tar:     GREP_EDIT  = 2.16
 tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
