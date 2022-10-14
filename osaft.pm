@@ -30,8 +30,8 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.16 22/09/20 14:28:23";
-our $VERSION    =  "22.06.22";  # official version number of this file
+our $SID_osaft  =  "@(#) osaft.pm 2.17 22/10/14 10:46:59";
+our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
 
@@ -2874,16 +2874,17 @@ our %cfg = (
         # following are used in o-saft.tcl, but are generate with o-saft-man.pm
         # the keys --help* are used as pattern
         # TODO: hardcoded  docs/  and  o-saft.pl  should be configurable
-        '--help'           => "docs/o-saft.pl.--help",
-        '--help=alias'     => "docs/o-saft.pl.--help=alias",
-        '--help=checks'    => "docs/o-saft.pl.--help=checks",
-        '--help=commands'  => "docs/o-saft.pl.--help=commands",
-        '--help=data'      => "docs/o-saft.pl.--help=data",
-        '--help=glossar'   => "docs/o-saft.pl.--help=glossar",
-        '--help=opts'      => "docs/o-saft.pl.--help=opts",
-        '--help=regex'     => "docs/o-saft.pl.--help=regex",
-        '--help=rfc'       => "docs/o-saft.pl.--help=rfc",
-        '--help=warnings'  => "docs/o-saft.pl.--help=warnings",
+        '--help'                => "docs/o-saft.pl.--help",
+        '--help=alias'          => "docs/o-saft.pl.--help=alias",
+        '--help=checks'         => "docs/o-saft.pl.--help=checks",
+        '--help=commands'       => "docs/o-saft.pl.--help=commands",
+        '--help=data'           => "docs/o-saft.pl.--help=data",
+        '--help=glossar'        => "docs/o-saft.pl.--help=glossar",
+        '--help=opts'           => "docs/o-saft.pl.--help=opts",
+        '--help=regex'          => "docs/o-saft.pl.--help=regex",
+        '--help=rfc'            => "docs/o-saft.pl.--help=rfc",
+        '--help=warnings'       => "docs/o-saft.pl.--help=warnings",
+        '--help=ciphers-text'   => "docs/o-saft.pl.--help=ciphers-text",
     }, # files
    #------------------+-----------------+--------------------------------------
     'done'      => {},          # defined in caller
@@ -3440,7 +3441,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.16 2022/09/20
+2.17 2022/10/14
 
 =head1 AUTHOR
 
