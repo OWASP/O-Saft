@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.41 22/09/28 20:06:36
+#?      @(#) Makefile.hlp 1.42 22/10/14 09:52:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.41
+_SID.hlp           := 1.42
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -114,7 +114,7 @@ LIST.help-section  := \
 
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.help-section),\
-        $(eval _target=testarg-$(subst =,-,$(arg))) \
+        $(eval _target=testarg-hlp-$(subst =,-,$(arg))) \
         $(eval $(_target):  TEST.args = $(arg) ) \
         $(eval ALL.test.hlp += $(_target) ) \
     )
