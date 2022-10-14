@@ -21,20 +21,20 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.16 22/10/14 10:06:37
+#?      @(#) Makefile 2.17 22/10/14 10:42:04
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.16
+_SID            = 2.17
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
                 #     _SID
                 #     _INST.text
-                #     GREP_EDIT
+                #     _INST.is_edit
 
 ALL.includes   := Makefile
                 # must be  :=  to avoid overwrite after includes
@@ -102,6 +102,8 @@ SRC.docker      = \
 		  Dockerfile
 SRC.rc          = .$(SRC.pl)
 
+SRC.exe         = $(SRC.pl) $(SRC.gui) $(CHK.pl) $(DEV.pl) $(SRC.sh)
+
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
 SRC.inst        = $(SRC.contrib.dir)/INSTALL-template.sh
@@ -159,6 +161,13 @@ TEST.critic.rc  = .perlcriticrc
 SRC.test        = \
                   $(TEST.do:%=$(TEST.dir)/%) \
                   $(TEST.critic.rc:%=$(TEST.dir)/%)
+TEST.Makefiles   = \
+		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
+		  Makefile.opt     Makefile.cmd   Makefile.ext   Makefile.exit \
+		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
+		  Makefile.critic  Makefile.dev   Makefile.etc   Makefile.template \
+		  Makefile.docker  Makefile.FQDN  Makefile.examples
+SRC.Makefiles   = $(TEST.Makefiles:%=$(TEST.dir)/%)
 
 # documentation files
 DOC.dir         = docs
@@ -207,35 +216,28 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 # generated files for internal use, i.e. $(SRC.tcl)
 # TODO: because make does not allow = in target names, the generated targets
 #       should use - instead
-LIST.opt_data   = --help --help=opts --help=commands --help=glossar --help=alias \
+LIST.DOC_data   = --help --help=opts --help=commands --help=glossar --help=alias \
 		  --help=data --help=data --help=checks --help=regex --help=rfc \
 		  --help=ciphers-html --help=ciphers-text
 # --help=warnings  uses a different command to be generated
-GEN.DOC.data    = $(LIST.opt_data:%=$(DOC.dir)/$(SRC.pl).%)
+GEN.DOC.data    = $(LIST.DOC_data:%=$(DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
-SRC.exe         = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
-SRC.Makefiles   = \
-		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
-		  Makefile.opt     Makefile.cmd   Makefile.ext   Makefile.exit \
-		  Makefile.cgi     Makefile.tcl   Makefile.misc  Makefile.warnings \
-		  Makefile.critic  Makefile.dev   Makefile.etc   Makefile.template \
-		  Makefile.docker  Makefile.FQDN  Makefile.examples
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
-ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles:%=$(TEST.dir)/%)
+ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.doc         = $(SRC.doc) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.man) $(GEN.inst) $(GEN.DOC.data)
+ALL.gen         = $(GEN.src) $(GEN.docs) $(GEN.DOC.data)
 ALL.docs        = $(SRC.doc) $(GEN.docs)
     # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
+    #       $(GEN.wiki) is rarley used but part of ALL.gen for simplicity
 #               # $(GEN.tags) added in t/Makefile.misc
-#               # $(GEN.wiki) not part of ALL.gen as rarly used
 ALL.src         = \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
@@ -287,8 +289,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.16 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.16
+_INST.genbytext = generated data by Makefile 2.17 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.17
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -396,7 +398,7 @@ help.all-v help.all-vv: help.all
 
 HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
-HELP-clean      = remove all generated files '$(ALL.gen) $(GEN.wiki) $(GEN.tags)'
+HELP-clean      = remove all generated files '$(ALL.gen) $(GEN.tags)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
 HELP-install    = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) must exist
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
@@ -498,8 +500,8 @@ HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
 HELP-clean.tmp  = remove '$(TMP.dir)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
-HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)'
-HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.wiki)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
+HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)'
+HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
 HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', '$(INSTALL.dir)' may exist
 HELP-o-saft.rel = generate '$(GEN.rel)'
 #               # HELP-o-saft.rel hardcoded, grrr
@@ -510,27 +512,27 @@ HELP--v         = verbose: print target and newer dependencies also
 HELP--vv        = verbose: print target and all dependencies also
 
 HELP-_project2  = __________________ targets to get more help and information _
-HELP-help.all   = print all targets, including test and development targets
+HELP-help.all   = print all targets, including most test and development targets
 #               # defined in t/Makefile.help also
 HELP-help.help  = print targets to get information/documentation from Makefiles
 
 # alias targets
-pl:     $(SRC.pl)
-cgi:    $(GEN.cgi.html)
-man:    $(GEN.man)
-pdf:    $(GEN.pdf)
-pod:    $(GEN.pod)
-html:   $(GEN.html)
-text:   $(GEN.text)
-wiki:   $(GEN.wiki)
-docs:   $(GEN.docs)
+pl:         $(SRC.pl)
+cgi:        $(GEN.cgi.html)
+man:        $(GEN.man)
+pdf:        $(GEN.pdf)
+pod:        $(GEN.pod)
+html:       $(GEN.html)
+text:       $(GEN.text)
+wiki:       $(GEN.wiki)
+docs:       $(GEN.docs)
 standalone: $(GEN.src)
-tar:    $(GEN.tgz)
-GREP_EDIT           = 2.16
-tar:     GREP_EDIT  = 2.16
-tmptar:  GREP_EDIT  = something which hopefully does not exist in the file
-tmptar: $(GEN.tmptgz)
-tmptgz: $(GEN.tmptgz)
+tar:        $(GEN.tgz)
+_INST.is_edit           = 2.17
+tar:     _INST.is_edit  = 2.17
+tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
+tmptar:     $(GEN.tmptgz)
+tmptgz:     $(GEN.tmptgz)
 cleangen:   clean.gen
 cleantar:   clean.tar
 cleantgz:   clean.tar
@@ -581,7 +583,7 @@ docker.push:
 
 clean.gen:
 	@$(TRACE.target)
-	rm -rf $(ALL.gen) $(GEN.wiki) $(GEN.inst)
+	rm -rf $(ALL.gen) $(GEN.inst)
 clean.tmp:
 	@$(TRACE.target)
 	rm -rf $(TMP.dir)
@@ -647,7 +649,7 @@ $(GEN.inst): $(SRC.inst) Makefile
 
 $(GEN.tgz)--to-noisy: $(ALL.src)
 	@$(TRACE.target)
-	@grep -q '$(GREP_EDIT)' $? \
+	@grep -q '$(_INST.is_edit)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
 
@@ -680,7 +682,7 @@ $(DOC.dir)/%.pdf: %.odg
 # the tool (o-saft.pl) but no other source files.
 _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 	@$(TRACE.target)
-	@grep -q '$(GREP_EDIT)' $? \
+	@grep -q '$(_INST.is_edit)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    && exit 1 \
 	    || echo "# no edits"
