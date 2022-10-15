@@ -156,6 +156,8 @@ exec wish "$0" ${1+"$@"}
 #?      Following key bindings are defined:
 #?        !         show window with About text
 #?        ?         show window with Help text
+#?        c         show window ciphers
+#?        d         show window tool settings (with --debug only)
 #?        h         show window with Help text
 #?        q         (quit) terminate Window or program
 #?        <ButtonPress>                 start browser with selected link
@@ -559,7 +561,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.32 Summer Edition 2022
+#?      @(#) 2.33 Summer Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -667,10 +669,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.32 22/10/15 13:58:01"
+set cfg(SID)    "@(#) o-saft.tcl 2.33 22/10/15 14:35:39"
 set cfg(mySID)  "$cfg(SID) Summer Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.32}
+set cfg(VERSION) {2.33}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -946,6 +948,7 @@ array set cfg_buttons "
     #     cfg_label     cfg_texts
     #     cfg_tipp      cfg_tipps
 
+# functions to get above texts
 proc _get_btn_txt {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 0] }
 proc _get_btn_bg  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 1] }
 proc _get_btn_img {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 2] }
@@ -959,6 +962,7 @@ array set cfg_colors "
     link        blue
     status      wheat
 "
+# above texts are used with _get_color()
 
 array set cfg_texts "
     DESC_search {-- CONFIGURATION texts used in GUI's Help window ------------}
@@ -991,9 +995,11 @@ array set cfg_texts "
     gui_button  {Style of buttons:}
     win_about   {About}
     win_colour  {Colour}
+    win_cmds    {Commands}
+    win_opts    {Options}
     win_font    {Font}
     win_help    {Help}
-    win_prog    {Settings}
+    win_tool    {Tool Settings}
     win_config  {Config}
     win_filter  {Filter}
     win_search  {Search ...}
@@ -1006,6 +1012,7 @@ GUI may be incomplete
 use »$prg(SAFT) --help=gen-docs« to generate static files
     }
 "
+# above texts are used with _get_text()
 
 array set cfg_tipps "
     DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
@@ -1052,6 +1059,7 @@ Changes apply to next +command.
     --no-tlsv13 {do not check for TLSv13 ciphers}
     docker-id   {Docker image ID (registry:tag) to be connected}
 "; # cfg_tipps; # Note: text for tab* contain new lines.
+# above texts are used with _get_tipp()
 
 # now add default to cfg_* as described before
 foreach key [array names cfg_buttons] {
@@ -1061,6 +1069,7 @@ foreach key [array names cfg_buttons] {
     set cfg_images($key) [_get_btn_img $key]
 }
 
+# functions to get above texts
 proc _get_color   {key} { global cfg_colors;  return $cfg_colors($key) }
     #? return color name for key from global cfg_colors variable
 proc _get_text    {key} { global cfg_texts;   return $cfg_texts($key)  }
@@ -2349,7 +2358,8 @@ proc create_filterwin   {}  {
     _dbx 2 "{}"
     global myX
     set win [create_window  [_get_text win_filter] $myX(geoF)]
-    create_filtertab        $win {FIL}
+    if {"" eq $win} { return }
+    create_filtertab  $win {FIL}
     return
 }; # create_filterwin
 
@@ -2427,11 +2437,12 @@ proc create_configwin   {}  {
     _dbx 2 "{}"
     global myX
     set win [create_window  [_get_text win_config] $myX(geoC)]
-    create_configtab        $win {CFG}
+    if {"" eq $win} { return }
+    create_configtab  $win {CFG}
     return
 }; # create_configwin
 
-proc create_progtab     {parent cmd}    {
+proc create_tooltab     {parent cmd}    {
     #? create tab with tool config data
     _dbx 2 "{$parent, $cmd}"
     global cfg prg
@@ -2482,17 +2493,18 @@ proc create_progtab     {parent cmd}    {
     }
     guitip_set  $this.e [_get_tipp docker-id]
     return
-}; # create_progtab
+}; # create_tooltab
 
-proc create_progwin     {}  {
+proc create_toolwin     {}  {
     #? create window with tool config data
     #  used for --gui-layout=tablet only
     _dbx 2 "{}"
     global myX
-    set win [create_window  [_get_text win_prog] $myX(geoT)]
-    create_progtab          $win {CFG}
+    set win [create_window  [_get_text win_tool] $myX(geoT)]
+    if {"" eq $win} { return }
+    create_tooltab    $win {CFG}
     return
-}; # create_progwin
+}; # create_toolwin
 
 proc create_ciphers     {}  {
     #? create new window with Cipher Suites; store widget in cfg(winD)
@@ -3184,7 +3196,7 @@ proc create_main_menu          {parent w} {
     $w_conf add command -label [_get_text menu_filt] -command "create_filterwin"
     $w_conf add command -label [_get_text menu_conf] -command "create_configwin"
     if {0<$cfg(DEBUG)} {
-    $w_conf add command -label [_get_text menu_prog] -command "create_progwin"
+    $w_conf add command -label [_get_text menu_prog] -command "create_toolwin"
     }
     $w_conf add command -label [_get_text menu_mode] -command "create_main classic"
     $w_conf clone $w_menu.configs
@@ -3289,17 +3301,17 @@ proc create_main_tabs          {parent w} {
     global cfg
     set w   $parent.$w
     # create TABs: Command and Options
-    set tab_cmds    [create_note $w "Commands"]
-    set tab_opts    [create_note $w "Options"]
-    set tab_filt    [create_note $w "Filter"]
-    set tab_conf    [create_note $w "Config"]
+    set tab_cmds    [create_note $w [_get_text win_cmds  ]]
+    set tab_opts    [create_note $w [_get_text win_opts  ]]
+    set tab_filt    [create_note $w [_get_text win_filter]]
+    set tab_conf    [create_note $w [_get_text win_config]]
     create_buttons    $tab_cmds {CMD}  ;# fill Commands pane
     create_buttons    $tab_opts {OPT}  ;# fill Options pane
     create_filtertab  $tab_filt {FIL}  ;# fill Filter pane
     create_configtab  $tab_conf {CFG}  ;# fill Config pane
     if {0<$cfg(DEBUG)} {
-    set tab_prog    [create_note $w "Settings"]
-    create_progtab  $tab_prog {PRG}    ;# fill Settings pane
+    set tab_tool    [create_note $w [_get_text win_tool]]
+    create_tooltab    $tab_tool {PRG}  ;# fill Settings pane
     }
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
@@ -3690,7 +3702,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.32 22/10/15 13:58:01
+ #?      @(#) .o-saft.tcl generated by 2.33 22/10/15 14:35:39
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -4454,10 +4466,12 @@ proc gui_init:keys  {}  {
     bind . <Key-exclam>     {create_about     }
     bind . <Key-question>   {create_help {}   }
     bind . <Key-c>          {create_ciphers   }
+    bind . <Key-d>          {create_toolwin   }
     bind . <Key-f>          {create_filterwin }
     bind . <Key-g>          {create_configwin }
     bind . <Key-h>          {create_help {}   }
     bind . <Key-q>          {exit}
+    # exclude above bindings from entry widgets
     return
 }; # gui_init:keys
 
