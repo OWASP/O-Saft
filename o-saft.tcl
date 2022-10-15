@@ -100,22 +100,6 @@ exec wish "$0" ${1+"$@"}
 #?          set IMG(my-file) [image create photo -file path/to/your-file ]
 #?          set cfg_images(+info)  {my-file};   # where +info is your command
 #?
-#?   Copy Texts
-#?      All texts visible in the GUI,  wether a label, a button, an entry or a
-#?      text itself, can be copied to the systems clipboard, using the systems
-#?      standard copy&paste methods, or with:
-#?         <Control-ButtonPress-1>
-#?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
-#?      the pathname and the class of the object containing the text.
-#?      Keep in mind that it also copies the huge text in the help window.
-#?      With  <Control-ButtonPress-1>  or  <Shift-Control-ButtonPress-1>   the
-#?      text will be copied to the (ICCCM) buffer CLIPBOARD. This ensures that
-#?      it will not interfere with the usual copy&paste buffer  PRIMARY.
-#?      <ButtonPress-1> is the "select button", usually the left mouse button.
-#?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
-#?      (which is most likely the <left click>).
-#?      This behaviour is disabled with the  --test-tcl  option.
-#?
 #?   Help / Search
 #?      The help [?] button opens a new window with the complete documentation
 #?      of O-Saft (in particular the result of: o-saft.pl +help ).
@@ -151,6 +135,34 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      The GUI contains various [?] buttons. Clicking such a button will show
 #?      the corresponding section in the help window (context sensitive).
+#?
+#?   Copy Texts
+#?      All texts visible in the GUI,  wether a label, a button, an entry or a
+#?      text itself, can be copied to the systems clipboard, using the systems
+#?      standard copy&paste methods, or with:
+#?         <Control-ButtonPress-1>
+#?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
+#?      the pathname and the class of the object containing the text.
+#?      Keep in mind that it also copies the huge text in the help window.
+#?      With  <Control-ButtonPress-1>  or  <Shift-Control-ButtonPress-1>   the
+#?      text will be copied to the (ICCCM) buffer CLIPBOARD. This ensures that
+#?      it will not interfere with the usual copy&paste buffer  PRIMARY.
+#?      <ButtonPress-1> is the "select button", usually the left mouse button.
+#?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
+#?      (which is most likely the <left click>).
+#?      This behaviour is disabled with the  --test-tcl  option.
+#?
+#?   Key Bindings
+#?      Following key bindings are defined:
+#?        !         show window with About text
+#?        ?         show window with Help text
+#?        h         show window with Help text
+#?        q         (quit) terminate Window or program
+#?        <ButtonPress>                 start browser with selected link
+#?        <Control-ButtonPress-1>       copy text to clipboard (see above)
+#?        <Shift-Control-ButtonPress-1> copy text to clipboard (see above)
+#?        <Control-v>      copy text from clipboard
+#?        <Control-c>      copy selected text to clipboard
 #?
 #? OPTIONS
 #?   Options for information and help:
@@ -547,7 +559,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.31 Summer Edition 2022
+#?      @(#) 2.32 Summer Edition 2022
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -581,7 +593,7 @@ if {![regexp -- {--test-?tcl} $argv]} {
 # Hence it's defined right below.
 
 if {0<$cfg(testtcl)} {
-    # do not bind in debug-only mode to avoid errors
+    # do not bind in debug-only mode to avoid errors, see "Key Bindings"
     foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
                          TButton TCombobox TEntry TLabel TText Frame Menu \
                          LabelFrame  PanedWindow Scale Scrollbar \
@@ -655,10 +667,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.31 22/10/15 11:27:09"
+set cfg(SID)    "@(#) o-saft.tcl 2.32 22/10/15 13:58:01"
 set cfg(mySID)  "$cfg(SID) Summer Edition 2022"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.31}
+set cfg(VERSION) {2.32}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1922,6 +1934,8 @@ proc create_window     {title size} {
     wm geometry  $this $size
     pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
+    #bind $this <Key-q>                      "destroy $this";# see "Key Bindings"
+    # TODO: bind should not apply to entry fields
     guitheme_set $this.f1.closewin $cfg(gui-button)
     if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
@@ -2764,6 +2778,7 @@ proc create_help  {sect} {
         set t [string trim [$txt get $a "$a + $e c"]]
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
+        set r [regsub {[)]} $r {\\)}];  # need to escape )
         set name [_str2obj [string trim $t]]
         _dbx 4 " 5. LNK: $i\tHELP-LNK-$name\t$t"
         if {[regexp {^\s*[+|-]} $line_txt] && [regexp -lineanchor "\\s\\s+$r$" $l]} {
@@ -3675,7 +3690,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.31 22/10/15 11:27:09
+ #?      @(#) .o-saft.tcl generated by 2.32 22/10/15 13:58:01
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3913,7 +3928,6 @@ proc osaft_help   {}    {
               {regex}   { set head "Regular expressions used internally"
                           # expected line like:
                           #     3DESorCBC3 - (?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)
-                          set txt [regsub -all -line {^\s*\n} $txt {}] ;# remove empty lines
                           set txt [regsub -all -line {(\n)(\s*)([^ ]+)} $txt {\1\2'\3'}]
                         }
               {rfc}     { set head "List of RFCs related to SSL, TLS" }
@@ -3929,7 +3943,7 @@ proc osaft_help   {}    {
         }
     }
     _dbx 4 " 2. merge HELP and additional help texts"
-    set help [regsub {(\n\nATTRIBUTION)} $help "$info\n\nATTRIBUTION"]
+    set help [regsub "(\n\nATTRIBUTION)" $help "$info\n\nATTRIBUTION"]
     set help [regsub -all {^===.*?===} $help {}]    ;# remove informal messages
 
     #dbx " 3. building TOC from section head lines here is difficult, done in create_help()"
@@ -4433,13 +4447,16 @@ proc gui_init:fonts {}  {
 }; # gui_init:fonts
 
 proc gui_init:keys  {}  {
-    #? initialise key bindings
+    #? initialise key bindings, see "Key Bindings"
     _dbx 2 "{}"
-    bind . <Control-v>      {clipboard get  }
+    bind . <Control-v>      {clipboard get    }
     bind . <Control-c>      {clipboard clear ; clipboard append [selection get]}
-    bind . <Key-exclam>     {create_about   }
-    bind . <Key-question>   {create_help {} }
-    bind . <Key-h>          {create_help {} }
+    bind . <Key-exclam>     {create_about     }
+    bind . <Key-question>   {create_help {}   }
+    bind . <Key-c>          {create_ciphers   }
+    bind . <Key-f>          {create_filterwin }
+    bind . <Key-g>          {create_configwin }
+    bind . <Key-h>          {create_help {}   }
     bind . <Key-q>          {exit}
     return
 }; # gui_init:keys
