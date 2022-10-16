@@ -24,6 +24,9 @@ _y_cmds=`o-saft.pl --help=commands|awk '/^\+/{print $1}'`
 _y_opts=`o-saft.pl --help=opts    |awk '/^\-/{print $1}'`
 _y_rang=`o-saft.pl --help=range   |awk "/ *'/"'{print "--cipherrange="$1}'`
 _y_gui=`o-saft.tcl --help=opts    |awk '/^[+-]/{print $1}'`
+_m_help=`make e-ALL.help    |tr -s ' ' '\\012'`
+_m_test=`make e-ALL.tests   |tr -s ' ' '\\012'`
+_m_warn=`make e-ALL.tests   |tr -s ' ' '\\012'`
 
 _o-saft()
 {
@@ -42,6 +45,19 @@ _o-gui()
   curr_arg=${COMP_WORDS[COMP_CWORD]}
   COMPREPLY=( $(compgen -W "$_y_gui" -- $curr_arg ) )
 }
+
+_o-make()
+{
+  local curr_arg;
+  curr_arg=${COMP_WORDS[COMP_CWORD]}
+  case "$curr_arg" in
+    help*)          COMPREPLY=( $(compgen -W "$_m_help" -- $curr_arg ) ); ;;
+    test*)          COMPREPLY=( $(compgen -W "$_m_test" -- $curr_arg ) ); ;;
+    warn*)          COMPREPLY=( $(compgen -W "$_m_warn" -- $curr_arg ) ); ;;
+  esac
+}
+
 complete -F _o-saft o-saft
 complete -F _o-saft o-saft.pl
 complete -F _o-gui  o-saft.tcl
+complete -F _o-make make
