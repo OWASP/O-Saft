@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.42 22/10/14 09:52:30
+#?      @(#) Makefile.hlp 1.43 22/10/16 19:14:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.42
+_SID.hlp           := 1.43
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -107,7 +107,7 @@ LIST.help-section  := \
 	--help=error --help=exit  --help=cipherpattern \
 	--help=cfg-cmd  --help=cfg-check --help=cfg-data  --help=cfg-hint   \
 	--help=cfg-info --help=cfg-range --help=cfg-regex --help=cfg-ourstr \
-	--help=cfg-text --help=ciphers-text --help=ciphers-html     \
+	--help=cfg-text --help=ciphers-text --help=ciphers-list --help=ciphers-html \
 	--help=gen-docs --help=gen-wiki  --help=gen-html  --help=gen-cgi --help=gen-pod
 # --help=* aliases (not yet tested)
 #	---help-problem:    TEST.args  += --help=error
