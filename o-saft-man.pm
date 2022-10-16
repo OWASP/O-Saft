@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.66 22/10/14 00:21:05";
+my  $SID_man= "@(#) o-saft-man.pm 2.67 22/10/16 11:15:19";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -398,10 +398,10 @@ EoFUNC
  </script>
 EoFUNC
 
-    'style'         => << 'EoSTYLE',
+    'style_root'    => << 'EoROOT',
 
-  /* variable definitions */
-  :root {
+ /* variable definitions */
+ :root {
     /* color and background */
     --bg-osaft:     #fff;
     --bg-blue:      #226;               /* darkblue  */
@@ -416,13 +416,30 @@ EoFUNC
     --border-0:     0px solid #fff;
     --border-1:     1px solid #080;     /* green */
     --border-w:     1px solid #fff;     /* white */
-  }
+ }
+EoROOT
+
+    'style_button'  => << 'EoButton',
+
+ .b, div[class=h] > a, input[type=submit] {
+    margin:         0.1em;
+    padding:        0px 0.5em 0px 0.5em;
+    text-decoration:none;
+    font-weight:    bold;
+    background:     var(--bg-button);
+    color:          #000;
+    border:         var(--border-1);
+    border-radius:  2px;
+    box-shadow:     1px 1px 3px #666;
+ }
+ a[class="b r"]:hover, div[class=h] > a:hover {background:var(--bg-button);}
+EoButton
+
+    'style'         => << 'EoSTYLE',
+
  .h             {margin-left:     1em;border:var(--border-0);}
  .l             {margin-left:     2em;}
  .r             {float:right;}
- .b, div[class=h] > a, input[type=submit] {
-                 margin:        0.1em;padding:0px 0.5em 0px 0.5em; text-decoration:none; font-weight:bold; color:#000; border:var(--border-1); border-radius:2px; box-shadow:1px 1px 3px #666; background:var(--bg-button);}
- a[class="b r"]:hover, div[class=h] > a:hover {background:var(--bg-button);}
  p > a[class="b"] {margin-left: -2em; }
  p > a[class="b"]:hover         {background:var(--bg-button);}
  .c             {padding:0px 3px 0px 3px;            border:var(--border-0);font-size:12pt !important; font-family:monospace;background:var(--bg-literal);} /* white-space:pro */
@@ -643,7 +660,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.66'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.67'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -694,6 +711,8 @@ sub _man_html_head  {
          . $html{'script_func2'}
          . '</script>' . "\n"
          . '<style>'
+         . $html{'style_root'}
+         . $html{'style_button'}
          . $html{'style'}
          . '</style>' . "\n"
          . '</head>'  . "\n"
@@ -731,7 +750,7 @@ sub _man_form_head  {
     $txt .= sprintf("  %s\n", _man_help_button("--help=abbr",    'b', "open window with the glossar"));
     $txt .= sprintf("  %s\n", _man_help_button("--help=todo",    'b', "open window with help for ToDO"));
     $txt .= sprintf("  %s\n", _man_help_button("--help=ciphers-text", 'b', "open window with list of cipher suites (text format)"));
-    $txt .= sprintf("  %s\n", _man_help_button("--content-type=html&--help=ciphers-html", 'b', "open window with list of cipher suites (HTML format)"));
+    $txt .= sprintf("  %s\n", _man_help_button("--content-type=html&--help=ciphers-list", 'b', "open window with list of cipher suites (HTML format)"));
     $txt .= ' </div>' . $html{'form_anf'} . "      <div class=n>\n";
         # <div class=n> contains checkboxes for some options.These checkboxes
         # are added in following  foreach loop.
@@ -1688,117 +1707,117 @@ sub man_ciphers_html{
           . $html{'meta'}
           . $html{'script_nonce'}
           . $html{'script_func1'}
-          . '</script>'
+          . "</script>\n"
+          . '<style>'
           . << 'EoHTML';
 
-<style>
-body                 {padding:   1em;       }
-body > h1            {padding-top:1em;  margin-top:1em; }
-body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
-body > h2 > button   {float:right;      margin-top:1em; display:inline; }
-/* table { border-collapse: collapse; } * nicht verwenden */
-/* table { table-layout: fixed;       } * geht nicht      */
-table       {display: none;     }
-table th    {background:#aaa;   }
-tbody tr:nth-child(even){background:#fff;    }
-tbody tr:nth-child(odd) {background:#eee;    }
-tbody td:first-child    {text-align:right;   }
-tbody td    {width: 5em; }
-thead       {position: sticky; top:3em; }
-details                {padding: 0.2em; font-weight:bold;     }
-details:nth-child(even){background:#fff;     }
-details:nth-child(odd) {background:#eee;     }
-details summary:hover  {background:#ffd700;  }
-details span:first-child  {text-align:right; min-width:15em;  }
-details span         {padding:   0.2em; display:inline-block; min-width:6em; border-radius:4px 4px 4px 4px; }
-details div          {margin-top:0.5ex; font-size:90%; border:1px solid #000; border-top:0px solid #000; border-radius:0px 0px 10px 10px; }
-details dl           {padding:   0.2em; display:block;        }
-details dt,dd        {padding:   0.5ex; display:inline-block; }
-details dt           {min-width: 12em;  text-align:left;font-weight:bold;}
-/* automatically generate colour of tag based on the sec attribute */
-  [sec="-"]          {background-color:#f00; }
-  [sec^="weak"]      {background-color:#f00; }
-  [sec^="WEAK"]      {background-color:#f00; }
-  [sec="-?-"]        {background-color:#ff0; }
-  [sec^="LOW"]       {background-color:#fd8; }
-  [sec^="medium"]    {background-color:#ff4; }
-  [sec^="MEDIUM"]    {background-color:#ff4; }
-  [sec^="high"]      {background-color:#4f4; }
-  [sec^="HIGH"]      {background-color:#3f3; }
-  [typ="PFS"]        {background-color:#4f4; }
-/* automatically generate content if tag from attribute typ= */
-  [typ]::before         {content:attr(typ);  }
-  dd[typ]               {border:1px solid #ffd700;}
-  td[typ]               {border:1px solid #fff; }
-  [typ]:hover           {border:1px solid #aaa; }
-  [typ]:hover ::after   {border:1px solid #000; border-radius:3px; position:absolute; margin-left:0.5em; background:#fd8; min-width:19em; }
-/* following definitons should be generated from OSaft/Doc/glossar.txt  */
-/* sequence of following definitions important: more lacy pattern first */
-  [typ="-"]:hover       ::after {content:"\2014  none / null / nothing"; }
-  [typ="-?-"]:hover     ::after {content:"\2014  unknown"; }
-  [typ^="ADH"]:hover    ::after {content:"\2014  Anonymous Diffie-Hellman"; }
-  [typ="AEAD"]:hover    ::after {content:"\2014  Authenticated Encryption with Additional Data"; }
-  [typ^="AES"]:hover    ::after {content:"\2014  Advanced Encryption Standard"; }
-  [typ="AESGCM"]:hover  ::after {content:"\2014  AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM"; }
-  [typ^="ARIA"]:hover   ::after {content:"\2014  128-bit symmetric block cipher"; }
-  [typ="ARIAGCM"]:hover ::after {content:"\2014  symmetric key block cipher encryption algorithm with GCM"; }
-  [typ="CAMELLIA"]:hover    ::after {content:"\2014  symmetric key block cipher encryption algorithm"; }
-  [typ="CAMELLIAGCM"]:hover ::after {content:"\2014  CAMELLIA with GCM"; }
-  [typ="CAST"]:hover    ::after {content:"\2014  Carlisle Adams and Stafford Tavares, block cipher"; }
-  [typ="CBC"]:hover     ::after {content:"\2014  Cyclic Block Chaining (aka Cypher Block Chaining)"; }
-  [typ^="CECPQ"]:hover  ::after {content:"\2014  Combined elliptic Curve and Post-Quantum Cryptography Key Exchange"; }
-  [typ^="ChaCha"]:hover ::after {content:"\2014  stream cipher algorithm (with 256-bit key)"; }
-  [typ="DES"]:hover     ::after {content:"\2014  Data Encryption Standard"; }
-  [typ="3DES"]:hover    ::after {content:"\2014  Tripple Data Encryption Standard"; }
-  [typ="DSS"]:hover     ::after {content:"\2014  Digital Signature Standard"; }
-  [typ="DH"]:hover      ::after {content:"\2014  Diffie-Hellman"; }
-  [typ^="DHE"]:hover    ::after {content:"\2014  Diffie-Hellman ephemeral (same as EDH)"; }
-  [typ="DHEPSK"]:hover  ::after {content:"\2014  Diffie-Hellman ephemeral with pre-shared key"; }
-  [typ="DH/DSS"]:hover  ::after {content:"\2014  Diffie-Hellman with DSS"; }
-  [typ="DH/RSA"]:hover  ::after {content:"\2014  Diffie-Hellman with RSA"; }
-  [typ="DH(512)"]:hover ::after {content:"\2014  Diffie-Hellman (512 bit)"; }
-  [typ="ECCPWD"]:hover  ::after {content:"\2014  Elliptic Curve Cryptography (with password?)"; }
-  [typ^="ECDH"]:hover   ::after {content:"\2014  Elliptic Curve Diffie-Hellman"; }
-  [typ^="ECDHE"]:hover  ::after {content:"\2014  Ephemeral Elliptic Curve Diffie-Hellman"; }
-  [typ="ECDH/ECDSA"]:hover  ::after {content:"\2014  Elliptic Curve Diffie-Hellman with ECDSA"; }
-  [typ="ECDH/RSA"]:hover    ::after {content:"\2014  Elliptic Curve Diffie-Hellman with RSA"; }
-  [typ="ECDHEPSK"]:hover    ::after {content:"\2014  Elliptic Curve Diffie-Hellman with pre-shared key"; }
-  [typ="ECDSA"]:hover   ::after {content:"\2014  Elliptic Curve Digital Signature Algorithm"; }
-  [typ^="EDH"]:hover    ::after {content:"\2014  Ephemeral Diffie-Hellman"; }
-  [typ="FZA"]:hover     ::after {content:"\2014  Fortezza encryption"; }
-  [typ^="GOST"]:hover   ::after {content:"\2014  Gossudarstwenny Standard, block cipher"; }
-  [typ="IDEA"]:hover    ::after {content:"\2014  International Data Encryption Algorithm"; }
-  [typ="KRB"]:hover     ::after {content:"\2014  Key Exchange Kerberos"; }
-  [typ="KRB5"]:hover    ::after {content:"\2014  Key Exchange Kerberos 5"; }
-  [typ="MD2"]:hover     ::after {content:"\2014  Message Digest 2"; }
-  [typ="MD4"]:hover     ::after {content:"\2014  Message Digest 4"; }
-  [typ="MD5"]:hover     ::after {content:"\2014  Message Digest 5"; }
-  [typ="None"]:hover    ::after {content:"\2014  no encryption / plain text"; }
-  [typ="RC2"]:hover     ::after {content:"\2014  Rivest Cipher 2, block cipher"; }
-  [typ="RC4"]:hover     ::after {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)"; } # dumm '
-  [typ="RC5"]:hover     ::after {content:"\2014  Rivest Cipher 5, block cipher"; }
-  [typ="RIPEMD"]:hover  ::after {content:"\2014  RACE Integrity Primitives Evaluation Message Digest"; }
-  [typ="RSA"]:hover     ::after {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)"; }
-  [typ="RSAPSK"]:hover  ::after {content:"\2014  Rivest Sharmir Adelman with pre-shared key"; }
-  [typ="RSA(512)"]:hover ::after {content:"\2014  Rivest Sharmir Adelman (512 bit)"; }
-  [typ="PCT"]:hover     ::after {content:"\2014  Private Communications Transport"; }
-  [typ="PSK"]:hover     ::after {content:"\2014  Pre-shared Key"; }
-  [typ="SEED"]:hover    ::after {content:"\2014  128-bit symmetric block cipher"; }
-  [typ="SHA"]:hover     ::after {content:"\2014  Secure Hash Algorithm"; }
-  [typ="SHA1"]:hover    ::after {content:"\2014  Secure Hash Algorithm"; }
-  [typ="SHA256"]:hover  ::after {content:"\2014  Secure Hash Algorithm (256 bit)"; }
-  [typ="SHA384"]:hover  ::after {content:"\2014  Secure Hash Algorithm (384 bit)"; }
-  [typ="SHA512"]:hover  ::after {content:"\2014  Secure Hash Algorithm (512 bit)"; }
-  [typ="SRP"]:hover     ::after {content:"\2014  Secure Remote Password protocol"; }
-  [typ="SSLv2"]:hover   ::after {content:"\2014  Secure Socket Layer 2"; }
-  [typ="SSLv3"]:hover   ::after {content:"\2014  Secure Socket Layer 3"; }
-  [typ="TLSv10"]:hover  ::after {content:"\2014  Transport Level Secure 1.0"; }
-  [typ="TLSv11"]:hover  ::after {content:"\2014  Transport Level Secure 1.1"; }
-  [typ="TLSv12"]:hover  ::after {content:"\2014  Transport Level Secure 1.2"; }
-  [typ="TLSv13"]:hover  ::after {content:"\2014  Transport Level Secure 1.3"; }
-/* not yet working: setting CSS variables and then use them
-  dd[val]            {--data: attr(val); --index: var(--data); }
-*/
+ body                 {padding:   1em;       }
+ body > h1            {padding-top:1em;  margin-top:1em; }
+ body > h2            {padding:   1em;   margin-top:-0.3em; font-size:120%;height:1.5em;width:94%;color:white;background:linear-gradient(#000,#fff);border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0;position:fixed;top:0px; }
+ body > h2 > button   {float:right;      margin-top:1em; display:inline; }
+ /* table { border-collapse: collapse; } * nicht verwenden */
+ /* table { table-layout: fixed;       } * geht nicht      */
+ table       {display: none;     }
+ table th    {background:#aaa;   }
+ tbody tr:nth-child(even) {background:#fff; }
+ tbody tr:nth-child(odd)  {background:#eee; }
+ tbody td:first-child   {text-align:right;  }
+ tbody td               {width: 5em;        }
+ thead                  {position: sticky; top:3em; }
+ details                {padding: 0.2em; font-weight:bold;     }
+ details:nth-child(even){background:#fff;   }
+ details:nth-child(odd) {background:#eee;   }
+ details summary:hover  {background:#ffd700;}
+ details span:first-child  {text-align:right; min-width:15em;  }
+ details span           {padding:   0.2em; display:inline-block; min-width:6em; border-radius:4px 4px 4px 4px; }
+ details div            {margin-top:0.5ex; font-size:90%; border:1px solid #000; border-top:0px solid #000; border-radius:0px 0px 10px 10px; }
+ details dl             {padding:   0.2em; display:block;        }
+ details dt,dd          {padding:   0.5ex; display:inline-block; }
+ details dt             {min-width: 12em;  text-align:left;font-weight:bold;}
+ /* automatically generate colour of tag based on the sec attribute */
+ [sec="-"]              {background-color:#f00; }
+ [sec^="weak"]          {background-color:#f00; }
+ [sec^="WEAK"]          {background-color:#f00; }
+ [sec="-?-"]            {background-color:#ff0; }
+ [sec^="LOW"]           {background-color:#fd8; }
+ [sec^="medium"]        {background-color:#ff4; }
+ [sec^="MEDIUM"]        {background-color:#ff4; }
+ [sec^="high"]          {background-color:#4f4; }
+ [sec^="HIGH"]          {background-color:#3f3; }
+ [typ="PFS"]            {background-color:#4f4; }
+ /* automatically generate content if tag from attribute typ= */
+ [typ]::before          {content:attr(typ);     }
+ dd[typ]                {border:1px solid #ffd700;}
+ td[typ]                {border:1px solid #fff; }
+ [typ]:hover            {border:1px solid #aaa; }
+ [typ]:hover ::after    {border:1px solid #000; border-radius:3px; position:absolute; margin-left:0.5em; background:#fd8; min-width:19em; }
+ /* following definitons should be generated from OSaft/Doc/glossar.txt  */
+ /* sequence of following definitions important: more lacy pattern first */
+ [typ="-"]:hover       ::after  {content:"\2014  none / null / nothing";}
+ [typ="-?-"]:hover     ::after  {content:"\2014  unknown";}
+ [typ^="ADH"]:hover    ::after  {content:"\2014  Anonymous Diffie-Hellman";}
+ [typ="AEAD"]:hover    ::after  {content:"\2014  Authenticated Encryption with Additional Data";}
+ [typ^="AES"]:hover    ::after  {content:"\2014  Advanced Encryption Standard";}
+ [typ="AESGCM"]:hover  ::after  {content:"\2014  AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM";}
+ [typ^="ARIA"]:hover   ::after  {content:"\2014  128-bit symmetric block cipher";}
+ [typ="ARIAGCM"]:hover ::after  {content:"\2014  symmetric key block cipher encryption algorithm with GCM";}
+ [typ="CAMELLIA"]:hover    ::after  {content:"\2014  symmetric key block cipher encryption algorithm";}
+ [typ="CAMELLIAGCM"]:hover ::after  {content:"\2014  CAMELLIA with GCM";}
+ [typ="CAST"]:hover    ::after  {content:"\2014  Carlisle Adams and Stafford Tavares, block cipher";}
+ [typ="CBC"]:hover     ::after  {content:"\2014  Cyclic Block Chaining (aka Cypher Block Chaining)";}
+ [typ^="CECPQ"]:hover  ::after  {content:"\2014  Combined elliptic Curve and Post-Quantum Cryptography Key Exchange";}
+ [typ^="ChaCha"]:hover ::after  {content:"\2014  stream cipher algorithm (with 256-bit key)";}
+ [typ="DES"]:hover     ::after  {content:"\2014  Data Encryption Standard";}
+ [typ="3DES"]:hover    ::after  {content:"\2014  Tripple Data Encryption Standard";}
+ [typ="DSS"]:hover     ::after  {content:"\2014  Digital Signature Standard";}
+ [typ="DH"]:hover      ::after  {content:"\2014  Diffie-Hellman";}
+ [typ^="DHE"]:hover    ::after  {content:"\2014  Diffie-Hellman ephemeral (same as EDH)";}
+ [typ="DHEPSK"]:hover  ::after  {content:"\2014  Diffie-Hellman ephemeral with pre-shared key";}
+ [typ="DH/DSS"]:hover  ::after  {content:"\2014  Diffie-Hellman with DSS";}
+ [typ="DH/RSA"]:hover  ::after  {content:"\2014  Diffie-Hellman with RSA";}
+ [typ="DH(512)"]:hover ::after  {content:"\2014  Diffie-Hellman (512 bit)";}
+ [typ="ECCPWD"]:hover  ::after  {content:"\2014  Elliptic Curve Cryptography (with password?)";}
+ [typ^="ECDH"]:hover   ::after  {content:"\2014  Elliptic Curve Diffie-Hellman";}
+ [typ^="ECDHE"]:hover  ::after  {content:"\2014  Ephemeral Elliptic Curve Diffie-Hellman";}
+ [typ="ECDH/ECDSA"]:hover  ::after  {content:"\2014  Elliptic Curve Diffie-Hellman with ECDSA";}
+ [typ="ECDH/RSA"]:hover    ::after  {content:"\2014  Elliptic Curve Diffie-Hellman with RSA";}
+ [typ="ECDHEPSK"]:hover    ::after  {content:"\2014  Elliptic Curve Diffie-Hellman with pre-shared key";}
+ [typ="ECDSA"]:hover   ::after  {content:"\2014  Elliptic Curve Digital Signature Algorithm";}
+ [typ^="EDH"]:hover    ::after  {content:"\2014  Ephemeral Diffie-Hellman";}
+ [typ="FZA"]:hover     ::after  {content:"\2014  Fortezza encryption";}
+ [typ^="GOST"]:hover   ::after  {content:"\2014  Gossudarstwenny Standard, block cipher";}
+ [typ="IDEA"]:hover    ::after  {content:"\2014  International Data Encryption Algorithm";}
+ [typ="KRB"]:hover     ::after  {content:"\2014  Key Exchange Kerberos";}
+ [typ="KRB5"]:hover    ::after  {content:"\2014  Key Exchange Kerberos 5";}
+ [typ="MD2"]:hover     ::after  {content:"\2014  Message Digest 2";}
+ [typ="MD4"]:hover     ::after  {content:"\2014  Message Digest 4";}
+ [typ="MD5"]:hover     ::after  {content:"\2014  Message Digest 5";}
+ [typ="None"]:hover    ::after  {content:"\2014  no encryption / plain text";}
+ [typ="RC2"]:hover     ::after  {content:"\2014  Rivest Cipher 2, block cipher";}
+ [typ="RC4"]:hover     ::after  {content:"\2014  Rivest Cipher 4, stream cipher (aka Ron's Code)";} # dumm '
+ [typ="RC5"]:hover     ::after  {content:"\2014  Rivest Cipher 5, block cipher";}
+ [typ="RIPEMD"]:hover  ::after  {content:"\2014  RACE Integrity Primitives Evaluation Message Digest";}
+ [typ="RSA"]:hover     ::after  {content:"\2014  Rivest Sharmir Adelman (public key cryptographic algorithm)";}
+ [typ="RSAPSK"]:hover  ::after  {content:"\2014  Rivest Sharmir Adelman with pre-shared key";}
+ [typ="RSA(512)"]:hover ::after {content:"\2014  Rivest Sharmir Adelman (512 bit)";}
+ [typ="PCT"]:hover     ::after  {content:"\2014  Private Communications Transport";}
+ [typ="PSK"]:hover     ::after  {content:"\2014  Pre-shared Key";}
+ [typ="SEED"]:hover    ::after  {content:"\2014  128-bit symmetric block cipher";}
+ [typ="SHA"]:hover     ::after  {content:"\2014  Secure Hash Algorithm";}
+ [typ="SHA1"]:hover    ::after  {content:"\2014  Secure Hash Algorithm";}
+ [typ="SHA256"]:hover  ::after  {content:"\2014  Secure Hash Algorithm (256 bit)";}
+ [typ="SHA384"]:hover  ::after  {content:"\2014  Secure Hash Algorithm (384 bit)";}
+ [typ="SHA512"]:hover  ::after  {content:"\2014  Secure Hash Algorithm (512 bit)";}
+ [typ="SRP"]:hover     ::after  {content:"\2014  Secure Remote Password protocol";}
+ [typ="SSLv2"]:hover   ::after  {content:"\2014  Secure Socket Layer 2";}
+ [typ="SSLv3"]:hover   ::after  {content:"\2014  Secure Socket Layer 3";}
+ [typ="TLSv10"]:hover  ::after  {content:"\2014  Transport Level Secure 1.0";}
+ [typ="TLSv11"]:hover  ::after  {content:"\2014  Transport Level Secure 1.1";}
+ [typ="TLSv12"]:hover  ::after  {content:"\2014  Transport Level Secure 1.2";}
+ [typ="TLSv13"]:hover  ::after  {content:"\2014  Transport Level Secure 1.3";}
+ /* not yet working: setting CSS variables and then use them
+  dd[val]            {--data: attr(val); --index: var(--data);}
+ */
 </style>
 </head>
 <body>
@@ -1848,6 +1867,7 @@ sub man_ciphers     {
     _man_dbx("man_ciphers($typ) ..");
     my $txt = _man_ciphers_get();
     return man_ciphers_html($txt) if ('html' eq $typ);
+    #return man_ciphers_list($txt) if ('list' eq $typ);
     return man_ciphers_text($txt) if ('text' eq $typ);
     return "";
 } # man_ciphers
@@ -2277,8 +2297,10 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_man()            if ($hlp =~ /^(gen-)?man$/);
     $txt = man_man()            if ($hlp =~ /^(gen-)?[nt]roff$/);
     $txt = man_cgi()            if ($hlp =~ /^(gen-)?cgi$/);
-    $txt = man_ciphers('text')  if ($hlp =~ /^(gen-)?-?ciphers([_.-]text)?$/);
-    $txt = man_ciphers('html')  if ($hlp =~ /^(gen-)?-?ciphers[_.-]?html$/);
+    $txt = man_ciphers('text')  if ($hlp =~ /^(gen-)?-?ciphers$/);
+    $txt = man_ciphers('text')  if ($hlp =~ /^(gen-)?-?ciphers.?text$/);
+    $txt = man_ciphers('list')  if ($hlp =~ /^(gen-)?-?ciphers.?list$/);
+    $txt = man_ciphers('html')  if ($hlp =~ /^(gen-)?-?ciphers.?html$/);
     $txt = man_alias()          if ($hlp =~ /^alias(es)?$/);
     $txt = man_commands()       if ($hlp =~ /^commands?$/);
     $txt = man_options()        if ($hlp =~ /^opts?$/);
@@ -2333,8 +2355,8 @@ sub _main_man       {   # needs not to be _main unless used as Perl package
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
         $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
-           # testing this module is technically the same as getting the text
-        next if ($arg =~ m/^[+-]-?/);   # ignore other options
+# htmitesting this module is technically the same as getting the text
+		next if ($arg =~ m/^[+-]-?/);   # ignore other options
         printhelp($arg);
     }
     exit 0;
@@ -2428,7 +2450,9 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * ciphers-text -> list all ciphers with all information in text format
 
-=item * ciphers-html -> list all ciphers with all information in HTML format
+=item * ciphers-list -> list all ciphers with all information in HTML list format
+
+=item * ciphers-html -> list all ciphers with all information in HTML table format
 
 =item * contents
 
@@ -2503,7 +2527,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.66 2022/10/14
+2.67 2022/10/16
 
 =head1 AUTHOR
 
