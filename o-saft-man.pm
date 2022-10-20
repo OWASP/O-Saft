@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.68 22/10/16 12:16:29";
+my  $SID_man= "@(#) o-saft-man.pm 2.69 22/10/20 23:24:12";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -282,17 +282,9 @@ function osaft_options(){
         }
         return;
 }
-function osaft_set_default(id){
-/* set value of input fileds with type=text to its default (speciefied in its
- * attribute osaft-default)
- */
-        var obj = document.getElementById(id);
-        try { obj.value = obj.getAttribute('osaft-default'); } catch(e) {}
-        return;
-}
 function osaft_enable(){
-/* check all input fileds with type=text if they are disabled, which is set by
- * see osaft_submit(), then remove the disabled attribute again
+/* check all input fields with type=text if they are disabled, which was set
+ * by osaft_submit(), then removes the disabled attribute for these tags
  */
         var arr = document.getElementsByTagName('input');
         for (var tag=0; tag<arr.length; tag++) {
@@ -303,20 +295,20 @@ function osaft_enable(){
         return;
 }
 function osaft_submit(){
-/* check all input fileds with type=text if the value differs from its default
- * adds the attribute disabled to the input tag to ensure that no name=value
- * for this input field will be submitted
+/* check all input fields with type=text, if its value is empty the attribute
+ * disabled is added to the input tag to ensure that no  name=value  for this
+ * input field will be submitted
  * return true (so that the form will be submitted)
  */
         var arr = document.getElementsByTagName('input');
         for (var tag=0; tag<arr.length; tag++) {
             if (/^text$/.test(arr[tag].type)===true) {
-                if (arr[tag].value === arr[tag].getAttribute('osaft-default')) {
+                if (arr[tag].value === '') {
                     arr[tag].setAttribute('disabled', true);
                 }
             }
         }
-        // ensure that input fields are enabled again
+        // ensure that all input fields are enabled again after submit
         setTimeout("osaft_enable()",2000);
         return true;
 }
@@ -404,6 +396,7 @@ EoFUNC
  :root {
     /* color and background */
     --bg-osaft:     #fff;
+    --bg-black:     #000;
     --bg-blue:      #226;               /* darkblue  */
     --bg-head:      linear-gradient(#000,#fff);    /* black,white */
     --bg-mbox:      rgba(0,0,0,0.9);
@@ -414,70 +407,79 @@ EoFUNC
     --bg-hover:     #d3d3d3;            /* lightgray */
     --bg-literal:   #d3d3d3;            /* lightgray */
     --border-0:     0px solid #fff;
-    --border-1:     1px solid #080;     /* green */
+    --border-1:     1px solid #000;     /* black */
     --border-w:     1px solid #fff;     /* white */
+    --radius-10:    0px 0px 10px 10px;
+    --radius-20:    0px 0px 20px 20px;
+    --shadow:       1px 4px 4px #666;
  }
 EoROOT
 
     'style_button'  => << 'EoButton',
 
- .b, div[class=h] > a, input[type=submit] {
-    margin:         0.1em;
-    padding:        0px 0.5em 0px 0.5em;
+   [type=submit] {      /* submit/start buttons */
+    text-align:     left;
+    font-size:      80%;
+    font-weight:    bold;
+    min-width:      10em;
+    background:     var(--bg-start);
+    box-shadow:     var(--shadow);
+    border:         var(--border-1);
+    border-radius:  5px;
+   }
+
+   .navdiv div > a, .b { /* help buttons */
+    display:        block;
+    margin:         0.2em;
+    padding:        0px 0.2em 0px 0.2em;
     text-decoration:none;
     font-weight:    bold;
-    background:     var(--bg-button);
     color:          #000;
+    background:     var(--bg-button);
+    box-shadow:     var(--shadow);
     border:         var(--border-1);
-    border-radius:  2px;
-    box-shadow:     1px 1px 3px #666;
- }
- a[class="b r"]:hover, div[class=h] > a:hover {background:var(--bg-button);}
+    border-radius:  3px;
+   }
+   .b { display: inline-block; }              /* ^top and start button */
 EoButton
 
     'style'         => << 'EoSTYLE',
 
- .h             {margin-left:     1em;border:var(--border-0);}
- .l             {margin-left:     2em;}
- .r             {float:right;}
- p > a[class="b"] {margin-left: -2em; }
- p > a[class="b"]:hover         {background:var(--bg-button);}
- .c             {padding:0px 3px 0px 3px;            border:var(--border-0);font-size:12pt !important; font-family:monospace;background:var(--bg-literal);} /* white-space:pro */
- .q             {border:var(--border-0);}
- p              {margin-left:     2em;margin-top:0;}
- td             {                     padding-left:    1em;}
- h2             {margin:       -0.3em;margin-bottom: 0.5em;height:1.5em;padding:1em;background:var(--bg-head);color:white;border-radius:0px 0px 20px 20px;box-shadow:0 5px 5px #c0c0c0; }
- h2 > span      {                                    border:var(--border-0);}
- h3, h4, h5     {margin-bottom: 0.2em;}
- body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
- body > h4      {margin-left:     1em;}
- b              {margin-left:     1em;}     /* for discrete commands */
- li             {margin-left:     3em;}
- li.n           {list-style-type: none; }
- div            {                     padding:0.5em; border:var(--border-1);}
- div[id=c]      {                     padding:0px;   border:var(--border-0);}
- div[class=c]   {margin-left:     4em;padding:0.1em; border:var(--border-0);}
- div[class=n]   {                                    border:var(--border-0);}
- form           {font-size:       20px; }   /* chromium hack */
- form           {                     padding:1em;}
- span           {margin-bottom:   2em;font-size:120%;border:var(--border-1);}
- label[class=i] {margin-right:    1em;min-width:8em; border:var(--border-w);display:inline-block;}
- label[class=i]:hover           {background:var(--bg-hover);border-bottom:var(--border-1);}
- input[type=submit]             {background:var(--bg-start);min-width:8em;text-align:left;}
- input[type=submit]:hover       {background:var(--bg-start-h);}
- input          {margin-right:  0.5em;}
- fieldset > p   {margin:           0px;padding:0.5em;background-color:#ffa;}
- /* dirty hack for mobile-friendly A tag's title= attribute;
-  * placed left bound below tag; browser's title still visible
-  * does not work for BUTTON and INPUT tags
-  */
- [title]        {position:  relative; }
- a[class=b][title]:hover:after, a[class='b r'][title]:hover:after {
-    content: attr(title);
-    position:absolute; z-index:99; top:100%; left:-1em;
-    border: 2px solid darkgrey; border-radius:2px;
-    background-color:rgba(0,0,0,0.8); color:white;
-    font-weight:normal; padding:0.3em; }
+/* { page header */
+   body > h2        { margin: -0.3em -0.3em 0.5em -0.3em; padding:1em; height:1.5em;background:var(--bg-head);color:white;border-radius:var(--radius-20); }
+   body > h2 > span { margin-bottom:2em;font-size:120%;border:var(--border-0);}
+/* } page header */
+/* { help page only */
+   h3, h4, h5       {margin-bottom: 0.2em;}
+   body > h4        {margin-left:     1em;}
+/* } help page only */
+/* { cgi page only */
+   form             { font-size:  20px; }   /* chromium hack */
+   form             { padding:     1em; }
+/* } cgi page only */
+   li               { margin-left: 2em; }           /* lists in texts        */
+   li[class="n"]    { list-style-type:none; }       /* "comments" in text    */
+   p                { margin-left: 1em; margin-top:0px; }   /* all texts     */
+   p > a[class="b"] { margin-left:-1em; }           /* ^top button only      */
+   label[class="i"] { margin-right:1em; min-width:8em; border:var(--border-w); display:inline-block; } 
+   label[class="i"]:hover { background:var(--bg-hover);border-bottom:var(--border-1);}
+   b                { margin-left: 1em; }           /* for discrete commands #FIXME: wrong in cgi page */
+   .r               { float:right;      }           /* help buttons          */
+   .l               { margin-left: 2em; }           /* label for options     */
+   .c               { margin-left: 2em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
+   span[class="c"]  { margin-left:0.1em;}           /* literal text (inline) */
+/* dirty hack for mobile-friendly A tag's title= attribute;
+ * placed left bound below tag; browser's title still visible
+ * does not work for BUTTON and INPUT tags
+ */
+   [title]          { position:relative; }
+   a[class="b"][title]:hover:after,
+   a[class="b r"][title]:hover:after {
+        content: attr(title);
+        position:absolute; z-index:99; top:100%; left:-1em; padding:0.3em;
+        border-radius:2px; background:var(--bg-mbox); color:white;
+    font-weight:normal;
+   }
 EoSTYLE
 
     'style_ciphers' => << 'EoSTYLE_C',
@@ -771,7 +773,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.68'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.69'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -811,7 +813,7 @@ sub _man_http_head  {
 } # _man_http_head
 
 sub _man_html_head  {
-    #? print footer of HTML page
+    #? print header of HTML page
     # SEE HTML:JavaScript
     _man_dbx("_man_html_head() ...");
     return $html{'doctype'}
@@ -943,8 +945,8 @@ sub _man_html_chck  {
         $tag_nam =  scalar((split(/\s+/, $cmd_opt))[0]);
         my ($key, $val) = split(/=/, $tag_nam); # split into key and value
         if (defined $val && $val =~ m/^[A-Z0-9:_-]+/) { # --opt=VALUE
-            my $label = sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $tag_nam, $key);
-            my $input = sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $tag_nam, $key, $val, $val);
+            my $label = sprintf("<label class=l >%s=</label>", $key);
+            my $input = sprintf("<input type=text id='%s' name='%s' value='' placeholder='%s'>", $tag_nam, $key, $val);
             return "$label$input";
         # else: see below
         }
@@ -2561,7 +2563,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.68 2022/10/16
+2.69 2022/10/20
 
 =head1 AUTHOR
 
@@ -2784,14 +2786,13 @@ options without a value:
 
     <input type=checkbox name='--opt' value='' >--opt</input>
 
-Options with a value need an input field for the value, and a reset button
-to undo changes. Additionally, the key=value should only be send on submit
-of the form if the value was changed.  The change will be checked with the
-form's onsubmit event (which calls osaft_submit(); for details see there). 
+Options with a value should only be send on the form's submit if the value
+is not empty.  The setting will be checked with the form's  onsubmit event
+(which calls osaft_submit(); for details see there).
 The generated HTML looks like:
 
-   <label onclick=osaft_set_default(id) >
-   <input type=text id='--opt=VALUE' name='--opt' value=VALUE osaft=VALUE>
+   <label>
+   <input type=text id='--opt=VALUE' name='--opt' value='' placeholder=VALUE>
 
 The input field's name is the option itself, and the value is the option's
 value. 
