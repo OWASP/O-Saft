@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.70 22/10/21 11:54:05";
+my  $SID_man= "@(#) o-saft-man.pm 2.71 22/10/21 23:29:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -180,6 +180,13 @@ my %html = (
     'copyright'     => << 'EoCOPY',
  <hr><p><span style="display:none">&copy; Achim Hoffmann 2022</span></p>
 EoCOPY
+
+    'links'         => << 'EoLINK',
+ <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
+ <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
+ <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
+ <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
+EoLINK
 
     'action'        => '__HTML_cgi_bin__',
 
@@ -392,6 +399,7 @@ EoFUNC
     --bg-black:     #000;
     --bg-blue:      #226;               /* darkblue  */
     --bg-head:      linear-gradient(#000,#fff);    /* black,white */
+    --bg-menu:      linear-gradient(#000,#aaa);    /* black,grey */
     --bg-mbox:      rgba(0,0,0,0.9);
     --bg-mdiv:      linear-gradient(#fff,#226);
     --bg-button:    linear-gradient(#d3d3d3,#fff);  /* lightgray */
@@ -418,54 +426,62 @@ EoROOT
     background:     var(--bg-start);
     box-shadow:     var(--shadow);
     border:         var(--border-1);
-    border-radius:  5px;
+    border-radius:  4px;
  }
+ [type="submit"]:hover  { background:var(--bg-start-h); }
 
- .navdiv div > a, .b {  /* help buttons */
+ .navdiv div a, .b {    /* help buttons */
     display:        block;
     margin:         0.2em;
     padding:        0px 0.2em 0px 0.2em;
     text-decoration:none;
+    font-size:      90%;
     font-weight:    bold;
     color:          #000;
     background:     var(--bg-button);
     box-shadow:     var(--shadow);
     border:         var(--border-1);
-    border-radius:  3px;
+    border-radius:  4px;
    }
  .b { display: inline-block; }              /* ^top and start button */
 EoButton
 
     'style'         => << 'EoSTYLE',
 
+ body   { margin:0px 0.5em 0px 0.5em; background:#f2eff2; font: 16pt Arial, Helvetica, sans-serif; }
 /* { page header */
- body > h2        { margin: -0.3em -0.3em 0.5em -0.3em; padding:1em; height:1.5em;background:var(--bg-head);color:white;border-radius:var(--radius-20); }
- body > h2 > span { margin-bottom:2em;font-size:120%;border:var(--border-0);}
+ body > h2          { margin: 0px -0.3em 0px -0.3em; padding:1em; background:var(--bg-head);color:white;border-radius:var(--radius-20); }
+ body > h2 > span   { margin-bottom:2em;font-size:120%;border:var(--border-0);}
 /* } page header */
 /* { help page only */
- h3, h4, h5       {margin-bottom: 0.2em;}
- body > h4        {margin-left:     1em;}
+ h3, h4, h5         { margin-bottom: 0.2em; }
+ body > h4          { margin-left:     1em; }
 /* } help page only */
 /* { cgi page only */
- form             { font-size:  20px; }   /* chromium hack */
- form             { padding:     1em; }
+ fieldset           { margin:     0px;  }
+ fieldset > details:nth-child(2) > div  { z-index:2; } /* "Simple GUI" on top */
+ fieldset > details > div       { margin:0.1em 0.7em 0px -0.9em; background:white; overflow-y:scroll; }
+/*
+fieldset > details > div:focus  { display:block; } // geht nicht
+fieldset > details > summary    { background:var(--bg-button); } // nicht schön
+*/
 /* } cgi page only */
- li               { margin-left: 2em; }           /* lists in texts        */
- li[class="n"]    { list-style-type:none; }       /* "comments" in text    */
- p                { margin-left: 1em; margin-top:0px; }   /* all texts     */
- p > a[class="b"] { margin-left:-1em; }           /* ^top button only      */
- label[class="i"] { margin-right:1em; min-width:8em; border:var(--border-w); display:inline-block; } 
+ li                 { margin-left: 2em; }           /* lists in texts        */
+ li[class="n"]      { list-style-type:none; }       /* "comments" in text    */
+ p                  { margin-left: 1em; margin-top:0px; }   /* all texts     */
+ p > a[class="b"]   { margin-left:-1em; }           /* ^top button only      */
+ label[class="i"]   { margin-right:1em; min-width:8em; border:var(--border-w); display:inline-block; } 
  label[class="i"]:hover { background:var(--bg-hover);border-bottom:var(--border-1);}
- b                { margin-left: 1em; }           /* for discrete commands #FIXME: wrong in cgi page */
- .r               { float:right;      }           /* help buttons          */
- .l               { margin-left: 2em; }           /* label for options     */
- .c               { margin-left: 2em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
- span[class="c"]  { margin-left:0.1em;}           /* literal text (inline) */
+ b                  { margin-left: 1em; }           /* for discrete commands #FIXME: wrong in cgi page */
+ .r                 { float:right;      }           /* help buttons          */
+ .l                 { margin-left: 2em; }           /* label for options     */
+ .c                 { margin-left: 2em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
+ span[class="c"]    { margin-left:0.1em;}           /* literal text (inline) */
 /* dirty hack for mobile-friendly A tag's title= attribute;
  * placed left bound below tag; browser's title still visible
  * does not work for BUTTON and INPUT tags
  */
- [title]          { position:relative; }
+ [title]            { position:relative; }
  a[class="b"][title]:hover:after,
  a[class="b r"][title]:hover:after {
     content: attr(title);
@@ -588,10 +604,9 @@ EoSTYLE_C
 
     'body_anf'      => << 'EoBODY',
 <body>
- <h2 id="title" title="" ><span id="txt" >__HTML_title__</span>
+ <h2 title="__HTML_version__" ><span id="txt" >__HTML_title__</span>
      <button id="schema" style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all&#13;action and href attributes">Change to osaft: schema</button>
  </h2>
- <!-- also hides unwanted text before <body> tag -->
 EoBODY
 
     'form_anf'      => << 'EoFORM',
@@ -650,13 +665,6 @@ EoFORM
   <p>The server may be slow and is short on memory, so please don't expect miracles.</p>
  </div> </div>
 EoWARN
-
-    'links'         => << 'EoLINK',
- <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
- <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a>
- <a href="https://github.com/OWASP/O-Saft/archive/master.zip" target=_tar class=b >Download (newest)</a><br><br>
- <a href="https://owasp.org/www-project-o-saft/" target=_owasp  >O-Saft Home</a>
-EoLINK
 
 );
 
@@ -766,21 +774,22 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.70'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.71'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
 sub _man_html_init  {
     #? initialise %html hash
-    my $tipp    = _man_get_version();
+    my $tipp    = _man_get_version();   # get official version
     my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
         # get action from --usr-action= or set to default (defensive programming)
     # this function is called once, usually, hence it's save to modify %html directly
     $html{'action'}         =~ s/__HTML_cgi_bin__/$cgi_bin/g;
     $html{'form_anf'}       =~ s/__HTML_cgi_bin__/$cgi_bin/g;
     $html{'script_endcgi'}  =~ s/__HTML_cgi_bin__/$cgi_bin/g;
-    $html{'meta'}           =~ s/__HTML_title__/$html{'title'}/g;
+    $html{'body_anf'}       =~ s/__HTML_version__/$tipp/g;
     $html{'body_anf'}       =~ s/__HTML_title__/$html{'title'}/g;
+    $html{'meta'}           =~ s/__HTML_title__/$html{'title'}/g;
     return;
 } # _man_html_init
 
@@ -2551,7 +2560,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.70 2022/10/21
+2.71 2022/10/21
 
 =head1 AUTHOR
 
