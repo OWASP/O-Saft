@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.9 20/06/10 23:02:08
+# SID   @(#) coding.txt 1.10 22/10/26 12:02:31
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -49,11 +49,7 @@ HACKER's INFO
         syntax check at compile time.
         This will be changed in future.
 
-        The  code  mainly uses  'text enclosed in single quotes'  for program
-        internal strings such as hash keys. It uses  "double quoted text" for
-        texts being printed. However, exceptions if obviously necessary ;-)
-        Strings used for  RegEx are always enclosed in single quotes.  Reason
-        is mainly to make searching texts a bit easier.
+	For quoting see below.
 
       Code style
 
@@ -90,6 +86,34 @@ HACKER's INFO
         All tests can be done with make, see:
 
           *  make help.test.critic
+
+      Quoting
+
+	Using single quotes  '  and/or double quotes  "  is the nature of the
+	processed data, the generated data or the program code.  These quotes
+	are written literally in data, whereas  Perl provides various methods
+	to handles different types of quotes. Coding gets complicated if both
+	quotes are part of the data, in particular when printing data.
+
+        The  code  mainly uses  'text enclosed in single quotes'  for program
+        internal strings such as hash keys. It uses  "double quoted text" for
+        texts being printed. However, exceptions if obviously necessary ;-)
+        Strings used for  RegEx are always enclosed in single quotes.  Reason
+        is mainly to make searching texts a bit easier.
+
+	Perl's operators  'q()' and 'qq()' are used only to avoid escaping of
+	character, because all types of quotes can smoothly mixed there.
+	In general  "double quoted text" is used for interpolated strings. In
+	some cases, it is necessary to use Perl's  'sprintf()'  function.
+	For details, please see:
+
+	    perldoc -f q
+	    perldoc -f qq
+	    perldoc -f sprintf
+	    perldoc perlop # following sections:
+	        Comma Operator
+	        Quote and Quote-Like Operators
+	        Gory details of parsing quoted constructs
 
       General
 
@@ -378,7 +402,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.9 20/06/10 23:02:08";
+            my $SID = "coding.txt 1.10 22/10/26 12:02:31";
           (Note beside: previous example is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
