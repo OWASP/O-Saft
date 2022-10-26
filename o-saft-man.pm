@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.71 22/10/21 23:29:41";
+my  $SID_man= "@(#) o-saft-man.pm 2.72 22/10/26 12:03:45";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -465,6 +465,20 @@ EoButton
 fieldset > details > div:focus  { display:block; } // geht nicht
 fieldset > details > summary    { background:var(--bg-button); } // nicht schön
 */
+/* for menu bar left vertical instead top horizontal:
+ *   .navdiv { float:left; }
+ *   .navdiv > details  { min-width:4em; }
+*/
+ .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:5 }
+ .navdiv > details:first-child >summary  { list-style:none; font-size:120%; max-width:2em !important; }
+ .navdiv > details       { min-width:4em;  float:left; }
+ .navdiv > details   div { background:var(--bg-menu); z-index:3;  }
+ .navdiv > details > div > input[type="submit"]  { display:block; }
+ .navdiv > details > div > label         { font-weight:normal; display:block; }
+ .navdiv > details > div > details > div { margin-left:0.8em; }
+ .navdiv > details > div [type="submit"] { margin: 0.2em 0px 0.2em 0px; }
+ details >div            { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
+ details[open] > summary { text-decoration:underline; }
 /* } cgi page only */
  li                 { margin-left: 2em; }           /* lists in texts        */
  li[class="n"]      { list-style-type:none; }       /* "comments" in text    */
@@ -611,34 +625,24 @@ EoBODY
 
     'form_anf'      => << 'EoFORM',
 
+ <a name="aFORM"></a>
  <form id="o-saft" action="__HTML_cgi_bin__" method="GET" onsubmit="return osaft_submit()" target="cmd" >
   <noscript><div>
-JavaScript disabled. The buttons for most common commands are missing.<br>
-The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
-All options with values are passed to __HTML_cgi_bin__ .
-  </div><br></noscript>
-  <input  type=hidden name="--cgi" value="" >
-  <fieldset>
-    <p>
-    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
-    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
-    </p>
-    <table id="osaft_buttons">
-    </table><br>
-    <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-    <button onclick="toggle_display('c');return false;" title="show options">Commands & Options</button>
-    <div id="c" >
-     <div id="a" >
-       <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
-      <br>
+All options, even those without values, are passed to __HTML_cgi_bin__ .
+  </div></noscript>
+  <input  type="hidden" name="--cgi" value="" >
 EoFORM
 
+    'fieldset'      => << 'EoFIELDSET',
+  <fieldset>
+    <p>
+    Host[:Port]:: <input type="text" name="--url"  size="40" title="hostname or hostname:port or URL" >
+    <input type="submit" name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
+    <input type="reset"  value="clear" title="clear all settings or reset to defaults"/>
+    </p>
+EoFIELDSET
+
     'form_end'      => << 'EoFORM',
-</p>
-        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-     </div><!-- id="b" -->
-    </div><!-- id="c" -->
   </fieldset>
  </form>
  <hr>
@@ -774,7 +778,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.71'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.72'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -836,6 +840,20 @@ sub _man_html_head  {
     ;
 } # _man_html_head
 
+sub _man_html_details {
+    #? print details scope with summary text and div content
+    my $sum = shift;
+    my $open= shift;
+    my $txt = shift;
+    return << "EoDetails";
+    <details $open><summary>$sum</summary>
+      <div>
+$txt
+      </div>
+    </details><!-- $sum -->
+EoDetails
+} # _man_html_details
+
 sub _man_help_button{
     #? return href tag for a help button
     my $cmd   = shift;      # must be --help=* option; also used for button text
@@ -843,41 +861,67 @@ sub _man_help_button{
     my $title = shift;      # value for title= attribute
     my $href  = $html{'action'};
     my $txt   = $cmd;       # 
-       $txt  =~ s/^--.*help=//; # button text without --help and other options
-       #$txt  =~ s/^help=//; # button text without --help
-       $class = "class='$class'" if ($class !~ m/^\s*$/);
-    return sprintf('<a %s href="%s?--cgi&--header&%s" target=_help title="%s" >%s</a>',
-                    $class, $href, $cmd, $title, $txt);
+       $txt  =~ s/.*--.*help=//; # button text without --help and other options
+       $txt  =~ s/&.*$//;   # button text without --help and other options
+       $class = qq(class="$class") if ($class !~ m/^\s*$/);
+    return qq(        <a $class target="_help" href="$href?--cgi&--header&$cmd" title="$title" >$txt</a>\n);
 } # _man_help_button
 
-sub _man_form_head  {
-    #? print start of CGI form
-    my $cgi_bin = $html{'action'};
-    my $txt;
-    _man_dbx("_man_form_head() ...");
-    $txt .= sprintf(" <div class=h ><b>Help:</b>\n");
-    $txt .= sprintf("  <a class='b r' href='o-saft.html' target=_help  title='open window with complete help (rendered)'> ? </a>\n");
-    $txt .= sprintf("  %s\n", _man_help_button("--help",         'b', "open window with complete help (plain text)"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=command", 'b', "open window with help for commands"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=checks",  'b', "open window with help for checks"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=example", 'b', "open window with examples"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=opt",     'b', "open window with help for options"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=FAQ",     'b', "open window with FAQs"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=abbr",    'b', "open window with the glossar"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=todo",    'b', "open window with help for ToDO"));
-    $txt .= sprintf("  %s\n", _man_help_button("--help=ciphers-text", 'b', "open window with list of cipher suites (text format)"));
-    $txt .= sprintf("  %s\n", _man_help_button("--content-type=html&--help=ciphers-list", 'b', "open window with list of cipher suites (HTML format)"));
-    $txt .= ' </div>' . $html{'form_anf'} . "      <div class=n>\n";
+sub _man_cmd_button {
+    #? return input tag for a cmd button
+    my $cmd = shift;
+    return qq(        <input target="_cmd" type="submit" name="--cmd" value="$cmd" title="execute o-saft.pl $cmd" >\n);
+} # _man_cmd_button
+
+sub _man_opt_button {
+    #? return input tag for a opt button
+    my $opt = shift;
+    my $val = shift;
+    return qq(        <label><input type="checkbox" name="$opt" value="$val" >$opt</label>\n);
+} # _man_cmd_button
+
+sub _man_menu_bar   {
+    #? print menu bar
+    my $menu  = _man_help_button("--help=ciphers-html&--content-type=html", '',
+                                 "open window with list of cipher suites (html format)")
+              . qq(        <a target="_help" href="docs/o-saft.html#aABOUT%20CGI" >! Help (this CGI form)</a>)
+              . qq(        <a target="_help" href="docs/o-saft.html" >? Help (complete help)</a>);
+    my $cmds;
+       $cmds .= _man_cmd_button($_)     foreach qw(+check +cipher +info +quick +vulns +protocols);
+    my $opts  = _man_opt_button('--format', 'html');
+       $opts .= _man_opt_button($_, '') foreach qw(--header --enabled --no-dns --no-http --no-sni --no-sslv2 --no-sslv3);
+    my $help  =
+         _man_help_button("--help",         '', "open window with complete help (plain text)")
+       . _man_help_button("--help=command", '', "open window with help for commands")
+       . _man_help_button("--help=checks",  '', "open window with help for checks")
+       . _man_help_button("--help=example", '', "open window with examples")
+       . _man_help_button("--help=opt",     '', "open window with help for options")
+       . _man_help_button("--help=FAQ",     '', "open window with FAQs")
+       . _man_help_button("--help=abbr",    '', "open window with the glossar")
+       . _man_help_button("--help=todo",    '', "open window with help for ToDO")
+       . _man_help_button("--help=ciphers-text", '', "open window with list of cipher suites (text format)")
+       . _man_help_button("--help=ciphers-html&--content-type=html", '', "open window with list of cipher suites (html format)");
+    return qq(  <div  class="navdiv">\n)
+         . _man_html_details("☰",    '', $menu)
+         . _man_html_details("Cmd",  '', $cmds)
+         . _man_html_details("Opt",  '', $opts)
+         . _man_html_details("Help", '', $help)
+         . qq(  </div> <!-- class=navdiv -->\n);
+} # _man_menu_bar
+
+sub _man_cgi_simple {
+    #? generate list of options for "Simple GUI"
+    my $txt = qq(       <table id="osaft_buttons">\n       </table>\n);
+        # Above  <table>  contains the quick buttons for some commands. These
+        # quick buttons should get their description from the later generated
+        # help text in this page. Hence the buttons are generated later using
+        # JavaScript function  osaft_buttons() so that the corresponding help
+        # text can be derived from the HTML page itself. SEE HTML:JavaScript
+    $txt   .= qq(       <hr>\n);
+    $txt   .= qq(       <div class="n">\n);
+    # show most common used options; layout by lines using BR
         # <div class=n> contains checkboxes for some options.These checkboxes
         # are added in following  foreach loop.
-        # Above HTML contains  <table id="osaft_buttons">  which contains the
-        # quick buttons for some commands. These quick buttons should get the
-        # description from the later generated help text in this page,  hence
-        # the buttons are not generated here but using  JavaScript at runtime
-        # so that the corresponding help text  can be derived from the (HTML)
-        # page itself. SEE HTML:JavaScript
-    #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
-    # show most common used options; layout by lines using BR
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
@@ -887,27 +931,32 @@ sub _man_form_head  {
                      traceKEY traceCMD  trace v     cgi-no-header BR
                  )) {
         if ('BR' eq $key) { $txt .= "        <br>\n"; next; }
-        my $tag_nam = '--' . $key;
+        my $tag_nam = "--$key";
         $txt .= _man_html_cbox('cgi', "        ", "q$tag_nam", $tag_nam, "", $tag_nam) . "\n";
     }
+    $txt .= "       </div><!-- class=n -->";
     $txt .= _man_html_go("cgi");
-    $txt .= << "EoHTML";
-      </div><!-- class=n -->
-     </div><!-- id="a" -->
-     <div id="b" >
-        <button class=r onclick="toggle_display('a');toggle_display('b');return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-        <!-- not yet working properly
-        <input type=text     name=--cmds size=55 title="type any command or option"/>/>
-        -->
-EoHTML
     return $txt;
-} # _man_form_head
+} # _man_cgi_simple
 
-sub _man_form_foot  {
-    #? print end of CGI form
-    _man_dbx("_man_form_foot() ...");
-    return $html{'form_end'} . $html{'script_endcgi'};
-} # _man_form_foot
+sub _man_html_form  {
+    #? print HTML form for CGI
+    my $cgi_bin = $html{'action'};
+    my $txt;
+    _man_dbx("_man_html_form() ...");
+    return $html{'form_anf'}
+         . _man_menu_bar()
+         . $html{'fieldset'}
+         . _man_html_details("Simple GUI", '', _man_cgi_simple())
+         . _man_html_details("Full GUI Commands & Options", 'open',
+                             _man_html('cgi', 'COMMANDS', 'LAZY')
+           . '<input type=reset  value="clear" title="clear all settings or reset to defaults"/>'
+                # print help starting at COMMANDS and a reset button
+           )
+         . $html{'form_end'}
+         . $html{'script_endcgi'}
+         ;
+} # _man_html_form
 
 sub _man_html_foot  {
     #? print footer of HTML page
@@ -925,7 +974,7 @@ sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
     my $title = '';
        $title = 'experimental option' if ("--format=html" eq $cmd_txt); # TODO: experimental hack
     return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
-    return sprintf("%s<label class=i for='%s'><input type=checkbox id='%s' name='%s' value='%s' title='%s' >%s</label>&#160;&#160;",
+    return sprintf(qq(%s<label class="i" for="%s"><input type="checkbox" id="%s" name="%s" value="%s" title="%s" >%s</label>&#160;&#160;),
                     $prefix, $tag_id, $tag_id, $tag_nam, $tag_val, $title, $cmd_txt);
 } # _man_html_cbox
 
@@ -948,8 +997,8 @@ sub _man_html_chck  {
         $tag_nam =  scalar((split(/\s+/, $cmd_opt))[0]);
         my ($key, $val) = split(/=/, $tag_nam); # split into key and value
         if (defined $val && $val =~ m/^[A-Z0-9:_-]+/) { # --opt=VALUE
-            my $label = sprintf("<label class=l >%s=</label>", $key);
-            my $input = sprintf("<input type=text id='%s' name='%s' value='' placeholder='%s'>", $tag_nam, $key, $val);
+            my $label = qq(<label class="l" >$key=</label>);
+            my $input = qq(<input type="text" id="$tag_nam" name="$key" value="" placeholder="$val">);
             return "$label$input";
         # else: see below
         }
@@ -968,7 +1017,7 @@ sub _man_html_ankor {
     #? return ankor tag for each word in given parameter
     my $n = shift;
     my $a = '';
-    return sprintf('<a name="a%s"></a>', $n) if ($n !~ m/^[-\+]+/);
+    return qq(<a name="a$n"></a>) if ($n !~ m/^[-\+]+/);
     foreach my $n (split(/[\s,]+/,$n)) {
         $a .= sprintf("<a name='a%s'></a>", _man_name_ankor($n));
     }
@@ -980,8 +1029,8 @@ sub _man_html_go    {
     # SEE HTML:start
     my $key = shift;
     return "" if ($key ne 'cgi');
-    my $top = sprintf("%8s<a class=b href='#aCOMMANDS' title='return to Commands'>^</a>\n", "");
-    my $run = sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "");
+    my $top = qq(        <a class="b" href="#aFORM" title="return to top">^</a>\n);
+    my $run = qq(        <input type="submit" value="start" title="execute o-saft.pl with selected commands and options"/>\n);
     return "$top$run";
 } # _man_html_go
 
@@ -1072,11 +1121,11 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
                     # code or example line
                     my $v=$1;
                     $v=~s!<<!&lt;&lt;!g;
-                    $txt .= "<div class=c >$v</div>\n";
+                    $txt .= qq(<div class="c" >$v</div>\n);
                     next
                 };
-        s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
+        s!'([^']*)'!<span class="c" >$1</span>!g;   # markup examples
         #dbx# m/-SSL/ && do { print STDERR "##1 $_ ###"; };
         m![IX]&(?:[^&]*)&! && do {
                     # avoid spaces in internal links to anchors
@@ -1087,7 +1136,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
         s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
         s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
             # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
-        s!^\s+($mytool .*)!<div class=c >$1</div>!; # example line
+        s!^\s+($mytool .*)!<div class="c" >$1</div>!; # example line
         # detect lists, very lazy ... # SEE HTML:Known Bugs
         m/^=item +\* (.*)/    && do { $txt .= "<li>$1</li>\n";next;};
         m/^=item +\*\* (.*)/  && do { $txt .= "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
@@ -1708,8 +1757,8 @@ sub man_help_brief  {
     $pod .= _man_foot(15);
     my $opt = "";
        $opt = " --header" if (0 < $cfg_header); # be nice to the user
-    $pod .= sprintf("\nFor more options  see: $cfg{me}$opt --help=opt");
-    $pod .= sprintf("\nFor more commands see: $cfg{me}$opt --help=commands\n\n");
+    $pod .= qq(\nFor more options  see: $cfg{me}$opt --help=opt);
+    $pod .= qq(\nFor more commands see: $cfg{me}$opt --help=commands\n\n);
     return $pod;
 } # man_help_brief
 
@@ -1772,7 +1821,7 @@ sub man_warnings    {
         if ($bad == 1) {
              # unexpected format, silently print and continue
              #dbx# _dbx("bad $_");
-             $txt .= sprintf("%s", $_);
+             $txt .= $_;
              next;
         }
         $err =~ s/\$STR\{ERROR}/$STR{ERROR}/;
@@ -2200,9 +2249,7 @@ sub man_cgi         {
     return
         _man_http_head() .
         _man_html_head() .
-        _man_form_head() .
-        _man_html('cgi', 'COMMANDS', 'LAZY') . # print help starting at COMMANDS
-        _man_form_foot() .
+        _man_html_form() .
         $html{'warning_box'} .  # not exactly the place in HTML for this <div>, but syntactically ok
         _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
@@ -2560,7 +2607,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.71 2022/10/21
+2.72 2022/10/26
 
 =head1 AUTHOR
 
