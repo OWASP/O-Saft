@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.97 22/09/28 21:02:14
+# SID   @(#) help.txt 1.98 22/10/26 19:56:57
 
 NAME
 
@@ -3117,10 +3117,10 @@ CUSTOMISATION
         the value to be set for this key.  Note that unknown keys are ignored
         silently.
 
-        If KEY=TEXT is an exiting filename, all lines from that file are read
-        and set. For details see  CONFIGURATION FILE  below.
+        If  'KEY=TEXT'  is an existing filename, all lines from that file are
+        read and set. For details see  CONFIGURATION FILE  below.
 
-        CIPHER  must be a valid cipher suite name as shown with:
+        'CIPHER'  must be a valid cipher suite name as shown with:
 
               $0 ciphers
 
@@ -3129,7 +3129,7 @@ CUSTOMISATION
 
     CONFIGURATION FILE
 
-        Note that the file can contain 'KEY=TEXT' pairs for any kind of the
+        Note that the file can contain  'KEY=TEXT' pairs for any kind of the
         configuration as given by the  --cfg-CFG  option.
 
         For example  when used with  --cfg-text=FILE  only values for  %text
@@ -3154,8 +3154,8 @@ CUSTOMISATION
         of  'KEY VALUE'.
 
         Configurations options must be written like '--cfg-CFG=KEY=VALUE'.
-        Where 'CFG' is any of:  'cmd', 'check', 'data', 'text'  and  'KEY' is
-        any key from internal data structure (see above).
+        Where  'CFG'  is any of:  'cmd', 'check', 'data', 'text'  and  'KEY'
+        is any key from internal data structure (see above).
 
         All commands and options given on command-line will  overwrite  those
         found in the rc-file.
@@ -3221,14 +3221,22 @@ CIPHER NAMES
           5) beside IANA, openssl's cipher names are preferred
           6) name variants are supported, as long as they are unique
           7) hex numbers can be used
+          8) our internal hex numbers for ciphers are like '0x0300CCA9'
 
-        [IANA]    http://www.iana.org/assignments/tls-parameters/tls-parameters.txt September 2013
+        [IANA]    http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
 
         [openssl] ... openssl 1.0.1
 
-        If in any doubt, use  +list  --v  to get an idea about the mapping.
+        If in any doubt, use any of the  provided commands or options to list
+        to show our known ciphers. For example:
+
+              $0 --test-ciphers-show  # or any other  --test-ciphers-*
+              $0 --list
+              $0 --help=ciphers-text
+              $0 ciphers -V
+
         Use  --help=regex  to see which regex are used to handle all variants
-        herein.
+        of cipher suite names herein.
 
         Mind the traps and dragons with cipher names and what number they are
         actually mapped to. In particular when  --lib,  --exe  or  --openssl
@@ -3243,7 +3251,7 @@ CIPHER NAMES
         For example the cipher commonly known as 'DES-CBC3-SHA' is identified
         by '0x020701c0' (in openssl) and has 'SSL2_DES_192_EDE3_CBC_WITH_SHA'
         as constant name. A definition is missing in IANA, but there is
-        'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.  Thers is also '0x000A' for the same
+        'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.  There is also '0x000A' for the same
         cipher 'DES-CBC3-SHA'.  Both are valid, first one if used with SSLv2,
         and second one when used with SSLv3.
         It's the responsibility of each tool to map the human readable cipher
