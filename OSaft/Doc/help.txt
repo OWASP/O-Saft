@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.98 22/10/26 19:56:57
+# SID   @(#) help.txt 1.99 22/10/26 22:24:14
 
 NAME
 
@@ -829,7 +829,7 @@ OPTIONS
 
       --help=gen-cgi
 
-          Print documentation in format to be used for CGI.
+          Print HTML form to be used for CGI.
 
       --help=error
       --help=problem
@@ -4055,6 +4055,71 @@ INSTALLATION
         Also note that using  stand-alone executable have not been tested the
         same way as the  $0  itself. Use them at your own risk.
 
+
+ABOUT CGI
+
+        This script can be used as CGI application.  Output is the same as in
+        common CLI mode. The output will be prefixed with the HTTP header
+        'Content-Type:text/plain'.
+        The script  o-saft.cgi  should be used as wrapper for $0 .
+        The HTML form  o-saft.cgi.html  which can be generated with:
+
+              $0 --help=gen-cgi
+
+        should be used as front-end for  o-saft.cgi.
+
+    CGI-form functionality
+
+        This form provides following functionality:
+
+        * top menu bar with following menus:
+          * ☰           - general informations about CGI usage
+          * Cmd         - quick commands menu
+          * Opt         - quick options menu
+          * Help        - various help pages
+
+        * input field for a target (hostname or URL)
+
+        * GUI sections
+          * Simple GUI  - simple form with most common commands and options
+                          each provided +command buttons submit the form with
+                          the selected options and the clicked command
+
+          * Full GUI Commands & Options
+                        - form with all commands and options,  its content is
+                          the same as the  COMMANDS  and  OPTIONS  section of
+                          the complete help page (see  --help  ).
+
+        In both GUI sections exist following buttons:
+
+        * ^             - return to top of form
+        * start         - submit form with selected command and options
+
+        In general, command buttons which submit the form are yellow. Buttons
+        which show some help, mainly in a new browser tab, are gray.
+
+    CGI-form limitations
+
+        * the generated form provides commands and options which are rejected
+          by  o-saft.cgi  (see below).
+
+        * the generated form may contain references (links) to sections which
+          are not part of the form
+
+        * only one target can be provided,  however, it is obvious how to use
+          more targets ...
+
+    CGI script limitations
+
+        The script returns an empty page (HTML body) for following reasons:
+
+        * use of local or multicast IPs as target
+
+        * use of dangerous commands or options
+
+        For deatils pleasesee
+
+              perldoc o-saft.cgi
 
 DOCKER
 
