@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.73 22/10/27 21:44:08";
+my  $SID_man= "@(#) o-saft-man.pm 2.74 22/10/27 22:42:06";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -411,9 +411,9 @@ EoFUNC
     --border-0:     0px solid #fff;
     --border-1:     1px solid #000;     /* black */
     --border-w:     1px solid #fff;     /* white */
-    --radius-10:    0px 0px 10px 10px;
-    --radius-20:    0px 0px 20px 20px;
-    --shadow:       1px 4px 4px #666;
+    --radius-10:    0px 10px 10px 10px;
+    --radius-20:    0px  0px 20px 20px;
+    --shadow:       1px  4px  4px #666;
  }
 EoROOT
 
@@ -472,7 +472,6 @@ fieldset > details > summary    { background:var(--bg-button); } // nicht schön
 */
  .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:5 }
  .navdiv > details:first-child >summary  { list-style:none; font-size:120%; max-width:2em !important; }
- .navdiv > details       { float:left;  }
  .navdiv > details   div { margin-left:-0.3em; background:var(--bg-menu); z-index:3;  }
  .navdiv > details > div > input[type="submit"]  { display:block; }
  .navdiv > details > div > label         { font-weight:normal; display:block; }
@@ -653,7 +652,7 @@ EoFORM
  <style>
   /* message box "Note", if necessary # TODO: font-size not working in firefox */
   .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
-  .m > div      {position:relative; min-width:10em; margin:13% auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:120%; }
+  .m > div      {position:relative; min-width:10em; margin:4em auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:120%; }
   .m > div > a  {opacity:1; pointer-events:auto; }
   .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:var(--bg-blue); color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 3px 3px #5bb; }
   .m > div > a:hover  {background: #5bb; }
@@ -777,7 +776,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.73'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.74'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2606,7 +2605,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.73 2022/10/27
+2.74 2022/10/27
 
 =head1 AUTHOR
 
