@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.61 22/09/21 09:54:29
+#?      @(#) Makefile.dev 1.62 22/10/27 13:38:34
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.61
+_SID.dev           := 1.62
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -79,6 +79,10 @@ LIST.o-saft-pl     :=
 LIST.o-saft-sh     :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
+LIST.o-saft-sh-post:= \
+	-post=HTML-simple.awk -post=HTML-table.awk  -post=lazy_checks.awk \
+	-post=JSON-array.awk  -post=JSON-struct.awk \
+	-post=XML-value.awk   -post=XML-attribute.awk 
 LIST.osaft         :=
 
 # Ciphers.pm supports command/options with or without + and -- prefix
@@ -245,6 +249,15 @@ ifndef dev-macros-generated
       $(eval   test.dev.$(prg).all.log :  $(ALL.test.dev.$(prg).log)     ) \
     )
 
+    $(eval _prg=o-saft-sh-)
+    $(foreach arg, $(LIST.$(_prg)post),\
+        $(eval _target=testarg-dev-$(_prg)$(subst =,-,$(arg)) ) \
+        $(eval ALL.test.dev.$(_prg)post += $(_target) ) \
+        $(eval $(_target)%:    TEST.init = $(arg) ) \
+    )
+    undefine _prg
+    undefine _target
+
     # TEST.init for testarg-dev-* targets
     $(foreach prg, $(LIST.program),\
       $(foreach arg, $(LIST.$(prg)),$(eval testarg-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
@@ -271,16 +284,20 @@ test.dev.o-saft-man.all.log:test.dev.osaft-man.all.log
 $(_TEST.dev.tmpfile):
 	@mkdir $@
 
-# more individual targets for EXE.osaft (calling contrib/bunt.pl)
+# more individual targets for EXE.o-saft-sh (calling contrib/bunt.pl)
 # TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
 #       testarg-dev-o-saft-sh_--colour%:    TEST.dev.hosts  = localhost
-testarg-dev-o-saft-sh_--colour:      TEST.args = --colour +unknown-cmd localhost
-testarg-dev-o-saft-sh_--colour+ocsp: TEST.args = --colour        +ocsp localhost
-testarg-dev-o-saft-sh_--colour-line: TEST.args = --colour --line +ocsp localhost
+testarg-dev-o-saft-sh_--colour:      TEST.args = --colour +unknown-cmd $(TEST.host)
+testarg-dev-o-saft-sh_--colour+ocsp: TEST.args = --colour        +ocsp $(TEST.host)
+testarg-dev-o-saft-sh_--colour-line: TEST.args = --colour --line +ocsp $(TEST.host)
 ALL.test.dev            += \
 	testarg-dev-o-saft-sh_--colour \
 	testarg-dev-o-saft-sh_--colour+ocsp \
 	testarg-dev-o-saft-sh_--colour-line
+
+testarg-dev-o-saft-sh--post%:   EXE.pl    = $(EXE.o-saft-sh)
+testarg-dev-o-saft-sh--post%:   TEST.args = --no-rc --header $(TEST.host)
+#testarg-dev-o-saft-sh--post%:   TEST.args = $(TEST.host)
 
 # OSaft/Doc/Data.pm function needs a file where to read the information
 # it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
@@ -414,7 +431,8 @@ test.dev.grep.warn: testarg-dev-grep_warn
 
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
-ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep) $(ALL.test.dev.misc)
+ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep) \
+			$(ALL.test.dev.misc) $(ALL.test.dev.o-saft-sh-post)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
