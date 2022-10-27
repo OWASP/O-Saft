@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.72 22/10/26 12:03:45";
+my  $SID_man= "@(#) o-saft-man.pm 2.73 22/10/27 21:44:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -196,6 +196,7 @@ EoLINK
   <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
   <!-- CSP in meta tag is not recommended, but it servs as hint how to set
        the HTTP header Content-Security-Policy -->
+  <meta name="viewport" content="width=device-width,initial-scale=0.4">
   <title>__HTML_title__</title>
 EoMETA
 
@@ -460,7 +461,7 @@ EoButton
 /* { cgi page only */
  fieldset           { margin:     0px;  }
  fieldset > details:nth-child(2) > div  { z-index:2; } /* "Simple GUI" on top */
- fieldset > details > div       { margin:0.1em 0.7em 0px -0.9em; background:white; overflow-y:scroll; }
+ fieldset > details > div       { margin:0.1em 0.55em 0px -0.85em; background:white; overflow-y:scroll; }
 /*
 fieldset > details > div:focus  { display:block; } // geht nicht
 fieldset > details > summary    { background:var(--bg-button); } // nicht schön
@@ -471,12 +472,11 @@ fieldset > details > summary    { background:var(--bg-button); } // nicht schön
 */
  .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:5 }
  .navdiv > details:first-child >summary  { list-style:none; font-size:120%; max-width:2em !important; }
- .navdiv > details       { min-width:4em;  float:left; }
- .navdiv > details   div { background:var(--bg-menu); z-index:3;  }
+ .navdiv > details       { float:left;  }
+ .navdiv > details   div { margin-left:-0.3em; background:var(--bg-menu); z-index:3;  }
  .navdiv > details > div > input[type="submit"]  { display:block; }
  .navdiv > details > div > label         { font-weight:normal; display:block; }
- .navdiv > details > div > details > div { margin-left:0.8em; }
- .navdiv > details > div [type="submit"] { margin: 0.2em 0px 0.2em 0px; }
+ .navdiv > details > div > details > div { margin-left:0.8em; } /* submenu */
  details >div            { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
  details[open] > summary { text-decoration:underline; }
 /* } cgi page only */
@@ -653,12 +653,11 @@ EoFORM
  <style>
   /* message box "Note", if necessary # TODO: font-size not working in firefox */
   .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
-  .m > div      {position:relative; width:35em; margin:13% auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:150%; }
-  .m > div > p  {font-size:120%; }
+  .m > div      {position:relative; min-width:10em; margin:13% auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:120%; }
   .m > div > a  {opacity:1; pointer-events:auto; }
   .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:var(--bg-blue); color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 3px 3px #5bb; }
   .m > div > a:hover  {background: #5bb; }
-  .m > div > h3       {margin:-0.8em; border-bottom:var(--border-1); margin-bottom:1em; }
+  .m > div > h3       {margin:-0.8em 0px 1em 0px; border-bottom:var(--border-1); }
   .m > div > h3:before{content:"\00a0\00a0\00a0" }
  </style>
  <div id="warn" class="m"> <div>
@@ -778,7 +777,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.72'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.73'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2607,7 +2606,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.72 2022/10/26
+2.73 2022/10/27
 
 =head1 AUTHOR
 
