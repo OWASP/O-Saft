@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.99 22/10/26 22:24:14
+# SID   @(#) help.txt 1.100 22/10/27 11:16:36
 
 NAME
 
@@ -4082,15 +4082,15 @@ ABOUT CGI
 
         * GUI sections
           * Simple GUI  - simple form with most common commands and options
-                          each provided +command buttons submit the form with
-                          the selected options and the clicked command
+                          Each provided +command buttons submit the form with
+                          the selected options and the clicked command.
 
           * Full GUI Commands & Options
                         - form with all commands and options,  its content is
-                          the same as the  COMMANDS  and  OPTIONS  section of
+                          The same as the  COMMANDS  and  OPTIONS  section of
                           the complete help page (see  --help  ).
 
-        In both GUI sections exist following buttons:
+        In both GUI sections following buttons exist:
 
         * ^             - return to top of form
         * start         - submit form with selected command and options
@@ -4100,26 +4100,30 @@ ABOUT CGI
 
     CGI-form limitations
 
-        * the generated form provides commands and options which are rejected
+        * The generated form provides commands and options which are rejected
           by  o-saft.cgi  (see below).
 
-        * the generated form may contain references (links) to sections which
-          are not part of the form
+        * The generated form may contain references (links) to sections which
+          are not part of the form.
 
-        * only one target can be provided,  however, it is obvious how to use
+        * Only one target can be provided,  however, it is obvious how to use
           more targets ...
+
+        * The  --format=html  option should be used together with  --header ,
+          otherwise the generated HTML may be corrupted for some commands.
 
     CGI script limitations
 
         The script returns an empty page (HTML body) for following reasons:
 
-        * use of local or multicast IPs as target
+        * Use of local or multicast IPs as target.
 
-        * use of dangerous commands or options
+        * Use of dangerous commands or options.
 
         For deatils pleasesee
 
               perldoc o-saft.cgi
+
 
 DOCKER
 
