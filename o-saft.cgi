@@ -139,7 +139,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.65 22/09/12 14:37:33";
+my $SID_cgi = "@(#) o-saft.cgi 1.66 22/10/27 09:41:29";
 my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -180,7 +180,7 @@ sub _warn_and_exit  {
 } # _warn_and_exit
 
 if (not $ENV{'QUERY_STRING'}) {
-	print "**WARNNG: test mode: restart using args as value in QUERY_STRING\n";
+	print "**WARNING: test mode: restart using args as value in QUERY_STRING\n";
 	_warn_and_exit "call without parameters" if (1 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
@@ -234,26 +234,44 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.65\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.66\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
 
-	_print_if_test "**WARNNG: test mode: die with detailed messages on errors";
+	_print_if_test "**WARNING: test mode: die with detailed messages on errors";
 
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
 	}
 
-	# ignore (just remove) potential dangerous commands and options
+	# check for potential dangerous commands and options, simply ignore
+        # (just remove) them; examples:
+        #       --cgi&--cmd=dump                # ignore
+        #       --cgi&--cmd=+dump               # ignore
+        #       --cgi&--url=+dump               # ignore
+        #       --cgi&--trace=                  # ignore
+        #       --cgi&--opt=--trace=            # ignore
+        #       --cgi&--unknown=--v=            # ignore
 	# also fix trailing =
 	my $ignore = qr/
-		^--(?:
-		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version) # illegal commands
+		(?:^--
+		      # illegal commands and options
+		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version)
 		     |(?:cmd|url)=--(?:trace|--v)   # illegal options given as URL
-		     |trace|v                       # options with to verbose output
-		     |ca.?(?:file|path)|rc=         # may be used to enumerate paths
+		      # illegal options
+		     |trace|v                       # options to verbose output
+		     |ca[._-]?(?:file|path)|rc=     # may be used to enumerate paths
+		)|(?:=
+		      # illegal commands as parameter value
+		      [+]?(?:dump|exec|list|libversion|version)
+		      # illegal options as parameter value
+		     |--(?:trace|--v)
+		     |--ca[._-]?(?:file|path)|rc=
 		)/xi;
+                # o-saft.pl splits key=value arguments at = ,  if 'key' is an 
+                # unknown option then 'value'  turns into  a valid command or
+                # option argument; see o-saft.pl's argument parser
 	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 	my @save_argv;
 	foreach my $arg (@argv) {
@@ -271,6 +289,8 @@ if ($me =~/\.cgi$/) {
 		$arg =~ s#=$##;   # remove trailing = in key=value
 		push(@save_argv, $arg);
 	}
+	_print_if_test "**ARGS_in: @argv";
+	_print_if_test "**ARGSuse: @save_argv";
 	@argv = @save_argv;
 	#dbx# system "echo  'argv=@argv' >> /tmp/osaft.cgi.log";
 
@@ -291,12 +311,13 @@ if ($me =~/\.cgi$/) {
 	my $err = 0;
 	my $key = '&--(?:host|url)=';
 	foreach my $dangerous (
-		qr/[^a-zA-Z0-9,.:_&\!\/=\+-]/i,
+		qr/[^a-zA-Z0-9,.:_&\!\/=+-]/i,
 			# dangerous characters anywhere
 			# above whitelist for allowed characters!
 			# FIXME: this blocks also valid IPv6 in URL because of [ and/or ]
 
 		qr/&--(?:env|exe|lib|call|openssl)/i,
+		qr/=--(?:env|exe|lib|call|openssl)/i,   # see comment for $ignore above
 			# dangerous commands and options
 
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
@@ -459,14 +480,13 @@ if ($me =~/\.cgi$/) {
 			# FIXME: also blocks FQDN:port like   cafe:4711/path
 
 		) {
-		#dbx# print "#dbx: $qs =~ m#$dangerous#\n";
 		if ($qs =~ m#$dangerous#) {
+			_print_if_test "**ERROR: $qs";
 			_print_if_test "**ERROR: $dangerous";
 			$err++;
 		}
 	}
 	_warn_and_exit "dangerous parameters; aborted" if 0 < $err;
-	#dbx# print "\nQS: $qs\n";
 
 	# prepare execution environment
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
