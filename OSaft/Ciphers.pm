@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.53 22/10/07 21:23:43";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.54 22/10/27 12:03:00";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -289,6 +289,14 @@ our %ciphers = (
 # ...
 ); # %ciphers
 
+# recommended according  http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
+our @cipher_iana_recomended = qw(
+    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x0300130$
+    0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
+    0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
+    0x0300D001 0x0300D002 0x0300D005
+); # cipher_iana_recomended
+
 our $cipher_results = { # list of checked ciphers
     #--------------+--------+--------------+----------+
     # key       => [  ssl    supported ], # cipher suite name
@@ -389,7 +397,7 @@ sub key2text    {
 
 =head2 get_alias( $cipher_key)
 
-Return all copher suite names except the first cipher suite name.
+Return all cipher suite names except the first cipher suite name.
 
 =head2 get_const( $cipher_key)
 
@@ -402,6 +410,10 @@ Return all copher suite names except the first cipher suite name.
 =head2 get_encsize( $cipher_key)
 
 Return encryption block size of cipher suite.
+
+=head2 get_iana(  $cipher_key)
+
+Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
 
 =cut
 
@@ -628,6 +640,14 @@ sub get_desc    {
             get_param($key, 'notes'),
     );
 } # get_desc
+
+sub get_iana        {
+    #? return "yes" if cipher suite is recommended by IANA, "no" otherwise
+    my $key = shift;
+       $key = text2key($key);       # normalize cipher key
+    return (grep{ /^$key/i} @cipher_iana_recomended) ? "yes" : "no";
+} # get_iana
+
 
 sub get_cipherkeys  {
     my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
@@ -1579,7 +1599,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.53 2022/10/07
+2.54 2022/10/27
 
 =head1 AUTHOR
 
