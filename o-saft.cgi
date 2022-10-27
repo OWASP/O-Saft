@@ -139,7 +139,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.66 22/10/27 09:41:29";
+my $SID_cgi = "@(#) o-saft.cgi 1.67 22/10/27 22:39:21";
 my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -234,7 +234,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.66\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.67\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -255,14 +255,14 @@ if ($me =~/\.cgi$/) {
         #       --cgi&--unknown=--v=            # ignore
 	# also fix trailing =
 	my $ignore = qr/
-		(?:^--
+		^--(?:
 		      # illegal commands and options
 		      (?:cmd|url)=[+]?(?:dump|exec|list|libversion|version)
 		     |(?:cmd|url)=--(?:trace|--v)   # illegal options given as URL
 		      # illegal options
 		     |trace|v                       # options to verbose output
 		     |ca[._-]?(?:file|path)|rc=     # may be used to enumerate paths
-		)|(?:=
+		)|=(?:
 		      # illegal commands as parameter value
 		      [+]?(?:dump|exec|list|libversion|version)
 		      # illegal options as parameter value
