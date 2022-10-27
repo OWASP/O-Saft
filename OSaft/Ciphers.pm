@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.54 22/10/27 12:03:00";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.55 22/10/27 12:13:04";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1064,8 +1064,8 @@ sub show_desc       {
 sub show_sorted     {
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    my $head = "= OWASP openssl cipher suite";
-    my $line = "=------+-------+----------------------------------------------";
+    my $head = "= OWASP IANA    openssl cipher suite";
+    my $line = "=------+-------+-------+----------------------------------------------";
     print << 'EoT';
 
 === internal data structure: ciphers sorted according strength ===
@@ -1085,7 +1085,7 @@ EoT
     push(@unsorted, get_name($_)) foreach sort keys %ciphers;
     foreach my $c (sort_names(@unsorted)) {
         my $sec = get_sec(get_key($c));
-        push(@sorted, sprintf("%4s\t%s\t%s", get_cipher_owasp($c), $sec, $c));
+        push(@sorted, sprintf("%4s\t%s\t%s\t%s", get_cipher_owasp($c), get_iana(get_key($c)), $sec, $c));
     }
     print foreach sort @sorted;
     print ($line);
@@ -1599,7 +1599,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.54 2022/10/27
+2.55 2022/10/27
 
 =head1 AUTHOR
 
