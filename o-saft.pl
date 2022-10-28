@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.37 22/09/20 15:06:47"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.38 22/10/28 23:41:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2820,10 +2820,10 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
-sub _get_ciphers_list   {
+sub _get_cipherlist_openssl {
     #? return space-separated list of cipher suites according command-line options
     #  this is usefull for display only or for use with openssl
-    _trace("_get_ciphers_list(){");
+    _trace("_get_cipherlist_openssl(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default is 'rfc'
     _trace("cipherpattern   = $cfg{'cipherpattern'}, cipherrange= $range");
@@ -2860,9 +2860,14 @@ sub _get_ciphers_list   {
         die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
-    _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
+    _trace("_get_cipherlist_openssl\t= @ciphers }"); # TODO: trace a bit late
     return @ciphers;
-} # _get_ciphers_list
+} # _get_cipherlist_openssl
+
+sub _get_cipherlist     {
+    #? return space-separated list of cipher suites according command-line options
+    return _get_cipherlist_openssl();
+} # _get_cipherlist
 
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
@@ -3158,7 +3163,7 @@ sub ciphers_scan        {
     return $results;
 } # ciphers_scan
 
-sub check_certchars($$) {
+sub check_certchars     {
     #? check for invalid characters in certificate
     my ($host, $port) = @_;
     _y_CMD("check_certchars() ". $cfg{'done'}->{'check_certchars'});
@@ -3199,7 +3204,7 @@ sub check_certchars($$) {
     return;
 } # check_certchars
 
-sub check_dh        {
+sub check_dh            {
     #? check if target is vulnerable to Logjam attack; uses \$cipher_results
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
@@ -3248,7 +3253,7 @@ sub check_dh        {
     return;
 } # check_dh
 
-sub check_url($$)   {
+sub check_url           {
     #? request given URL and check if it is a valid CRL or OCSP site
     #? returns result of check; empty string if anything OK
     my ($uri, $type) = @_;      # type is 'ext_crl' or 'ocsp_uri'
@@ -3421,7 +3426,7 @@ sub check_url($$)   {
     return $txt;
 } # check_url
 
-sub check_nextproto {
+sub check_nextproto     {
     #? check target for ALPN or NPN support; returns list of supported protocols
     my ($host, $port, $type, $mode) = @_;
     # $type is ALPN or NPN; $mode is all or single
@@ -3481,7 +3486,7 @@ sub check_nextproto {
     return @npn;
 } # check_nextproto
 
-sub checkalpn       {
+sub checkalpn           {
     #? check target for ALPN or NPN support; returns void
     # stores list of supported protocols in corresponding $info{}
     # uses protocols from $cfg{'protos_next'} only
@@ -3504,7 +3509,7 @@ sub checkalpn       {
     return;
 } # checkalpn
 
-sub checkpreferred  {
+sub checkpreferred      {
     #? test if target prefers strong ciphers, aka SSLHonorCipherOrder
     my ($host, $port) = @_;     # not yet used
     _y_CMD("checkpreferred() " . $cfg{'done'}->{'checkpreferred'});
@@ -3528,7 +3533,7 @@ sub checkpreferred  {
     return;
 } # checkpreferred
 
-sub checkcipher($$) {
+sub checkcipher         {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $key) = @_;
     my $c    = OSaft::Ciphers::get_name($key);  # $cipher = $c;
@@ -3577,7 +3582,7 @@ sub checkcipher($$) {
     return;
 } # checkcipher
 
-sub _checkcipher_init  {
+sub _checkcipher_init   {
     # initialise $check{...}-{val} with empty string, because they will be
     # extended per $ssl (protocol)
     foreach my $key (qw(
@@ -3591,7 +3596,7 @@ sub _checkcipher_init  {
     return;
 } # _checkcipher_init
 
-sub checkciphers    {
+sub checkciphers        {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port, $results) = @_;
 
@@ -7533,7 +7538,7 @@ if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
     _yeast_TIME("get{");
     if ((_need_cipher() > 0) or (_need_default() > 0)) {
         _y_CMD("  get cipher list ...");
-        @{$cfg{'ciphers'}} = _get_ciphers_list();
+        @{$cfg{'ciphers'}} = _get_cipherlist_openssl();
     } # _need_cipher or _need_default
     _yeast_TIME("get}");
 }
