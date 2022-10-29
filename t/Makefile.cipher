@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.24 22/10/29 19:03:06
+#?      @(#) Makefile.cipher 1.25 22/10/29 21:10:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.24
+_SID.cipher        := 1.25
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -81,21 +81,21 @@ LIST.cipher        := \
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.cipher),\
 	$(eval _target=testcmd-cipher-+cipher-$(subst =,-,$(arg))) \
-	$(eval $(_target)_%:  TEST.args = $(arg) ) \
-	$(eval ALL.testcipher  += $(_target)_ ) \
+	$(eval $(_target)_%:  TEST.args = $(arg)) \
+	$(eval ALL.testcipher  += $(_target)_)    \
     )
     $(foreach mode, $(LIST.cipher-mode),\
       $(foreach arg, $(LIST.cipher-pattern),\
 	$(eval _target=testcmd-cipher-+cipher-$(subst =,-,$(arg))$(subst =,-,$(mode))) \
 	$(eval $(_target)_%:  TEST.args = $(arg) $(mode) ) \
-	$(eval ALL.testcipher  += $(_target)_ ) \
+	$(eval ALL.testcipher  += $(_target)_) \
       ) \
     )
     # for --test-ciphers-list see Makefile.opt
     $(foreach arg, $(LIST.cipher-range),\
 	$(eval _target=testcmd-cipher-+test-ciphers-list-$(subst =,-,$(arg))) \
-	$(eval $(_target):    TEST.args = $(arg) ) \
-	$(eval ALL.testciphers += $(_target) ) \
+	$(eval $(_target):    TEST.args = $(arg)) \
+	$(eval ALL.testciphers += $(_target))     \
     )
     undefine _target
 endif
@@ -120,6 +120,7 @@ testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
 testcmd-cipher-+cipher---trace-host_%:  TEST.args  += +cipher --showhost --trace-KEY
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
+
 # not yet implemented # TODO: hence missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
 testcmd-cipher-+cipher-weak_%:      TEST.args  += +cipher-weak
