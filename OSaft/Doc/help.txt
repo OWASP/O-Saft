@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.100 22/10/27 11:16:36
+# SID   @(#) help.txt 1.101 22/10/29 17:28:51
 
 NAME
 
@@ -1511,9 +1511,19 @@ OPTIONS
           * 'full'              all constants  0x03000000 .. 0x03FFFFFF
           * 'SSLv2'             all ciphers according RFC for SSLv2
           * 'SSLv2_long'        more lazy list of constants for SSLv2 ciphers
+          * 'SSLv3'             all ciphers according RFC for SSLv3
+          * 'SSLv3_SSLv2'       all ciphers for SSLv3 with SSLv2
+          * 'TLSv12'            all ciphers according RFC for TLSv12
+          * 'TLSv13'            all ciphers according RFC for TLSv13
+          * 'c0xx'              constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
+          * 'ccxx'              constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
+          * 'ecc'               all constants for ciphers using ECC
 
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
+
+          For details about the ranges, please see:
+              $0 --help=ranges
 
       --slow-server-delay=SEC
 
