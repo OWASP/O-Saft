@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.101 22/10/29 17:28:51
+# SID   @(#) help.txt 1.102 22/10/29 17:37:44
 
 NAME
 
@@ -1523,7 +1523,14 @@ OPTIONS
           It does not make sense to use it for other protocols; however ...
 
           For details about the ranges, please see:
-              $0 --help=ranges
+              $0 --help=range
+
+      --cipherpattern=PATTERN
+
+          Specify pattern for cipher suite names to be tested with  +cipher .
+          'PATTERN's are similar to those supported by openssl, like  'NULL',
+          'AES', 'MD5'. For a complete list please see:
+              $0 --help=pattern
 
       --slow-server-delay=SEC
 
