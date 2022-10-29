@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.103 22/10/29 17:43:03
+# SID   @(#) help.txt 1.104 22/10/29 17:56:13
 
 NAME
 
@@ -1525,13 +1525,19 @@ OPTIONS
           For details about the ranges, please see:
               $0 --help=range
 
+          If  any  option of  --cipherpattern=PATTERN  or --cipher=CIPHER  is
+          used,  --cipherrange=RANGE  is ignored.
+
       --cipherpattern=PATTERN
 
           Specify pattern for cipher suite names to be tested with  +cipher .
           'PATTERN's are similar to those supported by openssl, like  'NULL',
           'AES', 'MD5'. Default is:  'ALL:NULL:eNULL:aNULL:LOW:EXP'.
+
           For a complete list please see:
               $0 --help=pattern
+
+          This option is only used together with  --ciphermode=openssl .
 
       --slow-server-delay=SEC
 
