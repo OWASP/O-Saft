@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.102 22/10/29 17:37:44
+# SID   @(#) help.txt 1.103 22/10/29 17:43:03
 
 NAME
 
@@ -1529,7 +1529,8 @@ OPTIONS
 
           Specify pattern for cipher suite names to be tested with  +cipher .
           'PATTERN's are similar to those supported by openssl, like  'NULL',
-          'AES', 'MD5'. For a complete list please see:
+          'AES', 'MD5'. Default is:  'ALL:NULL:eNULL:aNULL:LOW:EXP'.
+          For a complete list please see:
               $0 --help=pattern
 
       --slow-server-delay=SEC
