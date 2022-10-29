@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.39 22/10/29 18:02:21"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.40 22/10/29 18:55:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -3072,10 +3072,15 @@ sub ciphers_scan_raw    {
                 $Net::SSLhello::usesni = 0;
             }
         }
-        my @all = _get_cipherlist_hex($ssl);
         my @accepted = [];  # accepted ciphers (cipher keys)
+        my @all = _get_cipherlist_hex($ssl);
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
+        if ("@all" =~ /^\s*$/) {
+            _warn("407: no valid ciphers specified; no check done for '$ssl'");
+            next;           # ensure warning for all protocols
+            #return $results;# only one warning
+        }
         if (_is_cfg_do('cipher_intern')) {  # may be called for cipher_dump too
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
