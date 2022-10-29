@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.64 22/10/29 21:54:09
+#?      @(#) Makefile.dev 1.65 22/10/29 22:19:10
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.64
+_SID.dev           := 1.65
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -255,6 +255,7 @@ ifndef dev-macros-generated
         $(eval ALL.test.dev.$(_prg)post += $(_target)) \
         $(eval $(_target):     TEST.init = $(arg))     \
     )
+    $(eval     test.dev.$(_prg)post.all :  $(ALL.test.dev.$(_prg)post))
     undefine _prg
     undefine _target
 
