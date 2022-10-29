@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.38 22/10/28 23:41:47"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.39 22/10/29 18:02:21"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2828,7 +2828,7 @@ sub _get_cipherlist_openssl {
     my $range   = $cfg{'cipherrange'};  # default is 'rfc'
     _trace("cipherpattern   = $cfg{'cipherpattern'}, cipherrange= $range");
     my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
-       $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
+       $pattern = join(":", @{$cfg{'cipher'}}) if (0 < scalar(@{$cfg{'cipher'}}));
         # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
         # can be specified like: --cipher=NULL:RC4  or  --cipher=NULL --cipher=RC4
     _trace(" cipher pattern = $pattern");
@@ -2864,10 +2864,25 @@ sub _get_cipherlist_openssl {
     return @ciphers;
 } # _get_cipherlist_openssl
 
-sub _get_cipherlist     {
-    #? return space-separated list of cipher suites according command-line options
-    return _get_cipherlist_openssl();
-} # _get_cipherlist
+sub _get_cipherlist_hex {
+    #? return space-separated list of cipher hex keys according command-line options
+    _trace("_get_cipherlist_hex(){");
+    my $ssl     = shift;
+    my @ciphers = ();
+    my $range   = $cfg{'cipherrange'};  # default is 'rfc'
+    _trace("cipherrange= $range");
+    if (0 < scalar(@{$cfg{'cipher'}})) {
+        # patterns are in $cfg{'cipherpatterns'} and handled before
+        foreach my $name (@{$cfg{'cipher'}}) {
+            #_dbx "key = " . OSaft::Ciphers::get_key($name);
+            push(@ciphers, OSaft::Ciphers::get_key($name)); # works also if $name is a key
+        }
+    } else {
+        @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
+    }
+    _trace("_get_cipherlist_hex\t= @ciphers }");
+    return @ciphers;
+} # _get_cipherlist_hex
 
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
@@ -3057,11 +3072,11 @@ sub ciphers_scan_raw    {
                 $Net::SSLhello::usesni = 0;
             }
         }
-        my @all = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
+        my @all = _get_cipherlist_hex($ssl);
         my @accepted = [];  # accepted ciphers (cipher keys)
         _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
-        if (_is_cfg_do('cipher_intern')) {
+        if (_is_cfg_do('cipher_intern')) {  # may be called for cipher_dump too
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
         }
@@ -6306,7 +6321,8 @@ while ($#argv >= 0) {
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
-                if ($arg !~ m/^[A-Z0-9-]+$/) {   # must be upper case
+                if ($arg !~ m/^[XxA-Z0-9-]+$/) { # must be upper case
+                     # x in RegEx to allow hex keys of ciphers like 0x0300C014
                     _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
                     $arg = "";
                 }
@@ -7324,7 +7340,7 @@ if (0 < $info) {        # +info does not do anything with ciphers
 #| -------------------------------------
 # SEE Note:+cipher
 if ((0 < _need_cipher()) or (0 < _need_default())) {
-    foreach my $mode (qw(dump intern openssl ssleay)) {
+    foreach my $mode (@{$cfg{'ciphermodes'}}) {
         if ($mode eq $cfg{'ciphermode'}) {
             # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
             my $do = 'cipher_' . $mode;
@@ -7535,12 +7551,12 @@ usr_pre_cipher();
 #| get list of ciphers available for tests
 #| -------------------------------------
 if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
-    _yeast_TIME("get{");
     if ((_need_cipher() > 0) or (_need_default() > 0)) {
-        _y_CMD("  get cipher list ...");
+        _yeast_TIME("get{");
+        _y_CMD("get cipher list ...");
         @{$cfg{'ciphers'}} = _get_cipherlist_openssl();
+        _yeast_TIME("get}");
     } # _need_cipher or _need_default
-    _yeast_TIME("get}");
 }
 
 #| SEE Note:Duplicate Commands
