@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.62 22/10/27 13:38:34
+#?      @(#) Makefile.dev 1.64 22/10/29 21:54:09
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.62
+_SID.dev           := 1.64
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -241,19 +241,19 @@ ifndef dev-macros-generated
     # variables ALL.test.*.all, ALL.test.*.log
     $(foreach prg, $(LIST.program),\
       $(foreach arg, $(LIST.$(prg)),\
-        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg)) ) \
+        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg))) \
       ) \
-      $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod ) \
-      $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log) ) \
-      $(eval   test.dev.$(prg).all     :  $(ALL.test.dev.$(prg))         ) \
-      $(eval   test.dev.$(prg).all.log :  $(ALL.test.dev.$(prg).log)     ) \
+      $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod) \
+      $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log)) \
+      $(eval   test.dev.$(prg).all     :  $(ALL.test.dev.$(prg)))         \
+      $(eval   test.dev.$(prg).all.log :  $(ALL.test.dev.$(prg).log))     \
     )
 
     $(eval _prg=o-saft-sh-)
     $(foreach arg, $(LIST.$(_prg)post),\
-        $(eval _target=testarg-dev-$(_prg)$(subst =,-,$(arg)) ) \
-        $(eval ALL.test.dev.$(_prg)post += $(_target) ) \
-        $(eval $(_target)%:    TEST.init = $(arg) ) \
+        $(eval _target=testarg-dev-$(_prg)$(subst =,-,$(arg))) \
+        $(eval ALL.test.dev.$(_prg)post += $(_target)) \
+        $(eval $(_target):     TEST.init = $(arg))     \
     )
     undefine _prg
     undefine _target
@@ -266,12 +266,12 @@ ifndef dev-macros-generated
     # EXE.pl and TEST.* variables for testarg-dev-* targets
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
     $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt) ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg)) ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:   TEST.init = --help ) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg) ) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg) ) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg) ) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt)) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg))) )
+    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:   TEST.init = --help) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg)) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg)) )
+    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg)) )
 
 endif
 
