@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.43 22/10/16 19:14:44
+#?      @(#) Makefile.hlp 1.45 22/10/29 21:35:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.43
+_SID.hlp           := 1.45
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -79,8 +79,8 @@ LIST.list-legacy    := \
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.list-legacy),\
         $(eval _target=testarg-hlp-+list-$(subst =,-,$(arg))) \
-        $(eval $(_target):  TEST.args = $(arg) ) \
-        $(eval ALL.test.hlp += $(_target) ) \
+        $(eval $(_target):  TEST.args = $(arg)) \
+        $(eval ALL.test.hlp += $(_target))      \
     )
     undefine _target
 endif
@@ -104,7 +104,7 @@ LIST.help-section  := \
 	--help=range --help=regex --help=options --help=pattern     \
 	--help=text  --help=rfc   --help=ourstr  --help=program.code \
 	--help=toc   --help=todo  --help=tools   --help=warnings    \
-	--help=error --help=exit  --help=cipherpattern \
+	--help=error --help=exit  --help=ABOUT   --help=cipherpattern \
 	--help=cfg-cmd  --help=cfg-check --help=cfg-data  --help=cfg-hint   \
 	--help=cfg-info --help=cfg-range --help=cfg-regex --help=cfg-ourstr \
 	--help=cfg-text --help=ciphers-text --help=ciphers-list --help=ciphers-html \
@@ -115,8 +115,8 @@ LIST.help-section  := \
 ifndef cipher-macros-generated
     $(foreach arg, $(LIST.help-section),\
         $(eval _target=testarg-hlp-$(subst =,-,$(arg))) \
-        $(eval $(_target):  TEST.args = $(arg) ) \
-        $(eval ALL.test.hlp += $(_target) ) \
+        $(eval $(_target):  TEST.args = $(arg)) \
+        $(eval ALL.test.hlp += $(_target))      \
     )
     undefine _target
 endif
