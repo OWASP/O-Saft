@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 1.58 22/09/21 09:51:42
+#?      @(#) Makefile.cgi 1.59 22/10/29 21:37:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 1.58
+_SID.cgi           := 1.59
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -218,8 +218,8 @@ ifndef cgi-targets-generated
     # ifndef enforces execution of $(foreach ...) below
     $(foreach arg, $(LIST.cgi-opt-ignore), \
 	$(eval _target=testcmd-cgi-good-$(subst =,-,$(arg))_any.FQDN) \
-	$(eval $(_target):  TEST.init += $(arg) ) \
-	$(eval ALL.cgi.badopt += $(_target) )     \
+	$(eval $(_target):  TEST.init += $(arg)) \
+	$(eval ALL.cgi.badopt += $(_target))     \
     )
     $(foreach arg, $(LIST.cgi-opt-die), $(eval \
 	testcmd-cgi-$(subst =,-,$(arg))_any.FQDN:  TEST.init += $(arg) \
@@ -313,7 +313,7 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 1.58: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.59: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
