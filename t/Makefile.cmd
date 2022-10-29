@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.58 22/09/21 09:53:47
+#?      @(#) Makefile.cmd 1.59 22/10/29 21:33:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.58
+_SID.cmd           := 1.59
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -98,17 +98,17 @@ ifndef cmd-targets-generated
     # target foreach command
     $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summ),\
 	$(eval _target=$(_TEST.cmd)-$(subst =,-,$(cmd))) \
-	$(eval $(_target)_%:  TEST.args += $(cmd) ) \
-	$(eval ALL.testcmd  += $(_target)_ ) \
+	$(eval $(_target)_%:  TEST.args += $(cmd)) \
+	$(eval ALL.testcmd  += $(_target)_) \
     )
     # targets without --trace* options
     $(foreach cmd, $(LIST.cmd.withtrace),\
 	$(eval $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_%:  TEST.args += $(cmd) $(LIST.no-out.opt) ) \
-	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_ ) \
+	$(eval ALL.testcmd  += $(_TEST.cmd)-$(subst =,-,$(cmd))--noout_) \
       $(foreach opt, $(LIST.cmd.trace-opt),\
 	$(eval _target=$(_TEST.cmd)-$(subst =,-,$(cmd))$(subst =,-,$(opt))) \
-	$(eval $(_target)_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt) ) \
-	$(eval ALL.testcmd  += $(_target)_ ) \
+	$(eval $(_target)_%:  TEST.args += $(cmd) $(opt) $(LIST.no-out.opt)) \
+	$(eval ALL.testcmd  += $(_target)_) \
       ) \
     )
     undefine _target
