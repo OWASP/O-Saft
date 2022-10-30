@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.60 22/10/30 20:17:01";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.61 22/10/30 20:32:27";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1585,19 +1585,27 @@ this modules provides following commands:
 
 - print example for all getter functions for specified cipher key
 
-=item get_hex=CIPHER-SUITE
-
-- print cipher suite name's hex value
-
-=item get_key=CIPHER-SUITE
-
-- print cipher suite name's internal key
-
 =back
 
 All commands can be used with or without '+' prefix, for example 'dump' is same
 as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
 '--test-ciphers-show'.
+
+=over 4
+
+=item get_METHOD=HEX
+
+- print cipher suite value for 'METHOD', for valid 'get_METHOD' see  METHODS  above
+
+=item find_keys=CIPHER-SUITE
+
+- print cipher suite internal key for matching cipher names 'CIPHER-SUITE'
+
+=item find_names=CIPHER-SUITE
+
+- print cipher suite names for matching cipher names 'CIPHER-SUITE'
+
+=back
 
 =head1 OPTIONS
 
@@ -1625,7 +1633,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.60 2022/10/30
+2.61 2022/10/30
 
 =head1 AUTHOR
 
