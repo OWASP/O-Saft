@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.56 22/10/30 09:59:55";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.57 22/10/30 15:13:30";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -335,11 +335,9 @@ Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 sub text2key    {
     # return internal hex key for given hex, return as is if not hex
     my $txt = shift;
-    my $key = $txt;
-#printf(STDERR "# %s txt=%s\n", (caller(0))[3], $txt); return;
-#printf(STDERR "# text2key txt=%s\n", $txt); 
-       $key =~ s/(,|0x)//g;     # 0x00,0x26  --> 0026
-    return $txt if ($key !~ m/^[0-9A-Fa-f]+$/); # unknown format, return as is
+    my $key = uc($txt); # we use upper case only
+       $key =~ s/(,|0X)//g;     # 0x00,0x26  --> 0026
+    return $txt if ($key !~ m/^[0-9A-F]+$/); # unknown format, return as is
     return "0x$key" if (8 == length($key));
     if (4 < length($key)) {
        # SSLv2: quick&dirty: expects 6 characers
@@ -434,9 +432,9 @@ sub get_param   {
     if ('ARRAY' eq ref($ciphers{$hex}->{$key})) {
         return wantarray ? @{$ciphers{$hex}->{$key}} : join(' ', @{$ciphers{$hex}->{$key}});
     } else {
-        return               $ciphers{$hex}->{$key};
+        return               $ciphers{$hex}->{$key} || $STR{UNDEF};
     }
-    return $STR{UNDEF};
+    return $STR{UNDEF}; # never reached
 } # get_param
 
 sub get_openssl { return  get_param(shift, 'openssl');  }
@@ -575,9 +573,9 @@ suite constants. Given name must match exactly.
 
 Get all matching hex keys for given cipher name (pattern).
 
-=head2 get_desc(  $cipher_key)
+=head2 get_data(  $cipher_key)
 
-Get description for internal C<%cipher> data structure.
+Get all data for given cipher key from internal C<%cipher> data structure.
 
 =head2 get_cipherkeys()
 
@@ -620,11 +618,12 @@ sub get_key     {
 sub get_keys    {
     #? TODO  find all hex key for wich given cipher pattern matches in %ciphers
     my $c = shift;
-    #_dbx("c=$c");
+    _dbx("c=$c");
     return '';
 } # get_keys
 
-sub get_desc    {
+sub get_data    {
+    #? return all data for given cipher key from internal %cipher data structure.
     my $key = shift;
     return $STR{UNDEF} if (not defined $ciphers{$key});
     # my @x = sort values %{$ciphers{$key}}; # lasy approach not used
@@ -643,7 +642,7 @@ sub get_desc    {
             get_param($key, 'const'),
             get_param($key, 'notes'),
     );
-} # get_desc
+} # get_data
 
 sub get_iana        {
     #? return "yes" if cipher suite is recommended by IANA, "no" otherwise
@@ -919,7 +918,7 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #_________________________________________________ internal/testing methods __|
 
 sub show_getter03   {
-    #? show hardcoded example for all getter functions for key 0x00,0x03
+    #? show hardcoded example for all getter functions for key 0x03000003 (aka 0x00,0x03)
     _v_print((caller(0))[3]);
 #   0x00,0x03	RSA  40   N    RC4  RSA(512) MD5  4346,6347  0    WEAK SSLv3  export
 #   0x00,0x03   EXP-RC4-MD5    RSA_RC4_40_MD5
@@ -941,7 +940,9 @@ sub show_getter03   {
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",   $cipher, "ssl",  get_ssl(  $cipher), "SSLv3");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "tags", get_notes($cipher), "export");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_desc",  $cipher, "desc", get_desc( $cipher), "40 4346,6347 MD5 N RC4 RSA RSA(512) SSLv3 WEAK export");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_iana",  $cipher, "iana", get_iana( $cipher), "no");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_encsize",$cipher,"encsize", get_encsize( $cipher), "-");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_data",  $cipher, "data", get_data( $cipher), "WEAK WEAK SSLv3 RSA(512) RSA RC4 40 MD5 4346,6347 EXP-RC4-MD5 RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5 export");
     printf("#----------------------+-------+----------------+---------------\n");
     return;
 } # show_getter03
@@ -978,7 +979,9 @@ sub show_getter     {
     printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_desc",  $key, "desc",  get_desc( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_iana",  $key, "iana",  get_iana( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_encsize",$key, "encsize", get_encsize( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_data",  $key, "data",  get_data( $key) );
     printf("=----------------------+-------+----------------\n");
     return;
 } # show_getter
@@ -1392,12 +1395,28 @@ sub show            {
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?|show|simple)/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
-    show_hex($1)            if ($arg =~ m/^(?:get.)?hex=(.*)/   );
-    show_key($1)            if ($arg =~ m/^(?:get.)?key=(.*)/   );
-    find_name($1)           if ($arg =~ m/^find.?name=(.*)/     );
+    print key2text($1)      if ($arg =~ m/^(?:get.)?hex=(.*)/   );
+    print get_key($1)       if ($arg =~ m/^(?:get.)?key=(.*)/   );
+    print get_sec($1)       if ($arg =~ m/^(?:get.)?sec=(.*)/   );
+    print get_ssl($1)       if ($arg =~ m/^(?:get.)?ssl=(.*)/   );
+    print get_keyx($1)      if ($arg =~ m/^(?:get.)?keyx=(.*)/  );
+    print get_auth($1)      if ($arg =~ m/^(?:get.)?auth=(.*)/  );
+    print get_enc($1)       if ($arg =~ m/^(?:get.)?enc=(.*)/   );
+    print get_bits($1)      if ($arg =~ m/^(?:get.)?bits=(.*)/  );
+    print get_mac($1)       if ($arg =~ m/^(?:get.)?mac=(.*)/   );
+    print get_rfc($1)       if ($arg =~ m/^(?:get.)?rfc=(.*)/   );
+    print get_name($1)      if ($arg =~ m/^(?:get.)?name=(.*)/  );
+    print get_names($1)     if ($arg =~ m/^(?:get.)?names=(.*)/ );
+    print get_consts($1)    if ($arg =~ m/^(?:get.)?consts=(.*)/);
+    print get_aliases($1)   if ($arg =~ m/^(?:get.)?aliases=(.*)/);
+    print get_notes($1)     if ($arg =~ m/^(?:get.)?notes=(.*)/ );
+    print get_openssl($1)   if ($arg =~ m/^(?:get.)?openssl=(.*)/);
+    print get_encsize($1)   if ($arg =~ m/^(?:get.)?encsize=(.*)/);
+    print get_iana($1)      if ($arg =~ m/^(?:get.)?iana=(.*)/  );
+    print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value
-    print join(" ", get_cipherkeys())  . "\n" if ($arg =~ m/^get_cipherkeys/);
-    print join(" ", get_ciphernames()) . "\n" if ($arg =~ m/^get_ciphernames/);
+    print join(" ", get_cipherkeys())  . "\n" if ($arg =~ m/^(?:get.)?cipherkeys/);
+    print join(" ", get_ciphernames()) . "\n" if ($arg =~ m/^(?:get.)?ciphernames/);
     if ($arg =~ m/^regex/) {
         $arg = "--test-ciphers-regex";  # rebuild passed argument
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
@@ -1609,7 +1628,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.56 2022/10/30
+2.57 2022/10/30
 
 =head1 AUTHOR
 
