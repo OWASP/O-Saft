@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.57 22/10/30 15:13:30";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.58 22/10/30 19:25:01";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -127,7 +127,7 @@ provided for each value.
 #based on the consideration that the data structure needs to be  maintained very
 #carefully. Therefore the description of  all (known) cipher suites is done in a
 #simple table, which just contains TAB-separated words.  This table will then be
-#converted into the %cipher hash automatically when thes module is loaded. It is
+#converted into the %ciphers hash automatically when this module is loaded. It's
 #the author's opinion, that tabular data is more easy to maintain by humans than
 #structured data.
 
@@ -258,7 +258,7 @@ our %ciphers_desc = (   # description of %ciphers table
     'const'    => 'Constant Names', # Comma-separated list of cipher suite constants
     'notes'    => 'Notes/Comments', # Comma-separated list of notes and comments
                             # for this cipher suite; for eaxmple: EXPORT, OSX
-                            # each value is used as key to %ciphers_notes
+                            # each value is used as key to %cipher_notes
                             # 
     'sample'        => { # example
       '0x0300003D'  => [split /\s+/, q(HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256,Alias RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
@@ -352,13 +352,15 @@ sub text2key    {
 
 sub key2text    {
     # return internal hex key converted to openssl-style hex key
+    # strips 0x03,0x00
     # return as is if not hex
     my $key = shift;
+       $key =~ s/0x//i;         #    0x0026  --> 0026 (necessary in test-mode only)
     return $key if ($key !~ m/^[0-9A-Fa-f]+$/); # unknown format, return as is
     if (6 < length($key)) {     #   from     -->     to
-       $key =~ s/^0x42//;       # 0x42420001 -->   420001 ; internal use in future
-       $key =~ s/^0x02//;       # 0x02010080 -->   010080
-       $key =~ s/^0x0300//;     # 0x03000004 -->     0004
+       $key =~ s/^42//;         # 0x42420001 -->   420001 ; internal use in future
+       $key =~ s/^02//;         # 0x02010080 -->   010080
+       $key =~ s/^0300//;       # 0x03000004 -->     0004
     }
        $key =~ s/(..)/,0x$1/g;  #       0001 --> ,0x00,0x04
        $key =~ s/^,//;          # ,0x00,0x04 -->  0x00,0x04
@@ -396,7 +398,7 @@ sub key2text    {
 
 =head2 get_names( $cipher_key)
 
-=head2 get_alias( $cipher_key)
+=head2 get_aliases( $cipher_key)
 
 Return all cipher suite names except the first cipher suite name.
 
@@ -575,7 +577,7 @@ Get all matching hex keys for given cipher name (pattern).
 
 =head2 get_data(  $cipher_key)
 
-Get all data for given cipher key from internal C<%cipher> data structure.
+Get all data for given cipher key from internal C<%ciphers> data structure.
 
 =head2 get_cipherkeys()
 
@@ -584,7 +586,7 @@ Returns space-separetd string or array depending on calling context.
 
 =head2 get_ciphernames()
 
-Get list of all defined cipher suite names in C<%cipher>. Returns first name if
+Get list of all defined cipher suite names in C<%ciphers>. Returns first name if
 multiple names are defined for a cipher key.
 
 =head2 find_name($cipher)
@@ -623,7 +625,7 @@ sub get_keys    {
 } # get_keys
 
 sub get_data    {
-    #? return all data for given cipher key from internal %cipher data structure.
+    #? return all data for given cipher key from internal %ciphers data structure
     my $key = shift;
     return $STR{UNDEF} if (not defined $ciphers{$key});
     # my @x = sort values %{$ciphers{$key}}; # lasy approach not used
@@ -985,26 +987,6 @@ sub show_getter     {
     printf("=----------------------+-------+----------------\n");
     return;
 } # show_getter
-
-sub show_key        {
-    #? print hex key for cipher if found in internal data structure
-    my $txt = shift;
-    my $key = get_key($txt);
-    _v_print((caller(0))[3]);
-    local $\ = "\n";
-    print "key for $txt : $key";
-    return;
-} # show_key
-
-sub show_hex        {
-    #? print hex key for cipher if found in internal data structure
-    my $txt = shift;
-    my $key = get_key($txt);
-    _v_print((caller(0))[3]);
-    local $\ = "\n";
-    print "key for $txt : $key";
-    return;
-} # show_hex
 
 sub show_description {
     #? print textual description for columns %ciphers hash
@@ -1395,7 +1377,8 @@ sub show            {
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?|show|simple)/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
-    print key2text($1)      if ($arg =~ m/^(?:get.)?hex=(.*)/   );
+    print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
+    print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
     print get_key($1)       if ($arg =~ m/^(?:get.)?key=(.*)/   );
     print get_sec($1)       if ($arg =~ m/^(?:get.)?sec=(.*)/   );
     print get_ssl($1)       if ($arg =~ m/^(?:get.)?ssl=(.*)/   );
@@ -1406,20 +1389,21 @@ sub show            {
     print get_mac($1)       if ($arg =~ m/^(?:get.)?mac=(.*)/   );
     print get_rfc($1)       if ($arg =~ m/^(?:get.)?rfc=(.*)/   );
     print get_name($1)      if ($arg =~ m/^(?:get.)?name=(.*)/  );
-    print get_names($1)     if ($arg =~ m/^(?:get.)?names=(.*)/ );
-    print get_consts($1)    if ($arg =~ m/^(?:get.)?consts=(.*)/);
-    print get_aliases($1)   if ($arg =~ m/^(?:get.)?aliases=(.*)/);
-    print get_notes($1)     if ($arg =~ m/^(?:get.)?notes=(.*)/ );
+    print get_const($1)     if ($arg =~ m/^(?:get.)?const=(.*)/ );
+    print get_note($1)      if ($arg =~ m/^(?:get.)?note=(.*)/  );
     print get_openssl($1)   if ($arg =~ m/^(?:get.)?openssl=(.*)/);
     print get_encsize($1)   if ($arg =~ m/^(?:get.)?encsize=(.*)/);
     print get_iana($1)      if ($arg =~ m/^(?:get.)?iana=(.*)/  );
     print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
-    # enforce string value
-    print join(" ", get_cipherkeys())  . "\n" if ($arg =~ m/^(?:get.)?cipherkeys/);
-    print join(" ", get_ciphernames()) . "\n" if ($arg =~ m/^(?:get.)?ciphernames/);
+    # enforce string value for returned arrays
+    print join(" ", get_names($1))      if ($arg =~ m/^(?:get.)?names=(.*)/  );
+    print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
+    print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
+    print join(" ", get_notes($1))      if ($arg =~ m/^(?:get.)?notes=(.*)/  );
+    print join(" ", get_cipherkeys())   if ($arg =~ m/^(?:get.)?cipherkeys/  );
+    print join(" ", get_ciphernames())  if ($arg =~ m/^(?:get.)?ciphernames/ );
     if ($arg =~ m/^regex/) {
-        $arg = "--test-ciphers-regex";  # rebuild passed argument
-        printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl $arg\n");
+        printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl --test-ciphers-regex\n");
     }
     return;
 } # show
@@ -1628,7 +1612,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.57 2022/10/30
+2.58 2022/10/30
 
 =head1 AUTHOR
 
