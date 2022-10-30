@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.40 22/10/29 18:55:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.41 22/10/30 20:54:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -166,7 +166,7 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 #| definitions: include configuration; it's ok to die if missing
 #| -------------------------------------
 use OSaft::Text     qw(%STR);
-use OSaft::Ciphers  qw(%ciphers %ciphers_desc %cipher_notes $cipher_results);
+use OSaft::Ciphers  qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
     # not loaded with _load_modules() because always needed
 use osaft;
 use OSaft::Data;
@@ -925,8 +925,8 @@ _yeast_TIME("cfg}");
 # following defined in OSaft/Ciphers.pm
 #   %ciphers_desc();
 #   %ciphers();
+#   %ciphers_notes();
 #   %cipher_results();
-#   %cipher_notes();
 
 our %text = (
     'separator'     => ":",# separator character between label and value
@@ -2869,15 +2869,17 @@ sub _get_cipherlist_hex {
     _trace("_get_cipherlist_hex(){");
     my $ssl     = shift;
     my @ciphers = ();
-    my $range   = $cfg{'cipherrange'};  # default is 'rfc'
-    _trace("cipherrange= $range");
     if (0 < scalar(@{$cfg{'cipher'}})) {
-        # patterns are in $cfg{'cipherpatterns'} and handled before
         foreach my $name (@{$cfg{'cipher'}}) {
-            #_dbx "key = " . OSaft::Ciphers::get_key($name);
-            push(@ciphers, OSaft::Ciphers::get_key($name)); # works also if $name is a key
+            if ($name =~ m/^(?:0x)?[0-9A-F]+$/i) {
+                #_dbx "key = " . OSaft::Ciphers::get_key($name);
+                push(@ciphers, OSaft::Ciphers::get_key($name));   # hex key
+            } else {
+                push(@ciphers, OSaft::Ciphers::find_keys($name)); # name or pattern
+            }
         }
     } else {
+        _trace("cipherrange= $cfg{'cipherrange'}"); # default is 'rfc'
         @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
     }
     _trace("_get_cipherlist_hex\t= @ciphers }");
@@ -5431,7 +5433,7 @@ sub print_cipherline($$$$$$) {
     my $sec   = OSaft::Ciphers::get_sec($key); # will be changed for --legacy=owasp
        $sec   = osaft::get_cipher_owasp($cipher) if ('owasp' eq $legacy);
        $sec   = "-"    if (('no' eq $support)  and  ('owasp' eq $legacy));
-    my $desc  = OSaft::Ciphers::get_desc($key);
+   #my $desc  = OSaft::Ciphers::get_data($key);# not yet used
     my $yesno = $text{'legacy'}->{$legacy}->{$support};
     # first our own formats
     if ($legacy =~ m/compact|full|owasp|quick|simple|key/) {
@@ -6323,9 +6325,11 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'CIPHER_ITEM')  {
             # $arg = lc($arg);   # case-sensitive
+#TODO: cipherpatterns nur bei cipher_openssl benutzen
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
+#TODO: Prüfung weg, damit auch SSLv2_long möglich
                 if ($arg !~ m/^[XxA-Z0-9-]+$/) { # must be upper case
                      # x in RegEx to allow hex keys of ciphers like 0x0300C014
                     _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
