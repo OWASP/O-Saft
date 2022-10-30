@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.59 22/10/30 19:29:18";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.60 22/10/30 20:17:01";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -414,10 +414,6 @@ Return all cipher suite names except the first cipher suite name.
 
 Return encryption block size of cipher suite.
 
-=head2 get_iana(  $cipher_key)
-
-Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
-
 =cut
 
 # some people prefer to use a getter function to get data from objects
@@ -571,13 +567,13 @@ sub get_encsize {
 Get hex key for given cipher name; searches in cipher suite names and in cipher
 suite constants. Given name must match exactly.
 
-=head2 get_keys(  $cipher_pattern)
-
-Get all matching hex keys for given cipher name (pattern).
-
 =head2 get_data(  $cipher_key)
 
 Get all data for given cipher key from internal C<%ciphers> data structure.
+
+=head2 get_iana(  $cipher_key)
+
+Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
 
 =head2 get_cipherkeys()
 
@@ -589,7 +585,15 @@ Returns space-separetd string or array depending on calling context.
 Get list of all defined cipher suite names in C<%ciphers>. Returns first name if
 multiple names are defined for a cipher key.
 
-=head2 find_name($cipher)
+=head2 find_names( $cipher_pattern)
+
+Find all matching cipher names for given cipher name (pattern).
+
+=head2 find_keys( $cipher_pattern)
+
+Find all matching hex keys for given cipher name (pattern).
+
+=head2 find_name( $cipher)
 
 Find cipher key(s) for given cipher name or cipher constant.
 
@@ -616,13 +620,6 @@ sub get_key     {
     _warn("521: no key found for '$txt'");  # most likely a programming error %cfg or <DATA> herein
     return '';
 } # get_key
-
-sub get_keys    {
-    #? TODO  find all hex key for wich given cipher pattern matches in %ciphers
-    my $c = shift;
-    _dbx("c=$c");
-    return '';
-} # get_keys
 
 sub get_data    {
     #? return all data for given cipher key from internal %ciphers data structure
@@ -669,6 +666,20 @@ sub get_ciphernames {
     return wantarray ? (sort @list) : join(' ', (sort @list));
     # SEE Note:Testing, sort
 } # get_ciphernames
+
+sub find_keys    {
+    #? TODO  find all hex key for which given cipher pattern matches in %ciphers
+    my $pattern = shift;
+    _trace("find_keys($pattern)");
+    return map({get_key($_);} grep(/$pattern/, get_ciphernames()));
+} # find_keys
+
+sub find_names   {
+    #? TODO  find all cipher suite names for which given cipher pattern matches in %ciphers
+    my $pattern = shift;
+    _trace("find_names($pattern)");
+    return grep(/$pattern/, get_ciphernames());
+} # find_names
 
 sub find_name       {   # TODO: not yet used
     #? check if given cipher name is a known cipher
@@ -1396,6 +1407,8 @@ sub show            {
     print get_iana($1)      if ($arg =~ m/^(?:get.)?iana=(.*)/  );
     print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value for returned arrays
+    print join(" ", find_names($1))     if ($arg =~ m/^find.?names=(.*)/     );
+    print join(" ", find_keys($1))      if ($arg =~ m/^find.?keys=(.*)/      );
     print join(" ", get_names($1))      if ($arg =~ m/^(?:get.)?names=(.*)/  );
     print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
     print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
@@ -1612,7 +1625,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.59 2022/10/30
+2.60 2022/10/30
 
 =head1 AUTHOR
 
