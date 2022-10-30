@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.58 22/10/30 19:25:01";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.59 22/10/30 19:29:18";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -193,7 +193,7 @@ use base     qw(Exporter);
 our @EXPORT_OK = qw(
                 %ciphers
                 %ciphers_desc
-                %cipher_notes
+                %ciphers_notes
                 $cipher_results
                 ciphers_done
 );
@@ -258,7 +258,7 @@ our %ciphers_desc = (   # description of %ciphers table
     'const'    => 'Constant Names', # Comma-separated list of cipher suite constants
     'notes'    => 'Notes/Comments', # Comma-separated list of notes and comments
                             # for this cipher suite; for eaxmple: EXPORT, OSX
-                            # each value is used as key to %cipher_notes
+                            # each value is used as key to %ciphers_notes
                             # 
     'sample'        => { # example
       '0x0300003D'  => [split /\s+/, q(HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256,Alias RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
@@ -308,14 +308,14 @@ our $cipher_results = { # list of checked ciphers
     #--------------+--------+--------------+----------+
 }; # $cipher_results
 
-our %cipher_notes = (
+our %ciphers_notes = (
     #? list of notes and comments for ciphers, these texts are referenced in %ciphers
     #------------------+---------,
     # hex       =>      'text'   ,
     #------------------+---------,
     #------------------+---------,
 # ...
-); # %%cipher_notes
+); # %ciphers_notes
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -1612,7 +1612,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.58 2022/10/30
+2.59 2022/10/30
 
 =head1 AUTHOR
 
