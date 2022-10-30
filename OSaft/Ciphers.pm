@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.55 22/10/27 12:13:04";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.56 22/10/30 09:59:55";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -333,7 +333,7 @@ Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 =cut
 
 sub text2key    {
-    # return as is if not hex
+    # return internal hex key for given hex, return as is if not hex
     my $txt = shift;
     my $key = $txt;
 #printf(STDERR "# %s txt=%s\n", (caller(0))[3], $txt); return;
@@ -353,7 +353,10 @@ sub text2key    {
 } # text2key
 
 sub key2text    {
+    # return internal hex key converted to openssl-style hex key
+    # return as is if not hex
     my $key = shift;
+    return $key if ($key !~ m/^[0-9A-Fa-f]+$/); # unknown format, return as is
     if (6 < length($key)) {     #   from     -->     to
        $key =~ s/^0x42//;       # 0x42420001 -->   420001 ; internal use in future
        $key =~ s/^0x02//;       # 0x02010080 -->   010080
@@ -617,6 +620,7 @@ sub get_key     {
 sub get_keys    {
     #? TODO  find all hex key for wich given cipher pattern matches in %ciphers
     my $c = shift;
+    #_dbx("c=$c");
     return '';
 } # get_keys
 
@@ -690,7 +694,7 @@ sub find_name       {   # TODO: not yet used
         _warn("513: partial match for cipher name found '$cipher'");
         push(@list, $key);
     }
-    print "#name=$cipher : @list\n";
+    return @list;
 # TODO: # $rex_name = s/([_-])/.?/g; $rex_name = s/DHE/EDH/;
     return $STR{UNDEF};
 } # find_name
@@ -999,7 +1003,7 @@ sub show_hex        {
     return;
 } # show_hex
 
-sub show_desc       {
+sub show_description {
     #? print textual description for columns %ciphers hash
     _v_print((caller(0))[3]);
     local $\ = "\n";
@@ -1059,7 +1063,7 @@ sub show_desc       {
     print ("=-------------------------------------------+-------");
 
     return;
-} # show_desc
+} # show_description
 
 sub show_sorted     {
     _v_print((caller(0))[3]);
@@ -1159,9 +1163,9 @@ EoT
     return;
 } # show_overview
 
-sub show_alias      {
-    #? show aliases for ciher suite names or constants depending on $type
-    #  $type: name | const
+sub show_all_names  {
+    #? show aliases, constants or RFCs for cipher suite names depending on $type
+    #  $type: name | const | rfc
     my $type = shift;
     _v_print((caller(0))[3]);
     my $text = $type;
@@ -1187,24 +1191,24 @@ $txt_cols
     printf("= %-13s\t%-37s\t%s\n", "key", "cipher name", "$text  names");
     printf("$line");
     foreach my $key (sort keys %ciphers) {
-        my @aliases = [];
+        my @names   = [];
         my $name    = "";
-        if ($type =~ /rfc/) {
+        if ('rfc' eq $type) {
             $name   = $ciphers{$key}->{'names'}[0];
-            my $rfc = $ciphers{$key}->{$type};
+            my $rfc = $ciphers{$key}->{'rfc'};
             next if "-" eq $rfc;
-            @aliases= $rfc;
+            @names  = $rfc;
         } else {
-            @aliases= @{$ciphers{$key}->{$type}};
-            $name   = shift @aliases;
-            next if 1 > scalar @aliases;
+            @names  = @{$ciphers{$key}->{$type}};
+            $name   = shift @names;
+            next if 1 > scalar @names;
         }
-        printf("%s\t%-37s\t@aliases\n", $key, $name);
+        printf("%s\t%-37s\t@names\n", $key, $name);
     }
     printf("$line");
     printf("= %-13s\t%-37s\t%s\n", "key", "cipher name", "alias names");
     return;
-} # show_alias
+} # show_all_names
 
 sub show_ssltest    {
     #? print internal list of ciphers in format like ssltest
@@ -1375,20 +1379,22 @@ sub show            {
        $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
     _v_print((caller(0))[3]);
     #_dbx("arg=$arg");
-    show_alias('const')     if ($arg =~ m/^const(?:ants?)?/ );
-    show_alias('names')     if ($arg =~ m/^alias(?:es)?/    );
-    show_alias('rfc')       if ($arg =~ m/^rfc/i            );
-    show_desc()             if ($arg =~ m/^desc(?:ription)?/);
-    show_desc()             if ($arg =~ m/^ciphers.?desc(?:ription)?/);
-    show_overview()         if ($arg eq 'overview'          );
-    show_ssltest()          if ($arg eq 'ssltest'           );
-    show_sorted()           if ($arg =~ m/^(owasp|sort(?:ed)?)/);
+    local $\ = "\n";
+    return                  if ($arg =~ m/^version/i            ); # done in main
+    show_all_names('const') if ($arg eq 'constants'             );
+    show_all_names('names') if ($arg eq 'aliases'               );
+    show_all_names('rfc')   if ($arg eq 'rfcs'                  );
+    show_description()      if ($arg eq 'description'           );
+    show_description()      if ($arg =~ m/^ciphers.?description/);
+    show_overview()         if ($arg eq 'overview'              );
+    show_ssltest()          if ($arg eq 'ssltest'               );
+    show_sorted()           if ($arg =~ m/^(owasp|sort(?:ed)?)/ );
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?|show|simple)/);
-    show_getter($1)         if ($arg =~ m/^getter=?(.*)/    );
-    show_hex($1)            if ($arg =~ m/^hex=(.*)/        );
-    show_key($1)            if ($arg =~ m/^key=(.*)/        );
-    find_name($1)           if ($arg =~ m/^find.?name=(.*)/ );
+    show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
+    show_hex($1)            if ($arg =~ m/^(?:get.)?hex=(.*)/   );
+    show_key($1)            if ($arg =~ m/^(?:get.)?key=(.*)/   );
+    find_name($1)           if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value
     print join(" ", get_cipherkeys())  . "\n" if ($arg =~ m/^get_cipherkeys/);
     print join(" ", get_ciphernames()) . "\n" if ($arg =~ m/^get_ciphernames/);
@@ -1523,15 +1529,15 @@ this modules provides following commands:
 
 - print overview of various (internal) checks according cipher definitions
 
-=item alias
+=item aliases
 
-- print overview of various known cipher suite names
+- print overview of known cipher suite names
 
-=item const
+=item constants
 
-- print overview of various cipher suite constant names
+- print overview of known cipher suite constant names
 
-=item rfc
+=item rfcs
 
 - print overview of cipher suites and corresponding RFCs
 
@@ -1559,11 +1565,15 @@ this modules provides following commands:
 
 - print internal lists of ciphers (format like "ssltest --list")
 
-=item hex=CIPHER-SUITE
+=item getter
+
+- print example for all getter functions for specified cipher key
+
+=item get_hex=CIPHER-SUITE
 
 - print cipher suite name's hex value
 
-=item key=CIPHER-SUITE
+=item get_key=CIPHER-SUITE
 
 - print cipher suite name's internal key
 
@@ -1599,7 +1609,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.55 2022/10/27
+2.56 2022/10/30
 
 =head1 AUTHOR
 
