@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.65 22/10/29 22:19:10
+#?      @(#) Makefile.dev 1.66 22/10/30 18:56:31
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.65
+_SID.dev           := 1.66
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -164,10 +164,8 @@ HELP-test.dev.help.all   = print all test.dev.EXE_--help
 HELP-test.dev.pod.all    = print all test.dev.EXE_pod
 HELP-test.dev.help.log   = same as test.dev.help.all but store output in '$(TEST.logdir)/'
 HELP-test.dev.pod.log    = same as test.dev.help.all but store output in '$(TEST.logdir)/'
-HELP-test.dev.osaft-dbx.all     = test o-saft-dbx.pm
-HELP-test.dev.osaft-man.all     = test o-saft-man.pm
 
-_HELP-_dev2         = ______________ summary targets for internal documentations _
+_HELP-_dev2         = _______________ summary targets for internal functionality _
 HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
 
 #_____________________________________________________________________________
@@ -359,7 +357,7 @@ testarg-dev-install-sh_pod:
 #______________________________________________ special targets for testing __|
 
 HELP-_dev3          = _____________________________________ some special targets _
-HELP-testarg-dev-grep_subs  = list perl function definitons from '$(LIST.sources)'
+HELP-testarg-dev-grep_subs  = list perl function definitions from '$(LIST.sources)'
 HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_subs but with description
 HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
 HELP-testarg-dev-grep_hint  = list all _hint() from '$(LIST.sources)'
@@ -394,7 +392,7 @@ testarg-dev-grep_warn:
 	$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_warn$(_TEST.brace)' $($(prg)) ..." && cd $(TEST.dir)&&grep -H '_warn$(_TEST.brace)' $($(prg)) |sed -e 's/: */\t/'; )
 # TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
 
-# function definitons more beautified for $(SRC.pl)
+# function definitions more beautified for $(SRC.pl)
 EXE.grep-sub   := perl -lane '\
 		sub p{printf("%-24s\t%s\n",@_);} \
 		($$F[0]=~/^\#/)&&do{$$_=~s/^\s*\#\??/-/;p($$s,$$_)if($$s ne "");$$s="";}; \
