@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.68 22/10/31 19:20:37";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.69 22/10/31 21:15:29";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -214,8 +214,7 @@ our @EXPORT_OK  = qw(
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-our %ciphers_desc   = (
-    #? description of %ciphers table
+our %ciphers_desc   = ( # description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
                             # array of all culumns used most tables (including
                             # the definition below in DATA);
@@ -281,8 +280,8 @@ Note about TLS version:
         ',
 ); # %ciphers_desc
 
-our %ciphers        = (
-    #? list of all ciphers, will be generated in _ciphers_init() from <DATA>
+our %ciphers        = ( # list of all ciphers
+    # will be generated in _ciphers_init() from <DATA>
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
     # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
@@ -300,8 +299,7 @@ our @cipher_iana_recomended =
     0x0300D001 0x0300D002 0x0300D005
 ); # cipher_iana_recomended
 
-our $cipher_results = {
-    #? list of checked ciphers
+our $cipher_results = { # list of checked ciphers
     #--------------+--------+--------------+----------+
     # key       => [  ssl    supported ], # cipher suite name
     #--------------+--------+--------------+----------+
@@ -312,8 +310,8 @@ our $cipher_results = {
     #--------------+--------+--------------+----------+
 }; # $cipher_results
 
-our %ciphers_notes  = (
-    #? list of notes and comments for ciphers, these texts are referenced in %ciphers
+our %ciphers_notes  = ( # list of notes and comments for ciphers
+    # these texts are referenced in %ciphers
     #------------------+---------,
     # hex       =>      'text'   ,
     #------------------+---------,
@@ -1667,7 +1665,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.68 2022/10/31
+2.69 2022/10/31
 
 =head1 AUTHOR
 
