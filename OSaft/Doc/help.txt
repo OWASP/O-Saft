@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.105 22/10/29 22:35:10
+# SID   @(#) help.txt 1.106 22/10/31 10:56:35
 
 NAME
 
@@ -1204,13 +1204,20 @@ OPTIONS
 
       --cipher=CIPHER
 
-          'CIPHER' can be any string accepted by openssl or following:
-          * 'yeast'     use all ciphers from list defined herein, see  +list
+          'CIPHER' can be any cipher suite name or (internal) hex constant.
+          If 'CIPHER' does not match a hex key, for example 0x03000035, it is
+          used as pattern (RegEx) to match cipher suite names. For example:
+            'AES256-SHA' matches 23 cipher suites, 
+          For example 'AES256-SHA' matches 23 ciphers,  while 'AES256-SHA$'
+          matches 2 ciphers, see:
+              OSaft/Ciphers.pm find-names=AES256-SHA
+              OSaft/Ciphers.pm find-names=AES256-SHA$
 
-          Beside the cipher names accepted by openssl, CIPHER can be the name
-          of the constant or the (hex) value as defined in openssl's files.
-          Currently supported are the names and constants of openssl 1.0.1k.
-          Example:
+          To be sure that exactly one cipher suite matches, use for example:
+              --cipher=^AES256-SHA$
+
+          When  --ciphermode=openssl or --ciphermode=ssleay is used, 'CIPHER'
+          can be any string accepted by openssl or a hex constant. Examples:
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
             * --cipher=66
@@ -1503,7 +1510,7 @@ OPTIONS
 
           Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
-          * 'rfc'               all ciphers defined in various RFCs
+          * 'rfc'               all ciphers defined in various RFCs; default
           * 'shifted'           'rfc', shifted by 64 bytes to the right
           * 'long'              like 'rfc' but more lazy list of constants
           * 'huge'              all constants  0x03000000 .. 0x0300FFFF
@@ -1525,9 +1532,7 @@ OPTIONS
           For details about the ranges, please see:
               $0 --help=range
 
-          If --cipher=CIPHER  is used,  --cipherrange=RANGE  is ignored.
-
-          This option is only used together with  --ciphermode=openssl .
+          If any  --cipher=CIPHER  is used,  --cipherrange=RANGE  is ignored.
 
       --slow-server-delay=SEC
 
