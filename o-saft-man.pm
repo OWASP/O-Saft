@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.74 22/10/27 22:42:06";
+my  $SID_man= "@(#) o-saft-man.pm 2.75 22/10/31 09:45:59";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -776,7 +776,7 @@ sub _man_usr_value  {
 sub _man_get_version{
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.74'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.75'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1476,11 +1476,9 @@ sub _man_ciphers_get     {
         my @alias = OSaft::Ciphers::get_names($key);
         my @_keep = grep { $alias[$_] ne $name } 0..$#alias;
            @alias = @alias[@_keep];      # remove names, which equal $name
+        my $pfs   = OSaft::Ciphers::get_pfs  ($key);
         my $rfc   = OSaft::Ciphers::get_rfc  ($key);
         my $rfcs  = "";
-        my $pfs   = "-";
-           $pfs   = "PFS" if $name =~ m/^(?:EC)?DHE/;
-           $pfs   = "PFS" if $name =~ m/^(?:EXP-)?EDH-/;# EDH- and EXP-EDH- for ancient names
         foreach my $key (split(/,/, $rfc)) {
             # replace RFC-number, if any, with URL
             my $num = $key;
@@ -2605,7 +2603,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.74 2022/10/27
+2.75 2022/10/31
 
 =head1 AUTHOR
 
