@@ -27,7 +27,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_usr= "@(#) o-saft-usr.pm 2.5 22/07/02 11:59:17";
+my  $SID_usr    = "@(#) o-saft-usr.pm 2.6 22/10/31 20:24:01";
 
 
 #_____________________________________________________________________________
@@ -257,18 +257,20 @@ sub _main_usr       {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __FILE__, $SID_usr)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
+    print_pod($0, __FILE__, $SID_usr)   if ($arg =~ m/--?h(elp)?$/x);
     # no other options implemented yet
+    print "$SID_usr\n"      if ($arg =~ /^version$/);
+   #print "$VERSION\n"      if ($arg =~ /^[-+]?V(ERSION)?$/);
     exit 0;
 } # _main
 
-sub o_saft_usr_done {};     # dummy to check successful include
+sub usr_done        {}; # dummy to check successful include
 
 =pod
 
 =head1 VERSION
 
-2.5 2022/07/02
+2.6 2022/10/31
 
 =head1 AUTHOR
 
