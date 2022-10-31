@@ -34,8 +34,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
+my  $SID_data   = "@(#) Data.pm 1.55 22/10/31 20:49:09";
 our $VERSION    = "22.06.22";   # official verion number of this file
-my  $SID_data   = "@(#) Data.pm 1.54 22/07/07 19:01:43";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -160,6 +160,7 @@ Return all data from file and replace $0 by $name. Returns data as string.
 =cut
 
 sub get         {
+    #? return data from file as string, replace $0 by $name
     my $file    = shift;
     my $name    = shift || "o-saft.pl";
     my $version = shift || $VERSION;
@@ -188,6 +189,7 @@ Return all data converted to internal markup format. Returns array of lines.
 =cut
 
 sub get_markup    {
+    #? return data with internal markup, returns array of lines
     my $file    = shift;
     my $parent  = shift || "o-saft.pl";
     my $version = shift || $VERSION;
@@ -442,7 +444,7 @@ sub _main_doc   {
     while (my $cmd = shift @argv) {
         my $arg    = shift @argv; # get 2nd argument, which is filename
         print_pod($0, __PACKAGE__, $SID_data)   if ($cmd =~ /^--?h(?:elp)?$/);
-        _main_doc_usage()       if ($cmd =~ /^--usage$/);
+        _main_doc_usage()       if ($cmd eq '--usage');
         # ----------------------------- commands
         print list() . "\n"     if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
@@ -456,7 +458,7 @@ sub _main_doc   {
     exit 0;
 } # _main_doc
 
-sub o_saft_help_done {};    # dummy to check successful include
+sub doc_data_done   {}; # dummy to check successful include
 
 =pod
 
@@ -601,7 +603,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.54 2022/07/07
+1.55 2022/10/31
 
 =head1 AUTHOR
 
