@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.62 22/10/31 08:30:02";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.63 22/10/31 08:35:49";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -431,7 +431,7 @@ sub get_param   {
     if ('ARRAY' eq ref($ciphers{$hex}->{$key})) {
         return wantarray ? @{$ciphers{$hex}->{$key}} : join(' ', @{$ciphers{$hex}->{$key}});
     } else {
-        return               $ciphers{$hex}->{$key} || $STR{UNDEF};
+        return               $ciphers{$hex}->{$key} || "";
     }
     return $STR{UNDEF}; # never reached
 } # get_param
@@ -1634,7 +1634,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.62 2022/10/31
+2.63 2022/10/31
 
 =head1 AUTHOR
 
