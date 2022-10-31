@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.19 22/09/30 10:51:23";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.20 22/10/31 20:40:32";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -115,7 +115,7 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
     #  avoids printing of empty lines
 
-sub _yeast_ciphers_list     {
+sub _yeast_ciphers_list {
     #? print ciphers fromc %cfg (output optimised for +cipher)
     return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
     _yline(" ciphers {");
@@ -158,7 +158,8 @@ sub _yeast_ciphers_list     {
     return;
 } # _yeast_ciphers_list
 
-sub _yeast_targets          {
+sub _yeast_targets      {
+    #? print information about targets to be processed
     my $trace   = shift;
     my $prefix  = shift;
     my @targets = @_;
@@ -321,6 +322,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 } # _yeast_init
 
 sub _yeast_exit {
+    #? print collected just be program exit
     if (0 < $cfg{'trace'}) {
         _yTRAC("cfg'exitcode'", $cfg{'use'}->{'exitcode'});
         _yTRAC("exit status",   (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
@@ -342,6 +344,7 @@ sub _yeast_exit {
 } # _yeast_exit
 
 sub _yeast_args {
+    #? print information about command line arguments
     return if (not _is_cfg_out('traceARG'));
     # using _y_ARG() may be a performance penulty, but it's trace anyway ...
     _yline(" ARGV {");
@@ -418,7 +421,7 @@ sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s", "-"x19, "-"x7, "-
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 
 # subs for fomated maps
-sub __prot_option   {
+sub __prot_option       {
     my $data;
     foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
         $data .= __trac(\%{$cfg{'openssl_option_map'}}, $key) . "\n";
@@ -427,7 +430,7 @@ sub __prot_option   {
     return $data;
 } # __prot_option
 
-sub __prot_version  {
+sub __prot_version      {
     my $data;
     foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
         $data .= __yeast(sprintf("%14s= ", $key) . sprintf("0x%04X 0x%08x",
@@ -834,10 +837,10 @@ sub _main_dbx       {
     binmode(STDERR, ":unix:utf8");
     print_pod($0, __FILE__, $SID_dbx)   if ($arg =~ m/--?h(elp)?$/x);   # print own help
     # else
-    if ($arg =~ m/--tests?$/) {
-        _yeast_test_help();
-        exit 0;
-    }
+    # ----------------------------- commands
+    if ($arg eq 'version')              { print "$SID_dbx\n"; exit 0; }
+    if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n"; exit 0; }
+    if ($arg =~ m/--tests?$/) { _yeast_test_help(); exit 0; }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -845,7 +848,7 @@ sub _main_dbx       {
     exit 0;
 } # _main_dbx
 
-sub o_saft_dbx_done {};     # dummy to check successful include
+sub dbx_done        {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1001,7 +1004,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.19 2022/09/30
+2.20 2022/10/31
 
 =head1 AUTHOR
 
