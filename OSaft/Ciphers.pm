@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.67 22/10/31 19:05:18";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.68 22/10/31 19:20:37";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1537,8 +1537,11 @@ sub _main_ciphers   {
         # ----------------------------- options
         $cfg{'verbose'}++          if ($arg eq '--v');
         # ----------------------------- commands
-        print "$VERSION\n"         if ($arg =~ /^(?:--test-ciphers?-)?version/i);
+        print "$SID_ciphers\n"     if ($arg =~ /^version$/);
+        print "$VERSION\n"         if ($arg =~ /^[-+]?V(ERSION)?$/);
+        print "$VERSION\n"         if ($arg =~ /^--test.?ciphers.?version/i);
         # allow short option without --test-ciphers- prefix
+        $arg =~ s/^--test.?ciphers.?//; # remove if there
         show("--test-ciphers-$arg");
     }
     exit 0;
@@ -1664,7 +1667,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.67 2022/10/31
+2.68 2022/10/31
 
 =head1 AUTHOR
 
