@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.72 22/10/31 09:50:27
+#?      @(#) Makefile.dev 1.73 22/10/31 10:14:02
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.72
+_SID.dev           := 1.73
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -88,7 +88,8 @@ LIST.osaft         :=
 # Ciphers.pm supports command/options with or without + and -- prefix
 LIST.osaft-ciphers-cmd  := \
 	aliases constants rfcs  dump    regex   description overview \
-	openssl osaft   show    simple  sorted  ssltest     version
+	openssl osaft   show    simple  sorted  ssltest     version  \
+	get_keys_list   get_names_list
 
 # Ciphers.pm supports command for each of its functions, test with key 0x03001301
 LIST.osaft-ciphers-get  := \
