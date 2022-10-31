@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.65 22/10/31 09:42:16";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.66 22/10/31 10:07:57";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -580,15 +580,15 @@ Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
 
 Return "yes" if cipher suite supports PFS, "no" otherwise.
 
-=head2 get_cipherkeys()
+=head2 get_keys_list()
 
-Get list of all defined hex keys for cipher suites.
+Get list of all defined (internal) hex keys for cipher suites in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
 
-=head2 get_ciphernames()
+=head2 get_names_list()
 
-Get list of all defined cipher suite names in C<%ciphers>. Returns first name if
-multiple names are defined for a cipher key.
+Get list of all defined cipher suite names in C<%ciphers>.
+Returns space-separetd string or array depending on calling context.
 
 =head2 find_names( $cipher_pattern)
 
@@ -667,34 +667,34 @@ sub get_pfs        {
 } # get_pfs
 
 
-sub get_cipherkeys  {
+sub get_keys_list   {
     my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
     return wantarray ? (sort @keys) : join(' ', (sort @keys));
     # SEE Note:Testing, sort
-} # get_cipherkeys
+} # get_keys_list 
 
-sub get_ciphernames {
+sub get_names_list  {
     my @list;
-    foreach my $key (sort keys %ciphers) {      # SEE Note:Testing, sort
+    foreach my $key (sort keys %ciphers) {
         next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
         push(@list, get_name($key));
     }
     return wantarray ? (sort @list) : join(' ', (sort @list));
     # SEE Note:Testing, sort
-} # get_ciphernames
+} # get_names_list
 
-sub find_keys    {
+sub find_keys       {
     #? TODO  find all hex key for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_keys($pattern)");
-    return map({get_key($_);} grep(/$pattern/, get_ciphernames()));
+    return map({get_key($_);} grep(/$pattern/, get_names_list()));
 } # find_keys
 
-sub find_names   {
+sub find_names      {
     #? TODO  find all cipher suite names for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_names($pattern)");
-    return grep(/$pattern/, get_ciphernames());
+    return grep(/$pattern/, get_names_list());
 } # find_names
 
 sub find_name       {   # TODO: not yet used
@@ -1268,7 +1268,7 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $out_header  = 1;
     my $txt_head    = "";
     if ($format eq "openssl") { # like 'openssl ciphers'
-        print join(":", get_ciphernames());
+        print join(":", get_names_list());
         return;
     }
     if ($format =~ m/openssl/) {
@@ -1432,8 +1432,8 @@ sub show            {
     print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
     print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
     print join(" ", get_notes($1))      if ($arg =~ m/^(?:get.)?notes=(.*)/  );
-    print join(" ", get_cipherkeys())   if ($arg =~ m/^(?:get.)?cipherkeys/  );
-    print join(" ", get_ciphernames())  if ($arg =~ m/^(?:get.)?ciphernames/ );
+    print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.)?keys.?list/  );
+    print join(" ", get_names_list())   if ($arg =~ m/^(?:get.)?names.?list/ );
     if ($arg =~ m/^regex/) {
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl --test-ciphers-regex\n");
     }
@@ -1652,7 +1652,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.65 2022/10/31
+2.66 2022/10/31
 
 =head1 AUTHOR
 
