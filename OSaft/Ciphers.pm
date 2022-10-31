@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.64 22/10/31 09:18:07";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.65 22/10/31 09:42:16";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -576,6 +576,10 @@ Get all data for given cipher key from internal C<%ciphers> data structure.
 
 Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
 
+=head2 get_pfs(   $cipher_key|$cipher_name)
+
+Return "yes" if cipher suite supports PFS, "no" otherwise.
+
 =head2 get_cipherkeys()
 
 Get list of all defined hex keys for cipher suites.
@@ -650,6 +654,17 @@ sub get_iana        {
        $key = text2key($key);       # normalize cipher key
     return (grep{ /^$key/i} @cipher_iana_recomended) ? "yes" : "no";
 } # get_iana
+
+sub get_pfs        {
+    #? return "yes" if cipher suite supports PFS, "no" otherwise
+    my $key  = shift;
+    my $name = $key;
+    if ($key =~ /^0x[0-9A-F]{8}$/i) {
+       $name = get_name($key);
+    }
+    return (($name =~ m/^(?:EC)?DHE/) or ($name =~ m/^(?:EXP-)?EDH-/)) ? "yes" : "no";
+        # EDH- and EXP-EDH- for ancient names
+} # get_pfs
 
 
 sub get_cipherkeys  {
@@ -955,6 +970,7 @@ sub show_getter03   {
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "tags", get_notes($cipher), "export");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_iana",  $cipher, "iana", get_iana( $cipher), "no");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_pfs",   $cipher, "pfs",  get_iana( $cipher), "no");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_encsize",$cipher,"encsize", get_encsize( $cipher), "-");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_data",  $cipher, "data", get_data( $cipher), "WEAK WEAK SSLv3 RSA(512) RSA RC4 40 MD5 4346,6347 EXP-RC4-MD5 RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5 export");
     printf("#----------------------+-------+----------------+---------------\n");
@@ -994,6 +1010,7 @@ sub show_getter     {
     printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_iana",  $key, "iana",  get_iana( $key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_pfs",   $key, "pfs",   get_iana( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_encsize",$key, "encsize", get_encsize( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_data",  $key, "data",  get_data( $key) );
     printf("=----------------------+-------+----------------\n");
@@ -1406,6 +1423,7 @@ sub show            {
     print get_openssl($1)   if ($arg =~ m/^(?:get.)?openssl=(.*)/);
     print get_encsize($1)   if ($arg =~ m/^(?:get.)?encsize=(.*)/);
     print get_iana($1)      if ($arg =~ m/^(?:get.)?iana=(.*)/  );
+    print get_pfs($1)       if ($arg =~ m/^(?:get.)?pfs=(.*)/   );
     print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value for returned arrays
     print join(" ", find_names($1))     if ($arg =~ m/^find.?names=(.*)/     );
@@ -1634,7 +1652,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.64 2022/10/31
+2.65 2022/10/31
 
 =head1 AUTHOR
 
