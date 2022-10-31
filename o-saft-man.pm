@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.75 22/10/31 09:45:59";
+my  $SID_man= "@(#) o-saft-man.pm 2.76 22/10/31 20:19:15";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -773,10 +773,10 @@ sub _man_usr_value  {
     return $arg[1];
 } # _man_usr_value
 
-sub _man_get_version{
+sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.75'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.76'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -852,7 +852,7 @@ $txt
 EoDetails
 } # _man_html_details
 
-sub _man_help_button{
+sub _man_help_button {
     #? return href tag for a help button
     my $cmd   = shift;      # must be --help=* option; also used for button text
     my $class = shift;      # value for class= attribute (if not empty)
@@ -978,7 +978,7 @@ sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
 
 sub _man_html_chck  {
     #? return checkbox, or input field with clickable label (to reset input)
-    #? to beused for +commands and --options
+    # to be used for +commands and --options
     my $mode    = shift; # cgi or html
     my $cmd_opt = shift || "";                  # +cmd or --opt or --opt=value
     my $tag_nam = $cmd_opt;
@@ -1005,6 +1005,7 @@ sub _man_html_chck  {
 } # _man_html_chck
 
 sub _man_name_ankor {
+    #? return name for an ankor tag without commas
     my $n = shift;
     $n =~ s/,//g;  # remove comma
     #$n =~ s/\s/_/g;# replace spaces
@@ -1940,7 +1941,7 @@ sub man_ciphers_text{
 
 sub man_ciphers     {
     #? print ciphers, $typ denotes type of output: text or html
-    #  see also https://ciphersuite.info/cs/
+    # see also https://ciphersuite.info/cs/
     my $typ = shift;# text or html
     _man_dbx("man_ciphers($typ) ..");
     my $txt = _man_ciphers_get();
@@ -1952,8 +1953,8 @@ sub man_ciphers     {
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
-    #? header of table is not printed if $typ is cfg-*
-    #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
+    # header of table is not printed if $typ is cfg-*
+    # NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
     my $pod =  "";
@@ -2419,26 +2420,32 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return;
 } # printhelp
 
-sub _main_man       {   # needs not to be _main unless used as Perl package
+sub _main_man       {
+    #? print own documentation or special required one
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     while (my $arg = shift @ARGV) {
         # --help and --gen-docs is special, anything els handled in printhelp()
-        print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(elp)?$/x);  # print own help
-        man_docs_write()                  if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
+        #TODO: __FILE__ must be __PACKAGE__ if this file is a perl module
+        print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(?:elp)?$/x);
+        # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
+        # ----------------------------- commands
+        if ($arg =~ /^version$/)         { print "$SID_man\n"; next; }
+       #if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n"; next; }
+        man_docs_write()            if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
+        # testing this module is technically the same as getting the text
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
         $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
-# htmitesting this module is technically the same as getting the text
-		next if ($arg =~ m/^[+-]-?/);   # ignore other options
+	next if ($arg =~ m/^[+-]-?/);   # ignore other options
         printhelp($arg);
     }
     exit 0;
 } # _main_man
 
-sub o_saft_man_done {};     # dummy to check successful include
+sub saft_man_done   {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -2603,7 +2610,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.75 2022/10/31
+2.76 2022/10/31
 
 =head1 AUTHOR
 
