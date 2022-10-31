@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.18 22/10/31 10:10:25";
+our $SID_osaft  =  "@(#) osaft.pm 2.19 22/10/31 21:09:20";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -273,9 +273,9 @@ my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
     $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
 
 #branch
-our %ciphers = ();  # defined in OSaft/Ciphers.pm; need forward here
+our %ciphers    = ();   # defined in OSaft/Ciphers.pm; need forward here
 
-our %prot   = (     # collected data for protocols and ciphers
+our %prot       = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
     # ssl           protocol  name        hex version value openssl  option     val LOW ...
     #--------------+---------------------+-----------------+-------------------+---+---+---+---
@@ -313,7 +313,7 @@ our %prot   = (     # collected data for protocols and ciphers
     # TODO: hex value should be same as %_SSLmap in Net::SSLinfo
 ); # %prot
 
-our %prot_txt = (
+our %prot_txt   = (     # texts for protocol checks
     'cnt'           => "Supported total ciphers for ",           # counter
     '-?-'           => "Supported ciphers with security unknown",# "
     'WEAK'          => "Supported ciphers with security WEAK",   #  "
@@ -1786,7 +1786,8 @@ our %tls_curves = (
 # order_for_NIST_curves_by_ID = 23, 1, 3, 19, 21, 6, 7, 9, 10, 24, 11, 12, 25, 13, 14
 ################
 
-our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
+our %data_oid   = (     # list of texts for some OIDs
+        # TODO: nothing YET IMPLEMENTED except for EV
         # TODO: generate this table using Net::SSLeay functions like:
         #   Net::SSLeay::OBJ_nid2ln(),  Net::SSLeay::OBJ_ln2nid()
         #   Net::SSLeay::OBJ_nid2sn(),  Net::SSLeay::OBJ_sn2nid(),
@@ -1892,7 +1893,7 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     #'1.3.6.1.4.1.13177.10.1.3.10'   => {'txt' => "SSL SECURE WEB SERVER CERTIFICATES"},
 ); # %data_oid
 
-our %cfg = (
+our %cfg = (    # main data structure for configuration
     'mename'        => "O-Saft ", # my name pretty printed
     'need_netdns'   => 0,       # used for better error message handling only
     'need_timelocal'=> 0,       # -"-
@@ -2890,7 +2891,7 @@ our %cfg = (
     'done'      => {},          # defined in caller
 ); # %cfg
 
-our %target_desc = (
+our %target_desc = (    # description of table used for printing targets
     #--------------+-----------------------------------------------------------
     # key             description
     #--------------+-----------------------------------------------------------
@@ -3209,14 +3210,14 @@ Print hint for specified command, additionl text will be appended.
 
 =cut
 
-sub osaft_sleep {
+sub osaft_sleep     {
     #? wrapper for IO::select
     my $wait = shift;
     select(undef, undef, undef, $wait); ## no critic qw(BuiltinFunctions::ProhibitSleepViaSelect)
     return;
 } # osaft_sleep
 
-sub printhint   {
+sub printhint       {
     #? Print hint for specified command.
     my $cmd  = shift;
     my @args = @_;
@@ -3333,7 +3334,7 @@ sub _prot_init_value    {
     return;
 } # _prot_init_value
 
-sub _cfg_init   {
+sub _cfg_init       {
     #? initialise dynamic settings in %cfg, copy data from %prot
     # initialise targets with entry containing defaults
     push(@{$cfg{'targets'}}, @target_defaults);
@@ -3364,7 +3365,7 @@ sub _cfg_init   {
     return;
 } # _cfg_init
 
-sub _cmd_init   {
+sub _cmd_init       {
     #? initialise dynamic settings in %cfg for commands
     foreach my $key (sort keys %cfg) {  # well-known "summary" commands
         push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
@@ -3375,7 +3376,7 @@ sub _cmd_init   {
     return;
 } # _cmd_init
 
-sub _dbx_init   {
+sub _dbx_init       {
     #? initialise settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
     $dbx{'cmd-http'}  = $cfg{'cmd-http'};
@@ -3385,7 +3386,7 @@ sub _dbx_init   {
     return;
 } # _dbx_init
 
-sub _osaft_init {
+sub _osaft_init     {
     #? additional generic initialisations for data structures
     my $me =  $0;       # done here to instead of package's "main" to avoid
        $me =~ s#.*[/\\]##;  # multiple variable definitions of $me
@@ -3406,16 +3407,20 @@ sub _osaft_init {
 } # _osaft_init
 
 sub _main_lib       {
+    #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/) {
-            OSaft::Text::print_pod($0, __PACKAGE__, $SID_osaft);# print own help
+        # ----------------------------- commands
+        if ($arg =~ m/^--?h(?:elp)?$/)   {
+            OSaft::Text::print_pod($0, __PACKAGE__, $SID_osaft);
             exit 0;
         }
+        if ($arg =~ /^version$/)         { print "$SID_osaft\n"; next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";   next; }
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -3424,7 +3429,7 @@ sub _main_lib       {
     exit 0;
 } # _main_lib
 
-sub osaft_done  {};     # dummy to check successful include
+sub osaft_done      {}; # dummy to check successful include
 
 _osaft_init();          # complete initialisations
 
@@ -3441,7 +3446,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.18 2022/10/31
+2.19 2022/10/31
 
 =head1 AUTHOR
 
