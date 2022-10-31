@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.17 22/10/14 10:46:59";
+our $SID_osaft  =  "@(#) osaft.pm 2.18 22/10/31 10:10:25";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3268,7 +3268,7 @@ sub test_cipher_regex   {
 ";
     print __regex_head();
     print __regex_line();
-    foreach my $key (sort (OSaft::Ciphers::get_cipherkeys())) {
+    foreach my $key (sort (OSaft::Ciphers::get_keys_list())) {
         my $ssl    = OSaft::Ciphers::get_ssl( $key);
         my $cipher = OSaft::Ciphers::get_name($key);
         my $is_pfs = (::_is_ssl_pfs($ssl, $cipher) eq "") ? "no" : "yes";
@@ -3441,7 +3441,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.17 2022/10/14
+2.18 2022/10/31
 
 =head1 AUTHOR
 
