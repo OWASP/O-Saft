@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.63 22/10/31 08:35:49";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.64 22/10/31 09:18:07";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -425,7 +425,7 @@ sub get_param   {
     #? internal method to return required value from %ciphers ($cipher is hex-key)
     #? returns array or string depending on calling context
     my ($hex, $key) = @_;
-    #_trace("get_param: '$hex' : '$h'");
+    #_trace("get_param($hex,$key)");
         $hex = text2key($hex);      # normalize cipher key
     # if (0 < (grep{/^$hex/i} %ciphers))  # TODO: brauchen wir das für defense programming?
     if ('ARRAY' eq ref($ciphers{$hex}->{$key})) {
@@ -1456,7 +1456,7 @@ sub _ciphers_init   {
         $ciphers{$key}->{'keyx'}    = $fields[4]  || '';
         $ciphers{$key}->{'auth'}    = $fields[5]  || '';
         $ciphers{$key}->{'enc'}     = $fields[6]  || '';
-        $ciphers{$key}->{'bits'}    = ($fields[7] || '0'); # our values are strings, but perl cast to int, which renders 0 as ''
+        $ciphers{$key}->{'bits'}    = ($fields[7] || '0 '); # our values are strings, but perl cast to int, which renders 0 as ''; ugly, very ugly hack
         $ciphers{$key}->{'mac'}     = $fields[8]  || '';
         $ciphers{$key}->{'rfc'}     = $fields[9]  || '';
         @{$ciphers{$key}->{'names'}}= split(/,/, $fields[10]);
@@ -1634,7 +1634,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.63 2022/10/31
+2.64 2022/10/31
 
 =head1 AUTHOR
 
