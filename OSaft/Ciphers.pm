@@ -36,7 +36,7 @@ package OSaft::Ciphers;
 use strict;
 use warnings;
 use Carp;
-our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
+our @CARP_NOT   = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 BEGIN {
     # SEE Perl:@INC
@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.66 22/10/31 10:07:57";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.67 22/10/31 19:05:18";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -190,7 +190,7 @@ readability of the program code. Methods intended for external use are:
 
 use Exporter qw(import);
 use base     qw(Exporter);
-our @EXPORT_OK = qw(
+our @EXPORT_OK  = qw(
                 %ciphers
                 %ciphers_desc
                 %ciphers_notes
@@ -214,7 +214,8 @@ our @EXPORT_OK = qw(
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-our %ciphers_desc = (   # description of %ciphers table
+our %ciphers_desc   = (
+    #? description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
                             # array of all culumns used most tables (including
                             # the definition below in DATA);
@@ -280,7 +281,7 @@ Note about TLS version:
         ',
 ); # %ciphers_desc
 
-our %ciphers = (
+our %ciphers        = (
     #? list of all ciphers, will be generated in _ciphers_init() from <DATA>
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
     # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
@@ -289,15 +290,18 @@ our %ciphers = (
 # ...
 ); # %ciphers
 
-# recommended according  http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
-our @cipher_iana_recomended = qw(
+our @cipher_iana_recomended =
+    #? list of all ciphers (hex keys) recommended by IANA, see
+    # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
+    qw(
     0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x0300130$
     0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
     0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
     0x0300D001 0x0300D002 0x0300D005
 ); # cipher_iana_recomended
 
-our $cipher_results = { # list of checked ciphers
+our $cipher_results = {
+    #? list of checked ciphers
     #--------------+--------+--------------+----------+
     # key       => [  ssl    supported ], # cipher suite name
     #--------------+--------+--------------+----------+
@@ -308,7 +312,7 @@ our $cipher_results = { # list of checked ciphers
     #--------------+--------+--------------+----------+
 }; # $cipher_results
 
-our %ciphers_notes = (
+our %ciphers_notes  = (
     #? list of notes and comments for ciphers, these texts are referenced in %ciphers
     #------------------+---------,
     # hex       =>      'text'   ,
@@ -330,10 +334,14 @@ Convert hex text to internal key: 0x00,0x3D --> 0x0300003D.
 
 Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 
+=head2 set_sec(   $cipher_key)
+
+Set value for 'security' in for specified cipher key.
+
 =cut
 
 sub text2key    {
-    # return internal hex key for given hex, return as is if not hex
+    #? return internal hex key for given hex, return as is if not hex
     my $txt = shift;
     my $key = uc($txt); # we use upper case only
        $key =~ s/(,|0X)//g;     # 0x00,0x26  --> 0026
@@ -351,7 +359,7 @@ sub text2key    {
 } # text2key
 
 sub key2text    {
-    # return internal hex key converted to openssl-style hex key
+    #? return internal hex key converted to openssl-style hex key
     # strips 0x03,0x00
     # return as is if not hex
     my $key = shift;
@@ -368,6 +376,9 @@ sub key2text    {
        $key =  "     $key" if (10 > length($key));
     return "$key";
 } # key2text
+
+sub set_sec     { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
+    #? set value in $ciphers{$key}->{'sec'} hash
 
 =pod
 
@@ -605,6 +616,7 @@ Find cipher key(s) for given cipher name or cipher constant.
 =cut
 
 sub get_key     {
+    #? return hex key for given cipher name; searches in cipher suite names and constants
     my $txt = shift;
     my $key = uc($txt);
        $key =~ s/X/x/g; # 0X... -> 0x...
@@ -648,14 +660,14 @@ sub get_data    {
     );
 } # get_data
 
-sub get_iana        {
+sub get_iana    {
     #? return "yes" if cipher suite is recommended by IANA, "no" otherwise
     my $key = shift;
        $key = text2key($key);       # normalize cipher key
     return (grep{ /^$key/i} @cipher_iana_recomended) ? "yes" : "no";
 } # get_iana
 
-sub get_pfs        {
+sub get_pfs     {
     #? return "yes" if cipher suite supports PFS, "no" otherwise
     my $key  = shift;
     my $name = $key;
@@ -666,14 +678,15 @@ sub get_pfs        {
         # EDH- and EXP-EDH- for ancient names
 } # get_pfs
 
-
 sub get_keys_list   {
+    #? return list of all defined (internal) hex keys for cipher suites in %ciphers
     my @keys = grep{ /^0x[0-9a-fA-F]{8}$/} keys %ciphers;   # only valid keys
     return wantarray ? (sort @keys) : join(' ', (sort @keys));
     # SEE Note:Testing, sort
 } # get_keys_list 
 
 sub get_names_list  {
+    #? return list of all defined cipher suite names in %ciphers
     my @list;
     foreach my $key (sort keys %ciphers) {
         next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
@@ -683,22 +696,22 @@ sub get_names_list  {
     # SEE Note:Testing, sort
 } # get_names_list
 
-sub find_keys       {
+sub find_keys   {
     #? TODO  find all hex key for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_keys($pattern)");
     return map({get_key($_);} grep(/$pattern/, get_names_list()));
 } # find_keys
 
-sub find_names      {
+sub find_names  {
     #? TODO  find all cipher suite names for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_names($pattern)");
     return grep(/$pattern/, get_names_list());
 } # find_names
 
-sub find_name       {   # TODO: not yet used
-    #? check if given cipher name is a known cipher
+sub find_name   {
+    #? TODO  check if given cipher name is a known cipher
     #  checks in %ciphers, if not found search in all aliases and constants
     #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES256-SHA256
     # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
@@ -729,10 +742,6 @@ sub find_name       {   # TODO: not yet used
 
 =pod
 
-=head2 set_sec(   $cipher_key)
-
-Set value for 'security' in for specified cipher key.
-
 =head2 sort_names(@ciphers)
 
 Sort ciphers according their strength. Returns list with most strongest first. 
@@ -747,9 +756,8 @@ Sort ciphers according their strength. Returns list with most strongest first.
 C<%unsorted> is a reference to a hash) of cipher suite hex keys.
 =cut
 
-sub set_sec         { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; }
-
 sub sort_names      {
+    #? sort array of cipher suite names according their strength
     # cipher suites must be given as array
     # NOTE: the returned list may not be exactly sorted according the cipher's
     #       strength, just roughly
@@ -876,8 +884,10 @@ sub sort_names      {
 } # sort_names
 
 sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
+    #? sort array of ciphers according their strength
     # returns array with sorted cipher keys
     # only used when ckecking for ciphers with openssl
+#TODO: should be same as sort_names()
     my $unsorted= shift;    # hash with $key => yes-or-no
     my @sorted;             # array to be returned
     my @tmp_arr;
@@ -1080,6 +1090,7 @@ sub show_description {
 } # show_description
 
 sub show_sorted     {
+    #? print %ciphers sorted according strength
     _v_print((caller(0))[3]);
     local $\ = "\n";
     my $head = "= OWASP IANA    openssl cipher suite";
@@ -1115,6 +1126,7 @@ EoT
 } # show_sorted
 
 sub show_overview   {
+    #? print overview of internal checks about %ciphers
     _v_print((caller(0))[3]);
     local $\ = "\n";
     print << 'EoT';
@@ -1532,7 +1544,7 @@ sub _main_ciphers   {
     exit 0;
 } # _main_ciphers
 
-sub ciphers_done    {};     # dummy to check successful include
+sub ciphers_done    {}; # dummy to check successful include
 
 # complete initialisations
 _ciphers_init();
@@ -1652,7 +1664,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.66 2022/10/31
+2.67 2022/10/31
 
 =head1 AUTHOR
 
