@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.70 22/10/30 20:21:13
+#?      @(#) Makefile.dev 1.71 22/10/31 09:49:26
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.70
+_SID.dev           := 1.71
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -94,7 +94,8 @@ LIST.osaft-ciphers-cmd  := \
 LIST.osaft-ciphers-get  := \
 	get_key     get_sec     get_ssl     get_keyx    get_auth    get_enc \
 	get_bits    get_mac     get_rfc     get_name    get_const   get_note \
-	get_openssl get_encsize get_iana    get_aliases get_names   get_consts
+	get_openssl get_encsize get_iana \
+	get_aliases get_consts  get_names   get_notes
 
 # command/options for Ciphers.pm composed of previous ones and some specials
 LIST.osaft-ciphers  := \
