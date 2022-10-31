@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.61 22/10/30 20:32:27";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.62 22/10/31 08:30:02";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -355,8 +355,9 @@ sub key2text    {
     # strips 0x03,0x00
     # return as is if not hex
     my $key = shift;
+    return $key if ($key !~ m/^0x[0-9A-F]+$/i); # unknown format, return as is
+       # NOTE: invalid keys like 0x0300001E-bug should not be converted
        $key =~ s/0x//i;         #    0x0026  --> 0026 (necessary in test-mode only)
-    return $key if ($key !~ m/^[0-9A-Fa-f]+$/); # unknown format, return as is
     if (6 < length($key)) {     #   from     -->     to
        $key =~ s/^42//;         # 0x42420001 -->   420001 ; internal use in future
        $key =~ s/^02//;         # 0x02010080 -->   010080
@@ -1633,7 +1634,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.61 2022/10/30
+2.62 2022/10/31
 
 =head1 AUTHOR
 
