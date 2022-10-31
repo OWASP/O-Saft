@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.41 22/10/30 20:54:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.42 22/10/31 22:15:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2853,7 +2853,7 @@ sub _get_cipherlist_openssl {
     if (@ciphers <= 0) {      # empty list
         _warn("063: given pattern '$pattern' did not return cipher list");
         _y_CMD("  using private cipher list ...");
-        @ciphers = OSaft::Ciphers::get_ciphernames();
+        @ciphers = OSaft::Ciphers::get_names_list_list();
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
