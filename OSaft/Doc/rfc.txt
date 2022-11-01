@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.16 22/11/01 17:57:53
+# SID	@(#) rfc.txt 1.17 22/11/01 19:27:07
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -104,13 +104,15 @@ url	http://tools.ietf.org/
 4490	Using the GOST 28147-89, GOST R 34.11-94, GOST R 34.10-94, and GOST R 34.10-2001 Algorithms with Cryptographic Message Syntax (CMS)
 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
 4634	US Secure Hash Algorithms (SHA, SHA-based HMAC and HKDF)
-5869	HMAC-based Extract-and-Expand Key Derivation Function
+5869	HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
 5830	GOST 28147-89: Encryption, Decryption, and Message Authentication Code (MAC) Algorithms
 5831	GOST R 34.11-94: Hash Function Algorithm
 5832	GOST R 34.10-2001: Digital Signature Algorithm
 6986	GOST R 34.11-2012: Hash Function
 7091	GOST R 34.10-2012: Digital Signature Algorithm
 7801	GOST R 34.12-2015: Block Cipher "Kuznyechik"
+9189	GOST Cipher Suites for Transport Layer Security (TLS) Protocol Version 1.2
+9150	TLS 1.3 Authentication and Integrity-Only Cipher Suites
 7836	Guidelines on the Cryptographic Algorithms to Accompany the Usage of Standards GOST R 34.10-2012 and GOST R 34.11-2012
 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
@@ -174,8 +176,11 @@ url	http://tools.ietf.org/
 7710	Captive Portal Using DHCP
 8484	DNS over HTTPS (DoH)
 8467	Padding for DoH und DoT
+8492	Secure Password Ciphersuites for Transport Layer Security (TLS)
 1918	Address Allocation for Private Internets
 6598	IANA-Reserved IPv4 Prefix for Shared Address Space
-9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
+8701	Applying Generate Random Extensions And Sustain Extensibility (GREASE) to TLS Extensibility
 8998	ShangMi (SM) Cipher Suites for TLS 1.3
+9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
+9155	Deprecating MD5 and SHA-1 Signature Hashes in TLS 1.2 and DTLS 1.2
 
