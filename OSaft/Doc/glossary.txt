@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.29 22/10/10 21:19:33
+# SID	@(#) glossary.txt 1.30 22/11/01 17:55:35
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -624,8 +624,11 @@ SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
-SM3	block cipher algorithm?
-SM4	block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
+SM2	ShangMi authentication function
+SM3	ShangMi hash function
+SM4	ShangMi block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
+SM4CCM	AEAD algorithms AEAD_SM4_CCM
+SM4GCM	AEAD algorithms AEAD_SM4_GCM
 SMS4	see SM4
 SMACK	State Machine AttaCKs	(Exploit SSL/TLS)
 Snefu	hash function
