@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.15 22/10/06 12:11:57
+# SID	@(#) rfc.txt 1.16 22/11/01 17:57:53
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -177,4 +177,5 @@ url	http://tools.ietf.org/
 1918	Address Allocation for Private Internets
 6598	IANA-Reserved IPv4 Prefix for Shared Address Space
 9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
+8998	ShangMi (SM) Cipher Suites for TLS 1.3
 
