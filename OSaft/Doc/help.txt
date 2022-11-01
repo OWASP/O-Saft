@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.106 22/10/31 10:56:35
+# SID   @(#) help.txt 1.107 22/11/01 12:09:10
 
 NAME
 
@@ -2245,11 +2245,14 @@ RESULTS
               ** all *RC2* and  *RC4*  ciphers
               ** all *EXPORT*  ciphers
               ** all *anon* (a.k.a ADH a.k.a DHA) ciphers
-              ** all *CBC* and *CBC3* (a.k.a 3DES) and DES ciphers
+              ** all *CBC* and *CBC3* (a.k.a 3DES, EDE-CBC) and DES ciphers
             * low:
+            * medium:
+              ** all *PSK* ciphers using CBC (assumes that the PSK is secure)
             * high:
-              ** all *AES(128|256)* ciphers
-              ** all *CAMELLIA* ciphers
+              ** all *DHE*AES(128|256)* ciphers
+              ** all *CHACHA* ciphers
+              ** all *PSK* ciphers (except those using 
 
       +check
 
