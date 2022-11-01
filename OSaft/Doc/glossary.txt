@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.30 22/11/01 17:55:35
+# SID	@(#) glossary.txt 1.31 22/11/01 19:28:24
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -212,6 +212,9 @@ ECC	Elliptic Curve Cryptography
 ECCSI	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption
 ECDH	Elliptic Curve Diffie-Hellman
 ECDHE	Ephemeral ECDH
+ECDHE_ECDSA	Ephemeral ECDH with ECDSA or EdDSA signatures
+ECDHE_RSA	Ephemeral ECDH with RSA signatures
+ECDH_anon	Anonymous ephemeral ECDH, no signatures
 ECDLP	Elliptic Curve Discrete Logarithm Problem
 ECDSA	Elliptic Curve Digital Signature Algorithm
 ECDSA-256	Elliptic Curve Digital Signature Algorithm (256 bits)
@@ -369,7 +372,8 @@ KRB5	Key Exchange Kerberos 5
 KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
-Kuznyechik	blockcipher  (used in GOST)
+Kuznyechik	block cipher  (used in GOST)
+Magma	block cipher  (used in GOST)
 LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
 LEA	? algorithm
 LEA-128	see LEA
