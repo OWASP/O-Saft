@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.107 22/11/01 12:09:10
+# SID   @(#) help.txt 1.108 22/11/01 14:10:48
 
 NAME
 
@@ -2242,7 +2242,7 @@ RESULTS
 
             * weak:
               ** all *NULL* ciphers
-              ** all *RC2* and  *RC4*  ciphers
+              ** all *RC2* and *RC4* ciphers
               ** all *EXPORT*  ciphers
               ** all *anon* (a.k.a ADH a.k.a DHA) ciphers
               ** all *CBC* and *CBC3* (a.k.a 3DES, EDE-CBC) and DES ciphers
@@ -2988,8 +2988,12 @@ OUTPUT
             Replace  'N/A'  by whatever you think is adequate:  "No answer",
             "Not available",  "Not applicable",  ...
 
-        Lines not described above, will have the form (by default):
-              Label for information or check:  TABresult
+        Examples:                                                             
+              === Title line ===                                              
+              = this is a comment                                             
+
+              Label for information or check:  TABresult                      
+              !!Hint: above result depends on the target
 
         For more details on these lines, please refer to  RESULTS  above.
 
