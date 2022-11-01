@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.71 22/11/01 13:56:53";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.72 22/11/01 14:03:43";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1101,7 +1101,9 @@ sub show_sorted     {
 =
 =   description of columns:
 =       OWASP       - OWASP scoring (A, B, C, D)
-=       openssl     - strength gven bei OpenSSL
+=       openssl     - strength given bei OpenSSL
+=       self        - strength according own rules
+=       IANA        - "yes" if recommended by IANA
 =       cipher suite- OpenSSL suite name
 EoT
     print ($line);
@@ -1668,7 +1670,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.71 2022/11/01
+2.72 2022/11/01
 
 =head1 AUTHOR
 
