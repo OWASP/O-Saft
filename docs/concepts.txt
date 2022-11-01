@@ -9,33 +9,169 @@
 Zeilen, die mit # beginnen, sind in OSaft/Doc/help.txt schon eingetragen
 
 
-=== Concepts ===
+PROLOG
 
-See OSaft/Doc/help.txt .
+        Some texts herein are  literally or conceptual  identical to texts in
+        other files. These texts are followed herein with for example:
+          "> See also: OSaft/Doc/help.txt  CONCEPTS"
 
-It follows the perl principle "Perl is a language for getting your job done."
+        It is recommended to cross-check changes of such texts and adapt them
+        accordingly.
 
-O-Saft has many features that ease the task of the users at the expense of
-greater complexity in some parts of the code (for example the parser for
-command line options and arguments).
 
-The design of O-Saft's commands and options is very much influenced by
-linguistic principles. For examples, most options can be abrevated in
-various ways. Also, common things should be short and easy to remember,
-aka "concise and natural for humans".
-In the documentation important information should come first, details will
-follow.
-  include Huffman coding (common constructions should be short), good
-  end-weighting (the important information should come first), and a
-  large collection of language primitives.
+PRINCIPLES
 
-It's often a matter of opinion and taste how something should be done,
-for example command line arguments. So we try to allow all options and
-arguments a user might be used to (i.e. from other tools).
+        Quick overview about principles and concepts:
 
-It's also often a matter of opinion and taste how results should be presented.
-O-Saft strictly follows the rule: one check result in one line of output.
-It should be very easy to postprocess output. Think the UNIX pipe model.
+          * '+'  prefix for command arguments
+          * '--' prefix for option arguments
+          * each check produces one line of output
+          * additional information (comments) ar disabled by default
+          * '='  prefix for dosumention/comments
+          * '#'  prefix for verbose messages
+          * program terminates immediately on errors
+          * --help*  provides user help/usage
+          * --test*  provides information about internal data
+
+
+CONCEPTS
+
+        The purpose of  O-Saft  is to do the work,  not to force the user  to
+        learn a new tool or to install "newer" software first.
+	However, the user "should do something" if necessary depending on the
+        reported results.
+
+        It follows the Perl principle:
+          "Perl is a language for getting your job done."
+
+        Before the concepts can be described,  we need to explained the words
+        and terms. In particular:  developer vs. user,  commands vs. options,
+        debug vs. trace vs. results/output,  code. For the deatils please see
+        GLOSSAR  below.
+
+        Following concepts are described first:
+          * Developer vs. user
+          * Commands vs. options
+          * Verbose vs. trace (and debug)
+          * Output and results
+          * Errors, warnings, hints
+          * Ancient systems
+
+    Developer vs. user
+
+        As said above, the main purpose of the tool(s) is/are to do the job.
+        Therefore the user's view is the most important. This view covers the
+        tools' usage with commands and options (arguments in general) and the
+        results (output) shown by the tools.
+
+        Developers also needs to understand the concept of the code.  In this
+        the user's view is used. It is explicitly noted if a developer's view
+        is meant.
+
+    Commands vs. options
+
+        In general "commands" are used for somthing to be done. "options" are
+        used to configure or modify the behaviour of the commands.
+
+        The tool(s) have many features that ease the task of the users at the
+        expense of greater complexity in some parts of the code  (for example
+        the parser for command line options and arguments).
+
+        The design of the commands and options is very much influenced by
+        linguistic principles. For examples, most options can be abrevated in
+        various ways. Common things should be short and easy to remember, aka
+        "concise and natural for humans".
+
+        It's often a matter of opinion or taste how something should be done,
+        for example command line arguments. hence we try to allow all options
+        and arguments a user might be used to (i.e. from other tools).
+
+        Following general rules are used:
+          * commands are prefixed with '+', for example  +cipher
+          * options are prefixed with '--', for example  --cipher=AES
+          * the sequence of commands and options is not important
+
+        > See also: OSaft/Doc/help.txt  SYNOPSIS
+
+        Rare exceptions are necessary to handle ambiguity. For example --help
+        is used in general to print the user's help for specific tool. But if
+        such a tool is  a wrapper which passes its arguments to another tool,
+        user's help fo this tool itself cannot be printed. Example:
+          o-saft.pl --help  # print help for o-saft.pl
+          o-saft    --help  # print help for o-saft.pl
+          o-saft     -help  # print help for o-saft itself
+
+        For the same reason,  the sequence of arguments maybe important. This
+        most likely is necessary for  --v  and  --trace*  options. Example:
+          o-saft.pl +cn target             --exit=ARGS --traceargs
+          o-saft.pl +cn target --traceargs --exit=ARGS
+          o-saft.pl            --traceargs +cn target  --exit=ARGS
+
+    Verbose vs. trace (and debug)
+
+        Verbose output is intended for the user. It's enabled with the option
+        --v . All verbose messages are prefixed with '#'.
+
+        Except for hunting special problems with a target,  trace options are
+        most likely for developers. These options are named  --trace* . Their
+        messages are also prefixed with '#'.
+
+        Debugging is intended for developers. No special options are provided
+        for debugging beside the  --trace*  options. For more details see the
+        section   "Debugging code"  below.
+
+    Output and results
+
+        All output is designed to make it  easily parsable by postprocessors.
+        Following rules are used:
+          * Lines for formatting or header lines start with  '='.
+          * Lines for verbosity or tracing start with  '#'.
+          * Errors and warnings start with  '**', hints start with '!!'.
+          * Empty lines are comments ;-)
+          * Label texts end with a separation character; default is  ':'.
+          * Label and value for all checks are separated by at least one  TAB
+            character.
+          * Texts for additional information are enclosed in '<<'  and  '>>'.
+          * 'N/A'  is used  when no proper information was found or provided.
+            Replace  'N/A'  by whatever you think is adequate:  "No answer",
+            "Not available",  "Not applicable",  ...
+
+        Examples:
+              === Title line ===
+              = this is a comment
+              Label for information or check:  TABresult
+              !!Hint: above result depends on the target
+
+        > See also: OSaft/Doc/help.txt  OUTPUT
+
+        It is also often  a matter of opinion and taste how results should
+        be presented. Most tools strictly follow the rule:
+          one check result in one line of output
+        For postprocess output (see above), think the UNIX pipe model.
+
+        Results of checks are marked  'yes'  or 'no'.  This leaves the proper
+        interpretation, if the result is "good" or "bad", to the user.
+
+        > See also: OSaft/Doc/help.txt  CONCEPTS
+
+        For status Code see  "STATUS CODE" below
+
+    Errors, warnings, hints
+
+        Errors, warnings and hints may be part of the output as needed. While
+        errors and warnings are printed immediately as they occour during the
+        program flow, hints are printed right after the corresponding result.
+
+        Hints print an additional explanation of a specific result.
+
+        Errors and warnings start with a unique 3-digit number.
+
+        > See also: OSaft/Doc/help.txt  OUTPUT
+
+        Note that an error terminates the tool immediately, unless the option
+        --exitcode  was used.
+
+    Ancient systems
 
 This tool should run on older systems too.
 Background:
@@ -50,6 +186,64 @@ all features then, but it should work. In such cases, **WARNING messages are
 printed. These warnings cannot be switched off the usual way with --no-warning.
 just to keep you -the user- informed, that not everything is possible.
 
+
+DEVELOPMENT
+
+        This part describes concepts used for development.
+
+        Following concepts are described first:
+          * Documentation (user and development)
+          * Progrmming (code) style
+          * Handling erros and exceptions
+          * Debugging code
+          * Programming +ciphers
+          * Programming: +info +check
+          * Testing
+          * Make for development
+
+    Documentation (user and development)
+
+        In the documentation important information should come first, details
+        will follow. Cite:
+          include Huffman coding (common constructions should be short), good
+          end-weighting (the important information should come first), and a
+          large collection of language primitives.
+
+    Progrmming (code) style
+
+        In general the code favours language constructs that are easy to read
+        by humans, even they are unusual for other programming languages (for
+        example postfix conditions).
+
+        Because of our goal to support running on old systems too (see above)
+        parts of the code make ugly checks for version numbers  and try to do
+        checks in a cumbersome way. 
+        Keep in mind: the code knows how to do the work, the user most likely
+        does not know.
+
+        The code uses spaces for formating, mainly to make the code look like
+        tabular data. It's because the author's opinion  that tabular data is
+        better readable (aka understanable) than continous (code) prose.
+        There's no strict rule about such "tables", their style depend on the
+        context they are used in.
+
+    Handling erros and exceptions
+
+        As said before,  the purpose of the tools is to  simplify users' life 
+        and not the programmers' life.  We try hard to fullfil this goal.
+        Programming is often done in a defensive way,  means that any kind of
+        error (and exception if any) will be  catched and shown  to the user.
+        Unfortnately not all errors can be foreseen.  In the GUI (o-saft.tcl)
+        a "silent" catch is used sometimes, which disacrds any error message.
+
+        There are often situations where the underlaying system misses tools,
+        is improper configured or simply behaves strange.  If such conditions
+        are identified, a proper  **WARNING  or  !!Hint  will be shown.  This
+        may disturb or bore the user, but we don't hide what we detect, which
+        might be suspiscious somehow.
+
+        This tool checks security accurate, it dos not give a "good feeling".
+
 --> Drawbacks, traps:
   O-Saft complains about unkwown commands (+cmd), but not about unknown
   options. This means that unknown options are silently ignored, a misspelled
@@ -57,47 +251,29 @@ just to keep you -the user- informed, that not everything is possible.
   -legacy=compact  then the parameter (compact here) is treated as hostname.
   (may change in future).
 
---> HACKER's INFO
-  Because of our goal to support running on old systems too (see  CONCEPTS),
-  parts of the code make ugly checks for version numbers and try to do checks
-  in a cumbersome way. 
-  Keep in mind: the code knows how to do the work, the user most likely does
-  not know.
+    Debugging code
 
+        Debugging is intended  for development only.  All additional code for
+        debug, trace and verbose functionality is separated in its own file.
+        As verbose functionality, and trace partly, makes sense for the user,
+        debug does not.  However, using the  --trace*  options provide a huge
+        amount of information too.
+        Hence, no special commands and options for debugging are implemented.
+        Either use perl's  -d  option, or change the code.  Further hints can
+        be found in ... TBD ...
 
-=== Programming ===
+    Programming +ciphers
 
-O-Saft's code favours language constructs that are easy to read for humans,
-even they are unusual for other programming languages (like postfix conditions).
+        There are three modes (technically spoken) are implemented  to detect
+        the ciphers supported by the server:
+          +cipher --ciphermode=intern
+              - private implementation without using other perl modules
+          +cipher --ciphermode=ssleay
+              - using perl's IO::Socket:SSL module (mainly based on openssl)
+          +cipher --ciphermode=openssl
+              - using external openssl
 
-The purpose of O-Saft is to make users' life simpler, not the programmers'.
-We try hard to fullfil this goal.
-Programming is often done in a very defensive way, means that any kind of
-error (and exception if any) will be catched and displayed to the user.
-Unfortnately not all errors can be foreseen, hence a "silent" catch is used
-sometimes, which disacrds any error message (mainly used in the GUI o-saft.tcl).
-
-There are often situations where the underlaying system misses tools, is
-improper configured or simply behaves strange. If such conditions are
-identified, a proper  **WARNING  or  !!Hint  will be printed. 
-This may disturb or bore the user, but we don't hide what we detect, which
-might be suspiscious somehow.
-This is a tool to check security accurate, not to give a "good feeling".
-
-
-== Programming: Cipher ==
-
-There are three modes (technically spoken) to detect the ciphers supported by
-the server:
-  +cipher --ciphermode=intern
-            - private implementation without using other perl modules
-  +cipher --ciphermode=ssleay
-            - using perl's IO::Socket:SSL module (mainly based on openssl)
-  +cipher --ciphermode=openssl
-            - using external openssl
-
-
-== Programming: +cipher ==
+        Since VERSION 22.02.22  --ciphermode=intern  is the default.
 
 To get the ciphers supported by the server, a basic connection is made
 using IO::Socket:SSL->new(). This connection does not check the server's
@@ -111,7 +287,7 @@ laying libssl), which has proper fallbacks to older protocols (like
 TLSv1 or even SSLv3).
 
 
-== Programming: +info ==
+   Programming: +info +check
 
 All other commands, beside +cipher use Net::SSLeay to connect to the
 server. However, Net::SSLeay uses IO::Socket:SSL underneath.
@@ -123,15 +299,21 @@ CTX_tlsv1_2_new() and TLSv1_2_method() in 2017). If the connection fails,
 the next method is used, until the connection is established or failed
 at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
 
+    Testing
 
-=== Results ===
+        TBD ... 
+	Documentation about testing can be found in the section  TESTING  in
+          OSaft/Doc/help.txt
+        This should be moved to this document and then referenced in there.
 
-Results (checks) are marked "yes" or "no". 
-It leaves the interpretation, if the result is "good" or "bad", to the user.
+    Make for development
+
+        TBD ... explain make system and targets ...
 
 
-== Results: Status Code ==
-Why does O-Saft not support a  --fail  option?
+STATUS CODE
+
+        Why does O-Saft not support a  --fail  option?
 
 Long answer: 
 
@@ -264,4 +446,19 @@ Hope this helps to understand how O-Saft handles various situation and
 how to configure it for very spezial purposes.
 
 
+GLOSSAR
+
+        This glossar explains the words and terms used herein this document.
+
+        TBD ...
+
+        developer
+        user
+        debug
+        trace
+        verbose
+        result
+        code
+        command
+        option
 
