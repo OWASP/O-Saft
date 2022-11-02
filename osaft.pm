@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.22 22/11/02 13:58:37";
+our $SID_osaft  =  "@(#) osaft.pm 2.23 22/11/02 14:06:39";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2151,7 +2151,7 @@ our %cfg = (    # main data structure for configuration
         'ecc'       =>          # constants for ciphers using ecc
                        "0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF,",
         'intern'    => "",      # internal list, computed later ...
-                                # see _cfg_init(): shifted + GREASE
+                                # see _cfg_init(): shifted
     }, # cipherranges
     'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
@@ -3377,8 +3377,7 @@ sub _cfg_init       {
     $cfg{'cipherranges'}->{'rfc'}         .= $cfg{'cipherranges'}->{'GREASE'};
     $cfg{'cipherranges'}->{'shifted'}     .= $cfg{'cipherranges'}->{'rfc'};
     $cfg{'cipherranges'}->{'TLSv13'}      .= $cfg{'cipherranges'}->{'GREASE'};
-    $cfg{'cipherranges'}->{'intern'}       = $cfg{'cipherranges'}->{'shifted'}
-                                           . $cfg{'cipherranges'}->{'GREASE'};
+    $cfg{'cipherranges'}->{'intern'}       = $cfg{'cipherranges'}->{'shifted'};
     return;
 } # _cfg_init
 
@@ -3463,7 +3462,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.22 2022/11/02
+2.23 2022/11/02
 
 =head1 AUTHOR
 
