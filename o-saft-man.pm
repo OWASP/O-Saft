@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.76 22/10/31 20:19:15";
+my  $SID_man= "@(#) o-saft-man.pm 2.77 22/11/02 23:42:30";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -776,7 +776,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.76'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.77'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2037,9 +2037,12 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # TODO: --cfg_range=* and --cfg-regex=*  are not yet implemented
         #       however, we can print it using --help=cfg-regex
         foreach my $key (sort keys %{$cfg{$list}}) {
-            $txt =  $cfg{$list}->{$key};
+            $txt =  $cfg{$list}->{$key} || "";  # "" to avoid "Use of uninitialized value ..."
             if ('ARRAY' eq ref($cfg{$list}->{$key})) {
                 $txt = join("\t", @{$cfg{$list}->{$key}});
+            }
+            if ('range' eq $typ) {
+                $txt =~ s/     */                   /g; # adjust leading spaces
             }
             $pod .= _man_cfg($typ, $key, $sep, $txt);
         }
@@ -2610,7 +2613,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.76 2022/10/31
+2.77 2022/11/02
 
 =head1 AUTHOR
 
