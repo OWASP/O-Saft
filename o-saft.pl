@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.45 22/11/02 14:17:14"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.46 22/11/02 22:28:35"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -3118,8 +3118,10 @@ sub ciphers_scan_raw    {
             if (_is_cfg_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
-                printf("%-36s\t%s\n", "=   $checks{'cnt_totals'}->{txt}", scalar(@all));
-                    # FIXME: should use print_line() instead of hardcoded printf
+                if ('simple' eq $cfg{'legacy'}) {
+                    printf("%-36s\t%s\n", "=   $checks{'cnt_totals'}->{txt}", scalar(@all));
+                        # FIXME: should use print_line() instead of hardcoded printf
+                }
                 next if (scalar @accepted < 1); # defensive programming ..
                 #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
             } else {
