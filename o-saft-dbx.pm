@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.20 22/10/31 20:40:32";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.21 22/11/02 22:39:13";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -126,13 +126,14 @@ sub _yeast_ciphers_list {
     if (0 < $need) {
         # avoid printing huge lists
         my @range;
-        if ($cfg{'cipherrange'} =~ m/(full|huge|long|safe|rfc)/i) {
+        if ($cfg{'cipherrange'} =~ m/(full|huge|long|safe|rfc|intern)/i) {
             # avoid huge (useless output)
             $_cnt = 0xffffff;
             $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
             $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/long/i);
             $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
-            $_cnt = 2051     if ($cfg{'cipherrange'} =~ m/rfc/i);  # estimated count
+            $_cnt = 2051     if ($cfg{'cipherrange'} =~ m/rfc/i);   # estimated count
+            $_cnt = 2640     if ($cfg{'cipherrange'} =~ m/intern/i);# estimated count
             @range = qw"<<huge list not printed>>";
         } else {
             # expand smaller list
@@ -1004,7 +1005,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.20 2022/10/31
+2.21 2022/11/02
 
 =head1 AUTHOR
 
