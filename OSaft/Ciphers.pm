@@ -48,7 +48,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.75 22/11/01 19:24:22";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.76 22/11/02 22:57:03";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -790,6 +790,7 @@ sub sort_names      {
         qw(DH.?(?i:anon)),              # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
         qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
+        qw((?:GREASE-))    ,            # dummy ciphers (avoids **WARNING: 412: for GREASE*)
     );
     my @strength = (
         qw(CECPQ1[_-].*?CHACHA)       ,
@@ -838,7 +839,8 @@ sub sort_names      {
         qw((?:EDH|DHE).*?128) ,
         qw((?:EDH|DHE).*?(?:RSA|DSS)) ,
         qw(CAMELLIA) ,                  # 9. unknown strength
-        qw((?:SEED|IDEA|ARIA)),
+        qw((?:SEED|IDEA|ARIA|SM4)),
+        qw(^(?:SHA256-|SHA384-)),
         qw(RSA[_-]) ,                   # 10.
         qw(DH[_-])  ,
         qw(RC)      ,
@@ -1670,7 +1672,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.75 2022/11/01
+2.76 2022/11/02
 
 =head1 AUTHOR
 
