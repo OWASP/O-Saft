@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.19 22/10/31 21:09:20";
+our $SID_osaft  =  "@(#) osaft.pm 2.21 22/11/02 13:56:28";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2077,24 +2077,18 @@ our %cfg = (    # main data structure for configuration
                     # memory footprint,  but requires use of  eval()  when the
                     # range is needed:  eval($cfg{cipherranges}->{rfc})
                     # Each string must be syntax for perl's range definition.
-        'yeast'     => "",      # internal list, computed later ...
         'rfc'       =>          # constants for ciphers defined in various RFCs
                        "0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
                         0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
                         0x0300D000 .. 0x0300D0FF,
-                        0x0300DADA,   0x0300EAEA, 0x0300FAFA, 
                         0x0300FE00 .. 0x0300FFFF,
                        ",
+                            # GREASE ciphers added in _cfg_init()
         'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
-                       "0x03000100 .. 0x0300013F,
-                        0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
-                        0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
-                        0x0300D000 .. 0x0300D0FF,
-                        0x0300DADA,   0x0300EAEA, 0x0300FAFA, 
-                        0x0300FE00 .. 0x0300FFFF,
-                       ",
+                       "0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,",
+                                # see _cfg_init(): + rfc
         'long'      =>          # more lazy list of constants for cipher
-                       "0x03000000 .. 0x030013FF, 0x0300C000 .. 0x0300FFFF",
+                       "0x03000000 .. 0x030013FF, 0x0300C000 .. 0x0300FFFF,",
         'huge'      =>          # huge range of constants for cipher
                        "0x03000000 .. 0x0300FFFF",
         'safe'      =>          # safe full range of constants for cipher
@@ -2103,55 +2097,61 @@ our %cfg = (    # main data structure for configuration
         'full'      =>          # full range of constants for cipher
                        "0x03000000 .. 0x03FFFFFF",
 # TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
-        'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
-                                # see Note(a) above also
+        'SSLv2_base'=>          # constants for ciphers for SSLv2
                        "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0800,   0x02FF0810, 0x02FFFFFF,
-                        0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
-                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ",
-                       # 0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
-                       # 0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
+                        # 0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
+                        # 0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
+        'SSLv2_rfc' =>          # additional constants for ciphers for SSLv2
+                       "0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,",
+        'SSLv2_rfc+'=>          # additional constants for ciphers for SSLv2 long list
+                       "0x03000000 .. 0x0300002F, 0x030000FF,",
+        'SSLv2_FIPS'=>          # additional constants for FIPS ciphers (SSLv2 and SSLv3)
+                       "0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,",
+        'SSLv2'     => "",      # constants for ciphers according RFC for SSLv2
+                                # see _cfg_init(): SSLv2_base + SSLv2_rfc + SSLv2_FIPS
+                                # see Note(a) above also
 # TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
 # TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
-        'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
-                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
-                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
-                        0x03000000 .. 0x0300002F, 0x030000FF,
-                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
-                       ",
+        'SSLv2_long'=> "",      # more lazy list of constants for ciphers for SSLv2
+                                # see _cfg_init(): SSLv2_base + SSLv2_rfc+ + SSLv2_FIPS
         'SSLv3'     =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
                        "0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
                         0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
                         0x0300C000 .. 0x0300C022, 0x0300FEE0 .. 0x0300FEFF,
                         0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
                        ",
-        'SSLv3_SSLv2' =>        # constants for SSLv3 ciphers (with SSLv2 ciphers)
-                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
-                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
-                        0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
-                        0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
-                        0x0300C000 .. 0x0300C0FF, 0x0300FEE0 .. 0x0300FEFF,
-                        0x0300FF00 .. 0x0300FF03, 0x0300FF80 .. 0x0300FF83, 0x0300FFFF,
-                       ",
+        'SSLv3_SSLv2' => "",    # SSLv3 and SSLv2 ciphers; initialised in _cfg_init()
+                                # see _cfg_init(): SSLv2_base + SSLv2_rfc+ + SSLv3
 # TODO: 'SSLv3_old' =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
 # TODO:                "0x03000000 .. 0x0300002F, 0x030000FF",  # old SSLv3 ciphers
-# TODO: 'TLSv10'    => # same as SSLv3
-# TODO: 'TLSv11'    => # same as SSLv3
+        'TLSv10'    => "",      # same as SSLv3
+        'TLSv11'    => "",      # same as SSLv3
         'TLSv12'    =>          # constants for TLSv1.2 ciphers
                        "0x0300003B .. 0x03000040, 0x03000067 .. 0x0300006D,
                         0x0300009C .. 0x030000A7, 0x030000BA .. 0x030000C5,
                         0x0300C023 .. 0x0300C032, 0x0300C072 .. 0x0300C079,
-                        0x0300CC13 .. 0x0300CC15, 0x0300FFFF,
+                        0x0300CC13 .. 0x0300CC15, 0x0300D000 .. 0x0300D005,
+                        0x0300FFFF,
                        ",
-        'TLSv13'    => "0x03001301 .. 0x03001305, 0x0300FF85, 0x0300FF87",
+        'TLSv13'    =>          # constants for TLSv1.3 ciphers
+                       "0x03001301 .. 0x03001305, 0x0300FF85, 0x0300FF87,
+                        0x030000C6,   0x030000C7, 0x0300C0B4, 0x0300C0B5,
+                       ",
+                            # GREASE ciphers added in _cfg_init()
+        'GREASE'    =>          # constants for GREASE ciphers
+                       "0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
+                        0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
+                        0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA, 0x0300EAEA, 0x0300FAFA,
+                       ",
         'c0xx'      => "0x0300C000 .. 0x0300C0FF",  # constants for ciphers using ecc
         'ccxx'      => "0x0300CC00 .. 0x0300CCFF",  # constants for ciphers using ecc
         'ecc'       =>          # constants for ciphers using ecc
-                       "0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF",
+                       "0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF,",
+        'intern'    => "",      # internal list, computed later ...
+                                # see _cfg_init(): shifted + GREASE
     }, # cipherranges
     'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
@@ -2162,18 +2162,31 @@ our %cfg = (    # main data structure for configuration
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
-    'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
+    'ciphercurves'  =>          # contains all curves to be passed for +cipher checks
+                       [
+                        qw(prime192v1 prime256v1),
+                        qw(sect163k1 sect163r1 sect193r1           sect233k1 sect233r1),
+                        qw(sect283k1 sect283r1 sect409k1 sect409r1 sect571k1 sect571r1),
+                        qw(secp160k1 secp160r1 secp160r2 secp192k1 secp224k1 secp224r1),
+                        qw(secp256k1 secp384r1 secp521r1),
+                        qw(brainpoolP256r1 brainpoolP384r1 brainpoolP512r1),
+                                # TODO: list NOT YET complete, see %tls_curves
+                                #       adapted to Mosman's openssl 1.0.2dev (5/2017)
+                                #qw(ed25519 ecdh_x25519 ecdh_x448),
+                                #qw(prime192v2 prime192v3 prime239v1 prime239v2 prime239v3),
+                                #qw(sect193r2 secp256r1 ),
+                        ],
 
     # List of all extensions sent by protocol
     'extensions_by_prot' => {   # List all Extensions used by protocol, SSLv2 does not support extensions by design
-         'SSLv3'     => [],      # SSLv3 does not support extensions as originally defined, may be back-ported
-         'TLSv1'     => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
-         'TLSv11'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
-         'TLSv12'    => [qw(renegotiation_info supported_groups ec_point_formats signature_algorithms )],
-         'TLSv13'    => [qw(supported_versions supported_groups ec_point_formats signature_algorithms
-                            session_ticket renegotiation_info encrypt_then_mac
-                            extended_master_secret psk_key_exchange_modes key_share
-                         )],
+         'SSLv3'    => [],      # SSLv3 does not support extensions as originally defined, may be back-ported
+         'TLSv1'    => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+         'TLSv11'   => [qw(renegotiation_info supported_groups ec_point_formats session_ticket)],
+         'TLSv12'   => [qw(renegotiation_info supported_groups ec_point_formats signature_algorithms )],
+         'TLSv13'   => [qw(supported_versions supported_groups ec_point_formats signature_algorithms
+                           session_ticket renegotiation_info encrypt_then_mac
+                           extended_master_secret psk_key_exchange_modes key_share
+                        )],
     }, # extensions_by_prot
 
    # following keys for commands, naming scheme:
@@ -3345,23 +3358,27 @@ sub _cfg_init       {
     # initialise alternate protocols and curves for cipher checks
     $cfg{'cipher_alpns'}= [split(/,/, $cfg{'protos_next'})];
     $cfg{'cipher_npns'} = [split(/,/, $cfg{'protos_next'})];
-    $cfg{'ciphercurves'}= [
-            qw(prime192v1 prime256v1),
-            qw(sect163k1 sect163r1 sect193r1           sect233k1 sect233r1),
-            qw(sect283k1 sect283r1 sect409k1 sect409r1 sect571k1 sect571r1),
-            qw(secp160k1 secp160r1 secp160r2 secp192k1 secp224k1 secp224r1),
-            qw(secp256k1 secp384r1 secp521r1),
-            qw(brainpoolP256r1 brainpoolP384r1 brainpoolP512r1),
-            # TODO: list NOT YET complete, see %tls_curves
-            #       adapted to Mosman's openssl 1.0.2dev (5/2017)
-            #qw(ed25519 ecdh_x25519 ecdh_x448),
-            #qw(prime192v2 prime192v3 prime239v1 prime239v2 prime239v3),
-            #qw(sect193r2 secp256r1 ),
-        ];
     # incorporate some environment variables
     $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
     $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
     $cfg{'openssl_fips'}= $ENV{'OPENSSL_FIPS'} if (defined $ENV{'OPENSSL_FIPS'});
+    # initialise cipherranges
+    $cfg{'cipherranges'}->{'SSLv2'}        = $cfg{'cipherranges'}->{'SSLv2_base'}
+                                           . $cfg{'cipherranges'}->{'SSLv2_rfc'}
+                                           . $cfg{'cipherranges'}->{'SSLv2_FIPS'};
+    $cfg{'cipherranges'}->{'SSLv2_long'}   = $cfg{'cipherranges'}->{'SSLv2_base'}
+                                           . $cfg{'cipherranges'}->{'SSLv2_rfc+'}
+                                           . $cfg{'cipherranges'}->{'SSLv2_FIPS'};
+    $cfg{'cipherranges'}->{'SSLv3_SSLv2'}  = $cfg{'cipherranges'}->{'SSLv2_base'}
+                                           . $cfg{'cipherranges'}->{'SSLv2_rfc+'}
+                                           . $cfg{'cipherranges'}->{'SSLv3'};
+    $cfg{'cipherranges'}->{'TLSv10'}       = $cfg{'cipherranges'}->{'SSLV3'};
+    $cfg{'cipherranges'}->{'TLSv11'}       = $cfg{'cipherranges'}->{'SSLV3'};
+    $cfg{'cipherranges'}->{'rfc'}         .= $cfg{'cipherranges'}->{'GREASE'};
+    $cfg{'cipherranges'}->{'shifted'}     .= $cfg{'cipherranges'}->{'rfc'};
+    $cfg{'cipherranges'}->{'TLSv13'}      .= $cfg{'cipherranges'}->{'GREASE'};
+    $cfg{'cipherranges'}->{'intern'}       = $cfg{'cipherranges'}->{'shifted'}
+                                           . $cfg{'cipherranges'}->{'GREASE'};
     return;
 } # _cfg_init
 
@@ -3446,7 +3463,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.19 2022/10/31
+2.21 2022/11/02
 
 =head1 AUTHOR
 
