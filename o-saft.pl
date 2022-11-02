@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.44 22/11/02 09:47:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.45 22/11/02 14:17:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -2825,15 +2825,15 @@ sub _get_cipherlist_openssl {
     #  this is usefull for display only or for use with openssl
     _trace("_get_cipherlist_openssl(){");
     my @ciphers = ();
-    my $range   = $cfg{'cipherrange'};  # default is 'rfc'
+    my $range   = $cfg{'cipherrange'};  # default
     _trace("cipherpattern   = $cfg{'cipherpattern'}, cipherrange= $range");
     my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
        $pattern = join(":", @{$cfg{'cipher'}}) if (0 < scalar(@{$cfg{'cipher'}}));
         # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
         # can be specified like: --cipher=NULL:RC4  or  --cipher=NULL --cipher=RC4
     _trace(" cipher pattern = $pattern");
-    if ($range eq "rfc") {
-        # default cipher range is 'rfc' (see o-saft-lib.pm), then get list of
+    if ($range eq "intern") {
+        # default cipher range is 'intern' (see o-saft-lib.pm), then get list of
         # ciphers from Net::SSLinfo
         if ($cmd{'extciphers'} == 1) {
             @ciphers = Net::SSLinfo::cipher_openssl($pattern);
@@ -2879,7 +2879,7 @@ sub _get_cipherlist_hex {
             }
         }
     } else {
-        _trace("cipherrange= $cfg{'cipherrange'}"); # default is 'rfc'
+        _trace("cipherrange= $cfg{'cipherrange'}"); # default
         @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
     }
     _trace("_get_cipherlist_hex\t= @ciphers }");
@@ -3084,8 +3084,7 @@ sub ciphers_scan_raw    {
             #return $results;# only one warning
         }
         if (_is_cfg_do('cipher_intern')) {  # may be called for cipher_dump too
-            _v_print("cipher range: $cfg{'cipherrange'}");
-            _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
+            _v_print("cipher range: $cfg{'cipherrange'}, checking " . scalar(@all) . " ciphers ...");
         }
         @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
         if (_is_cfg_do('cipher_dump')) {
@@ -6052,10 +6051,12 @@ sub printversion        {
     printversionmismatch();
 
     print "= $me +cipher --ciphermode=intern =";
-    # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
-    my @cnt = (_eval_cipherranges('rfc'));
+    my @cnt = (_eval_cipherranges($cfg{'cipherrange'}));
+    my $list= $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
+       $list=~ s/     */        /g; # squeeze leading spaces
+    print "    used cipherrange                 " . $cfg{'cipherrange'};
     print "    number of supported ciphers      " . scalar @cnt;
-    print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
+    print "    default list of ciphers          " . $list;
     if ($cfg{'verbose'} > 0) {
         # these lists are for special purpose, so with --v only
         print "    long list of ciphers         " . $cfg{'cipherranges'}->{'long'};
