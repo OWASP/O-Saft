@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.21 22/11/02 13:56:28";
+our $SID_osaft  =  "@(#) osaft.pm 2.22 22/11/02 13:58:37";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2065,7 +2065,7 @@ our %cfg = (    # main data structure for configuration
                     # NOTE: commands_int must contain the commands cipher_dump
                     #       cipher_intern, cipher_openssl and cipher_ssleay
     'ciphers'       => [],      # contains all ciphers to be tested # TODO: change from cipher names to keys
-    'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
+    'cipherrange'   => 'intern',# the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
                     # Technical (perl) note for definition of these ranges:
                     # Each range is defined as a string like  key=>"2..5, c..f"
@@ -3463,7 +3463,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.21 2022/11/02
+2.22 2022/11/02
 
 =head1 AUTHOR
 
