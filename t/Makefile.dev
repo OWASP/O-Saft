@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.74 22/10/31 18:51:59
+#?      @(#) Makefile.dev 1.75 22/11/03 01:25:02
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.74
+_SID.dev           := 1.75
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -142,7 +142,7 @@ LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap --test-sslea
 
 LIST.osaft-dbx     := \
 	--tests $(LIST.net-sslinfo-t) \
-	--test-memory   --test-data --test-init --test-maps --test-prot
+	--test-memory   --test-data --test-init --test-maps --test-prot --test-regex
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft-pl     += $(LIST.osaft-dbx)
 
