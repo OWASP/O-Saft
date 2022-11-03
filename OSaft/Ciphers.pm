@@ -37,8 +37,8 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.77 22/11/03 23:53:32";
-our $VERSION    = "22.06.22";   # official verion number of this file
+my  $SID_ciphers= "@(#) Ciphers.pm 2.78 22/11/04 00:32:47";
+our $VERSION    = "22.11.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
@@ -1674,7 +1674,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.77 2022/11/03
+2.78 2022/11/04
 
 
 =head1 AUTHOR
