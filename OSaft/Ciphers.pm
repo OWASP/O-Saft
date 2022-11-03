@@ -1,4 +1,10 @@
 #!/usr/bin/perl
+## PACKAGE {
+
+#!# Copyright (c) 2022, Achim Hoffmann
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
+package OSaft::Ciphers;
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #  We believe it's better readable (severity 2 only).
@@ -16,23 +22,6 @@
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
 
-## PACKAGE {
-
-#!# Copyright (c) 2022, Achim Hoffmann
-#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
-
-=pod
-
-=encoding utf8
-
-=head1 NAME
-
-OSaft::Ciphers - common Perl module to define cipher suites for O-Saft
-
-=cut
-
-package OSaft::Ciphers;
-
 use strict;
 use warnings;
 use Carp;
@@ -48,7 +37,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.76 22/11/02 22:57:03";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.77 22/11/03 23:53:32";
 our $VERSION    = "22.06.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -64,6 +53,14 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 
 =pod
 
+=encoding utf8
+
+
+=head1 NAME
+
+OSaft::Ciphers - common Perl module to define cipher suites for O-Saft
+
+
 =head1 SYNOPSIS
 
 =over 2
@@ -73,6 +70,7 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Vari
 =item  OSaft::Ciphers.pm       # on command line will print help
 
 =back
+
 
 =head1 DESCRIPTION
 
@@ -92,6 +90,7 @@ are only for this additional functionality, please read descriptions there.
 Following functions (methods) must be defined in the calling program:
 
 None (03/2022).
+
 
 =head1 CONCEPT
 
@@ -154,6 +153,7 @@ This documentation describes the public variables and methods only, but not the
 internal ones, in particular the  C<show_*()> functions.  Please see the source
 itself for that.
 
+
 =head1 VARIABLES
 
 =over 4
@@ -177,42 +177,24 @@ Pointer to hash with all checked ciphers.
 
 =back
 
-=head1 METHODS
-
-No methods are exported. The full package name must be used, which improves the
-readability of the program code. Methods intended for external use are:
-
 =cut
 
+#_____________________________________________________________________________
+#________________________________________________ public (export) variables __|
+
+# SEE Perl:perlcritic
 ## no critic qw(Variables::ProhibitPackageVars)
-#  perlcritic complains to not declare (global) package variables, but the
-#  purpose of this module is to do that.
 
 use Exporter qw(import);
 use base     qw(Exporter);
 our @EXPORT_OK  = qw(
-                %ciphers
-                %ciphers_desc
-                %ciphers_notes
-                $cipher_results
-                ciphers_done
+        %ciphers
+        %ciphers_desc
+        %ciphers_notes
+        $cipher_results
+        ciphers_done
 );
 #   methods not exported, see METHODS description above
-
-#_____________________________________________________________________________
-#_______________________________________________________ internal functions __|
-
-# SEE Perl:Undefined subroutine
-*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
-*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
-*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $cfg{'verbose'}); return; } if not defined &_v_print;
-*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $cfg{'verbose'}); return; } if not defined &_v2print;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
 
 our %ciphers_desc   = ( # description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
@@ -320,9 +302,26 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
 ); # %ciphers_notes
 
 #_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
+*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
+*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $cfg{'verbose'}); return; } if not defined &_v_print;
+*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $cfg{'verbose'}); return; } if not defined &_v2print;
+
+#_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
 =pod
+
+=head1 METHODS
+
+No methods are exported. The full package name must be used, which improves the
+readability of the program code. Methods intended for external use are:
+
 
 =head2 text2key($text)
 
@@ -954,7 +953,7 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 
 #_____________________________________________________________________________
-#_________________________________________________ internal/testing methods __|
+#____________________________________________________ internal test methods __|
 
 sub show_getter03   {
     #? show hardcoded example for all getter functions for key 0x03000003 (aka 0x00,0x03)
@@ -1554,7 +1553,6 @@ sub _main_ciphers   {
 
 sub ciphers_done    {}; # dummy to check successful include
 
-# complete initialisations
 _ciphers_init();
 
 #_____________________________________________________________________________
@@ -1646,6 +1644,7 @@ as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
 
 =back
 
+
 =head1 OPTIONS
 
 =over 4
@@ -1660,19 +1659,23 @@ as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
 
 =back
 
+
 =head1 NOTES
 
 It's often recommended not to export constants and variables from modules, see
 for example  http://perldoc.perl.org/Exporter.html#Good-Practices . The main
 purpose of this module is defining variables. Hence we export them.
 
+
 =head1 SEE ALSO
 
 # ...
 
+
 =head1 VERSION
 
-2.76 2022/11/02
+2.77 2022/11/03
+
 
 =head1 AUTHOR
 
