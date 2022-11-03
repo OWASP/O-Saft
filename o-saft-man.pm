@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.77 22/11/02 23:42:30";
+my  $SID_man= "@(#) o-saft-man.pm 2.78 22/11/03 12:08:28";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -456,7 +456,8 @@ EoButton
 /* } page header */
 /* { help page only */
  h3, h4, h5         { margin-bottom: 0.2em; }
- body > h4          { margin-left:     1em; }
+ body > h3          { margin-top:    1.2em; }
+ body   h4          { margin-left:     1em; }       /* mainly +cmd and --opt */
 /* } help page only */
 /* { cgi page only */
  fieldset           { margin:     0px;  }
@@ -479,16 +480,16 @@ fieldset > details > summary    { background:var(--bg-button); } // nicht schön
  details >div            { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
  details[open] > summary { text-decoration:underline; }
 /* } cgi page only */
- li                 { margin-left: 2em; }           /* lists in texts        */
- li[class="n"]      { list-style-type:none; }       /* "comments" in text    */
- p                  { margin-left: 1em; margin-top:0px; }   /* all texts     */
+ li                 { margin-left: 1.2em; }         /* lists in texts        */
+ li[class="n"]      { margin-left: 2.2em; list-style-type:none; } /* "comments" in text */
+ p                  { margin: 0px 0px 0.5em 1em; }  /* all texts     */
  p > a[class="b"]   { margin-left:-1em; }           /* ^top button only      */
  label[class="i"]   { margin-right:1em; min-width:8em; border:var(--border-w); display:inline-block; } 
  label[class="i"]:hover { background:var(--bg-hover);border-bottom:var(--border-1);}
  b                  { margin-left: 1em; }           /* for discrete commands #FIXME: wrong in cgi page */
  .r                 { float:right;      }           /* help buttons          */
  .l                 { margin-left: 2em; }           /* label for options     */
- .c                 { margin-left: 2em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
+ .c                 { margin-left: 3em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
  span[class="c"]    { margin-left:0.1em;}           /* literal text (inline) */
 /* dirty hack for mobile-friendly A tag's title= attribute;
  * placed left bound below tag; browser's title still visible
@@ -776,7 +777,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.77'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.78'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2613,7 +2614,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.77 2022/11/02
+2.78 2022/11/03
 
 =head1 AUTHOR
 
