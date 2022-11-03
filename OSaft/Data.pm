@@ -1,27 +1,16 @@
 #!/usr/bin/perl
-
 ## PACKAGE {
 
 #!# Copyright (c) 2022, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
-
-=pod
-
-=encoding utf8
-
-=head1 NAME
-
-OSaft::Data -- common SSL/TLS-connection data for O-Saft and related tools
-
-=cut
 
 package OSaft::Data;
 
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.6 22/11/03 14:09:08";
-our $VERSION    =  "22.05.22";
+my  $SID_data   =  "@(#) Data.pm 1.7 22/11/03 23:55:02";
+our $VERSION    =  "22.06.22";
 
 BEGIN {
     # SEE Perl:@INC
@@ -40,11 +29,20 @@ use OSaft::Text qw(print_pod);
 
 =pod
 
+=encoding utf8
+
+
+=head1 NAME
+
+OSaft::Data -- common SSL/TLS-connection data for O-Saft and related tools
+
+
 =head1 DESCRIPTION
 
 Utility package for O-Saft (o-saft.pl and related tools).  It declares and
 defines common  L</VARIABLES>  to be used in the calling tool.
 All variables and methods are defined in the  OSaft::Data  namespace.
+
 
 =head1 SYNOPSIS
 
@@ -64,6 +62,7 @@ All variables and methods are defined in the  OSaft::Data  namespace.
 =item --help
 
 =back
+
 
 =head1 VARIABLES
 
@@ -112,7 +111,10 @@ Same as %data with values only.
 =cut
 
 #_____________________________________________________________________________
-#________________________________________________________________ variables __|
+#________________________________________________ public (export) variables __|
+
+# SEE Perl:perlcritic
+## no critic qw(Variables::ProhibitPackageVars)
 
 use Exporter qw(import);
 use base     qw(Exporter);
@@ -127,6 +129,7 @@ our @EXPORT_OK  = qw(
         %data0
         %info
         %shorttexts
+        data_done
 );
 
 # NOTE: do not change names of keys in %data and all %check_* as these keys
@@ -791,23 +794,32 @@ our %shorttexts = (
 ); # %shorttexts
 
 #_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+
+#_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
 =pod
 
 =head1 METHODS
 
-=head2 TBD
-
-TBD
+None.
 
 =cut
 
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
+sub show            {
+    return;
+} # show
+
 #_____________________________________________________________________________
-#_________________________________________________________ internal methods __|
+#___________________________________________________ initialisation methods __|
 
 sub _data_init      {
     #? initialise variables
@@ -832,6 +844,9 @@ sub _data_init      {
     return;
 } # _data_init
 
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
+
 sub _main_data      {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -839,7 +854,12 @@ sub _main_data      {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_data)   if ($arg =~ m/^--?h(?:elp)?$/x);# print own help
+        print_pod($0, __PACKAGE__, $SID_data)   if ($arg =~ m/^--?h(?:elp)?$/x);
+        # ----------------------------- options
+#       if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
+        # ----------------------------- commands
+        if ($arg =~ /^version$/)         { print "$SID_data\n"; next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
         if ($arg =~ m/^--(?:test[_.-]?)data/x) {
             $arg = "--test-data";
 #?#            printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -847,6 +867,10 @@ sub _main_data      {
     }
     exit 0;
 } # _main_data
+
+sub data_done       {}; # dummy to check successful include
+
+_data_init();
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -859,7 +883,7 @@ sub _main_data      {
 
 =head1 VERSION
 
-1.6 2022/11/03
+1.7 2022/11/03
 
 =head1 AUTHOR
 
@@ -867,19 +891,10 @@ sub _main_data      {
 
 =cut
 
-sub data_done  {};      # dummy to check successful include
-
-_data_init();
-
 ## PACKAGE }
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
-
-# SEE Perl:Undefined subroutine
-*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
 
 _main_data(@ARGV) if (not defined caller);
 
