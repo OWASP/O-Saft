@@ -30,8 +30,8 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.24 22/11/04 00:21:19";
-our $VERSION    =  "22.09.22";  # official version number of this file
+our $SID_osaft  =  "@(#) osaft.pm 2.25 22/11/04 00:31:36";
+our $VERSION    =  "22.11.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
 
@@ -3483,7 +3483,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.24 2022/11/04
+2.25 2022/11/04
 
 =head1 AUTHOR
 
