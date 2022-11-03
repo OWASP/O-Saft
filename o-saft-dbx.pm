@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.21 22/11/02 22:39:13";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.22 22/11/03 01:16:27";
 
 #_____________________________________________________________________________
 #__________________________________________________________ debug functions __|
@@ -809,7 +809,7 @@ sub _yeast_test {
     _yeast_test_methods()       if ('--testmethods'   eq $arg); # Net::SSLinfo
     _yeast_test_memory()        if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    osaft::test_regex()         if ('regex'           eq $arg);
+    osaft::test_cipher_regex()  if ('regex'           eq $arg);
     _yeast_test_data()          if ('data'            eq $arg);
     _yeast_test_init()          if ('init'            eq $arg);
     _yeast_test_maps()          if ('maps'            eq $arg);
@@ -1005,7 +1005,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.21 2022/11/02
+2.22 2022/11/03
 
 =head1 AUTHOR
 
