@@ -9,8 +9,8 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.7 22/11/03 23:55:02";
-our $VERSION    =  "22.06.22";
+my  $SID_data   =  "@(#) Data.pm 1.8 22/11/04 00:33:50";
+our $VERSION    =  "22.11.22";
 
 BEGIN {
     # SEE Perl:@INC
@@ -883,7 +883,7 @@ _data_init();
 
 =head1 VERSION
 
-1.7 2022/11/03
+1.8 2022/11/04
 
 =head1 AUTHOR
 
