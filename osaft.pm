@@ -1,4 +1,11 @@
 #!/usr/bin/perl -I .
+## PACKAGE {
+
+#!# Copyright (c) 2022, Achim Hoffmann
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
+package osaft;
+
 
 # TODO: implement
 #    require "o-saft-lib" "full";  # or "raw"
@@ -19,18 +26,11 @@
 ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
 #       That's intended in strings; perlcritic is too pedantic.
 
-## PACKAGE {
-
-#!# Copyright (c) 2022, Achim Hoffmann
-#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
-
-package osaft;
-
 use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.23 22/11/02 14:06:39";
+our $SID_osaft  =  "@(#) osaft.pm 2.24 22/11/04 00:21:19";
 our $VERSION    =  "22.09.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -51,9 +51,11 @@ use OSaft::Text qw(%STR);
 
 =encoding utf8
 
+
 =head1 NAME
 
 o-saft-lib -- common perl modul for O-Saft and related tools
+
 
 =head1 SYNOPSIS
 
@@ -97,6 +99,7 @@ and variables:
 None of the constants, variables, or methods should be defined in the caller,
 otherwise the calling script must handle warnings properly.
 
+
 =head1 OPTIONS
 
 =over 4
@@ -106,6 +109,7 @@ otherwise the calling script must handle warnings properly.
 =item --regex, --test-regex
 
 =back
+
 
 =head1 DESCRIPTION
 
@@ -129,11 +133,13 @@ Following functions (methods) must be defined in the calling program:
 
 =back
 
+
 =head1 NOTES
 
 It's often recommended not to export constants and variables from modules, see
 for example  http://perldoc.perl.org/Exporter.html#Good-Practices . The main
 purpose of this module is defining variables. Hence we export them.
+
 
 =head1 CONSTANTS
 
@@ -156,6 +162,7 @@ purpose of this module is defining variables. Hence we export them.
 =item $STR{MAKEVAL}
 
 =back
+
 
 =head1 VARIABLES
 
@@ -189,9 +196,13 @@ purpose of this module is defining variables. Hence we export them.
 
 =back
 
+
 =head1 METHODS
 
 =cut
+
+#_____________________________________________________________________________
+#________________________________________________ public (export) variables __|
 
 ## no critic qw(Modules::ProhibitAutomaticExportation)
 #  perlcritic complains to use @EXPORT_OK instead of @EXPORT, but we want any-
@@ -200,74 +211,72 @@ purpose of this module is defining variables. Hence we export them.
 # See NOTES below also.
 
 use Exporter qw(import);
-use base qw(Exporter);
+use base     qw(Exporter);
 our @EXPORT     = qw(
-                %ciphers
-                %prot
-                %prot_txt
-                %tls_compression_method
-                %tls_handshake_type
-                %tls_key_exchange_type
-                %tls_record_type
-                %tls_error_alerts
-                %TLS_EXTENSIONS
-                %TLS_EC_POINT_FORMATS
-                %TLS_MAX_FRAGMENT_LENGTH
-                %TLS_NAME_TYPE
-                %TLS_PROTOCOL_VERSION
-                %TLS_PSK_KEY_EXCHANGE_MODE
-                %TLS_SIGNATURE_SCHEME
-                %TLS_SUPPORTED_GROUPS
-                %TLS_ID_TO_EXTENSIONS
-                %ec_curve_types
-                %tls_curves
-                %target_desc
-                @target_defaults
-                %data_oid
-                %dbx
-                %cfg
-                get_ciphers_range
-                get_cipher_owasp
-                get_openssl_version
-                get_dh_paramter
-                get_target_nr
-                get_target_prot
-                get_target_host
-                get_target_port
-                get_target_auth
-                get_target_proxy
-                get_target_path
-                get_target_orig
-                get_target_start
-                get_target_open
-                get_target_stop
-                get_target_error
-                set_target_nr
-                set_target_prot
-                set_target_host
-                set_target_port
-                set_target_auth
-                set_target_proxy
-                set_target_path
-                set_target_orig
-                set_target_start
-                set_target_open
-                set_target_stop
-                set_target_error
-                tls_const2text
-                tls_key2text
-                tls_text2key
-                printhint
-                test_cipher_regex
+        %ciphers
+        %prot
+        %prot_txt
+        %tls_compression_method
+        %tls_handshake_type
+        %tls_key_exchange_type
+        %tls_record_type
+        %tls_error_alerts
+        %TLS_EXTENSIONS
+        %TLS_EC_POINT_FORMATS
+        %TLS_MAX_FRAGMENT_LENGTH
+        %TLS_NAME_TYPE
+        %TLS_PROTOCOL_VERSION
+        %TLS_PSK_KEY_EXCHANGE_MODE
+        %TLS_SIGNATURE_SCHEME
+        %TLS_SUPPORTED_GROUPS
+        %TLS_ID_TO_EXTENSIONS
+        %ec_curve_types
+        %tls_curves
+        %target_desc
+        @target_defaults
+        %data_oid
+        %dbx
+        %cfg
+        get_ciphers_range
+        get_cipher_owasp
+        get_openssl_version
+        get_dh_paramter
+        get_target_nr
+        get_target_prot
+        get_target_host
+        get_target_port
+        get_target_auth
+        get_target_proxy
+        get_target_path
+        get_target_orig
+        get_target_start
+        get_target_open
+        get_target_stop
+        get_target_error
+        set_target_nr
+        set_target_prot
+        set_target_host
+        set_target_port
+        set_target_auth
+        set_target_proxy
+        set_target_path
+        set_target_orig
+        set_target_start
+        set_target_open
+        set_target_stop
+        set_target_error
+        tls_const2text
+        tls_key2text
+        tls_text2key
+        printhint
+        test_cipher_regex
+        osaft_done
 );
-# not yet exported: osaft_sleep osaft_done
+# not yet exported: osaft_sleep
 # insert above in vi with:
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^ *\($STR_[A-Z][^ ]*\).*/\t\t\1/p' %
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
     $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
@@ -2942,6 +2951,16 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'cmd-quick' => undef,
 ); # %dbx
 
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
+*_trace1  = sub { print(join(" ", "#${0}::",    @_), "\n") if (1 < $cfg{'trace'});   return; } if not defined &_trace1;
+*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
+*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (3 < $cfg{'trace'});   return; } if not defined &_trace3;
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -3317,9 +3336,8 @@ sub test_cipher_sort    {
     return;
 } # test_cipher_sort
 
-
 #_____________________________________________________________________________
-#_________________________________________________________ internal methods __|
+#___________________________________________________ initialisation methods __|
 
 sub _prot_init_value    {
     #? initialise default values in %prot
@@ -3422,6 +3440,9 @@ sub _osaft_init     {
     return;
 } # _osaft_init
 
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
+
 sub _main_lib       {
     #? print own documentation or special required one
     my @argv = @_;
@@ -3462,7 +3483,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.23 2022/11/02
+2.24 2022/11/04
 
 =head1 AUTHOR
 
@@ -3472,20 +3493,6 @@ _osaft_init();          # complete initialisations
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
-
-# SEE Perl:Undefined subroutine
-*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
-
-# TODO: interanl wrappers for main's methods
-#       they are defined after the  ## PACKAGE  mark to avoid errors in the
-#       script generated by contrib/gen_standalone.sh
-sub _trace      { ::_trace(@_); return; }
-sub _trace0     { ::_trace(@_); return; }
-sub _trace1     { ::_trace(@_); return; }
-sub _trace2     { ::_trace(@_); return; }
-sub _trace3     { ::_trace(@_); return; }
 
 _main_lib(@ARGV) if (not defined caller);
 
