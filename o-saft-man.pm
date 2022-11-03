@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.78 22/11/03 12:08:28";
+my  $SID_man= "@(#) o-saft-man.pm 2.79 22/11/03 14:15:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -460,12 +460,12 @@ EoButton
  body   h4          { margin-left:     1em; }       /* mainly +cmd and --opt */
 /* } help page only */
 /* { cgi page only */
+ body h4 [class="i"] {margin-left:    -1em; }       /* mainly +cmd and --opt */
  fieldset           { margin:     0px;  }
  fieldset > details:nth-child(2) > div  { z-index:2; } /* "Simple GUI" on top */
  fieldset > details > div       { margin:0.1em 0.55em 0px -0.85em; background:white; overflow-y:scroll; }
 /*
 fieldset > details > div:focus  { display:block; } // geht nicht
-fieldset > details > summary    { background:var(--bg-button); } // nicht schön
 */
 /* for menu bar left vertical instead top horizontal:
  *   .navdiv { float:left; }
@@ -473,11 +473,15 @@ fieldset > details > summary    { background:var(--bg-button); } // nicht schön
 */
  .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:5 }
  .navdiv > details:first-child >summary  { list-style:none; font-size:120%; max-width:2em !important; }
+ .navdiv > details:first-child { margin-left:0.1em; }
+ .navdiv > details       { margin-left: 0.8em; float:left; }
  .navdiv > details   div { margin-left:-0.3em; background:var(--bg-menu); z-index:3;  }
  .navdiv > details > div > input[type="submit"]  { display:block; }
  .navdiv > details > div > label         { font-weight:normal; display:block; }
  .navdiv > details > div > details > div { margin-left:0.8em; } /* submenu */
- details >div            { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
+ details > div           { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
+ details > div > li      { margin-left: 2.2em; }    /* lists in texts        */
+ details > div > table   { font-size:   100%;  }    /* Simple GUI (unsure why necessary)*/
  details[open] > summary { text-decoration:underline; }
 /* } cgi page only */
  li                 { margin-left: 1.2em; }         /* lists in texts        */
@@ -777,7 +781,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.78'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.79'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2614,7 +2618,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.78 2022/11/03
+2.79 2022/11/03
 
 =head1 AUTHOR
 
