@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.108 22/11/01 14:10:48
+# SID   @(#) help.txt 1.109 22/11/03 12:07:29
 
 NAME
 
@@ -1134,30 +1134,30 @@ OPTIONS
           'METHOD'      method to be used for specific functionality
 
           Available methods:
-          * info-socket         use internal socket to retrieve information
-          * info-openssl        use external openssl to retrieve information
-          * info-user           use usr_getinfo() to retrieve information
-          * cipher-socket       use internal socket to ckeck for ciphers
-          * cipher-openssl      use external openssl to ckeck for ciphers
-          * cipher-user         use usr_getciphers() to ckeck for ciphers
+          * 'info-socket'       use internal socket to retrieve information
+          * 'info-openssl'      use external openssl to retrieve information
+          * 'info-user'         use usr_getinfo() to retrieve information
+          * 'cipher-socket'     use internal socket to ckeck for ciphers
+          * 'cipher-openssl'    use external openssl to ckeck for ciphers
+          * 'cipher-user'       use usr_getciphers() to ckeck for ciphers
 
           Method names starting with:
-          * info-
+          * 'info-'
             are responsible to retrieve information  about the SSL connection
             and the target certificate (i.e. what the +info command provides)
-          * cipher-
+          * 'cipher-'
             are responsible to connect to the target  and test if it supports
             the specified ciphers  (i.e. what the  +cipher  command provides)
-          * check-
+          * 'check-'
             are responsible for performing the checks (i.e. what's shown with
             the  +check  command)
-          * score-
+          * 'score-'
             are responsible to compute  the score based on check results
 
           The second part of the name denotes which kind of method to call:
-          * socket      the internal functionality with sockets is used
-          * openssl     the exteranl openssl executable is used
-          * user        the external special function, as specified in user's
+          * 'socket'    the internal functionality with sockets is used
+          * 'openssl'   the exteranl openssl executable is used
+          * 'user'      the external special function, as specified in user's
                         o-saft-usr.pm,  is used.
 
           Example:
@@ -1677,7 +1677,7 @@ OPTIONS
           The argument to the  --legacy=TOOL  option  is the name of the tool
           to be simulated.
 
-          Following TOOLs are supported:
+          Following 'TOOL's are supported:
           * 'sslaudit'          format of output similar to  sslaudit
           * 'sslcipher'         format of output similar to  ssl-cipher-check
           * 'ssldiagnos'        format of output similar to  ssldiagnos
@@ -1694,15 +1694,15 @@ OPTIONS
           Note that these legacy formats only apply to  output of the checked
           ciphers. Other texts like headers and footers are adapted slightly.
 
-          Please do not expect identical output as the TOOL  when using these
-          options, it's a best guess and should be parsable in a very similar
+          When using ths option, please do not expect identical output as the
+          'TOOL'. It is a best guess and should be parsable in a very similar
           way.
 
       --legacy=TYPE
       --legacy=compact
 
           Internal format: mainly avoid tabs and spaces format is as follows:
-                Some Label:<-- anything right of colon is data
+              Some Label:<-- anything right of colon is data
 
       --legacy=full
 
@@ -3824,8 +3824,8 @@ INSTALLATION
 
     OpenSSL
 
-        Currently (since 18.06.18) it is recommend to build openssl using
-            contrib/install_openssl.sh
+        Currently (since 18.06.18) it is recommend to build openssl using:
+              contrib/install_openssl.sh
 
         Other possibilities are:
           * compiling openssl using following sources
@@ -4055,14 +4055,14 @@ INSTALLATION
           * perl with PAR::Packer module
               pp -C -c $0
               pp -C -c $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                          -M Net::SSLinfo -M Net::SSLhello -M osaft
+                  -M Net::SSLinfo -M Net::SSLhello -M osaft
               pp -C -c checkAllCiphers.pl
               pp -C -c checkAllCiphers.pl -M Net::DNS
 
           * ActiveState perl with its perlapp
               perlapp --clean $0
               perlapp --clean $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                          -M Net::SSLinfo -M Net::SSLhello -M osaft
+                  -M Net::SSLinfo -M Net::SSLhello -M osaft
               perlapp --clean checkAllCiphers.pl
               perlapp --clean checkAllCiphers.pl -M Net::DNS -M osaft
 
@@ -4543,9 +4543,9 @@ DEBUG
                   PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
                   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
                   .                                 /System/Library/OpenSSL
-                     existing path to CA PEM files /etc/ssl/certs
+                  .  existing path to CA PEM files /etc/ssl/certs
                   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-                     existing PEM file for CA      /etc/ssl/certs/ca-certificates.crt
+                  .  existing PEM file for CA      /etc/ssl/certs/ca-certificates.crt
                   number of supported ciphers      201
                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
@@ -5036,7 +5036,7 @@ DOCUMENTATION
         In the GUI a more sophisticate search is implemented, see the  "Help"
         window there:
 
-          o-saft.tcl
+          o-saft.tcl 
 
     Developer documentation
 
@@ -5045,15 +5045,17 @@ DOCUMENTATION
 
           * the files itself
 
-          * with:   $0 --help=test
+          * with:
+              $0 --help=test
+              $0 --test
 
-          * with:   $0 --test
+          * reading:
+              Makefile.pod
+              perldoc Makefile.pod
 
-          * reading: Makefile.pod
-
-          * using:  make
-
-          * using:  make help.doc
+          * using:
+              make
+              make help.doc
 
         Using make for development uses additional external tools and/or Perl
         modules:
