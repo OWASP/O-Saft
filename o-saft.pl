@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.47 22/11/02 23:05:16"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.48 22/11/04 00:35:56"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -138,7 +138,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-    sub _VERSION { return "22.06.22"; } # <== our official version number
+    sub _VERSION { return "22.11.22"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
@@ -8308,6 +8308,11 @@ Following pragmas are used in various files:
 
     Our POD in *pm is fine, perlcritic (severity 2) is too pedantic here.
 
+* Variables::ProhibitPackageVars
+
+    perlcritic  complains to not declare  (global) package variables.  The
+    purpose of some modules is to do that.
+
 
 =head2 Perl:BEGIN perlcritic
 
@@ -8369,6 +8374,7 @@ Following approach is used:
 This ensures, that the definition is used only, if it doesn't exists. This
 also avoids use of Perl's eval(). The disadvantage is, that the subroutine
 does not have exacly the same functionality as the original definition.
+TODO: in each named subroutin:  return if (grep{/(?:--no.?warn)/} @ARGV);
 
 Also SEE L<Perl:BEGIN>.
 
