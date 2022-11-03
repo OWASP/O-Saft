@@ -20,7 +20,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.5 22/07/02 11:27:49";
+my  $SID_data   =  "@(#) Data.pm 1.6 22/11/03 14:09:08";
 our $VERSION    =  "22.05.22";
 
 BEGIN {
@@ -271,7 +271,7 @@ our %data   = (         # connection and certificate details
     'http_refresh'      => {'val' => sub { Net::SSLinfo::http_refresh(    $_[0], $_[1])}, 'txt' => "HTTP Refresh header"},
     'http_sts'          => {'val' => sub { Net::SSLinfo::http_sts(        $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
-    'options'           => {'val' => sub { Net::SSLinfo::options(         $_[0], $_[1])}, 'txt' => "<<internal>> used SSL options bitmask"},
+    'options'           => {'val' => sub { Net::SSLinfo::options(         $_[0], $_[1])}, 'txt' => "internal used SSL options bitmask"},
     'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _data_init');},'txt' => "Target's fallback SSL Protocol"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     # following not printed by default, but can be used as command
@@ -785,7 +785,7 @@ our %shorttexts = (
     'http_location' => "HTTP Location header",
     'http_refresh'  => "HTTP Refresh header",
     'http_sts'      => "HTTP STS header",
-    'options'       => "<<internal>> SSL bitmask",
+    'options'       => "internal SSL bitmask",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
@@ -859,7 +859,7 @@ sub _main_data      {
 
 =head1 VERSION
 
-1.5 2022/07/02
+1.6 2022/11/03
 
 =head1 AUTHOR
 
