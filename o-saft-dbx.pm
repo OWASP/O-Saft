@@ -55,11 +55,12 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.22 22/11/03 01:16:27";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.23 22/11/04 00:04:03";
 
 #_____________________________________________________________________________
-#__________________________________________________________ debug functions __|
-# debug functions
+#__________________________________________________________________ methods __|
+# debug methods
+
 sub _yTIME      {
     return "" if (not _is_cfg_out('traceTIME'));
     my $now = time() - ($time0 || 0);
@@ -414,6 +415,9 @@ sub _vprintme   {
     return;
 } # _vprintme
 
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
 # subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s", @_); }
@@ -442,6 +446,9 @@ sub __prot_version      {
     chomp  $data;   # remove last \n
     return $data;
 } # __prot_version
+
+#_____________________________________________________________________________
+#____________________________________________________ internal test methods __|
 
 sub _yeast_test_help    {
     local $\ = "\n";
@@ -829,6 +836,9 @@ sub _yeast_test {
     return;
 } # _yeast_test
 
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
+
 sub _main_dbx       {
     my $arg = shift || "--help";    # without argument print own help
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -1005,7 +1015,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.22 2022/11/03
+2.23 2022/11/04
 
 =head1 AUTHOR
 
