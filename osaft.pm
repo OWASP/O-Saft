@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.27 22/11/04 14:00:55";
+our $SID_osaft  =  "@(#) osaft.pm 2.28 22/11/04 22:44:34";
 our $VERSION    =  "22.11.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2958,7 +2958,7 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 *_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 *_trace   = sub {
-     undef $\;
+     local $\ = undef;
      my $func = shift;  # avoid space after :: below
      print(join(" ", "#$cfg{'me'}::$func", @_), "\n") if (0 < $cfg{'trace'});
      return;
@@ -3488,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.27 2022/11/04
+2.28 2022/11/04
 
 =head1 AUTHOR
 
