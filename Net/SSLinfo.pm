@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.280 22/11/04 10:24:39";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.281 22/11/04 10:41:13";
 our $VERSION        =  "22.11.12";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -108,11 +108,13 @@ Net::SSLinfo -- perl extension for SSL connection and certificate data
     Net::SSLinfo.pm                 # print help
     Net::SSLinfo.pm --help          # print help
     Net::SSLinfo.pm +VERSION        # print version string
+    Net::SSLinfo.pm version         # print internal version string
     Net::SSLinfo.pm --test-sclient  # print available options for 'openssl s_client'
     Net::SSLinfo.pm --test-sslmap   # print constants for SSL protocols
     Net::SSLinfo.pm --test-openssl  # print information about openssl capabilities
     Net::SSLinfo.pm --test-ssleay   # print information about Net::SSLeay capabilities
     Net::SSLinfo.pm --test-methods  # print available methods in Net::SSLeay
+    Net::SSLinfo.pm unknown-host    # print empty data structure
     Net::SSLinfo.pm your.tld        # print data from your.tld
 
     # from within perl scripts:
@@ -4085,16 +4087,19 @@ sub _main           {
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ /^--?h(?:elp)?$/)       { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
-        if ($arg =~ /^version$/)            { print "$SID_sslinfo";     next; }
-        if ($arg =~ /^[+-]?VERSION/i)       { print "$VERSION";         next; }
-        if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
-        if ($arg =~ /^--test.?sslmap/)      { print test_sslmap();  }
-        if ($arg =~ /^--test.?sc_?lient/)   { print test_sclient(); }
-        if ($arg =~ /^--test.?methods/)     { print test_methods(); }
-        if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
+        if ($arg =~ m/^--?h(?:elp)?$/)          { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
+        # ----------------------------- options
+        if ($arg =~ m/^--(?:v|trace.?)/i)       { $Net::SSLinfo::verbose++; next; }
+        # ----------------------------- commands
+        if ($arg =~ m/^version$/)               { print "$SID_sslinfo";     next; }
+        if ($arg =~ m/^[+-]?VERSION/i)          { print "$VERSION";         next; }
+        if ($arg =~ m/^(?:--test)?.?ssleay/)    { print test_ssleay();      next; }
+        if ($arg =~ m/^(?:--test)?.?sslmap/)    { print test_sslmap();      next; }
+        if ($arg =~ m/^(?:--test)?.?s_?client/) { print test_sclient();     next; }
+        if ($arg =~ m/^(?:--test)?.?methods/)   { print test_methods();     next; }
+        if ($arg =~ m/^[+-]/)                   { next; }   # silently ignore unknown options
         # treat remaining args as hostname to test
-        do_ssl_open( shift, 443, '');
+        do_ssl_open( $arg, 443, '');
         print Net::SSLinfo::datadump("main");
     }
     exit 0;
