@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.60 22/11/04 21:11:43
+#?      @(#) Makefile.cmd 1.61 22/11/04 22:16:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.60
+_SID.cmd           := 1.61
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -122,19 +122,35 @@ endif
 testcmd-cmd-%:                      EXE.pl      = ../$(SRC.pl)
 testcmd-cmd-%:                      TEST.init   = --trace-CLI --header
 
-testcmd-cmd-+ignored-keys_%:        TEST.args += $(LIST.ignore.cmd)
+testcmd-cmd-+ignored-keys_%:        TEST.args  += $(LIST.ignore.cmd)
+testcmd-cmd-+ignored-keys_%.log:    EXE.log-filtercmd = cat
+    # testcmd-cmd-+ignored-keys_  prints those commands, which are ignored
+    # in following targets. It results in different output for each execution.
+    # testcmd-cmd-+ignored-keys_.lg ensures that no EXE.log-filtercmd is used.
+
 # avoid output of random values in some commands
-testcmd-cmd-+http_%:                TEST.args += --no-out=sts_expired
-testcmd-cmd-+hsts_%:                TEST.args += --no-out=sts_expired
-testcmd-cmd-+sts_%:                 TEST.args += --no-out=sts_expired
-testcmd-cmd-+sts--noout_%:          TEST.args += +sts   $(LIST.no-out.opt)
+testcmd-cmd-+http_%:                TEST.args  += --no-out=sts_expired
+testcmd-cmd-+hsts_%:                TEST.args  += --no-out=sts_expired
+testcmd-cmd-+sts_%:                 TEST.args  += --no-out=sts_expired
+testcmd-cmd-+sts--noout_%:          TEST.args  += +sts   $(LIST.no-out.opt)
 testcmd-cmd-+https_body--httpbody_%: TEST.args += +https_body --https_body
 testcmd-cmd-+info--tracekey-norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
 testcmd-cmd-+check--trace-norc_%:    TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
-testcmd-cmd-+quick--tracearg_%:     TEST.args += +quick --trace-arg
-testcmd-cmd-+check--nossltls_%:     TEST.args += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
+testcmd-cmd-+quick--tracearg_%:     TEST.args  += +quick --trace-arg
+testcmd-cmd-+check--nossltls_%:     TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
+
+testcmd-cmd-+info_%.log:            EXE.log-filtercmd  = awk -F: '\
+	BEGIN{OFS=":"} \
+	($$1!~/Target.s/)  {print;next;} \
+	($$1~/Master.Key/)              {$$2="\t$(TEST.logtxt)"}\
+	($$1~/Session.(ID|Ticket)$$/)   {$$2="\t$(TEST.logtxt)"}\
+	($$1~/Session Start/)           {$$2="\t$(TEST.logtxt)";$$3=$$4=$$5=""}\
+	{print}'
+    # expected and changed lines like:
+    #   Target's Master-Key:                	0CAAF5CF1....
+    #   Target's TLS Session Start Time locale:	Fri Nov  4 21:17:06 2022
 
 ALL.testcmd    += \
 	testcmd-cmd-+ignored-keys_ \
@@ -146,15 +162,15 @@ ALL.testcmd    += \
 	testcmd-cmd-+check--nossltls_ \
 	testcmd-cmd-+https_body--httpbody_
 
-testarg-cmd-host_url+cn.log:    EXE.log-filterarg  = awk -F= '\
+testarg-cmd-host_url+cn:            TEST.args  += --v +cn
+testarg-cmd-host_url+cn:            TEST.init   = localhost/tests
+    # target to test hostname with url (path) # TODO: add to ALL.testcmd
+testarg-cmd-host_url+cn.log:        EXE.log-filterarg  = awk -F= '\
 	BEGIN{OFS="="} \
 	($$1~/master_key/)              {$$2="$(TEST.logtxt)"}\
 	($$1~/session_(id|ticket)$$/)   {$$2="$(TEST.logtxt)"}\
 	($$1~/session_start(date|time)/){$$2="$(TEST.logtxt)"}\
 	{print}'
-testarg-cmd-host_url+cn:        TEST.args  += --v +cn
-testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
-    # target to test hostname with url (path) # TODO: add to ALL.testcmd
 
 ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
 ALL.test.cmd       += testarg-cmd-host_url+cn
