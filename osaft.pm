@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.26 22/11/04 00:38:38";
+our $SID_osaft  =  "@(#) osaft.pm 2.27 22/11/04 14:00:55";
 our $VERSION    =  "22.11.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2957,10 +2957,15 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 # SEE Perl:Undefined subroutine
 *_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
-*_trace1  = sub { print(join(" ", "#${0}::",    @_), "\n") if (1 < $cfg{'trace'});   return; } if not defined &_trace1;
-*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
-*_trace3  = sub { print(join(" ", "#${0}::",    @_), "\n") if (3 < $cfg{'trace'});   return; } if not defined &_trace3;
+*_trace   = sub {
+     undef $\;
+     my $func = shift;  # avoid space after :: below
+     print(join(" ", "#$cfg{'me'}::$func", @_), "\n") if (0 < $cfg{'trace'});
+     return;
+} if not defined &_trace;
+*_trace1  = sub { _trace(@_) if (1 < $cfg{'trace'});        return; } if not defined &_trace1;
+*_trace2  = sub { _trace(@_) if (2 < $cfg{'trace'});        return; } if not defined &_trace2;
+*_trace3  = sub { _trace(@_) if (3 < $cfg{'trace'});        return; } if not defined &_trace3;
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -3029,7 +3034,7 @@ sub get_ciphers_range   {
     my $range = shift;
        $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
     my @all;
-    _trace("get_ciphers_range($ssl, $range");
+    _trace("get_ciphers_range($ssl, $range)");
     #  NOTE: following eval must not use the block form because the value
     #        needs to be evaluated
     foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
@@ -3483,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.26 2022/11/04
+2.27 2022/11/04
 
 =head1 AUTHOR
 
