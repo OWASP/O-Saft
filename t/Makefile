@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.134 22/11/04 18:08:35
+#?      @(#) Makefile 1.135 22/11/04 19:19:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.134
+_SID.test          := 1.135
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -574,8 +574,8 @@ testarg-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* | $(EXE.arg-logfilter) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testarg-$* | $(EXE.arg-logfilter) > $@ 2>&1
+	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.arg-logfilter) > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.arg-logfilter) > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
@@ -669,8 +669,8 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* | $(EXE.cmd-logfilter) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* | $(EXE.cmd-logfilter) > $@ 2>&1
+	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.cmd-logfilter) > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.cmd-logfilter) > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo "diff $(TEST.logdir)/$@ ..."
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
