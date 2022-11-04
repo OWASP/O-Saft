@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.131 22/09/21 12:12:19
+#?      @(#) Makefile 1.132 22/11/04 15:18:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.131
+_SID.test          := 1.132
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -96,6 +96,7 @@ TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 # internal variables
 TEST.dir       := t
 TEST.logdir     = $(TEST.dir)/log
+TEST.logtxt     = <<random value replace by make>>
 TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 
 # following may be redefined in included t/Makefiles*
