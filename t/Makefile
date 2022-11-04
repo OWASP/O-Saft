@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.135 22/11/04 19:19:29
+#?      @(#) Makefile 1.136 22/11/04 20:03:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.135
+_SID.test          := 1.136
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -148,9 +148,9 @@ EXE.gendoc.pod2man := pod2man
 EXE.gendoc         := $(EXE.gendoc.perldoc)
 
 # default filter for testarg-%.log targets
-EXE.arg-logfilter  := cat
+EXE.log-filterarg  := cat
 # default filter for testcmd-%.log targets
-EXE.cmd-logfilter  := cat
+EXE.log-filtercmd  := cat
 
 _EXE.grep-opt      := -q
     # grep (mainly used in message-% target) should not report matching lines
@@ -574,8 +574,8 @@ testarg-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.arg-logfilter) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.arg-logfilter) > $@ 2>&1
+	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.log-filterarg) > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.log-filterarg) > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
 	    || mv $@ $(_NEW.log)
@@ -658,7 +658,7 @@ testcmd-%:
 # Finally, if current logfile is/was missing, use newly created one:
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 # diff's STDERR is discarded (may return: "file does not exist").
-# The target's command output is piped to  $(EXE.cmd-logfilter),  which is cat
+# The target's command output is piped to  $(EXE.log-filtercmd),  which is cat
 # by default. This filter can be redefined as needed.  SEE Make:OSAFT_MAKE
 # NOTE: all target commands are prefixed with -  this avoids that make reports
 # errors if the command fails (as failture is intended, somehow).
@@ -669,8 +669,8 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.cmd-logfilter) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.cmd-logfilter) > $@ 2>&1
+	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.log-filtercmd) > $@ 2>&1" \
+	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.log-filtercmd) > $@ 2>&1
 	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo "diff $(TEST.logdir)/$@ ..."
 	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
 	    && rm $@ \
