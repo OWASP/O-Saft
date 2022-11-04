@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.133 22/11/04 17:59:59
+#?      @(#) Makefile 1.134 22/11/04 18:08:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.133
+_SID.test          := 1.134
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -565,7 +565,7 @@ no.message-%:
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg-%:
 	@$(TRACE.target)
-	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) | $(EXE.arg-logfilter)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
 # SEE Make:--dry-run
 # following pattern rule should be unified with testcmd-%.log
