@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.48 22/11/04 00:35:56"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.49 22/11/04 15:39:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5225,7 +5225,7 @@ sub printdump       {
     return;
 } # printdump
 
-sub print_ruler     { print "=" . '-'x38, "+" . '-'x35 if (_is_cfg_out('header')); return; }
+sub print_ruler     { printf("=%s+%s\n", '-'x38, '-'x35) if (_is_cfg_out('header')); return; }
     #? print header ruler line
 
 sub print_header    {
@@ -5401,9 +5401,9 @@ sub print_size($$$$)    {
     return;
 } # print_size
 
-sub print_cipherruler_dh {print "=   " . "-"x35 . "+-------------------------" if (_is_cfg_out('header')); return; }
+sub print_cipherruler_dh {printf("=   %s+%s\n", "-"x35, "-"x25) if (_is_cfg_out('header')); return; }
     #? print header ruler line for ciphers with DH parameters
-sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if (_is_cfg_out('header')); return; }
+sub print_cipherruler   { printf("=   %s+%s+%s\n", "-"x35, "-"x7, "-"x8) if (_is_cfg_out('header')); return; }
     #? print header ruler line for ciphers
 sub print_cipherhead($) {
     #? print header line according given legacy format
