@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 ## PACKAGE {
 
 #!# Copyright (c) 2022, Achim Hoffmann
@@ -10,11 +9,11 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.5 22/06/15 14:41:39";
-our $VERSION    =  "22.05.22";
+my  $SID_text   =  "@(#) Text.pm 1.6 22/11/04 10:51:16";
+our $VERSION    =  "22.11.22";
 
 #_____________________________________________________________________________
-#________________________________________________________________ variables __|
+#________________________________________________ public (export) variables __|
 
 our %STR = (
     'ERROR'     => "**ERROR: ",
@@ -29,7 +28,7 @@ our %STR = (
 
 use Exporter qw(import);
 use base     qw(Exporter);
-our @EXPORT_OK  = qw( %STR print_pod );
+our @EXPORT_OK  = qw( %STR print_pod text_done );
 
 # SEE Perl:constant
 
@@ -43,6 +42,7 @@ our @EXPORT_OK  = qw( %STR print_pod );
 =head1 NAME
 
 OSaft::Text -- common texts for O-Saft and related tools
+
 
 =head1 SYNOPSIS
 
@@ -69,6 +69,7 @@ OSaft::Text -- common texts for O-Saft and related tools
 Utility package for O-Saft (o-saft.pl and related tools).  It declares and
 defines common  L</TEXTS>  to be used in the calling tool.
 All variables and methods are defined in the  OSaft::Text  namespace.
+
 
 =head1 TEXTS
 
@@ -101,8 +102,29 @@ Perlish spoken, all texts are variables:
 
 Print POD for specified file, exits program.
 
+
+=head1 SEE ALSO
+
+# ...
+
+
+=head1 VERSION
+
+1.6 2022/11/04
+
+
+=head1 AUTHOR
+
+22-feb-22 Achim Hoffmann
+
 =cut
 
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
+# SEE Perl:Undefined subroutine
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -129,7 +151,7 @@ sub print_pod       {
 #____________________________________________________ internal test methods __|
 
 #_____________________________________________________________________________
-#_________________________________________________________ internal methods __|
+#_____________________________________________________________________ main __|
 
 
 sub _main_text      {
@@ -153,31 +175,7 @@ sub text_done  {};      # dummy to check successful include
 ## PACKAGE }
 
 #_____________________________________________________________________________
-#_____________________________________________________ public documentation __|
-
-=pod
-
-=head1 SEE ALSO
-
-# ...
-
-=head1 VERSION
-
-1.5 2022/06/15
-
-=head1 AUTHOR
-
-22-feb-22 Achim Hoffmann
-
-=cut
-
-#_____________________________________________________________________________
 #_____________________________________________________________________ self __|
-
-# SEE Perl:Undefined subroutine
-*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
 
 _main_text(@ARGV) if (not defined caller);
 
