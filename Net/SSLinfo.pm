@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.281 22/11/04 10:41:13";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.282 22/11/04 10:43:53";
 our $VERSION        =  "22.11.12";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1476,7 +1476,7 @@ sub datadump        {
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
     $data .= _dump('ciphers', " ", join(' ', @{$_SSLinfo{'ciphers'}}));
-    $data .= _dump('addr',    " ", join('.', unpack('W4', $_SSLinfo{'addr'})));  # pretty print IP
+    $data .= _dump('addr',    " ", join('.', unpack('W4', $_SSLinfo{'addr'}||"")));  # pretty print IP
     foreach my $key (sort keys %_SSLinfo) { # SEE Note:Testing, sort
         next if ($key =~ m/addr|ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
         if ($key =~ m/$_SSLinfo_random/) {  # handled special
