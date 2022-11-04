@@ -37,10 +37,22 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.279 22/06/15 12:18:56";
-our $VERSION        =  "22.02.12";  # official verion number of tis file
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.280 22/11/04 10:24:39";
+our $VERSION        =  "22.11.12";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
+use Socket;
+use Net::SSLeay;
+BEGIN {
+    Net::SSLeay::load_error_strings();
+    Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
+    Net::SSLeay::randomize();
+    if (1.45 > $Net::SSLeay::VERSION) {
+        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize");
+    } else {
+        Net::SSLeay::initialize();
+    }
+}
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -529,10 +541,10 @@ follow the rules describend above.
 =cut
 
 #_____________________________________________________________________________
-#___________________________________________________________ initialisation __|
+#________________________________________________ public (export) variables __|
 
 use Exporter qw(import);
-use base qw(Exporter);
+use base     qw(Exporter);
 our @EXPORT = qw(
         net_sslinfo_done
         ssleay_methods
@@ -691,18 +703,9 @@ our $HAVE_XS = eval {
 
     } ? 1 : 0;
 
-use Socket;
-use Net::SSLeay;
-BEGIN {
-    Net::SSLeay::load_error_strings();
-    Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
-    Net::SSLeay::randomize();
-    if (1.45 > $Net::SSLeay::VERSION) {
-        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize");
-    } else {
-        Net::SSLeay::initialize();
-    }
-}
+#_____________________________________________________________________________
+#___________________________________________________________ initialisation __|
+
 my $_protos = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
     # NOTE: most weak protocol first, cause we check for vulnerabilities
     # next protocols not yet configurable
@@ -778,13 +781,24 @@ sub do_ssl_open($$$@);
 sub do_ssl_close($$);
 sub do_openssl($$$$);
 
+# define some shortcuts to avoid $Net::SSLinfo::*
+my $_echo    = '';              # dangerous if aliased or wrong one found
+my $_timeout = undef;
+my $_openssl = undef;
+
 #_____________________________________________________________________________
-#___________________________________________________ internal trace methods __|
+#_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
+
+# need our own _trace() methods
+sub _trace      { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $trace); return; }
+sub _trace1     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1 == $trace); return; }
+sub _trace2     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1  < $trace); return; }
+
+sub _verbose    { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $Net::SSLinfo::verbose); return; }
 
 sub _traceset   {
     $trace = $Net::SSLinfo::trace;          # set global variable
@@ -796,17 +810,6 @@ sub _traceset   {
     $Net::SSLeay::slowly = $Net::SSLinfo::slowly;
     return;
 }
-
-sub _trace      { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $trace); return; }
-sub _trace1     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1 == $trace); return; }
-sub _trace2     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1  < $trace); return; }
-
-sub _verbose    { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $Net::SSLinfo::verbose); return; }
-
-# define some shortcuts to avoid $Net::SSLinfo::*
-my $_echo    = '';              # dangerous if aliased or wrong one found
-my $_timeout = undef;
-my $_openssl = undef;
 
 sub _setcommand {
     #? check for external command $command; returns command or empty string
@@ -1494,7 +1497,7 @@ sub datadump        {
 } # datadump
 
 #_____________________________________________________________________________
-#_______________________________________________________ internal functions __|
+#______________________________________________ internal SSL helper methods __|
 
 ### _OpenSSL_opt_get()  defined later to avoid forward declaration
 
@@ -2129,7 +2132,7 @@ sub _openssl_x509   {
 } # _openssl_x509
 
 #_____________________________________________________________________________
-#___________________________________________________________ public methods __|
+#__________________________________________________________________ methods __|
 
 =pod
 
@@ -4076,14 +4079,15 @@ sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
+    push(@argv, "--help") if (0 > $#argv);
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if ($#argv < 0) { print_pod($0, __PACKAGE__, $SID_sslinfo) }
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
         if ($arg =~ /^--?h(?:elp)?$/)       { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
-        if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
+        if ($arg =~ /^version$/)            { print "$SID_sslinfo";     next; }
+        if ($arg =~ /^[+-]?VERSION/i)       { print "$VERSION";         next; }
         if ($arg =~ /^--test.?ssleay/)      { print test_ssleay();  }
         if ($arg =~ /^--test.?sslmap/)      { print test_sslmap();  }
         if ($arg =~ /^--test.?sc_?lient/)   { print test_sclient(); }
@@ -4095,6 +4099,9 @@ sub _main           {
     }
     exit 0;
 } # _main
+
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
 
 =pod
 
