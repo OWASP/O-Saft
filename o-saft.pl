@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.49 22/11/04 15:39:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.50 22/11/04 16:03:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -5232,7 +5232,7 @@ sub print_header    {
     #? print title line and table haeder line if second argument given
     my ($txt, $desc, $rest, $header) = @_;
     return if (0 >= $header);
-    print $txt;
+    printf("$txt\n");
     return if ($desc =~ m/^ *$/); # title only if no more arguments
     printf("= %-37s %s\n", $text{'desc'}, $desc);
     print_ruler();
@@ -5242,7 +5242,7 @@ sub print_header    {
 sub print_footer    {
     #? print footer line according given legacy format
     my $legacy  = shift;
-    if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
+    if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n\n"; }
     # all others are empty, no need to do anything
     return;
 } # print_footer
@@ -5791,7 +5791,7 @@ sub printciphersummary  {
     #? print summary of cipher check +cipher
     my ($legacy, $host, $port, $total) = @_;
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
-        print_header("\n" . _get_text('out_summary', ""), "", "", $cfg{'out'}->{'header'});
+        print_header("\n" . _get_text('out_summary' , ""), "", "", $cfg{'out'}->{'header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
         printprotocols($legacy, $host, $port);
     }
