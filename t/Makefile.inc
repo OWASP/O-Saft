@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.29 22/03/19 18:50:36
+#?      @(#) Makefile.inc 1.30 22/11/04 15:14:28
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.29
+_SID.inc       := 1.30
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -62,6 +62,10 @@ endif
 
 ifndef TEST.logdir
     TEST.logdir = $(TEST.dir)/log
+endif
+
+ifndef TEST.logtxt
+    TEST.logtxt = <<value not printed (OSAFT_MAKE exists)>>
 endif
 
 ifndef TMP.dir
