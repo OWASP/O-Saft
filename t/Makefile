@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.136 22/11/04 20:03:22
+#?      @(#) Makefile 1.137 22/11/04 23:27:47
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.136
+_SID.test          := 1.137
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -820,9 +820,11 @@ tests:      $(ALL.tests)
 	@$(TRACE.target)
 	@$(MAKE) $(MFLAGS) -s $(ALL.tests)
 
-tests.log:  $(ALL.tests.log) test.log-compare-hint
+tests.log:  $(ALL.tests.log)
 	@$(TRACE.target)
 	@$(MAKE) $(MFLAGS) -s $(ALL.tests.log)
+	@-$(EXE.log-compare-hint)
+	@-$(EXE.log-move-hint)
 
 test.tests.log-compare: TEST.target_prefix  = test
 test.tests.log-move:    TEST.target_prefix  = test
