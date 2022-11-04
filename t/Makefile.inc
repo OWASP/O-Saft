@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.31 22/11/04 18:06:31
+#?      @(#) Makefile.inc 1.32 22/11/04 19:59:37
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.31
+_SID.inc       := 1.32
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -137,12 +137,12 @@ ifndef EXE.dummy
     EXE.dummy  := /bin/echo -n ""
 endif
 
-ifndef EXE.arg-logfilter
-    EXE.arg-logfilter  := cat
+ifndef EXE.log-filterarg
+    EXE.log-filterarg  := cat
 endif
 
-ifndef EXE.cmd-logfilter
-    EXE.cmd-logfilter  := cat
+ifndef EXE.log-iltercmd
+    EXE.log-filtercmd  := cat
 endif
 
 ifndef _EXE.sort-opt
