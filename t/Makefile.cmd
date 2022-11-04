@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.59 22/10/29 21:33:25
+#?      @(#) Makefile.cmd 1.60 22/11/04 21:11:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.59
+_SID.cmd           := 1.60
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -146,6 +146,12 @@ ALL.testcmd    += \
 	testcmd-cmd-+check--nossltls_ \
 	testcmd-cmd-+https_body--httpbody_
 
+testarg-cmd-host_url+cn.log:    EXE.log-filterarg  = awk -F= '\
+	BEGIN{OFS="="} \
+	($$1~/master_key/)              {$$2="$(TEST.logtxt)"}\
+	($$1~/session_(id|ticket)$$/)   {$$2="$(TEST.logtxt)"}\
+	($$1~/session_start(date|time)/){$$2="$(TEST.logtxt)"}\
+	{print}'
 testarg-cmd-host_url+cn:        TEST.args  += --v +cn
 testarg-cmd-host_url+cn:        TEST.init   = localhost/tests
     # target to test hostname with url (path) # TODO: add to ALL.testcmd
