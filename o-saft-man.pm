@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.81 22/11/04 18:28:15";
+my  $SID_man= "@(#) o-saft-man.pm 2.82 22/11/04 18:39:33";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -780,7 +780,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.81'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.82'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1546,7 +1546,8 @@ EoHTML
 sub _man_ciphers_html_li {
     #? helper function for man_ciphers_html(): return LI tag with content
     my ($hex, $sec, $name, $dl) = @_;
-       $dl =~ s/\n$//;  # remove trailing \n
+    $name = "" if not defined $name;    # defensive programming
+    $dl   =~ s/\n$//;
     return << "EoHTML";
 
   <details title="show details">
@@ -2622,7 +2623,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.81 2022/11/04
+2.82 2022/11/04
 
 
 =head1 AUTHOR
