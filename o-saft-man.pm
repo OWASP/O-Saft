@@ -57,7 +57,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.80 22/11/03 23:57:33";
+my  $SID_man= "@(#) o-saft-man.pm 2.81 22/11/04 18:28:15";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -780,7 +780,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.80'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.81'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1574,6 +1574,7 @@ sub _man_ciphers_html_ul {
         chomp($line);
         next if $line =~ m/^\s*$/;
         $line =~ s/^\s*//;              # remove leading whitespace
+        ($hex, $sec, $name) = split(/\t/, $line);
         if ($line =~ m/^0x/) {
             if ("" ne $dl) {            # new cipher, print previous one
                 $ul .= _man_ciphers_html_li($hex, $sec, $name, _man_ciphers_html_dl($dl));
@@ -1586,7 +1587,7 @@ sub _man_ciphers_html_ul {
         my  $txt =  $key;
         $txt =~ s/$key/$OSaft::Ciphers::ciphers_desc{$key}/; # convert internal key to human readable text
         $sec =  "";
-        $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL SRENGTH should also be marked
+        $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL STRENGTH should also be marked
         $sec =  "sec='$val'" if ("sec"     eq $key);
         $dl .= "      <dt>${txt}:</dt><dd $sec typ='$val' ><t> </t></dd><br />\n";
         # <t> tag necessary, otherwise dd::after will not work
@@ -1658,8 +1659,8 @@ sub _man_ciphers_html_tb {
         }
         my ($key, $val) = split(/\t/, $line);
         $sec = "";
-        $sec = "sec='$val'" if ("openssl" eq $key); # OpenSSL SRENGTH should also be marked
-        $sec = "sec='$val'" if ("sec" eq $key); # OpenSSL SRENGTH should also be marked
+        $sec = "sec='$val'" if ("openssl" eq $key); # OpenSSL STRENGTH should also be marked
+        $sec = "sec='$val'" if ("sec" eq $key); # OpenSSL STRENGTH should also be marked
         $td .= "        <td typ='$val' $sec><t> </t></td>\n";
         # <t> tag necessary, otherwise td::after will not work
     }
@@ -2621,7 +2622,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.80 2022/11/03
+2.81 2022/11/04
 
 
 =head1 AUTHOR
