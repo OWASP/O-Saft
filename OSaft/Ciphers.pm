@@ -18,9 +18,13 @@ package OSaft::Ciphers;
 ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
 #  We use here documents as needed for human readability.
 
+## no critic qw(BuiltinFunctions::RequireBlockGrep)
+#  other people, other opinions
+
 # test resources with:
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
+# 0.02  0.00  0:00.03 100%  0k  9924k  # 11/2022
 
 use strict;
 use warnings;
@@ -37,7 +41,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.78 22/11/04 00:32:47";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.79 22/11/05 13:00:10";
 our $VERSION    = "22.11.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -734,7 +738,7 @@ sub find_name   {
     }
     return @list;
 # TODO: # $rex_name = s/([_-])/.?/g; $rex_name = s/DHE/EDH/;
-    return $STR{UNDEF};
+    #return $STR{UNDEF};
 } # find_name
 
 =pod
@@ -1403,7 +1407,7 @@ EoT
     return;
 } # show_ciphers
 
-sub show            {
+sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? dispatcher for various --test-cipher-* options; show information
     my $arg = shift;    # any --test-cipher-*
        $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
@@ -1674,7 +1678,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.78 2022/11/04
+2.79 2022/11/05
 
 
 =head1 AUTHOR
