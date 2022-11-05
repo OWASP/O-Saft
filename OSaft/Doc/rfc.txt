@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.17 22/11/01 19:27:07
+# SID	@(#) rfc.txt 1.18 22/11/05 11:37:10
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -183,4 +183,6 @@ url	http://tools.ietf.org/
 8998	ShangMi (SM) Cipher Suites for TLS 1.3
 9102	Argon2 Memory-hard function for password hashing and proof-of-work applications (2021)
 9155	Deprecating MD5 and SHA-1 Signature Hashes in TLS 1.2 and DTLS 1.2
+8398	Internationalized Email Addresses in X.509 Certificates
+8399	Internationalization Updates to RFC 5280
 
