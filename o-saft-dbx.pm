@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.23 22/11/04 00:04:03";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.24 22/11/05 13:11:14";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -135,7 +135,7 @@ sub _yeast_ciphers_list {
             $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
             $_cnt = 2051     if ($cfg{'cipherrange'} =~ m/rfc/i);   # estimated count
             $_cnt = 2640     if ($cfg{'cipherrange'} =~ m/intern/i);# estimated count
-            @range = qw"<<huge list not printed>>";
+            @range = "<<huge list not printed>>";
         } else {
             # expand smaller list
             @range = osaft::get_ciphers_range('TLSv13', $cfg{'cipherrange'});
@@ -1015,7 +1015,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.23 2022/11/04
+2.24 2022/11/05
 
 =head1 AUTHOR
 
