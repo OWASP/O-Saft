@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.68 22/09/29 21:58:52
+#?      @(#) %M% %I% %E% %U%
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.68
+_SID.misc          := %I%
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -170,7 +170,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.68: $(MAKE) cloc.stat.log" > $@
+	@echo "# %M% %I%: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -264,7 +264,8 @@ test.norc%:
 	@-diff $(_log).$(_ext) $(_log)--no-rc.$(_ext) || exit 0
 	@rm    $(_log).$(_ext) $(_log)--no-rc.$(_ext)
 
-ALL.testmisc   += test.norc+info test.norc+check
+ALL.test.norc   = test.norc+info test.norc+check
+ALL.testmisc   += $(ALL.test.norc)
 # TODO: test.norc%.log  NOT YET IMPLEMENTED
 
 # TODO: Profiling should go to Makefile.profile or alike
@@ -418,7 +419,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.68: $(MAKE) test.quality.log" > $@
+	@echo "# %M% %I%: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -454,7 +455,8 @@ test.misc.todo.log:       $(ALL.test.misc.todo.log)
 .PHONY: OSaft/_ciphers_openssl_all.pm
 .PHONY: OSaft/_ciphers_openssl_h.pm
 
-ALL.test.misc      += test.bench test.bunt test.norc \
+ALL.test.misc      += test.bench test.bunt \
+			$(ALL.test.norc) \
 			$(ALL.test.cloc) \
 			$(ALL.test.quality) \
 			$(ALL.test.misc.todo) \
