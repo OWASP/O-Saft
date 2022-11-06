@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.14 22/06/14 10:18:52
+#?      @(#) .perlcriticrc 1.15 22/11/06 12:22:40
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -563,18 +563,6 @@ verbose     = 8
 	# which is hard to be expressed as a hash
 
 
-[-BuiltinFunctions::ProhibitBooleanGrep]
-
-    # Message
-	# "grep" used in boolean context at line  ...
-	# "grep" used in void context at line  ...
-
-    # CHECK DISABLED
-	# Perl::Critic  is too noicy and may have false positives, see its own
-        # description:
-	#    perlcritic --doc BuiltinFunctions::ProhibitBooleanGrep
-
-
 #[TestingAndDebugging::ProhibitNoStrict]
 
     # Message:
@@ -610,6 +598,18 @@ verbose     = 8
 	# Anyway, "use strict" and "use warnings" is added to modules too.
 
 
+[-BuiltinFunctions::ProhibitBooleanGrep]
+
+    # Message
+	# "grep" used in boolean context at line  ...
+	# "grep" used in void context at line  ...
+
+    # CHECK DISABLED
+	# Perl::Critic  is too noicy and may have false positives, see its own
+        # description:
+	#    perlcritic --doc BuiltinFunctions::ProhibitBooleanGrep
+
+
 #[BuiltinFunctions::ProhibitStringyEval]
 
     # Message:
@@ -643,6 +643,16 @@ verbose     = 8
 	# FIXME: write a  osaft_sleep() which hides the select, this way the
 	# violation is printed only once. Then we can enable it again.
     	
+
+[-BuiltinFunctions::RequireBlockGrep]
+
+    # Message:
+	# The expression forms of `grep' and `map' are awkward and hard to read.
+
+    # CHECK DISABLED
+	# other people, other opinions
+
+
 
 [BuiltinFunctions::ProhibitStringySplit]
 
