@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.76 22/11/04 13:11:33
+#?      @(#) Makefile.dev 1.77 22/11/06 12:27:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.76
+_SID.dev           := 1.77
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -49,6 +49,7 @@ EXE.osaft-dbx      := ../o-saft-dbx.pm
 EXE.osaft-man      := ../o-saft-man.pm
 EXE.osaft-usr      := ../o-saft-usr.pm
 EXE.osaft-ciphers  := ../OSaft/Ciphers.pm
+EXE.osaft-data     := ../OSaft/Data.pm
 EXE.osaft-doc-data := ../OSaft/Doc/Data.pm
 EXE.net-sslhello   := ../Net/SSLhello.pm
 EXE.net-sslinfo    := ../Net/SSLinfo.pm
@@ -65,7 +66,18 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
 
 # list of variables containing source files (executables)
-LIST.sources       := EXE.o-saft-tcl EXE.osaft EXE.osaft-dbx EXE.osaft-man EXE.osaft-usr EXE.osaft-ciphers EXE.osaft-doc-data EXE.net-sslhello EXE.net-sslinfo EXE.o-saft-pl
+LIST.sources       := \
+	EXE.o-saft-tcl \
+	EXE.osaft \
+	EXE.osaft-dbx \
+	EXE.osaft-man \
+	EXE.osaft-usr \
+	EXE.osaft-ciphers \
+	EXE.osaft-data \
+	EXE.osaft-doc-data \
+	EXE.net-sslhello \
+	EXE.net-sslinfo \
+	EXE.o-saft-pl
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
@@ -115,6 +127,10 @@ LIST.osaft-ciphers  := \
 # some command and options supported by Ciphers.pm are supported by $(SRC.pl)
 # too, but must be used there as  --test-ciphers-*
 LIST.osaft-ciphers--test := $(LIST.osaft-ciphers-cmd:%=--test-ciphers-%)
+
+LIST.osaft-data    := \
+	check_cert  check_conn  check_dest  check_http  check_size \
+	checks      data        shorttexts
 
 LIST.o-saft-pl     += $(LIST.osaft-ciphers--test)
 
