@@ -9,8 +9,8 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.8 22/11/04 00:33:50";
-our $VERSION    =  "22.11.22";
+my  $SID_data   =  "@(#) Data.pm 1.9 22/11/06 12:21:32";
+our $VERSION    =  "22.06.22";
 
 BEGIN {
     # SEE Perl:@INC
@@ -51,6 +51,22 @@ All variables and methods are defined in the  OSaft::Data  namespace.
 =item use OSaft::Data;          # in perl code
 
 =item OSaft/Data.pm --help      # on command-line will print help
+
+=item OSaft/Data.pm data        # show content of %data
+
+=item OSaft/Data.pm checks      # show content of %checks
+
+=item OSaft/Data.pm check_cert  # show content of %check_cert
+
+=item OSaft/Data.pm check_conn  # show content of %check_conn
+
+=item OSaft/Data.pm check_http  # show content of %check_http
+
+=item OSaft/Data.pm check_dest  # show content of %check_dest
+
+=item OSaft/Data.pm check_size  # show content of %check_size
+
+=item OSaft/Data.pm shorttexts  # show content of %shorttexts
 
 =back
 
@@ -815,6 +831,42 @@ None.
 #____________________________________________________ internal test methods __|
 
 sub show            {
+    #? dispatcher for various --test-data-* options to show information
+    # output similar (but not identical) to o-saft-man::man_table()
+    my $arg = shift;
+    printf("= %%$arg\n");
+    #if ('info' eq $arg)   { # not yet used
+    #printf("%21s -\t%s\n", $_, $info{$_}->{txt}) foreach (sort keys %info);
+    #}
+    if ('data' eq $arg)   {
+        printf("%21s -\t%s\n", $_, $data{$_}->{txt})       foreach (sort keys %data);
+    }
+    if ('checks' eq $arg) {
+        printf("%21s -\t%s\n", $_, $checks{$_}->{txt})     foreach (sort keys %checks);
+    }
+    if ('check_cert' eq $arg) {
+        printf("%21s -\t%s\n", $_, $check_cert{$_}->{txt}) foreach (sort keys %check_cert);
+    }
+    if ('check_conn' eq $arg) {
+        printf("%21s -\t%s\n", $_, $check_conn{$_}->{txt}) foreach (sort keys %check_conn);
+    }
+    if ('check_dest' eq $arg) {
+        printf("%21s -\t%s\n", $_, $check_dest{$_}->{txt}) foreach (sort keys %check_dest);
+    }
+    if ('check_size' eq $arg) {
+        printf("%21s -\t%s\n", $_, $check_size{$_}->{txt}) foreach (sort keys %check_size);
+    }
+    if ('check_http' eq $arg) {
+        printf("%21s -\t%s\n", $_, $check_http{$_}->{txt}) foreach (sort keys %check_http);
+    }
+    if ('shorttexts' eq $arg) {
+        printf("%21s -\t%s\n", $_, $shorttexts{$_})        foreach (sort keys %shorttexts);
+    }
+    return if ($arg =~ /check_/); # cert conn dest size http
+    print <<"EoHelp";
+
+= Please use  o-saft.pl --help=$arg  for formated output.
+EoHelp
     return;
 } # show
 
@@ -860,10 +912,10 @@ sub _main_data      {
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_data\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
-        if ($arg =~ m/^--(?:test[_.-]?)data/x) {
+        $arg =~ s/^(?:--test.?data)//;
+show($arg);
             $arg = "--test-data";
-#?#            printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
-        }
+#?#         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
     }
     exit 0;
 } # _main_data
@@ -883,7 +935,7 @@ _data_init();
 
 =head1 VERSION
 
-1.8 2022/11/04
+1.9 2022/11/06
 
 =head1 AUTHOR
 
