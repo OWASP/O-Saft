@@ -1,0 +1,174 @@
+#! /usr/bin/make -rRf
+#?
+#? DESCRIPTION
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.gen
+#?
+#? VERSION
+#?      @(#) Makefile.gen 1.1 22/11/10 22:25:39
+#?
+#? AUTHOR
+#?      22-oct-22 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+HELP-help.test.gen  = make functions to generate targets
+
+_SID.gen           := 1.1
+
+_MYSELF.gen        := t/Makefile.gen
+ALL.includes       += $(_MYSELF.gen)
+ALL.inc.type       += gen
+ALL.help.tests     += help.test.gen
+
+first-gen-target-is-default: help.test.gen
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+help.test.gen:        HELP_TYPE = gen
+help.test.gen-v:      HELP_TYPE = gen
+help.test.gen-vv:     HELP_TYPE = gen
+help.test.gen:        _HELP-help.make =
+    # text from _HELP-help.make is useless for documentation here
+help.test.gen:        D = "$$"
+    # need a literal $ below
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+HELP-_gen1          = __________________________ testing internal documentations _
+HELP-test.gen       = internal test of target generation functions
+HELP-test.gen.log   = same as test.gen but store output in '$(TEST.logdir)/'
+HELP-_gen2          = ______________________________ target generation functions _
+HELP-test-targets   = test-targets(prefix,typ,tool,var-name,var-for-args,var-set-empty)
+HELP-test-targets-args = test-targets-args(prefix,typ,tool,var-name)
+HELP-test-targets-init = test-targets-init(prefix,typ,tool,var-name)
+
+HELP.gen            = $(_NL)\
+\#    Beside the target 'test.gen' for internal testing, no other targets are$(_NL)\
+\#    provides but only functions. The desciption of the targets can be found$(_NL)\
+\#    in Makefile.pod, SEE Make:target generation .
+
+
+#_____________________________________________________________________________
+#______________________________________________ target generation functions __|
+
+ifndef gen-macros-generated
+    # ifndef enforces execution of $(foreach ...) below
+
+    # arguments from $3  used in the target name must not contain /
+    # hence $(subst /,-,$3) is used to replace / by -
+    # arguments from $4  used in the target name must not contain =
+    # hence $(subst =,-,$(_arg)) is used to replace = by -
+
+  define test-targets
+    # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
+    #            var-name_to_assign_args=$5,  var-name_set_empty=$6
+    # generates targets: $1-$2-$3_$4  and  $1-$2-$3_%
+    #           example: testcmd-gen-some-tool--arg
+    $(eval _help-typ.prg=HELP-test.$2.$(subst /,-,$3))
+    $(eval _test.typ.prg=test.$2.$(subst /,-,$3))
+    $(eval _testtype-prg=$1-$2-$(subst /,-,$3))
+    $(foreach _arg, $($4),\
+        $(eval _target=$(_testtype-prg)_$(subst =,-,$(_arg))) \
+        $(eval ALL.$(_test.typ.prg)        += $(_target))     \
+        $(eval $(_target):                    $5 = $(_arg))   \
+    ) \
+    $(eval     $(_help-typ.prg) = targets for testing arguments of '$3')
+    $(eval     $(_testtype-prg)_%:            EXE.pl    = ../$3)
+    $(eval     $(_testtype-prg)_%:            $6 = )
+    $(eval     ALL.test.$2                 += $(ALL.$(_test.typ.prg)))
+    $(eval     ALL.$(_test.typ.prg).log    += $(ALL.$(_test.typ.prg):%=%.log))
+    $(eval     $(_test.typ.prg).all:          $(ALL.$(_test.typ.prg)))
+    $(eval     $(_test.typ.prg).log:          $(ALL.$(_test.typ.prg).log))
+    $(eval     $(_test.typ.prg).log-compare:  TEST.target_prefix  = $(_testarg-prg)_)
+    $(eval     $(_test.typ.prg).log-move:     TEST.target_prefix  = $(_testarg-prg)_)
+    $(eval     $(_test.typ.prg).log:          TEST.target_prefix  = $(_testarg-prg)_)
+    undefine _arg
+    undefine _target
+    undefine _help-typ.prg
+    undefine _test.typ.prg
+    undefine _testtype-prg
+  endef
+
+  define test-targets-args
+    # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
+    # generate targets with argument assigned to TEST.args, TEST.init set empty
+    $(call test-targets,$1,$2,$3,$4,TEST.args,TEST.init)
+  endef
+
+  define test-targets-init
+    # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
+    # generate targets with argument assigned to TEST.init, TEST.args set empty
+    $(call test-targets,$1,$2,$3,$4,TEST.init,TEST.args)
+  endef
+
+endif
+
+
+#_____________________________________________________________________________
+#___________________________________________________________ testing myself __|
+
+TEST.gen.exe       := Some/Dumm.pm
+LIST.Some-Dumm.pm  := --arg=1 --arg=2
+LIST.gen.inc-type  := tst
+LIST.gen.expected  := testarg-tst-Some-Dumm.pm_--arg-1 testarg-tst-Some-Dumm.pm_--arg-2
+LIST.gen.TEST.init := TEST.init-arg1 TEST.init-arg2
+
+ifndef gen-macros-generated
+    $(eval _tst=$(LIST.gen.inc-type))
+    $(foreach prg, $(TEST.gen.exe),\
+        $(eval _name=$(subst /,-,$(prg))) \
+        $(eval $(call test-targets-args,testarg,$(_tst),$(prg),LIST.$(_name))) \
+    )
+endif
+
+testarg-tst-Some-Dumm.pm_--arg-2: TEST.init = $(LIST.gen.TEST.init)
+
+# Following targets tests the above generated targets. It first prints some
+# information about the expected output of the following called make. While
+# is shown verbatime.
+
+test.gen:
+	@echo "#### generated targets for:"
+	@echo "#    program:      'EXE.pl            = $(TEST.gen.exe)'"
+	@echo "#    arguments:    'LIST.Some-Dumm.pm = $(LIST.Some-Dumm.pm)'"
+	@echo "#    Makefile.tst: 'ALL.inc.type      = tst'"
+	@echo "#### add TEST.init for 'target testarg-tst-Some-Dumm.pm_--arg-2' only:"
+	@echo "#                  'TEST.init = $(LIST.gen.TEST.init)'"
+	@echo "#"
+	@echo "#### list generated targets, should return:"
+	@echo "	$(LIST.gen.expected)"
+	$(MAKE) s-ALL.test.tst
+	@echo "#"
+	@echo "#### list generated targets, should return:"
+	@echo "	$(LIST.gen.expected:%=%.log)"
+	$(MAKE) s-ALL.test.tst.Some-Dumm.pm.log
+	@echo "#"
+	@echo "#### list commands or each target, should return one command line for each:"
+	$(MAKE) -n testarg-tst-Some-Dumm.pm_--arg-1 testarg-tst-Some-Dumm.pm_--arg-2
+	@echo "#       \-- program --/ \-- arguments ..."
+	@echo "#"
+
+test.gen.log:
+	@echo "#### show commands for test.tst.Some-Dumm.pm.log"
+	$(MAKE) test.tst.Some-Dumm.pm.log EXE.pl=echo
+	@-$(EXE.log-compare-hint)
+	@-$(EXE.log-move-hint)
+#       Last make tests functionality of the target, not of the program EXE.pl
+#       used in the target. As the specified EXE.pl is a dummy string, it will
+#       be replaced by echo, which then will be executed.
+
+test.gen.log-compare:  TEST.target_prefix  = testarg-gen-
+test.gen.log-move:     TEST.target_prefix  = testarg-gen-
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+
+ALL.test.gen        = test.gen
+ALL.test.gen.log    = $(ALL.test.gen:%=%.log)
+
