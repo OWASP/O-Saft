@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 1.1 22/11/10 22:25:39
+#?      @(#) Makefile.gen 1.2 22/11/10 22:49:11
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 1.1
+_SID.gen           := 1.2
 
 _MYSELF.gen        := t/Makefile.gen
 ALL.includes       += $(_MYSELF.gen)
@@ -43,9 +43,9 @@ HELP-_gen1          = __________________________ testing internal documentations
 HELP-test.gen       = internal test of target generation functions
 HELP-test.gen.log   = same as test.gen but store output in '$(TEST.logdir)/'
 HELP-_gen2          = ______________________________ target generation functions _
-HELP-test-targets   = test-targets(prefix,typ,tool,var-name,var-for-args,var-set-empty)
-HELP-test-targets-args = test-targets-args(prefix,typ,tool,var-name)
-HELP-test-targets-init = test-targets-init(prefix,typ,tool,var-name)
+HELP-GEN.targets    = GEN.targets(prefix,typ,tool,var-name,var-for-args,var-set-empty)
+HELP-GEN.targets-args = GEN.targets-args(prefix,typ,tool,var-name)
+HELP-GEN.targets-init = GEN.targets-init(prefix,typ,tool,var-name)
 
 HELP.gen            = $(_NL)\
 \#    Beside the target 'test.gen' for internal testing, no other targets are$(_NL)\
@@ -64,7 +64,7 @@ ifndef gen-macros-generated
     # arguments from $4  used in the target name must not contain =
     # hence $(subst =,-,$(_arg)) is used to replace = by -
 
-  define test-targets
+  define GEN.targets
     # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
     #            var-name_to_assign_args=$5,  var-name_set_empty=$6
     # generates targets: $1-$2-$3_$4  and  $1-$2-$3_%
@@ -94,16 +94,16 @@ ifndef gen-macros-generated
     undefine _testtype-prg
   endef
 
-  define test-targets-args
+  define GEN.targets-args
     # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
     # generate targets with argument assigned to TEST.args, TEST.init set empty
-    $(call test-targets,$1,$2,$3,$4,TEST.args,TEST.init)
+    $(call GEN.targets,$1,$2,$3,$4,TEST.args,TEST.init)
   endef
 
-  define test-targets-init
+  define GEN.targets-init
     # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
     # generate targets with argument assigned to TEST.init, TEST.args set empty
-    $(call test-targets,$1,$2,$3,$4,TEST.init,TEST.args)
+    $(call GEN.targets,$1,$2,$3,$4,TEST.init,TEST.args)
   endef
 
 endif
@@ -122,7 +122,7 @@ ifndef gen-macros-generated
     $(eval _tst=$(LIST.gen.inc-type))
     $(foreach prg, $(TEST.gen.exe),\
         $(eval _name=$(subst /,-,$(prg))) \
-        $(eval $(call test-targets-args,testarg,$(_tst),$(prg),LIST.$(_name))) \
+        $(eval $(call GEN.targets-args,testarg,$(_tst),$(prg),LIST.$(_name))) \
     )
 endif
 
