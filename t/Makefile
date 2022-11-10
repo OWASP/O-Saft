@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.138 22/11/10 22:44:02
+#?      @(#) Makefile 1.139 22/11/10 23:43:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.138
+_SID.test          := 1.139
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -363,6 +363,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.misc)     = $(_SID.misc)'
 	@echo '# $$(_SID.cmd)      = $(_SID.cmd)'
 	@echo '# $$(_SID.dev)      = $(_SID.dev)'
+	@echo '# $$(_SID.mod)      = $(_SID.mod)'
 	@echo '# $$(_SID.etc)      = $(_SID.etc)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
@@ -780,6 +781,10 @@ endif
 
 ifeq (,$(_SID.dev))
     -include t/Makefile.dev
+endif
+
+ifeq (,$(_SID.mod))
+    -include t/Makefile.mod
 endif
 
 ifeq (,$(_SID.init))
