@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.54 22/11/10 22:11:05
+@(#) Makefile.pod 1.55 22/11/10 22:50:46
 
 =head1 AUTHOR
 
@@ -815,15 +815,15 @@ Makefile.gen.
 
 General functions:
 
-    $(call test-targets,testcmd,TYP,TOOL,VAR-name,TEST.args,TEST.init)
-    $(call test-targets,testcmd,TYP,TOOL,VAR-name,TEST.init,TEST.args)
+    $(call GEN.targets,testcmd,TYP,TOOL,VAR-name,TEST.args,TEST.init)
+    $(call GEN.targets,testcmd,TYP,TOOL,VAR-name,TEST.init,TEST.args)
 
 Wrapper functions (calling the general functions):
 
-    $(call test-targets-args,testarg,TYP,TOOL,VAR-name)
-    $(call test-targets-init,testarg,TYP,TOOL,VAR-name)
-    $(call test-targets-args,testcmd,TYP,TOOL,VAR-name)
-    $(call test-targets-init,testcmd,TYP,TOOL,VAR-name)
+    $(call GEN.targets-args,testarg,TYP,TOOL,VAR-name)
+    $(call GEN.targets-init,testarg,TYP,TOOL,VAR-name)
+    $(call GEN.targets-args,testcmd,TYP,TOOL,VAR-name)
+    $(call GEN.targets-init,testcmd,TYP,TOOL,VAR-name)
 
 =head3 Description
 
@@ -903,7 +903,7 @@ Additionally 2 simple wrapper functions for both variants are provided.
 
     TOOL       = path/tool
     LIST.tool  = --opt=val  --arg
-    $(call test-targets-args,testarg,typ,$(TOOL),LIST.tool)
+    $(call GEN.targets-args,testarg,typ,$(TOOL),LIST.tool)
 
 This generates following targets and macros:
 
@@ -917,7 +917,7 @@ This generates following targets and macros:
 
 =item Generate targets for various options
 
-    $(call test-targets-init,testarg,typ,$(TOOL),LIST.tool)
+    $(call GEN.targets-init,testarg,typ,$(TOOL),LIST.tool)
 
 TODO ... to be completed ...
 
