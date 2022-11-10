@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 1.2 22/11/10 22:49:11
+#?      @(#) Makefile.gen 1.3 22/11/11 00:54:49
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 1.2
+_SID.gen           := 1.3
 
 _MYSELF.gen        := t/Makefile.gen
 ALL.includes       += $(_MYSELF.gen)
@@ -124,6 +124,8 @@ ifndef gen-macros-generated
         $(eval _name=$(subst /,-,$(prg))) \
         $(eval $(call GEN.targets-args,testarg,$(_tst),$(prg),LIST.$(_name))) \
     )
+    undefine _tst
+    undefine _name
 endif
 
 testarg-tst-Some-Dumm.pm_--arg-2: TEST.init = $(LIST.gen.TEST.init)
