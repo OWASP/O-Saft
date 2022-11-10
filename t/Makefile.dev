@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.77 22/11/06 12:27:23
+#?      @(#) Makefile.dev 1.78 22/11/11 00:28:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.77
+_SID.dev           := 1.78
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -43,8 +43,8 @@ EXE.o-saft-pl      := ../$(SRC.pl)
 EXE.o-saft-sh      := ../$(SRC.sh)
 EXE.o-saft-docker  := ../$(EXE.docker)
 #EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
-EXE.osaft          := ../osaft.pm
 EXE.osaft-standalone   := ../$(GEN.src)
+EXE.osaft          := ../osaft.pm
 EXE.osaft-dbx      := ../o-saft-dbx.pm
 EXE.osaft-man      := ../o-saft-man.pm
 EXE.osaft-usr      := ../o-saft-usr.pm
@@ -65,6 +65,7 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
 
+# TODO: LIST.sources anpassen
 # list of variables containing source files (executables)
 LIST.sources       := \
 	EXE.o-saft-tcl \
@@ -95,75 +96,7 @@ LIST.o-saft-sh-post:= \
 	-post=HTML-simple.awk -post=HTML-table.awk  -post=lazy_checks.awk \
 	-post=JSON-array.awk  -post=JSON-struct.awk \
 	-post=XML-value.awk   -post=XML-attribute.awk 
-LIST.osaft         :=
 
-# Ciphers.pm supports command/options with or without + and -- prefix
-LIST.osaft-ciphers-cmd  := \
-	aliases constants rfcs  dump    regex   description overview \
-	openssl osaft   show    simple  sorted  ssltest     version  \
-	get_keys_list   get_names_list
-
-# Ciphers.pm supports command for each of its functions, test with key 0x03001301
-LIST.osaft-ciphers-get  := \
-	get_key     get_sec     get_ssl     get_keyx    get_auth    get_enc \
-	get_bits    get_mac     get_rfc     get_name    get_const   get_note \
-	get_openssl get_encsize get_iana    get_pfs  \
-	get_aliases get_consts  get_names   get_notes
-
-# command/options for Ciphers.pm composed of previous ones and some specials
-LIST.osaft-ciphers  := \
-	$(LIST.osaft-ciphers-cmd) \
-	$(LIST.osaft-ciphers-get:%=%=0x03001301) \
-	getter=0x060040   getter=0x02060040 get_key=DES-CBC-MD5 \
-	getter=0xC0,0x2C  getter=0x0300C02C get_key=ECDHE-ECDSA-AES256-GCM-SHA384 \
-	getter=0xCC,0xA9  getter=0x0300CCA9 get_key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
-	get_key=DHE-PSK-AES128-SHA     get_key=DHE_PSK_WITH_AES_128_CBC_SHA \
-	get_key=DHE-PSK-AES128-SHA256  get_key=DHE-PSK-AES128-CBC-SHA256    \
-	text2key=0x1301   text2key=0x13,0x01    key2text=0x03001301 \
-	find_names=DHE-PSK-AES128 find_keys=DHE-PSK-AES128
-    # only $(LIST.osaft-ciphers-cmd) is tested here, as they all produce the
-    # same output as $(LIST.osaft-ciphers--test)
-
-# some command and options supported by Ciphers.pm are supported by $(SRC.pl)
-# too, but must be used there as  --test-ciphers-*
-LIST.osaft-ciphers--test := $(LIST.osaft-ciphers-cmd:%=--test-ciphers-%)
-
-LIST.osaft-data    := \
-	check_cert  check_conn  check_dest  check_http  check_size \
-	checks      data        shorttexts
-
-LIST.o-saft-pl     += $(LIST.osaft-ciphers--test)
-
-LIST.osaft-doc-data := \
-	--usage version         +VERSION    list  print \
-	get     get-markup      get-text    get-as-text \
-
-# tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
-LIST.osaft-man     := \
-	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
-	content data    glossar intern  help    hint    legacy   links      \
-	opt     options ourstr  pattern range   regex   rfc      text       \
-	toc     todo    tools   warning exit    abbr    \
-	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
-	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
-    # o-saft-man.pm allows any of the above listed arguments like:
-    #   o-saft-man.pm toc
-    #   o-saft-man.pm --help=toc
-    #   o-saft-man.pm --test-toc
-    # only the first form is tested here, as they all produce the same output
-
-LIST.net-sslinfo-t :=   --test-methods --test-sclient --test-sslmap --test-ssleay
-# TODO: --test-openssl
-#LIST.o-saft-pl     += $(LIST.net-sslinfo-t)
-
-LIST.osaft-dbx     := \
-	--tests $(LIST.net-sslinfo-t) \
-	--test-memory   --test-data --test-init --test-maps --test-prot --test-regex
-# o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
-LIST.o-saft-pl     += $(LIST.osaft-dbx)
-
-LIST.net-sslhello  :=   +VERSION  --test-init
-LIST.net-sslinfo   :=   +VERSION  localhost $(LIST.net-sslinfo-t)
 LIST.t-makefile    :=
 LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected --cgi
 # NOTE: ensure that EXE.install is called with --n !
@@ -301,12 +234,6 @@ ifndef dev-macros-generated
 
 endif
 
-# alias for program
-test.dev.o-saft-dbx.all:    test.dev.osaft-dbx.all
-test.dev.o-saft-man.all:    test.dev.osaft-man.all
-test.dev.o-saft-dbx.all.log:test.dev.osaft-dbx.all.log
-test.dev.o-saft-man.all.log:test.dev.osaft-man.all.log
-
 $(_TEST.dev.tmpfile):
 	@mkdir $@
 
@@ -324,15 +251,6 @@ ALL.test.dev            += \
 testarg-dev-o-saft-sh--post%:   EXE.pl    = $(EXE.o-saft-sh)
 testarg-dev-o-saft-sh--post%:   TEST.args = --no-rc --header $(TEST.host)
 #testarg-dev-o-saft-sh--post%:   TEST.args = $(TEST.host)
-
-# OSaft/Doc/Data.pm function needs a file where to read the information
-# it's found automatically when using o-saft.pl but not OSaft/Doc/Data.pm
-testarg-dev-osaft-doc-data_%:   TEST.args = help.txt
-testarg-dev-osaft-dbx_%:        EXE.pl    = $(EXE.o-saft-pl)
-
-# more info with pretty printed output: --header
-testarg-dev-osaft-man_%:        TEST.args = --header
-testarg-dev-osaft-man_pod:      TEST.args =
 
 # do not execute script, just show: --n
 testarg-dev-contrib-openssl_%:  TEST.args = --n
