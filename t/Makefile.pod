@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.53 22/09/21 22:43:42
+@(#) Makefile.pod 1.54 22/11/10 22:11:05
 
 =head1 AUTHOR
 
@@ -217,7 +217,7 @@ all Makefile* . NOTE: this description is independent of any functionality
 of the project, it just describes the used "coding syntax" in Makefile*.
 
 Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
-None of them are disabled explicitly.  Therefore some behaviour may depend
+None of them are disabled explicitly. Therefore, some behaviour may depend
 on the local make configuration. SEE  Make:automatic variables  also.
 
 
@@ -785,6 +785,143 @@ need to print all array elements:
 Matching targets needs to be done individually in each Makefile*, printing
 the array is always the same. Hence the code for awk's "END{}"  can be put
 in a make variable also.
+
+
+=head2 Make:target generation
+
+For testing single arguments out of a list with the same target,  a target
+for for each argument is required. There're still some pattern rules which
+do this, but they need to be called with the proper value of the pattern.
+That's why we need a single target for each argument.
+
+The first goal to do this is to write each of these unique targets without
+commands (recipe). When called, they finally match a proper  pattern rule. 
+Example:
+
+    testarg-%:
+            some command here
+    testarg-tst-tool--arg1:
+    testarg-tst-tool--arg2:
+
+As a naming scheme for target names is used which includes the tool's name
+and the most important argument,  elongate target names  would be created.
+There are also many targets then, which just differ in the  last part, the
+argument.
+
+Therefor, GNU Make provides "user defined functions"  which are defined in
+Makefile.gen.
+
+=head3 Synopsis
+
+General functions:
+
+    $(call test-targets,testcmd,TYP,TOOL,VAR-name,TEST.args,TEST.init)
+    $(call test-targets,testcmd,TYP,TOOL,VAR-name,TEST.init,TEST.args)
+
+Wrapper functions (calling the general functions):
+
+    $(call test-targets-args,testarg,TYP,TOOL,VAR-name)
+    $(call test-targets-init,testarg,TYP,TOOL,VAR-name)
+    $(call test-targets-args,testcmd,TYP,TOOL,VAR-name)
+    $(call test-targets-init,testcmd,TYP,TOOL,VAR-name)
+
+=head3 Description
+
+The goal of the functions is to generate all targets for a  specific tool.
+Any tool may be called with its own arguments. Therefore, each argument to
+be tested with a tool, requires its own target. Also, each target  must be
+added to the corresponding / well-known macros, for example:  ALL.*  etc..
+Finally a target -pattern rule- is generated, which groups the targets for
+this tool. Please see below for L<Examples>.
+
+For these targets, the variables  EXE.pl,  TEST.init  and  TEST.args  must
+be defined properly.  In most cases, only one of  TEST.init  or  TEST.args
+is needed. The other one is set empty.  It avoids inheritance of its value
+from other matching targets. Abstract example:
+
+    testarg-TYP-TOOL_%:    EXE.pl    = ../TOOL
+    testarg-TYP-TOOL_%:    TEST.init = 
+    testarg-TYP-TOOL-arg:  TEST.args = some-arg
+
+As no commands  are defined for the targets,  they (above example) finally
+As no commands are defined for the targets, they finally match the generic
+target  testarg-% . Currently supported pattern rules in t/Makefile are:
+
+    testarg-%  and  testcmd-% 
+
+This still allows to use special or additional settings for the  generated
+targets. Such settings must be done explicitly in the calling Makefile.* .
+Example:
+
+    testarg-TYP-TOOL-arg:  TEST.init += other-arg
+
+=head3 Target generation function
+
+The target names follow a strict syntax, see L<O-Saft Makefile Targets>.
+In short, the naming scheme is:
+
+    testarg-TYP-TOOL-OPTIONS_ARGUMENT
+
+where TYP is the Makefile's type, TOOL is the tool to be executed, OPTIONS
+are the used options for the tool and  ARGUMENT is a paramter to the tool.
+The prefix of the target name,  testarg in above example,  can be specifid
+too.  Note that a corresponding pattern rule must exist with this pattern.
+Currentls there are:  testarg-%  testcmd-% .
+
+To build the target name,  the prefix, TYP and TOOL  must be passed to the
+functions. They are passed verbatim. The last parameter passed is the name
+of the variable which contains a list of values to be used as ARGUMENT.
+
+Because there are a some (GNU Make) restrictions for allowed characters in
+target names, some characters of the values need to be substituted.  These
+charcters are in particular / : and =  . Means that ARGUMENT can be like:
+
+    --option=value 
+
+Note that the tools are called in the test directory, ./t usually, they're
+and should not be found via  $PATH . So the value assigned to EXE.pl  must
+be prefixed with ../ .
+
+All generated targets are also added to the variable  ALL.test.TYP .
+
+=head3 Target function variants
+
+Depending on the purpose of the tests, setting the variables TEST.init and
+TEST.args should be swapped.  Therefore, the function provides  parameters
+for them. Swapping the variables has no impact on the commands executed by
+the target, beside the order of its arguments.  For Example, this could be
+used to generate the same command-line just differing in the last argument
+of the executed command (may produce a more pretty output).
+
+Additionally 2 simple wrapper functions for both variants are provided.
+
+=head3 Examples
+
+=over
+
+=item Generate targets for various options
+
+    TOOL       = path/tool
+    LIST.tool  = --opt=val  --arg
+    $(call test-targets-args,testarg,typ,$(TOOL),LIST.tool)
+
+This generates following targets and macros:
+
+    testarg.typ.path-tool_--opt-val: TEST.args = --option1
+    testarg.typ.path-tool_--arg:     TEST.args = --option1
+    testarg.typ.path-tool_%:         TEST.init =
+    testarg.typ.path-tool_%:         EXE.pl    = ../path/tool
+    ALL.testarg.typ.path-tool = testarg.typ.path-tool_--option1
+                                testarg.typ.path-tool_--arg
+    ALL.testarg.typ           = $(ALL.testarg.typ.path-tool)
+
+=item Generate targets for various options
+
+    $(call test-targets-init,testarg,typ,$(TOOL),LIST.tool)
+
+TODO ... to be completed ...
+
+=back
 
 
 =head2 Make:variables and quotes
