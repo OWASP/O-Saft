@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.137 22/11/04 23:27:47
+#?      @(#) Makefile 1.138 22/11/10 22:44:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.137
+_SID.test          := 1.138
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -99,7 +99,7 @@ TEST.logdir     = $(TEST.dir)/log
 TEST.logtxt    := <<random value replaced by make>>
 TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 
-# following may be redefined in included t/Makefiles*
+# following may be redefined in included t/Makefile*
 #TEST.init      := --header
 #TEST.args      :=
 
@@ -366,6 +366,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.etc)      = $(_SID.etc)'
 	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
+	@echo '# $$(_SID.gen)      = $(_SID.gen)'
 	@echo '# $$(_SID.hlp)      = $(_SID.hlp)'
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
 	@echo '# $$(_SID.opt)      = $(_SID.opt)'
@@ -728,6 +729,10 @@ test.patt-%: test.pattern-%
 # to avoid multiple inlcudes of the same file, which would result in make
 # errors complaining about target redefinitions
 # for a detailed description see t/Makefile.template
+
+ifeq (,$(_SID.gen))
+    -include t/Makefile.gen
+endif
 
 ifeq (,$(_SID.help))
     -include t/Makefile.help
