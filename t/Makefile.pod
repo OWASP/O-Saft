@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.55 22/11/10 22:50:46
+@(#) Makefile.pod 1.56 22/11/10 23:45:07
 
 =head1 AUTHOR
 
@@ -238,6 +238,7 @@ included by the main Makefile and organised as follows:
     Makefile
         include t/Makefile
             include t/Makefile.inc
+            include t/Makefile.gen
             include t/Makefile.help
             include t/Makefile.warnings
             include t/Makefile.cipher
@@ -250,6 +251,7 @@ included by the main Makefile and organised as follows:
             include t/Makefile.tcl
             include t/Makefile.etc
             include t/Makefile.dev
+            include t/Makefile.mod
             include t/Makefile.php
             include t/Makefile.init
             include t/Makefile.misc
