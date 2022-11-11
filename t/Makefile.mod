@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.2 22/11/11 12:32:21
+#?      @(#) Makefile.mod 1.3 22/11/12 00:04:04
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.2
+_SID.mod           := 1.3
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -138,9 +138,10 @@ endif
 # all targets are generated, see Makefile.gen
 
 ifndef mod-macros-generated
-    $(foreach prg, $(SRC.pm),\
-        $(call GEN.targets-init,testarg,mod,$(prg),LIST.$(subst /,-,$(prg))) \
+    $(foreach _prg, $(SRC.pm),\
+        $(call GEN.targets-init,testarg,mod,$(_prg),LIST.$(subst /,-,$(_prg))) \
     )
+    undefine _prg
 endif
 
 # some special adaptions to generated targets
