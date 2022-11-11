@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.78 22/11/11 00:28:23
+#?      @(#) Makefile.dev 1.79 22/11/11 13:25:32
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.78
+_SID.dev           := 1.79
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -65,24 +65,24 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
 
-# TODO: LIST.sources anpassen
-# list of variables containing source files (executables)
-LIST.sources       := \
-	EXE.o-saft-tcl \
-	EXE.osaft \
-	EXE.osaft-dbx \
-	EXE.osaft-man \
-	EXE.osaft-usr \
-	EXE.osaft-ciphers \
-	EXE.osaft-data \
-	EXE.osaft-doc-data \
-	EXE.net-sslhello \
-	EXE.net-sslinfo \
-	EXE.o-saft-pl
+# list of source files (executables) to be used for some "grep"-targets
+LIST._sources      := \
+	$(SRC.tcl) \
+	osaft.pm \
+	o-saft-dbx.pm \
+	o-saft-man.pm \
+	o-saft-usr.pm \
+	OSaft/Ciphers.pm \
+	OSaft/Data.pm \
+	OSaft/Doc/Data.pm \
+	Net/SSLhello.pm \
+	Net/SSLinfo.pm \
+	$(SRC.pl)
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
 # EXE.o-saft-pl  is the last in the list (see t*_flow target below)
+LIST.sources       := $(LIST._sources:%=../%)
 
 
 # no targets are generated for empty LIST.* variables
@@ -320,21 +320,21 @@ HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 # TODO: need to generate individual targets
 testarg-dev-grep_subs:
 	@$(TRACE.target)
-	$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^sub[[:space:]]' $($(prg)) ..." && cd $(TEST.dir)&&egrep '^sub[[:space:]]' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^sub[[:space:]]' $(prg) ..." && cd $(TEST.dir)&&egrep '^sub[[:space:]]' $(prg); )
 testarg-dev-grep_desc:
 	@$(TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg); )
 testarg-dev-grep_flow:
 	@$(TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $($(prg)) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $($(prg)); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $(prg); )
 _TEST.brace=(
 # ) beat Make's foreach dragon
 testarg-dev-grep_hint:
 	@$(TRACE.target)
-	$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_hint$(_TEST.brace)' $($(prg)) ..." && cd $(TEST.dir)&&grep -H '_hint$(_TEST.brace)' $($(prg)) |sed -e 's/: */\t/'; )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_hint$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H '_hint$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
 testarg-dev-grep_warn:
 	@$(TRACE.target)
-	$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_warn$(_TEST.brace)' $($(prg)) ..." && cd $(TEST.dir)&&grep -H '_warn$(_TEST.brace)' $($(prg)) |sed -e 's/: */\t/'; )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_warn$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H '_warn$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
 # TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
 
 # function definitions more beautified for $(SRC.pl)
