@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.79 22/11/11 13:25:32
+#?      @(#) Makefile.dev 1.80 22/11/11 13:37:04
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.79
+_SID.dev           := 1.80
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -66,24 +66,11 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
 
 # list of source files (executables) to be used for some "grep"-targets
-LIST._sources      := \
-	$(SRC.tcl) \
-	osaft.pm \
-	o-saft-dbx.pm \
-	o-saft-man.pm \
-	o-saft-usr.pm \
-	OSaft/Ciphers.pm \
-	OSaft/Data.pm \
-	OSaft/Doc/Data.pm \
-	Net/SSLhello.pm \
-	Net/SSLinfo.pm \
-	$(SRC.pl)
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
 # EXE.o-saft-pl  is the last in the list (see t*_flow target below)
-LIST.sources       := $(LIST._sources:%=../%)
-
+LIST.sources       := $(SRC.tcl:%=../%)  $(SRC.pm:%=../%)  $(SRC.pl:%=../%)
 
 # no targets are generated for empty LIST.* variables
 
