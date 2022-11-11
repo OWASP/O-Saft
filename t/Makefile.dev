@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.81 22/11/11 17:10:19
+#?      @(#) Makefile.dev 1.82 22/11/12 00:07:43
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.81
+_SID.dev           := 1.82
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -37,33 +37,10 @@ help.test.dev-vv:     HELP_TYPE = dev
 
 TEST.dev.hosts      =
 
-# need to call program in this directory and not the one found via $PATH
-EXE.o-saft-tcl     := ../$(SRC.tcl)
-EXE.o-saft-pl      := ../$(SRC.pl)
-EXE.o-saft-sh      := ../$(SRC.sh)
-EXE.o-saft-docker  := ../$(EXE.docker)
-#EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
-EXE.osaft-standalone   := ../$(GEN.src)
-EXE.osaft          := ../osaft.pm
-EXE.osaft-dbx      := ../o-saft-dbx.pm
-EXE.osaft-man      := ../o-saft-man.pm
-EXE.osaft-usr      := ../o-saft-usr.pm
-EXE.osaft-ciphers  := ../OSaft/Ciphers.pm
-EXE.osaft-data     := ../OSaft/Data.pm
-EXE.osaft-doc-data := ../OSaft/Doc/Data.pm
-EXE.net-sslhello   := ../Net/SSLhello.pm
-EXE.net-sslinfo    := ../Net/SSLinfo.pm
-EXE.t-makefile     := ../$(TEST.dir)/Makefile.pod
-EXE.install-sh     := ../INSTALL.sh
 # TODO: other tools should go to Makefile.contrib
 #       these targets require the symbolic link: contrib -> ../contrib
-EXE.contrib-bunt   := $(SRC.contrib.dir)/bunt.pl
-EXE.contrib-openssl = $(SRC.contrib.dir)/install_openssl.sh
-EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
-# NOTE: there is already EXE.install in ../Makefile
 
-# generate list of programs as variable (all EXE.* above with EXE. removed)
-LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
+# list of programs 
 LIST.programs      := \
 	$(SRC.sh) $(EXE.docker) $(GEN.src) \
 	$(SRC.pl) $(SRC.tcl)   $(SRC.pm)  \
@@ -73,37 +50,38 @@ LIST.programs      := \
 	$(SRC.contrib.dir)/bunt.pl \
 	$(SRC.contrib.dir)/install_openssl.sh \
 	$(SRC.contrib.dir)/gen_standalone.sh
+#EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
 
 # list of source files (executables) to be used for some "grep"-targets
 # NOTE: contains only source files with potentionally marked control flow. This
-# is for sure in  EXE.o-saft-pl  and  EXE.o-saft-tcl.  To avoid  the target re-
+# is for sure in  SRC.pl  and  SRC.tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
-# EXE.o-saft-pl  is the last in the list (see t*_flow target below)
+# SRC.pl  is the last in the list (see t*_flow target below)
 LIST.sources       := $(SRC.tcl:%=../%)  $(SRC.pm:%=../%)  $(SRC.pl:%=../%)
 
 # no targets are generated for empty LIST.* variables
 
-LIST.o-saft-tcl    := --help=opts --test-o-saft
-LIST.o-saft-pl     :=  
-LIST.o-saft-sh     :=  -help -list -help=rc -help=sni
+LIST.o-saft.tcl    := --help=opts --test-o-saft
+LIST.o-saft.pl     :=  
+LIST.o-saft        :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
-LIST.o-saft-sh-post:= \
+LIST.o-saft-post   := \
 	-post=HTML-simple.awk -post=HTML-table.awk  -post=lazy_checks.awk \
 	-post=JSON-array.awk  -post=JSON-struct.awk \
 	-post=XML-value.awk   -post=XML-attribute.awk 
 
 LIST.t-makefile    :=
-LIST.install-sh    :=   --install  --clean  --check     --checkdev  --expected --cgi
+LIST.INSTALL.sh    :=   --install  --clean  --check     --checkdev  --expected --cgi
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.install-sh --openssl does not work from t directory
 # TODO: EXE.install-sh not completely working as expected
 
-_TEST.dev.tmpfile      := /tmp/tmpfile
+_TEST.dev.tmpfile  := /tmp/tmpfile
 
-LIST.contrib-bunt      := --test
-LIST.contrib-openssl   := --n --m
-LIST.contrib-standalone:= --n --s --t
+LIST.contrib-bunt.pl   := --test
+LIST.contrib-install_openssl.sh := --n --m
+LIST.contrib-gen_standalone.sh  := --n --s --t
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same commands_notyet in osaft.pm
@@ -130,43 +108,6 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# The goal here is to generate all targets from the variables defined above.
-# The target -pattern rule- called finally is (see $(TEST.dir)/Makefile):
-#       testarg-dev-%:
-#               cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
-#
-# Therefore the variables  EXE.pl, TEST.dir, TEST.init and TEST.args must be
-# defined properly for these targets.  In most cases, only one of  TEST.init
-# or  TEST.args is needed. Means that the other can be set empty by default.
-# These variables must be set depending on the target or pattern rule.
-# Abstract example:
-#       testarg-dev-osaft_%:         EXE.pl    = $(EXE.osaft)
-#       testarg-dev-osaft_%:         TEST.args = 
-#       testarg-dev-osaft_some-arg:  TEST.init = some-arg
-#       testarg-dev-osaft_%:
-# The first three set the required variables,  the last one ensures that the
-# pattern rule  testarg-dev_%  is called.
-#
-# If a target needs special or additional settings, this is done explicitly.
-#
-# The variable (list)  LIST.program  defines a unique pattern  for each pro-
-# gram. The pattern appplies to the syntax rules for variable names in Make-
-# file (while the program names itself might not).
-# This pattern is used in the variables  EXE.*  and  LIST.*  . Each of these
-# programs should be called with the  arguments defined in the corresponding
-# LIST.* , where  *  is any of the values from  LIST.program  .  "osaft"  is
-# such a program in the example above. With that there is:
-#       EXE.osaft   = osaft.pm
-#       LIST.osaft  = some-arg
-# The targets for the programs are generated herein. It results in a command
-# like:
-#       $(EXE.osaft) $(LIST.osaft)
-# for each program from  LIST.program .
-# Because these targets are generated dynamically, the statically defined
-# LIST.*  variables are not used elswhere, see  dev-macros-generated  below.
-#
-# Finally all generated targets are added to the variable  ALL.test.dev .
-#
 # Automatically generated targets for each program are:
 #       testarg-dev-<program>--help
 #       testarg-dev-<program>_pod
@@ -175,96 +116,86 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 # Some of them are explicitly disabled, see "useless generated" below.
 #
 
-#EXE.gendoc      := $(EXE.gendoc.perldoc)
-    # cannot be set here because it then will be part of LIST.program
+# usually: _EXE.perldoc-opt
 _EXE.gendoc-opt := $(_EXE.$(EXE.gendoc)-opt)
 ifndef dev-macros-generated
     # ifndef enforces execution of $(foreach ...) below
+    # need to call program in this directory and not the one found via $PATH
 
     # SEE Make:generating help
-    $(foreach _prg, $(LIST.programs), $(eval \
-	   HELP.dev += test.dev.$(subst /,-,$(_prg)).all\t\# targets for testing '$(_prg)'\n\
-    ))
+    $(foreach _prg, $(LIST.programs), \
+       $(eval HELP.dev += test.dev.$(subst /,-,$(_prg)).all\t\# targets for testing '$(_prg)'\n)\
+    )
     $(eval HELP.dev +=\t\t\#____________ same as above, but store output in '$(TEST.logdir)' _\n)
-    $(foreach _prg, $(LIST.programs), $(eval \
-	   $(eval _test=test.$(subst /,-,$(_prg))) \
-	   HELP.dev += test.$(_test)_ARG.log\t\# see test.$(_test)_ARG but ...\n\
-    ))
+    $(foreach _prg, $(LIST.programs),\
+        $(eval _test=test.$(subst /,-,$(_prg))) \
+        $(eval HELP.dev += test.$(_test)_ARG.log\t\# see test.$(_test)_ARG but ...\n)\
+    )
     undefine _prg
     undefine _test
 
-    # arguments from LIST.* used in the target name must not contain =
-    # hence $(subst =,-,$(arg)) is used to replace = by -
-
-    # variables ALL.test.*.all, ALL.test.*.log
-    $(foreach prg, $(LIST.program),\
-      $(foreach arg, $(LIST.$(prg)),\
-        $(eval ALL.test.dev.$(prg)     += testarg-dev-$(prg)_$(subst =,-,$(arg))) \
-      ) \
-      $(eval   ALL.test.dev.$(prg)     += testarg-dev-$(prg)_--help testarg-dev-$(prg)_pod) \
-      $(eval   ALL.test.dev.$(prg).log += $(ALL.test.dev.$(prg):%=%.log)) \
-      $(eval   test.dev.$(prg).all     :  $(ALL.test.dev.$(prg)))         \
-      $(eval   test.dev.$(prg).all.log :  $(ALL.test.dev.$(prg).log))     \
+    # generate testarg-*_pod and testarg-*_--help targets
+    $(foreach _prg, $(LIST.programs),\
+        $(eval _name=$(subst /,-,$(_prg)))     \
+        $(eval _testarg=testarg-dev-$(_name)) \
+        $(eval $(_testarg)_pod:     EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt)) \
+        $(eval $(_testarg)_pod:     TEST.init = ../$(_prg))  \
+        $(eval $(_testarg)_--help:  TEST.init = --help)      \
+        $(eval ALL.test.dev.$(_name) += $(_testarg)_pod $(_testarg)_--help) \
+        $(eval ALL.test.dev.pod      += $(_testarg)_pod)    \
+        $(eval ALL.test.dev.help     += $(_testarg)_--help) \
     )
-
-    $(eval _prg=o-saft-sh-)
-    $(foreach arg, $(LIST.$(_prg)post),\
-        $(eval _target=testarg-dev-$(_prg)$(subst =,-,$(arg))) \
-        $(eval ALL.test.dev.$(_prg)post += $(_target)) \
-        $(eval $(_target):     TEST.init = $(arg))     \
-    )
-    $(eval     test.dev.$(_prg)post.all :  $(ALL.test.dev.$(_prg)post))
     undefine _prg
-    undefine _target
+    undefine _testarg
 
-    # TEST.init for testarg-dev-* targets
-    $(foreach prg, $(LIST.program),\
-      $(foreach arg, $(LIST.$(prg)),$(eval testarg-dev-$(prg)_$(subst =,-,$(arg)): TEST.init = $(arg) )) \
-      $(foreach arg, $(LIST.$(prg)),$(eval ALL.test.dev += testarg-dev-$(prg)_$(subst =,-,$(arg)) )) \
+    # generate testarg-* targets
+    $(foreach _prg, $(LIST.programs),\
+        $(call GEN.targets-init,testarg,dev,$(_prg),LIST.$(subst /,-,$(_prg))) \
     )
-    # EXE.pl and TEST.* variables for testarg-dev-* targets
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   EXE.pl    = $(EXE.$(prg))) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_%:   TEST.args = ) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt)) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_pod: TEST.init = $(EXE.$(prg))) )
-    $(foreach prg, $(LIST.program), $(eval testarg-dev-$(prg)_--help:   TEST.init = --help) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-compare: TEST.target_prefix  = testarg-dev-$(prg)) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log-move:    TEST.target_prefix  = testarg-dev-$(prg)) )
-    $(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log:         TEST.target_prefix  = testarg-dev-$(prg)) )
+
+    $(eval _prg=o-saft)
+    $(foreach arg, $(LIST.o-saft-post),\
+        $(eval _testarg=testarg-dev-$(_prg)_$(subst =,-,$(arg))) \
+        $(eval ALL.test.dev.$(_prg)-post += $(_testarg)) \
+        $(eval $(_testarg):     TEST.init = $(arg))     \
+    )
+    $(eval     test.dev.$(_prg)-post.all :  $(ALL.test.dev.$(_prg)-post))
+    undefine _prg
+    undefine _testarg
 
 endif
 
 $(_TEST.dev.tmpfile):
 	@mkdir $@
 
-# more individual targets for EXE.o-saft-sh (calling contrib/bunt.pl)
+# more individual targets for SRC.sh (calling contrib/bunt.pl)
 # TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
-#       testarg-dev-o-saft-sh_--colour%:    TEST.dev.hosts  = localhost
-testarg-dev-o-saft-sh_--colour:      TEST.args = --colour +unknown-cmd $(TEST.host)
-testarg-dev-o-saft-sh_--colour+ocsp: TEST.args = --colour        +ocsp $(TEST.host)
-testarg-dev-o-saft-sh_--colour-line: TEST.args = --colour --line +ocsp $(TEST.host)
+#       testarg-dev-o-saft_--colour%:    TEST.dev.hosts  = localhost
+testarg-dev-o-saft_--colour:      TEST.args = --colour +unknown-cmd $(TEST.host)
+testarg-dev-o-saft_--colour+ocsp: TEST.args = --colour        +ocsp $(TEST.host)
+testarg-dev-o-saft_--colour-line: TEST.args = --colour --line +ocsp $(TEST.host)
 ALL.test.dev            += \
-	testarg-dev-o-saft-sh_--colour \
-	testarg-dev-o-saft-sh_--colour+ocsp \
-	testarg-dev-o-saft-sh_--colour-line
+	testarg-dev-o-saft_--colour \
+	testarg-dev-o-saft_--colour+ocsp \
+	testarg-dev-o-saft_--colour-line
 
-testarg-dev-o-saft-sh--post%:   EXE.pl    = $(EXE.o-saft-sh)
-testarg-dev-o-saft-sh--post%:   TEST.args = --no-rc --header $(TEST.host)
-#testarg-dev-o-saft-sh--post%:   TEST.args = $(TEST.host)
+testarg-dev-o-saft_-post%:      EXE.pl    = ../$(SRC.sh)
+testarg-dev-o-saft_-post%:      TEST.args = --no-rc --header $(TEST.host)
+#testarg-dev-o-saft_-post%:      TEST.args = $(TEST.host)
 
 # do not execute script, just show: --n
-testarg-dev-contrib-openssl_%:  TEST.args = --n
-testarg-dev-install-sh_%:       TEST.args = --n /tmp/o-saft
+testarg-dev-contrib-install_openssl_%:  TEST.args = --n
+testarg-dev-INSTALL.sh_%:       TEST.args = --n /tmp/o-saft
 # additional special option for INSTALL.sh
-testarg-dev-install-sh_--checkdev--other:   TEST.args += --checkdev --other
+testarg-dev-INSTALL.sh_--checkdev--other:   TEST.args += --checkdev --other
 
-ALL.test.dev.install-sh += testarg-dev-install-sh_--checkdev--other
-ALL.test.dev            += testarg-dev-install-sh_--checkdev--other
+ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other
+ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other
 
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
 # TODO: target works but gen_standalone.sh returns errors (needs to be improved)
-testarg-dev-contrib-standalone-tmp: EXE.pl    = $(EXE.contrib-standalone)
+testarg-dev-contrib-standalone-tmp: EXE.pl    = $(SRC.contrib.dir)/gen_standalone.sh
 testarg-dev-contrib-standalone-tmp: TEST.args = $(_TEST.dev.tmpfile)
 testarg-dev-contrib-standalone_tmpfile: testarg-dev-contrib-standalone-tmp
 	@rm -f $(_TEST.dev.tmpfile)
@@ -273,29 +204,21 @@ ALL.test.dev            += testarg-dev-contrib-standalone_tmpfile
 
 
 # targets: EXE.* --help
-ALL.test.dev.help   = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_--help )
 test.dev.help.all:  $(ALL.test.dev.help)
 test.dev.help.log:  $(ALL.test.dev.help:%=%.log)
 
 # targets: EXE.pl = perlpod
-ALL.test.dev.pod    = $(foreach prg, $(LIST.program), testarg-dev-$(prg)_pod )
 test.dev.pod.all:   $(ALL.test.dev.pod)
 test.dev.pod.log:   $(ALL.test.dev.pod:%=%.log)
 
-# generate pattern rules, one foreach EXE.*
-$(foreach prg, $(LIST.program), testarg-dev-$(prg)_% ):
-# generate summary rules, one foreach EXE.*
-$(foreach prg, $(LIST.program), $(eval test.dev.$(prg).all: $(ALL.test.dev.$(prg))) )
-$(foreach prg, $(LIST.program), $(eval test.dev.$(prg).log: $(ALL.test.dev.$(prg).log) test.log-compare-hint) )
-
 # useless generated targets (as these are shell not perl programs)
-testarg-dev-o-saft-sh_pod:
+testarg-dev-o-saft_pod:
 	@$(TRACE.target)
 testarg-dev-o-saft-docker_pod:
 	@$(TRACE.target)
 testarg-dev-contrib-openssl_pod:
 	@$(TRACE.target)
-testarg-dev-install-sh_pod:
+testarg-dev-INSTALL.sh_pod:
 	@$(TRACE.target)
 
 #_____________________________________________________________________________
@@ -376,7 +299,7 @@ test.dev.grep.warn: testarg-dev-grep_warn
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
 ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep) \
-			$(ALL.test.dev.misc) $(ALL.test.dev.o-saft-sh-post)
+		      $(ALL.test.dev.misc) $(ALL.test.dev.o-saft-post)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
