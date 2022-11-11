@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.3 22/11/12 00:04:04
+#?      @(#) Makefile.mod 1.4 22/11/12 00:11:58
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.3
+_SID.mod           := 1.4
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -37,14 +37,12 @@ help.test.mod-vv:     HELP_TYPE = mod
 
 TEST.mod.hosts      =
 
-EXE.o-saft-pl      := ../$(SRC.pl)
-
 # following names of  LIST.*  variables must match the names of the tool the
 # variable should be used for; general rule is:
 # for tool named  path/tool.pm  the variable  LIST.path-tool.pm  must be usd
 # no targets are generated for empty  LIST.*  variables
 
-LIST.o-saft-pl     :=  
+LIST.o-saft.pl     :=  
 LIST.osaft.pm      :=
 
 # Ciphers.pm supports command/options with or without + and -- prefix
@@ -82,7 +80,7 @@ LIST.OSaft-Data.pm     := \
 	check_cert  check_conn  check_dest  check_http  check_size \
 	checks      data        shorttexts
 
-LIST.o-saft-pl     += $(LIST.OSaft-Ciphers--test)
+LIST.o-saft.pl     += $(LIST.OSaft-Ciphers--test)
 
 LIST.OSaft-Doc-Data.pm := \
 	--usage version         +VERSION    list  print \
@@ -104,13 +102,13 @@ LIST.o-saft-man.pm     := \
 
 LIST.Net-SSLinfo.pm-t  :=   --test-methods --test-sclient --test-sslmap --test-ssleay
 # TODO: --test-openssl
-#LIST.o-saft-pl        += $(LIST.Net-SSLinfo.pm-t)
+#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
 LIST.o-saft-dbx.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t) \
 	--test-memory   --test-data --test-init --test-maps --test-prot --test-regex
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
-LIST.o-saft-pl         += $(LIST.o-saft-dbx.pm)
+LIST.o-saft.pl         += $(LIST.o-saft-dbx.pm)
 
 LIST.Net-SSLhello.pm   :=   +VERSION  --test-init
 LIST.Net-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
@@ -151,7 +149,7 @@ endif
 testarg-mod-OSaft-Doc-Data.pm_%: TEST.args  = help.txt
 
 # o-saft-dbx.pm does not make sense without a calling parent
-testarg-mod-o-saft-dbx.pm_%:    EXE.pl      = $(EXE.o-saft-pl)
+testarg-mod-o-saft-dbx.pm_%:    EXE.pl      = ../$(SRC.pl)
 
 # more info with pretty printed output: --header
 testarg-mod-o-saft-man.pm_%:    TEST.args   = --header
