@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.1 22/11/10 23:37:33
+#?      @(#) Makefile.mod 1.2 22/11/11 12:32:21
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.1
+_SID.mod           := 1.2
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -129,7 +129,11 @@ HELP-test.mod.log   = same as test.mod but store output in '$(TEST.logdir)/'
 #______________________________________________________ targets for testing __|
 
 # programs to be tested here are in $(SRC.pm)
-# TODO: make -f t/Makefile.mod  does not work, because SRC.pm is missing there
+ifndef SRC.pm
+    # define dummy to inform user about missing macro
+    SRC.pm          = __SRC.pm_
+    LIST.__SRC.pm_  = not-defined-in-Makefile.mod
+endif
 
 # all targets are generated, see Makefile.gen
 
@@ -138,8 +142,6 @@ ifndef mod-macros-generated
         $(call GEN.targets-init,testarg,mod,$(prg),LIST.$(subst /,-,$(prg))) \
     )
 endif
-
-ALL.test.mod.log    = $(ALL.test.mod:%=%.log)
 
 # some special adaptions to generated targets
 
@@ -155,6 +157,9 @@ testarg-mod-o-saft-man.pm_%:    TEST.args   = --header
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
+
+#ALL.test.mod  # defined in GEN.targets-init
+ALL.test.mod.log    = $(ALL.test.mod:%=%.log)
 
 test.mod.log-compare:   TEST.target_prefix  = testarg-mod-
 test.mod.log-move:      TEST.target_prefix  = testarg-mod-
