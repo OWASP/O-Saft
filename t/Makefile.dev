@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.80 22/11/11 13:37:04
+#?      @(#) Makefile.dev 1.81 22/11/11 17:10:19
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.80
+_SID.dev           := 1.81
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -64,6 +64,15 @@ EXE.contrib-standalone := $(SRC.contrib.dir)/gen_standalone.sh
 
 # generate list of programs as variable (all EXE.* above with EXE. removed)
 LIST.program        = $(shell awk '/^EXE\./ {sub(/^EXE./,"");arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.dev))
+LIST.programs      := \
+	$(SRC.sh) $(EXE.docker) $(GEN.src) \
+	$(SRC.pl) $(SRC.tcl)   $(SRC.pm)  \
+	$(LIST.sources) \
+	$(TEST.dir)/Makefile.pod \
+	INSTALL.sh \
+	$(SRC.contrib.dir)/bunt.pl \
+	$(SRC.contrib.dir)/install_openssl.sh \
+	$(SRC.contrib.dir)/gen_standalone.sh
 
 # list of source files (executables) to be used for some "grep"-targets
 # NOTE: contains only source files with potentionally marked control flow. This
@@ -114,6 +123,9 @@ HELP-test.dev.pod.log    = same as test.dev.help.all but store output in '$(TEST
 
 _HELP-_dev2         = _______________ summary targets for internal functionality _
 HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
+
+HELP.dev       += test.dev.help.all\t\# targets for testing --help option\n
+HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
@@ -170,15 +182,16 @@ ifndef dev-macros-generated
     # ifndef enforces execution of $(foreach ...) below
 
     # SEE Make:generating help
-    $(foreach prg, $(LIST.program), $(eval \
-	   HELP.dev +=test.dev.$(prg).all\t\# targets for testing $(EXE.$(prg))\n\
+    $(foreach _prg, $(LIST.programs), $(eval \
+	   HELP.dev += test.dev.$(subst /,-,$(_prg)).all\t\# targets for testing '$(_prg)'\n\
     ))
-    $(eval HELP.dev +=test.dev.help.all\t\# targets for testing --help option\n)
-    $(eval HELP.dev +=test.dev.pod.all\t\# targets for testing perldoc generation\n)
     $(eval HELP.dev +=\t\t\#____________ same as above, but store output in '$(TEST.logdir)' _\n)
-    $(foreach prg, $(LIST.program), $(eval \
-	   HELP.dev +=test.$(prg)_ARG.log\t\# see test.$(prg)_ARG but ...\n\
+    $(foreach _prg, $(LIST.programs), $(eval \
+	   $(eval _test=test.$(subst /,-,$(_prg))) \
+	   HELP.dev += test.$(_test)_ARG.log\t\# see test.$(_test)_ARG but ...\n\
     ))
+    undefine _prg
+    undefine _test
 
     # arguments from LIST.* used in the target name must not contain =
     # hence $(subst =,-,$(arg)) is used to replace = by -
