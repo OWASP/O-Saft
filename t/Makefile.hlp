@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.45 22/10/29 21:35:27
+#?      @(#) Makefile.hlp 1.46 22/11/12 21:52:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.45
+_SID.hlp           := 1.46
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -52,49 +52,26 @@ testarg-hlp-%:                  EXE.pl      = ../$(SRC.pl)
 testarg-hlp-%:                  TEST.init   = --header --no-rc
     # --no-rc ensures that a local RC-file does not change the results
 
+# all other commands with --trace-CLI
+testarg-hlp-+list%:             TEST.init  += --trace-CLI +list
+testarg-hlp-+ciphers-%:         TEST.init  += --trace-CLI +ciphers
+testarg-hlp---help%:            TEST.init  += --trace-CLI
+
+# these are kind of help, but do not use --help
+LIST.hlp.help-like := \
+	+help=commands  --cmd=VERSION   --cmd=version   +VERSION    +version --h
+
+# +list ...
+LIST.hlp.list-legacy   := \
+	--dummy-no-arg  --legacy=simple  --legacy=dump \
+	--legacy=owasp  --legacy=openssl --legacy=ssltest
+
+# --help
 # To get a list of used (at least documented)  --help*  options, use:
 #   o-saft.pl --help=help
 # or:
 #   grep help= OSaft/Doc/help.txt
-
-# these are kind of help, but do not use --help
-testarg-hlp---cmd-VERSION:      TEST.args  += --cmd=VERSION
-testarg-hlp---cmd-version:      TEST.args  += --cmd=version
-testarg-hlp-+VERSION:           TEST.args  += +VERSION
-testarg-hlp-+version:           TEST.args  += +version
-testarg-hlp-+version--v--usr:   TEST.args  += +version --v --usr
-testarg-hlp---v+version:        TEST.args  += --v +version
-testarg-hlp---v+help:           TEST.args  += --v +help
-testarg-hlp-+help-commands:     TEST.args  += +help=commands
-testarg-hlp---h:                TEST.args  += --h
-
-# all other commands with --trace-CLI
-
-# +list ...
-testarg-hlp-+list%:             TEST.init  += --trace-CLI +list
-LIST.list-legacy    := \
-	--dummy-no-arg  --legacy=simple  --legacy=dump \
-	--legacy=owasp  --legacy=openssl --legacy=ssltest
-
-ifndef cipher-macros-generated
-    $(foreach arg, $(LIST.list-legacy),\
-        $(eval _target=testarg-hlp-+list-$(subst =,-,$(arg))) \
-        $(eval $(_target):  TEST.args = $(arg)) \
-        $(eval ALL.test.hlp += $(_target))      \
-    )
-    undefine _target
-endif
-
-# +ciphers ...
-testarg-hlp-+ciphers-%:         TEST.init  += --trace-CLI +ciphers
-testarg-hlp-+ciphers---dummy:   TEST.args  += 
-testarg-hlp-+ciphers--v:        TEST.args  += -v
-testarg-hlp-+ciphers--V:        TEST.args  += -V
-ALL.test.hlp += testarg-hlp-+ciphers---dummy testarg-hlp-+ciphers--v testarg-hlp-+ciphers--V
-
-# --help
-testarg-hlp---help%:            TEST.init  += --trace-CLI
-LIST.help-section  := \
+LIST.hlp.help-section  := \
 	--dummy-no-arg  --legacy=simple  --legacy=dump \
 	--help=FAQ   --help=WHY   --help=CHECK   --help=SECURITY    \
 	--help=alias --help=check --help=cmd     --help=commands    \
@@ -112,22 +89,36 @@ LIST.help-section  := \
 # --help=* aliases (not yet tested)
 #	---help-problem:    TEST.args  += --help=error
 
-ifndef cipher-macros-generated
-    $(foreach arg, $(LIST.help-section),\
-        $(eval _target=testarg-hlp-$(subst =,-,$(arg))) \
-        $(eval $(_target):  TEST.args = $(arg)) \
-        $(eval ALL.test.hlp += $(_target))      \
-    )
-    undefine _target
+# because all above LIST.* are used for the same SRC.pl, they are combined to
+# a single LIST, otherwise multiple calls of  GEN.targets-args  with the same
+# SRC.pl may generate duplicate targets in  ALL.test.hlp
+LIST.hlp.all   := $(LIST.hlp.list-legacy) $(LIST.hlp.help-like) $(LIST.hlp.help-section)
+
+# all targets are generated, see Makefile.gen; only one program: SRC.pl
+
+ifndef exit-macros-generated
+    $(eval $(call GEN.targets-args,testarg,hlp,$(SRC.pl),LIST.hlp.all))
 endif
 
+# some special targets
+testarg-hlp-o-saft.pl_+version--v--usr:   TEST.args  += +version --v --usr
+testarg-hlp-o-saft.pl_--v+version:        TEST.args  += --v +version
+testarg-hlp-o-saft.pl_--v+help:           TEST.args  += --v +help
+ALL.test.hlp += testarg-hlp-o-saft.pl_+version--v--usr testarg-hlp-o-saft.pl_--v+version testarg-hlp-o-saft.pl_--v+help
+
 # --help=* with special options, which must preceed --help=*
-testarg-hlp---help-cmd--format-width:   TEST.args  += --format-width=54 --help=cmd
-testarg-hlp---help-why--format-width:   TEST.args  += --format-width=54 --help=why
-#testarg-hlp---help-cmd--tty:            TEST.args  += --format-tty --help=cmd
-#testarg-hlp---help-cmd--tty:            TEST.args  += --tty --help=cmd # alias
+testarg-hlp-o-saft.pl_--help-cmd--format-width:   TEST.args  += --format-width=54 --help=cmd
+testarg-hlp-o-saft.pl_--help-why--format-width:   TEST.args  += --format-width=54 --help=why
+#testarg-hlp-o-saft.pl_--help-cmd--tty:            TEST.args  += --format-tty --help=cmd
+#testarg-hlp-o-saft.pl_--help-cmd--tty:            TEST.args  += --tty --help=cmd # alias
     # --tty does not produce different output, except on special devices
-ALL.test.hlp += testarg-hlp---help-cmd--format-width testarg-hlp---help-why--format-width
+ALL.test.hlp += testarg-hlp-o-saft.pl_--help-cmd--format-width testarg-hlp-o-saft.pl_--help-why--format-width
+
+# +ciphers ...
+testarg-hlp-o-saft.pl_+ciphers---dummy:   TEST.args  += 
+testarg-hlp-o-saft.pl_+ciphers--v:        TEST.args  += -v
+testarg-hlp-o-saft.pl_+ciphers--V:        TEST.args  += -V
+ALL.test.hlp += testarg-hlp-o-saft.pl_+ciphers---dummy testarg-hlp-o-saft.pl_+ciphers--v testarg-hlp-o-saft.pl_+ciphers--V
 
 ALL.test.hlp.log    = $(ALL.test.hlp:%=%.log)
 
