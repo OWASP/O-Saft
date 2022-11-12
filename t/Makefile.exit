@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.28 22/11/12 21:06:20
+#?      @(#) Makefile.exit 1.29 22/11/12 22:41:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.28
+_SID.exit          := 1.29
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -60,9 +60,11 @@ LIST.o-saft.pl--exit := \
 
 testarg-exit-o-saft.pl_%:   EXE.pl      = ../$(SRC.pl)
 testarg-exit-o-saft.pl_%:   TEST.init   = --trace-CLI +cn $(TEST.host)
+#testarg-exit-o-saft.pl_--exit-HOST0:   TEST.init   = --trace-CLI +cn $(TEST.host)
 
 ifndef exit-macros-generated
-    $(eval $(call GEN.targets-args,testarg,exit,$(SRC.pl),LIST.o-saft.pl--exit))
+    # must use GEN.targets instead of GEN.targets-args to avoid setting TEST.init
+    $(eval $(call GEN.targets,testarg,exit,$(SRC.pl),LIST.o-saft.pl--exit,TEST.args,_TEST.dumm))
 endif
 
 # some special targets
