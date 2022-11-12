@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.139 22/11/10 23:43:02
+#?      @(#) Makefile 1.140 22/11/12 19:08:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.139
+_SID.test          := 1.140
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -89,6 +89,27 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
+
+ifndef test-remove-environment-variables
+    # most environment variables should be ignored,  to avoid unexpected
+    # behaviour and to keep our list of variables clean;
+    # forst define list of required variables, then get list of existing
+    # environment variable and remove all except the required ones
+    $(eval _keep = DISPLAY   HOME    PATH    PWD     SHELL TERM  USER NLSPATH \
+                   DT_RUNPATH  DT_RPATH DT_NEEDED \
+                   DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH \
+                   LD_CONFIG LD_LIBRARY_PATH LD_PRELOAD LD_RUN_PATH LD_DEBUG \
+                   LD_TRACE_LOADED_OBJECTS   LD_TRACE_LOADED_OBJECTS_ALL \
+                   LD_TRACE_PRELINKING  LIBPATH RPATH   RUNPATH SHLIB_PATH  \
+                   OPENSSL OPENSSL_CONF OPENSSL_FIPS    OPENSSL_ENGINES \
+                   OPENSSL_ALLOW_PROXY  OPENSSL_ALLOW_PROXY_CERTS \
+    )
+    $(eval _env  = $(shell printenv | awk -F= '{print $$1}'))
+    $(foreach _var, $(filter-out $(_keep),$(_env)), $(eval undefine $(_var)))
+    $(eval undefine _keep)
+    $(eval undefine _env)
+    test-remove-environment-variables = done
+endif
 
 # store -n (dry-run) option in own variable
 TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
