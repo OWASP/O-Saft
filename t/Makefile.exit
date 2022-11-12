@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.27 22/09/21 09:56:07
+#?      @(#) Makefile.exit 1.28 22/11/12 21:06:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.27
+_SID.exit          := 1.28
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -49,34 +49,26 @@ HELP.test.exit.all  = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testarg-exit-%:             EXE.pl      = ../$(SRC.pl)
-testarg-exit-%:             TEST.init   = --trace-CLI +cn $(TEST.host)
+LIST.o-saft.pl--exit := \
+	--exit=invalid_label_to_show_failed-status \
+	--exit=BEGIN0  --exit=BEGIN1   --exit=INIT0    --exit=CONF0 --exit=CONF1 \
+	--exit=INIT1   --exit=ARGS     --exit=MAIN \
+	--exit=HOST0   --exit=HOST1    --exit=HOST2    --exit=HOST3 --exit=HOST4 \
+	--exit=HOST5   --exit=HOST6    --exit=HOST8    --exit=HOST9 --exit=END
 
-testarg-exit---exit-000:    TEST.args  += --exit=invalid_label_to_show_failed-status
-testarg-exit---exit-BEGIN0: TEST.args  += --exit=BEGIN0
-testarg-exit---exit-BEGIN1: TEST.args  += --exit=BEGIN1
-testarg-exit---exit-INIT0:  TEST.args  += --exit=INIT0
-testarg-exit---exit-WARN:   TEST.args  += --exit=WARN   +force-warning
-testarg-exit---exit-CONF0:  TEST.args  += --exit=CONF0
-testarg-exit---exit-CONF1:  TEST.args  += --exit=CONF1
-testarg-exit---exit-INIT1:  TEST.args  += --exit=INIT1
-testarg-exit---exit-ARGS:   TEST.args  += --exit=ARGS
-testarg-exit---exit-MAIN:   TEST.args  += --exit=MAIN
-testarg-exit---exit-HOST0:  TEST.args  += --exit=HOST0
-testarg-exit---exit-HOST1:  TEST.args  += --exit=HOST1
-testarg-exit---exit-HOST2:  TEST.args  += --exit=HOST2
-testarg-exit---exit-HOST3:  TEST.args  += --exit=HOST3
-testarg-exit---exit-HOST4:  TEST.args  += --exit=HOST4
-testarg-exit---exit-HOST5:  TEST.args  += --exit=HOST5
-testarg-exit---exit-HOST6:  TEST.args  += --exit=HOST6
-#testarg-exit---exit-HOST7:  TEST.args  += --exit=HOST7
-testarg-exit---exit-HOST8:  TEST.args  += --exit=HOST8
-testarg-exit---exit-HOST9:  TEST.args  += --exit=HOST9
-testarg-exit---exit-END:    TEST.args  += --exit=END
+# all targets are generated, see Makefile.gen; only one program: SRC.pl
 
-ALL.testexit        = $(shell awk -F: '/^testarg-exit-%/{next} /^testarg-exit/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.exit))
+testarg-exit-o-saft.pl_%:   EXE.pl      = ../$(SRC.pl)
+testarg-exit-o-saft.pl_%:   TEST.init   = --trace-CLI +cn $(TEST.host)
 
-ALL.test.exit       = $(ALL.testexit)
+ifndef exit-macros-generated
+    $(eval $(call GEN.targets-args,testarg,exit,$(SRC.pl),LIST.o-saft.pl--exit))
+endif
+
+# some special targets
+testarg-exit-o-saft.pl_--exit-WARN:     TEST.args  += --exit=WARN   +force-warning
+#testarg-exit-o-saft.pl_--exit-HOST7:    TEST.args  += --exit=HOST7
+
 ALL.test.exit.log   = $(ALL.test.exit:%=%.log)
 
 test.exit.log-compare:  TEST.target_prefix  = testarg-exit
