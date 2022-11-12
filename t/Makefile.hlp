@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.46 22/11/12 21:52:50
+#?      @(#) Makefile.hlp 1.47 22/11/12 22:58:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.46
+_SID.hlp           := 1.47
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -53,9 +53,9 @@ testarg-hlp-%:                  TEST.init   = --header --no-rc
     # --no-rc ensures that a local RC-file does not change the results
 
 # all other commands with --trace-CLI
-testarg-hlp-+list%:             TEST.init  += --trace-CLI +list
-testarg-hlp-+ciphers-%:         TEST.init  += --trace-CLI +ciphers
-testarg-hlp---help%:            TEST.init  += --trace-CLI
+testarg-hlp-o-saft.pl_--legacy-%:   TEST.init  += --trace-CLI +list
+testarg-hlp-o-saft.pl_+ciphers--%:  TEST.init  += --trace-CLI +ciphers
+testarg-hlp-o-saft.pl_--help%:      TEST.init  += --trace-CLI
 
 # these are kind of help, but do not use --help
 LIST.hlp.help-like := \
@@ -63,7 +63,7 @@ LIST.hlp.help-like := \
 
 # +list ...
 LIST.hlp.list-legacy   := \
-	--dummy-no-arg  --legacy=simple  --legacy=dump \
+	--legacy-no-arg --legacy=simple  --legacy=dump \
 	--legacy=owasp  --legacy=openssl --legacy=ssltest
 
 # --help
@@ -72,7 +72,7 @@ LIST.hlp.list-legacy   := \
 # or:
 #   grep help= OSaft/Doc/help.txt
 LIST.hlp.help-section  := \
-	--dummy-no-arg  --legacy=simple  --legacy=dump \
+	--help-no-arg  --legacy=simple  --legacy=dump \
 	--help=FAQ   --help=WHY   --help=CHECK   --help=SECURITY    \
 	--help=alias --help=check --help=cmd     --help=commands    \
 	--help=data  --help=exit  --help=content --help=compliance  \
@@ -97,7 +97,8 @@ LIST.hlp.all   := $(LIST.hlp.list-legacy) $(LIST.hlp.help-like) $(LIST.hlp.help-
 # all targets are generated, see Makefile.gen; only one program: SRC.pl
 
 ifndef exit-macros-generated
-    $(eval $(call GEN.targets-args,testarg,hlp,$(SRC.pl),LIST.hlp.all))
+    # must use GEN.targets instead of GEN.targets-args to avoid setting TEST.init
+    $(eval $(call GEN.targets,testarg,hlp,$(SRC.pl),LIST.hlp.all,TEST.args,TEST.dumm))
 endif
 
 # some special targets
