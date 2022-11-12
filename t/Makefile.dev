@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.82 22/11/12 00:07:43
+#?      @(#) Makefile.dev 1.83 22/11/12 09:54:00
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.82
+_SID.dev           := 1.83
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -119,7 +119,7 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 # usually: _EXE.perldoc-opt
 _EXE.gendoc-opt := $(_EXE.$(EXE.gendoc)-opt)
 ifndef dev-macros-generated
-    # ifndef enforces execution of $(foreach ...) below
+    # SEE Make:macros
     # need to call program in this directory and not the one found via $PATH
 
     # SEE Make:generating help
@@ -146,6 +146,7 @@ ifndef dev-macros-generated
         $(eval ALL.test.dev.help     += $(_testarg)_--help) \
     )
     undefine _prg
+    undefine _name
     undefine _testarg
 
     # generate testarg-* targets
@@ -154,14 +155,16 @@ ifndef dev-macros-generated
     )
 
     $(eval _prg=o-saft)
-    $(foreach arg, $(LIST.o-saft-post),\
-        $(eval _testarg=testarg-dev-$(_prg)_$(subst =,-,$(arg))) \
+    $(foreach _arg, $(LIST.o-saft-post),\
+        $(eval _testarg=testarg-dev-$(_prg)_$(subst =,-,$(_arg))) \
         $(eval ALL.test.dev.$(_prg)-post += $(_testarg)) \
-        $(eval $(_testarg):     TEST.init = $(arg))     \
+        $(eval $(_testarg):     TEST.init = $(_arg))     \
     )
     $(eval     test.dev.$(_prg)-post.all :  $(ALL.test.dev.$(_prg)-post))
+    undefine _arg
     undefine _prg
     undefine _testarg
+    $(eval undefine _prg)
 
 endif
 
