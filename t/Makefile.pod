@@ -59,7 +59,7 @@ This documentation here consist of following main sections:
 =item L</O-Saft Terms>
 
 Most important for users (developers) is how the Makefile* work in general
-and how macros (variables) and targets are used.
+and how macros, variables and targets are used.
 
 =item L</O-Saft Makefile Syntax>
 
@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.56 22/11/10 23:45:07
+@(#) Makefile.pod 1.57 22/11/12 09:47:33
 
 =head1 AUTHOR
 
@@ -216,9 +216,9 @@ This section describes the syntax and other conventions used in general in
 all Makefile* . NOTE: this description is independent of any functionality
 of the project, it just describes the used "coding syntax" in Makefile*.
 
-Makefile*  use mainly  GNU Make's built-in variables (macros) and targets.
-None of them are disabled explicitly. Therefore, some behaviour may depend
-on the local make configuration. SEE  Make:automatic variables  also.
+Makefile*  use mainly  GNU Make's built-in variables and targets.  None of
+them are disabled explicitly.  Therefore, some behaviour may depend on the
+local make configuration. SEE  Make:automatic variables  also.
 
 
 =head2 O-Saft Makefile General
@@ -283,7 +283,9 @@ Following Makefile* are not included and provide additional information:
 
 =head2 O-Saft Makefile Variable and Target Names
 
-General rules for our variable and target names in Makefile* are:
+General rules for our macro, variable and target names in Makefile* are:
+
+* macro names are lowercase characters - and _ only
 
 * variable names start with uppercase characters or  _
 
@@ -347,7 +349,7 @@ It is prefered that the complete definition, name=value, fits in one line,
 however, huge definitions are splited in multiple lines for better (human)
 readability.
 
-Sometimes Make's  'define'  are used instead of variables (macros), mainly
+Sometimes Make's  'define' functions are used instead of variables, mainly
 if it does not fit in one line.
 
 
@@ -393,6 +395,8 @@ Where  t/Makefile  may include more files.
 When internal variables, those staring with _, are defined, they should be
 removed when possible using Make's  'undefine'.
 
+SEE L<Make:macros> also.
+
 
 =head2 O-Saft Makefile Variables
 
@@ -428,7 +432,7 @@ Notes about some special variables:
     ALL.tests       - list of all targets for testing
     ALL.tests.log   - list of all targets for tests writing to logfiles
 
-The variables  ALL.tests  and  ALL.tests.log  are generated in  t/Nakefile
+The variables  ALL.tests  and  ALL.tests.log  are generated in  t/Makefile
 from the corresponding  ALL.test.TYP  in each  t/Makefile.TYP , where  TYP
 is  cmd, cgi, opt, etc. SEE O-Saft Makefile Includes  also.
 
@@ -448,6 +452,7 @@ Naming conventions for targets:
     testarg-TYP-*   - targets for testing tool arguments in Makefile.TYP
     testcmd-TYP-*   - targets for testing tool  commands in Makefile.TYP
                       "tool" may be any of those defined in macro  ALL.exe
+                      see variable  ALL.exe  for defined "tool"s
     testarg-name%   - pattern rule which finally uses testarg-% target
     testcmd-name_%  - pattern rule which finally uses testcmd-% target
 
@@ -494,7 +499,7 @@ Example:
 
     HELP-_cgi0      = _______________________________ some targets _
     HELP-help       = print overview of all targets
-    HELP-doc        = same as help, but evaluates macros
+    HELP-doc        = same as help, but evaluates variables
     HELP.typ        = $(_NL)\
     \# some additional text with more than one line $(_NL)\
     \# other line
@@ -524,6 +529,10 @@ Some words about the terms and words used in GNU Make in this project.
 * macro  is a synonym for  variable  in makefiles, here the  term variable
   is prefered.
 
+* GNU Make uses  functions  for its own built-in functions.  When commands
+  are grouped using the  'define'  directive (function), GNU Make uses the
+  term  "user defined functions". Here the term macro is used for that.
+
 * GNU Make uses  prerequisites  when targets depend on something, here the
   term dependencies is used.
 
@@ -538,18 +547,18 @@ Some words about the terms and words used in GNU Make in this project.
 
 =head2 GNU Make:macros
 
-* macro  is a synonym for  variable  in makefiles.
+* macro  is a synonym for  variable  in GNU Make makefiles.
 
 * macro definitions in makefiles must not be sequential!
 
-* $$ avoids evaluating  $ (the macro) when reading the makefile, but it is
-  evaluated when the corresponding target is executed.
+* $$ avoids evaluating  $ (the variable) when reading the makefile, but it
+  is evaluated when the corresponding target is executed.
 
-* Definition using   =  deferred  definition; macro expanded when used.
+* deferred  definition using    =   - variable expanded when used.
 
-* Definition using  :=  immediate definition; macro expanded when defined.
+* immediate definition using   :=   - variable expanded when defined.
 
-* Definition using ::=  immediate definition; macro expanded when defined.
+* immediate definition using  ::=   - variable expanded when defined.
 
 Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 :=  is used in our Makefile*.
@@ -592,7 +601,7 @@ all Makefile*, is used. Example:
         -include t/Makefile
     endif
 
-It's silently ignored if the file required by the  --include  directive is
+It is silently ignored if the file required by the  -include  directive is
 missing.
 
 
@@ -810,17 +819,17 @@ and the most important argument,  elongate target names  would be created.
 There are also many targets then, which just differ in the  last part, the
 argument.
 
-Therefor, GNU Make provides "user defined functions"  which are defined in
-Makefile.gen.
+Therefor, GNU Make provides "user defined functions" which we call macros.
+They are mainly defined in Makefile.gen.
 
 =head3 Synopsis
 
-General functions:
+General macros (functions):
 
     $(call GEN.targets,testcmd,TYP,TOOL,VAR-name,TEST.args,TEST.init)
     $(call GEN.targets,testcmd,TYP,TOOL,VAR-name,TEST.init,TEST.args)
 
-Wrapper functions (calling the general functions):
+Wrapper macros (functions) calling the general macro:
 
     $(call GEN.targets-args,testarg,TYP,TOOL,VAR-name)
     $(call GEN.targets-init,testarg,TYP,TOOL,VAR-name)
@@ -832,7 +841,7 @@ Wrapper functions (calling the general functions):
 The goal of the functions is to generate all targets for a  specific tool.
 Any tool may be called with its own arguments. Therefore, each argument to
 be tested with a tool, requires its own target. Also, each target  must be
-added to the corresponding / well-known macros, for example:  ALL.*  etc..
+added to the corresponding / well-known variable, for example: ALL.* etc..
 Finally a target -pattern rule- is generated, which groups the targets for
 this tool. Please see below for L<Examples>.
 
@@ -886,6 +895,9 @@ be prefixed with ../ .
 
 All generated targets are also added to the variable  ALL.test.TYP .
 
+SEE O-Saft Makefile Variable, Macro names  also.
+SEE O-Saft Makefile Variable, Macro names  also.
+
 =head3 Target function variants
 
 Depending on the purpose of the tests, setting the variables TEST.init and
@@ -907,7 +919,7 @@ Additionally 2 simple wrapper functions for both variants are provided.
     LIST.tool  = --opt=val  --arg
     $(call GEN.targets-args,testarg,typ,$(TOOL),LIST.tool)
 
-This generates following targets and macros:
+This generates following targets and variables:
 
     testarg.typ.path-tool_--opt-val: TEST.args = --option1
     testarg.typ.path-tool_--arg:     TEST.args = --option1
@@ -959,6 +971,43 @@ variable's value, $(_NL) is used for that.
 
 GNU Make's define  directive, which would avoid the use of  $(_NL), is not
 used to set variables. May change in future ...
+
+
+=head2 Make:macros
+
+This is about our macros, which are "user defined functions" in GNU Make.
+
+Some notes about oddities with 'define', 'foreach', 'call', 'eval':
+
+=over
+
+=item using 'foreach' function in general
+
+To enforces execution of $(foreach ..) in the macro, macro definitions are
+defined inside  'ifndef' .. 'endif'  scope.
+
+=item 'foreach', 'call' function
+
+While the 'foreach' function allows seperating its parameters with spaces,
+parameters for 'call' and 'subst' must be used without spaces.
+
+=item using variablas in macros
+
+Variables n macros can be set directly by using:
+
+    _macro-var=value
+
+or
+
+    $(eval _macro-var=value)
+
+Unfortunatelly a simple  'undefine _macro-var'  does not always work. Then
+'$(eval undefine _macro-var)'  must be used. It is difficult to debug such
+variables, best is to use our target like:
+
+    make help.test.makevars | grep _macro-var
+
+=back
 
 
 =head2 Make:defines with commands (recipes)
@@ -1183,7 +1232,7 @@ the sequence they are defined in the Makefile* . The disadvantage is, that
 other external tools are necessary.
 
 In some Makefile* the help texts can be generated dynamically using make's
-internal functions like $(foreach ...) .  It can generate  HELP-*  macros,
+internal functions like $(foreach ...) . It can generate HELP-* variables,
 which then can be accessed from within make but not be extracted. Example:
 
     $(foreach arg,$(LIST.program),$(eval  \
