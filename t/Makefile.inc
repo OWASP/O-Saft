@@ -1,7 +1,7 @@
 #! /usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile.inc    - define missing macros for Makefile
+#?      Makefile.inc    - define missing variables for Makefile
 #?
 #? SYNOPSYS
 #?      ifndef ALL.Makefiles
@@ -9,17 +9,17 @@
 #?      endif
 #?
 #? DESCRIPTION
-#?      Defines general macros used in Makefile if they are missing.
+#?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.32 22/11/04 19:59:37
+#?      @(#) Makefile.inc 1.33 22/11/12 15:07:42
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.32
+_SID.inc       := 1.33
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -32,7 +32,7 @@ ALL.inc.type   += inc
 #________________________________________________________________ variables __|
 
 HELP.inc        = $(_NL)\
-\# Makefile to define required macros. It does not contain targets.    $(_NL)\
+\# Makefile to define required variables. It does not contain targets. $(_NL)\
 \# Note that all definitions herein should be idempotent, so that this $(_NL)\
 \# file could be included several times. That's why only  =  and no  +=$(_NL)\
 \# assignments are used. $(_NL)\
@@ -169,5 +169,5 @@ ifndef _CR
     _CR        := \\015
 endif
 
-# also set pseudo macro .SUFFIXES empty (in the hope, it's never needed)
+# also set pseudo variable .SUFFIXES empty (in the hope, it's never needed)
 .SUFFIXES:
