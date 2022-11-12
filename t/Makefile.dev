@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.83 22/11/12 09:54:00
+#?      @(#) Makefile.dev 1.84 22/11/12 13:27:44
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.83
+_SID.dev           := 1.84
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -40,24 +40,23 @@ TEST.dev.hosts      =
 # TODO: other tools should go to Makefile.contrib
 #       these targets require the symbolic link: contrib -> ../contrib
 
-# list of programs 
-LIST.programs      := \
-	$(SRC.sh) $(EXE.docker) $(GEN.src) \
-	$(SRC.pl) $(SRC.tcl)   $(SRC.pm)  \
-	$(LIST.sources) \
-	$(TEST.dir)/Makefile.pod \
-	INSTALL.sh \
-	$(SRC.contrib.dir)/bunt.pl \
-	$(SRC.contrib.dir)/install_openssl.sh \
-	$(SRC.contrib.dir)/gen_standalone.sh
-#EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
-
 # list of source files (executables) to be used for some "grep"-targets
 # NOTE: contains only source files with potentionally marked control flow. This
 # is for sure in  SRC.pl  and  SRC.tcl.  To avoid  the target re-
 # turning "failed", it must be ensured that the last file returns something, so
 # SRC.pl  is the last in the list (see t*_flow target below)
 LIST.sources       := $(SRC.tcl:%=../%)  $(SRC.pm:%=../%)  $(SRC.pl:%=../%)
+
+# list of programs 
+LIST.programs      := \
+	$(SRC.sh) $(EXE.docker) $(GEN.src) \
+	$(SRC.pl) $(SRC.tcl)    $(SRC.pm)  \
+	$(TEST.dir)/Makefile.pod \
+	INSTALL.sh \
+	$(SRC.contrib.dir)/bunt.pl \
+	$(SRC.contrib.dir)/install_openssl.sh \
+	$(SRC.contrib.dir)/gen_standalone.sh
+#EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
 
 # no targets are generated for empty LIST.* variables
 
@@ -136,11 +135,11 @@ ifndef dev-macros-generated
 
     # generate testarg-*_pod and testarg-*_--help targets
     $(foreach _prg, $(LIST.programs),\
-        $(eval _name=$(subst /,-,$(_prg)))     \
+        $(eval _name=$(subst /,-,$(_prg)))    \
         $(eval _testarg=testarg-dev-$(_name)) \
         $(eval $(_testarg)_pod:     EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt)) \
-        $(eval $(_testarg)_pod:     TEST.init = ../$(_prg))  \
-        $(eval $(_testarg)_--help:  TEST.init = --help)      \
+        $(eval $(_testarg)_pod:     TEST.init = ../$(_prg)) \
+        $(eval $(_testarg)_--help:  TEST.init = --help)     \
         $(eval ALL.test.dev.$(_name) += $(_testarg)_pod $(_testarg)_--help) \
         $(eval ALL.test.dev.pod      += $(_testarg)_pod)    \
         $(eval ALL.test.dev.help     += $(_testarg)_--help) \
@@ -301,8 +300,8 @@ test.dev.grep.warn: testarg-dev-grep_warn
 
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
-ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) $(ALL.test.dev.grep) \
-		      $(ALL.test.dev.misc) $(ALL.test.dev.o-saft-post)
+#ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) # pdocuses duplicate
+ALL.test.dev       += $(ALL.test.dev.grep) $(ALL.test.dev.misc) $(ALL.test.dev.o-saft-post)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
