@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 1.5 22/09/21 10:01:12
+#?      @(#) Makefile.init 1.6 22/11/12 14:09:44
 #?
 #? AUTHOR
 #?      19-dez-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-_SID.init          := 1.5
+_SID.init          := 1.6
 
 _MYSELF.init       := t/Makefile.init
 ALL.includes       += $(_MYSELF.init)
@@ -61,32 +61,23 @@ LIST.init.opts     := opt0 opt1 opt2 opt3 opt4 opt5 opt6 opt7
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# The goal here is to generate all targets from the variables defined above.
-# Each command in $(LIST.init.cmds) should be called with each set of options
-# $(LIST.init.opt*).
-# The generated targets look like:
-#       testarg-init-+CMD-optD: TEST.args := +CMD $(optD)
-# where +CMD is the command from $(LIST.init.cmds) and D is the number of the
-# variable LIST.init.opt* and $(optD) the content of $(LIST.init.optD.
-# Example:
-#       testarg-init-+info-opt0: TEST.args := +info
-#       testarg-init-+cert-opt1: TEST.args := +cert --no-dns --no-http
-#
-# Finally the pattern rule  testarg-init-%   calls the generated target.
-# Use:
-#       make test.init -n
-# to see how all generated targets look like.
+# SEE Make:target generation
+# SEE Make:macros
+# macro GEN.targets-args cannot be used, because all content of LIST.init.opt*
+# must be assigned to TEST.args
 
-ifndef init-generated
-    $(foreach cmd, $(LIST.init.cmds),\
-      $(foreach opt, $(LIST.init.opts),\
-        $(eval testarg-init-$(cmd)-$(opt): TEST.args := $(cmd) $(LIST.init.$(opt)) ) \
-        $(eval ALL.test.init   += testarg-init-$(cmd)-$(opt) ) \
+ifndef init-macros-generated
+    $(foreach _cmd, $(LIST.init.cmds),\
+      $(foreach _opt, $(LIST.init.opts),\
+        $(eval testarg-init-$(_cmd)-$(_opt): TEST.args := $(_cmd) $(LIST.init.$(_opt)) ) \
+        $(eval ALL.test.init   += testarg-init-$(_cmd)-$(_opt) ) \
       ) \
     )
+    undefine _cmd
+    undefine _opt
 endif
 
-testarg-init-%:         EXE.pl      := $(SRC.pl)
+testarg-init-%:         EXE.pl      := ../$(SRC.pl)
 testarg-init-%:         TEST.init   :=  any-host --no-rc --test-init
 
 # some individual targets (not all variant of cmd and opt required)
