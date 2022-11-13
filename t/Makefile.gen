@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 1.4 22/11/12 09:51:37
+#?      @(#) Makefile.gen 1.5 22/11/13 21:57:41
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 1.4
+_SID.gen           := 1.5
 
 _MYSELF.gen        := t/Makefile.gen
 ALL.includes       += $(_MYSELF.gen)
@@ -52,7 +52,6 @@ HELP.gen            = $(_NL)\
 \#    provides but only functions. The desciption of the targets can be found$(_NL)\
 \#    in Makefile.pod, SEE Make:target generation .
 
-
 #_____________________________________________________________________________
 #______________________________________________ target generation functions __|
 
@@ -66,21 +65,24 @@ ifndef gen-macros-generated
     # hence $(subst =,-,$(_arg)) is used to replace = by -
 
   define GEN.targets
-    # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
-    #            var-name_to_assign_args=$5,  var-name_set_empty=$6
-    # generates targets: $1-$2-$3_$4  and  $1-$2-$3_%
+    # parameter: target-prefix=$1, Makefile.typ=$2, target-tool=$3, tool=$4,
+    #            variable-name_for_args=$5,
+    #            var-name_to_assign_args=$6,  var-name_set_empty=$7
+    # generates targets: $1-$2$3_$4  and  $1-$2$3_%
     #           example: testcmd-gen-some-tool--arg
-    $(eval _help-typ.prg=HELP-test.$2.$(subst /,-,$3))
-    $(eval _test.typ.prg=test.$2.$(subst /,-,$3))
-    $(eval _testtype-prg=$1-$2-$(subst /,-,$3))
-    $(foreach _arg, $($4),\
+    # beside the prefix '-' $3 and $4 are identical usually, to avoid use of
+    # the tools name ($4) in the target name, $3 can be set empty
+    $(eval _help-typ.prg=HELP-test.$2.$(subst /,-,$4))
+    $(eval _test.typ.prg=test.$2.$(subst /,-,$4))
+    $(eval _testtype-prg=$1-$2$(subst /,-,$3))
+    $(foreach _arg, $($5),\
         $(eval _target=$(_testtype-prg)_$(subst =,-,$(_arg))) \
         $(eval ALL.$(_test.typ.prg)        += $(_target))     \
-        $(eval $(_target):                    $5 = $(_arg))   \
+        $(eval $(_target):                    $6 = $(_arg))   \
     ) \
-    $(eval     $(_help-typ.prg) = targets for testing arguments of '$3')
-    $(eval     $(_testtype-prg)_%:            EXE.pl    = ../$3)
-    $(eval     $(_testtype-prg)_%:            $6 = )
+    $(eval     $(_help-typ.prg) = targets for testing arguments of '$4')
+    $(eval     $(_testtype-prg)_%:            EXE.pl    = ../$4)
+    $(eval     $(_testtype-prg)_%:            $7 = )
     $(eval     ALL.test.$2                 += $(ALL.$(_test.typ.prg)))
     $(eval     ALL.$(_test.typ.prg).log    += $(ALL.$(_test.typ.prg):%=%.log))
     $(eval     $(_test.typ.prg).all:          $(ALL.$(_test.typ.prg)))
@@ -101,17 +103,16 @@ ifndef gen-macros-generated
   define GEN.targets-args
     # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
     # generate targets with argument assigned to TEST.args, TEST.init set empty
-    $(call GEN.targets,$1,$2,$3,$4,TEST.args,TEST.init)
+    $(call GEN.targets,$1,$2,-$3,$3,$4,TEST.args,TEST.init)
   endef
 
   define GEN.targets-init
     # parameter: target-prefix=$1, Makefile.typ=$2, tool=$3, variable-name_for_args=$4
     # generate targets with argument assigned to TEST.init, TEST.args set empty
-    $(call GEN.targets,$1,$2,$3,$4,TEST.init,TEST.args)
+    $(call GEN.targets,$1,$2,-$3,$3,$4,TEST.init,TEST.args)
   endef
 
 endif
-
 
 #_____________________________________________________________________________
 #___________________________________________________________ testing myself __|
@@ -173,7 +174,6 @@ test.gen.log-move:     TEST.target_prefix  = testarg-gen-
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
-
 
 ALL.test.gen        = test.gen
 ALL.test.gen.log    = $(ALL.test.gen:%=%.log)
