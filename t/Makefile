@@ -51,7 +51,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.140 22/11/12 19:08:46
+#?      @(#) Makefile 1.142 22/11/13 13:26:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +60,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.140
+_SID.test          := 1.142
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -68,6 +68,8 @@ ALL.inc.type       += test
 ALL.help.tests     += help.test
 
 export OSAFT_MAKE  := avoid writing random data (like date and time string)
+export LANG        := C
+    # LANG ensures same messages and sorting everywhere  
 
 first-test-target-is-default: help.test
 
@@ -95,14 +97,15 @@ ifndef test-remove-environment-variables
     # behaviour and to keep our list of variables clean;
     # forst define list of required variables, then get list of existing
     # environment variable and remove all except the required ones
-    $(eval _keep = DISPLAY   HOME    PATH    PWD     SHELL TERM  USER NLSPATH \
-                   DT_RUNPATH  DT_RPATH DT_NEEDED \
-                   DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH \
-                   LD_CONFIG LD_LIBRARY_PATH LD_PRELOAD LD_RUN_PATH LD_DEBUG \
-                   LD_TRACE_LOADED_OBJECTS   LD_TRACE_LOADED_OBJECTS_ALL \
-                   LD_TRACE_PRELINKING  LIBPATH RPATH   RUNPATH SHLIB_PATH  \
-                   OPENSSL OPENSSL_CONF OPENSSL_FIPS    OPENSSL_ENGINES \
-                   OPENSSL_ALLOW_PROXY  OPENSSL_ALLOW_PROXY_CERTS \
+    $(eval _keep = OSAFT_MAKE   LANG \
+        DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
+        DT_RUNPATH      DT_RPATH DT_NEEDED \
+        DYLD_LIBRARY_PATH   DYLD_FALLBACK_LIBRARY_PATH \
+        LD_CONFIG       LD_LIBRARY_PATH LD_PRELOAD      LD_RUN_PATH LD_DEBUG \
+        LD_TRACE_LOADED_OBJECTS   LD_TRACE_LOADED_OBJECTS_ALL LD_TRACE_PRELINKING \
+        LIBPATH RPATH   RUNPATH   SHLIB_PATH  \
+        OPENSSL_CONF    OPENSSL_FIPS    OPENSSL_ENGINES OPENSSL \
+        OPENSSL_ALLOW_PROXY OPENSSL_ALLOW_PROXY_CERTS \
     )
     $(eval _env  = $(shell printenv | awk -F= '{print $$1}'))
     $(foreach _var, $(filter-out $(_keep),$(_env)), $(eval undefine $(_var)))
