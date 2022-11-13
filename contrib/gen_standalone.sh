@@ -21,7 +21,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#)  2.3 22/10/08 22:48:58
+#?       @(#)  2.4 22/11/13 22:24:11
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -207,7 +207,7 @@ fi
   \echo ""
 
   ## TODO: o-saft-dbx.pm  still with errors
-  f=o-saft-dbx.pm
+  f=o-saft-dbx.pm ; [ -f $f ] || f=../$f
   \echo "{ # $f"
   $try \perl -ne 'print if (m(## PACKAGE [{])..m(## PACKAGE }))' $f
   \echo "} # $f"
