@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.39 22/09/21 11:43:31
+#?      @(#) Makefile.tcl 1.40 22/11/14 09:26:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(Project).tcl'
 
-_SID.tcl           := 1.39
+_SID.tcl           := 1.40
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -42,7 +42,7 @@ HELP-test.tcl       = test functionality of '$(SRC.tcl)'
 HELP-test.tcl.log   = same as test.tcl but store output in '$(TEST.logdir)/'
 HELP-test.tclinteractive= test functionality of '$(SRC.tcl) with GUI'
 HELP-test.tclinteractive.log = same as test.tclinterive but store output in '$(TEST.logdir)/'
-HELP-test.GUI       = alias for test.tclinteractive
+HELP-test.GUI       = alias for test.tclinteractive (user interaction required)
 HELP-_tcl2          = ________________________________________________ GUI tests _
 
 HELP.tcl            = # no special documentation yet
@@ -51,60 +51,59 @@ HELP.test.tcl.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-testcmd-tcl-%:              EXE.pl      = ../o-saft.tcl
-testcmd-tcl-%:              TEST.init   = +quit
+testarg-tcl-o-saft.tcl_%:               EXE.pl      = ../$(SRC.tcl)
+testarg-tcl-o-saft.tcl_%:               TEST.init   = localhost +quit
     # ensure that o-saft.tcl exits and does not build the GUI
 
-testcmd-tcl-+VERSION_%:     TEST.args  += +VERSION
-testcmd-tcl---version_%:    TEST.args  += --version
-testcmd-tcl---rc_%:         TEST.args  += --rc
-testcmd-tcl---v_%:          TEST.args  += --v
-testcmd-tcl---v--no-docs_%: TEST.args  += --v --no-docs
-testcmd-tcl---v--load_%:    TEST.args  += --v --load=Makefile
+LIST.tcl.args  := \
+	+VERSION --version  --rc  --v  --d  --d=2  --d=6  --trace  --gui \
+	--gui-layout=classic --gui-layout=tablet --test-osaft --test-docs \
+	--unknown
+
+# some special targets
+testarg-tcl-o-saft.tcl_--v--no-docs:    TEST.args  += --v --no-docs
+testarg-tcl-o-saft.tcl_--v--load:       TEST.args  += --v --load=Makefile
 #               returns: different count and TAB tabs: .... .note.oX3XXMake
-testcmd-tcl---d_%:          TEST.args  += --d
-testcmd-tcl---d2_%:         TEST.args  += --d=2
-testcmd-tcl---d6_%:         TEST.args  += --d=6
-testcmd-tcl---trace_%:      TEST.args  += --trace
-testcmd-tcl---gui_%:        TEST.args  += --gui
-testcmd-tcl---v_%:          TEST.args  += --v
-testcmd-tcl---v--img_%:     TEST.args  += --v --img   --gui-layout=classic
-testcmd-tcl---v--text_%:    TEST.args  += --v --text  --gui-layout=classic
-testcmd-tcl---v-host_%:     TEST.args  += --v host1 host2
-testcmd-tcl---v-host-host_%:TEST.args  += --v host1 host2 host3 host4 host5
-testcmd-tcl---gui-classic_%:TEST.args  += --gui-layout=classic
-testcmd-tcl---gui-tablet_% :TEST.args  += --gui-layout=tablet
-testcmd-tcl---test-osaft_%: TEST.args  += --test-osaft
-testcmd-tcl---test-docs_%:  TEST.args  += --test-docs
+testarg-tcl-o-saft.tcl_--v--img:        TEST.args  += --v --img   --gui-layout=classic
+testarg-tcl-o-saft.tcl_--v--text:       TEST.args  += --v --text  --gui-layout=classic
+testarg-tcl-o-saft.tcl_--v-host:        TEST.args  += --v host1 host2
+testarg-tcl-o-saft.tcl_--v-host-host:   TEST.args  += --v host1 host2 host3 host4 host5
+# test some warnings
+testarg-tcl-o-saft.tcl_--v-host1-host2: TEST.args  += --v host1 host2 host3 host4 host5 host6 
+#testarg-tcl---v--load-bad_%:TEST.args  += --load=/tmp/bad  # file with large value > 5000
 # TODO:  to be implemented
-#testcmd-tcl---load-FILE_%:  TEST.args  += --load=EXAMPLE
+#--load=EXAMPLE
 # TODO:  test with docker
-#testcmd-tcl---id%:          TEST.args  += --id=docker-ID
-#testcmd-tcl---tag%:         TEST.args  += --id=docker-Tag
-#testcmd-tcl---v--gen-docs_%:TEST.args  += --v --gen-docs
+#testarg-tcl-o-saft.tcl_--id:            TEST.args  += --id=docker-ID
+#testarg-tcl-o-saft.tcl_--tag:           TEST.args  += --id=docker-Tag
+#testarg-tcl-o-saft.tcl_--v--gen-docs:   TEST.args  += --v --gen-docs
     # --gen-docs should be used with o-saft.pl only, see Makefile.hlp
 
-# test command wich require user interaction (in GUI)
-testcmd-tclinteractive-%:   EXE.pl      = ../o-saft.tcl
-testcmd-tclinteractive-%:   TEST.init   =
-testcmd-tclinteractive---gui--gui-classic_%: TEST.args  += --gui --gui-layout=classic
-testcmd-tclinteractive---gui--gui-tablet_%:  TEST.args  += --gui --gui-layout=tablet
-testcmd-tclinteractive---gui--docker_%:      TEST.args  += --gui --docker
-testcmd-tclinteractive---test-tcl_%:         TEST.args  += --test-tcl
+ifndef tcl-macros-generated
+    $(call GEN.targets,testarg,tcl,-$(SRC.tcl),$(SRC.tcl),LIST.tcl.args,TEST.args,TEST.dumm)
+endif
+ALL.test.tcl   += \
+	testarg-tcl-o-saft.tcl_--v--no-docs testarg-tcl-o-saft.tcl_--v--load \
+	testarg-tcl-o-saft.tcl_--v--img     testarg-tcl-o-saft.tcl_--v--text \
+	testarg-tcl-o-saft.tcl_--v-host     testarg-tcl-o-saft.tcl_--v-host-host \
+	testarg-tcl-o-saft.tcl_--v-host1-host2
 
-# test some warnings
-testcmd-tcl---v-host1-host2_%:  TEST.args  += --v host1 host2 host3 host4 host5 host6 
-testcmd-tcl---unknown_%:    TEST.args  += --unknown
-#testcmd-tcl---v--load-bad_%:TEST.args  += --load=/tmp/bad  # file with large value > 5000
+# test command which require user interaction (in GUI)
+testarg-tclinteractive-%:   EXE.pl      = ../$(SRC.tcl)
+testarg-tclinteractive-%:   TEST.init   = $(TEST.host)
+testarg-tclinteractive---gui--gui-classic:  TEST.args  += --gui --gui-layout=classic
+testarg-tclinteractive---gui--gui-tablet:   TEST.args  += --gui --gui-layout=tablet
+testarg-tclinteractive---gui--docker:       TEST.args  += --gui --docker
+testarg-tclinteractive---test-tcl:          TEST.args  += --test-tcl
 
-# SEE Make:target matching
-ALL.testtcl         = $(shell awk -F% '/^testcmd-tcl-%/{next} /^testcmd-tcl-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.tcl))
-ALL.test.tcl        = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
 ALL.test.tcl.log    = $(ALL.test.tcl:%=%.log)
 
-# *test-interactive* targets are not added to coomon variables,
-# they cannot be used in scripted make, but need to be startet interactive
-ALL.testtclinteractive      = $(shell awk -F% '/^testcmd-tclinteractive-%/{next} /^testcmd-tclinteractive-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.tcl))
+# *test-interactive* targets are not added to common variables,
+# because they cannot be used in scripted make
+ALL.testtclinteractive     := testarg-tclinteractive---test-tcl \
+	testarg-tclinteractive---gui--gui-classic \
+	testarg-tclinteractive---gui--gui-tablet \
+	testarg-tclinteractive---gui--docker
 ALL.test.tclinteractive     = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtclinteractive:%=%$(host)))
 ALL.test.tclinteractive.log = $(ALL.test.tclinteractive:%=%.log)
 test.tclinteractive:          $(ALL.test.tclinteractive)
@@ -112,9 +111,9 @@ test.tclinteractive.log:      $(ALL.test.tclinteractive.log)
 test.GUI:           test.tclinteractive
 test.GUI.log:       test.tclinteractive.log
 
-test.tcl.log-compare:       TEST.target_prefix  = testcmd-tcl-
-test.tcl.log-move:          TEST.target_prefix  = testcmd-tcl-
-test.tcl.log:               TEST.target_prefix  = testcmd-tcl-
+test.tcl.log-compare:       TEST.target_prefix  = testarg-tcl-
+test.tcl.log-move:          TEST.target_prefix  = testarg-tcl-
+test.tcl.log:               TEST.target_prefix  = testarg-tcl-
 
 test.tcl:           $(ALL.test.tcl)
 test.tcl.log:       $(ALL.test.tcl.log) test.log-compare-hint
