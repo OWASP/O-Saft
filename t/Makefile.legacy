@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.8 22/09/21 10:01:49
+#?      @(#) Makefile.legacy 1.9 22/11/14 10:24:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.8
+_SID.legacy        := 1.9
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -44,7 +44,7 @@ HELP-test.legacy.log    = same as test.legacy but store output in '$(TEST.logdir
 HELP.legacy             = # not yet used
 HELP.test.legacy.all    = # no special documentation yet
 
-# other SSL-related test tools, not used in ths project, just fo documentation
+# other SSL-related test tools, not used in this project, just for documentation
 _TEST.tools.ssl     = \
 	cnark.pl    analyze-ssl.pl      manyssl      SSLAudit.pl \
 	sslmap.py   sslscan  ssltest.pl sslthing.sh  sslyze.py       testssl.sh \
@@ -77,6 +77,7 @@ testarg-legacy-+cipher%:    EXE.pl      = ../$(SRC.pl)
 testarg-legacy-+cipher%:    TEST.init   = --trace-CLI --header --enabled +cipher $(TEST.legacy.hosts)
 
 ifndef legacy-macros-generated
+    # GEN.targets cannot be used, because it would generate duplicate targets
     _TEST.legacy   := testarg-legacy-+cipher--legacy
     $(foreach arg, $(LIST.legacy),\
 	$(eval _target=$(_TEST.legacy)-$(arg)) \
