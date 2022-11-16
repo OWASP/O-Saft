@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.50 22/11/04 16:03:00"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.51 22/11/16 10:06:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -1532,8 +1532,9 @@ sub _check_ssl_methods  {
     _trace("SSLeay methods  = " . join(" ", @list));
     foreach my $ssl (@{$cfg{'versions'}}) {
         next if ($cfg{$ssl} == 0);          # don't check what's disabled by option
-        if (_is_cfg_do('cipher_intern')) {  # internal method does not depend on other libraries
-            if ($ssl eq 'DTLSv1') {
+        if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump')) {
+            # internal method does not depend on other libraries, but DTLS* not yet supported
+            if ($ssl =~ m/^DTLS/) {
                 _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipher'; not checked");
                 next;
             }
