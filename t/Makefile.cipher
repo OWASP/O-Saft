@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.25 22/10/29 21:10:00
+#?      @(#) Makefile.cipher 1.26 22/11/16 10:43:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.25
+_SID.cipher        := 1.26
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -60,7 +60,7 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl
+LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl --ciphermode=dump
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=0x0300002F  --cipher=IS-UNKNOWN --cipher=is_invalid
 #TODO: --cipher=0x0300002F invalid with --ciphermode=openssl; will be fixed later
 
