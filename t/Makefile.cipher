@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.26 22/11/16 10:43:34
+#?      @(#) Makefile.cipher 1.27 22/11/17 16:25:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.26
+_SID.cipher        := 1.27
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -79,10 +79,18 @@ LIST.cipher        := \
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
 
 ifndef cipher-macros-generated
+    # cannot use GEN.targets because ALL.testcipher instead of ALL.test.cipher
+    # is set here; see further use of ALL.testcipher below
     $(foreach arg, $(LIST.cipher),\
 	$(eval _target=testcmd-cipher-+cipher-$(subst =,-,$(arg))) \
 	$(eval $(_target)_%:  TEST.args = $(arg)) \
 	$(eval ALL.testcipher  += $(_target)_)    \
+    )
+    # for --test-ciphers-list see Makefile.opt
+    $(foreach arg, $(LIST.cipher-range),\
+	$(eval _target=testarg-cipher-+test-ciphers-list_$(subst =,-,$(arg))) \
+	$(eval $(_target):    TEST.args = $(arg)) \
+	$(eval ALL.testciphers += $(_target))     \
     )
     $(foreach mode, $(LIST.cipher-mode),\
       $(foreach arg, $(LIST.cipher-pattern),\
@@ -91,21 +99,16 @@ ifndef cipher-macros-generated
 	$(eval ALL.testcipher  += $(_target)_) \
       ) \
     )
-    # for --test-ciphers-list see Makefile.opt
-    $(foreach arg, $(LIST.cipher-range),\
-	$(eval _target=testcmd-cipher-+test-ciphers-list-$(subst =,-,$(arg))) \
-	$(eval $(_target):    TEST.args = $(arg)) \
-	$(eval ALL.testciphers += $(_target))     \
-    )
     undefine _target
 endif
 
-# testcmd-cipher-+test-ciphers-list-* do not need a target for testing,  hence
-# they are added to ALL.testciphers instead of ALL.testciphers to avoid adding
+# testarg-cipher-+test-ciphers-list-* do not need a target for testing,  hence
+# they are added to ALL.testciphers instead of ALL.testcipher to avoid adding
 # the TEST.cipher.hosts below
 
+testarg-cipher-%:                   EXE.pl      = ../$(SRC.pl)
+testarg-cipher-+test-ciphers-list_%: TEST.init  = --test-ciphers-list
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
-testcmd-cipher-+test-ciphers-list-%: TEST.init  = --test-ciphers-list
 testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher--%:          TEST.init   = --trace-CLI --header +cipher
 testcmd-cipher-+cipher_%:           TEST.args  +=
