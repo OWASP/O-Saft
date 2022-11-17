@@ -41,7 +41,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.79 22/11/05 13:00:10";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.80 22/11/17 17:47:35";
 our $VERSION    = "22.11.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -894,7 +894,7 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $unsorted= shift;    # hash with $key => yes-or-no
     my @sorted;             # array to be returned
     my @tmp_arr;
-    foreach my $key (keys %$unsorted) {
+    foreach my $key (sort keys %$unsorted) {
         next if ($key =~ m/^\s*$/);         # defensive programming ..
         my $cipher    = get_name($key);
         if (not defined $cipher) {  # defensive programming ..
@@ -1678,7 +1678,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.79 2022/11/05
+2.80 2022/11/17
 
 
 =head1 AUTHOR
