@@ -169,6 +169,7 @@
 #?      --colour-blind      same as --colour
 #?      --colour-not-blind  use green instead of blue coloured texts
 #?      --other             check for other SSL-related tool with  --checkdev
+#       --useenv            change hashbang lines to /usr/bin/env
 #?
 #? EXAMPLES
 #?      $0
@@ -223,7 +224,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.88 22/07/02 23:37:09
+#?      @(#) MßÅ'V 1.89 22/11/18 09:44:50
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -237,6 +238,7 @@ dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
+useenv=0                # 1 to change hashbang lines to /usr/bin/env
 other=0
 force=0
 optx=0
@@ -440,11 +442,13 @@ while [ $# -gt 0 ]; do
           '--color-not-blind')  colour="32m";   ;; # alias
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
+          '--useenv')           useenv=1;       ;;
+          '--use-env')          useenv=1;       ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.88 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.89 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
