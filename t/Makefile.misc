@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.69 22/11/10 22:28:36
+#?      @(#) Makefile.misc 1.70 22/11/18 15:19:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.69
+_SID.misc          := 1.70
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -170,7 +170,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.69: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.70: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -419,7 +419,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.69: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.70: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -432,6 +432,7 @@ test.quality.log: $(_TEST.quality.log)
 # TODO: same target as test.warnings.log
 
 HELP-test.misc.todo = search for 'FIXME' and 'TODO' comments in '$(ALL.qa)'
+HELP-test.misc.hashbang = get first line of file with '#!' (hashbang) in $(ALL:src)'
 testarg-misc_FIXME:
 	@echo "#make: search for '# FIXME' in code ..."
 	@-grep '# FIXME'            $(ALL.qa)
@@ -440,9 +441,14 @@ testarg-misc_TODO:
 	@echo "#make: search for '# TODO' in code ..."
 	@-grep '# TODO'             $(ALL.qa)
 	@echo ""
+testarg-misc_hashbang:
+	@echo "#make: search for '#!' (hashbang) in code ..."
+	@-egrep '^#\![ /].*/'        $(ALL.src)
+	@echo ""
++   # get only  #!/...  and  #! /...  but not  #!#...
 ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO
 ALL.test.misc.todo.log := $(ALL.test.misc.todo:%=%.log)
-ALL.testmisc           += $(ALL.test.misc.todo)
+ALL.testmisc           += $(ALL.test.misc.todo) testarg-misc_hashbang
 test.misc.todo:           $(ALL.test.misc.todo)
 test.misc.todo.log:       $(ALL.test.misc.todo.log)
 	@$(TRACE.target)
@@ -460,6 +466,7 @@ ALL.test.misc      += test.bench test.bunt \
 			$(ALL.test.cloc) \
 			$(ALL.test.quality) \
 			$(ALL.test.misc.todo) \
+			testarg-misc_hashbang \
 			$(GEN.tags)
 ALL.test.misc.log  += test.quality.log $(ALL.test.misc.todo.log)
     # NOTE: ALL.test.misc does not contain $(ALL.testmisc) because they are too noisy
