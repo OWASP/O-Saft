@@ -264,7 +264,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)$/i)                 { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)$/i)               { $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(\d+)$/i)                     { $cfg{'trace'}    = $1; next; }
-    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'traceTIME'}++;   $cfg{'trace'} ||= 1; next; } # Timestamp on; trace on if it was off
+    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'traceTIME'}++;  $cfg{'trace'} ||= 1; next; } # Timestamp on; trace on if it was off
     if ($arg =~ /^--?p(?:ort)?=(\d+)$/i)                { $cfg{'port'}     = $1; next; }
     if ($arg =~ /^--?h(?:ost)?=(.+)$/i)                 { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); next; }     
     # proxy options
