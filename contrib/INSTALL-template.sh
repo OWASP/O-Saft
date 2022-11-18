@@ -224,7 +224,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) MßÅ'V 1.89 22/11/18 09:44:50
+#?      @(#) Pmà8V 1.90 22/11/18 12:53:36
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -410,6 +410,13 @@ check_commands () {
 	echo "# $text_tool"
 }
 
+copy_file   () {
+	src=$1
+	dst=$2
+	# TODO: check for $useenv
+	$try X\cp "$src" "$dst"  || exit 4
+}
+
 # --------------------------------------------- arguments and options
 new_dir=
 while [ $# -gt 0 ]; do
@@ -448,7 +455,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.89 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.90 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -604,7 +611,7 @@ if [ "$mode" = "dest" ]; then
 	done
 	for f in $files ; do
 		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
-		$try \cp "$f" "$inst_directory/$f"  || exit 4
+		copy_file "$f" "$inst_directory/$f"
 	done
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
