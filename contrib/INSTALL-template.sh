@@ -1,6 +1,4 @@
-#! /bin/sh
-#?
-#? File INSERTED_BY_MAKE_FROM
+#! /bin/sh #?  #? File INSERTED_BY_MAKE_FROM
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -44,7 +42,7 @@
 #=
 #=# check installation in /opt/o-saft
 #=#--------------------------------------------------------------
-#=# (warnings are ok if 'git clone' will be used for development)
+#=# (warnings are ok if »git clone« will be used for development)
 #=#            Dockerfile	found; did you run »INSTALL.sh --clean«?
 #=#              Makefile	found; did you run »INSTALL.sh --clean«?
 #=#--------------------------------------------------------------
@@ -61,7 +59,7 @@
 #=#----------------------+---------------------------------------
 #=#          ./.o-saft.pl	will be used when started in . only
 #=# /opt/o-saft/.o-saft.pl	will be used when started in /opt/o-saft only
-#=# /home/usr/.o-saft.tcl	missing, consider generating: o-saft.tcl --rc > /home/user/.o-saft.tcl
+#=# /home/usr/.o-saft.tcl	missing, consider generating: »o-saft.tcl --rc > /home/user/.o-saft.tcl«
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
@@ -262,7 +260,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) 0~/�$V 1.94 22/11/18 23:27:25
+#?      @(#)  1.95 22/11/19 00:03:30
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -287,12 +285,14 @@ alias echo=/bin/echo    # need special echo which has -n option;
 tab="	"               # need a real TAB (0x09) for /bin/echo
 
 text_miss=" missing, try installing with ";
-text_dev="did you run »$0 --clean«?"
-text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 text_one="missing, consider generating with »make standalone«"
-text_tool="Note: podman is a tool to view pod files, it's not the container engine"
 text_path="Note: all found executables in PATH are listed"
+text_prof="note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
+text_tool="Note: podman is a tool to view pod files, it's not the container engine"
+# must be redefined after reading arguments
+text_dev="did you run »$0 --clean«?"
+text_alt="file from previous installation, try running »$0 --clean« "
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
@@ -448,8 +448,6 @@ check_commands () {
 		is=`\command -v $c`
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
-	echo "#"
-	echo "# $text_tool"
 	return
 }
 
@@ -522,7 +520,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.94 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.95 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -532,6 +530,8 @@ if [ -n "$new_dir" ]; then
 	[ -z "$mode" ] && mode=dest              # no mode given, set default
 fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
+text_dev="did you run »$0 --clean $inst_directory«?"
+text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
 # --------------------------------------------- main
 
@@ -711,6 +711,8 @@ if [ "$mode" = "checkdev" ]; then
 	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
+	echo "#"
+	echo "# $text_tool"
 	echo_foot
 	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
@@ -720,12 +722,13 @@ if [ "$mode" = "checkdev" ]; then
 		if [ -n "$v" ]; then
 			echo_green  "$v"
 		else 
-			echo_red "missing; install with: 'cpan $m'"
+			echo_red "missing; install with: »cpan $m«"
 			err=`expr $err + 1`
 		fi
 	done
+	echo "#"
+	echo "# $text_prof"
 	echo_foot
-	echo "# Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 	echo ""
 
 	[ $other -eq 0 ] && exit 0;
@@ -764,6 +767,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		fi
 	done
 done
+echo "#"
 echo "# $text_path"
 [ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
@@ -782,7 +786,7 @@ cd "$inst_directory"
 err=0
 
 echo_head "# check installation in $inst_directory"
-echo "# (warnings are ok if 'git clone' will be used for development)"
+echo "# (warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
@@ -826,7 +830,7 @@ if [ -e "$rc" ]; then
 else
 	txt="missing"
 fi
-echo_label "$rc" && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
+echo_label "$rc" && echo_yellow "$txt, consider generating: »$osaft_gui --rc > $rc«"
 echo_foot
 
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
@@ -877,7 +881,7 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
-		text_miss="$text_miss 'cpan $m'"
+		text_miss="$text_miss »cpan $m«"
 		echo_red "$text_miss"
 		err=`expr $err + 1`
 	fi
