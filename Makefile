@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.18 22/11/10 22:59:12
+#?      @(#) Makefile 2.19 22/11/19 00:14:07
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.18
+_SID            = 2.19
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -251,6 +251,7 @@ ALL.src         = \
 		  $(ALL.tst) \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
+ALL.tgz        += O-Saft/$(GEN.inst)
 
 # internal used make
 MAKE            = $(MAKE_COMMAND)
@@ -290,8 +291,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.18 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.18
+_INST.genbytext = generated data by Makefile 2.19 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.19
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -529,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.18
-tar:     _INST.is_edit  = 2.18
+_INST.is_edit           = 2.19
+tar:     _INST.is_edit  = 2.19
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -701,7 +702,7 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 # would generate the tarball there also, hence the tarball is specified as full
 # path with $(PWD).
 # The directory prefix in the tarball is the current directory, aka $(PWD) .
-$(GEN.tgz): $(ALL.src) $(GEN.tags)
+$(GEN.tgz): $(ALL.src) $(GEN.tags) $(GEN.inst)
 	@$(TRACE.target)
 	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
 
