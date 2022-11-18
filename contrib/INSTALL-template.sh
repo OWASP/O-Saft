@@ -224,7 +224,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) Pmà8V 1.90 22/11/18 12:53:36
+#?      @(#) 0=BÅ)V 1.91 22/11/18 12:55:26
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -414,7 +414,7 @@ copy_file   () {
 	src=$1
 	dst=$2
 	# TODO: check for $useenv
-	$try X\cp "$src" "$dst"  || exit 4
+	$try \cp "$src" "$dst"  || exit 4
 }
 
 # --------------------------------------------- arguments and options
@@ -455,7 +455,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.90 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.91 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
