@@ -1,4 +1,6 @@
-#! /bin/sh #?  #? File INSERTED_BY_MAKE_FROM
+#! /bin/sh
+#?
+#? File INSERTED_BY_MAKE_FROM
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -260,7 +262,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.95 22/11/19 00:03:30
+#?      @(#)  1.96 22/11/19 00:51:21
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -520,7 +522,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.95 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.96 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
