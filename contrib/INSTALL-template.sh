@@ -164,12 +164,48 @@
 #?      -x      debug using shell's "set -x"
 #?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
 #?              overwrites existing ones
-#?      --no-colour         do not use coloured texts; default
-#?      --colour            use coloured texts (red, yellow, blue|green)
-#?      --colour-blind      same as --colour
-#?      --colour-not-blind  use green instead of blue coloured texts
-#?      --other             check for other SSL-related tool with  --checkdev
-#       --useenv            change hashbang lines to /usr/bin/env
+#?          --openssl   - calls  contrib/install_openssl.sh which builds and
+#?      --no-colour     - do not use coloured texts; default
+#?      --colour        - use coloured texts (red, yellow, blue|green)
+#?      --colour-blind  - same as --colour
+#?      --colour-not-blind  - use green instead of blue coloured texts
+#?      --other         - check for other SSL-related tool with  --checkdev
+#?      --useenv        - change #! (hashbang) lines to  #!/usr/bin/env
+#?                        Applies only to files with following extension:
+#?                          .awk  .pl  .sh  .tcl  .txt
+#?                        also applies to all Makefile* .
+#?                        The hashbang line  will only be changed when there
+#?                        are no arguments given.
+#?                        Examples of changed lines:
+#?                            #!/bin/sh
+#?                            #! /bin/sh
+#?                            #!/bin/cat
+#?                            #!/usr/bin/make
+#?                            #!/usr/bin/perl
+#?                        Examples of lines not to be changed:
+#?                            #!/usr/bin/gawk -f
+#?                            #!/usr/bin/make -rRf
+#?                            #! /usr/bin/perl -w
+#?                            #!/usr/bin/perl -w
+#?                            #!/usr/bin/perl -w -I .
+#?
+#?      Note about  --useenv  option:
+#?      From the perspective of an end-user, using  /usr/bin/env seems to be
+#?      more convenient. The advantages are: it is most likely more portable
+#?      and it respects the user's environment variable  $PATH .
+#?      The disadvantages are:  /usr/bin/env does not allow arguments passed
+#?      to the specified program and it may have a security impact, as it is
+#?      not obvious which program is finally executed.
+#?      Also, some scripts use the program with arguments. When /usr/bin/env
+#?      is used instead, the use must call the scripts with these arguments.
+#?      Well, env can be used to pass arguments, examples:
+#?          /usr/bin/env sh -c '\prog -opt arg'
+#?          /usr/bin/env sh -c 'exec "$@"' sh -opt arg
+#?      This, a bit cumbersome approach, is not implemented here.
+#?
+#?      That's why the  hardcoded path for the program is used in its script
+#?      by default. But we provide the  --useenv  option here to change this
+#?      behaviour. It's up to user then, which solution fits better.
 #?
 #? EXAMPLES
 #?      $0
@@ -178,8 +214,10 @@
 #?      $0 --install
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
+#?      $0 /opt/bin/ --useenv
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
+#?      $0 --check   /opt/bin/ --colour
 #?      $0 --checkdev
 #?      $0 --cgi /opt/bin/
 #?      $0 --cgi .
@@ -224,7 +262,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) 0=BÅ)V 1.91 22/11/18 12:55:26
+#?      @(#) ðmµj‹U 1.93 22/11/18 23:17:12
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -408,13 +446,38 @@ check_commands () {
 	done
 	echo "#"
 	echo "# $text_tool"
+	return
 }
 
 copy_file   () {
 	src=$1
 	dst=$2
-	# TODO: check for $useenv
-	$try \cp "$src" "$dst"  || exit 4
+	convert=0
+	if [ 0 -lt $useenv ]; then
+		ext=${src##*.}
+		file=${src##*/}
+		case "$ext" in
+		    awk | cgi | pl | pm | sh | tcl | txt)  convert=1 ; ;;
+		esac
+		case "$file" in
+		    Makefile*)    convert=1 ; ;;
+		esac
+	fi
+	if [ 1 -eq $convert ]; then
+		# only the very first line $. ist changed
+		if [ "$try" = "echo" ]; then
+		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\! /usr/bin/env $1|;}print;" '"'$src' > '$dst'"
+		    return
+		fi
+		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\! /usr/bin/env $1|;}print;' \
+		        "$src" > "$dst"  || exit 4
+		# set proper modes
+		\chmod 555 "$dst" # assuming that it is and should be executable
+
+	else
+		$try \cp --preserve=all "$src"  "$dst"  || exit 4
+	fi
+	return
 }
 
 # --------------------------------------------- arguments and options
@@ -455,7 +518,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.91 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.93 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
