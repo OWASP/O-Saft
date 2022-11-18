@@ -262,7 +262,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) ðmµj‹U 1.93 22/11/18 23:17:12
+#?      @(#) 0~/¦$V 1.94 22/11/18 23:27:25
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -417,7 +417,11 @@ echo_head   () {
 	fi
 }
 echo_foot   () {
-	echo "#$_line"
+	if [ -z "$colour" ]; then
+		echo "#$_line"
+	else
+		\echo "\033[7;37m\033[1;30m#$_line\033[0m"
+	fi
 }
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
@@ -518,7 +522,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.93 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.94 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
