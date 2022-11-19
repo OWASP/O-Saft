@@ -162,17 +162,16 @@
 #       --help  got it
 #?      --n     do not execute, just show (ignored for  --check)
 #?      -x      debug using shell's "set -x"
-#?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
-#?              overwrites existing ones
-#?          --openssl   - calls  contrib/install_openssl.sh which builds and
+#?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
+#?                        $HOME, overwrites existing ones
 #?      --no-colour     - do not use coloured texts; default
 #?      --colour        - use coloured texts (red, yellow, blue|green)
 #?      --colour-blind  - same as --colour
 #?      --colour-not-blind  - use green instead of blue coloured texts
 #?      --other         - check for other SSL-related tool with  --checkdev
 #?      --useenv        - change #! (hashbang) lines to  #!/usr/bin/env
-#?                        Applies only to files with following extension:
-#?                          .awk  .pl  .sh  .tcl  .txt
+#?                        Applies only to files with following extensions:
+#?                          .awk  .cgi .pl  .sh  .tcl  .txt
 #?                        also applies to all Makefile* .
 #?                        The hashbang line  will only be changed when there
 #?                        are no arguments given.
@@ -262,7 +261,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.96 22/11/19 00:51:21
+#?      @(#)  1.97 22/11/19 01:11:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -522,7 +521,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.96 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.97 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
