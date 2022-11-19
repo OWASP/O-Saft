@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated data by Makefile 2.14 from contrib/INSTALL-template.sh
+#? File generated data by Makefile 2.19 from contrib/INSTALL-template.sh
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -44,7 +44,7 @@
 #=
 #=# check installation in /opt/o-saft
 #=#--------------------------------------------------------------
-#=# (warnings are ok if 'git clone' will be used for development)
+#=# (warnings are ok if »git clone« will be used for development)
 #=#            Dockerfile	found; did you run »INSTALL.sh --clean«?
 #=#              Makefile	found; did you run »INSTALL.sh --clean«?
 #=#--------------------------------------------------------------
@@ -61,7 +61,7 @@
 #=#----------------------+---------------------------------------
 #=#          ./.o-saft.pl	will be used when started in . only
 #=# /opt/o-saft/.o-saft.pl	will be used when started in /opt/o-saft only
-#=# /home/usr/.o-saft.tcl	missing, consider generating: o-saft.tcl --rc > /home/user/.o-saft.tcl
+#=# /home/usr/.o-saft.tcl	missing, consider generating: »o-saft.tcl --rc > /home/user/.o-saft.tcl«
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
@@ -162,13 +162,34 @@
 #       --help  got it
 #?      --n     do not execute, just show (ignored for  --check)
 #?      -x      debug using shell's "set -x"
-#?      --force install RC-FILEs  .o-saft.pl  and  .o-saft.tcl  in  $HOME,
-#?              overwrites existing ones
-#?      --no-colour         do not use coloured texts; default
-#?      --colour            use coloured texts (red, yellow, blue|green)
-#?      --colour-blind      same as --colour
-#?      --colour-not-blind  use green instead of blue coloured texts
-#?      --other             check for other SSL-related tool with  --checkdev
+#?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
+#?                        $HOME, overwrites existing ones
+#?      --no-colour     - do not use coloured texts; default
+#?      --colour        - use coloured texts (red, yellow, blue|green)
+#?      --colour-blind  - same as --colour
+#?      --colour-not-blind  - use green instead of blue coloured texts
+#?      --other         - check for other SSL-related tool with  --checkdev
+#?      --useenv        - change #! (shebang) lines to  #!/usr/bin/env
+#?                        Applies only to files with following extensions:
+#?                          .awk  .cgi .pl  .sh  .tcl  .txt
+#?                        also applies to all Makefile* .
+#?                        The shebang line  will only be changed when there
+#?                        are no arguments given.
+#?                        Examples of changed lines:
+#?                            #!/bin/sh
+#?                            #! /bin/sh
+#?                            #!/bin/cat
+#?                            #!/usr/bin/make
+#?                            #!/usr/bin/perl
+#?                        Examples of lines not to be changed:
+#?                            #!/usr/bin/gawk -f
+#?                            #!/usr/bin/make -rRf
+#?                            #! /usr/bin/perl -w
+#?                            #!/usr/bin/perl -w
+#?                            #!/usr/bin/perl -w -I .
+#?
+#?      Please see  docs/concepts.txt  for details about /usr/bin/env .
+#?      It's up to user then, which solution fits better.
 #?
 #? EXAMPLES
 #?      $0
@@ -177,8 +198,10 @@
 #?      $0 --install
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
+#?      $0 /opt/bin/ --useenv
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
+#?      $0 --check   /opt/bin/ --colour
 #?      $0 --checkdev
 #?      $0 --cgi /opt/bin/
 #?      $0 --cgi .
@@ -187,7 +210,7 @@
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       and scopes containing  "generated data from Makefile 2.14" .
+#       and scopes containing  "generated data from Makefile 2.19" .
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
@@ -223,7 +246,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.88 22/07/02 23:37:09
+#?      @(#)  1.99 22/11/19 14:50:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -237,6 +260,7 @@ dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
+useenv=0                # 1 to change shebang lines to /usr/bin/env
 other=0
 force=0
 optx=0
@@ -247,14 +271,16 @@ alias echo=/bin/echo    # need special echo which has -n option;
 tab="	"               # need a real TAB (0x09) for /bin/echo
 
 text_miss=" missing, try installing with ";
-text_dev="did you run »$0 --clean«?"
-text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 text_one="missing, consider generating with »make standalone«"
-text_tool="Note: podman is a tool to view pod files, it's not the container engine"
 text_path="Note: all found executables in PATH are listed"
+text_prof="note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
+text_tool="Note: podman is a tool to view pod files, it's not the container engine"
+# must be redefined after reading arguments
+text_dev="did you run »$0 --clean«?"
+text_alt="file from previous installation, try running »$0 --clean« "
 
-# generated data from Makefile 2.14 {
+# generated data from Makefile 2.19 {
 osaft_sh="o-saft"
 osaft_exe="o-saft.pl"
 osaft_gui="o-saft.tcl"
@@ -304,7 +330,7 @@ tools_other="
 	OSSL_CCS_InjectTest.py SSLAudit.exe SSLAudit.pl SSLCertScanner.exe SSLPressure.exe TLSSLed_v1.3.sh TestSSLServer.exe TestSSLServer.jar analyze-ssl.pl athena-ssl-cipher-check_v062.jar bash-heartbleed.sh beast.pl ccs-injection.sh check-ssl-heartbleed.pl chksslkey cnark.pl manyssl poet robot-detect smtp_tls_cert.pl ssl-cert-check ssl-check-heartbleed.pl ssl-cipher-check.pl ssl-dos ssl-renegotiation.sh sslcat ssldiagnos.exe sslmap.py sslscan sslscan.exe sslsniff sslstrip ssltest.pl ssltest_heartbeat.py sslthing.sh sslyze.py stunnel testssl.sh tls-check.pl tls-scan tlsenum vessl
 	"
 
-# generated data from Makefile 2.14 }
+# generated data from Makefile 2.19 }
 
 # HARDCODED {
 # because newer Makefiles may no longer know about them
@@ -377,7 +403,11 @@ echo_head   () {
 	fi
 }
 echo_foot   () {
-	echo "#$_line"
+	if [ -z "$colour" ]; then
+		echo "#$_line"
+	else
+		\echo "\033[7;37m\033[1;30m#$_line\033[0m"
+	fi
 }
 echo_label  () {
 	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
@@ -404,8 +434,42 @@ check_commands () {
 		is=`\command -v $c`
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
-	echo "#"
-	echo "# $text_tool"
+	return
+}
+
+copy_file   () {
+	src=$1
+	dst=$2
+	convert=0
+	if [ 0 -lt $useenv ]; then
+		ext=${src##*.}
+		file=${src##*/}
+		# ugly hardcode match of extensions and names
+		case "$ext" in
+		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
+		esac
+		case "$file" in
+		    usage_examples)       convert=1 ; ;;
+		    Dockerfile*)          convert=1 ; ;;
+		    Makefile*)            convert=1 ; ;;
+		    *_completion_o-saft)  convert=1 ; ;;
+		esac
+	fi
+	if [ 1 -eq $convert ]; then
+		# only the very first line $. ist changed
+		if [ "$try" = "echo" ]; then
+		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\! /usr/bin/env $1|;}print;" '"'$src' > '$dst'"
+		    return
+		fi
+		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\! /usr/bin/env $1|;}print;' \
+		        "$src" > "$dst"  || exit 4
+		# set proper modes
+		\chmod 555 "$dst" # assuming that it is and should be executable
+
+	else
+		$try \cp --preserve=all "$src"  "$dst"  || exit 4
+	fi
+	return
 }
 
 # --------------------------------------------- arguments and options
@@ -440,11 +504,13 @@ while [ $# -gt 0 ]; do
           '--color-not-blind')  colour="32m";   ;; # alias
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
+          '--useenv')           useenv=1;       ;;
+          '--use-env')          useenv=1;       ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.88 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.99 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -454,6 +520,8 @@ if [ -n "$new_dir" ]; then
 	[ -z "$mode" ] && mode=dest              # no mode given, set default
 fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
+text_dev="did you run »$0 --clean $inst_directory«?"
+text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
 # --------------------------------------------- main
 
@@ -600,7 +668,7 @@ if [ "$mode" = "dest" ]; then
 	done
 	for f in $files ; do
 		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
-		$try \cp "$f" "$inst_directory/$f"  || exit 4
+		copy_file "$f" "$inst_directory/$f"
 	done
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
@@ -633,6 +701,8 @@ if [ "$mode" = "checkdev" ]; then
 	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
+	echo "#"
+	echo "# $text_tool"
 	echo_foot
 	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
@@ -642,12 +712,13 @@ if [ "$mode" = "checkdev" ]; then
 		if [ -n "$v" ]; then
 			echo_green  "$v"
 		else 
-			echo_red "missing; install with: 'cpan $m'"
+			echo_red "missing; install with: »cpan $m«"
 			err=`expr $err + 1`
 		fi
 	done
+	echo "#"
+	echo "# $text_prof"
 	echo_foot
-	echo "# Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 	echo ""
 
 	[ $other -eq 0 ] && exit 0;
@@ -686,6 +757,7 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		fi
 	done
 done
+echo "#"
 echo "# $text_path"
 [ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
@@ -704,7 +776,7 @@ cd "$inst_directory"
 err=0
 
 echo_head "# check installation in $inst_directory"
-echo "# (warnings are ok if 'git clone' will be used for development)"
+echo "# (warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
@@ -748,7 +820,7 @@ if [ -e "$rc" ]; then
 else
 	txt="missing"
 fi
-echo_label "$rc" && echo_yellow "$txt, consider generating: $osaft_gui --rc > $rc"
+echo_label "$rc" && echo_yellow "$txt, consider generating: »$osaft_gui --rc > $rc«"
 echo_foot
 
 # from here on, all **WARNINGS (from $osaft_exe) are unimportant  and hence
@@ -799,7 +871,7 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
-		text_miss="$text_miss 'cpan $m'"
+		text_miss="$text_miss »cpan $m«"
 		echo_red "$text_miss"
 		err=`expr $err + 1`
 	fi
