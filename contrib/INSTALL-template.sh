@@ -246,7 +246,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.98 22/11/19 14:20:58
+#?      @(#)  1.99 22/11/19 14:50:00
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -444,11 +444,15 @@ copy_file   () {
 	if [ 0 -lt $useenv ]; then
 		ext=${src##*.}
 		file=${src##*/}
+		# ugly hardcode match of extensions and names
 		case "$ext" in
-		    awk | cgi | pl | pm | sh | tcl | txt)  convert=1 ; ;;
+		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
 		esac
 		case "$file" in
-		    Makefile*)    convert=1 ; ;;
+		    usage_examples)       convert=1 ; ;;
+		    Dockerfile*)          convert=1 ; ;;
+		    Makefile*)            convert=1 ; ;;
+		    *_completion_o-saft)  convert=1 ; ;;
 		esac
 	fi
 	if [ 1 -eq $convert ]; then
@@ -506,7 +510,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.98 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.99 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
