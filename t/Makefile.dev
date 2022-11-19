@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.84 22/11/12 13:27:44
+#?      @(#) Makefile.dev 1.85 22/11/19 15:07:20
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.84
+_SID.dev           := 1.85
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -188,11 +188,21 @@ testarg-dev-o-saft_-post%:      TEST.args = --no-rc --header $(TEST.host)
 # do not execute script, just show: --n
 testarg-dev-contrib-install_openssl_%:  TEST.args = --n
 testarg-dev-INSTALL.sh_%:       TEST.args = --n /tmp/o-saft
+#   # returns following errors, which is OK for --n :
+#   #   ../INSTALL.sh: 787: cd: can't cd to /tmp/o-saft
+#   #   **ERROR: 040: /tmp/o-saft does not exist; exit
+#   #   **ERROR: 043: missing XXXX; file ignored
 # additional special option for INSTALL.sh
 testarg-dev-INSTALL.sh_--checkdev--other:   TEST.args += --checkdev --other
+testarg-dev-INSTALL.sh_--install--gnuenv:   TEST.args += --install  --gnuenv
+testarg-dev-INSTALL.sh_--install--useenv:   TEST.args += --install  --useenv
 
-ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other
-ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other
+ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other \
+			   testarg-dev-INSTALL.sh_--install--gnuenv \
+			   testarg-dev-INSTALL.sh_--install--useenv
+ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other \
+			   testarg-dev-INSTALL.sh_--install--gnuenv \
+			   testarg-dev-INSTALL.sh_--install--useenv
 
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
