@@ -169,11 +169,11 @@
 #?      --colour-blind  - same as --colour
 #?      --colour-not-blind  - use green instead of blue coloured texts
 #?      --other         - check for other SSL-related tool with  --checkdev
-#?      --useenv        - change #! (hashbang) lines to  #!/usr/bin/env
+#?      --useenv        - change #! (shebang) lines to  #!/usr/bin/env
 #?                        Applies only to files with following extensions:
 #?                          .awk  .cgi .pl  .sh  .tcl  .txt
 #?                        also applies to all Makefile* .
-#?                        The hashbang line  will only be changed when there
+#?                        The shebang line  will only be changed when there
 #?                        are no arguments given.
 #?                        Examples of changed lines:
 #?                            #!/bin/sh
@@ -188,23 +188,8 @@
 #?                            #!/usr/bin/perl -w
 #?                            #!/usr/bin/perl -w -I .
 #?
-#?      Note about  --useenv  option:
-#?      From the perspective of an end-user, using  /usr/bin/env seems to be
-#?      more convenient. The advantages are: it is most likely more portable
-#?      and it respects the user's environment variable  $PATH .
-#?      The disadvantages are:  /usr/bin/env does not allow arguments passed
-#?      to the specified program and it may have a security impact, as it is
-#?      not obvious which program is finally executed.
-#?      Also, some scripts use the program with arguments. When /usr/bin/env
-#?      is used instead, the use must call the scripts with these arguments.
-#?      Well, env can be used to pass arguments, examples:
-#?          /usr/bin/env sh -c '\prog -opt arg'
-#?          /usr/bin/env sh -c 'exec "$@"' sh -opt arg
-#?      This, a bit cumbersome approach, is not implemented here.
-#?
-#?      That's why the  hardcoded path for the program is used in its script
-#?      by default. But we provide the  --useenv  option here to change this
-#?      behaviour. It's up to user then, which solution fits better.
+#?      Please see  docs/concepts.txt  for details about /usr/bin/env .
+#?      It's up to user then, which solution fits better.
 #?
 #? EXAMPLES
 #?      $0
@@ -261,7 +246,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.97 22/11/19 01:11:00
+#?      @(#)  1.98 22/11/19 14:20:58
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -275,7 +260,7 @@ dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
-useenv=0                # 1 to change hashbang lines to /usr/bin/env
+useenv=0                # 1 to change shebang lines to /usr/bin/env
 other=0
 force=0
 optx=0
@@ -521,7 +506,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.97 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.98 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
