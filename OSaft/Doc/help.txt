@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.109 22/11/03 12:07:29
+# SID   @(#) help.txt 1.110 22/11/19 14:14:26
 
 NAME
 
@@ -155,6 +155,8 @@ CONCEPTS
         However, the user "should do something" if necessary depending on the
         reported results.
 
+        Developers may read more details on the concept in  docs/concepts.txt
+
     This help text
 
         The sequence of the sections in the help text doesn't strictly follow
@@ -170,10 +172,10 @@ CONCEPTS
         interpretation, if the result is "good" or "bad", to the user.
         Background:  it is not always possible to rate a result as  "good" or
         "bad" or "insecure" or whatever. That's why  O-Saft  can not give the
-        "the best" or a "proper"  recommendation.  In practice it  depends on
-        the context what a recommendation or countermeasure should be. That's
-        why results are marked  'yes'  or  'no'  if considered "questionable"
-        or "not good" (for example according other checks).
+        "the best" or "proper" recommendation.  In practice it depends on the
+        context what a recommendation or countermeasure should be. That's why
+        results are marked  'yes'  or  'no'  if considered "questionable", or
+        "not good" (for example according other checks).
 
         For more details please see  RESULTS  below.
 
@@ -5050,6 +5052,7 @@ DOCUMENTATION
               $0 --test
 
           * reading:
+              docs/concepts.txt
               Makefile.pod
               perldoc Makefile.pod
 
@@ -5106,7 +5109,6 @@ TODO
         * new features
           ** client certificate
           ** some STRATTLS need : HELP STARTTLS HELP as output of HELPs are different
-          ** support: PCT protocol
           ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
           ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
 
