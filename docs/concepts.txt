@@ -1,12 +1,10 @@
 
 ###############################################################################
 ##                                                                           ##
-##  This file/text is still a draft (Januar 2022).                           ##
-##  It describes the main concepts used for programming O-Saft               ##
+##  This file/text is not yet complete (November 2022).                      ##
+##  It describes the main concepts used for programming O-Saft.              ##
 ##                                                                           ##
 ###############################################################################
-
-Zeilen, die mit # beginnen, sind in OSaft/Doc/help.txt schon eingetragen
 
 
 PROLOG
@@ -213,6 +211,7 @@ DEVELOPMENT
           * Programming: +info +check
           * Testing
           * Make for development
+          * Portability
 
     Documentation (user and development)
 
@@ -266,7 +265,7 @@ DEVELOPMENT
         amount of information too.
         Hence, no special commands and options for debugging are implemented.
         Either use perl's  -d  option, or change the code.  Further hints can
-        be found in ... TBD ...
+        be found in ... # TODO ...
 
     Programming: arguments in general
 
@@ -296,6 +295,7 @@ DEVELOPMENT
 
         Since VERSION 22.02.22  --ciphermode=intern  is the default.
 
+# TODO: ... 
 To get the ciphers supported by the server, a basic connection is made
 using IO::Socket:SSL->new(). This connection does not check the server's
 certificate as it is not important for the cipher. It also uses SNI by
@@ -310,6 +310,7 @@ TLSv1 or even SSLv3).
 
    Programming: +info +check
 
+# TODO: ... 
 All other commands, beside +cipher use Net::SSLeay to connect to the
 server. However, Net::SSLeay uses IO::Socket:SSL underneath.
 In this case, the connection must succeed. We encounter the same
@@ -322,20 +323,71 @@ at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
 
     Testing
 
-        TBD ... 
+# TODO: ... 
 	Documentation about testing can be found in the section  TESTING  in
           OSaft/Doc/help.txt
         This should be moved to this document and then referenced in there.
 
     Make for development
 
-        TBD ... explain make system and targets ...
+# TODO: ... explain make system and targets ...
+
+    Portability
+
+        As decribed above in "Ancient systems", the tools should work on many
+        systems.  So we use traditional interpreters fpr the core tools only,
+        these are: perl sh awk sed .
+
+        Further development most likely continues on modern systems. On these
+        modern and more sophisticated tools can be expected, like GNU Make or
+        GNU awk (gawk).
+        It's assumed that further development continues on modern systems and
+
+        The scripts use hardcoded path in their shebang line, for a detailled
+        discussion see "Using env" below.
+
+    Using env
+
+        From the perspective of an end-user, using  /usr/bin/env  seems to be
+        more convenient than hardcoded paths.  The advantages are: it is most
+        likely more portable and it respects the user's  environment variable
+        $PATH . The disadvantages are:  /usr/bin/env  doesn't allow arguments
+        passed to the specified program (exception see below) and it may have
+        a security impact, because it is not obvious which program is finally
+        executed.
+
+        Also, some scripts use the program with arguments. When  /usr/bin/env
+        is used instead, the user must call the scripts with these arguments,
+        which violates our goal to provide a simple to use tool.
+        Well, some env can be used to pass arguments, examples:
+            /usr/bin/env sh -c '\prog -opt arg'
+            /usr/bin/env sh -c 'exec "$@"' sh -opt arg
+        This, a bit cumbersome approach, will not be implemented here.
+
+        GNU's  /usr/bin/env  supports the  -S/--split-string  option  to pass
+        such arguments to the program, example:
+            /usr/bin/env -S prog -opt arg
+
+        Using the old-school hardcoded path is simple and is known to work on
+        all platforms, while detecting the version of /usr/bin/env and how it
+        behaves, is hard work and not guaranteed to do the expected job.
+        
+        However, in some scripts /usr/bin/env is used, but in the most simple
+        way only.
+
+        That's why the  hardcoded path  for the program is used by default.
+        The installation script  INSTALL.sh  will provide options  to replace
+        it with  /usr/bin/env .
+
+        For more details on shebang and env, please read (last seen 11/2022):
+            https://www.in-ulm.de/~mascheck/various/shebang/
 
 
 STATUS CODE
 
         Why does O-Saft not support a  --fail  option?
 
+# TODO:
 Long answer: 
 
 Background: one of O-Saft's concepts is to "show important information" and to
@@ -459,7 +511,6 @@ EoT
 
    o-saft.pl
 
-
 Note that creating .o-saft.pl must be done once in the directory where
 o-saft.pl will be started.
 
@@ -471,10 +522,10 @@ GLOSSAR
 
         This glossar explains the words and terms used herein this document.
 
-        TBD ...
-
+# TODO: ... 
         developer
         user
+        program and tool are used interchangeable
         debug
         trace
         verbose
