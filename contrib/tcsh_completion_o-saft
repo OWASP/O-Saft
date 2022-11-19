@@ -1,4 +1,4 @@
-#?/bin/tcsh
+#!/bin/tcsh
 
 #? NAME
 #?      $0  -  tcsh completion function for o-saft, o-saft.pl, o-saft-tcl
