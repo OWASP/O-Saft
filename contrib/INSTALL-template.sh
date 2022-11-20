@@ -187,6 +187,9 @@
 #?                            #! /usr/bin/perl -w
 #?                            #!/usr/bin/perl -w
 #?                            #!/usr/bin/perl -w -I .
+#?      --gnuenv        - change #! (shebang) lines to  #!/usr/bin/env -S
+#?                        Applies the change to shebang lines with arguments.
+#?                        Implies  --useenv .
 #?
 #?      Please see  docs/concepts.txt  for details about /usr/bin/env .
 #?      It's up to user then, which solution fits better.
@@ -199,6 +202,7 @@
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
 #?      $0 /opt/bin/ --useenv
+#?      $0 /opt/bin/ --gnuenv
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
 #?      $0 --check   /opt/bin/ --colour
@@ -246,7 +250,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.99 22/11/19 14:50:00
+#?      @(#)  1.100 22/11/21 00:23:35
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -260,6 +264,7 @@ dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
+useenv=0                # 1 to change shebang lines to /usr/bin/env
 useenv=0                # 1 to change shebang lines to /usr/bin/env
 other=0
 force=0
@@ -455,14 +460,23 @@ copy_file   () {
 		    *_completion_o-saft)  convert=1 ; ;;
 		esac
 	fi
+	#dbx# \perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || echo skip $src ...
+	\perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || convert=0
 	if [ 1 -eq $convert ]; then
 		# only the very first line $. ist changed
 		if [ "$try" = "echo" ]; then
-		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\! /usr/bin/env $1|;}print;" '"'$src' > '$dst'"
+		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\!/usr/bin/env $1|;}print;" '"'$src' > '$dst'"
 		    return
 		fi
-		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\! /usr/bin/env $1|;}print;' \
-		        "$src" > "$dst"  || exit 4
+		# convert only  "#! /some/path/tool"
+		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\!/usr/bin/env $1|;}print;' \
+			"$src" > "$dst"  || exit 4
+		if [ 0 -lt $gnuenv ]; then
+		# convert only  "#! /some/path/tool arg..."
+		\perl -lane 'if(1==$.){exit 1 if m|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|;}' "$src" || \
+		\perl -lane 'if(1==$.){s|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|#\!/usr/bin/env -S $1 $2|;}print;' \
+			"$src" > "$dst"  || exit 4
+		fi
 		# set proper modes
 		\chmod 555 "$dst" # assuming that it is and should be executable
 
@@ -506,11 +520,13 @@ while [ $# -gt 0 ]; do
           '--blind')            colour="34m";   ;; # alias
           '--useenv')           useenv=1;       ;;
           '--use-env')          useenv=1;       ;; # alias
+          '--gnuenv')           gnuenv=1; useenv=1; ;;
+          '--gnu-env')          gnuenv=1; useenv=1; ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.99 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.100 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
