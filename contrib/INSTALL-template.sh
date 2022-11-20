@@ -250,7 +250,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.100 22/11/21 00:23:35
+#?      @(#)  1.101 22/11/21 00:29:13
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -454,7 +454,9 @@ copy_file   () {
 		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
 		esac
 		case "$file" in
+		    o-saft)               convert=1 ; ;;
 		    usage_examples)       convert=1 ; ;;
+		    o-saft-docker*)       convert=1 ; ;;
 		    Dockerfile*)          convert=1 ; ;;
 		    Makefile*)            convert=1 ; ;;
 		    *_completion_o-saft)  convert=1 ; ;;
@@ -526,7 +528,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.100 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.101 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
