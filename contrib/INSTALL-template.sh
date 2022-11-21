@@ -250,7 +250,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.102 22/11/21 16:49:49
+#?      @(#)  1.103 22/11/21 18:42:17
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -528,7 +528,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.102 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.103 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -543,7 +543,7 @@ text_alt="file from previous installation, try running »$0 --clean $inst_direct
 
 if [ '..' = "$dir" ]; then
 	# avoid errors in $0 if called by own make
-	[ "$OSAFT_MAKE"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
+	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
 fi
 
 # --------------------------------------------- main
