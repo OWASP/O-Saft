@@ -250,7 +250,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.101 22/11/21 00:29:13
+#?      @(#)  1.102 22/11/21 16:49:49
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -528,7 +528,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.101 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.102 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -540,6 +540,11 @@ fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 text_dev="did you run »$0 --clean $inst_directory«?"
 text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
+
+if [ '..' = "$dir" ]; then
+	# avoid errors in $0 if called by own make
+	[ "$OSAFT_MAKE"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
+fi
 
 # --------------------------------------------- main
 
