@@ -47,14 +47,18 @@
 #=# (warnings are ok if »git clone« will be used for development)
 #=#            Dockerfile	found; did you run »INSTALL.sh --clean«?
 #=#              Makefile	found; did you run »INSTALL.sh --clean«?
+#=#                    t/	found; did you run »INSTALL.sh --clean«?
+#=#     contrib/critic.sh	found; did you run »INSTALL.sh --clean«?
+#=#               CHANGES	found; did you run »INSTALL.sh --clean«?
+#=#                README	found; did you run »INSTALL.sh --clean«?
 #=#--------------------------------------------------------------
 #=
 #=# check for used O-Saft programs (according $PATH)
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	22.05.22 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	    2.23 /opt/o-saft/o-saft.tcl
+#=#             o-saft.pl	22.11.22 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	    2.35 /opt/o-saft/o-saft.tcl
 #=#                o-saft	    1.26 /opt/o-saft/o-saft
-#=# contrib/o-saft-standalone.pl 22.05.22 contrib/o-saft-standalone.pl
+#=# contrib/o-saft-standalone.pl 22.11.22 contrib/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -66,18 +70,20 @@
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
-#=#              Net::DNS	    1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
+#=#                                      ancient module found, try installing newer version, at least  1.49
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
-#=#                 osaft	22.05.22 osaft.pm
-#=#          Net::SSLinfo	22.02.12 Net/SSLinfo.pm
-#=#         Net::SSLhello	22.05.22 Net/SSLhello.pm
-#=#        OSaft::Ciphers	22.05.22 OSaft/Ciphers.pm
-#=#           OSaft::Data	22.05.22 OSaft/Data.pm
-#=#           OSaft::Text	22.05.22 OSaft/Text.pm
+#=#                 osaft	22.11.22 osaft.pm
+#=#          Net::SSLinfo	22.11.12 Net/SSLinfo.pm
+#=#         Net::SSLhello	22.06.22 Net/SSLhello.pm
+#=#        OSaft::Ciphers	22.11.22 OSaft/Ciphers.pm
+#=#           OSaft::Data	22.06.22 OSaft/Data.pm
+#=#           OSaft::Text	22.11.22 OSaft/Text.pm
 #=#  OSaft::error_handler	19.11.19 OSaft/error_handler.pm
-#=#      OSaft::Doc::Data	22.02.13 OSaft/Doc/Data.pm
+#=#      OSaft::Doc::Data	22.11.13 OSaft/Doc/Data.pm
 #=#----------------------+---------------------------------------
 #=
 #=# check for important Perl modules used by installed O-Saft
@@ -85,11 +91,12 @@
 #=# testing /opt/o-saft/o-saft.pl ...	
 #=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
 #=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=#----------------------+---------------------------------------
@@ -250,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.103 22/11/21 18:42:17
+#?      @(#)  1.104 22/11/23 20:50:45
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -528,7 +535,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.103 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.104 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -541,12 +548,20 @@ clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 text_dev="did you run »$0 --clean $inst_directory«?"
 text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
+# --------------------------------------------- main
+
+# ------------------------ expected mode --------- {
+if [ "$mode" = "expected" ]; then
+	echo "## Expected output (sample) when called like:"
+	echo "##     $0 --check /opt/o-saft"
+	\sed -ne '/^#=/s/#=//p' $0
+	exit 0
+fi; # expected mode }
+
 if [ '..' = "$dir" ]; then
 	# avoid errors in $0 if called by own make
 	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
 fi
-
-# --------------------------------------------- main
 
 # ------------------------- default mode --------- {
 if [ -z "$mode" ]; then
@@ -617,14 +632,6 @@ if [ "$mode" = "cgi" ]; then
 	$try \ln -s "$inst_directory" $lnk  || echo_red "**ERROR: 053: symlink $lnk failed"
 	exit 0
 fi; # cgi mode }
-
-# ------------------------ expected mode --------- {
-if [ "$mode" = "expected" ]; then
-	echo "## Expected output (sample) when called like:"
-	echo "##     $0 --check /opt/o-saft"
-	\sed -ne '/^#=/s/#=//p' $0
-	exit 0
-fi; # expected mode }
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
