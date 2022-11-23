@@ -37,8 +37,8 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.282 22/11/04 10:43:53";
-our $VERSION        =  "22.11.12";  # official verion number of tis file
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.283 22/11/23 21:12:47";
+our $VERSION        =  "22.11.22";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
 use Socket;
