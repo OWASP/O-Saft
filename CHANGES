@@ -1,4 +1,50 @@
 
+Version: 22.11.22
+  BUGFIX
+    * Net/SSLinfo.pm: BF: avoid "Use of uninitialized value ..." in datadump()
+    * OSaft/Ciphers.pm: BF: using string '0 ' if value is 0 in _ciphers_init()
+    * OSaft/Fata.pm: BF: string <<internal>> changed to internal to avoid conflict in HTML
+    * o-saft.pl: BF: output for --ciphermode=dump corrected
+    * o-saft.cgi: BF: regex for arguments to be ignored corrected
+    * o-saft.tcl: BF: generating content for "help" improved
+    * t/Makefile: ET: name of targets unified: testarg-hlp-*
+    * t/Makefile.cipher: BT: targets testcmd-cipher-+test-ciphers-list-* corrected (are testarg-* now)
+    * contrib/gen_standalone.sh: BF: better check for include of o-saft-dbx.pm
+  CHANGES
+    * o-saft.pl: EF: print number of checked ciphers for each protocol
+    * o-saft.pl: EF: print warning if no ciphers specified
+    * o-saft-man.pm: EF: new design for o-saft.cgi.html
+    * o-saft-man.pm: EF: man_docs_write() (writes --help=ciphers-text also)
+    * o-saft.cgi: EF: regex for illegal commands and options improved
+    * o-saft.tcl: ED: "Key Bindings" documented
+    * o-saft.tcl: EF: osaft_write_docs() used "o-saft.pl --help=gen-docs" to generate files
+    * OSaft/Doc/help.txt: EF: description for --cipherrange=RANGE improved; --cipherpattern=PATTERN added
+    * OSaft/Ciphers.pm: EF: cipher suites SM4-GCM-SM3 and SM4-CCM-SM3 added
+    * OSaft/Ciphers.pm: EF: security for ciphers *PSK*CBC* set mediu
+    * OSaft/Ciphers.pm: ET: test functionality improved
+    * OSaft/Ciphers.pm: EF: @cipher_iana_recomended added (list of ciphers suites recommended by IANA)
+    * t/Makefile.cipher: ET: tests for --ciphermode=dump added
+    * t/Makefile.dev: ET: new Targets to test INSTALL.sh
+    * Makefile: EF: enforce LANG=C environment for all tests
+    * Makefile: EF: remove useless environment variables
+    * Makefile: EF: include t/Makefile.gen t/Makefile.mod
+    * Makefile: ET: target docs and do.data improved
+    * contrib/HTML-table.awk: EF: improved for cipher lists; some header lines handled special
+    * contrib/*_completion_o-saft: EF: completion for make added
+    * checkAllCiphers.pl: EF: trace variable assignment improved
+  NEW
+    * o-saft.pl: EF: --cipher=CIPHER implemented
+    * OSaft/Ciphers.pm: NF: get(pfs) implemented
+    * t/Makefile: NT: target commands of testarg-%.log and testcmd-%.log piped to filter
+    * t/Makefile.gen: NF: new Makefilewith user defined functions
+    * t/Makefile.pod: EF: new section Make:target generation
+    * t/Makefile.inc: EF: new text for TEST.logtxt; EXE.arg-logfilter and EXE.cmd-logfilter added
+    * t/Makefile.dev: NT: targets for get_keys_list and get_names_list added
+    * t/Makefile.dev: ET: targets for testng OSaft/Ciphers.pm functions added
+    * t/Makefile.dev: ET: targets testarg-dev-o-saft-sh--post-* added
+    * t/Makefile.misc: NT: new target testarg-misc_hashbang
+    * contrib/INSTALL-template.sh: EF: copy_file implemented with --useenv; descrition for --useenv added
+
 Version: 22.06.22
   BUGFIX
     * o-saft-man.pm: BF: check if no parameter given corrected
