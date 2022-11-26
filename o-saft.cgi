@@ -139,7 +139,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.67 22/10/27 22:39:21";
+my $SID_cgi = "@(#) o-saft.cgi 1.68 22/11/26 20:28:04";
 my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -234,7 +234,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.67\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.68\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -490,8 +490,9 @@ if ($me =~/\.cgi$/) {
 
 	# prepare execution environment
 	local $ENV{LD_LIBRARY_PATH} = "$openssl/lib/";
-	local $ENV{PATH}  = "$openssl/bin/";
-	      $ENV{PATH} .= ':' . $ENV{PATH}   if (defined $ENV{PATH}); # defensive programming
+	my    $path = $ENV{PATH};
+	local $ENV{PATH}   = "$openssl/bin/";
+	      $ENV{PATH}  .= ':' . $path   if (defined $path);  # defensive programming
 	local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 
 	# start $osaft
