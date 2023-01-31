@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.85 22/11/26 19:57:57";
+my  $SID_man= "@(#) o-saft-man.pm 2.86 23/01/31 18:34:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -403,6 +403,7 @@ EoFUNC
     --bg-mbox:      rgba(0,0,0,0.9);
     --bg-mdiv:      linear-gradient(#fff,#226);
     --bg-button:    linear-gradient(#d3d3d3,#fff);  /* lightgray */
+    --bg-button-h:  linear-gradient(#fff,#d3d3d3);  /* lightgray */
     --bg-start:     linear-gradient(#ffd700,#ff0);  /* gold */
     --bg-start-h:   linear-gradient(#ff0,#ffd700);  /* gold */
     --bg-hover:     #d3d3d3;            /* lightgray */
@@ -443,6 +444,7 @@ EoROOT
     border:         var(--border-1);
     border-radius:  4px;
    }
+ .navdiv div a:hover, .b:hover { background: var(--bg-button-h); }
  .b { display: inline-block; }              /* ^top and start button */
 EoButton
 
@@ -780,7 +782,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.85'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.86'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2623,7 +2625,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.85 2022/11/26
+2.86 2023/01/31
 
 
 =head1 AUTHOR
