@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.51 22/11/16 10:06:25"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.52 23/03/06 19:16:39"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -239,7 +239,8 @@ sub _warn   {
     #? print warning if wanted; SEE Note:Message Numbers
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
-    my ($_no) = "@txt" =~ m/^([0-9(]{3})/;  # message number, usually
+    my $_no =  "@txt";
+       $_no =~ m/^([0-9(]{3})/;  # message number, usually
     return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't pass $cfg{use}{warning}
     # other configuration values can be retrieved from %cfg
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
