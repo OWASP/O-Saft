@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.85 22/11/19 15:07:20
+#?      @(#) Makefile.dev 1.86 23/04/02 01:57:20
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.85
+_SID.dev           := 1.86
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -116,7 +116,10 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 #
 
 # usually: _EXE.perldoc-opt
-_EXE.gendoc-opt := $(_EXE.$(EXE.gendoc)-opt)
+_EXE.gendoc-opt    := $(_EXE.$(EXE.gendoc)-opt)
+_EXE.log-filterarg := awk '/^perl /{$$3="  TODAY  ";}{print}'
+    # testarg filter to unify generated date in pod and nroff files
+    # willbe used in testarg-%.log only
 ifndef dev-macros-generated
     # SEE Make:macros
     # need to call program in this directory and not the one found via $PATH
@@ -137,6 +140,7 @@ ifndef dev-macros-generated
     $(foreach _prg, $(LIST.programs),\
         $(eval _name=$(subst /,-,$(_prg)))    \
         $(eval _testarg=testarg-dev-$(_name)) \
+        $(eval $(_testarg)_pod:     EXE.log-filterarg = $(_EXE.log-filterarg)) \
         $(eval $(_testarg)_pod:     EXE.pl    = $(EXE.gendoc) $(_EXE.gendoc-opt)) \
         $(eval $(_testarg)_pod:     TEST.init = ../$(_prg)) \
         $(eval $(_testarg)_--help:  TEST.init = --help)     \
