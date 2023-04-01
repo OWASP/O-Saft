@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.73 22/11/19 09:56:51
+#?      @(#) Makefile.misc 1.74 23/04/01 22:59:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.73
+_SID.misc          := 1.74
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -170,7 +170,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.73: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.74: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -308,6 +308,7 @@ profile.sub%:
 # better use dprof.out below
 
 # requires perl module Devel/NYTProf or package, for example libdevel-nytprof-perl
+_TEST.nytprof.dir   = $(TEST.logdir)/nytprof
 _TEST.nytprof.log   = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_TEST.nytprof.log)
 	@$(TRACE.target)
@@ -316,8 +317,8 @@ nytprof.out: $(_TEST.nytprof.log)
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
 	@$(TRACE.target)
-	@$(EXE.nytprof) $(TEST.opt.nytprof) --file $<
-	@echo "# inspect with: firefox $(TEST.dir)/nytprof/index.html"
+	@$(EXE.nytprof) $(TEST.opt.nytprof) -out $(_TEST.nytprof.dir) --file $<
+	@echo "# inspect with: firefox $(_TEST.nytprof.dir)/index.html"
 nytprof: nytprof.html
 
 # requires perl module Devel/DProf or package, for example libdevel-dprof-perl
@@ -419,7 +420,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.73: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.74: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
