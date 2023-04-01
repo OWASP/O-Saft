@@ -12,9 +12,6 @@
 #?      make help.test
 #?
 # HACKER's INFO
-#       For details please see
-#           ../Makefile  Makefile.help  Makefile.template
-#
 #    Naming conventions for t/Makefile*
 #       * variable names have the prefix  TEST  and  HELP .
 #       * target names for public use have the prefix  test.
@@ -51,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.142 22/11/13 13:26:27
+#?      @(#) Makefile 1.143 23/04/02 01:19:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -60,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.142
+_SID.test          := 1.143
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -95,8 +92,8 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 ifndef test-remove-environment-variables
     # most environment variables should be ignored,  to avoid unexpected
     # behaviour and to keep our list of variables clean;
-    # forst define list of required variables, then get list of existing
-    # environment variable and remove all except the required ones
+    # first define list of required variables, then get list of existing
+    # environment variables and remove all except the required ones
     $(eval _keep = OSAFT_MAKE   LANG \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
@@ -123,7 +120,7 @@ TEST.logdir     = $(TEST.dir)/log
 TEST.logtxt    := <<random value replaced by make>>
 TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 
-# following may be redefined in included t/Makefile*
+# following may be redefined in any included t/Makefile*
 #TEST.init      := --header
 #TEST.args      :=
 
@@ -140,7 +137,7 @@ TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 # defined in other t/Makefile*
 # ALL.tests =
 
-#  $(SRC.rc)  may not be defined here, hence hardcoded
+# $(SRC.rc)  may not be defined here, hence hardcoded
 
 ifndef SRC.contrib.dir
     SRC.contrib.dir = contrib
@@ -151,7 +148,7 @@ endif
 # Hence an additional variable is used.
 # TODO: not public, not documented, variable needs to be defined here
 TRACE.target.log    =
-    #  example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
+    # example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
 TEST.today         := $(shell date +%Y""%m%d)
     # current date in ISO format
@@ -164,7 +161,7 @@ EXE.log-tkdiff     := tkdiff
 EXE.diffs          := diff xxdiff mgdiff tkdiff
 EXE.diff           := tkdiff
 EXE.log-diff        = $(EXE.log-tkdiff)
-    # chaneg EXE.log-diff to use another program
+    # change EXE.log-diff to use another program
 
 # need a usable way to change generator for man-pages
 EXE.gendoc.perldoc := perldoc
@@ -200,7 +197,7 @@ _EXE.pod2man-opt   := --utf8
 #     _EXE.target_to_arr.awk    - extract target names and store uniquely in arr[]
 #     _EXE.print_arr_END.awk    - print collected data from arr[]
 #     _EXE.print_file.awk       - either print separator line or the filename
-TEST.target_prefix :=   [a-zA-Z][_a-zA-Z.]
+TEST.target_prefix     := [a-zA-Z][_a-zA-Z.]
    # matching target names not starting with _
 _EXE.macro_by_line.awk := /^[a-zA-Z_][a-zA-Z_.]* *=/{sub(/=/,"",$$1);print $$1}
 _EXE.target_by_line.awk:= /^[a-zA-Z_][a-zA-Z_.]* *:/{sub(/:/,"",$$1);print $$1}
@@ -208,9 +205,10 @@ _EXE.target_to_arr.awk  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
 _EXE.print_arr_END.awk := END{for(idx in arr){print idx}}
 _EXE.print_file.awk    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 
-# if target was test*-compare-v or test*-move-v  TRACE.target  is not empty, so
-# checking this variable if not empty is sufficent to print verbose information
-# not tested if following defines could be written as macros
+# TRACE.target is not empty if target was  test*-compare-v or test*-move-v . So
+# it is sufficent to check TRACE.target. If it's not empty, verbose information
+# will be printed.
+# TODO: not tested if following defines could be written as macros
 # SEE Make:defines with commands
 
 define EXE.log-compare
@@ -300,8 +298,8 @@ help.test.all:      help.test.test.all
 	@$(TRACE.target)
 # convenience to satisfy  help.test.all
 
-# help.test.test would only print the HELP-* texts from herein.
-# All other tests from the individual t/Makefile.*  files have their own HELP-*
+# help.test.test would only print the  HELP-*  texts from herein.
+# All other tests from the individual t/Makefile.* files have their own  HELP-*
 # variable their. help.test.test should also print hints how to get information
 # about these other targets. Therefore the auxiliary target  _help_list  exists
 # in  Makefile  which is used as dependency here.
@@ -359,12 +357,12 @@ HELP-testcmd-test.internal = print GNU Make's internals and global project setti
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(Project))
-# NOTE: $(_SID*) variables indicate if a sub-makefile was included.
+# NOTE: $(_SID*) variables indicate if a t/Makefile* was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
-#       the targets executes and not when the Makefile is read.
+#       the target executes and not when the Makefile is read.
 # NOTE: when target testcmd-test.internal is called with  -n ; the command:
 #           @echo '# $$(MAKE)          = $(MAKE)'
-#       it will produce output:
+#       will produce output:
 #           # $(MAKE)          = make
 #       SEE GNU Make:MAKE vs. MAKE_COMMAND
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
@@ -481,10 +479,10 @@ $(TEST.logdir):
 	@mkdir $@
 
 HELP-test.links = create required symbolic links in '$(TEST.dir)'
-# creating links is scary, fails if they exist; therefore ln --force is used,
-# but this may destroy existing links or files silently
-# because the target itself is never created, it will always be executed
-# use this target (rule)  with care!
+# Creating links is scary, fails if they exist; therefore ln --force is used,
+# but this may destroy existing links or files silently.
+# Because the target itself is never created, it will always be executed. Use
+# this target (rule)  with care!
 ../%:
 	@$(TRACE.target)
 	cd $(TEST.dir) && ln --force -s $@
@@ -630,9 +628,9 @@ testarg-%.log: $(TEST.logdir) _FORCE
 # addditional pattern rule for each  testcmd-DDD,  the general  pattern rule
 # testcmd-%  is used.  It handles all the individual targets which contain the
 # hostname.
-# Unfortunatelly, this pattern contains  DDD_  (for example 001_host.some.tld)
-# as hostname.  This  DDD_  prefix must then be removed in the target command,
-# the  $(shell awk ...)  does the dirty work. in detail (as defined below):
+# Unfortunately, this pattern contains DDD_ (for example 001_host.some.tld) as
+# hostname. This  DDD_  prefix must then be removed in the target command, the
+# $(shell awk ...)  does the dirty work. in detail (as defined below):
 #       # pattern rule to handle all targets testcmd-DDD_HOSTNAME
 #       testcmd-%:
 #       #
@@ -680,7 +678,7 @@ testcmd-%:
 
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
-# created file to name which contains the current date.
+# created logfile to name which contains the current date.
 # Finally, if current logfile is/was missing, use newly created one:
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 # diff's STDERR is discarded (may return: "file does not exist").
