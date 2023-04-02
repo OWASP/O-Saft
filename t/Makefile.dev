@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.87 23/04/02 08:55:25
+#?      @(#) Makefile.dev 1.88 23/04/02 15:09:14
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.87
+_SID.dev           := 1.88
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -117,12 +117,10 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 
 # usually: _EXE.perldoc-opt
 _EXE.gendoc-opt    := $(_EXE.$(EXE.gendoc)-opt)
-_dumm = $$$$
-#EXE.log-filterarg := awk '/^perl /{$$3 ="  TODAY  ";}{print}'
-    # fails with GNU Make, hence using following
-_EXE.log-filterarg := awk '/^perl /{sub(/20..-[0-9][0-9]-[0-9][0-9]/,"OSAFT_DATE");}{print}'
-    # testarg filter to unify generated date in pod and nroff files
-    # willbe used in testarg-%.log only
+_EXE.log-filterarg := sed '/^perl /s/ 20..-[0-9][0-9]-[0-9][0-9] / OSAFT_DATE /'
+    # quick&dirty filter, may macth and change valid data in rare cases
+    # SEE Make:EXE.log-filter
+    # SEE GNU Make:Dragons
 ifndef dev-macros-generated
     # SEE Make:macros
     # need to call program in this directory and not the one found via $PATH
