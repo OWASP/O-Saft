@@ -1,4 +1,4 @@
-#! /usr/bin/perldoc 
+#! /usr/bin/perldoc
 
 =pod
 
@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.57 22/11/12 09:47:33
+@(#) Makefile.pod 1.58 23/04/02 15:05:33
 
 =head1 AUTHOR
 
@@ -359,7 +359,7 @@ Each Makefile defines its own unique SID as variable with a version number
 as value.  This SID is used  several times verbatim.  One might argue that
 the variable  _SID  or  _SID.*  should be used instead for all usages. But
 it is used verbatim to ensure  that exactly this string is used and cannot
-be overwritten (i.e. with an environment variable) when make is called. 
+be overwritten (i.e. with an environment variable) when make is called.
 If a Makefile is changed, all occurrences of the string must be changed.
 
 The value of the _SID.* variables should be managed by the version control
@@ -458,7 +458,7 @@ Naming conventions for targets:
 
 Examples:
 
-    testcmd-cmd-+check_localhost    - test command +check of $(SRC.pl) 
+    testcmd-cmd-+check_localhost    - test command +check of $(SRC.pl)
                                       with parameter localhost
                                       target can be found in Makefile.cmd
 
@@ -713,7 +713,7 @@ rewritten with the real target name instead of the escaped variable.
 
 GNU Make's >3.81 documentation states that the first matching pattern rule
 will be used and others are not executed. First means: the first appearing
-rule in the Makefile. On some systems the last defined  pattern rule  will 
+rule in the Makefile. On some systems the last defined  pattern rule  will
 be executed, unfortunately.
 This behaviour inhibits that  the sequence of rules  can be used to ensure
 the execution of a special rule.
@@ -725,11 +725,24 @@ As workaround a more specific pattern rule is defined in such cases.
 Traditionally $(MAKE) is used for the make command itself. For convenience
 t/Makefile.inc  redefines  MAKE  to contain  -f Makefile  .
 
-When  $(MAKE)  is used in documentation (variables or texts),  make should 
+When  $(MAKE)  is used in documentation (variables or texts),  make should
 be printed, usually. It is recommended to use  $(MAKE_COMMAND)  there.
 
 When using  $(MAKE)  is used in quoted texts, for example:  echo "$(MAKE)"
 GNU Make behaves strange and evaluates the line before printing).
+
+
+=head2 GNU Make:Dragons
+
+Sometimes GNU Make behaves strange when a literal $ character must be used
+in the value of a variable. The usual way is to double it like:
+
+    TEST.var := awk '/match/{ $$1 = "matched"; }'
+
+If it does not work proper, it mainly renders to the empty string when the
+variable is used.
+
+Currently (2023) no workaround is known. Try to avoid $ then.
 
 
 =head1 O-Saft Makefile Annotations
@@ -806,7 +819,7 @@ do this, but they need to be called with the proper value of the pattern.
 That's why we need a single target for each argument.
 
 The first goal to do this is to write each of these unique targets without
-commands (recipe). When called, they finally match a proper  pattern rule. 
+commands (recipe). When called, they finally match a proper  pattern rule.
 Example:
 
     testarg-%:
@@ -858,7 +871,7 @@ As no commands  are defined for the targets,  they (above example) finally
 As no commands are defined for the targets, they finally match the generic
 target  testarg-% . Currently supported pattern rules in t/Makefile are:
 
-    testarg-%  and  testcmd-% 
+    testarg-%  and  testcmd-%
 
 This still allows to use special or additional settings for the  generated
 targets. Such settings must be done explicitly in the calling Makefile.* .
@@ -887,7 +900,7 @@ Because there are a some (GNU Make) restrictions for allowed characters in
 target names, some characters of the values need to be substituted.  These
 charcters are in particular / : and =  . Means that ARGUMENT can be like:
 
-    --option=value 
+    --option=value
 
 Note that the tools are called in the test directory, ./t usually, they're
 and should not be found via  $PATH . So the value assigned to EXE.pl  must
@@ -1035,6 +1048,8 @@ are tested.
 Unfortunately  this  results in  untested commands,  those defined  in the
 variable  _ignore-output-keys . An additional target  should exist to test
 these commands also.
+
+See also L<Make:OSAFT_MAKE>, L<Make:EXE.log-filter>, L<GNU Make:Dragons>.
 
 
 =head2 Make:--dry-run
@@ -1222,6 +1237,8 @@ mainly strings printed in debugging or trace mode.
 To avoid dependencies to be fulfilled at runtime, STR_MAKEVAL  is not used
 in all tools but hardcoded there again. This may/should change in future.
 
+See also L<Make:--ignore-output>, L<Make:EXE.log-filter>, L<GNU Make:Dragons>.
+
 
 =head2 Make:generating help
 
@@ -1245,6 +1262,48 @@ dynamically, example:
         HELP.doc +=\btest.$(arg)\t\# targets for testing something)\n )
 
 Unfortunately, this adds additional leading spaces to each generated line.
+
+
+=head2 Make:generating help files
+
+Many help and documentation texts are provided in files or are generated.
+
+For generating documentation in various formats, like POD, nroff, Makefile
+targets are used. Take care, that some of the tools for generation produce
+random output like  current date and time.  This behaviour is harmless for
+normal use, but may cause difficulties when comparing output  as in  *.log
+targets.
+
+See also L<GNU Make:Dragons>, L<Make:EXE.log-filter>.
+
+
+=head2 Make:EXE.log-filter
+
+To avoid diffs when testing with  *.log  targets, output can be piped to a
+filter which normalises the random text. In t/Makefile following variables
+are provided for the filter program:
+
+    EXE.log-filterarg := cat
+    EXE.log-filtercmd := cat
+
+The default filter program is  cat , which does nothing.
+
+The generalised use is like:
+
+    testcmd-some.target.log:
+        do-somthing | $(EXE.log-filtercmd) > $@
+
+To activate the filter, the variable  EXE.log-filterarg  EXE.log-filtercmd
+must be set. For example like:
+
+    EXE.log-filterarg := sed -ne 's/random text/OSAFT_MAKE/'
+
+This is usually done by defining the variable depending on a unique target
+like:
+
+    testcmd-some.target.log: EXE.log-filterarg := sed -ne 's/random text/OSAFT_MAKE/'
+
+See also L<Make:OSAFT_MAKE>, L<Make:--ignore-output>, L<GNU Make:Dragons>.
 
 
 =head2 EXE.pl:--trace-CLI
@@ -1281,7 +1340,7 @@ narrow down the problem source:
 * get list of all targets (and variables),  which match the specified one;
   for example to get list of  test.cgi  targets:
 
-    make t-test.cgi 
+    make t-test.cgi
 
 * use -d option for make
 
