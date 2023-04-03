@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.24 22/11/05 13:11:14";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.25 23/04/03 15:49:02";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -924,83 +924,68 @@ Defines all functions needed for trace and debug output in  L<o-saft.pl|o-saft.p
 
 =head1 METHODS
 
-=head2 Functions defined herein
-
-=over 4
-
-=item _yeast_ciphers_list( )
-
-=item _yeast_trac( )
-
-=item _yeast_init( )
-
-=item _yeast_exit( )
-
-=item _yeast_args( )
-
-=item _yeast( )
-
-=item _y_ARG( ), _y_CMD( ), _yline( )
-
-=item _vprintme( )
-
-=item _v_print( ), _v2print( ), _v3print( ), _v4print( )
-
-=item _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
-
-=back
-
-=head2 Functions for internal testing; initiated with option  C<--test-*>
-
-=over 4
-
-=item _yeast_test_help( )
-
-=item _yeast_test_data( )
-
-=item _yeast_test_init( )
-
-=item _yeast_test_maps( )
-
-=item _yeast_test_prot( )
-
-=item _yeast_test_methods( )
-
-=item _yeast_test_sclient( )
-
-=item _yeast_test_sslmap( )
-
-=item _yeast_test_ssleay( )
-
-=item _yeast_test( )
-
-=back
-
-=head2 Variables which may be used herein
-
-They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
-
-=over 4
-
-
-=item $SID_main
-
-=item %data
-
-=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, time_absolut, verbose
-
-=item %checks
-
-=item %dbx
-
-=item $time0
-
-=back
-
 Functions being used in L<o-saft.pl|o-saft.pl> should be defined as empty stub there.
 For example:
 
     sub _yeast_init() {}
+
+=head3 _yeast_ciphers_list( )
+
+=head3 _yeast_trac( )
+
+=head3 _yeast_init( )
+
+=head3 _yeast_exit( )
+
+=head3 _yeast_args( )
+
+=head3 _yeast( )
+
+=head3 _y_ARG( ), _y_CMD( ), _yline( )
+
+=head3 _vprintme( )
+
+=head3 _v_print( ), _v2print( ), _v3print( ), _v4print( )
+
+=head3 _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
+
+=head2 Functions for internal testing; initiated with option  C<--test-*>
+
+=head3 _yeast_test_help( )
+
+=head3 _yeast_test_data( )
+
+=head3 _yeast_test_init( )
+
+=head3 _yeast_test_maps( )
+
+=head3 _yeast_test_prot( )
+
+=head3 _yeast_test_methods( )
+
+=head3 _yeast_test_sclient( )
+
+=head3 _yeast_test_sslmap( )
+
+=head3 _yeast_test_ssleay( )
+
+=head3 _yeast_test( )
+
+=head2 VARIABLES
+
+Variables which may be used herein must be defined as `our' in L<o-saft.pl|o-saft.pl>:
+
+=head3 $SID_main
+
+=head3 %data
+
+=head3 %cfg, i.e. trace, traceARG, traceCMD, traceKEY, time_absolut, verbose
+
+=head3 %checks
+
+=head3 %dbx
+
+=head3 $time0
 
 
 =head1 SPECIALS
@@ -1015,7 +1000,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.24 2022/11/05
+2.25 2023/04/03
 
 =head1 AUTHOR
 
