@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.28 22/11/04 22:44:34";
+our $SID_osaft  =  "@(#) osaft.pm 2.29 23/04/03 15:35:08";
 our $VERSION    =  "22.11.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2972,15 +2972,15 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 
 =pod
 
-=head2 tls_text2key($text)
+=head3 tls_text2key($text)
 
 Convert text to internal key: 0x00,0x26 -> 0x03000026
 
-=head2 tls_key2text($key)
+=head3 tls_key2text($key)
 
 Convert internal key to text: 0x03000026 -> 0x00,0x26
 
-=head2 tls_const2text($constant_name)
+=head3 tls_const2text($constant_name)
 
 Convert TLS constant name to text (just replac _ by space).
 
@@ -3014,15 +3014,15 @@ sub tls_const2text      {  my $c=shift; $c =~ s/_/ /g; return $c; }
 
 =pod
 
-=head2 get_ciphers_range($range)
+=head3 get_ciphers_range($range)
 
 Get cipher suite hex values for given C<$range>.
 
-=head2 get_cipher_owasp($cipher)
+=head3 get_cipher_owasp($cipher)
 
 Get OWASP rating of given C<%cipher>.
 
-=head2 get_openssl_version($cmd)
+=head3 get_openssl_version($cmd)
 
 Call external $cmd (which is a full path for L<openssl|openssl>, usually) executable
 to retrive its version. Returns version string.
@@ -3079,7 +3079,7 @@ sub get_openssl_version {
 
 =pod
 
-=head2 get_dh_paramter($cipher, $data)
+=head3 get_dh_paramter($cipher, $data)
 
 Parse output of `openssl -msg' (given in $data) and returns DH parameters.
 Returns empty string if none found.
@@ -3154,55 +3154,55 @@ sub get_dh_paramter     {
 
 =pod
 
-=head2 get_target_nr($idx)
+=head3 get_target_nr($idx)
 
-=head2 get_target_prot($idx)
+=head3 get_target_prot($idx)
 
-=head2 get_target_host($idx)
+=head3 get_target_host($idx)
 
-=head2 get_target_port($idx)
+=head3 get_target_port($idx)
 
-=head2 get_target_auth($idx)
+=head3 get_target_auth($idx)
 
-=head2 get_target_proxy($idx)
+=head3 get_target_proxy($idx)
 
-=head2 get_target_path($idx)
+=head3 get_target_path($idx)
 
-=head2 get_target_orig($idx)
+=head3 get_target_orig($idx)
 
-=head2 get_target_start($idx)
+=head3 get_target_start($idx)
 
-=head2 get_target_open($idx)
+=head3 get_target_open($idx)
 
-=head2 get_target_stop($idx)
+=head3 get_target_stop($idx)
 
-=head2 get_target_error($idx)
+=head3 get_target_error($idx)
 
 Get information from internal C<%cfg{'targets'}> data structure.
 
-=head2 set_target_nr($idx, $index)
+=head3 set_target_nr($idx, $index)
 
-=head2 set_target_prot($idx, $protocol)
+=head3 set_target_prot($idx, $protocol)
 
-=head2 set_target_host($idx, $host_or_IP)
+=head3 set_target_host($idx, $host_or_IP)
 
-=head2 set_target_port($idx, $port)
+=head3 set_target_port($idx, $port)
 
-=head2 set_target_auth($idx, $auth-string)
+=head3 set_target_auth($idx, $auth-string)
 
-=head2 set_target_proxy($idx, $proxy-index))
+=head3 set_target_proxy($idx, $proxy-index))
 
-=head2 set_target_path($idx $path)
+=head3 set_target_path($idx $path)
 
-=head2 set_target_orig($idx, $original-argument))
+=head3 set_target_orig($idx, $original-argument))
 
-=head2 set_target_start($idx, $start-timestamp)
+=head3 set_target_start($idx, $start-timestamp)
 
-=head2 set_target_open($idx, $open-timestamp)
+=head3 set_target_open($idx, $open-timestamp)
 
-=head2 set_target_stop($idx, $end-timestamp)
+=head3 set_target_stop($idx, $end-timestamp)
 
-=head2 set_target_error($idx, $errors)
+=head3 set_target_error($idx, $errors)
 
 Set information in internal C<%cfg{'targets'}> data structure.
 
@@ -3237,11 +3237,11 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 
 =pod
 
-=head2 osaft::osaft_sleep($wait)
+=head3 osaft::osaft_sleep($wait)
 
 Wrapper to simulate "sleep" with perl's select.
 
-=head2 osaft::printhint($cmd,@text)
+=head3 osaft::printhint($cmd,@text)
 
 Print hint for specified command, additionl text will be appended.
 
@@ -3264,7 +3264,7 @@ sub printhint       {
 
 =pod
 
-=head2 osaft::test_cipher_regex( )
+=head3 osaft::test_cipher_regex( )
 
 Internal test function: apply regex to intended text/list.
 
@@ -3488,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.28 2022/11/04
+2.29 2023/04/03
 
 =head1 AUTHOR
 
