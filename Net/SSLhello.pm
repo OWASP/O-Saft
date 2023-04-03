@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "22.06.22";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.53 22/07/05 00:00:34",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.54 23/04/03 15:21:57",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -5214,7 +5214,7 @@ sub _doCheckAllExtensions ($$$$;$) {
 
 =pod
 
-=head2 parseServerKeyExchange( )
+=head3 parseServerKeyExchange( )
 
 Manually parse a Server Kex Exchange packet and detect KeyExchange length, according https://tools.ietf.org/html/rfc5246#section-7.4.3
 - DHE:   length of the DHparam (needed for openssl <= 1.0.1), e.g. dh, 2048 bits (dh in small letters to be different from openssl (large letters)
@@ -5894,7 +5894,7 @@ sub parseSSL2_ServerHello ($$$;$) {
 
 =pod
 
-=head2 parseTLS_ServerHello( )
+=head3 parseTLS_ServerHello( )
 
 # FIXME: missing
 
