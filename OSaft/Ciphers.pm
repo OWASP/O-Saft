@@ -41,7 +41,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.80 22/11/17 17:47:35";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.81 23/04/03 16:00:27";
 our $VERSION    = "22.11.22";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -136,22 +136,22 @@ provided for each value.
 
 =pod
 
-=head2 Variables
+=head3 Variables
 
 All variables except C<$cipher_results> are constants, and hence read-only. There
 is no need to change them in the calling program.
 
-=head2 Methods
+=head3 Methods
 
 Because all variables are constants, mainly getter methods are provided.
 The only setter method is C<set_sec> which is used to redefine the security value
 of an cipher by the user with the option  "--cfg-cipher=CIPHER=value"
 
-=head2 Testing
+=head3 Testing
 
 The getter methods can be used directly, see:  OSaft/Ciphers.pm --usage
 
-=head2 Documentaion
+=head3 Documentaion
 
 This documentation describes the public variables and methods only, but not the
 internal ones, in particular the  C<show_*()> functions.  Please see the source
@@ -160,26 +160,22 @@ itself for that.
 
 =head1 VARIABLES
 
-=over 4
-
-=item %ciphers
+=head3 %ciphers
 
 Hash with all cipher suites and paramters of each suite. Indexed by cipher ID.
 
-=item %ciphers_desc
+=head3 %ciphers_desc
 
 Describes the data structure in C<%ciphers>.
 
-=item %ciphers_notes
+=head3 %ciphers_notes
 
 Notes and comments for a specific cipher, documentation only.
 Will be referenced in C<%ciphers>.
 
-=item $cipher_results
+=head3 $cipher_results
 
 Pointer to hash with all checked ciphers.
-
-=back
 
 =cut
 
@@ -327,15 +323,15 @@ No methods are exported. The full package name must be used, which improves the
 readability of the program code. Methods intended for external use are:
 
 
-=head2 text2key($text)
+=head3 text2key($text)
 
 Convert hex text to internal key: 0x00,0x3D --> 0x0300003D.
 
-=head2 key2text($key)
+=head3 key2text($key)
 
 Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 
-=head2 set_sec(   $cipher_key)
+=head3 set_sec(   $cipher_key)
 
 Set value for 'security' in for specified cipher key.
 
@@ -383,47 +379,47 @@ sub set_sec     { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; 
 
 =pod
 
-=head2 get_param( $cipher_key, $key)
+=head3 get_param( $cipher_key, $key)
 
-=head2 get_openssl( $cipher_key)
+=head3 get_openssl( $cipher_key)
 
-=head2 get_ssl(   $cipher_key)
+=head3 get_ssl(   $cipher_key)
 
-=head2 get_sec(   $cipher_key)
+=head3 get_sec(   $cipher_key)
 
-=head2 get_keyx(  $cipher_key)
+=head3 get_keyx(  $cipher_key)
 
-=head2 get_auth(  $cipher_key)
+=head3 get_auth(  $cipher_key)
 
-=head2 get_enc(   $cipher_key)
+=head3 get_enc(   $cipher_key)
 
-=head2 get_bits(  $cipher_key)
+=head3 get_bits(  $cipher_key)
 
-=head2 get_mac(   $cipher_key)
+=head3 get_mac(   $cipher_key)
 
-=head2 get_dtls(  $cipher_key)
+=head3 get_dtls(  $cipher_key)
 
-=head2 get_rfc(   $cipher_key)
+=head3 get_rfc(   $cipher_key)
 
-=head2 get_notes( $cipher_key)
+=head3 get_notes( $cipher_key)
 
-=head2 get_name(  $cipher_key)
+=head3 get_name(  $cipher_key)
 
-=head2 get_names( $cipher_key)
+=head3 get_names( $cipher_key)
 
-=head2 get_aliases( $cipher_key)
+=head3 get_aliases( $cipher_key)
 
 Return all cipher suite names except the first cipher suite name.
 
-=head2 get_const( $cipher_key)
+=head3 get_const( $cipher_key)
 
-=head2 get_consts($cipher_key)
+=head3 get_consts($cipher_key)
 
-=head2 get_note(  $cipher_key)
+=head3 get_note(  $cipher_key)
 
-=head2 get_notes( $cipher_key)
+=head3 get_notes( $cipher_key)
 
-=head2 get_encsize( $cipher_key)
+=head3 get_encsize( $cipher_key)
 
 Return encryption block size of cipher suite.
 
@@ -500,15 +496,15 @@ sub get_encsize {
 #
 # =pod
 # 
-# =head2 get_encmode( $cipher_key)
+# =head3 get_encmode( $cipher_key)
 # 
 # Return type of encryption mode of cipher suite.
 # 
-# =head2 get_enctype( $cipher_key)
+# =head3 get_enctype( $cipher_key)
 # 
 # Return type of encryption of cipher suite.
 # 
-# =head2 get_mactype( $cipher_key)
+# =head3 get_mactype( $cipher_key)
 # 
 # Return type of MAC of cipher suite.
 # 
@@ -575,42 +571,42 @@ sub get_encsize {
 
 =pod
 
-=head2 get_key(   $cipher_name)
+=head3 get_key(   $cipher_name)
 
 Get hex key for given cipher name; searches in cipher suite names and in cipher
 suite constants. Given name must match exactly.
 
-=head2 get_data(  $cipher_key)
+=head3 get_data(  $cipher_key)
 
 Get all data for given cipher key from internal C<%ciphers> data structure.
 
-=head2 get_iana(  $cipher_key)
+=head3 get_iana(  $cipher_key)
 
 Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
 
-=head2 get_pfs(   $cipher_key|$cipher_name)
+=head3 get_pfs(   $cipher_key|$cipher_name)
 
 Return "yes" if cipher suite supports PFS, "no" otherwise.
 
-=head2 get_keys_list()
+=head3 get_keys_list()
 
 Get list of all defined (internal) hex keys for cipher suites in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
 
-=head2 get_names_list()
+=head3 get_names_list()
 
 Get list of all defined cipher suite names in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
 
-=head2 find_names( $cipher_pattern)
+=head3 find_names( $cipher_pattern)
 
 Find all matching cipher names for given cipher name (pattern).
 
-=head2 find_keys( $cipher_pattern)
+=head3 find_keys( $cipher_pattern)
 
 Find all matching hex keys for given cipher name (pattern).
 
-=head2 find_name( $cipher)
+=head3 find_name( $cipher)
 
 Find cipher key(s) for given cipher name or cipher constant.
 
@@ -743,14 +739,14 @@ sub find_name   {
 
 =pod
 
-=head2 sort_names(@ciphers)
+=head3 sort_names(@ciphers)
 
 Sort ciphers according their strength. Returns list with most strongest first. 
 
 C<@ciphers> is a list of cipher suite names. These names should be those used by
 openssl(1)  .
 
-=head2 sort_results(%unsorted)
+=head3 sort_results(%unsorted)
 
 Sort ciphers according their strength. Returns list with most strongest first. 
 
@@ -1678,7 +1674,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.80 2022/11/17
+2.81 2023/04/03
 
 
 =head1 AUTHOR
