@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.86 23/01/31 18:34:04";
+my  $SID_man= "@(#) o-saft-man.pm 2.87 23/04/03 15:53:24";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -782,7 +782,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.86'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.87'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2522,9 +2522,7 @@ For compatibility with other programs and modules it also supports:
 
 =head1 METHODS
 
-=over 2
-
-=item * printhelp($format)
+=head3 * printhelp($format)
 
 Public method for  all functionality.  The generated output format depends
 on the $format parameter, which is a literal string, as follows:
@@ -2611,8 +2609,6 @@ on the $format parameter, which is a literal string, as follows:
 
 =back
 
-=back
-
 If any other string is used,  'printhelp()'  extracts just the section of
 the documention which is headed by that string.
 
@@ -2625,7 +2621,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.86 2023/01/31
+2.87 2023/04/03
 
 
 =head1 AUTHOR
@@ -2652,7 +2648,7 @@ __END__
 =head1 Annotations, Internal Notes
 
 The annotations here are for internal documentation only.
-For details about our annotations, please SEE  Annotations,  in o-saft.pl.
+For details about our annotations, please SEE  Annotations, in  L<o-saft.pl|o-saft.pl>.
 
 
 =head2 Perlcritic:LocalVars
