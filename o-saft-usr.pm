@@ -27,7 +27,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_usr    = "@(#) o-saft-usr.pm 2.6 22/10/31 20:24:01";
+my  $SID_usr    = "@(#) o-saft-usr.pm 2.7 23/04/03 15:43:14";
 
 
 #_____________________________________________________________________________
@@ -40,7 +40,7 @@ my  $SID_usr    = "@(#) o-saft-usr.pm 2.6 22/10/31 20:24:01";
 
 =head1 NAME
 
-o-saft-usr.pm - module for o-saft.pl's user definable functions
+o-saft-usr.pm - module for L<o-saft.pl|o-saft.pl>'s user definable functions
 
 =head1 SYNOPSIS
 
@@ -63,98 +63,90 @@ hence is is recommended that all variables and function use a unique
 prefix like:
     usr_  or _usr_
 
-=head2 Functions defined herein
-
-=over 4
-
-=item usr_pre_init( )
-
-At beginning, right before initialising internal data.
-
-=item usr_pre_file( )
-
-At beginning, right after initialising internal data.
-
-=item usr_pre_args( )
-
-Right before reading command-line arguments.  All internal structures
-and variables are initialised, all external files are read (except
-configuration files specified witj  I<--cfg_*=>  option.
-
-=item usr_pre_exec( )
-
-All command-line arguments are read. Right before executing myself.
-
-=item usr_pre_cipher( )
-
-Before getting list of ciphers.
-
-=item usr_pre_main( )
-
-Before executing commands.
-
-=item usr_pre_host( )
-
-Before starting loop over all given hosts.
-
-=item usr_pre_info( )
-
-DNS stuff and SNI connection checked. Before doing commands per host.
-
-=item usr_pre_open( )
-
-Before opening connection.
-
-=item usr_pre_cmds( )
-
-Before listing or checking anything.  SSL connection  is open and all
-data available in  $Net::SSLinfo::* .
-
-=item usr_pre_data( )
-
-All data according SSL connection and ciphers available in %data  and
-@results. Before doing any checks and before printing anything.
-
-=item usr_pre_print( )
-
-All checks are done, ready to print data from %checks also.
-
-=item usr_pre_next( )
-
-Host completely processed. Right before next host.
-
-=item usr_pre_exit( )
-
-Right before program exit.
-
-=item usr_version()
-
-Return version of this interface.
-
-=back
-
-=head2 Variables which may be used herein
-
-They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
-
-=over 4
-
-=item $VERSION
-
-=item %data
-
-=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
-
-=item %checks
-
-=item %org
-
-=back
+=head2 METHODS
 
 Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
 For example:
 
     sub usr_pre_args() {}
+
+=head3 usr_pre_init( )
+
+At beginning, right before initialising internal data.
+
+=head3 usr_pre_file( )
+
+At beginning, right after initialising internal data.
+
+=head3 usr_pre_args( )
+
+Right before reading command-line arguments.  All internal structures
+and variables are initialised, all external files are read (except
+configuration files specified witj  I<--cfg_*=>  option.
+
+=head3 usr_pre_exec( )
+
+All command-line arguments are read. Right before executing myself.
+
+=head3 usr_pre_cipher( )
+
+Before getting list of ciphers.
+
+=head3 usr_pre_main( )
+
+Before executing commands.
+
+=head3 usr_pre_host( )
+
+Before starting loop over all given hosts.
+
+=head3 usr_pre_info( )
+
+DNS stuff and SNI connection checked. Before doing commands per host.
+
+=head3 usr_pre_open( )
+
+Before opening connection.
+
+=head3 usr_pre_cmds( )
+
+Before listing or checking anything.  SSL connection  is open and all
+data available in  $Net::SSLinfo::* .
+
+=head3 usr_pre_data( )
+
+All data according SSL connection and ciphers available in %data  and
+@results. Before doing any checks and before printing anything.
+
+=head3 usr_pre_print( )
+
+All checks are done, ready to print data from %checks also.
+
+=head3 usr_pre_next( )
+
+Host completely processed. Right before next host.
+
+=head3 usr_pre_exit( )
+
+Right before program exit.
+
+=head3 usr_version()
+
+Return version of this interface.
+
+=head2 VARAIBLES
+
+Variables which may be used herein must be defined as `our' in  L<o-saft.pl|o-saft.pl>:
+
+=head3 $VERSION
+
+=head3 %data
+
+=head3 %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
+
+=head3 %checks
+
+=head3 %org
 
 =cut
 
@@ -270,7 +262,7 @@ sub usr_done        {}; # dummy to check successful include
 
 =head1 VERSION
 
-2.6 2022/10/31
+2.7 2023/04/03
 
 =head1 AUTHOR
 
