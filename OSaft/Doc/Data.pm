@@ -4,6 +4,8 @@
 #!# Copyright (c) 2022, Achim Hoffmann
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
+package OSaft::Doc::Data;
+
 ## no critic qw(Documentation::RequirePodSections)
 #        Our POD below is fine, Perl::Critic (severity 2) is too pedantic here.
 
@@ -19,8 +21,6 @@
 #        to have simple and complex regex.  /x is used for human readability as
 #        needed.
 
-package OSaft::Doc::Data;
-
 use strict;
 use warnings;
 
@@ -34,8 +34,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.55 22/10/31 20:49:09";
-our $VERSION    = "22.06.22";   # official verion number of this file
+my  $SID_data   = "@(#) Data.pm 1.57 23/04/03 16:52:14";
+our $VERSION    = "22.11.22";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -48,9 +48,11 @@ use OSaft::Text qw(print_pod);
 
 =encoding utf8
 
+
 =head1 NAME
 
 OSaft::Doc::Data - common Perl module to read data for user documentation
+
 
 =head1 SYNOPSIS
 
@@ -64,18 +66,14 @@ OSaft::Doc::Data - common Perl module to read data for user documentation
 
 =back
 
-
-=head1 METHODS
-
 =cut
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
-*_dbx  = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-# TODO: return if (grep{/(?:--no.?warn)/} @ARGV);   # ugly hack
+*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
+*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
 sub _replace_var    {
     #? replace $0 by name and $VERSION by version in array, return array
@@ -153,7 +151,9 @@ sub get_egg     {
 
 =pod
 
-=head2 get($file,$name,$version)
+=head1 METHODS
+
+=head3 get($file,$name,$version)
 
 Return all data from file and replace $0 by $name. Returns data as string.
 
@@ -171,7 +171,7 @@ sub get         {
 
 =pod
 
-=head2 get_as_text($file)
+=head3 get_as_text($file)
 
 Return all data from file as is. Returns data as string.
 
@@ -182,7 +182,7 @@ sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
 
 =pod
 
-=head2 get_markup($file,$name,$version)
+=head3 get_markup($file,$name,$version)
 
 Return all data converted to internal markup format. Returns array of lines.
 
@@ -282,7 +282,7 @@ sub get_markup    {
 # NOTE: NOT YET READY, not yet used (hence no POD also)
 #=pod
 #
-#=head2 get_text($file)
+#=head3 get_text($file)
 #
 #Same as  get()  but with some variables substituted.
 #
@@ -336,7 +336,7 @@ sub get_text    {
 
 =pod
 
-=head2 print_as_text($file)
+=head3 print_as_text($file)
 
 Same as  get()  but prints text directly.
 
@@ -354,38 +354,43 @@ If called from command line, like
 
 this modules provides following COMMANDS:
 
-=head2 VERSION
+=over 4
+
+=item VERSION
 
 Print VERSION version.
 
-=head2 version
+=item version
 
 Print internal version.
 
-=head2 list
+=item list
 
 Print list of *.txt files in current directory. These files may be used for
 following commands.
 
-=head2 get filename
+=item get filename
 
 Call get(filename).
 
-=head2 get_as_text filename
+=item get_as_text filename
 
 Call get_as_text(filename).
 
-=head2 get_markup filename
+=item get_markup filename
 
 Call get_markup(filename).
 
-=head2 get_text filename
+=item get_text filename
 
 Call get_text(filename).
 
-=head2 print_as_text filename
+=item print_as_text filename
 
 Call print_as_text(filename).
+
+=back
+
 
 =head1 OPTIONS
 
@@ -414,6 +419,19 @@ sub list        {
     closedir(DIR);
     return join("\n", sort @txt);
 } # list
+
+#_____________________________________________________________________________
+#____________________________________________________ internal test methods __|
+
+# none, piblic methods used directly
+
+#_____________________________________________________________________________
+#___________________________________________________ initialisation methods __|
+
+# none
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 sub _main_doc_usage {
     #? print usage
@@ -459,6 +477,9 @@ sub _main_doc   {
 } # _main_doc
 
 sub doc_data_done   {}; # dummy to check successful include
+
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
 
 =pod
 
@@ -597,13 +618,16 @@ Means that the prefixes  "Commands for"  and  "Options for"  are used to
 identify groups of commands and options. If a sub-title does not start
 with these prefixes, all following commands and options are ignored.
 
+
 =head1 SEE ALSO
 
 # ...
 
+
 =head1 VERSION
 
-1.55 2022/10/31
+1.57 2023/04/03
+
 
 =head1 AUTHOR
 
