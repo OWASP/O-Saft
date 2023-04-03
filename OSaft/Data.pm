@@ -9,7 +9,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.9 22/11/06 12:21:32";
+my  $SID_data   =  "@(#) Data.pm 1.10 23/04/03 16:02:18";
 our $VERSION    =  "22.06.22";
 
 BEGIN {
@@ -82,47 +82,43 @@ All variables and methods are defined in the  OSaft::Data  namespace.
 
 =head1 VARIABLES
 
-=over 4
-
-=item %checks
+=head3 %checks
 
 Computed checks.
 
-=item %check_cert
+=head3 %check_cert
 
 Collected and checked certificate data.
 
-=item %check_conn
+=head3 %check_conn
 
 Collected and checked connection data.
 
-=item %check_dest
+=head3 %check_dest
 
 Collected and checked target (connection) data.
 
-=item %check_http
+=head3 %check_http
 
 Collected HTTP and HTTPS data.
 
-=item %check_size
+=head3 %check_size
 
 Collected and checked length and count data.
 
-=item %data
+=head3 %data
 
 Data from connection and certificate details.
 
-=item %data0
+=head3 %data0
 
 Same as %data with 'val' only. Contains values from first connection only.
 
-=item %info
+=head3 %info
 
 Same as %data with values only.
 
-=item %shorttexts
-
-=back
+=head3 %shorttexts
 
 =cut
 
@@ -935,7 +931,7 @@ _data_init();
 
 =head1 VERSION
 
-1.9 2022/11/06
+1.10 2023/04/03
 
 =head1 AUTHOR
 
