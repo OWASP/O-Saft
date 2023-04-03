@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.283 22/11/23 21:12:47";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.284 23/04/03 15:29:13";
 our $VERSION        =  "22.11.22";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -59,10 +59,11 @@ BEGIN {
 
 # Documentaion starts here, so  POD-style inline documentation  can be used for
 # functions also which will be extracted automatically by POD tools. All public
-# functions will be prefixed with a POD description.
+# functions will be prefixed with a POD description.  POD =head3 should be used
+# for function descriptions.
 #
 # Dragons with perldoc:
-#   =head2
+#   =head2, =head3
 #       Needs at least one space between ( and ) , otherwise formatting will be
 #       wrong.
 #   C<$something>
@@ -2138,17 +2139,17 @@ sub _openssl_x509   {
 
 =pod
 
-=head2 s_client_check()
+=head3 s_client_check()
 
 Check if specified openssl executable is available and check capabilities of
 "s_client"  command..
 Returns  undef  if openssl is not available.
 
-=head2 s_client_get_optionlist
+=head3 s_client_get_optionlist
 
 Get list of options for openssl s_client command. Returns array.
 
-=head2 s_client_opt_get($option)
+=head3 s_client_opt_get($option)
 
 Returns 1 if specified option is available for openssl s_client.
 
@@ -2241,7 +2242,7 @@ sub s_client_opt_get{ return _OpenSSL_opt_get(shift); }
 
 =pod
 
-=head2 do_ssl_free($ctx,$ssl,$socket)
+=head3 do_ssl_free($ctx,$ssl,$socket)
 
 Destroy and free L<Net::SSLeay> allocated objects.
 =cut
@@ -2257,7 +2258,7 @@ sub do_ssl_free     {
 
 =pod
 
-=head2 do_ssl_new($host,$port,$sslversions[,$cipherlist,$alpns,$npns,$socket])
+=head3 do_ssl_new($host,$port,$sslversions[,$cipherlist,$alpns,$npns,$socket])
 
 Establish new SSL connection using L<Net::SSLeay>.
 
@@ -2425,7 +2426,7 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
 
 =pod
 
-=head2 do_ssl_open($host,$port,$sslversions[,$cipherlist])
+=head3 do_ssl_open($host,$port,$sslversions[,$cipherlist])
 
 Opens new SSL connection with Net::SSLeay and stores collected data.
 
@@ -3221,7 +3222,7 @@ sub do_ssl_open($$$@) {
 
 =pod
 
-=head2 do_ssl_close( )
+=head3 do_ssl_close( )
 
 Close L<Net::SSLeay> connection and free allocated objects.
 =cut
@@ -3239,7 +3240,7 @@ sub do_ssl_close($$)  {
 
 =pod
 
-=head2 do_openssl($command,$host,$port,$data)
+=head3 do_openssl($command,$host,$port,$data)
 
 Wrapper for call of external L<openssl(1)> executable. Handles special
 behaviours on some platforms.
@@ -3364,7 +3365,7 @@ sub do_openssl($$$$)  {
 
 =pod
 
-=head2 set_cipher_list($ssl,$cipherlist)
+=head3 set_cipher_list($ssl,$cipherlist)
 
 Set cipher list for connection. List is colon-separated list of ciphers.
 
@@ -3381,52 +3382,52 @@ sub set_cipher_list {
 
 =pod
 
-=head2 errors( )
+=head3 errors( )
 
 Get list of errors, intenal ones but most likely from I<$Net::SSLeay::*> calls.
 
-=head2 s_client( )
+=head3 s_client( )
 
 Dump data retrived from "openssl s_client ..." call. For debugging only.
 
-=head2 options( )
+=head3 options( )
 
 Return hex value bitmask of (openssl) options used to establish connection.
 Useful for debugging and trouble shooting.
 
-=head2 PEM( ), pem( )
+=head3 PEM( ), pem( )
 
 Get certificate in PEM format.
 
-=head2 text( )
+=head3 text( )
 
 Get certificate in human readable format.
 
-=head2 before( )
+=head3 before( )
 
 Get date before certificate is valid.
 
-=head2 after( )
+=head3 after( )
 
 Get date after certificate is valid.
 
-=head2 dates( )
+=head3 dates( )
 
 Get dates when certificate is valid.
 
-=head2 issuer( )
+=head3 issuer( )
 
 Get issuer of certificate.
 
-=head2 subject( )
+=head3 subject( )
 
 Get subject of certificate.
 
-=head2 selected( )
+=head3 selected( )
 
 Get cipher selected by server for current session. Returns ciphers string.
 
-=head2 cipher_list($pattern)
+=head3 cipher_list($pattern)
 
 Get cipher list offered by local SSL implementation (i.g. Net::SSLeay).
 Returns space-separated list of ciphers.
@@ -3434,13 +3435,13 @@ Returns array if used in array context, a single string otherwise.
 
 Requires successful connection to target.
 
-=head2 cipher_openssl($pattern)
+=head3 cipher_openssl($pattern)
 
 Get cipher list offered by local openssl implementation. Returns colon-separated list of ciphers.
 
 Does not require connection to any target.
 
-=head2 ciphers($pattern)
+=head3 ciphers($pattern)
 
 Returns List of ciphers provided for current connection to target.
 Calls cipher_list() or cipher_openssl() depending on Net::SSLinfo::use_openssl.
@@ -3498,258 +3499,258 @@ sub ciphers         {
 All following functions have  $host and $port  parameter and return
 information according the the connection, certificate for this connection.
 
-=head2 cn( ), commonname( )
+=head3 cn( ), commonname( )
 
 Get common name (CN) from certificate.
 
-=head2 altname( )
+=head3 altname( )
 
 Get alternate name (subjectAltNames) from certificate.
 
-=head2 authority( )
+=head3 authority( )
 
 Get authority (issuer) from certificate.
 
-=head2 owner( )
+=head3 owner( )
 
 Get owner (subject) from certificate.
 
-=head2 certificate( )
+=head3 certificate( )
 
 Get certificate (subject, issuer) from certificate.
 
-=head2 SSLversion( )
+=head3 SSLversion( )
 
 Get SSL protocol version used by connection.
 
-=head2 version( )
+=head3 version( )
 
 Get version from certificate.
 =cut
 
 # TODO: not yet implemented
-#=head2 keysize( )
+#=head3 keysize( )
 #
 #Get certificate private key size.
 #
-#=head2 keyusage( )
+#=head3 keyusage( )
 #
 #Get certificate X509v3 Extended Key Usage (Version 3 and TLS only?)
 
 =pod
 
-=head2 ssleay_methods( )
+=head3 ssleay_methods( )
 
 Return list of available methods:  Net::SSLeay::*_method and
 Net::SSLeay::CTX_*_new . Most important (newest) method first.
 
-=head2 test_ssleay( )
+=head3 test_ssleay( )
 
 Test availability and print information about Net::SSLeay:
 Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'>
 
-=head2 datadump( )
+=head3 datadump( )
 
 Print all available (by Net::SSLinfo) data.
 
 Due to huge amount of data, the value for s_client is usually omitted.
 Please set I<$Net::SSLinfo::use_sclient gt 1> to print this data also.
 
-=head2 (details)
+=head3 (details)
 
 All following require that I<$Net::SSLinfo::use_openssl=1;> being set.
 
-=head2 compression( )
+=head3 compression( )
 
 Get target's compression support.
 
-=head2 exapansion( )
+=head3 exapansion( )
 
 Get target's exapansion support.
 
-=head2 next_protocols( )
+=head3 next_protocols( )
 
 Get (NPN) protocols advertised by server,
 
-=head2 alpn( )
+=head3 alpn( )
 
 Get target's selected protocol (ALPN).
 
-=head2 no_alpn( )
+=head3 no_alpn( )
 
 Get target's not negotiated message (ALPN).
 
-=head2 next_protocol( )
+=head3 next_protocol( )
 
 Get target's next protocol message (ALPN).
 
-=head2 krb5
+=head3 krb5
 
 Get target's Krb5 Principal.
 
-=head2 psk_identity
+=head3 psk_identity
 
 Get target's PSK identity.
 
-=head2 psk_hint
+=head3 psk_hint
 
 Get target's PSK identity hint.
 
-=head2 srp
+=head3 srp
 
 Get target's SRP username.
 
-=head2 master_key
+=head3 master_key
 
 Get target's Master-Key.
 
-=head2 master_secret
+=head3 master_secret
 
 Get target's support for Extended master secret.
 
-=head2 extended_master_secret
+=head3 extended_master_secret
 
 Same as master_secret .
 
-=head2 public_key_len
+=head3 public_key_len
 
 Get target's Server public key length.
 
-=head2 session_id
+=head3 session_id
 
 Get target's TLS Session-ID.
 
-=head2 session_id_ctx
+=head3 session_id_ctx
 
 Get target's TLS Session-ID-ctx.
 
-=head2 session_protocol
+=head3 session_protocol
 
 Get target's announced SSL protocols.
 
-=head2 session_startdate
+=head3 session_startdate
 
 Get target's TLS Start Time (human readable format))
 
-=head2 session_starttime
+=head3 session_starttime
 
 Get target's TLS Start Time (seconds since EPOCH)
 
-=head2 session_ticket
+=head3 session_ticket
 
 Get target's TLS session ticket.
 
-=head2 session_ticket_hint, session_lifetime
+=head3 session_ticket_hint, session_lifetime
 
 Get target's TLS session ticket lifetime hint.
 
-=head2 session_timeout
+=head3 session_timeout
 
 Get target's SSL session timeout.
 
-=head2 dh_parameter( )
+=head3 dh_parameter( )
 
 Get targets DH parameter.
 
-=head2 fingerprint_hash( )
+=head3 fingerprint_hash( )
 
 Get certificate fingerprint hash value.
 
-=head2 fingerprint_md5( )
+=head3 fingerprint_md5( )
 
 Get  MD5 fingerprint if available (Net::SSLeay >= 1.49)
 
-=head2 fingerprint_sha1( )
+=head3 fingerprint_sha1( )
 
 Get SHA1 fingerprint if available (Net::SSLeay >= 1.49)
 
-=head2 fingerprint_sha2( )
+=head3 fingerprint_sha2( )
 
 Get SHA2 fingerprint if available (Net::SSLeay >= 1.49)
 
-=head2 fingerprint_type( )
+=head3 fingerprint_type( )
 
 Get certificate fingerprint hash algorithm.
 
-=head2 fingerprint_text( )
+=head3 fingerprint_text( )
 
 Get certificate fingerprint, which is the hash algorthm followed by the hash
 value. This is usually the same as I<fingerprint_type()=fingerprint_hash()>.
 
-=head2 fingerprint( )
+=head3 fingerprint( )
 
 Alias for I<fingerprint_text()>.
 
-=head2 email( )
+=head3 email( )
 
 Get certificate email address(es).
 
-=head2 serial_hex( )
+=head3 serial_hex( )
 
 Get certificate serial number as hex value.
 
-=head2 serial_int( )
+=head3 serial_int( )
 
 Get certificate serial number as integer value.
 
-=head2 serial( )
+=head3 serial( )
 
 Get certificate serial number as integer and hex value.
 
-=head2 modulus( )
+=head3 modulus( )
 
 Get certificate modulus of the public key.
 
-=head2 modulus_exponent( )
+=head3 modulus_exponent( )
 
 Get certificate modulus' exponent of the public key.
 
-=head2 modulus_len( )
+=head3 modulus_len( )
 
 Get certificate modulus (bit) length of the public key.
 
-=head2 ocsp_response( )
+=head3 ocsp_response( )
 
 Get OCSP Response (compact list with values from ocsp_response_data()).
 
-=head2 ocsp_response_data( )
+=head3 ocsp_response_data( )
 
 Get complete OCSP Response Data.
 
-=head2 ocsp_response_status( )
+=head3 ocsp_response_status( )
 
 Get OCSP Response Status value.
 
-=head2 ocsp_cert_status( )
+=head3 ocsp_cert_status( )
 
 Get OCSP Response Cert Status value.
 
-=head2 ocsp_next_update( )
+=head3 ocsp_next_update( )
 
 Get OCSP Response Next Update date.
 
-=head2 ocsp_this_update( )
+=head3 ocsp_this_update( )
 
 Get OCSP Response This Update date.
 
-=head2 pubkey( )
+=head3 pubkey( )
 
 Get certificate's public key.
 
-=head2 pubkey_algorithm( )
+=head3 pubkey_algorithm( )
 
 Get certificate's public key algorithm.
 
-=head2 pubkey_value( )
+=head3 pubkey_value( )
 
 Get certificate's public key value.
 Same as I<modulus()>  but may be different format.
 
-=head2 renegotiation( )
+=head3 renegotiation( )
 
 Get certificate's renegotiation support.
 
-=head2 resumption( )
+=head3 resumption( )
 
 Get certificate's resumption support.
 Some target servers respond with  `New' and `Reused'  connections in
@@ -3759,123 +3760,123 @@ resumption is assumed.
 If resumption is not detected, increasing the timeout with i.e.
 I<$Net::SSLinfo::timeout_sec = 5>  may return different results.
 
-=head2 sigkey_len( )
+=head3 sigkey_len( )
 
 Get certificate signature key (bit).
 
-=head2 sigkey_value( )
+=head3 sigkey_value( )
 
 Get certificate signature value (hexdump).
 
-=head2 subject_hash( ), issuer_hash( )
+=head3 subject_hash( ), issuer_hash( )
 
 Get certificate subject/issuer hash value (in hex).
 
-=head2 verify( )
+=head3 verify( )
 
 Get result of certificate chain verification.
 
-=head2 error_verify( )
+=head3 error_verify( )
 
 Get error string of certificate chain verification, if any.
 
-=head2 error_depth( )
+=head3 error_depth( )
 
 Get depth where certificate chain verification failed.
 
-=head2 chain( )
+=head3 chain( )
 
 Get certificate's CA chain.
 
-=head2 chain_verify( )
+=head3 chain_verify( )
 
 Get certificate's CA chain verification trace (for debugging only).
 
-=head2 selfsigned( )
+=head3 selfsigned( )
 
 If certificate is self signed.
 
-=head2 https_alerts( )
+=head3 https_alerts( )
 
 Get HTTPS alerts send by server.
 
-=head2 https_protocols( )
+=head3 https_protocols( )
 
 Get HTTPS Alterenate-Protocol header.
 
-=head2 https_svc( )
+=head3 https_svc( )
 
 Get HTTPS Alt-Svc and X-Firefox-Spdy header.
 
-=head2 https_body( )
+=head3 https_body( )
 
 Get HTTPS response (body)
 
-=head2 https_status( )
+=head3 https_status( )
 
 Get HTTPS response (aka status) line.
 
-=head2 https_server( )
+=head3 https_server( )
 
 Get HTTPS Server header.
 
-=head2 https_location( )
+=head3 https_location( )
 
 Get HTTPS Location header.
 
-=head2 https_refresh( )
+=head3 https_refresh( )
 
 Get HTTPS Refresh header.
 
-=head2 http_protocols( )
+=head3 http_protocols( )
 
 Get HTTP Alterenate-Protocol header.
 
-=head2 http_svc( )
+=head3 http_svc( )
 
 Get HTTP Alt-Svc and X-Firefox-Spdy header.
 
-=head2 http_status( )
+=head3 http_status( )
 
 Get HTTP response (aka status) line.
 
-=head2 http_location( )
+=head3 http_location( )
 
 Get HTTP Location header.
 
-=head2 http_refresh( )
+=head3 http_refresh( )
 
 Get HTTP Refresh header.
 
-=head2 http_sts( )
+=head3 http_sts( )
 
 Get HTTP Strict-Transport-Security header, if any.
 
-=head2 hsts_httpequiv( )
+=head3 hsts_httpequiv( )
 
 Get hhtp-equiv=Strict-Transport-Security attribute from HTML body, if any.
 
-=head2 hsts( )
+=head3 hsts( )
 
 Get complete STS header.
 
-=head2 hsts_maxage( )
+=head3 hsts_maxage( )
 
 Get max-age attribute of STS header.
 
-=head2 hsts_subdom( )
+=head3 hsts_subdom( )
 
 Get includeSubDomains attribute of STS header.
 
-=head2 hsts_preload( )
+=head3 hsts_preload( )
 
 Get preload attribute of STS header.
 
-=head2 https_pins( )
+=head3 https_pins( )
 
 Get pins attribute of STS header.
 
-=head2 CTX_method( )
+=head3 CTX_method( )
 
 Get used Net::SSLeay::CTX_*_new) method. Useful for debugging only.
 
@@ -4000,7 +4001,7 @@ sub CTX_method      { return _SSLinfo_get('CTX_method',       $_[0], $_[1]); }
 
 =pod
 
-=head2 verify_hostname( )
+=head3 verify_hostname( )
 
 Verify if given hostname matches common name (CN) in certificate.
 =cut
@@ -4020,7 +4021,7 @@ sub verify_hostname {
     return sprintf("Given hostname '%s' %s CN '%s' in certificate", $host, $match, $cname);
 } # verify_hostname
 
-=head2 verify_altname( ), verify_alias( )
+=head3 verify_altname( ), verify_alias( )
 
 Verify if given hostname matches alternate name (subjectAltNames) in certificate.
 =cut
