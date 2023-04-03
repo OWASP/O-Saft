@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.76 23/04/03 18:44:43
+#?      @(#) Makefile.misc 1.77 23/04/03 18:53:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.76
+_SID.misc          := 1.77
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -170,7 +170,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.76: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.77: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -420,7 +420,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.76: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.77: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -444,6 +444,10 @@ testarg-misc_TODO:
 	@echo "#make: search for '# TODO' in code ..."
 	@-grep '# TODO'             $(ALL.qa)
 	@echo ""
+testarg-misc_head2:
+	@echo "#make: search for '^=head2' in source files ..."
+	@-grep '^=head2 '           $(ALL.src)
+	@echo ""
 testarg-misc_SEE:
 	@echo "#make: search for '# SEE' in source files ..."
 	@-grep '# SEE '             $(ALL.src)
@@ -454,11 +458,14 @@ testarg-misc_shebang:
 	@-egrep -m 1 '^#![ /].*/'   $(ALL.src)
 	@echo ""
 #   # get only  #!/...  and  #! /...  but not  #!#...
-ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO testarg-misc_SEE
+ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO
 ALL.test.misc.todo.log := $(ALL.test.misc.todo:%=%.log)
-ALL.test.misc.info     := testarg-misc_SEE testarg-misc_shebang
+ALL.test.misc.info     := testarg-misc_head2 testarg-misc_SEE  testarg-misc_shebang
 ALL.test.misc.info.log := $(ALL.test.misc.info:%=%.log)
 ALL.testmisc           += $(ALL.test.misc.todo) $(ALL.test.misc.info)
+test.misc.head2:          testarg-misc_head2
+test.misc.see:            testarg-misc_SEE
+test.misc.shebang:        testarg-misc_shebang
 test.misc.todo:           $(ALL.test.misc.todo)
 test.misc.todo.log:       $(ALL.test.misc.todo.log)
 test.misc.info:           $(ALL.test.misc.info)
