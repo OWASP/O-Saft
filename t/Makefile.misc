@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.75 23/04/03 18:36:41
+#?      @(#) Makefile.misc 1.76 23/04/03 18:44:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.75
+_SID.misc          := 1.76
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -170,7 +170,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.75: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.76: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -420,7 +420,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.75: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.76: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -433,7 +433,9 @@ test.quality.log: $(_TEST.quality.log)
 # TODO: same target as test.warnings.log
 
 HELP-test.misc.todo = search for 'FIXME' and 'TODO' comments in '$(ALL.qa)'
+HELP-test.misc.see  = search for 'SEE ' links in '$(ALL.src)'
 HELP-test.misc.shebang  = get first line of file with '#!' (shebang) in $(ALL:src)'
+HELP-test.misc.info = alias for: test.misc.see test.misc.shebang
 testarg-misc_FIXME:
 	@echo "#make: search for '# FIXME' in code ..."
 	@-grep '# FIXME'            $(ALL.qa)
@@ -454,9 +456,13 @@ testarg-misc_shebang:
 #   # get only  #!/...  and  #! /...  but not  #!#...
 ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO testarg-misc_SEE
 ALL.test.misc.todo.log := $(ALL.test.misc.todo:%=%.log)
-ALL.testmisc           += $(ALL.test.misc.todo) testarg-misc_shebang
+ALL.test.misc.info     := testarg-misc_SEE testarg-misc_shebang
+ALL.test.misc.info.log := $(ALL.test.misc.info:%=%.log)
+ALL.testmisc           += $(ALL.test.misc.todo) $(ALL.test.misc.info)
 test.misc.todo:           $(ALL.test.misc.todo)
 test.misc.todo.log:       $(ALL.test.misc.todo.log)
+test.misc.info:           $(ALL.test.misc.info)
+test.misc.info.log:       $(ALL.test.misc.info.log)
 	@$(TRACE.target)
 .PHONY: $(ALL.test.misc.log)
 
