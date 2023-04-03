@@ -9,7 +9,7 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.6 22/11/04 10:51:16";
+my  $SID_text   =  "@(#) Text.pm 1.7 23/04/03 16:05:11";
 our $VERSION    =  "22.11.22";
 
 #_____________________________________________________________________________
@@ -73,32 +73,30 @@ All variables and methods are defined in the  OSaft::Text  namespace.
 
 =head1 TEXTS
 
-Perlish spoken, all texts are variables:
+Perlish spoken, all texts are L</VARIABLES>.
 
-=over 4
+=head1 VARIABLES
 
-=item %STR{ERROR}
+=head3 %STR{ERROR}
 
-=item %STR{WARN}
+=head3 %STR{WARN}
 
-=item %STR{HINT}
+=head3 %STR{HINT}
 
-=item %STR{USAGE}
+=head3 %STR{USAGE}
 
-=item %STR{DBX}
+=head3 %STR{DBX}
 
-=item %STR{UNDEF}
+=head3 %STR{UNDEF}
 
-=item %STR{NOTXT}
+=head3 %STR{NOTXT}
 
-=item %STR{MAKEVAL}
-
-=back
+=head3 %STR{MAKEVAL}
 
 
 =head1 METHODS
 
-=head2 OSaft::Text::print_pod($file)
+=head3 OSaft::Text::print_pod($file)
 
 Print POD for specified file, exits program.
 
@@ -110,7 +108,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-1.6 2022/11/04
+1.7 2023/04/03
 
 
 =head1 AUTHOR
