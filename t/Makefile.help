@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.90 22/02/22 08:11:34
+#?      @(#) Makefile.help 1.91 23/04/03 18:19:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.90
+_SID.help          := 1.91
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -91,7 +91,8 @@ help.inc: HELP_HEAD = $(HELP_RULE)
 
 # Define scripts as variables, for better human readability. For details about
 # the commands for matching macro and target names, please see in Makefile.pod
-# "O-Saft Makefile Syntax"  and  "Make:target matching".
+# SEE  O-Saft Makefile Syntax
+# SEE  Make:target matching".
 # Script variables defined in t/Makefile:
 #     _EXE.macro_by_line.awk    - extract macro  names
 #     _EXE.target_by_line.awk   - extract target names
