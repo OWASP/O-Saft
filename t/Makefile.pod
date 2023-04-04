@@ -17,7 +17,7 @@ This file  contains the  internal (developer) documentation  for all other
 Makefile*. This is done to keep other Makefile* as simple as possible, and
 just containing the user (developer) documentation.
 
-Please also  SEE Documentation  in o-saft.pl .
+SEE Documentation  in L<o-saft.pl|o-saft.pl> also.
 
 
 =head1 ASTRACT
@@ -38,7 +38,7 @@ Where in general  testarg-*  is a target to test  one or more arguments of
 a tool, and  testcmd-*  is a target to test a command of  $(SRC.pl) .
 Most  test.*  targets are summary targets executing a list of the above.
 All  help.*  targets are for documentation of the makefile's targets.
-For more details on target names, please  SEE O-Saft Makefile Targets .
+For more details on target names, please  see L</O-Saft:Makefile Targets> .
 
 To get a list of all target for testing, use:
 
@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.58 23/04/02 15:05:33
+@(#) Makefile.pod 1.59 23/04/04 09:37:29
 
 =head1 AUTHOR
 
@@ -90,7 +90,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 O-Saft Terms
 
-Please also  SEE Documentation  in o-saft.pl .
+SEE Documentation  in L<o-saft.pl|o-saft.pl> also.
 
 
 =head1 O-Saft Makefile Quick Overview
@@ -141,7 +141,7 @@ Show what all targets will do (huge output):
     make testarg-make-n
 
 
-=head2 O-Saft Makefile Example Usage
+=head2 O-Saft:Makefile Example Usage
 
 To show readable (for humans) information about variables and targets from
 a Makefile* itself, see:
@@ -218,10 +218,12 @@ of the project, it just describes the used "coding syntax" in Makefile*.
 
 Makefile*  use mainly  GNU Make's built-in variables and targets.  None of
 them are disabled explicitly.  Therefore, some behaviour may depend on the
-local make configuration. SEE  Make:automatic variables  also.
+local make configuration.
+
+SEE L</GNU Make:automatic variables>  also.
 
 
-=head2 O-Saft Makefile General
+=head2 O-Saft:Makefile General
 
 To extract and format the texts, the targets use  GNU Make's functionality
 like  $(eval ...), $(foreach ...) and $(shell).
@@ -230,7 +232,7 @@ text are to be extracted form other Makefile*.  Each tool  and its command
 arguments are defined as variable, see corresponding  EXE.*  variables.
 
 
-=head2 O-Saft Makefile Includes
+=head2 O-Saft:Makefile Includes
 
 All testing functionality is grouped in individual Makefile*. They are all
 included by the main Makefile and organised as follows:
@@ -281,7 +283,7 @@ Following Makefile* are not included and provide additional information:
     Makefile.examples
 
 
-=head2 O-Saft Makefile Variable and Target Names
+=head2 O-Saft:Makefile Variable and Target Names
 
 General rules for our macro, variable and target names in Makefile* are:
 
@@ -339,7 +341,7 @@ The main Makefile is an exception, because it uses commonly used names for
 targets.
 
 
-=head2 O-Saft Makefile Variable Values
+=head2 O-Saft:Makefile Variable Values
 
 In general no quotes  around texts in variables  are used.  However, it is
 sometimes necessary to use quotes to enforce the proper evaluation of used
@@ -366,7 +368,7 @@ The value of the _SID.* variables should be managed by the version control
 system.
 
 
-=head2 O-Saft Makefile Variable, Macro names
+=head2 O-Saft:Makefile Variable, Macro names
 
 Following internal variables in each Makefile* are used:
 
@@ -395,10 +397,10 @@ Where  t/Makefile  may include more files.
 When internal variables, those staring with _, are defined, they should be
 removed when possible using Make's  'undefine'.
 
-SEE L<Make:macros> also.
+SEE L</Make:macros> also.
 
 
-=head2 O-Saft Makefile Variables
+=head2 O-Saft:Makefile Variables
 
 Following names are used, which potentially conflict with make itself:
 
@@ -434,10 +436,12 @@ Notes about some special variables:
 
 The variables  ALL.tests  and  ALL.tests.log  are generated in  t/Makefile
 from the corresponding  ALL.test.TYP  in each  t/Makefile.TYP , where  TYP
-is  cmd, cgi, opt, etc. SEE O-Saft Makefile Includes  also.
+is  cmd, cgi, opt, etc.
+
+SEE L</O-Saft:Makefile Includes>  also.
 
 
-=head2 O-Saft Makefile Targets
+=head2 O-Saft:Makefile Targets
 
 Naming conventions for targets:
 
@@ -470,7 +474,7 @@ Targets in the Makefile* are grouped, usually. Each group should be headed
 by the help texts for the targets using  HELP-  variables (see below).
 
 
-=head2 O-Saft Makefile HELP Texts
+=head2 O-Saft:Makefile HELP Texts
 
 For extracting  information from the Makefile*,  i.e variables and targets
 and their definitions, following special naming syntax is used:
@@ -613,7 +617,7 @@ Remember important variables:
                       arguments/options (see make's documentation )
     $(MAKE_COMMAND) - private variable for the make command, without other
                       arguments/options as in $(MAKE)
-                      SEE Make:MAKE vs. MAKE_COMMAND
+                      SEE L</GNU Make:MAKE vs. MAKE_COMMAND>
     $(MFLAGS)       - contains all passed arguments/options to make
     $(MAKEFLAGS)    - same as $(MFLAGS) but omitts leading  -  character
     $(MAKECMDGOALS) - name of the target to be satisfied
@@ -856,7 +860,7 @@ Any tool may be called with its own arguments. Therefore, each argument to
 be tested with a tool, requires its own target. Also, each target  must be
 added to the corresponding / well-known variable, for example: ALL.* etc..
 Finally a target -pattern rule- is generated, which groups the targets for
-this tool. Please see below for L<Examples>.
+this tool. Please see below for L</Examples>.
 
 For these targets, the variables  EXE.pl,  TEST.init  and  TEST.args  must
 be defined properly.  In most cases, only one of  TEST.init  or  TEST.args
@@ -881,7 +885,7 @@ Example:
 
 =head3 Target generation function
 
-The target names follow a strict syntax, see L<O-Saft Makefile Targets>.
+The target names follow a strict syntax, see L</O-Saft:Makefile Targets>.
 In short, the naming scheme is:
 
     testarg-TYP-TOOL-OPTIONS_ARGUMENT
@@ -908,8 +912,8 @@ be prefixed with ../ .
 
 All generated targets are also added to the variable  ALL.test.TYP .
 
-SEE O-Saft Makefile Variable, Macro names  also.
-SEE O-Saft Makefile Variable, Macro names  also.
+SEE L</O-Saft:Makefile Variable, Macro names>  also.
+SEE L</O-Saft:Makefile Variable, Macro names>  also.
 
 =head3 Target function variants
 
@@ -1049,7 +1053,7 @@ Unfortunately  this  results in  untested commands,  those defined  in the
 variable  _ignore-output-keys . An additional target  should exist to test
 these commands also.
 
-See also L<Make:OSAFT_MAKE>, L<Make:EXE.log-filter>, L<GNU Make:Dragons>.
+SEE L</Make:OSAFT_MAKE>, L</Make:EXE.log-filter>, L</GNU Make:Dragons> also.
 
 
 =head2 Make:--dry-run
@@ -1237,7 +1241,7 @@ mainly strings printed in debugging or trace mode.
 To avoid dependencies to be fulfilled at runtime, STR_MAKEVAL  is not used
 in all tools but hardcoded there again. This may/should change in future.
 
-See also L<Make:--ignore-output>, L<Make:EXE.log-filter>, L<GNU Make:Dragons>.
+SEE L<Make:--ignore-output>, L</Make:EXE.log-filter>, L</GNU Make:Dragons> also.
 
 
 =head2 Make:generating help
@@ -1274,7 +1278,7 @@ random output like  current date and time.  This behaviour is harmless for
 normal use, but may cause difficulties when comparing output  as in  *.log
 targets.
 
-See also L<GNU Make:Dragons>, L<Make:EXE.log-filter>.
+SEE L</GNU Make:Dragons>, L</Make:EXE.log-filter> also.
 
 
 =head2 Make:EXE.log-filter
@@ -1303,7 +1307,7 @@ like:
 
     testcmd-some.target.log: EXE.log-filterarg := sed -ne 's/random text/OSAFT_MAKE/'
 
-See also L<Make:OSAFT_MAKE>, L<Make:--ignore-output>, L<GNU Make:Dragons>.
+SEE L</Make:OSAFT_MAKE>, L</Make:--ignore-output>, L</GNU Make:Dragons> also.
 
 
 =head2 EXE.pl:--trace-CLI
