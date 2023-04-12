@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.92 23/04/03 19:46:25
+#?      @(#) Makefile.help 1.93 23/04/12 23:40:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.92
+_SID.help          := 1.93
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -209,7 +209,7 @@ _help.HELP:
 #_____________________________________________________________ help targets __|
 
 # line printed with help should work copy&paste, hence some dummy definitions
-MYmacro         = dummy macro/variable used in examples
+TEST.MYmacro    = dummy macro/variable used in examples
 MYtarget: MYVAR = dummy target macro used in examples
 MYtarget: dummy_dependency
 	@$(EXE.dummy)
@@ -219,11 +219,11 @@ HELP-macros     = list all macro names used in Makefile* (alias: list, vars)
 HELP-targets    = list all targets used in Makefile* (alias: rules)
 HELP-macros.me  = list all macro names used in calling Makefile
 HELP-targets.me = list all targets used in calling Makefile
-HELP-e-MYmacro  = show content of MYmacro expanded (all in one line)
-HELP-s-MYmacro  = show content of MYmacro expanded (one word per line)
-HELP-m-MYmacro  = show definition of MYmacro as is      - exact macro match
-HELP-p-MYmacro  = show all definitions of MYmacro as is - macro pattern match
-HELP-t-MYtarget = show MYtarget                         - exact target match
+HELP-e-TEST.MYmacro  = show content of TEST.MYmacro expanded (all in one line)
+HELP-s-TEST.MYmacro  = show content of TEST.MYmacro expanded (one word per line)
+HELP-m-TEST.MYmacro  = show definition of TEST.MYmacro as is      - exact macro match
+HELP-p-TEST.MYmacro  = show all definitions of TEST.MYmacro as is - macro pattern match
+HELP-t-MYtarget = show MYtarget - exact target match
 
 HELP-_help2     = ________________________________ targets for documentation _
 HELP-help.help  = print this documentation
@@ -247,10 +247,10 @@ HELP.help       = $(_NL)\
 \# For easy use, following alias exist: $(_NL)\
 \#    e-  m-  p-  s-  t-                $(_NL)\
 \# which are used like:                 $(_NL)\
-\#    $(MAKE_COMMAND) e-MYmacro         $(_NL)\
-\#    $(MAKE_COMMAND) m-MYmacro         $(_NL)\
-\#    $(MAKE_COMMAND) p-MYmacro         $(_NL)\
-\#    $(MAKE_COMMAND) s-MYmacro         $(_NL)\
+\#    $(MAKE_COMMAND) e-TEST.MYmacro    $(_NL)\
+\#    $(MAKE_COMMAND) m-TEST.MYmacro    $(_NL)\
+\#    $(MAKE_COMMAND) p-TEST.MYmacro    $(_NL)\
+\#    $(MAKE_COMMAND) s-TEST.MYmacro    $(_NL)\
 \#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
 
 ALL.help       += help.help help.critic help.doc
