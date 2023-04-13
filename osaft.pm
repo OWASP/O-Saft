@@ -1,7 +1,7 @@
 #!/usr/bin/perl -I .
 ## PACKAGE {
 
-#!# Copyright (c) 2022, Achim Hoffmann
+#!# Copyright (c) 2023, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package osaft;
@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.29 23/04/03 15:35:08";
+our $SID_osaft  =  "@(#) osaft.pm 2.30 23/04/13 23:40:22";
 our $VERSION    =  "22.11.22";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3274,8 +3274,8 @@ Internal test function: apply regex to intended text/list.
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub __regex_head    { return sprintf("= %s\t%s\t%s\t%s", "PFS", "OWASP", "owasp", "cipher"); }
-sub __regex_line    { return "=------+-------+-------+---------------------------------------"; }
+sub _regex_head     { return sprintf("= %s\t%s\t%s\t%s", "PFS", "OWASP", "owasp", "cipher"); }
+sub _regex_line     { return "=------+-------+-------+---------------------------------------"; }
 
 sub test_cipher_regex   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
@@ -3304,8 +3304,8 @@ sub test_cipher_regex   {
       $cfg{'regex'}->{'OWASP_AA'}
 =
 ";
-    print __regex_head();
-    print __regex_line();
+    print _regex_head();
+    print _regex_line();
     foreach my $key (sort (OSaft::Ciphers::get_keys_list())) {
         my $ssl    = OSaft::Ciphers::get_ssl( $key);
         my $cipher = OSaft::Ciphers::get_name($key);
@@ -3320,8 +3320,8 @@ sub test_cipher_regex   {
         $o[0] = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_AA'}/);
         printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
     }
-    print __regex_line();
-    print __regex_head();
+    print _regex_line();
+    print _regex_head();
     print "
 = PFS values:
 =   yes   cipher supports PFS
@@ -3488,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.29 2023/04/03
+2.30 2023/04/13
 
 =head1 AUTHOR
 
