@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.19 22/11/19 00:14:07
+#?      @(#) Makefile 2.20 23/04/14 11:06:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.19
+_SID            = 2.20
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -198,7 +198,7 @@ WEB.src         = \
 SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
 
 # generated files
-TMP.dir         = /tmp/$(Project)
+O-TMP.dir         = /tmp/$(Project)
 GEN.html        = $(DOC.dir)/$(Project).html
 GEN.cgi.html    = $(DOC.dir)/$(Project).cgi.html
 GEN.text        = $(DOC.dir)/$(Project).txt
@@ -212,7 +212,7 @@ GEN.tags        = tags
 GEN.rel         = $(Project).rel
 
 GEN.tgz         = $(Project).tgz
-GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
+GEN.tmptgz      = $(O-TMP.dir)/$(GEN.tgz)
 
 # generated files for internal use, i.e. $(SRC.tcl)
 # TODO: because make does not allow = in target names, the generated targets
@@ -291,8 +291,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.19 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.19
+_INST.genbytext = generated data by Makefile 2.20 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.20
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -500,7 +500,7 @@ HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
-HELP-clean.tmp  = remove '$(TMP.dir)'
+HELP-clean.tmp  = remove '$(O-TMP.dir)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
 HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)'
 HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
@@ -530,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.19
-tar:     _INST.is_edit  = 2.19
+_INST.is_edit           = 2.20
+tar:     _INST.is_edit  = 2.20
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -588,7 +588,7 @@ clean.gen:
 	rm -rf $(ALL.gen) $(GEN.inst)
 clean.tmp:
 	@$(TRACE.target)
-	rm -rf $(TMP.dir)
+	rm -rf $(O-TMP.dir)
 clean.tar:
 	@$(TRACE.target)
 	rm -rf $(GEN.tgz)
@@ -603,7 +603,7 @@ $(OSD.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(SRC.contrib.dir) $(TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/Net $(O-TMP.dir)/OSaft $(O-TMP.dir)/OSaft/Doc $(O-TMP.dir)/$(SRC.contrib.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
