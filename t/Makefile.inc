@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.37 23/04/14 16:43:11
+#?      @(#) Makefile.inc 1.38 23/04/14 17:31:50
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.37
+_SID.inc       := 1.38
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -166,7 +166,7 @@ ifndef _NL
 endif
 
 ifndef O-CR
-    _O-R       := \\015
+    O-CR       := \\015
 endif
 
 # also set pseudo variable .SUFFIXES empty (in the hope, it's never needed)
