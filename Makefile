@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.20 23/04/14 11:06:37
+#?      @(#) Makefile 2.21 23/04/14 16:27:59
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.20
+_SID            = 2.21
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -58,9 +58,9 @@ first-target-is-default: help
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-Project         = o-saft
-ProjectName     = O-Saft
-INSTALL.dir     = /usr/local/$(Project)
+O-Project       = o-saft
+O-ProjectName   = O-Saft
+INSTALL.dir     = /usr/local/$(O-Project)
 
 # tool source files
 SRC.lic         = yeast.lic
@@ -81,24 +81,24 @@ NET.pm          = SSLinfo.pm \
 		  SSLhello.pm
 OSAFT.pm        = Ciphers.pm Data.pm Text.pm error_handler.pm
 USR.pm          = \
-		  $(Project)-dbx.pm \
-		  $(Project)-man.pm \
-		  $(Project)-usr.pm
+		  $(O-Project)-dbx.pm \
+		  $(O-Project)-man.pm \
+		  $(O-Project)-usr.pm
 SRC.pm          = \
 		  osaft.pm \
 		  $(NET.pm:%=Net/%)   \
 		  $(OSAFT.pm:%=OSaft/%) \
 		  $(USR.pm) \
 		  $(OSD.pm)
-SRC.sh          = $(Project)
-SRC.pl          = $(Project).pl
-SRC.tcl         = $(Project).tcl
-SRC.gui         = $(Project).tcl $(Project)-img.tcl
-SRC.cgi         = $(Project).cgi
-SRC.php         = $(Project).php
+SRC.sh          = $(O-Project)
+SRC.pl          = $(O-Project).pl
+SRC.tcl         = $(O-Project).tcl
+SRC.gui         = $(O-Project).tcl $(O-Project)-img.tcl
+SRC.cgi         = $(O-Project).cgi
+SRC.php         = $(O-Project).php
 SRC.docker      = \
-		  $(Project)-docker \
-		  $(Project)-docker-dev \
+		  $(O-Project)-docker \
+		  $(O-Project)-docker-dev \
 		  Dockerfile
 SRC.rc          = .$(SRC.pl)
 
@@ -135,14 +135,14 @@ SRC.contrib.misc    = \
 		  Dockerfile.alpine-3.6
 
 SRC.contrib.zap     = zap_config.sh zap_config.xml
-# some file should get the $(Project) suffix, which is appended later
+# some file should get the $(O-Project) suffix, which is appended later
 SRC.contrib.complete= \
 		  bash_completion \
 		  dash_completion \
 		  fish_completion \
 		  tcsh_completion
 SRC.contrib     = \
-		  $(SRC.contrib.complete:%=$(SRC.contrib.dir)/%_$(Project)) \
+		  $(SRC.contrib.complete:%=$(SRC.contrib.dir)/%_$(O-Project)) \
 		  $(SRC.contrib.examples:%=$(SRC.contrib.dir)/%) \
 		  $(SRC.contrib.post.awk:%=$(SRC.contrib.dir)/%) \
 		  $(SRC.contrib.post:%=$(SRC.contrib.dir)/%) \
@@ -198,20 +198,20 @@ WEB.src         = \
 SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
 
 # generated files
-O-TMP.dir         = /tmp/$(Project)
-GEN.html        = $(DOC.dir)/$(Project).html
-GEN.cgi.html    = $(DOC.dir)/$(Project).cgi.html
-GEN.text        = $(DOC.dir)/$(Project).txt
-GEN.wiki        = $(DOC.dir)/$(Project).wiki
-GEN.man         = $(DOC.dir)/$(Project).1
-GEN.pod         = $(DOC.dir)/$(Project).pod
-GEN.src         = $(SRC.contrib.dir)/$(Project)-standalone.pl
+O-TMP.dir         = /tmp/$(O-Project)
+GEN.html        = $(DOC.dir)/$(O-Project).html
+GEN.cgi.html    = $(DOC.dir)/$(O-Project).cgi.html
+GEN.text        = $(DOC.dir)/$(O-Project).txt
+GEN.wiki        = $(DOC.dir)/$(O-Project).wiki
+GEN.man         = $(DOC.dir)/$(O-Project).1
+GEN.pod         = $(DOC.dir)/$(O-Project).pod
+GEN.src         = $(SRC.contrib.dir)/$(O-Project)-standalone.pl
 GEN.pdf         = $(SRC.doc:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
-GEN.rel         = $(Project).rel
+GEN.rel         = $(O-Project).rel
 
-GEN.tgz         = $(Project).tgz
+GEN.tgz         = $(O-Project).tgz
 GEN.tmptgz      = $(O-TMP.dir)/$(GEN.tgz)
 
 # generated files for internal use, i.e. $(SRC.tcl)
@@ -291,8 +291,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.20 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.20
+_INST.genbytext = generated data by Makefile 2.21 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.21
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -482,7 +482,7 @@ $(_RELEASE).rel: Makefile
 
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
-HELP-_project   = ____________________________________ targets for $(Project) _
+HELP-_project   = ____________________________________ targets for $(O-Project) _
 HELP-help       = print common targets for O-Saft (this help)
 HELP-doc        = same as help, but evaluates '$(variables)'
 HELP-pl         = generate '$(SRC.pl)' from managed source files
@@ -530,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.20
-tar:     _INST.is_edit  = 2.20
+_INST.is_edit           = 2.21
+tar:     _INST.is_edit  = 2.21
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
