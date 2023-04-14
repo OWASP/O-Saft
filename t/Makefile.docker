@@ -6,16 +6,16 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 1.6 22/11/04 20:01:01
+#?      @(#) Makefile.docker 1.7 23/04/14 16:29:44
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-HELP-help.test.docker = targets for testing $(Project)-docker
+HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 1.6
+_SID.docker        := 1.7
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
