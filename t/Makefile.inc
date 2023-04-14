@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.33 22/11/12 15:07:42
+#?      @(#) Makefile.inc 1.34 23/04/14 11:01:25
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.33
+_SID.inc       := 1.34
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -68,8 +68,8 @@ ifndef TEST.logtxt
     TEST.logtxt = <<random value replaced by make>>
 endif
 
-ifndef TMP.dir
-    TMP.dir     = /tmp/$(Project)
+ifndef O-TMP.dir
+    O-TMP.dir   = /tmp/$(Project)
 endif
 
 ifndef SRC.pl
