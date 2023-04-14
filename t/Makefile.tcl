@@ -6,16 +6,16 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 1.40 22/11/14 09:26:27
+#?      @(#) Makefile.tcl 1.41 23/04/14 17:21:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-HELP-help.test.tcl  = targets for testing '$(Project).tcl'
+HELP-help.test.tcl  = targets for testing '$(O-Project).tcl'
 
-_SID.tcl           := 1.40
+_SID.tcl           := 1.41
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
