@@ -13,7 +13,7 @@
 #?          <tr><th>Common Name</th><td>example.tld</td></tr>
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.4 22/10/27 11:07:38
+#?      @(#) HTML-table.awk 1.5 23/04/14 17:41:01
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -22,6 +22,7 @@
 
 BEGIN {	FS="\t";
 	print "<!DOCTYPE html>";
+	print "<!-- converted to HTML by HTML-table.awk 1.5 -->";
 	print "<html><head><meta charset=\"utf-8\"><style>";
 	print " h2 { font-size:200%}";
 	print " h3 { font-size:150%}";
@@ -31,7 +32,8 @@ BEGIN {	FS="\t";
 	print " tr:first-child {background-color: #ccc}";
 	print " tr:nth-child(even) {background-color: #f2f2f2}";
 	print " .red {background-color:#f00;} .pink{background-color:#d6d;} .blue{background-color:#aad;} .gray{background-color:#0f0;} .or{background-color:#f80;} .ye{background-color:#ff0;}";
-	print "</style></head><body><table>";
+	print "</style></head><body><h1>O-Saft results</h1>";
+	print "<table>";
 	class = "";
 }
 
