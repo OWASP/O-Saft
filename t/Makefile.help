@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.95 23/04/14 16:42:00
+#?      @(#) Makefile.help 1.96 23/04/14 16:55:15
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.95
+_SID.help          := 1.96
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -52,10 +52,12 @@ help.test.help-v:     HELP_TYPE = help
 O-TAB          := \\011
 _NL            := \\012
 O-CR           := \\015
-T              := $$""(_NL)
-# define _SP containing a single space (tricky as _TEST.empty is empty)
-_TEST.empty    :=
-_SP            := $(_TEST.empty) $(_TEST.empty)
+# not yet used {
+# O-T            := $$""(_NL)
+# define O-SP containing a single space (tricky as _TEST.empty is empty)
+# _TEST.empty    :=
+# O-SP           := $(_TEST.empty) $(_TEST.empty)
+# }
 
 # internal help
 #     HELP_TYPE     - type of the Makefile*, must be the filename's extension
