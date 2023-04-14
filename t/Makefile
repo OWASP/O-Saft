@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.144 23/04/14 16:28:53
+#?      @(#) Makefile 1.145 23/04/14 16:59:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.144
+_SID.test          := 1.145
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -89,7 +89,7 @@ help.test.%:          HELP_HEAD = $(HELP_RULE)
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-ifndef test-remove-environment-variables
+ifndef TEST.remove-environment-variables
     # most environment variables should be ignored,  to avoid unexpected
     # behaviour and to keep our list of variables clean;
     # first define list of required variables, then get list of existing
@@ -108,7 +108,7 @@ ifndef test-remove-environment-variables
     $(foreach _var, $(filter-out $(_keep),$(_env)), $(eval undefine $(_var)))
     $(eval undefine _keep)
     $(eval undefine _env)
-    test-remove-environment-variables = done
+    TEST.remove-environment-variables = done
 endif
 
 # store -n (dry-run) option in own variable
