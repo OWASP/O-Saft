@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.88 23/04/02 15:09:14
+#?      @(#) Makefile.dev 1.89 23/04/14 17:24:37
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.88
+_SID.dev           := 1.89
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -99,7 +99,7 @@ HELP-test.dev.help.log   = same as test.dev.help.all but store output in '$(TEST
 HELP-test.dev.pod.log    = same as test.dev.help.all but store output in '$(TEST.logdir)/'
 
 _HELP-_dev2         = _______________ summary targets for internal functionality _
-HELP.dev = $(_NL)$(_TAB)$(_TAB)\#$(_HELP-_dev2)$(_NL)
+HELP.dev = $(_NL)$(O-TAB)$(O-TAB)\#$(_HELP-_dev2)$(_NL)
 
 HELP.dev       += test.dev.help.all\t\# targets for testing --help option\n
 HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
