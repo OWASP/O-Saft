@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.21 23/04/14 16:27:59
+#?      @(#) Makefile 2.22 23/04/14 16:35:38
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.21
+_SID            = 2.22
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -60,7 +60,7 @@ first-target-is-default: help
 
 O-Project       = o-saft
 O-ProjectName   = O-Saft
-INSTALL.dir     = /usr/local/$(O-Project)
+O-INSTALL.dir   = /usr/local/$(O-Project)
 
 # tool source files
 SRC.lic         = yeast.lic
@@ -291,9 +291,9 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.21 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.21
-EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(INSTALL.dir)@'         \
+_INST.genbytext = generated data by Makefile 2.22 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.22
+EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
@@ -402,12 +402,12 @@ HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
 HELP-clean      = remove all generated files '$(ALL.gen) $(GEN.tags)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
-HELP-install    = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', $(INSTALL.dir) must exist
-HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
+HELP-install    = install tool in '$(O-INSTALL.dir)' using '$(GEN.inst)', $(O-INSTALL.dir) must exist
+HELP-uninstall  = remove installtion directory '$(O-INSTALL.dir)' completely
 
-$(INSTALL.dir):
+$(O-INSTALL.dir):
 	@$(TRACE.target)
-	mkdir $(_INSTALL_FORCE_) $(INSTALL.dir)
+	mkdir $(_INSTALL_FORCE_) $(O-INSTALL.dir)
 
 all:    help
 
@@ -415,16 +415,16 @@ clean:  clean.tmp clean.tar clean.gen
 clear:  clean
 
 # target calls installed $(SRC.pl) to test general functionality
-install: $(GEN.inst) $(INSTALL.dir)
+install: $(GEN.inst) $(O-INSTALL.dir)
 	@$(TRACE.target)
-	$(GEN.inst) $(INSTALL.dir) \
-	    && $(INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
+	$(GEN.inst) $(O-INSTALL.dir) \
+	    && $(O-INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
 uninstall:
 	@$(TRACE.target)
-	-rm -r --interactive=never $(INSTALL.dir)
+	-rm -r --interactive=never $(O-INSTALL.dir)
 
 _RELEASE    = $(shell perl -nle '/^\s*sub _VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
 
@@ -504,7 +504,7 @@ HELP-clean.tmp  = remove '$(O-TMP.dir)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
 HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)'
 HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
-HELP-install-f  = install tool in '$(INSTALL.dir)' using '$(GEN.inst)', '$(INSTALL.dir)' may exist
+HELP-install-f  = install tool in '$(O-INSTALL.dir)' using '$(GEN.inst)', '$(O-INSTALL.dir)' may exist
 HELP-o-saft.rel = generate '$(GEN.rel)'
 #               # HELP-o-saft.rel hardcoded, grrr
 
@@ -530,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.21
-tar:     _INST.is_edit  = 2.21
+_INST.is_edit           = 2.22
+tar:     _INST.is_edit  = 2.22
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
