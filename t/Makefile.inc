@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.34 23/04/14 11:01:25
+#?      @(#) Makefile.inc 1.35 23/04/14 16:32:44
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.34
+_SID.inc       := 1.35
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -40,12 +40,12 @@ HELP.inc        = $(_NL)\
 # ensure that messages and sorting are the same, important to compare results
 LANG=C
 
-ifndef Project
-    Project    := o-saft
+ifndef O-Project
+    O-Project  := o-saft
 endif
 
-ifndef ProjectName
-    ProjectName := O-Saft
+ifndef O-ProjectName
+    O-ProjectName := O-Saft
 endif
 
 ifndef TEST.host
@@ -69,7 +69,7 @@ ifndef TEST.logtxt
 endif
 
 ifndef O-TMP.dir
-    O-TMP.dir   = /tmp/$(Project)
+    O-TMP.dir   = /tmp/$(O-Project)
 endif
 
 ifndef SRC.pl
