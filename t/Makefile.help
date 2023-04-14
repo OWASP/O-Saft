@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.93 23/04/12 23:40:01
+#?      @(#) Makefile.help 1.95 23/04/14 16:42:00
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.93
+_SID.help          := 1.95
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -49,9 +49,9 @@ help.test.help-v:     HELP_TYPE = help
 #________________________________________________________________ variables __|
 
 # internal variables
-_TAB           := \\011
+O-TAB          := \\011
 _NL            := \\012
-_CR            := \\015
+O-CR           := \\015
 T              := $$""(_NL)
 # define _SP containing a single space (tricky as _TEST.empty is empty)
 _TEST.empty    :=
@@ -134,7 +134,7 @@ EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
 EXE.targets     = awk       '$(_EXE.print_file.awk)$(_EXE.target_by_line.awk)'
-EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
+EXE.wordperline = tr -s " $(O-TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
@@ -311,13 +311,13 @@ _notempty:
 
 _line:
 	@echo ""
-	@$(EXE.echo) "$(_TAB)$(_TAB)#$($($@))"
+	@$(EXE.echo) "$(O-TAB)$(O-TAB)#$($($@))"
 
 .PHONY: _notempty _line
 
 help-makefiletitle-%:
 	@$(TRACE.target)
-	@$(EXE.echo) "Makefile.$*$(_TAB)# $(HELP-help.test.$*)"
+	@$(EXE.echo) "Makefile.$*$(O-TAB)# $(HELP-help.test.$*)"
 
 macros:
 	@$(TRACE.target)
@@ -339,7 +339,7 @@ rules: targets
 rules%me: targets.me
 
 # eval target quick&dirty:
-#       @$(EXE.echo) "$($@)$(_TAB)$(_TAB)# $(HELP-$($@))"
+#       @$(EXE.echo) "$($@)$(O-TAB)$(O-TAB)# $(HELP-$($@))"
 # pretty printed format using awk see below
 eval:
 	@$(TRACE.target)
