@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.143 23/04/02 01:19:19
+#?      @(#) Makefile 1.144 23/04/14 16:28:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.143
+_SID.test          := 1.144
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -356,7 +356,7 @@ HELP-_internal  = _____________________________________ internal test target _
 HELP-testcmd-test.internal = print GNU Make's internals and global project settings
 # dummy ' to keep some stupid syntax highlighting happy
 
-# internal information (nothing related to $(Project))
+# internal information (nothing related to $(O-Project))
 # NOTE: $(_SID*) variables indicate if a t/Makefile* was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
 #       the target executes and not when the Makefile is read.
