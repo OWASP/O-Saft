@@ -81,7 +81,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.59 23/04/04 09:37:29
+@(#) Makefile.pod 1.60 23/04/14 16:56:43
 
 =head1 AUTHOR
 
@@ -173,8 +173,8 @@ To get brief (mainly technical) information about the Makefile, use:
 * Requires GNU sed (for generating target  INSTALL.sh ).
 
 *  Unfortunately some of the macros use variables of the makefile,  like
-   $(T), while other macros must use the TAB character verbatim,  which is
-   difficult to identify by human eyes.
+   $(O-TAB), while other macros must use the TAB character verbatim, which
+   is difficult to identify by human eyes.
 
 
 =head1 O-Saft Makefile Preconditions
