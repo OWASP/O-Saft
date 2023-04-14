@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.35 23/04/14 16:32:44
+#?      @(#) Makefile.inc 1.36 23/04/14 16:38:31
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.35
+_SID.inc       := 1.36
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -157,8 +157,8 @@ ifndef _EXE.pod2man-opt
     _EXE.pod2man-opt   := --utf8 
 endif
 
-ifndef TAB
-    TAB        := \\011
+ifndef O-TAB
+    O-TAB      := \\011
 endif
 
 ifndef _NL
