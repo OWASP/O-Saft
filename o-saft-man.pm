@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) %M% %I% %E% %U%";
+my  $SID_man= "@(#) o-saft-man.pm 2.94 23/04/16 00:40:20";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -74,7 +74,7 @@ my  $cfg_header = 0;                    # we may be called from within parents B
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 our $VERBOSE    = 0;  # >1: option --v
-    $VERBOSE++ if (0 < (grep{/^--(v|trace)/} @ARGV)); # if called via o-saft.pl
+    $VERBOSE++ if (0 < (grep{/^--v/} @ARGV));   # if called via o-saft.pl
    # VERBOSE instead of verbose because of perlcritic
 local $\    = "";
 
@@ -468,6 +468,10 @@ EoButton
 /*
 fieldset > details > div:focus  { display:block; } // geht nicht
 */
+ .aside             { border:1px solid black; position:fixed; top:3em; right:0.5em;background:white; }
+ .aside details     { background:white; }
+ .aside summary     { padding:0px  0.5em 0px 0.5em; border-bottom:1px solid black; }
+ .aside p > a       { margin:0.3em 0.3em 0.3em 1em; font-size:80%; display:block;  }
 /* for menu bar left vertical instead top horizontal:
  *   .navdiv { float:left; }
  *   .navdiv > details  { min-width:4em; }
@@ -628,6 +632,13 @@ EoSTYLE_C
  </h2>
 EoBODY
 
+    'body_aside'    => << 'EoASIDE',
+
+ <aside class="aside"><details><summary>Content</summary><p>
+__HTML_aside__
+ </p></details></aside>
+EoASIDE
+
     'form_anf'      => << 'EoFORM',
 
  <a name="aFORM"></a>
@@ -782,7 +793,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '%I%'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.94'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1076,6 +1087,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $anf = shift;    # pattern where to start extraction
     my $end = shift;    # pattern where to stop extraction
     my $txt;
+    my @head;           # collect header line to build table of content
     my $skip= 0;
     my $c   = 0;
     my $h   = 0;
@@ -1091,13 +1103,15 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         next if (0 == $h);                          # ignore "out of scope"
         if (0 < $skip) { $skip--; next; }           # skip some texts
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
-m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special markup
+m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
         m/^=head1 (.*)/   && do {
+                    push(@head, $1);
                     $txt .= sprintf("$p\n<h1>%s %s </h1>\n", _man_html_ankor($1),$1);
                     $p="";
                     next;
                 };
         m/^=head2 (.*)/   && do {
+                    #push(@head, $1);    # don't collect, to many ...
                     my $x=$1;
                     if ($x =~ m/Discrete commands to test/) {
                         # SEE Help:Syntax
@@ -1163,6 +1177,13 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                            # encode special ma
         $txt .= $_;
     }
     $txt .= "$p"; # if not empty, otherwise harmless
+    my $toc;
+       $toc .= sprintf("  <a href=\"#a%s\">%s</a>\n", $_, $_) foreach @head;
+    $html{'body_aside'} =~ s/__HTML_aside__/$toc/g;
+    $txt .= $html{'body_aside'};
+    #$txt .= " <aside><details><summary>Content</summary><div>\n";
+    #$toc .= sprintf("  <a href=\"#a%s\">%s</a>\n", $_, $_) foreach @head;
+    #$txt .= " </div></details></aside>\n";
     return $txt;
 } # _man_html
 
@@ -2626,7 +2647,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-%I% 20%E%
+2.94 2023/04/16
 
 
 =head1 AUTHOR
