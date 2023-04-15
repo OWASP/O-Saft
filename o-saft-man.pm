@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.88 23/04/15 10:09:54";
+my  $SID_man= "@(#) o-saft-man.pm 2.89 23/04/15 10:29:11";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -782,7 +782,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.88'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.89'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -940,7 +940,7 @@ sub _man_cgi_simple {
         my $tag_val = "";
 	(  $tag_nam, $tag_val) = split(/=/, $key) if ($key =~ m/=/);
            $tag_nam = "--$tag_nam";
-        $txt .= _man_html_cbox('cgi', "        ", "q$tag_nam", $tag_nam, $tag_val, $tag_txt) . "\n";
+        $txt .= _man_html_cbox('cgi', "        ", "q$tag_txt", $tag_nam, $tag_val, $tag_txt) . "\n";
     }
     $txt .= "       </div><!-- class=n -->";
     $txt .= _man_html_go("cgi");
@@ -2625,7 +2625,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.88 2023/04/15
+2.89 2023/04/15
 
 
 =head1 AUTHOR
