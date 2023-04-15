@@ -80,13 +80,15 @@ where $key is  --(host|url)=
 
 Must be used as first parameter, otherwise dies.
 
-=item --format=html
+=item --format=html --format=html4 --format=html5
 
 Sends HTTP header:
 
   Content-type: text/html;charset=utf-8
 
 and convert output to HTML format using contrib/HTML-table.awk .
+Note that  contrib/HTML-table.awk  will be executed using  /usr/bin/gawk
+which must be installed on the system, if not, empty result is returned.
 
 =item --content-type=html
 
@@ -139,7 +141,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.68 22/11/26 20:28:04";
+my $SID_cgi = "@(#) o-saft.cgi 1.69 23/04/15 11:31:41";
 my $VERSION = '22.06.22';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -234,7 +236,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.68\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.69\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -502,9 +504,12 @@ if ($me =~/\.cgi$/) {
 		# 11/2021 ah: experimental: generate HTML output
 		# need to use system, as exec can't pipe
 		my $cmd = join(" ", $osaft, @argv);
-		#dbx# print "# mepath=$mepath\n";
-		#dbx# print "# system($cmd | /usr/bin/gawk -f $mepath/contrib/HTML-simple.awk)\n";
-		system("$cmd | /usr/bin/gawk -f $mepath/contrib/HTML-table.awk");
+		my $awk = 'contrib/HTML-table.awk'; # default HTML5, see script
+		   $awk = 'contrib/HTML4-table.awk' if ($qs =~ m/--format=html4/);
+		   $awk = 'contrib/HTML5-table.awk' if ($qs =~ m/--format=html5/);
+		   # 03/2023 ah: not sure if HTML4 necessary, we provide it anyway
+		#dbx# print "# system($cmd | /usr/bin/gawk -f $mepath/$awk)\n";
+		system("$cmd | /usr/bin/gawk -f $mepath/$awk");
 		exit;
 	}
 	exec  $osaft, @argv;        # exec is ok, as we call ourself only
