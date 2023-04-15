@@ -38,7 +38,7 @@
 #       scriptname must be the third argument.
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.10 23/04/15 11:29:46
+#?      @(#) HTML-table.awk 1.11 23/04/15 18:30:01
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -62,7 +62,7 @@ BEGIN {	FS="\t";
 	class = "";
 	idx   = 1;
 	print "<!DOCTYPE html>";
-	print "<!-- converted to HTML"html" by HTML-table.awk 1.10 -->";
+	print "<!-- converted to HTML"html" by HTML-table.awk 1.11 -->";
 	print "<html><head><meta charset=\"utf-8\"><style>";
 	print " .aside         { border:1px solid black; position:fixed; top:0.5em; right:0.5em;background:white;}";
 	print " .aside details { background:white;}";
@@ -120,7 +120,11 @@ END {
 		end = "</details>";
 	}
 	printf(" <div>\n");
-	for (h=1; h<idx; h++) { printf("  <a href=\"#h%s\">%s</a>\n", h, heads[h]); }
+	for (h=1; h<idx; h++) {
+		b = "span";
+		if (heads[h]~/ Target:/) { b = "b"; }
+		printf("  <a href=\"#h%s\"><%s>%s</%s></a>\n",h,b,heads[h],b);
+	}
 	printf(" </div>%s</%s>\n", end,aside);
 	printf("</body></html>\n");
 }
