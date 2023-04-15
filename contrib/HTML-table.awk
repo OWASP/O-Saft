@@ -11,9 +11,28 @@
 #?      Formats all output as HTML with label and value in table lines.
 #?      One table for each section in output and colours for some values.
 #?          <tr><th>Common Name</th><td>example.tld</td></tr>
+#
+# HACKER's INFO
+#       To distinguish if HTML4 or HTML5 should be used, the name of this file
+#       will be used.  Roughly, if the name starts with HTML4, HTML4 output is
+#       generated. if it starts with HTML5, HTML5 output is generated.
+#       Detection of  own scriptname is tricky.  It depends on the environment
+#       like: operating system, calling shell, awk vs. gawk. Luckily we insist
+#       on gawk (see shebang above),  hence only the operating system needs to
+#       be considered, as the calling shell does not provide reliable values.
+#       As first attempt, we rely that  /proc/self/cmdline  exits, if not, the
+#       the default behaviour will be used.
+#       The command line  as to be found in  /proc/self/cmdline  consist of at
+#       least following 3 words:  /usr/bin/gawk -f scriptname
+#       If called manually from within the shell using gawk, it may look like:
+#           gawk -f scriptname other arguments
+#       but can also be, like:
+#           gawk -v other=arg -f scriptname other arguments
+#       The detection here stricktly relys on the first usage,  means that the
+#       scriptname must be the third argument.
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.8 23/04/15 08:20:30
+#?      @(#) HTML-table.awk 1.9 23/04/15 09:45:44
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -21,8 +40,15 @@
 # -----------------------------------------------------------------------------
 
 BEGIN {	FS="\t";
+	# detect own scriptname
+	getline t < "/proc/self/cmdline"; split(t,a,"\0");
+	#dbx# print " /proc/self/cmdline\t = "cmd[3]; # [3] wenn: gawk -f t.awk
+	html = 5;   # default (fallback)
+	if (a[3] ~ /HTML-/)  { html = 5; }
+	if (a[3] ~ /HTML4-/) { html = 4; }
+	if (a[3] ~ /HTML5-/) { html = 5; }
 	print "<!DOCTYPE html>";
-	print "<!-- converted to HTML by HTML-table.awk 1.8 -->";
+	print "<!-- converted to HTML"html" by HTML-table.awk 1.9 -->";
 	print "<html><head><meta charset=\"utf-8\"><style>";
 	print " .aside         { border:1px solid black; position:fixed; top:0.5em; right:0.5em;}";
 	print " .aside details { background:white;}";
@@ -61,7 +87,7 @@ BEGIN {	FS="\t";
 ($NF == "yes")            { $NF = sprintf("<span class=\"gray\">%s</span>", $NF); }
 ($NF ~ /^no/)             { $NF = sprintf("<span class=\"ye\">%s</span>",   $NF); }
 ($1~/^====/ && $NF~/====/){ gsub(/====/,""); printf("  </table>\n  <h2>%s</h2>\n  <table>\n", $0); next; }
-($1~/^===/ && $NF~/===/)  { gsub(/===/,"");  printf("  </table>\n  <h3>%s</h3>\n  <table>\n", $0); next; }
+($1~/^===/ && $NF~/===/)  { gsub(/===/, ""); printf("  </table>\n  <h3>%s</h3>\n  <table>\n", $0); next; }
 ($1~/^== /)               {                  printf("   <tr><th colspan=2>%s</th></tr>\n",    $0); next; }
 ($1~/^=/ && $0 ~/ipher/ && $0~/supported/)  { # some header lines in cipher list are special
         split($0,a,/[ 	]*/);printf("   <tr><th>%s</th><td>%s</td><td>%s</td></tr>\n", a[2], a[3], a[4]); next; }
