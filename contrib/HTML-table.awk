@@ -36,9 +36,14 @@
 #           gawk -v other=arg -f scriptname other arguments
 #       The detection here stricktly relys on the first usage,  means that the
 #       scriptname must be the third argument.
+#
+#       The viewport uses  "initial-scale=0.5"  instead of  "initial-scale=1"
+#       For the viewport  "initial-scale=0.5" instead of "initial-scale=1" is
+#       used  which seems to produce the  same scaling for both orientations;
+#       reason unknown (03/2023).
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.11 23/04/15 18:30:01
+#?      @(#) HTML-table.awk 1.12 23/04/15 22:43:31
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -62,8 +67,10 @@ BEGIN {	FS="\t";
 	class = "";
 	idx   = 1;
 	print "<!DOCTYPE html>";
-	print "<!-- converted to HTML"html" by HTML-table.awk 1.11 -->";
-	print "<html><head><meta charset=\"utf-8\"><style>";
+	print "<!-- converted to HTML"html" by HTML-table.awk 1.12 -->";
+	print "<html><head><meta charset=\"utf-8\">";
+	print "<meta name=\"viewport\" content=\"width=device-width,initial-scale=0.5\">";
+	print "<style>";
 	print " .aside         { border:1px solid black; position:fixed; top:0.5em; right:0.5em;background:white;}";
 	print " .aside details { background:white;}";
 	print " .aside summary { font-size:120%; padding:0px  0.5em 0px 0.5em; border-bottom:1px solid black;}";
