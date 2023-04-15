@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.91 23/04/15 17:52:17";
+my  $SID_man= "@(#) %M% %I% %E% %U%";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -74,7 +74,7 @@ my  $cfg_header = 0;                    # we may be called from within parents B
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 our $VERBOSE    = 0;  # >1: option --v
-    $VERBOSE++ if (0 < $cfg{'verbose'});# if called via o-saft.pl
+    $VERBOSE++ if (0 < (grep{/^--(v|trace)/} @ARGV)); # if called via o-saft.pl
    # VERBOSE instead of verbose because of perlcritic
 local $\    = "";
 
@@ -782,7 +782,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.91'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '%I%'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2626,7 +2626,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.91 2023/04/15
+%I% 20%E%
 
 
 =head1 AUTHOR
