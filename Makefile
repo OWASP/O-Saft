@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.22 23/04/14 16:35:38
+#?      @(#) Makefile 2.23 23/04/16 23:50:05
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.22
+_SID            = 2.23
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -291,8 +291,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.22 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.22
+_INST.genbytext = generated data by Makefile 2.23 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.23
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -530,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.22
-tar:     _INST.is_edit  = 2.22
+_INST.is_edit           = 2.23
+tar:     _INST.is_edit  = 2.23
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -676,7 +676,7 @@ $(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
 # FIXME: (11/2021) libreoffice --headless  generates a file slighly different
 #        compared to the file generated interactively (reason yet unknown)
 #        we keep the generation here, to avoid missing files
-$(DOC.dir)/%.pdf: %.odg
+$(DOC.dir)/%.pdf: $(DOC.dir)/%.odg
 	@$(TRACE.target)
 	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(DOC.dir)/ $^ 
 
