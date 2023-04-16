@@ -39,11 +39,19 @@ PRINCIPLES
           * '#'  prefix for verbose (and debug) messages
 
 
+TERMINOLGY
+
+        For better readability of the descriptions herein, texts used/written
+        by the tools literally are flagged with single quotes, like: 'N/A' or
+        '+'. However, options and command for the tools are  written in plain
+        text without quotes, as they are no natural lanuauage, usually.
+
+
 CONCEPTS
 
         The purpose of  O-Saft  is to do the work,  not to force the user  to
         learn a new tool or to install "newer" software first.
-	However, the user "should do something" if necessary depending on the
+        However, the user "should do something" if necessary depending on the
         reported results.
 
         It follows the Perl principle:
@@ -94,14 +102,15 @@ CONCEPTS
         Following general rules are used:
           * commands are prefixed with '+', for example  +cipher
           * options are prefixed with '--', for example  --cipher=AES
-          * the sequence of commands and options is not important
+          * the sequence of commands and options is not important.
 
         > See also: OSaft/Doc/help.txt  SYNOPSIS
 
         Rare exceptions are necessary to handle ambiguity. For example --help
         is used in general to print the user's help for a specific tool.  But
-        if such a tool is a wrapper to passes  its arguments to another tool,
-        user's help for this tool itself cannot be printed. Example:
+        if a tool is a wrapper and passes its arguments to other tools,  some
+        arguments are valid for both, the wrapper tool and the called tool.
+        For example   --help  for printing user's help. Examples:
           o-saft.pl --help  # print help for o-saft.pl
           o-saft    --help  # print help for o-saft.pl
           o-saft     -help  # print help for o-saft itself
@@ -150,10 +159,10 @@ CONCEPTS
 
         > See also: OSaft/Doc/help.txt  OUTPUT
 
-        It is also often  a matter of opinion and taste how results should
-        be presented. Most tools strictly follow the rule:
-          one check result in one line of output
-        For postprocess output (see above), think the UNIX pipe model.
+        It is also often a matter of opinion and taste  how results should be
+        presented. Most tools strictly follow the rule:
+          * one check result in one line of output.
+        To postprocess output (see above), think the UNIX pipe model.
 
         Results of checks are marked  'yes'  or 'no'.  This leaves the proper
         interpretation, if the result is "good" or "bad", to the user.
@@ -180,6 +189,7 @@ CONCEPTS
     Ancient systems
 
         This tool should run on older systems too.
+
         Background:
         Most tools rely on the newest frameworks, libraries, modules or other
         gimmicks just to make work easy for programmers.  It seems that these
@@ -212,6 +222,7 @@ DEVELOPMENT
           * Testing
           * Make for development
           * Portability
+          * Using env
 
     Documentation (user and development)
 
@@ -238,6 +249,15 @@ DEVELOPMENT
         checks in a cumbersome way. 
         Keep in mind: the code knows how to do the work, the user most likely
         does not know.
+
+        The code mainly avoids if-else-constructs.  if-constructs are used to 
+        handle excetions of normal control flow and either continue with that 
+        or exit (break, continue, return) the loop of function.
+
+        As described before, "early breaks", like returns from functions, are
+        are used to keep the following code free of further checks.
+
+        Other people may have other programming styles ...
 
     Handling erros and exceptions
 
@@ -269,7 +289,7 @@ DEVELOPMENT
 
     Programming: arguments in general
 
-        A strong syntax for arguments is used to distinguish commands and
+        A strong syntax for arguments is used to distinguish the commands and
         options (as decribed above).
         As a lot of spelling variants and aliases are supported, this results
         currently (2018 ..) in an ugly parser.
@@ -323,25 +343,32 @@ at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
 
     Testing
 
+        Documentation about testing can be found in the section  TESTING  in
+
+        > See: OSaft/Doc/help.txt
+
 # TODO: ... 
-	Documentation about testing can be found in the section  TESTING  in
-          OSaft/Doc/help.txt
         This should be moved to this document and then referenced in there.
 
     Make for development
 
-# TODO: ... explain make system and targets ...
+       Anything about building and maintaining the project, its code and its
+       documentation is done in Makefiles.  The project's Makefile is in the
+       project directory itself. It also serves common used/expected targets
+       like 'install' or 'clean'.  All other targets for development, can be
+       found in the  ./t  directory. There exist numerous Makfiles.
+
+       > Start reading t/Makefile.pod , you may use: perldoc t/Makefile.pod
 
     Portability
 
         As decribed above in "Ancient systems", the tools should work on many
-        systems.  So we use traditional interpreters fpr the core tools only,
-        these are: perl sh awk sed .
+        systems.  So we use traditional interpreters for the core tools only,
+        these are: awk perl sed sh wc.
 
         Further development most likely continues on modern systems. On these
         modern and more sophisticated tools can be expected, like GNU Make or
         GNU awk (gawk).
-        It's assumed that further development continues on modern systems and
 
         The scripts use hardcoded path in their shebang line, for a detailled
         discussion see "Using env" below.
@@ -367,6 +394,7 @@ at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
         GNU's  /usr/bin/env  supports the  -S/--split-string  option  to pass
         such arguments to the program, example:
             /usr/bin/env -S prog -opt arg
+        It's not an option here, because GNU tools are not available always.
 
         Using the old-school hardcoded path is simple and is known to work on
         all platforms, while detecting the version of /usr/bin/env and how it
@@ -379,7 +407,7 @@ at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
         The installation script  INSTALL.sh  will provide options  to replace
         it with  /usr/bin/env .
 
-        For more details on shebang and env, please read (last seen 11/2022):
+        For more details on shebang and env, please read (last seen 12/2022):
             https://www.in-ulm.de/~mascheck/various/shebang/
 
 
@@ -387,135 +415,151 @@ STATUS CODE
 
         Why does O-Saft not support a  --fail  option?
 
-# TODO:
-Long answer: 
+        Short answer: 
 
-Background: one of O-Saft's concepts is to "show important information" and to
-inform about the performed checks based on these informations. The check results
-are basically "yes" or "no". It leaves the interpretation, if the result is
-"good" or "bad", to the user.  This means that all reported results are
-unbiased.
-Said this, it's obvious that o-saft.pl cannot return any other status beside the
-printed results (which *are* the status).
-The idea is, that postprocessors should be used to use the results for scoring
-or alike. This is another concept, and o-saft.pl is prepared for the ease use of
-prostprocessors.
+        The option  --exitcode  does the trick. For details, please see:
+          o-saft.pl --help
 
-As it is common sense that a status code other then 0 indicates that something
-is wrong, such a status code would violate this concept as it is biased.
-A status code other than 0 would also make using o-saft.pl in a pipe much more
-difficult.
+        Long answer: 
 
-Now, I see the practical use in a pipe or process chain, which simplifies the
-handling of the results, sometimes. 
-So, the requirement makes sense, but throws a couple of questions to be
-answered. The requirement, as described in this issue, is to return a status
-code other than 0, if any check reports "no". Could be done (is done 11oct2016:),
-but is not the complete truth.
-What about the other checks
-  * like the sizes?
-  * the DNS checks?
-  * are medium ciphers subject for fail?
-  * What about incomplete checks because the server did not return proper data
-    (i.e. DH parameters)?
-  * What about failed checks, which could be considered unimportant in the
-    tested environment (i.e. some STS or compliance checks)?
+        For background please see section "Output and results" above, here in
+        short some concepts again:
+          * show important information
+          * inform about the performed checks based on these informations
+          * check results are basically 'yes' or 'no'
+          * leaves the proper interpretation, if "good" or "bad" to the user.
+        This means that all reported results are unbiased.
 
-These are the same questions as for scoring the results (like other tools do).
-It's a matter of personal opinion and/or the attributes of the tested
-environment, if "something" should be considered "good" or "bad".
-However, if a user is aware of such problems, she can configure O-Saft to do
-only the relevant checks. Other tools cannot do this, and hence score
-everything, wether important, useful, practical, ... or not.
-Please see next comment for a practical example.
+        Said this, it's obvious that o-saft.pl cannot return any other status
+        beside the printed results (which *are* the status).
+        The idea is that postprocessors should be used to use the results for
+        scoring or alike. This is another concept, and  o-saft.pl is prepared
+        for the ease use of prostprocessors.
 
-How to deal with these questions?
-I.g. the "--fail" functionality needs to be configurable by the user.
-Best example why this is necessary, is the +cipher command. Is any supported
-cipher other than HIGH subject for fail? Should MEDIUM ciphers not fail? Or ask
-your marketing people what they think about disabling DES-CBC3-SHA (which is
-weak now), just to pass the test?
+        As it is common sense that a status code other then  0 indicates that
+        something is wrong,  such a status code would violate this concept as
+        it is biased.
+        A status code other than 0 would also make using  o-saft.pl in a pipe
+        much more difficult.
 
-My opinion is, that a configurable --fail in conjunction with the existing
-configuration of the checks to be performed, can do the trick.
+        On the other hand, using pipes or process chains  are of practical as
+        they can simplify handling of results, sometimes.
 
-Conclusion: there is no -and will not be- a general --fail option. Instead, we
-provide some options if various kinds of checks should be subject for an exit
-code. 
-With this concepts, it's up to the user to configure O-Saft to return a proper
-exit code. This should not be difficult for experianced users with special
-requirements ;-)
-For now, the option --exitcode does the trick, there are also some more
-options  --exitcode-*  for fine tuning. Please see  `o-saft.pl --help`.
+        So, the requirement makes sense,  but throws a couple of questions to
+        be answered. The requirement is to return a status code other than 0,
+        if any check reports 'no'. Could be done (is done since 11-oct-2016),
+        but is not the complete truth. What about the other checks:
+          * like the sizes?
+          * the DNS checks?
+          * are medium ciphers subject for fail?
+          * what about incomplete checks because the target server did not
+            return proper data (i.e. DH parameters)?
+          * what about failed checks, which could be considered unimportant
+            in the tested environment (i.e. some STS or compliance checks)?
 
-Here we go, this desciption is subject for discussion. Please provide you
-opinions.
+        These are the same questions as for example scoring the results (like
+        other tools do).
+        It's a matter of personal opinion and/or the attributes of the tested
+        environment, if "something" should be considered "good" or "bad".
+        However, if users are aware of such problems,  they can configure our
+        tools to do only the relevant checks. Other tools cannot do this, and
+        hence score everything, wether important, useful, practical, whatever
+        ... or not. Please see next comment for a practical example.
 
+        How to deal with these questions?
+
+        I.g. the "--fail" functionality needs to be configurable by the user.
+        Agood example why this is necessary, is the  +cipher  command. Is any
+        supported cipher other than  'HIGH' subject for fail? Should 'MEDIUM'
+        ciphers not fail?  Or ask your marketing people what they think about
+        disabling  DES-CBC3-SHA (which is 'weak' now), just to pass the test?
+
+        The authors opinion is that a configurable --fail in conjunction with
+        the existing configuration of the checks to be performed,  can do the
+        trick.
+
+        Conclusion: there is no --and will not be-- a general --fail option.
+        Instead, options are provided to control how  various kinds of checks
+        should be subject for an exit code. 
+        With this concepts, it's up to the user to configure when to return a
+        proper exit code.  This should not be difficult for experianced users
+        with special requirements ;-)
+
+        The option are  --exitcode  and for fine tuning  --exitcode-*. Please
+        see:
+           osaft.pl --help=OPTIONS
+
+        This desciption for "--fail functionality" is subject for discussion.
+        Please provide your opinions.
+
+
+# TODO: move following to OSaft/Doc/help.txt
 
 == Examples for  --exitcode ==
 
-Here is a practical example why a general "--fail" would not return the
-expected results.
+        Here is a practical example why a general --fail would not return the
+        expected results.
 
-Using  `o-saft.pl mysite.org --exitcode +vulns` would return results
-like shown in the very first comment above.
-Looking at these results, we see 6 "no" checks: BEAST, BREACH, DROWN,
-Lucky13, Sweet32 and SSLv2. My opinion is -please correct me if wrong-
-that only 2 checks should count for the exit code: Lucky13 and Sweet32.
+        Using something like:
 
-Currently, having the concepts (see previous comment) in mind, the
-solution to filter the improper checks would be to use prostprocessor:
+          $0 mysite.org --exitcode +vulns
 
-    o-saft.pl mysite.org --exitcode +vulns \
-	|grep -v '(<<'|egrep -q 'no( |$)' || echo fail
+        would return results like shown in the very first comment above.
+        Looking at these results, we see 6 'no' checks: BEAST, BREACH, DROWN,
+        Lucky13, Sweet32 and SSLv2. Most likely only 2 of these checks should
+        count for the exit code: Lucky13 and Sweet32.
 
-o-saft.pl could be configured to do the proper tests only. There are at least
-3 ways to do it:
+        Please correct me if wrong, participate on the discussion.
 
-1. using proper commands only:
+        Currently, having  docs/concepts.txt  in mind, the solution to filter
+        the improper checks would be to use a prostprocessor, for example:
 
-    o-saft.pl mysite.org --exitcode +crime +freak +heartbleed +logjam +lucky13 \
-	+poodle +rc4 +sloth +sweet32 +time +hassslv3 +pfs_cipher +session_random
+          $0 mysite.org --exitcode +vulns \
+          |grep -v '(<<'|egrep -q 'no( |$)' || echo fail
 
-2. using .o-saft.pl (the traditional way):
+        Using configurations, there are at least three other ways to do it:
 
-cat > .o-saft.pl <<EoT
---host=mysite.org
---exitcode
-+crime
-+freak
-+heartbleed
-+logjam
-+lucky13
-+poodle
-+rc4
-+sloth
-+sweet32
-+time
-+hassslv3
-+pfs_cipher
-+session_random
-EoT
+        1. using proper commands only:
 
-   o-saft.pl
+          $0 mysite.org --exitcode +crime +freak +heartbleed +logjam \
+             +lucky13 +poodle +rc4 +sloth +sweet32 +time +hassslv3 \
+             +pfs_cipher +session_random
 
-3. using .o-saft.pl (advanced usage):
+        2. using the traditional way:
 
-cat > .o-saft.pl <<EoT
---host=mysite.org
---exitcode
-+heureca
-### define new command +heureca , all following must be in one line
---cfg_cmd=heureca=crime freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv3 pfs_cipher session_random
-EoT
+          cat > .o-saft.pl <<EoConf && $0
+            --host=mysite.org
+            --exitcode
+            +crime
+            +freak
+            +heartbleed
+            +logjam
+            +lucky13
+            +poodle
+            +rc4
+            +sloth
+            +sweet32
+            +time
+            +hassslv3
+            +pfs_cipher
+            +session_random
+EoConf
 
-   o-saft.pl
+        3. using .o-saft.pl (advanced usage):
 
-Note that creating .o-saft.pl must be done once in the directory where
-o-saft.pl will be started.
+          cat > .o-saft.pl <<EoConf && $0
+            --host=mysite.org
+            --exitcode
+            +heureca
+            ### define new command +heureca , all following must be in one line
+            --cfg_cmd=heureca=crime freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv3 pfs_cipher session_random
+EoConf
 
-Hope this helps to understand how O-Saft handles various situation and
-how to configure it for very spezial purposes.
+        Note that .o-saft.pl must be created only once in the directory where
+        $0 will be started.
+
+        Hope this helps to understand how configuration can be used to handle
+        very spezial purposes.
 
 
 GLOSSAR
