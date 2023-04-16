@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.23 23/04/16 23:50:05
+#?      @(#) Makefile 2.24 23/04/16 23:54:32
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.23
+_SID            = 2.24
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -172,11 +172,11 @@ SRC.Makefiles   = $(TEST.Makefiles:%=$(TEST.dir)/%)
 
 # documentation files
 DOC.dir         = docs
-DOC.src         = o-saft_CLI_data_flow.odg \
+DOC.odg         = o-saft_CLI_data_flow.odg \
 		  o-saft_GUI_data_flow.odg \
 		  o-saft_docker.de.odg \
 		  o-saft_docker.en.odg
-SRC.doc         = $(DOC.src:%=$(DOC.dir)/%)
+SRC.odg         = $(DOC.odg:%=$(DOC.dir)/%)
 WEB.dir         = docs/img
 WEB.src         = \
 		  img.css \
@@ -206,7 +206,7 @@ GEN.wiki        = $(DOC.dir)/$(O-Project).wiki
 GEN.man         = $(DOC.dir)/$(O-Project).1
 GEN.pod         = $(DOC.dir)/$(O-Project).pod
 GEN.src         = $(SRC.contrib.dir)/$(O-Project)-standalone.pl
-GEN.pdf         = $(SRC.doc:%.odg=%.pdf)
+GEN.pdf         = $(SRC.odg:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
 GEN.rel         = $(O-Project).rel
@@ -232,10 +232,10 @@ ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.tx
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
-ALL.doc         = $(SRC.doc) $(SRC.web)
+ALL.doc         = $(SRC.odg) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.docs) $(GEN.DOC.data)
-ALL.docs        = $(SRC.doc) $(GEN.docs)
+ALL.docs        = $(SRC.odg) $(GEN.docs)
     # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
     #       $(GEN.wiki) is rarley used but part of ALL.gen for simplicity
 #               # $(GEN.tags) added in t/Makefile.misc
@@ -245,7 +245,7 @@ ALL.src         = \
 		  $(SRC.txt) \
 		  $(SRC.rc) \
 		  $(SRC.misc) \
-		  $(SRC.doc) \
+		  $(SRC.odg) \
 		  $(ALL.gen) \
 		  $(ALL.Makefiles) \
 		  $(ALL.tst) \
@@ -291,8 +291,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.23 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.23
+_INST.genbytext = generated data by Makefile 2.24 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.24
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -530,8 +530,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.23
-tar:     _INST.is_edit  = 2.23
+_INST.is_edit           = 2.24
+tar:     _INST.is_edit  = 2.24
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
