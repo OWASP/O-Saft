@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.24 23/04/16 23:54:32
+#?      @(#) Makefile 2.25 23/04/17 00:04:01
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.24
+_SID            = 2.25
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -177,6 +177,8 @@ DOC.odg         = o-saft_CLI_data_flow.odg \
 		  o-saft_docker.de.odg \
 		  o-saft_docker.en.odg
 SRC.odg         = $(DOC.odg:%=$(DOC.dir)/%)
+DOC.info        = concepts.txt
+SRC.info        = $(DOC.info:%=$(DOC.dir)/%)
 WEB.dir         = docs/img
 WEB.src         = \
 		  img.css \
@@ -232,10 +234,10 @@ ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.tx
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
-ALL.doc         = $(SRC.odg) $(SRC.web)
+ALL.doc         = $(SRC.odg) $(SRC.info) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.docs) $(GEN.DOC.data)
-ALL.docs        = $(SRC.odg) $(GEN.docs)
+ALL.docs        = $(SRC.odg) $(GEN.docs) $(SRC.info)
     # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
     #       $(GEN.wiki) is rarley used but part of ALL.gen for simplicity
 #               # $(GEN.tags) added in t/Makefile.misc
@@ -246,6 +248,7 @@ ALL.src         = \
 		  $(SRC.rc) \
 		  $(SRC.misc) \
 		  $(SRC.odg) \
+		  $(SRC.info) \
 		  $(ALL.gen) \
 		  $(ALL.Makefiles) \
 		  $(ALL.tst) \
@@ -291,8 +294,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.24 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.24
+_INST.genbytext = generated data by Makefile 2.25 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.25
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -530,8 +533,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.24
-tar:     _INST.is_edit  = 2.24
+_INST.is_edit           = 2.25
+tar:     _INST.is_edit  = 2.25
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
