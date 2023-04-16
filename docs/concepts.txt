@@ -578,3 +578,11 @@ GLOSSAR
         command
         option
 
+
+VERSION
+        @(#) concepts.txt 1.1 23/04/17 00:10:41
+
+
+AUTHOR
+        12-feb-2021 Achim Hoffmann
+
