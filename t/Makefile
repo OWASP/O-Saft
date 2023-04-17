@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.145 23/04/14 16:59:54
+#?      @(#) Makefile 1.146 23/04/17 20:07:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.145
+_SID.test          := 1.146
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -130,7 +130,7 @@ TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
 #TEST.hosts      =
 
 # following defined in ../Makefile
-# TEST.do  =
+# TEST.exe =
 # SRC.test =
 # ALL.test =
 
