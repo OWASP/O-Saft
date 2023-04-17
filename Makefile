@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.25 23/04/17 00:04:01
+#?      @(#) Makefile 2.26 23/04/17 20:06:27
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.25
+_SID            = 2.26
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -152,14 +152,14 @@ SRC.contrib     = \
 
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
-TEST.do         = SSLinfo.pl \
+TEST.exe        = SSLinfo.pl \
                   o-saft_bench.sh \
                   cloc-total.awk \
                   critic_345.sh \
                   test-bunt.pl.txt
 TEST.critic.rc  = .perlcriticrc
 SRC.test        = \
-                  $(TEST.do:%=$(TEST.dir)/%) \
+                  $(TEST.exe:%=$(TEST.dir)/%) \
                   $(TEST.critic.rc:%=$(TEST.dir)/%)
 TEST.Makefiles   = \
 		  Makefile         Makefile.inc   Makefile.help  Makefile.pod \
@@ -294,8 +294,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.25 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.25
+_INST.genbytext = generated data by Makefile 2.26 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.26
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -533,8 +533,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.25
-tar:     _INST.is_edit  = 2.25
+_INST.is_edit           = 2.26
+tar:     _INST.is_edit  = 2.26
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
