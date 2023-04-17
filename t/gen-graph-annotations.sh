@@ -9,10 +9,10 @@
 #? DESCRIPTION
 #?      Searches for references in all source files to other source files  or
 #?      to references in themselfs.
-#?      Builds a graph of all found references:
-#?	    graph-annotations_o-saft.*
-#?          graph-sources_o-saft.*
-#?      in fowlowing formats:   DOT  graph  PDF  SVG  VCG
+#?
+#?      Builds a graph of all found references in following files:
+#?	    o-saft_graph-annotations.*
+#?      in following formats:   DOT  graph  PDF  SVG  TCL  VCG
 #?
 #?      make's  e-ALL.src  target will be used to retrieved all source files.
 #?      Reference are:
@@ -29,12 +29,12 @@
 #? LIMITATIONS
 #?      The script generates multiple files at once. The main reason is, that
 #?      the output of the initial generator graph.pl needs to be modified and
-#?      and then filtered before converted to other formats.
+#?      then filtered before converted to other formats.
 #?      Therefore use of this script may not fit into the  general concept of
 #?      make which expects one result (file) for each target.
 #?
 #? VERSION
-#?      @(#)  1.1 23/04/17 21:53:49
+#?      @(#)  1.2 23/04/17 22:49:40
 #?
 #? AUTHOR
 #?      13-mar23 Achim Hoffmann
