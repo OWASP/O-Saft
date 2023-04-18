@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.110 22/11/19 14:14:26
+# SID   @(#) help.txt 1.112 23/04/18 11:58:24
 
 NAME
 
@@ -4526,7 +4526,10 @@ DEBUG
                   Net::SSLeay::
                   ::OPENSSL_VERSION_NUMBER()       0x268443744
                   ::SSLeay()                       0x268443744
-                  ::SSLEAY_DIR                     OPENSSLDIR: "/usr/local/openssl/ssl"
+                  ::SSLEAY_DIR                     ENGINESDIR: "/usr/lib/x86_64-linux-gnu/engines-1.1"
+                  ::SSLEAY_BUILD_ON                platform: debian-amd64
+                  ::SSLEAY_PLATFORM                OPENSSLDIR: "/usr/lib/ssl"
+                  ::SSLEAY_CFLAGS                  built on: Fri Jun 24 20:22:19 2022 UTC
                   Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
               = openssl =
                   external executable              /opt/openssl-chacha/bin/openssl
@@ -4552,10 +4555,17 @@ DEBUG
                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
                   .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-              = o-saft.pl +cipherall =
-                  number of supported ciphers      1280
-                  default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                  .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+              = o-saft.pl +cipher --ciphermode=intern =
+                  used cipherrange                 intern
+                  number of supported ciphers      2640
+                  default list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                  .                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                  .                                0x0300D000 .. 0x0300D0FF,
+                  .                                0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
+                  .                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
+                  .                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA, 0x0300EAEA, 0x0300FAFA,
                   long list of ciphers             0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF
                   huge list of ciphers             0x03000000 .. 0x0300FFFF
                   safe list of ciphers             0x03000000 .. 0x032FFFFF
@@ -4563,6 +4573,28 @@ DEBUG
                   C0xx list, range C0xx..C0FF      0x0300C000 .. 0x0300C0FF
                   CCxx list, range CCxx..CCFF      0x0300C000 .. 0x0300C0FF
                   ECC list, ephermeral ciphers     0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF
+                  SSLv2 list of ciphers            0x02000000,   0x02010080, 0x02020080, 0x02030080,
+                  .                                0x02040080,
+                  .                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                  .                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
+                  .                                0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C,
+                  .                                0x030000FF,0x0300FEE0,
+                  .                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                  SSLv2_long list of ciphers       0x02000000,   0x02010080, 0x02020080, 0x02030080,
+                  .                                0x02040080,
+                  .                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                  .                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
+                  .                                0x03000000 .. 0x0300002F, 0x030000FF,0x0300FEE0,
+                  .                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                  shifted list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                  .                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                  .                                0x0300D000 .. 0x0300D0FF,
+                  .                                0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
+                  .                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
+                  .                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA,
+                  .                                0x0300EAEA, 0x0300FAFA,
               = Required (and used) Modules =
                   @INC                 ./ ./lib . /bin /usr/share/perl5 \
                   .                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
@@ -4570,15 +4602,15 @@ DEBUG
                   .                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
               =   module name            VERSION  found in
               =   ----------------------+--------+------------------------------------------
-                  IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
-                  IO::Socket::SSL        2.044    /usr/share/perl5/IO/Socket/SSL.pm
+                  IO::Socket::INET       1.41     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
+                  IO::Socket::SSL        2.069    /usr/share/perl5/IO/Socket/SSL.pm
                   Time::Local            1.2300   /usr/share/perl/5.24/Time/Local.pm
-                  Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
-                  Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
-                  Net::SSLinfo           19.12.21 Net/SSLinfo.pm
-                  Net::SSLhello          19.12.21 Net/SSLhello.pm
+                  Net::DNS               1.29     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
+                  Net::SSLeay            1.88     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
+                  Net::SSLinfo           22.11.22 Net/SSLinfo.pm
+                  Net::SSLhello          22.06.22 Net/SSLhello.pm
                   Ciphers
-                  osaft                  19.12.26 osaft.pm
+                  osaft                  22.11.22 osaft.pm
 
         Following example shows the result with warnings (line nr. may vary):
 
@@ -5013,9 +5045,15 @@ nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
 
 DOCUMENTATION
 
+        For a description how documentation is organised, please see:
+
+          perldoc $0
+
+        The documentation here focuses on user part only.
+
     User documentation
 
-        Documentation is mainly intented for the user, which is provided with
+        The complete user documentation (or "help") is provided with:
 
           $0 --help
 
@@ -5025,9 +5063,9 @@ DOCUMENTATION
 
           $0 --help=HELP
 
-        This only provides the complete user documentation, or the well known
-        parts specified by the keyword, (HELP in example above).  To find any
-        text with some lines of context, following could be used:
+        It can be used to get well known parts of the documentation specified
+        by the keyword, (HELP in example above).
+        To find any text with some lines of context, following could be used:
 
           $0 --help | egrep -i -C 3 "some text"
 
@@ -5042,31 +5080,10 @@ DOCUMENTATION
 
     Developer documentation
 
-        Documentation for developers is provided in various ways. Information
-        for developers can be found found in:
+        To get used to documentation for developers, best start reading:
 
-          * the files itself
-
-          * with:
-              $0 --help=test
-              $0 --test
-
-          * reading:
-              docs/concepts.txt
-              Makefile.pod
-              perldoc Makefile.pod
-
-          * using:
-              make
-              make help.doc
-
-        Using make for development uses additional external tools and/or Perl
-        modules:
-
-          * perl-analyzer
-            (also requires Perl modules, JSON, Text::MicroTemplate)
-
-          * Debug::Trace Devel::Trace Devel::DProf Devel::NYTProf
+          docs/concepts.txt
+          perldoc t/Makefile.pod
 
 
 ATTRIBUTION
