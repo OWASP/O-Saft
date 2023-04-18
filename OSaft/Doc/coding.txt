@@ -1,8 +1,10 @@
 
-# SID   @(#) coding.txt 1.10 22/10/26 12:02:31
+# SID   @(#) coding.txt 1.11 23/04/18 13:58:48
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
+# Note that  $0  is used herin for the tool. It will be replaced by the
+# proper tool name when called by  $0  itsef.
 
 HACKER's INFO
 
@@ -16,6 +18,8 @@ HACKER's INFO
         but often needs highly adapted code for each individual check, and --
         more worse -- sometimes variants of the same code.
         Please keep this in mind, before trying to unitise the code.
+
+        Other people may have other programming styles ...
 
         Note:  following descriptions mainly uses the term "sub" (the perlish
         term) when talking about functions, procedures, and/or methods.
@@ -53,6 +57,10 @@ HACKER's INFO
 
       Code style
 
+        In general the code favours language constructs that are easy to read
+        by humans, even they are unusual for other programming languages (for
+        example postfix conditions, see below).
+
         Global variables are used, see X&Variables& for details below.
 
         Variables are declared at beginning of subs. I.g. we do not use local
@@ -62,9 +70,14 @@ HACKER's INFO
         else condition is used, it is written in one line:   } else {  .
         elsif is used in "borrowed" code only ;-)
 
-        Early return statements in subs are prefered, rather than complicated
-        and nested conditions. There are also goto statements in parsers, but
-        return statements are prefered.
+        if constructs are used to deal with exceptions of the  normal control
+        flow. The flow will continue hehind or exit (break, continue, return)
+        the loop or function.
+
+        As described before, "early breaks" (next, last in loops; return from
+        function) are prefered, rather than complicated or nested conditions.
+        There are also goto statements in parsers,  but return statements are
+        prefered.
 
         Most code is seqential instead of using functions, except the code is
         used multiple times. This is currenlty changed ...
@@ -79,7 +92,7 @@ HACKER's INFO
         recommendations given by perlcritic to make the most of it.
         For details please see:
 
-          *  Annotations at end of o-saft.pl
+          *  Annotations at end of $0
           *  .perlcriticrc
           *  contrib/critic.sh .
 
@@ -117,7 +130,8 @@ HACKER's INFO
 
       General
 
-        Exceptions are not used, there is no need for them.
+        Exceptions are not used, there is no need for them. Please see also:
+          docs/concepts.txt
 
         In general, the code *must not* use any additional libraries. We know
         that there exist infinite marvellous libraries and frameworks (called
@@ -128,6 +142,12 @@ HACKER's INFO
         the core language.  Currently some perl modules are an exception, and
         will be removed in future.
         However, libraries part of perl5 are assumed to be "core language".
+
+        Because of our goal to support running on old systems too (see above)
+        parts of the code make ugly checks for version numbers  and try to do
+        checks in a cumbersome way.
+        Keep in mind: the code knows how to do the work, the user most likely
+        does not know.
 
         Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
         message printed will always start with '**ERROR: '.
@@ -188,18 +208,14 @@ HACKER's INFO
 
         To reduce the huge amount of comments, and to write them only once if
         needed multiple times,  an annotation section  have been added at the
-        end of  $0  file. In this section a title for the comment is
-        followed by the comment's text. Example:
+        end of some files. Such an annotation looks like:
 
-          == Note:A Title
-             Text for comment.
+        For more details  SEE Annotations, Internal Notes (in o-saft.pl)
 
-        Such comments are refered to in the code by:
+            perldoc $0
 
-          SEE Note:A Title
-
-        This is experimental, to see if it helps  to make the control flow of
-        code more readable by humans, but keep the full documentation.
+        This helps  to make the control flow of code more readable by humans,
+        but keep the full documentation.
 
       Modules
 
@@ -283,13 +299,13 @@ HACKER's INFO
         o-saft-dbx.pm.
 
         Debug messages always start with    '#dbx#'.
-        verbose messages always start with  '#o-saft.pl: '.
-        Trace messages always start with    '#o-saft.pl::'.
+        verbose messages always start with  '#$0: '.
+        Trace messages always start with    '#$0::'.
         Following formats are used in trace messages:
-          #o-saft.pl:: some data           - output from $0's main
-          #o-saft.pl::subfunc(){           - inital output in subfunc
-          #o-saft.pl::subfunc: some data   - some output in subfunc
-          #o-saft.pl::subfunc() = result } - result output of subfunc
+          #$0:: some data           - output from $0's main
+          #$0::subfunc(){           - inital output in subfunc
+          #$0::subfunc: some data   - some output in subfunc
+          #$0::subfunc() = result } - result output of subfunc
         However, these rules are implemented very lazy.
 
         The prefix for verbose and trace message can be configured like:
@@ -299,6 +315,10 @@ HACKER's INFO
         When  --trace  is used,  additional trace output  with timestamps are
         are also printed, even if no  --trace-time  was given. This is useful
         because it automatically "scopes" other output with  '{'  and  '}'.
+
+        Other special coding  for debugging other than that in  o-saft-dbx.pm
+        is not provided. It's recommended to use perl's  -d  option  for full
+        debugging.
 
         Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
         is hard-coded.
@@ -329,7 +349,7 @@ HACKER's INFO
         proper RegEx for each command and option, could be done, but the code
         for such a sophisticated parser may be hard to understand.  So a loop
         over all arguments with a huge "switch" statment is implemented. Each
-        "switch-case" matches a RegEx,  and then assign a proper value in the
+        "switch-case" matches a RegEx, and then assigns a proper value in the
         configuration. See the  "#{ COMMANDS"  and  "#{ OPTIONS"  sections in
         $0 .
 
@@ -372,9 +392,45 @@ HACKER's INFO
               for the make system.  The description of the Makefile's targets
               is done as target in each Makefile itself.
 
-        Note that all documentation (user and development) is  actively  used
+        For more details  SEE Annotations, Internal Notes  and/or
+        SEE Note:Documentation (in o-saft.pl), or use:
+
+            perldoc $0
+
+        Note that many documentation (user and development) is actively  used
         by the program itself and by some additional tools, see for example:
-            o-saft.pl --help=opt
+            $0 --help=opt
+            $0 --test
+
+        Documentation for developers is provided in various ways,  and can be
+        found in:
+
+          * the files itself:
+              comments there
+              annotations
+
+          * with:
+              perldoc $0
+              $0 --help=test
+              $0 --test
+              perldoc t/Makefile.pod
+
+          * using:
+              make
+              make help.doc
+
+        (feel free to use your tool of choice instead of perldoc)
+
+        Using make for development uses additional external tools and/or Perl
+        modules:
+
+          * dot, dotty, xdot, graph-easy
+
+          * perl-analyzer
+            (also requires Perl modules, JSON, Text::MicroTemplate)
+
+          * Debug::Trace Devel::Trace Devel::DProf Devel::NYTProf
+
 
         Initially all user documentation was written in  Perl's POD  format.
         After two years of development, it was observerd that POD was not the
@@ -382,9 +438,7 @@ HACKER's INFO
         complicated, sometimes. Using POD is also a huge  performance penulty
         on all platforms. Hence  POD  will now be genereated on request using
         the  --help=pod  option.
-
-        For mor Details  SEE Note:Documentation (in o-saft.pl).
-
+        However, POD is still used for Annotations (see above).
 
     Repository
 
@@ -402,15 +456,15 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.10 22/10/26 12:02:31";
-          (Note beside: previous example is the SID of this file)
+            my $SID = "coding.txt 1.11 23/04/18 13:58:48";
+          (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
 
         * Changes are made in very small chunks,  each commited separately to
           the repository.
 
-        * Different types of changes see  Commit Comments  below) must not be
+        * Different types of changes (see Commit Comments  below) must not be
           mixed in one commit.
 
       Commit Comments
