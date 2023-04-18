@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.52 23/03/06 19:16:39"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.54 23/04/18 12:32:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -240,7 +240,7 @@ sub _warn   {
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
     my $_no =  "@txt";
-       $_no =~ m/^([0-9(]{3})/;  # message number, usually
+       $_no =~ s/^\s*([0-9(]{3}):?.*/$1/;   # message number, usually
     return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't pass $cfg{use}{warning}
     # other configuration values can be retrieved from %cfg
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
@@ -8108,7 +8108,7 @@ code is written in some way  (means the logic of the code), and not *what*
 the code does (which is most likely obvious).
 Some special syntax for comment lines are used, see  "Comments" section in
 
-    OSaft/Doc/coding.txt .
+    OSaft/Doc/coding.txt
 
 Additional documentation is avaialble in POD format  at end of the files.
 Examples:
