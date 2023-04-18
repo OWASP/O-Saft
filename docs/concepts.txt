@@ -232,32 +232,17 @@ DEVELOPMENT
           end-weighting (the important information should come first), and a
           large collection of language primitives.
 
-    Progrmming (code) style
+        For details about  documentations and  how it is organised, following
+        descriptions are recommended:
 
-        In general the code favours language constructs that are easy to read
-        by humans, even they are unusual for other programming languages (for
-        example postfix conditions).
+          OSaft/Doc/coding.txt
+          perldoc o-saft.pl
+          perldoc t/Makefile.pod
 
-        The code uses spaces for formating, mainly to make the code look like
-        tabular data. It is the author's opinion  that tabular data is better
-        readable (aka understanable) than continous (code) prose.  There's no
-        strict rule about formatting of such "tables",  their style depend on
-        the context they are used in.
+    Programming (code) style
 
-        Because of our goal to support running on old systems too (see above)
-        parts of the code make ugly checks for version numbers  and try to do
-        checks in a cumbersome way. 
-        Keep in mind: the code knows how to do the work, the user most likely
-        does not know.
-
-        The code mainly avoids if-else-constructs.  if-constructs are used to 
-        handle excetions of normal control flow and either continue with that 
-        or exit (break, continue, return) the loop of function.
-
-        As described before, "early breaks", like returns from functions, are
-        are used to keep the following code free of further checks.
-
-        Other people may have other programming styles ...
+        For programming style, and/or program code in general, please see:
+          OSaft/Doc/coding.txt
 
     Handling erros and exceptions
 
@@ -274,7 +259,7 @@ DEVELOPMENT
         may disturb or bore the user, but we don't hide what we detect, which
         might be suspiscious somehow.
 
-        This tool checks security accurate, it dos not give a "good feeling".
+        This tool checks security accurate, it does'nt give a "good feeling".
 
     Debugging code
 
@@ -580,7 +565,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.1 23/04/17 00:10:41
+        @(#) concepts.txt 1.2 23/04/18 14:00:40
 
 
 AUTHOR
