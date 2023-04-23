@@ -2,7 +2,7 @@
 ## PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
-#!#                    Copyright (c) 2022, Torsten Gigler
+#!#                    Copyright (c) 2023, Torsten Gigler
 #!#             This module is part of the OWASP-Project 'o-saft'
 #!# It simulates the SSLhello packets to check SSL parameters like the ciphers
 #!#         indepenantly from any SSL library like Openssl or gnutls.
@@ -70,8 +70,8 @@ BEGIN {
     }
 }
 
-our $VERSION    = "22.06.22";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.54 23/04/03 15:21:57",
+our $VERSION    = "23.04.23";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.55 23/04/17 00:47:52",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
