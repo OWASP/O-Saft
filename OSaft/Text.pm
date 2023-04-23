@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2022, Achim Hoffmann
+#!# Copyright (c) 2023, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OSaft::Text;
@@ -9,8 +9,8 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.7 23/04/03 16:05:11";
-our $VERSION    =  "22.11.22";
+my  $SID_text   =  "@(#) Text.pm 1.8 23/04/17 00:55:38";
+our $VERSION    =  "23.04.23";
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
@@ -108,7 +108,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-1.7 2023/04/03
+1.8 2023/04/17
 
 
 =head1 AUTHOR
