@@ -257,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.106 23/04/23 18:52:51
+#?      @(#)  1.107 23/04/23 18:59:03
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -535,7 +535,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.106 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.107 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -859,6 +859,7 @@ echo_foot
 echo_head "# check for installed Perl modules (started in $inst_directory )"
 for m in $perl_modules $osaft_modules ; do
 	echo_label "$m"
+	text_cpan="»cpan $m«"
 	# NOTE: -I . used to ensure that local ./Net is found
 	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
@@ -901,7 +902,7 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
-		echo_red "$text_miss »cpan $m«"
+		echo_red "$text_miss $text_cpan"
 		err=`expr $err + 1`
 	fi
 done
