@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #!#############################################################################
-#!#             Copyright (c) 2022, Achim Hoffmann
+#!#             Copyright (c) 2023, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.54 23/04/18 12:32:31"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.55 23/04/23 19:42:40"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -138,7 +138,7 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-    sub _VERSION { return "22.11.22"; } # <== our official version number
+    sub _VERSION { return "23.04.23"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
@@ -8198,7 +8198,7 @@ See  L<Documentation>  above and  L<Note:--test-*>  below and
 The annotations from here on describe behaviours, observations, and alike,
 which lead to special program logic.  The intention is to have one central
 place where to do the documentation.
-Up to now --2022-- this is an internal documentation only. It is available
+Up to now --2023-- this is an internal documentation only. It is available
 for the developer also with:
 
     perldoc o-saft.pl
