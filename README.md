@@ -123,7 +123,7 @@ docker pull owasp/o-saft
 
 ## VERSION
 
-**22.11.22**
+**23.04.23**
 
 The version of the tarball  o-saft.tgz  represents the version listed on top
 herein. All other files in the repository may be ahead of this tarball version.
@@ -132,6 +132,11 @@ SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saf
 ```
 8a1df29b32f6e8fe4bbcfd4b42a9924cb60434c54493cf0d27b2b881e0739c97
 ```
+
+[//]: # (above checksum for version 22.11.22)
+<!--
+# comment not rendered in HTML
+-->
 
 SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:18.11.18
 ```
