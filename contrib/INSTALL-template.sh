@@ -257,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.107 23/04/23 18:59:03
+#?      @(#)  1.108 23/04/23 19:03:30
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -294,6 +294,7 @@ text_alt="file from previous installation, try running »$0 --clean« "
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
+osaft_pm="INSERTED_BY_MAKE_OSAFT_PM"
 osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
@@ -535,7 +536,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.107 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.108 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
