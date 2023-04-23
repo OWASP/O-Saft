@@ -1,21 +1,63 @@
 
+Version: 22.12.22
+  BUGFIX
+    * contrib/INSTALL-template.sh: BF: overlong message corrected when modules are missing
+    * contrib/HTML-table.awk: BF: generating HTML comment corrected
+    * t/Makefile.misc: BF: target nytprof.html generates output in t/nytprof
+    * Makefile: BT: target pdf for generating PDF corrected
+    * o-saft.pl: BF: extracting message number in _warn() corrected (used to avoid printing duplicate messages)
+    * o-saft.pl: BF: avoid "Use of uninitialized value $_no ..."; issues/133
+    * o-saft-man.pm: BF: value attribute for generated checkbox corrected
+  CHANGES
+    * OSaft/Doc/help.txt: ED: documentation for developers moved to other files
+    * contrib/HTML-table.awk: EF: generate HTML4 or HTML5 depending on scriptname; default: HTML5
+    * contrib/HTML-table.awk: EF: comment added; h1 tag added
+    * Net/SSLinfo.pm: ED: using =head3 for method description in POD
+    * Net/SSLhello.pm: ED: using =head3 for method description in POD
+    * t/Makefile.dev: EF: using EXE.log-filterarg in testarg*pod.log targets (not yet fully working)
+    * Makefile: EF: INSERTED_BY_MAKE_OSAFT_PM: give INSTALL.sh list of own perl modules
+    * Makefile: ET: DOC.src renamed to DOC.odg; SRC.doc to SRC.odg
+    * o-saft-man.pm: EF: TOC added to generated HTML using <aside> tag (needs to be improved)
+    * o-saft-man.pm: EF: provide options --format=html4 and --format=html5
+    * o-saft-man.pm: EF: use linear-gradient background for help buttons in cgi.html
+    * o-saft-man.pm: EF: --no-tlsv13 removed from default settings in .cgi.html
+  NEW
+    * t/Makefile.misc: NF: targets docs.anno docs.subs added
+    * t/gen-graph-annotations.sh new
+    * t/gen-graph-sub-calls.sh: new
+
 Version: 22.11.22
   BUGFIX
+    * Net/SSLhello.pm: BF: correct use of %cfg (instead of %{$osaft::cfg...}
     * Net/SSLinfo.pm: BF: avoid "Use of uninitialized value ..." in datadump()
     * OSaft/Ciphers.pm: BF: using string '0 ' if value is 0 in _ciphers_init()
-    * OSaft/Fata.pm: BF: string <<internal>> changed to internal to avoid conflict in HTML
+    * OSaft/Data.pm: BF: string <<internal>> changed to internal to avoid conflict in HTML
     * o-saft.pl: BF: output for --ciphermode=dump corrected
+    * o-saft.cgi: BF: seting PATH corrected
     * o-saft.cgi: BF: regex for arguments to be ignored corrected
+    * o-saft.tcl: BF: using undefined array variable corrected
     * o-saft.tcl: BF: generating content for "help" improved
+    * o-saft-man.pm: BF: avoid "Use of uninitalized ..." (bug since 2.80)
+    * o-saft-man.pm: BF: print STRENGTH for --test-ciphers-list
     * t/Makefile: ET: name of targets unified: testarg-hlp-*
+    * t/Makefile.dev: BT: duplicate targets in ALL.test.dev removed
+    * t/Makefile.misc: BT: report only first occurrence of shebang in testarg-misc_shebang (still not perfect)
+    * t/Makefile.help: BT: EXE.pl = ../$(SRC.pl)
     * t/Makefile.cipher: BT: targets testcmd-cipher-+test-ciphers-list-* corrected (are testarg-* now)
     * contrib/gen_standalone.sh: BF: better check for include of o-saft-dbx.pm
   CHANGES
     * o-saft.pl: EF: print number of checked ciphers for each protocol
     * o-saft.pl: EF: print warning if no ciphers specified
+    * o-saft-man.pm: EF: use linear-gradient background for help buttons in cgi.html
+    * o-saft-man.pm: EF: --no-tlsv13 removed from default settings in .cgi.html
+    * o-saft-man.pm: EF: use shebang /usr/bin/perldoc instead of /usr/bin/env in generated files
+    * o-saft-man.pm: EF: EF: CSS for --help=gen-cgi and help page improved
     * o-saft-man.pm: EF: new design for o-saft.cgi.html
     * o-saft-man.pm: EF: man_docs_write() (writes --help=ciphers-text also)
+    * o-saft-dbx.pm: EF: osaft::test_regex() -> osaft::test_cipher_regex()
+    * o-saft-dbx.pm: EF: printing list of ciphers improved
     * o-saft.cgi: EF: regex for illegal commands and options improved
+    * o-saft.tcl: EF: destroy_window(): wrapper to destroy toplevel window
     * o-saft.tcl: ED: "Key Bindings" documented
     * o-saft.tcl: EF: osaft_write_docs() used "o-saft.pl --help=gen-docs" to generate files
     * OSaft/Doc/help.txt: EF: description for --cipherrange=RANGE improved; --cipherpattern=PATTERN added
@@ -23,8 +65,25 @@ Version: 22.11.22
     * OSaft/Ciphers.pm: EF: security for ciphers *PSK*CBC* set mediu
     * OSaft/Ciphers.pm: ET: test functionality improved
     * OSaft/Ciphers.pm: EF: @cipher_iana_recomended added (list of ciphers suites recommended by IANA)
+    * t/Makefile.docker: EF: testarg-%.log uses $(EXE.arg-logfilter)
     * t/Makefile.cipher: ET: tests for --ciphermode=dump added
+    * t/Makefile.misc: ET: target testarg-misc_hashbang renamed to testarg-misc_shebang
+    * t/Makefile.tcl: ET: use testarg% instead of testcmd%; generate targets with GEN.targets macro
+    * t/Makefile.pod: ED: section Make:macros added; consistent use of "macro" and "variable"
+    * t/Makefile.pod: ET: new makefiles added to section O-Saft Makefile Includes
     * t/Makefile.dev: ET: new Targets to test INSTALL.sh
+    * t/Makefile.hlp: ET: useless $(eval ...) removed
+    * t/Makefile.inc: EF: new text for TEST.logtxt; EXE.arg-logfilter and EXE.cmd-logfilter added
+    * t/Makefile.etc: EF: EXE.log-filtercmd added to testcmd-etc-testssl.s%.log
+    * t/Makefile.cmd: EF: EXE.log-filterarg, EXE.log-filtercmd for some targets added
+    * t/Makefile: EF: enforce LANG=C environment for all tests
+    * t/Makefile: EF: include t/Makefile.gen t/Makefile.mod
+    * t/Makefile: EF: include t/Makefile.gen t/Makefile.mod
+    * t/Makefile: ET: remove useless environment variables
+    * t/Makefile: EF: renamed: EXE.arg-logfilter -> EXE.log-filterarg; EXE.cmd-logfilter -> EXE.log-filtercmd
+    * t/Makefile.*: ET: use GEN.targets-args macro to generate targets
+    * Makefile: ET: INSTALL.sh added to ALL.tgz
+    * Makefile: EF: Makefile.gen added
     * Makefile: EF: enforce LANG=C environment for all tests
     * Makefile: EF: remove useless environment variables
     * Makefile: EF: include t/Makefile.gen t/Makefile.mod
@@ -43,6 +102,7 @@ Version: 22.11.22
     * t/Makefile.dev: ET: targets for testng OSaft/Ciphers.pm functions added
     * t/Makefile.dev: ET: targets testarg-dev-o-saft-sh--post-* added
     * t/Makefile.misc: NT: new target testarg-misc_hashbang
+    * t/Makefile.mod: NF: targets for testing module functionality
     * contrib/INSTALL-template.sh: EF: copy_file implemented with --useenv; descrition for --useenv added
 
 Version: 22.06.22
