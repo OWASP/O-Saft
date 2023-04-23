@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2022, Achim Hoffmann
+#!# Copyright (c) 2023, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OSaft::Data;
@@ -9,8 +9,8 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.10 23/04/03 16:02:18";
-our $VERSION    =  "22.06.22";
+my  $SID_data   =  "@(#) Data.pm 1.11 23/04/17 00:54:52";
+our $VERSION    =  "23.04.23";
 
 BEGIN {
     # SEE Perl:@INC
@@ -931,7 +931,7 @@ _data_init();
 
 =head1 VERSION
 
-1.10 2023/04/03
+1.11 2023/04/17
 
 =head1 AUTHOR
 
