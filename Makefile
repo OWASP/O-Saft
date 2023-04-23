@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.28 23/04/17 21:55:25
+#?      @(#) Makefile 2.29 23/04/23 19:06:27
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.28
+_SID            = 2.29
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -296,9 +296,9 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.28 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.28
-EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
+_INST.genbytext = generated data by Makefile 2.29 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.29
+EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
@@ -308,6 +308,7 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'         \
 		  -e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@'    \
 		  -e 's@INSERTED_BY_MAKE_PERL_MODULES@$(ALL.perlmodules)@'   \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'                \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_PM@$(SRC.pm)@'                \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_PL@$(SRC.pl)@'                \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'              \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@'      \
@@ -535,8 +536,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.28
-tar:     _INST.is_edit  = 2.28
+_INST.is_edit           = 2.29
+tar:     _INST.is_edit  = 2.29
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
