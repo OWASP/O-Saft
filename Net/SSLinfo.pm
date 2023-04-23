@@ -2,7 +2,7 @@
 ## PACKAGE {
 
 #!#############################################################################
-#!#             Copyright (c) 2022, Achim Hoffmann
+#!#             Copyright (c) 2023, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -37,8 +37,8 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.284 23/04/03 15:29:13";
-our $VERSION        =  "22.11.22";  # official verion number of tis file
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.285 23/04/17 00:46:30";
+our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
 use Socket;
