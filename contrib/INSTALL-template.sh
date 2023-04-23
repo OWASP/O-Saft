@@ -257,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.108 23/04/23 19:03:30
+#?      @(#)  1.109 23/04/23 19:35:01
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -441,6 +441,22 @@ echo_red    () {
 	\echo "\033[1;31m$@\033[0m"
 }
 
+check_pm    () {
+	# check if passed name is own perl module; return 0 if it is own module
+	# name can be path like Net/SSLinfo.pm or module name like Net::SSLinfo
+	# NOTE: extension in name (anything right of rightmost . including.) is
+	#       removed; this assumes that module names  (wether perl syntax or
+	#       path name) cannot contain . (dot).
+	_m=$1
+	_m=`\echo "$_m" | \sed -e 's#::#/#g'`
+	_m=${_m%.*}     # remove extension (.pm) if any
+	for _p in $osaft_pm ; do
+		_p=${_p%.*}     # remove extension (.pm) if any
+		[ "$_p" = "$_m" ] && return 0
+	done
+	return 1
+}
+
 check_commands () {
 	for c in $* ; do
 		echo_label "$c"
@@ -536,7 +552,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.108 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.109 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -865,6 +881,7 @@ for m in $perl_modules $osaft_modules ; do
 	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 	if [ -n "$v" ]; then
+		if check_pm "$m" ; then c="green"; fi
 		case "$m" in
 		  'IO::Socket::SSL') expect=1.90; ;; # 1.37 and newer work, somehow ...
 		  'Net::SSLeay')     expect=1.49; ;; # 1.33 and newer may work
@@ -872,10 +889,6 @@ for m in $perl_modules $osaft_modules ; do
 		  'Time::Local')     expect=1.90; ;;
 		esac
 		case "$m" in
-		  'Net::SSLinfo' | 'Net::SSLhello') c="green"; ;;
-		  'OSaft::error_handler' | 'osaft') c="green"; ;;
-		  'OSaft::Ciphers' )                c="green"; ;;
-		  'OSaft::Doc::Data' )              c="green"; ;;
 		  'Time::Local')
 			# has strange version numbering, needs ugly hack :-((
 			if [ 1.25 = $v \
@@ -903,6 +916,7 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
+		if check_pm "$m" ; then text_cpan="»o-saft.tgz«"; fi
 		echo_red "$text_miss $text_cpan"
 		err=`expr $err + 1`
 	fi
