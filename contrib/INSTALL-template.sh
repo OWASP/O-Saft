@@ -257,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.104 22/11/23 20:50:45
+#?      @(#)  1.105 23/04/23 18:48:14
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -535,7 +535,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.104 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.105 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -901,8 +901,7 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
-		text_miss="$text_miss »cpan $m«"
-		echo_red "$text_miss"
+		echo_red "$text_miss »cpan $m«"
 		err=`expr $err + 1`
 	fi
 done
