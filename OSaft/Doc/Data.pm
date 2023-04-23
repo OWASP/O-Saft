@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2022, Achim Hoffmann
+#!# Copyright (c) 2023, Achim Hoffmann
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 package OSaft::Doc::Data;
@@ -34,8 +34,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.57 23/04/03 16:52:14";
-our $VERSION    = "22.11.22";   # official verion number of this file
+my  $SID_data   = "@(#) Data.pm 1.58 23/04/17 00:56:24";
+our $VERSION    = "23.04.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -626,7 +626,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.57 2023/04/03
+1.58 2023/04/17
 
 
 =head1 AUTHOR
