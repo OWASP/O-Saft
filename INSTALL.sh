@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated data by Makefile 2.19 from contrib/INSTALL-template.sh
+#? File generated data by Makefile 2.29 from contrib/INSTALL-template.sh
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -47,14 +47,18 @@
 #=# (warnings are ok if »git clone« will be used for development)
 #=#            Dockerfile	found; did you run »INSTALL.sh --clean«?
 #=#              Makefile	found; did you run »INSTALL.sh --clean«?
+#=#                    t/	found; did you run »INSTALL.sh --clean«?
+#=#     contrib/critic.sh	found; did you run »INSTALL.sh --clean«?
+#=#               CHANGES	found; did you run »INSTALL.sh --clean«?
+#=#                README	found; did you run »INSTALL.sh --clean«?
 #=#--------------------------------------------------------------
 #=
 #=# check for used O-Saft programs (according $PATH)
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	22.05.22 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	    2.23 /opt/o-saft/o-saft.tcl
+#=#             o-saft.pl	22.11.22 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	    2.35 /opt/o-saft/o-saft.tcl
 #=#                o-saft	    1.26 /opt/o-saft/o-saft
-#=# contrib/o-saft-standalone.pl 22.05.22 contrib/o-saft-standalone.pl
+#=# contrib/o-saft-standalone.pl 22.11.22 contrib/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -66,18 +70,20 @@
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
-#=#              Net::DNS	    1.19 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
+#=#                                      ancient module found, try installing newer version, at least  1.49
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
-#=#                 osaft	22.05.22 osaft.pm
-#=#          Net::SSLinfo	22.02.12 Net/SSLinfo.pm
-#=#         Net::SSLhello	22.05.22 Net/SSLhello.pm
-#=#        OSaft::Ciphers	22.05.22 OSaft/Ciphers.pm
-#=#           OSaft::Data	22.05.22 OSaft/Data.pm
-#=#           OSaft::Text	22.05.22 OSaft/Text.pm
+#=#                 osaft	22.11.22 osaft.pm
+#=#          Net::SSLinfo	22.11.12 Net/SSLinfo.pm
+#=#         Net::SSLhello	22.06.22 Net/SSLhello.pm
+#=#        OSaft::Ciphers	22.11.22 OSaft/Ciphers.pm
+#=#           OSaft::Data	22.06.22 OSaft/Data.pm
+#=#           OSaft::Text	22.11.22 OSaft/Text.pm
 #=#  OSaft::error_handler	19.11.19 OSaft/error_handler.pm
-#=#      OSaft::Doc::Data	22.02.13 OSaft/Doc/Data.pm
+#=#      OSaft::Doc::Data	22.11.13 OSaft/Doc/Data.pm
 #=#----------------------+---------------------------------------
 #=
 #=# check for important Perl modules used by installed O-Saft
@@ -85,11 +91,12 @@
 #=# testing /opt/o-saft/o-saft.pl ...	
 #=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
 #=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.85 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
 #=#----------------------+---------------------------------------
@@ -187,6 +194,9 @@
 #?                            #! /usr/bin/perl -w
 #?                            #!/usr/bin/perl -w
 #?                            #!/usr/bin/perl -w -I .
+#?      --gnuenv        - change #! (shebang) lines to  #!/usr/bin/env -S
+#?                        Applies the change to shebang lines with arguments.
+#?                        Implies  --useenv .
 #?
 #?      Please see  docs/concepts.txt  for details about /usr/bin/env .
 #?      It's up to user then, which solution fits better.
@@ -199,6 +209,7 @@
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
 #?      $0 /opt/bin/ --useenv
+#?      $0 /opt/bin/ --gnuenv
 #?      $0 --install /opt/bin/
 #?      $0 --check   /opt/bin/
 #?      $0 --check   /opt/bin/ --colour
@@ -210,7 +221,7 @@
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts most values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       and scopes containing  "generated data from Makefile 2.19" .
+#       and scopes containing  "generated data from Makefile 2.29" .
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
@@ -246,7 +257,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.99 22/11/19 14:50:00
+#?      @(#)  1.109 23/04/23 19:35:01
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -261,6 +272,7 @@ dir=${0%/*}
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
 useenv=0                # 1 to change shebang lines to /usr/bin/env
+useenv=0                # 1 to change shebang lines to /usr/bin/env
 other=0
 force=0
 optx=0
@@ -270,7 +282,7 @@ alias echo=/bin/echo    # need special echo which has -n option;
 	                # TODO: check path for each platform
 tab="	"               # need a real TAB (0x09) for /bin/echo
 
-text_miss=" missing, try installing with ";
+text_miss="missing, try installing from/with";
 text_old="ancient module found, try installing newer version, at least "
 text_one="missing, consider generating with »make standalone«"
 text_path="Note: all found executables in PATH are listed"
@@ -280,8 +292,9 @@ text_tool="Note: podman is a tool to view pod files, it's not the container engi
 text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 
-# generated data from Makefile 2.19 {
+# generated data from Makefile 2.29 {
 osaft_sh="o-saft"
+osaft_pm="osaft.pm Net/SSLinfo.pm Net/SSLhello.pm OSaft/Ciphers.pm OSaft/Data.pm OSaft/Text.pm OSaft/error_handler.pm o-saft-dbx.pm o-saft-man.pm o-saft-usr.pm OSaft/Doc/Data.pm"
 osaft_exe="o-saft.pl"
 osaft_gui="o-saft.tcl"
 osaft_one="contrib/o-saft-standalone.pl"
@@ -330,7 +343,7 @@ tools_other="
 	OSSL_CCS_InjectTest.py SSLAudit.exe SSLAudit.pl SSLCertScanner.exe SSLPressure.exe TLSSLed_v1.3.sh TestSSLServer.exe TestSSLServer.jar analyze-ssl.pl athena-ssl-cipher-check_v062.jar bash-heartbleed.sh beast.pl ccs-injection.sh check-ssl-heartbleed.pl chksslkey cnark.pl manyssl poet robot-detect smtp_tls_cert.pl ssl-cert-check ssl-check-heartbleed.pl ssl-cipher-check.pl ssl-dos ssl-renegotiation.sh sslcat ssldiagnos.exe sslmap.py sslscan sslscan.exe sslsniff sslstrip ssltest.pl ssltest_heartbeat.py sslthing.sh sslyze.py stunnel testssl.sh tls-check.pl tls-scan tlsenum vessl
 	"
 
-# generated data from Makefile 2.19 }
+# generated data from Makefile 2.29 }
 
 # HARDCODED {
 # because newer Makefiles may no longer know about them
@@ -428,6 +441,22 @@ echo_red    () {
 	\echo "\033[1;31m$@\033[0m"
 }
 
+check_pm    () {
+	# check if passed name is own perl module; return 0 if it is own module
+	# name can be path like Net/SSLinfo.pm or module name like Net::SSLinfo
+	# NOTE: extension in name (anything right of rightmost . including.) is
+	#       removed; this assumes that module names  (wether perl syntax or
+	#       path name) cannot contain . (dot).
+	_m=$1
+	_m=`\echo "$_m" | \sed -e 's#::#/#g'`
+	_m=${_m%.*}     # remove extension (.pm) if any
+	for _p in $osaft_pm ; do
+		_p=${_p%.*}     # remove extension (.pm) if any
+		[ "$_p" = "$_m" ] && return 0
+	done
+	return 1
+}
+
 check_commands () {
 	for c in $* ; do
 		echo_label "$c"
@@ -449,20 +478,31 @@ copy_file   () {
 		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
 		esac
 		case "$file" in
+		    o-saft)               convert=1 ; ;;
 		    usage_examples)       convert=1 ; ;;
+		    o-saft-docker*)       convert=1 ; ;;
 		    Dockerfile*)          convert=1 ; ;;
 		    Makefile*)            convert=1 ; ;;
 		    *_completion_o-saft)  convert=1 ; ;;
 		esac
 	fi
+	#dbx# \perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || echo skip $src ...
+	\perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || convert=0
 	if [ 1 -eq $convert ]; then
 		# only the very first line $. ist changed
 		if [ "$try" = "echo" ]; then
-		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\! /usr/bin/env $1|;}print;" '"'$src' > '$dst'"
+		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\!/usr/bin/env $1|;}print;" '"'$src' > '$dst'"
 		    return
 		fi
-		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\! /usr/bin/env $1|;}print;' \
-		        "$src" > "$dst"  || exit 4
+		# convert only  "#! /some/path/tool"
+		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\!/usr/bin/env $1|;}print;' \
+			"$src" > "$dst"  || exit 4
+		if [ 0 -lt $gnuenv ]; then
+		# convert only  "#! /some/path/tool arg..."
+		\perl -lane 'if(1==$.){exit 1 if m|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|;}' "$src" || \
+		\perl -lane 'if(1==$.){s|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|#\!/usr/bin/env -S $1 $2|;}print;' \
+			"$src" > "$dst"  || exit 4
+		fi
 		# set proper modes
 		\chmod 555 "$dst" # assuming that it is and should be executable
 
@@ -506,11 +546,13 @@ while [ $# -gt 0 ]; do
           '--blind')            colour="34m";   ;; # alias
           '--useenv')           useenv=1;       ;;
           '--use-env')          useenv=1;       ;; # alias
+          '--gnuenv')           gnuenv=1; useenv=1; ;;
+          '--gnu-env')          gnuenv=1; useenv=1; ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.99 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.109 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -524,6 +566,19 @@ text_dev="did you run »$0 --clean $inst_directory«?"
 text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
 # --------------------------------------------- main
+
+# ------------------------ expected mode --------- {
+if [ "$mode" = "expected" ]; then
+	echo "## Expected output (sample) when called like:"
+	echo "##     $0 --check /opt/o-saft"
+	\sed -ne '/^#=/s/#=//p' $0
+	exit 0
+fi; # expected mode }
+
+if [ '..' = "$dir" ]; then
+	# avoid errors in $0 if called by own make
+	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
+fi
 
 # ------------------------- default mode --------- {
 if [ -z "$mode" ]; then
@@ -594,14 +649,6 @@ if [ "$mode" = "cgi" ]; then
 	$try \ln -s "$inst_directory" $lnk  || echo_red "**ERROR: 053: symlink $lnk failed"
 	exit 0
 fi; # cgi mode }
-
-# ------------------------ expected mode --------- {
-if [ "$mode" = "expected" ]; then
-	echo "## Expected output (sample) when called like:"
-	echo "##     $0 --check /opt/o-saft"
-	\sed -ne '/^#=/s/#=//p' $0
-	exit 0
-fi; # expected mode }
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
@@ -829,10 +876,12 @@ echo_foot
 echo_head "# check for installed Perl modules (started in $inst_directory )"
 for m in $perl_modules $osaft_modules ; do
 	echo_label "$m"
+	text_cpan="»cpan $m«"
 	# NOTE: -I . used to ensure that local ./Net is found
 	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 	if [ -n "$v" ]; then
+		if check_pm "$m" ; then c="green"; fi
 		case "$m" in
 		  'IO::Socket::SSL') expect=1.90; ;; # 1.37 and newer work, somehow ...
 		  'Net::SSLeay')     expect=1.49; ;; # 1.33 and newer may work
@@ -840,10 +889,6 @@ for m in $perl_modules $osaft_modules ; do
 		  'Time::Local')     expect=1.90; ;;
 		esac
 		case "$m" in
-		  'Net::SSLinfo' | 'Net::SSLhello') c="green"; ;;
-		  'OSaft::error_handler' | 'osaft') c="green"; ;;
-		  'OSaft::Ciphers' )                c="green"; ;;
-		  'OSaft::Doc::Data' )              c="green"; ;;
 		  'Time::Local')
 			# has strange version numbering, needs ugly hack :-((
 			if [ 1.25 = $v \
@@ -871,8 +916,8 @@ for m in $perl_modules $osaft_modules ; do
 		[ "$c" = "red"   ] && echo_red   "$v $p, $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
-		text_miss="$text_miss »cpan $m«"
-		echo_red "$text_miss"
+		if check_pm "$m" ; then text_cpan="»o-saft.tgz«"; fi
+		echo_red "$text_miss $text_cpan"
 		err=`expr $err + 1`
 	fi
 done
