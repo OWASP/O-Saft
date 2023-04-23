@@ -1,5 +1,5 @@
 
-Version: 22.12.22
+Version: 23.04.23
   BUGFIX
     * contrib/INSTALL-template.sh: BF: overlong message corrected when modules are missing
     * contrib/HTML-table.awk: BF: generating HTML comment corrected
