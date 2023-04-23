@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2022, Achim Hoffmann
+#!# Copyright (c) 2023, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OSaft::Ciphers;
@@ -23,6 +23,7 @@ package OSaft::Ciphers;
 
 # test resources with:
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
+# 0.06  0.01  0:00.07 100%  0k  9756k  # 3/2023
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
 # 0.02  0.00  0:00.03 100%  0k  9924k  # 11/2022
 
@@ -41,8 +42,8 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.81 23/04/03 16:00:27";
-our $VERSION    = "22.11.22";   # official verion number of this file
+my  $SID_ciphers= "@(#) Ciphers.pm 2.82 23/04/17 00:53:29";
+our $VERSION    = "23.04.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
@@ -1674,7 +1675,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.81 2023/04/03
+2.82 2023/04/17
 
 
 =head1 AUTHOR
