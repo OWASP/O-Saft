@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.58 23/04/17 00:56:24";
+my  $SID_data   = "@(#) Data.pm 1.59 23/04/23 20:23:15";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -89,11 +89,13 @@ sub _get_standalone {
     # o-saft-standalone.pl may be in installtion path or in contrib/ directory
     # hence various places for help.txt are checked
     my $file = shift;
+    my $orig = $file;
     $file =~ s#^\.\./##;
     $file =~ s#contrib/##;              # remove if in path
     $file =  "OSaft/Doc/$file";         # try this one ..
     $file =  "../$file" if (not -e $file);  # .. or this one
     $file =  ""         if (not -e $file);
+    _warn("189: no '$orig' found, consider installing") if "" eq $file;
     return $file;
 } # _get_standalone
 
@@ -626,7 +628,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.58 2023/04/17
+1.59 2023/04/23
 
 
 =head1 AUTHOR
