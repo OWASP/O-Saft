@@ -565,7 +565,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 2.39 Spring Edition 2023
+#?      @(#) 2.40 Spring Edition 2023
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -673,10 +673,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 2.39 23/04/26 15:56:21"
+set cfg(SID)    "@(#) o-saft.tcl 2.40 23/04/27 15:58:42"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2023"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {2.39}
+set cfg(VERSION) {2.40}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1946,6 +1946,7 @@ proc destroy_window    {w win}      {
 proc create_window     {title size} {
     #? create new toplevel window with given title and size; returns widget
     # special handling for windows with title "Help" or "About"
+    _dbx 2 "{$title, $size}{"
     global cfg myX
     set this    .[_str2obj $title]
     if {[winfo exists $this]}  { return "" }   ;# do nothing
@@ -1971,6 +1972,7 @@ proc create_window     {title size} {
     # FIXME: widget paremeter $tbl missing for osaft_save
     guitheme_set $this.f1.saveconfig $cfg(gui-button)
     guitheme_set $this.f0.help_me    $cfg(gui-button)
+    _dbx 2 "=$this }"
     return $this
 }; # create_window
 
@@ -1997,7 +1999,7 @@ proc create_host  {parent host_nr}  {
     #? frame with label and entry for host:port; $host_nr is index to hosts()
     # must use index to hosts() instead of host itself because the entry widget
     # needs a variable
-    _dbx 2 "{$parent, $host_nr}"
+    _dbx 2 "{$parent, $host_nr}{"
     global cfg hosts myX
     if {$host_nr >= [array size hosts]} {
         set host  ""
@@ -2033,6 +2035,7 @@ proc create_host  {parent host_nr}  {
     grid config  $this.eh -column 1 -sticky ew
     grid columnconfigure    $this 1 -weight 1
     pack $this -fill x -before ${parent}_1
+    _dbx 2 "=$this }"
     return $this
 }; # create_host
 
@@ -2044,7 +2047,7 @@ proc remove_host  {parent}          {
 
 proc create_text  {parent content}  {
     #? create scrollable text widget and insert given text; returns widget
-    _dbx 2 "{$parent, ...}"
+    _dbx 2 "{$parent, ...}{"
     set this    $parent
     text        $this.t -wrap char -yscroll "$this.s set";  # -width 40 -height 10
     scrollbar   $this.s -orient vertical -command "$this.t yview"
@@ -2055,12 +2058,13 @@ proc create_text  {parent content}  {
     gui_set_readonly $this.t
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
+    _dbx 2 "=$this }"
     return $this
 }; # create_text
 
 proc create_table {parent header}   {
     #? create scrollable table widget with given header lines; returns table widget
-    _dbx 2 "{$parent, ...}"
+    _dbx 2 "{$parent, ...}{"
     set this $parent
     global cfg
     pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
@@ -2095,6 +2099,7 @@ proc create_table {parent header}   {
         lappend titles 0 $txt
     }
     $this.t config -columns $titles
+    _dbx 2 "=$this.t }"
     return $this.t
 }; # create_table
 
@@ -2115,7 +2120,7 @@ proc create_resulttable {parent content} {
     #   the cipher becomes the Label column
     # lines starting with = or # are currently ignored, because Tcl's tablelist
     # has no "colspan" functionality and therfore do not fit into the 4 colums
-    _dbx 2 "{$parent, ...}"
+    _dbx 2 "{$parent, ...}{"
     _dbx 16 " content=»$content«"
     global  cfg prg
     set this    $parent.ft
@@ -2223,23 +2228,25 @@ proc create_resulttable {parent content} {
     }
     #_dbx 16 " tsize  = $tsize"
     pack $this -side top
+    _dbx 2 "=$this }"
     return $this
 }; # create_resulttable
 
 proc create_filterhead  {parent key col} {
     #? create a cell for header line in the filter grid
     # note: key must be the index to cfg_texts and cfg_tipps array
-    _dbx 2 "{$parent, ...}"
+    _dbx 2 "{$parent, ...}{"
     set this $parent.$key
     grid [label $this -text [_get_text $key] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
     guitip_set  $this       [_get_tipp $key]
+    _dbx 2 "}"
     return
 }; # create_filterhead
 
 proc create_filtertext  {parent cmd}    {
     #? create table with filter data
     # TODO: should be replaced by create_filtertable()
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt ;# filters
     set this $parent
@@ -2298,6 +2305,7 @@ proc create_filtertext  {parent cmd}    {
     }
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4   -minsize 20   -weight 1 ;# minsize does not work
+    _dbx 2 "=$this }"
     return $this
 }; # create_filtertext
 
@@ -2310,7 +2318,7 @@ proc create_filtertable {parent cmd}    {
     #####    changing font or colour must adapt cell in column 0
     #####    Tooltip
     #
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
     set this $parent
@@ -2343,12 +2351,13 @@ proc create_filtertable {parent cmd}    {
         $parent.t cellconfig $row,8    -editable yes -editwindow checkbutton
         $parent.t cellconfig $row,0 -fg $f_fg($k) -bg $f_bg($k) -font $f_fn($k)
     }
+    _dbx 2 "=$this }"
     return $this
 }; # create_filtertable
 
 proc create_filtertab   {parent cmd}    {
     #? create tab with filter data
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg
     pack [label $parent.text -relief flat -text [_get_tipp tabFILTER]]
     set this $parent.g
@@ -2362,23 +2371,25 @@ proc create_filtertab   {parent cmd}    {
     }
     pack [button $parent.tkcolor -command {create_selected [_get_text win_colour] [tk_chooseColor]} ] -side right
     guitheme_set $parent.tkcolor $cfg(gui-button)
+    _dbx 2 "}"
     return
 }; # create_filtertab
 
 proc create_filterwin   {}  {
     #? create window with filter data
     #  used for --gui-layout=tablet only
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global myX
     set win [create_window  [_get_text win_filter] $myX(geoF)]
     if {"" eq $win} { return }
     create_filtertab  $win {FIL}
+    _dbx 2 "}"
     return
 }; # create_filterwin
 
 proc create_filter      {parent cmd}    {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return }
     set obj $parent;    # we want to have a short variable name
@@ -2425,12 +2436,13 @@ proc create_filter      {parent cmd}    {
             set filter_bool($obj,HELP-$key) 0
         }
     }
+    _dbx 2 "}"
     return
 }; # create_filter
 
 proc create_configtab   {parent cmd}    {
     #? create tab with config data
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg
     set this $parent.or
     pack [frame $this] -fill x -padx 5 -anchor w
@@ -2451,23 +2463,25 @@ proc create_configtab   {parent cmd}    {
     pack [button $this.v$cmd -command "create_main tablet" -text [_get_text menu_mode]] \
          -side left
     guitip_set  $this [_get_btn_tip menu_mode]
+    _dbx 2 "}"
     return
 }; # create_configtab
 
 proc create_configwin   {}  {
     #? create window with gui config data
     #  used for --gui-layout=tablet only
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global myX
     set win [create_window  [_get_text win_config] $myX(geoC)]
     if {"" eq $win} { return }
     create_configtab  $win {CFG}
+    _dbx 2 "}"
     return
 }; # create_configwin
 
 proc create_tooltab     {parent cmd}    {
     #? create tab with tool config data
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg prg
 
     set  this $parent.c
@@ -2515,24 +2529,26 @@ proc create_tooltab     {parent cmd}    {
              -padx 5 -anchor w -side left
     }
     guitip_set  $this.e [_get_tipp docker-id]
+    _dbx 2 "}"
     return
 }; # create_tooltab
 
 proc create_toolwin     {}  {
     #? create window with tool config data
     #  used for --gui-layout=tablet only
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global myX
     set win [create_window  [_get_text win_tool] $myX(geoT)]
     if {"" eq $win} { return }
     create_tooltab    $win {CFG}
+    _dbx 2 "}"
     return
 }; # create_toolwin
 
 proc create_ciphers     {}  {
     #? create new window with Cipher Suites; store widget in cfg(winD)
     # SEE Cipher:text (in o-saft-man.pm) for expected data
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg myX
     if {[winfo exists $cfg(winD)]}  { show_window $cfg(winD); return }
     set cfg(winD) [create_window [_get_text win_cipher] $myX(geoD)]
@@ -2576,13 +2592,14 @@ proc create_ciphers     {}  {
     $table columnconfigure  9 -width  7 ;# auth
     $table columnconfigure 10 -width 15 ;# enc
     foreach row [split $content "\n"] { $table insert end $row }
+    _dbx 2 "}"
     return
 }; # create_ciphers
 
 proc create_about       {}  {
     #? create new window with About text; store widget in cfg(winA)
     #  Show the text starting with  #?  from this file.
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return }
     set cfg(winA) [create_window [_get_text win_about] $myX(geoA)]
@@ -2602,26 +2619,28 @@ proc create_about       {}  {
     # bind buttons and keys
     bind_browser $txt ABOUT-URL
     bind  $txt <KeyPress>   "search_view $txt %K"
+    _dbx 2 "}"
     return
 }; # create_about
 
 proc create_pod   {viewer sect}  {
     #? create new window with complete help using external viewer
     # for advantages and disadvantages please see contrib/.o-saft.tcl
-    _dbx 2 "{$viewer, $sect}"
+    _dbx 2 "{$viewer, $sect}{"
     global cfg myX
     set pod $cfg(POD)
     if ![info exists $pod] { set pod "docs/$pod" }
     # TODO: does probably not working on Windows
     putv  " exec {*}$viewer $pod -geo $myX(geoO) & "
     catch { exec {*}$viewer $pod -geo $myX(geoO) & }
+    _dbx 2 "}"
     return
 }; # create_pod
 
 proc create_help  {sect} {
     #? create new window with complete help text; store widget in cfg(winO)
     #? if  sect  is given, jump to this section
-    _dbx 2 "{$sect}"
+    _dbx 2 "{$sect}{"
     global cfg myX prg search
 
     if {1==[info exists prg(TKPOD)]} {
@@ -2897,24 +2916,26 @@ proc create_help  {sect} {
         set name [_str2obj [string trim $sect]]
         search_show $cfg(winO).t "HELP-HEAD-$name"
     }
+    _dbx 2 "}"
     return
 }; # create_help
 
 proc create_note  {parent title} {
     #? create notebook TAB; returns widget
-    _dbx 2 "{$parent, »$title«}"
+    _dbx 2 "{$parent, »$title«}{"
     set name [_str2obj $title]
     set this $parent.$name
     set alt  0
     if {[regexp {^\(} $title]} { set alt 1 }   ;# don't use (, but next charcter
     frame       $this
     $parent add $this  -text $title -underline $alt
+    _dbx 2 "=$w }"
     return $this
 }; # create_note
 
 proc create_tab   {parent layout cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
-    _dbx 2 "{$parent, $layout, $cmd, ...}"
+    _dbx 2 "{$parent, $layout, $cmd, ...}{"
     _dbx 4 " content=»$content«"
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"]
@@ -2934,28 +2955,31 @@ proc create_tab   {parent layout cmd content} {
     guitheme_set $tab.ttyresult  $cfg(gui-button)
     guitheme_set $tab.filter     $cfg(gui-button)
     $cfg(objN) select $tab
+    _dbx 2 "=$w }"
     return $w
 }; # create_tab
 
 proc create_cmd   {parent title} {
     #? create button to run O-Saft command; returns widget
-    _dbx 2 "{$parent, »$title«}"
+    _dbx 2 "{$parent, »$title«}{"
     global cfg
     set name [regsub {^\+} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
     pack [button $this -text $title -command "osaft_exec $parent $title"] -side left
     guitheme_set $this $cfg(gui-button)
+    _dbx 2 "=$this }"
     return $this
 }; # create_cmd
 
 proc create_opt   {parent title} {
     #? create checkbutton for O-Saft options; returns widget
-    _dbx 2 "{$parent, »$title«}"
+    _dbx 2 "{$parent, »$title«}{"
     global cfg
     set name [regsub {^--} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
     pack [checkbutton $this -text $title -variable cfg($title)] -side left -padx 5
     guitip_set   $this [_get_tipp $title]
+    _dbx 2 "=$this }"
     return $this
 }; # create_opt
 
@@ -2963,7 +2987,7 @@ proc create_win   {parent title cmd} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
-    _dbx 2 "{$parent, »$title« $cmd}"
+    _dbx 2 "{$parent, »$title« $cmd}{"
     global cfg myX prg
     set this $parent
     set win  $this
@@ -3102,6 +3126,7 @@ proc create_win   {parent title cmd} {
         #incr col   ;# horizontal
         incr row   ;# vertical
     }
+    _dbx 2 "}"
     return
 }; # create_win
 
@@ -3109,7 +3134,7 @@ proc create_buttons     {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     #  cmd must be "OPT" or "CMD"
-    _dbx 2 "{$parent, $cmd}"
+    _dbx 2 "{$parent, $cmd}{"
     global cfg prg
     set data $cfg(OPTS)
     _dbx 4 " gui-layout=$cfg(gui-layout)"
@@ -3153,6 +3178,7 @@ proc create_buttons     {parent cmd} {
             if {1==[regexp $prg(rexOUT-show) $txt]} { $this.help_me config -state disable }
         }
     }
+    _dbx 2 "=$parent }"
     return $parent
 }; # create_buttons
 
@@ -3164,7 +3190,7 @@ proc create_main_menu          {parent w} {
     #.       +---------------------------------------------------------------+
     #   ☰  Cmd  Opt  are Tcl menus
     #
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg prg myX
     set menu_type menubar  ;# FIXME: not yet implemented due to improper widget names
     set menu_type normal
@@ -3254,13 +3280,14 @@ proc create_main_menu          {parent w} {
     # bind . <Key-o>  "$w_opts invoke 0"
     # bind . <Key-s>  "$w_conf invoke 0"
 
+    _dbx 2 "=$w.main }"
     return $w.main
 }; # create_main_menu
 
 proc create_main_host_entries  {parent w} {
     #? create host entries in main window
     # add hosts from command-line; line  with  +  and  -  or  !  button
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg hosts
     set w $parent.$w
     pack [frame ${w}_1]            ;# create dummy frame to keep create_host() happy
@@ -3269,12 +3296,13 @@ proc create_main_host_entries  {parent w} {
         if {5 < $i} { pwarn "only 6 hosts possible; »$host« ignored"; continue }
         lappend cfg(guiwidgets) [create_host $w $i]
     }
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_host_entries
 
 proc create_main_quick_buttons {parent w} {
     #? create command buttons for simple commands and help
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global prg myX
     set w   $parent.$w
     pack [frame     $w] -fill x
@@ -3284,12 +3312,13 @@ proc create_main_quick_buttons {parent w} {
     }
     pack [button    $w.loadresult -command "osaft_load {_LOAD}"] -side left  -padx 11
     pack [button    $w.help       -command "create_help {}"]     -side right -padx $myX(padx)
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_quick_buttons
 
 proc create_main_quick_options {parent w} {
     #? create option checkboxes for simple access
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global prg
     set w   $parent.$w
     pack [frame     $w] -fill x
@@ -3301,26 +3330,28 @@ proc create_main_quick_options {parent w} {
         pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
         guitip_set  $w.dockerid [_get_tipp docker-id]
     }
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_quick_options
 
 proc create_main_note          {parent w} {
     #? create notebook object and set up Ctrl+Tab traversal
     #  used for --gui-layout=classic (and version < 1.254 )
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg
     set w   $parent.$w
     set cfg(objN)   $w
     ttk::notebook   $w -padding 5
     ttk::notebook::enableTraversal $w
     pack $w -fill both -expand 1
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_note
 
 proc create_main_tabs          {parent w} {
     #? create notebook object and set up Ctrl+Tab traversal
     #  used for --gui-layout=classic (and version < 1.254 )
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg
     set w   $parent.$w
     # create TABs: Command and Options
@@ -3339,34 +3370,37 @@ proc create_main_tabs          {parent w} {
     # add Save and Reset button in Options pane
     pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
     pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_tabs
 
 proc create_main_status_line   {parent w} {
     #? create status line
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg myX
     set w   $parent.$w
     set cfg(objS)   $w.t
     pack [frame     $w   -relief sunken -borderwidth 1] -fill x
     pack [text      $w.t -relief flat   -height $myX(maxS) -background [_get_color status] ] -fill x
     gui_set_readonly $cfg(objS)
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_status_line
 
 proc create_main_exit_button   {parent w} {
     #? create exit button
-    _dbx 2 "{$parent, $w}"
+    _dbx 2 "{$parent, $w}{"
     global cfg myX
     set w   $parent.$w
     pack [frame     $w] -fill x -side bottom
     pack [button    $w.closeme  -command {exit}] -side right -padx $myX(rpad)
+    _dbx 2 "=$w }"
     return $w
 }; # create_main_exit_button
 
 proc remove_main        {}  {
     #? destroy toplevel GUI, leave toplevel itself
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg
     foreach w $cfg(guiwidgets) {
         #if {[regexp {ft_} $w]} { } # frame for host
@@ -3374,12 +3408,13 @@ proc remove_main        {}  {
         catch {destroy $w}
     }
     set cfg(guiwidgets) {}
+    _dbx 2 "}"
     return
 }; # remove_main
 
 proc create_main  {layout}  {
     #? create toplevel GUI, layout as classic or tablet; sets $cfg(gui-layout)
-    _dbx 2 "{$layout}"
+    _dbx 2 "{$layout}{"
     putv  " set   layout = $layout"
     global cfg
     set cfg(gui-layout) $layout
@@ -3404,12 +3439,13 @@ proc create_main  {layout}  {
         }
     }
     lappend cfg(guiwidgets) [create_main_status_line $w fl ]
+    _dbx 2 "=$w }"
     return $w
 }; # create_main
 
 proc search_view  {w key}   {
     #? scroll given text widget according key
-    _dbx 2 "{$w, $key}"
+    _dbx 2 "{$w, $key}{"
     #dbx puts "search_view: {$w, $key} [$w yview]"
     # Up and Down are handled automatically, usually, but not always, grrrr
     switch $key {
@@ -3424,12 +3460,13 @@ proc search_view  {w key}   {
     # tested: "$w yview end", "$w yview scroll 1.0", "$w yview moveto 1.0", "$w see 1.0"
     #   Home    { $w yview scroll -99 pages }
     #   End     { $w yview scroll  99 pages }
+    _dbx 2 "}"
     return
 }; # search_view
 
 proc search_show  {w mark}  {
     #? jump to mark in given text widget
-    _dbx 2 "{$w, $mark}"
+    _dbx 2 "{$w, $mark}{"
     catch { $w see [$w index $mark.first] } err
     if {"" eq $err} {
         # "see" sometimes places text to far on top, so we scroll up one line
@@ -3437,12 +3474,13 @@ proc search_show  {w mark}  {
     } else {
         _dbx 4  " err    = $err"
     }
+    _dbx 2 "}"
     return
 }; # search_show
 
 proc search_mark  {w see}   {
     #? remove previous highlight, highlight at position see
-    _dbx 2 "{$w, $see}"
+    _dbx 2 "{$w, $see}{"
     set anf  [lindex $see 0]
     set end  [lindex $see 1]
     # $see contains tuple with start and end position of matched text, now
@@ -3456,6 +3494,7 @@ proc search_mark  {w see}   {
     $w tag delete HELP-search-mark $anf
     $w tag add    HELP-search-mark $anf $end
     $w tag config HELP-search-mark -font osaftBold -background yellow
+    _dbx 2 "}"
     return
 }; # search_mark
 
@@ -3464,7 +3503,7 @@ proc search_more  {w search_text regex} {
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
     # start and end position (index)
-    _dbx 2 "{$w, »$search_text«, $regex}"
+    _dbx 2 "{$w, »$search_text«, $regex}{"
     global search myX
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [_count_tuples $matches]
@@ -3501,6 +3540,7 @@ proc search_more  {w search_text regex} {
         # TAG-$i  are never used again; new searches overwrite existing tags
     }
     gui_set_readonly $txt
+    _dbx 2 "=$this }"
     return $this
 }; # search_more
 
@@ -3508,7 +3548,7 @@ proc search_next  {w direction} {
     #? show next search text in help window
     # direction: + to search forward, - to search backward
     global search
-    _dbx 2 "{$w, $direction}"
+    _dbx 2 "{$w, $direction}{"
     _dbx 4 " see    = $search(see)"
     # nextrange, prevrange return a tuple like:        23.32 23.37
     # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
@@ -3526,12 +3566,13 @@ proc search_next  {w direction} {
     search_mark $w "$see"
     #$w yview scroll 1 units           ;# somtimes necessary, but difficult to decide when
     set search(see)  $see
+    _dbx 2 "}"
     return
 }; # search_next
 
 proc search_text  {w search_text} {
     #? search given text in help window's $w widget
-    _dbx 2 "{$w, »$search_text«}"
+    _dbx 2 "{$w, »$search_text«}{"
     global search
     if {[regexp ^\\s*$ $search_text]}  { return }  ;# do not search for spaces
     if {"exact" ne $search(mode)} {
@@ -3663,24 +3704,26 @@ proc search_text  {w search_text} {
     if {$search(more) < [_count_tuples $anf]} {
        search_more $w $search_text $regex
     }
+    _dbx 2 "}"
     return
 }; # search_text
 
-proc search_rset  {}    {
+proc search_rset        {}  {
     #? reset/clear search list (history)
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global search
     set search(curr) 0
     set search(list) ""
     set search(last) ""
     set search(see)  ""
     set search(text) "";# resets entry field
+    _dbx 2 "}"
     return
 }; # search_rset
 
 proc search_list  {direction} {
     #? get next or previous search text from search list (history)
-    _dbx 2 "{$direction}"
+    _dbx 2 "{$direction}{"
     global search
     set  len [llength $search(list)]
     switch $direction {
@@ -3691,13 +3734,14 @@ proc search_list  {direction} {
     if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
     set search(text) [lindex $search(list) $search(curr)]
     _dbx 4 " curr= $search(curr) of $len, »$search(text)«"
+    _dbx 2 "}"
     return
 }; # search_list
 
 proc osaft_write_rc     {}  {
     #? print data for resource file
     # print all lines between  RC-ANF and RC-END
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg argv0
     set qq {"} ;# dumm "
     if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
@@ -3725,7 +3769,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 2.39 23/04/26 15:56:21
+ #?      @(#) .o-saft.tcl generated by 2.40 23/04/27 15:58:42
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3791,12 +3835,13 @@ set cfg(TITLE)  {$cfg(TITLE)}"
 #-----------------------------------------------------------------------------}
 ";
 
+    _dbx 2 "}"
     return
 }; # osaft_write_rc
 
 proc osaft_write_opts   {}  {
     #? extract and print options from myself
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global argv0
     set fid [open $argv0 r]
     set txt [read $fid]
@@ -3822,11 +3867,12 @@ proc osaft_write_opts   {}  {
         if { "\{" eq $col2 || "-" eq $col2 } { puts [lindex $cols 0] }
     }
     close $fid
+    _dbx 2 "}"
     return
 }; # osaft_write_opts
 
 proc _get_data_filename  {mode} {
-    _dbx 2 "{$mode}"
+    _dbx 2 "{$mode}{}"
     global cfg
     return "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
 }; # _get_data_filename
@@ -3834,10 +3880,11 @@ proc _get_data_filename  {mode} {
 proc osaft_write_docs   {}  {
     #? get documentation and help texts from o-saft.pl and store in file
     # see also "make doc.data" and "make static.docs"
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global prg
     putv  " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs"
     catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs } txt
+    _dbx 2 "}"
     return
 }; # osaft_write_docs
 
@@ -3847,7 +3894,7 @@ proc osaft_read_data {norc mode} {
     #  example: mode = "--help=data"
     #       reads:  o-saft.pl.--help=data
     #    or calls:  o-saft.pl --help=data
-    _dbx 2 "{$norc,$mode}"
+    _dbx 2 "{$norc,$mode}{"
     global cfg prg env
     set txt  ""
     if {0==$cfg(docs-exe)} {
@@ -3872,12 +3919,13 @@ proc osaft_read_data {norc mode} {
     }
     putv  " exec {*}$prg(PERL) $prg(SAFT) [docker_args] $norc $mode"
     catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] $norc $mode } txt
+    _dbx 2 "=... RC text ... }"
     return $txt
 }; # osaft_read_data
 
 proc osaft_about {mode} {
     #? extract description from myself; returns text
-    _dbx 2 "{$mode}"
+    _dbx 2 "{$mode}{"
     global arrv argv0
     set fid [open $argv0 r]
     set txt [read $fid]
@@ -3890,20 +3938,22 @@ proc osaft_about {mode} {
         set hlp "$hlp\n[regsub {^#[?.]} $l {}]"
     }
     close $fid
+    _dbx 2 "=... about text ... }"
     return $hlp
 }; # osaft_about
 
 proc osaft_ciphers   {} {
     #? get description of cipher suites from o-saft.pl; returns text
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     set help [osaft_read_data "" "--help=ciphers-text"]
     # convert to tabular data
+    _dbx 2 "}"
     return $help
 }; # osaft_ciphers
 
 proc osaft_help   {}    {
     #? get help from o-saft.pl --help (for use in own help window)
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg prg
     # get information from O-Saft; it's a performance penulty, but simple ;-)
     set help [osaft_read_data "" "--help"]
@@ -3983,12 +4033,13 @@ proc osaft_help   {}    {
 
     #dbx " 3. building TOC from section head lines here is difficult, done in create_help()"
 
+    _dbx 2 "=... help text ... }"
     return $help
 }; # osaft_help
 
 proc osaft_reset  {}    {
     #? reset all options in exe()
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global exe
     guistatus_set "reset"
     foreach {idx val} [array get exe] {
@@ -4000,12 +4051,13 @@ proc osaft_reset  {}    {
             set exe($idx]) ""
         }
     }
+    _dbx 2 "}"
     return
 }; # osaft_reset
 
 proc osaft_init   {}    {
     #? set values from .o-saft.pl in cfg()
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg exe prg
     if {1==$cfg(docker)} { return };# skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
@@ -4028,6 +4080,7 @@ proc osaft_init   {}    {
     }
     # now copy commands and options from command-line to $cfg
     foreach {idx val} [array get exe] { set cfg($idx) $val }
+    _dbx 2 "}"
     return
 }; # osaft_init
 
@@ -4095,7 +4148,7 @@ proc osaft_save   {tbl type nr} {
 
 proc osaft_load   {cmd} {
     #? load results from file and create a new TAB for it
-    _dbx 2 "{$cmd}"
+    _dbx 2 "{$cmd}{"
     global cfg results
     set name $cmd
     switch $cmd {
@@ -4115,13 +4168,14 @@ proc osaft_load   {cmd} {
     guistatus_set "loaded file: $name"
     putv          " loaded $name "
     guicursor_set {}
+    _dbx 2 "}"
     return
 }; # osaft_load
 
 proc osaft_exec   {parent cmd}  {
     #? run $prg(SAFT) with given command; write result to global $osaft
     # $parent is a dummy here
-    _dbx 2 "{$cmd}"
+    _dbx 2 "{$cmd}{"
     global cfg hosts prg results
     guicursor_set watch
     guistatus_set "#{ $cmd"
@@ -4209,12 +4263,13 @@ proc osaft_exec   {parent cmd}  {
     destroy $cfg(winF)                 ;# workaround, see FIXME in create_filtertab
     guistatus_set "#} $do done (status=$status)."  ;# status not yet used ...
     guicursor_set {}
+    _dbx 2 "}"
     return
 }; # osaft_exec
 
 proc config_read  {}    {
     #? read configuration RC-file and IMG-file
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg prg env
     # read $cfg(RC) if any
     # if the file does not exist, the error is silently catched and ignored
@@ -4226,12 +4281,13 @@ proc config_read  {}    {
     update_cfg                     ;# update configuration as needed
     # read $cfg(IMG)               ;# must be read before any widget is created
     read_images $cfg(gui-button)   ;# more precisely: before first use of guitheme_set
+    _dbx 2 "}"
     return
 }; # config_read
 
 proc config_data  {}    {
     #? get data for commands, options and help from $prg(SAFT)
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg prg
     # read (get) data from prg(SAFT)
     # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
@@ -4254,12 +4310,13 @@ $cfg(CMDS)
             exit 2
         }
     }
+    _dbx 2 "}"
     return
 }; # config_data
 
 proc config_print {}    {
     #? print debug information
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global argv0 argv env cfg prg myX hosts
 
     # some platforms are picky (i.e. Android's AndroWish)-:
@@ -4386,12 +4443,13 @@ $tk_wm
 _/" "#\[$cfg(ICH)\]:"] ;# same prefix as in putv;  dumm "
     #          [tk windowingsystem] # we believe this is a window manager property
 
+    _dbx 2 "}"
     return
 }; # config_print
 
 proc gui_init:prg {start} {
     # search browser, first matching will be used
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global prg
     foreach bin " $start \
             firefox chrome chromium iceweasel konqueror mozilla \
@@ -4413,12 +4471,13 @@ proc gui_init:prg {start} {
             break
         }
     }
+    _dbx 2 "}"
     return
 }; # gui_init:prg
 
 proc gui_init:cfg   {}  {
     # configure GUI according available packages
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg IMG
     if {[catch { package require tablelist } err]} {
         pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
@@ -4433,12 +4492,13 @@ proc gui_init:cfg   {}  {
     }
     if {0==[regexp {::tk::icons::question} [image names]]} { unset IMG(help) }
         # reset if no icons there, forces text (see cfg_buttons)
+    _dbx 2 "}"
     return
 }; # gui_init:cfg
 
 proc gui_init:geo   {}  {
     # configure according real size
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global myX
     set __x         [lindex [wm maxsize .] 0]
     set __y         [lindex [wm maxsize .] 1]
@@ -4450,12 +4510,13 @@ proc gui_init:geo   {}  {
         {Aqua}  { set myX(miny)   770  ;# because fonts are bigger by default }
     }
     set myX(geoS)   "$myX(minx)x$myX(miny)"
+    _dbx 2 "}"
     return
 }; # gui_init:geo
 
 proc gui_init:fonts {}  {
     # configure fonts
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     global cfg prg
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
     font create osaftHead   {*}[font config TkFixedFont  ] -weight bold
@@ -4478,12 +4539,13 @@ proc gui_init:fonts {}  {
         break
     }
     _dbx 4 " table font = $cfg(tfont)"
+    _dbx 2 "}"
     return
 }; # gui_init:fonts
 
 proc gui_init:keys_NOT_WORKING {}  {
     #? initialise key bindings, see "Key Bindings"
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     set ignore_widgets ""
     foreach w [info commands] {
         # collect widgets, which should not get our bindings
@@ -4512,12 +4574,13 @@ proc gui_init:keys_NOT_WORKING {}  {
     # other tests, not working too
     #   bind .entry <Key-q> break
     #   bind .entry <Key-q> {} 
+    _dbx 2 "}"
     return
 }; # gui_init:keys
 
 proc gui_init:keys  {}  {
     #? initialise key bindings, see "Key Bindings"
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     bind . <Control-v>      {clipboard get    }
     bind . <Control-c>      {clipboard clear ; clipboard append [selection get]}
     #bind . <Key-exclam>     {create_about     }
@@ -4528,12 +4591,13 @@ proc gui_init:keys  {}  {
     #bind . <Key-g>          {create_configwin }
     #bind . <Key-h>          {create_help {}   }
     #bind . <Key-q>          {exit}
+    _dbx 2 "}"
     return
 }; # gui_init:keys
 
 proc gui_init       {}  {
     #? initialise GUI
-    _dbx 2 "{}"
+    _dbx 2 "{}{"
     gui_init:cfg
     global cfg argv
     set __native    ""
@@ -4557,10 +4621,12 @@ proc gui_init       {}  {
     gui_init:fonts
     gui_init:geo
     #gui_init:keys ;# must be done very late, when all widgets are created
+    _dbx 2 "}"
     return
 }; # gui_init
 
 proc gui_main       {}  {
+    _dbx 2 "{}{"
     global argv0 argv env cfg prg myX hosts
     gui_init
 
@@ -4600,6 +4666,7 @@ proc gui_main       {}  {
 
     gui_init:keys
 
+    _dbx 2 "}"
     return
 }; # gui_main
 
