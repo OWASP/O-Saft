@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.95 23/04/17 00:59:27";
+my  $SID_man= "@(#) o-saft-man.pm 2.96 23/05/07 09:29:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -793,7 +793,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.95'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.96'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1774,7 +1774,7 @@ sub man_help_brief  {
             next;
         }
         $line =~ s/^\s*//;                  # normalise
-        $line =~ s![IX]&([^&]*)&!$1!g;      # remove markup
+        $line =~ s![ISX]&([^&]*)&!$1!g;      # remove markup
         $line =  sprintf("\n%17s %s", " ", $line) if (defined $opts{$idx}->{'txt'});
         $opts{$idx}->{'txt'} .= $line;
     }
@@ -2647,7 +2647,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.95 2023/04/17
+2.96 2023/05/07
 
 
 =head1 AUTHOR
