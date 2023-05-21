@@ -24,6 +24,9 @@
 #?      -cgi    start o-saft.cgi with remaining arguments
 #?      -gui    start o-saft.tcl with remaining arguments
 #       -tcl    alias for -gui
+#?      -log    start o-saft.pl  with remaining arguments  and store result in
+#?              file, then start start o-saft.tcl loading this file
+#?              (option intended when system cannot exec other programs)
 #?      -docker start o-saft-docker with remaining arguments
 #?      -id=*   passed to o-saft-docker
 #?      -tag=*  passed to o-saft-docker
@@ -43,6 +46,9 @@
 #?      $0  must be installed in the same directory as the tools it will call
 #?          $0.pl  $0.cgi  $0.tcl
 #?
+#?      If  -log  option is used, the options  -help=*  -docker*  and  -post=*
+#?      are silently ignored.
+#?
 #?      Option  +VERSION  prints version of this program  and not the version
 #?      of  o-saft.pl .
 #?
@@ -54,8 +60,10 @@
 #?          $0 -post='bunt.pl'      ' +cmd --option target
 #?          $0 -post='bunt.pl -blind' +cmd --option target
 #?          $0 -colour                +cmd --option target  # same as above
-#?          $0 -gui target
-#           $0 -prd=yeast.pl  +cmd   target
+#?          $0 -gui                  target
+#?          $0 -gui           +cmd   target
+#?          $0 -log           +cmd   target
+#           $0 -prg=yeast.pl  +cmd   target
 #?
 #?          $0 -docker +cmd --option target
 #?          $0 -docker -post='bunt.pl'      ' +cmd --option target
@@ -71,7 +79,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.27 23/05/21 18:09:44
+#?      @(#) o-saft 1.28 23/05/21 19:46:48
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -80,6 +88,7 @@
 
 ich=${0##*/}
 dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
+log=/tmp/$ich.$$.$USER.log
 prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
@@ -98,7 +107,7 @@ post_args=
     # aguments passed to post command, mainly used for -help=
 such=
     # text to be searched for passed to post command, mainly used for -help=
-mode=cli        # cli, cgi, gui
+mode=cli        # cli, cgi, gui, log
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
 docker_tag=
@@ -124,7 +133,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.27"; exit 0; ;;
+        +VERSION)       echo "1.28"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -143,6 +152,7 @@ EoT
         -cli    | --cli)    mode=cli    ; ;;
         -gui    | --gui)    mode=gui    ; ;;
         -tcl    | --tcl)    mode=gui    ; ;;
+        -log    | --log)    mode=log    ; ;;
         -docker | --docker) docker=1    ; ;;
         -id*)           docker_id="$1"  ; ;;
         -tag*)          docker_tag="$1" ; ;;
@@ -178,20 +188,25 @@ done
 
 # docker mode is special
 if [ $docker -eq 1 ]; then
-    if [ -n "$osaft_vm_build" ]; then
-        echo "**WARNING: option -docker ignored inside VM; exit"
-    else
+    if [ -z "$osaft_vm_build" ]; then
         echo $dok $docker_id $docker_tag -$mode -post=$post $*
         [ -n "$try" ] && exit 0
              $dok $docker_id $docker_tag -$mode -post=$post $*
         exit $?
     fi
+    #else
+    echo "**WARNING: option -docker ignored inside VM"
 fi
 
 # all other modes
 case "$mode" in
     cgi) $try $cgi --cgi $* | $post  ; ;;
     gui) $try $gui --post="$post" $* ; ;;
+    log)
+         [ -e $log ] && echo "**ERROR: '$log' exists; aborted" && exit 2
+         echo "$prg $* $args > $log" ; echo "$gui --load=$log"
+         $try  $prg $* $args > $log  && $try $gui --load=$log  && rm $log
+         ;;
     *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args  $such"
          [ -n "$try" ] && exit 0
          # some shell behave strange when quotes are needed (for $such here)
@@ -203,7 +218,7 @@ case "$mode" in
          fi
          ;;
 esac
-exit 0
+exit $?
 
 
 # NOTE: $gui
