@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.55 23/04/23 19:42:40"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.56 23/05/21 16:59:18"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -8390,7 +8390,7 @@ to search for the files to be included. Following disadvantages are known:
   - the list of directories depends on the system (OS and distribution)
   - this list must be known before any Perl command is executed
   - it's tricky to use private directories
-  - using "-I . lib/" in hashbang line will pre- and append to @INC
+  - using "-I . lib/" in shebang line will pre- and append to @INC
 
 Therefore  @INC  needs to be adapted properly in Perl's  BEGIN  scope (see
 next annotation also). The added directories are:
