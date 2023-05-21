@@ -39,8 +39,8 @@
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
 #?
 #? LIMITATIONS
-#?      All option listed above must preceed options to be passed through.
-#?      $0  must be install in the same directory as the tools it will call
+#?      All option listed above must preceed arguments to be passed through.
+#?      $0  must be installed in the same directory as the tools it will call
 #?          $0.pl  $0.cgi  $0.tcl
 #?
 #?      Option  +VERSION  prints version of this program  and not the version
@@ -62,7 +62,7 @@
 #?          $0 -docker -post='bunt.pl -blind' +cmd --option target
 #?          $0 -docker -gui target
 #?
-#?      Specify program to execute script (if hashbang in file fails):
+#?      Specify program to execute script (if shebang in script file fails):
 #?          $0 -docker -post='perl contrib/bunt.pl' ' +cmd --option target
 #?
 # 
@@ -71,7 +71,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.26 21/04/16 13:26:57
+#?      @(#) o-saft 1.27 23/05/21 18:09:44
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -124,7 +124,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.26"; exit 0; ;;
+        +VERSION)       echo "1.27"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
