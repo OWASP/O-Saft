@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.89 23/04/14 17:24:37
+#?      @(#) Makefile.dev 1.90 23/05/21 20:30:01
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.89
+_SID.dev           := 1.90
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -65,6 +65,7 @@ LIST.o-saft.pl     :=
 LIST.o-saft        :=  -help -list -help=rc -help=sni
 LIST.o-saft-docker :=  -help
 # TODO: LIST.o-saft-docker-dev  := -help
+LIST.o-saft-mode   :=  -cli  -cgi  -gui  -log
 LIST.o-saft-post   := \
 	-post=HTML-simple.awk -post=HTML-table.awk  -post=lazy_checks.awk \
 	-post=JSON-array.awk  -post=JSON-struct.awk \
@@ -159,6 +160,15 @@ ifndef dev-macros-generated
     )
 
     $(eval _prg=o-saft)
+    $(foreach _arg, $(LIST.o-saft-mode),\
+        $(eval _testarg=testarg-dev-$(_prg)_$(subst =,-,$(_arg))) \
+        $(eval ALL.test.dev.$(_prg)-mode += $(_testarg)) \
+        $(eval $(_testarg):     TEST.init = $(_arg))     \
+        $(eval $(_testarg):     TEST.args = +quit $(TEST.host)) \
+    )
+    $(eval     test.dev.$(_prg)-mode.all :  $(ALL.test.dev.$(_prg)-mode))
+    undefine _arg
+    undefine _testarg
     $(foreach _arg, $(LIST.o-saft-post),\
         $(eval _testarg=testarg-dev-$(_prg)_$(subst =,-,$(_arg))) \
         $(eval ALL.test.dev.$(_prg)-post += $(_testarg)) \
@@ -171,6 +181,10 @@ ifndef dev-macros-generated
     $(eval undefine _prg)
 
 endif
+
+testarg-dev-o-saft_-post%:      EXE.pl    = ../$(SRC.sh)
+testarg-dev-o-saft_-post%:      TEST.args = --no-rc --header $(TEST.host)
+#testarg-dev-o-saft_-post%:      TEST.args = $(TEST.host)
 
 $(_TEST.dev.tmpfile):
 	@mkdir $@
@@ -185,10 +199,6 @@ ALL.test.dev            += \
 	testarg-dev-o-saft_--colour \
 	testarg-dev-o-saft_--colour+ocsp \
 	testarg-dev-o-saft_--colour-line
-
-testarg-dev-o-saft_-post%:      EXE.pl    = ../$(SRC.sh)
-testarg-dev-o-saft_-post%:      TEST.args = --no-rc --header $(TEST.host)
-#testarg-dev-o-saft_-post%:      TEST.args = $(TEST.host)
 
 # do not execute script, just show: --n
 testarg-dev-contrib-install_openssl_%:  TEST.args = --n
@@ -316,7 +326,8 @@ test.dev.grep.warn: testarg-dev-grep_warn
 ALL.test.dev.misc   = testarg-dev-o-saft_notyet
 
 #ALL.test.dev       += $(ALL.test.dev.help) $(ALL.test.dev.pod) # pdocuses duplicate
-ALL.test.dev       += $(ALL.test.dev.grep) $(ALL.test.dev.misc) $(ALL.test.dev.o-saft-post)
+ALL.test.dev       += $(ALL.test.dev.grep) $(ALL.test.dev.misc) \
+                      $(ALL.test.dev.o-saft-mode) $(ALL.test.dev.o-saft-post)
 ALL.test.dev.log    = $(ALL.test.dev:%=%.log)
 
 test.dev.log-compare:   TEST.target_prefix  = testarg-dev-
