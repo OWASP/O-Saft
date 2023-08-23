@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.31 22/11/01 19:28:24
+# SID	@(#) glossary.txt 1.32 23/08/23 11:04:57
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -10,6 +10,9 @@ AA	Attribute Authority
 AAD	Additional Authenticated Data
 ACME	Automated Certificate Management Environment
 ACL	Access Control List
+Achterbahn	80-, 128-bit key stream cipher (2006)
+ACHTERBAHN-80	see Achterbahn
+ACHTERBAHN-128	see Achterbahn
 Adiantum	ChaCha stream cipher with Poly1305 and XChaCha12
 ADH	Anonymous Diffie-Hellman
 Adler32	hash function
@@ -17,7 +20,7 @@ AE	Authenticated Encryption
 AEAD	Authenticated Encryption with Additional Data
 AECDHE	Anonymous Ephemeral ECDH
 AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
-AES	Advanced Encryption Standard, block cipher
+AES	Advanced Encryption Standard, symmetric block cipher
 AESCCM	AES with CCM
 AESCCM8	AES with CCM8
 AESGCM	AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM
@@ -32,7 +35,8 @@ AKC	Agreement with Key Confirmation
 AKID	Authority Key IDentifier
 ALPN	Application Layer Protocol Negotiation
 ALPACA	Application Layer and Content Confusion Attack	(Exploit SSL/TLS)
-AMASTRID	stream cipher algorithm
+AMASTRID	stream cipher
+Anubis	128-bit symmetric block cipher
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
 Argon2	Password hashing function (J. Aumasson, 2014)
@@ -54,7 +58,7 @@ Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
 BDH	Bilinear Diffie-Hellman
 BEAR	block cipher combining stream cipher and hash function
 BEAST	Browser Exploit Against SSL/TLS	(Exploit SSL/TLS)
-BEAST .	fast block cipher for arbitrary blocksizes
+BEAST .	fast block cipher for arbitrary blocksizes (rarely)
 BER	Basic Encoding Rules
 BGP	Boorder Gateway Protocol
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
@@ -70,17 +74,17 @@ BLAKE-224	see BLAKE (224 bit)
 BLAKE-256	see BLAKE (256 bit)
 BLAKE-384	see BLAKE (384 bit)
 BLAKE-512	see BLAKE (512 bit)
-Blowfish	symmetric block cipher
+Blowfish	64-bit symmetric block cipher (1993)
 boomerang attack	attack on BLAKE
 BPA	Branch Prediction Analysis
 Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext; a variant of CRIME	(Exploit SSL/TLS)
 Bullrun	NSA program to break encrypted communication
-CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
-CAST	Carlisle Adams and Stafford Tavares, block cipher
-CAST-128	Carlisle Adams and Stafford Tavares, block cipher
+CAMELLIA	encryption algorithm (by Mitsubishi and NTT), 128-bit symmetric block cipher
+CAST	Carlisle Adams and Stafford Tavares, symmetric block cipher
+CAST-128	Carlisle Adams and Stafford Tavares, 64-bit symmetric block cipher
 CAST5	alias for CAST-128
-CAST-256	Carlisle Adams and Stafford Tavares, block cipher
+CAST-256	Carlisle Adams and Stafford Tavares, 128-bit symmetric block cipher
 CAST6	alias for CAST-256
 cipher suite	cipher suite is a named combination of authentication, encryption, and message authentication code algorithms
 CA	Certificate Authority (aka root CA)
@@ -106,13 +110,13 @@ CFB3	Cipher Feedback
 CFBx	Cipher Feedback x bit mode
 CFRG	Crypto Forum Research Group
 CGN	Carrier- Grade NAT (RFC6598)
-ChaCha	stream cipher algorithm (with 256-bit key)
+ChaCha	256-bit key stream cipher
 ChaCha8	see ChaCha
 ChaCha12	see ChaCha (aka 12-round ChaCha)
 ChaCha20	see ChaCha (aka 20-round ChaCha)
 ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 CHAP	Challenge Handshake Authentication Protocol
-CLEFIA	lightweight block cipher algorithm
+CLEFIA	lightweight 128-bit block cipher
 CKA	(PKCS#11)
 CKK	(PKCS#11)
 CKM	(PKCS#11)
@@ -136,7 +140,7 @@ CRC64	CRC with polynomial length 64
 CRAM	Challenge Response Authentication Mechanism
 CRIME	Compression Ratio Info-leak Made Easy	(Exploit SSL/TLS)
 CRL	Certificate Revocation List
-CRYPTON	128 bit block cipher (1998)
+CRYPTON	128-bit block cipher (1998)
 CRYPTREC	Cryptography Research and Evaluation Committees
 CRYSTALS	post-quantum hash function, signature
 CRYSTALS-Dilithium	post-quantum hash function, signature
@@ -161,7 +165,7 @@ DACL	Discretionary Access Control List
 DANE	DNS-based Authentication of Named Entities
 DDH	Decisional Diffie-Hellman (Problem)
 DEA	Data Encryption Algorithm (sometimes a synonym for DES)
-DEAL	128, 192, 256 bit block cipher (Lars Knudsen, 1998)
+DEAL	128-bit symmetric block cipher (Lars Knudsen, 1998)
 DECIPHER	synonym for decryption
 DEK	Data Encryption Key
 DER	Distinguished Encoding Rules
@@ -184,7 +188,7 @@ DLP	Discrete Logarithm Problem
 DN	Distinguished Name
 DNSSEC	DNS Security Extension
 DPA	Dynamic Passcode Authentication (see CAP)
-DRAGON	stream cipher algorithm
+DRAGON	stream cipher (2007)
 DRG	Deterministic Random Generator
 DRBG	Deterministic Random Bit Generator
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption	(Exploit SSL/TLS)
@@ -284,19 +288,20 @@ GHASH	Hash funtion used in GCM
 GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
 Goldilocks	see Curve448
-GOST	Gossudarstwenny Standard, block cipher
+GOST	Gossudarstwenny Standard, 64-bit symmetric block cipher (1994)
 GOST 	hash function (used in GOST cipher suite)
-GOST28147-89	block cipher
+GOST28147-89	block cipher (RFC5830)
 GOST3410-2012	signature algorithm
 GOST3411-2012	hash algorithm
 GOST3412-2015	block cipher
 GOST3413-2015	modes of operation for block ciphers
-GOST3431095	cryptographic algorithm?
-GOST3431004	cryptographic algorithm?
-GOST3431195	cryptographic algorithm?
-GOSTR341001	cryptographic algorithm?
-GOSTR341094	cryptographic algorithm?
-GOSTR341194	cryptographic algorithm?
+GOST3431095	see GOST28147-89
+GOST3431004	see GOST28147-89
+GOST3431195	see GOST28147-89
+GOSTR341001	see GOST28147-89
+GOSTR341094	see GOST28147-89
+GOSTR341194	see GOST28147-89
+GOSTR341122015	GOST R 34.12-2015 (RFC7801, RFC8891), see GOST28147-89
 Grainv1	stream cipher (64-bit IV)
 Grainv128	stream cipher (96-bit IV)
 GREASE	Generate Random Extensions And Sustain Extensibility
@@ -311,8 +316,8 @@ HAS-160	hash function
 HAS-V	hash function
 HC128	alias for HC128
 HC256	alias for HC256
-HC-128	stream cipher algorithm
-HC-256	stream cipher algorithm
+HC-128	128-bit key stream cipher (2004)
+HC-256	256-bit key stream cipher (2004)
 HCH	Hash-Coputer-Hash
 HCTR	a variable-input-length encryption mode
 HEARTBLEED	attack against TLS extension heartbeat
@@ -356,8 +361,9 @@ JH-384	see JH (384 bits)
 JH-512	see JH (512 bits)
 Jolkit-BC	tweakable block cipher
 JSSE	Java Secure Socket Extension
-KATAN	lightweight block cipher algorithm
-KLEIN	lightweight block cipher algorithm
+KATAN	lightweight block cipher
+KASUMI	64-bit symmetric block cipher (successor of MISTY1, broken 2005)
+KLEIN	lightweight block cipher
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 KCI	Key Compromise Impersonation
 KDC	Key Distribution Center (mainly Kerberos)
@@ -378,10 +384,11 @@ LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 200
 LEA	? algorithm
 LEA-128	see LEA
 LEA-256	see LEA
-LED	lightweight block cipher algorithm
-LEXv2	stream cipher algorithm
+LED	lightweight block cipher
+LEXv2	stream cipher
 LFSR	Linear Feedback Shift Register
-LION	block cipher combining stream cipher and hash function
+LION	variable block-length symmetric block cipher (2007)
+LION 	hash function (2007)
 LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
 LM hash	LAN Manager hash aka LanMan hash
 LogJam	Attack to force server to downgrade to export ciphers	(Exploit SSL/TLS)
@@ -393,8 +400,9 @@ Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky13	Break SSL/TLS Protocol with ciphers using CBC-mode	(Exploit SSL/TLS)
 Lucky 13	Break SSL/TLS Protocol	(Exploit SSL/TLS)
 Lucky Thirteen	see Lucky 13
+Magenta	128-bit symmetric block cipher (Deutsche Telekom 1990, broken 1998)
 MANTIS	block cipher, low-latency variant of SKINNY
-MARS	128-bit block cipher (developed at IBM)
+MARS	128-bit symmetric block cipher (developed at IBM)
 MAC	Message Authentication Code
 MCF	Modular Crypt Format
 MDC	Modification Detection Code
@@ -407,17 +415,19 @@ MEE	MAC-then-Encode-then-Encrypt (see also MtE, AtE)
 MEK	Message Encryption Key
 MECAI	Mutually Endorsing CA Infrastrukture
 MGF	Mask Generation Function
-MIDORI	lightweight block cipher algorithm (64 or 128 bit) (2015)
+MIDORI	lightweight 64-, 128-bit block cipher (2015)
 Midori64	see MIDORI
 Midori128	see MIDORI
-MISTY1	block cipher algorithm
+MISTY	Mitsubishi Improved Security Technology aka Matsui, Ischikawa, Sorimachi, Yamagishi
+MISTY1	64-bit symmetric block cipher (1995)
+MISTY2	?
 MPQS	Multiple Polynomial Quadratic Sieve
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MS-SSTP	see SSTP
 MtE	MAC-then-encrypt (see also AtE)
 NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 NCP	Normalized Certification Policy (according TS 102 042)
-NOEKEON	symmetric block cipher algorithm
+NOEKEON	128-bit symmetric block cipher (2000)
 Neokeon	see NOEKEON (probaly typo)
 NewHope	post-quantum key exchange
 nistp192	alias for P-192
@@ -425,13 +435,13 @@ nistp224	alias for P-224
 nistp256	alias for P-256
 nistp384	alias for P-384
 nistp521	alias for P-521
-NLSv2	stream cipher algorithm
+NLSv2	stream cipher
 nonce	(arbitrary) number used only once
 NPN	Next Protocol Negotiation
 NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
-NTRU	asymetric cipher algorithm using lattice reduction
+NTRU	asymmetric cipher using lattice reduction (1996)
 NTRUEncrypt	alias for NTRU
 NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
 NULL	no encryption
@@ -441,8 +451,8 @@ OCB	Offset Codebook Mode (block cipher mode of operation)
 OCB1	same as OCB
 OCB2	improved OCB aka AEM
 OCB3	improved OCB2
-OCELOT1	stream cipher algorithm
-OCELOT2	stream cipher algorithm
+OCELOT1	stream cipher
+OCELOT2	stream cipher
 OCSP	Online Certificate Status Protocol
 OCSP stapling	formerly known as: TLS Certificate Status Request
 OFB	Output Feedback
@@ -452,6 +462,7 @@ OMAC	One-Key CMAC, aka CBC-MAC
 OMAC1	same as CMAC
 OMAC2	same as OMAC
 OPIE	One-time pad Password system
+ORYX	96-bit key stream cipher (broken 1998)
 OTP	One Time Pad
 OV	Organisational Validation
 OV-SSL	Organisational Validated Certificate
@@ -465,7 +476,8 @@ P-521	Elliptic Curve used in FIPS 186-4 (NIST)
 PACE	Password Authenticated Connection Establishment
 PAD	Peer Authorization Database
 PAKE	Password Authenticated Key Exchange
-Panama	stream cipher algorithm
+Panama	256-bit key stream cipher (1998)
+Panama 	hash funcrion (1998, broken 2001)
 PCN	Pre-Congestion Notification
 PBE	Password Based Encryption
 PBKDF2	Password Based Key Derivation Function
@@ -479,7 +491,7 @@ PFS	Perfect Forward Secrecy
 PFX	see PKCS#12 (Personal Information Exchange)
 PGP	Pretty Good Privacy
 PII	Personally Identifiable Information
-Picollo	lightweight block cipher algorithm
+Picollo	lightweight block cipher
 PKCS	Public Key Cryptography Standards
 PKCS1	PKCS #1: RSA Encryption Standard
 PKCS3	PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol
@@ -502,10 +514,10 @@ Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption	(Exploit SSL/TLS)
 PQC	Post-Quantum Crypto
-PRESENT	block cipher algorithm (80 or 128 bit) (2007)
+PRESENT	64-bit block symmetric cipher (2007)
 PRF	Pseudo-Random Function
 PRP	Pseudo-Random Permutation
-PRINCE	low-latency block cipher algorithm (64 bit) (2012)
+PRINCE	low-latency 64-bit symmetric block cipher (2012)
 prime192v1	alias for P-192
 prime224v1	alias for P-224
 prime256v1	alias for P-256
@@ -517,22 +529,26 @@ PSKC	Portable Symmetric Key Container
 PTG	Physical Random Generator
 PVT	Public Validation Token
 PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
+QARMA	Qualcomm ARM Authenticator, lightweight 64-, 128-bit block cipher (2016)
+QARMA-64	see QARMA
+QARMA-128	see QARMA
+QUAD	80-bit key stream cipher (2002)
 QUIC	Quick UDP Internet Connection
 RA	Registration Authority (aka Registration CA)
-Rabbit	stream cipher algorithm
+Rabbit	128-bit key stream cipher (2003)
 RACCOON	Timing vulnerability in TLS' DH key exchange	(Exploit SSL/TLS)
 RADIUS	Remote Authentication Dial-In User Service
 Radix-64	alias for Base-64
 RAINBOW	post-quantum signature (broken 2/2022)
 RBG	Random Bit Generator
-RC2	Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)
+RC2	Rivest Cipher 2, 64-bit symmetric block cipher by Ron Rivest
 RC4	Rivest Cipher 4, stream cipher (aka Ron's Code)
-RC5	Rivest Cipher 5, block cipher (32-bit word)
-RC5-64	Rivest Cipher 5, block cipher (64-bit word)
-RC6	Rivest Cipher 6
+RC5	Rivest Cipher 5, 32-bit symmetric block cipher
+RC5-64	Rivest Cipher 5, 64-bit symmetric block cipher
+RC6	Rivest Cipher 6, 128-bit symmetric block cipher
 RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 RFC	Request for Comments
-Rijndael	symmetric block cipher algorithm (AES)
+Rijndael	symmetric block cipher (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 RIPE-MD	alias for RIPEMD
 RLWE	Ring Learning-with-Errors
@@ -552,7 +568,9 @@ SA	Subordinate Authority (aka Subordinate CA)
 SACL	System Access Control List
 SAD	Security Association Database
 SAE	Simultaneous Authentication of Equals
-SAFER	Secure And Fast Encryption Routine, block cipher
+SAFER	Secure And Fast Encryption Routine, 64-bit symmetric block cipher (1993)
+SAFER+	128-bit symmetric block cipher (1998)
+SAFER++	128-bit symmetric block cipher (1998)
 Salsa20	stream cipher (by D. Bernstein, 2005), see ChaCha20
 Salsa20/8	see scrypt
 Salsa20/12	see Salsa20
@@ -579,7 +597,7 @@ secp384r1	alias for P-384
 secp521r1	alias for P-521
 SEAL	Software-Optimized Encryption Algorithm; 32-bit word stream cipher (1994)
 SEED	128-bit symmetric block cipher (1998)
-Serpent	symmetric key block cipher (128 bit)
+Serpent	128-bit symmetric block cipher (1998)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
 SIV	Synthetic Initialization Vector
@@ -614,7 +632,7 @@ SIKEp434	post-quantum hash function, signature (broken 7/2022)
 SIKEp503	post-quantum hash function, signature (broken 7/2022)
 SIKEp610	post-quantum hash function, signature (broken 7/2022)
 SIKEp751	post-quantum hash function, signature (broken 7/2022)
-SIMON	lightweight block cipher (NSA algorithm, questionable security)
+SIMON	lightweight 32-, 48-, 64-, 96-, 128-bit symmetric block cipher (NSA algorithm, questionable security) (2013)
 SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 Skein-256-256	see Skein (256 bits)
@@ -626,31 +644,39 @@ SKINNY	SPN tweakable block cipher
 SKINNY-128-256	see SLINNY
 SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
-Skipjack	block cipher encryption algorithm specified as part of the Fortezza
+Skipjack	64-bit block cipher (part of the Fortezza) (1998, partially brocken)
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 SM2	ShangMi authentication function
 SM3	ShangMi hash function
-SM4	ShangMi block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
+SM4	ShangMi block cipher (Chinese gouvernment algorithm, questionable but no objections yet)
 SM4CCM	AEAD algorithms AEAD_SM4_CCM
 SM4GCM	AEAD algorithms AEAD_SM4_GCM
 SMS4	see SM4
 SMACK	State Machine AttaCKs	(Exploit SSL/TLS)
 Snefu	hash function
-Snow20	stream cipher algorithm
+Snow20	see SNOW
 SNI	Server Name Indication
-SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
+SNOW	32-bit word synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
+SNOW 1.0	see SNOW
+SNOW 2.0	see SNOW
+SNOW 3G	see SNOW
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
-Sosemanuk	stream cipher algorithm
+Sosemanuk	128-bit stream cipher (2005)
+SOBER	Seventeen Octet Byte Enabled Register, 8-, 16-, 32-bit key stream cipher (1997)
+SOBER-2	see SOBER
+SOBER-t8	see SOBER
+SOBER-t16	see SOBER
+SOBER-t32	see SOBER
+SOBER-128	see SOBER
 SPARX	? algorithm
-SPECK	lightweight block cipher algorithm (NSA algorithm, questionable security)
-Speck64	see Speck
-Speck128	see Speck
-Speck256	see Speck
-Speck256-XTS	see Speck
+SPECK	lightweight 16-, 24-, 32-, 48-, 64-bit symmetric block cipher (NSA algorithm, questionable security) (2013, broken 2018)
+Speck64	see SPECK
+Speck128	see SPECK
+Speck256	see SPECK
+Speck256-XTS	see SPECK
 SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
-SPECK	block cipher combining
 SPHINCS	Stateless hash-based signatures, post-quantum hash function, signature
 SPHINCS-256	alias for SPHINCS
 SPHINCS-SHAKE256	alias for SPHINCS
@@ -659,7 +685,7 @@ SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
 SPRP	Strong Pseudo-Random Permutation
-Square	block cipher
+Square	128-bit symmetric block cipher (1997, broken with Square attack))
 SRI	Subresource Integrity
 SRP	Secure Remote Password protocol
 SRTP	Secure RTP
@@ -673,7 +699,7 @@ SSP	Security Support Provider
 SSPI	Security Support Provider Interface
 SST	Serialized Certificate Store format
 SSTP	Secure Socket Tunneling Protocol
-STES	stream cipher algorithm
+STES	stream cipher
 Streebog	hash function
 Streebog-256	see Streebog
 Streebog-512	see Streebog
@@ -695,7 +721,7 @@ TGT	Ticket Granting Ticket (mainly Kerberos)
 Tiger	hash function
 TIME	Timing Info-leak Made Easy	(Exploit SSL/TLS)
 TIME 	A Perfect CRIME? TIME Will Tell
-Threefish	hash function
+Threefish	256-, 512-, 1024-bit symmetric block cipher (part of Skein hash function) (2008)
 TLS	Transport Layer Security
 TLSA	TLS Trust Anchors
 TLSv1	Transport Layer Security version 1
@@ -705,24 +731,30 @@ TOCTOU	Time-of-check, time-of-use
 TOFU	Trust on First Use
 TR-02102	Technische Richtlinie 02102 (des BSI)
 TR-03116	Technische Richtlinie 03116 (des BSI)
-Trivium	stream cipher algorithm
+Trivium	80-bit key synchronous stream cipher (2005, broken 4/2015)
 TSK	Transmission Security Key
 TSK 	TACK signing key
 TSP	trust-Management Service Provider
 TSS	Time Stamp Service
 TTP	trusted Third Party
-Twofish	symmetric key block cipher (128 bit)
+Twofish	128-bit symmetric block cipher (1998)
 UC 	Unified Capabilities
 UC	Unified Communications (SSL Certificate using SAN)
 UCC	Unified Communications Certificate (rarley used)
 UMAC	Message Authentication Code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
+VEST	Very Efficient Substitution Transposition, cipher with T-functions (2005, brocken 2007)
+VEST-4	see VEST
+VEST-8	see VEST
+VEST-16	see VEST
+VEST-32	see VEST
 VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
-VMPC	stream cipher algorithm
+VMPC	Variably Modified Permutation Composition, stream cipher (2007)
 VR-224	alias for BADA55-VR-224
 VR-256	alias for BADA55-VR-256
 VR-384	alias for BADA55-VR-384
+WAKE	32-bit word stream cipher (1993, broken)
 WHIRLPOOL	hash function
 WPAD	Web Proxy Auto-Discovery
 wolfSSL	SSL library mainly intended and used for embedded and real-time systems
@@ -735,7 +767,7 @@ X509	X.509: The Directory - Authentication Framework
 X3DH	Extended Triple Diffie-Hellman
 XCBC	eXtended CBC-MAC
 XCBC-MAC	same as XCBC
-XChaCha	stream cipher algorithm (with 512-bit key)
+XChaCha	512-bit key stream cipher
 XChaCha12	see ChaCha (aka 12-round XChaCha)
 XChaCha20	see ChaCha (aka 20-round XChaCha)
 XEX	XOR Encrypt XOR
