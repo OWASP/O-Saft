@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.33 23/08/09 18:53:42
+#?      @(#) Makefile 2.34 23/09/01 20:51:06
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.33
+_SID            = 2.34
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -258,7 +258,7 @@ ALL.src         = \
 		  $(ALL.tst) \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
-ALL.tgz        += O-Saft/$(GEN.inst) $(GEN.rel)
+ALL.tgz        += O-Saft/$(GEN.inst) O-Saft/$(GEN.rel)
 
 # internal used make
 MAKE            = $(MAKE_COMMAND)
@@ -298,8 +298,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.33 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.33
+_INST.genbytext = generated data by Makefile 2.34 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.34
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -565,8 +565,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.33
-tar:     _INST.is_edit  = 2.33
+_INST.is_edit           = 2.34
+tar:     _INST.is_edit  = 2.34
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
