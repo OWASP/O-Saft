@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.147 23/09/01 21:35:36
+#?      @(#) Makefile 1.148 23/09/01 23:23:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.147
+_SID.test          := 1.148
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -96,7 +96,7 @@ ifndef TEST.remove-environment-variables
     # behaviour and to keep our list of variables clean;
     # first define list of required variables, then get list of existing
     # environment variables and remove all except the required ones
-    $(eval _keep = OSAFT_MAKE   LANG \
+    $(eval _keep = OSAFT_MAKE   LANG    LC_CTYPE \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
         DYLD_LIBRARY_PATH   DYLD_FALLBACK_LIBRARY_PATH \
