@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.146 23/04/17 20:07:29
+#?      @(#) Makefile 1.147 23/09/01 21:35:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.146
+_SID.test          := 1.147
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -66,7 +66,9 @@ ALL.help.tests     += help.test
 
 export OSAFT_MAKE  := avoid writing random data (like date and time string)
 export LANG        := C
+export LC_CTYPE    := C.UTF-8
     # LANG ensures same messages and sorting everywhere  
+    # LC_CTYPE should ensures that all characters are proper encoded
 
 first-test-target-is-default: help.test
 
