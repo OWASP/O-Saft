@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.04.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.55 23/04/17 00:47:52",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.56 23/09/02 01:54:24",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -1542,7 +1542,7 @@ sub printConstants {
         print "    \{DEFAULT\}     \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{DEFAULT}))       { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{DEFAULT}}){
                                                                                                                 my $__first_indent = 0;
                                                                                                                 _trace2_ (", \n" . " " x $__first_indent) if ($__first_indent > 0); # add a newline if not the first line
-                                                                                                                my $__decode_str = _decode_val (undef, \$val, \%osaft::TLS_EXTENSIONS{$key}, $__first_indent, 20, ": ", ", ", " | ", " / ");
+                                                                                                                my $__decode_str = _decode_val (undef, \$val, \$osaft::TLS_EXTENSIONS{$key}, $__first_indent, 20, ": ", ", ", " | ", " / ");
 
                                                                                                                 _trace5_ (" " x 20) if ($__first_indent < 1);
                                                                                                                 print $__decode_str;
@@ -5184,10 +5184,10 @@ sub _doCheckAllExtensions ($$$$;$) {
                 last if (!defined($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}]) ); # found value is not defined => Exit Loop
                 last if (!(grep { $_ eq $_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}] } @{$Net::SSLhello::extensions_params_hash{$_extension}[0]})); # found value has NOT been in the offered list => Exit Loop
                 $found_values++;
-                _trace5_ ("#     ---> extension found $found_values value(s) " . _decode_val (undef, \@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}, \%osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
+                _trace5_ ("#     ---> extension found $found_values value(s) " . _decode_val (undef, \@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}, \$osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
                 @{$Net::SSLhello::extensions_params_hash{$_extension}[0]} = grep { $_ ne $_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}] }
                                                                                    @{$Net::SSLhello::extensions_params_hash{$_extension}[0]};  # delete accepted cipher from ToDo-Array '@cipherSpecArray'
-                _trace5_ ("#     ---> extensions_params_hash: " . _decode_val (undef, \@{$Net::SSLhello::extensions_params_hash{$_extension}[0]}, \%osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
+                _trace5_ ("#     ---> extensions_params_hash: " . _decode_val (undef, \@{$Net::SSLhello::extensions_params_hash{$_extension}[0]}, \$osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
 
                 last if ( (@{$Net::SSLhello::extensions_params_hash{$_extension}[0]}) < 1); # no more elements to check
                 if ($found_values > $Net::SSLhello::extensions_max_values) { ## protect ftom staying in an endless loop
@@ -5594,11 +5594,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             if (defined ($_param)) {
                                 _trace2_("\n   parseHandshakeRecord: $host:$port, $client_ssl, Cipher: $lastProtocolCipher -> SeverKey Type: $_description: $_param\n");
                             }
-                            _trace5_ ("#     ---> values of 'supported_groups': " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \%osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
+                            _trace5_ ("#     ---> values of 'supported_groups': " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
                             push (@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, $_supported_group)
                                  if ( (defined ($_supported_group)) && (!grep {$_supported_group eq $_ } @{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}) );
                                                                     # add new supported_group to array in the result hash
-                            _trace4_ ("#     ---> found 'supported_groups':     " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \%osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
+                            _trace4_ ("#     ---> found 'supported_groups':     " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
                             if (! exists ($_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description}) ) {
                                 $_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description} = $_description;
                                 $_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{format_positions}[0] = 1; # -> supported_groups{RX}[1]
