@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.18 22/09/21 12:10:39
+#?      @(#) Makefile.make 1.19 23/09/04 17:23:58
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.18
+_SID.make          := 1.19
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -65,8 +65,11 @@ HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
 # special/individual help.* targets in Makefiles
 LIST.helpmake  := help              help.all            help.help.all-v \
 		  help.doc          help.doc.all        help.makefiles.doc \
-		  testcmd-test.internal help.test.makevars help.test.log-info
+		  help.test.test    help.test.test.all  help.test.targets \
+		  help.test.makevars  help.test.log-info \
+		  testcmd-test.internal
 # Makefile-specific help.test.* targets
+# testcmd-test.internal is in fact a help.* target, as it print information
 # pod and template are missing in $(ALL.inc.type) because they are not included
 # help.test.%.all  is rarely used
 LIST.makefiles  = $(ALL.inc.type) pod template
