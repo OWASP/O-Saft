@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.150 23/09/04 16:12:44
+#?      @(#) Makefile 1.151 23/09/04 16:59:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.150
+_SID.test          := 1.151
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -290,7 +290,7 @@ $(ALL.tests.log)$(_NL)\
 \# summary targets for tests:$(_NL)\
 $(ALL.help.tests:help.%=%)$(_NL)\
 \#$(_NL)\
-\# for more target and details, following targets can be used$(_NL)\
+\# for more details of the targets, following targets can be used:$(_NL)\
 $(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
 
 HELP.test.test  = $(HELP.test)
@@ -321,12 +321,15 @@ HELP-help.test.test.all     = print available targets for tests from all Makefil
 HELP-help.test.test.alls    = print available targets for tests one per line
 #HELP-help.test.test.all-n   = show command for all available test targets
 HELP-help.test.%.all        = print available individual targets for tests '%' from Makefile.*
+HELP-help.test.%.internal   = show settings for tests '%' from Makefile.*
+HELP-help.test.targets      = print all available targets for tests; followed by targets sorted by Makefile*
 
 # experimental: some targets print too many shell commands
 help.test.test.all-n:
 	@$(TRACE.target)
 	@$(MAKE) -n $(ALL.tests)
 
+# following roughly the same as "make s-ALL.tests"
 help.test.test.alls:
 	@$(TRACE.target)
 	@echo " # $(words $(ALL.tests)) targets for tests:"
@@ -340,7 +343,6 @@ help.test.%.all:
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
-HELP-help.test.%.internal   = show settings for tests '%' from Makefile.*
 help.test.%.internal:
 	@$(TRACE.target)
 	@echo " # TEST.file:       $(TEST.file)"
@@ -354,15 +356,15 @@ help.test.%.internal:
 ALL.help.tests.all      = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
 ALL.help.test.internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
 help.test.targets:
-	$(MAKE) -s $(ALL.help.tests.all $(ALL.help.test.internal)
+	@$(MAKE) -s $(ALL.help.tests.all) $(ALL.help.test.internal)
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
 
 HELP-_internal  = _____________________________________ internal test target _
 HELP-testcmd-test.internal = print GNU Make's internals and global project settings
-HELP-help.test.makevars = print all variables
 # dummy ' to keep some stupid syntax highlighting happy
+HELP-help.test.makevars = print all variables
 
 # internal information (nothing related to $(O-Project))
 # NOTE: $(_SID*) variables indicate if a t/Makefile* was included.
@@ -374,12 +376,14 @@ HELP-help.test.makevars = print all variables
 #           # $(MAKE)          = make
 #       SEE GNU Make:MAKE vs. MAKE_COMMAND
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
+
+# next 3 empty targets are dummies to get values for $< $? $^ and $+
 test.file-1:
 test,file-2:
 test_file-3:
 testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@$(TRACE.target)
-	@echo 'test.target: test.file-1 test-file-2 test_file-3'
+	@echo 'testcmd-test.internal: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
 	@echo '# $$(_SID.help)     = $(_SID.help)'
@@ -462,6 +466,8 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '#                    use: make help.test.makevars'
 # not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
 # not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
+
+# TODO taget testcmd-test.internal-v does not work
 
 # TODO (2022) not yet added to proper variables
 ALL.help.test      += testcmd-test.internal
