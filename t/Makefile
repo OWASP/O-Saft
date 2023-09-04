@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.149 23/09/04 14:51:39
+#?      @(#) Makefile 1.150 23/09/04 16:12:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.149
+_SID.test          := 1.150
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -354,13 +354,14 @@ help.test.%.internal:
 ALL.help.tests.all      = $(foreach type,$(ALL.inc.type), help.test.$(type).all)
 ALL.help.test.internal  = $(foreach type,$(ALL.inc.type), help.test.$(type).internal)
 help.test.targets:
-	@$(MAKE) -s $(ALL.help.tests.all $(ALL.help.test.internal)
+	$(MAKE) -s $(ALL.help.tests.all $(ALL.help.test.internal)
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
 
 HELP-_internal  = _____________________________________ internal test target _
 HELP-testcmd-test.internal = print GNU Make's internals and global project settings
+HELP-help.test.makevars = print all variables
 # dummy ' to keep some stupid syntax highlighting happy
 
 # internal information (nothing related to $(O-Project))
