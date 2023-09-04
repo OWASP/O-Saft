@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.148 23/09/01 23:23:12
+#?      @(#) Makefile 1.149 23/09/04 14:51:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.148
+_SID.test          := 1.149
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -299,6 +299,11 @@ help.test:          help.test.test
 help.test.all:      help.test.test.all
 	@$(TRACE.target)
 # convenience to satisfy  help.test.all
+
+help.tests:           HELP_TYPE = test
+help.tests:           HELP_HEAD = $(HELP_RULE)
+help.tests:         help.test.test
+    # convenience alias for  help.test
 
 # help.test.test would only print the  HELP-*  texts from herein.
 # All other tests from the individual t/Makefile.* files have their own  HELP-*
