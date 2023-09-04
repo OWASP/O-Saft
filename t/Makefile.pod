@@ -44,10 +44,17 @@ To get a list of all target for testing, use:
 
     make s-ALL.tests
 
+For more such target, please  see L</O-Saft:Makefile Targets> .
+
 To get a list of help target, use:
 
-    make help.tests
+    make s-ALL.help
     make help.help
+    make help.test
+
+To get a list of makefiles and their pupose, use:
+
+    make help.makefiles.doc
 
 
 =head2 Quick Overview
@@ -81,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.60 23/04/14 16:56:43
+@(#) Makefile.pod 1.61 23/09/04 17:45:17
 
 =head1 AUTHOR
 
@@ -473,6 +480,19 @@ Examples:
 Targets in the Makefile* are grouped, usually. Each group should be headed
 by the help texts for the targets using  HELP-  variables (see below).
 
+=head3 Get information about available targets
+
+Following make commands can be used as starters to get a list of available
+targets, their documentation, information about Makefiles and other help:
+
+    make s-ALL.tests
+    make help.test.all
+    make help.test
+    make help.test.targets
+    make help.all
+    make help.makefiles.doc
+    make targets | grep ^test
+
 
 =head2 O-Saft:Makefile HELP Texts
 
@@ -533,6 +553,8 @@ Some words about the terms and words used in GNU Make in this project.
 * macro  is a synonym for  variable  in makefiles, here the  term variable
   is prefered.
 
+* rule  is used by GNU Make, here the term  target  is prefered.
+
 * GNU Make uses  functions  for its own built-in functions.  When commands
   are grouped using the  'define'  directive (function), GNU Make uses the
   term  "user defined functions". Here the term macro is used for that.
@@ -570,7 +592,7 @@ Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 
 =head2 GNU Make:include
 
-GNU Make's include directive  doesn't understand  variables, the used path
+GNU Make's include directive  does not understand variables, the used path
 must be verbatim. Multiple makefiles are used to keep make's functionality
 (targets) maintainable. Beside  Makefile  they are all named  Makefile.TYP
 where  TYP  describes the content, somehow. I. g. it should be possible to
@@ -578,8 +600,8 @@ use each of these Makefile* by its own, like:
 
     make -f Makefile.TYP target
 
-GNU Make's include functionality, in particular when including files  sub-
-directories, is difficult to use. Hence following trick is used:
+GNU Make's include functionality, in particular when including  files from
+sub-directories, is difficult to use. Hence following trick is used:
 
 * sub-directories contains a symbolic link to . (itself)
 
@@ -598,8 +620,8 @@ This avoids sophistcated syntax in the files itself, like:
     endif
 
 GNU Make also cannot manage recursive includes of the same file. This must
-be checked before including. The private  _SID.* variable, which is set in
-all Makefile*, is used. Example:
+be checked before including. The private  _SID.*  variable is used,  which
+is set in all Makefile*. Example:
 
     ifeq (,$(_SID.test))
         -include t/Makefile
@@ -614,7 +636,7 @@ missing.
 Remember important variables:
 
     $(MAKE)         - the make command itself, in sub-make with additional
-                      arguments/options (see make's documentation )
+                      arguments/options (see make's documentation)
     $(MAKE_COMMAND) - private variable for the make command, without other
                       arguments/options as in $(MAKE)
                       SEE L</GNU Make:MAKE vs. MAKE_COMMAND>
@@ -628,6 +650,7 @@ Remember important variables:
 For details use:
 
     make help.test.make
+    make help.test.makevars
     make testcmd-test.internal
 
 
