@@ -1,0 +1,572 @@
+
+# SID   @(#) devel.txt 2.1 23/09/10 13:12:12
+
+
+NAME
+
+        devel.txt - hints and tricks for debugging, tracing and testing
+
+
+SYNOPSIS
+
+        $0 --help=developer
+
+
+DESCRIPTION
+
+        This is about hints and tricks for debugging, tracing and testing. It
+        is the documentation for development!
+
+	For user documentation please refer to  help.txt  or use:.
+
+              $0 --help
+              $0 --help=HELP
+
+	For a general overview how documentation is organised, please see:
+
+              perldoc $0
+
+        Documentation for development is provided in various ways.  It can be
+        found for example in/with:
+
+          * the files itself
+          * with:   $0 --help=test
+          * with:   $0 --test
+          * reading: Makefile.pod
+            with:   perldoc Makefile.pod
+          * using:  make
+          * using:  make help.doc
+
+        Using make for development uses additional external tools and/or Perl
+        modules:
+
+          * perl-analyzer
+            (also requires Perl modules, JSON, Text::MicroTemplate)
+
+          * Debug::Trace Devel::Trace Devel::DProf Devel::NYTProf
+
+
+DEBUGGING
+
+    Debugging, Tracing
+
+        Following  options and commands  are useful for hunting problems with
+        SSL connections and/or this tool. Note that some options can be given
+        multiple times to increase amount of listed information. Also keep in
+        mind that it's best to specify  --v  as very first argument.
+
+        Note that the file  o-saft-dbx.pm  is required,  if any  --trace*  or
+        --v   option is used.
+
+    Commands
+
+        * +dump
+        * +libversion
+        * +s_client
+        * +todo
+        * +version
+
+    Options
+
+        * --v
+        * --v--
+        * --trace
+        * --trace-arg
+        * --trace-cmd
+        * --trace-cli
+        * --trace-key
+        * --trace-me
+        * --trace-time
+        * --trace=FILE
+
+        Please see  '$0 --help=OPTIONS'  for detailed description.
+
+        Empty or undefined strings are written as  '<<undefined>>'  in texts.
+        Some parameters, in particular those of  HTTP responses,  are written
+        as  '<<response>>'.  Long parameter lists are abbreviated with '...'.
+        In general, single-line values are always printed,  multi-line values
+        are printed with  --trace=2  only.
+
+        Hint: start with  --trace-me, then  --trace  and finally  --trace=2 .
+
+    Output
+
+        When using  --v  and/or  --trace  options,  additional output will be
+        prefixed with a  '#'  (mainly as first, left-most character.
+        Following formats are used:
+
+           #[space]
+             Additional text for verbosity (--v options).
+
+           #[variable name][TAB]
+             Internal variable name (--trace-key options).
+
+           #o-saft.pl::
+           #Net::SSLinfo::
+             Trace information for  --trace  options.
+
+           #{
+             Trace information from  NET::SSLinfo  for  --trace  options.
+             These are data lines in the format:
+              #{ variable name : value #}
+
+             Note that 'value'  here can span multiple lines and ends with:
+              #}
+
+    Debugging with Perl modules
+
+        * Debug::Trace
+        * Debug::LTrace
+        * Devel::CallTrace
+        * Devel::TraceCalls
+
+        Examples to get method/function calls (be prepared for huge output):
+
+	perl -MDevel::CallTrace $0 --help=cipherpattern --header
+	perl -MDevel::CallTrace $0 demo +info   |& wc  # >  53k lines
+	perl -MDevel::CallTrace $0 demo +cipher |& wc  # > 600k lines
+
+	perl -d:TraceCalls=_cfg_set $0 demo +cipher 
+	# aber:
+	# genauer sub-Name muss angegeben werden, gibt Input-Parameter aus
+	# manchmal besser:
+	perl -d:TraceCalls=_cfg_set $0 demo +cipher | & perl -pe 's/\(.*\)/(...)/'
+
+	perl -MDebug::LTrace='*' $0 --help=cipherpattern --header | & perl -pe 's/\(.*\) / (...)/'
+	# liefert nur sub aus main::
+	# liefert Level mit  | | | ...
+
+    Using outdated modules
+
+        This tool was designed to work with old Perl modules too.  When using
+        old modules, a proper  '**WARNING:'  will be printed. These warinings
+        cannot be switched of using  --no-warning  .
+        The warning also informs about the missing functionality or check.
+
+        I.g. it is best to install newer versions of the module if possible.
+        A good practice to check if modules are available in a proper version
+        is to call:
+
+          $0 +version
+          $0 +version --v --v
+
+        Following example shows the result without warnings:
+
+              === reading: ./.o-saft.pl (RC-FILE done) ===
+              === reading: Net/SSLhello.pm (O-Saft module done) ===
+              === reading: Net/SSLinfo.pm (O-Saft module done) ===
+              === ./o-saft.pl 16.09.09 ===
+                  Net::SSLeay::
+                  ::OPENSSL_VERSION_NUMBER()       0x268443744
+                  ::SSLeay()                       0x268443744
+                  ::SSLEAY_DIR                     ENGINESDIR: "/usr/lib/x86_64-linux-gnu/engines-1.1"
+                  ::SSLEAY_BUILD_ON                platform: debian-amd64
+                  ::SSLEAY_PLATFORM                OPENSSLDIR: "/usr/lib/ssl"
+                  ::SSLEAY_CFLAGS                  built on: Fri Jun 24 20:22:19 2022 UTC
+                  Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
+              = openssl =
+                  external executable              /opt/openssl-chacha/bin/openssl
+                  external executable (TLSv1.3)    openssl
+                  version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
+                  used environment variable (name) LD_LIBRARY_PATH
+                  environment variable (content)   <<undef>>
+                  path to shared libraries
+                  full path to openssl.cnf file    <<undef>>
+                  common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                  .                                /etc/ssl/openssl.cnf \
+                  .                                /System//Library/OpenSSL/openssl.cnf \
+                  .                                /usr/ssl/openssl.cnf
+                  URL where to find CRL file       <<undef>>
+                  directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
+                  PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
+                  common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
+                  .                                 /System/Library/OpenSSL
+                  .  existing path to CA PEM files /etc/ssl/certs
+                  common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                  .  existing PEM file for CA      /etc/ssl/certs/ca-certificates.crt
+                  number of supported ciphers      201
+                  openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
+                  o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                  .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+              = o-saft.pl +cipher --ciphermode=intern =
+                  used cipherrange                 intern
+                  number of supported ciphers      2640
+                  default list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                  .                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                  .                                0x0300D000 .. 0x0300D0FF,
+                  .                                0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
+                  .                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
+                  .                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA, 0x0300EAEA, 0x0300FAFA,
+                  long list of ciphers             0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF
+                  huge list of ciphers             0x03000000 .. 0x0300FFFF
+                  safe list of ciphers             0x03000000 .. 0x032FFFFF
+                  full list of ciphers             0x03000000 .. 0x03FFFFFF
+                  C0xx list, range C0xx..C0FF      0x0300C000 .. 0x0300C0FF
+                  CCxx list, range CCxx..CCFF      0x0300C000 .. 0x0300C0FF
+                  ECC list, ephermeral ciphers     0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF
+                  SSLv2 list of ciphers            0x02000000,   0x02010080, 0x02020080, 0x02030080,
+                  .                                0x02040080,
+                  .                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                  .                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
+                  .                                0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C,
+                  .                                0x030000FF,0x0300FEE0,
+                  .                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                  SSLv2_long list of ciphers       0x02000000,   0x02010080, 0x02020080, 0x02030080,
+                  .                                0x02040080,
+                  .                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                  .                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
+                  .                                0x03000000 .. 0x0300002F, 0x030000FF,0x0300FEE0,
+                  .                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                  shifted list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
+                  .                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
+                  .                                0x0300D000 .. 0x0300D0FF,
+                  .                                0x0300FE00 .. 0x0300FFFF,
+                  .                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
+                  .                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
+                  .                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA,
+                  .                                0x0300EAEA, 0x0300FAFA,
+              = Required (and used) Modules =
+                  @INC                 ./ ./lib . /bin /usr/share/perl5 \
+                  .                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+                  .                    /usr/lib/x86_64-linux-gnu/perl/5.20 \
+                  .                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
+              =   module name            VERSION  found in
+              =   ----------------------+--------+------------------------------------------
+                  IO::Socket::INET       1.41     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
+                  IO::Socket::SSL        2.069    /usr/share/perl5/IO/Socket/SSL.pm
+                  Time::Local            1.2300   /usr/share/perl/5.24/Time/Local.pm
+                  Net::DNS               1.29     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
+                  Net::SSLeay            1.88     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
+                  Net::SSLinfo           22.11.22 Net/SSLinfo.pm
+                  Net::SSLhello          22.06.22 Net/SSLhello.pm
+                  Ciphers
+                  osaft                  22.11.22 osaft.pm
+
+        Following example shows the result with warnings (line nr. may vary):
+
+              === reading: ./.o-saft.pl (RC-FILE done) ===
+              === reading: ./Net/SSLhello.pm (O-Saft module done) ===
+              **WARNING: 121: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
+              === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
+              **WARNING: 120: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
+              **WARNING: 121: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+              **WARNING: 121: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+              **WARNING: 124: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+              !!Hint: --force-openssl can be used to disables this check
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+              **WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
+              **WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
+              **WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
+              === o-saft.pl 16.09.09 ===
+                  Net::SSLeay::
+                  ::OPENSSL_VERSION_NUMBER()       0x9470143
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+                  ::SSLeay()                       0x1.35
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+              = openssl =
+                  version of external executable   OpenSSL 0.9.8y 5 Feb 2013
+                  external executable              /usr/bin/openssl
+                  used environment variable (name) LD_LIBRARY_PATH
+                  environment variable (content)   <<undef>>
+                  path to shared libraries
+                  full path to openssl.cnf file    <<undef>>
+                  common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                  .                                /etc/ssl/openssl.cnf \
+                  .                                /System//Library/OpenSSL/openssl.cnf \
+                  .                                /usr/ssl/openssl.cnf
+                  URL where to find CRL file       <<undef>>
+                  directory with PEM files for CAs /System/Library/OpenSSL/certs
+                  PEM format file with CAs         <<undef>>
+                  common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+                  common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                  number of supported ciphers      43
+                  openssl supported SSL versions   SSLv2 SSLv3 TLSv1
+                  o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                  .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+              **WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+              **WARNING: 841: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
+              = o-saft.pl +cipherall =
+                  default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                  .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+              = Required (and used) Modules =
+                  @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
+                  .                    /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /System/Library/Perl/5.10.0 \
+                  .                    /Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /Library/Perl/5.10.0 \
+                  .                    /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /Network/Library/Perl/5.10.0 \
+                  .                    /Network/Library/Perl \
+                  .                    /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+                  .                    /System/Library/Perl/Extras/5.10.0 .
+              =   module name            VERSION  found in
+              =   ----------------------+--------+------------------------------------------
+                  IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
+                  IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
+                  Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
+                  Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
+                  Net::SSLinfo           16.06.01 ./Net/SSLinfo.pm
+                  Net::SSLhello          16.05.16 ./Net/SSLhello.pm
+                  osaft                  16.05.10 /osaft.pm
+
+        Please keep in mind that the shown version numbers and the shown line
+        numbers are examples and may differ on your system.
+
+        When starting $0 with outdated modules, more '**WARNING:' will
+        be shown. The warnings depend on the installed version of the module.
+        $0  is known to work with at least:
+              IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
+              Net::SSLeay 1.30
+
+
+TESTING
+
+        What is "testing"?
+        This tool itself is for testing something (TLS etc.),  so it needs to
+        be explained what testing here is about.  Following testing types are
+        distinguished and then described:
+
+        * User testing
+        * Functional testing
+        * Developer (internal) testing
+
+        All descriptions below, except  "User testing", are only intended for
+        development.
+
+    User testing
+
+        During normal use of the tool, "testing" is only required for hunting
+        problems with the connected target. Following options for tracing and
+        verbosity can be used for that:
+
+      --v
+
+          Print more information about checks.
+
+      --trace
+
+          Print debugging messages.
+          For more details, please see  X&Options for tracing and debugging& .
+
+    Functional testing
+
+        This section describes "developer" rather than "user" testing.
+
+        Functional testing mainly means testing the functionality of the tool
+        itself, for example: do the commands and options work as described in
+        the documentation:  $0 --help
+
+        Makefiles are used for testing  functionality and code quality during
+        development. These tests are implemented in the  ./t/  directory, see
+        all 'Makefile.*' there, start with 'Makefile.pod'.
+
+    Developer (internal) testing
+
+        Testing SSL/TLS  is a challenging task. Beside the oddities described
+        elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
+        and errors which may occour during runtime.
+
+        Following options and commands for  $0  are available to improve
+        testing.  They mainly can simulate error conditions or stop execution
+        properly (they are not intended for other use cases):
+
+      +quit
+
+          Stop execution after processing all arguments and before processing
+          any target. The runtime configuration is complete at this point.
+
+      --exit=KEY
+
+          Terminate tool at specified 'KEY'. For available 'KEY', please see:
+              $0 --help=exit
+              grep exit= $0
+
+      --cfg-init=KEY=VALUE
+
+          With this option values in the internal  '%cfg'  hash can be set:
+
+              $cfg{KEY} = VALUE
+
+          Only (perl) scalars or arrays can be set. The type will be detected
+          automatically.
+
+          Example,  this option can be used to change the text used as prefix
+          in each output line triggerd by the  --v  option:
+              $0 --cfg-init=prefix_verbose="#VERBOSE: "
+
+          or the text used as prefix triggerd by the  --trace  option:
+              $0 --cfg-init=prefix_trace="#TRACE: "
+
+        The options which provide information about  internal data structures
+        and alike described below, behave like the command  +quit  and do not
+        perform any checks on the target(s).  
+        See 't/Makefile.*' how to use these tests.
+
+      --tests
+
+          Print overview of following commands/options.
+
+      --test-data
+
+          Print overview of all available commands and checks.
+
+      --test-maps
+
+          Print internal data strucures  '%cfg{openssl}',  '%cfg{ssleay}'.
+
+      --test-prot
+
+          Print internal data according protocols.
+
+      --test-regex
+
+          Print results for applying various texts to defined regex.
+
+      --test-ciphers-dump
+      --test-ciphers-overview
+      --test-ciphers-openssl
+      --test-ciphers-show
+      --test-ciphers-simple
+      --test-ciphers-sorted
+      --test-ciphers-ssltest
+
+          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+          These options are aliases for:  +list --legacy=TYP  .
+
+      --test-ciphers-hex=*
+      --test-ciphers-key=*
+      --test-ciphers-list
+
+          Print some special information, please see: OSaft/Ciphers.pm .
+
+      --test-init
+
+          Print parts of  data structure  '%cfg'.  In contrast to the options
+          described above,  --test-init  exits straight before performing the
+          specified commands on the target.  Therefore it prints the settings
+          in  '%cfg'  containing all applied commands and options.
+
+      --test-memory
+
+          Print overview of variables' memory usage, used for debugging only.
+
+      --test-methods
+
+          Print available methods for 'openssl' in Net::SSLeay.
+
+      --test-sclient
+
+          Print available options for 'openssl s_client' from Net::SSLeay.
+
+      --test-sslmap
+
+          Print SSL protocols constants from Net::SSLeay.
+
+      --test-ssleay
+
+          Print information about Net::SSLeay capabilities.
+
+      --test-sub
+
+          Obsolete, please use:
+
+              make test.dev.grep.sub
+              make test.dev-grep.subs
+              make test.dev-grep.desc
+
+    Testing results
+
+        Finally there should be tests, which prove that the results of  $0
+        are really what they should be. A test target is necessary therefore,
+        which produces reliable results.
+        However, some of the implemented tests in 't/Makefile.*' (see section
+        "Functional testing" above) already work properly. This test coverage
+        needs to be improved ...
+
+
+EXAMPLES
+
+##{ nur noch die Beispiele aus help.txt, die mit debug/trace zu tun haben
+   diese dort dann löschen und Verweis hier setzen
+##}
+
+    Testing with exit code
+
+        * Test SSL/TLS connection and return exit code
+          $0 +check  --exitcode  some.tld
+
+        * Test ciphers and return exit code with details about exit code
+          $0 +cipher --exitcode --exitcode-v  some.tld
+
+        * Test ciphers and return exit code for ciphers only
+          $0 +cipher --exitcode --exitcode-no-prot  some.tld
+
+        * Test with exit code but avoid checks considered 'yes' even if 'no'
+          $0 +check  --exitcode --ignore-out=ev- --ignore-out=rfc_7525 some.tld
+
+    Specials for hunting problems with connections etc.
+
+        * Do not read RC-FILE .$0
+          $0 +info some.tld --no-rc
+
+        * Show command-line argument processing
+          $0 +info some.tld --trace-arg
+
+        * Simple tracing
+          $0 +cn   some.tld --trace
+          $0 +info some.tld --trace
+
+        * A bit more tracing
+          $0 +cn   some.tld --trace --trace
+
+        * Show internal variable names in output
+          $0 +info some.tld --trace-key
+
+        * Show internal argument processeing
+          $0 +info --trace-arg some.tld
+
+        * Show internal control flow
+          $0 +info some.tld --trace-cmd
+
+        * Show internal timing
+          $0 +info some.tld --trace-time
+
+        * Show checking ciphers
+          $0 +cipher some.tld --v --v
+#
+#        * List checked ciphers one per line
+#          $0 +cipher some.tld --v --v --v
+#
+#        * Show processing of ciphers
+#          $0 +cipher some.tld --v --v --v --v
+
+        * Show values retrieved from target certificate directly
+          $0 +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
+
+        * Show certificate CA verifications
+          $0 some.tld +chain_verify +verify +error_verify +chain
+
+        * Avoid most performance and timeout problems (don't use  --v)
+          $0 +info some.tld --no-dns --no-sni --ignore-no-conn
+          $0 +info some.tld --no-dns --no-sni --no-cert --no-http --no-openssl
+
+        * Identify timeout problems
+          $0 +info some.tld --trace-cmd
+
+          this will show lines containing:
+          #O-Saft  CMD: test ...
+
+
+VERSION
+
+        @(#) $VERSION
+
+AUTHOR
+
+        22. September 2022 Achim Hoffmann
+
+        Project Home: https://owasp.org/www-project-o-saft/
+
