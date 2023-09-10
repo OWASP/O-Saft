@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.82 23/04/17 00:53:29";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.83 23/09/10 11:21:59";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1675,7 +1675,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.82 2023/04/17
+2.83 2023/09/10
 
 
 =head1 AUTHOR
@@ -1715,8 +1715,8 @@ __DATA__
 #       notes   - list of notes and comments
 #
 #   All columns must be separated by TABs (0x9 aka \t), no spaces are allowed.
-#   The left-most column must not preceded by white spaces. It must begin with
-#   the cipher suite hex key, like:  0x  followed by exactly  8 hex characters
+#   The left-most column must not be prepended by white spaces.  It must begin
+#   iwith the cipher suite hex key, like:  0x  followed by exactly 8 hex chars
 #   [0-9A-F]. Only such lines are used for ciphers.
 #   If additional characters  [a-zA-Z-]  are used in the hex key  it then does
 #   not match  ^0x[0-9a-fA-F]{8} . The definition is stored in  %ciphers , but
