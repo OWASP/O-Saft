@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.56 23/05/21 16:59:18"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.57 23/09/10 13:02:21"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -8079,12 +8079,24 @@ This is the documentation for development!
 
 For user documentation please use:
 
-    o-sat.pl --help
+    o-saft.pl --help
+    o-saft.pl --help=HELP
 
 =head3 Documentation General
 
-Documentation distinguishes between the  L<Public User Documentation>  and
-L<Internal Code Documentation>  and  L<Internal Makefile Documentation>.
+Documentation distinguishes between:
+
+=over
+
+=item L<Public User Documentation>
+
+=item L<Internal Developer Documentation>
+
+=item L<Internal Code Documentation>
+
+=item L<Internal Makefile Documentation>
+
+=back
 
 =head3 Public User Documentation
 
@@ -8100,6 +8112,14 @@ For details on documentation texts (format, syntax, etc.) from files, see:
     ./OSaft/Doc/Data.pm
     ./o-saft-man.pm
 
+=head3 Internal Developer Documentation
+
+Documentation for development such as tracing, debugging, testing and make
+can be found in:
+
+    OSaft/Doc/devel.txt
+    o-saft.pl --help=developer
+
 =head3 Internal Code Documentation
 
 All comments/documentation/explanation of code details is written close to
@@ -8109,9 +8129,10 @@ the code does (which is most likely obvious).
 Some special syntax for comment lines are used, see  "Comments" section in
 
     OSaft/Doc/coding.txt
+    o-saft.pl --help=Program.Code
 
-Additional documentation is avaialble in POD format  at end of the files.
-Examples:
+Additional documentation in POD format  is avaialble at end of many files,
+see for examples:
 
     perldoc o-saft.pl
     perldoc o-saft-man.pm
