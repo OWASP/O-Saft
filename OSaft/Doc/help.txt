@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.112 23/04/18 11:58:24
+# SID   @(#) help.txt 1.113 23/09/10 11:30:55
 
 NAME
 
@@ -325,9 +325,10 @@ COMMANDS
         There are commands for various tests according the  SSL connection to
         the target, the targets certificate and the used ciphers.
 
-        All commands are preceded by a  '+'  to easily distinguish from other
-        arguments and options. However, some --OPTIONS options are treated as
-        commands for historical reason or compatibility to other programs.
+        All commands are prepended by a  '+'  character to easily distinguish
+        from other arguments and options. However, some --OPTIONS options are
+        treated as commands for historical reason or compatibility with other
+        programs.
 
         The most important commands are (in alphabetical order):
           +check +cipher +info +http +list +quick +sni +sni_check +version
@@ -630,8 +631,8 @@ COMMANDS
 
           I. g. it is expected that the order is according the cipher suite's
           strength, meaning the most strongest first, and the weakest last.
-          It does not make sense to use an order where a weak cipher preceeds
-          a stronger one. Such a (mis-)configuration should be detected.
+          It doesn't make sense to use an order where a weak cipher preceds a
+          stronger one. Such a (mis-)configuration should be detected.
 
           Having this in mind, the algorithm to detect a  proper cipher order
           is as simply as follows:
@@ -1741,10 +1742,10 @@ OPTIONS
 
           * 'hex'       Convert some data to hex: 2 bytes separated by ':'.
           * '0x'        Convert some data with hex values:
-                           2 bytes preceded by '0x' and separated by a space.
+                          2 bytes prepended by '0x' and separated by a space.
           * '/x'        Same as  --format=\x
           * '\x'        Convert some data with hex values:
-                           2 bytes preceded by '\x' and no separating char.
+                          2 bytes prepended by '\x' and no separating char.
 
       --tty
       --format-tty
@@ -3573,7 +3574,7 @@ LIMITATIONS
 
     Options
 
-        The option  --port=PORT  must preceed  --host=HOST  for a target like
+        The option  --port=PORT  must precede  --host=HOST  for a target like
         HOST:PORT  .
 
         The characters  '+' and '='  cannot be used for  --separator=CHAR
@@ -4742,7 +4743,7 @@ TESTING
 
       +quit
 
-          Stop execution after processing all arguments and before precessing
+          Stop execution after processing all arguments and before processing
           any target. The runtime configuration is complete at this point.
 
       --exit=KEY
