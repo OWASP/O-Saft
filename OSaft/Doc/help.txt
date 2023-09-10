@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.114 23/09/10 13:24:21
+# SID   @(#) help.txt 1.115 23/09/10 13:30:10
 
 NAME
 
@@ -4449,14 +4449,17 @@ TESTING
         What is "testing"?
         This tool itself is for testing something (TLS etc.),  so it needs to
         be explained what testing here is about.  Following testing types are
-        distinguished and then described:
+        distinguished:
 
         * User testing
         * Functional testing
         * Developer (internal) testing
+        * Testing results
 
         All descriptions below, except  "User testing", are only intended for
-        development.
+        development and can be found with:
+
+              $0 --help=development
 
     User testing
 
@@ -4472,141 +4475,6 @@ TESTING
 
           Print debugging messages.
           For more details, please see  X&Options for tracing and debugging& .
-
-    Functional testing
-
-        This section describes "developer" rather than "user" testing.
-
-        Functional testing mainly means testing the functionality of the tool
-        itself, for example: do the commands and options work as described in
-        the documentation:  $0 --help
-
-        Makefiles are used for testing  functionality and code quality during
-        development. These tests are implemented in the  ./t/  directory, see
-        all 'Makefile.*' there, start with 'Makefile.pod'.
-
-    Developer (internal) testing
-
-        Testing SSL/TLS  is a challenging task. Beside the oddities described
-        elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
-        and errors which may occour during runtime.
-
-        Following options and commands for  $0  are available to improve
-        testing.  They mainly can simulate error conditions or stop execution
-        properly (they are not intended for other use cases):
-
-      +quit
-
-          Stop execution after processing all arguments and before processing
-          any target. The runtime configuration is complete at this point.
-
-      --exit=KEY
-
-          Terminate tool at specified 'KEY'. For available 'KEY', please see:
-              $0 --help=exit
-              grep exit= $0
-
-      --cfg-init=KEY=VALUE
-
-          With this option values in the internal  '%cfg'  hash can be set:
-
-              $cfg{KEY} = VALUE
-
-          Only (perl) scalars or arrays can be set. The type will be detected
-          automatically.
-
-          Example,  this option can be used to change the text used as prefix
-          in each output line triggerd by the  --v  option:
-              $0 --cfg-init=prefix_verbose="#VERBOSE: "
-
-          or the text used as prefix triggerd by the  --trace  option:
-              $0 --cfg-init=prefix_trace="#TRACE: "
-
-        The options which provide information about  internal data structures
-        and alike described below, behave like the command  +quit  and do not
-        perform any checks on the target(s).  
-        See 't/Makefile.*' how to use these tests.
-
-      --tests
-
-          Print overview of following commands/options.
-
-      --test-data
-
-          Print overview of all available commands and checks.
-
-      --test-maps
-
-          Print internal data strucures  '%cfg{openssl}',  '%cfg{ssleay}'.
-
-      --test-prot
-
-          Print internal data according protocols.
-
-      --test-regex
-
-          Print results for applying various texts to defined regex.
-
-      --test-ciphers-dump
-      --test-ciphers-overview
-      --test-ciphers-openssl
-      --test-ciphers-show
-      --test-ciphers-simple
-      --test-ciphers-sorted
-      --test-ciphers-ssltest
-
-          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
-          These options are aliases for:  +list --legacy=TYP  .
-
-      --test-ciphers-hex=*
-      --test-ciphers-key=*
-      --test-ciphers-list
-
-          Print some special information, please see: OSaft/Ciphers.pm .
-
-      --test-init
-
-          Print parts of  data structure  '%cfg'.  In contrast to the options
-          described above,  --test-init  exits straight before performing the
-          specified commands on the target.  Therefore it prints the settings
-          in  '%cfg'  containing all applied commands and options.
-
-      --test-memory
-
-          Print overview of variables' memory usage, used for debugging only.
-
-      --test-methods
-
-          Print available methods for 'openssl' in Net::SSLeay.
-
-      --test-sclient
-
-          Print available options for 'openssl s_client' from Net::SSLeay.
-
-      --test-sslmap
-
-          Print SSL protocols constants from Net::SSLeay.
-
-      --test-ssleay
-
-          Print information about Net::SSLeay capabilities.
-
-      --test-sub
-
-          Obsolete, please use:
-
-              make test.dev.grep.sub
-              make test.dev-grep.subs
-              make test.dev-grep.desc
-
-    Testing results
-
-        Finally there should be tests, which prove that the results of  $0
-        are really what they should be. A test target is necessary therefore,
-        which produces reliable results.
-        However, some of the implemented tests in 't/Makefile.*' (see section
-        "Functional testing" above) already work properly. This test coverage
-        needs to be improved ...
 
 
 EXAMPLES
