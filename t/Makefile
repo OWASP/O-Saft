@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.152 23/09/10 11:01:03
+#?      @(#) Makefile 1.153 23/09/10 11:14:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.152
+_SID.test          := 1.153
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -377,9 +377,15 @@ HELP-help.test.makevars = print all variables
 #       SEE GNU Make:MAKE vs. MAKE_COMMAND
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
 
-_SID.pod        = $(shell awk '($$1=="@(#)"){print $$3}' t/Makefile.pod)
-    # Makefile.pod is nowhere included, hence its _SID is missing here and
-    # must be exracted from t/Makefile.pod directly
+# Makefile and Makefile.pod are nowhere included, hence their _SID is missing
+# here and must be exracted from the file directly, ugly workaround ...
+ifndef _SID
+    _SID        = $(shell awk '($$1=="_SID"){print $$3}' ../Makefile)
+endif
+ifndef _SID.pod
+    _SID.pod    = $(shell awk '($$1=="@(#)"){print $$3}' t/Makefile.pod)
+endif
+#   _SID.TEMPL  = missing, as it is not so important
 
 # next 3 empty targets are dummies to get values for $< $? $^ and $+
 test.file-1:
@@ -413,7 +419,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
 	@echo '# $$(_SID.docker)   = $(_SID.docker)'
 	@echo '# $$(_SID.legacy)   = $(_SID.legacy)'
-	@echo '# $$(_SID.template) = $(_SID.template)'
+	@echo '# $$(_SID.TEMPL)    = $(_SID.TEMPL)'
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
