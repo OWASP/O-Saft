@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.151 23/09/04 16:59:16
+#?      @(#) Makefile 1.152 23/09/10 11:01:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.151
+_SID.test          := 1.152
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -376,6 +376,10 @@ HELP-help.test.makevars = print all variables
 #           # $(MAKE)          = make
 #       SEE GNU Make:MAKE vs. MAKE_COMMAND
 # TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
+
+_SID.pod        = $(shell awk '($$1=="@(#)"){print $$3}' t/Makefile.pod)
+    # Makefile.pod is nowhere included, hence its _SID is missing here and
+    # must be exracted from t/Makefile.pod directly
 
 # next 3 empty targets are dummies to get values for $< $? $^ and $+
 test.file-1:
