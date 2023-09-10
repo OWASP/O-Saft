@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.59 23/04/23 20:23:15";
+my  $SID_data   = "@(#) Data.pm 1.60 23/09/10 09:08:49";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -487,8 +487,8 @@ sub doc_data_done   {}; # dummy to check successful include
 
 =head1 MARKUP
 
-Following notations / markups are used for public (user) documentation
-(for example help.txt):
+Following notations / markups are used for public (user) documentation (for
+example help.txt):
 
 =over 2
 
@@ -498,11 +498,11 @@ Titles start at beginning of a line, i.g. all upper case characters.
 
 =item SUB-Title
 
-Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
+Sub-titles start at beginning of a line prepended by 4 or 6 spaces.
 
 =item code
 
-Code lines start at beginning of a line preceeded by 14 or more spaces.
+Code lines start at beginning of a line prepended by 14 or more spaces.
 
 =item "text in double quotes"
 
@@ -519,7 +519,7 @@ POD format. Hence character classes are defined literally without markup to
 avoid confusion.  However, when generating documentation it is assumed that
 strings (words) beginning with  a-zA-Z  are character classes.
 
-=item '* list item
+=item * list item
 
 Force list item (first level) in generated markup.
 
@@ -545,8 +545,8 @@ Will not be replaced, but kept as is.
 
 =back
 
-Referenses to titles are written in all upper case characters and prefixed
-and suffixed with 2 spaces or a . (dot) or , (comma).
+Referenses to titles are written in all upper case characters  and prefixed
+with 2 spaces and suffixed with 2 spaces or a . (dot) or , (comma).
 
 There is only one special markup used:
 
@@ -554,21 +554,24 @@ There is only one special markup used:
 
 =item X&Some title here&
 
-Which refers to sub-titles. It must be used to properly markup internal
-links to sub-sections if the title is not written in all upper case.
+Referenses to sub-titles. It must be used to properly markup internal links
+to sub-sections if the title is not written in all upper case.
 
 =back
 
-All head lines for sections (see TITLE above) must be preceded by 2 empty
-lines. All head lines for commands and options should contain just this command
-or option. Aliases for commands or options should be written in their own line
-(to avoid confusion in some other parsers, like Tcl).
+All head lines for sections (see TITLE above)  must be prepended by 2 empty
+lines. A head line describing commands or options  should contain just this
+command or option. Aliases for them should be written in their own line (to
+avoid confusion in some other parsers, like Tcl).
 
 List items should be followed by an empty line.
 
-Texts in section headers should not contain any quote characters.  I.g. no
-other markup is used. Even lines starting with  '#'  as first character are
-usually not treated as comment line but verbatim text.
+Texts in head lines for a section should not contain any quote characters.
+
+I.g. no other markup is used in head lines.
+
+Even lines starting with  '#' as first character are usually not treated as
+comment line but verbatim text.
 
 =head2 Special markups
 
@@ -600,7 +603,7 @@ usually not treated as comment line but verbatim text.
 
 =head3 Left hand digit or letter followed by )
 
-List item may start with letter or digit fowwed by ) .
+List item may start with letter or digit followed by ) .
 
 =head3 Special markups for o-saft.tcl
 
@@ -616,9 +619,9 @@ The sub-titles in the COMMANDS and OPTIONS sections must look like:
 
 =back
 
-Means that the prefixes  "Commands for"  and  "Options for"  are used to
-identify groups of commands and options. If a sub-title does not start
-with these prefixes, all following commands and options are ignored.
+Means that the prefixes  "Commands for",  "Commands to"  and  "Options for"
+are used to identify groups of commands and options. If a sub-title doesn't
+start with these prefixes, all following commands and options are ignored.
 
 
 =head1 SEE ALSO
@@ -628,7 +631,7 @@ with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.59 2023/04/23
+1.60 2023/09/10
 
 
 =head1 AUTHOR
