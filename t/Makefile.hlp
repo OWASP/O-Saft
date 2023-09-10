@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.48 22/11/13 21:35:36
+#?      @(#) Makefile.hlp 1.50 23/09/10 13:16:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.48
+_SID.hlp           := 1.50
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -80,6 +80,7 @@ LIST.hlp.help-section  := \
 	--help=hint  --help=opt   --help=intern  --help=legacy      \
 	--help=range --help=regex --help=options --help=pattern     \
 	--help=text  --help=rfc   --help=ourstr  --help=program.code \
+	--help=development \
 	--help=toc   --help=todo  --help=tools   --help=warnings    \
 	--help=error --help=exit  --help=ABOUT   --help=cipherpattern \
 	--help=cfg-cmd  --help=cfg-check --help=cfg-data  --help=cfg-hint   \
@@ -98,7 +99,7 @@ LIST.hlp.all   := $(LIST.hlp.list-legacy) $(LIST.hlp.help-like) $(LIST.hlp.help-
 
 ifndef exit-macros-generated
     # must use GEN.targets instead of GEN.targets-args to avoid setting TEST.init
-    $(eval $(call GEN.targets,testarg,hlp,-$(SRC.pl),$(SRC.pl),LIST.hlp.all,TEST.args,TEST.dumm))
+    $(call GEN.targets,testarg,hlp,-$(SRC.pl),$(SRC.pl),LIST.hlp.all,TEST.args,TEST.dumm)
 endif
 
 # some special targets
