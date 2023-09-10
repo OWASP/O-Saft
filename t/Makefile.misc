@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.78 23/04/18 01:07:58
+#?      @(#) Makefile.misc 1.79 23/09/10 10:12:13
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.78
+_SID.misc          := 1.79
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -75,7 +75,7 @@ _ALL.devmodules.extern += Data::Dumper  Devel::Size Devel::Trace  Debug::Trace
 _ALL.devmodules.extern += Pod::Perldoc  File::Find
 _ALL.devmodules.extern += Perl::Analyzer JSON Text::MicroTemplate GraphViz2 Storable
 _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
-_ALL.devmodules.optional   := Debug::LTrace Devel::TraceCalls
+_ALL.devmodules.optional   := Debug::LTrace Devel::CallTrace Devel::TraceCalls
 #                         not used, but may be useful for debugging
 
 ifndef SRC.contrib.dir
@@ -200,7 +200,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.78: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.79: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -450,7 +450,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.78: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.79: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
