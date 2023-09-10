@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.60 23/09/10 09:08:49";
+my  $SID_data   = "@(#) Data.pm 1.61 23/09/10 10:10:40";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -519,7 +519,7 @@ POD format. Hence character classes are defined literally without markup to
 avoid confusion.  However, when generating documentation it is assumed that
 strings (words) beginning with  a-zA-Z  are character classes.
 
-=item * list item
+=item '*' list item (SEE Note:POD ERRORS)
 
 Force list item (first level) in generated markup.
 
@@ -631,7 +631,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.60 2023/09/10
+1.61 2023/09/10
 
 
 =head1 AUTHOR
@@ -722,6 +722,17 @@ links (HTML).
 
 A list of tools (pattern) is used to detect such code examples. Such lines
 are identified if the first word in the line matches this paatern.
+
+=head2 Note:POD ERRORS
+
+POD's =item keyword doesn't allow that following text starts with a * . It
+then complains with something like:
+
+  POD ERRORS
+  Around line 522:
+      Expected text after =item, not a bullet
+
+That's why '*' (star enclosed in single quotes) is used instead of * .
 
 =cut
 
