@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.83 23/09/10 11:21:59";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.84 23/11/10 13:47:40";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1249,6 +1249,10 @@ sub show_ssltest    {
     foreach my $key (sort { $ciphers{$a}->{ssl}   cmp $ciphers{$b}->{ssl} ||
                             $ciphers{$a}->{names} cmp $ciphers{$b}->{names}
                           } keys %ciphers) {
+        # FIXME: sort returns slightly random sequence in continous calls;
+        #        reason unknown, probably $ciphers{$a}->{ssl}
+        #        this does not impact the functionality, but makes comparing
+        #        results more difficult
         if ($last_k ne $ciphers{$key}->{ssl}) {
             $last_k =  $ciphers{$key}->{ssl};
             printf("%s Ciphers Supported...\n", $ciphers{$key}->{ssl});
@@ -1675,7 +1679,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.83 2023/09/10
+2.84 2023/11/10
 
 
 =head1 AUTHOR
