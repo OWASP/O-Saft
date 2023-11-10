@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.31 23/04/17 01:04:14";
+our $SID_osaft  =  "@(#) osaft.pm 2.32 23/11/10 11:35:16";
 our $VERSION    =  "23.04.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2683,7 +2683,7 @@ our %cfg = (    # main data structure for configuration
         # RegEx matching OWASP TLS Cipher String Cheat Sheet
             # matching list of concrete constants would be more accurate, but
             # that cannot be done with RegEx or ranges, unfortunatelly
-        'OWASP_AA'      => '^(TLS(?:v?13)?[_-](?:AES|CHACHA20)[_-])',  # newer (2021 and later) openssl use strange names for TLSv1.3
+        'OWASP_AA'      => '^(TLS(?:v?13)?[_-](?:AES...|CHACHA20)[_-])',  # newer (2021 and later) openssl use strange names for TLSv1.3; i.e. TLS13-AES128-GCM-SHA256
         'OWASP_A'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
         'OWASP_B'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
         'OWASP_C'       => '^((?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]|(?:(?:EC)?DHE-)?PSK[_-]CHACHA)',
@@ -3488,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.31 2023/04/17
+2.32 2023/11/10
 
 =head1 AUTHOR
 
