@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.33 23/11/10 13:11:48";
+our $SID_osaft  =  "@(#) osaft.pm 2.34 23/11/11 00:16:49";
 our $VERSION    =  "23.04.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2418,6 +2418,7 @@ our %cfg = (    # main data structure for configuration
                                 # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
         'lwp'           => 0,   # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
+        'user_agent'    => '',  # User-Agent header to be used in HTTP requests
         'alpn'          => 1,   # 0: do not use -alpn option for openssl
         'npn'           => 1,   # 0: do not use -nextprotoneg option for openssl
         'reconnect'     => 1,   # 0: do not use -reconnect option for openssl
@@ -3435,6 +3436,7 @@ sub _osaft_init     {
     $cfg{'ARGV'}    = [@ARGV];
     $cfg{'prefix_trace'}    = "#${me}::";
     $cfg{'prefix_verbose'}  = "#${me}: ";
+    $cfg{'use'}->{'user_agent'} = "$cfg{'me'}/2.34"; # SID from main not available her
     _prot_init_value(); # initallise WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallise dynamic data in %cfg
     _cmd_init();        # initallise dynamic commands in %cfg
@@ -3488,7 +3490,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.33 2023/11/10
+2.34 2023/11/11
 
 =head1 AUTHOR
 
