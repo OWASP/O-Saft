@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.32 23/11/10 11:35:16";
+our $SID_osaft  =  "@(#) osaft.pm 2.33 23/11/10 13:11:48";
 our $VERSION    =  "23.04.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3330,7 +3330,7 @@ sub test_cipher_regex   {
 =   x     value A or B or C or D or -?- as returned by get_cipher_owasp()
 =   miss  cipher not matched by any RegEx, programming error
 = owasp values:
-=   xx    list of all matching OWASP_x RegEx
+=   xx    list of all matching OWASP_x RegEx (OWASP column picks best one)
 ";
     return;
 } # test_cipher_regex
@@ -3488,7 +3488,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.32 2023/11/10
+2.33 2023/11/10
 
 =head1 AUTHOR
 
