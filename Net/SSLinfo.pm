@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.285 23/04/17 00:46:30";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.286 23/11/10 15:37:30";
 our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -2347,7 +2347,16 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
                 my $bitmask = _SSLbitmask_get($_ssl);
                 if (defined $bitmask) {        # if there is a bitmask, disable this version
                     _trace("do_ssl_new: OP_NO_$_ssl");  # NOTE: constant name *not* as in ssl.h
-                    Net::SSLeay::CTX_set_options($ctx, $bitmask);
+                    if (1.88 <= $Net::SSLeay::VERSION) {
+                        # either perl after 5.32 (here 5.36) complains with:
+                        #   Argument "0x04000000" isn't numeric in subroutine entry at ...
+                        # or the API of Net::SSLeay::CTX_set_options() after 1.88 changed,
+                        # so that the bitmask must be passed as integer
+                        Net::SSLeay::CTX_set_options($ctx, hex($bitmask));
+                    } else {
+                        # fix 10nov23: not sure if this was really correct for 1.88 and older
+                        Net::SSLeay::CTX_set_options($ctx, $bitmask);
+                    }
                 }
                 #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
                 #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
