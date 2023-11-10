@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.286 23/11/10 15:37:30";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.287 23/11/10 17:39:51";
 our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -3332,7 +3332,11 @@ sub do_openssl($$$$)  {
         # TODO: both, _trace and _verbose, may produce useless trailing : 
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
-        $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/); # avoid in access.log: "\n" 400 750 "-" "-"
+        $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
+        $pipe .= "\r";
+            # sending an empty string or simply one without \r results in
+            # a line in access.log like: "\n" 400 750 "-" "-"
+            # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
         $data  = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         if ($data =~ m/(\nusage:|unknown option)/s) {
