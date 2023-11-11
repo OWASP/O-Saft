@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.115 23/09/10 13:30:10
+# SID   @(#) help.txt 1.116 23/11/11 01:16:13
 
 NAME
 
@@ -1343,6 +1343,10 @@ OPTIONS
       --no-http
 
           Do not make HTTP request.
+
+      --http-user-agent=UA
+
+          Use 'UA' for HTTP header "User-Agent:" in HTTP(s) requests.
 
       --sni
 
