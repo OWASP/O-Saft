@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.57 23/09/10 13:02:21"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.58 23/11/11 01:11:17"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -6321,6 +6321,7 @@ while ($#argv >= 0) {
         if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5]       = $arg; }
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
+        if ($typ eq 'HTTP_USER_AGENT')  { $cfg{'use'}->{'user_agent'} = $arg; }
         #  +---------+--------------+------------------------------------------
         if ($typ eq 'NO_OUT') {
             if ($arg =~ /^[,:]*$/) {            # special to set empty string
@@ -6938,6 +6939,8 @@ while ($#argv >= 0) {
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'use'}->{'mx'}   = 0;}
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'use'}->{'mx'}   = 1;}
+#   if ($arg =~ /^--useragent/)         { $typ = 'HTTP_USER_AGENT'; } # TODO not working
+    if ($arg =~ /^--(?:http)?useragent/){ $typ = 'HTTP_USER_AGENT'; } # TODO: (?:http)? not working
     if ($arg eq  '--sslretry')          { $typ = 'SSLHELLO_RETRY';  }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLHELLO_TOUT';   }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'SSLHELLO_MAXC';   }
@@ -7478,6 +7481,12 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http         = 0; # if only +cipher given don't use http 'cause it may cause erros
+}
+if (defined $cfg{'use'}->{'user_agent'}) {
+    $Net::SSLinfo::user_agent       = $cfg{'use'}->{'user_agent'};
+} else {
+    my $ua = $cfg{'mename'}; $ua =~ s/\s*$//;
+    $Net::SSLinfo::user_agent       = "$ua/2.58";
 }
 
 #| set defaults for Net::SSLhello
