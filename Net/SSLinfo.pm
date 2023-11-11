@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.287 23/11/10 17:39:51";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.288 23/11/11 01:09:29";
 our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -355,6 +355,10 @@ matches the other parameters, in particular the host and port.
 =item $Net::SSLinfo::verbose
 
 Print some verbose messages.
+
+=item $Net::SSLinfo::user_agent
+
+Text to be used as User-Agent in HTTP requests.
 
 =back
 
@@ -763,6 +767,7 @@ $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
 $Net::SSLinfo::prefix_trace= '#' . SSLINFO . '::';  # prefix string used in trace   messages
+$Net::SSLinfo::user_agent  = '-'; # User-Agent for HTTP requests
 $Net::SSLinfo::verbose     = 0; # 1: print some verbose messages
 $Net::SSLinfo::linux_debug = 0; # passed to Net::SSLeay::linux_debug
 $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
@@ -3282,6 +3287,7 @@ sub do_openssl($$$$)  {
     my $cafile = $Net::SSLinfo::ca_file || '';
     _trace("do_openssl($mode,$host,$port...).");
     _setcmd();
+#printf("#dbx# %s -> %s -> %s : %s : %s #\n", (caller(5))[3], (caller(3))[3], (caller(0))[3], $mode, $pipe);
     if ('' eq $_openssl) {
         _trace("do_openssl($mode): WARNING: no openssl");
         return SSLINFO_HASH;
@@ -3333,12 +3339,13 @@ sub do_openssl($$$$)  {
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
-        $pipe .= "\r";
+        $pipe .= "\r\nUser-Agent:$Net::SSLinfo::user_agent\r\n\r";
+        #$pipe .= "\r";
             # sending an empty string or simply one without \r results in
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
-        $data  = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;  ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        $data  = `echo "$pipe" | $_timeout $_openssl $mode $host$port 2>&1`;  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
             my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
