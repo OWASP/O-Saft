@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.28 23/11/13 12:17:09";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.29 23/11/13 12:24:36";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -82,7 +82,7 @@ sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
 sub _yINIT      { local $\ = "\n"; print __INIT(@_);    return; }
 sub _yTRAC      { local $\ = "\n"; print __TRAC(@_);    return; }
 sub _yline      { _yeast(__line($_[0]));                return; }
-sub _ynull      { _yeast("value <<undef>> means that internal variable is not defined @_"); return; }
+sub _ynull      { _yeast("value $STR{'UNDEF'} means that internal variable is not defined @_"); return; }
 sub __trac      {}      # forward declaration
 sub __trac      {
     #? print variable according its type, understands: CODE, SCALAR, ARRAY, HASH
@@ -91,7 +91,7 @@ sub __trac      {
     my $data = "";
     if (not defined $ref->{$key}) {
         # undef is special, avoid perl warnings
-        return __TRAC($key, "<<undef>>");
+        return __TRAC($key, "$STR{'UNDEF'}");
     }
     SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
         /^$/    && do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
@@ -289,8 +289,8 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
     # else  user friendly information
-    my $sni_name = $cfg{'sni_name'} || "<<undef>>"; # default is Perl's undef
-    my $port     = $cfg{'port'} || "<<undef>>";     # default is Perl's undef
+    my $sni_name = __undef($cfg{'sni_name'});   # default is Perl's undef
+    my $port     = __undef($cfg{'port'});       # default is Perl's undef
     _yline(" user-friendly cfg {");
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
     _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
@@ -1001,7 +1001,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.28 2023/11/13
+2.29 2023/11/13
 
 =head1 AUTHOR
 
