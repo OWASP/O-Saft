@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.58 23/11/11 01:11:17"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.61 23/11/13 14:47:04"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,6 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
+osaft::set_user_agent("$cfg{'me'}/2.61");
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -2828,7 +2829,7 @@ sub _get_cipherlist_openssl {
     _trace("_get_cipherlist_openssl(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default
-    _trace("cipherpattern   = $cfg{'cipherpattern'}, cipherrange= $range");
+    _trace(" cipherpattern  = $cfg{'cipherpattern'}, cipherrange= $range");
     my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
        $pattern = join(":", @{$cfg{'cipher'}}) if (0 < scalar(@{$cfg{'cipher'}}));
         # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
@@ -2868,9 +2869,10 @@ sub _get_cipherlist_openssl {
 
 sub _get_cipherlist_hex {
     #? return space-separated list of cipher hex keys according command-line options
-    _trace("_get_cipherlist_hex(){");
     my $ssl     = shift;
     my @ciphers = ();
+    _trace("_get_cipherlist_hex($ssl){");
+    _trace(" cfg{'cipher'}  = " . @{$cfg{'cipher'}} );
     if (0 < scalar(@{$cfg{'cipher'}})) {
         foreach my $name (@{$cfg{'cipher'}}) {
             if ($name =~ m/^(?:0x)?[0-9A-F]+$/i) {
@@ -2884,7 +2886,8 @@ sub _get_cipherlist_hex {
         _trace("cipherrange= $cfg{'cipherrange'}"); # default
         @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
     }
-    _trace("_get_cipherlist_hex\t= @ciphers }");
+    _trace(" no. of ciphers = " . scalar(@ciphers));
+    _trace("_get_cipherlist_hex()\t= @ciphers }");
     return @ciphers;
 } # _get_cipherlist_hex
 
@@ -2955,7 +2958,7 @@ sub _get_data0          {
                      join(" ", @{$cfg{'ciphers'}}))
        ) {
         _y_CMD("  open with no SNI.");
-        _trace("cn_nosni: method= $Net::SSLinfo::method");
+        _trace(" cn_nosni: method= $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
 # TODO:  following needs to be improved, because there are multipe openssl
@@ -3055,6 +3058,7 @@ sub ciphers_scan_raw    {
     #? scan target for ciphers for all protocols
     # returns array with accepted ciphers
     my ($host, $port) = @_;
+    _trace("ciphers_scan_raw($host, $port){");
     my $total   = 0;
     my $enabled = 0;
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
@@ -3131,6 +3135,11 @@ sub ciphers_scan_raw    {
             }
         }
     } # $ssl
+    if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
+        _trace("ciphers_scan_raw()\t= $results }");
+    } else {
+        _trace("ciphers_scan_raw()\t= <<result prined with --trave=2>> }");
+    }
     return $results;
 } # ciphers_scan_raw
 
@@ -3138,6 +3147,7 @@ sub ciphers_scan        {
     #? scan target for ciphers for all protocols
     # returns hash with accepted ciphers
     my ($host, $port) = @_;
+    _trace("ciphers_scan($host, $port){");
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
 # Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
@@ -3186,6 +3196,11 @@ sub ciphers_scan        {
         }
         $cfg{'use'}->{'sni'} = $usesni;
     } # $ssl
+    if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
+        _trace("ciphers_scan()\t= $results }");
+    } else {
+        _trace("ciphers_scan()\t= <<result prined with --trave=2>> }");
+    }
     return $results;
 } # ciphers_scan
 
@@ -3459,7 +3474,7 @@ sub check_nextproto     {
     # in single mode, each protocol specified in $cfg{'protos_next'} is tested
     # for its own, while in all mode all protocols are set at once
     # Also SEE Note:ALPN, NPN
-    _trace("check_nextproto($host, $port, $type, $mode)");
+    _trace("check_nextproto($host, $port, $type, $mode){");
     my @protos = split(",", $cfg{'protos_next'});
        @protos = $cfg{'protos_next'}   if ($mode eq 'all'); # pass all at once
     my @npn;
@@ -3508,7 +3523,7 @@ sub check_nextproto     {
         #print "$proto : $np";
         #}
     }
-    _trace("check_nextproto:  @npn");
+    _trace("check_nextproto()\t= @npn }");
     return @npn;
 } # check_nextproto
 
@@ -3517,7 +3532,7 @@ sub checkalpn           {
     # stores list of supported protocols in corresponding $info{}
     # uses protocols from $cfg{'protos_next'} only
     my ($host, $port) = @_;
-    _y_CMD("checkalpn() ");
+    _y_CMD("checkalpn($host,$port) ");
     $cfg{'done'}->{'checkalpn'}++;
     return if (1 < $cfg{'done'}->{'checkalpn'});
     # _trace("trace not necessary, output from check_nextproto() is sufficient");
@@ -3564,6 +3579,7 @@ sub checkcipher         {
     my ($ssl, $key) = @_;
     my $c    = OSaft::Ciphers::get_name($key);  # $cipher = $c;
     my $risk = OSaft::Ciphers::get_sec($key);
+    _trace("checkcipher($host, $port){");
     # check weak ciphers
     $checks{'cipher_null'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
     $checks{'cipher_adh'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
@@ -3605,6 +3621,7 @@ sub checkcipher         {
     $prot{$ssl}->{'OWASP_C'}++     if ($risk eq 'C');
     $prot{$ssl}->{'OWASP_B'}++     if ($risk eq 'B');
     $prot{$ssl}->{'OWASP_A'}++     if ($risk eq 'A');
+    _trace("checkcipher() }");
     return;
 } # checkcipher
 
@@ -3726,6 +3743,7 @@ sub checkdates($$)  {
     _y_CMD("checkdates() " . $cfg{'done'}->{'checkdates'});
     $cfg{'done'}->{'checkdates'}++;
     return if (1 < $cfg{'done'}->{'checkdates'});
+    _trace("checkdates($host, $port){");
 
     # NOTE: all $data{'valid_*'} are values, not functions
 
@@ -3741,6 +3759,7 @@ sub checkdates($$)  {
         $checks{'valid_years'}->{val}   = 0;
         $checks{'valid_months'}->{val}  = 0;
         $checks{'valid_days'}->{val}    = 0;
+        _trace("checkdates() }");
         return;
     }
 
@@ -3809,6 +3828,7 @@ sub checkdates($$)  {
     _trace("checkdates: valid-years = " . $data{'valid_years'}->{val});
     _trace("checkdates: valid-month = " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
     _trace("checkdates: valid-days  = " . $data{'valid_days'}->{val}   . "  = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
+    _trace("checkdates() }");
     return;
 } # checkdates
 
@@ -3819,6 +3839,7 @@ sub checkcert($$)   {
     _y_CMD("checkcert() " . $cfg{'done'}->{'checkcert'});
     $cfg{'done'}->{'checkcert'}++;
     return if (1 < $cfg{'done'}->{'checkcert'});
+    _trace("checkcert($host, $port){");
 
     # wildcards (and some sizes)
     _checkwildcard($host, $port);
@@ -3923,6 +3944,7 @@ sub checkcert($$)   {
 # TODO: check: Subject
 #        The subject field can be empty in which case the entity being authenticated is defined in the subjectAltName.
 
+    _trace("checkcert() }");
     return;
 } # checkcert
 
@@ -3980,6 +4002,7 @@ sub checksizes($$)  {
     _y_CMD("checksizes() " . $cfg{'done'}->{'checksizes'});
     $cfg{'done'}->{'checksizes'}++;
     return if (1 < $cfg{'done'}->{'checksizes'});
+    _trace("checksizes($host, $port){");
 
     checkcert($host, $port) if (_is_cfg_use('cert')); # in case we missed it before
     $value =  $data{'pem'}->{val}($host);
@@ -4051,6 +4074,7 @@ sub checksizes($$)  {
         $checks{'modulus_exp_oldssl'}->{val} = $text{'na_openssl'};
         $checks{'modulus_size_oldssl'}->{val}= $text{'na_openssl'};
     }
+    _trace("checksizes() }");
     return;
 } # checksizes
 
@@ -4717,6 +4741,7 @@ sub checkprot($$)   {
     $cfg{'done'}->{'checkprot'}++;
     return if (1 < $cfg{'done'}->{'checkprot'});
     # remember: check is 'yes' for empty value ""
+    _trace("checkprot($host, $port){");
 
     # SSLv2 and SSLv3 are special:
     #   The protocol may supported by the target, but no ciphers offered. Only
@@ -4758,6 +4783,7 @@ sub checkprot($$)   {
     $key    = 'npns';
     $value  = $data{$key}->{val}($host, $port);
     $checks{'hasnpn'}->{val}    = " " if ($value eq "");
+    _trace("checkprot() }");
     return;
 } # checkprot
 
@@ -4771,6 +4797,7 @@ sub checkdest($$)   {
     $cfg{'done'}->{'checkdest'}++;
     return if (1 < $cfg{'done'}->{'checkdest'});
     # remember: check is 'yes' for empty value ""
+    _trace("checkdest($host, $port){");
 
     checksni($host, $port);     # set checks according hostname
     # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
@@ -4857,6 +4884,7 @@ sub checkdest($$)   {
     $checks{'ocsp_stapling'}->{val} = ($value =~ /.*no\s*response.*/i) ? $value : "";
         # for valid ocsp_stapling, ocsp_response should be something like:
         # Response Status: successful (0x0); Cert Status: good; This Update: Jan 01 00:23:42 2021 GMT; Next Update:
+    _trace("checkdest() }");
     return;
 } # checkdest
 
@@ -4868,6 +4896,7 @@ sub checkhttp($$)   {
     $cfg{'done'}->{'checkhttp'}++;
     return if (1 < $cfg{'done'}->{'checkhttp'});
     # remember: check is 'yes' for empty value ""
+    _trace("checkhttp($host, $port){");
 
     # collect information
     my $notxt = " "; # use a variable to make assignments below more human readable
@@ -4934,6 +4963,7 @@ sub checkhttp($$)   {
             $checks{$key}->{score}  = 0;
         }
     }
+    _trace("checkhttp() }");
     return;
 } # checkhttp
 
@@ -5017,6 +5047,7 @@ sub checkssl($$)    {
     _y_CMD("checkssl() "  . $cfg{'done'}->{'checkssl'});
     $cfg{'done'}->{'checkssl'}++;
     return if (1 < $cfg{'done'}->{'checkssl'});
+    _trace("checkssl($host, $port){");
 
     $cfg{'no_cert_txt'} = $text{'na_cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
     if (_is_cfg_use('cert')) {
@@ -5073,6 +5104,7 @@ sub checkssl($$)    {
 # TODO: only if( not _is_cfg_use('cert'))
     }
 
+    _trace("checkssl() }");
     return;
 } # checkssl
 
@@ -5712,8 +5744,8 @@ sub printcipherpreferred {
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     if (_is_cfg_out('header')) {
-        printf("= prot.\t%-31s%s\n", "preferred cipher (strong first)", "preferred cipher (weak first)");
-        printf("=------+------------------------------+-------------------------------\n");
+        printf("= prot.\t%-31s\t%s\n", "preferred cipher (strong first)", "preferred cipher (weak first)");
+        printf("=------+-------------------------------+-------------------------------\n");
     }
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
@@ -5725,7 +5757,7 @@ sub printcipherpreferred {
         );
     }
     if (_is_cfg_out('header')) {
-        printf("=------+------------------------------+-------------------------------\n");
+        printf("=------+-------------------------------+-------------------------------\n");
     }
     print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
     return;
@@ -5733,18 +5765,22 @@ sub printcipherpreferred {
 
 sub printprotocols      {
     #? print table with cipher information per protocol
-    # number of found ciphers, various risks ciphers, default and PFS cipher
+    # number of found ciphers, various risks ciphers, default cipher and PFS cipher
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
+    my @score = qw(A B C D);
     local $\ = "\n";
     if (_is_cfg_out('header')) {
+        printf("# amount of detected ciphers for:\n");
         if ('owasp' eq $legacy) {
-            printf("# A, B, C OWASP rating;  D=broken  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
-            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(A B C D PFS tot preferred-strong-cipher PFS-cipher));
+            @score = qw(A B C D);
+            printf("#   A, B, C OWASP rating;  D=known broken;  tot=total enabled ciphers\n");
         } else {
-            printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=enabled ciphers  PFS=enabled cipher with PFS\n");
-            printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot preferred-strong-cipher PFS-cipher));
+            @score = qw(H M L W);
+            printf("#   H=HIGH  M=MEDIUM  L=LOW  W=WEAK;  tot=total enabled ciphers\n");
         }
+        printf("#   preferred=offered by server;   PFS=enabled cipher with PFS\n");
+        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", @score, qw(PFS tot preferred-strong-cipher PFS-cipher));
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
@@ -7478,15 +7514,10 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_http         = $cfg{'use'}->{'http'};
     $Net::SSLinfo::use_https        = $cfg{'use'}->{'https'};
     $Net::SSLinfo::target_url       = "/";
+    $Net::SSLinfo::user_agent       = $cfg{'use'}->{'user_agent'};
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http         = 0; # if only +cipher given don't use http 'cause it may cause erros
-}
-if (defined $cfg{'use'}->{'user_agent'}) {
-    $Net::SSLinfo::user_agent       = $cfg{'use'}->{'user_agent'};
-} else {
-    my $ua = $cfg{'mename'}; $ua =~ s/\s*$//;
-    $Net::SSLinfo::user_agent       = "$ua/2.58";
 }
 
 #| set defaults for Net::SSLhello
