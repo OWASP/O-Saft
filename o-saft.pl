@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.65 23/11/13 16:34:29"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.66 23/11/13 18:36:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.65");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.66");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5855,7 +5855,9 @@ sub printciphersummary  {
                   );
         $Net::SSLinfo::verbose = $_verbose;     # restore
     } else {
-        _hint("'cipher_selected' temporarily disabled");  # TODO: adapte to new SSLhello (2/2021)
+        if (0 < $verbose) {
+            _hint("'cipher_selected' temporarily disabled");  # TODO: adapt to new SSLhello (2/2021)
+        }
     }
     _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
     return;
@@ -7409,8 +7411,7 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             #$legacy = $cfg{'legacy'};
         }
     }
-    # $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
-    # TODO: need_netinfo disabled until all functionaluty provided by NET::SSLhello
+    $cfg{'need_netinfo'} = 0 if (_is_cfg_do('cipher') and ("intern" eq $cfg{'ciphermode'}));
 }
 
 _yeast_TIME("inc{");
