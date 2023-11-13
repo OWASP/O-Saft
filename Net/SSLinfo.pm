@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.288 23/11/11 01:09:29";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.289 23/11/13 19:05:20";
 our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -2658,11 +2658,11 @@ sub do_ssl_open($$$@) {
         if (0 < $Net::SSLinfo::use_https) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
-            # TODO: test with a browser User-Agent
             my $ua = "User-Agent: Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0";
             my $response = '';
             my $request  = "GET $Net::SSLinfo::target_url HTTP/1.1\r\n";
-               $request .= "Host: $host\r\nConnection: close\r\n\r\n";
+               $request .= "Host:$host\r\nConnection:close\r\n";
+               $request .= "User-Agent:$Net::SSLinfo::user_agent\r\n\r\n";
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or do {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
@@ -2737,10 +2737,9 @@ sub do_ssl_open($$$@) {
                 Net::SSLeay::get_http($host, 80, $Net::SSLinfo::target_url,
                   Net::SSLeay::make_headers(
                         'Host'       => $host,
+                        'User-Agent' => $Net::SSLinfo::user_agent,
                         'Connection' => 'close',
                   )
-                  # TODO: test with a browser User-Agent
-                  # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
                 );
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
