@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.63 23/11/13 15:50:50"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.64 23/11/13 16:00:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.63");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.64");# use version of this file not $VERSION
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -7049,24 +7049,24 @@ while ($#argv >= 0) {
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';          } # alias:
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';         } # alias:
     # check cipher commands
-    if ($arg =~ /^\+ciphers?$p?adh/i)   { $arg = '+cipher_adh';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?cbc/i)   { $arg = '+cipher_cbc';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?des/i)   { $arg = '+cipher_des';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?edh/i)   { $arg = '+cipher_edh';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?exp/i)   { $arg = '+cipher_exp';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?export/i){ $arg = '+cipher_exp';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?null/i)  { $arg = '+cipher_null';    } # alias:
-    if ($arg =~ /^\+ciphers?$p?weak/i)  { $arg = '+cipher_weak';    } # alias:
-    if ($arg =~ /^\+ciphers?$p?order/i) { $arg = '+cipher_order';   } # alias:
+    if ($arg =~ /^\+ciphers?$p?adh$/i)  { $arg = '+cipher_adh';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?cbc$/i)  { $arg = '+cipher_cbc';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?des$/i)  { $arg = '+cipher_des';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?edh$/i)  { $arg = '+cipher_edh';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?exp$/i)  { $arg = '+cipher_exp';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?export$/i){$arg = '+cipher_exp';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?null$/i) { $arg = '+cipher_null';    } # alias:
+    if ($arg =~ /^\+ciphers?$p?weak$/i) { $arg = '+cipher_weak';    } # alias:
+    if ($arg =~ /^\+ciphers?$p?order$/i){ $arg = '+cipher_order';   } # alias:
     if ($arg =~ /^\+ciphers?$p?strong/i){ $arg = '+cipher_strong';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?pfs/i)   { $arg = '+cipher_pfs';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?pfsall/i){ $arg = '+cipher_pfsall';  } # alias:
+    if ($arg =~ /^\+ciphers?$p?pfs$/i)  { $arg = '+cipher_pfs';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?pfsall$/i){$arg = '+cipher_pfsall';  } # alias:
     if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias:
-    if ($arg =~ /^\+ciphers$p?openssl/i){ $arg = '+ciphers_local';  } # alias: for backward compatibility
-    if ($arg =~ /^\+ciphers$p?local/i)  { $arg = '+ciphers_local';  } # alias:
+    if ($arg =~ /^\+ciphers$p?openssl$/i){$arg = '+ciphers_local';  } # alias: for backward compatibility
+    if ($arg =~ /^\+ciphers$p?local$/i) { $arg = '+ciphers_local';  } # alias:
     if ($arg =~ /^\+ciphers?$p?preferr?ed/i){ $arg = '+cipher_default'; }
-    if ($arg =~ /^\+ciphers?$p?defaults?/i){  $arg = '+cipher_default'; } # alias:
-    if ($arg =~ /^\+ciphers?$p?dh/i)    { $arg = '+cipher_dh';      } # alias:
+    if ($arg =~ /^\+ciphers?$p?defaults?$/i){ $arg = '+cipher_default'; } # alias:
+    if ($arg =~ /^\+ciphers?$p?dh$/i)   { $arg = '+cipher_dh';      } # alias:
     if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+cbc$p?ciphers?/i)   { $arg = '+cipher_cbc';     } # alias: backward compatibility < 17.06.17
