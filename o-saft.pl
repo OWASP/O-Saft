@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.62 23/11/13 15:14:39"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.63 23/11/13 15:50:50"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.62");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.63");# use version of this file not $VERSION
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -4976,13 +4976,16 @@ sub _get_sstp_https {
     my $server  = "";
     my ($status, %headers);
     my $request = << "EoREQ";
-SSTP_DUPLEX_POST $url HTTP/1.1
-SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}
-Content-Length:   $ulonglong_max
-Connection:       close
-Host:             $host
-
+SSTP_DUPLEX_POST $url HTTP/1.1\r
+SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}\r
+Content-Length:   $ulonglong_max\r
+Connection:       close\r
+Host:             $host\r
+User-Agent:       $cfg{'use'}->{'user_agent'}\r
+\r
 EoREQ
+    # some webservers are picky, they need \r\n as line terminator
+    # TODO: : check both variants for SSTP_DUPLEX_POST: with and without \r
 
     #_dbx "_get_sstp_https: request {\n$request#}";
     $Net::SSLeay::slowly = 1;   # otherwise some server respond with "400 Bad Request"
