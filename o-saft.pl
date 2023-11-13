@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.61 23/11/13 14:47:04"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.62 23/11/13 15:14:39"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.61");
+osaft::set_user_agent("$cfg{'me'}/2.62");# use version of this file not $VERSION
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
