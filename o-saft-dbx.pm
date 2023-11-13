@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.29 23/11/13 12:24:36";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.30 23/11/13 17:50:43";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -145,8 +145,9 @@ sub _yeast_ciphers_list {
             $_cnt = scalar @range;
         }
         $_cnt = sprintf("%5s", $_cnt);  # format count
-        _yeast("use cipher from openssl= " . $cmd{'extciphers'});
+        _yeast("   cmd{extciphers}= " . $cmd{'extciphers'} . " (1=use cipher from openssl)");
         _yeast("      starttls= " . $cfg{'starttls'});
+        _yeast("    ciphermode= " . $cfg{'ciphermode'});
         _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
         _yeast("   cipherrange= " . $cfg{'cipherrange'});
         # format range text
@@ -156,6 +157,11 @@ sub _yeast_ciphers_list {
             _yeast($txt);
         }
         _yeast(" $_cnt ciphers= @range");
+        _yeast("     cipher_dh= " . $cfg{'cipher_dh'});
+        _yeast("    cipher_md5= " . $cfg{'cipher_md5'});
+        _yeast("   cipher_ecdh= " . $cfg{'cipher_ecdh'});
+        _yeast("   cipher_npns= " . ___ARR(@{$cfg{'cipher_npns'}}));
+        _yeast("  cipher_alpns= " . ___ARR(@{$cfg{'cipher_alpns'}}));
     }
     _yline(" ciphers }");
     return;
@@ -1001,7 +1007,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.29 2023/11/13
+2.30 2023/11/13
 
 =head1 AUTHOR
 
