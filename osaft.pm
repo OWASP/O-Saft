@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.36 23/11/13 14:45:55";
+our $SID_osaft  =  "@(#) osaft.pm 2.37 23/11/13 15:30:03";
 our $VERSION    =  "23.04.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2337,7 +2337,7 @@ our %cfg = (    # main data structure for configuration
                         qw(reversehost ip resumption renegotiation
                          session_protocol session_ticket session_random session_lifetime
                          krb5 psk_hint psk_identity srp heartbeat ocsp_stapling
-                         cipher_selected cipher_pfs ccs crime
+                         cipher_selected cipher_pfs ccs compression crime
                        )],
     'need-checkhttp'=> [qw(https_pins)],# commands which need checkhttp(); more will be added in _init
     'need-checkprot'=> [        # commands which need checkprot(), should be same as in 'cmd-prots'
@@ -3450,7 +3450,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.36"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.37"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3497,7 +3497,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.36 2023/11/13
+2.37 2023/11/13
 
 =head1 AUTHOR
 
