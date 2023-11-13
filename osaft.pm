@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.35 23/11/11 00:37:52";
+our $SID_osaft  =  "@(#) osaft.pm 2.36 23/11/13 14:45:55";
 our $VERSION    =  "23.04.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -265,6 +265,7 @@ our @EXPORT     = qw(
         set_target_open
         set_target_stop
         set_target_error
+        set_user_agent
         tls_const2text
         tls_key2text
         tls_text2key
@@ -3207,6 +3208,10 @@ Get information from internal C<%cfg{'targets'}> data structure.
 
 Set information in internal C<%cfg{'targets'}> data structure.
 
+=head3 set_user_agent($txt)
+
+Set User-Agent to be used in HTTP requests in internal C<%cfg{'use'}> .
+
 
 =cut
 
@@ -3234,6 +3239,7 @@ sub set_target_start { my $i=shift; $cfg{'targets'}[$i][8]  = shift; return; }
 sub set_target_open  { my $i=shift; $cfg{'targets'}[$i][9]  = shift; return; }
 sub set_target_stop  { my $i=shift; $cfg{'targets'}[$i][10] = shift; return; }
 sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
+sub set_user_agent   { my $t=shift; $cfg{'use'}->{'user_agent'} = $t;return; }
 
 
 =pod
@@ -3443,6 +3449,8 @@ sub _osaft_init     {
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
+    $me = $cfg{'mename'}; $me =~ s/\s*$//;
+    set_user_agent("$me/2.36"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3489,7 +3497,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.35 2023/11/11
+2.36 2023/11/13
 
 =head1 AUTHOR
 
