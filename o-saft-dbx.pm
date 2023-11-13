@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.27 23/04/23 19:49:54";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.28 23/11/13 12:17:09";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -68,13 +68,14 @@ sub _yTIME      {
        $now +=1 if (0 > $now);  # fix runtime error: $now == -1
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
+sub __undef     { my $v = shift; $v = $STR{'UNDEF'} if not defined $v; return $v; }
 sub __yeast     { return $cfg{'prefix_verbose'} . $_[0]; }
 sub ___ARG      { return $cfg{'prefix_verbose'} .            " ARG: " . join(" ", @_);    }
 sub ___CMD      { return $cfg{'prefix_verbose'} . _yTIME() . " CMD: " . join(" ", @_);    }
 sub __line      { return "#----------------------------------------------------" . $_[0]; }
 sub ___ARR      { return join(" ", "[", sort(@_), "]"); }
-sub __INIT      { return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);     }
-sub __TRAC      { return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $_[0], $_[1]);     }
+sub __INIT      { my ($k, $v) = @_; $v = __undef($v); return sprintf("%s%21s= %s", $cfg{'prefix_verbose'}, $k, $v );    }
+sub __TRAC      { my ($k, $v) = @_; $v = __undef($v); return sprintf("%s%14s= %s", $cfg{'prefix_verbose'}, $k, $v );    }
 sub _y_ARG      { local $\ = "\n"; print ___ARG(@_) if (_is_cfg_out('traceARG')); return; }
 sub _y_CMD      { local $\ = "\n"; print ___CMD(@_) if (_is_cfg_out('traceCMD')); return; }
 sub _yeast      { local $\ = "\n"; print __yeast($_[0]);return; }
@@ -1000,7 +1001,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.27 2023/04/23
+2.28 2023/11/13
 
 =head1 AUTHOR
 
