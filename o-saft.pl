@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.69 23/11/14 18:33:55"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.70 23/11/14 19:57:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,9 +184,10 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.69");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.70");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
+our $session_protocol = "";     # TODO: temporary until available in osaft.pm
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -3101,6 +3102,7 @@ sub ciphers_scan_raw    {
             _v_print("cipher range: $cfg{'cipherrange'}, checking " . scalar(@all) . " ciphers ...");
         }
         @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
+        $session_protocol = $ssl if (0 < scalar @accepted); # store latest available protocol
         if (_is_cfg_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d",
                          (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) )
@@ -3727,19 +3729,18 @@ sub checkciphers        {
     _trace("checkciphers() }") if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay')));
     return if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay'))); # FIXME: dirty hack until checks below can be done
 
-    $ssl       = $data{'session_protocol'}->{val}($host, $port);
     # my $cipher = $data{'cipher_selected'} ->{val}($host, $port); # TODO if ciphermode=openssl or ssleay
-    my $cipher = $prot{$ssl}->{'default'};
-    my @prots  = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
+    my $cipher = $prot{$session_protocol}->{'default'};
+    my @prots  = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
 
     if (1 > $cnt_all) {         # no protocol with ciphers found
             $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
     } else {
         if (1 > $#prots) {      # found exactly one matching protocol
-            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
+            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
         } else {
             _warn("631: protocol '". join(';', @prots) . "' multiple protocol with selected cipher available");
-            $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $prot{$_}->{'default'} . " " foreach (@prots);
+            $checks{'cipher_pfs'}->{val} .= "$session_protocol}:" . $prot{$_}->{'default'} . " " foreach (@prots);
         }
     }
 
@@ -4838,9 +4839,8 @@ sub checkdest($$)   {
     # get selected cipher and store in %checks, also check for PFS
     $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
-my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
-_dbx "checkdest ssl=$ssl # @prot";
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
+# FIXME: cipher_selected for --ciphermode=openssl|ssleay only
 
     # PFS is scary if the TLS session ticket is not random
     #  we should have different tickets in %data0 and %data
@@ -7433,9 +7433,9 @@ _yeast_TIME("inc{");
 #| import common and private modules
 #| -------------------------------------
 # FIXME: need_netinfo disabled until cipher_pfs is check in checkdest() instead of checkciphers()
-#if (1 > _need_netinfo()) {
-#    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
-#}
+if (1 > _need_netinfo()) {
+    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+}
 _load_modules() if (0 == $::osaft_standalone);
 
 _yeast_TIME("inc}");
@@ -7901,7 +7901,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     if (_is_cfg_do('cipher_default') and (0 < $#{$cfg{'do'}})) {
         # don't print if not a single command, because +check or +cipher do it
-        # in printptotocols() anyway
+        # in printprotocols() anyway
         printcipherpreferred($legacy, $host, $port);
         goto CLOSE_SSL; # next HOSTS
     }
