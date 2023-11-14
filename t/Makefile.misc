@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.80 23/11/12 15:58:30
+#?      @(#) Makefile.misc 1.81 23/11/15 00:51:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.80
+_SID.misc          := 1.81
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -200,7 +200,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.80: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.81: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -451,7 +451,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.80: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.81: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -463,17 +463,18 @@ test.quality.log: $(_TEST.quality.log)
 	@ls -l  $(TEST.logdir)/$@*
 # TODO: same target as test.warnings.log
 
+_EXE.prettyfilter  := sed -e 's/: */:\t/'
 HELP-test.misc.todo = search for 'FIXME' and 'TODO' comments in '$(ALL.qa)'
 HELP-test.misc.see  = search for 'SEE ' links in '$(ALL.src)'
 HELP-test.misc.shebang  = get first line of file with '#!' (shebang) in $(ALL:src)'
 HELP-test.misc.info = alias for: test.misc.see test.misc.shebang
 testarg-misc_FIXME:
 	@echo "#make: search for '# FIXME' in code ..."
-	@-grep '# FIXME'            $(ALL.qa)
+	@-grep '# FIXME'            $(ALL.qa) | $(_EXE.prettyfilter)
 	@echo ""
 testarg-misc_TODO:
 	@echo "#make: search for '# TODO' in code ..."
-	@-grep '# TODO'             $(ALL.qa)
+	@-grep '# TODO'             $(ALL.qa) | $(_EXE.prettyfilter)
 	@echo ""
 testarg-misc_head2:
 	@echo "#make: search for '^=head2' in source files ..."
@@ -481,12 +482,12 @@ testarg-misc_head2:
 	@echo ""
 testarg-misc_SEE:
 	@echo "#make: search for '# SEE' in source files ..."
-	@-grep '# SEE '             $(ALL.src)
-	@-egrep '^ *SEE '           $(ALL.src)
+	@-grep '# SEE '             $(ALL.src) | $(_EXE.prettyfilter)
+	@-egrep '^ *SEE '           $(ALL.src) | $(_EXE.prettyfilter)
 	@echo ""
 testarg-misc_shebang:
 	@echo "#make: search for '#!' (shebang) in code ..."
-	@-egrep -m 1 '^#![ /].*/'   $(ALL.src)
+	@-egrep -m 1 '^#![ /].*/'   $(ALL.src) | $(_EXE.prettyfilter)
 	@echo ""
 #   # get only  #!/...  and  #! /...  but not  #!#...
 ALL.test.misc.todo     := testarg-misc_FIXME testarg-misc_TODO
