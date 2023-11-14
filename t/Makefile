@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? NAME
 #?      Makefile        - makefile for testing O-Saft
@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.153 23/09/10 11:14:23
+#?      @(#) Makefile 1.154 23/11/15 00:52:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.153
+_SID.test          := 1.154
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
