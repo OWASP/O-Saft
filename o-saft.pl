@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.66 23/11/13 18:36:43"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.67 23/11/14 12:35:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.66");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.67");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1112,12 +1112,18 @@ sub _hex_like_openssl   {
 #| definitions: %cfg functions
 #| -------------------------------------
 sub __need_this($)      {
-    # returns >0 if any of the given commands is listed in $cfg{'$_'}
+    # returns >0 if any of the given commands is listed in $cfg{'do'}
     my $key = shift;
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;      # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 } # __need_this
+sub _need_netinfo()     {
+    # returns >0 if $cfg{'do'} contains commands other than cipher*
+    # compares with $cfg{'need-cipher'}
+    my $need_cipher = join("|", @{$cfg{'need-cipher'}});
+    return grep{not /^($need_cipher)$/} @{$cfg{'do'}};
+} # _need_netinfo
 #sub _need_openssl()     { return __need_this('need-openssl');   }
 sub _need_cipher()      { return __need_this('need-cipher');    }
 sub _need_default()     { return __need_this('need-default');   }
@@ -7411,13 +7417,16 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             #$legacy = $cfg{'legacy'};
         }
     }
-    $cfg{'need_netinfo'} = 0 if (_is_cfg_do('cipher') and ("intern" eq $cfg{'ciphermode'}));
 }
 
 _yeast_TIME("inc{");
 
 #| import common and private modules
 #| -------------------------------------
+# FIXME: need_netinfo disabled until cipher_pfs is check in checkdest() instead of checkciphers()
+#if (1 > _need_netinfo()) {
+#    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+#}
 _load_modules() if (0 == $::osaft_standalone);
 
 _yeast_TIME("inc}");
@@ -7854,7 +7863,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _trace("fallback: $version $supported");
     }
 
-    if ((_need_default() > 0) or ($check > 0)) {
+    if ((0 < _need_default()) or (0 < $check)) {
         # SEE Note:+cipherall
         _y_CMD("get default ...");
         _yeast_TIME("need_default{");
@@ -7867,7 +7876,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
             $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
             # FIXME: there are 3 connections above, but only one is counted
-            last if (_is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher") > 0);
+            last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
             my $cipher  = $prot{$ssl}->{'cipher_strong'};
             $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
             ##if (_is_cfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
