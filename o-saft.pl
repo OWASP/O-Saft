@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.68 23/11/14 17:46:07"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.69 23/11/14 18:33:55"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.68");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.69");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3114,7 +3114,7 @@ sub ciphers_scan_raw    {
             # SEE Note:+cipherall
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
-            _v_print(sprintf("default cipher %7s: %s", $ssl, $cipher);
+            _v_print(sprintf("default cipher %7s: %s", $ssl, $cipher));
         }
 
         # prepare for printing, list, needed for summary checks
@@ -3706,9 +3706,10 @@ sub checkciphers        {
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
     my $ssl;
-    my $cnt = 0; # count ciphers
+    my $cnt_all = 0; # count ciphers
     my $cnt_pfs = 0;
-    foreach $ssl (@{$cfg{'version'}}) {      # check all SSL versions
+    foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
+        $cnt_all   += $prot{$ssl}->{'cnt'};
         $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
@@ -3723,8 +3724,24 @@ sub checkciphers        {
     }
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
-    # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
-    # TODO: $checks{'cipher_pfs'}->{val} = (1 > $cnt_pfs) ? " " : "";
+    _trace("checkciphers() }") if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay')));
+    return if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay'))); # FIXME: dirty hack until checks below can be done
+
+    $ssl       = $data{'session_protocol'}->{val}($host, $port);
+    # my $cipher = $data{'cipher_selected'} ->{val}($host, $port); # TODO if ciphermode=openssl or ssleay
+    my $cipher = $prot{$ssl}->{'default'};
+    my @prots  = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
+
+    if (1 > $cnt_all) {         # no protocol with ciphers found
+            $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
+    } else {
+        if (1 > $#prots) {      # found exactly one matching protocol
+            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
+        } else {
+            _warn("631: protocol '". join(';', @prots) . "' multiple protocol with selected cipher available");
+            $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $prot{$_}->{'default'} . " " foreach (@prots);
+        }
+    }
 
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'});
@@ -4802,7 +4819,7 @@ sub checkdest($$)   {
     #? check anything related to target and connection
     my ($host, $port) = @_;
     my $ciphers = shift;
-    my ($key, $value, $ssl, $cipher, $cnt);
+    my ($key, $value, $ssl, $cipher);
     _y_CMD("checkdest() " . $cfg{'done'}->{'checkdest'});
     $cfg{'done'}->{'checkdest'}++;
     return if (1 < $cfg{'done'}->{'checkdest'});
@@ -4821,19 +4838,9 @@ sub checkdest($$)   {
     # get selected cipher and store in %checks, also check for PFS
     $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
+my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
+_dbx "checkdest ssl=$ssl # @prot";
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
-    $cnt    = 0;
-    $cnt   += $prot{$_}->{'cnt'} foreach (@{$cfg{'version'}}); # count ciphers
-    my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
-    if (1 > $cnt) {             # no protocol with ciphers found
-            $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
-    } else {
-        if (1 > $#prot) {       # found exactly one matching protocol
-            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
-        } else {
-            _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
-        }
-    }
 
     # PFS is scary if the TLS session ticket is not random
     #  we should have different tickets in %data0 and %data
@@ -7907,6 +7914,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         $cipher_results = {};           # new list for every host
         $cipher_results = ciphers_scan($host, $port);
         $checks{'cnt_totals'}->{val} = scalar %$cipher_results;
+        # TODO:  $prot{$ssl}->{'default'} = $cipher;
         checkciphers($host, $port, $cipher_results); # necessary to compute 'out_summary'
         _yeast_TIME("need_cipher}");
      }
