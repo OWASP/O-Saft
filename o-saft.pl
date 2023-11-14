@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.67 23/11/14 12:35:00"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.68 23/11/14 17:46:07"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.67");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.68");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3108,6 +3108,14 @@ sub ciphers_scan_raw    {
             # correct total number if first 2 ciphers are identical (this
             # indicates cipher order by the server);  delete first one
         }
+        # get default/preferred/selected cipher
+        if (0 < scalar @accepted) {
+            my $cipher = OSaft::Ciphers::get_name($accepted[0]) || $STR{UNDEF}; # may return undef
+            # SEE Note:+cipherall
+            $prot{$ssl}->{'cipher_strong'}  = $cipher;
+            $prot{$ssl}->{'default'}        = $cipher;
+            _v_print(sprintf("default cipher %7s: %s", $ssl, $cipher);
+        }
 
         # prepare for printing, list, needed for summary checks
         my $last_a  = "";   # avoid duplicates
@@ -3115,12 +3123,6 @@ sub ciphers_scan_raw    {
             next if ($last_a eq $key);
             $results->{$ssl}{$key} = "yes";
             $last_a = $key;
-        }
-        if (0 < scalar @accepted) {
-            my $cipher = OSaft::Ciphers::get_name($accepted[0]) || $STR{UNDEF}; # may return undef
-            # SEE Note:+cipherall
-            $prot{$ssl}->{'cipher_strong'}  = $cipher;
-            $prot{$ssl}->{'default'}        = $cipher;
         }
 
         # print ciphers
@@ -3703,8 +3705,10 @@ sub checkciphers        {
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
+    my $ssl;
+    my $cnt = 0; # count ciphers
     my $cnt_pfs = 0;
-    foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
+    foreach $ssl (@{$cfg{'version'}}) {      # check all SSL versions
         $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
@@ -3720,8 +3724,6 @@ sub checkciphers        {
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
-#    $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
-#    $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
     # TODO: $checks{'cipher_pfs'}->{val} = (1 > $cnt_pfs) ? " " : "";
 
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
