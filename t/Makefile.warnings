@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.76 23/11/15 00:59:15
+#?      @(#) Makefile.warnigs 1.77 23/11/15 16:29:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.76
+_SID.warnings      := 1.77
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -316,6 +316,7 @@ warning-324: TEST.args  = TODO: --sniname=wrong +cn
 warning-325: TEST.args  = TODO: testing connection failed, HTTP disabled, difficult ...
 warning-331: TEST.args  = TODO: testing _isccs: failed to connect, difficult ...
 warning-332: TEST.args  = TODO: testing _isccs: no reply, difficult ...
+warning-406: TEST.args  = --no-rc       +cipher-dh --ciphermode=intern $(TEST.host)
 warning-407: TEST.args  = --no-rc       +cipher -ciphermode=intern --cipher=IS-UNKNOWN $(TEST.host)
 warning-408: TEST.args  = --no-openssl  +cipher-dh --exit=HOST2 $(TEST.host)
 warning-409: TEST.args  = --sslv2 --sni +cipher    --exit=HOST4 $(TEST.host)
@@ -421,7 +422,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.76: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.77: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
