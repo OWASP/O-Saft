@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.71 23/11/15 00:48:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.72 23/11/15 15:36:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.71");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.72");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -5591,8 +5591,10 @@ sub print_cipherpreferred($$$$) {
     if ($legacy eq 'sslaudit')  {} # TODO: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    my $key = OSaft::Ciphers::get_key($data{'cipher_selected'}->{val}($host)); # TODO use key
-    print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
+    if ("intern" ne $cfg{'ciphermode'}) {
+       my $key = OSaft::Ciphers::get_key($data{'cipher_selected'}->{val}($host)); # TODO use key
+       print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
+    }
     return;
 } # print_cipherpreferred
 
@@ -5779,7 +5781,9 @@ sub printcipherpreferred {
     if (_is_cfg_out('header')) {
         printf("=------+-------------------------------+-------------------------------\n");
     }
-    print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
+    if ("intern" ne $cfg{'ciphermode'}) {
+        print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
+    }
     return;
 } # printcipherpreferred
 
