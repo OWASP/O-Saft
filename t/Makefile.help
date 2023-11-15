@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? NAME
 #?      Makefile    - makefile for help targets of O-Saft project
@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.96 23/04/14 16:55:15
+#?      @(#) Makefile.help 1.97 23/11/15 00:53:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.96
+_SID.help          := 1.97
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
