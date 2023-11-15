@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.75 23/11/15 18:30:38"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.76 23/11/15 19:30:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.75");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.76");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -4793,10 +4793,22 @@ sub checkprot($$)   {
         # FIXME: OSaft/Doc/help.txt ok now, but needs to be fixed too
     }
     if (_is_cfg_ssl('TLSv1')) {
-        $checks{'hastls10'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
+        $checks{'hastls10_old'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
     }
     if (_is_cfg_ssl('TLSv11')) {
-        $checks{'hastls11'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
+        $checks{'hastls11_old'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
+    }
+    # old targets may not support TLSv13, then TLSv1 or TLSv11 may be ok
+    if (0 >= $prot{'TLSv13'}->{'cnt'}) {
+        _hint("TLSv1.3 did not return ciphers, consider using '+hastls10_old' and '+hastls10_old'");
+    }
+    if (_is_cfg_ssl('TLSv1')) {
+        my $notxt = (0 < $prot{'TLSv1'}->{'cnt'}) ? " " : "";
+        $checks{'hastls10'} ->{val} = $notxt;
+    }
+    if (_is_cfg_ssl('TLSv11')) {
+        my $notxt = (0 < $prot{'TLSv11'}->{'cnt'}) ? " " : "";
+        $checks{'hastls11'} ->{val} = $notxt;
     }
     if (_is_cfg_ssl('TLSv12')) {
         $checks{'hastls12'}->{val}  = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
