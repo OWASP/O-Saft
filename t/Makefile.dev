@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.90 23/05/21 20:30:01
+#?      @(#) Makefile.dev 1.93 23/11/15 00:58:04
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.90
+_SID.dev           := 1.93
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -118,8 +118,12 @@ HELP.dev       += test.dev.pod.all\t\# targets for testing perldoc generation\n
 
 # usually: _EXE.perldoc-opt
 _EXE.gendoc-opt    := $(_EXE.$(EXE.gendoc)-opt)
-_EXE.log-filterarg := sed '/^perl /s/ 20..-[0-9][0-9]-[0-9][0-9] / OSAFT_DATE /'
-    # quick&dirty filter, may macth and change valid data in rare cases
+_EXE.log-filterarg := sed \
+		-e '/^perl /s/ v[0-9].[0-9._-]* / OSAFT_VERSION /' \
+		-e '/^perl /s/ 20..-[0-9][0-9]-[0-9][0-9] / OSAFT_DATE /'
+    # quick&dirty filter, may match and change also valid data in rare cases
+    #   example line: perl v5.36.0   2023-11-11  ....
+    #   changed to:   perl OSAFT_VERSION   OSAFT_DATE  ....
     # SEE Make:EXE.log-filter
     # SEE GNU Make:Dragons
 ifndef dev-macros-generated
