@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.04.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.58 23/11/15 15:41:37",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.59 23/11/15 15:45:02",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -5697,7 +5697,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             if ((grep{/(:?--v)$/ix} @main::ARGV) > 0) { # warning with --v only
                                 # TODO: warning here disabled, as it is considered a server problem; nees to be tested again
                                 _carp ("$client_ssl not supported by '$host:$port'; no ciphers detected, ignored\n");
-                                _hint (consider using '--ciphermode=openssl' also\n");
+                                _hint ("consider using '--ciphermode=openssl' also\n");
                             };
                         } elsif ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             if ( ($Net::SSLhello::usesni) && !( ( ($client_protocol == $PROTOCOL_VERSION{'SSLv3'}) && (!$Net::SSLhello::force_TLS_extensions) ) || ($client_protocol == $PROTOCOL_VERSION{'SSLv2'}) ) ) {           # SNI sent
