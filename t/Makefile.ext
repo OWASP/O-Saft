@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 1.29 22/09/21 09:59:14
+#?      @(#) Makefile.ext 1.30 23/11/15 00:56:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 1.29
+_SID.ext           := 1.30
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
