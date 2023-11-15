@@ -9,7 +9,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.11 23/04/17 00:54:52";
+my  $SID_data   =  "@(#) Data.pm 1.12 23/11/15 19:31:33";
 our $VERSION    =  "23.04.23";
 
 BEGIN {
@@ -410,8 +410,6 @@ our %check_conn = (  # connection data
     'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
     'sweet32'       => {'txt' => "Connection is safe against Sweet32 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-     # NOTE: following keys use mixed case letters, that's ok 'cause these
-     #       checks are not called by their own commands; ugly hack ...
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
@@ -420,8 +418,10 @@ our %check_dest = (  # target (connection) data
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hassslv2'      => {'txt' => "Target does not support SSLv2"},
     'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # POODLE
-    'hastls10'      => {'txt' => "Target supports TLSv1"},
-    'hastls11'      => {'txt' => "Target supports TLSv1.1"},
+    'hastls10'      => {'txt' => "Target does not supports TLSv1"},
+    'hastls11'      => {'txt' => "Target does not supports TLSv1.1"},
+    'hastls10_old'  => {'txt' => "Target supports TLSv1"},  # until 23.04.23 version
+    'hastls11_old'  => {'txt' => "Target supports TLSv1.1"},# until 23.04.23 version
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
     'hasalpn'       => {'txt' => "Target supports ALPN"},
@@ -552,10 +552,12 @@ our %shorttexts = (
     'rootcert'      => "Not root CA",
     'ocsp_uri'      => "OCSP URL",
     'ocsp_valid'    => "OCSP valid",
+    'hastls10_old'  => "TLSv1",
+    'hastls11_old'  => "TLSv1.1",
     'hassslv2'      => "No SSLv2",
     'hassslv3'      => "No SSLv3",
-    'hastls10'      => "TLSv1",
-    'hastls11'      => "TLSv1.1",
+    'hastls10'      => "No TLSv1",
+    'hastls11'      => "No TLSv1.1",
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
     'hasalpn'       => "Supports ALPN",
@@ -931,7 +933,7 @@ _data_init();
 
 =head1 VERSION
 
-1.11 2023/04/17
+1.12 2023/11/15
 
 =head1 AUTHOR
 
