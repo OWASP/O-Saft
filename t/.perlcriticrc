@@ -1,4 +1,4 @@
-#! /usr/bin/perlcritic
+#!/usr/bin/perlcritic
 #?
 #? NAME
 #?      .perlcriticrc  - configuration for Perl::Critic for O-Saft
@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.15 22/11/06 12:22:40
+#?      @(#) .perlcriticrc 1.16 23/11/15 01:01:07
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
