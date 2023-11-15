@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.93 23/11/15 00:58:04
+#?      @(#) Makefile.dev 1.94 23/11/15 11:02:46
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.93
+_SID.dev           := 1.94
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -192,6 +192,11 @@ testarg-dev-o-saft_-post%:      TEST.args = --no-rc --header $(TEST.host)
 
 $(_TEST.dev.tmpfile):
 	@mkdir $@
+
+# o-saft -log calls o-saft.tcl but +quit ensures that the GUI is not shown, the
+# option --d is added which is passed from o-saft to o-saft.tcl and then forces
+# to print some verbose information
+testarg-dev-o-saft_-log:          TEST.args += --d
 
 # more individual targets for SRC.sh (calling contrib/bunt.pl)
 # TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
