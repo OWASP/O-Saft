@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? NAME
 #?      Makefile.inc    - define missing variables for Makefile
@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.39 23/09/01 21:37:26
+#?      @(#) Makefile.inc 1.40 23/11/15 00:53:30
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.39
+_SID.inc       := 1.40
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
