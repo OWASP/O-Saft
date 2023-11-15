@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#) Makefile.template 1.26 22/09/21 12:01:24
+#?      @(#) Makefile.template 1.27 23/11/15 01:00:13
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 1.26
+_SID.TEMPL     := 1.27
 
 _MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
