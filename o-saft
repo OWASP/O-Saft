@@ -79,7 +79,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.28 23/05/21 19:46:48
+#?      @(#) o-saft 1.29 23/11/15 10:28:43
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -88,7 +88,10 @@
 
 ich=${0##*/}
 dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
-log=/tmp/$ich.$$.$USER.log
+log=$$.$USER
+[ -n "$OSAFT_MAKE" ] && log=OSAFT_MAKE
+    # avoid random name, which confuses diff of generated output (i.e. with make)
+log=/tmp/$ich.$log.log;
 prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
@@ -133,7 +136,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.28"; exit 0; ;;
+        +VERSION)       echo "1.29"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
