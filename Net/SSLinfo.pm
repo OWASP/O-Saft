@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.289 23/11/13 19:05:20";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.290 23/11/15 02:12:53";
 our $VERSION        =  "23.04.23";  # official verion number of tis file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1953,8 +1953,15 @@ sub _ssleay_ssl_new {
             my $sni  = $Net::SSLinfo::sni_name;
             _trace("_ssleay_ssl_new: SNI");
             if (1.45 <= $Net::SSLeay::VERSION) {
+                # set_tlsext_host_name() vanished somewhen after 1.88
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $sni)  or do {$err = $!} and last;
+                my $e = Net::SSLeay::set_tlsext_host_name($ssl, $sni);
+                if ((0 == $e) and ($0 !~ /SSLinfo.pm$/)) { $err = $!; last; }
+                    # TODO: openssl > 2.0: sets error "No such file or directory",
+                    #       but seems to work, probably because API missing
+                    # fails since (1.88 < $Net::SSLeay::VERSION) when called as:
+                    #       Net/SSLinfo.pm localhost
+                    # reason unknown; hence exit for Net/SSLinfo.pm itself disabled
             } else {
                 # quick&dirty instead of:
                 #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
