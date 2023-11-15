@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.73 23/11/15 16:23:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.74 23/11/15 16:26:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.73");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.74");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -7837,12 +7837,12 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     if (_is_cfg_do('cipher_dh')) {
         # abort here is ok because +cipher-dh cannot be combined with other commands
-        if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
-            _warn("408: OpenSSL disabled using '--no-openssl', can't check DH parameters; target ignored");
+        if ("intern" eq $cfg{'ciphermode'}) {
+            _warn("406: get DH parameters for '--ciphermode=intern' not implemented; command ignored");
             next;
         }
-        if ("intern" eq $cfg{'ciphermode'}) {
-            _warn("211: get DH parameters for '--ciphermode=intern' not implemented; command ignored");
+        if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
+            _warn("408: OpenSSL disabled using '--no-openssl', can't check DH parameters; target ignored");
             next;
         }
     }
