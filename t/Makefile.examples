@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -6,7 +6,7 @@
 #?      make help.test.examples
 #?
 #? VERSION
-#?      @(#)  1.9 22/09/21 09:58:23
+#?      @(#) Makefile.examples 1.11 23/11/15 00:58:51
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.examples = print targets for testing documented examples
 
-_SID.examples      := 1.9
+_SID.examples      := 1.11
 
 _MYSELF.examples   := t/Makefile.examples
 ALL.includes       += $(_MYSELF.examples)
