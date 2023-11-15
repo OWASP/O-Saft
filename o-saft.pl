@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.74 23/11/15 16:26:45"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.75 23/11/15 18:30:38"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.74");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.75");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -3611,6 +3611,9 @@ sub checkcipher         {
     $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
     $checks{'tr_03116-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_lazy(  $ssl, $c));
     # check attacks
+    # NOTE: if no ciphers for a protocol $ssl were found,  this function is not
+    #       called at all for this protocol, hence the target is not vulnerable
+    #       for this protocol, that's what we expect
     $checks{'rc4'}      ->{val}     = $checks{'cipher_rc4'}->{val}; # these are the same checks
     $checks{'beast'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_beast($ssl, $c));
     $checks{'breach'}   ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_breach($c));
@@ -7436,9 +7439,24 @@ _yeast_TIME("inc{");
 
 #| import common and private modules
 #| -------------------------------------
-# FIXME: need_netinfo disabled until cipher_pfs is check in checkdest() instead of checkciphers()
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
     $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+    foreach my $cmd (qw(
+        beast crime drown freak logjam lucky13 poodle sloth sweet32
+	cipher_strong cipher_weak
+        )) {
+        # quick&dirty hack (11/2023) for some single commands like  +beast  to
+        # avoid Perl's  Undefined subroutine &Net::SSLinfo::do_ssl_open called
+        # reason is that these checks are called late with printchecks(),  but
+        # printchecks() is done after calling Net::SSLinfo (which would return
+        # above error if need_netinfo=0);
+        # another solution would be that _get_data0()  is not called for these
+        # commands and any combination of them (difficult ...)
+        # calling Net::SSLinfo even with --ciphermode=intern   should not harm
+        # checks as protocols and ciphers (which are used for the checks)  are
+        # detected properly before and not modified by Net::SSLinfo
+        $cfg{'need_netinfo'} = 1 if _is_cfg_do($cmd);
+    }
 }
 _load_modules() if (0 == $::osaft_standalone);
 
