@@ -1,4 +1,4 @@
-#! /usr/bin/make -rRf
+#!/usr/bin/make -rRf
 #?
 #? DESCRIPTION
 #?      For more details please see
@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 1.28 22/09/21 09:55:11
+#?      @(#) Makefile.critic 1.29 23/11/15 00:59:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 1.28
+_SID.critic        := 1.29
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
