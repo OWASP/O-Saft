@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #?
 #? NAME
 #?      $0 - postprocess to colourize output of o-saft.pl
@@ -36,7 +36,7 @@
 #       if shell builtin is needed.
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.8 21/01/14 01:16:56
+#?      @(#) bunt.sh 1.9 23/11/15 01:02:11
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann
