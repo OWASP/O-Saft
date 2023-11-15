@@ -79,7 +79,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.29 23/11/15 10:28:43
+#?      @(#) o-saft 1.30 23/11/15 10:53:39
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -136,7 +136,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.29"; exit 0; ;;
+        +VERSION)       echo "1.30"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -206,9 +206,11 @@ case "$mode" in
     cgi) $try $cgi --cgi $* | $post  ; ;;
     gui) $try $gui --post="$post" $* ; ;;
     log)
-         [ -e $log ] && echo "**ERROR: '$log' exists; aborted" && exit 2
-         echo "$prg $* $args > $log" ; echo "$gui --load=$log"
-         $try  $prg $* $args > $log  && $try $gui --load=$log  && rm $log
+         [ -e $log -a -z "$OSAFT_MAKE" ] && echo "**ERROR: '$log' exists; aborted" && exit 2
+         echo "$prg $* $args > $log" ; echo "$gui $* --load=$log"
+         $try  $prg $* $args > $log  && $try $gui $* --load=$log  && rm $log
+             # dirty hack: passing $* to $gui as it assumes they behave the
+             # same way there as for $prg
          ;;
     *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args  $such"
          [ -n "$try" ] && exit 0
