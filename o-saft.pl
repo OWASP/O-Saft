@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.76 23/11/15 19:30:47"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.77 23/11/16 16:36:26"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.76");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.77");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -7299,6 +7299,7 @@ while ($#argv >= 0) {
 
 #| prepare %cfg according options
 #| -------------------------------------
+_y_CMD("check arguments ...");
 
 local $\ = "\n";
 
@@ -7474,7 +7475,7 @@ _load_modules() if (0 == $::osaft_standalone);
 
 _yeast_TIME("inc}");
 _yeast_TIME("mod{");
-_y_CMD("check $cfg{'me'} internals ...");
+_y_CMD("check internals ($cfg{'me'}) ...");
 
 my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay');
 
@@ -7635,16 +7636,16 @@ _y_CMD("no connection commands ...");
 _trace(" --test= $test");
 # all --test-cipher* are special (need other data like %cfg or alike)
 $test =~ s/^(?:[+]|--)(test.*)/--$1/;   # SEE Note:--test-*
-if ($test =~ m/testciphers?list/)   { _yeast_test($test);   exit 0; }
-if ($test =~ m/testciphers?regex/)  { test_cipher_regex();  exit 0; }
-if ($test =~ m/^--testcipher/)      { OSaft::Ciphers::show($test); exit 0; }
-if ($test !~ m/^\s*$/)              { _yeast_test($test);   exit 0; }
+if ($test =~ m/testciphers?list/)   { _y_CMD("test list   ..."); _yeast_test($test);   exit 0; }
+if ($test =~ m/testciphers?regex/)  { _y_CMD("test regex  ..."); test_cipher_regex();  exit 0; }
+if ($test =~ m/^--testcipher/)      { _y_CMD("test cipher ..."); OSaft::Ciphers::show($test); exit 0; }
+if ($test !~ m/^\s*$/)              { _y_CMD("test any    ..."); _yeast_test($test);   exit 0; }
 # interanl information commands
-if (_is_cfg_do('list'))             { printciphers();       exit 0; }
-if (_is_cfg_do('ciphers'))          { printciphers();       exit 0; }
-if (_is_cfg_do('version'))          { printversion();       exit 0; }
-if (_is_cfg_do('libversion'))       { printopenssl();       exit 0; }
-if (_is_cfg_do('quit'))             { printquit();          exit 0; }
+if (_is_cfg_do('list'))             { _y_CMD("list        ..."); printciphers();       exit 0; }
+if (_is_cfg_do('ciphers'))          { _y_CMD("ciphers     ..."); printciphers();       exit 0; }
+if (_is_cfg_do('version'))          { _y_CMD("version     ..."); printversion();       exit 0; }
+if (_is_cfg_do('libversion'))       { _y_CMD("libversion  ..."); printopenssl();       exit 0; }
+if (_is_cfg_do('quit'))             { _y_CMD("quit        ..."); printquit();          exit 0; }
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
@@ -7685,6 +7686,7 @@ usr_pre_main();
 #| do the work for all targets
 #| -------------------------------------
 
+_y_CMD("usage ...");
 # defensive, user-friendly programming
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
