@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.30 23/11/13 17:50:43";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.31 23/11/16 11:32:04";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -558,7 +558,12 @@ sub _yeast_test_data    {
 =   !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
 =   .  no score defined in %checks{key}
 =
-= A shorttext should be available for each command and all data keys, except:
+= Some commands (keys) in column  cmd-ch.  marked  !  are not considered an
+= error 'cause they are ancient checks like hastls10_old, or special checks
+= like extensions, or are just for documentation like cps_valid.
+=
+= A short text should be available for  each command and for all data keys,
+# except for internal commands (columns intern) and following:
 =      cn_nosni, ext_*, valid_*
 =
 = Internal or summary commands:
@@ -1007,7 +1012,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.30 2023/11/13
+2.31 2023/11/16
 
 =head1 AUTHOR
 
