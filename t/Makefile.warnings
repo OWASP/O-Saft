@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.77 23/11/15 16:29:14
+#?      @(#) Makefile.warnigs 1.78 23/11/16 10:57:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.77
+_SID.warnings      := 1.78
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -55,23 +55,25 @@ help.test.warnings-vv:    HELP_TYPE = warnings
 #       warn "**WARNING:
 #       _warn("
 #       _warn($STR{
+#       print $STR{ERROR}, 
+#       print $STR{WARN}, 
 # Because perl comments with # cannot be used inside Makefile's define or macro
 # definitions, the following sequence of the perl code is explained first:
 #   skip assignments
 #   remove opening ( if any
-#   if line mtches die or warn or print
-#       replace die|warn by **WARNING: or **ERROR:
+#   if line matches die or warn or print
+#       replace die|warn by **ERROR: or **WARNING:
 #       replace _warn by **WARNING:
 #       remove postfix condition
-#       remove ") and anything reight to it
+#       remove ") and anything right to it
 #       remove _warn (if still there)
 # TODO: warn and die not detected, if they do not appear as first word in line
 EXE.extract_warn       := perl -nle '\
 	m/^\s*warn\s+=/ && do {next};\
-	s/[(]/ / if m/^\s*(?:die|_?warn|print)\s*\(\s*$$STR.[EW]/;\
-	m/^\s*(?:die|_?warn|print $$STR.[EW])/ && do {\
-		s/^\s*(?:print|die|warn)\s+$$STR.ERROR.,\s"/**ERROR: /;\
-		s/^\s*(?:print|die|warn)\s+$$STR.WARN.[,.\s]+"/**WARNING: /;\
+	s/[(]/ / if m/^\s*(?:die|_?warn|print)\s*\(\s*\$$STR.[EW]/;\
+	m/^\s*(?:die|_?warn|print \$$STR.[EW])/ && do {\
+		s/^\s*(?:print|die|warn)\s+\$$STR.ERROR.,\s"/**ERROR: /;\
+		s/^\s*(?:print|die|warn)\s+\$$STR.WARN.[,.\s]+"/**WARNING: /;\
 		s/^\s*(?:print|die|warn)[\s(]+"\$$STR.WARN.[,.\s]+/**WARNING: /;\
 		s/",\s+"/ /;\
 		s/^\s*_warn(?:_nosni)?\s*\(\s*"/**WARNING: /;\
@@ -422,7 +424,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.77: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.78: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
