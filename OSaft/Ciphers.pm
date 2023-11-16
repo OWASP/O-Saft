@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.85 23/11/16 10:50:32";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.86 23/11/16 19:53:03";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -152,7 +152,7 @@ of an cipher by the user with the option  "--cfg-cipher=CIPHER=value"
 
 The getter methods can be used directly, see:  OSaft/Ciphers.pm --usage
 
-=head3 Documentaion
+=head3 Documentation
 
 This documentation describes the public variables and methods only, but not the
 internal ones, in particular the  C<show_*()> functions.  Please see the source
@@ -1409,23 +1409,25 @@ EoT
 } # show_ciphers
 
 sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
-    #? dispatcher for various --test-cipher-* options; show information
-    my $arg = shift;    # any --test-cipher-*
-       $arg =~ s/^--test[._-]?ciphers?[._-]?//;   # normalize
+    #? dispatcher for various --test-ciphers-* options; show information
+    my $arg = shift;    # any --test-ciphers-*
+       $arg =~ s/^--test[._-]?ciphers[._-]?//;   # normalize
     _v_print((caller(0))[3]);
     #_dbx("arg=$arg");
     local $\ = "\n";
     return                  if ($arg =~ m/^version/i            ); # done in main
-    show_all_names('const') if ($arg eq 'constants'             );
-    show_all_names('names') if ($arg eq 'aliases'               );
-    show_all_names('rfc')   if ($arg eq 'rfcs'                  );
+    show_all_names('const') if ($arg =~ m/const(?:ants?)?$/     );
+    show_all_names('names') if ($arg =~ m/alias(?:es)?$/        );
+    show_all_names('rfc')   if ($arg =~ m/rfcs?$/               );
     show_description()      if ($arg eq 'description'           );
     show_description()      if ($arg =~ m/^ciphers.?description/);
     show_overview()         if ($arg eq 'overview'              );
     show_ssltest()          if ($arg eq 'ssltest'               );
-    show_sorted()           if ($arg =~ m/^(owasp|sort(?:ed)?)/ );
+    show_sorted()           if ($arg =~ m/^(owasp|sort(?:ed)?$)/);
+    show_ciphers('simple')  if ($arg eq 'list'                  ); # ancient option
         ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?|show|simple)/);
+    show_ciphers($1)        if ($arg =~ m/^(show|simple)$/      );
+    show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?)$/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
     print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
@@ -1453,8 +1455,8 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
     print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
     print join(" ", get_notes($1))      if ($arg =~ m/^(?:get.)?notes=(.*)/  );
-    print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.)?keys.?list/  );
-    print join(" ", get_names_list())   if ($arg =~ m/^(?:get.)?names.?list/ );
+    print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.)?keys.?list$/ );
+    print join(" ", get_names_list())   if ($arg =~ m/^(?:get.)?names.?list$/);
     if ($arg =~ m/^regex/) {
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl --test-ciphers-regex\n");
     }
@@ -1518,7 +1520,7 @@ sub _main_ciphers_usage {
     #? print usage
     my $name = (caller(0))[1];
     print "# commands to show internal cipher tables:\n";
-    foreach my $cmd (qw(alias const dump description openssl rfc simple sort overview )) {
+    foreach my $cmd (qw(alias const dump description openssl rfc simple sort ssltest overview )) {
         printf("\t%s %s\n", $name, $cmd);
     }
     print "# commands to show cipher data:\n";
@@ -1527,7 +1529,9 @@ sub _main_ciphers_usage {
     }
     print "# various commands (examples):\n";
     printf("\t$name version\n");
-    printf("\t$name getter=0x0300CCA9\n");  # avoid: Possible attempt to separate words with commas at ...
+    printf("\t$name getter=0x0300CCA9\n");
+    printf("\t$name getter=0xCC,0xA9\n");  # avoid: Possible attempt to separate words with commas at ...
+    printf("\t$name getter=0x03,0x00,0xCC,0xA9\n");
     foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 )) {
         printf("\t%s %s\n", $name, $cmd);
     }
@@ -1555,8 +1559,8 @@ sub _main_ciphers   {
         print "$VERSION\n"         if ($arg =~ /^[-+]?V(ERSION)?$/);
         print "$VERSION\n"         if ($arg =~ /^--test.?ciphers.?version/i);
         # allow short option without --test-ciphers- prefix
-        $arg =~ s/^--test.?ciphers.?//; # remove if there
-        show("--test-ciphers-$arg");
+        $arg =~ s/^--test.?ciphers//;   # remove if there
+        show("--test-ciphers$arg");
     }
     exit 0;
 } # _main_ciphers
@@ -1638,6 +1642,9 @@ All commands can be used with or without '+' prefix, for example 'dump' is same
 as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
 '--test-ciphers-show'.
 
+The commands  'simple' 'openssl' 'openssl-v' 'openssl-V' and 'ssltest'  are the
+same as '+list' command with corresponding '--legacy=' option of "o-saft.pl".
+
 =over 4
 
 =item get_METHOD=HEX
@@ -1684,7 +1691,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.85 2023/11/16
+2.86 2023/11/16
 
 
 =head1 AUTHOR
