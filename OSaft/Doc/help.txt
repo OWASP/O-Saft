@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.117 23/11/16 01:27:20
+# SID   @(#) help.txt 1.118 23/11/16 01:50:08
 
 NAME
 
@@ -3058,6 +3058,9 @@ ENVIRONMENT
           * OPENSSL         - if set, full path to openssl executable
           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
                               directory where to find openssl.cnf
+          * OSAFT_MAKE      - if set, some  random values  in the result  are
+                              replaced by constant strings; it is set for all
+                              targets in all Makefile*
 #         * OPENSSL_FIPS    -
 #         * OPENSSL_ENGINES -
 #         * OPENSSL_ALLOW_PROXY
