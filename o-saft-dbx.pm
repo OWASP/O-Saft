@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.31 23/11/16 11:32:04";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.32 23/11/16 21:17:39";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -472,6 +472,7 @@ sub _yeast_test_help    {
 =   --test-data     overview of all available commands and checks
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
+=   --test-vars     internal data structures using Data::Dumper
 =   --test-regex    results for applying various texts to regex
 =   --test-memory   overview of variables' memory usage
 =   --test-methods  available methods for openssl in Net::SSLeay
@@ -815,6 +816,57 @@ sub _yeast_test_memory  {
     return;
 } # _yeast_test_memory
 
+sub __yeast_dump_var    {
+    #? print varable name and it's content using Data::Dumper()
+    #  unfortunately Data::Dumper is not able to print the name of the variable
+    #  hence this cumbersome approach (see settings in calling function)
+    my $type = shift;
+    my $var  = shift;
+    my $name = "$type$var";
+    _yline(" $name {");
+    printf("%s = %s\n", $name, Dumper($$var))  if ('$' eq $type);
+    printf("%s = %s\n", $name, Dumper(\%$var)) if ('%' eq $type);
+    printf("%s = %s\n", $name, Dumper(\@$var)) if ('@' eq $type);
+    _yline(" $name }");
+    return;
+} # __yeast_dump_var
+
+sub _yeast_test_vars    {
+    printf("#%s:\n", (caller(0))[3]);
+    local $\ = "\n";
+    # for details on used $Data::Dumper:: varaibles, see man Data::Dumper
+    local $Data::Dumper::Deparse    = 1;# we want the code references
+        # TODO: use Deparse=1 and filter code, see _yeast_test_init()
+    local $Data::Dumper::Sparseseen = 1;# not needed here
+    local $Data::Dumper::Purity     = 0;# no warnings for "DUMMY"
+    local $Data::Dumper::Sortkeys   = 1;# 
+    local $Data::Dumper::Quotekeys  = 1;# default, but ensure it's set
+    local $Data::Dumper::Indent     = 1;# 2 with more indentation
+    local $Data::Dumper::Pair   = "\t=> ";  # slightly better formatting
+#   local $Data::Dumper::Pad    = __yeast();# not used, output is valid perl
+#   local $Data::Dumper::Varname= '%prot';
+    # Varname is just replace VAR, means $%prot1 is used istead of $VAR1, which
+    # is not exactly what we want, hence Terse=1 is used  and the variable name
+    # is written verbatim
+    local $Data::Dumper::Terse      = 1;
+
+    print "
+=== internal data structures %ciphers %prot %cfg %data %info %checks ===
+=
+= Print initialised internal data structures using Perl's Data::Dumper.
+=
+";
+    __yeast_dump_var('$', 'cipher_results');
+    __yeast_dump_var('%', 'ciphers');
+    __yeast_dump_var('%', 'ciphers_desc');
+    __yeast_dump_var('%', 'prot');
+    __yeast_dump_var('%', 'cfg');
+    __yeast_dump_var('%', 'data');
+    __yeast_dump_var('%', 'info');
+    __yeast_dump_var('%', 'checks');
+    return;
+} # _yeast_test_vars
+
 sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit, --testcipherlist
@@ -833,7 +885,8 @@ sub _yeast_test {
     _yeast_test_init()          if ('init'            eq $arg);
     _yeast_test_maps()          if ('maps'            eq $arg);
     _yeast_test_prot()          if ('prot'            eq $arg);
-    $arg =~ s/^ciphers?[._-]?//;    # allow --test-cipher* and --test-cipher-*
+    _yeast_test_vars()          if ('vars'            eq $arg);
+    $arg =~ s/^ciphers[._-]?//; # allow --test-ciphers* and --test-ciphers-*
     OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
     if ('list' eq $arg) {
         # _yeast_ciphers_list() relies on some special $cfg{} settings
@@ -863,7 +916,8 @@ sub _main_dbx       {
     # ----------------------------- commands
     if ($arg eq 'version')              { print "$SID_dbx\n"; exit 0; }
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n"; exit 0; }
-    if ($arg =~ m/--tests?$/) { _yeast_test_help(); exit 0; }
+    if ($arg =~ m/--tests?$/)           { _yeast_test_help(); exit 0; }
+print "aa";
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -889,9 +943,9 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 
 =over 2
 
-=item require "o-saft-dbx.pm";
+=item require "o-saft-dbx.pm";  # from within Perl code
 
-=item o-saft-dbx.pm <L<OPTIONS|OPTIONS>>
+=item o-saft-dbx.pm <L<OPTIONS|OPTIONS>>    # on command line
 
 =back
 
@@ -923,6 +977,8 @@ List available commands or options for internal testing.
 =item --test-maps
 
 =item --test-prot
+
+=item --test-vars
 
 See  I<--tests>  for description of these options.
 
@@ -1012,7 +1068,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.31 2023/11/16
+2.32 2023/11/16
 
 =head1 AUTHOR
 
