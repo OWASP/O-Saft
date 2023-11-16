@@ -80,7 +80,7 @@ where $key is  --(host|url)=
 
 Must be used as first parameter, otherwise dies.
 
-=item --format=html --format=html4 --format=html5
+=item --html --html4 --html5
 
 Sends HTTP header:
 
@@ -141,7 +141,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.70 23/04/23 19:49:04";
+my $SID_cgi = "@(#) o-saft.cgi 1.71 23/11/16 00:59:58";
 my $VERSION = '23.04.23';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -228,7 +228,7 @@ if ($me =~/\.cgi$/) {
 	die  "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
 	# TODO: check if following RegEx need $ at end
-	$typ    = 'html' if ($qs =~ m/--format=html/); # --format=html already in @argv
+	$typ    = 'html' if ($qs =~ m/--html/); # --html already in @argv
 	$header = 1 if (0 < (grep{/--cgi.?header/}     $qs));
 	$header = 0 if (0 < (grep{/--cgi.?no.?header/} $qs));
 	$header = 0 if (0 < (grep{/--no.?cgi.?header/} $qs));
@@ -236,7 +236,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.70\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.71\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -505,8 +505,8 @@ if ($me =~/\.cgi$/) {
 		# need to use system, as exec can't pipe
 		my $cmd = join(" ", $osaft, @argv);
 		my $awk = 'contrib/HTML-table.awk'; # default HTML5, see script
-		   $awk = 'contrib/HTML4-table.awk' if ($qs =~ m/--format=html4/);
-		   $awk = 'contrib/HTML5-table.awk' if ($qs =~ m/--format=html5/);
+		   $awk = 'contrib/HTML4-table.awk' if ($qs =~ m/--html4/);
+		   $awk = 'contrib/HTML5-table.awk' if ($qs =~ m/--html5/);
 		   # 03/2023 ah: not sure if HTML4 necessary, we provide it anyway
 		#dbx# print "# system($cmd | /usr/bin/gawk -f $mepath/$awk)\n";
 		system("$cmd | /usr/bin/gawk -f $mepath/$awk");
