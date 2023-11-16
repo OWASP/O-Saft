@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.98 23/09/10 11:58:50";
+my  $SID_man= "@(#) o-saft-man.pm 2.100 23/11/16 02:17:58";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -793,7 +793,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.98'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.100'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -899,7 +899,7 @@ sub _man_menu_bar   {
     #? print menu bar
     my $menu  = _man_help_button("--help=ciphers-html&--content-type=html", '',
                                  "open window with list of cipher suites (html format)")
-              . qq(        <a target="_help" href="docs/o-saft.html#aABOUT%20CGI" >! Help (this CGI form)</a>)
+              . qq(        <a target="_help" href="docs/o-saft.html#aABOUT%20CGI" >! About (this CGI form)</a>)
               . qq(        <a target="_help" href="docs/o-saft.html" >? Help (complete help)</a>);
     my $cmds;
        $cmds .= _man_cmd_button($_)     foreach qw(+check +cipher +info +quick +vulns +protocols);
@@ -937,12 +937,11 @@ sub _man_cgi_simple {
     # show most common used options; layout by lines using BR
         # <div class=n> contains checkboxes for some options.These checkboxes
         # are added in following  foreach loop.
-        # SEE HTML:--format
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
                      no-http http BR
-                     header  no-header  no-warnings format=html4  format=html5   BR
+                     header  no-header  no-warnings html4 html5   BR
                      enabled disabled   legacy=owasp BR
                      traceKEY traceCMD  trace v     cgi-no-header BR
                  )) {
@@ -992,7 +991,6 @@ sub _man_html_cbox  {   ## no critic qw(Subroutines::ProhibitManyArgs)
     #? return input checkbox tag with clickable label and hover highlight
     my ($mode, $prefix, $tag_id, $tag_nam, $tag_val, $cmd_txt) = @_;
     my $title = '';
-       $title = 'experimental option' if ($cmd_txt =~ m/--format=html/); # TODO: experimental hack
     return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
     return sprintf(qq(%s<label class="i" for="%s"><input type="checkbox" id="%s" name="%s" value="%s" title="%s" >%s</label>&#160;&#160;),
                     $prefix, $tag_id, $tag_id, $tag_nam, $tag_val, $title, $cmd_txt);
@@ -2654,7 +2652,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.98 2023/09/10
+2.100 2023/11/16
 
 
 =head1 AUTHOR
@@ -2923,19 +2921,6 @@ See JavaScript function  'osaft_buttons()'.
 The documenation in HTML format contains a "start" button at the bottom of
 each toplevel section.  This should only be done when the page is used for
 CGI (aka --help=cgi).
-
-
-=head2 HTML:--format
-
-The generated HTML contains a checkbox for --format=html4  and  a checkbox
-for  --format=html5 . Both checkboxes are named (HTML attribute)  --format
-but have a unique id.  As they have different values, both are used in the
-resulting URL, means if both are checked the URL contains:
-
-    ...&--format=html4&--format=html5&...
-
-This is considered harmless because the 2'nd parameter is used then, which
-is the default anyway.
 
 
 =head2 HTML:Known Bugs
