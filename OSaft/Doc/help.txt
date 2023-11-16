@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.118 23/11/16 01:50:08
+# SID   @(#) help.txt 1.119 23/11/16 18:43:02
 
 NAME
 
@@ -362,7 +362,7 @@ COMMANDS
       +ciphers
 
           Show known ciphers in format like "openssl ciphers".
-          It also accepts the  -v  and  -V  option.
+          It also accepts the  -v  and  -V  option (like openssl).
           Use  +list  command for more information according ciphers.
 
       +list
@@ -374,7 +374,7 @@ COMMANDS
             * --legacy=simple   simple space-separated output
             * --legacy=full     TAB-separated output with more data
             * --legacy=owasp    simple output sorted according OWASP scoring
-            * --legacy=openssl  output like with  +ciphers  command
+            * --legacy=openssl  output same as with  +ciphers  command
             * --legacy=ssltest  output like "ssltest --list"
 
 #          Use  --v  option to show more details.
