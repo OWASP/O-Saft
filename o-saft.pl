@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.77 23/11/16 16:36:26"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.78 23/11/16 19:00:41"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.77");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.78");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -7634,13 +7634,13 @@ _yeast_TIME("ini}");
 #| -------------------------------------
 _y_CMD("no connection commands ...");
 _trace(" --test= $test");
-# all --test-cipher* are special (need other data like %cfg or alike)
+# all --test-ciphers-* are special (need other data like %cfg or alike)
 $test =~ s/^(?:[+]|--)(test.*)/--$1/;   # SEE Note:--test-*
-if ($test =~ m/testciphers?list/)   { _y_CMD("test list   ..."); _yeast_test($test);   exit 0; }
-if ($test =~ m/testciphers?regex/)  { _y_CMD("test regex  ..."); test_cipher_regex();  exit 0; }
-if ($test =~ m/^--testcipher/)      { _y_CMD("test cipher ..."); OSaft::Ciphers::show($test); exit 0; }
+if ($test =~ m/testciphersregex/)   { _y_CMD("test regex  ..."); osaft::test_cipher_regex();  exit 0; }
+if ($test =~ m/testciphers/)        { _y_CMD("test cipher ..."); OSaft::Ciphers::show($test); exit 0; }
 if ($test !~ m/^\s*$/)              { _y_CMD("test any    ..."); _yeast_test($test);   exit 0; }
 # interanl information commands
+# NOTE: printciphers() is a wrapper for OSaft::Ciphers::show() regarding more options
 if (_is_cfg_do('list'))             { _y_CMD("list        ..."); printciphers();       exit 0; }
 if (_is_cfg_do('ciphers'))          { _y_CMD("ciphers     ..."); printciphers();       exit 0; }
 if (_is_cfg_do('version'))          { _y_CMD("version     ..."); printversion();       exit 0; }
