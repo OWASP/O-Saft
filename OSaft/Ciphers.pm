@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.84 23/11/10 13:47:40";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.85 23/11/16 10:50:32";
 our $VERSION    = "23.04.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1481,13 +1481,18 @@ sub _ciphers_init   {
         my $len    = $#fields;
         my $key    = $fields[0];
         if ($key  !~ /^0x[0-9A-F]{8}/) {
-            _warn(sprintf("504: DATA line%4d: wrong hex key '%s'", $., $key));
+            _warn("504: DATA line" . sprintf("%4d", $.) . ": wrong hex key '$key'");
             next;
         }
         if (13 != $len+1) {
-            _warn(sprintf("505: DATA line%4d: wrong number of TAB-separated fields '%s' != 13\n", $., $len));
+            _warn("505: DATA line" . sprintf("%4d", $.) . ": wrong number of TAB-separated fields '$len' != 13");
             next;
         }
+            # above two messages could be constructed in a simpler way, like:
+            #   _warn(sprintf("504: DATA line%4d: ..text..'", $., $key));
+            # because other tools (i.e. make) extract the message, we provide
+            # the well known pattern for them:
+            #   _warn("504: DATA line" . sprintf("%4d", $.) . ": ..text.. '$key'");
         # now loop over @fields, but assign each to the hash; keys see %ciphers_desc
         $ciphers{$key}->{'openssl'} = $fields[1]  || '';
         $ciphers{$key}->{'sec'}     = $fields[2]  || '';
@@ -1679,7 +1684,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.84 2023/11/10
+2.85 2023/11/16
 
 
 =head1 AUTHOR
