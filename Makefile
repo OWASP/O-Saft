@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.35 23/11/15 00:56:06
+#?      @(#) Makefile 2.36 23/11/16 13:46:03
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.35
+_SID            = 2.36
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -298,8 +298,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.35 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.35
+_INST.genbytext = generated data by Makefile 2.36 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.36
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -565,8 +565,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.35
-tar:     _INST.is_edit  = 2.35
+_INST.is_edit           = 2.36
+tar:     _INST.is_edit  = 2.36
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -695,11 +695,14 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 # most files could also be generated with: $(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
-$(DOC.dir)/$(SRC.pl).%warnings: $(SRC.pl)
+$(DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(TEST.dir)/Makefile.warnings
 	@$(TRACE.target)
 	$(MAKE_COMMAND) -s warnings-info > $@
 
-$(DOC.dir)/$(SRC.pl).%: $(SRC.pl)
+# pattern rule for generating docs/$(SRC.pl).--help=*
+# unfortunately the target name does not contain any hint on which source file
+# it depends, hence all possible dependencies are used
+$(DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc $* > $@
 
