@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.78 23/11/16 19:00:41"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.79 23/11/17 14:04:18"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.78");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.79");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -6216,11 +6216,12 @@ sub printciphers        {
     }
     # anything else prints user-specified formats
     _trace("printciphers: +list");  # late, to not disturb output of plain "ciphers"
-    _v_print("command: " . join(" ", @{$cfg{'do'}}));
-    _v_print("database version: ", _VERSION());
-    _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
-    _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
-    OSaft::Ciphers::show($cfg{'legacy'});
+    _v_print("printciphers: command: " . join(" ", @{$cfg{'do'}}));
+    _v_print("printciphers: database version: ", _VERSION());
+    _v_print("printciphers: options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
+    _v_print("printciphers: options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
+    #OSaft::Ciphers::show($cfg{'legacy'});
+    _yeast_test('--testcipherslist');
     return;
 } # printciphers
 
@@ -7637,7 +7638,8 @@ _trace(" --test= $test");
 # all --test-ciphers-* are special (need other data like %cfg or alike)
 $test =~ s/^(?:[+]|--)(test.*)/--$1/;   # SEE Note:--test-*
 if ($test =~ m/testciphersregex/)   { _y_CMD("test regex  ..."); osaft::test_cipher_regex();  exit 0; }
-if ($test =~ m/testciphers/)        { _y_CMD("test cipher ..."); OSaft::Ciphers::show($test); exit 0; }
+if ($test =~ m/testciphers.+/)      { _y_CMD("test cipher ..."); OSaft::Ciphers::show($test); exit 0; }
+if ($test =~ m/testciphers$/)       { _y_CMD("test list   ..."); printciphers();       exit 0; }
 if ($test !~ m/^\s*$/)              { _y_CMD("test any    ..."); _yeast_test($test);   exit 0; }
 # interanl information commands
 # NOTE: printciphers() is a wrapper for OSaft::Ciphers::show() regarding more options
