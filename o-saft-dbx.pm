@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.33 23/11/17 13:12:08";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.34 23/11/17 14:02:01";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -871,7 +871,21 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit, --testcipherlist
     _yeast($arg);
-    OSaft::Ciphers::show($arg)  if ($arg =~ /^--test[._-]?cipher/);
+    if ($arg =~ /^--test.?ciphers.?list$/) {    # allow not normalised also
+        # --test-ciphers-list is for printing ciphers in common --v format, it
+        # also honors the option  --cipherrange=  additonaly it relies on some
+        # special settings in $cfg{};  +cipher  must be added to $cfg{'do'} to
+        # enforce printing, also at least one TLS version must be used;
+        # changing the configuration here should  not harm other functionality
+        # changing the $cfg{} here should not harm other functionality because
+        # _yeast_test() is for debugging only and will exit then
+        $cfg{'verbose'} = 1;
+        push(@{$cfg{'do'}}, 'cipher'); # enforce printing cipher informations
+        push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
+        _yeast_ciphers_list();
+        return;
+    }
+    OSaft::Ciphers::show($arg)  if ($arg =~ /^--test.?cipher/);
     _yeast_test_help()          if ('--test'          eq $arg);
     _yeast_test_help()          if ('--tests'         eq $arg);
     _yeast_test_sclient()       if ('--testsclient'   eq $arg); # Net::SSLinfo
@@ -886,18 +900,6 @@ sub _yeast_test {
     _yeast_test_maps()          if ('maps'            eq $arg);
     _yeast_test_prot()          if ('prot'            eq $arg);
     _yeast_test_vars()          if ('vars'            eq $arg);
-    $arg =~ s/^ciphers[._-]?//; # allow --test-ciphers* and --test-ciphers-*
-    OSaft::Ciphers::show($arg)  if ($arg =~ /^cipher/); # allow --test-cipher* and cipher-*
-    if ('list' eq $arg) {
-        # _yeast_ciphers_list() relies on some special $cfg{} settings
-        # enforce printing cipher information by adding  +cipher, this
-        # should not harm other functionality, as _yeast_test() is for
-        # debugging only and will exit then
-        $cfg{'verbose'} = 1;
-        push(@{$cfg{'do'}}, 'cipher'); # enforce printing cipher informations
-        push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
-        _yeast_ciphers_list();
-    }
     return;
 } # _yeast_test
 
@@ -917,7 +919,6 @@ sub _main_dbx       {
     if ($arg eq 'version')              { print "$SID_dbx\n"; exit 0; }
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n"; exit 0; }
     if ($arg =~ m/--tests?$/)           { _yeast_test_help(); exit 0; }
-print "aa";
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
@@ -961,12 +962,6 @@ o-saft-dbx.pm - module for tracing o-saft.pl
 List available commands or options for internal testing.
 
 =item --test-ciphers-list
-
-=item --test-ciphers-show
-
-=item --test-ciphers-sort
-
-=item --test-ciphers-overview
 
 =item --test-regex
 
@@ -1068,7 +1063,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.33 2023/11/17
+2.34 2023/11/17
 
 =head1 AUTHOR
 
