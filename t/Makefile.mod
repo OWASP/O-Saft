@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.5 23/11/16 21:24:20
+#?      @(#) Makefile.mod 1.6 23/11/17 23:25:28
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.5
+_SID.mod           := 1.6
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -106,7 +106,7 @@ LIST.Net-SSLinfo.pm-t  :=   --test-methods --test-sclient --test-sslmap --test-s
 
 LIST.o-saft-dbx.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
-	--test-data --test-init --test-maps --test-prot --test-vars
+	--test-avail --test-init --test-maps --test-prot --test-vars
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft.pl         += $(LIST.o-saft-dbx.pm)
 
