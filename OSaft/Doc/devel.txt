@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 2.1 23/09/10 13:12:12
+# SID   @(#) devel.txt 2.2 23/11/17 22:59:57
 
 
 NAME
@@ -127,9 +127,9 @@ DEBUGGING
 	perl -MDevel::CallTrace $0 demo +cipher |& wc  # > 600k lines
 
 	perl -d:TraceCalls=_cfg_set $0 demo +cipher 
-	# aber:
-	# genauer sub-Name muss angegeben werden, gibt Input-Parameter aus
-	# manchmal besser:
+	    # Note that the exact name of the sub must be provided, it then
+	    # also prints input parameters;
+            # you may add a filter for better readability:
 	perl -d:TraceCalls=_cfg_set $0 demo +cipher | & perl -pe 's/\(.*\)/(...)/'
 
 	perl -MDebug::LTrace='*' $0 --help=cipherpattern --header | & perl -pe 's/\(.*\) / (...)/'
@@ -139,7 +139,7 @@ DEBUGGING
     Using outdated modules
 
         This tool was designed to work with old Perl modules too.  When using
-        old modules, a proper  '**WARNING:'  will be printed. These warinings
+        old modules, a proper  '**WARNING:'  will be printed.  These warnings
         cannot be switched of using  --no-warning  .
         The warning also informs about the missing functionality or check.
 
@@ -332,6 +332,7 @@ TESTING
         * User testing
         * Functional testing
         * Developer (internal) testing
+        * Testing results
 
         All descriptions below, except  "User testing", are only intended for
         development.
@@ -376,13 +377,18 @@ TESTING
       +quit
 
           Stop execution after processing all arguments and before processing
-          any target. The runtime configuration is complete at this point.
+          any target. The runtime configuration is complete at this point, so
+          this command is intended to show initialisations using any of  --v
+          or  --trace .
 
       --exit=KEY
 
           Terminate tool at specified 'KEY'. For available 'KEY', please see:
               $0 --help=exit
               grep exit= $0
+
+           The purpose is to show data  up to a specific point at runtime (in
+           code flow) and avoid printing further, probably useless, data.
 
       --cfg-init=KEY=VALUE
 
@@ -409,38 +415,56 @@ TESTING
 
           Print overview of following commands/options.
 
-      --test-data
+      --test-ciphers-list
+
+          Obsolte since version 23.11.23, please use  --test-ciphers .
+
+      --test-ciphers-openssl
+      --test-ciphers-simple
+      --test-ciphers-ssltest
+
+          These options are aliases for:  +list --legacy=TYP  .
+          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+
+      --test-ciphers-alias
+      --test-ciphers-const
+      --test-ciphers-dump
+      --test-ciphers-description
+      --test-ciphers-overview
+      --test-ciphers-openssl
+      --test-ciphers-simple
+      --test-ciphers-ssltest
+      --test-ciphers-rfcs
+      --test-ciphers-sort
+
+          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+
+      --test-ciphers-getter=*
+      --test-ciphers-get_CMD=*
+
+          Print some special information, please see: OSaft/Ciphers.pm .
+
+      --test-avail
 
           Print overview of all available commands and checks.
 
       --test-maps
 
-          Print internal data strucures  '%cfg{openssl}',  '%cfg{ssleay}'.
+          Print internal data structures  '%cfg{openssl}',  '%cfg{ssleay}'.
 
       --test-prot
 
           Print internal data according protocols.
 
+      --test-vars
+
+          Print internal data structures  '%ciphers',  '$cipher_results',
+          '%prot',  '%cfg',  '%data',  '%info'  and  '%checks'  using Perl's
+          "Data::Dumper".
+
       --test-regex
 
           Print results for applying various texts to defined regex.
-
-      --test-ciphers-dump
-      --test-ciphers-overview
-      --test-ciphers-openssl
-      --test-ciphers-show
-      --test-ciphers-simple
-      --test-ciphers-sorted
-      --test-ciphers-ssltest
-
-          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
-          These options are aliases for:  +list --legacy=TYP  .
-
-      --test-ciphers-hex=*
-      --test-ciphers-key=*
-      --test-ciphers-list
-
-          Print some special information, please see: OSaft/Ciphers.pm .
 
       --test-init
 
