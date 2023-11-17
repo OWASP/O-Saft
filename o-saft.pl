@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.79 23/11/17 14:04:18"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.80 23/11/17 22:55:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.79");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.80");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -6213,6 +6213,8 @@ sub printciphers        {
         $cfg{'legacy'} = 'openssl';
         $cfg{'legacy'} = 'openssl-v' if (0 < $cfg{'opt-v'});
         $cfg{'legacy'} = 'openssl-V' if (0 < $cfg{'opt-V'});
+        OSaft::Ciphers::show($cfg{'legacy'});
+        return;
     }
     # anything else prints user-specified formats
     _trace("printciphers: +list");  # late, to not disturb output of plain "ciphers"
@@ -6220,7 +6222,6 @@ sub printciphers        {
     _v_print("printciphers: database version: ", _VERSION());
     _v_print("printciphers: options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
     _v_print("printciphers: options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
-    #OSaft::Ciphers::show($cfg{'legacy'});
     _yeast_test('--testcipherslist');
     return;
 } # printciphers
