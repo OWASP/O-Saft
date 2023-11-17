@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.32 23/11/16 21:17:39";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.33 23/11/17 13:12:08";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -469,7 +469,7 @@ sub _yeast_test_help    {
 =  ----------------+----------------------------------------------
 =   --tests         this text
 =   --test-init     data structure  %cfg after initialisation
-=   --test-data     overview of all available commands and checks
+=   --test-avail    overview of all available commands and checks
 =   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
 =   --test-prot     internal data according protocols
 =   --test-vars     internal data structures using Data::Dumper
@@ -488,7 +488,7 @@ sub _yeast_test_help    {
     return $data;
 } # _yeast_test_help
 
-sub _yeast_test_data    {
+sub _yeast_test_avail   {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -570,7 +570,7 @@ sub _yeast_test_data    {
 = Internal or summary commands:
 =      " . join(" ", @yeast) . "\n";
     return;
-} # _yeast_test_data
+} # _yeast_test_avail
 
 sub _yeast_test_init    {
     local $\ = "\n";
@@ -881,7 +881,7 @@ sub _yeast_test {
     _yeast_test_memory()        if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
     osaft::test_cipher_regex()  if ('regex'           eq $arg);
-    _yeast_test_data()          if ('data'            eq $arg);
+    _yeast_test_avail()         if ($arg =~ m/^avail(?:able)?$/);
     _yeast_test_init()          if ('init'            eq $arg);
     _yeast_test_maps()          if ('maps'            eq $arg);
     _yeast_test_prot()          if ('prot'            eq $arg);
@@ -970,7 +970,7 @@ List available commands or options for internal testing.
 
 =item --test-regex
 
-=item --test-data
+=item --test-avail
 
 =item --test-init
 
@@ -1021,7 +1021,7 @@ For example:
 
 =head3 _yeast_test_help( )
 
-=head3 _yeast_test_data( )
+=head3 _yeast_test_avail( )
 
 =head3 _yeast_test_init( )
 
@@ -1068,7 +1068,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.32 2023/11/16
+2.33 2023/11/17
 
 =head1 AUTHOR
 
