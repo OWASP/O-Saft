@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.119 23/11/16 18:43:02
+# SID   @(#) help.txt 1.120 23/11/17 22:58:08
 
 NAME
 
@@ -2008,6 +2008,10 @@ OPTIONS
           when this option is given.
 
     Options for tracing and debugging
+
+          The terms "trace" and "debug" are used interchangeable herein.  The
+          functionality enabled by the options described below is more likely
+          considered "tracing".
 
       --n
 
@@ -4464,8 +4468,7 @@ TESTING
         * Developer (internal) testing
         * Testing results
 
-        All descriptions below, except  "User testing", are only intended for
-        development and can be found with:
+        All descriptions intended for development and can be found with:
 
               $0 --help=development
 
@@ -4483,6 +4486,12 @@ TESTING
 
           Print debugging messages.
           For more details, please see  X&Options for tracing and debugging& .
+
+    Functional testing
+    Developer (internal) testing
+    Testing results
+
+        Please see:  '$0 --help=development'
 
 
 EXAMPLES
