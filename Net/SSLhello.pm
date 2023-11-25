@@ -70,8 +70,8 @@ BEGIN {
     }
 }
 
-our $VERSION    = "23.04.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.59 23/11/15 15:45:02",
+our $VERSION    = "23.11.23";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.60 23/11/26 00:10:21",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
