@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.81 23/11/25 22:18:25"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.82 23/11/25 22:21:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.81");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.82");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -6475,7 +6475,7 @@ while ($#argv >= 0) {
         if ($typ eq 'LEGACY')   {
             $arg = lc($arg);
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
-            if (1 == (grep{/^$arg$/i} @{$cfg{'legacys'}})) {
+            if (1 == (grep{/^$arg$/} @{$cfg{'legacys'}})) {     # case-sensitive
                 $cfg{'legacy'} = $arg;
             } else {
                 _warn("054: option with unknown legacy '$arg'; setting ignored") if ($arg !~ /^\s*$/);
