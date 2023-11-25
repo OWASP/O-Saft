@@ -30,8 +30,8 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.37 23/11/13 15:30:03";
-our $VERSION    =  "23.04.23";  # official version number of this file
+our $SID_osaft  =  "@(#) osaft.pm 2.38 23/11/25 10:48:32";
+our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
 
@@ -2584,10 +2584,11 @@ our %cfg = (    # main data structure for configuration
     'legacys'           => [    # list of known values
                             qw(cnark sslaudit sslcipher ssldiagnos sslscan dump
                             ssltest ssltest-g sslyze testsslserver thcsslcheck
-                            openssl simple full compact quick owasp osaft o-saft)
+                            simple full compact quick owasp osaft o-saft
+                            openssl openssl-v openssl-V)
                            ],
                            # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
-                           # osaft o-saft are used for comfort
+                           # openssl-v openssl-V osaft o-saft are used for convenience
     'usr_args'          => [],  # list of all arguments --usr* (to be used in o-saft-usr.pm)
    #------------------+---------+----------------------------------------------
     'data'  => {       # data provided (mainly used for testing and debugging)
@@ -3450,7 +3451,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.37"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.38"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3497,7 +3498,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.37 2023/11/13
+2.38 2023/11/25
 
 =head1 AUTHOR
 
