@@ -34,8 +34,8 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.61 23/09/10 10:10:40";
-our $VERSION    = "23.04.23";   # official verion number of this file
+my  $SID_data   = "@(#) Data.pm 1.62 23/11/26 00:38:01";
+our $VERSION    = "23.11.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -631,7 +631,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.61 2023/09/10
+1.62 2023/11/26
 
 
 =head1 AUTHOR
