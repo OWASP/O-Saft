@@ -9,8 +9,8 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.8 23/04/17 00:55:38";
-our $VERSION    =  "23.04.23";
+my  $SID_text   =  "@(#) Text.pm 1.9 23/11/26 00:37:23";
+our $VERSION    =  "23.11.23";
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
@@ -108,7 +108,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-1.8 2023/04/17
+1.9 2023/11/26
 
 
 =head1 AUTHOR
