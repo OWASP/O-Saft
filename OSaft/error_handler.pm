@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Filename: error_handler.pm
 #!#############################################################################
-#!#                    Copyright (c) 2022, Torsten Gigler
+#!#                    Copyright (c) 2023, Torsten Gigler
 #!#   This script is part of the OWASP-Project 'o-saft'.
 #!#   It's a simple library 'OSaft::error_handler' stores and optionally
 #!#   prints all classified errors for other parts of o-saft.
@@ -83,7 +83,7 @@ use Exporter qw(import);
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # the version number of this package
-    OERR_VERSION                                => '19.11.19',
+    OERR_VERSION                                => '23.11.23',
 
     # error types (general)
     OERR_NO_ERROR                               =>     1,   # no error
