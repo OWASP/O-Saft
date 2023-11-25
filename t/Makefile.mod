@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.6 23/11/17 23:25:28
+#?      @(#) Makefile.mod 1.7 23/11/25 23:49:43
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.6
+_SID.mod           := 1.7
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -69,12 +69,15 @@ LIST.OSaft-Ciphers.pm  := \
 	get_key=DHE-PSK-AES128-SHA256  get_key=DHE-PSK-AES128-CBC-SHA256    \
 	text2key=0x1301   text2key=0x13,0x01    key2text=0x03001301 \
 	find_names=DHE-PSK-AES128 find_keys=DHE-PSK-AES128
-    # only $(LIST.OSaft-Ciphers-cmd) is tested here, as they all produce the
+    # only $(LIST.OSaft-Ciphers.pm-cmd) is tested here, as they all produce the
     # same output as $(LIST.OSaft-Ciphers--test)
 
 # some command and options supported by Ciphers.pm are supported by $(SRC.pl)
 # too, but must be used there as  --test-ciphers-*
-LIST.OSaft-Ciphers--test := $(LIST.OSaft-Ciphers-cmd:%=--test-ciphers-%)
+# following generated list contains following commands unknown to Ciphers.pm:
+#    --test-ciphers-version --test-ciphers-get_keys_list --test-ciphers-get_keys_list
+# doesn't harm, they produce nearly emty output
+LIST.OSaft-Ciphers--test := $(LIST.OSaft-Ciphers.pm-cmd:%=--test-ciphers-%)
 
 LIST.OSaft-Data.pm     := \
 	check_cert  check_conn  check_dest  check_http  check_size \
