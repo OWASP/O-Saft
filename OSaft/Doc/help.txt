@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.120 23/11/17 22:58:08
+# SID   @(#) help.txt 1.121 23/11/26 22:10:15
 
 NAME
 
@@ -4113,19 +4113,19 @@ ABOUT CGI
         This form provides following functionality:
 
         * top menu bar with following menus:
-          * ☰           - general informations about CGI usage
-          * Cmd         - quick commands menu
-          * Opt         - quick options menu
-          * Help        - various help pages
+          ** ☰          - general informations about CGI usage
+          ** Cmd        - quick commands menu
+          ** Opt        - quick options menu
+          ** Help       - various help pages
 
         * input field for a target (hostname or URL)
 
         * GUI sections
-          * Simple GUI  - simple form with most common commands and options
+          ** Simple GUI - simple form with most common commands and options
                           Each provided +command buttons submit the form with
                           the selected options and the clicked command.
 
-          * Full GUI Commands & Options
+          ** Full GUI Commands & Options
                         - form with all commands and options,  its content is
                           The same as the  COMMANDS  and  OPTIONS  section of
                           the complete help page (see  --help  ).
