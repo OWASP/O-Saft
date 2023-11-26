@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.100 23/11/16 02:17:58";
+my  $SID_man= "@(#) o-saft-man.pm 2.101 23/11/26 21:09:22";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -408,12 +408,15 @@ EoFUNC
     --bg-start-h:   linear-gradient(#ff0,#ffd700);  /* gold */
     --bg-hover:     #d3d3d3;            /* lightgray */
     --bg-literal:   #d3d3d3;            /* lightgray */
+    /* border */
     --border-0:     0px solid #fff;
     --border-1:     1px solid #000;     /* black */
     --border-w:     1px solid #fff;     /* white */
     --radius-10:    0px 10px 10px 10px;
     --radius-20:    0px  0px 20px 20px;
     --shadow:       1px  4px  4px #666;
+    /* misc */
+    --z-index:      42;
  }
 EoROOT
 
@@ -463,24 +466,24 @@ EoButton
 /* { cgi page only */
  body h4 [class="i"] {margin-left:    -1em; }       /* mainly +cmd and --opt */
  fieldset           { margin:     0px;  }
- fieldset > details:nth-child(2) > div  { z-index:2; } /* "Simple GUI" on top */
+ fieldset > details:nth-child(2) > div  { z-index:calc(var(--z-index)); } /* "Simple GUI" on top */
  fieldset > details > div       { margin:0.1em 0.55em 0px -0.85em; background:white; overflow-y:scroll; }
 /*
 fieldset > details > div:focus  { display:block; } // geht nicht
 */
- .aside             { border:1px solid black; position:fixed; top:3em; right:0.5em;background:white; }
- .aside details     { background:white; }
- .aside summary     { padding:0px  0.5em 0px 0.5em; border-bottom:1px solid black; }
- .aside p > a       { margin:0.3em 0.3em 0.3em 1em; font-size:80%; display:block;  }
+ aside              { border:1px solid black; position:fixed; top:3em; right:0.5em;background:white; z-index:calc(var(--z-index) + 7); }
+ aside details      { background:white; }
+ aside summary      { padding:0px  0.5em 0px 0.5em; border-bottom:1px solid black; }
+ aside p > a        { margin:0.3em 0.3em 0.3em 1em; font-size:80%; display:block;  }
 /* for menu bar left vertical instead top horizontal:
  *   .navdiv { float:left; }
  *   .navdiv > details  { min-width:4em; }
 */
- .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:5 }
+ .navdiv            { background:black; color:white; padding:0.3em; min-height:1.5em; font-weight:bold; position:sticky; top: 0px; z-index:calc(var(--z-index) + 5); } /* navigation top-most */
  .navdiv > details:first-child >summary  { list-style:none; font-size:120%; max-width:2em !important; }
  .navdiv > details:first-child { margin-left:0.1em; }
  .navdiv > details       { margin-left: 0.8em; float:left; }
- .navdiv > details   div { margin-left:-0.3em; background:var(--bg-menu); z-index:3;  }
+ .navdiv > details   div { margin-left:-0.3em; background:var(--bg-menu); z-index:calc(var(--z-index) + 3);  }
  .navdiv > details > div > input[type="submit"]  { display:block; }
  .navdiv > details > div > label         { font-weight:normal; display:block; }
  .navdiv > details > div > details > div { margin-left:0.8em; } /* submenu */
@@ -508,7 +511,7 @@ fieldset > details > div:focus  { display:block; } // geht nicht
  a[class="b"][title]:hover:after,
  a[class="b r"][title]:hover:after {
     content: attr(title);
-    position:absolute; z-index:99; top:100%; left:-1em; padding:0.3em;
+    position:absolute; z-index:calc(var(--z-index) + 22); top:100%; left:-1em; padding:0.3em;
     border-radius:2px; background:var(--bg-mbox); color:white;
     font-weight:normal;
  }
@@ -668,7 +671,7 @@ EoFORM
  <!-- print "Note" text box for CGI usage; only visible with fragment #Note -->
  <style>
   /* message box "Note", if necessary # TODO: font-size not working in firefox */
-  .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:9; }
+  .m            {opacity:1; pointer-events:none; position:fixed; transition:opacity 400ms ease-in; background:var(--bg-mbox); top:0; right:0; bottom:0; left:0; z-index:calc(var(--z-index) + 9); }
   .m > div      {position:relative; min-width:10em; margin:4em auto; padding:1em; border-radius:8px;   background:var(--bg-mdiv); font-size:120%; }
   .m > div > a  {opacity:1; pointer-events:auto; }
   .m > div > a  {position:absolute; width:1.1em; top:0.1em;      right:0.2em; line-height:1.1em;   background:var(--bg-blue); color:#fff; text-align:center;  text-decoration:none; font-weight:bold; border-radius:8px; box-shadow:1px 3px 3px #5bb; }
@@ -793,7 +796,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.100'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.101'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1179,9 +1182,6 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
        $toc .= sprintf("  <a href=\"#a%s\">%s</a>\n", $_, $_) foreach @head;
     $html{'body_aside'} =~ s/__HTML_aside__/$toc/g;
     $txt .= $html{'body_aside'};
-    #$txt .= " <aside><details><summary>Content</summary><div>\n";
-    #$toc .= sprintf("  <a href=\"#a%s\">%s</a>\n", $_, $_) foreach @head;
-    #$txt .= " </div></details></aside>\n";
     return $txt;
 } # _man_html
 
@@ -2652,7 +2652,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.100 2023/11/16
+2.101 2023/11/26
 
 
 =head1 AUTHOR
