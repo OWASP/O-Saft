@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.102 23/11/26 21:51:02";
+my  $SID_man= "@(#) o-saft-man.pm 2.103 23/11/26 22:27:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -493,8 +493,9 @@ fieldset > details > div:focus  { display:block; } // geht nicht
  details > div > table   { font-size:   100%;  }    /* Simple GUI (unsure why necessary)*/
  details[open] > summary { text-decoration:underline; }
 /* } cgi page only */
- li                 { margin-left: 1.2em; }         /* lists in texts        */
- li[class="n"]      { margin-left: 2.2em; list-style-type:none; } /* "comments" in text */
+ li                 { margin-left: 2.0em; }         /* lists in texts        */
+ li[class="l2"]     { margin-left: 3.0em; list-style-type:square;} /* 2nd level lists in texts */
+ li[class="n"]      { margin-left: 2.2em; list-style-type:none; }  /* "comments" in text */
  p                  { margin: 0px 0px 0.5em 1em; }  /* all texts     */
  p > a[class="b"]   { margin-left:-1em; }           /* ^top button only      */
  label[class="i"]   { margin-right:1em; min-width:8em; border:var(--border-w); display:inline-block; } 
@@ -502,7 +503,7 @@ fieldset > details > div:focus  { display:block; } // geht nicht
  b                  { margin-left: 1em; }           /* for discrete commands #FIXME: wrong in cgi page */
  .r                 { float:right;      }           /* help buttons          */
  .l                 { margin-left: 2em; }           /* label for options     */
- .c                 { margin-left: 3em; padding:0.1em;  font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
+ .c                 { margin-left: 3em; padding:0.1em 0.3em; font-size:12pt !important; font-family:monospace; background:var(--bg-literal);} /* literal text block; #TODO: white-space:pro   */
  span[class="c"]    { margin-left:0.1em;}           /* literal text (inline) */
 /* dirty hack for mobile-friendly A tag's title= attribute;
  * placed left bound below tag; browser's title still visible
@@ -797,7 +798,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.102'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.103'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1164,8 +1165,8 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
             # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
         s!^\s+($mytool .*)!<div class="c" >$1</div>!; # example line
         # detect lists, very lazy ... # SEE HTML:Known Bugs
-        m/^=item +\* (.*)/    && do { $txt .= "<li>$1</li>\n";next;};
-        m/^=item +\*\* (.*)/  && do { $txt .= "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
+        m/^=item +\* (.*)/    && do { $txt .= qq(<li>$1</li>\n);            next;};
+        m/^=item +\*\* (.*)/  && do { $txt .= qq(<li class="l2">$1 </li>\n);next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         s!<<!&lt;&lt;!g;                            # encode remaining special markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
@@ -2653,7 +2654,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.102 2023/11/26
+2.103 2023/11/26
 
 
 =head1 AUTHOR
