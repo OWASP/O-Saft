@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.121 23/11/26 22:10:15
+# SID   @(#) help.txt 1.122 23/11/26 23:19:43
 
 NAME
 
@@ -3555,14 +3555,14 @@ KNOWN PROBLEMS
         --trace-time,  --timeout=SEC,  --trace,  --trace-cmd
 
         Using  --trace-time   should show following times:
-          * DNS:             1 -  10 sec
+          * DNS:             1 .. 10 sec
           * need_default:    <5 sec
-          * need_cipher:     1 - 299 sec (+cipher with socket)
-          * no SNI:          1 -  10 sec
-          * connection test: 1 -   5 sec
-          * prepare checks:  2 -  20 sec
-          *   checkalpn.     1 -  15 sec
-          *   checkprot.     1 -  15 sec
+          * need_cipher:     1 ..299 sec (+cipher with socket)
+          * no SNI:          1 .. 10 sec
+          * connection test: 1 ..  5 sec
+          * prepare checks:  2 .. 20 sec
+          *   checkalpn.     1 .. 15 sec
+          *   checkprot.     1 .. 15 sec
           * cipher:          <1 sec
           * info:            <1 sec
           * check:           <1 sec
