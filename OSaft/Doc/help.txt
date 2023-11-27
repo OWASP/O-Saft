@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.122 23/11/26 23:19:43
+# SID   @(#) help.txt 1.123 23/11/27 13:42:07
 
 NAME
 
@@ -39,9 +39,6 @@ QUICKSTART
         * Show supported (enabled) ciphers of target:
           $0 +cipher --enabled example.tld
 
-        * Show supported (enabled) ciphers with their DH parameters:
-          $0 +cipher-dh example.tld
-
         * Show details of certificate and connection of target:
           $0 +info example.tld
 
@@ -50,10 +47,6 @@ QUICKSTART
 
         * Check connection to target for vulnerabilities:
           $0 +vulns example.tld
-
-        * Check for all known ciphers (independant of SSL library):
-          checkAllCiphers.pl example.tld
-          checkAllCiphers.pl example.tld --range=full --v
 
         * Get the certificate's Common Name for a bunch of servers:
           $0 +cn example.tld some.tld other.tld
@@ -197,23 +190,27 @@ TECHNICAL INFORMATION
         with the  +cipher  command.
 
         Therefore following commands and options changed:
-          * +cipher     uses internal method
-          * +cipherall  command obsolete, !!Hint is printed
-          * +cipherraw  command obsolete, !!Hint is printed
-          * --openssl-ciphers  --force-openssl  changed to  --ciphermode=openssl
-          * --openssl=TOOL  TOOL only used for  +cipher  --ciphermode=openssl
-          * --legacy=owasp  option obsolete
+           # VERSION < 19.11.19       |  change ...
+           #--------------------------+---------------------------------
+            * +cipher                 | uses internal method
+            * +cipherall              | command obsolete, !!Hint is printed
+            * +cipherraw              | command obsolete, !!Hint is printed
+            * --force-openssl         | 
+            * --openssl-ciphers       | changed to  --ciphermode=openssl
+            * --openssl=TOOL          | TOOL only used for  +cipher  --ciphermode=openssl
+            * --legacy=owasp          | option obsolete
+           #--------------------------+---------------------------------
 
         The historic commands  +cipherall  and  +cipherraw should be replaced
         with the new syntax, as follows:
 
-              VERSION < 19.11.19           VERSION > 19.11.19
-             #----------------------------+---------------------------------
-              * +cipher                      +cipher  --ciphermode=ssleay
-              * +cipher  --force-openssl     +cipher  --ciphermode=openssl
-              * +cipherall                   +cipher
-              * +cipherraw                   +cipher  --ciphermode=intern
-             #----------------------------+---------------------------------
+           # VERSION < 19.11.19       |  VERSION > 19.11.19
+           #--------------------------+---------------------------------
+            * +cipher                 |  +cipher  --ciphermode=ssleay
+            * +cipher --force-openssl |  +cipher  --ciphermode=openssl
+            * +cipherall              |  +cipher
+            * +cipherraw              |  +cipher  --ciphermode=intern
+           #--------------------------+---------------------------------
 
     Version before 19.11.19
 
@@ -371,11 +368,11 @@ COMMANDS
           details of the cipher and some internal details.
 
           Different output formats are used for the  --legacy=*  option:
-            * --legacy=simple   simple space-separated output
-            * --legacy=full     TAB-separated output with more data
-            * --legacy=owasp    simple output sorted according OWASP scoring
-            * --legacy=openssl  output same as with  +ciphers  command
-            * --legacy=ssltest  output like "ssltest --list"
+            * --legacy=simple   - simple space-separated output
+            * --legacy=full     - TAB-separated output with more data
+            * --legacy=owasp    - simple output sorted according OWASP scoring
+            * --legacy=openssl  - output same as with  +ciphers  command
+            * --legacy=ssltest  - output like "ssltest --list"
 
 #          Use  --v  option to show more details.
 # seit 15.01.07 nicht mehr benutzt
@@ -1036,11 +1033,11 @@ OPTIONS
       --openssl=TOOL
 
           'TOOL'        can be a path to openssl executable; default: openssl
-#         * ssleay:     use installed Net::SSLeay library for Perl
-#         * x86_32:     use  ** NOT YET IMPLEMENTED **
-#         * x86_64:     use  ** NOT YET IMPLEMENTED **
-#         * x86Mac:     use  ** NOT YET IMPLEMENTED **
-#         * arch:       use  ** NOT YET IMPLEMENTED **
+#         * ssleay:     - use installed Net::SSLeay library for Perl
+#         * x86_32:     - use  ** NOT YET IMPLEMENTED **
+#         * x86_64:     - use  ** NOT YET IMPLEMENTED **
+#         * x86Mac:     - use  ** NOT YET IMPLEMENTED **
+#         * arch:       - use  ** NOT YET IMPLEMENTED **
 
       --openssl-cnf=FILE --openssl-conf=FILE
 
@@ -1137,12 +1134,13 @@ OPTIONS
           'METHOD'      method to be used for specific functionality
 
           Available methods:
-          * 'info-socket'       use internal socket to retrieve information
-          * 'info-openssl'      use external openssl to retrieve information
-          * 'info-user'         use usr_getinfo() to retrieve information
-          * 'cipher-socket'     use internal socket to ckeck for ciphers
-          * 'cipher-openssl'    use external openssl to ckeck for ciphers
-          * 'cipher-user'       use usr_getciphers() to ckeck for ciphers
+            * 'info-socket'    - use internal socket to retrieve information
+            * 'info-openssl'   - use external openssl to retrieve information
+            * 'info-user'      - use usr_getinfo() to retrieve information
+            * 'cipher-socket'  - use internal socket to ckeck for ciphers
+            * 'cipher-openssl' - use external openssl to ckeck for ciphers
+            * 'cipher-user'    - use usr_getciphers() to ckeck for ciphers
+# TODO: above list renders wrong for HTML
 
           Method names starting with:
           * 'info-'
@@ -1158,10 +1156,10 @@ OPTIONS
             are responsible to compute  the score based on check results
 
           The second part of the name denotes which kind of method to call:
-          * 'socket'    the internal functionality with sockets is used
-          * 'openssl'   the exteranl openssl executable is used
-          * 'user'      the external special function, as specified in user's
-                        o-saft-usr.pm,  is used.
+            * 'socket'      - the internal functionality with sockets is used
+            * 'openssl'     - the exteranl openssl executable is used
+            * 'user'        - the external special function,  as specified in
+                              user's  o-saft-usr.pm,  is used.
 
           Example:
               --call=cipher-openssl
@@ -1199,20 +1197,19 @@ OPTIONS
       --ciphermode=MODE
 
           Following 'MODE's are supported:
-          * 'intern'    scan for ciphers using internal method; (default)
-          * 'openssl'   scan for ciphers using external openssl executable
-          * 'ssleay'    scan for ciphers using  IO::Socket  and  Net::SSLeay
-          * 'dump'      same as 'intern' but print  all cipher information,
-                        useful when postprocessed by contrib/* tools
+          * 'intern'    - scan for ciphers using internal method; (default)
+          * 'openssl'   - scan for ciphers using external openssl executable
+          * 'ssleay'    - scan for ciphers using  IO::Socket and  Net::SSLeay
+          * 'dump'      - same as 'intern' but print  all cipher information,
+                          useful when postprocessed by contrib/* tools
 
       --cipher=CIPHER
 
           'CIPHER' can be any cipher suite name or (internal) hex constant.
-          If 'CIPHER' does not match a hex key, for example 0x03000035, it is
-          used as pattern (RegEx) to match cipher suite names. For example:
-            'AES256-SHA' matches 23 cipher suites, 
-          For example 'AES256-SHA' matches 23 ciphers,  while 'AES256-SHA$'
-          matches 2 ciphers, see:
+          If 'CIPHER' does not match a hex key, i.e. '0x03000035', it is used
+          as pattern (RegEx) to match cipher suite names. For example:
+          'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
+          2 ciphers, see:
               OSaft/Ciphers.pm find-names=AES256-SHA
               OSaft/Ciphers.pm find-names=AES256-SHA$
 
@@ -1487,16 +1484,16 @@ OPTIONS
           Name of protocol to be added to list of  applcation layer protocols
           (ALPN), which is used for cipher checks.
 
-          --cipher-alpn=,   sets empty list.
-          --cipher-alpn=,,  sets list to empty element "".
+          * --cipher-alpn=,     - sets empty list.
+          * --cipher-alpn=,,    - sets list to empty element "".
 
       --cipher-npn=NAME
 
           Name of protocol to be added to list of  next protocol negotiations
           (NPN), which is used for cipher checks.
 
-          --cipher-npn=,   sets empty list.
-          --cipher-npn=,,  sets list to empty element "".
+          * --cipher-npn=,      - sets empty list.
+          * --cipher-npn=,,     - sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
           openssl executable (for example  --force-openssl).
@@ -1506,8 +1503,8 @@ OPTIONS
           Name of ecliptic curve to be added to list of ecliptic curves (EC),
           which is used for cipher checks.
 
-          --cipher-curve=,   sets empty list.
-          --cipher-curve=,,  sets list to empty element "".
+          * --cipher-curve=,    - sets empty list.
+          * --cipher-curve=,,   - sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
           openssl executable (for example  --force-openssl).
@@ -1517,21 +1514,21 @@ OPTIONS
 
           Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
-          * 'rfc'               all ciphers defined in various RFCs; default
-          * 'shifted'           'rfc', shifted by 64 bytes to the right
-          * 'long'              like 'rfc' but more lazy list of constants
-          * 'huge'              all constants  0x03000000 .. 0x0300FFFF
-          * 'safe'              all constants  0x03000000 .. 0x032FFFFF
-          * 'full'              all constants  0x03000000 .. 0x03FFFFFF
-          * 'SSLv2'             all ciphers according RFC for SSLv2
-          * 'SSLv2_long'        more lazy list of constants for SSLv2 ciphers
-          * 'SSLv3'             all ciphers according RFC for SSLv3
-          * 'SSLv3_SSLv2'       all ciphers for SSLv3 with SSLv2
-          * 'TLSv12'            all ciphers according RFC for TLSv12
-          * 'TLSv13'            all ciphers according RFC for TLSv13
-          * 'c0xx'              constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
-          * 'ccxx'              constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
-          * 'ecc'               all constants for ciphers using ECC
+          * 'rfc'             - all ciphers defined in various RFCs; default
+          * 'shifted'         - 'rfc', shifted by 64 bytes to the right
+          * 'long'            - like 'rfc' but more lazy list of constants
+          * 'huge'            - all constants  0x03000000 .. 0x0300FFFF
+          * 'safe'            - all constants  0x03000000 .. 0x032FFFFF
+          * 'full'            - all constants  0x03000000 .. 0x03FFFFFF
+          * 'SSLv2'           - all ciphers according RFC for SSLv2
+          * 'SSLv2_long'      - more lazy list of constants for SSLv2 ciphers
+          * 'SSLv3'           - all ciphers according RFC for SSLv3
+          * 'SSLv3_SSLv2'     - all ciphers for SSLv3 with SSLv2
+          * 'TLSv12'          - all ciphers according RFC for TLSv12
+          * 'TLSv13'          - all ciphers according RFC for TLSv13
+          * 'c0xx'            - constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
+          * 'ccxx'            - constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
+          * 'ecc'             - all constants for ciphers using ECC
 
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
@@ -1682,21 +1679,21 @@ OPTIONS
           of other SSL testing tools.
 
           The argument to the  --legacy=TOOL  option  is the name of the tool
-          to be simulated.
+          who's format of output is to be simulated.
 
           Following 'TOOL's are supported:
-          * 'sslaudit'          format of output similar to  sslaudit
-          * 'sslcipher'         format of output similar to  ssl-cipher-check
-          * 'ssldiagnos'        format of output similar to  ssldiagnos
-          * 'sslscan'           format of output similar to  sslscan
-          * 'ssltest'           format of output similar to  ssltest
-          * 'ssltestg'          format of output similar to  ssltest -g
-          * 'ssltest-g'         format of output similar to  ssltest -g
-          * 'sslyze'            format of output similar to  sslyze
-          * 'ssl-cipher-check'  same as sslcipher
-          * 'ssl-cert-check'    format of output similar to  ssl-cert-check
-          * 'testsslserver'     format of output similar to  TestSSLServer.jar
-          * 'thcsslcHeck'       format of output similar to  THCSSLCheck
+          * 'sslaudit'          - similar to  sslaudit
+          * 'sslcipher'         - similar to  ssl-cipher-check
+          * 'ssldiagnos'        - similar to  ssldiagnos
+          * 'sslscan'           - similar to  sslscan
+          * 'ssltest'           - similar to  ssltest
+          * 'ssltestg'          - similar to  ssltest -g
+          * 'ssltest-g'         - similar to  ssltest -g
+          * 'sslyze'            - similar to  sslyze
+          * 'ssl-cipher-check'  - same as sslcipher
+          * 'ssl-cert-check'    - similar to  ssl-cert-check
+          * 'testsslserver'     - similar to  TestSSLServer.jar
+          * 'thcsslcHeck'       - similar to  THCSSLCheck
 
           Note that these legacy formats only apply to  output of the checked
           ciphers. Other texts like headers and footers are adapted slightly.
@@ -1738,17 +1735,17 @@ OPTIONS
           This option is used to specify the format of the result lines. This
           covers the value of the result line only.
 
-          * 'raw'       Print raw data as passed from  Net::SSLinfo.
+          * 'raw'       - Print raw data as passed from  Net::SSLinfo.
             Note:  all data will be printed as is,  without  additional label
             or formatting. It's recommended to use the  option in conjunction
             with exactly one command.  Otherwise the user needs  to know  how
             to "read" the printed data.
 
-          * 'hex'       Convert some data to hex: 2 bytes separated by ':'.
-          * '0x'        Convert some data with hex values:
+          * 'hex'       - Convert some data to hex: 2 bytes separated by ':'.
+          * '0x'        - Convert some data with hex values:
                           2 bytes prepended by '0x' and separated by a space.
-          * '/x'        Same as  --format=\x
-          * '\x'        Convert some data with hex values:
+          * '/x'        - Same as  --format=\x
+          * '\x'        - Convert some data with hex values:
                           2 bytes prepended by '\x' and no separating char.
 
       --tty
@@ -1846,15 +1843,15 @@ OPTIONS
           Following values are supported:
 
           * 'raw'
-          * 'unix'      Print raw data, binary in bytes without conversion.
+          * 'unix'      - Print raw data, binary in bytes without conversion.
             Note:  binary here just means characters (as all output is text).
 
-          * 'utf8'      Convert all characters to UTF-8.
-          * 'crlf'      Use CR LF as end of line.
+          * 'utf8'      - Convert all characters to UTF-8.
+          * 'crlf'      - Use CR LF as end of line.
 
-          * 'CHARSET'   'CHARSET' can be any of the local installed character
-                        sets, like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
-                        This conversion may print its own warnings.
+          * 'CHARSET'   - can be any of the local installed  character sets,
+                          like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
+                          This conversion may print its own warnings.
 
           The option can be used multiple times with different values.
           To reset the  default behaviour, either  'raw'  or  'unix'  must be
@@ -1888,21 +1885,21 @@ OPTIONS
 
           $0 --help=alias
 
-                Tool's Option       (Tool)          $0 Option
-             #---------------------+---------------+------------------------
-              * --checks CMD        (TLS-Check.pl)  same as  +CMD
-              * -h, -h=HOST         (various tools) same as  --host HOST
-              * -p, -p=PORT         (various tools) same as  --port PORT
-              * -t HOST             (ssldiagnos)    same as  --host HOST
-              * --UDP               (ssldiagnos)    same as  --udp
-              * --timeout, --grep   (ssltest.pl)    ignored
-              * -r,  -s,  -t,  -x   (ssltest.pl)    ignored
-              * --insecure          (cnark.pl)      ignored
-              * --nopct --nocolor   (ssldiagnos)    ignored
-              * -connect, -H, -u, -url, -U          ignored
-              * -noSSL                              same as  --no-SSL
-              * -no_SSL                             same as  --no-SSL
-             #---------------------+---------------+------------------------
+            # Tool's Option         | (Tool)          $0 Option
+            #-----------------------+--------------+------------------------
+            * --checks CMD          | (TLS-Check.pl)  same as  +CMD
+            * -h, -h=HOST           | (various tools) same as  --host HOST
+            * -p, -p=PORT           | (various tools) same as  --port PORT
+            * -t HOST               | (ssldiagnos)    same as  --host HOST
+            * --UDP                 | (ssldiagnos)    same as  --udp
+            * --timeout, --grep     | (ssltest.pl)    ignored
+            * -r,  -s,  -t,  -x     | (ssltest.pl)    ignored
+            * --insecure            | (cnark.pl)      ignored
+            * --nopct --nocolor     | (ssldiagnos)    ignored
+            * -connect, -H, -u, -url, -U            ignored
+            * -noSSL                |                 same as  --no-SSL
+            * -no_SSL               |                 same as  --no-SSL
+            #-----------------------+--------------+------------------------
 
         For definition of  'SSL'  see  --SSL  and  --no-SSL  above.
 
@@ -2108,16 +2105,16 @@ OPTIONS
 
           Alias for  --trace-VALUE  options (see above).
 
-            Trace Option          Alias Option
-          #--------------------+----------------------------
-          * --trace=1           same as  --trace
-          * --trace=2           same as  --trace  --trace
-          * --trace=arg         same as  --trace-arg
-          * --trace=cmd         same as  --trace-cmd
-          * --trace=cli         same as  --trace-cli
-          * --trace=key         same as  --trace-key
-          * --trace=time        same as  --trace-time
-          #--------------------+----------------------------
+            # Trace Option      | Alias Option
+            #-------------------+-----------------------------
+            * --trace=1         | same as  --trace
+            * --trace=2         | same as  --trace  --trace
+            * --trace=arg       | same as  --trace-arg
+            * --trace=cmd       | same as  --trace-cmd
+            * --trace=cli       | same as  --trace-cli
+            * --trace=key       | same as  --trace-key
+            * --trace=time      | same as  --trace-time
+            #-------------------+-----------------------------
 
       --trace=FILE
 
@@ -2651,11 +2648,11 @@ CHECKS
 
         Following commands will check the value to be in  a specific range to
         become  'yes'  or  'no':
-          * +sts_maxage1d       - yes if HSTS maxage < 1 day
-          * +sts_maxage1m       - yes if HSTS maxage < 1 month
-          * +sts_maxage1y       - yes if HSTS maxage < 1 year
-          * +sts_maxage18       - yes if HSTS maxage < 18 weeks (5 months)
-          * +sts_maxagexy       - yes if HSTS maxage > 1 year
+          * +sts_maxage1d       - 'yes' if HSTS maxage < 1 day
+          * +sts_maxage1m       - 'yes' if HSTS maxage < 1 month
+          * +sts_maxage1y       - 'yes' if HSTS maxage < 1 year
+          * +sts_maxage18       - 'yes' if HSTS maxage < 18 weeks (5 months)
+          * +sts_maxagexy       - 'yes' if HSTS maxage > 1 year
           * +modulus_exp_1      - Public Key Modulus Exponent <>1
           * +modulus_exp_65537  - Public Key Modulus Exponent =65537
           * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
@@ -3555,17 +3552,17 @@ KNOWN PROBLEMS
         --trace-time,  --timeout=SEC,  --trace,  --trace-cmd
 
         Using  --trace-time   should show following times:
-          * DNS:             1 .. 10 sec
-          * need_default:    <5 sec
-          * need_cipher:     1 ..299 sec (+cipher with socket)
-          * no SNI:          1 .. 10 sec
-          * connection test: 1 ..  5 sec
-          * prepare checks:  2 .. 20 sec
-          *   checkalpn.     1 .. 15 sec
-          *   checkprot.     1 .. 15 sec
-          * cipher:          <1 sec
-          * info:            <1 sec
-          * check:           <1 sec
+              DNS:             1 .. 10 sec
+              need_default:    <5 sec
+              need_cipher:     1 ..299 sec (+cipher with socket)
+              no SNI:          1 .. 10 sec
+              connection test: 1 ..  5 sec
+              prepare checks:  2 .. 20 sec
+                  checkalpn.   1 .. 15 sec
+                  checkprot.   1 .. 15 sec
+              cipher:          <1 sec
+              info:            <1 sec
+              check:           <1 sec
 
 
 LIMITATIONS
@@ -3662,10 +3659,12 @@ LIMITATIONS
         for right at the beginning. Proper warnings and hints are printed.
         Following table shows the openssl option and how to disable it within
         $0:
-          * -nextprotoneg       --no-nextprotoneg
-          * -reconnect          --no-reconnect
-          * -tlsextdebug        --no-tlsextdebug
-          * -alpn               --no-alpn
+            #-------------------+---------------------
+            * -nextprotoneg     | --no-nextprotoneg
+            * -reconnect        | --no-reconnect
+            * -tlsextdebug      | --no-tlsextdebug
+            * -alpn             | --no-alpn
+            #-------------------+---------------------
 
     Connection problems
 
@@ -3683,14 +3682,16 @@ LIMITATIONS
         It is a trade-off to wait for all information done accurately,  or to
         get the results quickly. The logic to stop connecting for --ssl-error
         can be controlled with following additional options:
-          * --ssl-error-max=CNT      - max. continous errors
-          * --ssl-error-timeout=SEC  - treat a failure as error after timeout
-          * --ssl-error-total=CNT    - max. amount of errors
+            #-----------------------+----------------------------------------
+            * --ssl-error-max=CNT     | max. continous errors
+            * --ssl-error-timeout=SEC | treat failure as error after timeout
+            * --ssl-error-total=CNT   | max. amount of errors
+            #-----------------------+----------------------------------------
 
         This means that no more connections are made when more than
-          * --ssl-error-max errors occour sequentialy
+            * --ssl-error-max errors occour sequentialy
         or
-          * --ssl-error-total errors occoured
+            * --ssl-error-total errors occoured
 
         Examples:
           * --ssl-error-max=3
@@ -4536,9 +4537,6 @@ EXAMPLES
         * Test for a specific ciphers
           $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
-        * Show supported (enabled) ciphers with their DH parameters:
-          $0 +cipher-dh some.tld
-
         * Test using a private libssl.so, libcrypto.so and openssl
           $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
 
@@ -4547,6 +4545,13 @@ EXAMPLES
 
         * Test using a private openssl also for testing supported ciphers
           $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
+
+        * Show supported (enabled) ciphers with their DH parameters:
+          $0 +cipher-dh --ciphermode=openssl example.tld
+
+        * Check for all known ciphers (simple internal test function):
+          checkAllCiphers.pl example.tld
+          checkAllCiphers.pl example.tld --range=full --v
 
 # score will be removed, so don't anounce it
 #        * Show current score settings
@@ -4704,12 +4709,12 @@ DOCUMENTATION
           $0 --help=HELP
 
         It can be used to get well known parts of the documentation specified
-        by the keyword, (HELP in example above).
+        by the keyword, ('HELP' in example above).
         To find any text with some lines of context, following could be used:
 
           $0 --help | egrep -i -C 3 "some text"
 
-        This is simply avaiable with:
+        This is simply avaiable with the wrapper tool "o-saft":
 
           o-saft --help="some text"
 
