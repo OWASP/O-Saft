@@ -59,7 +59,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.105 23/11/27 00:12:43";
+my  $SID_man= "@(#) o-saft-man.pm 2.106 23/11/27 13:43:31";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -802,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.105'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.106'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1169,7 +1169,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
             # L& must be done after I& ad/or X& to avoid mismatch to i.e.  I&-SSL&
         s!^\s+($mytool .*)!<div class="c" >$1</div>!; # example line
         # detect lists, very lazy ... # SEE HTML:Known Bugs
-        s!(^=item +\*\*? )([^-]+)-( .*)!$1<span class="d">$2</span>&ndash;$3!g;
+        s!(^=item +\*\*? )(.+)[|-]( .*)!$1<span class="d">$2</span>&ndash;$3!g;
         m/^=item +\* (.*)/    && do { $txt .= qq(<li>$1</li>\n);            next;};
         m/^=item +\*\* (.*)/  && do { $txt .= qq(<li class="l2">$1 </li>\n);next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
@@ -2659,7 +2659,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.105 2023/11/27
+2.106 2023/11/27
 
 
 =head1 AUTHOR
