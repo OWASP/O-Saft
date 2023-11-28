@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.18 22/11/05 11:37:10
+# SID	@(#) rfc.txt 1.19 23/11/28 12:49:03
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -77,6 +77,7 @@ url	http://tools.ietf.org/
 6520	TLS Extension: Heartbeat
 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
 7633	TLS Extension: Feature Extension: Must Staple
+7924	TLS Extension: Cached Information Extension
 8449	TLS Extension: Record Size Limit
 5077	TLS session resumption without Server-Side State
 6961	TLS Multiple Certificate Status Request Extension
@@ -185,4 +186,10 @@ url	http://tools.ietf.org/
 9155	Deprecating MD5 and SHA-1 Signature Hashes in TLS 1.2 and DTLS 1.2
 8398	Internationalized Email Addresses in X.509 Certificates
 8399	Internationalization Updates to RFC 5280
+8447	IANA Registry Updates for TLS and DTLS
+8478	Zstandard Compression and the application/zstd Media Type
+8879	TLS Certificate Compression
+7250	Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)
+7924	Transport Layer Security (TLS) Cached Information Extension
+7932	Brotli Compressed Data Format
 
