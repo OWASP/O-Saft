@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.60 23/11/26 00:10:21",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.61 23/11/29 18:11:51",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -940,10 +940,10 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-  '0x03000080'=> [qw(GOSTR341094_WITH_28147_CNT_IMIT      GOSTR341094-28147-CNT-IMIT)],
-  '0x03000081'=> [qw(GOSTR341001_WITH_28147_CNT_IMIT      GOSTR341001-28147-CNT-IMIT)],
-  '0x03000082'=> [qw(GOSTR341094_WITH_NULL_GOSTR3411      GOSTR341094-NULL-GOSTR3411)],
-  '0x03000083'=> [qw(GOSTR341001_WITH_NULL_GOSTR3411      GOSTR341001-NULL-GOSTR3411)],
+  '0x03000080'=> [qw(GOSTR341094_WITH_28147_CNT_IMIT      GOST94-GOST89-GOST89)],
+  '0x03000081'=> [qw(GOSTR341001_WITH_28147_CNT_IMIT      GOST2001-GOST89-GOST89)],
+  '0x03000082'=> [qw(GOSTR341094_WITH_NULL_GOSTR3411      GOST94-NULL-GOST94)],
+  '0x03000083'=> [qw(GOSTR341001_WITH_NULL_GOSTR3411      GOST2001-NULL-GOST94)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
@@ -1158,20 +1158,20 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
   '0x0300C09C'=> [qw(RSA_WITH_AES_128_CCM        RSA-AES128-CCM)],
   '0x0300C09D'=> [qw(RSA_WITH_AES_256_CCM        RSA-AES256-CCM)],
-  '0x0300C09E'=> [qw(DHE_RSA_WITH_AES_128_CCM    DHE-RSA-AES128_CCM)],
-  '0x0300C09F'=> [qw(DHE_RSA_WITH_AES_256_CCM    DHE-RSA-AES256_CCM)],
+  '0x0300C09E'=> [qw(DHE_RSA_WITH_AES_128_CCM    DHE-RSA-AES128-CCM)],
+  '0x0300C09F'=> [qw(DHE_RSA_WITH_AES_256_CCM    DHE-RSA-AES256-CCM)],
   '0x0300C0A0'=> [qw(RSA_WITH_AES_128_CCM_8      RSA-AES128-CCM8)],
   '0x0300C0A1'=> [qw(RSA_WITH_AES_256_CCM_8      RSA-AES256-CCM8)],
-  '0x0300C0A2'=> [qw(DHE_RSA_WITH_AES_128_CCM_8  DHE-RSA-AES128_CCM8)],
-  '0x0300C0A3'=> [qw(DHE_RSA_WITH_AES_256_CCM_8  DHE-RSA-AES256_CCM8)],
-  '0x0300C0A4'=> [qw(PSK_WITH_AES_128_CCM        PSK-WITH-AES128_CCM)],
-  '0x0300C0A5'=> [qw(PSK_WITH_AES_256_CCM        PSK-WITH-AES256_CCM)],
-  '0x0300C0A6'=> [qw(DHE_PSK_WITH_AES_128_CCM    DHE-PSK-AES128_CCM)],
-  '0x0300C0A7'=> [qw(DHE_PSK_WITH_AES_256_CCM    DHE-PSK-AES256_CCM)],
+  '0x0300C0A2'=> [qw(DHE_RSA_WITH_AES_128_CCM_8  DHE-RSA-AES128-CCM8)],
+  '0x0300C0A3'=> [qw(DHE_RSA_WITH_AES_256_CCM_8  DHE-RSA-AES256-CCM8)],
+  '0x0300C0A4'=> [qw(PSK_WITH_AES_128_CCM        PSK-AES128-CCM)],
+  '0x0300C0A5'=> [qw(PSK_WITH_AES_256_CCM        PSK-AES256-CCM)],
+  '0x0300C0A6'=> [qw(DHE_PSK_WITH_AES_128_CCM    DHE-PSK-AES128-CCM)],
+  '0x0300C0A7'=> [qw(DHE_PSK_WITH_AES_256_CCM    DHE-PSK-AES256-CCM)],
   '0x0300C0A8'=> [qw(PSK_WITH_AES_128_CCM_8      PSK-AES128-CCM8)],
   '0x0300C0A9'=> [qw(PSK_WITH_AES_256_CCM_8      PSK-AES256-CCM8)],
-  '0x0300C0AA'=> [qw(PSK_DHE_WITH_AES_128_CCM_8  PSK-DHE-AES128-CCM8)],
-  '0x0300C0AB'=> [qw(PSK_DHE_WITH_AES_256_CCM_8  PSK-DHE-AES256-CCM8)],
+  '0x0300C0AA'=> [qw(PSK_DHE_WITH_AES_128_CCM_8  DHE-PSK-AES128-CCM8)],
+  '0x0300C0AB'=> [qw(PSK_DHE_WITH_AES_256_CCM_8  DHE-PSK-AES256-CCM8)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: http://www-archive.mozilla.org/projects/security/pki/nss/ssl/fips-ssl-ciphersuites.html
@@ -1186,7 +1186,7 @@ my %cipherHexHash = (
   '0x0300FEFF'=> [qw(RSA_FIPS_WITH_3DES_EDE_CBC_SHA      RSA-FIPS-3DES-EDE-SHA)],
 
 #!#----------------------------------------+-------------+--------------------+
-#!# Protocol: some  PSK and CCM ciphers (from o-saft.pl, nane1 <-> name2)
+#!# Protocol: some  PSK and CCM ciphers (from o-saft.pl, name1 <-> name2)
 #!# added manually 20141012
 #!#
 #!#----------------------------------------+-------------+--------------------+
@@ -1221,10 +1221,10 @@ my %cipherHexHash = (
    '0x030000B8' => [qw(RSA_PSK_WITH_NULL_SHA256          RSA-PSK-SHA256)],
    '0x030000B9' => [qw(RSA_PSK_WITH_NULL_SHA384          RSA-PSK-SHA384)],
 
-   '0x0300C0AC' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM      ECDHE-RSA-AES128-CCM)],
-   '0x0300C0AD' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM      ECDHE-RSA-AES256-CCM)],
-   '0x0300C0AE' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM_8    ECDHE-RSA-AES128-CCM-8)],
-   '0x0300C0AF' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM_8    ECDHE-RSA-AES256-CCM-8)],
+   '0x0300C0AC' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM      ECDHE-ECDSA-AES128-CCM)],
+   '0x0300C0AD' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM      ECDHE-ECDSA-AES256-CCM)],
+   '0x0300C0AE' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM_8    ECDHE-ECDSA-AES128-CCM-8)],
+   '0x0300C0AF' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM_8    ECDHE-ECDSA-AES256-CCM-8)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: some PSK ciphers
@@ -1359,7 +1359,7 @@ my %cipherHexHash = (
 # CipherSuite TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x6F };
 # CipherSuite TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256   = { 0xC0,0x70 };
 # CipherSuite TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384   = { 0xC0,0x71 };
-   '0x0300C064'=>[qw(PSK_WITH_ARIA_128_CBC_SHA256          PSK-ARIA128-SHA-56)],
+   '0x0300C064'=>[qw(PSK_WITH_ARIA_128_CBC_SHA256          PSK-ARIA128-SHA256)],
    '0x0300C065'=>[qw(PSK_WITH_ARIA_256_CBC_SHA384          PSK-ARIA256-SHA384)],
    '0x0300C066'=>[qw(DHE_PSK_WITH_ARIA_128_CBC_SHA256      DHE-PSK-ARIA128-SHA256)],
    '0x0300C067'=>[qw(DHE_PSK_WITH_ARIA_256_CBC_SHA384      DHE-PSK-ARIA256-SHA384)],
@@ -1394,7 +1394,7 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-   '0x030000C6'=>[qw(TLS13_SM4_GCM_SM3                     TLS13-SM4-CGM)],
+   '0x030000C6'=>[qw(TLS13_SM4_GCM_SM3                     TLS13-SM4-GCM)],
    '0x030000C7'=>[qw(TLS13_SM4_CCM_SM3                     TLS13-SM4-CCM)],
 
 #!#----------------------------------------+-------------+--------------------+
