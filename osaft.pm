@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.38 23/11/25 10:48:32";
+our $SID_osaft  =  "@(#) osaft.pm 2.40 23/11/30 12:48:35";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2144,11 +2144,12 @@ our %cfg = (    # main data structure for configuration
                         0x0300009C .. 0x030000A7, 0x030000BA .. 0x030000C5,
                         0x0300C023 .. 0x0300C032, 0x0300C072 .. 0x0300C079,
                         0x0300CC13 .. 0x0300CC15, 0x0300D000 .. 0x0300D005,
-                        0x0300FFFF,
+                        0x0300C100 .. 0x0300C102, 0x0300FFFF,
                        ",
         'TLSv13'    =>          # constants for TLSv1.3 ciphers
                        "0x03001301 .. 0x03001305, 0x0300FF85, 0x0300FF87,
                         0x030000C6,   0x030000C7, 0x0300C0B4, 0x0300C0B5,
+                        0x0300C100 .. 0x0300C107,
                        ",
                             # GREASE ciphers added in _cfg_init()
         'GREASE'    =>          # constants for GREASE ciphers
@@ -2687,18 +2688,22 @@ our %cfg = (    # main data structure for configuration
             # matching list of concrete constants would be more accurate, but
             # that cannot be done with RegEx or ranges, unfortunatelly
         'OWASP_AA'      => '^(TLS(?:v?13)?[_-](?:AES...|CHACHA20)[_-])',  # newer (2021 and later) openssl use strange names for TLSv1.3; i.e. TLS13-AES128-GCM-SHA256
-        'OWASP_A'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305)[_-]SHA)',
+        'OWASP_A'       => '^(?:TLSv?1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES...[_-]GCM|CHACHA20-POLY1305[_-]SHA))|TLS13[_-]AES-?...[_-]',
+            # due to cipher name rodeo we have AESxxx-GCM-SHA* and AES-xxx-GCM-SHA*
         'OWASP_B'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
         'OWASP_C'       => '^((?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]|(?:(?:EC)?DHE-)?PSK[_-]CHACHA)',
             # all ECDHE-PSK-CHACHA* DHE-PSK-CHACHA* and PSK-CHACHA* are C too
-        'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]))',
-        'OWASP_NA'      => '(?:ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ)',
+        'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]|PSK[_-]SHA))',
+            # all PSK-SHA are aliases for PSK-NULL-SHA and hence D
+            # TODO:  all AES128-SHA are aliases for AES128-CBC-SHA; severity depends on protocl version
+        'OWASP_NA'      => '(?:^PCT_|ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ|SM4)',
             # PCT are not SSL/TLS; will produce 'miss' in internal tests
         # TODO: need exception, i.e. TLSv1 and TLSv11
         'notOWASP_A    '=> '^(?:TLSv11?)',
         'notOWASP_B'    => '',
         'notOWASP_C'    => '',
         'notOWASP_D'    => '',
+        'notCipher'     => '^GREASE|SCSV',  # pseudo ciphers with a valid hex key
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
@@ -3062,7 +3067,8 @@ sub get_cipher_owasp    {
     if (" D" ne $sec) {     # if it is A, B or C check OWASP_NA again
         $sec = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
     }
-    $sec = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_AA'}/); # some special for TLSv1.3 only, aleways secure
+    $sec = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_AA'}/); # some special for TLSv1.3 only, always secure
+    $sec = "-"   if ($cipher =~ /$cfg{'regex'}->{'notCipher'}/); # some specials
     # TODO: implement when necessary: notOWASP_A, notOWASP_B, notOWASP_C, notOWASP_D
     return $sec;
 } # get_cipher_owasp
@@ -3326,6 +3332,10 @@ sub test_cipher_regex   {
         $o[0] = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_A'}/);
         $o[3] = "D"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_D'}/);
         $o[0] = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_AA'}/);
+        if ($cipher =~ /$cfg{'regex'}->{'notCipher'}/) {
+            $is_pfs =  '-';
+            $o[0]   = "-";
+        }
         printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
     }
     print _regex_line();
@@ -3334,9 +3344,11 @@ sub test_cipher_regex   {
 = PFS values:
 =   yes   cipher supports PFS
 =   no    cipher does not supports PFS
+=   -     pseudo cipher
 = OWASP values:
 =   x     value A or B or C or D or -?- as returned by get_cipher_owasp()
 =   miss  cipher not matched by any RegEx, programming error
+=   -     pseudo cipher
 = owasp values:
 =   xx    list of all matching OWASP_x RegEx (OWASP column picks best one)
 ";
@@ -3451,7 +3463,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.38"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.40"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3498,7 +3510,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.38 2023/11/25
+2.40 2023/11/30
 
 =head1 AUTHOR
 
