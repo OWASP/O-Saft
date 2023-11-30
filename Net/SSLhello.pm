@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.61 23/11/29 18:11:51",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.63 23/11/30 17:45:40",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -125,9 +125,11 @@ use base qw(Exporter);
 our @EXPORT_OK  = qw(
         net_sslhello_done
         checkSSLciphers
+        getSSLciphersWithParam
         compileClientHello
         compileSSL2CipherArray
         compileTLSCipherArray
+        getCipherParameter
         hexCodedCipher
         hexCodedSSL2Cipher
         hexCodedString
@@ -1702,7 +1704,7 @@ sub printCipherStringArray ($$$$$@) {
         } else {                                                    # SSLv2
             $cipher = "0x".substr($protocolCipher,-6,6);
         }
-        if ($legacy eq 'csv') {                                     # csv-style
+        if ($legacy eq 'csv') {                                     # csv-style output
             printf "%s%s%s%s%-6s%s%-8s%s%-12s%s%8s%s",
                 $host, $sep,            # %s%s
                 $port, $sep,            # %s%s
@@ -1710,39 +1712,24 @@ sub printCipherStringArray ($$$$$@) {
                 $sni,  $sep,            # %-8s%s%
                 $cipherOrder, $sep,     # %-12s%s
                 $cipher, $sep;          # %8s%s
-            if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
+            if ( (defined ($cipherHexHash{$protocolCipher}) ) && ($#{$cipherHexHash{$protocolCipher}}>0) ) { # definiert, max index >0
                 printf "%-36s%s%-41s",
-                    $cipherHexHash {$protocolCipher}[1], $sep,      # %-30s%s
-                    $cipherHexHash {$protocolCipher}[0];            # %-36s
+                    $cipherHexHash{$protocolCipher}[1], $sep,
+                    $cipherHexHash{$protocolCipher}[0];
             } else { # no RFC-Defined cipher
-                printf "%-36s%s%-41s\n",
-                    "NO-RFC-".$cipher, $sep,                        # %-30s%s
-                    "NO-RFC-".$cipher;                              # %-36ss
+                printf "%-36s%s%-41s\n", "NO-RFC-".$cipher, $sep, "NO-RFC-".$cipher;
             }
             print $sep;
             # Print parameters by the cipher
-            if (exists ($_SSLhello{$protocolCipher}{param}{ServerKey}{values})) { #length of dh_param, supported_group
-                print "param: $_SSLhello{$protocolCipher}{param}{ServerKey}{description} (". (@{$_SSLhello{$protocolCipher}{param}{ServerKey}{values}}) . "): ";
-                for (my $_i = 0; $_i <= $#{$_SSLhello{$protocolCipher}{param}{ServerKey}{values}}; $_i++) {
-                    print $sep_sep if ($_i) > 0;
-                    print $_SSLhello{$protocolCipher}{param}{ServerKey}{values}[$_i];
-                }
-            }
-            print "\n";
-        } else { # human readable output
-               if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
-                    printf "# Cipher-String: >%s<, %-36s, %s",$cipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0];
+            print getCipherParameter($protocolCipher, "Paramters: ", $sep_sep) . "\n";
+        } else {                                                    # human readable output
+            printf "# Cipher-String: >%s<,",$cipher;
+            if ( (defined ($cipherHexHash{$protocolCipher}) ) && ($#{$cipherHexHash{$protocolCipher}}>0) ) { # definiert, max index >0
+                printf " %-36s, %s", $cipherHexHash{$protocolCipher}[1], $cipherHexHash{$protocolCipher}[0];
                 # Print parameters by the cipher
-                if (exists ($_SSLhello{$protocolCipher}{param}{ServerKey}{values})) { #length of dh_param
-                    print ", Paramters: $_SSLhello{$protocolCipher}{param}{ServerKey}{description}: ";
-                    for (my $_i = 0; $_i <= $#{$_SSLhello{$protocolCipher}{param}{ServerKey}{values}}; $_i++) {
-                        print $sep_sep if ($_i) > 0;
-                        print $_SSLhello{$protocolCipher}{param}{ServerKey}{values}[$_i];
-                    }
-                }
-                print "\n";
+                print getCipherParameter($protocolCipher, ", Paramters: ", $sep_sep);
             } else {
-                print  "# Cipher-String: >".$cipher."<, NO-RFC-".$cipher;
+                print  " NO-RFC-" . $cipher;
             }
             print "\n";
         }
@@ -1761,10 +1748,6 @@ sub checkSSLciphers ($$$@) {
     #? if the first 2 ciphers are identical the array is sorted by priority of the server
     #
     my($host, $port, $ssl, @cipher_str_array) = @_;
-#    my $host  = shift || "localhost"; # hostname
-#    my $port  = shift || 443;
-#    my $ssl   = shift || ""; # SSLv2
-#    my (@cipher_str_array) = @_ || ();
     my $cipher_spec     = "";               # raw data with all hex values, SSLv2: 3 bytes, SSLv3 and later: 2 bytes
     my $acceptedCipher  = "";
     my @cipherSpecArray = ();               # temporary Array for all ciphers to be tested in the next _doCheckSSLciphers
@@ -2136,6 +2119,17 @@ sub checkSSLciphers ($$$@) {
     }
 } # checkSSLciphers
 
+sub getSSLciphersWithParam {
+    #? get ciphers with paramters using checkSSLciphers()
+    #? parameters are the same as for checkSSLciphers()
+    #? returns hash of ciphers with their parameters
+    my($host, $port, $ssl, @cipher_str_array) = @_;
+    my %ciphers;
+    foreach my $key (checkSSLciphers($host, $port, $ssl, @cipher_str_array)) {
+        $ciphers{$key} = getCipherParameter($key, "", " | ");
+    }
+    return %ciphers
+} # getSSLciphersWithParam
 
 sub openTcpSSLconnection ($$) {
     #? open a TCP connection to a server and port and send STARTTLS if requested
@@ -6084,8 +6078,31 @@ sub _chomp_r { # chomp \r\n
     return ($string);
 }
 
+sub getCipherParameter {
+    #? print parameters for cipher, i.e. DH, ECDH
+    #? returns string with parameters, or empty string if none available
+    #? given $prefix is used if parameters are available,
+    #? multiple paramters are separated by given $sep
+    # FIXME: <<POD missing>>
+    my $protocolCipher = shift;
+    my $prefix  = shift || "";
+    my $sep     = shift || " | ";
+    my $string  = "";
+    my $param   = $_SSLhello{$protocolCipher}{param}{ServerKey};
+    # Print parameters by the cipher
+    if (exists ($param->{values})) { #length of dh_param, supported_group
+        #$string = "$prefix$param->{description} (". (@{$param->{values}}) . "): "; # until version 1.61
+        $string = "$prefix$param->{description}: ";
+        for (my $_i = 0; $_i <= $#{$param->{values}}; $_i++) {
+            $string .= $sep if 0 < ($_i);
+            $string .= $param->{values}[$_i];
+        }
+    }
+    return $string;
+} # getCipherParameter
+
 sub hexCodedString {
-    #? <<description missing>> <<POD missing>> # FIXME:
+    # FIXME: <<description missing>> <<POD missing>>
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
