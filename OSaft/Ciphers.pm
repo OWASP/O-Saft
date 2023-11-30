@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.89 23/11/29 18:06:58";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.90 23/11/30 10:38:09";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -789,21 +789,22 @@ sub sort_names      {
         qw((?:MD[2345])),               # all MD
         qw(DH.?(?i:anon)),              # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
+        qw((?:PSK.SHA)) ,               # all PSK-SHA (which are PSK-NULL-SHA)
         qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
-        qw((?:GREASE-))    ,            # dummy ciphers (avoids **WARNING: 412: for GREASE*)
+        qw((?:GREASE-)) ,               # dummy ciphers (avoids **WARNING: 412: for GREASE*)
     );
     my @strength = (
         qw(CECPQ1[_-].*?CHACHA)       ,
         qw(CECPQ1[_-].*?AES256.GCM)   ,
-        qw(^(TLS_|TLS13-))   ,
+        qw(^(TLS_|TLS13[_-]))         , # TLS13_ for TLS13_GOSTR341112_256_*
         qw((?:ECDHE|EECDH).*?CHACHA)  , # 1. all ecliptical curve, ephermeral, GCM
         qw((?:ECDHE|EECDH).*?512.GCM) , # .. sorts -ECDSA before -RSA
         qw((?:ECDHE|EECDH).*?384.GCM) ,
         qw((?:ECDHE|EECDH).*?256.GCM) ,
         qw((?:ECDHE|EECDH).*?128.GCM) ,
-        qw((?:EDH|DHE).*?CHACHA)  ,     # 2. all ephermeral, GCM
-        qw((?:EDH|DHE).*?PSK)     ,
-        qw((?:EDH|DHE).*?512.GCM) ,     # .. sorts AES before CAMELLIA
+        qw((?:EDH|DHE).*?CHACHA)      , # 2. all ephermeral, GCM
+        qw((?:EDH|DHE).*?PSK)         ,
+        qw((?:EDH|DHE).*?512.GCM)     , # .. sorts AES before CAMELLIA
         qw((?:EDH|DHE).*?384.GCM) ,
         qw((?:EDH|DHE).*?256.GCM) ,
         qw((?:EDH|DHE).*?128.GCM) ,
@@ -1691,7 +1692,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.89 2023/11/29
+2.90 2023/11/30
 
 
 =head1 AUTHOR
