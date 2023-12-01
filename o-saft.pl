@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.87 23/12/01 08:14:49"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.88 23/12/01 08:18:04"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.87");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.88");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -1818,7 +1818,7 @@ sub _init_openssl       {
     if (not defined $cfg{'ca_file'} or $cfg{'ca_path'} eq "") {
         $cfg{'ca_file'} = "$cfg{'ca_paths'}[0]/$cfg{'ca_files'}[0]"; # use default
         _warn("060: no PEM file for CA found; using '--ca-file=$cfg{'ca_file'}'");
-        _warn("     if default file does not exist, some certificate checks may fail");
+        _warn("060: if default file does not exist, some certificate checks may fail");
         _hint("use '--ca-file=/full/path/$cfg{'ca_files'}[0]'");
     }
     _v_print("_init_openssl: ca_file=$cfg{'ca_file'}");
