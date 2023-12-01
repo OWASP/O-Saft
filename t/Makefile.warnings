@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.78 23/11/16 10:57:08
+#?      @(#) Makefile.warnigs 1.79 23/12/01 18:05:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.78
+_SID.warnings      := 1.79
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -282,7 +282,6 @@ warning-135: TEST.args  = TODO: testing Net::SSLeay < 1.49
 #warning-139: TEST.args  = free
 warning-140: TEST.args  = +cipherraw --dtlsv1               +quit
 warning-141: TEST.args  = +cipherraw --dtlsv9               +quit
-warning-141: TEST.args  = TODO: testing wrong or unsupported SSL protocol
 #warning-142: TEST.args  = free
 warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLeay, difficult ...
 warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
@@ -424,7 +423,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.78: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.79: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
