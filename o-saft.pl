@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.90 23/12/01 08:40:57"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.91 23/12/01 16:55:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.90");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.91");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -5665,7 +5665,7 @@ sub _print_cipher_results       {
             _warn("863: unknown cipher key '$key'; key ignored");
             next;
         }
-        my $r_yesno = $results->{$key}; # [0];
+        my $r_yesno = $results->{$key}[0];
         $total++;
         next if (($r_yesno ne $yesno) and ("" ne $yesno));
         next if not _is_print_cipher($r_yesno, $cfg{'out'}->{'disabled'}, $cfg{'out'}->{'enabled'});
