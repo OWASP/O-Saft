@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.91 23/12/01 16:55:20"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.93 23/12/01 21:38:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.91");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.93");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -873,6 +873,7 @@ my %info_gnutls = ( # NOT YET USED
 ); # %info_gnutls
 
 our %cmd = (
+   # contains all OpenSSL related informations and settings
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
     'openssl'       => "openssl",   # OpenSSL
     'openssl3'      => "openssl",   # OpenSSL which supports TLSv1.3
@@ -885,6 +886,7 @@ our %cmd = (
     'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
+    'version'       => "",      # OpenSSL's version number, see osaft::get_openssl_version
 );
 
 #| construct list for special commands: 'cmd-*'
@@ -1689,6 +1691,11 @@ sub _check_openssl      {
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
         _enable_sclient($opt);
+    }
+    $cmd{'version'} = osaft::get_openssl_version($cmd{'openssl'});
+    if ($cmd{'version'} lt "1.0.2") {
+        _warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
+        $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
     }
     # TODO: checks not yet complete
     # TODO: should check openssl with a real connection
@@ -3063,11 +3070,73 @@ sub ciphers_scan_prot   {
     return @res;
 } # ciphers_scan_prot
 
-sub ciphers_scan_raw    {
-    #? scan target for ciphers for all protocols
+sub ciphers_scan_openssl {
+    #? scan target for ciphers for all protocols (using openssl)
+    # returns hash with accepted ciphers
+    my ($host, $port) = @_;
+    _trace("ciphers_scan_openssl($host, $port){");
+# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
+# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
+#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
+# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+    my $cnt = scalar(@{$cfg{'ciphers'}});
+    my $results = {};       # hash of cipher list to be returned
+    foreach my $ssl (@{$cfg{'version'}}) {
+        my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
+        my $usesni  = $cfg{'use'}->{'sni'};
+        if (($cfg{'verbose'} + $cfg{'trace'} > 0) or _is_cfg_out('traceCMD')) {
+            # optimise output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
+            my $_me = "";
+               $_me = $cfg{'me'} . "   CMD:" if (_is_cfg_out('traceCMD')); # TODO: _yTIME() missing
+               $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
+            print("#$_me     checking $cnt ciphers for $ssl ... ($__openssl)");
+        }
+        if ($ssl =~ m/^SSLv[23]/) {
+            # SSLv2 has no SNI; SSLv3 has originally no SNI
+            if (_is_cfg_do('cipher') or $cfg{'verbose'} > 0) {
+                _warn_nosni("410:", $ssl, $cfg{'use'}->{'sni'});
+                # ciphers are collected for various checks, this would result
+                # in above warning, even then if  SSLv3 is not needed for the
+                # requested check;  to avoid these noicy warnings, it is only
+                # printend for  +cipher  command or with --v option
+                # NOTE: applies to --ciphermode=openssl|ssleay only
+            }
+            $cfg{'use'}->{'sni'} = 0; # do not use SNI for this $ssl
+        }
+        my $__verbose   = $cfg{'verbose'};
+            # $cfg{'v_cipher'}  should only print cipher checks verbosely,
+            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence we need to save
+            # the current value and reset after calling ciphers_scan_prot()
+        $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
+        my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
+        $cfg{'verbose'} = $__verbose if ($__verbose != 2);
+        # remove  protocol: in each item
+        #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
+        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and Perl::Critic
+            # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
+            # but discarted by Perl::Critic, hence the less readable for loop
+        # now build line in %results
+        foreach my $cipher (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
+            my $key = OSaft::Ciphers::get_key($cipher);
+            $results->{$ssl}{$key} = [ ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no" , "" ];
+                #                      \----- yes or no ---   ,          DH parameter -----/
+        }
+        $cfg{'use'}->{'sni'} = $usesni;
+    } # $ssl
+    if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
+        _trace("ciphers_scan_openssl()\t= $results }");
+    } else {
+        _trace("ciphers_scan_openssl()\t= <<result prined with --trave=2>> }");
+    }
+    return $results;
+} # ciphers_scan_openssl
+
+sub ciphers_scan_intern {
+    #? scan target for ciphers for all protocols (using own parser)
     # returns array with accepted ciphers
     my ($host, $port) = @_;
-    _trace("ciphers_scan_raw($host, $port){");
+    _trace("ciphers_scan_intern($host, $port){");
     my $total   = 0;
     my $enabled = 0;
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
@@ -3150,74 +3219,12 @@ sub ciphers_scan_raw    {
         }
     } # $ssl
     if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
-        _trace("ciphers_scan_raw()\t= $results }");
+        _trace("ciphers_scan_intern()\t= $results }");
     } else {
-        _trace("ciphers_scan_raw()\t= <<result prined with --trace=2>> }");
+        _trace("ciphers_scan_intern()\t= <<result prined with --trace=2>> }");
     }
     return $results;
-} # ciphers_scan_raw
-
-sub ciphers_scan        {
-    #? scan target for ciphers for all protocols
-    # returns hash with accepted ciphers
-    my ($host, $port) = @_;
-    _trace("ciphers_scan($host, $port){");
-# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
-#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
-# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
-    my $cnt = scalar(@{$cfg{'ciphers'}});
-    my $results = {};       # hash of cipher list to be returned
-    foreach my $ssl (@{$cfg{'version'}}) {
-        my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
-        my $usesni  = $cfg{'use'}->{'sni'};
-        if (($cfg{'verbose'} + $cfg{'trace'} > 0) or _is_cfg_out('traceCMD')) {
-            # optimise output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
-            my $_me = "";
-               $_me = $cfg{'me'} . "   CMD:" if (_is_cfg_out('traceCMD')); # TODO: _yTIME() missing
-               $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
-            print("#$_me     checking $cnt ciphers for $ssl ... ($__openssl)");
-        }
-        if ($ssl =~ m/^SSLv[23]/) {
-            # SSLv2 has no SNI; SSLv3 has originally no SNI
-            if (_is_cfg_do('cipher') or $cfg{'verbose'} > 0) {
-                _warn_nosni("410:", $ssl, $cfg{'use'}->{'sni'});
-                # ciphers are collected for various checks, this would result
-                # in above warning, even then if  SSLv3 is not needed for the
-                # requested check;  to avoid these noicy warnings, it is only
-                # printend for  +cipher  command or with --v option
-                # NOTE: applies to --ciphermode=openssl|ssleay only
-            }
-            $cfg{'use'}->{'sni'} = 0; # do not use SNI for this $ssl
-        }
-        my $__verbose   = $cfg{'verbose'};
-            # $cfg{'v_cipher'}  should only print cipher checks verbosely,
-            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence we need to save
-            # the current value and reset after calling ciphers_scan_prot()
-        $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
-        my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
-        $cfg{'verbose'} = $__verbose if ($__verbose != 2);
-        # remove  protocol: in each item
-        #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
-        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and Perl::Critic
-            # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
-            # but discarted by Perl::Critic, hence the less readable for loop
-        # now build line in %results
-        foreach my $cipher (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-            my $key = OSaft::Ciphers::get_key($cipher);
-            $results->{$ssl}{$key} = [ ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no" , "" ];
-                #                      \----- yes or no ---   ,          DH parameter -----/
-        }
-        $cfg{'use'}->{'sni'} = $usesni;
-    } # $ssl
-    if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
-        _trace("ciphers_scan()\t= $results }");
-    } else {
-        _trace("ciphers_scan()\t= <<result prined with --trave=2>> }");
-    }
-    return $results;
-} # ciphers_scan
+} # ciphers_scan_intern
 
 sub check_certchars     {
     #? check for invalid characters in certificate
@@ -5754,14 +5761,10 @@ sub printciphers_dh     {
 } # printciphers_dh
 
 sub printciphers_dh_openssl {
-    #? print ciphers and DH parameter from target (available with openssl only)
+    #? print ciphers and DH parameter from target (using openssl)
     # check if openssl is available must be done in caller
     my ($legacy, $host, $port) = @_;
-    my $openssl_version = osaft::get_openssl_version($cmd{'openssl'});
-    _trace1("printciphers_dh_openssl: openssl_version= $openssl_version");
-    if ($openssl_version lt "1.0.2") { # yes Perl can do this check  # TODO: move this check to _check_openssl()
-        _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
-        $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
+    if ($cmd{'version'} lt "1.0.2") {   # yes Perl can do this check
         require Net::SSLhello;  # to parse output of '-msg'; ok here, as Perl handles multiple includes proper
             # SEE Note:Stand-alone
     }
@@ -7894,7 +7897,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             next;
         }
     } # cipher_dh
-
     if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump') or _is_cfg_do('cipher_dh')) {
         _y_CMD("+cipher");
         _yeast_TIME("ciphermode=intern{");
@@ -7902,7 +7904,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
         $cipher_results = {};           # new list for every host (array of arrays)
-        $cipher_results = ciphers_scan_raw($host, $port);   # print ciphers also if not cipher_dh
+        $cipher_results = ciphers_scan_intern($host, $port);# print ciphers also if not cipher_dh
         #my $enabled = %$cipher_results; # FIXME: this is the number of enabled ciphers!
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             $checks{'cnt_totals'}->{val} += osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
@@ -7984,7 +7986,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
         _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
         $cipher_results = {};           # new list for every host
-        $cipher_results = ciphers_scan($host, $port);
+        $cipher_results = ciphers_scan_openssl($host, $port);
         $checks{'cnt_totals'}->{val} = scalar %$cipher_results;
         # TODO:  $prot{$ssl}->{'default'} = $cipher;
         checkciphers($host, $port, $cipher_results); # necessary to compute 'out_summary'
