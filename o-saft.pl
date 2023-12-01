@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.89 23/12/01 08:28:44"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.90 23/12/01 08:40:57"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.89");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.90");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -3206,7 +3206,8 @@ sub ciphers_scan        {
         # now build line in %results
         foreach my $cipher (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             my $key = OSaft::Ciphers::get_key($cipher);
-            $results->{$ssl}{$key} = ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no";
+            $results->{$ssl}{$key} = [ ((grep{/^$cipher$/} @supported)>0) ? "yes" : "no" , "" ];
+                #                      \----- yes or no ---   ,          DH parameter -----/
         }
         $cfg{'use'}->{'sni'} = $usesni;
     } # $ssl
