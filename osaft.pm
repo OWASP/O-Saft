@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.40 23/11/30 12:48:35";
+our $SID_osaft  =  "@(#) osaft.pm 2.41 23/12/01 21:24:02";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -1973,6 +1973,7 @@ our %cfg = (    # main data structure for configuration
                                 # cert.pem instead of certs.pem on Android :-(
     'ca_paths'      => [qw(/etc/ssl/certs       /usr/lib/certs           /System/Library/OpenSSL /etc/tls/certs)],
                                 # common paths to PEM files for CAs; 1st used as default
+    'openssl_version' => undef,  # openssl's version (if executable found)
     'openssl_cnfs'  => [qw(/etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)],
                                 # common openssl.cnf files for openssl; 1st used as default
     'openssl_cnf'   => undef,   # full path to openssl's openssl.cnf
@@ -3463,7 +3464,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.40"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.41"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3510,7 +3511,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.40 2023/11/30
+2.41 2023/12/01
 
 =head1 AUTHOR
 
