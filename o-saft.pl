@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.86 23/12/01 00:12:44"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.87 23/12/01 08:14:49"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.86");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.87");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -5737,6 +5737,7 @@ sub printciphercheck    {
 } # printciphercheck
 
 sub printciphers_dh     {
+    #? print ciphers and DH parameter from target
     my ($legacy, $host, $port, $result) = @_;
     foreach my $ssl (@{$cfg{'version'}}) {
         print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
@@ -5753,7 +5754,7 @@ sub printciphers_dh     {
 
 sub printciphers_dh_openssl {
     #? print ciphers and DH parameter from target (available with openssl only)
-    # currently DH parameters requires openssl, check must be done in caller
+    # check if openssl is available must be done in caller
     my ($legacy, $host, $port) = @_;
     my $openssl_version = osaft::get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh_openssl: openssl_version= $openssl_version");
