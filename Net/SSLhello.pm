@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.63 23/11/30 17:45:40",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.64 23/12/01 00:08:15",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -2122,11 +2122,19 @@ sub checkSSLciphers ($$$@) {
 sub getSSLciphersWithParam {
     #? get ciphers with paramters using checkSSLciphers()
     #? parameters are the same as for checkSSLciphers()
-    #? returns hash of ciphers with their parameters
+    #? returns numerical hash, each entry with array [ciphers, parameters]
+    #? entry {0} is the array returned by checkSSLciphers()
+    # FIXME: <<POD missing>> 
     my($host, $port, $ssl, @cipher_str_array) = @_;
     my %ciphers;
-    foreach my $key (checkSSLciphers($host, $port, $ssl, @cipher_str_array)) {
-        $ciphers{$key} = getCipherParameter($key, "", " | ");
+    my $_i = 0;
+    my $lastkey   = "";
+    @{$ciphers{0}} = checkSSLciphers($host, $port, $ssl, @cipher_str_array);
+    foreach my $key (@{$ciphers{0}}) {
+        next if ($lastkey eq $key); # should happen only once
+        $lastkey  = $key;
+        $_i++;
+        $ciphers{$_i} = [ $key, getCipherParameter($key, "", " | ") ];
     }
     return %ciphers
 } # getSSLciphersWithParam
