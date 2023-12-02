@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.100 23/12/02 20:41:19"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.101 23/12/02 21:38:56"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.100");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.101");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -3214,8 +3214,7 @@ sub ciphers_scan_intern {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                    (_is_cfg_legacy('sslscan'))?($_printtitle):0, @{$accepted{0}});
                 if (_is_cfg_legacy('simple|openssl')) {
-                    printf("%-36s\t%s\n", "=   $checks{'cnt_totals'}->{txt}", scalar(@all));
-                        # FIXME: should use print_line() instead of hardcoded printf
+                    print_check($legacy, $host, $port, 'cnt_totals', scalar(@all));
                 }
                 next if ($accepted_cnt < 1); # defensive programming ..
                 #push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
@@ -5732,7 +5731,7 @@ sub printciphercheck    {
             #       ciphers for all protocols, here only the number of ciphers
             #       for the protocol $ssl should be printed
         print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
-        print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
+        print_check($legacy, $host, $port, 'cnt_totals', $total);
     } else {
         print "\n  * $ssl Cipher Suites :";
         print_cipherpreferred($legacy, $ssl, $host, $port);
