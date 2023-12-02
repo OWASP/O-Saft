@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.95 23/12/02 14:06:45"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.99 23/12/02 19:45:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.95");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.99");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -696,10 +696,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     #       can produce better human readable results
 }
 
-_yeast("a _yeast");
-print "EXIT\n";
-exit;
-
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
@@ -1161,6 +1157,8 @@ sub _is_cfg_tty($)      { my  $is=shift;    return $cfg{'tty'}->{$is};  }
 sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
+sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'} =~ $is); }
+    # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
 sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
@@ -3212,8 +3210,8 @@ sub ciphers_scan_intern {
             print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
             if (_is_cfg_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
-                    ($legacy eq "sslscan")?($_printtitle):0, @{$accepted{0}});
-                if ($cfg{'legacy'} =~ m/simple|openssl/) {
+                   (_is_cfg_legacy('sslscan'))?($_printtitle):0, @{$accepted{0}});
+                if (_is_cfg_legacy('simple|openssl')) {
                     printf("%-36s\t%s\n", "=   $checks{'cnt_totals'}->{txt}", scalar(@all));
                         # FIXME: should use print_line() instead of hardcoded printf
                 }
@@ -7552,7 +7550,7 @@ if (1 == $quick) {
     _set_cfg_out('enabled', 1);
     $cfg{'label'}   = 'short';
 }
-$text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
+$text{'separator'}  = "\t"    if _is_cfg_legacy('quick');
 
 #| set defaults for Net::SSLinfo
 #| -------------------------------------
