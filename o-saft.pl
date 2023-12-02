@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.94 23/12/02 12:24:54"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.95 23/12/02 14:06:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.94");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.95");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -230,6 +230,8 @@ sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR $STR{DBX}, join(" ", @
     #? print line for debugging
 sub _dbx    { my @txt = @_; _dprint(@txt); return; }
     #? print line for debugging (alias for _dprint)
+sub _tracrc { printf("#%s: %s\n", $cfg{'me'}, join(" ", @_)); return; }
+    #? same as _yeast from o-saft-dbx.pm; needed before loading o-saft-dbx.pm
 sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
@@ -571,7 +573,7 @@ if (_is_argv('(?:--rc=)') > 0) {                # other RC-FILE given
     $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
     # no check if file exists, will be done below
 }
-print "#o-saft.pl  RC-FILE: $cfg{'RC-FILE'}\n" if _is_v_trace();
+_tracrc("RC-FILE: $cfg{'RC-FILE'}") if _is_v_trace();
 my @rc_argv = "";
 if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
@@ -587,23 +589,23 @@ if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
-        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot used here
+        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot be used here
         if (_is_v_trace()) {
             my @cfgs;
-            print "#$cfg{'me'}  $cfg{'RC-FILE'}\n";
-            print "#$cfg{'me'}: !!Hint: use  --trace  to see complete settings\n";
-            print "#$cfg{'me'}: #------------------------------------------------- RC-FILE {\n";
+            _tracrc("$cfg{'RC-FILE'}");
+            _tracrc("!!Hint: use  --trace  to see complete settings");
+            _tracrc("#------------------------------------------------- RC-FILE {");
             foreach my $val (@rc_argv) {
                 #print join("\n  ", "", @rc_argv);
                 $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
-                print "#$cfg{'me'}:      $val\n";
+                _tracrc("     $val");
                 if ($val =~ m/--cfg[^=]*=[^=]*/) {
                     $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
                     push(@cfgs, $val);
                 }
             }
-            print "#$cfg{'me'}: added/modified= @cfgs\n";
-            print "#$cfg{'me'}: #------------------------------------------------- RC-FILE }\n";
+            _tracrc("added/modified= @cfgs");
+            _tracrc("#------------------------------------------------- RC-FILE }");
         }
     } else {
         _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_v_trace();
@@ -693,6 +695,10 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     # NOTE: these comment lines at end of else scope so that some make targets
     #       can produce better human readable results
 }
+
+_yeast("a _yeast");
+print "EXIT\n";
+exit;
 
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
