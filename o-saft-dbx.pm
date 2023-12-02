@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.35 23/12/02 11:28:03";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.36 23/12/02 11:48:35";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -98,10 +98,19 @@ sub __trac      {
         /CODE/  && do { $data .= __TRAC($key, "<<code>>");   last SWITCH; };
         /SCALAR/&& do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
         /ARRAY/ && do { $data .= __TRAC($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
-        /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});      # print hashes for full trace only
+        /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});  # print hashes for full trace only
                         $data .= __yeast("# - - - - HASH: $key = {\n");
                         foreach my $k (sort keys %{$ref->{$key}}) {
-                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k}) . "\n"); # TODO: output needs to be improved
+                            my $val = "";
+                            if (defined ${$ref->{$key}}{$k}) {
+                               if ('ARRAY' eq ref(${$ref->{$key}}{$k})) {
+                                   $val = "[ " . join(", ",@{$ref->{$key}{$k}}) . " ]";
+                                       # ,-separated list hence not ___ARR()
+                               } else {
+                                   $val = join("-", ${$ref->{$key}}{$k});
+                               }
+                            }
+                            $data .= __TRAC("    $k", $val . "\n");
                         };
                         $data .= __yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -1063,7 +1072,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.35 2023/12/02
+2.36 2023/12/02
 
 =head1 AUTHOR
 
