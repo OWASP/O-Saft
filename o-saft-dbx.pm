@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.34 23/11/17 14:02:01";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.35 23/12/02 11:28:03";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -99,9 +99,9 @@ sub __trac      {
         /SCALAR/&& do { $data .= __TRAC($key, $ref->{$key}); last SWITCH; };
         /ARRAY/ && do { $data .= __TRAC($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});      # print hashes for full trace only
-                        $data .= __yeast("# - - - - HASH: $key = {");
+                        $data .= __yeast("# - - - - HASH: $key = {\n");
                         foreach my $k (sort keys %{$ref->{$key}}) {
-                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k})); # TODO: output needs to be improved
+                            $data .= __TRAC("    ".$key."->".$k, join("-", ${$ref->{$key}}{$k}) . "\n"); # TODO: output needs to be improved
                         };
                         $data .= __yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -1063,7 +1063,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.34 2023/11/17
+2.35 2023/12/02
 
 =head1 AUTHOR
 
