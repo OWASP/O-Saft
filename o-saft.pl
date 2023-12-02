@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.93 23/12/01 21:38:45"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.94 23/12/02 12:24:54"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.93");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.94");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -7542,7 +7542,6 @@ if (not _is_cfg_use('http')) {          # was explicitly set with --no-http 'cau
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
-$quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if (1 == $quick) {
     _set_cfg_out('enabled', 1);
     $cfg{'label'}   = 'short';
@@ -8033,7 +8032,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     } # cipher
     next if _yeast_NEXT("exit=HOST5 - host ciphers end");
 
-    goto CLOSE_SSL if (_is_cfg_do('cipher') and ($quick == 0));
+    goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick));
 
     usr_pre_info();
     _yeast_TIME("SNI{");
