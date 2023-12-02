@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.7 23/11/25 23:49:43
+#?      @(#) Makefile.mod 1.8 23/12/02 10:32:47
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.7
+_SID.mod           := 1.8
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -94,7 +94,7 @@ LIST.o-saft-man.pm     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
-	toc     todo    tools   warning exit    abbr    \
+	toc     todo    tools   exit    abbr    warnings \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
     # o-saft-man.pm allows any of the above listed arguments like:
