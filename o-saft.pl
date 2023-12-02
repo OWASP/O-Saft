@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.99 23/12/02 19:45:20"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.100 23/12/02 20:41:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.99");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.100");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -1157,7 +1157,9 @@ sub _is_cfg_tty($)      { my  $is=shift;    return $cfg{'tty'}->{$is};  }
 sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
 sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
-sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'} =~ $is); }
+sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); }
+    # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
+sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
     # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
@@ -1611,7 +1613,7 @@ sub _check_ssl_methods  {
             $cfg{$ssl} = 1;
         } else {
             _warn("143: SSL version '$ssl': not supported by Net::SSLeay; not checked");
-            _hint("consider using '--ciphermode=intern' instead") if ('intern' ne $cfg{'ciphermode'});
+            _hint("consider using '--ciphermode=intern' instead") if not _is_cfg_ciphermode('intern');
         }
     } # $ssl
 
@@ -5620,7 +5622,7 @@ sub print_cipherpreferred($$$$) {
     if ($legacy eq 'sslaudit')  {} # TODO: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    if ("intern" ne $cfg{'ciphermode'}) {
+    if (not _is_cfg_ciphermode('intern')) {
        my $key = OSaft::Ciphers::get_key($data{'cipher_selected'}->{val}($host)); # TODO use key
        print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
     }
@@ -5822,7 +5824,7 @@ sub printcipherpreferred {
     if (_is_cfg_out('header')) {
         printf("=------+-------------------------------+-------------------------------\n");
     }
-    if ("intern" ne $cfg{'ciphermode'}) {
+    if (not _is_cfg_ciphermode('intern')) {
         print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
     }
     return;
@@ -7480,7 +7482,7 @@ _yeast_TIME("inc{");
 #| import common and private modules
 #| -------------------------------------
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
-    $cfg{'need_netinfo'} = 0 if ("intern" eq $cfg{'ciphermode'});
+    $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     foreach my $cmd (qw(
         beast crime drown freak logjam lucky13 poodle sloth sweet32
 	cipher_strong cipher_weak
@@ -7926,7 +7928,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         # TODO dirty hack, check with dh256.tlsfun.de
         _y_CMD("+cipher-dh");
         _yeast_TIME("cipher-dh{");
-        if ("intern" eq $cfg{'ciphermode'}) {
+        if (_is_cfg_ciphermode('intern')) {
             printciphers_dh($legacy, $host, $port, $cipher_results);
         } else {
             printciphers_dh_openssl($legacy, $host, $port);
