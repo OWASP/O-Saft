@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.101 23/12/02 21:38:56"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.102 23/12/02 22:00:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.101");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.102");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -5756,7 +5756,7 @@ sub printciphers_dh     {
         print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         print_cipherhead( 'cipher_dh');
         if (exists $result->{$ssl}) {
-            foreach my $c (keys %{$result->{$ssl}}) {
+            foreach my $c (sort keys %{$result->{$ssl}}) {  # sort is contribution for comparing results
                 printf("    %-28s\t%s\n", OSaft::Ciphers::get_name($c), ${$result->{$ssl}{$c}}[1]);
             }
         }
