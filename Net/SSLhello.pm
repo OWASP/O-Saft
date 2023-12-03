@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.64 23/12/01 00:08:15",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.65 23/12/03 10:34:23",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -1520,7 +1520,7 @@ sub version { # version of SSLhello
     return;
 } # version
 
-sub __print { return sprintf("%s%s\n", "#SSLHello: ", @_); }
+sub __print { return sprintf("%s%s\n", "#SSLhello: ", @_); }
 sub _yprint { return __print(sprintf("%21s=%s", $_[0], $_[1])); }
 
 sub printConstants {
@@ -1528,7 +1528,7 @@ sub printConstants {
     #
     local $\ = ""; # no auto '\n' at the end of the line
     my $line = "#--------------------+-------------------------------------------";
-    print ("#O-Saft::Net::SSLhello::Constants:\n");
+    print __print("#----------------------------------- Net::SSLhello::Constants {");
     print __print($line);
     print ("#O-Saft::osaft::TLS_EXTENSIONS:\n");
     foreach my $key (sort {lc $a cmp lc $b} keys %osaft::TLS_EXTENSIONS) {
@@ -1555,6 +1555,7 @@ sub printConstants {
         print "\n";
     }
     print __print($line);
+    print __print("#----------------------------------- Net::SSLhello::Constants }");
     print "\n";
 } # printConstants
 
@@ -1563,7 +1564,7 @@ sub printParameters {
     #
     local $\ = ""; # no auto '\n' at the end of the line
     my $line = "#--------------------+-------------------------------------------";
-    print ("#O-Saft::Net::SSLhello::Parameters:\n");
+    print __print("#---------------------------------- Net::SSLhello::Parameters {");
     print __print($line);
     print _yprint("retry",           $Net::SSLhello::retry)           if (defined($Net::SSLhello::retry));
     print _yprint("timeout",         $Net::SSLhello::timeout)         if (defined($Net::SSLhello::timeout));
@@ -1580,7 +1581,7 @@ sub printParameters {
     print _yprint("useecc",          $Net::SSLhello::useecc)          if (defined($Net::SSLhello::useecc));
     print _yprint("useecpoint",      $Net::SSLhello::useecpoint)      if (defined($Net::SSLhello::useecpoint));
     if (%{$Net::SSLhello::extensions_by_prot}) {
-            print "#SSLHello: extensions_by_prot:\n";
+        print __print("extensions_by_prot");
         foreach my $_prot (sort keys %{$Net::SSLhello::extensions_by_prot}) {
             print _yprint("->{$_prot}", join(", ",@{$Net::SSLhello::extensions_by_prot->{$_prot}})) if defined($Net::SSLhello::extensions_by_prot->{$_prot});
         }
@@ -1602,7 +1603,7 @@ sub printParameters {
     print _yprint("proxyport",       $Net::SSLhello::proxyport)       if (defined($Net::SSLhello::proxyport));
     print _yprint("max_ciphers",     $Net::SSLhello::max_ciphers)     if (defined($Net::SSLhello::max_ciphers));
     print _yprint("max_sslHelloLen", $Net::SSLhello::max_sslHelloLen) if (defined($Net::SSLhello::max_sslHelloLen));
-    print ("\n#O-Saft::Net::SSLhello: information about the OS and some socket constants and functions.\n");
+    print __print("# information about the OS and some socket constants and functions");
     print __print($line);
     print _yprint("OS",                  $^O)                         if (defined($^O));
     my $_pf_inet =                                      PF_INET;
@@ -1623,6 +1624,7 @@ sub printParameters {
         }
     print _yprint("socket::getprotobyname('tcp')", $_protocol);
     print __print($line);
+    print __print("#---------------------------------- Net::SSLhello::Parameters }");
     return;
 } # printParameters
 
