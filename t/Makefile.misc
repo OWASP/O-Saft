@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.81 23/11/15 00:51:52
+#?      @(#) Makefile.misc 1.82 23/12/03 12:34:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.81
+_SID.misc          := 1.82
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -54,6 +54,7 @@ TEST.opt.cloc      := \
 	--by-percent c
 TEST.opt.dprofpp   :=
 TEST.opt.nytprof   :=
+EXE.wc             := wc
 EXE.cloc           := cloc
 EXE.cloc.filter    := cat
 EXE.cloc.total     := t/cloc-total.awk
@@ -170,6 +171,9 @@ ALL.testdocs   := docs.anno docs.subs
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
 
+HELP-_wc        = ________________________________________ statistic targets _
+HELP-test.wc    = count lines and bytes of code of all source files using '$(EXE.wc)'
+
 HELP-_cloc      = ________________________________________ statistic targets _
 HELP-cloc       = count lines of code of all source files; summary output
 HELP-cloc.file  = count lines of code of all source files; output by file
@@ -183,6 +187,19 @@ HELP-cloc.stat.log  = same as cloc but redirect to '$(_TEST.cloc.log)' also
 #       make cloc TEST.opt.cloc=--csv
 #       make cloc TEST.opt.cloc=--xml
 # NOTE: --quiet suppresses count of files also, hence not used by default
+
+testarg-misc.wc::
+	@$(TRACE.target)
+	@echo "#make: $(HELP-test.wc) ..."
+	@$(EXE.echo) "# lines\t  words\t   bytes\tfile"
+	@$(EXE.echo) "#-------+--------+--------+-----------------------------"
+	@wc $(ALL.src)
+	@$(EXE.echo) "#-------+--------+--------+-----------------------------"
+test.wc: testarg-misc.wc
+test.wc.log: testarg-misc.wc.log
+#ALL.test.misc.info.log := $(ALL.test.misc.info:%=%.log)
+.PHONY: test.wc testarg.wc
+
 cloc%:
 	@$(TRACE.target)
 	@$(EXE.cloc) $(TEST.opt.cloc) $(_TEST.cloc.src) | $(EXE.cloc.filter)
@@ -200,7 +217,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.81: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 1.82: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -451,7 +468,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.81: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 1.82: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
@@ -513,6 +530,7 @@ test.misc.info.log:       $(ALL.test.misc.info.log)
 .PHONY: OSaft/_ciphers_openssl_h.pm
 
 ALL.test.misc      += test.bench test.bunt \
+			test.wc \
 			$(ALL.test.norc) \
 			$(ALL.test.cloc) \
 			$(ALL.test.quality) \
