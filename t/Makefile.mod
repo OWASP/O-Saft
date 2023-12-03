@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.8 23/12/02 10:32:47
+#?      @(#) Makefile.mod 1.9 23/12/03 12:05:49
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.8
+_SID.mod           := 1.9
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -89,6 +89,12 @@ LIST.OSaft-Doc-Data.pm := \
 	--usage version         +VERSION    list  print \
 	get     get-markup      get-text    get-as-text \
 
+LIST.Net-SSLinfo.pm-t  :=   --test-methods --test-sclient --test-sslmap --test-ssleay
+LIST.Net-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
+# TODO: --test-openssl
+LIST.Net-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
+#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
+
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
 LIST.o-saft-man.pm     := \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
@@ -103,18 +109,12 @@ LIST.o-saft-man.pm     := \
     #   o-saft-man.pm --test-toc
     # only the first form is tested here, as they all produce the same output
 
-LIST.Net-SSLinfo.pm-t  :=   --test-methods --test-sclient --test-sslmap --test-ssleay
-# TODO: --test-openssl
-#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
-
 LIST.o-saft-dbx.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
 	--test-avail --test-init --test-maps --test-prot --test-vars
 # o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
-LIST.o-saft.pl         += $(LIST.o-saft-dbx.pm)
 
-LIST.Net-SSLhello.pm   :=   +VERSION  --test-init
-LIST.Net-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
+LIST.o-saft.pl         += $(LIST.o-saft-dbx.pm)
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same commands_notyet in osaft.pm
