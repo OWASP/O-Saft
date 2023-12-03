@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.65 23/12/03 10:34:23",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.67 23/12/03 11:57:10",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -107,6 +107,24 @@ Export Functions:
 $socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a host on a port (via proxy) and doing STARTTLS if requested
 @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing); # Check a list if ciphers (@testing), output: @accepted ciphers (if the first 2 ciphers are equal the server has an order)
 Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the list of ciphers (@accepted ciphers)
+
+=head1 OPTIONS
+
+Following options are for internal testing:
+
+=over 2
+
+=item --help
+
+=item --test-init
+
+=item --test-parameters
+
+=item --test-constants
+
+List constants and/or parameters used by Net::SSLhello.
+
+=back
 
 =head1 METHODS
 
@@ -477,13 +495,13 @@ sub _sprintf_hex_val ($$;$) {
     my $_val_ref        = shift(@_);
     my $_indent         = shift(@_) || 0;
     my $_hex_str        = "";
-    my $_format_string  = $_format || "-- undef --";
+    my $_format_string  = $_format || $STR{'UNDEF'};
 
     _trace5_(" " x $_indent . "#   ---> _sprintf_hex_val: \$_format: '$_format_string' -> ");
     if (! defined ($_format)) {                                     # guess format, if not defined
         if (! defined ($_val_ref)) {
-            _trace5 ("-- undefined value --\n");
-            return ("-- undefined value --");
+            _trace5 ("$STR{'UNDEF'}\n");
+            return ($STR{'UNDEF'});
         }
         _trace5_ ("if (\$\$_val_ref =~ /\^\\d+\$/); defined (\$\$_val_ref) = " . defined ($$_val_ref) ." -> ");
         if (! defined ($$_val_ref)) {
@@ -529,14 +547,14 @@ sub _sprintf_val_description ($$;$$) {
     if ($Net::SSLhello::trace >= 5) {                               #               ? value if TRUE                         : value if FALSE
         my $_val_ref_print      = (defined ($_val_ref))                             ? ref ($_val_ref) . ": "
                                                                                        . _sprintf_hex_val (undef, $_val_ref, $_indent)
-                                                                                                                            : "-- undef --";
-        my $_def_hash_ref_print = (defined ($_def_hash_ref))                        ? ref ($_def_hash_ref)                  : "-- undef --";
+                                                                                                                            : $STR{'UNDEF'};
+        my $_def_hash_ref_print = (defined ($_def_hash_ref))                        ? ref ($_def_hash_ref)                  : $STR{'UNDEF'};
         if ( (defined ($_def_hash_ref)) && (ref ($_def_hash_ref) eq "HASH") ) {
             $_def_hash_ref_print   .= ": ->{FORMAT}: ";
-            $_def_hash_ref_print   .= (defined ($_def_hash_ref->{FORMAT}))          ? "defined"                             : "-- undef --";
+            $_def_hash_ref_print   .= (defined ($_def_hash_ref->{FORMAT}))          ? "defined"                             : $STR{'UNDEF'};
             if (defined($_val_ref)) {
                 $_def_hash_ref_print   .= ", ->{$$_val_ref}: ";
-                $_def_hash_ref_print   .= (defined ($_def_hash_ref->{$$_val_ref}))  ? "defined"                             : "-- undef --";
+                $_def_hash_ref_print   .= (defined ($_def_hash_ref->{$$_val_ref}))  ? "defined"                             : $STR{'UNDEF'};
             }
         }
         print " " x $_indent . "#   ---> _sprintf_val_description: (\$_val_ref = <<$_val_ref_print>>, \$_def_hash_ref = <<$_def_hash_ref_print>>)\n";
@@ -586,7 +604,7 @@ sub _decode_val ($$$;$$$$$$) {
     my $_sub3_lines     = 0;
     my $_decode_str     = "";
     my $_format_print   = $_format;
-    $_format_print      = "-- undef --" if (! defined ($_format));
+    $_format_print      = $STR{'UNDEF'} if (! defined ($_format));
 
     _trace5_ (" " x $_next_indent . "# _decode_val (\$_format: '$_format_print', \$val_ref, \$_def_hash_ref, \$_first_indent: '$_first_indent', \$_next_indent: '$_next_indent', \$_text_sep: '$_text_sep', \$_sub_sep: '$_sub_sep', \$_sub_sub_sep: '$_sub_sub_sep', \$_sub3_sep: '$_sub3_sep ')\n");
     $_decode_str = " " x $_first_indent;
@@ -1610,13 +1628,13 @@ sub printParameters {
     print _yprint("socket::PF"."_INET",  $_pf_inet);
     my $_af_inet =                                      AF_INET;
     print _yprint("socket::AF"."_INET",  $_af_inet);
-    my $_sock_stream =  (defined(SOCK_STREAM))        ? SOCK_STREAM   : "--undef --";
+    my $_sock_stream =  (defined(SOCK_STREAM))        ? SOCK_STREAM   : $STR{'UNDEF'};
     print _yprint("socket::SOCK_STREAM", $_sock_stream);
-    my $_sol_socket =   (defined(SOL_SOCKET))         ? SOL_SOCKET    : "--undef --";
+    my $_sol_socket =   (defined(SOL_SOCKET))         ? SOL_SOCKET    : $STR{'UNDEF'};
     print _yprint("socket::SOL_SOCKET",  $_sol_socket);
-    my $_so_sndtimeo = (defined(SO_SNDTIMEO))         ? SO_SNDTIMEO   : "--undef --";
+    my $_so_sndtimeo = (defined(SO_SNDTIMEO))         ? SO_SNDTIMEO   : $STR{'UNDEF'};
     print _yprint("socket::SO_SNDTIMEO", $_so_sndtimeo);
-    my $_so_rcvtimeo = (defined(SO_RCVTIMEO))         ? SO_RCVTIMEO   : "--undef --";
+    my $_so_rcvtimeo = (defined(SO_RCVTIMEO))         ? SO_RCVTIMEO   : $STR{'UNDEF'};
     print _yprint("socket::SO_RCVTIMEO", $_so_rcvtimeo);
     my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
         if (! $_protocol) { 
@@ -6117,13 +6135,11 @@ sub hexCodedString {
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
     return ("") if ($codedString eq "");
-    if (!defined($prefix)) { # undefined -> ""
-            $prefix = "";
-    }
+       $prefix      = "" if not defined($prefix); # undefined -> ""
     $codedString =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eigx; # code all octets as HEX values and separate then with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})(?=[0-9A-Fa-f]{2})/"$1\n$prefix"/eigx; # add a new line each 48 HEX-octetts (=144 symbols incl. spaces) if not last octett reached
     chomp ($codedString); # delete CR at the end
-    chop ($codedString);  # delete 'space' at the end
+    chop  ($codedString); # delete 'space' at the end
     return ($codedString);
 } # hexCodedString
 
@@ -6131,16 +6147,14 @@ sub hexCodedString {
 sub hexCodedCipher {
     #? <<description missing>> <<POD missing>> # FIXME:
     # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück
-    my $codedString= shift || "";
-    my $prefix= shift; # set an optional prefix after '\n'
+    my $codedString = shift || "";
+    my $prefix      = shift; # set an optional prefix after '\n'
     return ("") if ($codedString eq "");
-    if (!defined($prefix)) { # undefined -> ""
-            $prefix = "";
-    }
+       $prefix      = "" if not defined($prefix); # undefined -> ""
     $codedString =~ s/([\x00-\xFF])/sprintf("%02X", ord($1))/eigx; # code all octets as HEX values and separate then with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{2}){64})/"$1\n$prefix"/eigx; # add a new line each 64 HEX octetts (=128 symbols incl. spaces)
-    chomp ($codedString); #delete CR at the end
-    return ($codedString); #delete 'space' at the end
+    chomp  ($codedString); # delete CR at the end
+    return ($codedString); # delete 'space' at the end
 } # hexCodedCipher
 
 
@@ -6150,13 +6164,11 @@ sub hexCodedSSL2Cipher {
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
     return ("") if ($codedString eq "");
-    if (!defined($prefix)) { # undefined -> ""
-            $prefix = "";
-    }
+       $prefix      = "" if not defined($prefix); # undefined -> ""
     $codedString =~ s/([\x00-\xFF])([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X%02X ", ord($1), ord($2), ord($3))/eigx; # code all 3-octet-ciphers as HEX value pairs and separate them with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{6}){16}\s)/"$1\n$prefix"/eigx; # add a new line each 16 ciphers (=112 symbols incl. spaces)
-    chomp ($codedString);   # delete CR at the end
-    return ($codedString);  # delete 'space' at the end
+    chomp  ($codedString); # delete CR at the end
+    return ($codedString); # delete 'space' at the end
 }
 
 sub hexCodedTLSCipher {
@@ -6165,12 +6177,10 @@ sub hexCodedTLSCipher {
     my $codedString = shift || "";
     my $prefix      = shift; # set an optional prefix after '\n'
     return ("") if ($codedString eq "");
-    if (!defined($prefix)) { # undefined -> ""
-            $prefix = "";
-    }
+       $prefix      = "" if not defined($prefix); # undefined -> ""
     $codedString =~ s/([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X ", ord($1), ord($2))/eigx; # code all 2-octet-ciphers as HEX value pairs and separate then with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{4}){16}\s)/"$1\n$prefix"/eigx; # add a new line each 16 ciphers (=80 symbols incl. spaces)
-    chomp ($codedString);  # delete CR at the end
+    chomp  ($codedString); # delete CR at the end
     return ($codedString); # delete 'space' at the end
 } # hexCodedSSL2Cipher
 
@@ -6337,7 +6347,9 @@ sub _main       {
     while (my $arg = shift @argv) {
         if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
         if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
-        if ($arg =~ /^--test.?init/)        { printParameters();    }
+        if ($arg =~ /^--test.?init/)            { printParameters();}
+        if ($arg =~ /^--test.?para(?:meter)?/)  { printParameters();}
+        if ($arg =~ /^--test.?const(?:ant)?/)   { printConstants(); }
         if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
     }
     exit 0;
