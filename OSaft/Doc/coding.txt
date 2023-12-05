@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.11 23/04/18 13:58:48
+# SID   @(#) coding.txt 1.12 23/12/05 23:09:03
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -7,6 +7,15 @@
 # proper tool name when called by  $0  itsef.
 
 HACKER's INFO
+
+    Terminology
+
+        Throughout the code and its documentation following terms are used:
+
+          * <>  - angle  brackets (chevron)
+          * {}  - curly  brackets (brace, accolades, llave)
+          * ()  - round  brackets (paranthese, paranthèse, paréntesis)
+          * []  - square brackets (bracket, crochet, corchete)
 
     Program Code
 
@@ -456,7 +465,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.11 23/04/18 13:58:48";
+            my $SID = "coding.txt 1.12 23/12/05 23:09:03";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
