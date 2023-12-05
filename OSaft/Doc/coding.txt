@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.12 23/12/05 23:09:03
+# SID   @(#) coding.txt 1.13 23/12/05 23:51:23
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -62,7 +62,30 @@ HACKER's INFO
         syntax check at compile time.
         This will be changed in future.
 
-	For quoting see below.
+        For quoting see below.
+
+      Brackets
+
+        Angle, curly and square brackets are mainly unambiguous in Perl.
+
+        Round brackets are unambiguous if used for grouping.  Parameters  for
+        function calls are also a group. Hence they are most like used there,
+        even Perl does not require them.  This avoids unambiguous, unexpected
+        use of parameters, for example when a function's return value is used
+        as parameter for another function (in-line code).
+
+        Examples of ambiguous code to be avoided:
+
+          * 'print 4, 2, rand 1, 0;'    # 1 is paramter for rand not print
+          * '&myfunc;'                  # call uses @_
+          * 'myfunc;'                   # maybe a function call ...
+          * '$f="foo"; $bar->foo;'      # do all humans see the function?
+          * '$f="foo"; $bar->$f();'     # round brackets mandatory
+
+        Round brackets are sometimes omitted for:
+
+          * LHS condition
+          * built-in functions, like 'keys', 'print', 'sort', 'scalar'
 
       Code style
 
@@ -80,7 +103,7 @@ HACKER's INFO
         elsif is used in "borrowed" code only ;-)
 
         if constructs are used to deal with exceptions of the  normal control
-        flow. The flow will continue hehind or exit (break, continue, return)
+        flow. The flow will continue behind or exit (break, continue, return)
         the loop or function.
 
         As described before, "early breaks" (next, last in loops; return from
@@ -465,7 +488,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.12 23/12/05 23:09:03";
+            my $SID = "coding.txt 1.13 23/12/05 23:51:23";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
