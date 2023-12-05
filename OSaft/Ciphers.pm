@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.90 23/11/30 10:38:09";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.91 23/12/05 10:49:35";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -282,16 +282,28 @@ our @cipher_iana_recomended =
     0x0300D001 0x0300D002 0x0300D005
 ); # cipher_iana_recomended
 
-our $cipher_results = { # list of checked ciphers
-    #--------------+--------+--------------+----------+
-    # key       => [  ssl    supported ], # cipher suite name
-    #--------------+--------+--------------+----------+
-#  '0x02010080' => [ SSLv3,  yes ],  # RC4-MD5
-#  '0x03000004' => [ SSLv3,  yes ],  # RC4-MD5
-#  '0x0300003D' => [ TLSv12, yes ],  # AES256-SHA256
-#  '0x02FF0810' => [ SSLv3,  no  ],  # NULL
-    #--------------+--------+--------------+----------+
-}; # $cipher_results
+our $cipher_results = {};
+    #? list of checked ciphers per SSL/TLS version
+my  $cipher_results_desc = <<EoDESC;
+=---------------+------+----------------------------+----------------------+
+=  ssl       => {
+=       key    => [ supported, cipher parameters ], # cipher suite name
+=  }
+=---------------+------+----------------------------+----------------------+
+= 'SSLv3'    => {
+=      '0x02010080' => [ yes, '' ],                 # RC4-MD5
+=      '0x03000004' => [ yes, '' ],                 # RC4-MD5
+=      '0x02FF0810' => [ no,  '' ],                 # NULL
+= },
+= 'TLSv12'   => {
+=      '0x0300006B' => [ yes, 'dh: 2048 bits' ],    # DHE-RSA-AES256-SHA256
+=      '0x0300003D' => [ yes, '' ],                 # AES256-SHA256
+= },
+= '_admin'   => {   # for internal use
+=      'TLSv12'     => { ... },  # TODO: ...
+= },
+=---------------+------+----------------------------+----------------------+
+EoDESC
 
 our %ciphers_notes  = ( # list of notes and comments for ciphers
     # these texts are referenced in %ciphers
@@ -1079,13 +1091,14 @@ sub show_description {
     print ("=------+--------------------------------+---------------+---------------");
 
     print  "\n= \%cipher_results : description of hash:\n";
-# currently (12/2015)
-    print ("=-------------------------------------------+-------");
-    print ("=           %hash{  ssl   }->{'cipher key'} = value;");
-    print ("=-------------------------------------------+-------");
-    print ("  %cipher_results{'TLSv12'}->{'0x0300003D'} = 'yes';"); # AES256-SHA256
-    print ("  %cipher_results{'SSLv3'} ->{'0x02FF0810'} = 'no'; "); # NULL-NULL
-    print ("=-------------------------------------------+-------");
+    print  $cipher_results_desc;
+    print  "= \%cipher_results : description of Perl code:\n";
+    print ("=-------------------------------------------+---------------");
+    print ("=           %hash{  ssl   }->{'cipher key'} = [values];");
+    print ("=-------------------------------------------+---------------");
+    print ("  %cipher_results{'TLSv12'}->{'0x0300003D'} = ['yes', ''];"); # AES256-SHA256
+    print ("  %cipher_results{'SSLv3'} ->{'0x02FF0810'} = ['no',  ''];"); # NULL-NULL
+    print ("=-------------------------------------------+---------------");
 
     return;
 } # show_description
@@ -1692,7 +1705,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.90 2023/11/30
+2.91 2023/12/05
 
 
 =head1 AUTHOR
