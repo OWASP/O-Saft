@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 1.13 23/12/05 23:51:23
+# SID   @(#) coding.txt 1.14 23/12/05 23:52:37
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -134,11 +134,11 @@ HACKER's INFO
 
       Quoting
 
-	Using single quotes  '  and/or double quotes  "  is the nature of the
-	processed data, the generated data or the program code.  These quotes
-	are written literally in data, whereas  Perl provides various methods
-	to handles different types of quotes. Coding gets complicated if both
-	quotes are part of the data, in particular when printing data.
+        Using single quotes  '  and/or double quotes  "  is the nature of the
+        processed data, the generated data or the program code.  These quotes
+        are written literally in data, whereas  Perl provides various methods
+        to handles different types of quotes. Coding gets complicated if both
+        quotes are part of the data, in particular when printing data.
 
         The  code  mainly uses  'text enclosed in single quotes'  for program
         internal strings such as hash keys. It uses  "double quoted text" for
@@ -146,19 +146,19 @@ HACKER's INFO
         Strings used for  RegEx are always enclosed in single quotes.  Reason
         is mainly to make searching texts a bit easier.
 
-	Perl's operators  'q()' and 'qq()' are used only to avoid escaping of
-	character, because all types of quotes can smoothly mixed there.
-	In general  "double quoted text" is used for interpolated strings. In
-	some cases, it is necessary to use Perl's  'sprintf()'  function.
-	For details, please see:
+        Perl's operators  'q()' and 'qq()' are used only to avoid escaping of
+        character, because all types of quotes can smoothly mixed there.
+        In general  "double quoted text" is used for interpolated strings. In
+        some cases, it is necessary to use Perl's  'sprintf()'  function.
+        For details, please see:
 
-	    perldoc -f q
-	    perldoc -f qq
-	    perldoc -f sprintf
-	    perldoc perlop # following sections:
-	        Comma Operator
-	        Quote and Quote-Like Operators
-	        Gory details of parsing quoted constructs
+            perldoc -f q
+            perldoc -f qq
+            perldoc -f sprintf
+            perldoc perlop # following sections:
+                Comma Operator
+                Quote and Quote-Like Operators
+                Gory details of parsing quoted constructs
 
       General
 
@@ -206,7 +206,7 @@ HACKER's INFO
 
         For debugging the code, the  --trace  option can be used. See  DEBUG
         section below for more details. Be prepared for a lot of output!
-	In fact it's a mix of tracing and debugging, to be technical correct.
+        In fact it's a mix of tracing and debugging, to be technical correct.
 
       LHS condition checks
 
@@ -301,7 +301,7 @@ HACKER's INFO
 
         In general all names are in lower case. Using _ instead of camel case
         is prefered. However, there are some exceptions for wrapper functions
-	for  Net::SSLinfo  and  Net::SSLeay .
+        for  Net::SSLinfo  and  Net::SSLeay .
 
       Code information
 
@@ -488,7 +488,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 1.13 23/12/05 23:51:23";
+            my $SID = "coding.txt 1.14 23/12/05 23:52:37";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
