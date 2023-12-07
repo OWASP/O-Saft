@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.103 23/12/03 09:46:00"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.105 23/12/07 12:28:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.103");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.105");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 our $session_protocol = "";     # TODO: temporary until available in osaft.pm
@@ -931,6 +931,9 @@ if (0 < _is_argv('(?:--no.?rc)')) {
 
 _yeast_TIME("cfg}");
 
+our @ciphers_keys;  # temp. use until defined in osaft.pm
+    # similar to @{$cfg{'ciphers'} but contains hex-keys instead of names
+
 # following defined in OSaft/Ciphers.pm
 #   %ciphers_desc();
 #   %ciphers();
@@ -1582,7 +1585,7 @@ sub _check_ssl_methods  {
         # methods.  Sometimes, for whatever reason,  the user may know that the
         # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
         # which simply disables the check.
-        if (_is_cfg_use('ssl_lazy')) {
+        if (_is_cfg_use('ssl_lazy') or _is_cfg_ciphermode('openssl|ssleay')) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
@@ -2845,10 +2848,11 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
-sub _get_cipherlist_openssl {
+sub _get_cipherlist_names   {
     #? return space-separated list of cipher suites according command-line options
     #  this is usefull for display only or for use with openssl
-    _trace("_get_cipherlist_openssl(){");
+    my $ssl     = shift;# parameter not used, just to have the same syntax as _get_cipherlist_keys
+    _trace("_get_cipherlist_names(){");
     my @ciphers = ();
     my $range   = $cfg{'cipherrange'};  # default
     _trace(" cipherpattern  = $cfg{'cipherpattern'}, cipherrange= $range");
@@ -2868,7 +2872,7 @@ sub _get_cipherlist_openssl {
     } else {
         # cipher range specified with --cipher-range=* option
         # ranges are defined as numbers, need to get the cipher suite name
-        _v_print("cipher range: $range");
+        _trace(" cipher range   = $range");
         foreach my $c (_eval_cipherranges($range)) {
             my $key = sprintf("0x%08X",$c);
             push(@ciphers, OSaft::Ciphers::get_name($key)||""); # "" avoids some undef
@@ -2885,15 +2889,15 @@ sub _get_cipherlist_openssl {
         die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
-    _trace("_get_cipherlist_openssl\t= @ciphers }"); # TODO: trace a bit late
+    _trace("_get_cipherlist_names\t= @ciphers }");
     return @ciphers;
-} # _get_cipherlist_openssl
+} # _get_cipherlist_names
 
-sub _get_cipherlist_hex {
+sub _get_cipherlist_keys {
     #? return space-separated list of cipher hex keys according command-line options
     my $ssl     = shift;
     my @ciphers = ();
-    _trace("_get_cipherlist_hex($ssl){");
+    _trace("_get_cipherlist_keys($ssl){");
     _trace(" cfg{'cipher'}  = " . @{$cfg{'cipher'}} );
     if (0 < scalar(@{$cfg{'cipher'}})) {
         foreach my $name (@{$cfg{'cipher'}}) {
@@ -2909,9 +2913,9 @@ sub _get_cipherlist_hex {
         @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
     }
     _trace(" no. of ciphers = " . scalar(@ciphers));
-    _trace("_get_cipherlist_hex()\t= @ciphers }");
+    _trace("_get_cipherlist_keys()\t= @ciphers }");
     return @ciphers;
-} # _get_cipherlist_hex
+} # _get_cipherlist_keys
 
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
@@ -3115,7 +3119,7 @@ sub ciphers_scan_openssl {
             # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence we need to save
             # the current value and reset after calling ciphers_scan_prot()
         $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
-        my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
+        my @supported   = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
         $cfg{'verbose'} = $__verbose if ($__verbose != 2);
         # remove  protocol: in each item
         #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
@@ -3150,7 +3154,6 @@ sub ciphers_scan_intern {
     my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
     my $typ     = "raw";    # used for --trace only
        $typ     = "all" if (_is_cfg_do('cipher_intern'));
-    _y_CMD("  use SSLhello +cipher$typ ...");
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
         next if ($cfg{$ssl} == 0);
@@ -3167,8 +3170,8 @@ sub ciphers_scan_intern {
         my %accepted;       # accepted ciphers (cipher keys and cipher parameters)
                             # contains at least one entry: $accepted{selected}
         my $accepted_cnt = 0;
-        my @all = _get_cipherlist_hex($ssl);
-        _y_CMD("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        my @all = _get_cipherlist_keys($ssl);
+        _trace("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
         if ("@all" =~ /^\s*$/) {
             _warn("407: no valid ciphers specified; no check done for '$ssl'");
@@ -3179,7 +3182,7 @@ sub ciphers_scan_intern {
             _v_print("cipher range: $cfg{'cipherrange'}, checking " . scalar(@all) . " ciphers ...");
         }
         %accepted = Net::SSLhello::getSSLciphersWithParam($host, $port, $ssl, @all);
-        $accepted_cnt = scalar (keys %accepted) - 1;  # do not count 'selected'
+        $accepted_cnt = scalar (keys %accepted) - 1;  # ignore $accepted{'0'}
         $session_protocol = $ssl if (0 < $accepted_cnt); # store latest available protocol
         if (_is_cfg_do('cipher_dump')) {
             _v_print(sprintf("total number of accepted ciphers: %4d", $accepted_cnt));
@@ -3197,9 +3200,9 @@ sub ciphers_scan_intern {
         # prepare for printing, list, needed for summary checks
         my $last_a  = "";   # avoid duplicates
         foreach my $_i (sort keys %accepted) {
-            next if (0 == $_i); # item {0} is array of all keys
+            next if ('0' eq $_i);       # item {0} is array of all keys
             my $key = $accepted{$_i}[0];
-            next if ($last_a eq $key);
+            next if ($last_a eq $key);  # ignore duplicates; should be the first 'selected' one only
             $results->{$ssl}{$key} = [ "yes", $accepted{$_i}[1] ];
             $last_a = $key;
         }
@@ -3208,7 +3211,7 @@ sub ciphers_scan_intern {
         # NOTE: rest of code (print*()) should be moved to calling place,
         #       but as the variables @all, @{$accepted{0}} are only available here
         #       (or must be computed again), printing is done here      11/2020
-        if (_is_cfg_do('cipher') or _is_cfg_do('check')) {
+        if (_is_cfg_do('cipher') or _is_cfg_do('check')) { # TODO: or _is_cfg_do('cipher_dump')
             print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
             if (_is_cfg_do('cipher_intern')) {
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
@@ -3601,6 +3604,20 @@ sub checkpreferred      {
     return;
 } # checkpreferred
 
+sub _checkcipher_init   {
+    # initialise $check{...}-{val} with empty string, because they will be
+    # extended per $ssl (protocol)
+    foreach my $key (qw(
+        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
+        cipher_edh ciphers_pfs cipher_pfsall
+        beast breach freak logjam lucky13 rc4 robot sloth sweet32
+        ism pci fips rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-
+    )) {
+        $checks{$key}->{val} = "";
+    }
+    return;
+} # _checkcipher_init
+
 sub checkcipher         {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $key) = @_;
@@ -3655,20 +3672,6 @@ sub checkcipher         {
     return;
 } # checkcipher
 
-sub _checkcipher_init   {
-    # initialise $check{...}-{val} with empty string, because they will be
-    # extended per $ssl (protocol)
-    foreach my $key (qw(
-        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
-        cipher_edh ciphers_pfs cipher_pfsall
-        beast breach freak logjam lucky13 rc4 robot sloth sweet32
-        ism pci fips rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-
-    )) {
-        $checks{$key}->{val} = "";
-    }
-    return;
-} # _checkcipher_init
-
 sub checkciphers        {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port, $results) = @_;
@@ -3698,7 +3701,7 @@ sub checkciphers        {
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $ssl (sort keys %$results) { # check all accepted ciphers
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
-      foreach my $key (sort keys %{$results->{$ssl}}) {
+      foreach my $key (sort keys %{$results->{$ssl}}) { # check all accepted
         # SEE Note:Testing, sort
         next if ($key =~ m/^\s*$/);         # defensive programming (key missing in %ciphers)
         next if not $results->{$ssl}{$key}; # defensive programming ..
@@ -5240,18 +5243,18 @@ sub scoring         {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|https_pins|psk_|rootcert|srp|zlib)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
-          # FIXME: not yet scored
-        next if ($key =~ m/^TLSv1[123]/); # FIXME:
+          # FIX ME: not yet scored
+        next if ($key =~ m/^TLSv1[123]/); # FIX ME:
         $value = $checks{$key}->{val};
-        # TODO: go through @cipher_results
-# TODO   foreach my $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-# TODO       # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
-# TODO       $key = $ssl . '-' . $sec;
-# TODO       if ($checks{$key}->{val} != 0) {    # if set, decrement score
-# TODO           $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
-# TODO printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
-# TODO       }
-# TODO   }
+# TBD: go through @cipher_results
+#        foreach my $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
+#            # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
+#            $key = $ssl . '-' . $sec;
+#            if ($checks{$key}->{val} != 0) {    # if set, decrement score
+#                $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
+#      printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
+#            }
+#        }
         $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "sizes");
 #       $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "cipher");
         $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "https"); # done above
@@ -5340,7 +5343,6 @@ sub print_title     {
         print "$txt";
         print " " . "-" x length($txt);
     }
-    my $txt     = _get_text('out_ciphers', $ssl);
     if ($legacy eq 'sslaudit')  {} # no title
     if ($legacy eq 'sslcipher') { print "Testing $host ..."; }
     if ($legacy eq 'ssldiagnos'){
@@ -5357,6 +5359,8 @@ sub print_title     {
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {
+        #  $ssl = "xxx ciphers for $ssl"; # if number of offered ciphers is passed
+        my $txt =  _get_text('out_ciphers', $ssl);
         print_header($txt, "", "", 1);  # SEE Note:Cipher and Protocol
     }
     return;
@@ -5689,7 +5693,7 @@ sub _print_cipher_results       {
 sub printcipherall      { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results from Net::SSLhello::checkSSLciphers()
     #? returns number of unique (enabled) ciphers
-    # FIXME: $legacy, --enabled and --disabled not fully supported
+    # FIXME: --enabled and --disabled not fully supported
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
@@ -5890,6 +5894,39 @@ sub printprotocols      {
     }
     return;
 } # printprotocols
+
+sub printciphers_openssl {
+    #? print result of cipher check +cipher
+    return;
+} # printciphers_openssl
+
+sub printciphers_intern {
+    #? print result of cipher check +cipher
+    return;
+} # printciphers_intern
+
+sub printciphers        {
+    #? print result of cipher check +cipher
+    my ($legacy, $host, $port, $results) = @_;
+    my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
+    _y_CMD("printciphers() ");
+    foreach my $ssl (@{$cfg{'version'}}) {
+        $_printtitle++;
+        if (_is_cfg_ciphermode('intern|dump')) {
+            print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
+            next if 0 >= (keys(%{$results->{$ssl}}));
+            if (_is_cfg_do('cipher_intern')) {
+                printciphers_intern($legacy, $ssl, $host, $port, $_printtitle, $results);
+            } else {
+                #Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @{$accepted{0}});
+            }
+        }
+        if (_is_cfg_ciphermode('openssl|ssleay')) {
+            printciphers_openssl($legacy, $ssl, $host, $port, $_printtitle, $results);
+        }
+    } # $ssl
+    return;
+} # printciphers
 
 sub printciphersummary  {
     #? print summary of cipher check +cipher
@@ -6230,14 +6267,14 @@ sub printversion        {
     return;
 } # printversion
 
-sub printciphers        {
+sub printciphers_list   {
     #? print cipher descriptions from internal database
     # uses settings from --legacy= and option -v or -V to select output format
     my $do = shift;
-    _y_CMD("printciphers($do)");
-    _v_print("printciphers: database version: ", _VERSION());
-    _v_print("printciphers: options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
-    _v_print("printciphers: options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
+    _y_CMD("printciphers_list($do)");
+    _v_print("printciphers_list: database version: ", _VERSION());
+    _v_print("printciphers_list: options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out'}->{'header'}");
+    _v_print("printciphers_list: options: --v=$cfg{'verbose'}, -v=$cfg{'opt-v'} , -V=$cfg{'opt-V'}");
     if ('ciphers' eq $do) {
         # output looks like: openssl ciphers
         $cfg{'out'}->{'header'} = 0;
@@ -6250,7 +6287,7 @@ sub printciphers        {
         # becomes --legacy=openssl-v'
     OSaft::Ciphers::show($cfg{'legacy'});
     return;
-} # printciphers
+} # printciphers_list
 
 sub printscores         {
     #? print calculated score values
@@ -7667,9 +7704,9 @@ if ($test =~ m/testciphersregex/)   { _y_CMD("test regex  ..."); osaft::test_cip
 if ($test =~ m/testciphers.+/)      { _y_CMD("test cipher ..."); _yeast_test($test);   exit 0; }
 if ($test !~ m/^\s*$/)              { _y_CMD("test any    ..."); _yeast_test($test);   exit 0; }
 # interanl information commands
-# NOTE: printciphers() is a wrapper for OSaft::Ciphers::show() regarding more options
-if (_is_cfg_do('list'))             { _y_CMD("list        ..."); printciphers('list'); exit 0; }
-if (_is_cfg_do('ciphers'))          { _y_CMD("ciphers     ..."); printciphers('ciphers');  exit 0; }
+# NOTE: printciphers_list() is a wrapper for OSaft::Ciphers::show() regarding more options
+if (_is_cfg_do('list'))             { _y_CMD("list        ..."); printciphers_list('list'); exit 0; }
+if (_is_cfg_do('ciphers'))          { _y_CMD("ciphers     ..."); printciphers_list('ciphers');  exit 0; }
 if (_is_cfg_do('version'))          { _y_CMD("version     ..."); printversion();       exit 0; }
 if (_is_cfg_do('libversion'))       { _y_CMD("libversion  ..."); printopenssl();       exit 0; }
 if (_is_cfg_do('quit'))             { _y_CMD("quit        ..."); printquit();          exit 0; }
@@ -7691,13 +7728,21 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
-if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
-    if ((_need_cipher() > 0) or (_need_default() > 0)) {
-        _yeast_TIME("get{");
-        _y_CMD("get cipher list ...");
-        @{$cfg{'ciphers'}} = _get_cipherlist_openssl();
-        _yeast_TIME("get}");
-    } # _need_cipher or _need_default
+# vor 2.104: if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
+# vor 2.104:     if ((_need_cipher() > 0) or (_need_default() > 0)) {
+if (_need_cipher()) {
+    _yeast_TIME("get{");
+    _y_CMD("get cipher list for [@{$cfg{'ciphers'}}] ...");
+    if (_is_cfg_ciphermode('intern|dump')) {
+	my $pattern = join("|", @{$cfg{'cipher'}}); # build RegEx from all given patterns
+        @{$cfg{'ciphers'}} = OSaft::Ciphers::find_names($pattern);
+        push(@ciphers_keys,  OSaft::Ciphers::get_key($_)) foreach (@{$cfg{'ciphers'}});
+    }
+    if (_is_cfg_ciphermode('openssl|ssleay')) {
+        @{$cfg{'ciphers'}} = _get_cipherlist_names("");
+    }
+    _yeast_TIME("get}");
+    _v_print("use cipher list: @{$cfg{'ciphers'}}");
 }
 
 #| SEE Note:Duplicate Commands
@@ -7896,30 +7941,53 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     if (_is_cfg_do('cipher_dh')) {
         # abort here is ok because +cipher-dh cannot be combined with other commands
+# TODO: ciphermode=dump ungültig, warning und auf intern ändern
         if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
             _warn("408: OpenSSL disabled using '--no-openssl', can't check DH parameters; target ignored");
             next;
         }
     } # cipher_dh
-    if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump') or _is_cfg_do('cipher_dh')) {
-        _y_CMD("+cipher");
-        _yeast_TIME("ciphermode=intern{");
-        Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
+
+    if (_need_cipher()) {
+        _yeast_TIME("need cipher{");
+        _y_CMD("need cipher (ciphermode=$cfg{'ciphermode'}) ...");
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
+        #_trace("versions = @{$cfg{'version'}})";
         $cipher_results = {};           # new list for every host (array of arrays)
-        $cipher_results = ciphers_scan_intern($host, $port);# print ciphers also if not cipher_dh
-        #my $enabled = %$cipher_results; # FIXME: this is the number of enabled ciphers!
-        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            $checks{'cnt_totals'}->{val} += osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
+        if (_is_cfg_ciphermode('intern|dump')) {
+            _y_CMD("  use SSLhello +cipher$typ ...");
+            Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
+            $cipher_results = ciphers_scan_intern($host, $port);# print ciphers also if not cipher_dh
+            foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+                #$checks{'cnt_totals'}->{val} += osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
+                # TODO: obiges liefert zuviel, da --cipher=AES128-SHA nicht beachtet wird
+# FIXME: unten  liefert nur die gefundenen
+                $checks{'cnt_totals'}->{val} += scalar (keys %{$cipher_results->{$ssl}});
+            }
         }
-    }
+        if (_is_cfg_ciphermode('openssl|ssleay')) {
+            _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
+            _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
+            $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
+
+            # TODO:  $prot{$ssl}->{'default'} = $cipher;
+# TODO: unklar ob folgendes nötig
+            checkciphers($host, $port, $cipher_results); # necessary to compute 'out_summary'
+
+            foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+                $checks{'cnt_totals'}->{val} += scalar (keys %{$cipher_results->{$ssl}});
+            }
+        }
+        _yeast_TIME("need cipher}");
+    } # need_cipher
+
+# TODO: if() ändern zu: id (_is_cfg_ciphermode('intern|dump'))
     if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump')) { # implies _need_cipher()
         # SEE Note:+cipherall
         my $total   = $checks{'cnt_totals'}->{val};
         checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
         printciphersummary($legacy, $host, $port, $total) if (_is_cfg_do('cipher'));
-        _yeast_TIME("ciphermode=intern}");
         next if (_is_cfg_do('cipher') and (0 == $quick));
     } # ciphermode=intern
 
@@ -7984,18 +8052,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         goto CLOSE_SSL; # next HOSTS
     }
 
-    if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {  # implies _need_cipher()
-        _yeast_TIME("need_cipher{");
-        _y_CMD("  need_cipher ...");
-        _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
-        _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
-        $cipher_results = {};           # new list for every host
-        $cipher_results = ciphers_scan_openssl($host, $port);
-        $checks{'cnt_totals'}->{val} = scalar %$cipher_results;
-        # TODO:  $prot{$ssl}->{'default'} = $cipher;
-        checkciphers($host, $port, $cipher_results); # necessary to compute 'out_summary'
-        _yeast_TIME("need_cipher}");
-     }
     next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
@@ -8746,7 +8802,7 @@ Data structures with runtime data:
     %info           - like %data, but for data which could not be retrieved
                       from Net::SSLinfo like HTTP vs. HTTPS checks
     %prot           - collected data per protocol (from Net::SSLinfo)
-    @cipher_results - collected results as:  [SSL, cipher, "yes|no"]
+    %cipher_results - collected results as:  SSL=>cipher=>["yes|no","DH"]
 
 NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
 NOTE: all keys in %checks  must be in lower case letters,  because generic
