@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.107 23/12/08 13:47:57"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.108 23/12/08 15:19:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.107");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.108");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5935,7 +5935,7 @@ sub printciphers_intern {
     _trace("printciphers_intern( ... $ssl ...) ...");
     print_cipherhead( $legacy) if (0 == ($legacy eq "sslscan")?($printtitle):0);
     my $last_r  = "";       # avoid duplicates (may be added by checkSSLciphers())
-    foreach my $key (keys %{$results->{$ssl}}) {
+    foreach my $key (sort keys %{$results->{$ssl}}) {
         next if ($last_r eq $key);
         print_cipherline($legacy, $ssl, $host, $port, $key, "yes");
         $last_r = $key;
