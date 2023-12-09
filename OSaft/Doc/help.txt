@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.124 23/12/05 23:48:09
+# SID   @(#) help.txt 1.125 23/12/09 13:07:16
 
 NAME
 
@@ -1203,31 +1203,6 @@ OPTIONS
           * 'dump'      - same as 'intern' but print  all cipher information,
                           useful when postprocessed by contrib/* tools
 
-      --cipher=CIPHER
-
-          'CIPHER' can be any cipher suite name or (internal) hex constant.
-          If 'CIPHER' does not match a hex key, i.e. '0x03000035', it is used
-          as pattern (RegEx) to match cipher suite names. For example:
-          'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
-          2 ciphers, see:
-              OSaft/Ciphers.pm find-names=AES256-SHA
-              OSaft/Ciphers.pm find-names=AES256-SHA$
-
-          To be sure that exactly one cipher suite matches, use for example:
-              --cipher=^AES256-SHA$
-
-          When  --ciphermode=openssl or --ciphermode=ssleay is used, 'CIPHER'
-          can be any string accepted by openssl or a hex constant. Examples:
-            * --cipher=DHE_DSS_WITH_RC4_128_SHA
-            * --cipher=0x03000066
-            * --cipher=66
-
-          will be mapped to   'DHE-DSS-RC4-SHA'
-
-          Note: if more than one cipher matches, just one will be selected.
-
-          Default is 'ALL:NULL:eNULL:aNULL:LOW' as specified in Net::SSLinfo.
-
       --socket-reuse
 
           TCP socket will be reused for  next connection attempt  even if SSL
@@ -1478,6 +1453,47 @@ OPTIONS
           Additional delay in seconds  after each connect for a cipher check.
           This is useful when connecting to servers which have IPS in place,
           or are slow in accepting new connections or requests.
+
+      --cipher=CIPHER
+
+          Only check for 'CIPHER' instead of using ciphers from internal list
+          (default). Multiple options are can be specified.
+
+          'CIPHER' can be any cipher suite name or (internal) hex key, see:
+
+             $0 +list
+
+          for known, valid keys and cipher names.
+
+          If 'CIPHER' does not match a hex key, i.e. '0x03000035', it is used
+          as pattern (RegEx) to match cipher suite names. For example:
+          'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
+          2 ciphers, see:
+              OSaft/Ciphers.pm find-names=AES256-SHA
+              OSaft/Ciphers.pm find-names=AES256-SHA$
+
+          To be sure that exactly one cipher suite matches, use for example:
+              --cipher=^AES256-SHA$
+              --cipher=0x03000035
+
+          Hex keys must be specified with a leading '0x'  followed by exactly
+          8 uper case hex characters '[0-9A-F]'.
+
+          The pattern can be common RegEx like 'GCM|CHACHA'.  Simple OpenSSL-
+          style pattern are also accepted, for example: 'AES:ECDH'.
+
+          When  --ciphermode=openssl or --ciphermode=ssleay is used, 'CIPHER'
+          can be any string accepted by openssl or a hex key. Examples:
+            * --cipher=DHE_DSS_WITH_RC4_128_SHA
+            * --cipher=0x03000066
+
+          will be mapped to   'DHE-DSS-RC4-SHA'
+
+          'CIPHER' can also be any pattern accepted by openssl, for example:
+            * --cipher='!DES:!ADH:!aNULL'
+
+          Default is 'ALL:NULL:eNULL:aNULL:LOW:EXP' as specified in Net::SSLinfo.
+
 
       --cipher-alpn=NAME
 
