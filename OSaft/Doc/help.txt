@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.125 23/12/09 13:07:16
+# SID   @(#) help.txt 1.126 23/12/09 13:13:22
 
 NAME
 
@@ -1549,8 +1549,9 @@ OPTIONS
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
 
-          For details about the ranges, please see:
-              $0 --help=range
+          For the full list and details about the ranges, please see:
+
+              $0 --header --help=range
 
           If any  --cipher=CIPHER  is used,  --cipherrange=RANGE  is ignored.
 
