@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.126 23/12/09 13:13:22
+# SID   @(#) help.txt 1.127 23/12/09 13:40:33
 
 NAME
 
@@ -1465,6 +1465,10 @@ OPTIONS
 
           for known, valid keys and cipher names.
 
+          'CIPHER' can be also be any of the intern defined patterns, see:
+
+             $0 --header --help=cipherpattern
+
           If 'CIPHER' does not match a hex key, i.e. '0x03000035', it is used
           as pattern (RegEx) to match cipher suite names. For example:
           'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
@@ -1494,6 +1498,7 @@ OPTIONS
 
           Default is 'ALL:NULL:eNULL:aNULL:LOW:EXP' as specified in Net::SSLinfo.
 
+          See  LIMITATIONS  also.
 
       --cipher-alpn=NAME
 
@@ -1554,6 +1559,7 @@ OPTIONS
               $0 --header --help=range
 
           If any  --cipher=CIPHER  is used,  --cipherrange=RANGE  is ignored.
+          See  LIMITATIONS  also.
 
       --slow-server-delay=SEC
 
@@ -3614,6 +3620,15 @@ LIMITATIONS
 
         --cfg-text=FILE  cannot be used to redefine the texts  'yes' and 'no'
         as used in the output for  +cipher  command.
+
+        --cipher=CIPHER  accepts keys, names and patterns for ciphers.
+        Keys must start with '0x' followed by exactly 8 uppercase hex chars.
+        If 'CIPHER' should match a cipher suite name, it must be written with
+        uppercase letters. If it should match a predefined pattern it must be
+        written with lowercase letters.
+        Note that currently not all OpenSSL-style patterns are supported.
+
+        --cipherrange=RANGE  accepts only lowercase names.
 
     Checks (general)
 
