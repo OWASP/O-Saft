@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.91 23/12/05 10:49:35";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.92 23/12/09 11:20:36";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -707,15 +707,18 @@ sub get_names_list  {
 } # get_names_list
 
 sub find_keys   {
-    #? TODO  find all hex key for which given cipher pattern matches in %ciphers
+    #? find all hex key for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_keys($pattern)");
     return map({get_key($_);} grep(/$pattern/, get_names_list()));
 } # find_keys
 
 sub find_names  {
-    #? TODO  find all cipher suite names for which given cipher pattern matches in %ciphers
-    my $pattern = shift;
+    #? find all cipher suite names for which given cipher pattern matches in %ciphers
+    #? pattern can be RegEx like GCM|CHACHA or OpenSSL-style pattern like GCM:CHACHA
+    # NOTE: matches the primary cipher suite name only, not aliases or constants
+    my $pattern =  shift;
+       $pattern =~ s/:/|/g;
     _trace("find_names($pattern)");
     return grep(/$pattern/, get_names_list());
 } # find_names
@@ -1705,7 +1708,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.91 2023/12/05
+2.92 2023/12/09
 
 
 =head1 AUTHOR
