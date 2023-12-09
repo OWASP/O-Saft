@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.40 23/11/30 12:48:35";
+our $SID_osaft  =  "@(#) osaft.pm 2.41 23/12/09 12:34:51";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2004,12 +2004,15 @@ our %cfg = (    # main data structure for configuration
     'TLS1FF'        => 0,       # dummy for future use
     'DTLSfamily'    => 0,       # dummy for future use
     'cipher'        => [],      # ciphers we got with --cipher=
-    'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
-                                # should simply be   ALL:COMPLEMENTOFALL,  but
-                                # have seen implementations  where it does not
-                                # list all compiled-in ciphers, hence the long
-                                # list
-                                # TODO: must be same as in Net::SSLinfo or used from there
+                                # if the passed value is any of cipherpatterns
+                                # the value from cipherpatterns will be used
+    'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP",  # default for openssl
+                                # pattern for all ciphers known by openssl
+                                # should simply be   ALL:COMPLEMENTOFALL
+                                # but have seen implementations  where it does
+                                # not list all compiled-in ciphers,  hence the
+                                # long list
+                                # NOTE: must be same as in Net::SSLinfo
     'cipherpatterns'    => {    # openssl patterns for cipher lists
         # key             description                cipher pattern for openssl
         #----------------+--------------------------+---------------------------
@@ -2026,7 +2029,7 @@ our %cfg = (    # main data structure for configuration
         'edh'       => [ "Ephermeral DH Ciphers",   'EDH'                     ], 
         'ecdh'      => [ "Ecliptical curve DH Ciphers",             'ECDH'    ], 
         'ecdsa'     => [ "Ecliptical curve DSA Ciphers",            'ECDSA'   ], 
-        'ecdhe'     => [ "Ephermeral ecliptical curve DH Ciphers",  'EECDH'   ], # TODO:  ECDHE not possible with openssl
+        'ecdhe'     => [ "Ephermeral ecliptical curve DH Ciphers",  'EECDH'   ], # NOTE:  ECDHE not possible with openssl
         'eecdh'     => [ "Ephermeral ecliptical curve DH Ciphers",  'EECDH'   ], 
         'aecdh'     => [ "Anonymous ecliptical curve DH Ciphers",   'AECDH'   ], 
         'exp40'     => [ "40 Bit encryption",       'EXPORT40'                ], 
@@ -2052,7 +2055,7 @@ our %cfg = (    # main data structure for configuration
         'sslv3'     => [ "all SSLv3 Ciphers",       'SSLv3' ], # NOTE: not possible with some openssl
         'tlsv1'     => [ "all TLSv1 Ciphers",       'TLSv1' ], # NOTE: not possible with some openssl
         'tlsv11'    => [ "all TLSv11 Ciphers",      'TLSv1' ], # alias for tlsv1
-        'tlsv12'    => [ "all TLSv12 Ciphers",      'TLSv1.2' ],
+        'tlsv12'    => [ "all TLSv12 Ciphers",      'TLSv1.2' ], # NOTE: not possible with openssl
         'srp'       => [ "SRP Ciphers",             'SRP'   ], 
         'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
         'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
@@ -2074,7 +2077,8 @@ our %cfg = (    # main data structure for configuration
                     # modes how to scan for ciphers;
                     # NOTE: commands_int must contain the commands cipher_dump
                     #       cipher_intern, cipher_openssl and cipher_ssleay
-    'ciphers'       => [],      # contains all ciphers to be tested # TODO: change from cipher names to keys
+    'ciphers'       => [],      # contains all cipher keys to be tested
+                                # contains cipher names for ciphermode=openssl
     'cipherrange'   => 'intern',# the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
                     # Technical (perl) note for definition of these ranges:
@@ -2087,7 +2091,7 @@ our %cfg = (    # main data structure for configuration
                     # memory footprint,  but requires use of  eval()  when the
                     # range is needed:  eval($cfg{cipherranges}->{rfc})
                     # Each string must be syntax for perl's range definition.
-        'rfc'       =>          # constants for ciphers defined in various RFCs
+        'rfc'       =>          # constants for ciphers defined in various RFC
                        "0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
                         0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
                         0x0300D000 .. 0x0300D0FF,
@@ -3463,7 +3467,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.40"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.41"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3510,7 +3514,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.40 2023/11/30
+2.41 2023/12/09
 
 =head1 AUTHOR
 
