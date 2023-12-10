@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.41 23/12/09 12:34:51";
+our $SID_osaft  =  "@(#) osaft.pm 2.42 23/12/10 11:34:39";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2056,6 +2056,8 @@ our %cfg = (    # main data structure for configuration
         'tlsv1'     => [ "all TLSv1 Ciphers",       'TLSv1' ], # NOTE: not possible with some openssl
         'tlsv11'    => [ "all TLSv11 Ciphers",      'TLSv1' ], # alias for tlsv1
         'tlsv12'    => [ "all TLSv12 Ciphers",      'TLSv1.2' ], # NOTE: not possible with openssl
+#        'tlsv13'    => [ "all TLSv13 Ciphers",      'TLSv1.3' ], # NOTE: not possible with openssl
+        'tls13'     => [ "some TLS13 Ciphers",      'TLS13' ], # NOTE: not possible with openssl
         'srp'       => [ "SRP Ciphers",             'SRP'   ], 
         'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
         'sha'       => [ "Ciphers with SHA1 Mac",   'SHA'   ], 
@@ -2994,23 +2996,23 @@ Convert internal key to text: 0x03000026 -> 0x00,0x26
 
 =head3 tls_const2text($constant_name)
 
-Convert TLS constant name to text (just replac _ by space).
+Convert TLS constant name to text (just replace _ by space).
 
 =cut
 
 sub tls_text2key        {
     my $txt = shift;
-       $txt =~ s/(,|0x)//g;
+       $txt =~ s/(,|0x)//g;     # TODO: check if valid hex
     if (4 < length($txt)) {
-       $txt = "0x02$txt";    # SSLv2
+       $txt = "0x02$txt";       # SSLv2
     } else {
-       $txt = "0x0300$txt";  # SSLv3, TLSv1.x
+       $txt = "0x0300$txt";     # SSLv3, TLSv1.x
     }
     return $txt;
 }
 
 sub tls_key2text        {
-    my $key = shift;
+    my $key = shift;            # TODO: check if valid hex
     if ($key =~ m/^0x0300/) {
        $key =~ s/0x0300//;      #   03000004 ->     0004
     } else {
@@ -3467,7 +3469,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.41"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.42"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3514,7 +3516,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.41 2023/12/09
+2.42 2023/12/10
 
 =head1 AUTHOR
 
