@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.42 23/12/10 11:34:39";
+our $SID_osaft  =  "@(#) osaft.pm 2.43 23/12/10 12:03:50";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2998,7 +2998,17 @@ Convert internal key to text: 0x03000026 -> 0x00,0x26
 
 Convert TLS constant name to text (just replace _ by space).
 
+=head3 tls_valid_key($text)
+
+Return internal key if it is a valid cipher hex key, empty string otherwise.
+
 =cut
+
+sub tls_valid_key       {
+    my $key =  shift;
+       $key = "0x$key" if $key !~ m/^0x/;
+    return ($key =~ m/^0x[0-9a-fA-F]{8}$/) ? $key : "-";
+}
 
 sub tls_text2key        {
     my $txt = shift;
@@ -3469,7 +3479,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.42"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.43"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3516,7 +3526,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.42 2023/12/10
+2.43 2023/12/10
 
 =head1 AUTHOR
 
