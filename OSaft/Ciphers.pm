@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.92 23/12/09 11:20:36";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.93 23/12/10 11:05:49";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1708,7 +1708,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.92 2023/12/09
+2.93 2023/12/10
 
 
 =head1 AUTHOR
@@ -1812,6 +1812,7 @@ __DATA__
 0x02080080	LOW	weak	SSLv2	RSA	RSA	RC4	64	MD5	-?-	RC4-64-MD5,EXP-RC4-64-MD5	RC4_64_WITH_MD5	BSAFE
 0x02FF0800	-?-	weak	SSLv2	RSA	RSA	DES	64	MD5	-?-	DES-CFB-M1	DES_64_CFB64_WITH_MD5_1	-
 0x02FF0810	-?-	weak	SSLv2	RSA(512)	None	None	0	MD5	-	NULL	NULL	SSLeay
+0x02FFFFFF	-	-	SSLv2	None	None	-	0	None	-?-	SSL2_UNFFINED_CIPHER_0x02FFFFFF	SSL2_UNFFINED_CIPHER_0x02FFFFFF	internal
 0x03000000	-?-	weak	SSLv3	RSA	None	None	0	MD5	5246	NULL-NULL	NULL_WITH_NULL_NULL	SSLeay
 0x03000001	-?-	weak	SSLv3	RSA	RSA	None	0	MD5	5246	NULL-MD5	RSA_WITH_NULL_MD5,RSA_NULL_MD5	EXPORT
 0x03000002	-?-	weak	SSLv3	RSA	RSA	None	0	SHA1	5246	NULL-SHA	RSA_WITH_NULL_SHA,RSA_NULL_SHA	-
