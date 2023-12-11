@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.293 23/12/11 14:47:05";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.294 23/12/11 14:53:58";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1015,6 +1015,24 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-legacy_renegotiation'     => 0,
     '-legacy_server_connect'    => 0,
     '-no_legacy_server_connect' => 0,
+    #--------------+------------
+    # openssl > 1.x disabled various protocols, hence check if available
+    #--------------+------------  
+    '-ssl2'         => 0,
+    '-ssl3'         => 0,
+    '-tls1'         => 0,
+    '-tls1_1'       => 0,
+    '-tls1_2'       => 0,
+    '-tls1_3'       => 0,
+    '-dtls'         => 0,
+    '-dtls1'        => 0,
+    '-dtls1_2'      => 0,
+    '-no_ssl2'      => 0,
+    '-no_ssl3'      => 0,
+    '-no_tls1'      => 0,
+    '-no_tls1_1'    => 0,
+    '-no_tls1_2'    => 0,
+    '-no_tls1_3'    => 0,
     #--------------+------------
     # options in server mode
     #--------------+------------
