@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.44 23/12/11 10:35:38";
+our $SID_osaft  =  "@(#) osaft.pm 2.45 23/12/11 10:54:41";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2699,10 +2699,10 @@ our %cfg = (    # main data structure for configuration
         'OWASP_B'       => '^(?:TLSv1[123]?)?(?:(EC)?(?:DHE|EDH).*?(?:AES|CHACHA).*?(?!GCM|POLY1305)[_-]SHA)',
         'OWASP_C'       => '^((?:TLSv1[123]?)?.*?(?:AES...|RSA)[_-]|(?:(?:EC)?DHE-)?PSK[_-]CHACHA)',
             # all ECDHE-PSK-CHACHA* DHE-PSK-CHACHA* and PSK-CHACHA* are C too
-        'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]|PSK[_-]SHA))',
+        'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]|PSK[_-]SHA|UNFFINED))',
             # all PSK-SHA are aliases for PSK-NULL-SHA and hence D
             # TODO:  all AES128-SHA are aliases for AES128-CBC-SHA; severity depends on protocl version
-        'OWASP_NA'      => '(?:^PCT_|ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ|SM4)',
+        'OWASP_NA'      => '(?:^PCT_|ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ|SM4|FZA[_-]FZA)',
             # PCT are not SSL/TLS; will produce 'miss' in internal tests
         # TODO: need exception, i.e. TLSv1 and TLSv11
         'notOWASP_A    '=> '^(?:TLSv11?)',
@@ -3484,7 +3484,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.44"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.45"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3531,7 +3531,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.44 2023/12/11
+2.45 2023/12/11
 
 =head1 AUTHOR
 
