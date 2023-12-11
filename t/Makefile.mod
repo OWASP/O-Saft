@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.9 23/12/03 12:05:49
+#?      @(#) Makefile.mod 1.10 23/12/11 14:48:33
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.9
+_SID.mod           := 1.10
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -89,9 +89,10 @@ LIST.OSaft-Doc-Data.pm := \
 	--usage version         +VERSION    list  print \
 	get     get-markup      get-text    get-as-text \
 
-LIST.Net-SSLinfo.pm-t  :=   --test-methods --test-sclient --test-sslmap --test-ssleay
+LIST.Net-SSLinfo.pm-t  := \
+	--test-openssl --test-sclient --test-sslmap \
+	--test-methods --test-ssleay
 LIST.Net-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
-# TODO: --test-openssl
 LIST.Net-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
 #LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
