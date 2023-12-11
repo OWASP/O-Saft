@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.93 23/12/10 11:05:49";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.94 23/12/11 12:57:20";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -805,7 +805,7 @@ sub sort_names      {
         qw(DH.?(?i:anon)),              # Anon needs to be caseless
         qw((?:NULL))    ,               # all NULL
         qw((?:PSK.SHA)) ,               # all PSK-SHA (which are PSK-NULL-SHA)
-        qw((?:SCSV))    ,               # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
+        qw((?:SCSV|SSL2_UNFFINED)),     # dummy ciphers (avoids **WARNING: 412: for INFO_SCSV)
         qw((?:GREASE-)) ,               # dummy ciphers (avoids **WARNING: 412: for GREASE*)
     );
     my @strength = (
@@ -1708,7 +1708,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.93 2023/12/10
+2.94 2023/12/11
 
 
 =head1 AUTHOR
