@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.291 23/11/26 00:09:41";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.292 23/12/11 14:39:37";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1355,6 +1355,23 @@ sub ssleay_methods  {
     push(@list, 'CTX_set_next_proto_select_cb') if (defined &Net::SSLeay::CTX_set_next_proto_select_cb);
     return @list;
 } # ssleay_methods
+
+sub test_openssl    {
+    #? return internal data structure %_OpenSSL_opt (openssl options)
+    s_client_check();
+    my $line = "#-----------------------+----------------";
+    my $data = "$line\n# _OpenSSL_opt          | 1=available\n$line\n";
+    foreach my $_opt (sort keys %_OpenSSL_opt) {
+        if ('data' eq $_opt) {  # huge internal data from from openssl call
+            if (0 >= $Net::SSLinfo::verbose) {
+                $_OpenSSL_opt{$_opt} = '<<use  --v  or  --trace to see data>>';
+            }
+        }
+        $data  .= sprintf("#%19s\t= %s\n", $_opt, $_OpenSSL_opt{$_opt});
+    }
+    $data .= "$line";
+    return $data;
+} # test_methods
 
 sub test_methods    {
     #? return openssl s_client availabilities (options for s_client)
@@ -4124,6 +4141,7 @@ sub _main           {
         if ($arg =~ m/^(?:--test)?.?sslmap/)    { print test_sslmap();      next; }
         if ($arg =~ m/^(?:--test)?.?s_?client/) { print test_sclient();     next; }
         if ($arg =~ m/^(?:--test)?.?methods/)   { print test_methods();     next; }
+        if ($arg =~ m/^(?:--test)?.?openssl/)   { print test_openssl();     next; }
         if ($arg =~ m/^[+-]/)                   { next; }   # silently ignore unknown options
         # treat remaining args as hostname to test
         do_ssl_open( $arg, 443, '');
