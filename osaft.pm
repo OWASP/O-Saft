@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.43 23/12/10 12:03:50";
+our $SID_osaft  =  "@(#) osaft.pm 2.44 23/12/11 10:35:38";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3058,12 +3058,15 @@ sub get_ciphers_range   {
     my $range = shift;
        $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
     my @all;
-    _trace("get_ciphers_range($ssl, $range)");
+    _trace2("get_ciphers_range($ssl, $range)");
     #  NOTE: following eval must not use the block form because the value
     #        needs to be evaluated
+    goto END if not exists $cfg{'cipherranges'}->{$range};
+    goto END if ($cfg{'cipherranges'}->{$range} !~ m/^[x0-9A-Fa-f,.\s]+$/); # if someone tries to inject ...
     foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         push(@all, sprintf("0x%08X",$c));
     }
+    END:
     _trace2("get_ciphers_range()\t= @all");
     return @all;
 } # get_ciphers_range
@@ -3072,6 +3075,7 @@ sub get_cipher_owasp    {
     #? return OWASP rating for cipher suite name (see $cfg{regex}->{{OWASP_*}
     my $cipher  = shift;
     my $sec     = "miss";
+    _trace2("get_cipher_owasp($cipher, $sec)");
     return  $sec if not defined $cipher;    # defensive programming (key missing in %ciphers)
     return  $sec if ($cipher =~ m/^\s*$/);  # ..
     # following sequence is important:
@@ -3086,14 +3090,15 @@ sub get_cipher_owasp    {
     $sec = "A"   if ($cipher =~ /$cfg{'regex'}->{'OWASP_AA'}/); # some special for TLSv1.3 only, always secure
     $sec = "-"   if ($cipher =~ /$cfg{'regex'}->{'notCipher'}/); # some specials
     # TODO: implement when necessary: notOWASP_A, notOWASP_B, notOWASP_C, notOWASP_D
+    _trace2("get_cipher_owasp()\t= $sec");
     return $sec;
 } # get_cipher_owasp
 
 sub get_openssl_version {
     # we do a simple call, no checks, should work on all platforms
     # get something like: OpenSSL 1.0.1k 8 Jan 2015
-    my $cmd  = shift;
-    my $data = qx($cmd version);
+    my $cmd     = shift;    # assume that $cmd cannot be injected
+    my $data    = qx($cmd version);
     chomp $data;
     _trace("get_openssl_version: $data");
     $data =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
@@ -3479,7 +3484,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.43"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.44"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3526,7 +3531,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.43 2023/12/10
+2.44 2023/12/11
 
 =head1 AUTHOR
 
