@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.82 23/12/13 01:28:26
+#?      @(#) Makefile.warnigs 1.83 23/12/13 21:25:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.82
+_SID.warnings      := 1.83
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -220,7 +220,7 @@ warning-057: TEST.args  = --cipher-mode=unknown             +quit
 warning-058: TEST.args  = --ca-path=unknown                 +quit
 warning-059: TEST.args  = --ca-path=unknown                 +quit
 warning-060: TEST.args  = --ca-paths=unknown --cfg-init=ca_files=unknown +quit
-#warning-061: TEST.args  = free
+warning-061: TEST.args  = --cipher-openssl +cipher          +quit
 warning-062: TEST.args  = --cipher=unknown +cipher          any-host
 warning-063: TEST.args  = --cipher=UNKNOWN +cipher          any-host
 warning-064: TEST.args  = +sts --no-http                    any-host
@@ -285,7 +285,7 @@ warning-141: TEST.args  = +cipherraw --dtlsv9               +quit
 warning-142: TEST.args  = TODO: testing ancient openssl version: using '-msg' option to get DH parameters
 warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLeay, difficult ...
 warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
-warning-145: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
+warning-145: TEST.args  = --cipher-openssl +cipher --dtls11 +quit
 warning-146: TEST.args  = TODO: testing missing openssl -tlsextdebug option
 warning-147: TEST.args  = TODO: testing missing openssl executable in Net::SSLinfo
 warning-148: TEST.args  = TODO: testing missing openssl version -d failed, difficult ...
@@ -424,7 +424,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.82: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.83: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
