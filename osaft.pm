@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.46 23/12/13 01:31:11";
+our $SID_osaft  =  "@(#) osaft.pm 2.47 23/12/13 09:03:29";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2835,6 +2835,8 @@ our %cfg = (    # main data structure for configuration
         'cipher'    => "+cipher : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherall' => "+cipherall : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
+        'openssl3'  => "OpenSSL 3.x changed some functionality, please see '$cfg__me --help=TECHNIC'",
+        'openssl3c' => "+cipher fow OpenSSL 3.x may result in many warnings, consider using '--no-warning'",
        #--------------+--------------------------------------------------------
     }, # hints
    #------------------+--------------------------------------------------------
@@ -3502,7 +3504,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.46"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.47"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3549,7 +3551,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.46 2023/12/13
+2.47 2023/12/13
 
 =head1 AUTHOR
 
