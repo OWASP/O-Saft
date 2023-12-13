@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.96 23/12/13 11:54:00";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.97 23/12/13 13:14:40";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -335,6 +335,10 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
 No methods are exported. The full package name must be used, which improves the
 readability of the program code. Methods intended for external use are:
 
+=head3 is_valid_key($key
+
+Return normalised key if it matches  /^(0x)?[0-9A-F]{8}$/,  return empty string
+otherwise.
 
 =head3 text2key($text)
 
@@ -349,6 +353,14 @@ Convert internal key to hex text: 0x0300003D --> 0x00,0x3D.
 Set value for 'security' in for specified cipher key.
 
 =cut
+
+sub is_valid_key {
+    #? return normalised key if m/^(0x)?[0-9A-F]{8}$/; empty string otherwise
+    my $key = uc(shift);
+       $key =~ s/^0X//g;
+    return "" if $key !~ m/^[0-9A-F]{8}$/;
+    return "0x$key";
+} # is_valid_key
 
 sub text2key    {
     #? return internal hex key for given hex, return as is if not hex
@@ -1448,6 +1460,7 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     show_ciphers($1)        if ($arg =~ m/^(show|simple)$/      );
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?)$/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
+    print is_valid_key($1)  if ($arg =~ m/^is.?valid.?key=(.*)/ );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
     print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
     print get_key($1)       if ($arg =~ m/^(?:get.)?key=(.*)/   );
@@ -1543,7 +1556,7 @@ sub _main_ciphers_usage {
         printf("\t%s %s\n", $name, $cmd);
     }
     print "# commands to show cipher data:\n";
-    foreach my $cmd (qw(key=CIPHER-NAME getter=KEY)) {
+    foreach my $cmd (qw(key=CIPHER-NAME getter=KEY is_valid_key=KEY)) {
         printf("\t%s %s\n", $name, $cmd);
     }
     print "# various commands (examples):\n";
@@ -1551,7 +1564,7 @@ sub _main_ciphers_usage {
     printf("\t$name getter=0x0300CCA9\n");
     printf("\t$name getter=0xCC,0xA9\n");  # avoid: Possible attempt to separate words with commas at ...
     printf("\t$name getter=0x03,0x00,0xCC,0xA9\n");
-    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 )) {
+    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 is_valid_key=0300Cca9)) {
         printf("\t%s %s\n", $name, $cmd);
     }
     print "#\n# all commands can also be used as '--test-ciphers-CMD\n";
@@ -1710,7 +1723,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.96 2023/12/13
+2.97 2023/12/13
 
 
 =head1 AUTHOR
