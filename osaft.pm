@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.45 23/12/11 10:54:41";
+our $SID_osaft  =  "@(#) osaft.pm 2.46 23/12/13 01:31:11";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2493,7 +2493,7 @@ our %cfg = (    # main data structure for configuration
                        # same data structure as Net::SSLinfo's %_OpenSSL_opt
                        # not all values used yet
                        # default value 1 means supported by openssl, will be
-                       # structure initialised correctly in _check_openssl()
+                       # initialised correctly in _check_openssl()
                        # which uses Net::SSLinfo::s_client_check()
         #------------------+-------+-------------------------------------------
         # key (=option) supported=1  warning message if option is missing
@@ -2538,6 +2538,24 @@ our %cfg = (    # main data structure for configuration
         '-legacy_renegotiation'     => [ 1, "<<NOT YET USED>>"      ],
         '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"      ],
         '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"      ],
+        #------------------+-------+-------------------------------------------
+	# openssl > 1.x disabled various protocols, default enabled
+        #------------------+-------+-------------------------------------------
+        '-ssl2'             => [ 1, "SSLv2 for +cipher disabled"    ],
+        '-ssl3'             => [ 1, "SSLv3 for +cipher disabled"    ],
+        '-tls1'             => [ 1, "TLSv1 for +cipher disabled"    ],
+        '-tls1_1'           => [ 1, "TLSv1.1 for +cipher disabled"  ],
+        '-tls1_2'           => [ 1, "TLSv1.2 for +cipher disabled"  ],
+        '-tls1_3'           => [ 1, "TLSv1.3 for +cipher disabled"  ],
+        '-dtls'             => [ 1, "DTLSv1 for +cipher disabled"   ],
+        '-dtls1'            => [ 1, "DTLSv1 for +cipher disabled"   ],
+        '-dtls1_2'          => [ 1, "DTLSv1.2 for +cipher disabled" ],
+        '-no_ssl2'          => [ 1, "option ignored" ],
+        '-no_ssl3'          => [ 1, "option ignored" ],
+        '-no_tls1'          => [ 1, "option ignored" ],
+        '-no_tls1_1'        => [ 1, "option ignored" ],
+        '-no_tls1_2'        => [ 1, "option ignored" ],
+        '-no_tls1_3'        => [ 1, "option ignored" ],
         #------------------+-------+-------------------------------------------
     }, # openssl
     'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
@@ -3484,7 +3502,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.45"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.46"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3531,7 +3549,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.45 2023/12/11
+2.46 2023/12/13
 
 =head1 AUTHOR
 
