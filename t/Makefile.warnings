@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.81 23/12/11 13:50:28
+#?      @(#) Makefile.warnigs 1.82 23/12/13 01:28:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.81
+_SID.warnings      := 1.82
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -324,6 +324,7 @@ warning-409: TEST.args  = --sslv2 --sni +cipher    --exit=HOST4 $(TEST.host)
 warning-410: TEST.args  = --sslv2 --sni +cipher --ciphermode=openssl --exit=HOST4 $(TEST.host)
 warning-411: TEST.args  = TODO: testing checked cipher does not match returned cipher, difficult ...
 warning-412: TEST.args  = TODO: testing missing ciphers in sorted list, difficult ...
+warning-413: TEST.args  = --tlsv13 --no-rc +cipher -cipher-openssl --notls1 --notlsv11 --notlsv12 $(TEST.host)
 warning-420: TEST.args  = TODO: testing empty value [$cipher, $ssl], check ignored; programming error
 warning-451: TEST.args  = TODO: testing function obsolete, please use cipher_openssl, difficult ...
 warning-510: TEST.args  = TODO: testing --help=unknown-table , difficult ...
@@ -423,7 +424,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.81: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.82: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
