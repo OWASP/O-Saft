@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.47 23/12/13 09:03:29";
+our $SID_osaft  =  "@(#) osaft.pm 2.48 23/12/13 12:45:12";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -1995,11 +1995,10 @@ our %cfg = (    # main data structure for configuration
     'TLSv11'        => 1,       # 1:   "
     'TLSv12'        => 1,       # 1:   "
     'TLSv13'        => 1,       # 1:   "
-                                # NOTE: DTLS currently (6/2015) disabled by default 'cause not supported by openssl
     'DTLSv09'       => 0,       # 1:   "
-    'DTLSv1'        => 0,       # 1:   "
-    'DTLSv11'       => 0,       # 1:   "
-    'DTLSv12'       => 0,       # 1:   "
+    'DTLSv1'        => 1,       # 1:   "
+    'DTLSv11'       => 1,       # 1:   "
+    'DTLSv12'       => 1,       # 1:   "
     'DTLSv13'       => 0,       # 1:   "
     'TLS1FF'        => 0,       # dummy for future use
     'DTLSfamily'    => 0,       # dummy for future use
@@ -3504,7 +3503,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.47"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.48"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3551,7 +3550,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.47 2023/12/13
+2.48 2023/12/13
 
 =head1 AUTHOR
 
