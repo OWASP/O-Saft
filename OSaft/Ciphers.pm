@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.97 23/12/13 13:14:40";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.99 23/12/13 13:32:44";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -385,7 +385,7 @@ sub key2text    {
     # strips 0x03,0x00
     # return as is if not hex
     my $key = shift;
-    return $key if ($key !~ m/^0x[0-9A-F]+$/i); # unknown format, return as is
+    return $key if not is_valid_key($key);  # unknown format, return as is
        # NOTE: invalid keys like 0x0300001E-bug should not be converted
        $key =~ s/0x//i;         #    0x0026  --> 0026 (necessary in test-mode only)
     if (6 < length($key)) {     #   from     -->     to
@@ -693,7 +693,7 @@ sub get_pfs     {
     #? return "yes" if cipher suite supports PFS, "no" otherwise
     my $key  = shift;
     my $name = $key;
-    if ($key =~ /^0x[0-9A-F]{8}$/i) {
+    if (not is_valid_key($key)) {
        $name = get_name($key);
     }
     return (($name =~ m/^(?:EC)?DHE/) or ($name =~ m/^(?:EXP-)?EDH-/)) ? "yes" : "no";
@@ -711,7 +711,7 @@ sub get_names_list  {
     #? return list of all defined cipher suite names in %ciphers
     my @list;
     foreach my $key (sort keys %ciphers) {
-        next if ($key !~ m/^0x[0-9a-fA-F]{8}$/);# extract only valid keys
+        next if (not is_valid_key($key));   # extract only valid keys
         push(@list, get_name($key));
     }
     return wantarray ? (sort @list) : join(' ', (sort @list));
@@ -1514,7 +1514,7 @@ sub _ciphers_init   {
         my @fields = split(/\t/, $line);
         my $len    = $#fields;
         my $key    = $fields[0];
-        if ($key  !~ /^0x[0-9A-F]{8}/) {
+        if ($key  !~ /^0x[0-9A-F]{8}/) {    # cannot use is_valid_key() because some keys have suffixes
             _warn("504: DATA line" . sprintf("%4d", $.) . ": wrong hex key '$key'");
             next;
         }
@@ -1723,7 +1723,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.97 2023/12/13
+2.99 2023/12/13
 
 
 =head1 AUTHOR
