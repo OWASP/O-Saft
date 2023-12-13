@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.114 23/12/13 10:04:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.115 23/12/13 12:16:57"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.114");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.115");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7075,29 +7075,29 @@ while ($#argv >= 0) {
         _set_cfg_out('exitcode_low',    0);
     }
     # some options are for compatibility with other programs
-    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
+    #   example openssl: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
     if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # -"-
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    }
     if ($arg =~ /^--?tlsv?11$/i)        { $cfg{'TLSv11'}    = 1;    }
     if ($arg =~ /^--?tlsv?12$/i)        { $cfg{'TLSv12'}    = 1;    }
     if ($arg =~ /^--?tlsv?13$/i)        { $cfg{'TLSv13'}    = 1;    }
-    if ($arg =~ /^--dtlsv?09$/i)        { $cfg{'DTLSv09'}   = 1;    }
-    if ($arg =~ /^--dtlsv?10?$/i)       { $cfg{'DTLSv1'}    = 1;    }
-    if ($arg =~ /^--dtlsv?11$/i)        { $cfg{'DTLSv11'}   = 1;    }
-    if ($arg =~ /^--dtlsv?12$/i)        { $cfg{'DTLSv12'}   = 1;    }
-    if ($arg =~ /^--dtlsv?13$/i)        { $cfg{'DTLSv13'}   = 1;    }
-    if ($arg =~ /^--nosslv?2$/i)        { $cfg{'SSLv2'}     = 0;    }
-    if ($arg =~ /^--nosslv?3$/i)        { $cfg{'SSLv3'}     = 0;    }
-    if ($arg =~ /^--notlsv?1$/i)        { $cfg{'TLSv1'}     = 0;    }
-    if ($arg =~ /^--notlsv?11$/i)       { $cfg{'TLSv11'}    = 0;    }
-    if ($arg =~ /^--notlsv?12$/i)       { $cfg{'TLSv12'}    = 0;    }
-    if ($arg =~ /^--notlsv?13$/i)       { $cfg{'TLSv13'}    = 0;    }
-    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv09'}   = 0;    }
-    if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    }
-    if ($arg =~ /^--nodtlsv?11$/i)      { $cfg{'DTLSv11'}   = 0;    }
-    if ($arg =~ /^--nodtlsv?12$/i)      { $cfg{'DTLSv12'}   = 0;    }
-    if ($arg =~ /^--nodtlsv?13$/i)      { $cfg{'DTLSv13'}   = 0;    }
+    if ($arg =~ /^--?dtlsv?09$/i)       { $cfg{'DTLSv09'}   = 1;    }
+    if ($arg =~ /^--?dtlsv?10?$/i)      { $cfg{'DTLSv1'}    = 1;    }
+    if ($arg =~ /^--?dtlsv?11$/i)       { $cfg{'DTLSv11'}   = 1;    }
+    if ($arg =~ /^--?dtlsv?12$/i)       { $cfg{'DTLSv12'}   = 1;    }
+    if ($arg =~ /^--?dtlsv?13$/i)       { $cfg{'DTLSv13'}   = 1;    }
+    if ($arg =~ /^--?nosslv?2$/i)       { $cfg{'SSLv2'}     = 0;    }
+    if ($arg =~ /^--?nosslv?3$/i)       { $cfg{'SSLv3'}     = 0;    }
+    if ($arg =~ /^--?notlsv?1$/i)       { $cfg{'TLSv1'}     = 0;    }
+    if ($arg =~ /^--?notlsv?11$/i)      { $cfg{'TLSv11'}    = 0;    }
+    if ($arg =~ /^--?notlsv?12$/i)      { $cfg{'TLSv12'}    = 0;    }
+    if ($arg =~ /^--?notlsv?13$/i)      { $cfg{'TLSv13'}    = 0;    }
+    if ($arg =~ /^--?nodtlsv?09$/i)     { $cfg{'DTLSv09'}   = 0;    }
+    if ($arg =~ /^--?nodtlsv?10?$/i)    { $cfg{'DTLSv1'}    = 0;    }
+    if ($arg =~ /^--?nodtlsv?11$/i)     { $cfg{'DTLSv11'}   = 0;    }
+    if ($arg =~ /^--?nodtlsv?12$/i)     { $cfg{'DTLSv12'}   = 0;    }
+    if ($arg =~ /^--?nodtlsv?13$/i)     { $cfg{'DTLSv13'}   = 0;    }
     if ($arg =~ /^--notcp/i)            { $cfg{$_} = 0 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
     if ($arg =~ /^--tcp/i)              { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
     if ($arg =~ /^--noudp/i)            { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
