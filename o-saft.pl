@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.115 23/12/13 12:16:57"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.116 23/12/13 12:42:01"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.115");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.116");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1537,7 +1537,7 @@ sub _check_ssl_methods  {
     my $typ;
     my @list;
     _y_CMD("  check supported SSL versions ...");
-    if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
+    if (_is_cfg_ciphermode('openssl|ssleay')) {
         @list = Net::SSLinfo::ssleay_methods();
         # method names do not literally match our version string, hence the
         # cumbersome code below
@@ -1545,12 +1545,13 @@ sub _check_ssl_methods  {
     _trace("SSLeay methods  = " . join(" ", @list));
     foreach my $ssl (@{$cfg{'versions'}}) {
         next if ($cfg{$ssl} == 0);          # don't check what's disabled by option
-        if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump')) {
-            # internal method does not depend on other libraries, but DTLS* not yet supported
-            if ($ssl =~ m/^DTLS/) {
-                _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipher'; not checked");
-                next;
-            }
+        if (_is_cfg_ciphermode('intern|dump')) {
+            # internal method does not depend on other libraries
+            #if ($ssl =~ m/^DTLS/) { # check disabled sinc 23.12.23
+            #    # OpenSSL 1.x does not supported DTLS*, ...
+            #    _warn("140: SSL version '$ssl': not supported by '$cfg{'me'} +cipher'; not checked");
+            #    next;
+            #}
             push(@{$cfg{'version'}}, $ssl);
             next;
         }
@@ -6000,7 +6001,7 @@ sub printciphers        {
 
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
-        if (_is_cfg_do('cipher_intern') or _is_cfg_do('cipher_dump')) {
+        if (_is_cfg_ciphermode('intern|dump')) {
             print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
             goto END_SSL if 0 >= (keys(%{$results->{$ssl}}));
             if (_is_cfg_do('cipher_intern')) {
