@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.116 23/12/13 12:42:01"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.117 23/12/13 13:46:52"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.116");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.117");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1163,6 +1163,7 @@ sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); 
     # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
 sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
     # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
+sub _is_valid_key($)    { return OSaft::Ciphers::is_valid_key(shift);     }
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
 sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
@@ -1180,7 +1181,7 @@ sub _cipher_set_sec     {
     # parameter looks like: 0x030000BA=sec or CAMELLIA128-SHA=sec
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
-        $key = OSaft::Ciphers::get_key($key) if ($key !~ m/^0x[0-9a-fA-F]{8}$/);
+        $key = OSaft::Ciphers::get_key($key) if (not _is_valid_key($key));
                 # if is is not a key, try to get the key from a cipher name
     return if not $key; # warning already printed
     OSaft::Ciphers::set_sec($key, $val);
@@ -2940,13 +2941,13 @@ sub _get_cipherslist    {
     if ('names' eq $mode) {  # convert to cipher names
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = OSaft::Ciphers::get_name($c)||"" if ($c =~ m/^0x[0-9A-F]+$/i);
+            $ciphers[$i] = OSaft::Ciphers::get_name($c)||"" if _is_valid_key($c);
         }
     }
     if ('keys'  eq $mode) {   # convert to cipher hex keys
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if ($c !~ m/^0x[0-9A-F]+$/i);
+            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if not _is_valid_key($c);
         }
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
