@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.119 23/12/13 19:50:43"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.120 23/12/13 21:13:48"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.119");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.120");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1143,6 +1143,8 @@ sub _need_check_dh()    { return __need_this('need-check_dh');  }
 sub _need_checkhttp()   { return __need_this('need-checkhttp'); }
 sub _need_checkprot()   { return __need_this('need-checkprot'); }
     # returns >0 if any  of the given commands is listed in $cfg{need-*}
+sub _is_do_cmdvulns()   { return __need_this('cmd-vulns');      }
+    # returns >0 if any  of the given commands is listed in $cfg{cmd-vulns}
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
     # returns list of matching entries in specified array @cfg{*}
@@ -7644,10 +7646,7 @@ _yeast_TIME("inc{");
 #| -------------------------------------
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
-    foreach my $cmd (qw(
-        beast crime drown freak logjam lucky13 poodle sloth sweet32
-	cipher_strong cipher_weak
-        )) {
+    $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());    # FIXME: necessary for _get_data0()
         # quick&dirty hack (11/2023) for some single commands like  +beast  to
         # avoid Perl's  Undefined subroutine &Net::SSLinfo::do_ssl_open called
         # reason is that these checks are called late with printchecks(),  but
@@ -7658,8 +7657,6 @@ if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
         # calling Net::SSLinfo even with --ciphermode=intern   should not harm
         # checks as protocols and ciphers (which are used for the checks)  are
         # detected properly before and not modified by Net::SSLinfo
-        $cfg{'need_netinfo'} = 1 if _is_cfg_do($cmd);
-    }
 }
 _load_modules() if (0 == $::osaft_standalone);
 
