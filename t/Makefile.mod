@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.10 23/12/11 14:48:33
+#?      @(#) Makefile.mod 1.11 23/12/13 19:23:25
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.10
+_SID.mod           := 1.11
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -68,6 +68,8 @@ LIST.OSaft-Ciphers.pm  := \
 	get_key=DHE-PSK-AES128-SHA     get_key=DHE_PSK_WITH_AES_128_CBC_SHA \
 	get_key=DHE-PSK-AES128-SHA256  get_key=DHE-PSK-AES128-CBC-SHA256    \
 	text2key=0x1301   text2key=0x13,0x01    key2text=0x03001301 \
+	is_valid_key=0x1  is_valid_key=03001301 is_valid_key=0x03001301 \
+	find_name=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 	find_names=DHE-PSK-AES128 find_keys=DHE-PSK-AES128
     # only $(LIST.OSaft-Ciphers.pm-cmd) is tested here, as they all produce the
     # same output as $(LIST.OSaft-Ciphers--test)
