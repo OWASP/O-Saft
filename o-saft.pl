@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.108 23/12/08 15:19:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.112 23/12/13 01:33:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.108");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.112");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1189,14 +1189,6 @@ sub _cipher_set_sec     {
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _eval_cipherranges  {
-    #? return array of cipher suite hex key, securely evaluated from given range
-    # invalid; avoid injection attempts
-    my $key = shift;
-    return [] if $cfg{'cipherranges'}->{$key} !~ m/^[x0-9A-Fa-f,.\s]+$/; # see osaft.pm
-    return (eval($cfg{'cipherranges'}->{$key})); ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-} # _eval_cipherranges
-
 sub __is_number         {
     # return 1 if given parameter is a number; return 0 otherwise
     my $val = shift;
@@ -1694,11 +1686,26 @@ sub _check_openssl      {
         # Perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialised
         my $val = Net::SSLinfo::s_client_opt_get($opt);
-           $val = 0 if ($val eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
+           $val = 0 if ($val eq '<<openssl>>');
         # _dbx "$opt $val";
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
-        _enable_sclient($opt);
+        _enable_sclient($opt);  # may print propper _warn()
+        my $ssl;
+        # NOTE: grep() uses %prot instead of %{$cfg{'openssl_option_map'}}
+        #       for better human readability
+        if (grep{$ssl = $_ if $opt eq ($prot{$_}{'opt'}||"");} keys %prot) {
+            #_dbx "opt : $opt = $val # $ssl = $cfg{$ssl}";
+            # simple one-liner to get key from %prot for which $opt matches
+            # %prot maps our internal protocol string to the option used by
+            # openssl; %cfg{$ssl} is set to 1 if ciphers should be scanned.
+            # if $opt exists in %prot,  in particula if  $prot{$ssl}->{opt}
+            # equals $opt grep() sets $ssl to the key of %prot
+            # ||""  avoids Perl warning "Use of uninitialized value ..."
+            # nothing to do if protocol disabled by user
+            $cfg{$ssl} = $val if 0 < $cfg{$ssl};
+                # _check_ssl_methods() sets @{$cfg{'versions'}} depending on $cfg{$ssl}
+        }
     }
     $cmd{'version'} = osaft::get_openssl_version($cmd{'openssl'});
     if ($cmd{'version'} lt "1.0.2") {
@@ -2742,12 +2749,16 @@ sub _useopenssl($$$$)   {
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
+    # OpenSSL 3.0.11 :
+    #   # does not know its own ciphers, i.e -cipher TLS_AES_256_GCM_SHA384 returns
+    #   Call to SSL_CONF_cmd(-cipher, TLS13_AES_256_GCM_SHA384) failed
+    #   40470D68167F0000:error:0A0000B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:../ssl/ssl_lib.c:2760:
     return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 
     if ($data =~ m#^\s*$#) {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
-        _warn("312: SSL version '$ssl': unknown result from openssl");
+        _warn("312: SSL version '$ssl': unknown result from openssl or '$cipher'");
         _warn("312: result from openssl: '$data'") if _is_v_trace();
     }
     _trace2("_useopenssl: #{ $data }");
@@ -2847,74 +2858,94 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
-sub _get_cipherlist_names   {
-    #? return space-separated list of cipher suites according command-line options
-    #  this is usefull for display only or for use with openssl
-    my $ssl     = shift;# parameter not used, just to have the same syntax as _get_cipherlist_keys
-    _trace("_get_cipherlist_names(){");
+sub _get_cipherslist    {
+    #? return array of cipher suites (names or keys) according command-line options
+    #  evaluates the --cipher= --cipher-range= option
+    my $mode    = shift;# 'names' returns array with cipher suite names;
+                        # 'keys'  returns array with hex keys of cipher suite names
+    my $ssl     = shift;# used for mode=intern only
+#local *_trace = \&_dbx;
+    _trace("_get_cipherslist($mode, $ssl){");
     my @ciphers = ();
-    my $range   = $cfg{'cipherrange'};  # default
-    _trace(" cipherpattern  = $cfg{'cipherpattern'}, cipherrange= $range");
-    my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
-       $pattern = join(":", @{$cfg{'cipher'}}) if (0 < scalar(@{$cfg{'cipher'}}));
-        # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
-        # can be specified like: --cipher=NULL:RC4  or  --cipher=NULL --cipher=RC4
-    _trace(" cipher pattern = $pattern");
-    if ($range eq "intern") {
-        # default cipher range is 'intern' (see o-saft-lib.pm), then get list of
-        # ciphers from Net::SSLinfo
-        if ($cmd{'extciphers'} == 1) {
-            @ciphers = Net::SSLinfo::cipher_openssl($pattern);
+    my $pattern = "";   # RegEx or colon-separated
+    _trace(" get list --cipher = [@{$cfg{'cipher'}}]");
+    # check all values passed with --cipher= and add them to array of ciphers
+    # note that values matching cfg{cipherpatterns} are already replaced with
+    # the corresponding string from there
+    # (1) if valid hex key given, add to @ciphers, otherwise add to $pattern
+    # (2) if valid $range given, add ciphers from cfg{cipherranges}
+    # (3) use default ciphers if no options given (@ciphers empty so far)
+    #     otherwise get ciphers matching pattern
+    # (4) convert array items according given $mode
+    # for usage and limitations, please see OSaft/Doc/help.txt
+    # TODO: use is_valid_cipherkey() below instead of regex
+    foreach my $name (@{$cfg{'cipher'}}) {
+        # $name can be a hex key like 0x0300002F, which maps to a unique cipher
+        # or a pattern like AES128-SHA, which maps to many cipher names
+        if ($name =~ m/^0x[0-9A-F]+$/i) {   # (1) keys must start with 0x
+            $name = OSaft::Ciphers::get_name($name) if 'names' eq $mode;
+            push(@ciphers, $name) if $name; # silently ignore if no name found
         } else {
-            @ciphers = Net::SSLinfo::cipher_list(   $pattern);
+            $pattern .= ":$name";
+            # can be specified like: --cipher=NULL:RC4 or --cipher=NULL --cipher=RC4
         }
-    } else {
-        # cipher range specified with --cipher-range=* option
-        # ranges are defined as numbers, need to get the cipher suite name
-        _trace(" cipher range   = $range");
-        foreach my $c (_eval_cipherranges($range)) {
-            my $key = sprintf("0x%08X",$c);
-            push(@ciphers, OSaft::Ciphers::get_name($key)||""); # "" avoids some undef
-        }
-    }
-    _trace(" got ciphers    = @ciphers");
-    if (@ciphers <= 0) {      # empty list
-        _warn("063: given pattern '$pattern' did not return cipher list");
-        _y_CMD("  using private cipher list ...");
-        @ciphers = OSaft::Ciphers::get_names_list();
-    }
-    if (@ciphers <= 0) {
-        print "Errors: " . Net::SSLinfo::errors();
-        die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
-    }
-    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
-    _trace("_get_cipherlist_names\t= @ciphers }");
-    return @ciphers;
-} # _get_cipherlist_names
-
-sub _get_cipherlist_keys {
-    #? return space-separated list of cipher hex keys according command-line options
-    my $ssl     = shift;
-    my @ciphers = ();
-    _trace("_get_cipherlist_keys($ssl){");
-    _trace(" cfg{'cipher'}  = " . @{$cfg{'cipher'}} );
-    if (0 < scalar(@{$cfg{'cipher'}})) {
-        foreach my $name (@{$cfg{'cipher'}}) {
-            if ($name =~ m/^(?:0x)?[0-9A-F]+$/i) {
-                #_dbx "key = " . OSaft::Ciphers::get_key($name);
-                push(@ciphers, OSaft::Ciphers::get_key($name));   # hex key
+        $pattern =~ s/^://;     # remove leading :
+    } # --cipher=
+    if ($pattern) {
+        if (_is_cfg_ciphermode('intern|dump')) {
+            foreach my $name (split(":", $pattern)) {
+                push(@ciphers, OSaft::Ciphers::find_names($name)); # "" avoids some undef
+            }
+        } else { # _is_cfg_ciphermode('openssl')
+            # 'intern' is the default cipher range (see o-saft-lib.pm), which
+            # may not be usefull for openssl; openssl needs to use it's own
+            # list, which is either de default pattern or the specified one
+            $pattern = $cfg{'cipherpattern'} if $pattern =~ m/^ *$/;
+                # use default if no --cipher=* was given or was invalid
+            if ($cmd{'extciphers'} == 1) {
+                _trace(" get list openssl  = $pattern");
+                push(@ciphers, Net::SSLinfo::cipher_openssl($pattern));
             } else {
-                push(@ciphers, OSaft::Ciphers::find_keys($name)); # name or pattern
+                _trace(" get list sslleay  = $pattern");
+                push(@ciphers, Net::SSLinfo::cipher_list(   $pattern));
+            }
+            if (0 >= @ciphers) {
+                print "Errors: " . Net::SSLinfo::errors();
+                die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
             }
         }
-    } else {
-        _trace("cipherrange= $cfg{'cipherrange'}"); # default
-        @ciphers = osaft::get_ciphers_range($ssl, $cfg{'cipherrange'});
+    } # pattern
+    if (0 >= @ciphers) {        # empty list, check range
+        # $range should not be used when --cipher= was given
+        # however, if --cipher= did not result in valid ciphers, range is used
+        # this slighly differs from documentation in OSaft/Doc/help.txt
+            _trace(" get list --range  = $pattern");
+            $pattern = $cfg{'cipherrange'} if $pattern =~ m/^\s*$/;
+            $pattern = 'SSLv2' if 'sslv2' eq lc($pattern);  # ancient targets don't support anything else
+            # ranges are defined as numbers
+            push(@ciphers, osaft::get_ciphers_range($ssl, $pattern));
+            if (0 >= @ciphers) {
+                _warn("063: given pattern '$pattern' did not return cipher list");
+                # die $STR{ERROR}, "016: no ciphers found; invalid --cipher= or --cipher-range="
+            }
+    } # --cipher-range=
+    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
+    if ('names' eq $mode) {  # convert to cipher names
+        for my $i (0 .. $#ciphers) {
+            my $c = $ciphers[$i];
+            $ciphers[$i] = OSaft::Ciphers::get_name($c)||"" if ($c =~ m/^0x[0-9A-F]+$/i);
+        }
     }
-    _trace(" no. of ciphers = " . scalar(@ciphers));
-    _trace("_get_cipherlist_keys()\t= @ciphers }");
+    if ('keys'  eq $mode) {   # convert to cipher hex keys
+        for my $i (0 .. $#ciphers) {
+            my $c = $ciphers[$i];
+            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if ($c !~ m/^0x[0-9A-F]+$/i);
+        }
+    }
+    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
+    _trace("_get_cipherslist\t= [@ciphers] }");
     return @ciphers;
-} # _get_cipherlist_keys
+} # _get_cipherslist
 
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
@@ -3075,6 +3106,9 @@ sub ciphers_scan_prot   {
                 _warn("411: checked $ssl cipher '$c' does not match returned cipher '$supported'");
             }
         }
+        if ($c =~ /^(?:TLS(?:13)?)/) {
+                _warn("413: some openssl fail with '-cipher $c', the cipher may not be listed then");
+        }
         push(@res, "$version:$supported") if ($supported ne "");
         my $yesno = ($supported eq "") ? "no" : "yes";
         _v2print("check cipher: $ssl:$c\t$yesno");
@@ -3096,6 +3130,7 @@ sub ciphers_scan_openssl {
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+    @{$cfg{'ciphers'}} = _get_cipherslist('names', "");
     my $cnt = scalar(@{$cfg{'ciphers'}});
     my $results = {};       # hash of cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
@@ -3187,7 +3222,7 @@ sub ciphers_scan_intern {
         my %accepted;       # accepted ciphers (cipher keys and cipher parameters)
                             # contains at least one entry: $accepted{selected}
         my $accepted_cnt = 0;
-        my @all = _get_cipherlist_keys($ssl);
+        my @all = _get_cipherslist('keys', $ssl);
         _trace("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar @all;
         if ("@all" =~ /^\s*$/) {
@@ -6264,7 +6299,7 @@ sub printversion        {
     printversionmismatch();
 
     print "= $me +cipher --ciphermode=intern =";
-    my @cnt = (_eval_cipherranges($cfg{'cipherrange'}));
+    my @cnt = (osaft::get_ciphers_range('TLSv13',$cfg{'cipherrange'})); # 'TLSv13' is a dummy here
     my $list= $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
        $list=~ s/     */        /g; # squeeze leading spaces
     print "    used cipherrange                 " . $cfg{'cipherrange'};
@@ -6541,7 +6576,7 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'CIPHER_ITEM')  {
-            # $arg = lc($arg);   # case-sensitive
+            #my $key = lc($arg); # key in cfg{'cipherpatterns'} is lower case
 #TODO: cipherpatterns nur bei cipher_openssl benutzen
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
@@ -7800,26 +7835,7 @@ if (0 > $#{$cfg{'do'}}) {
 
 _y_ARG("commands=@{$cfg{'do'}}");
 
-usr_pre_cipher();
-
-#| get list of ciphers available for tests
-#| -------------------------------------
-# vor 2.104: if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
-# vor 2.104:     if ((_need_cipher() > 0) or (_need_default() > 0)) {
-if (_need_cipher()) {
-    _yeast_TIME("get{");
-    _y_CMD("get cipher list for [@{$cfg{'ciphers'}}] ...");
-    if (_is_cfg_ciphermode('intern|dump')) {
-	my $pattern = join("|", @{$cfg{'cipher'}}); # build RegEx from all given patterns
-        @{$cfg{'ciphers'}} = OSaft::Ciphers::find_names($pattern);
-        push(@ciphers_keys,  OSaft::Ciphers::get_key($_)) foreach (@{$cfg{'ciphers'}});
-    }
-    if (_is_cfg_ciphermode('openssl|ssleay')) {
-        @{$cfg{'ciphers'}} = _get_cipherlist_names("");
-    }
-    _yeast_TIME("get}");
-    _v_print("use cipher list: @{$cfg{'ciphers'}}");
-}
+usr_pre_cipher(); # weg?
 
 #| SEE Note:Duplicate Commands
 #| -------------------------------------
