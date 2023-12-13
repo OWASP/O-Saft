@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.118 23/12/13 19:14:56"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.119 23/12/13 19:50:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.118");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.119");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3710,7 +3710,6 @@ sub checkcipher         {
     $checks{'robot'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_robot($ssl, $c));
     $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sloth($ssl, $c));
     $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sweet($ssl, $c));
-    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
     $prot{$ssl}->{'WEAK'}++        if ($risk =~ /WEAK/i);
@@ -3804,6 +3803,7 @@ sub checkciphers        {
         }
         $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
+        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" ne _is_ssl_pfs($ssl, $cipher));  # add PFS cipher
       }
     }
 
@@ -8055,6 +8055,33 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     } # cipher_dh
     next if _yeast_NEXT("exit=HOST2 - host ciphers start");
 
+    if ((0 < _need_default()) or (0 < $check)) {
+        # SEE Note:+cipherall
+        _y_CMD("get default ...");
+        _yeast_TIME("need_default{");
+        $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
+        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+            next if not defined $prot{$ssl}->{opt};
+            my $anf = time();
+            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
+            $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
+            $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
+            $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
+            # FIXME: there are 3 connections above, but only one is counted
+            last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
+            my $cipher  = $prot{$ssl}->{'cipher_strong'};
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+            ##if (_is_cfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
+            ##    # +cipher_selected command given, but no other commands; ready
+            ##    print_cipherpreferred($legacy, $ssl, $host, $port); # need to check if $ssl available first
+            ##    next HOSTS; # TODO: foreach-loop for targets misses label
+            ##}
+        }
+        checkpreferred($host, $port);
+        _yeast_TIME("need_default}");
+    }
+    next if _yeast_NEXT("exit=HOST3 - host ciphers default");
+
     if (_need_cipher()) {
         _yeast_TIME("need cipher{");
         _y_CMD("need cipher (ciphermode=$cfg{'ciphermode'}) ...");
@@ -8081,6 +8108,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
         _yeast_TIME("need cipher}");
     } # need_cipher
+    next if _yeast_NEXT("exit=HOST4 - host cipher");
 
     if (_is_cfg_do('cipher_dh')) {
         # TODO dirty hack, check with dh256.tlsfun.de
@@ -8094,34 +8122,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _yeast_TIME("cipher-dh}");
         goto CLOSE_SSL; # next HOSTS
     } # cipher_dh
-    next if _yeast_NEXT("exit=HOST3 - host ciphers default");
-
-    if ((0 < _need_default()) or (0 < $check)) {
-        # SEE Note:+cipherall
-        _y_CMD("get default ...");
-        _yeast_TIME("need_default{");
-        $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            next if not defined $prot{$ssl}->{opt};
-            my $anf = time();
-            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
-            $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
-            $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
-            $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
-            # FIXME: there are 3 connections above, but only one is counted
-            last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
-            my $cipher  = $prot{$ssl}->{'cipher_strong'};
-            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
-            ##if (_is_cfg_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
-            ##    # +cipher_selected command given, but no other commands; ready
-            ##    print_cipherpreferred($legacy, $ssl, $host, $port); # need to check if $ssl available first
-            ##    next HOSTS; # TODO: foreach-loop for targets misses label
-            ##}
-        }
-        checkpreferred($host, $port);
-        _yeast_TIME("need_default}");
-    }
-    next if _yeast_NEXT("exit=HOST4 - host ciphermode=intern");
+    next if _yeast_NEXT("exit=HOST5 - host ciphers");
 
     if (_need_cipher()) {
         if (_is_cfg_do('cipher') or _is_cfg_do('check') or  _is_cfg_do('quick')) {
