@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.112 23/12/13 01:33:43"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.113 23/12/13 09:02:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.112");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.113");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1711,6 +1711,12 @@ sub _check_openssl      {
     if ($cmd{'version'} lt "1.0.2") {
         _warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
+    }
+    if ($cmd{'version'} gt "2.0") {
+        if (_is_cfg_ciphermode('openssl|ssleay')) {
+            _hint($cfg{'hints'}->{'openssl3'});
+            _hint($cfg{'hints'}->{'openssl3c'});
+        }
     }
     # TODO: checks not yet complete
     # TODO: should check openssl with a real connection
