@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.294 23/12/11 14:53:58";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.296 23/12/13 17:27:17";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1025,8 +1025,10 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-tls1_2'       => 0,
     '-tls1_3'       => 0,
     '-dtls'         => 0,
-    '-dtls1'        => 0,
+    '-dtls1'        => 0,   # do we need -dtls1_0 also?
+    '-dtls1_1'      => 0,   # 12/2023: not supported by OpenSSL 3.0.11
     '-dtls1_2'      => 0,
+    '-dtls1_3'      => 0,   # 12/2023: not supported by OpenSSL 3.0.11
     '-no_ssl2'      => 0,
     '-no_ssl3'      => 0,
     '-no_tls1'      => 0,
@@ -3368,7 +3370,10 @@ sub do_openssl($$$$)  {
     if (($mode =~ m/^-?s_client$/)
     ||  ($mode =~ m/^-?s_client.*?-cipher/)) {
         $mode .= ' -alpn '         . $Net::SSLinfo::protos_alpn if (1 == $Net::SSLinfo::use_alpn);
-        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protos_npn  if (1 == $Net::SSLinfo::use_npn);
+        if ($mode !~ m/-tls1_3/) { # TODO: check chould be for openssl 3.x only
+            $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protos_npn  if (1 == $Net::SSLinfo::use_npn);
+            # openssl 3.0.11 does not like -nextprotoneg with -tls1_3
+        }
     }
     if ($mode =~ m/^-?s_client/) {
         $mode .= ' -connect'     if  ($mode !~ m/-connect/);
