@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.94 23/11/15 11:02:46
+#?      @(#) Makefile.dev 1.95 23/12/13 17:46:50
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.94
+_SID.dev           := 1.95
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -282,7 +282,7 @@ testarg-dev-grep_subs:
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^sub[[:space:]]' $(prg) ..." && cd $(TEST.dir)&&egrep '^sub[[:space:]]' $(prg); )
 testarg-dev-grep_desc:
 	@$(TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg); )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)' ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)'; )
 testarg-dev-grep_flow:
 	@$(TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $(prg); )
