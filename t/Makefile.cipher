@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.28 23/11/15 01:10:03
+#?      @(#) Makefile.cipher 1.29 23/12/13 09:05:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.28
+_SID.cipher        := 1.29
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -32,6 +32,10 @@ TEST.cipher.hosts      = localhost
 ifdef TEST.hosts
     TEST.cipher.hosts  = $(TEST.hosts)
 endif
+
+# for testing with private compiled openssl, i.e. version 1.0.2-chacha
+TEST.openssl           = /usr/local/openssl/bin/openssl
+TEST.openssl-cnf       = /usr/local/openssl/ssl/openssl.cnf
 
 help.test.cipher:        HELP_TYPE = cipher
 help.test.cipher-v:      HELP_TYPE = cipher
@@ -122,6 +126,7 @@ testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
 testcmd-cipher-+cipher---trace-host_%:  TEST.args  += +cipher --showhost --trace-KEY
+testcmd-cipher-+cipher---openssl-local_%:   TEST.args  += --ciphermode=openssl --openssl=$(TEST.openssl) --openssl-cnf=$(TEST.openssl-cnf)
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
 
 # not yet implemented # TODO: hence missing in ALL.testciphermisc below
@@ -133,7 +138,8 @@ ALL.testciphermisc     = \
 	testcmd-cipher-+cipher-selected_ \
 	testcmd-cipher-+cipher-strong_  \
 	testcmd-cipher-+ciphercheck_    \
-	testcmd-cipher-+cipher--trace-host_
+	testcmd-cipher-+cipher--trace-host_ \
+	testcmd-cipher-+cipher---openssl-local_
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
