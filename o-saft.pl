@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.117 23/12/13 13:46:52"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.118 23/12/13 19:14:56"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.117");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.118");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3244,6 +3244,7 @@ sub ciphers_scan_intern {
         # %accepted = { idx => [ key, cipher-paramter ] };# at least $accepted{'0'} is returned
         %accepted = Net::SSLhello::getSSLciphersWithParam($host, $port, $ssl, @all);
         $accepted_cnt = scalar (keys %accepted);
+        $accepted_cnt--;    # -1 because $accepted{'0'} always exist
         #dbx# print Dumper(\%accepted);
         if (exists $accepted{'0'}[1]) { # defensive programming ..
             if ($accepted{'0'}[0] eq $accepted{'0'}[1]) {
@@ -3727,17 +3728,47 @@ sub checkcipher         {
     return;
 } # checkcipher
 
+sub checkciphers_pfs    {
+    #? test if given ciphers support PFS, set corresponding %checks
+    my $cnt_all = shift;
+    my $cnt_pfs = shift;
+    my $session_protocol = shift;
+    _trace("checkciphers_pfs($cnt_all, $cnt_pfs, $session_protocol){");
+    # my $cipher = $data{'cipher_selected'} ->{val}($host, $port); # TODO if ciphermode=openssl or ssleay
+    my $cipher = $prot{$session_protocol}->{'default'};
+    my @prots  = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
+    if (1 > $cnt_all) {         # no protocol with ciphers found
+        $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
+        goto END;
+    }
+    if (1 > $#prots) {      # found exactly one matching protocol
+        $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
+    } else {
+        _warn("631: protocol '". join(';', @prots) . "' multiple protocols with selected cipher available");
+        $checks{'cipher_pfs'}->{val} .= "$session_protocol}:" . $prot{$_}->{'default'} . " " foreach (@prots);
+    }
+    $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
+    $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'}->{val});
+    END:
+    _trace("checkciphers_pfs() }");
+    return;
+} # checkciphers_pfs
+
 sub checkciphers        {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port, $results) = @_;
-
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
     return if (1 < $cfg{'done'}->{'checkciphers'});
     _trace("checkciphers($host, $port){");
 
     _checkcipher_init();        # values are set to <<undefined>>, initialise with ""
-    foreach my $ssl (@{$cfg{'version'}}) {  # all checked SSL versions
+    my $ssl;
+    my $cnt_all = 0; # count ciphers
+    my $cnt_pfs = 0;
+    foreach $ssl (@{$cfg{'version'}}) {  # all checked SSL versions
+        $cnt_all   += $prot{$ssl}->{'cnt'};
+        $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         if (not $results->{$ssl}) { # no ciphers found; avoid misleading values
             foreach my $key (@{$cfg{'need-cipher'}}) {
                 if ($key =~ m/(drown|poodle|has(?:ssl|tls))/) {
@@ -3748,13 +3779,11 @@ sub checkciphers        {
             }
             @{$prot{$ssl}->{'ciphers_pfs'}} = _get_text('miss_cipher', "");
         }
-        _trace("checkciphers() }");
-        next; # no more checks possible if nothing there
     }
 
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach my $ssl (keys %$results) {      # all checked SSL versions with ciphers
+    foreach $ssl (keys %$results) {      # all checked SSL versions with ciphers
       next if '_admin' eq $ssl;
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
       foreach my $key (keys %{$results->{$ssl}}) { # check all accepted 
@@ -3781,12 +3810,8 @@ sub checkciphers        {
     # additional BEAST check: checks for vulnerable protocols are disabled?
     my $beastskipped = _isbeastskipped($host, $port);
     $checks{'beast'}->{val} .= " " . ${beastskipped} if "" ne $beastskipped;
-
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
-    my $ssl;
-    my $cnt_all = 0; # count ciphers
-    my $cnt_pfs = 0;
     foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
         $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
@@ -3803,27 +3828,8 @@ sub checkciphers        {
     }
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
-    _trace("checkciphers() }") if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay')));
-    return if (0 < (_is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay'))); # FIXME: dirty hack until checks below can be done
-
-    # my $cipher = $data{'cipher_selected'} ->{val}($host, $port); # TODO if ciphermode=openssl or ssleay
-    my $session_protocol = $results->{'_admin'}{'session_protocol'};
-    my $cipher = $prot{$session_protocol}->{'default'};
-    my @prots  = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
-
-    if (1 > $cnt_all) {         # no protocol with ciphers found
-            $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
-    } else {
-        if (1 > $#prots) {      # found exactly one matching protocol
-            $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
-        } else {
-            _warn("631: protocol '". join(';', @prots) . "' multiple protocol with selected cipher available");
-            $checks{'cipher_pfs'}->{val} .= "$session_protocol}:" . $prot{$_}->{'default'} . " " foreach (@prots);
-        }
-    }
-
-    $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
-    $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'});
+    return if _is_cfg_ciphermode('openssl|ssleay'); # FIXME: dirty hack until checks below can be done
+    checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
     _trace("checkciphers() }");
     return;
 } # checkciphers
@@ -8060,20 +8066,16 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             _y_CMD("  use SSLhello +cipher$typ ...");
             Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
             $cipher_results = ciphers_scan_intern($host, $port);# print ciphers also if not cipher_dh
-            foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-                $checks{'cnt_ciphers'}->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_offered'};
-                $checks{'cnt_totals'} ->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_accepted'};
-            }
         }
         if (_is_cfg_ciphermode('openssl|ssleay')) {
             _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
             _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
             $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
             # TODO:  $prot{$ssl}->{'default'} = $cipher;
-            foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-                $checks{'cnt_ciphers'}->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_offered'};
-                $checks{'cnt_totals'} ->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_accepted'};
-            }
+        }
+        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+            $checks{'cnt_ciphers'}->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_offered'};
+            $checks{'cnt_totals'} ->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_accepted'};
         }
         #dbx# print Dumper(\$cipher_results);
         checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
