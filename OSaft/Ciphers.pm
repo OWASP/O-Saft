@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.94 23/12/11 12:57:20";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.96 23/12/13 11:54:00";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -944,26 +944,28 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $weight  = 39 if ($cipher =~ /^ECDH[_-]/i);
         $weight  = 59 if ($cipher =~ /^(?:DES|RC)/i);
         $weight  = 69 if ($cipher =~ /^EXP/i);
-        $weight  = 89 if ($cipher =~ /^A/i);    # NOTE: must be before ^AEC
-        $weight  = 79 if ($cipher =~ /^AEC/i);  # NOTE: must be after ^A
+        $weight  = 89 if ($cipher =~ /^A/i);        # NOTE: must be before ^AEC
+        $weight  = 79 if ($cipher =~ /^AEC/i);      # NOTE: must be after ^A
         $weight  = 99 if ($cipher =~ /^NULL/i);
-        $weight -= 10 if ($cipher =~ /^TLS_/);  # some TLSv1.3 start with TLS_*
-        $weight -= 10 if ($cipher =~ /^TLS13-/);# some TLSv1.3 start or TLS13_*
-        $weight -= 5  if ($cipher =~ /SHA512$/);
-        $weight -= 4  if ($cipher =~ /SHA384$/);
-        $weight -= 3  if ($cipher =~ /SHA256$/);
-        $weight -= 3  if ($cipher =~ /SHA128$/);
-        $weight -= 2  if ($cipher =~ /256.SHA$/);
-        $weight -= 1  if ($cipher =~ /128.SHA$/);
+        $weight -= 11 if ($cipher =~ /^TLS[_-]/);   # some TLSv1.3 start with TLS_*
+        $weight -= 10 if ($cipher =~ /^TLS13[_-]/); # some TLSv1.3 start or TLS13_*
+        $weight -= 9  if ($cipher =~ /SHA512$/);
+        $weight -= 8  if ($cipher =~ /SHA384$/);
+        $weight -= 7  if ($cipher =~ /SHA256$/);
+        $weight -= 6  if ($cipher =~ /SHA128$/);
+        $weight -= 5  if ($cipher =~ /256.SHA$/);
+        $weight -= 4  if ($cipher =~ /128.SHA$/);
         $weight -= 3  if ($cipher =~ /CHACHA/);
         $weight -= 2  if ($cipher =~ /256.GCM/);
         $weight -= 1  if ($cipher =~ /128.GCM/);
         # TODO: need to "rate"  -CBC- and -RC4- and -DSS-
-        push(@tmp_arr, "$sec_owasp $weight $key"); #  $cipher ${$line}[0] ${$line}[2]");
+        push(@tmp_arr, "$sec_owasp.$weight $key ");
+           # single word for "$sec_owasp.$weight",
+           # otherwise sort is not guaranteed to return always same oder
     }
     foreach my $line (sort @tmp_arr) {  # sorts according $sec_owasp
         my @arr = split(" ", $line);
-        push(@sorted, $arr[2]);
+        push(@sorted, $arr[1]);
     }
     return @sorted;
 } # sort_results
@@ -1708,7 +1710,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.94 2023/12/11
+2.96 2023/12/13
 
 
 =head1 AUTHOR
