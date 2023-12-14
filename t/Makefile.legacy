@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 1.9 22/11/14 10:24:50
+#?      @(#) Makefile.legacy 1.10 23/12/14 10:50:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 1.9
+_SID.legacy        := 1.10
 
 _MYSELF.legacy     := t/Makefile.legacy
 ALL.includes       += $(_MYSELF.legacy)
@@ -78,7 +78,7 @@ testarg-legacy-+cipher%:    TEST.init   = --trace-CLI --header --enabled +cipher
 
 ifndef legacy-macros-generated
     # GEN.targets cannot be used, because it would generate duplicate targets
-    _TEST.legacy   := testarg-legacy-+cipher--legacy
+    _TEST.legacy   := testarg-legacy-+cipher---legacy
     $(foreach arg, $(LIST.legacy),\
 	$(eval _target=$(_TEST.legacy)-$(arg)) \
 	$(eval $(_target)_%:        TEST.args = --legacy=$(arg) )\
