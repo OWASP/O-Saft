@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.127 23/12/14 23:31:23"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.128 23/12/14 23:42:23"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.127");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.128");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7620,7 +7620,9 @@ if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     # TODO: following necessary for _get_data0(), if called as sibgle command
     $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());
+    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_order')); 
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_strong'));
+    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_weak')); 
 }
 _load_modules() if (0 == $::osaft_standalone);
 
