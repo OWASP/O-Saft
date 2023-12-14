@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.83 23/12/13 21:25:59
+#?      @(#) Makefile.warnigs 1.84 23/12/14 19:00:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.83
+_SID.warnings      := 1.84
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -344,6 +344,7 @@ warning-831: TEST.args  = --testing-+quit__without__--trace=arg +quit
 warning-841: TEST.args  = TODO: used openssl version differs from compiled Net:SSLeay
 warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
 warning-861: TEST.args  = TODO: not all ciphers listed
+warning-864: TEST.args  = --legacy=openssl +cipher $(TEST.host)
 
 # o-saft.pl: programming error (cipher missing in %cipher)
 warning-862: TEST.args  = TODO: unknown cipher key '$key', key ignored, difficult ...
@@ -424,7 +425,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.83: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 1.84: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
