@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.128 23/12/14 13:37:10
+# SID   @(#) help.txt 1.129 23/12/14 19:59:03
 
 NAME
 
@@ -213,6 +213,7 @@ TECHNICAL INFORMATION
             +sigkey_len        | 2048                  | 2104
             +sigkey_value      | hexhex                | Signature Value hexhex
             +dh_parameter      | ECDH, P-256, 256 bits | X25519, 253 bits
+            +cipher-selected   | New, TLSv1/SSLv3, ... | New, TLSv1.3, ...
            #-------------------+-----------------------+---------------------
 
         As the purpose of this tool is to check for any cipher,  wether known
