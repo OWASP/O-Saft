@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.121 23/12/14 12:25:29"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.122 23/12/14 14:39:07"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.121");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.122");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3061,13 +3061,6 @@ sub _get_data0          {
     return;
 } # _get_data0
 
-sub _set_prot_default   {
-    #? set default cipher in %prot for given cipher key
-    my ($ssl, $key) = @_;
-    # NOT YET USED
-    return;
-} # _set_prot_default
-
 sub ciphers_scan_prot   {
     #? test target if given ciphers are accepted, returns array with accepted ciphers
     #? scans for ciphers with given protocol only
@@ -3266,7 +3259,7 @@ sub ciphers_scan_intern {
         # get default/preferred/selected cipher
         if (exists $accepted{'0'}[1]) {
             my $cipher = OSaft::Ciphers::get_name($accepted{'0'}[1]) || $STR{UNDEF}; # may return undef
-            # SEE Note:+cipherall
+            # SEE Note:+cipher-selected
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
             _v_print(sprintf("default cipher %7s: %s", $ssl, $cipher));
@@ -5755,30 +5748,6 @@ sub _print_cipher_results       {
     return $total;
 } # _print_cipher_results
 
-sub printcipherall      { ## no critic qw(Subroutines::RequireArgUnpacking)
-    #? print all cipher check results from Net::SSLhello::checkSSLciphers()
-    #? returns number of unique (enabled) ciphers
-    # FIXME: --enabled and --disabled not fully supported
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
-    my $port    = shift;
-    my $outtitle= shift;    # print title line if 0
-    my @results = @_;       # contains only accepted cipher keys
-    my $unique  = 0;        # count unique ciphers
-    my $last_r  = "";       # avoid duplicates (may be added by checkSSLciphers())
-    print_cipherhead( $legacy) if ($outtitle == 0);
-    foreach my $key (@results) {
-        next if ($last_r eq $key);
-        print_cipherline($legacy, $ssl, $host, $port, $key, "yes");
-        $last_r = $key;
-        $unique++;
-    }
-    print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
-    print_footer($legacy);
-    return $unique;
-} # printcipherall
-
 sub printciphers_dh     {
     #? print ciphers and DH parameter from target
     my ($legacy, $host, $port, $result) = @_;
@@ -6038,7 +6007,7 @@ sub printciphers        {
         #}
     }
     if ($_printtitle > 0) { # if we checked for ciphers
-        # SEE Note:+cipherall
+        # SEE Note:+cipher-selected
         my $total   = $checks{'cnt_totals'}->{val};
         printciphersummary($legacy, $host, $port, $total);
     }
@@ -6304,7 +6273,7 @@ sub printversion        {
     }
 
     print "= $me +cipher --ciphermode=openssl or --ciphermode=ssleay =";
-    my @ciphers= Net::SSLinfo::cipher_openssl();# openssl ciphers ALL:aNULL:eNULL
+    my @ciphers= Net::SSLinfo::cipher_openssl();# openssl ciphers ALL:aNULL:eNULL:LOW:EXP
     my $cnt    = 0;
        $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
     print "    number of supported ciphers      " . $cnt;
@@ -7647,18 +7616,9 @@ _yeast_TIME("inc{");
 #| import common and private modules
 #| -------------------------------------
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
+    # SEE Note:need Net::SSLinfo
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
-    $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());    # FIXME: necessary for _get_data0()
-        # quick&dirty hack (11/2023) for some single commands like  +beast  to
-        # avoid Perl's  Undefined subroutine &Net::SSLinfo::do_ssl_open called
-        # reason is that these checks are called late with printchecks(),  but
-        # printchecks() is done after calling Net::SSLinfo (which would return
-        # above error if need_netinfo=0);
-        # another solution would be that _get_data0()  is not called for these
-        # commands and any combination of them (difficult ...)
-        # calling Net::SSLinfo even with --ciphermode=intern   should not harm
-        # checks as protocols and ciphers (which are used for the checks)  are
-        # detected properly before and not modified by Net::SSLinfo
+    $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());    # TODO: necessary for _get_data0()
 }
 _load_modules() if (0 == $::osaft_standalone);
 
@@ -8056,7 +8016,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _yeast_NEXT("exit=HOST2 - host ciphers start");
 
     if ((0 < _need_default()) or (0 < $check)) {
-        # SEE Note:+cipherall
+        # SEE Note:+cipher-selected
         _y_CMD("get default ...");
         _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
@@ -9096,6 +9056,23 @@ About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x102031af => 1.2.3z
 
 
+=head2 Note:need Net::SSLinfo
+
+The module  Net::SSLinfo  provides methods to retieve some SSL/TLS-related
+informations. it should only be loaded if necessary. Loading is controlled
+by $cfg{'need_netinfo'} . If just ciphers are checked, it's not necessary.
+
+I.g. it is loaded if commands like  +check,  +quick  or  +vulns  are used.
+Some commands, like  +beast or +robot, do not need the module. But because
+these commands are handled like +check  the configuration needed by +check
+must be prepared. Otherwise Perl may complain with:
+    "Undefined subroutine &Net::SSLinfo::do_ssl_open called ..."
+This can happen in printchecks() or _get_data0(). To avoid these warnings,
+the module will be loaded for some commands,  even it is not need  and may
+performs useless connections to the target. Otherwise a more sophisticated
+configuration of  $cfg{'need_netinfo'}  needs to be implemented.
+
+
 =head2 Note:OpenSSL CApath
 
 _init_openssldir() gets the configured directory for the certificate files
@@ -9631,7 +9608,7 @@ defined by the user. The first occourance of a command is used, all others
 are ignored.
 
 
-=head2 Note:+cipherall
+=head2 Note:+cipher-selected
 
 SEE L<Note:term default cipher>.
 
@@ -9639,21 +9616,13 @@ In October 2017 (VERSION 17.09.17), the +cipherall command is no longer an
 alias for +cipherraw. It is now using the the same technique as +cipherraw
 to detect the targets ciphers, but prints the results like the traditional
 +cipher command.
-This has some impacts on computing other checks, like the default selected
-cipher, the strongest and weakest selected cipher.
+Getting the selected (default) cipher is different for --ciphermode=intern
+and --ciphermode=openssl . Also computing other checks, like the strongest
+and weakest selected cipher is affected.
 
-One problem is, that  +cipher  itself cannot detect the default cipher, so
-it uses the underlaying SSL library's methods to do it, see _get_default()
-which also computes the strongest and weakest selected cipher.
-When using +cipherraw another method to detect these ciphers must be used;
-this is not yet implemented completely.
-The problem should finally be solved when  +cipher and +cipherraw  use the
-same data structure for the results. Then the program flow should be like:
-
-    ciphers_scan()
-    checkciphers()
-    printciphers()
-    printciphersummary()
+One problem is, that  --ciphermode=openssl needs to use the underlying SSL
+library's methods.  _get_default() does this and also computes the weakest
+and strongest selected cipher.
 
 
 =head2 Note:+cipher
@@ -9666,9 +9635,6 @@ It now prints the "Security" A, B, C (and  -?- if unknown) as specified by
 OWASP. The column "supported" will not be printed,  because only supported
 ciphers are listed now. This makes the options  --enabled  and  --disabled
 also obsolete.
-
-Note that the description in L<Note:+cipherall> uses the commands names as
-used in VESRIONs before 19.11.19.
 
 More information, which is also important for users,  can be found in user
 documentation  OSaft/Doc/help.txt  section "Version 19.11.19 and later".
