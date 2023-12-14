@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.120 23/12/13 21:13:48"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.121 23/12/14 12:25:29"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.120");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.121");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6829,6 +6829,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
+        _y_ARG("handle --help= ...");   # _y_CMD not possible here
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
@@ -7604,6 +7605,7 @@ if (0 == $cfg{'exec'})  {
         exec $0, '+exec', @ARGV;
     }
 }
+_yeast_EXIT("exit=CONF3 - runtime configuration start");
 
 #| openssl and Net::SSLeay is picky about path names
 #| -------------------------------------
@@ -7815,6 +7817,7 @@ if ($cfg{'label'} eq 'short') {     # reconfigure texts
 _initchecks_val();  # initialise default values in %checks again depending on given options
 
 _yeast_TIME("ini}");
+_yeast_EXIT("exit=CONF4 - runtime configuration end");
 
 #| first all commands which do not make a connection
 #| -------------------------------------
@@ -7929,7 +7932,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $port = osaft::get_target_port($idx);
     $cfg{'port'}    = $port;
     $cfg{'host'}    = $host;
-    next if _yeast_NEXT("exit=HOST0 - host $host:$port");
+    next if _yeast_NEXT("exit=HOST0 - host start $host:$port");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host   = $host {\n");
     # SNI must be set foreach host, but it's always the same name!
@@ -8025,7 +8028,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     _yeast_TIME("DNS}");
-    next if _yeast_NEXT("exit=HOST1 - host DNS");
+    next if _yeast_NEXT("exit=HOST1 - host DNS done");
 
     # Quick check if the target is available
     _y_CMD("test connect ...");
@@ -8077,7 +8080,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         checkpreferred($host, $port);
         _yeast_TIME("need_default}");
     }
-    next if _yeast_NEXT("exit=HOST3 - host ciphers default");
+    next if _yeast_NEXT("exit=HOST3 - host ciphers default done");
 
     if (_need_cipher()) {
         _yeast_TIME("need cipher{");
@@ -8105,7 +8108,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
         _yeast_TIME("need cipher}");
     } # need_cipher
-    next if _yeast_NEXT("exit=HOST4 - host cipher");
+    next if _yeast_NEXT("exit=HOST4 - host ciphers scan done");
 
     if (_is_cfg_do('cipher_dh')) {
         # TODO dirty hack, check with dh256.tlsfun.de
@@ -8119,7 +8122,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _yeast_TIME("cipher-dh}");
         goto CLOSE_SSL; # next HOSTS
     } # cipher_dh
-    next if _yeast_NEXT("exit=HOST5 - host ciphers");
+    next if _yeast_NEXT("exit=HOST5 - host ciphers DH done");
 
     if (_need_cipher()) {
         if (_is_cfg_do('cipher') or _is_cfg_do('check') or  _is_cfg_do('quick')) {
@@ -8133,7 +8136,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
-    next if _yeast_NEXT("exit=HOST5 - host ciphers end");
+    next if _yeast_NEXT("exit=HOST6 - host ciphers end");
+    next if _yeast_NEXT("exit=HOST6 - host prepare start"); # dummy for --help=exit documentation
 
     if (_is_cfg_do('fallback_protocol')) {
         _y_CMD("protocol fallback support ...");
@@ -8240,13 +8244,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     _yeast_TIME("prepare}");
-    next if _yeast_NEXT("exit=HOST6 - host prepare");
     usr_pre_print();
 
     if (0 < $check) {
         _y_CMD("+check");
         _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
+    next if _yeast_NEXT("exit=HOST7 - host prepare end");
+    next if _yeast_NEXT("exit=HOST7 - host print start"); # dummy for --help=exit documentation
 
     # for debugging only
     if (_is_cfg_do('s_client')) {
@@ -8282,8 +8287,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
-    next if _yeast_NEXT("exit=HOST8 - host end");
-    _yeast_EXIT("exit=HOST9 - perform host end");
+    next if _yeast_NEXT("exit=HOST8 - host print end");
+    _yeast_EXIT("exit=HOST9 - host end");
 
 } # foreach host
 
