@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.123 23/12/14 18:20:11"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.124 23/12/14 18:53:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.123");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.124");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2874,7 +2874,6 @@ sub _get_cipherslist    {
     my $mode    = shift;# 'names' returns array with cipher suite names;
                         # 'keys'  returns array with hex keys of cipher suite names
     my $ssl     = shift;# used for mode=intern only
-#local *_trace = \&_dbx;
     _trace("_get_cipherslist($mode, $ssl){");
     my @ciphers = ();
     my $pattern = "";   # RegEx or colon-separated
@@ -5976,6 +5975,10 @@ sub printciphers        {
     my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
     _y_CMD("printciphers() ");
     #dbx print Dumper(\$results);
+    if (_is_cfg_legacy('openssl')) {
+        _warn("864: invalid '--legacy=$legacy' option; reset to default 'simple'");
+        $legacy = 'simple';
+    }
 
     foreach my $ssl (@{$cfg{'version'}}) {
         $_printtitle++;
