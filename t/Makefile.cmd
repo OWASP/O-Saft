@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.62 23/11/15 00:55:33
+#?      @(#) Makefile.cmd 1.63 23/12/14 11:08:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.62
+_SID.cmd           := 1.63
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -133,10 +133,10 @@ testcmd-cmd-+http_%:                TEST.args  += --no-out=sts_expired
 testcmd-cmd-+hsts_%:                TEST.args  += --no-out=sts_expired
 testcmd-cmd-+sts_%:                 TEST.args  += --no-out=sts_expired
 testcmd-cmd-+sts--noout_%:          TEST.args  += +sts   $(LIST.no-out.opt)
-testcmd-cmd-+https_body--httpbody_%: TEST.args += +https_body --https_body
-testcmd-cmd-+info--tracekey-norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check--tracekey-norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check--trace-norc_%:    TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
+testcmd-cmd-+https_body--httpbody_%:  TEST.args += +https_body --https_body
+testcmd-cmd-+info--tracekey--norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd-+check--tracekey--norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
+testcmd-cmd-+check--trace--norc_%:  TEST.args += +check --trace-cmd --norc --trace-time --trace=2 $(LIST.no-out.opt)
 testcmd-cmd-+quick--tracearg_%:     TEST.args  += +quick --trace-arg
 testcmd-cmd-+check--nossltls_%:     TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
@@ -155,9 +155,9 @@ testcmd-cmd-+info_%.log:            EXE.log-filtercmd  = awk -F: '\
 ALL.testcmd    += \
 	testcmd-cmd-+ignored-keys_ \
 	testcmd-cmd-+sts--noout_   \
-	testcmd-cmd-+info--tracekey-norc_ \
-	testcmd-cmd-+check--tracekey-norc_ \
-	testcmd-cmd-+check--trace-norc_ \
+	testcmd-cmd-+info--tracekey--norc_ \
+	testcmd-cmd-+check--tracekey--norc_ \
+	testcmd-cmd-+check--trace--norc_ \
 	testcmd-cmd-+quick--tracearg_ \
 	testcmd-cmd-+check--nossltls_ \
 	testcmd-cmd-+https_body--httpbody_
