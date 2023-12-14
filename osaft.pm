@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.50 23/12/13 21:22:29";
+our $SID_osaft  =  "@(#) osaft.pm 2.51 23/12/14 17:47:17";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -303,7 +303,7 @@ our %prot       = (     # collected data for protocols and ciphers
     'TLS1FF'    => {'txt' => "--dummy--", 'hex' => 0x03FF,  'opt' => undef      },  #  "
     'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => undef      },  #  "
     'fallback'  => {'txt' => "cipher",    'hex' => 0x0000,  'opt' => undef      },  #  "
-   #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => undef      },
+    'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => undef      },
     #-----------------------+--------------+----------------+------------------+---+---+---+---
     # see _prot_init_value() for following values in
     #   "protocol"=> {cnt, -?-, WEAK, LOW, MEDIUM, HIGH, protocol}
@@ -318,6 +318,7 @@ our %prot       = (     # collected data for protocols and ciphers
     #  DTLSv13  0xFEFC  # DTLS1.3, NOT YET specified (udp)
     #  DTLSfamily       # DTLS1.FF, no defined PROTOCOL, for internal use only
     #  fallback         # no defined PROTOCOL, for internal use only
+    #  TLS_FALLBACK_SCSV# 12/2023: not sure needed
     # 'hex' value will be copied to $cfg{'openssl_version_map'} below
     # 'opt' value will be copied to $cfg{'openssl_option_map'}  below
     # TODO: hex value should be same as %_SSLmap in Net::SSLinfo
@@ -3505,7 +3506,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.50"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.51"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3552,7 +3553,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.50 2023/12/13
+2.51 2023/12/14
 
 =head1 AUTHOR
 
