@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.124 23/12/14 18:53:16"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.125 23/12/14 19:40:08"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.124");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.125");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1535,8 +1535,6 @@ sub _check_functions    {
 
 sub _check_ssl_methods  {
    # check for supported SSL version methods and add them to $cfg{'version'}
-   # TODO: anything related to ciphermode=intern can be removed when Net::SSLhello
-   #       supports DTLSv1
     my $typ;
     my @list;
     _y_CMD("  check supported SSL versions ...");
@@ -3727,15 +3725,14 @@ sub checkciphers_pfs    {
     my $cnt_pfs = shift;
     my $session_protocol = shift;
     _trace("checkciphers_pfs($cnt_all, $cnt_pfs, $session_protocol){");
-    # my $cipher = $data{'cipher_selected'} ->{val}($host, $port); # TODO if ciphermode=openssl or ssleay
-    my $cipher = $prot{$session_protocol}->{'default'};
-    my @prots  = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
-    if (1 > $cnt_all) {         # no protocol with ciphers found
+    my $cipher  = $prot{$session_protocol}->{'default'};
+    my @prots   = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
+    if (1 > $cnt_all) { # no protocol with ciphers found
         $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
         goto END;
     }
-    if (1 > $#prots) {      # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}= ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
+    if (1 > $#prots) {  # found exactly one matching protocol
+        $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
     } else {
         _warn("631: protocol '". join(';', @prots) . "' multiple protocols with selected cipher available");
         $checks{'cipher_pfs'}->{val} .= "$session_protocol}:" . $prot{$_}->{'default'} . " " foreach (@prots);
@@ -4912,6 +4909,7 @@ sub checkdest($$)   {
     my $ciphers = shift;
     my ($key, $value, $ssl, $cipher);
     _y_CMD("checkdest() " . $cfg{'done'}->{'checkdest'});
+_dbx "checkdest";
     $cfg{'done'}->{'checkdest'}++;
     return if (1 < $cfg{'done'}->{'checkdest'});
     # remember: check is 'yes' for empty value ""
@@ -9101,12 +9099,12 @@ Each capability can be queried with  Net::SSLinfo::s_client_opt_get().
 Even  Net::SSLinfo::s_client_*()  will check capabilities, no proper error
 messages could be printed there. Hence checks are done herein first, which
 disables unavailable functionality and avoids warnings. Results (supported
-or not capability) are stored  in $cfg{'openssl'} .
+or no capability) are stored  in $cfg{'openssl'} .
 
 Some options for s_client are implemented, see Net::SSLinfo.pm , or use:
     Net/SSLinfo.pm --test-sclient
 
-Example of (1.0.2d) openssl s_client --help
+=head3 Example of (1.0.2d) openssl s_client --help
 
  unknown option --help
  usage: s_client args
@@ -9191,7 +9189,7 @@ Example of (1.0.2d) openssl s_client --help
  -keymatexportlen len  - Export len bytes of keying material (default 20)
  -no_tlsext        - Don't send any TLS extensions (breaks servername, NPN and ALPN among others)
 
-Example of (1.l.0l) openssl s_client --help
+=head3 Example of (1.l.0l) openssl s_client --help
 
  Usage: s_client [options]
  Valid options are:
@@ -9345,14 +9343,230 @@ Example of (1.l.0l) openssl s_client --help
  -noct                      Do not request or parse SCTs (default)
  -ctlogfile infile          CT log list CONF file
 
+=head3 Example of (3.0.11) openssl s_client --help
+
+Usage: s_client [options] [host:port]
+
+General options:
+ -help                      Display this summary
+ -engine val                Use engine, possibly a hardware device
+ -ssl_client_engine val     Specify engine to be used for client certificate operations
+ -ssl_config val            Use specified section for SSL_CTX configuration
+ -ct                        Request and parse SCTs (also enables OCSP stapling)
+ -noct                      Do not request or parse SCTs (default)
+ -ctlogfile infile          CT log list CONF file
+
+Network options:
+ -host val                  Use -connect instead
+ -port +int                 Use -connect instead
+ -connect val               TCP/IP where to connect; default: 4433)
+ -bind val                  bind local address for connection
+ -proxy val                 Connect to via specified proxy to the real server
+ -proxy_user val            UserID for proxy authentication
+ -proxy_pass val            Proxy authentication password source
+ -unix val                  Connect over the specified Unix-domain socket
+ -4                         Use IPv4 only
+ -6                         Use IPv6 only
+ -maxfraglen +int           Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)
+ -max_send_frag +int        Maximum Size of send frames 
+ -split_send_frag +int      Size used to split data for encrypt pipelines
+ -max_pipelines +int        Maximum number of encrypt/decrypt pipelines to be used
+ -read_buf +int             Default read buffer size to be used for connections
+ -fallback_scsv             Send the fallback SCSV
+
+Identity options:
+ -cert infile               Client certificate file to use
+ -certform PEM|DER          Client certificate file format (PEM/DER/P12); has no effect
+ -cert_chain infile         Client certificate chain file (in PEM format)
+ -build_chain               Build client certificate chain
+ -key val                   Private key file to use; default: -cert file
+ -keyform PEM|DER|ENGINE    Key format (ENGINE, other values ignored)
+ -pass val                  Private key and cert file pass phrase source
+ -verify +int               Turn on peer certificate verification
+ -nameopt val               Certificate subject/issuer name printing options
+ -CApath dir                PEM format directory of CA's
+ -CAfile infile             PEM format file of CA's
+ -CAstore uri               URI to store of CA's
+ -no-CAfile                 Do not load the default certificates file
+ -no-CApath                 Do not load certificates from the default certificates directory
+ -no-CAstore                Do not load certificates from the default certificates store
+ -requestCAfile infile      PEM format file of CA names to send to the server
+ -dane_tlsa_domain val      DANE TLSA base domain
+ -dane_tlsa_rrdata val      DANE TLSA rrdata presentation form
+ -dane_ee_no_namechecks     Disable name checks when matching DANE-EE(3) TLSA records
+ -psk_identity val          PSK identity
+ -psk val                   PSK in hex (without 0x)
+ -psk_session infile        File to read PSK SSL session from
+ -name val                  Hostname to use for "-starttls lmtp", "-starttls smtp" or "-starttls xmpp[-server]"
+
+Session options:
+ -reconnect                 Drop and re-make the connection with the same Session-ID
+ -sess_out outfile          File to write SSL session to
+ -sess_in infile            File to read SSL session from
+
+Input/Output options:
+ -crlf                      Convert LF from terminal into CRLF
+ -quiet                     No s_client output
+ -ign_eof                   Ignore input eof (default when -quiet)
+ -no_ign_eof                Don't ignore input eof
+ -starttls val              Use the appropriate STARTTLS command before starting TLS
+ -xmpphost val              Alias of -name option for "-starttls xmpp[-server]"
+ -brief                     Restrict output to brief summary of connection parameters
+ -prexit                    Print session information when the program exits
+
+Debug options:
+ -showcerts                 Show all certificates sent by the server
+ -debug                     Extra output
+ -msg                       Show protocol messages
+ -msgfile outfile           File to send output of -msg or -trace, instead of stdout
+ -nbio_test                 More ssl protocol testing
+ -state                     Print the ssl states
+ -keymatexport val          Export keying material using label
+ -keymatexportlen +int      Export len bytes of keying material; default 20
+ -security_debug            Enable security debug messages
+ -security_debug_verbose    Output more security debug output
+ -trace                     Show trace output of protocol messages
+ -keylogfile outfile        Write TLS secrets to file
+ -nocommands                Do not use interactive command letters
+ -servername val            Set TLS extension servername (SNI) in ClientHello (default)
+ -noservername              Do not send the server name (SNI) extension in the ClientHello
+ -tlsextdebug               Hex dump of all TLS extensions received
+ -ignore_unexpected_eof     Do not treat lack of close_notify from a peer as an error
+ -status                    Request certificate status from server
+ -serverinfo val            types  Send empty ClientHello extensions (comma-separated numbers)
+ -alpn val                  Enable ALPN extension, considering named protocols supported (comma-separated list)
+ -async                     Support asynchronous operation
+ -nbio                      Use non-blocking IO
+
+Protocol and version options:
+ -tls1                      Just use TLSv1
+ -tls1_1                    Just use TLSv1.1
+ -tls1_2                    Just use TLSv1.2
+ -tls1_3                    Just use TLSv1.3
+ -dtls                      Use any version of DTLS
+ -timeout                   Enable send/receive timeout on DTLS connections
+ -mtu +int                  Set the link layer MTU
+ -dtls1                     Just use DTLSv1
+ -dtls1_2                   Just use DTLSv1.2
+ -nextprotoneg val          Enable NPN extension, considering named protocols supported (comma-separated list)
+ -early_data infile         File to send as early data
+ -enable_pha                Enable post-handshake-authentication
+ -use_srtp val              Offer SRTP key management with a colon-separated profile list
+ -srpuser val               (deprecated) SRP authentication for 'user'
+ -srppass val               (deprecated) Password for 'user'
+ -srp_lateuser              (deprecated) SRP username into second ClientHello message
+ -srp_moregroups            (deprecated) Tolerate other than the known g N values.
+ -srp_strength +int         (deprecated) Minimal length in bits for N
+
+Random state options:
+ -rand val                  Load the given file(s) into the random number generator
+ -writerand outfile         Write random data to the specified file
+
+TLS/SSL options:
+ -no_ssl3                   Just disable SSLv3
+ -no_tls1                   Just disable TLSv1
+ -no_tls1_1                 Just disable TLSv1.1
+ -no_tls1_2                 Just disable TLSv1.2
+ -no_tls1_3                 Just disable TLSv1.3
+ -bugs                      Turn on SSL bug compatibility
+ -no_comp                   Disable SSL/TLS compression (default)
+ -comp                      Use SSL/TLS-level compression
+ -no_ticket                 Disable use of TLS session tickets
+ -serverpref                Use server's cipher preferences
+ -legacy_renegotiation      Enable use of legacy renegotiation (dangerous)
+ -client_renegotiation      Allow client-initiated renegotiation
+ -no_renegotiation          Disable all renegotiation.
+ -legacy_server_connect     Allow initial connection to servers that don't support RI
+ -no_resumption_on_reneg    Disallow session resumption on renegotiation
+ -no_legacy_server_connect  Disallow initial connection to servers that don't support RI
+ -allow_no_dhe_kex          In TLSv1.3 allow non-(ec)dhe based key exchange on resumption
+ -prioritize_chacha         Prioritize ChaCha ciphers when preferred by clients
+ -strict                    Enforce strict certificate checks as per TLS standard
+ -sigalgs val               Signature algorithms to support (colon-separated list)
+ -client_sigalgs val        Signature algorithms to support for client certificate authentication (colon-separated list)
+ -groups val                Groups to advertise (colon-separated list)
+ -curves val                Groups to advertise (colon-separated list)
+ -named_curve val           Elliptic curve used for ECDHE (server-side only)
+ -cipher val                Specify TLSv1.2 and below cipher list to be used
+ -ciphersuites val          Specify TLSv1.3 ciphersuites to be used
+ -min_protocol val          Specify the minimum protocol version to be used
+ -max_protocol val          Specify the maximum protocol version to be used
+ -record_padding val        Block size to pad TLS 1.3 records to.
+ -debug_broken_protocol     Perform all sorts of protocol violations for testing purposes
+ -no_middlebox              Disable TLSv1.3 middlebox compat mode
+ -no_etm                    Disable Encrypt-then-Mac extension
+
+Validation options:
+ -policy val                adds policy to the acceptable policy set
+ -purpose val               certificate chain purpose
+ -verify_name val           verification policy name
+ -verify_depth int          chain depth limit
+ -auth_level int            chain authentication security level
+ -attime intmax             verification epoch time
+ -verify_hostname val       expected peer hostname
+ -verify_email val          expected peer email
+ -verify_ip val             expected peer IP address
+ -ignore_critical           permit unhandled critical extensions
+ -issuer_checks             (deprecated)
+ -crl_check                 check leaf certificate revocation
+ -crl_check_all             check full chain revocation
+ -policy_check              perform rfc5280 policy checks
+ -explicit_policy           set policy variable require-explicit-policy
+ -inhibit_any               set policy variable inhibit-any-policy
+ -inhibit_map               set policy variable inhibit-policy-mapping
+ -x509_strict               disable certificate compatibility work-arounds
+ -extended_crl              enable extended CRL features
+ -use_deltas                use delta CRLs
+ -policy_print              print policy processing diagnostics
+ -check_ss_sig              check root CA self-signatures
+ -trusted_first             search trust store first (default)
+ -suiteB_128_only           Suite B 128-bit-only mode
+ -suiteB_128                Suite B 128-bit mode allowing 192-bit algorithms
+ -suiteB_192                Suite B 192-bit-only mode
+ -partial_chain             accept chains anchored by intermediate trust-store CAs
+ -no_alt_chains             (deprecated)
+ -no_check_time             ignore certificate validity time
+ -allow_proxy_certs         allow the use of proxy certificates
+ -CRL infile                CRL file to use
+ -crl_download              Download CRL from distribution points
+ -CRLform PEM|DER           CRL format (PEM or DER); default PEM
+ -verify_return_error       Close connection on verification error
+ -verify_quiet              Restrict verify output to errors
+ -chainCAfile infile        CA file for certificate chain (PEM format)
+ -chainCApath dir           Use dir as certificate store path to build CA certificate chain
+ -chainCAstore uri          CA store URI for certificate chain
+ -verifyCAfile infile       CA file for certificate verification (PEM format)
+ -verifyCApath dir          Use dir as certificate store path to verify CA certificate
+ -verifyCAstore uri         CA store URI for certificate verification
+
+Extended certificate options:
+ -xkey infile               key for Extended certificates
+ -xcert infile              cert for Extended certificates
+ -xchain infile             chain for Extended certificates
+ -xchain_build              build certificate chain for the extended certificates
+ -xcertform PEM|DER         format of Extended certificate (PEM/DER/P12); has no effect
+ -xkeyform PEM|DER          format of Extended certificate's key (DER/PEM/P12); has no effect
+
+Provider options:
+ -provider-path val         Provider load path (must be before 'provider' argument if required)
+ -provider val              Provider to load (can be specified multiple times)
+ -propquery val             Property query used when fetching algorithms
+
+Parameters:
+ host:port                  Where to connect; same as -connect option
+
 
 =head2 Note:Selected Protocol
 
 'sslversion' returns protocol as used in our data structure (like TLSv12)
 
-example (output from openssl):
+example (output from openssl 1.x):
 
     New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+
+example (output from openssl 3.x):
+
+    New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
 
 example Net::SSLeay:
 
@@ -9376,17 +9590,20 @@ SEE L<Note:term default cipher>.
 'cipher_selected' returns the cipher as used in our data structure (like
  DHE-DES-CBC), this is the one selected if the client provided a list
 example (output from openssl):
+        TBD
 
 example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
+
+For Programming internals see L<Note:+cipher-selected> also.
 
 
 =head2 Note:Cipher and Protocol
 
 Cipher suites names are not unique per SSL/TLS protocol and can be used in
 multiple protocols, for example SSLv3 and TLSv11. When ciphers are checked
-with  +cipher  or  +check , its not possible to map the reported cipher to
-the propper SSL/TLS protocol, unless the  --header option was used.
+with  +cipher  or  +check, it's not possible to map the reported cipher to
+the propper SSL/TLS protocol, unless the  --header  option was used.
 
 As the the checks for cipher suites are done per protocol, the result will
 be pretended with a header line indicating the current SSL/TLS protocol.
