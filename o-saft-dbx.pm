@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.36 23/12/02 11:48:35";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.38 23/12/14 17:32:46";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -437,7 +437,7 @@ sub _vprintme   {
 # subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s", @_); }
-sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", " score"); }
+sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", ""); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 
@@ -518,6 +518,7 @@ sub _yeast_test_avail   {
 =   intern      internal command only, not avaialable as +key
 =  ------------+--------------------------------------------------
 =";
+#=   score       score value for failed check
 
     my $old;
     my @yeast = ();     # list of potential internal, private commands
@@ -544,18 +545,15 @@ sub _yeast_test_avail   {
             $key, $cmd,
             (defined $data{$key})                ? __data( $key) : " ",   # data
             (defined $checks{$key})                     ?   "*"  : " ",   # checks
-            ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
-            || ($key =~ /$cfg{'regex'}->{'SSLprot'}/i)) ?   "*"  : "!",   # cmd-ch.
+            (_is_member($key, \@{$dbx{'cmd-check'}}) > 0) ? "*"  : "!",   # cmd-ch.
             (defined $shorttexts{$key})                 ?   "*"  : " ",   # short
             (_is_cfg_intern($key))                      ?   "I"  : " ",   # intern
-            (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
+            "",
+#           (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
+# score removed 23.12.23
+#=   .  no score defined in %checks{key}
             );
     }
-# FIXME: @{$dbx{'cmd-check'}} is incomplete when o-saft-dbx.pm is require'd in
-#        main; some checks above then fail (mainly those matching
-#        $cfg{'regex'}->{'SSLprot'}, hence the dirty additional
-#        || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
-#               
     print __data_line();
     print __data_head();
     print "=
@@ -566,7 +564,6 @@ sub _yeast_test_avail   {
 =      key not present
 =   ?  key in %data present but missing in \$cfg{commands}
 =   !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
-=   .  no score defined in %checks{key}
 =
 = Some commands (keys) in column  cmd-ch.  marked  !  are not considered an
 = error 'cause they are ancient checks like hastls10_old, or special checks
@@ -917,6 +914,10 @@ sub _yeast_test {
 
 sub _main_dbx       {
     my $arg = shift || "--help";    # without argument print own help
+    $cfg{'time0'} = $STR{MAKEVAL} if (defined $ENV{'OSAFT_MAKE'});
+        # SEE Make:OSAFT_MAKE (in Makefile.pod)
+        # dirty hack here which asumes that _main_dbx() is called to print
+        # information only and does not need time0
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see t/.perlcriticrc for detailed description of "no critic"
     #  SEE Perl:binmode()
@@ -1072,7 +1073,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.36 2023/12/02
+2.38 2023/12/14
 
 =head1 AUTHOR
 
