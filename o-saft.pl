@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.128 23/12/14 23:42:23"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.130 23/12/15 12:34:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.128");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.130");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -298,7 +298,7 @@ sub _print_read         {
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}    @ARGV));# --cgi-exec or --cgi-trace
     return if (0 >= (grep{/(?:--warn|--v$|--trace)/i}   @ARGV));
     if (0 >= (grep{/(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)/i} @ARGV)) {
-        return if (0 <  (grep{/(?:--trace[_.-]?CLI$)/i} @ARGV));# --trace-CLI
+        return if (0 <  (grep{/(?:--trace[_.-]?CLI|KEY$)/i} @ARGV));# --trace-CLI
     }
     printf("=== reading: %s (%s) ===\n", $fil, @txt);
     return;
@@ -3220,7 +3220,8 @@ sub ciphers_scan_intern {
             }
         }
         my %accepted;       # accepted ciphers (cipher keys and cipher parameters)
-                            # contains at least one entry: $accepted{selected}
+                            # %accepted = { idx => [ key, cipher-paramter ] };
+                            # contains at least one entry: $accepted{'0'}
         my $accepted_cnt = 0;
         my @all = _get_cipherslist('keys', $ssl);
         _trace("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
@@ -3233,18 +3234,21 @@ sub ciphers_scan_intern {
         if (_is_cfg_do('cipher_intern')) {  # may be called for cipher_dump too
             _v_print("cipher range: $cfg{'cipherrange'}, checking " . scalar(@all) . " ciphers ...");
         }
-        # %accepted = { idx => [ key, cipher-paramter ] };# at least $accepted{'0'} is returned
         %accepted = Net::SSLhello::getSSLciphersWithParam($host, $port, $ssl, @all);
+        #dbx# print Dumper(\%accepted);
+        Dumper(%accepted);
+            # FIXME: FIXME: dirty hack, Dumper result ignored
+            # Dumper used to aboid that a hash with only 2 keys is counted wrong
+            # with following "keys %accepted", reason yet unknown
         $accepted_cnt = scalar (keys %accepted);
         $accepted_cnt--;    # -1 because $accepted{'0'} always exist
-        #dbx# print Dumper(\%accepted);
         if (exists $accepted{'0'}[1]) { # defensive programming ..
             if ($accepted{'0'}[0] eq $accepted{'0'}[1]) {
-                $accepted_cnt--;
                 $results->{'_admin'}{$ssl}{'cipher_selected'} = $accepted{'0'}[0];
                 _trace("    cipher_selected = $accepted{'0'}[0]");
             }
         }
+        #dbx# print Dumper(\%accepted);
         $results->{'_admin'}{$ssl}{'ciphers'}      = @all;          # required to print not accepted ciphers
         $results->{'_admin'}{$ssl}{'cnt_offered'}  = scalar @all;   # same as cnt_ciphers
         $results->{'_admin'}{$ssl}{'cnt_accepted'} = $accepted_cnt; # same as cnt_totals
