@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.130 23/12/15 12:34:25"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.131 23/12/15 12:41:17"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.130");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.131");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2875,7 +2875,7 @@ sub _get_cipherslist    {
     _trace("_get_cipherslist($mode, $ssl){");
     my @ciphers = ();
     my $pattern = "";   # RegEx or colon-separated
-    _trace(" get list --cipher = [@{$cfg{'cipher'}}]");
+    _trace(" get list --cipher = [ @{$cfg{'cipher'}} ]");
     # check all values passed with --cipher= and add them to array of ciphers
     # note that values matching cfg{cipherpatterns} are already replaced with
     # the corresponding string from there
@@ -2950,7 +2950,7 @@ sub _get_cipherslist    {
         }
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
-    _trace("_get_cipherslist\t= [@ciphers] }");
+    _trace("_get_cipherslist\t= [ @ciphers ] }");
     return @ciphers;
 } # _get_cipherslist
 
