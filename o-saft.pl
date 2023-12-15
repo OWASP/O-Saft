@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.131 23/12/15 12:41:17"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.132 23/12/15 13:39:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.131");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.132");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3823,8 +3823,12 @@ sub checkciphers        {
     }
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
-    return if _is_cfg_ciphermode('openssl|ssleay'); # FIXME: dirty hack until checks below can be done
-    checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
+    if (defined $results->{'_admin'}{'session_protocol'}) {
+        checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
+    } else {
+        _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'");
+        # for ciphermode=openssl|ssleay only; reason not yet identified (12/2023)
+    }
     _trace("checkciphers() }");
     return;
 } # checkciphers
