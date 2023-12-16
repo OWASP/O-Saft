@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.99 23/12/13 13:32:44";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.100 23/12/16 18:49:04";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1579,17 +1579,17 @@ sub _main_ciphers   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __PACKAGE__, $SID_ciphers)     if (0 > $#argv);
+    print_pod($0, __PACKAGE__, $SID_ciphers)    , exit if (0 > $#argv);
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_ciphers) if ($arg =~ m/^--?h(?:elp)?$/); # print own help
-        _main_ciphers_usage()      if ($arg eq '--usage');
+        print_pod($0, __PACKAGE__, $SID_ciphers), exit if ($arg =~ m/^--?h(?:elp)?$/); # print own help
+        _main_ciphers_usage() , next    if ($arg eq '--usage');
         # ----------------------------- options
-        $cfg{'verbose'}++          if ($arg eq '--v');
+        $cfg{'verbose'}++     , next    if ($arg eq '--v');
         # ----------------------------- commands
-        print "$SID_ciphers\n"     if ($arg =~ /^version$/);
-        print "$VERSION\n"         if ($arg =~ /^[-+]?V(ERSION)?$/);
-        print "$VERSION\n"         if ($arg =~ /^--test.?ciphers.?version/i);
+        print "$SID_ciphers\n", next    if ($arg =~ /^version$/);
+        print "$VERSION\n"    , next    if ($arg =~ /^[-+]?V(ERSION)?$/);
+        print "$VERSION\n"    , next    if ($arg =~ /^--test.?ciphers.?version/i);
         # allow short option without --test-ciphers- prefix
         $arg =~ s/^--test.?ciphers//;   # remove if there
         show("--test-ciphers$arg");
@@ -1723,7 +1723,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.99 2023/12/13
+2.100 2023/12/16
 
 
 =head1 AUTHOR
