@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.132 23/12/15 13:39:28"; # version of this file
+our $SID_main   = "@(#) %M% %I% %E% %U%"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.132");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/%I%");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -253,8 +253,7 @@ sub _warn   {
         return if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_printed'}}));
         push(@{$cfg{out}->{'warnings_printed'}}, $_no);
     }
-    local $\ = "\n";
-    print($STR{WARN}, join(" ", @txt));
+    printf($STR{WARN} ."%s\n", join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     _yeast_EXIT("exit=WARN - exit on first warning");
     return;
@@ -1761,7 +1760,6 @@ sub _init_openssldir    {
     my $status  = $?;
     my $error   = $!;
     my $capath  = "";
-    local   $\  = "\n";
     _trace("_init_openssldir: $dir");
     if (($error ne "") && ($status != 0)) { # we ignore error messages for status==0
         # When there is a status and an error message, external call failed.
@@ -5399,7 +5397,6 @@ sub print_footer    {
 sub print_title     {
     #? print title according given legacy format
     my ($legacy, $ssl, $host, $port, $header) = @_;
-    local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
         my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
         print "$txt";
@@ -5809,7 +5806,6 @@ sub printciphers_dh_openssl {
 sub printcipherpreferred {
     #? print table with preferred/selected (default) cipher per protocol
     my ($legacy, $host, $port) = @_;
-    local $\ = "\n";
     if (_is_cfg_out('header')) {
         printf("= prot.\t%-31s\t%s\n", "preferred cipher (strong first)", "preferred cipher (weak first)");
         printf("=------+-------------------------------+-------------------------------\n");
@@ -5838,7 +5834,6 @@ sub printprotocols      {
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
     my @score = qw(A B C D);
-    local $\ = "\n";
     if (_is_cfg_out('header')) {
         printf("# amount of detected ciphers for:\n");
         if ('owasp' eq $legacy) {
@@ -6060,7 +6055,6 @@ sub printciphersummary  {
 sub printdata($$$)      {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
-    local $\ = "\n";
     print_header($text{'out_infos'}, $text{'desc_info'}, "", $cfg{'out'}->{'header'});
     _trace_cmd('%data');
     if (_is_cfg_do('cipher_selected')) {    # value is special
@@ -6106,21 +6100,22 @@ sub printchecks($$$)    {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
     my $value = "";
-    local $\ = "\n";
+    my $match_cipher = '(?:SSL|D?TLS)v[0-9]+:';
     print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out'}->{'header'});
     _trace_cmd(' printchecks: %checks');
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _is_cfg_use('cert'));
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
+        next if (not _is_hashkey($key, \%checks));
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}));
         next if (_is_member( $key, \@{$cfg{'ignore-out'}}));
-        next if (not _is_hashkey($key, \%checks));
         next if (_is_cfg_intern( $key));# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
         if (not _is_cfg_use('experimental')) {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
         $value = _get_yes_no($checks{$key}->{val});
+#_dbx "V[$key] = $value " if $value =~ m/(?:SSL|D?TLS)v[0-9]+:/; # cannot use $cfg{'regex'}->{'SSLprot'}/;
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) {   # sizes are special
             print_size($legacy, $host, $port, $key) if (_is_cfg_use('cert'));
@@ -6425,7 +6420,6 @@ sub printopenssl        {
 sub printusage_exit     {
     #? print simple usage, first line with passed text
     my @txt = @_;
-    local $\ = "\n";
     print $STR{USAGE}, @txt;
     print "# most common usage:
   $cfg{'me'} +info     your.tld
@@ -7567,7 +7561,6 @@ if (0 == $cfg{'exec'})  {
         #ENV{OPENSSL} no need to set again if already done when called
         my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
         my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
-        local $\ = "\n";
         $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         $ENV{PATH} = join($chr, @{$cmd{'libs'}}, $ENV{PATH})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars
