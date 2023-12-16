@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) %M% %I% %E% %U%"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.134 23/12/16 13:51:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/%I%");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.134");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6100,7 +6100,7 @@ sub printchecks($$$)    {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
     my $value = "";
-    my $match_cipher = '(?:SSL|D?TLS)v[0-9]+:';
+    my $match_cipher = '(?:SSL|D?TLS)v[0-9]+:[A-Z0-9_-]+'; # similar to $cfg{'regex'}->{'SSLprot'}
     print_header($text{'out_checks'}, $text{'desc_check'}, "", $cfg{'out'}->{'header'});
     _trace_cmd(' printchecks: %checks');
     _warn("821: can't print certificate sizes without a certificate (--no-cert)") if (not _is_cfg_use('cert'));
@@ -6115,7 +6115,14 @@ sub printchecks($$$)    {
             next if (_is_member( $key, \@{$cfg{'commands_exp'}}));
         }
         $value = _get_yes_no($checks{$key}->{val});
-#_dbx "V[$key] = $value " if $value =~ m/(?:SSL|D?TLS)v[0-9]+:/; # cannot use $cfg{'regex'}->{'SSLprot'}/;
+        if ($value =~ m/$match_cipher/) { # SEE Note:Testing, sort
+            # cipher names may appear unsorted in the $value
+            my @unsorted = grep{/$match_cipher/} split(/[ )]/, $value);
+                # split on space and round bracket, bracket may not be preceded by space
+            $value =~ s/$match_cipher ?//g; #remove ciphers removed in if
+            $value =~ s/([)])\s*$/sprintf("%s %s", join(" ", sort @unsorted), $1)/ex;
+                # add sorted list right before closing bracket
+        }
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) {   # sizes are special
             print_size($legacy, $host, $port, $key) if (_is_cfg_use('cert'));
