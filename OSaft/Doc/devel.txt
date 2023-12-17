@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 2.2 23/11/17 22:59:57
+# SID   @(#) devel.txt 2.3 23/12/17 12:51:35
 
 
 NAME
@@ -44,6 +44,67 @@ DESCRIPTION
             (also requires Perl modules, JSON, Text::MicroTemplate)
 
           * Debug::Trace Devel::Trace Devel::DProf Devel::NYTProf
+
+
+OVERVIEW
+
+        Using make for development uses additional external tools and/or Perl
+        To get an overview about the source, functions, methods, descriptions
+        following commands can be used.
+
+        Descriptions, Methods
+
+          make testarg-dev-grep_desc
+          make testarg-dev-grep_warn
+          make test.dev.grep.sub
+          make test.dev-grep.subs
+          make test.dev-grep.desc
+
+        Configurations
+
+          make testarg-mod-o-saft-dbx.pm_--test-vars
+          o-saft.pl --test-vars
+          o-saft.pl +quit --trace
+          o-saft.pl +quit --trace=3
+
+        Warnings
+
+          make testarg-hlp-o-saft.pl_--help-warnings.log
+          o-saft.pl --header --no-rc --help=warnings
+
+        Ciphers
+
+          make testarg-hlp-o-saft.pl_--legacy-owasp
+          o-saft.pl +list --header --no-rc --legacy=owasp
+          o-saft.pl +list --header --no-rc --legacy=openssl
+          o-saft.pl +ciphers -v
+          o-saft.pl +ciphers -V
+          OSaft/Ciphers.pm key=ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+          OSaft/Ciphers.pm getter=0x0300CCA9
+          OSaft/Ciphers.pm description
+          OSaft/Ciphers.pm ovrview
+
+        Special Informations
+
+          make testcmd-cipher-+cipher---cipher-IS-UNKNOWN--ciphermode-openssl_localhost
+          o-saft.pl --test
+
+          o-saft.pl --header --enabled +dump localhost
+
+    Testing results
+
+
+# Tests returning same or similar results:
+#
+#           make testarg-hlp-o-saft.pl_--help-warnings.log
+#           make testarg-mod-o-saft-man.pm_warnings
+#
+#           make testarg-hlp-o-saft.pl_--legacy-owasp
+#           make testarg-mod-OSaft-Ciphers.pm_sorted
+#
+#           make testcmd-cipher-+cipher---cipher-IS-UNKNOWN--ciphermode-openssl_localhost
+#           make testcmd-cipher-+cipher---cipher-is_invalid--ciphermode-openssl_localhost
+#
 
 
 DEBUGGING
