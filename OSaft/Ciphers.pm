@@ -42,7 +42,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.100 23/12/16 18:49:04";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.101 23/12/17 19:33:42";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -1583,13 +1583,14 @@ sub _main_ciphers   {
     # got arguments, do something special
     while (my $arg = shift @argv) {
         print_pod($0, __PACKAGE__, $SID_ciphers), exit if ($arg =~ m/^--?h(?:elp)?$/); # print own help
-        _main_ciphers_usage() , next    if ($arg eq '--usage');
+        _main_ciphers_usage()   , next  if ($arg eq '--usage');
         # ----------------------------- options
-        $cfg{'verbose'}++     , next    if ($arg eq '--v');
+        $cfg{'verbose'}++       , next  if ($arg eq '--v');
         # ----------------------------- commands
-        print "$SID_ciphers\n", next    if ($arg =~ /^version$/);
-        print "$VERSION\n"    , next    if ($arg =~ /^[-+]?V(ERSION)?$/);
-        print "$VERSION\n"    , next    if ($arg =~ /^--test.?ciphers.?version/i);
+        (print "$SID_ciphers\n"), next  if ($arg =~ /^version$/);
+        (print "$VERSION\n")    , next  if ($arg =~ /^[-+]?V(ERSION)?$/);
+        (print "$VERSION\n")    , next  if ($arg =~ /^--test.?ciphers.?version/i);
+            # round brackets because print is not a sub but an operator
         # allow short option without --test-ciphers- prefix
         $arg =~ s/^--test.?ciphers//;   # remove if there
         show("--test-ciphers$arg");
@@ -1723,7 +1724,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.100 2023/12/16
+2.101 2023/12/17
 
 
 =head1 AUTHOR
