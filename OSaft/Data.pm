@@ -9,7 +9,7 @@ package OSaft::Data;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) Data.pm 1.14 23/12/22 18:40:28";
+my  $SID_data   =  "@(#) Data.pm 1.15 23/12/22 18:42:03";
 our $VERSION    =  "23.11.23";
 
 BEGIN {
@@ -497,7 +497,7 @@ our %check_size = (  # length and count data
     'cnt_wildcard'  => {'txt' => "Certificate Wildcards count"},    # == 0
     'cnt_chaindepth'=> {'txt' => "Certificate Chain Depth count"},  # == 1
     'cnt_ciphers'   => {'txt' => "Total number of checked ciphers"},# <> 0
-    'cnt_totals'    => {'txt' => "Total number of accepdet ciphers"},
+    'cnt_totals'    => {'txt' => "Total number of accepted ciphers"},
     'cnt_checks_noo'=> {'txt' => "Total number of check results 'no(<<)'"},
     'cnt_checks_no' => {'txt' => "Total number of check results 'no'"},
     'cnt_checks_yes'=> {'txt' => "Total number of check results 'yes'"},
@@ -933,7 +933,7 @@ _data_init();
 
 =head1 VERSION
 
-1.14 2023/12/22
+1.15 2023/12/22
 
 =head1 AUTHOR
 
