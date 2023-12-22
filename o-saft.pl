@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.134 23/12/16 13:51:31"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.135 23/12/22 09:01:52"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.134");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.135");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3196,14 +3196,12 @@ sub ciphers_scan_intern {
     _trace("ciphers_scan_intern($host, $port){");
     my $total   = 0;
     my $enabled = 0;
-    my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
     my $results = {};       # hash with cipher list to be returned
     my $usesni  = $Net::SSLhello::usesni;           # store SNI for recovery later
     my $typ     = "raw";    # used for --trace only
        $typ     = "all" if (_is_cfg_do('cipher_intern'));
     $results->{'_admin'}{'session_protocol'}   = "";
     foreach my $ssl (@{$cfg{'version'}}) {
-        $_printtitle++;
         $results->{'_admin'}{$ssl}{'cnt_offered'}  = 0; # early initialisation ..
         $results->{'_admin'}{$ssl}{'cnt_accepted'} = 0; # .. avoids uninitialised use
         next if ($cfg{$ssl} == 0);
@@ -3277,7 +3275,7 @@ sub ciphers_scan_intern {
 
     } # $ssl
     if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
-        _trace("ciphers_scan_intern()\t= " . join(" ", keys(%{$results})) . " }");
+        _trace("ciphers_scan_intern()\t= " . join(" ", sort keys(%{$results})) . " }");
     } else {
         _trace("ciphers_scan_intern()\t= <<result prined with --trace=2>> }");
     }
@@ -5806,6 +5804,7 @@ sub printciphers_dh_openssl {
 sub printcipherpreferred {
     #? print table with preferred/selected (default) cipher per protocol
     my ($legacy, $host, $port) = @_;
+    _trace("printcipherpreferred($legacy, $host, $port){");
     if (_is_cfg_out('header')) {
         printf("= prot.\t%-31s\t%s\n", "preferred cipher (strong first)", "preferred cipher (weak first)");
         printf("=------+-------------------------------+-------------------------------\n");
@@ -5825,6 +5824,7 @@ sub printcipherpreferred {
     if (not _is_cfg_ciphermode('intern')) {
         print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
     }
+    _trace("printcipherpreferred() }");
     return;
 } # printcipherpreferred
 
@@ -5833,6 +5833,7 @@ sub printprotocols      {
     # number of found ciphers, various risks ciphers, default cipher and PFS cipher
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
+    _trace("printprotocols($legacy, $host, $port){");
     my @score = qw(A B C D);
     if (_is_cfg_out('header')) {
         printf("# amount of detected ciphers for:\n");
@@ -5887,7 +5888,46 @@ sub printprotocols      {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     return;
+    _trace("printprotocols() }");
 } # printprotocols
+
+sub printciphersummary  {
+    #? print summary of cipher check +cipher
+    my ($legacy, $host, $port, $total) = @_;
+    _trace("printciphersummary($legacy, $host, $port, $total){");
+    if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
+        print_header("\n" . _get_text('out_summary' , ""), "", "", $cfg{'out'}->{'header'});
+        print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
+        printprotocols($legacy, $host, $port);
+            # NOTE: reported ciphers here may be others than detected accepted
+            #       ciphers, for example when --cipher=0x0300002F was used
+    }
+    _y_CMD("printciphersummary() ");
+    if (0 < $cfg{'need_netinfo'}) {
+_dbx " printciphersummary netinfo ";
+        my $key;
+        my $_verbose = $Net::SSLinfo::verbose;  # save
+        if (2 > $_verbose) {    # avoid huge verbosity in simple cases
+            $Net::SSLinfo::verbose = 0 if 2 > $_verbose;
+            if (0 < $_verbose) {
+                _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
+            }
+        }
+        my $cipher = $data{'cipher_selected'}->{val}($host, $port);
+        print_line($legacy, $host, $port, 'cipher_selected',
+                   $data{'cipher_selected'}->{txt}, "$cipher "
+                   . _cipher_get_sec($cipher)
+                  );
+        $Net::SSLinfo::verbose = $_verbose;     # restore
+    } else {
+        if (0 < $verbose) {
+            _hint("'cipher_selected' temporarily disabled");  # TODO: adapt to new SSLhello (2/2021)
+        }
+    }
+    _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
+    _trace("printciphersummary() }");
+    return;
+} # printciphersummary
 
 sub printcipherlines    {
     #? print result of cipher check +cipher (when --ciphermode=openssl)
@@ -6016,41 +6056,6 @@ sub printciphers        {
     }
     return;
 } # printciphers
-
-sub printciphersummary  {
-    #? print summary of cipher check +cipher
-    my ($legacy, $host, $port, $total) = @_;
-    if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
-        print_header("\n" . _get_text('out_summary' , ""), "", "", $cfg{'out'}->{'header'});
-        print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
-        printprotocols($legacy, $host, $port);
-            # NOTE: reported ciphers here may be others than detected accepted
-            #       ciphers, for example when --cipher=0x0300002F was used
-    }
-    _y_CMD("printciphersummary() ");
-    if (0 < $cfg{'need_netinfo'}) {
-        my $key;
-        my $_verbose = $Net::SSLinfo::verbose;  # save
-        if (2 > $_verbose) {    # avoid huge verbosity in simple cases
-            $Net::SSLinfo::verbose = 0 if 2 > $_verbose;
-            if (0 < $_verbose) {
-                _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
-            }
-        }
-        my $cipher = $data{'cipher_selected'}->{val}($host, $port);
-        print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, "$cipher "
-                   . _cipher_get_sec($cipher)
-                  );
-        $Net::SSLinfo::verbose = $_verbose;     # restore
-    } else {
-        if (0 < $verbose) {
-            _hint("'cipher_selected' temporarily disabled");  # TODO: adapt to new SSLhello (2/2021)
-        }
-    }
-    _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
-    return;
-} # printciphersummary
 
 sub printdata($$$)      {
     #? print information stored in %data
@@ -8064,7 +8069,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         if (_is_cfg_ciphermode('intern|dump')) {
             _y_CMD("  use SSLhello +cipher$typ ...");
             Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
-            $cipher_results = ciphers_scan_intern($host, $port);# print ciphers also if not cipher_dh
+            $cipher_results = ciphers_scan_intern($host, $port);
         }
         if (_is_cfg_ciphermode('openssl|ssleay')) {
             _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
