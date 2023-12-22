@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.135 23/12/22 09:01:52"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.136 23/12/22 09:16:30"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.135");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.136");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3723,19 +3723,19 @@ sub checkciphers_pfs    {
     #? test if given ciphers support PFS, set corresponding %checks
     my $cnt_all = shift;
     my $cnt_pfs = shift;
-    my $session_protocol = shift;
-    _trace("checkciphers_pfs($cnt_all, $cnt_pfs, $session_protocol){");
-    my $cipher  = $prot{$session_protocol}->{'default'};
-    my @prots   = grep{/(^$session_protocol$)/i} @{$cfg{'versions'}};
+    my $ssl     = shift; # session_protocol
+    _trace("checkciphers_pfs($cnt_all, $cnt_pfs, $ssl){");
+    my $cipher  = $prot{$ssl}->{'default'};
+    my @prots   = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     if (1 > $cnt_all) { # no protocol with ciphers found
         $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
         goto END;
     }
     if (1 > $#prots) {  # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($session_protocol, $cipher)) ? $cipher : "";
+        $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
     } else {
         _warn("631: protocol '". join(';', @prots) . "' multiple protocols with selected cipher available");
-        $checks{'cipher_pfs'}->{val} .= "$session_protocol}:" . $prot{$_}->{'default'} . " " foreach (@prots);
+        $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $prot{$_}->{'default'} . " " foreach (@prots);
     }
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'}->{val});
