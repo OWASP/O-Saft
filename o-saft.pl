@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.137 23/12/22 09:48:02"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.138 23/12/22 10:37:01"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.137");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.138");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1688,7 +1688,6 @@ sub _check_openssl      {
         # that cfg{openssl} is not properly initialised
         my $val = Net::SSLinfo::s_client_opt_get($opt);
            $val = 0 if ($val eq '<<openssl>>');
-        # _dbx "$opt $val";
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
         _enable_sclient($opt);  # may print propper _warn()
@@ -2150,7 +2149,6 @@ sub _cfg_set_init       {
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
     _warn("075: TESTING only: setting configuration: 'cfg{$key}=$val';");
-    #_dbx "typeof: " . ref($cfg{$key});
     SWITCH: for (ref($cfg{$key})) {
         /^$/     && do {   $cfg{$key}  =  $val ; };     # same as SCALAR
         /SCALAR/ && do {   $cfg{$key}  =  $val ; };
@@ -2471,7 +2469,6 @@ sub _is_tls12only   {
             push(@ret, _get_text('disabled', "--no-$ssl"));
         }
     }
-#_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
 } # _is_tls12only
 
@@ -2542,7 +2539,6 @@ sub _isbeastskipped($$) {
             push(@ret, _get_text('disabled', "--no-$ssl"));
         }
     }
-#_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
 } # _isbeastskipped
 
@@ -2864,6 +2860,61 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
+sub _get_data0          {
+    #? get %data for connection without SNI
+    #  this function currently only returns data for:  cn_nosni, session_ticket
+    my ($host, $port) = @_;
+    _y_CMD("test without SNI (disable with --no-sni) ...");
+    # check if SNI supported, also copy some data to %data0
+        # to do this, we need a clean SSL connection with SNI disabled
+        # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
+        # finally we close the connection to be clean for all other tests
+    _trace(" cn_nosni: {");
+    _yeast_TIME("no SNI{");
+    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
+    if (defined Net::SSLinfo::do_ssl_open(
+                    $host, $port,
+                    (join(" ", @{$cfg{'version'}})),
+                     join(" ", @{$cfg{'ciphers'}}))
+       ) {
+        _y_CMD("  open with no SNI.");
+        _trace(" cn_nosni: method= $Net::SSLinfo::method");
+        $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
+        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
+# TODO:  following needs to be improved, because there are multipe openssl
+        # calls which may produce unexpected results (10/2015) {
+        # 'sort' is used to make tests comparable
+        foreach my $key (sort keys %data) { # copy to %data0
+            next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
+            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+        }
+# }
+    } else {
+        _warn("204: Can't make a connection to '$host:$port' without SNI; no initial data (compare with and without SNI not possible)");
+    }
+    if (0 < (length Net::SSLinfo::errors())) {
+        _warn("203: connection without SNI succeded with errors; errors ignored");
+            # fails often with: Error in cipher list; SSL_CTX_set_cipher_list:no cipher match
+            # TODO: don't show warning 203 if only this in Net::SSLinfo::errors
+        if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
+            _warn("206: $_") foreach Net::SSLinfo::errors();
+            # following OK, i.e. if SSLv2 or SSLv3 is not supported:
+            #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
+            #   ....SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1383:
+        } else {
+            _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
+        }
+    }
+    _yeast_TIME("no SNI}");         # should be before if {}, but also ok here
+    # now close connection, which also resets Net::SSLinfo's internal data
+    # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
+    # the connection failed and does nothing (except resetting data)
+    Net::SSLinfo::do_ssl_close($host, $port);
+    $Net::SSLinfo::use_SNI  = $cfg{'use'}->{'sni'};
+    _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
+    return;
+} # _get_data0
+
 sub _get_cipherslist    {
     #? return array of cipher suites (names or keys) according command-line options
     #  evaluates the --cipher= --cipher-range= option
@@ -2952,7 +3003,7 @@ sub _get_cipherslist    {
     return @ciphers;
 } # _get_cipherslist
 
-sub _get_default($$$$)  {
+sub _get_cipher_default {
     # return list of offered (default) cipher from target
     # mode defines how to retrieve the preferred cipher
     #   strong:  pass cipher list sorted with strongest first
@@ -2964,11 +3015,10 @@ sub _get_default($$$$)  {
     # Both, openssl and sockets (IO::Socket::SSL), use the underlaying libssl
     # which works with the compiled in ciphers only.  Hence all known ciphers
     # (by libssl) are passed:  @{$cfg{'ciphers'}}, we cannot pass all ciphers
-    # like: keys %ciphers. +cipher --ciphermode=intern must be used, if other
-    # ciphers than the local available should be checked.
+    # like: keys %ciphers.
 
     my ($ssl, $host, $port, $mode) = @_;
-    _trace("_get_default($ssl, $host, $port, $mode){");
+    _trace("_get_cipher_default($ssl, $host, $port, $mode){");
     $cfg{'done'}->{'default_get'}++;
     my $dh      = "";   # returned DH parameters (not yet used)
     my $version = "";   # returned protocol version
@@ -2997,74 +3047,43 @@ sub _get_default($$$$)  {
     } else {
         _v2print("preferred cipher: $ssl:\t$cipher");
     }
-    _trace("_get_default()\t= $cipher }"); # TODO: trace a bit late
+    _trace("_get_cipher_default()\t= $cipher }");
     return $cipher;
-} # _get_default
+} # _get_cipher_default
 
-sub _get_data0          {
-    #? get %data for connection without SNI
-    #  this function currently only returns data for:  cn_nosni, session_ticket
-    my ($host, $port) = @_;
-    _y_CMD("test without SNI (disable with --no-sni) ...");
-    # check if SNI supported, also copy some data to %data0
-        # to do this, we need a clean SSL connection with SNI disabled
-        # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
-        # finally we close the connection to be clean for all other tests
-    _trace(" cn_nosni: {");
-    _yeast_TIME("no SNI{");
-    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
-    if (defined Net::SSLinfo::do_ssl_open(
-                    $host, $port,
-                    (join(" ", @{$cfg{'version'}})),
-                     join(" ", @{$cfg{'ciphers'}}))
-       ) {
-        _y_CMD("  open with no SNI.");
-        _trace(" cn_nosni: method= $Net::SSLinfo::method");
-        $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
-        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
-# TODO:  following needs to be improved, because there are multipe openssl
-        # calls which may produce unexpected results (10/2015) {
-        # 'sort' is used to make tests comparable
-        foreach my $key (sort keys %data) { # copy to %data0
-            next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
-            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
-        }
-# }
-    } else {
-        _warn("204: Can't make a connection to '$host:$port' without SNI; no initial data (compare with and without SNI not possible)");
+sub ciphers_default_openssl {
+    #? return list of offered (default) cipher from target with openssl
+    # Function need for --ciphermode=openssl only,  SEE Note:+cipher-selected
+    # +cipher --ciphermode=intern (which is the default anyway) must be used,
+    # if other ciphers than the local available should be checked.
+    my ($host, $port)   = @_;
+    _trace("ciphers_default_openssl($host, $port){");
+    $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
+    foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+        next if not defined $prot{$ssl}->{opt};
+        my $anf = time();
+        # no need to check for "valid" $ssl (like DTLSfamily), done by _get_cipher_default()
+        $prot{$ssl}->{'cipher_strong'}  = _get_cipher_default($ssl, $host, $port, 'strong' );
+        $prot{$ssl}->{'cipher_weak'}    = _get_cipher_default($ssl, $host, $port, 'weak'   );
+        $prot{$ssl}->{'default'}        = _get_cipher_default($ssl, $host, $port, 'default');
+        last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
+        my $cipher  = $prot{$ssl}->{'cipher_strong'};
+        $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
     }
-    if (0 < (length Net::SSLinfo::errors())) {
-        _warn("203: connection without SNI succeded with errors; errors ignored");
-            # fails often with: Error in cipher list; SSL_CTX_set_cipher_list:no cipher match
-            # TODO: don't show warning 203 if only this in Net::SSLinfo::errors
-        if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
-            _warn("206: $_") foreach Net::SSLinfo::errors();
-            # following OK, i.e. if SSLv2 or SSLv3 is not supported:
-            #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
-            #   ....SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1383:
-        } else {
-            _hint("use '--v' to show more information about Net::SSLinfo::do_ssl_open() errors");
-        }
-    }
-    _yeast_TIME("no SNI}");         # should be before if {}, but also ok here
-    # now close connection, which also resets Net::SSLinfo's internal data
-    # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
-    # the connection failed and does nothing (except resetting data)
-    Net::SSLinfo::do_ssl_close($host, $port);
-    $Net::SSLinfo::use_SNI  = $cfg{'use'}->{'sni'};
-    _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
+    checkpreferred($host, $port);
+    _trace("ciphers_default_openssl() }");
     return;
-} # _get_data0
+} # ciphers_default_openssl
 
-sub ciphers_scan_prot   {
+sub ciphers_prot_openssl {
     #? test target if given ciphers are accepted, returns array with accepted ciphers
-    #? scans for ciphers with given protocol only
+    #? scans for ciphers with given protocol only, needed for --ciphermode=openssl only
     my ($ssl, $host, $port, $arr) = @_;
     my @ciphers = @{$arr};      # ciphers to be checked
     my $version = "";           # returned protocol version
     my $dh      = "";           # returned DH parameters (not yet used)
 
-    _trace("ciphers_scan_prot($ssl, $host, $port, @ciphers){");
+    _trace("ciphers_prot_openssl($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
     _v_print("connect delay: $cfg{'connect_delay'} second(s)") if ($cfg{'connect_delay'} > 0);
@@ -3114,9 +3133,9 @@ sub ciphers_scan_prot   {
     } # foreach @ciphers
     _v_print("connection errors: $cfg{'done'}->{'ssl_errors'}                  ");
     #    spaces to overwrite remaining cipher suite names
-    _trace("ciphers_scan_prot()\t= " . $#res . " @res }");
+    _trace("ciphers_prot_openssl()\t= " . $#res . " @res }");
     return @res;
-} # ciphers_scan_prot
+} # ciphers_prot_openssl
 
 sub ciphers_scan_openssl {
     #? scan target for ciphers for all protocols (using openssl)
@@ -3155,12 +3174,12 @@ sub ciphers_scan_openssl {
         }
         my $__verbose   = $cfg{'verbose'};
             # $cfg{'v_cipher'}  should only print cipher checks verbosely,
-            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence we need to save
-            # the current value and reset after calling ciphers_scan_prot()
+            # ciphers_prot_openssl()  uses  $cfg{'verbose'}, hence need to save
+            # the current value and reset after calling ciphers_prot_openssl()
         $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
-        my @supported   = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
+        my @supported   = ciphers_prot_openssl($ssl, $host, $port, \@{$cfg{'ciphers'}});
         $cfg{'verbose'} = $__verbose if ($__verbose != 2);
-        $results->{'_admin'}{$ssl}{'ciphers'}      = \@{$cfg{'ciphers'}};          # required to print not accepted ciphers
+        $results->{'_admin'}{$ssl}{'ciphers'}      = \@{$cfg{'ciphers'}}; # required to print not accepted ciphers
         $results->{'_admin'}{$ssl}{'cnt_offered'}  = scalar @{$cfg{'ciphers'}};   # same as cnt_ciphers
         $results->{'_admin'}{$ssl}{'cnt_accepted'} = @supported;    # same as cnt_totals
         # remove  protocol: in each item
@@ -3256,7 +3275,6 @@ sub ciphers_scan_intern {
         # get default/preferred/selected cipher
         if (exists $accepted{'0'}[1]) {
             my $cipher = OSaft::Ciphers::get_name($accepted{'0'}[1]) || $STR{UNDEF}; # may return undef
-            # SEE Note:+cipher-selected
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
             $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
@@ -4012,7 +4030,6 @@ sub checkcert($$)   {
     # certificate
     if ($cfg{'verbose'} > 0) { # TODO
         foreach my $label (qw(verify selfsigned)) {
-            #dbx# _dbx "$label : $value #";
             $value = $data{$label}->{val}($host);
             $checks{$label}->{val}   = $value if ($value eq "");
 
@@ -4094,11 +4111,6 @@ sub checksni($$)    {
     } else {
         $checks{'certfqdn'}->{val}  = $data{'cn_nosni'}->{val} . " <> " . $host;
     }
-    #dbx# _dbx "host:\t\t"           . $host;
-    #dbx# _dbx "data{cn}:\t\t"       . $data{'cn'}->{val}($host);
-    #dbx# _dbx "data{cn_nosni}:\t"   . $data{'cn_nosni'}->{val};
-    #dbx# _dbx "checks{hostname}:\t" . $checks{'hostname'}->{val};
-    #dbx# _dbx "checks{certfqdn}:\t" . $checks{'certfqdn'}->{val};
     return;
 } # checksni
 
@@ -5096,7 +5108,6 @@ EoREQ
     # some webservers are picky, they need \r\n as line terminator
     # TODO: : check both variants for SSTP_DUPLEX_POST: with and without \r
 
-    #_dbx "_get_sstp_https: request {\n$request#}";
     $Net::SSLeay::slowly = 1;   # otherwise some server respond with "400 Bad Request"
     my $dum      = $Net::SSLeay::slowly;    # keeps Perl happy
     my $response = Net::SSLeay::sslcat($host, $port, $request);
@@ -5320,11 +5331,6 @@ sub scoring         {
         $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "certificate");
         $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "connection");
         $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "destination");
-#_dbx "$key " . $checks{$key}->{val} if($checks{$key}->{typ} eq "connection");
-#_dbx "score certificate $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_cert'}->{val} if($checks{$key}->{typ} eq "certificate");
-#_dbx "score connection  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_conn'}->{val} if($checks{$key}->{typ} eq "connection");
-#_dbx "score destination $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_dest'}->{val} if($checks{$key}->{typ} eq "destination");
-#_dbx "score http/https  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_http'}->{val} if($checks{$key}->{typ} eq "https");
     }
     return;
 } # scoring
@@ -5905,7 +5911,6 @@ sub printciphersummary  {
     }
     _y_CMD("printciphersummary() ");
     if (0 < $cfg{'need_netinfo'}) {
-_dbx " printciphersummary netinfo ";
         my $key;
         my $_verbose = $Net::SSLinfo::verbose;  # save
         if (2 > $_verbose) {    # avoid huge verbosity in simple cases
@@ -6051,7 +6056,6 @@ sub printciphers        {
         #}
     }
     if ($_printtitle > 0) { # if we checked for ciphers
-        # SEE Note:+cipher-selected
         my $total   = $checks{'cnt_totals'}->{val};
         printciphersummary($legacy, $host, $port, $total);
     }
@@ -7514,9 +7518,7 @@ if (0 < $cmd{'extciphers'}) {
 }
 
 # SEE Note:Testing, sort
-# _dbx "unsorted: @{$cfg{'do'}}";
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
-# _dbx "  sorted: @{$cfg{'do'}}";
 # $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
 
 if (2 == @{$cfg{'targets'}}) {
@@ -7661,10 +7663,6 @@ _check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot(
 #| check for proper openssl support
 #| -------------------------------------
 _check_openssl()    if (0 < $do_checks);
-
-#_dbx "do: @{$cfg{'do'}}";
-#_dbx "need-default: @{$cfg{'need-default'}}";
-#_dbx "_check_ssl_methods(): " . _need_cipher() . " : " . _need_default() . " : ver? "._is_cfg_do('version');
 
 #| check for supported SSL versions
 #| -------------------------------------
@@ -7887,7 +7885,6 @@ if ($fail > 0) {
     _hint("do not use '--ignore-out=*' or '--no-out=*'");
         # It's not simple to identify the given command, as $cfg{'do'} may
         # contain a list of commands. So the hint is a bit vage.
-        # _dbx "@{$cfg{'done'}->{'arg_cmds'}}"
 } else {
     # print warnings and hints if necessary
     foreach my $cmd (@{$cfg{'do'}}) {
@@ -8033,27 +8030,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     } # cipher_dh
     next if _yeast_NEXT("exit=HOST2 - host ciphers start");
 
-    if (_is_cfg_ciphermode('openssl|ssleay')) {
-        # SEE Note:+cipher-selected
-        _y_CMD("get default ...");
-        _yeast_TIME("need_default{");
-        $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            next if not defined $prot{$ssl}->{opt};
-            my $anf = time();
-            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
-            $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
-            $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
-            $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
-            last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
-            my $cipher  = $prot{$ssl}->{'cipher_strong'};
-            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
-        }
-        checkpreferred($host, $port);
-        _yeast_TIME("need_default}");
-    }
-    next if _yeast_NEXT("exit=HOST3 - host ciphers default done");
-
     if (_need_cipher()) {
         _yeast_TIME("need cipher{");
         _y_CMD("need cipher (ciphermode=$cfg{'ciphermode'}) ...");
@@ -8071,6 +8047,11 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
             $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
             # TODO:  $prot{$ssl}->{'default'} = $cipher;
+            # SEE Note:+cipher-selected
+            _y_CMD("  get default ...");
+            _yeast_TIME("need_default{");
+            ciphers_default_openssl($host, $port);
+            _yeast_TIME("need_default}");
         }
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             $checks{'cnt_ciphers'}->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_offered'};
@@ -8080,7 +8061,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
         _yeast_TIME("need cipher}");
     } # need_cipher
-    next if _yeast_NEXT("exit=HOST4 - host ciphers scan done");
+    next if _yeast_NEXT("exit=HOST3 - host ciphers scan done");
 
     if (_is_cfg_do('cipher_dh')) {
         # TODO dirty hack, check with dh256.tlsfun.de
@@ -8094,7 +8075,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _yeast_TIME("cipher-dh}");
         goto CLOSE_SSL; # next HOSTS
     } # cipher_dh
-    next if _yeast_NEXT("exit=HOST5 - host ciphers DH done");
+    next if _yeast_NEXT("exit=HOST4 - host ciphers DH done");
 
     if (_need_cipher()) {
         if (_is_cfg_do('cipher') or _is_cfg_do('check') or  _is_cfg_do('quick')) {
@@ -8108,12 +8089,12 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
-    next if _yeast_NEXT("exit=HOST6 - host ciphers end");
-    next if _yeast_NEXT("exit=HOST6 - host prepare start"); # dummy for --help=exit documentation
+    next if _yeast_NEXT("exit=HOST5 - host ciphers end");
+    next if _yeast_NEXT("exit=HOST5 - host prepare start"); # dummy for --help=exit documentation
 
     if (_is_cfg_do('fallback_protocol')) {
         _y_CMD("protocol fallback support ...");
-        # following similar to ciphers_scan_prot();
+        # following similar to ciphers_prot_openssl();
         my ($version, $supported, $dh);
         if (0 == $cmd{'extciphers'}) {
             ($version, $supported)      = _usesocket( '', $host, $port, '');
@@ -8222,8 +8203,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _y_CMD("+check");
         _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
-    next if _yeast_NEXT("exit=HOST7 - host prepare end");
-    next if _yeast_NEXT("exit=HOST7 - host print start"); # dummy for --help=exit documentation
+    next if _yeast_NEXT("exit=HOST6 - host prepare end");
+    next if _yeast_NEXT("exit=HOST6 - host print start"); # dummy for --help=exit documentation
 
     # for debugging only
     if (_is_cfg_do('s_client')) {
@@ -8259,7 +8240,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
-    next if _yeast_NEXT("exit=HOST8 - host print end");
+    next if _yeast_NEXT("exit=HOST7 - host print end");
     _yeast_EXIT("exit=HOST9 - host end");
 
 } # foreach host
@@ -9404,8 +9385,8 @@ and --ciphermode=openssl . Also computing other checks, like the strongest
 and weakest selected cipher is affected.
 
 One problem is, that  --ciphermode=openssl needs to use the underlying SSL
-library's methods.  _get_default() does this and also computes the weakest
-and strongest selected cipher.
+library's methods.  ciphers_default_openssl()  does this and also computes
+the weakest and strongest selected cipher.
 
 
 =head2 Note:+cipher
