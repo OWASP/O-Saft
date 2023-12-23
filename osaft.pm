@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.51 23/12/14 17:47:17";
+our $SID_osaft  =  "@(#) osaft.pm 2.52 23/12/23 20:07:28";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -3083,12 +3083,12 @@ sub get_ciphers_range   {
     _trace2("get_ciphers_range($ssl, $range)");
     #  NOTE: following eval must not use the block form because the value
     #        needs to be evaluated
-    goto END if not exists $cfg{'cipherranges'}->{$range};
-    goto END if ($cfg{'cipherranges'}->{$range} !~ m/^[x0-9A-Fa-f,.\s]+$/); # if someone tries to inject ...
+    goto FIN if not exists $cfg{'cipherranges'}->{$range};
+    goto FIN if ($cfg{'cipherranges'}->{$range} !~ m/^[x0-9A-Fa-f,.\s]+$/); # if someone tries to inject ...
     foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         push(@all, sprintf("0x%08X",$c));
     }
-    END:
+    FIN:
     _trace2("get_ciphers_range()\t= @all");
     return @all;
 } # get_ciphers_range
@@ -3120,7 +3120,7 @@ sub get_openssl_version {
     # we do a simple call, no checks, should work on all platforms
     # get something like: OpenSSL 1.0.1k 8 Jan 2015
     my $cmd     = shift;    # assume that $cmd cannot be injected
-    my $data    = qx($cmd version);
+    my $data    = qx($cmd version); ## no critic qw(InputOutput::ProhibitBacktickOperators)
     chomp $data;
     _trace("get_openssl_version: $data");
     $data =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
@@ -3506,7 +3506,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.51"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.52"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3553,7 +3553,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.51 2023/12/14
+2.52 2023/12/23
 
 =head1 AUTHOR
 
