@@ -21,14 +21,21 @@ package main;   # ensure that main:: variables are used
 #        We always close our filehandles, Perl::Critic is too stupid to read
 #        over 15 lines.
 
+## no critic qw(InputOutput::RequireCheckedClose)
+#        There is no harm if closing a file fails.
+
 ## no critic qw(Documentation::RequirePodSections)
 #        Perl::Critic is uses a strange list of required sections in POD.
 #        See  t/.perlcriticrc .
+
+## no critic qw(Variables::RequireLocalizedPunctuationVars)
+#        SEE Perlcritic:LocalVars
 
 ## no critic qw(Variables::ProhibitPunctuationVar)
 #        We want to use $\ $0 etc.
 
 ## no critic qw(Variables::ProhibitPackageVars)
+#        There is mainly ::osaft_standalone, which is ok.
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls  Modules::RequireVersionVar)
 ## no critic qw(RegularExpressions::RequireDotMatchAnything RegularExpressions::RequireLineBoundaryMatching)
@@ -41,7 +48,7 @@ package main;   # ensure that main:: variables are used
 
 use strict;
 use warnings;
-use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
+use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
@@ -60,7 +67,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.107 23/12/14 12:07:57";
+my  $SID_man= "@(#) o-saft-man.pm 2.108 23/12/23 20:40:01";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -80,7 +87,7 @@ our $VERBOSE    = 0;  # >1: option --v
 local $\    = "";
 
 # SEE Note:Stand-alone
-$::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Variables::ProhibitPackageVars)
+$::osaft_standalone = 0 if not defined $::osaft_standalone;
 
 #_____________________________________________________________________________
 #_____________________________________________ texts for user documentation __|
@@ -796,14 +803,15 @@ sub _man_usr_value  {
     my $key =  shift;
        $key =~ s/^(?:--|\+)//;  # strip leading chars
     my @arg =  "";              # key, value # Note: value is anything right to leftmost = 
-    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); # does not allow multiple $key in 'usr_args'
+    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr_args'}}); ## no critic qw(BuiltinFunctions::ProhibitVoidMap)
+        # does not allow multiple $key in 'usr_args'
     return $arg[1];
 } # _man_usr_value
 
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.107'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.108'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1134,7 +1142,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
                 };
         m/^=head3 (.*)/   && do {
                     # commands and options expected with =head3 only
-                    $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    $a=$1;
                     if ('cgi' eq $key) {
                         $txt .= _man_help_button($a, "b r", "open window with special help") if ($a =~ m/--help/);
                     }
@@ -1176,7 +1184,7 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         s!<<!&lt;&lt;!g;                            # encode remaining special markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
-        m/^\s*$/ && do { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        m/^\s*$/ && do {
                     $a = "id='h$a'" if ('' ne $a);
                     $txt .= "$p<p $a>";
                     $p = "</p>";
@@ -1211,13 +1219,13 @@ sub _man_foot       {
     return sprintf("=%s+%s\n", '-'x $len1, '-'x60);
 } # _man_foot
 
-sub _man_opt        {   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _man_opt        {
     #? print line in  "KEY - VALUE"  format
-    my @args = @_; # key, sep, value
+    my ($key, $sep, $val) = @_;
     my $len  = 16;
-       $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
-    my $txt  = sprintf("%${len}s%s%s\n", @args);
-    return _man_squeeze((16+length($_[1])), $txt);
+       $len  = 1 if ("=" eq $sep); # allign left for copy&paste
+    my $txt  = sprintf("%${len}s%s%s\n", $key, $sep, $val);
+    return _man_squeeze((16+length($sep)), $txt);
 } # _man_opt
 
 sub _man_cfg        {
@@ -1465,7 +1473,7 @@ sub _man_cmd_from_source {
                 $txt .= sprintf("+$len%s\n", $1, $2);
             }
         }
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+        close($fh);
     } else {
             $txt .= sprintf("%s cannot read '%s'; %s\n", $STR{ERROR}, _get_filename("o-saft.pl"), $!);
     }
@@ -1494,7 +1502,7 @@ sub _man_cmd_from_rcfile {
                 $val  = "";
             }
         }
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+        close($fh);
     } else {
             $txt .= sprintf("%s cannot read '%s'; %s\n", $STR{ERROR}, $cfg{'RC-FILE'}, $!);
     }
@@ -1869,7 +1877,7 @@ sub man_warnings    {
         $msg =~ s/^[", ]*//;
         $txt .= sprintf("%s%s\t- %s\n", $err, $nr, $msg);
     }
-    close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+    close($fh);
     # print collected messages
     $pod .= <<"EoHelp";
 
@@ -2200,7 +2208,7 @@ sub man_alias       {
             }
             $pod .= _man_squeeze(29, $txt);
         }
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+        close($fh);
     }
     $pod .= _man_foot(27);
     $pod .= <<'EoHelp';
@@ -2321,7 +2329,7 @@ sub man_help        {
     my $end     = "[A-Z]";
     my $hlp;
     _man_dbx("man_help($anf, $end) ...");
-    if (0 < $::osaft_standalone) {  ## no critic qw(Variables::ProhibitPackageVars)
+    if (0 < $::osaft_standalone) {
         # in standalone mode use $0 instead of $parent (which is "O-Saft")
         @help   = OSaft::Doc::Data::get_markup("help.txt", $0, $version);
     }
@@ -2383,7 +2391,7 @@ sub man_src_grep    {
             }
            $pod .= sprintf("%-15s%s\n", $opt, $comment);
         }
-        close($fh); ## no critic qw(InputOutput::RequireCheckedClose)
+        close($fh);
     }
     $pod .= _man_foot(14);
     return $pod;
@@ -2665,7 +2673,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.107 2023/12/14
+2.108 2023/12/23
 
 
 =head1 AUTHOR
@@ -2700,8 +2708,8 @@ For details about our annotations, please SEE  Annotations, in  L<o-saft.pl|o-sa
 Perl::Critic complains that variables (like $a) should be localised in the
 code. This is wrong, because it is exactly the purpose  to find this value
 (other settings) in other lines.
-Hence  "no critic Variables::RequireLocalizedPunctuationVars"  needs to be
-set in each line using $a.
+Hence global "no critic Variables::RequireLocalizedPunctuationVars" avoids 
+setting in each line using $a.
 
 
 =head2 Help:Syntax
