@@ -9,23 +9,18 @@ package OSaft::Ciphers;
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #  We believe it's better readable (severity 2 only).
 
-## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
-#  We use perlish multiplication vor strings, like "'-' x 7", (severity 2 only).
-
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  We use /x as needed for human readability only.
 
-## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
-#  We use here documents as needed for human readability.
-
-## no critic qw(BuiltinFunctions::RequireBlockGrep)
-#  other people, other opinions
+## no critic qw(Variables::ProhibitPackageVars)
+#  SEE Perl:perlcritic
 
 # test resources with:
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  alias
 # 0.06  0.01  0:00.07 100%  0k  9756k  # 3/2023
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
 # 0.02  0.00  0:00.03 100%  0k  9924k  # 11/2022
+# 0.02  0.00  0:00.02 100%  0k  8804k  # 12/2023
 
 use strict;
 use warnings;
@@ -42,14 +37,14 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.101 23/12/17 19:33:42";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.102 23/12/23 21:09:33";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
 # SEE Note:Stand-alone
-$::osaft_standalone = 0 if not defined $::osaft_standalone; ## no critic qw(Variables::ProhibitPackageVars)
+$::osaft_standalone = 0 if not defined $::osaft_standalone;
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -183,9 +178,6 @@ Pointer to hash with all checked ciphers.
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
 
-# SEE Perl:perlcritic
-## no critic qw(Variables::ProhibitPackageVars)
-
 use Exporter qw(import);
 use base     qw(Exporter);
 our @EXPORT_OK  = qw(
@@ -244,12 +236,12 @@ our %ciphers_desc   = ( # description of %ciphers table
                             # each value is used as key to %ciphers_notes
                             # 
     'sample'        => { # example
-      '0x0300003D'  => [split /\s+/, q(HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256,Alias RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
+      '0x0300003D'  => [split /\s+/x, q(HIGH HIGH TLSv12 RSA  RSA  AES  256  SHA256 5246 AES256-SHA256,Alias RSA_WITH_AES_256_SHA256,RSA_WITH_AES_256_CBC_SHA256 L )],
                             # qw// would result in Perl warning:
                             #   Possible attempt to separate words with commas
                             # q// is one word, hence it must be splitted to become an array
         },
-    'additional_notes'  => '
+    'additional_notes'  => <<'EoNOTE',
 Note about Constant names:
   Depending on the source of the constant, a different prefix in the name is
   used, such as TLS_ SSL_ SSL_CK_ SSL3_CK_ TLS1_CK_
@@ -260,7 +252,7 @@ Note about TLS version:
   Following normalised strings are used for protocol versions:
       SSLv2, SSLv3, DTLS0.9, DTLS1.0, TLSv10, TLSv11, TLSv12, TLSv13, PCT
   SSL/TLS  is used for pseudo cipher suites.
-        ',
+EoNOTE
 ); # %ciphers_desc
 
 our %ciphers        = ( # list of all ciphers
@@ -284,7 +276,7 @@ our @cipher_iana_recomended =
 
 our $cipher_results = {};
     #? list of checked ciphers per SSL/TLS version
-my  $cipher_results_desc = <<EoDESC;
+my  $cipher_results_desc = <<'EoDESC';
 =---------------+------+----------------------------+----------------------+
 =  ssl       => {
 =       key    => [ supported, cipher parameters ], # cipher suite name
@@ -1579,17 +1571,17 @@ sub _main_ciphers   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __PACKAGE__, $SID_ciphers)    , exit if (0 > $#argv);
+    if (0 > $#argv) { print_pod($0, __PACKAGE__, $SID_ciphers);    exit; }
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_ciphers), exit if ($arg =~ m/^--?h(?:elp)?$/); # print own help
-        _main_ciphers_usage()   , next  if ($arg eq '--usage');
+        if ($arg =~ m/^--?h(?:elp)?$/)  { print_pod($0, __PACKAGE__, $SID_ciphers); exit; }
+        if ($arg eq '--usage')          { _main_ciphers_usage();   next; }
         # ----------------------------- options
-        $cfg{'verbose'}++       , next  if ($arg eq '--v');
+        if ($arg eq '--v')              { $cfg{'verbose'}++;       next; }
         # ----------------------------- commands
-        (print "$SID_ciphers\n"), next  if ($arg =~ /^version$/);
-        (print "$VERSION\n")    , next  if ($arg =~ /^[-+]?V(ERSION)?$/);
-        (print "$VERSION\n")    , next  if ($arg =~ /^--test.?ciphers.?version/i);
+        if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
+        if ($arg =~ /^--test.?ciphers.?version/i) { print "$VERSION\n"; next; }
             # round brackets because print is not a sub but an operator
         # allow short option without --test-ciphers- prefix
         $arg =~ s/^--test.?ciphers//;   # remove if there
@@ -1724,7 +1716,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.101 2023/12/17
+2.102 2023/12/23
 
 
 =head1 AUTHOR
