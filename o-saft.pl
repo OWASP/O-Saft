@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.138 23/12/22 10:37:01"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.140 23/12/23 21:36:46"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -92,14 +92,16 @@ sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
     my @txt = @_;
     return if (_is_argv('(?:--trace.?(?:time|cmd))') <= 0);
+#    if (exists &_y_CMD) {
+#        _y_CMD(@txt);
+#        return;
+#    }
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     my $now = time();
        $now = time() - ($time0 || 0) if not _is_argv('(?:--time.*absolut)');
        $now +=1 if (0 > $now);  # fix runtime error: $now == -1
        $now += ($now % 2) if (defined $ENV{'OSAFT_MAKE'});
        $now = sprintf("%02s:%02s:%02s", (localtime($now))[2,1,0]);
-
-
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
        $now = "HH:MM:SS (OSAFT_MAKE exists)" if (not $time0);# time0 unset or 0
     }
@@ -184,7 +186,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.138");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.140");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -229,7 +231,7 @@ sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR $STR{DBX}, join(" ", @
     #? print line for debugging
 sub _dbx    { my @txt = @_; _dprint(@txt); return; }
     #? print line for debugging (alias for _dprint)
-sub _tracrc { printf("#%s: %s\n", $cfg{'me'}, join(" ", @_)); return; }
+sub _tracrc { my @txt = @_; printf("#%s: %s\n", $cfg{'me'}, join(" ", @txt)); return; }
     #? same as _yeast from o-saft-dbx.pm; needed before loading o-saft-dbx.pm
 sub _hint   {
     #? print hint message if wanted
@@ -1128,7 +1130,7 @@ sub _need_netinfo()     {
     # returns >0 if $cfg{'do'} contains commands other than cipher*
     # compares with $cfg{'need-cipher'}
     my $need_cipher = join("|", @{$cfg{'need-cipher'}});
-    return grep{not /^($need_cipher)$/} @{$cfg{'do'}};
+    return grep{not /^(?:$need_cipher)$/} @{$cfg{'do'}};
 } # _need_netinfo
 #sub _need_openssl()     { return __need_this('need-openssl');   }
 sub _need_cipher()      { return __need_this('need-cipher');    }
@@ -2995,7 +2997,8 @@ sub _get_cipherslist    {
     if ('keys'  eq $mode) {   # convert to cipher hex keys
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if not _is_valid_key($c);
+            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if not _is_valid_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators)
+               # "no critic" because perlcritic is too stupid for this
         }
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
@@ -3748,7 +3751,7 @@ sub checkciphers_pfs    {
     my @prots   = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     if (1 > $cnt_all) { # no protocol with ciphers found
         $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
-        goto END;
+        goto FIN;
     }
     if (1 > $#prots) {  # found exactly one matching protocol
         $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
@@ -3758,7 +3761,7 @@ sub checkciphers_pfs    {
     }
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'}->{val});
-    END:
+    FIN:
     _trace("checkciphers_pfs() }");
     return;
 } # checkciphers_pfs
@@ -3772,10 +3775,9 @@ sub checkciphers        {
     _trace("checkciphers($host, $port){");
 
     _checkcipher_init();        # values are set to <<undefined>>, initialise with ""
-    my $ssl;
     my $cnt_all = 0; # count ciphers
     my $cnt_pfs = 0;
-    foreach $ssl (@{$cfg{'version'}}) {  # all checked SSL versions
+    foreach my $ssl (@{$cfg{'version'}}) {  # all checked SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
         $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         if (not $results->{$ssl}) { # no ciphers found; avoid misleading values
@@ -3792,7 +3794,7 @@ sub checkciphers        {
 
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach $ssl (keys %$results) {      # all checked SSL versions with ciphers
+    foreach my $ssl (keys %$results) {      # all checked SSL versions with ciphers
       next if '_admin' eq $ssl;
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
       foreach my $key (keys %{$results->{$ssl}}) { # check all accepted 
@@ -3822,7 +3824,7 @@ sub checkciphers        {
     $checks{'beast'}->{val} .= " " . ${beastskipped} if "" ne $beastskipped;
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
-    foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
+    foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
         $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
@@ -4856,7 +4858,6 @@ sub checkroot($$)   {
 sub checkprot($$)   {
     #? check anything related to SSL protocol versions and ALPN, NPN
     my ($host, $port) = @_;
-    my $ssl;
     _y_CMD("checkprot() " . $cfg{'done'}->{'checkprot'});
     $cfg{'done'}->{'checkprot'}++;
     return if (1 < $cfg{'done'}->{'checkprot'});
@@ -5894,8 +5895,8 @@ sub printprotocols      {
     if (_is_cfg_out('header')) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
-    return;
     _trace("printprotocols() }");
+    return;
 } # printprotocols
 
 sub printciphersummary  {
@@ -5940,7 +5941,7 @@ sub printcipherlines    {
     my ($legacy, $ssl, $host, $port, $match, $results) = @_;
     foreach my $key (@{$results->{$ssl}{'sorted'}}) {
         my $yesno = $results->{$ssl}{$key}[0];
-        next if ($yesno !~ m/^($match)$/);
+        next if ($yesno !~ m/^(?:$match)$/);
         print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
     }
     return;
@@ -6580,12 +6581,9 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'CIPHER_ITEM')  {
-            #my $key = lc($arg); # key in cfg{'cipherpatterns'} is lower case
-#TODO: cipherpatterns nur bei cipher_openssl benutzen
-            if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases ...
+            if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases are lower case
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
-#TODO: Prüfung weg, damit auch SSLv2_long möglich
                 if ($arg !~ m/^[XxA-Z0-9-]+$/) { # must be upper case
                      # x in RegEx to allow hex keys of ciphers like 0x0300C014
                     _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
@@ -7517,6 +7515,13 @@ if (0 < $cmd{'extciphers'}) {
     }
 }
 
+if (_is_cfg_do('cipher_default')) {
+    if (not _is_cfg_ciphermode('openssl|ssleay')) {
+        _warn("065: '+cipher-default' is useful with '--ciphermode=openssl' only; command ignored");
+        exit 0;
+    }
+} # cipher_default
+
 # SEE Note:Testing, sort
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
 # $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
@@ -7634,7 +7639,7 @@ _yeast_TIME("inc{");
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
     # SEE Note:need Net::SSLinfo
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
-    # TODO: following necessary for _get_data0(), if called as sibgle command
+    # TODO: following necessary for _get_data0(), if called as single command
     $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_order')); 
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_strong'));
@@ -8082,10 +8087,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             printciphers($legacy, $host, $port, $cipher_results);
         }
         if (_is_cfg_do('cipher_default') and (0 < $#{$cfg{'do'}})) {
+            # special check/overview for cipher selection by openssl
             # don't print if not a single command, because +check or +cipher do it
             # in printprotocols() anyway
             printcipherpreferred($legacy, $host, $port);
-            goto CLOSE_SSL; # next HOSTS
         }
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
@@ -8667,7 +8672,7 @@ Also SEE L<Perl:Undefined subroutine>.
 
 Perl has no "real" concept and implementation  of constants.  Using Perl's
 pragma constant  declares in fact subroutines. Beside others, this has the
-disadvantage,  that such constants cannot be use in strings,  they are not
+disadvantage,  that such constants cannot be used in strings, they are not
 interpolated there.
 
 Our texts are rather variables than real constants, because it is possible
