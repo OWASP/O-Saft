@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_data   = "@(#) Data.pm 1.62 23/11/26 00:38:01";
+my  $SID_data   = "@(#) Data.pm 1.63 23/12/23 20:45:01";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -84,7 +84,7 @@ sub _replace_var    {
     return @arr;
 } # _replace_var
 
-sub _get_standalone {
+sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
     #? return help.txt with path in standalone mode
     # o-saft-standalone.pl may be in installtion path or in contrib/ directory
     # hence various places for help.txt are checked
@@ -412,13 +412,13 @@ sub list        {
     my $dir = $0;
        $dir =~ s#[/\\][^/\\]*$##;
     my @txt;
-    opendir(DIR, $dir) or return $!;
-    while (my $file = readdir(DIR)) {
+    opendir(my $dh, $dir) or return $!;
+    while (my $file = readdir($dh)) {
         next unless (-f "$dir/$file");
         next unless ($file =~ m/\.txt$/);
         push(@txt, $file);
     }
-    closedir(DIR);
+    closedir($dh);
     return join("\n", sort @txt);
 } # list
 
@@ -631,7 +631,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-1.62 2023/11/26
+1.63 2023/12/23
 
 
 =head1 AUTHOR
