@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.296 23/12/13 17:27:17";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.298 23/12/23 21:23:59";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -48,7 +48,7 @@ BEGIN {
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
     if (1.45 > $Net::SSLeay::VERSION) {
-        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize");
+        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize"); ## no critic qw(ErrorHandling::RequireCarping)
     } else {
         Net::SSLeay::initialize();
     }
@@ -1084,7 +1084,7 @@ $_SSLmap{'DTLSv13'}[1] = _ssleay_value_get('OP_or_undef', *Net::SSLeay::OP_NO_DT
 # TODO: %_SSLmap should be inherited from $cfg{openssl_version_map} or vice versa
 my %_SSLhex = map { $_SSLmap{$_}[0] => $_ } keys %_SSLmap;  # reverse map
 
-sub _SSLversion_get { return $_SSLmap{$_[0]}[0]; }  ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _SSLversion_get { return $_SSLmap{$_[0]}[0]; }  ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
 sub _SSLbitmask_get { return $_SSLmap{$_[0]}[1]; }  ## no critic qw(Subroutines::RequireArgUnpacking)
                                 # for 'no critic' above, see comment far below
 
@@ -1121,7 +1121,7 @@ my %_SSLinfo= ( # our internal data structure
     'ssl'       => undef,       # handle for Net::SSLeay
     '_options'  => '',          # option bitmask used for connection
     'errors'    => [],          # stack for errors, if any
-    'cipherlist'=> 'ALL:NULL:eNULL:aNULL:LOW', # we want to test really all ciphers available
+    'cipherlist'=> 'ALL:NULL:eNULL:aNULL:LOW:EXP', # we want to test really all ciphers available
     'verify_cnt'=> 0,           # Net::SSLeay::set_verify() call counter
     # now store the data we get from above handles
     'SSLversion'=> '',          # Net::SSLeay::version(); used protocol version
@@ -1231,7 +1231,7 @@ my %_SSLinfo= ( # our internal data structure
 ); # %_SSLinfo
 
 #  $_SSLinfo_random # SEE Make:OSAFT_MAKE (in Makefile.pod)
-my $_SSLinfo_random = qr/ctx|master_key|session_(?:startdate|starttime|ticket)|ssl|x509/; # handled special
+my $_SSLinfo_random = qr/ctx|master_key|session_(?:startdate|starttime|ticket)|ssl|x509/; ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 my $_SSLinfo_random_text = $STR{MAKEVAL};
 
 sub _SSLinfo_reset  {
@@ -1245,7 +1245,7 @@ sub _SSLinfo_reset  {
     $_SSLinfo{'port'}       = 443;
     $_SSLinfo{'errors'}     = [];
     $_SSLinfo{'ciphers'}    = [];
-    $_SSLinfo{'cipherlist'} = 'ALL:NULL:eNULL:aNULL:LOW';
+    $_SSLinfo{'cipherlist'} = 'ALL:NULL:eNULL:aNULL:LOW:EXP';
     $_SSLinfo{'verify_cnt'} = 0;
     $_SSLinfo{'ciphers_openssl'} = '';
     return;
@@ -1623,14 +1623,14 @@ sub _check_peer     {
     return $ok;
 } # _check_peer
 
-sub _check_crl      {
+sub _check_crl      { ## no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
     # TBD
     my $ssl = shift;
     _trace("_check_crl()");
     return;
 } # _check_crl
 
-sub _check_client_cert {print "##check_client_cert\n"; return; }
+sub _check_client_cert {print "##check_client_cert\n"; return; } ## no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
 #$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
 
 sub _ssleay_cert_get    {
@@ -2491,7 +2491,8 @@ Opens new SSL connection with Net::SSLeay and stores collected data.
 I<$sslversions> is space-separated list of SSL versions to be used. Following
 strings are allowed for versions: C<SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1>.
 If I<$sslversions> is empty, the system's default settings of versions are used.
-If I<$cipherlist> is missing or empty, default C<ALL:NULL:eNULL:aNULL:LOW> will be used.
+If I<$cipherlist> is missing or empty, default C<ALL:NULL:eNULL:aNULL:LOW:EXP>
+will be used.
 
 Returns array with $ssl object and $ctx object.
 
@@ -2509,8 +2510,9 @@ C<perl -MNet::SSLinfo -le 'print join"\n",Net::SSLinfo::ssleay_methods();'>
 =cut
 
 # from openssl/x509_vfy.h
-sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { return 18; }
-sub _FLAGS_ALLOW_SELFSIGNED () { return 0x00000001; }
+sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { return 18; } ## no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
+sub _FLAGS_ALLOW_SELFSIGNED () { return 0x00000001; }         ## no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
+    # "no critic" because these subs may be used by Net::SSLeay
 
 sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
