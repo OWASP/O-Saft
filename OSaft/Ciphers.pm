@@ -37,7 +37,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 2.102 23/12/23 21:09:33";
+my  $SID_ciphers= "@(#) Ciphers.pm 2.103 23/12/25 10:35:53";
 our $VERSION    = "23.11.23";   # official verion number of this file
 
 use OSaft::Text qw(%STR print_pod);
@@ -242,9 +242,10 @@ our %ciphers_desc   = ( # description of %ciphers table
                             # q// is one word, hence it must be splitted to become an array
         },
     'additional_notes'  => <<'EoNOTE',
-Note about Constant names:
+
+Note about constant names:
   Depending on the source of the constant, a different prefix in the name is
-  used, such as TLS_ SSL_ SSL_CK_ SSL3_CK_ TLS1_CK_
+  used, such as TLS_ or SSL_ or SSL_CK_ or SSL3_CK_ or TLS1_CK_ .
   Hence no prefix at all is used here.
 Note about TLS version:
   Usually the lowest/oldest protocol version is shown. But this cipher suite
@@ -1716,7 +1717,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-2.102 2023/12/23
+2.103 2023/12/25
 
 
 =head1 AUTHOR
