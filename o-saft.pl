@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.140 23/12/23 21:36:46"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.141 23/12/25 10:59:04"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -186,7 +186,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.140");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.141");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5905,7 +5905,7 @@ sub printciphersummary  {
     _trace("printciphersummary($legacy, $host, $port, $total){");
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
         print_header("\n" . _get_text('out_summary' , ""), "", "", $cfg{'out'}->{'header'});
-        print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
+        print_check(   $legacy, $host, $port, 'cnt_totals', $total);
         printprotocols($legacy, $host, $port);
             # NOTE: reported ciphers here may be others than detected accepted
             #       ciphers, for example when --cipher=0x0300002F was used
@@ -6043,7 +6043,7 @@ sub printciphers        {
         }
         END_SSL:
         if (_is_cfg_legacy('simple|openssl')) {
-            print_check($legacy, $host, $port, 'cnt_totals', $results->{'_admin'}{$ssl}{'cnt_offered'});
+            print_check($legacy, $host, $port, 'cnt_ciphers', $results->{'_admin'}{$ssl}{'cnt_offered'});
             #print_check($legacy, $host, $port, 'cnt_ciphers', $results->{'_admin'}{$ssl}{'cnt_accepted'});
         }
     } # $ssl
