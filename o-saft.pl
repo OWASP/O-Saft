@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.143 23/12/26 19:15:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.144 23/12/26 19:50:10"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -186,7 +186,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.143");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.144");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1172,25 +1172,180 @@ sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
 sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
 
+sub _set_cfg($$);       # forward toavoid: main::_set_cfg() called too early to check prototype at ...
+sub _set_cfg_from_file  {
+    # read values to be set in configuration from file
+    my $typ = shift;    # type of config value to be set
+    my $fil = shift;    # filename
+    _trace("_set_cfg_from_file($typ, $fil){");
+    my $line ="";
+    my $fh;
+    # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
+    #       is a false positive, because  Perl::Critic  seems not to understand
+    #       the logic of "open() && do{}; warn();",  hence the code was changed
+    #       to use an  if-condition
+    if (open($fh, '<:encoding(UTF-8)', $fil)) { ## no critic qw(InputOutput::RequireBriefOpen)
+        push(@{$dbx{file}}, $fil);
+        _print_read("$fil", "USER-FILE configuration file") if (_is_cfg_out('header'));
+        while ($line = <$fh>) {
+            #
+            # format of each line in file must be:
+            #    Lines starting with  =  are comments and ignored.
+            #    Anthing following (and including) a hash is a comment
+            #    and ignored. Empty lines are ignored.
+            #    Settings must be in format:  key=value
+            #       where white spaces are allowed around =
+            chomp $line;
+            $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
+                # remove trailing comments, but CFG-text may contain hash (#)
+            next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
+            next if ($line =~ m/^\s*$/);# ignore empty lines
+            _trace("_set_cfg_from_file: set $line ");
+            _set_cfg($typ, $line);
+        }
+        close($fh);
+        goto FIN;
+    };
+    _warn("070: configuration file '$fil' cannot be opened: $! ; file ignored");
+    FIN:
+    _trace("_set_cfg_from_file() }");
+    return;
+} #  _set_cfg_from_file
+
+sub _set_cfg($$)        {
+    # set value in configuration %cfg, %checks, %data, %text
+    # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
+    # if given value is a file, read settings from that file
+    # otherwise given value must be KEY=VALUE format;
+    # NOTE: may define new commands for CFG-cmd
+    my $typ = shift;    # type of config value to be set
+    my $arg = shift;    # KEY=VAL or filename
+    my ($key, $val);
+    _trace("_set_cfg($typ, ){");
+    if ($typ !~ m/^CFG-$cfg{'regex'}->{'cmd-cfg'}/) {
+        _warn("071: configuration key unknown '$typ'; setting ignored");
+        goto FIN;
+    }
+    if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
+        # we're picky about valid filenames: only characters, digits and some
+        # special chars (this should work on all platforms)
+        if ($cgi == 1) { # SEE Note:CGI mode
+            # should never occour, defensive programming
+            _warn("072: configuration files are not read in CGI mode; ignored");
+            return;
+        }
+        _set_cfg_from_file($typ, $arg);
+        goto FIN;
+    } # read file
+
+    ($key, $val) = split(/=/, $arg, 2); # left of first = is key
+    $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanitise key
+    $val =  "" if not defined $val;     # avoid warnings when not KEY=VALUE
+    $val =~ s/^[+]//;                   # remove first + in command liss
+    $val =~ s/ [+]/ /g;                 # remove + in commands
+
+    if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
+        $typ = 'cmd-' . $key ;  # the command to be set, i.e. cmd-http, cmd-sni, ...
+        _trace("_set_cfg: cfg{$typ}, KEY=$key, CMD=$val");
+        @{$cfg{$typ}} = ();
+        push(@{$cfg{$typ}}, split(/\s+/, $val));
+        foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
+            next if (_is_hashkey($key, \%checks));
+            next if (_is_hashkey($key, \%data));
+            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}));
+            next if (_is_cfg_intern( $key));
+            if ($key eq 'protocols') {  # valid before 17.02.26; behave smart for old rc-files
+                push(@{$cfg{$typ}}, 'next_protocols');
+                next;
+            }
+            if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
+                push(@{$cfg{$typ}}, 'cipher_selected');
+                _warn("073: configuration: please use '+cipher-selected' instead of '+$key'; setting ignored");
+                next;
+            }
+            _warn("074: configuration: unknown command '+$key' for '$typ'; setting ignored");
+        }
+        # check if it is a known command, otherwise add it and print warning
+        if ((_is_member($key, \@{$cfg{'commands'}})
+           + _is_member($key, \@{$cfg{'commands_cmd'}})
+           + _is_member($key, \@{$cfg{'commands_int'}})
+            ) < 1) {
+            # NOTE: new commands are added only if they are not yet defined,
+            # wether as internal, as summary or as (previously defined) user
+            # command. The new command must also consists only of  a-z0-9_.-
+            # charchters.  If any of these conditions fail, the command will
+            # be ignored silently.
+            if (not _is_member("cmd-$key", \@{$cfg{'commands_cmd'}})) {
+                # needed more checks, as these commands are defined as cmd-*
+                if ($key =~ m/^([a-z0-9_.-]+)$/) {
+                    # whitelust check for valid characters; avoid injections
+                    push(@{$cfg{'commands_usr'}}, $key);
+                    _warn("046: command '+$key' specified by user") if _is_v_trace();
+                }
+            }
+        }
+    }
+
+    # invalid keys are silently ignored (Perl is that clever:)
+
+    if ($typ eq 'CFG-score') {          # set new score value
+        _trace("_set_cfg: KEY=$key, SCORE=$val");
+        if ($val !~ m/^(?:\d\d?|100)$/) {# allow 0 .. 100
+            _warn("076: configuration: invalid score value '$val'; setting ignored");
+            goto FIN;
+        }
+        $checks{$key}->{score} = $val if ($checks{$key});
+    }
+
+    $val =~ s/(\\n)/\n/g;
+    $val =~ s/(\\r)/\r/g;
+    $val =~ s/(\\t)/\t/g;
+    _trace("_set_cfg: KEY=$key, TYP=$typ, LABEL=$val");
+    $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
+    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
+    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-info/);   # alias for --cfg-data
+    $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);   # allows CFG-hints also
+    $text{$key}          = $val if ($typ =~ /^CFG-text/);   # allows CFG-texts also
+    $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/); # BUT: CFG-score is different
+    $scores{$key}->{txt} = $val if ($key =~ m/^check_/);    # contribution to lazy usage
+
+    FIN:
+    _trace("_set_cfg() }");
+    return;
+} # _set_cfg
+
+sub _set_cfg_init       {
+    # set value in configuration %cfg; for debugging and test only
+    my ($typ, $arg) = @_;
+    my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
+    _warn("075: TESTING only: setting configuration: 'cfg{$key}=$val';");
+    SWITCH: for (ref($cfg{$key})) {
+        /^$/     && do {   $cfg{$key}  =  $val ; };     # same as SCALAR
+        /SCALAR/ && do {   $cfg{$key}  =  $val ; };
+        /ARRAY/  && do { @{$cfg{$key}} = ($val); };
+        /HASH/   && do { %{$cfg{$key}} =  $val ; };     # TODO: not yet working
+        /CODE/   && do { _warn("999: cannot set CODE"); };
+    } # SWITCH
+    return;
+} # _set_cfg_init
+
 #| definitions: internal wrapper functions for OSaft/Ciphers.pm
 #| -------------------------------------
-sub _cipher_is_key      { return OSaft::Ciphers::is_valid_key(shift); }
-sub _is_valid_key       { return OSaft::Ciphers::is_valid_key(shift); }
+sub _is_cipher_key      { return OSaft::Ciphers::is_valid_key(shift); }
 # following wrappers are called with cipher suite name, while OSaft::Ciphers
 # methods need to be called with cipher hex key
-sub _cipher_get_bits    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
-sub _cipher_get_sec     { return OSaft::Ciphers::get_sec(   OSaft::Ciphers::get_key(shift)); }
-sub _cipher_set_sec     {
+sub _get_cipher_sec     { return OSaft::Ciphers::get_sec( OSaft::Ciphers::get_key(shift)); }
+sub _set_cipher_sec     {
     # set cipher's security value in %ciphers; can be called with key or name
     # parameter looks like: 0x030000BA=sec or CAMELLIA128-SHA=sec
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
-        $key = OSaft::Ciphers::get_key($key) if (not _is_valid_key($key));
+        $key = OSaft::Ciphers::get_key($key) if (not _is_cipher_key($key));
                 # if is is not a key, try to get the key from a cipher name
     return if not $key; # warning already printed
     OSaft::Ciphers::set_sec($key, $val);
     return;
-} # _cipher_set_sec
+} # _set_cipher_sec
 
 #| definitions: internal functions
 #| -------------------------------------
@@ -2019,162 +2174,6 @@ sub _getscore           {
     return $score;
 } # _getscore
 
-sub _cfg_set($$);       # avoid: main::_cfg_set() called too early to check prototype at ...
-    # forward ...
-sub _cfg_set_from_file  {
-    # read values to be set in configuration from file
-    my $typ = shift;    # type of config value to be set
-    my $fil = shift;    # filename
-    _trace("_cfg_set: read $fil \n");
-    my $line ="";
-    my $fh;
-    # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
-    #       is a false positive, because  Perl::Critic  seems not to understand
-    #       the logic of "open() && do{}; warn();",  hence the code was changed
-    #       to use an  if-condition
-    if (open($fh, '<:encoding(UTF-8)', $fil)) { ## no critic qw(InputOutput::RequireBriefOpen)
-        push(@{$dbx{file}}, $fil);
-        _print_read("$fil", "USER-FILE configuration file") if (_is_cfg_out('header'));
-        while ($line = <$fh>) {
-            #
-            # format of each line in file must be:
-            #    Lines starting with  =  are comments and ignored.
-            #    Anthing following (and including) a hash is a comment
-            #    and ignored. Empty lines are ignored.
-            #    Settings must be in format:  key=value
-            #       where white spaces are allowed around =
-            chomp $line;
-            $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
-                # remove trailing comments, but CFG-text may contain hash (#)
-            next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
-            next if ($line =~ m/^\s*$/);# ignore empty lines
-            _trace("_cfg_set_from_file: set $line ");
-            _cfg_set($typ, $line);
-        }
-        close($fh);
-        return;
-    };
-    _warn("070: configuration file '$fil' cannot be opened: $! ; file ignored");
-    return;
-} #  _cfg_set_from_file
-
-sub _cfg_set($$)        {
-    # set value in configuration %cfg, %checks, %data, %text
-    # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
-    # if given value is a file, read settings from that file
-    # otherwise given value must be KEY=VALUE format;
-    # NOTE: may define new commands for CFG-cmd
-    my $typ = shift;    # type of config value to be set
-    my $arg = shift;    # KEY=VAL or filename
-    my ($key, $val);
-    _trace("_cfg_set($typ, ){");
-    if ($typ !~ m/^CFG-$cfg{'regex'}->{'cmd-cfg'}/) {
-        _warn("071: configuration key unknown '$typ'; setting ignored");
-        goto _CFG_RETURN;
-    }
-    if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
-        # we're picky about valid filenames: only characters, digits and some
-        # special chars (this should work on all platforms)
-        if ($cgi == 1) { # SEE Note:CGI mode
-            # should never occour, defensive programming
-            _warn("072: configuration files are not read in CGI mode; ignored");
-            return;
-        }
-        _cfg_set_from_file($typ, $arg);
-        goto _CFG_RETURN;
-    } # read file
-
-    ($key, $val) = split(/=/, $arg, 2); # left of first = is key
-    $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanitise key
-    $val =  "" if not defined $val;     # avoid warnings when not KEY=VALUE
-    $val =~ s/^[+]//;                   # remove first + in command liss
-    $val =~ s/ [+]/ /g;                 # remove + in commands
-
-    if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
-        $typ = 'cmd-' . $key ;  # the command to be set, i.e. cmd-http, cmd-sni, ...
-        _trace("_cfg_set: cfg{$typ}, KEY=$key, CMD=$val");
-        @{$cfg{$typ}} = ();
-        push(@{$cfg{$typ}}, split(/\s+/, $val));
-        foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
-            next if (_is_hashkey($key, \%checks));
-            next if (_is_hashkey($key, \%data));
-            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}));
-            next if (_is_cfg_intern( $key));
-            if ($key eq 'protocols') {  # valid before 17.02.26; behave smart for old rc-files
-                push(@{$cfg{$typ}}, 'next_protocols');
-                next;
-            }
-            if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
-                push(@{$cfg{$typ}}, 'cipher_selected');
-                _warn("073: configuration: please use '+cipher-selected' instead of '+$key'; setting ignored");
-                next;
-            }
-            _warn("074: configuration: unknown command '+$key' for '$typ'; setting ignored");
-        }
-        # check if it is a known command, otherwise add it and print warning
-        if ((_is_member($key, \@{$cfg{'commands'}})
-           + _is_member($key, \@{$cfg{'commands_cmd'}})
-           + _is_member($key, \@{$cfg{'commands_int'}})
-            ) < 1) {
-            # NOTE: new commands are added only if they are not yet defined,
-            # wether as internal, as summary or as (previously defined) user
-            # command. The new command must also consists only of  a-z0-9_.-
-            # charchters.  If any of these conditions fail, the command will
-            # be ignored silently.
-            if (not _is_member("cmd-$key", \@{$cfg{'commands_cmd'}})) {
-                # needed more checks, as these commands are defined as cmd-*
-                if ($key =~ m/^([a-z0-9_.-]+)$/) {
-                    # whitelust check for valid characters; avoid injections
-                    push(@{$cfg{'commands_usr'}}, $key);
-                    _warn("046: command '+$key' specified by user") if _is_v_trace();
-                }
-            }
-        }
-    }
-
-    # invalid keys are silently ignored (Perl is that clever:)
-
-    if ($typ eq 'CFG-score') {          # set new score value
-        _trace("_cfg_set: KEY=$key, SCORE=$val");
-        if ($val !~ m/^(?:\d\d?|100)$/) {# allow 0 .. 100
-            _warn("076: configuration: invalid score value '$val'; setting ignored");
-            goto _CFG_RETURN;
-        }
-        $checks{$key}->{score} = $val if ($checks{$key});
-    }
-
-    $val =~ s/(\\n)/\n/g;
-    $val =~ s/(\\r)/\r/g;
-    $val =~ s/(\\t)/\t/g;
-    _trace("_cfg_set: KEY=$key, TYP=$typ, LABEL=$val");
-    $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
-    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
-    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-info/);   # alias for --cfg-data
-    $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);   # allows CFG-hints also
-    $text{$key}          = $val if ($typ =~ /^CFG-text/);   # allows CFG-texts also
-    $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/); # BUT: CFG-score is different
-    $scores{$key}->{txt} = $val if ($key =~ m/^check_/);    # contribution to lazy usage
-
-    _CFG_RETURN:
-    _trace("_cfg_set() }");
-    return;
-} # _cfg_set
-
-sub _cfg_set_init       {
-    # set value in configuration %cfg; for debugging and test only
-    my ($typ, $arg) = @_;
-    my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
-    _warn("075: TESTING only: setting configuration: 'cfg{$key}=$val';");
-    SWITCH: for (ref($cfg{$key})) {
-        /^$/     && do {   $cfg{$key}  =  $val ; };     # same as SCALAR
-        /SCALAR/ && do {   $cfg{$key}  =  $val ; };
-        /ARRAY/  && do { @{$cfg{$key}} = ($val); };
-        /HASH/   && do { %{$cfg{$key}} =  $val ; };     # TODO: not yet working
-        /CODE/   && do { _warn("999: cannot set CODE"); };
-    } # SWITCH
-    return;
-} # _cfg_set_init
-
 #| definitions: check SSL functions
 #| -------------------------------------
 sub __readframe     {
@@ -2533,7 +2532,7 @@ sub _is_tr03116_lazy    {
 sub _is_rfc7525         {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    my $bit = _cipher_get_bits($cipher);
+    my $bit = OSaft::Ciphers::get_bits(OSaft::Ciphers::get_key($cipher));
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
    # /notRFC7525/;
     return $cipher if ($cipher =~ /NULL/);
@@ -2544,7 +2543,7 @@ sub _is_rfc7525         {
     return "";
 } # _is_rfc7525
 
-sub _isbeastskipped($$) {
+sub _is_beast_skipped   {
     #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
     #? returns empty string otherwise.
     my ($host, $port) = @_;
@@ -2556,9 +2555,9 @@ sub _isbeastskipped($$) {
         }
     }
     return join(" ", @ret);
-} # _isbeastskipped
+} # _is_beast_skipped
 
-sub _is_ssl_error($$$)  {
+sub _is_ssl_error       {
     # returns 1 if probably a SSL connection error occoured; 0 otherwise
     # increments counters in $cfg{'done'}
     my ($anf, $end, $txt) = @_;
@@ -3005,13 +3004,13 @@ sub _get_cipherslist    {
     if ('names' eq $mode) {  # convert to cipher names
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = OSaft::Ciphers::get_name($c)||"" if _is_valid_key($c);
+            $ciphers[$i] = OSaft::Ciphers::get_name($c)||"" if _is_cipher_key($c);
         }
     }
     if ('keys'  eq $mode) {   # convert to cipher hex keys
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if not _is_valid_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators)
+            $ciphers[$i] = OSaft::Ciphers::get_key( $c)||"" if not _is_cipher_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators)
                # "no critic" because perlcritic is too stupid for this
         }
     }
@@ -3681,7 +3680,7 @@ sub checkpreferred      {
         if ($weak eq $strong) {
             # FIXME: assumtion wrong if target returns always strongest cipher;
             #        meanwhile print hint (set hint here, printed later)
-            _cfg_set('CFG-hint', 'cipher_weak=check if "weak" cipher was returned may be misleading if the strongest cipher is returned always');
+            _set_cfg('CFG-hint', 'cipher_weak=check if "weak" cipher was returned may be misleading if the strongest cipher is returned always');
         }
     }
     _trace("checkpreferred() }");
@@ -3799,7 +3798,7 @@ sub checkciphers        {
         my $cipher = $prot{$ssl}->{'default'};  # from ciphers_scan_*()
         next if not $cipher;    # ignore empty ones
         next if ($STR{UNDEF} eq $cipher);
-        $cipher = OSaft::Ciphers::get_name($cipher) if _is_valid_key($cipher);
+        $cipher = OSaft::Ciphers::get_name($cipher) if _is_cipher_key($cipher);
         if (not grep{/$cipher/} $prot{'cipher_selected'}) {
             $prot{'cipher_selected'} .= " $ssl:$cipher";
         }
@@ -3834,7 +3833,7 @@ sub checkciphers        {
     }
 
     # additional BEAST check: checks for vulnerable protocols are disabled?
-    my $beastskipped = _isbeastskipped($host, $port);
+    my $beastskipped = _is_beast_skipped($host, $port);
     $checks{'beast'}->{val} .= " " . ${beastskipped} if "" ne $beastskipped;
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
@@ -6067,7 +6066,7 @@ sub printdata($$$)      {
     if (_is_cfg_do('cipher_selected')) {    # value is special
         my $key = $data{'cipher_selected'}->{val}($host, $port);
         print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, "$key " . _cipher_get_sec($key));
+                   $data{'cipher_selected'}->{txt}, "$key " . _get_cipher_sec($key));
     }
     foreach my $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'commands_notyet'}}));
@@ -6508,9 +6507,9 @@ while ($#argv >= 0) {
         #  +---------+--------------+------------------------------------------
         #   argument to process   what to do
         #  +---------+--------------+------------------------------------------
-        if ($typ eq 'CFG_INIT')     { _cfg_set_init(  $typ, $arg);  }
-        if ($typ eq 'CFG_CIPHER')   { _cipher_set_sec($typ, $arg); $typ = 'HOST'; } # $typ set to avoid next match
-        if ($typ =~ m/^CFG/)        { _cfg_set(       $typ, $arg);  }
+        if ($typ eq 'CFG_INIT')     { _set_cfg_init(  $typ, $arg);  }
+        if ($typ eq 'CFG_CIPHER')   { _set_cipher_sec($typ, $arg); $typ = 'HOST'; } # $typ set to avoid next match
+        if ($typ =~ m/^CFG/)        { _set_cfg(       $typ, $arg);  }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
         if ($typ eq 'LD_ENV')       { $cmd{'envlibvar'}   = $arg;   }
