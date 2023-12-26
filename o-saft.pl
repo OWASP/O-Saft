@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.141 23/12/25 10:59:04"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.143 23/12/26 19:15:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -186,7 +186,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.141");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.143");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1166,7 +1166,6 @@ sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); 
     # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
 sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
     # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
-sub _is_valid_key($)    { return OSaft::Ciphers::is_valid_key(shift);     }
 
 sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
 sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
@@ -1175,6 +1174,8 @@ sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
 
 #| definitions: internal wrapper functions for OSaft/Ciphers.pm
 #| -------------------------------------
+sub _cipher_is_key      { return OSaft::Ciphers::is_valid_key(shift); }
+sub _is_valid_key       { return OSaft::Ciphers::is_valid_key(shift); }
 # following wrappers are called with cipher suite name, while OSaft::Ciphers
 # methods need to be called with cipher hex key
 sub _cipher_get_bits    { return OSaft::Ciphers::get_bits(  OSaft::Ciphers::get_key(shift)); }
@@ -1854,7 +1855,7 @@ sub _init_openssl       {
     return;
 } # _init_openssl
 
-sub _initchecks_score   {
+sub _init_checks_score  {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -1870,9 +1871,9 @@ sub _initchecks_score   {
         $checks{$_}->{score} = 10 if (m/MEDIUM/i);
     }
     return;
-} # _initchecks_score
+} # _init_checks_score
 
-sub _initchecks_val     {
+sub _init_checks_val    {
     # set all default check values here
     my $notxt = "";
     #my $notxt = $text{'undef'}; # TODO: default should be 'undef'
@@ -1880,9 +1881,19 @@ sub _initchecks_val     {
 #### temporär, bis alle so gesetzt sind {
    $checks{'heartbeat'}->{val}  = $text{'undef'};
    foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
-       $checks{$key}->{val}  = $text{'undef'};
+       $checks{$key}->{val}     = $text{'undef'};
    }
 #### temporär }
+    # initialise $check{...}-{val} with empty string, because they will be
+    # extended per $ssl (protocol)
+    foreach my $key (qw(
+        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
+        cipher_edh ciphers_pfs cipher_pfsall
+        beast breach freak logjam lucky13 rc4 robot sloth sweet32
+        ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
+    )) {
+        $checks{$key}->{val}    = "";
+    }
     foreach my $key (keys %checks) {
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
@@ -1895,26 +1906,29 @@ sub _initchecks_val     {
     $checks{'sts_maxagexy'}->{val}  = 99999999;
     $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
     # if $data{'https_sts'}->{val}($host) is empty {
-        foreach my $key (qw(sts_maxage sts_expired sts_preload sts_subdom hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
-            $checks{$key}       ->{val} = $text{'na_STS'};
+        foreach my $key (qw(
+            sts_maxage sts_expired sts_preload sts_subdom
+            hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts
+        )) {
+            $checks{$key}->{val}        = $text{'na_STS'};
         }
         # following can not be set here, because they contain integers, see above
         #foreach my $key (qw(sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
-        #    $checks{$key}       ->{val} = $text{'na_STS'};
+        #    $checks{$key}->{val}        = $text{'na_STS'};
         #}
         #foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
-        #    $checks{$key}       ->{val} = $text{'na_STS'};
+        #    $checks{$key}->{val}        = $text{'na_STS'};
         #}
     # }
     foreach my $key (@{$cfg{'cmd-vulns'}}) {
-        $checks{$key}           ->{val} = $text{'undef'};  # may be refined below
+        $checks{$key}->{val}        = $text{'undef'};  # may be refined below
     }
     if (not _is_cfg_use('dns')) {
-        $checks{'reversehost'}  ->{val} = $text{'na_dns'};
+        $checks{'reversehost'}->{val}= $text{'na_dns'};
     }
     if (not _is_cfg_use('http')) {
-        $checks{'crl_valid'}    ->{val} = _get_text('disabled', "--no-http");
-        $checks{'ocsp_valid'}   ->{val} = _get_text('disabled', "--no-http");
+        $checks{'crl_valid'} ->{val}= _get_text('disabled', "--no-http");
+        $checks{'ocsp_valid'}->{val}= _get_text('disabled', "--no-http");
         foreach my $key (keys %checks) {
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
@@ -1953,14 +1967,14 @@ sub _initchecks_val     {
         }
     }
     return;
-} # _initchecks_val
+} # _init_checks_val
 
 sub _init_all           {
     # set all default values here
     $cfg{'done'}->{'init_all'}++;
     _trace("_init_all(){}");
-    _initchecks_score();
-    _initchecks_val();
+    _init_checks_score();
+    _init_checks_val();
     $cfg{'hints'}->{$_} = $text{'hints'}->{$_} foreach (keys %{$text{'hints'}});
     # _init_openssldir();
         # not done here because it needs openssl command, which may be set by
@@ -1977,7 +1991,7 @@ sub _resetchecks        {
     }
     $cfg{'done'}->{'ciphers_all'} = 0;
     $cfg{'done'}->{'ciphers_get'} = 0;
-    _initchecks_val();
+    _init_checks_val();
     return;
 } # _resetchecks
 
@@ -3055,10 +3069,11 @@ sub _get_cipher_default {
 } # _get_cipher_default
 
 sub ciphers_default_openssl {
-    #? return list of offered (default) cipher from target with openssl
-    # Function need for --ciphermode=openssl only,  SEE Note:+cipher-selected
-    # +cipher --ciphermode=intern (which is the default anyway) must be used,
-    # if other ciphers than the local available should be checked.
+    #? set strong, weak and default cipher from target in %prot (using openssl)
+    # Function needed for --ciphermode=openssl only,  SEE Note:+cipher-selected
+    # +cipher --ciphermode=intern  which is the default anyway, must be used if
+    # other ciphers than the local available should be checked.
+    # this is a more sohisticated method than  $data{'cipher_selected'}->{val}
     my ($host, $port)   = @_;
     _trace("ciphers_default_openssl($host, $port){");
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
@@ -3243,7 +3258,7 @@ sub ciphers_scan_intern {
         my $accepted_cnt = 0;
         my @all = _get_cipherslist('keys', $ssl);
         _trace("    checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
-        $total += scalar @all;
+        $total += scalar(@all);
         if ("@all" =~ /^\s*$/) {
             _warn("407: no valid ciphers specified; no check done for '$ssl'");
             next;           # ensure warning for all protocols
@@ -3258,7 +3273,7 @@ sub ciphers_scan_intern {
             # FIXME: FIXME: dirty hack, Dumper result ignored
             # Dumper used to aboid that a hash with only 2 keys is counted wrong
             # with following "keys %accepted", reason yet unknown
-        $accepted_cnt = scalar (keys %accepted);
+        $accepted_cnt = scalar(keys %accepted);
         $accepted_cnt--;    # -1 because $accepted{'0'} always exist
         if (exists $accepted{'0'}[1]) { # defensive programming ..
             if ($accepted{'0'}[0] eq $accepted{'0'}[1]) {
@@ -3283,7 +3298,6 @@ sub ciphers_scan_intern {
             $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
             _v_print(sprintf("default cipher %7s: %s", $ssl, $cipher));
         }
-        #dbx# print Dumper(\%prot);
 
         # now build line in %results
         my $last_a  = "";   # avoid duplicates
@@ -3674,20 +3688,6 @@ sub checkpreferred      {
     return;
 } # checkpreferred
 
-sub _checkcipher_init   {
-    # initialise $check{...}-{val} with empty string, because they will be
-    # extended per $ssl (protocol)
-    foreach my $key (qw(
-        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
-        cipher_edh ciphers_pfs cipher_pfsall
-        beast breach freak logjam lucky13 rc4 robot sloth sweet32
-        ism pci fips rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-
-    )) {
-        $checks{$key}->{val} = "";
-    }
-    return;
-} # _checkcipher_init
-
 sub checkcipher         {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $key) = @_;
@@ -3774,12 +3774,12 @@ sub checkciphers        {
     return if (1 < $cfg{'done'}->{'checkciphers'});
     _trace("checkciphers($host, $port){");
 
-    _checkcipher_init();        # values are set to <<undefined>>, initialise with ""
     my $cnt_all = 0; # count ciphers
     my $cnt_pfs = 0;
-    foreach my $ssl (@{$cfg{'version'}}) {  # all checked SSL versions
+    $prot{'cipher_selected'} = "";
+    foreach my $ssl (reverse(@{$cfg{'version'}})) { # all checked SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
-        $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
+        $cnt_pfs   += scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         if (not $results->{$ssl}) { # no ciphers found; avoid misleading values
             foreach my $key (@{$cfg{'need-cipher'}}) {
                 if ($key =~ m/(drown|poodle|has(?:ssl|tls))/) {
@@ -3790,7 +3790,21 @@ sub checkciphers        {
             }
             @{$prot{$ssl}->{'ciphers_pfs'}} = _get_text('miss_cipher', "");
         }
-    }
+        # collect selected ciphers, overwrites duplicates
+        # reverse(@{$cfg{'version'}}) is sorted accordig strength of protocol,
+        # $prot{'cipher_selected'}  is the list of ciphers  offered as default
+        # by the target, where each cipher is prefixed with the protocol;
+        # the default cipher of each protocol is searched for in the list and
+        # only added if it not exists
+        my $cipher = $prot{$ssl}->{'default'};  # from ciphers_scan_*()
+        next if not $cipher;    # ignore empty ones
+        next if ($STR{UNDEF} eq $cipher);
+        $cipher = OSaft::Ciphers::get_name($cipher) if _is_valid_key($cipher);
+        if (not grep{/$cipher/} $prot{'cipher_selected'}) {
+            $prot{'cipher_selected'} .= " $ssl:$cipher";
+        }
+        $prot{'cipher_selected'} =~ s/^\s*//; # remove leading spaces
+    } # $ssl
 
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
@@ -3826,7 +3840,7 @@ sub checkciphers        {
 
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
-        $cnt_pfs   += scalar @{$prot{$ssl}->{'ciphers_pfs'}};
+        $cnt_pfs   += scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
         # TR-02102-2, see 3.2.3
@@ -4941,11 +4955,8 @@ sub checkdest($$)   {
     # 12/2019: only relevant when target was IP, then $cfg{'ip'} must be identical to $cfg{'IP'}
 
     # SEE Note:Selected Protocol
-    # get selected cipher and store in %checks, also check for PFS
-    $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
-# FIXME: cipher_selected for --ciphermode=openssl|ssleay only
 
     # PFS is scary if the TLS session ticket is not random
     #  we should have different tickets in %data0 and %data
@@ -5682,7 +5693,7 @@ sub print_cipherline($$$$$$) {
     return;
 } # print_cipherline
 
-sub print_cipherpreferred($$$$) {
+sub print_cipherpreferred   {
     #? print preferred cipher according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
     my $yesno   = 'yes';
@@ -5691,6 +5702,7 @@ sub print_cipherpreferred($$$$) {
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
     if (not _is_cfg_ciphermode('intern')) {
+# 27dez23 FIXME
        my $key = OSaft::Ciphers::get_key($data{'cipher_selected'}->{val}($host)); # TODO use key
        print_cipherline($legacy, $ssl, $host, $port, $key, $yesno);
     }
@@ -5729,7 +5741,7 @@ sub _is_print_cipher    {
 } # _is_print_cipher
 
 #  NOTE: Perl::Critic's violation for next 2 subs are false positives
-sub _print_cipher_results       {
+sub _print_cipher_results   {
     #? print all ciphers from %results of $ssl if match $yesno; returns number of checked ciphers for $ssl
     my $legacy  = shift;
     my $ssl     = shift;
@@ -5860,7 +5872,7 @@ sub printprotocols      {
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
-        my $cnt = ($#{$prot{$ssl}->{'ciphers_pfs'}} + 1);
+        my $cnt = scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
@@ -5903,6 +5915,7 @@ sub printciphersummary  {
     #? print summary of cipher check +cipher
     my ($legacy, $host, $port, $total) = @_;
     _trace("printciphersummary($legacy, $host, $port, $total){");
+    _y_CMD("printciphersummary() ");
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {   # but only our formats
         print_header("\n" . _get_text('out_summary' , ""), "", "", $cfg{'out'}->{'header'});
         print_check(   $legacy, $host, $port, 'cnt_totals', $total);
@@ -5910,26 +5923,9 @@ sub printciphersummary  {
             # NOTE: reported ciphers here may be others than detected accepted
             #       ciphers, for example when --cipher=0x0300002F was used
     }
-    _y_CMD("printciphersummary() ");
-    if (0 < $cfg{'need_netinfo'}) {
-        my $key;
-        my $_verbose = $Net::SSLinfo::verbose;  # save
-        if (2 > $_verbose) {    # avoid huge verbosity in simple cases
-            $Net::SSLinfo::verbose = 0 if 2 > $_verbose;
-            if (0 < $_verbose) {
-                _hint("use --v --v for verbose output of 'cipher_selected' or use '+cipher_selected'");
-            }
-        }
-        my $cipher = $data{'cipher_selected'}->{val}($host, $port);
+    if (_is_cfg_ciphermode('openssl|ssleay')) {
         print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, "$cipher "
-                   . _cipher_get_sec($cipher)
-                  );
-        $Net::SSLinfo::verbose = $_verbose;     # restore
-    } else {
-        if (0 < $verbose) {
-            _hint("'cipher_selected' temporarily disabled");  # TODO: adapt to new SSLhello (2/2021)
-        }
+                   $data{'cipher_selected'}->{txt}, $prot{'cipher_selected'});
     }
     _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
     _trace("printciphersummary() }");
@@ -7795,7 +7791,7 @@ if ($cfg{'label'} eq 'short') {     # reconfigure texts
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
-_initchecks_val();  # initialise default values in %checks again depending on given options
+_init_checks_val(); # initialise default values in %checks again depending on given options
 
 _yeast_TIME("ini}");
 _yeast_EXIT("exit=CONF4 - runtime configuration end");
@@ -8046,6 +8042,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             _y_CMD("  use SSLhello +cipher$typ ...");
             Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
             $cipher_results = ciphers_scan_intern($host, $port);
+            #$prot{'cipher_selected'} = "";
         }
         if (_is_cfg_ciphermode('openssl|ssleay')) {
             _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
@@ -8063,7 +8060,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $checks{'cnt_totals'} ->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_accepted'};
         }
         #dbx# print Dumper(\$cipher_results);
-        checkciphers($host, $port, $cipher_results);# necessary to compute 'out_summary'
+        checkciphers($host, $port, $cipher_results);
         _yeast_TIME("need cipher}");
     } # need_cipher
     next if _yeast_NEXT("exit=HOST3 - host ciphers scan done");
