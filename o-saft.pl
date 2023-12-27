@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.144 23/12/26 19:50:10"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.145 23/12/27 09:59:56"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -186,7 +186,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.144");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.145");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2041,14 +2041,6 @@ sub _init_checks_val    {
 #### temporär }
     # initialise $check{...}-{val} with empty string, because they will be
     # extended per $ssl (protocol)
-    foreach my $key (qw(
-        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
-        cipher_edh ciphers_pfs cipher_pfsall
-        beast breach freak logjam lucky13 rc4 robot sloth sweet32
-        ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
-    )) {
-        $checks{$key}->{val}    = "";
-    }
     foreach my $key (keys %checks) {
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
@@ -2077,6 +2069,14 @@ sub _init_checks_val    {
     # }
     foreach my $key (@{$cfg{'cmd-vulns'}}) {
         $checks{$key}->{val}        = $text{'undef'};  # may be refined below
+    }
+    foreach my $key (qw(
+        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
+        cipher_edh  cipher_pfs cipher_pfsall
+        beast breach freak logjam lucky13 rc4 robot sloth sweet32
+        ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
+    )) {
+        $checks{$key}->{val}    = "";
     }
     if (not _is_cfg_use('dns')) {
         $checks{'reversehost'}->{val}= $text{'na_dns'};
@@ -7513,7 +7513,7 @@ if (0 < $cmd{'extciphers'}) {
 if (_is_cfg_do('cipher_default')) {
     if (not _is_cfg_ciphermode('openssl|ssleay')) {
         _warn("065: '+cipher-default' is useful with '--ciphermode=openssl' only; command ignored");
-        exit 0;
+        #exit 0;
     }
 } # cipher_default
 
