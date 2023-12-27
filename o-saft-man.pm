@@ -59,7 +59,6 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
     unshift(@INC, "..")     if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
-    # TBD: $::v = (grep{/^--v/} @ARGV); # then similar code for all @ARGV herein
 }
 
 use OSaft::Text qw(%STR print_pod);
@@ -67,7 +66,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.108 23/12/23 20:40:01";
+my  $SID_man= "@(#) o-saft-man.pm 2.109 23/12/27 17:45:36";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -81,9 +80,8 @@ my  $cfg_header = 0;                    # we may be called from within parents B
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
-our $VERBOSE    = 0;  # >1: option --v
-    $VERBOSE++ if (0 < (grep{/^--v/} @ARGV));   # if called via o-saft.pl
-   # VERBOSE instead of verbose because of perlcritic
+our $TRACE  = 0;  # >1: option --trace*
+    $TRACE++ if (0 < (grep{/^--trace.?(?:CMD)?/} @ARGV));   # if called via o-saft.pl
 local $\    = "";
 
 # SEE Note:Stand-alone
@@ -724,7 +722,7 @@ sub _get_filename   {
     return $src;
 } # _get_filename
 
-sub _man_dbx        {   # similar to _y_CMD
+sub _man_dbx        {   # similar to _trace()
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
@@ -736,7 +734,7 @@ sub _man_dbx        {   # similar to _y_CMD
         $anf = "<!-- "; $end = " -->";
         # TODO: need to sanitise @txt : remove <!-- and/or -->
     }
-    if (0 < $VERBOSE) {
+    if (0 < $TRACE) {
         print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
     }
     return;
@@ -811,7 +809,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.108'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.109'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1971,7 +1969,7 @@ sub man_ciphers_text{
     my $txt = shift;
     my $keys= "";
     _man_dbx("man_ciphers_text() ..");
-    if (0 < $VERBOSE) {
+    if (0 < $TRACE) {
         foreach my $key (keys %OSaft::Ciphers::ciphers_desc) {
             next if "additional_notes" eq $key;
             $keys .= "#\t$key\t$OSaft::Ciphers::ciphers_desc{$key}\n";
@@ -2493,7 +2491,7 @@ sub _main_man       {
         #TODO: __FILE__ must be __PACKAGE__ if this file is a perl module
         print_pod($0, __FILE__, $SID_man) if ($arg =~ m/--?h(?:elp)?$/x);
         # ----------------------------- options
-        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
+        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $TRACE++; next; }  # allow --v
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_man\n"; next; }
        #if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n"; next; }
@@ -2553,6 +2551,8 @@ see  L<METHODS>  below.
 
 =item * o-saft-man.pm --help        # on command-line will print help
 
+=item * o-saft-man.pm version       # on command-line will print own version
+
 =item * o-saft-man.pm [<$format>]   # on command-line
 
 =back
@@ -2564,6 +2564,17 @@ For compatibility with other programs and modules it also supports:
 =item * o-saft-man.pm --help=<$format>
 
 =item * o-saft-man.pm --test-<$format>
+
+=back
+
+
+=head1 OPTIONS
+
+=over 2
+
+=item * --v, --trace                # enable trace output for $0 itself
+
+=item * --test*                     # for comptibility with o-saft.pl
 
 =back
 
@@ -2673,7 +2684,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.108 2023/12/23
+2.109 2023/12/27
 
 
 =head1 AUTHOR
