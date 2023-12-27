@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.299 23/12/27 19:44:14";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.300 23/12/27 19:50:06";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -161,7 +161,10 @@ Note that Net::SSLeay may print on STDERR with I<$Net::SSLeay::trace> set.
 In trace messages empty or undefined strings are written as "<<undefined>>".
 
 I<$Net::SSLinfo::prefix_trace> contains the string used as prefix for each
-message printed with trace
+message printed with --trace
+
+I<$Net::SSLinfo::prefix_verbose> contains the string used as prefix for each
+message printed with --v
 
 =over
 
@@ -767,6 +770,7 @@ $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
 $Net::SSLinfo::prefix_trace= '#' . SSLINFO . '::';  # prefix string used in trace   messages
+$Net::SSLinfo::prefix_verbose= '#' . SSLINFO . '::';# prefix string used in trace   messages
 $Net::SSLinfo::user_agent  = '-'; # User-Agent for HTTP requests
 $Net::SSLinfo::verbose     = 0; # 1: print some verbose messages
 $Net::SSLinfo::linux_debug = 0; # passed to Net::SSLeay::linux_debug
@@ -806,7 +810,7 @@ sub _trace      { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trac
 sub _trace1     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1 == $trace); return; }
 sub _trace2     { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (1  < $trace); return; }
 
-sub _verbose    { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_trace . $txt if (0  < $Net::SSLinfo::verbose); return; }
+sub _verbose    { my $txt=shift; local $\="\n"; print $Net::SSLinfo::prefix_verbose . $txt if (0  < $Net::SSLinfo::verbose); return; }
 
 sub _traceset   {
     $trace = $Net::SSLinfo::trace;          # set global variable
