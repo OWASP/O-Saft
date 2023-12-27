@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.298 23/12/23 21:23:59";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.299 23/12/27 19:44:14";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1325,7 +1325,7 @@ sub _SSLinfo_print  {
             # not HTTP(S)
     {
         next if (not defined $_SSLinfo{$key});
-        _verbose("$key=$_SSLinfo{$key}"); 
+        _trace("$key=$_SSLinfo{$key}"); 
     }
     return;
 } # _SSLinfo_print
