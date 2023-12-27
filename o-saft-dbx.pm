@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.38 23/12/14 17:32:46";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.39 23/12/27 19:23:57";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -416,20 +416,6 @@ sub _trace3     { print $cfg{'prefix_trace'} . join(" ", @_) if (3 < $cfg{'trace
 sub _trace_     { local $\ = "";  print  " " . join(" ", @_) if (0 < $cfg{'trace'}); return; }
 # if --trace-arg given
 sub _trace_cmd  { printf("%s %s->\n", $cfg{'prefix_trace'}, join(" ",@_)) if (_is_cfg_out('traceCMD')); return; }
-
-sub _vprintme   {
-    #? write own version, command-line arguments and date and time
-    my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-    return if (0 >= ($cfg{'verbose'} + $cfg{'trace'}));
-    _yeast("$0 " . _VERSION());
-    _yeast("$0 " . join(" ", @{$cfg{'ARGV'}}));
-    if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
-        _yeast("$0 dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
-    } else {
-        _yeast("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
-    }
-    return;
-} # _vprintme
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
@@ -1016,8 +1002,6 @@ For example:
 
 =head3 _y_ARG( ), _y_CMD( ), _yline( )
 
-=head3 _vprintme( )
-
 =head3 _v_print( ), _v2print( ), _v3print( ), _v4print( )
 
 =head3 _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
@@ -1073,7 +1057,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.38 2023/12/14
+2.39 2023/12/27
 
 =head1 AUTHOR
 
