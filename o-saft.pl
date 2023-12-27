@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.148 23/12/27 19:09:33"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.150 23/12/27 19:50:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -187,7 +187,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.148");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.150");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -306,15 +306,28 @@ sub _vprint_read    {
     my ($fil, @txt) = @_;
     # TODO: quick&ugly check when to write "reading" depending on given --trace* options
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}    @ARGV));# --cgi-exec or --cgi-trace
-    return if (0 >= (grep{/(?:--warn|--v$|--trace)/i}   @ARGV));
+    return if (0 >= (grep{/(?:--v$|--trace|--warn)/i}   @ARGV));
     if (0 >= (grep{/(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)/i} @ARGV)) {
-        return if (0 <  (grep{/(?:--trace[_.-]?CLI|KEY$)/i} @ARGV));# --trace-CLI
+        return if (0 < (grep{/(?:--trace[_.-]?CLI|KEY$)/i}   @ARGV));# --trace-CLI
     }
-    # print "read ..." also if only --trace given
+    # print "read ..." also if only --trace* given
     _tprint("read", $fil, "(@txt)") if (0 < (grep{/(?:--trace)/i} @ARGV));
     _vprint("read", $fil, "(@txt)");
     return;
 } # _vprint_read
+
+sub _vprint_me      {
+    #? print own version, command-line arguments and date and time
+    my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    _vprint($cfg{'me'}, _VERSION());
+    _vprint($cfg{'me'}, @{$cfg{'ARGV'}});
+    if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
+        _vprint("$cfg{'me'}: dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
+    } else {
+        _vprint(sprintf("%s: %02s.%02s.%s %02s:%02s:%02s", $cfg{'me'}, $mday, ($mon +1), ($year +1900), $h, $m, $s));
+    }
+    return;
+} # _vprint_me
 
 sub _load_file      {
     #? load file with Perl's require using the paths in @INC
@@ -695,7 +708,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _v2print      {}
     sub _v3print      {}
     sub _v4print      {}
-    sub _vprintme     {}
     sub _trace        {}
     sub _trace1       {}
     sub _trace2       {}
@@ -7548,7 +7560,7 @@ $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); #
 
 _yeast_args();          # all arguments parsed; print with --traceARG
 _yeast_EXIT("exit=ARGS  - options and arguments done");
-_vprintme();
+_vprint_me();
 
 #_init_openssldir();    # called later for performance reasons
 
@@ -7699,6 +7711,8 @@ _vprint("initialise Net::SSL*");
         $Net::SSLinfo::trace        = $cfg{'trace'} if (0 < $cfg{'trace'});
     }
     $Net::SSLinfo::verbose          = $cfg{'verbose'};
+    $Net::SSLinfo::prefix_verbose   = "$STR{'INFO'}NET::SSLinfo: ";
+#   $Net::SSLinfo::prefix_trace     = ""; # set in module
     $Net::SSLinfo::linux_debug      = $cfg{'linux_debug'};
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
