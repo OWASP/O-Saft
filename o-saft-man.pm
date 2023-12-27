@@ -66,7 +66,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.109 23/12/27 17:45:36";
+my  $SID_man= "@(#) o-saft-man.pm 2.110 23/12/27 20:36:17";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -80,8 +80,8 @@ my  $cfg_header = 0;                    # we may be called from within parents B
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
-our $TRACE  = 0;  # >1: option --trace*
-    $TRACE++ if (0 < (grep{/^--trace.?(?:CMD)?/} @ARGV));   # if called via o-saft.pl
+our $TRACE  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
+    $TRACE++ if (0 < (grep{/^--trace(?:=\d+)?/} @ARGV));    # if called via o-saft.pl
 local $\    = "";
 
 # SEE Note:Stand-alone
@@ -809,7 +809,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.109'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.110'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2684,7 +2684,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.109 2023/12/27
+2.110 2023/12/27
 
 
 =head1 AUTHOR
