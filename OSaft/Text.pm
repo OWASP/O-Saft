@@ -9,7 +9,7 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.9 23/11/26 00:37:23";
+my  $SID_text   =  "@(#) Text.pm 1.10 23/12/27 11:41:04";
 our $VERSION    =  "23.11.23";
 
 #_____________________________________________________________________________
@@ -19,6 +19,7 @@ our %STR = (
     'ERROR'     => "**ERROR: ",
     'WARN'      => "**WARNING: ",
     'HINT'      => "!!Hint: ",
+    'INFO'      => "**INFO: ",
     'USAGE'     => "**USAGE: ",
     'DBX'       => "#dbx# ",
     'UNDEF'     => "<<undef>>",
@@ -108,7 +109,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-1.9 2023/11/26
+1.10 2023/12/27
 
 
 =head1 AUTHOR
