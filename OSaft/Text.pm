@@ -9,7 +9,7 @@ package OSaft::Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 1.10 23/12/27 11:41:04";
+my  $SID_text   =  "@(#) Text.pm 1.11 23/12/27 17:16:53";
 our $VERSION    =  "23.11.23";
 
 #_____________________________________________________________________________
@@ -84,6 +84,8 @@ Perlish spoken, all texts are L</VARIABLES>.
 
 =head3 %STR{HINT}
 
+=head3 %STR{INFO}
+
 =head3 %STR{USAGE}
 
 =head3 %STR{DBX}
@@ -109,7 +111,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-1.10 2023/12/27
+1.11 2023/12/27
 
 
 =head1 AUTHOR
