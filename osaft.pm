@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_osaft  =  "@(#) osaft.pm 2.52 23/12/23 20:07:28";
+our $SID_osaft  =  "@(#) osaft.pm 2.53 23/12/28 19:58:42";
 our $VERSION    =  "23.11.23";  # official version number of this file
 
 use OSaft::Text qw(%STR);
@@ -2848,6 +2848,7 @@ our %cfg = (    # main data structure for configuration
         'error'     => qr(^\*\*ERR),            # see STR{ERROR}
         'warning'   => qr(^\*\*WARN),           # see STR{WARN}
         'hint'      => qr(^\!\!Hint),           # see STR{HINT}
+        'info'      => qr(^\*\*INFO),           # see STR{INFO}
         'dbx'       => qr(^#dbx#),              # see STR{DBX}
         'headline'  => qr(^={1,3} ),            # headlines
         'keyline'   => qr(^#\[),                # dataline prefixed with key
@@ -3506,7 +3507,7 @@ sub _osaft_init     {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/2.52"); # default version; needs to be corrected by caller
+    set_user_agent("$me/2.53"); # default version; needs to be corrected by caller
     return;
 } # _osaft_init
 
@@ -3553,7 +3554,7 @@ _osaft_init();          # complete initialisations
 
 =head1 VERSION
 
-2.52 2023/12/23
+2.53 2023/12/28
 
 =head1 AUTHOR
 
