@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.150 23/12/27 19:50:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.152 23/12/28 19:57:01"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -187,7 +187,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.150");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.152");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1184,6 +1184,7 @@ sub _is_cfg_out($)      { my  $is=shift;    return $cfg{'out'}->{$is};  }
 sub _is_cfg_tty($)      { my  $is=shift;    return $cfg{'tty'}->{$is};  }
 sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
+sub _is_cfg_trace()     { return $cfg{'trace'};   }
 sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
 sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); }
     # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
@@ -1476,11 +1477,9 @@ sub _check_modules      {
     if ($have_version == 0) {
         warn $STR{WARN}, "120: ancient perl has no 'version' module; version checks may not be accurate;";
     }
-    if ($cfg{verbose} > 1) {
-        printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
-        printf "# %-21s\t%s\t%s\n", "module name", "VERSION", "> expected versions";
-        printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
-    }
+    _trace(sprintf("# %s+%s+%s", "-"x24, "-"x7, "-"x15));
+    _trace(sprintf("# %-24s %s %s", "module name", "VERSION", "> expected versions"));
+    _trace(sprintf("# %s+%s+%s", "-"x24, "-"x7, "-"x15));
     foreach my $mod (keys %expected_versions) {
         next if (($cfg{'need_netdns'}    == 0) and ($mod eq "Net::DNS"));# don't complain if not used
         next if (($cfg{'need_timelocal'} == 0) and ($mod eq "Time::Local"));# -"-
@@ -1502,14 +1501,12 @@ sub _check_modules      {
             warn $STR{WARN}, "121: ancient $mod $v < $expect detected;";
             # TODO: not sexy: warnings are inside tabular data for --v
         }
-        if ($cfg{verbose} > 1) {
-            printf "# %-21s\t%s\t> %s\t%s\n", $mod, $v, $expect, $ok;
-        }
+        _trace(sprintf("# %-24s %-7s > %s\t%s", $mod, $v, $expect, $ok));
     }
     # TODO: OCSP and OCSP stapling works since  Net::SSLeay 1.78 , we should
     #       use  Net::SSLeay 1.83  because of some bug fixes there, see:
     #       https://metacpan.org/changes/distribution/Net-SSLeay
-    printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15 if ($cfg{verbose} > 1);
+    _trace(sprintf("# %s+%s+%s", "-"x24, "-"x7, "-"x15));
     _trace("_check_modules() }");
     return;
 } # _check_modules
@@ -1644,21 +1641,21 @@ sub _check_functions    {
     if ($version_iosocket < 1.90) {
         $cfg{'ssleay'}->{'can_sni'} = 0;
     } else {
-        _v2print "IO::Socket::SSL\t$version_iosocket OK\tyes";
+        _trace("IO::Socket::SSL\t$version_iosocket OK\tyes");
     }
     if ($version_openssl < 0x01000000) {
         # same as  IO::Socket::SSL->can_client_sni()
         # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
         $cfg{'ssleay'}->{'can_sni'} = 0;
     } else {
-        _v2print "$text_ssleay OpenSSL version\tyes";
+        _trace("$text_ssleay OpenSSL version\tyes");
     }
 
     _trace(" check if Net::SSLeay is usable ...");
     if ($version_ssleay  < 1.49) {
         warn $STR{WARN}, "135: Net::SSLeay $version_ssleay < 1.49; may throw warnings and/or results may be missing;";
     } else {
-        _v2print "$text_ssleay (OK)\tyes";
+        _trace("$text_ssleay (OK)\tyes");
     }
 
     _trace(" check for NPN and ALPN support ...");  # SEE Note:OpenSSL Version
@@ -1666,50 +1663,50 @@ sub _check_functions    {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
         $cfg{'ssleay'}->{'get_alpn'} = 0;
     } else {
-        _v2print "$text_ssleay ALPN\tyes";
+        _trace("$text_ssleay ALPN\tyes");
     }
     if (($version_ssleay < 1.46) or ($version_openssl < 0x10001000)) {
         $cfg{'ssleay'}->{'set_npn'}  = 0;
     } else {
-        _v2print "$text_ssleay  NPN\tyes";
+        _trace("$text_ssleay  NPN\tyes");
     }
 
     if (not exists &Net::SSLeay::CTX_set_alpn_protos) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
     } else {
-        _v2print "$text_ssleay set ALPN\tyes";
+        _trace("$text_ssleay set ALPN\tyes");
     }
 
     if (not exists &Net::SSLeay::P_alpn_selected) {
         $cfg{'ssleay'}->{'get_alpn'} = 0;
     } else {
-        _v2print "$text_ssleay get ALPN\tyes";
+        _trace("$text_ssleay get ALPN\tyes");
     }
 
     if (not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
         $cfg{'ssleay'}->{'set_npn'} = 0;
     } else {
-        _v2print "$text_ssleay set  NPN\tyes";
+        _trace("$text_ssleay set  NPN\tyes");
     }
 
     if (not exists &Net::SSLeay::P_next_proto_negotiated) {
         $cfg{'ssleay'}->{'get_npn'}  = 0;
     } else {
-        _v2print "$text_ssleay get  NPN\tyes";
+        _trace("$text_ssleay get  NPN\tyes");
     }
 
     if (not exists &Net::SSLeay::OCSP_cert2ids) {
         # same as IO::Socket::SSL::can_ocsp() IO::Socket::SSL::can_ocsp_staple()
         $cfg{'ssleay'}->{'can_ocsp'}  = 0;
     } else {
-        _v2print "$text_ssleay OSCP\tyes";
+        _trace("$text_ssleay OSCP\tyes");
     }
 
     if (not exists &Net::SSLeay::CTX_set_tmp_ecdh) {
         # same as IO::Socket::SSL::can_ecdh()
         $cfg{'ssleay'}->{'can_ecdh'}  = 0;
     } else {
-        _v2print "$text_ssleay Curves\tyes";
+        _trace("$text_ssleay Curves\tyes");
     }
 
     $cfg{'ssleay'}->{'can_npn'}  = $cfg{'ssleay'}->{'get_npn'}; # alias
@@ -3103,9 +3100,9 @@ sub _get_cipher_default {
     if ($cipher =~ m#^\s*$#) {
         my $txt = "SSL version '$ssl': cannot get preferred cipher; ignored";
         # SSLv2 is special, see _usesocket "dirty hack"; don't print
-        _v_print($txt) if ($ssl !~ m/SSLv[2]/);
+        _trace($txt) if ($ssl !~ m/SSLv[2]/);
     } else {
-        _v2print("preferred cipher: $ssl:\t$cipher");
+        _trace1("preferred cipher: $ssl:\t$cipher");
     }
     _trace("_get_cipher_default()\t= $cipher }");
     return $cipher;
@@ -3147,24 +3144,28 @@ sub ciphers_prot_openssl {
     _trace("ciphers_prot_openssl($ssl, $host, $port, @ciphers) {");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-    _v_print("connect delay: $cfg{'connect_delay'} second(s)") if ($cfg{'connect_delay'} > 0);
+    if (0 < $cfg{'connect_delay'}) {
+       _v_print("connect delay: $cfg{'connect_delay'} second(s)") if (1 < _is_cfg_verbose())
+    }
     my $cnt     = 0;
+    my $len     = 0;
+    my $total   = scalar(@ciphers);
     foreach my $c (@ciphers) {
         next if ($c =~ m/^\s*$/);
+        $cnt++;
         my $anf = time();
         my $supported = "";
-        $cnt++;
-        my $txt = "$ssl: ($cnt of " . scalar(@ciphers) . " ciphers checked) abort connection attempts";
-        printf("#   cipher %3d/%d %s%s\r", $cnt, scalar @ciphers, $c, " "x42) if ($cfg{'verbose'} > 0);
-            # no \n at end of line, hence all messages print to same line
-            # wipe previous trailing text with  " "x42
-            # cannot use _v_print() because it prints with \n
+        my $txt = "$ssl: ($cnt of $total ciphers checked) abort connection attempts";
+        $len = ($len < length($c)) ? 1 : ($len - length($c));
+        printf("$STR{'INFO'}  cipher %4d/%d %s%s\r", $cnt, $total, $c, " "x $len) if (0 < _is_cfg_verbose());
+            # cannot use _v_print() because it prints with \n; SEE =head2 Note:stty
+        $len = length($c);
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'cipher_md5'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-cipher-md5
                 #_hint("use '--no-cipher-md5' to disable checks with MD5 ciphers");
-                _v4print("check cipher (MD5): $ssl:$c\n");
+                _vprint("  check cipher (MD5): $ssl:$c\n") if (1 < $cfg{'verbose'});
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
             ($version, $supported)      = _usesocket( $ssl, $host, $port, $c);
@@ -3189,11 +3190,12 @@ sub ciphers_prot_openssl {
         }
         push(@res, "$version:$supported") if ($supported ne "");
         my $yesno = ($supported eq "") ? "no" : "yes";
-        _v2print("check cipher: $ssl:$c\t$yesno");
+        _vprint("  check cipher: $ssl:$c\t$yesno") if (1 < $cfg{'verbose'});
         # TODO: should close dangling sockets here
     } # foreach @ciphers
-    _v_print("connection errors: $cfg{'done'}->{'ssl_errors'}                  ");
-    #    spaces to overwrite remaining cipher suite names
+    printf("\n") if (0 < _is_cfg_verbose());# keep last printed line (see above)
+    _trace("connection errors: $cfg{'done'}->{'ssl_errors'}                  ");
+        # spaces to overwrite remaining cipher suite names
     _trace("ciphers_prot_openssl()\t= " . $#res . " @res }");
     return @res;
 } # ciphers_prot_openssl
@@ -3214,13 +3216,9 @@ sub ciphers_scan_openssl {
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'use'}->{'sni'};
-        if (($cfg{'verbose'} + $cfg{'trace'} > 0) or _is_cfg_out('traceCMD')) {
-            # optimise output: instead using 3 lines with _trace() and _v_print()
-            my $_me = "";
-               $_me = $cfg{'me'} . "   CMD:" if (_is_cfg_out('traceCMD')); # TODO: _yTIME() missing
-               $_me = $cfg{'me'} . "::"      if ($cfg{'trace'}    > 0);
-            print("#$_me     checking $cnt ciphers for $ssl ... ($__openssl)");
-        }
+        _vprint("  test $cnt ciphers for $ssl ... ($__openssl) ");
+        _trace( "  test $cnt ciphers for $ssl ... ($__openssl) ");
+        _trace( " using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
             if (_is_cfg_do('cipher') or $cfg{'verbose'} > 0) {
@@ -3300,15 +3298,13 @@ sub ciphers_scan_intern {
                             # contains at least one entry: $accepted{'0'}
         my $accepted_cnt = 0;
         my @all = _get_cipherslist('keys', $ssl);
-        _trace(" checking " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         $total += scalar(@all);
+        _vprint("  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        _trace( "  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        _trace( " using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ("@all" =~ /^\s*$/) {
             _warn("407: no valid ciphers specified; no check done for '$ssl'");
             next;           # ensure warning for all protocols
-            #return $results;# only one warning
-        }
-        if (_is_cfg_do('cipher_intern')) {  # may be called for cipher_dump too
-            _trace(" cipher range= $cfg{'cipherrange'}, checking " . scalar(@all) . " ciphers ...");
         }
         %accepted = Net::SSLhello::getSSLciphersWithParam($host, $port, $ssl, @all);
         #dbx# print Dumper(\%accepted);
@@ -5287,11 +5283,11 @@ sub check_exitcode  {
         $exitcode -= $checks{'cnt_checks_noo'}->{val};
     }
 # TODO: $cfg{'exitcode_sizes'}
-    my $__tableline = "-------------+---+---+---+---+------+------------";
+    my $__tableline = "-----------------+---+---+---+---+-----+------------";
     my $__exitline  = "---------------------------------------------------- exitcode";
-    _v_print("$__exitline {");
-    _v_print(sprintf("%s\t%3s %3s %3s %3s %7s %s", qw(protocol H M L W no-PFS insecure)));
-    _v_print($__tableline);
+    _vprint("$__exitline {");
+    _vprint(sprintf("%-12s\t%3s %3s %3s %3s %7s %s", qw(protocol H M L W no-PFS insecure)));
+    _vprint($__tableline);
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (0 == $cfg{$ssl});      # not requested, don't count
 # TODO: counts protocol even if no cipher was supported, is this insecure?
@@ -5304,7 +5300,7 @@ sub check_exitcode  {
         $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (_is_cfg_out('exitcode_weak'));
         $cnt_ciph += $prot{$ssl}->{'LOW'}    if (_is_cfg_out('exitcode_low'));
         $exitcode += $cnt_ciph;
-        _v_print(sprintf("%-7s\t%3s %3s %3s %3s %3s\t%s", $ssl,
+        _vprint(sprintf("%-12s\t%3s %3s %3s %3s %3s\t%s", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
                 $cnt_pfs, $cnt_ciph,
@@ -5320,18 +5316,18 @@ sub check_exitcode  {
     my $ign_checks  = (_is_cfg_out('exitcode_checks')) ? "" : " (count ignored)";
     my $ign_prot    = (_is_cfg_out('exitcode_prot'))   ? "" : " (count ignored)";
     my $ign_pfs     = (_is_cfg_out('exitcode_pfs'))    ? "" : " (count ignored)";
-    _v_print($__tableline);
+    _vprint($__tableline);
     $cnt_prot-- if (0 < $cfg{'TLSv12'});
     $cnt_prot-- if (0 < $cfg{'TLSv13'});
     $exitcode += $cnt_prot if (_is_cfg_out('exitcode_prot'));
     $checks{'cnt_exitcode'}->{val} = $exitcode;
-    _v_print(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
-    _v_print(sprintf("%s\t%5s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
-    _v_print(sprintf("%s\t%5s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
-    _v_print(sprintf("%s\t%5s%s", $checks{'cnt_checks_no'} ->{txt}, $checks{'cnt_checks_no'} ->{val}, $ign_checks));
-    _v_print(sprintf("%s %3s%s",  $checks{'cnt_checks_noo'}->{txt}, "-".$checks{'cnt_checks_noo'}->{val}, $ign_checks));
-    _v_print(sprintf("%s\t%5s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
-    _v_print("$__exitline }");
+    _vprint(sprintf("%s\t%5s%s", "Total number of insecure protocols",  $cnt_prot,  $ign_prot));
+    _vprint(sprintf("%s\t%5s%s", "Total number of insecure ciphers",    $cnt_ciphs, $ign_ciphs));
+    _vprint(sprintf("%s\t%5s%s", "Total number of ciphers without PFS", $cnt_nopfs, $ign_pfs));
+    _vprint(sprintf("%s\t%5s%s", $checks{'cnt_checks_no'} ->{txt}, $checks{'cnt_checks_no'} ->{val}, $ign_checks));
+    _vprint(sprintf("%s %3s%s",  $checks{'cnt_checks_noo'}->{txt}, "-".$checks{'cnt_checks_noo'}->{val}, $ign_checks));
+    _vprint(sprintf("%s\t%5s",   $checks{'cnt_exitcode'}  ->{txt}, $checks{'cnt_exitcode'}  ->{val}));
+    _vprint("$__exitline }");
     $cfg{'verbose'} = $old_verbose; # restore
     _trace("check_exitcode()\t= $checks{'cnt_exitcode'}->{val} }");
     return $checks{'cnt_exitcode'}->{val};
@@ -5383,12 +5379,13 @@ sub _cleanup_data   {
     if ($key eq "https_status") {
         # remove non-printables from HTTP Status line
         # such bytes may occour if SSL connection failed
-        _v_print("removing non-printable characters from $key: $value");
+        _vprint("  removing non-printable characters from $key: $value");
         $value =~ s/[^[:print:]]+//g;   # FIXME: not yet perfect
     }
     if ($key =~ m/X509$/) {
         $value =~ s#/([^=]*)#\n   ($1)#g;
         $value =~ s#=#\t#g;
+        #_vprint("  pretty print $key");
     }
     return $value;
 } # _cleanup_data
@@ -6089,7 +6086,7 @@ sub printdata($$$)      {
         if (_is_member( $key, \@{$cfg{'cmd-NL'}})) {
             # for +info print multiline data only if --v given
             # if command given explicitly, i.e. +text, print
-            if (_is_cfg_do('info') and (0 >= $cfg{'verbose'})) {
+            if (_is_cfg_do('info') and (0 >= _is_cfg_verbose())) {
                 _hint("use '--v' to print multiline data of '+$key' for '+info'");
                 next;
             }
@@ -7711,7 +7708,7 @@ _vprint("initialise Net::SSL*");
         $Net::SSLinfo::trace        = $cfg{'trace'} if (0 < $cfg{'trace'});
     }
     $Net::SSLinfo::verbose          = $cfg{'verbose'};
-    $Net::SSLinfo::prefix_verbose   = "$STR{'INFO'}NET::SSLinfo: ";
+    $Net::SSLinfo::prefix_verbose   = "$STR{'INFO'}  Net::SSLinfo: ";
 #   $Net::SSLinfo::prefix_trace     = ""; # set in module
     $Net::SSLinfo::linux_debug      = $cfg{'linux_debug'};
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
@@ -8000,8 +7997,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
            _yeast_TIME("test DNS}");
         }
     }
-    _vprint("  print DNS stuff");
     if (_is_cfg_do('host') or (($info + $check + $cmdsni) > 0)) {
+        _vprint("  print DNS stuff");
         _trace(" +info || +check || +sni*");
         if ($legacy =~ /(compact|full|owasp|simple)/) {
             print_ruler();
@@ -8089,8 +8086,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     } # cipher_dh
     next if _yeast_NEXT("exit=HOST4 - host ciphers DH done");
 
-    _vprint("  print ciphers");
     if (_need_cipher()) {
+        _vprint("  print ciphers");
         if (_is_cfg_do('cipher') or _is_cfg_do('check') or  _is_cfg_do('quick')) {
             printciphers($legacy, $host, $port, $cipher_results);
         }
@@ -8119,6 +8116,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     usr_pre_info();
+    _vprint("  get target data");
     _yeast_TIME("SNI{");
     _get_data0($host, $port);   # uses Net::SSLinfo::do_ssl_open() and ::do_ssl_close()
     _yeast_TIME("SNI}");
@@ -8177,7 +8175,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     # following sequence important!
     # if conditions are just to improve performance
     # Net::SSLinfo::do_ssl_open() will be call here if --ignore_no_conn was given
-        _vprint("  +dump");
     _vprint("  perform checks ...");
     if (_need_checkalpn() > 0) {
         checkalpn( $host, $port);   _yeast_TIME("  checkalpn.");
@@ -8261,7 +8258,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 _yeast_TIME("hosts}");
 
 usr_pre_exit();
-_yeast_exit();
+_yeast_exit() if _is_trace();   # for --trace=\d only, not --traceKEY and alike
 _yeast_EXIT("exit=END   - end");# for symetric reason, rather useless here
 
 _vprint("check exit code");
@@ -8271,7 +8268,7 @@ exit 0 if (not _is_cfg_use('exitcode'));
 my $status = check_exitcode();
 if (0 < $status) {
     # print EXIT message unless switched off with --exitcode-quiet
-    print "# EXIT $status" if (not _isc_fg_out('exitcode_quiet'));
+    print "# EXIT $status" if (not _is_cfg_out('exitcode_quiet'));
 }
 exit $status;
 
@@ -9503,7 +9500,7 @@ formatting.  This concept becomes clumsy  when the tool is used on devices
 with limited capabilities (like tablets or smartphones).
 
 The format of the output is described in the  RESULT  section of the docu-
-mentation. Beside the results we also have the documentation itself, which
+mentation. Beside the results there's also the documentation itself, which
 is intended to be read by humans.
 I.g. all output may be passed to well known  formatting tools like  nroff,
 troff, etc.  but this may clutter some texts  which are well formatted for
@@ -9551,6 +9548,22 @@ by 8 spaces too.
 
 Hopefully this generated result is more comfortable to read  than the text
 provided by the default behaviour. Simply use the  --tty  option.
+
+
+=head2 Note:stty
+
+If a print statements should overwrite the text they printed earlier, '\r'
+is used instead of '\n' or '\r\n'.  Most system handle it depending on the
+final device, for example terminal (tty) or file, correctly. For terminals
+it is most likely controlled by/with "stty". 
+
+Inestead of wiping the line separately, spaces are added to the end of the
+text. Finally a single '\n' is written to keep the last line.
+
+Obviosly there is a line break if the text is longer than the tty's width.
+
+Currently (12/2023) there's only one such print statement: testing ciphers
+which requires at least 65 characters (stty columns) to behave as expected.
 
 
 =cut
