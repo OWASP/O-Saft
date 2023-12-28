@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.40 23/12/28 08:57:22";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.41 23/12/28 14:45:58";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -341,23 +341,14 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 sub _yeast_exit {
     #? print collected information at program exit
-    if (0 < $cfg{'trace'}) {
-        _yTRAC("cfg'exitcode'", $cfg{'use'}->{'exitcode'});
-        _yTRAC("exit status",   (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
-    }
-    _yTRAC("internal administration ..");
-    _yTRAC('@cfg{done} {');
+    _yTRAC("cfg{exitcode}", $cfg{'use'}->{'exitcode'});
+    _yTRAC("exit status", (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
+    _yeast("internal administration ..");
+    _yline(' @cfg{done} {');
     foreach my $key (sort keys %{$cfg{'done'}}) {
-        # cannot use  _yeast_trac(\%{$cfg{'done'}}, $key);
-        # because we want the CMD prefix here
-        my $label = sprintf("  %-10s=", $key);
-        if ('arg_cmds' eq $key) {
-            _yTRAC("$label\t[" . join(" ", @{$cfg{'done'}->{$key}}) . "]");
-        } else {
-            _yTRAC("$label\t" . $cfg{'done'}->{$key});
-        }
+        _yeast_trac(\%{$cfg{'done'}}, $key);
     }
-    _yTRAC('@cfg{done} }');
+    _yline(' @cfg{done} }');
     return;
 } # _yeast_exit
 
@@ -1057,7 +1048,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.40 2023/12/28
+2.41 2023/12/28
 
 =head1 AUTHOR
 
