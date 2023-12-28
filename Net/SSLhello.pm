@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.68 23/12/15 13:24:27",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.69 23/12/28 22:17:27",
 my  $SSLHELLO   = "O-Saft::Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -448,21 +448,21 @@ sub _sprintf_hex_val        ($$;$);
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _y_ts      { if ($Net::SSLhello::traceTIME <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]) }
+sub _y_me_ts   { return "" if ($Net::SSLhello::traceTIME <= 0); return sprintf("#%s [%02s:%02s:%02s]:", $SSLHELLO, (localtime)[2,1,0]); }
 
-sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . $SSLHELLO . "::" . $messages[0]                 if ($Net::SSLhello::trace > 0); return }
-sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . $SSLHELLO . "::"                                if ($Net::SSLhello::trace > 0); return }
-sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)        if ($Net::SSLhello::trace > 1); return }
-sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace > 2); return }
-sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages)    if ($Net::SSLhello::trace ==3); return }
-sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 3); return }
-sub _trace5($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . $SSLHELLO . "::" . join(" ", @messages) if ($Net::SSLhello::trace > 4); return }
-sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 0); return }
-sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($Net::SSLhello::trace > 1); return }
-sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 2); return }
-sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace ==3); return }
-sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 3); return }
-sub _trace5_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($Net::SSLhello::trace > 4); return }
+sub _trace($)  { my @messages = @_; local $\ = ""; printf("%s %s",      _y_me_ts(), $messages[0])         if ($Net::SSLhello::trace > 0); return }
+sub _trace0($) { my @messages = @_; local $\ = ""; printf("%s",         _y_me_ts())                       if ($Net::SSLhello::trace > 0); return }
+sub _trace1($) { my @messages = @_; local $\ = ""; printf("%s %s",      _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 1); return }
+sub _trace2($) { my @messages = @_; local $\ = ""; printf("%s %s -->",  _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 2); return }
+sub _trace3($) { my @messages = @_; local $\ = ""; printf("%s %s -->",  _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace ==3); return }
+sub _trace4($) { my @messages = @_; local $\ = ""; printf("%s %s --->", _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 3); return }
+sub _trace5($) { my @messages = @_; local $\ = ""; printf("%s %s --->", _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 4); return }
+sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                       if ($Net::SSLhello::trace > 0); return }
+sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                       if ($Net::SSLhello::trace > 1); return }
+sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                             if ($Net::SSLhello::trace > 2); return }
+sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                             if ($Net::SSLhello::trace ==3); return }
+sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                             if ($Net::SSLhello::trace > 3); return }
+sub _trace5_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                             if ($Net::SSLhello::trace > 4); return }
 
 sub _carp   {
     #? print warning message if wanted
