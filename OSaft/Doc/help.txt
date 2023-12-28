@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.129 23/12/14 19:59:03
+# SID   @(#) help.txt 1.130 23/12/28 16:41:39
 
 NAME
 
@@ -565,6 +565,7 @@ COMMANDS
           with  --cipher=CIPHER  option.
 
           Use  --v  option to see all ciphers being checked.
+#          For  --ciphermode=openssl  only
 
       +cipher-default
 
@@ -2092,9 +2093,9 @@ OPTIONS
 
       Difference --trace vs. --v
 
-          While  --v  is used to print more data,  --trace  is used to  print
+          --v  prints more information what actually is done. --trace  prints
           more information about internal data such as procedure names and/or
-          variable names and program flow.
+          variable names with their values.
 
       --v
 
@@ -2107,17 +2108,17 @@ OPTIONS
 
           Note that  --v  is different from  -v  (see above).
 
-      --v --v
-
-          Print remotely checked ciphers.
-
       --v-cipher --cipher-v
 
           Print remotely checked ciphers.
           In contrast to  --v --v  above,  this just prints the ciphers while
           being checked, but no other verbose messages.
 
-# following no longer implemented (8/2016)
+# following no longer implemented (8/2016, 12/2023)
+#
+#      --v --v
+#
+#          Print remotely checked ciphers.
 #
 #      --v --v --v
 #
@@ -2129,7 +2130,7 @@ OPTIONS
 #
       --trace
 
-          Print debugging messages.
+          Print debugging messages, function names, variable names or values.
 
       --trace --trace
 
@@ -2158,7 +2159,8 @@ OPTIONS
 
       --trace-cmd
 
-          Trace execution of command processing (those given as  +CMD).
+          Option obsolete since Version 23.11.23. Please use  --v  instead.
+#          Trace execution of command processing (those given as  +CMD).
 
       --trace-key
       --trace@
@@ -2173,8 +2175,8 @@ OPTIONS
 
       --trace-time
 
-          Prints trace output with timestamps. More timestamps are printed if
-          used together with  --trace-cmd.
+          Prints trace output with timestamps.
+#          More timestamps are printed if used together with  --trace-cmd.
 
       --trace=VALUE
 
@@ -2185,7 +2187,6 @@ OPTIONS
             * --trace=1         | same as  --trace
             * --trace=2         | same as  --trace  --trace
             * --trace=arg       | same as  --trace-arg
-            * --trace=cmd       | same as  --trace-cmd
             * --trace=cli       | same as  --trace-cli
             * --trace=key       | same as  --trace-key
             * --trace=time      | same as  --trace-time
@@ -2197,11 +2198,12 @@ OPTIONS
 
       --trace-me
 
-          Print debugging messages for  $0  only, but not any modules.
+          Print debugging messages for  $0  only but not for called methods of
+          any used module.
 
       --trace-not-me
 
-          Print debugging messages for modules only, but not $0 itself.
+          Print debugging messages for modules only, but not  $0  itself.
 
       --hint
 
@@ -3624,7 +3626,7 @@ KNOWN PROBLEMS
              For a detailed description, please see X&Connection problems&.
 
         Other options which may help to get closer to the problem's cause:
-        --trace-time,  --timeout=SEC,  --trace,  --trace-cmd
+        --trace-time,  --timeout=SEC,  --trace
 
         Using  --trace-time   should show following times:
               DNS:             1 .. 10 sec
@@ -3825,11 +3827,12 @@ LIMITATIONS
 
     Debug and trace output
 
-        When both  --trace-key  and  --trace-cmd  options are used, output is
-        mixed, obviously.
-        Hint: output for  --trace-cmd  always contains "CMD".
-
-        Any  --trace*  option implies  --trace-time .
+# until VERSION 23.11.23
+#        When both  --trace-key  and  --trace-cmd  options are used, output is
+#        mixed, obviously.
+#        Hint: output for  --trace-cmd  always contains "CMD".
+#
+#        Any  --trace*  option implies  --trace-time .
 
 
 DEPENDENCIES
@@ -4716,13 +4719,17 @@ EXAMPLES
           $0 +info --trace-arg some.tld
 
         * Show internal control flow
-          $0 +info some.tld --trace-cmd
+          $0 +info some.tld --v
+          $0 +info some.tld --trace-me
 
         * Show internal timing
           $0 +info some.tld --trace-time
 
         * Show checking ciphers
-          $0 +cipher some.tld --v --v
+          $0 +cipher some.tld --v
+
+        * Show checking ciphers
+          $0 +cipher some.tld --v --v --ciphermode=openssl
 #
 #        * List checked ciphers one per line
 #          $0 +cipher some.tld --v --v --v
@@ -4736,12 +4743,12 @@ EXAMPLES
         * Show certificate CA verifications
           $0 some.tld +chain_verify +verify +error_verify +chain
 
-        * Avoid most performance and timeout problems (don't use  --v)
+        * Avoid most performance and timeout problems (don't use  --v --trace)
           $0 +info some.tld --no-dns --no-sni --ignore-no-conn
           $0 +info some.tld --no-dns --no-sni --no-cert --no-http --no-openssl
 
         * Identify timeout problems
-          $0 +info some.tld --trace-cmd
+          $0 +info some.tld --v --trace-time
 
           this will show lines containing:
           #O-Saft  CMD: test ...
