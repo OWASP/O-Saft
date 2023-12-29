@@ -71,7 +71,7 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.71 23/12/29 11:27:57",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.72 23/12/29 12:48:30",
 my  $SSLHELLO   = "Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -449,7 +449,6 @@ sub _sprintf_hex_val        ($$;$);
 #sub _trace4_  { _trace4(@_); }
 
 sub _ytime     { my $now = 1; return (0 >= $Net::SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
-#sub _ytime     { return "" if ($Net::SSLhello::traceTIME <= 0); my $now = 1; return sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
       #$now = time() if ($cfg_out('time_absolut'));# not supported here
 sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
 
@@ -1540,7 +1539,7 @@ sub version { # version of SSLhello
     return;
 } # version
 
-sub __print { return sprintf("%s%s\n", "#SSLhello: ", @_); }
+sub __print { return sprintf("#%s: %s\n", $SSLHELLO, @_); }
 sub _yprint { return __print(sprintf("%21s=%s", $_[0], $_[1])); }
 
 sub printConstants {
