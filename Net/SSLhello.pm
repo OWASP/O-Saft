@@ -71,8 +71,8 @@ BEGIN {
 }
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.70 23/12/28 22:36:29",
-my  $SSLHELLO   = "O-Saft::Net::SSLhello";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.71 23/12/29 11:27:57",
+my  $SSLHELLO   = "Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -448,9 +448,10 @@ sub _sprintf_hex_val        ($$;$);
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _ytime     { my $now = 1; return sprintf("%02s:%02s:%02s", (localtime($now))[2,1,0]); }
+sub _ytime     { my $now = 1; return (0 >= $Net::SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
+#sub _ytime     { return "" if ($Net::SSLhello::traceTIME <= 0); my $now = 1; return sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
       #$now = time() if ($cfg_out('time_absolut'));# not supported here
-sub _y_me_ts   { return "" if ($Net::SSLhello::traceTIME <= 0); return sprintf("#%s [%s]:", $SSLHELLO, _ytime()); }
+sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
 
 sub _trace($)  { my @messages = @_; printf("%s %s",      _y_me_ts(), $messages[0])         if ($Net::SSLhello::trace > 0); return }
 sub _trace0($) { my @messages = @_; printf("%s",         _y_me_ts())                       if ($Net::SSLhello::trace > 0); return }
@@ -1534,7 +1535,6 @@ my %SSL2_CIPHER_STRINGS = (
 
 sub version { # version of SSLhello
     #? prints the official version number of SSLhello (yy-mm-dd)
-
     local $\ = ""; # no auto '\n' at the end of the line
     print "NET::SSLhello        ($VERSION)\n";
     return;
@@ -1547,6 +1547,7 @@ sub printConstants {
     #? prints the global constants
     #
     local $\ = ""; # no auto '\n' at the end of the line
+    _trace("printConstants() {\n");
     my $line = "#--------------------+-------------------------------------------";
     print __print("#----------------------------------- Net::SSLhello::Constants {");
     print __print($line);
@@ -1577,12 +1578,14 @@ sub printConstants {
     print __print($line);
     print __print("#----------------------------------- Net::SSLhello::Constants }");
     print "\n";
+    _trace("printConstants() }\n");
 } # printConstants
 
 sub printParameters {
     #? prints the global parameters
     #
     local $\ = ""; # no auto '\n' at the end of the line
+    _trace("printParameters() {\n");
     my $line = "#--------------------+-------------------------------------------";
     print __print("#---------------------------------- Net::SSLhello::Parameters {");
     print __print($line);
@@ -1645,6 +1648,7 @@ sub printParameters {
     print _yprint("socket::getprotobyname('tcp')", $_protocol);
     print __print($line);
     print __print("#---------------------------------- Net::SSLhello::Parameters }");
+    _trace("printParameters() }\n");
     return;
 } # printParameters
 
@@ -1675,7 +1679,7 @@ sub printCipherStringArray ($$$$$@) {
     my $cipher  = "";
     local $\    = ""; # no auto '\n' at the end of the line
 
-    _trace4 ("printCipherStringArray: {\n");
+    _trace("printCipherStringArray($legacy, $host, $port, $ssl, $usesni, ...) {\n");
     $legacy = "csv" if ($legacy eq "compact");                      # backward compatibility: old 'compact' style => new 'csv' style
     if ($usesni) {
         $sni = "SNI";
@@ -1759,7 +1763,7 @@ sub printCipherStringArray ($$$$$@) {
     if ($legacy eq 'csv') { # csv-style
         print "\n";
     }
-    _trace4 ("printCipherStringArray: }\n\n");
+    _trace("printCipherStringArray() }\n");
     return;
 } # printCipherStringArray
 
@@ -1803,7 +1807,7 @@ sub checkSSLciphers ($$$@) {
     if ($protocol == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
         _trace4_ ("\n");
         foreach my $cipher_str (@cipher_str_array) {
-            _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
+            _trace4 (" checkSSLciphers: Cipher-String: >$cipher_str< -> ");
             ($cipher_str) =~ s/(?:0x03|0x02|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
             _trace4_ (" >". hexCodedCipher($cipher_str)."<\n");
 
@@ -1825,14 +1829,14 @@ sub checkSSLciphers ($$$@) {
                 }
                 _trace_("\n");
             }
-            _trace(" checkSSLciphers: }\n\n");
         }
+        _trace("checkSSLciphers() }\n");
         return (compileSSL2CipherArray ($acceptedCipher));
     } else { # SSL3, TLS, DTLS .... check by the cipher
         $cipher_spec = ""; # collect cipher specs
         _trace4_ ("\n");
         foreach my $cipher_str (@cipher_str_array) {
-            _trace5 ("checkSSLciphers: add cipher >$cipher_str< to cipher-string -> ");
+            _trace5 (" checkSSLciphers: add cipher >$cipher_str< to cipher-string -> ");
             if ($cipher_str !~ /0x02/x) { # No SSL2 cipher
                 ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
                 _trace5_ ("  >". hexCodedCipher($cipher_str)."<");
@@ -1852,11 +1856,9 @@ sub checkSSLciphers ($$$@) {
 
                 if ($Net::SSLhello::trace > 1) { # print ciphers that are tested this round:
                     $i = 0;
-                    if ($Net::SSLhello::starttls) {
-                        _trace1 ("checkSSLciphers ($host, $port (STARTTLS), $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
-                    } else {
-                        _trace1 ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
-                    }
+                    my $txt = "";
+                       $txt = " (STARTTLS)" if $Net::SSLhello::starttls;
+                    _trace1 (" checkSSLciphers:$txt Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
                     _trace4_ ("\n");
                     foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {
                         _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
@@ -1883,7 +1885,7 @@ sub checkSSLciphers ($$$@) {
                      || ($my_error =~ /create a socket/) ) {
                         #### Fatal Errors -> Useless to check more protocols
 
-                        _trace ("checkSSLciphers (1.1): '$my_error'\n") if ($my_error);
+                        _trace (" checkSSLciphers (1.1): '$my_error'\n") if ($my_error);
                         _trace ("**WARNING: checkSSLciphers => Exit loop (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
@@ -1891,28 +1893,28 @@ sub checkSSLciphers ($$$@) {
                       || ($my_error =~ /answer ignored/)
                       || ($my_error =~ /protocol_version.*?not supported/)
                       || ($my_error =~ /check.*?aborted/x) ) { # Just stop, no warning
-                        _trace2 ("checkSSLciphers (1.2): '$my_error'\n") if ($my_error);
+                        _trace2 (" checkSSLciphers (1.2): '$my_error'\n") if ($my_error);
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
                     } elsif ( ($my_error =~ /target.*?ignored/x)
                       || ($my_error =~ /protocol.*?ignored/x) ) {
                          #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 ("checkSSLciphers (1.3): \'$my_error\'\n") if ($my_error);
+                        _trace2 (" checkSSLciphers (1.3): \'$my_error\'\n") if ($my_error);
                         carp ("**WARNING: checkSSLciphers => Exit loop (1.3)");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
                     } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_CIPHERS)) || ($my_error =~ /\-> Received NO Data/)) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
                         if ($Net::SSLhello::noDataEqNoCipher == 1) { # ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported
-                            _trace2 ("checkSSLciphers (1.4): Ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported. Ignored: '$my_error'\n");
+                            _trace2 (" checkSSLciphers (1.4): Ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported. Ignored: '$my_error'\n");
                             @cipherSpecArray =(); # => empty @cipherSpecArray
                             $my_error = ""; # reset error message
                             next;
                         } else { # noDataEqNoCipher == 0
-                            _trace2 ("checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported. Retry to test the following cipheres individually:\n");
+                            _trace2 (" checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported. Retry to test the following cipheres individually:\n");
                             carp ("**WARNING: checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported.");
                         }
                     } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_RECORD)) || ($my_error =~ /Error 1: too many requests/)) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                        _trace2 ("checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                        _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                         carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                         next;
                     } elsif ((OSaft::error_handler->is_err) || $my_error) { # error found
@@ -1920,7 +1922,7 @@ sub checkSSLciphers ($$$@) {
                             OSaft::error_handler->new( {
                                 type    => (OERR_SSLHELLO_ERROR_MESSAGE_IGNORED),
                                 id      => '(1.9)',
-                                message => "Unexpected Error Messagege ignored: \'$my_error\'",
+                                message => "Unexpected Error Message ignored: \'$my_error\'",
                                 warn    => 1,
                             } );
                         }
@@ -1937,7 +1939,7 @@ sub checkSSLciphers ($$$@) {
             $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round;
             if ($Net::SSLhello::trace > 1) { #print ciphers that are tested this round:
                 $i = 0;
-                _trace ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
+                _trace (" checkSSLciphers: Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
                 _trace4_ ("\n");
                 foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {
                     _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
@@ -1959,36 +1961,36 @@ sub checkSSLciphers ($$$@) {
             } else { # no cipher accepted
                 _trace1_ ("=> no cipher found\n");
                 if ( ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
-                    _trace2 ("checkSSLciphers (2.1): '$my_error'\n");
+                    _trace2 (" checkSSLciphers (2.1): '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers => Exit loop (2.1)");
                     @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                     last;
                 } elsif ( ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) { # just stop, no warning
-                    _trace1 ("**checkSSLciphers => Exit loop (2.2)");
+                    _trace1 (" checkSSLciphers (2.2): Exit loop");
                     @cipherSpecArray =(); # server did not accepty any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                     last;       # no more ciphers to test
                 } elsif ( ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {   #### Fatal Errors -> Useless to check more ciphers
-                    _trace2 ("checkSSLciphers (2.3): '$my_error'\n");
+                    _trace2 (" checkSSLciphers (2.3): '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers => Exit loop (2.3)");
                     @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                     last;
                 } elsif ( $my_error =~ /\-> Received NO Data/) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
                     if ($Net::SSLhello::noDataEqNoCipher == 1) { # ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported
-                        _trace1 ("checkSSLciphers (2.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$my_error'\n");
+                        _trace1 (" checkSSLciphers (2.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$my_error'\n");
                         @cipherSpecArray =(); # => Empty @cipherSpecArray
                         $my_error = ""; # reset error message
                         next;   # here: eq last
                     } else {    # noDataEqNoCipher == 0
-                        _trace2 ("checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
+                        _trace2 (" checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
                         carp ("**WARNING: checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported.");
                     }
                 } elsif ($my_error =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                    _trace2 ("checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                    _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                     carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($my_error) {  # error found
-                    _trace2 ("checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$my_error'\n");
-                    carp ("checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$my_error'\n");
+                    _trace2 (" checkSSLciphers (2.6): Unexpected Error Message ignored: '$my_error'\n");
+                    carp (" checkSSLciphers (2.6): Unexpected Error Message ignored: '$my_error'\n");
                     $my_error = ""; # reset error message
                 }
                 @cipherSpecArray =(); # => Empty @cipherSpecArray
@@ -2018,12 +2020,12 @@ sub checkSSLciphers ($$$@) {
         printTLSCipherList ($cipher_str) if ($Net::SSLhello::trace > 3); # abt: _trace4
 
         while ($cipher_str) { # found some cipher => Check priority
-            _trace2 ("checkSSLciphers: Check Cipher Priority for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
+            _trace2 (" checkSSLciphers: Check Cipher Priority for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $my_error = ""; # reset error message
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect accepted ciphers by priority
             _trace2_ ("# -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($my_error) {
-                _trace2 ("checkSSLciphers (3): '$my_error'\n");
+                _trace2 (" checkSSLciphers (3): '$my_error'\n");
                 # list untested ciphers
                 $i = 0;
                 my $str = ""; #output string with list of ciphers
@@ -2036,18 +2038,18 @@ sub checkSSLciphers ($$$@) {
                 }
                 # End: list untested ciphers
                 if ( ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
-                    _trace1 ("checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
+                    _trace1 (" checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     $my_error = ""; # reset error message
                     last;
                 } elsif ( ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/x) ) { # Just stop, no warning
-                    _trace1 ("checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
+                    _trace1 (" checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
-                    _trace1 ("checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
+                    _trace1 (" checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp ("**WARNING: checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
@@ -2105,7 +2107,7 @@ sub checkSSLciphers ($$$@) {
 
                 $cipher_str = join ("",@acceptedCipherArray); # check prio for next ciphers
             } else { # nothing received => lost connection
-                _trace2 ("checkSSLciphers (6): '$my_error'\n");
+                _trace2 (" checkSSLciphers (6): '$my_error'\n");
                 # list untested ciphers
                 $i = 0;
                 my $str = ""; # output string with list of ciphers
@@ -2118,22 +2120,22 @@ sub checkSSLciphers ($$$@) {
                 }
                 # End: list untested ciphers
                 if (  ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
-                    _trace1 ("checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
+                    _trace1 (" checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     $my_error = ""; # reset error message
                     last;
                 } elsif ($my_error =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                    _trace2 ("checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                    _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                     carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($my_error) { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
-                    _trace1 ("checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
+                    _trace1 (" checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
-                    _trace1 ("checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
+                    _trace1 (" checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp ("**WARNING: checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
@@ -2151,7 +2153,7 @@ sub checkSSLciphers ($$$@) {
         #     _doCheckAllExtensions ($host, $port, $protocol, $acceptedCipherSortedArray[$_i], $dtlsEpoch, 1); # if server uses a priority List we get the same cipher again!$
         # }
 
-        _trace(" checkSSLciphers: }\n\n");
+        _trace("checkSSLciphers() }\n");
         return (compileTLSCipherArray (join ("",@acceptedCipherSortedArray)));
     }
 } # checkSSLciphers
@@ -2166,6 +2168,7 @@ sub getSSLciphersWithParam {
     my %ciphers;
     my $_i = 0;
     my $lastkey   = "";
+    _trace("getSSLciphersWithParam($host, $port, $ssl, ...) {\n");
     @{$ciphers{0}} = checkSSLciphers($host, $port, $ssl, @cipher_str_array);
     foreach my $key (@{$ciphers{0}}) {
         next if ($lastkey eq $key); # should happen only once
@@ -2173,6 +2176,7 @@ sub getSSLciphersWithParam {
         $_i++;
         $ciphers{$_i} = [ $key, getCipherParameter($key, "", " | ") ];
     }
+    _trace("getSSLciphersWithParam()\t= %ciphers }\n");
     return %ciphers
 } # getSSLciphersWithParam
 
@@ -5272,7 +5276,7 @@ sub parseServerKeyExchange($$$) {
     #? parse a ServerKeyExchange packet to detect length of DHparam, ECDHE 'supprted_group', RSA Key length, optional usage of PSK
     #? Test PSK ciphers locally with: "openssl s_server -4 -psk 1a2b3c4d -psk_hint 01020304 -nocert -www -msg"
     #? Verfied size of DHparam etc manually with "openssl s_client -showcerts -msg -psk 1a2b3c4d -tls1_2 -cipher 'DHE-PSK-AES128-CBC-SHA' -connect localhost:4433"
-    #? TBD: parsie independant from cipher name; could be needed for TLSv13
+    #? TBD: parse independant from cipher name; could be needed for TLSv13
     my ($keyExchange, $len, $d) = @_;
     my ($_tmpLen, $_null, $_handshake_type, $_bits) = 0;
     my %_mySSLinfo;
@@ -5734,7 +5738,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 warn    => 0,
                             } );
                             if ((grep{/(:?--v)$/ix} @main::ARGV) > 0) { # warning with --v only
-                                # TODO: warning here disabled, as it is considered a server problem; nees to be tested again
+                                # TODO: warning here disabled, as it is considered a server problem; needs to be tested again
                                 _carp ("$client_ssl not supported by '$host:$port'; no ciphers detected, ignored\n");
                                 _hint ("consider using '--ciphermode=openssl' also\n");
                             };
