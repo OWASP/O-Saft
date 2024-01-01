@@ -62,12 +62,22 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.152 23/12/28 19:57:01"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.153 24/01/01 16:29:55"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
 use autouse 'Data::Dumper' => qw(Dumper);
 #use Encode;    # see _load_modules()
+
+#| definitions: configuration need early
+#| -------------------------------------
+# SEE Make:OSAFT_MAKE (in Makefile.pod)
+our $time0  = time();   # must be set very early, cannot be done in osaft.pm
+    $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
+    # normalise to even seconds, allows small time diffs
+
+#_____________________________________________________________________________
+#______________________________________________ functions needed in BEGIN{} __|
 
 sub _set_binmode    {
     # set discipline for I/O operations (STDOUT, STDERR)
@@ -79,16 +89,13 @@ sub _set_binmode    {
 } # _set_binmode
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
-sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # SEE Note:ARGV
+# SEE Note:ARGV
+sub _is_ARGV    { my $rex = shift; return (grep{/$rex/}  @ARGV); }  # case-sensitive!
+sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # case-insensitive!
+sub _is_trace   { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/}   @ARGV); }
+sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! because of --v
     # return 1 if value in command-line arguments @ARGV
-sub _is_trace   { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/} @ARGV);   }
-sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! SEE Note:ARGV
-    # need to check @ARGV directly as this is called before any options are parsed
 
-# SEE Make:OSAFT_MAKE (in Makefile.pod)
-our $time0  = time();   # must be set very early, cannot be done in osaft.pm
-    $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
-    # normalise to even seconds, allows small time diffs
 sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
     my @txt = @_;
@@ -114,7 +121,7 @@ sub _yeast_EXIT($)  {
     my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+,]|--)$arg).*/i} @ARGV) > 0) { # case-sensitve, cannot use _is_argv()
+    if (0 < _is_ARGV("(?:([+,]|--)$arg).*")) {
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         exit 0;
     }
@@ -125,7 +132,7 @@ sub _yeast_NEXT($)  {
     my $txt =  shift;   # example: INIT0 - initialisation start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(?:([+,]|--)$arg).*/i} @ARGV) > 0) { # case-sensitve, cannot use _is_argv()
+    if (0 < _is_ARGV("(?:([+,]|--)$arg).*")) {
         printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         return 1;
     }
@@ -153,8 +160,7 @@ BEGIN {
     unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
     unshift(@INC, $_pwd)    if (1 > (grep{/^$_pwd$/}  @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
-    # handle simple help very quickly; _is_argv() cannot be used because upper case
-    if ((grep{/(?:[+]|,|--)VERSION/} @ARGV) > 0) { _version_exit(); }
+    _version_exit()         if _is_ARGV('(?:([+,]|--)VERSION)');
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
@@ -166,68 +172,29 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
-#| definitions: include configuration; it's ok to die if missing
-#| -------------------------------------
-use OSaft::Text     qw(%STR);
-use OSaft::Ciphers  qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
-    # not loaded with _load_modules() because always needed
-use osaft;
-use OSaft::Data;
-# simplify use of variables (because importing fails in o-saft-standalone.pl)
-#our %cfg        = %OSaft::Cfg::cfg;
-our %checks     = %OSaft::Data::checks;
-our %data       = %OSaft::Data::data;
-our %data0      = %OSaft::Data::data0;
-our %info       = %OSaft::Data::info;
-our %shorttexts = %OSaft::Data::shorttexts;
-our %check_cert = %OSaft::Data::check_cert;
-our %check_conn = %OSaft::Data::check_conn;
-our %check_dest = %OSaft::Data::check_dest;
-our %check_http = %OSaft::Data::check_http;
-our %check_size = %OSaft::Data::check_size;
-
-$cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.152");# use version of this file not $VERSION
-osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
-# TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
-
-my  $arg    = "";
-my  @argv   = ();   # all options, including those from RC-FILE
-                    # will be used when ever possible instead of @ARGV
-
-#dbx# print STDERR "#$cfg{'me'} INC=@INC\n";
-
-printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
-    # print complete command-line if any --trace-* was given, it's intended
-    # that it works if unknown --trace-* was given, for example --trace-CLI
-
-#| definitions: forward declarations
-#| -------------------------------------
-sub _is_cfg_intern($);
-    # forward ...
-
 #| README if any
 #| -------------------------------------
 #if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
     # SEE Since VERSION 16.06.16
 
-#| CGI
+#| definitions: include configuration
 #| -------------------------------------
-my  $cgi = 0;
-    $cgi = 1 if ((grep{/(?:--cgi-?(?:exec|trace))/i} @ARGV) > 0);
-#if ($cfg{'me'} =~/\.cgi$/) { SEE Since VERSION 18.12.18
-    #die $STR{ERROR}, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
-#} # CGI
+# modueles always needed, it's ok to die if missing, hence not loaded with _load_modules()
+use OSaft::Text     qw(%STR);
+use OSaft::Ciphers  qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
+use osaft;          # defines %cfg, ...
+use OSaft::Data;
+
+printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
+    # print complete command-line if any --trace-* was given, it's intended
+    # that it works if unknown --trace-* was given, for example --trace-CLI
 
 #_____________________________________________________________________________
-#________________________________________________________________ functions __|
+#______________________________________ functions for trace, initialisation __|
 
 #| definitions: debug and tracing functions
 #| -------------------------------------
-# functions and variables used very early in main
+# functions used very early in main
 sub _dprint { my @txt = @_; printf(STDERR "%s%s\n", $STR{DBX}, join(" ", @txt)); return; }
     #? print line for debugging
 sub _dbx    { my @txt = @_; _dprint(@txt); return; }
@@ -267,7 +234,7 @@ sub _warn_and_exit  {
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
     my @txt = @_;
-    if (_is_argv('(?:--experimental)') > 0) {
+    if (0 < _is_argv('(?:--experimental)')) {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
@@ -292,7 +259,7 @@ sub _warn_nosni     {
 sub _vprint         {
     #? print information when --v is given
     my @txt = @_;
-    return if (0 >= (grep{/(?:--v$)/} @ARGV));
+    return if (0 >= _is_ARGV('(?:--v$)'));
     printf("%s%s\n", $STR{'INFO'}, join(" ", @txt));
     return;
 } # _vprint {
@@ -305,13 +272,13 @@ sub _vprint_read    {
     # $cfg{'out'}->{'header'} is also not yet properly set, see LIMITATIONS also
     my ($fil, @txt) = @_;
     # TODO: quick&ugly check when to write "reading" depending on given --trace* options
-    return if (0 <  (grep{/(?:--no.?header|--cgi)/i}    @ARGV));# --cgi-exec or --cgi-trace
-    return if (0 >= (grep{/(?:--v$|--trace|--warn)/i}   @ARGV));
-    if (0 >= (grep{/(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)/i} @ARGV)) {
-        return if (0 < (grep{/(?:--trace[_.-]?CLI|KEY$)/i}   @ARGV));# --trace-CLI
+    return if (0 <  _is_argv('(?:--no.?header|--cgi)'));        # --cgi-exec or --cgi-trace
+    return if (0 >= _is_argv('(?:--v$|--trace|--warn)'));
+    if (0 >= _is_argv('(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)')) {
+        return if (0 < _is_argv('(?:--trace[_.-]?CLI|KEY$)/')); # --trace-CLI or --trace-KEY
     }
     # print "read ..." also if only --trace* given
-    _tprint("read", $fil, "(@txt)") if (0 < (grep{/(?:--trace)/i} @ARGV));
+    _tprint("read", $fil, "(@txt)") if _is_argv('(?:--trace)');
     _vprint("read", $fil, "(@txt)");
     return;
 } # _vprint_read
@@ -584,59 +551,34 @@ sub __SSLinfo($$$)  {
     return $val;
 } # __SSLinfo
 
-#| read RC-FILE if any
+#| definitions: forward declarations
 #| -------------------------------------
-_yeast_TIME("cfg{");
-_yeast_EXIT("exit=CONF0 - RC-FILE start");
-if (_is_argv('(?:--rc)') > 0) {                 # (re-)compute default RC-File with full path
-    $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
-    $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
-}
-if (_is_argv('(?:--rc=)') > 0) {                # other RC-FILE given
-    $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
-    $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
-    # no check if file exists, will be done below
-}
-_tprint("RC-FILE: $cfg{'RC-FILE'}") if _is_trace();
-my @rc_argv = "";
-if (_is_argv('(?:--no.?rc)') <= 0) {            # only if not inhibited
-    # we do not use a function for following to avoid passing @argv, @rc_argv
-    if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
-        push(@{$dbx{file}}, $cfg{'RC-FILE'});
-        _vprint_read("$cfg{'RC-FILE'}", "RC-FILE done");
-        ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
-        #  NOTE: the purpose here is to *change the source array"
-        @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
-        @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
-        @rc_argv = grep{s/\s*([+,-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
-        ## use critic
-        close($rc);
-        _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
-        push(@argv, @rc_argv);
-        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot be used here
-        if (_is_trace()) {
-            my @cfgs;
-            _tprint("$cfg{'RC-FILE'}");
-            _tprint("!!Hint: use  --trace  to see complete settings");
-            _tprint("#------------------------------------------------- RC-FILE {");
-            foreach my $val (@rc_argv) {
-                #print join("\n  ", "", @rc_argv);
-                $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
-                _tprint("     $val");
-                if ($val =~ m/--cfg[^=]*=[^=]*/) {
-                    $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
-                    push(@cfgs, $val);
-                }
-            }
-            _tprint("added/modified= @cfgs");
-            _tprint("#------------------------------------------------- RC-FILE }");
-        }
-    } else {
-        _vprint_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_trace();
-    }
-}
-_yeast_EXIT("exit=CONF1 - RC-FILE end");
-$cfg{'RC-ARGV'} = [@rc_argv];
+sub _is_cfg_intern($);
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+my  $arg    = "";
+my  @argv   = ();   # all options, including those from RC-FILE
+                    # will be used when ever possible instead of @ARGV
+
+# simplify use of variables
+#our %cfg        = %OSaft::Cfg::cfg;
+our %checks     = %OSaft::Data::checks;
+our %data       = %OSaft::Data::data;
+our %data0      = %OSaft::Data::data0;
+our %info       = %OSaft::Data::info;
+our %shorttexts = %OSaft::Data::shorttexts;
+our %check_cert = %OSaft::Data::check_cert;
+our %check_conn = %OSaft::Data::check_conn;
+our %check_dest = %OSaft::Data::check_dest;
+our %check_http = %OSaft::Data::check_http;
+our %check_size = %OSaft::Data::check_size;
+
+$cfg{'time0'}   = $time0;
+osaft::set_user_agent("$cfg{'me'}/2.153");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
+# TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
 %{$cfg{'done'}} = (             # internal administration
         'targets'   => 0,
@@ -676,7 +618,70 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'check_certchars' => 0,
 );
 
-push(@argv, @ARGV); # got all now
+#| CGI
+#| -------------------------------------
+my  $cgi = 0;
+    $cgi = 1 if _is_argv('(?:--cgi-?(?:exec|trace$))');
+#if ($cfg{'me'} =~/\.cgi$/) { SEE Since VERSION 18.12.18
+    #die $STR{ERROR}, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
+#} # CGI
+
+#| read RC-FILE if any
+#| -------------------------------------
+_yeast_TIME("cfg{");
+_yeast_EXIT("exit=CONF0 - RC-FILE start");
+if (0 < _is_argv('(?:--rc)')) {                 # (re-)compute default RC-File with full path
+    $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
+    $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
+}
+if (0 < _is_argv('(?:--rc=)')) {                # other RC-FILE given
+    $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
+    $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
+    # no check if file exists, will be done below
+}
+_tprint("RC-FILE: $cfg{'RC-FILE'}") if _is_trace();
+my @rc_argv = "";
+if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
+    # we do not use a function for following to avoid passing @argv, @rc_argv
+    if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
+        push(@{$dbx{file}}, $cfg{'RC-FILE'});
+        _vprint_read("$cfg{'RC-FILE'}", "RC-FILE done");
+        ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
+        #  NOTE: the purpose here is to *change the source array"
+        @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
+        @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
+        @rc_argv = grep{s/\s*([+,-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
+        ## use critic
+        close($rc);
+        _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
+        push(@argv, @rc_argv);
+        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot be used here
+        if (_is_trace()) {
+            my @cfgs;
+            _tprint("$cfg{'RC-FILE'}");
+            _tprint("!!Hint: use  --trace  to see complete settings");
+            _tprint("#------------------------------------------------- RC-FILE {");
+            foreach my $val (@rc_argv) {
+                #print join("\n  ", "", @rc_argv);
+                $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
+                _tprint("     $val");
+                if ($val =~ m/--cfg[^=]*=[^=]*/) {
+                    $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
+                    push(@cfgs, $val);
+                }
+            }
+            _tprint("added/modified= @cfgs");
+            _tprint("#------------------------------------------------- RC-FILE }");
+        }
+    } else {
+        _vprint_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_trace();
+    }
+}
+$cfg{'RC-ARGV'} = [@rc_argv];
+$cfg{'done'}->{'rc_file'}++ if (0 < $#rc_argv);
+_yeast_EXIT("exit=CONF1 - RC-FILE end");
+
+push(@argv, @ARGV); # got all now; from hereon "grep{/.../} @argv" is used instead of _is_argv()
 push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC-FILE, needed in _warn()
 
 #| read DEBUG-FILE, if any (source for trace and verbose)
@@ -1090,7 +1095,6 @@ our %text = (
 
 $cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
-$cfg{'done'}->{'rc_file'}++ if ($#rc_argv > 0);
 
 #| incorporate some environment variables
 #| -------------------------------------
@@ -1106,6 +1110,9 @@ if (defined $ENV{'LIBPATH'}) {
 
 _yeast_EXIT("exit=INIT1 - initialisation end");
 usr_pre_file();
+
+#_____________________________________________________________________________
+#_______________________________________________________ internal functions __|
 
 #| definitions: functions to "convert" values
 #| -------------------------------------
@@ -2971,6 +2978,9 @@ sub _get_data0          {
     return;
 } # _get_data0
 
+#_____________________________________________________________________________
+#_________________________________________________ cipher-related functions __|
+
 sub _get_cipherslist    {
     #? return array of cipher suites (names or keys) according command-line options
     #  evaluates the --cipher= --cipher-range= option
@@ -3356,6 +3366,9 @@ sub ciphers_scan_intern {
     }
     return $results;
 } # ciphers_scan_intern
+
+#_____________________________________________________________________________
+#__________________________________________________________ check functions __|
 
 sub check_certchars     {
     #? check for invalid characters in certificate
@@ -5370,8 +5383,8 @@ sub scoring         {
     return;
 } # scoring
 
-#| definitions: print functions
-#| -------------------------------------
+#_____________________________________________________________________________
+#__________________________________________________________ print functions __|
 
 sub _cleanup_data   {
     # cleanup some values (strings) in data
@@ -6439,14 +6452,15 @@ sub printusage_exit     {
     #? print simple usage, first line with passed text
     my @txt = @_;
     print $STR{USAGE}, @txt;
-    print "# most common usage:
+    print <<"EoUSAGE";
+# most common usage:
   $cfg{'me'} +info     your.tld
   $cfg{'me'} +check    your.tld
   $cfg{'me'} +cipher   your.tld
 # for more help use:
   $cfg{'me'} --h
   $cfg{'me'} --help
-    ";
+EoUSAGE
     exit 2;
 } # printusage_exit
 
