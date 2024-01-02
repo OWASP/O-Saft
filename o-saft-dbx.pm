@@ -55,17 +55,24 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.42 24/01/02 11:05:19";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.44 24/01/02 22:57:53";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 # debug methods
 
 sub _yTIME      {
-    return "" if (not _is_cfg_out('traceTIME'));
-    my $now = time() - ($time0 || 0);
-       $now = time() if (_is_cfg_out('time_absolut'));# $time0 defined in main
-       $now +=1 if (0 > $now);  # fix runtime error: $now == -1
+    # compute timestamp, absolute or relative time
+    # return empty string if no --trace-time given
+    # %cfg is set when this function is called, if not it's ok to die
+    my $now = 0;
+    return "" if not _is_cfg_out('traceTIME');
+    if (defined $time0) {
+        $now  = time();
+        $now -= $time0 if not _is_cfg_out('time_absolut');
+        $now  = 0 if (0 > $now);# fix runtime error: $now == -1
+    }
+    $now -= 3600;               # remove 1 hour, otherwise we get 01:00:00
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
 sub __undef     { my $v = shift; $v = $STR{'UNDEF'} if not defined $v; return $v; }
@@ -128,7 +135,6 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
 
 sub _yeast_ciphers_list {
     #? print ciphers fromc %cfg (output optimised for +cipher)
-    return if (0 >= $cfg{'trace'});
     _yline(" ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
@@ -206,7 +212,6 @@ sub _yeast_targets      {
 sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
-    return if (0 >= $cfg{'trace'});
     local $\ = "\n";
     my $arg = " (does not exist)";
     ## no critic qw(Variables::ProhibitPackageVars); they are intended here
@@ -341,7 +346,6 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 sub _yeast_exit {
     #? print collected information at program exit
-    return if (0 >= $cfg{'trace'});
     _yTRAC("cfg{exitcode}", $cfg{'use'}->{'exitcode'});
     _yTRAC("exit status", (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
     _yeast("internal administration ..");
@@ -853,7 +857,7 @@ sub _yeast_test {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit, --testcipherlist
     _yeast($arg);
-    if ($arg =~ /^--test.?ciphers.?list$/) {    # allow not normalised also
+    if ($arg =~ /^--test.?ciphers?.?list$/) {   # allow not normalised also
         # --test-ciphers-list is for printing ciphers in common --v format, it
         # also honors the option  --cipherrange=  additonaly it relies on some
         # special settings in $cfg{};  +cipher  must be added to $cfg{'do'} to
@@ -1046,7 +1050,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.42 2024/01/02
+2.44 2024/01/02
 
 =head1 AUTHOR
 
