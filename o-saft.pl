@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.153 24/01/01 16:29:55"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.155 24/01/02 09:22:22"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -97,11 +97,11 @@ sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV
     # return 1 if value in command-line arguments @ARGV
 
 sub _yeast_TIME(@)  {
-    # print timestamp if --trace-time was given; similar to _y_CMD
+    # print timestamp if --trace-time was given; similar to trace_time
     my @txt = @_;
     return if (_is_argv('(?:--trace.?(?:time|cmd))') <= 0);
-#    if (exists &_y_CMD) {
-#        _y_CMD(@txt);
+#    if (exists &trace_time) {
+#        trace_time(@txt);
 #        return;
 #    }
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
@@ -194,6 +194,9 @@ printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI
 
 #| definitions: debug and tracing functions
 #| -------------------------------------
+# temporary definition until package available
+sub trace_arg   { _y_ARG(@_); return; }
+
 # functions used very early in main
 sub _dprint { my @txt = @_; printf(STDERR "%s%s\n", $STR{DBX}, join(" ", @txt)); return; }
     #? print line for debugging
@@ -275,7 +278,7 @@ sub _vprint_read    {
     return if (0 <  _is_argv('(?:--no.?header|--cgi)'));        # --cgi-exec or --cgi-trace
     return if (0 >= _is_argv('(?:--v$|--trace|--warn)'));
     if (0 >= _is_argv('(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)')) {
-        return if (0 < _is_argv('(?:--trace[_.-]?CLI|KEY$)/')); # --trace-CLI or --trace-KEY
+        return if (0 < _is_argv('(?:--trace[_.-]?CLI|KEY$)')); # --trace-CLI or --trace-KEY
     }
     # print "read ..." also if only --trace* given
     _tprint("read", $fil, "(@txt)") if _is_argv('(?:--trace)');
@@ -576,7 +579,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.153");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.155");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -708,7 +711,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _yeast_ciphers_list {}
     sub _yeast        {}
     sub _y_ARG        {}
-    sub _y_CMD        {}
     sub _v_print      {}
     sub _v2print      {}
     sub _v3print      {}
@@ -2920,7 +2922,7 @@ sub _get_target         {
        $host  =~ s#/.*$##;              # strip /path/and?more
     ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
     $port  =  $last if not defined $port;
-    _y_ARG("  target arg=$arg => prot=$prot, host=$host, port=$port");
+    trace_arg("target arg=$arg => prot=$prot, host=$host, port=$port");
     #return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
@@ -6485,7 +6487,7 @@ my $typ = 'HOST';
 push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
     $arg = shift @argv;
-    _y_ARG("cli_arg= $arg");
+    trace_arg("cli_arg= $arg");
     push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
     push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
@@ -6519,7 +6521,7 @@ while ($#argv >= 0) {
         # hence `next' at end of surrounding if()
         # $type is set at end of  each matching if condition,  hence only the
         # first matching if condition is executed; sequence is important!
-        _y_ARG("argument? $arg, typ= $typ");
+        trace_arg("argument? $arg, typ= $typ");
         push(@{$dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
         # programming: for better readability  "if($typ eq CONST)"  is used
         #              instead of recommended  "if(CONST eq $typ)"  below
@@ -6745,7 +6747,7 @@ while ($#argv >= 0) {
             }
             # TODO: checking names of protocols needs a sophisticated function
         }
-        _y_ARG("argument= $arg");
+        trace_arg("argument= $arg");
 
         # --trace is special for historical reason, we allow:
         #   --traceARG
@@ -6763,7 +6765,7 @@ while ($#argv >= 0) {
         if ($typ eq 'TRACE')    {
             $typ = 'HOST';      # expect host as next argument
             _set_cfg_out('traceARG',  1)    if ($arg =~ m#^ARG$#i);
-            _set_cfg_out('traceCMD',  1)    if ($arg =~ m#^CMD$#i);
+            _set_cfg_out('traceCMD',  1)    if ($arg =~ m#^CMD$#i); # obsolte since 24.01.24
             _set_cfg_out('traceKEY',  1)    if ($arg =~ m#^KEY$#i);
             _set_cfg_out('traceTIME', 1)    if ($arg =~ m#^TIME$#i);
             $cfg{'traceME'}++    if ($arg =~ m#^ME(?:only)?#i);
@@ -6782,7 +6784,7 @@ while ($#argv >= 0) {
 
     next if ($arg =~ /^\s*$/);  # ignore empty arguments
 
-    _y_ARG("arg_val? $arg");
+    trace_arg("arg_val? $arg");
     # remove trailing = for all options
     # such options are incorrectly used, or are passed in in CGI mode
     # NOTE: this means that we cannot have empty strings as value
@@ -6797,7 +6799,7 @@ while ($#argv >= 0) {
     }
 
     # first handle some old syntax for backward compatibility
-    _y_ARG("opt_old? $arg");
+    trace_arg("opt_old? $arg");
     if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/) {
         $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
         _warn("022: old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
@@ -6816,7 +6818,7 @@ while ($#argv >= 0) {
 
     # all options starting with  --usr or --user  are not handled herein
     # push them on $cfg{'usr_args'} so they can be accessd in o-saft-*.pm
-    _y_ARG("opt_usr? $arg");
+    trace_arg("opt_usr? $arg");
     if ($arg =~ /^--use?r/) {
         $arg =~ s/^(?:--|\+)//; # strip leading chars
         push(@{$cfg{'usr_args'}}, $arg);
@@ -6824,13 +6826,13 @@ while ($#argv >= 0) {
     }
 
     # all options starting with  --h or --help or +help  are not handled herein
-    _y_ARG("opt_--h? $arg");
+    trace_arg("opt_--h? $arg");
     if ($arg =~ /^--h$/)                            { $arg = "--help=help_brief"; } # --h  is special
     if ($arg =~ /^(?:--|\+)help$/)                  { $arg = "--help=NAME"; }   # --help
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
-        _y_ARG("handle --help= ...");
+        trace_arg("handle --help= ...");
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
@@ -6847,7 +6849,7 @@ while ($#argv >= 0) {
     }
 
     #{ handle some specials
-    _y_ARG("optmisc? $arg");
+    trace_arg("optmisc? $arg");
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
@@ -6883,7 +6885,7 @@ while ($#argv >= 0) {
 
     # Following checks use exact matches with 'eq' or RegEx matches with '=~'
 
-    _y_ARG("option?  $arg");
+    trace_arg("option?  $arg");
     #{ OPTIONS
     #  NOTE: that strings miss - and _ characters (see normalisation above)
     #!# You may read the lines as table with columns like: SEE Note:alias
@@ -7236,7 +7238,7 @@ while ($#argv >= 0) {
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
     #} --------+------------------------+---------------------------+----------
 
-    _y_ARG("option=  $arg") if ($arg =~ /^-/);
+    trace_arg("option= $arg") if ($arg =~ /^-/);
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
         # i.e. from sslscan: --no-renegotiation --no-compression ...
         # TODO: means that targets starting with '-' are not possible,
@@ -7245,7 +7247,7 @@ while ($#argv >= 0) {
     #{ COMMANDS
     my $p = qr/[._-]/;  # characters used as separators in commands keys
                         # this will always be used as $p? below
-    _y_ARG("command? $arg");
+    trace_arg("command? $arg");
     $arg =~ s/^,/+/;    # allow +command and ,command
     # The following sequence of conditions is important: commands which are an
     # alias for another command are listed first. These aliases should contain
@@ -7391,7 +7393,7 @@ while ($#argv >= 0) {
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
-        _y_ARG("command+ $val");
+        trace_arg("command+ $val");
         next if ($val =~ m/^\+\s*$/);   # ignore empty commands; for CGI mode
         next if ($val =~ m/^\s*$/);     # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {       # +exec is special
@@ -7417,13 +7419,13 @@ while ($#argv >= 0) {
         if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
         if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
         if (_is_member($val, \@{$cfg{'commands_usr'}}) == 1) {
-            _y_ARG("cmdsusr= $val");
+            trace_arg("cmdsusr= $val");
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
         if (_is_member($val, \@{$cfg{'commands_notyet'}}) > 0) {
             _warn("044: command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
-            _y_ARG("command= $val");
+            trace_arg("command= $val");
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
             _warn("049: command '$val' unknown; command ignored");
@@ -7440,7 +7442,7 @@ while ($#argv >= 0) {
         next;
     }
 
-    _y_ARG("host?    $arg");
+    trace_arg("host?    $arg");
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
         if ($arg !~ m/^[a-zA-Z0-9.-]+/){
             # TODO: lazy check for valid hostname, needs to be improved
@@ -7456,7 +7458,7 @@ while ($#argv >= 0) {
         } else {
             my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
             my $proxy = 0; # TODO: target parameter for proxy not yet supported
-            _y_ARG("host=    $host:$port,  auth=$auth,  path=$path");
+            trace_arg("host=$host:$port,  auth=$auth,  path=$path");
             _yeast("host: $host:$port") if ($cfg{'trace'} > 0);
             # if perlish programming
             # push(@{$cfg{'targets'}}, [$idx, $prot, $host, $port, $auth, $proxy, $path, $arg]);
@@ -7476,7 +7478,7 @@ while ($#argv >= 0) {
             # endif
         }
     } else {
-        _y_ARG("ignore=  $typ $arg");   # should never happen
+        trace_arg("ignore=$typ $arg");  # should never happen
     }
 
 } # while options and arguments
@@ -7579,7 +7581,7 @@ usr_pre_exec();
 
 #| call with other libraries
 #| -------------------------------------
-_y_ARG("exec? $cfg{'exec'}");
+trace_arg("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if (0 == $cfg{'exec'})  {
     # As all shared libraries used by Perl modules are already loaded when this
@@ -7604,7 +7606,7 @@ if (0 == $cfg{'exec'})  {
         _vprint("exec: $cmd{envlibvar}=" . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
         _vprint("exec: PATH=$ENV{PATH}");
         _vprint("exec: $0 +exec " . join(" ", @ARGV));
-        _vprint("################################################") if (_is_cfg_out('traceARG') or _is_cfg_out('traceCMD'));
+        _vprint("################################################") if _is_cfg_out('traceARG');
         exec $0, '+exec', @ARGV;
     }
 }
@@ -7846,7 +7848,7 @@ if (0 > $#{$cfg{'do'}}) {
     printusage_exit("no command given");
 }
 
-_y_ARG("commands=@{$cfg{'do'}}");
+trace_arg("commands=@{$cfg{'do'}}");
 
 usr_pre_cipher(); # weg?
 
@@ -7864,7 +7866,7 @@ usr_pre_main();
 #| -------------------------------------
 
 _vprint("check target arguments");
-#_y_ARG("targets=@{$cfg{'targets'}}"); # TBD: need better print method
+#trace_arg("targets=@{$cfg{'targets'}}"); # TBD: need better print method
 # defensive, user-friendly programming
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenance
