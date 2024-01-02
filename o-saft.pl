@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.155 24/01/02 09:22:22"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.156 24/01/02 11:17:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -264,6 +264,14 @@ sub _vprint         {
     my @txt = @_;
     return if (0 >= _is_ARGV('(?:--v$)'));
     printf("%s%s\n", $STR{'INFO'}, join(" ", @txt));
+    return;
+} # _vprint {
+
+sub _vprint2        {
+    #? print information when --v --v is given
+    my @txt = @_;
+    return if (1 >= _is_cfg_verbose());
+    _vprint(@txt);
     return;
 } # _vprint {
 
@@ -579,7 +587,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.155");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.156");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -658,7 +666,7 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
-        # _yeast_rcfile();  # function from o-saft-dbx.pm cannot be used here
+        # OSaft::Trace::print_rcfile();  # function cannot be used here
         if (_is_trace()) {
             my @cfgs;
             _tprint("$cfg{'RC-FILE'}");
@@ -711,9 +719,6 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub _yeast_ciphers_list {}
     sub _yeast        {}
     sub _y_ARG        {}
-    sub _v_print      {}
-    sub _v2print      {}
-    sub _v3print      {}
     sub _v4print      {}
     sub _trace        {}
     sub _trace1       {}
@@ -2243,11 +2248,11 @@ sub __readframe     {
             ($ht,$len) = unpack("Ca3",substr($buf,0,4,''));
             $len = unpack("N","\0$len");
             push @msg,[ $ht,substr($buf,0,$len,'') ];
-            _v_print sprintf("...ssl received type=%d ver=0x%x ht=0x%x size=%d", $type,$ver,$ht,length($msg[-1][1]));
+            _vprint2(sprintf("  ...ssl received type=%d ver=0x%x ht=0x%x size=%d", $type,$ver,$ht,length($msg[-1][1])));
         }
     } else {
         @msg = $buf;
-        _v_print sprintf("...ssl received type=%d ver=%x size=%d", $type,$ver,length($buf));
+        _vprint2(sprintf("  ...ssl received type=%d ver=%x size=%d", $type,$ver,length($buf)));
     }
     return ($type,$ver,@msg);
 } # __readframe
@@ -2321,17 +2326,17 @@ sub _is_ssl_bleed   {
     }
     # heartbeat request with wrong size
     for(1..$heartbeats) {
-        _v_print("...send heartbeat#$_");
+        _vprint2("  ...send heartbeat#$_");
         print $cl pack("H*",join('',qw(18 03 02 00 03 01 40 00)));
     }
     if ( ($type,$ver,$buf) = __readframe($cl)) {
         if ( $type == 21 ) {
-            _v_print("received alert (probably not vulnerable)");
+            _vprint2("  received alert (probably not vulnerable)");
         } elsif ( $type != 24 ) {
-            _v_print("unexpected reply type $type");
+            _vprint2("  unexpected reply type $type");
         } elsif ( length($buf)>3 ) {
             $ret = "heartbleed";
-            _v_print("BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
+            _vprint2("  BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
             #show_data($buf) if $show;
             #if ( $show_regex ) {
             #    while ( $buf =~m{($show_regex)}g ) {
@@ -2340,10 +2345,10 @@ sub _is_ssl_bleed   {
             #}
             # exit 1;
         } else {
-            _v_print("GOOD proper heartbeat reply (not vulnerable)");
+            _vprint2("  GOOD proper heartbeat reply (not vulnerable)");
         }
     } else {
-        _v_print("no reply - probably not vulnerable");
+        _vprint2("  no reply - probably not vulnerable");
     }
     close($cl);
     _trace("_is_ssl_bleed()\t= $ret }");
@@ -2422,12 +2427,12 @@ sub _is_ssl_ccs     {
     }
     if ( ($type,$ver,$buf) = __readframe($cl)) {
         if ( $type == 21 ) {
-            _v_print("received alert (probably not vulnerable)");
+            _vprint2("  received alert (probably not vulnerable)");
         } elsif ( $type != 24 ) {
-            _v_print("unexpected reply type $type");
+            _vprint2("  unexpected reply type $type");
         } elsif ( length($buf)>3 ) {
             $ret = "heartbleed";
-            _v_print("BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
+            _vprint2("  BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
             #show_data($buf) if $show;
             #if ( $show_regex ) {
             #    while ( $buf =~m{($show_regex)}g ) {
@@ -2436,10 +2441,10 @@ sub _is_ssl_ccs     {
             #}
             # exit 1;
         } else {
-            _v_print("GOOD proper heartbeat reply (not vulnerable)");
+            _vprint2("  GOOD proper heartbeat reply (not vulnerable)");
         }
     } else {
-        _v_print("no reply - probably not vulnerable");
+        _vprint2("  no reply - probably not vulnerable");
     }
     close($cl);
     return $ret;
@@ -2831,7 +2836,7 @@ sub _useopenssl($$$$)   {
     if ($cfg{'verbose'} < 1) {
         _hint("use '--v' or '--trace'"); # print always
     } else {
-        _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
+        _trace1("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
     }
 
     return "", "", "";
@@ -2865,14 +2870,14 @@ sub _can_connect        {
             SSL_check_crl   => 0,       # do not check CRL
             SSL_ocsp_mode   => 0,       # TODO: is 0 the roccect value to disable this check?
             SSL_startHandshake  => 0,
-        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
+        ) or do { _trace1("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
     } else {
         $socket = IO::Socket::INET->new(
             PeerAddr        => $host,
             PeerPort        => $port,
             Proto           => "tcp",
             Timeout         => $timeout,
-        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); }; # IO::Socket::INET::errstr();
+        ) or do { _trace1("_can_connect: IO::Socket::INET->new(): $!"); }; # IO::Socket::INET::errstr();
     }
     if (defined $socket) {
         close($socket);
@@ -3157,7 +3162,7 @@ sub ciphers_prot_openssl {
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
     if (0 < $cfg{'connect_delay'}) {
-       _v_print("connect delay: $cfg{'connect_delay'} second(s)") if (1 < _is_cfg_verbose())
+       _vprint("  connect delay: $cfg{'connect_delay'} second(s)") if (1 < _is_cfg_verbose())
     }
     my $cnt     = 0;
     my $len     = 0;
@@ -3170,7 +3175,7 @@ sub ciphers_prot_openssl {
         my $txt = "$ssl: ($cnt of $total ciphers checked) abort connection attempts";
         $len = ($len < length($c)) ? 1 : ($len - length($c));
         printf("$STR{'INFO'}  cipher %4d/%d %s%s\r", $cnt, $total, $c, " "x $len) if (0 < _is_cfg_verbose());
-            # cannot use _v_print() because it prints with \n; SEE =head2 Note:stty
+            # cannot use _vprint() because it prints with \n; SEE =head2 Note:stty
         $len = length($c);
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'cipher_md5'}) {
@@ -3405,7 +3410,7 @@ sub check_certchars     {
             $checks{'dv'}->{val}       .= $txt;
              if ($cfg{'verbose'} > 0) {
                  $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
-                 _v2print("EV:  wrong characters in $label: $value");
+                 _vprint2("  EV:  wrong characters in $label: $value");
              }
         }
     }
@@ -4849,9 +4854,9 @@ sub checkev($$)     {
         )) {
         if ($subject =~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
-            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1");
+            _vprint2("  EV: " . $cfg{'regex'}->{$oid} . " = $1");
         } else {
-            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
+            _vprint2("  EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
             $txt = _get_text('missing', $data_oid{$oid}->{txt});
             $checks{'ev+'}->{val} .= $txt;
             $checks{'ev-'}->{val} .= $txt;
@@ -4866,15 +4871,15 @@ sub checkev($$)     {
             $data_oid{$oid}->{val} = $1;
         } else {
             $checks{'ev-'}->{val} .= $txt;
-            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
+            _vprint2("  EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
         }
     }
     $oid = '2.5.4.9'; # may be missing
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#) {
         $txt = _get_text('missing', $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+");
-        _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
+        _vprint2("  EV: " . $cfg{'regex'}->{$oid} . " = missing+");
+        _vprint2("  EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
     }
     # optional OID
     foreach my $oid (qw(2.5.4.6 2.5.4.17)) {
@@ -4882,13 +4887,13 @@ sub checkev($$)     {
     if (64 < length($data_oid{'2.5.4.10'}->{val})) {
         $txt = _get_text('EV_large', "64 < " . $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $txt);
+        _vprint2("  EV: " . $txt);
     }
     # validity <27 months
     if ($data{'valid_months'}->{val} > 27) {
         $txt = _get_text('cert_valid', "27 < " . $data{'valid_months'}->{val});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $txt);
+        _vprint2("  EV: " . $txt);
     }
 
     # TODO: wildcard no, SAN yes
@@ -6189,8 +6194,8 @@ sub printquit           {
     $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
     $cfg{'trace'}   = 2 if ($cfg{'trace'}   < 2);   # -"-
     _set_cfg_out('traceARG', 1);    # for _yeast_args(); harmless change as +quit exits
-    print("\n# +quit using:  --verbode=2 --trace=2 --traceARG");
-    _v_print("\n# +quit : some information may appear multiple times\n#");
+    print("\n# +quit using:  --trace --trace=2 --traceARG");
+    _vprint("\n# +quit : some information may appear multiple times\n#");
     _yeast_init();
     # _yeast_args();  # duplicate call, see in main at "set environment"
     print "# TEST done.";
