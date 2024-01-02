@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.300 23/12/27 19:50:06";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.301 24/01/02 08:47:35";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1552,9 +1552,10 @@ sub datadump        {
 
 sub _SSLinfo_get    {
     # get specified value from %_SSLinfo, first parameter 'key' is mandatory
+    # uses trace=2 to avoid superfluous output
     my ($key, $host, $port) = @_;
     _traceset();
-    _trace("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
+    _trace2("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
     if ($key eq 'ciphers_openssl') {
         _trace("_SSLinfo_get($key): WARNING: function obsolete, please use cipher_openssl()");
         return '';
@@ -1573,14 +1574,13 @@ sub _SSLinfo_get    {
         return wantarray ? @{$_SSLinfo{$key}} : join(':', @{$_SSLinfo{$key}}); # if we want `openssl ciphers' format
     }
     if ($key eq 'dates') {
-       _trace("_SSLinfo_get 'dates'=" . $_SSLinfo{'before'} . " " . $_SSLinfo{'after'});
+       _trace2("_SSLinfo_get 'dates'=" . $_SSLinfo{'before'} . " " . $_SSLinfo{'after'});
         return ( $_SSLinfo{'before'}, $_SSLinfo{'after'});
     }
     if (0 < $trace) {
-        # prepare data to be printed by trace_()
         my $value = $_SSLinfo{$key} || '';
            $value = "<<use --trace=2 to print data>>" if ($value =~ m/[\r\n]/);
-        _trace("_SSLinfo_get '$key'=$value");
+        _trace2("_SSLinfo_get '$key'=$value");
     }
     return (grep{/^$key$/} keys %_SSLinfo) ? $_SSLinfo{$key} : '';
 } # _SSLinfo_get
