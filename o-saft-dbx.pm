@@ -55,7 +55,7 @@ BEGIN { # mainly required for testing ...
 use OSaft::Text qw(%STR print_pod);
 use osaft;
 
-my  $SID_dbx= "@(#) o-saft-dbx.pm 2.41 23/12/28 14:45:58";
+my  $SID_dbx= "@(#) o-saft-dbx.pm 2.42 24/01/02 11:05:19";
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -128,7 +128,7 @@ sub _yeast_trac { local $\ = "\n"; my $d = __trac(@_); print $d if ($d !~ m/^\s*
 
 sub _yeast_ciphers_list {
     #? print ciphers fromc %cfg (output optimised for +cipher)
-    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    return if (0 >= $cfg{'trace'});
     _yline(" ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $need = _need_cipher();
@@ -178,12 +178,12 @@ sub _yeast_ciphers_list {
 
 sub _yeast_targets      {
     #? print information about targets to be processed
-    my $trace   = shift;
-    my $prefix  = shift;
+    # full list if 1<trace
+    return if (0 >= $cfg{'trace'});
     my @targets = @_;
     #print " === print internal data structures for a targets === ";
-    if (0 == $trace) { # simple list
-        printf("%s%14s= [ ", $prefix, "targets");
+    if (2 > $cfg{'trace'}) { # simple list
+        printf("%s%14s= [ ", $cfg{'prefix_trace'}, "targets");
         foreach my $target (@targets) {
             next if (0 == @{$target}[0]);       # first entry conatins default settings
             printf("%s:%s%s ", @{$target}[2..3,6]);
@@ -191,14 +191,14 @@ sub _yeast_targets      {
         }
         printf("]\n");
     } else {
-        printf("%s%14s targets = [\n", $prefix, "# - - - -ARRAY");
+        printf("%s%14s targets = [\n", $cfg{'prefix_trace'}, "# - - - -ARRAY");
         printf("%s#  Index %6s %24s : %5s %10s %5s %-16s %s\n",
-                $prefix, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
+                $cfg{'prefix_trace'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
         foreach my $target (@targets) {
             #next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s   [%3s] %6s %24s : %5s %10s %5s %-16s %s\n", $prefix, @{$target}[0,1..7]);
+            printf("%s   [%3s] %6s %24s : %5s %10s %5s %-16s %s\n", $cfg{'prefix_trace'}, @{$target}[0,1..7]);
         }
-        printf("%s%14s ]\n", $prefix, "# - - - -ARRAY");
+        printf("%s%14s ]\n", $cfg{'prefix_trace'}, "# - - - -ARRAY");
     }
     return;
 } # _yeast_targets
@@ -206,7 +206,7 @@ sub _yeast_targets      {
 sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
-    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    return if (0 >= $cfg{'trace'});
     local $\ = "\n";
     my $arg = " (does not exist)";
     ## no critic qw(Variables::ProhibitPackageVars); they are intended here
@@ -286,7 +286,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 _yeast("# - - - - HASH: $key }");
             } else {
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
-                    _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
+                    _yeast_targets(@{$cfg{'targets'}});
                 } else {
                     if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
                         # SEE Make:OSAFT_MAKE (in Makefile.pod)
@@ -312,7 +312,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'use'}->{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $port (last specified)");
-    _yeast_targets($cfg{'trace'}, $cfg{'prefix_verbose'}, @{$cfg{'targets'}});
+    _yeast_targets(@{$cfg{'targets'}});
     _yeast("     use->http= $cfg{'use'}->{'http'}");
     _yeast("    use->https= $cfg{'use'}->{'https'}");
     _yeast(" out->hostname= $cfg{'out'}->{'hostname'}");
@@ -341,6 +341,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 sub _yeast_exit {
     #? print collected information at program exit
+    return if (0 >= $cfg{'trace'});
     _yTRAC("cfg{exitcode}", $cfg{'use'}->{'exitcode'});
     _yTRAC("exit status", (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
     _yeast("internal administration ..");
@@ -362,12 +363,12 @@ sub _yeast_args {
     _y_ARG("     passed arguments ARGV= " . ___ARR(@{$cfg{'ARGV'}}));
     _y_ARG("                   RC-FILE= " . $cfg{'RC-FILE'});
     _y_ARG("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
-    if (0 >= $cfg{'verbose'}) {
-    _y_ARG("      !!Hint:  use --v to get the list of all RC-ARGV");
-    _y_ARG("      !!Hint:  use --v --v to see the processed RC-ARGV");
+    if (2 > $cfg{'trace'}) {
+    _y_ARG("      !!Hint:  use --trace=2 to get the list of all RC-ARGV");
+    _y_ARG("      !!Hint:  use --trace=3 to see the processed RC-ARGV");
                   # NOTE: ($cfg{'trace'} does not work here
     }
-    _y_ARG("      from RC-FILE RC-ARGV= " . ___ARR(@{$cfg{'RC-ARGV'}})) if (0 < $cfg{'verbose'});
+    _y_ARG("      from RC-FILE RC-ARGV= " . ___ARR(@{$cfg{'RC-ARGV'}})) if (1 < $cfg{'trace'});
     my $txt = "[ ";
     foreach my $target (@{$cfg{'targets'}}) {
         next if (0 == @{$target}[0]);   # first entry conatins default settings
@@ -375,7 +376,7 @@ sub _yeast_args {
     }
     $txt .= "]";
     _y_ARG("         collected targets= " . $txt);
-    if (1 < $cfg{'verbose'}) {
+    if (2 < $cfg{'trace'}) {
     _y_ARG(" #--v { processed files, arguments and options");
     _y_ARG("    read files and modules= ". ___ARR(@{$dbx{file}}));
     _y_ARG("processed  exec  arguments= ". ___ARR(@{$dbx{exe}}));
@@ -389,7 +390,7 @@ sub _yeast_args {
 
 sub _yeast_rcfile {
     #? print content read from RC-FILE ## NOT YET USED ##
-    return if (0 >= ($cfg{'trace'} + $cfg{'verbose'}));
+    return if (0 >= $cfg{'trace'});
     _yline(" RC-FILE {");
     _yline(" RC-FILE }");
     return;
@@ -668,8 +669,6 @@ sub _yeast_test_prot    {
         _yeast(sprintf("%14s= ",$key) . $shorttexts{$key}) if ($key =~ m/$ssl/);
     }
     _yline(" }");
-    if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
-    }
     return;
 } # _yeast_test_prot
 
@@ -752,7 +751,7 @@ sub _yeast_test_memory  {
 = Use  --v  to get more details.
 =
 ";
-    if (0 < ($cfg{'trace'} + $cfg{'verbose'})){
+    if (0 < $cfg{'trace'}) {
         foreach my $k (keys %cfg) {
 	    printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
         }
@@ -862,7 +861,6 @@ sub _yeast_test {
         # changing the configuration here should  not harm other functionality
         # changing the $cfg{} here should not harm other functionality because
         # _yeast_test() is for debugging only and will exit then
-        $cfg{'verbose'} = 1;
         push(@{$cfg{'do'}}, 'cipher'); # enforce printing cipher informations
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         _yeast_ciphers_list();
@@ -1048,7 +1046,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.41 2023/12/28
+2.42 2024/01/02
 
 =head1 AUTHOR
 
