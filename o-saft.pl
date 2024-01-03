@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.158 24/01/03 01:10:36"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.160 24/01/03 16:51:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -75,8 +75,7 @@ use autouse 'Data::Dumper' => qw(Dumper);
 #| -------------------------------------
 # SEE Make:OSAFT_MAKE (in Makefile.pod)
 our $time0  = time();   # must be set very early, cannot be done in osaft.pm
-    $time0 += ($time0 % 2) if (defined $ENV{'OSAFT_MAKE'});
-    # normalise to even seconds, allows small time diffs
+    $time0  = 0 if (defined $ENV{'OSAFT_MAKE'});
 
 #_____________________________________________________________________________
 #______________________________________________ functions needed in BEGIN{} __|
@@ -599,7 +598,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.158");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.160");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -4030,11 +4029,17 @@ sub checkdates($$)  {
     }
     $checks{'sts_expired'} ->{val}  = $txt;
 
+    $now = "<<time()>>" if (defined $ENV{'OSAFT_MAKE'});
+        # $now no longer needed, avoid diff in logfiles generated with make
     _trace(" start, now, end= $start, $now, $end");
-    _trace(" valid       = " . $checks{'dates'}->{val});
-    _trace(" valid-years = " . $data{'valid_years'}->{val});
-    _trace(" valid-month = " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
-    _trace(" valid-days  = " . $data{'valid_days'}->{val}   . "  = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
+    _trace(" valid dates = " . $checks{'dates'}->{val});
+    _trace(" valid_years = " . $data{'valid_years'}->{val});
+    _trace(" valid_months= " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
+    if (60 > $data{'valid_days'}->{val} < 60) { # see calculation above
+        _trace(" valid_days  = " . $data{'valid_days'}->{val} . " = ($until[1] - $since[1])")
+    } else {
+        _trace(" valid_days  = " . $data{'valid_days'}->{val} . " = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
+    }
     FIN:
     _trace("checkdates() }");
     return;
