@@ -66,7 +66,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.112 24/01/03 01:08:54";
+my  $SID_man= "@(#) o-saft-man.pm 2.113 24/01/03 21:57:38";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -809,7 +809,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.112'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.113'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2368,7 +2368,9 @@ sub man_help        {
 
 sub man_src_grep    {
     #? search for given text in source file, then pretty print
+    # TBD: currecntly used for --help=exit only; hence hardcoded _man_head()
     my $hlp = shift;
+    my $key = shift;
     my $pod = "\n";
        $pod .= _man_head(14, "Option    ", "Description where program terminates");
     _man_dbx("man_src_grep($hlp) ...");
@@ -2378,16 +2380,19 @@ sub man_src_grep    {
     if (open($fh, '<:encoding(UTF-8)', $src)) {
         while(<$fh>) {
             next if (m(^\s*#));
-            next if (not m(_(?:exit|next).*$hlp));
+            next if (m(# alias));       # ignore calls in other functions
+            next if (not m($hlp));
             my $opt     = $_;
             my $comment = $_;
-            if ($opt =~ m/exit=/) {
-                # line looks like: _trace_exit("exit=BEGIN0 - BEGIN start");
-                # or             : _trace_next("exit=HOST0 - host start");
-                $opt =~ s/^[^"]*"/--/;    $opt =~ s/ - .*$//s;
+            if ($key =~ m/exit=/) {
+                # line looks like: _trace_info("BEGIN{ - BEGIN start");
+                # or             : _trace_exit("HOST0  - host start");
+                # or             : _trace_next("  HOST0 - host");
+                $opt =~ s/^[^"]*"\s*/$key/;
+                $opt =~ s/\s+.*//s;
                 $comment =~ s/^[^-]*//; $comment =~ s/".*$//s;
+                $pod .= sprintf("%-15s%s\n", $opt, $comment);
             }
-           $pod .= sprintf("%-15s%s\n", $opt, $comment);
         }
         close($fh);
     }
@@ -2447,7 +2452,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     # anything below requires data defined in parent
     $txt = man_table($1)        if ($hlp =~ /^(cmd|check|data|info|ourstr|text)s?$/);
     $txt = man_table('cfg_'.$1) if ($hlp =~ /^cfg[_.-]?(cmd|check|data|info|hint|text|range|regex|ourstr)s?$/);
-    $txt = man_src_grep("exit=")if ($hlp =~ /^exit$/);
+    $txt = man_src_grep(qr/\s*_trace_(exit|info|next)\(/n, "--exit=") if ($hlp =~ /^exit$/);
     if ($hlp =~ /^cmds$/)       { # print program's commands
         $txt = "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
         # no need for _man_squeeze()
@@ -2684,7 +2689,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.112 2024/01/03
+2.113 2024/01/03
 
 
 =head1 AUTHOR
