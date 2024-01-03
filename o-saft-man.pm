@@ -66,7 +66,7 @@ use osaft;
 use OSaft::Doc::Data;
 use OSaft::Ciphers; # required if called standalone only
 
-my  $SID_man= "@(#) o-saft-man.pm 2.110 23/12/27 20:36:17";
+my  $SID_man= "@(#) o-saft-man.pm 2.112 24/01/03 01:08:54";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -81,7 +81,7 @@ my  $cfg_header = 0;                    # we may be called from within parents B
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 our $TRACE  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
-    $TRACE++ if (0 < (grep{/^--trace(?:=\d+)?/} @ARGV));    # if called via o-saft.pl
+    $TRACE++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));    # if called via o-saft.pl
 local $\    = "";
 
 # SEE Note:Stand-alone
@@ -809,7 +809,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '2.110'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '2.112'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2378,12 +2378,12 @@ sub man_src_grep    {
     if (open($fh, '<:encoding(UTF-8)', $src)) {
         while(<$fh>) {
             next if (m(^\s*#));
-            next if (not m(_(?:EXIT|NEXT).*$hlp));
+            next if (not m(_(?:exit|next).*$hlp));
             my $opt     = $_;
             my $comment = $_;
             if ($opt =~ m/exit=/) {
-                # line looks like: _yeast_EXIT("exit=BEGIN0 - BEGIN start");
-                # or             : _yeast_NEXT("exit=HOST0 - host start");
+                # line looks like: _trace_exit("exit=BEGIN0 - BEGIN start");
+                # or             : _trace_next("exit=HOST0 - host start");
                 $opt =~ s/^[^"]*"/--/;    $opt =~ s/ - .*$//s;
                 $comment =~ s/^[^-]*//; $comment =~ s/".*$//s;
             }
@@ -2684,7 +2684,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-2.110 2023/12/27
+2.112 2024/01/03
 
 
 =head1 AUTHOR
