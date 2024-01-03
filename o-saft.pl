@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.160 24/01/03 16:51:25"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.161 24/01/03 21:59:06"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -98,19 +98,13 @@ sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV
     # return 1 if value in command-line arguments @ARGV
 
 our $make_text = "OSAFT_MAKE exists";
-sub _trace_time(@)  {
+sub _trace_time     {
     # print timestamp if --trace-time was given; similar to trace_time
     # time0 does not exist in early calls in BEGIN{} and until arguments are
     # read, %cfg is also not set until, hence OSAFT::Trace::trace_time not possible
     my @txt = @_;
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     return if (_is_argv('(?:--trace.?(?:time|cmd))') <= 0);
-#printf "##_trace_time time0=$time0\n";
-#    if (exists &trace_time) {
-#        trace_time(@txt);
-#        return;
-#    }
-#print "## _yTIME\n"  if (exists &_yTIME) ;
     my $now = 0;
     if (defined $time0) {
         $now = time();          # only set if called after $time0 is set
@@ -129,36 +123,55 @@ sub _trace_time(@)  {
     return;
 } # _trace_time
 
-sub _trace_exit($)  {
+sub _trace_exit     {
     # exit if parameter matches given argument in @ARGV
-    my $txt =  shift;   # example: INIT0 - initialisation start
-    my $arg =  $txt;
+    my $txt =  shift;   # example: INIT{ - initialisation start
+       $txt =~ s#^\s*##;# strip off leading left spaces
+    my $arg =  $txt;    # matches: --exit=INIT{
+       $arg =~ s#^\s*##;# strip off leading left spaces
        $arg =~ s# .*##; # strip off anything right of a space
-    if (0 < _is_ARGV("(?:([+,]|--)$arg).*")) {
-        printf STDERR ("#o-saft.pl  _trace_exit $txt\n");
+    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {  # \Q because of meta chars in $arg
+        my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
+        printf STDERR ("#${me}::_trace_exit $txt\n");
         exit 0;
     }
     return;
 } # _trace_exit
-sub _trace_next($)  {
+
+sub _trace_next     {
     # return 1 if parameter matches given argument in @ARGV; 0 otherwise
-    my $txt =  shift;   # example: INIT0 - initialisation start
+    my $txt =  shift;
+    if (exists &_vprint) { _vprint($txt); }
+       $txt =~ s#^\s*##;
+    _trace_time("$txt X"); # alias
     my $arg =  $txt;
-       $arg =~ s# .*##; # strip off anything right of a space
-    if (0 < _is_ARGV("(?:([+,]|--)$arg).*")) {
-        printf STDERR ("#o-saft.pl  _trace_next $txt\n");
+       $arg =~ s#^\s*##;
+       $arg =~ s# .*##;
+    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {
+        my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
+        printf STDERR ("#${me}::_trace_next $txt\n");
         return 1;
     }
     return 0;
 } # _trace_next
+
+sub _trace_info     {
+    # call _trace_time() and _trace_exit()
+    my $txt =  shift;   # example: INIT0 - initialisation start
+       $txt =~ s#^\s*##;
+    if (exists &_vprint) { _vprint($txt); }
+    _trace_time("$txt"); # alias
+    _trace_exit("$txt"); # alias
+    return;
+} # _trace_info
+
 sub _version_exit   { print _VERSION() . "\n"; exit 0; }
     # print VERSION and exit
 
 BEGIN {
     # SEE Perl:BEGIN
     # SEE Perl:BEGIN perlcritic
-    _trace_time("BEGIN{");
-    _trace_exit("exit=BEGIN0 - BEGIN start");
+    _trace_info("BEGIN{  - BEGIN start");
     sub _VERSION { return "23.11.23"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
@@ -174,10 +187,9 @@ BEGIN {
     _version_exit()         if _is_ARGV('(?:([+,]|--)VERSION)');
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
-    _trace_exit("exit=BEGIN1 - BEGIN end");
+    _trace_info("BEGIN}  - BEGIN end");
 } # BEGIN
-_trace_time("BEGIN}");          # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
-_trace_exit("exit=INIT0 - initialisation start");
+_trace_info("INIT{   - initialisation start");
 
 $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
@@ -239,7 +251,7 @@ sub _warn   {
     }
     printf($STR{WARN} ."%s\n", join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
-    _trace_exit("exit=WARN - exit on first warning");
+    _trace_exit("WARN - exit on first warning");
     return;
 } # _warn
 
@@ -313,7 +325,7 @@ sub _vprint_me      {
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
         _vprint("$cfg{'me'}: dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
     } else {
-        _vprint(sprintf("%s: %02s.%02s.%s %02s:%02s:%02s", $cfg{'me'}, $mday, ($mon +1), ($year +1900), $h, $m, $s));
+            _vprint(sprintf("%s: %02s.%02s.%s %02s:%02s:%02s", $cfg{'me'}, $mday, ($mon +1), ($year +1900), $h, $m, $s));
     }
     return;
 } # _vprint_me
@@ -598,7 +610,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.160");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.161");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -650,8 +662,7 @@ my  $cgi = 0;
 
 #| read RC-FILE if any
 #| -------------------------------------
-_trace_time("cfg{");
-_trace_exit("exit=CONF0 - RC-FILE start");
+_trace_info("RCFILE{ - RC-FILE start");
 if (0 < _is_argv('(?:--rc)')) {                 # (re-)compute default RC-File with full path
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
@@ -701,7 +712,8 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
 }
 $cfg{'RC-ARGV'} = [@rc_argv];
 $cfg{'done'}->{'rc_file'}++ if (0 < $#rc_argv);
-_trace_exit("exit=CONF1 - RC-FILE end");
+
+_trace_info("RCFILE} - RC-FILE end");
 
 push(@argv, @ARGV); # got all now; from hereon "grep{/.../} @argv" is used instead of _is_argv()
 push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC-FILE, needed in _warn()
@@ -976,7 +988,7 @@ if (0 < _is_argv('(?:--no.?rc)')) {
     }
 }
 
-_trace_time("cfg}");
+_trace_info("INIT    - RC-FILE merged");
 
 our @ciphers_keys;  # temp. use until defined in osaft.pm
     # similar to @{$cfg{'ciphers'} but contains hex-keys instead of names
@@ -1126,8 +1138,7 @@ if (defined $ENV{'LIBPATH'}) {
 }
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
-
-_trace_exit("exit=INIT1 - initialisation end");
+_trace_info("INIT}   - initialisation end");
 usr_pre_file();
 
 #_____________________________________________________________________________
@@ -7594,11 +7605,10 @@ if (2 == @{$cfg{'targets'}}) {
 $ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});  ## no critic qw(Variables::RequireLocalizedPunctuationVars
 $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); ## no critic qw(Variables::RequireLocalizedPunctuationVars
 
-_yeast_args();          # all arguments parsed; print with --traceARG
-_trace_exit("exit=ARGS  - options and arguments done");
-_vprint_me();
-
 #_init_openssldir();    # called later for performance reasons
+_yeast_args();          # all arguments parsed; print with --traceARG
+_vprint_me();
+_trace_info("ARGS    - options and arguments completed");
 
 usr_pre_exec();
 
@@ -7633,7 +7643,7 @@ if (0 == $cfg{'exec'})  {
         exec $0, '+exec', @ARGV;
     }
 }
-_trace_exit("exit=CONF3 - runtime configuration start");
+_trace_info("CONF{   - runtime configuration start");
 
 #| openssl and Net::SSLeay is picky about path names
 #| -------------------------------------
@@ -7645,7 +7655,7 @@ foreach my $key (qw(ca_file ca_path ca_crl)) {
 
 #| set openssl-specific path for executable and CAs
 #| -------------------------------------
-_vprint("initialise openssl");
+_vprint("  initialise openssl");
 _init_openssl();    # TODO: if (0 < _need_openssl()); cfg{need-openssl}
 
 if (0 < $info) {        # +info does not do anything with ciphers
@@ -7671,9 +7681,8 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
     }
 }
 
-_trace_time("inc{");
+_trace_info("  LOAD{   - load modules start");
 
-_vprint("load modules");
 #| import common and private modules
 #| -------------------------------------
 if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
@@ -7687,12 +7696,12 @@ if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
 }
 _load_modules() if (0 == $::osaft_standalone);
 
-_trace_time("inc}");
-_trace_time("mod{");
+_trace_info("  LOAD}   - load modules end");
+_trace_info("  CHECK{  - check configuration start");
 
 my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay');
 
-_vprint("check internals");
+_vprint("  check internals");
 #| check for required module versions
 #| -------------------------------------
 _check_modules()    if (0 < $do_checks);
@@ -7707,7 +7716,7 @@ _check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot(
 
 #| check for proper openssl support
 #| -------------------------------------
-_vprint("check openssl capabilities");
+_vprint("  check openssl capabilities");
 _check_openssl()    if (0 < $do_checks); # TODO: if (0 < _need_openssl()); cfg{need-openssl}
 
 #| check for supported SSL versions
@@ -7716,8 +7725,7 @@ _check_ssl_methods() if (0 < _need_cipher() + _need_default() + _is_cfg_do('vers
     # initialise $cfg{'version'} and all $cfg{ssl}
     # function is oversized for --ciphermode=intern but does the work
 
-_trace_time("mod}");
-_trace_time("ini{");
+_trace_info("  CHECK}  - check configuration end");
 
 #| set additional defaults if missing
 #| -------------------------------------
@@ -7738,7 +7746,7 @@ $text{'separator'}  = "\t"    if _is_cfg_legacy('quick');
 
 #| set defaults for Net::SSLinfo
 #| -------------------------------------
-_vprint("initialise Net::SSL*");
+_vprint("  initialise Net::SSL*");
 {
     #$IO::Socket::SSL::DEBUG         = $cfg{'trace'} if ($cfg{'trace'} > 0);
     no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
@@ -7841,8 +7849,7 @@ if ($cfg{'label'} eq 'short') {     # reconfigure texts
 
 _init_checks_val(); # initialise default values in %checks again depending on given options
 
-_trace_time("ini}");
-_trace_exit("exit=CONF4 - runtime configuration end");
+_trace_info("CONF}   - runtime configuration end");
 
 #| first all commands which do not make a connection
 #| -------------------------------------
@@ -7881,7 +7888,7 @@ usr_pre_cipher(); # weg?
 # @{$cfg{'do'}} = keys %unique;             # because sequence is user-defined
 @{$cfg{'do'}} = do { my %seen; grep { !$seen{$_}++ } @{$cfg{'do'}} };
 
-_trace_exit("exit=MAIN  - start");
+_trace_info("MAIN{   - start");
 _yeast_ciphers_list() if _is_trace();;
 usr_pre_main();
 
@@ -7937,14 +7944,14 @@ if ($fail > 0) {
         }
     }
 }
+_trace_info("CONF    - runtime configuration completed");
 
 #| perform commands for all hosts
 #| -------------------------------------
 
 usr_pre_host();
 
-_vprint("check targets ...");
-_trace_time("hosts{");
+_vprint("check all targets ...");
 
 # run the appropriate SSL tests for each host (ugly code down here):
 $sniname  = $cfg{'sni_name'};           # safe value;  NOTE: may be undef!
@@ -7956,9 +7963,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $port = osaft::get_target_port($idx);
     $cfg{'port'}    = $port;
     $cfg{'host'}    = $host;
-    next if _trace_next("exit=HOST0 - host start $host:$port");
-    _vprint("host " . ($host||"") . ":$port {");
-    _trace(" host   = $host {\n");
+    next if _trace_next("HOST{   - start $host:$port");
     # SNI must be set foreach host, but it's always the same name!
     if (_is_cfg_use('sni')) {
         if (defined $sniname) {
@@ -7980,9 +7985,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     _resetchecks();
     print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out'}->{'header'});
 
-    _trace_time("DNS{");
+    next if _trace_next("  DNS{    - start");
 
-    _vprint("  prepare DNS stuff");
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
     $fail = "";     # reusing variable
@@ -8051,12 +8055,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
     }
 
-    _trace_time("DNS}");
-    next if _trace_next("exit=HOST1 - host DNS done");
+    next if _trace_next("  DNS}    - end");
 
     # Quick check if the target is available
-    _vprint("  test connect");
-    _trace_time("test connect{");# SEE Note:Connection Test
+    next if _trace_next("  CONN{   - start"); # SEE Note:Connection Test
     my $connect_ssl = 1;
     _trace(" sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
@@ -8067,7 +8069,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         $Net::SSLinfo::use_http = 0;
         _warn("325: HTTP disabled, using '--no-http'");
     }
-    _trace_time("test connect}");
+    next if _trace_next("  CONN}   - end");
 
     if (_is_cfg_do('cipher_dh')) {
         # abort here is ok because +cipher-dh cannot be combined with other commands
@@ -8077,11 +8079,9 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             next;
         }
     } # cipher_dh
-    next if _trace_next("exit=HOST2 - host ciphers start");
 
-    _vprint("  need cipher (ciphermode=$cfg{'ciphermode'}) ...");
+    next if _trace_next("  CIPHER{ - start (ciphermode=$cfg{'ciphermode'})");
     if (_need_cipher()) {
-        _trace_time("need cipher{");
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
         $cipher_results = {};           # new list for every host (array of arrays)
@@ -8107,23 +8107,20 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         #dbx# print Dumper(\$cipher_results);
         checkciphers($host, $port, $cipher_results);
-        _trace_time("need cipher}");
     } # need_cipher
-    next if _trace_next("exit=HOST3 - host ciphers scan done");
+    next if _trace_next("  SCAN    - done");
 
     if (_is_cfg_do('cipher_dh')) {
-        # TODO dirty hack, check with dh256.tlsfun.de
         _vprint("  +cipher-dh");
-        _trace_time("cipher-dh{");
+        # TODO dirty hack, check with dh256.tlsfun.de
         if (_is_cfg_ciphermode('intern')) {
             printciphers_dh($legacy, $host, $port, $cipher_results);
         } else {
             printciphers_dh_openssl($legacy, $host, $port);
         }
-        _trace_time("cipher-dh}");
         goto CLOSE_SSL; # next HOSTS
     } # cipher_dh
-    next if _trace_next("exit=HOST4 - host ciphers DH done");
+    next if _trace_next("  DH      - done");
 
     if (_need_cipher()) {
         _vprint("  print ciphers");
@@ -8138,8 +8135,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         }
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
-    next if _trace_next("exit=HOST5 - host ciphers end");
-    next if _trace_next("exit=HOST5 - host prepare start"); # dummy for --help=exit documentation
+    next if _trace_next("  CIPHER} - end");
 
     if (_is_cfg_do('fallback_protocol')) {
         _vprint("  protocol fallback support ...");
@@ -8154,11 +8150,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _trace(" fallback: $version $supported");
     }
 
+    next if _trace_next("  DATA{   - get target data start");
     usr_pre_info();
-    _vprint("  get target data");
-    _trace_time("SNI{");
     _get_data0($host, $port);   # uses Net::SSLinfo::do_ssl_open() and ::do_ssl_close()
-    _trace_time("SNI}");
+    next if _trace_next("  DATA}   - get target data end");
 
     usr_pre_open();
 
@@ -8197,8 +8192,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _trace_time("test connection}");
     }
 
+    next if _trace_next("  PREPARE{ - start");
     usr_pre_cmds();
-    _trace_time("prepare{");
 
     if (_is_cfg_do('dump')) {
         _vprint("  +dump");
@@ -8243,15 +8238,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_is_cfg_do('sstp')) {   # only check if needed
         checksstp( $host, $port);   _trace_time("  checksstp.");
     }
+    next if _trace_next("  PREPARE{ - end");
 
-    _trace_time("prepare}");
+    next if _trace_next("  PRINT{  - start");
     usr_pre_print();
 
     if (0 < $check) {
         _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
-    next if _trace_next("exit=HOST6 - host prepare end");
-    next if _trace_next("exit=HOST6 - host print start"); # dummy for --help=exit documentation
 
     # for debugging only
     if (_is_cfg_do('s_client')) {
@@ -8262,20 +8256,15 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     # print all required data and checks
     # NOTE: if key (aka given command) exists in %checks and %data it will be printed for both
     _vprint("  print info ...");
-    _trace_time("info{");
     printdata(  $legacy, $host, $port) if (1 > $check); # not for +check
-    _trace_time("info}");
     _vprint("  print checks ...");
-    _trace_time("checks{");
     printchecks($legacy, $host, $port) if (1 > $info); # not for +info
-    _trace_time("checks}");
 
     if (_is_cfg_out('score')) { # no output for +info also
         _vprint("  print score ...");
-        _trace_time("score{");
         printscores($legacy, $host, $port);
-        _trace_time("score}");
     }
+    next if _trace_next("  PRINT}  - end");
 
     CLOSE_SSL:
     {
@@ -8284,13 +8273,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         Net::SSLinfo::do_ssl_close($host, $port);
       }
     }
-    _trace(" host   = $host }\n");
-    _vprint("host " . ($host||"") . ":$port }");
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
-    next if _trace_next("exit=HOST7 - host print end");
-    _trace_exit("exit=HOST9 - host end");
+    next if _trace_next("HOST}   - end");
 
 } # foreach host
 
@@ -8298,7 +8284,7 @@ _trace_time("hosts}");
 
 usr_pre_exit();
 _yeast_exit() if _is_trace();   # for --trace=\d only, not --traceKEY and alike
-_trace_exit("exit=END   - end");# for symetric reason, rather useless here
+_trace_info("MAIN}   - end");    # for symetric reason, rather useless here
 
 _vprint("check exit code");
 $cfg{'use'}->{'exitcode'} += $cfg{'out'}->{'exitcode'}; # --exitcode-v
