@@ -62,7 +62,7 @@
 use strict;
 use warnings;
 
-our $SID_main   = "@(#) yeast.pl 2.161 24/01/03 21:59:06"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.162 24/01/04 13:54:24"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -132,7 +132,8 @@ sub _trace_exit     {
        $arg =~ s# .*##; # strip off anything right of a space
     if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {  # \Q because of meta chars in $arg
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
-        printf STDERR ("#${me}::_trace_exit $txt\n");
+        printf STDERR ("#${me}::_trace_exit --exit=$txt\n");
+            # assumes that first word of $txt is argument of --exit
         exit 0;
     }
     return;
@@ -143,13 +144,13 @@ sub _trace_next     {
     my $txt =  shift;
     if (exists &_vprint) { _vprint($txt); }
        $txt =~ s#^\s*##;
-    _trace_time("$txt X"); # alias
+    _trace_time("$txt"); # alias
     my $arg =  $txt;
        $arg =~ s#^\s*##;
        $arg =~ s# .*##;
     if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
-        printf STDERR ("#${me}::_trace_next $txt\n");
+        printf STDERR ("#${me}::_trace_next --exit=$txt\n");
         return 1;
     }
     return 0;
@@ -610,7 +611,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.161");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.162");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -8625,15 +8626,13 @@ when the module is called as standalone script.
 
 Following approach is used:
 
-  - subroutines are defined where (mainly) needed
-  - modules use Perl's named subroutines like following, example: _warn():
+  - subroutines are defined where (mainly) needed like:
 
-    *_warn = sub { print($STR{WARN}, @_); } if not defined &_warn;
+     if (not exists &_warn) { = sub _warn { print($STR{WARN}, @_); } }
 
 This ensures, that the definition is used only, if it doesn't exists. This
 also avoids use of Perl's eval(). The disadvantage is, that the subroutine
-does not have exacly the same functionality as the original definition.
-TODO: in each named subroutin:  return if (grep{/(?:--no.?warn)/} @ARGV);
+may not have the same functionality or output as the module's definition.
 
 Also SEE L<Perl:BEGIN>.
 
@@ -8680,16 +8679,21 @@ Two of the above exmples need special settings:
 Loading `require'd  files and modules  as well as parsing the command-line
 in Perl's  BEGIN section  increases performance and lowers the memory foot
 print for some commands (see o-saft-man.pm also).
-Unfortunately Perl's BEGIN has following limits and restrictions:
+Therefore it's important to understand how Perl's compile phases work, see
+section "BEGIN, UNITCHECK, CHECK, INIT and END" in
 
-  - constants can be defined before and used herein
-  - sub can be defined herein and used later
-  - variables can not be defined herein and used later
+  man perlmod
+
+In short about BEGIN{}:
+
+  - constants can be defined before and used in BEGIN{}
+  - sub can be defined and used later
+  - variables can not be defined there and used later
   - some file handles (like <DATA>) are not yet available
   - strict sequence of definitions and usage (even for variables in subs)
 
 Perl subs used in the  BEGIN section must be defined there also, or before
-the BEGIN section (which is a crazy behaviour of Perl).
+the BEGIN section.
 To make the program work as needed,  the limitations  force us to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
