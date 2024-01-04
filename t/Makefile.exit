@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 1.31 23/11/15 00:57:02
+#?      @(#) Makefile.exit 1.32 24/01/04 14:46:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 1.31
+_SID.exit          := 1.32
 
 _MYSELF.exit       := t/Makefile.exit
 ALL.includes       += $(_MYSELF.exit)
@@ -49,12 +49,18 @@ HELP.test.exit.all  = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
+# get current list of available --exit=* options with:
+#    $(EXE.pl) --header --no-rc --trace-CLI --help=exit | awk '/^--exit/{print $1}'
 LIST.o-saft.pl--exit := \
 	--exit=invalid_label_to_show_failed-status \
-	--exit=BEGIN0  --exit=BEGIN1   --exit=INIT0    --exit=CONF0 --exit=CONF1 \
-	--exit=INIT1   --exit=ARGS     --exit=MAIN \
-	--exit=HOST0   --exit=HOST1    --exit=HOST2    --exit=HOST3 --exit=HOST4 \
-	--exit=HOST5   --exit=HOST6    --exit=HOST8    --exit=HOST9 --exit=END
+	--exit=BEGIN0   --exit=BEGIN9   --exit=INIT0    --exit=INIT --exit=INIT9 \
+	--exit=RCFILE0  --exit=RCFILE9  --exit=CONF0    --exit=CONF --exit=CONF9 \
+	--exit=LOAD0    --exit=LOAD9    --exit=CHECK0   --exit=CHECK9 \
+	--exit=WARN     --exit=ARGS     --exit=MAIN0    --exit=TARGETS0 \
+	--exit=HOST0    --exit=DNS0     --exit=DNS9     --exit=CONN0 --exit=CONN9 \
+	--exit=CIPHER0  --exit=SCAN     --exit=DH       --exit=CIPHER9 \
+	--exit=DATA0    --exit=DATA9    --exit=PREPARE0 --exit=PREPARE9 \
+	--exit=PRINT0   --exit=PRINT9   --exit=HOST9    --exit=TARGETS0 --exit=MAIN9
 
 # all targets are generated, see Makefile.gen; only one program: SRC.pl
 
