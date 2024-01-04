@@ -1,8 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -w -I . -I ..
 ## PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
-#!#                    Copyright (c) 2023, Torsten Gigler
+#!#                    Copyright (c) 2024, Torsten Gigler
 #!#             This module is part of the OWASP-Project 'o-saft'
 #!# It simulates the SSLhello packets to check SSL parameters like the ciphers
 #!#         indepenantly from any SSL library like Openssl or gnutls.
@@ -55,35 +55,99 @@ package Net::SSLhello;
 use strict;
 use warnings;
 
+our $VERSION    = "23.11.23";
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.73 24/01/04 19:25:28",
+my  $SSLHELLO   = "Net::SSLhello";
+
+use Socket; ## TBD will be deleted soon TBD ###
+use IO::Socket::INET; #require IO::Select if ($Net::SSLhello::trace > 1);
+use Carp;
+use OSaft::Text qw(print_pod %STR);
+use OSaft::error_handler qw (:sslhello_contants);
+    # use internal error_handler, get all constants used for SSLHELLO, for subs
+    # the full names will be used (includung OSaft::error_handler-><sub>)
+use osaft;  # main parameters, lists and functions that are used by o-saft and SSLhello
+
+use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
+    _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
+    _MY_PRINT_CIPHERS_PER_LINE          =>  8, # Nr of ciphers printed in a trace
+    _PROXY_CONNECT_MESSAGE1             => "CONNECT ",
+    _PROXY_CONNECT_MESSAGE2             => " HTTP/1.1\n\n",
+    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 16, # Max number og TCP-Segments that can reset the retry counter to '0' for next read
+    _SLEEP_B4_2ND_READ                  => 0.5,  # Sleep before second read (STARTTLS and proxy) [in sec.x]
+    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER    => 0.75, # DTLS-Protocol: Sleep after found a cipher to segregate the following request [in sec.x]
+    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND  => 0.05  # DTLS-Protocol: Sleep after not found a cipher to segregate the following request [in sec.x]
+};
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+$Net::SSLhello::trace               = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::traceTIME           = 0;# 1=trace prints timestamp
+$Net::SSLhello::usesni              = 1;# 0=do not use SNI extension, 1=use SNI extension (protocol >=tlsv1), 2(or 3): toggle sni (run twice per protocol without and with sni)
+$Net::SSLhello::use_sni_name        = 0;# 0=use hostname (default), 1: use sni_name for SNI mode connections
+$Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connection is use_sni_name=1; ###FIX: "1": quickfix until migration of o-saft.pl is compleated (tbd)
+$Net::SSLhello::force_TLS_extensions= 0;# prevent to not to use TLS extensions in SSLv3
+$Net::SSLhello::timeout             = 2;# time in seconds
+$Net::SSLhello::retry               = 3;# number of retry when timeout occurs
+$Net::SSLhello::connect_delay       = 0;# time to wait in seconds for starting next cipher check
+$Net::SSLhello::usereneg            = 0;# secure renegotiation
+$Net::SSLhello::use_signature_alg   = 1;# signature_algorithm: 0 (off), 1 (auto on if >=TLSv1.2, >=DTLS1.2), 2: always on
+$Net::SSLhello::useecc              = 1;# use 'Supported Elliptic' Curves Extension
+$Net::SSLhello::useecpoint          = 1;# use 'ec_point_formats' extension
+$Net::SSLhello::starttls            = 0;# 1= do STARTTLS
+$Net::SSLhello::starttlsType        = "SMTP";# default: SMTP
+@Net::SSLhello::starttlsPhaseArray  = [];# STARTTLS: customised phases (1-5) and error handling (6-8)
+$Net::SSLhello::starttlsDelay       = 0;# STARTTLS: time to wait in seconds (to slow down the requests)
+$Net::SSLhello::slowServerDelay     = 0;# proxy and STARTTLS: time to wait in seconds (for slow proxies and STARTTLS servers)
+$Net::SSLhello::double_reneg        = 0;# 0=Protection against double renegotiation info is active
+$Net::SSLhello::proxyhost           = "";#
+$Net::SSLhello::proxyport           = "";#
+$Net::SSLhello::experimental        = 0;# 0: experimental functions are protected (=not active)
+$Net::SSLhello::max_ciphers         = 64; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
+$Net::SSLhello::max_ciphers         = _MY_SSL3_MAX_CIPHERS; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
+$Net::SSLhello::max_sslHelloLen     = 16388; # according RFC: 16383+5 bytes; max len of sslHello messages (some implementations had issues with packets longer than 256 bytes)
+$Net::SSLhello::noDataEqNoCipher    = 1; # 1= for some TLS intolerant servers 'NoData or timeout equals to no cipher' supported -> Do NOT abort to test next ciphers
+$Net::SSLhello::extensions_by_prot  = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
+$Net::SSLhello::check_extensions    = [ qw(supported_groups) ]; # List of extensions to be checked for all supported params
+$Net::SSLhello::extensions_max_values = 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions 
+
 BEGIN {
     # section required only when called as: Net/SSLhello.pm or ./SSLhello.pm
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     if ("SSLhello.pm" eq $_me) {
         my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-        unshift(@INC, ".", "lib");
+        unshift(@INC, "lib");
         unshift(@INC, $ENV{PWD}, "$ENV{PWD}/lib") if (defined $ENV{'PWD'});
         unshift(@INC, "bin");
         if ($_path !~ m#^[.]/*$#) { # . already added
             unshift(@INC, "$_path", "$_path/lib") if ($_me ne $_path);
         }
-        unshift(@INC, "../") if ($0 =~ m#^(?:[.]/)?SSLhello.pm#); # call in Net/
+    }
+    # define trace functions, required if called standalone
+    if (not exists &_trace) {   # lazy check
+        sub _ytime     { my $now = 1; return (0 >= $Net::SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
+              #$now = time() if ($cfg_out('time_absolut'));# not supported here
+        sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
+        sub __trace    { my @txt = @_; printf("%s %s", _y_me_ts(), "@txt"); return }
+        sub _trace0($) { my @txt = @_; printf("%s",    _y_me_ts()) if ($Net::SSLhello::trace > 0); return }
+        sub _trace($)  { my @txt = @_; __trace($txt[0]) if ($Net::SSLhello::trace > 0); return }
+        sub _trace1($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 1); return; }
+        sub _trace2($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 2); return; }
+        sub _trace3($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace ==3); return; }
+        sub _trace4($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 3); return; }
+        sub _trace5($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 4); return; }
+        sub _trace_($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 0); return; }
+        sub _trace1_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 1); return; }
+        sub _trace2_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 2); return; }
+        sub _trace3_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace ==3); return; }
+        sub _trace4_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 3); return; }
+        sub _trace5_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 4); return; }
     }
 }
 
-our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.72 23/12/29 12:48:30",
-my  $SSLHELLO   = "Net::SSLhello";
-
-use Socket; ## TBD will be deleted soon TBD ###
-use IO::Socket::INET;
-#require IO::Select if ($Net::SSLhello::trace > 1);
-use Carp;
-use OSaft::error_handler qw (:sslhello_contants);
-    # use internal error_handler, get all constants used for SSLHELLO, for subs
-    # the full names will be used (includung OSaft::error_handler-><sub>)
-use OSaft::Text qw(%STR);
-use osaft;  # main parameters, lists and functions that are used by o-saft and SSLhello
-######################################################## public documentation #
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
 
 =pod
 
@@ -130,13 +194,8 @@ List constants and/or parameters used by Net::SSLhello.
 
 =cut
 
-
-#our %main::cfg;    # provided by caller
-our $dtlsEpoch = 0; # for DTLS only (globally)
-our %_SSLhello;     # our internal data structure
-our %resultHash;    # Hash that collects results
-our %extensions_params_hash; # hasgh that (temporarily) defines parameters for an extension
-our $my_error = ""; # global store for error message
+#_____________________________________________________________________________
+#________________________________________________ public (export) variables __|
 
 use Exporter qw(import);
 use base qw(Exporter);
@@ -179,49 +238,17 @@ our $HAVE_XS = eval {
 
     } ? 1 : 0;
 
-use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
-    _MY_PRINT_CIPHERS_PER_LINE          =>  8, # Nr of ciphers printed in a trace
-    _PROXY_CONNECT_MESSAGE1             => "CONNECT ",
-    _PROXY_CONNECT_MESSAGE2             => " HTTP/1.1\n\n",
-    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 16, # Max number og TCP-Segments that can reset the retry counter to '0' for next read
-    _SLEEP_B4_2ND_READ                  => 0.5,  # Sleep before second read (STARTTLS and proxy) [in sec.x]
-    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER    => 0.75, # DTLS-Protocol: Sleep after found a cipher to segregate the following request [in sec.x]
-    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND  => 0.05  # DTLS-Protocol: Sleep after not found a cipher to segregate the following request [in sec.x]
-};
+#_____________________________________________________________________________
+#___________________________________________________________ initialisation __|
+
+#our %main::cfg;    # provided by caller
+our $dtlsEpoch = 0; # for DTLS only (globally)
+our %_SSLhello;     # our internal data structure
+our %resultHash;    # Hash that collects results
+our %extensions_params_hash; # hasgh that (temporarily) defines parameters for an extension
+our $my_error = ""; # global store for error message
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
-#
-#
-#defaults for global parameters
-$Net::SSLhello::trace               = 0;# 1=simple debugging Net::SSLhello
-$Net::SSLhello::traceTIME           = 0;# 1=trace prints timestamp
-$Net::SSLhello::usesni              = 1;# 0=do not use SNI extension, 1=use SNI extension (protocol >=tlsv1), 2(or 3): toggle sni (run twice per protocol without and with sni)
-$Net::SSLhello::use_sni_name        = 0;# 0=use hostname (default), 1: use sni_name for SNI mode connections
-$Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connection is use_sni_name=1; ###FIX: "1": quickfix until migration of o-saft.pl is compleated (tbd)
-$Net::SSLhello::force_TLS_extensions= 0;# prevent to not to use TLS extensions in SSLv3
-$Net::SSLhello::timeout             = 2;# time in seconds
-$Net::SSLhello::retry               = 3;# number of retry when timeout occurs
-$Net::SSLhello::connect_delay       = 0;# time to wait in seconds for starting next cipher check
-$Net::SSLhello::usereneg            = 0;# secure renegotiation
-$Net::SSLhello::use_signature_alg   = 1;# signature_algorithm: 0 (off), 1 (auto on if >=TLSv1.2, >=DTLS1.2), 2: always on
-$Net::SSLhello::useecc              = 1;# use 'Supported Elliptic' Curves Extension
-$Net::SSLhello::useecpoint          = 1;# use 'ec_point_formats' extension
-$Net::SSLhello::starttls            = 0;# 1= do STARTTLS
-$Net::SSLhello::starttlsType        = "SMTP";# default: SMTP
-@Net::SSLhello::starttlsPhaseArray  = [];# STARTTLS: customised phases (1-5) and error handling (6-8)
-$Net::SSLhello::starttlsDelay       = 0;# STARTTLS: time to wait in seconds (to slow down the requests)
-$Net::SSLhello::slowServerDelay     = 0;# proxy and STARTTLS: time to wait in seconds (for slow proxies and STARTTLS servers)
-$Net::SSLhello::double_reneg        = 0;# 0=Protection against double renegotiation info is active
-$Net::SSLhello::proxyhost           = "";#
-$Net::SSLhello::proxyport           = "";#
-$Net::SSLhello::experimental        = 0;# 0: experimental functions are protected (=not active)
-$Net::SSLhello::max_ciphers         = _MY_SSL3_MAX_CIPHERS; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
-$Net::SSLhello::max_sslHelloLen     = 16388; # according RFC: 16383+5 bytes; max len of sslHello messages (some implementations had issues with packets longer than 256 bytes)
-$Net::SSLhello::noDataEqNoCipher    = 1; # 1= for some TLS intolerant servers 'NoData or timeout equals to no cipher' supported -> Do NOT abort to test next ciphers
-$Net::SSLhello::extensions_by_prot  = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
-$Net::SSLhello::check_extensions    = [ qw(supported_groups) ]; # List of extensions to be checked for all supported params
-$Net::SSLhello::extensions_max_values = 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions 
 
 my %RECORD_TYPE = ( # RFC 5246
     'change_cipher_spec'    => 20,
@@ -420,9 +447,9 @@ my %ECC_NAMED_CURVE = (
 #65283-65535  Unassigned          ,
 );
 
-##################################################################################
-# List of Functions
-##################################################################################
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
 sub checkSSLciphers         ($$$@);
 sub printCipherStringArray  ($$$$$@);
 sub _timedOut;
@@ -430,41 +457,6 @@ sub _error;
 sub _compileAllBytes        ($$$$$$;$$);
 sub _decode_val             ($$$;$$$$$$);
 sub _sprintf_hex_val        ($$;$);
-
-
-# TODO: import/export of the trace-function from o-saft-dbx.pm;
-# this is a workaround to get trace running using parameter '$Net::SSLhello::trace'
-## forward declarations
-#sub _trace  {};
-#sub _trace1 {};
-#sub _trace2 {};
-#sub _trace3 {};
-## Print errors; debugging
-#sub _error    { local $\ = "\n"; print ">>>Net::SSLhello>>> ERROR: " . join(" ", @_); }
-#sub _trace_   { _trace (@_); }
-#sub _trace1_  { _trace1(@_); }
-#sub _trace2_  { _trace2(@_); }
-#sub _trace3_  { _trace3(@_); }
-#sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
-#sub _trace4_  { _trace4(@_); }
-
-sub _ytime     { my $now = 1; return (0 >= $Net::SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
-      #$now = time() if ($cfg_out('time_absolut'));# not supported here
-sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
-
-sub _trace($)  { my @messages = @_; printf("%s %s",      _y_me_ts(), $messages[0])         if ($Net::SSLhello::trace > 0); return }
-sub _trace0($) { my @messages = @_; printf("%s",         _y_me_ts())                       if ($Net::SSLhello::trace > 0); return }
-sub _trace1($) { my @messages = @_; printf("%s %s",      _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 1); return }
-sub _trace2($) { my @messages = @_; printf("%s %s -->",  _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 2); return }
-sub _trace3($) { my @messages = @_; printf("%s %s -->",  _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace ==3); return }
-sub _trace4($) { my @messages = @_; printf("%s %s --->", _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 3); return }
-sub _trace5($) { my @messages = @_; printf("%s %s --->", _y_me_ts(), join(" ", @messages)) if ($Net::SSLhello::trace > 4); return }
-sub _trace_($) { my @messages = @_; printf(" %s", join(" ", @messages))                    if ($Net::SSLhello::trace > 0); return }
-sub _trace1_($){ my @messages = @_; printf(" %s", join(" ", @messages))                    if ($Net::SSLhello::trace > 1); return }
-sub _trace2_($){ my @messages = @_; printf("%s",  join(" ", @messages))                    if ($Net::SSLhello::trace > 2); return }
-sub _trace3_($){ my @messages = @_; printf("%s",  join(" ", @messages))                    if ($Net::SSLhello::trace ==3); return }
-sub _trace4_($){ my @messages = @_; printf("%s",  join(" ", @messages))                    if ($Net::SSLhello::trace > 3); return }
-sub _trace5_($){ my @messages = @_; printf("%s",  join(" ", @messages))                    if ($Net::SSLhello::trace > 4); return }
 
 sub _carp   {
     #? print warning message if wanted
@@ -1650,6 +1642,9 @@ sub printParameters {
     _trace("printParameters() }\n");
     return;
 } # printParameters
+
+#_____________________________________________________________________________
+#__________________________________________________________________ methods __|
 
 ### --------------------------------------------------------------------------------------------------------- ###
 ### compile packets functions
