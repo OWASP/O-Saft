@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.30 24/01/05 09:36:06
+#?      @(#) Makefile.cipher 1.31 24/01/05 12:58:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.30
+_SID.cipher        := 1.31
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -78,8 +78,11 @@ LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
 	--legacy=owasp  --force-openssl --showhost  \
 	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves \
-	--traceKEY  --trace  --trace=2  --trace=3  --trace=4
+	--traceKEY      --trace  --trace=2
 # NOTE: --traceKEY and not --trace-KEY to avoid addional settings below
+# --trace=3 and --trace=4 not generated because too much diff when used with 
+# test*.log ; they shuld not be part of ALL.testciphermisc and ALL.testcipher
+# but see individual targets below
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
@@ -124,6 +127,8 @@ testcmd-cipher-+cipher---nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1
 ALL.testcipher += testcmd-cipher-+cipher--nossltls_
 
 # some more individual tests
+testcmd-cipher-+cipher---trace-3_%: TEST.init  += --trace=3
+testcmd-cipher-+cipher---trace-4_%: TEST.init  += --trace=4
 testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
@@ -140,9 +145,9 @@ ALL.testciphermisc     = \
 	testcmd-cipher-+cipher-default_ \
 	testcmd-cipher-+cipher-selected_ \
 	testcmd-cipher-+cipher-strong_  \
-	testcmd-cipher-+ciphercheck_    \
 	testcmd-cipher-+cipher--trace-host_ \
-	testcmd-cipher-+cipher---openssl-local_
+	testcmd-cipher-+cipher---openssl-local_ \
+	testcmd-cipher-+ciphercheck_
 
 ALL.test.cipher        = $(foreach host,$(TEST.cipher.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.cipher       += $(foreach host,$(TEST.cipher.hosts),$(ALL.testciphermisc:%=%$(host)))
