@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 1.29 23/12/13 09:05:34
+#?      @(#) Makefile.cipher 1.30 24/01/05 09:36:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 1.29
+_SID.cipher        := 1.30
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -76,8 +76,10 @@ LIST.cipher-range  := \
 # --range=safe  and  --range=huge  disabled, because it takes a long time
 LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
-	--legacy=owasp  --force-openssl --showhost  --trace-KEY \
-	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves
+	--legacy=owasp  --force-openssl --showhost  \
+	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves \
+	--traceKEY  --trace  --trace=2  --trace=3  --trace=4
+# NOTE: --traceKEY and not --trace-KEY to avoid addional settings below
 #TODO: TEST.args  += --cipher-npns=,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=,,
 #TODO: TEST.args  += --cipher-npns=, --cipher-npns=ecdh_x448
@@ -116,6 +118,7 @@ testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher--%:          TEST.init   = --trace-CLI --header +cipher
 testcmd-cipher-+cipher_%:           TEST.args  +=
+testcmd-cipher-+cipher---trace-%:   TEST.init  += --cipher=AES128-SHA
 testcmd-cipher-+cipher---nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
 ALL.testcipher += testcmd-cipher-+cipher--nossltls_
