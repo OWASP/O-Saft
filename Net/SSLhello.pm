@@ -56,7 +56,7 @@ use strict;
 use warnings;
 
 our $VERSION    = "23.11.23";
-my  $SID_sslhelo= "@(#) SSLhello.pm 1.73 24/01/04 19:25:28",
+my  $SID_sslhelo= "@(#) SSLhello.pm 1.77 24/01/06 00:39:33",
 my  $SSLHELLO   = "Net::SSLhello";
 
 use Socket; ## TBD will be deleted soon TBD ###
@@ -104,13 +104,12 @@ $Net::SSLhello::double_reneg        = 0;# 0=Protection against double renegotiat
 $Net::SSLhello::proxyhost           = "";#
 $Net::SSLhello::proxyport           = "";#
 $Net::SSLhello::experimental        = 0;# 0: experimental functions are protected (=not active)
-$Net::SSLhello::max_ciphers         = 64; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
 $Net::SSLhello::max_ciphers         = _MY_SSL3_MAX_CIPHERS; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
 $Net::SSLhello::max_sslHelloLen     = 16388; # according RFC: 16383+5 bytes; max len of sslHello messages (some implementations had issues with packets longer than 256 bytes)
 $Net::SSLhello::noDataEqNoCipher    = 1; # 1= for some TLS intolerant servers 'NoData or timeout equals to no cipher' supported -> Do NOT abort to test next ciphers
 $Net::SSLhello::extensions_by_prot  = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
 $Net::SSLhello::check_extensions    = [ qw(supported_groups) ]; # List of extensions to be checked for all supported params
-$Net::SSLhello::extensions_max_values = 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions 
+$Net::SSLhello::extensions_max_values = 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions
 
 BEGIN {
     # section required only when called as: Net/SSLhello.pm or ./SSLhello.pm
@@ -129,22 +128,23 @@ BEGIN {
         sub _ytime     { my $now = 1; return (0 >= $Net::SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
               #$now = time() if ($cfg_out('time_absolut'));# not supported here
         sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
-        sub __trace    { my @txt = @_; printf("%s %s", _y_me_ts(), "@txt"); return }
-        sub _trace0($) { my @txt = @_; printf("%s",    _y_me_ts()) if ($Net::SSLhello::trace > 0); return }
-        sub _trace($)  { my @txt = @_; __trace($txt[0]) if ($Net::SSLhello::trace > 0); return }
-        sub _trace1($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 1); return; }
-        sub _trace2($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 2); return; }
-        sub _trace3($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace ==3); return; }
-        sub _trace4($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 3); return; }
-        sub _trace5($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 4); return; }
-        sub _trace_($) { my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 0); return; }
-        sub _trace1_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 1); return; }
-        sub _trace2_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 2); return; }
-        sub _trace3_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace ==3); return; }
-        sub _trace4_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 3); return; }
-        sub _trace5_($){ my @txt = @_; __trace(@txt)    if ($Net::SSLhello::trace > 4); return; }
+        sub __trace    { my @txt = @_; printf("%s %s", _y_me_ts(), "@txt"); return; }
+        sub _trace0($) { my @txt = @_; printf("%s",    _y_me_ts()) if ($Net::SSLhello::trace > 0); return; }
+        sub _trace($)  { my @txt = @_; __trace($txt[0])     if ($Net::SSLhello::trace > 0); return; }
+        sub _trace1($) { my @txt = @_; __trace(@txt)        if ($Net::SSLhello::trace > 1); return; }
+        sub _trace2($) { my @txt = @_; __trace(@txt)        if ($Net::SSLhello::trace > 2); return; }
+        sub _trace3($) { my @txt = @_; __trace(@txt)        if ($Net::SSLhello::trace ==3); return; }
+        sub _trace4($) { my @txt = @_; __trace(@txt)        if ($Net::SSLhello::trace > 3); return; }
+        sub _trace5($) { my @txt = @_; __trace(@txt)        if ($Net::SSLhello::trace > 4); return; }
+        sub _trace_($) { my @txt = @_; printf(" %s", @txt)  if ($Net::SSLhello::trace > 0); return; }
+        sub _trace1_($){ my @txt = @_; printf("%s",  @txt)  if ($Net::SSLhello::trace > 1); return; }
+        sub _trace2_($){ my @txt = @_; printf("%s",  @txt)  if ($Net::SSLhello::trace > 2); return; }
+        sub _trace3_($){ my @txt = @_; printf("%s",  @txt)  if ($Net::SSLhello::trace ==3); return; }
+        sub _trace4_($){ my @txt = @_; printf("%s",  @txt)  if ($Net::SSLhello::trace > 3); return; }
+        sub _trace5_($){ my @txt = @_; printf("%s",  @txt)  if ($Net::SSLhello::trace > 4); return; }
     }
 }
+# TODO: OSaft::error_handler->reset_err() prints wrong prefix for trace>3
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -195,7 +195,7 @@ List constants and/or parameters used by Net::SSLhello.
 =cut
 
 #_____________________________________________________________________________
-#________________________________________________ public (export) variables __|
+#____________________________________________________ export public methods __|
 
 use Exporter qw(import);
 use base qw(Exporter);
@@ -203,40 +203,11 @@ our @EXPORT_OK  = qw(
         net_sslhello_done
         checkSSLciphers
         getSSLciphersWithParam
-        compileClientHello
-        compileSSL2CipherArray
-        compileTLSCipherArray
-        getCipherParameter
-        hexCodedCipher
-        hexCodedSSL2Cipher
-        hexCodedString
-        hexCodedTLSCipher
         openTcpSSLconnection
-        parseServerHello
-        parseServerKeyExchange
-        parseSSL2_ServerHello
-        parseTLS_Extension
-        parseTLS_ServerHello
         printCipherStringArray
         printParameters
-        printSSL2CipherList
-        printTLSCipherList
         version
 );
-
-our $HAVE_XS = eval {
-        local $SIG{'__DIE__'} = 'DEFAULT';
-        eval {
-            require XSLoader;
-            XSLoader::load('Net::SSLhello', $VERSION);
-            1;
-        } or do {
-            require DynaLoader;
-            bootstrap Net::SSLhello $VERSION;
-            1;
-        };
-
-    } ? 1 : 0;
 
 #_____________________________________________________________________________
 #___________________________________________________________ initialisation __|
@@ -476,12 +447,32 @@ sub _hint   {
     return;
 }
 
-#if (! eval("require o-saft-dbx.pm;")) {
-#        # o-saft-dbx.pm may not be installed, try to find in program's directory
-#        push(@INC, $main::mepath);
-#        require "o-saft-dbx.pm";
-#}
+sub _trace_array2str {
+    #? return array in human readable internal repesentation ('0x0300xxxx' or '0x02yyyyyy')
+    my @arr = @_;
+    my $str = "";
+    my $i   = 0;
+    foreach my $item (@arr) {
+        $str .= "\n  " if (($i++) % _MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
+        $str .= " >$item<";
+    }
+    return $str;
+} # _trace_array2str
 
+sub _trace_cipher_array {
+    #? print human readable in internal repesentation ('0x0300xxxx' or '0x02yyyyyy')
+    #  just prints values, hence no prefix in printf()
+    my $suffix  = shift;
+    my @ciphers = @_;
+    my $i = 0;
+    return if (0 >= $Net::SSLhello::trace);
+    if (1 == $Net::SSLhello::trace) {
+        printf(" [ @ciphers ]$suffix\n");
+        return;
+    }
+    printf("%s%s\n", _trace_array2str(@ciphers), $suffix);
+    return;
+} # _trace_cipher_array
 
 #   trace output for known and unknown formts
 sub _sprintf_hex_val ($$;$) {
@@ -592,7 +583,7 @@ sub _decode_val ($$$;$$$$$$) {
     my $_text_sep       = shift(@_) || ":\n". " " x $_next_indent;  # optional: add a colon, a new line and an indent between section headline (e.g. 'sequence') and value
     my $_sub_sep        = shift(@_) || ", ";                        # optional: sub seperators of elements or arrays
     my $_sub_sub_sep    = shift(@_) || " | ";                       # optional: sub-sub seperators of array elements or nested arrays (arrays of arrays)
-    my $_sub3_sep       = shift(@_) || " / ";                       # optional: sub³ seperators of nested array elements (or error messages for more deeply nested attays 
+    my $_sub3_sep       = shift(@_) || " / ";                       # optional: sub³ seperators of nested array elements (or error messages for more deeply nested attays
     my $_sub_lines      = 0;
     my $_sub_sub_lines  = 0;
     my $_sub3_lines     = 0;
@@ -1633,7 +1624,7 @@ sub printParameters {
     my $_so_rcvtimeo = (defined(SO_RCVTIMEO))         ? SO_RCVTIMEO   : $STR{'UNDEF'};
     print _yprint("socket::SO_RCVTIMEO", $_so_rcvtimeo);
     my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
-        if (! $_protocol) { 
+        if (! $_protocol) {
             $_protocol = Socket::IPPROTO_TCP;
         }
     print _yprint("socket::getprotobyname('tcp')", $_protocol);
@@ -1784,19 +1775,8 @@ sub checkSSLciphers ($$$@) {
 
     OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
 
-    if ($Net::SSLhello::trace > 0) {
-        _trace("checkSSLciphers ($host, $port, $ssl,");
-        if ($Net::SSLhello::trace == 1) {
-            print(" [ @cipher_str_array ]) {\n");
-        }
-        if ($Net::SSLhello::trace > 1) {
-            foreach my $cipher_str (@cipher_str_array) {                         # $cipher_str: human readable in internal repesentation ('0x0300xxxx' or '0x02yyyyyy')
-                _trace_ ("\n  ")  if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                _trace_ (" >$cipher_str<");
-            }
-            _trace_(") {\n");
-        }
-    }
+    _trace("checkSSLciphers($host, $port, $ssl,");
+    _trace_cipher_array( " ) {", @cipher_str_array);
 
     if ($protocol == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
         _trace4_ ("\n");
@@ -1809,21 +1789,9 @@ sub checkSSLciphers ($$$@) {
         }
         _trace4_ ("\n");
         $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec);
-        if ($Net::SSLhello::trace > 0) { #about: _trace
-            $i = 0;
-            my $anzahl = int length ($acceptedCipher) / 3;
-            _trace(" checkSSLciphers: Accepted ". $anzahl ." Ciphers:");
-            if ($Net::SSLhello::trace == 1) {
-                print(" [ " . join(" ",compileSSL2CipherArray(@acceptedCipherArray)) . " ]\n");
-            }
-            if ($Net::SSLhello::trace  > 1) {
-                foreach my $cipher_str (compileSSL2CipherArray ($acceptedCipher) ) {
-                    _trace_ ("\n         ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                    _trace_ (" >$cipher_str<");
-                }
-                _trace_("\n");
-            }
-        }
+        my $anzahl = int length ($acceptedCipher) / 3;
+        _trace(" checkSSLciphers: Accepted ". $anzahl ." Ciphers:");
+        _trace_cipher_array("", compileSSL2CipherArray ($acceptedCipher));
         _trace("checkSSLciphers() }\n");
         return (compileSSL2CipherArray ($acceptedCipher));
     } else { # SSL3, TLS, DTLS .... check by the cipher
@@ -1852,18 +1820,14 @@ sub checkSSLciphers ($$$@) {
                     $i = 0;
                     my $txt = "";
                        $txt = " (STARTTLS)" if $Net::SSLhello::starttls;
-                    _trace1 (" checkSSLciphers:$txt Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
-                    _trace4_ ("\n");
-                    foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {
-                        _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                        _trace_ (" >$cipher_str<");
-                    }
-                    _trace2_ ("\n");
+                    _trace1(" checkSSLciphers:$txt Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
+                    _trace4_("\n");
+                    _trace_(_trace_array2str(compileTLSCipherArray($cipher_spec))."\n");
                 }
                 $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect accepted ciphers, $dtlsEpoch is only used in DTLS
                 _trace2_ ("       ");
                 if ($acceptedCipher) { # received an accepted cipher
-                    _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
+                    _trace1_("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
                     if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { #accepted cipher that was in the checklist
                         @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
                     } else { # cipher was *NOT* in the checklist
@@ -1933,18 +1897,14 @@ sub checkSSLciphers ($$$@) {
             $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round;
             if ($Net::SSLhello::trace > 1) { #print ciphers that are tested this round:
                 $i = 0;
-                _trace (" checkSSLciphers: Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
-                _trace4_ ("\n");
-                foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {
-                    _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                    _trace_ ( " >$cipher_str<");
-                }
-                _trace2_ ("\n");
+                _trace(" checkSSLciphers: Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
+                _trace4_("\n");
+                _trace_(_trace_array2str(compileTLSCipherArray($cipher_spec))."\n");
             }
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect Accepted ciphers
             _trace2_ ("       ");
             if ($acceptedCipher) { # received an accepted cipher ## TBD: error handling using `given'/`when' TBD
-                _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
+                _trace1_("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
                 if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { # accepted cipher that was in the checklist
                     @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
                 } else { # cipher was *NOT* in the checklist
@@ -1991,20 +1951,8 @@ sub checkSSLciphers ($$$@) {
             }
         } # end while ...
 
-        if ($Net::SSLhello::trace > 0) {    # about: _trace
-            $i = 0;
-            _trace(" checkSSLciphers: Accepted ". scalar(@acceptedCipherArray)." Ciphers (unsorted):");
-            if ($Net::SSLhello::trace == 1) {
-                print(" [ " . join(" ",compileTLSCipherArray(join("",@acceptedCipherArray))) . " ]\n");
-            }
-            if ($Net::SSLhello::trace  > 1) {
-                foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
-                    _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                    _trace_ (" >$cipher_str<");
-                }
-                _trace_("\n");
-            }
-        }
+        _trace(" checkSSLciphers: Accepted ". scalar(@acceptedCipherArray)." Ciphers (unsorted):");
+        _trace_cipher_array("", compileTLSCipherArray(join("",@acceptedCipherArray)));
 
         # >>>>> Check priority of ciphers <<<<<
         ####################################################################################################################
@@ -2021,16 +1969,7 @@ sub checkSSLciphers ($$$@) {
             if ($my_error) {
                 _trace2 (" checkSSLciphers (3): '$my_error'\n");
                 # list untested ciphers
-                $i = 0;
-                my $str = ""; #output string with list of ciphers
-                foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
-                    if (($i++) != 0) { # not 1st element
-                        $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                        $str .= " ";
-                    }
-                    $str .= ">$cipher_str<";
-                }
-                # End: list untested ciphers
+                my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                 if ( ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
                     _trace1 (" checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
@@ -2086,16 +2025,7 @@ sub checkSSLciphers ($$$@) {
                 } else { # cipher was *NOT* in the checklist
                     carp ("**WARNING: checkSSLciphers: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (3): ('0x".hexCodedCipher($acceptedCipherArray[0])." ... 0x".hexCodedCipher($acceptedCipherArray[-1])."'. Untested Ciphers:");
                     # list untested ciphers
-                    $i = 0;
-                    my $str = ""; # output string with list of ciphers
-                    foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
-                        if (($i++) != 0) { # not 1st element
-                            $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                            $str .= " ";
-                        }
-                        $str .= ">$cipher_str<";
-                    }
-                    # End: list untested ciphers
+                    my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                     @acceptedCipherArray = (); # => Empty @cipherSpecArray
                 } # End cipher was *NOT* in the ckecklist
 
@@ -2103,16 +2033,7 @@ sub checkSSLciphers ($$$@) {
             } else { # nothing received => lost connection
                 _trace2 (" checkSSLciphers (6): '$my_error'\n");
                 # list untested ciphers
-                $i = 0;
-                my $str = ""; # output string with list of ciphers
-                foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
-                    if (($i++) != 0) { # not 1st element
-                        $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
-                        $str .= " ";
-                    }
-                    $str .= ">$cipher_str<";
-                }
-                # End: list untested ciphers
+                my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                 if (  ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
                     _trace1 (" checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
@@ -2157,7 +2078,7 @@ sub getSSLciphersWithParam {
     #? parameters are the same as for checkSSLciphers()
     #? returns numerical hash, each entry with array [ciphers, parameters]
     #? entry {0} is the array returned by checkSSLciphers()
-    # FIXME: <<POD missing>> 
+    # FIXME: <<POD missing>>
     my($host, $port, $ssl, @cipher_str_array) = @_;
     my %ciphers;
     my $_i = 0;
@@ -2198,6 +2119,7 @@ sub openTcpSSLconnection ($$) {
 #   ##TBD new subs openTcpSSLconnectionViaProxy, openTcpSSLconnectionUsingStarttls
 #
 #    local $my_error = "" if (!defined($my_error));
+    _trace2("openTcpSSLconnection($host, $port) {\n");
 
     my @starttls_matrix =
         ( ["SMTP",
@@ -2374,22 +2296,22 @@ sub openTcpSSLconnection ($$) {
     local $my_error = ""; # reset error message
     OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
-        _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+        _trace2 (" openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
     } else {
-        _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port\n");
+        _trace2 (" openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port\n");
     }
     $retryCnt = 0;
     if ($Net::SSLhello::starttls)  {                    # starttls -> find STARTTLS type
         $startTlsTypeHash{$starttls_matrix[$_][0]} = $_ for 0 .. scalar(@starttls_matrix) - 1;
-        _trace4 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
+        _trace4 (" openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
 
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)};
-            _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
+            _trace4 (" openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
             if ( grep {/^$starttlsType$/x} ('12', '13', '14','15') ) { # ('12', '13', ...) -> Use of an experimental STARTTLS type
                 if  ($Net::SSLhello::experimental >0) {         # experimental function is are  activated
                     _trace_("\n");
-                    _trace ("openTcpSSLconnection: WARNING: use of STARTTLS type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
+                    _trace (" openTcpSSLconnection: WARNING: use of STARTTLS type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else {                                        # use of experimental functions is not permitted (option is not activated)
                     if ( grep {/^$starttlsType$/x} ('12', '13', '14', '15') ) { # experimental and untested
                         OSaft::error_handler->new( {
@@ -2412,7 +2334,7 @@ sub openTcpSSLconnection ($$) {
             if ($starttls_matrix[$starttlsType][0] eq 'CUSTOM') { # customise the starttls_matrix
                 for my $i (1..8) {
                     if (defined($Net::SSLhello::starttlsPhaseArray[$i])) {
-                        _trace4 ("openTcpSSLconnection: Customise starttls_matrix: \$Net::SSLhello::starttlsPhaseArray[$i]= >$Net::SSLhello::starttlsPhaseArray[$i]< = hex: >".unpack("H*",$Net::SSLhello::starttlsPhaseArray[$i])."<\n");
+                        _trace4 (" openTcpSSLconnection: Customise starttls_matrix: \$Net::SSLhello::starttlsPhaseArray[$i]= >$Net::SSLhello::starttlsPhaseArray[$i]< = hex: >".unpack("H*",$Net::SSLhello::starttlsPhaseArray[$i])."<\n");
                         if (($i == 2) || ($i == 4)) { #TX Data needs a different handling
                             $starttls_matrix[$starttlsType][$i] = "$Net::SSLhello::starttlsPhaseArray[$i]";
                             #($starttls_matrix[$starttlsType][$i]) =~ s/(\[^xc]|\c.)/chr(ord('$1'))/eg; ## escape2hex does not work
@@ -2425,7 +2347,7 @@ sub openTcpSSLconnection ($$) {
                         } else { # normal copy
                             $starttls_matrix[$starttlsType][$i] = $Net::SSLhello::starttlsPhaseArray[$i];
                         }
-                        _trace2 ("openTcpSSLconnection: Customise \$starttls_matrix[$starttlsType][$i]= >$starttls_matrix[$starttlsType][$i]< = hex: >".unpack("H*",$starttls_matrix[$starttlsType][$i])."<\n");
+                        _trace2 (" openTcpSSLconnection: Customise \$starttls_matrix[$starttlsType][$i]= >$starttls_matrix[$starttlsType][$i]< = hex: >".unpack("H*",$starttls_matrix[$starttlsType][$i])."<\n");
                     }
                 }
             }
@@ -2439,25 +2361,25 @@ sub openTcpSSLconnection ($$) {
         OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
         if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
             _trace_ ("\n");
-            _trace  ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
+            _trace  (" openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
             sleep($Net::SSLhello::connect_delay);
-            _trace4 ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s) [End]\n");
+            _trace4 (" openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s) [End]\n");
         }
         alarm (0); # switch off alarm (e.g. for  next retry )
         if ($retryCnt >0) { # retry
             _trace1_ ("\n") if (($retryCnt == 1) && ($Net::SSLhello::trace < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
             if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
-                _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport);
+                _trace1 (" openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport);
                 if ($retryCnt > $Net::SSLhello::retry) {
                     _trace1_ (" (this is an additional retry after suspension)");
                 }
                 _trace1_ ("\n");
             } else {
-                _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port\n");
+                _trace1 (" openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port\n");
             }
         }
         if ($Net::SSLhello::starttls) {
-            _trace ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($Net::SSLhello::trace >2) || ($sleepSecs > 0) );
+            _trace (" openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($Net::SSLhello::trace >2) || ($sleepSecs > 0) );
             sleep ($sleepSecs);
         }
 
@@ -2467,7 +2389,7 @@ sub openTcpSSLconnection ($$) {
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);                       # set Alarm for get-socket and set-socketoptions->timeout(s)
                 my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
-                if (! $_protocol) { 
+                if (! $_protocol) {
                     $_protocol = Socket::IPPROTO_TCP;
                 }
                 socket($socket, PF_INET, SOCK_STREAM, $_protocol) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
@@ -2531,7 +2453,7 @@ sub openTcpSSLconnection ($$) {
                         warn    => 0,
                     } );
                     close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!"); #tbd löschen ###
-                    #_trace2 ("openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
+                    #_trace2 (" openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
                     sleep (1);
                     # last; # no retry
                     next RETRY_TO_OPEN_SSL_CONNECTION;      # next retry
@@ -2544,7 +2466,7 @@ sub openTcpSSLconnection ($$) {
                 local $@ = "";
                 eval {
                     $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
-                    _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
+                    _trace4 (" openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
@@ -2560,7 +2482,7 @@ sub openTcpSSLconnection ($$) {
                     } );
                     close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
                     if (defined($slowServerDelay) && ($slowServerDelay>0)) {
-                        _trace2 ("openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        _trace2 (" openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
                         sleep ($slowServerDelay);
                     }
                     next RETRY_TO_OPEN_SSL_CONNECTION;      # retry
@@ -2574,14 +2496,14 @@ sub openTcpSSLconnection ($$) {
                 # CONNECT via proxy
                 eval {
                     $input = "";
-                    _trace2 ("openTcpSSLconnection ## CONNECT via proxy: try to receive the Connected-Message from the proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
+                    _trace2 (" openTcpSSLconnection ## CONNECT via proxy: try to receive the Connected-Message from the proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
                     if (length ($input)==0) { # did not receive a Message
-                        _trace4 ("openTcpSSLconnection: ... Received Connected-Message from proxy (1a): received NO Data\n");
+                        _trace4 (" openTcpSSLconnection: ... Received Connected-Message from proxy (1a): received NO Data\n");
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
                         osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
@@ -2601,7 +2523,7 @@ sub openTcpSSLconnection ($$) {
                     } );
                     close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
                     if (defined($slowServerDelay) && ($slowServerDelay>0)) {
-                        _trace2 ("openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        _trace2 (" openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
                         sleep ($slowServerDelay);
                     }
                     next RETRY_TO_OPEN_SSL_CONNECTION;      # retry
@@ -2610,11 +2532,11 @@ sub openTcpSSLconnection ($$) {
             } # << end a block
 
             if (length ($input) >0) { # got data
-                _trace3 ("openTcpSSLconnection: ... Received data via proxy: ".length($input)." bytes\n          >".substr(_chomp_r($input),0,64)."< ...\n");
-                _trace4 ("openTcpSSLconnection: ... Received data via proxy: ".length($input)." bytes\n          >"._chomp_r($input)."<\n");
+                _trace3 (" openTcpSSLconnection: ... Received data via proxy: ".length($input)." bytes\n          >".substr(_chomp_r($input),0,64)."< ...\n");
+                _trace4 (" openTcpSSLconnection: ... Received data via proxy: ".length($input)." bytes\n          >"._chomp_r($input)."<\n");
                 if ($input =~ /(?:^|\s)200\s/x) { # HTTP/1.0 200 Connection established\r\nProxy-agent: ... \r\n\r\n
                     $my_error = ""; # connection established
-                    _trace2 ("openTcpSSLconnection: Connection established to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+                    _trace2 (" openTcpSSLconnection: Connection established to $host:$port via proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
                 } else {
                     if ($Net::SSLhello::trace == 0) { # no trace => shorten the output
                         $input =~ /^((?:.+?(?:\r?\n|$)){1,4})/x; # maximal 4 lines
@@ -2628,7 +2550,7 @@ sub openTcpSSLconnection ($$) {
                     } );
                     close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
                     if (defined($slowServerDelay) && ($slowServerDelay>0)) {
-                        _trace2 ("openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        _trace2 (" openTcpSSLconnection: via proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
                         sleep ($slowServerDelay);
                     }
                     next RETRY_TO_OPEN_SSL_CONNECTION;
@@ -2678,15 +2600,15 @@ sub openTcpSSLconnection ($$) {
                     next RETRY_TO_OPEN_SSL_CONNECTION;      # retry
                 }};                                         # end of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                  # clear alarm if not done before
-                _trace2 ("openTcpSSLconnection: Connected to server $host:$port\n");
+                _trace2 (" openTcpSSLconnection: Connected to server $host:$port\n");
             } # << end a block
         }
 
         if ( !(OSaft::error_handler->is_err) && ($Net::SSLhello::starttls) )  { # no error and starttls ###############  Begin STARTTLS Support #############
-            _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]." protocol for server $host:$port, Retry = $retryCnt\n");
+            _trace2 (" openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]." protocol for server $host:$port, Retry = $retryCnt\n");
             # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
             if (($slowServerDelay > 0) || ($retryCnt > 0)) { # slow server or retry: sleep some secs
-                _trace2 ("openTcpSSLconnection: $host:$port: wait ".($slowServerDelay||1)." sec(s) to cope with slow servers\n");
+                _trace2 (" openTcpSSLconnection: $host:$port: wait ".($slowServerDelay||1)." sec(s) to cope with slow servers\n");
                 sleep ($slowServerDelay||1); # sleep $slowServerDelay secs or min 1 sec
                 #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             }
@@ -2695,7 +2617,7 @@ sub openTcpSSLconnection ($$) {
                 local $@ = "";
                 eval {
                     $input = "";
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
                     #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -2709,7 +2631,7 @@ sub openTcpSSLconnection ($$) {
                 }};                                                 # end of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0) { # received Data => 220 smtp.server.com Simple Mail Transfer Service Ready?
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1):  ... Received ".$starttls_matrix[$starttlsType][0]."-Message (1): ".length($input)." bytes: >"._chomp_r($input)."<\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 1):  ... Received ".$starttls_matrix[$starttlsType][0]."-Message (1): ".length($input)." bytes: >"._chomp_r($input)."<\n");
                     if ($input =~ /$starttls_matrix[$starttlsType][1]/) { # e.g. SMTP: 220 smtp.server.com Simple Mail Transfer Service Ready
                         $my_error = "";    # server is ready
                     } else {
@@ -2724,14 +2646,14 @@ sub openTcpSSLconnection ($$) {
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs= 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             carp ("**WARNING: openTcpSSLconnection: ... $my_error"); #if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
-                            _trace4 ("openTcpSSLconnection: STARTTLS (Phase 1): End suspend\n");
+                            _trace4 (" openTcpSSLconnection: STARTTLS (Phase 1): End suspend\n");
                             if ($retryCnt == $Net::SSLhello::retry) { # signal to do an additional retry
                                 $retryCnt++;
-                                _trace4 ("openTcpSSLconnection: STARTTLS (Phase 1): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
+                                _trace4 (" openTcpSSLconnection: STARTTLS (Phase 1): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
                                 redo RETRY_TO_OPEN_SSL_CONNECTION;      # extra retry
                             }
                             next RETRY_TO_OPEN_SSL_CONNECTION;          # next retry
@@ -2746,7 +2668,7 @@ sub openTcpSSLconnection ($$) {
                             last;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a fatal error message
                             $my_error = "STARTTLS (Phase 1): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             last RETRY_TO_OPEN_SSL_CONNECTION;
                         } else {
@@ -2756,28 +2678,28 @@ sub openTcpSSLconnection ($$) {
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
                             $my_error = "STARTTLS (Phase 1): Did *NOT* get a ".$starttls_matrix[$starttlsType][0]." Server Ready Message from $host:$port; target ignored. Server-Error: >"._chomp_r($input)."<"; # error message received from the server
-                            _trace2 ("openTcpSSLconnection: $my_error\n");
+                            _trace2 (" openTcpSSLconnection: $my_error\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             next RETRY_TO_OPEN_SSL_CONNECTION;   # next retry
                         }
                     }
                 } else {
                     $my_error = ("STARTTLS (Phase 1): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." message from $host:$port -> slow down and try to retry target.");
-                    _trace ("openTcpSSLconnection: $my_error\n");
+                    _trace (" openTcpSSLconnection: $my_error\n");
                     $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global variable 1 step later
                     $sleepSecs += $retryCnt + 2;
                     close ($socket) or carp("**WARNING: openTcpSSLconnection: STARTTLS: $my_error; Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;
                 }
             } else {
-                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+                _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 1): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][1]
 
             ### STARTTLS_Phase2 (send) #####
             if ($starttls_matrix[$starttlsType][2]) {
                 local $@ = "";
                 eval {
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<\n");
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
@@ -2785,7 +2707,7 @@ sub openTcpSSLconnection ($$) {
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #2 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
-                    _trace2 ("openTcpSSLconnection: $my_error\n");
+                    _trace2 (" openTcpSSLconnection: $my_error\n");
                     close ($socket) or carp("**WARNING: openTcpSSLconnection: $my_error Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
@@ -2797,7 +2719,7 @@ sub openTcpSSLconnection ($$) {
                 osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             } else {
-                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+                _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][2]
 
             ### STARTTLS_Phase3: receive (SMTP) Hello Answer
@@ -2805,7 +2727,7 @@ sub openTcpSSLconnection ($$) {
                 local $@ = "";
                 eval {
                     $input = "";
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n");
                     osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -2819,11 +2741,11 @@ sub openTcpSSLconnection ($$) {
                 }};                                                 # end of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0) { # received Data => 250-smtp.server.com Hello o-saft.localhost?
-                    _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 3): ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
-                    _trace4 ("openTcpSSLconnection: ## STARTTLS (Phase 3):  ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." bytes\n      >"._chomp_r($input)."<\n");
+                    _trace3 (" openTcpSSLconnection: ## STARTTLS (Phase 3): ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
+                    _trace4 (" openTcpSSLconnection: ## STARTTLS (Phase 3):  ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." bytes\n      >"._chomp_r($input)."<\n");
                     if ($input =~ /$starttls_matrix[$starttlsType][3]/) { # e.g. SMTP: 250-smtp.server.com Hello o-saft.localhost
                         $my_error = "";                             # server is ready
-                        _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): received a $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port: >"._chomp_r($input)."<\n");
+                        _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 3): received a $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port: >"._chomp_r($input)."<\n");
                     } else {
                         $input=_chomp_r($input);
                         if ( ($starttls_matrix[$starttlsType][6]) && ($input =~ /$starttls_matrix[$starttlsType][6]/) ) { # did receive a temporary error message
@@ -2835,14 +2757,14 @@ sub openTcpSSLconnection ($$) {
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs= 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             carp ("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
-                            _trace4 ("openTcpSSLconnection: STARTTLS (Phase 3): End suspend\n");
+                            _trace4 (" openTcpSSLconnection: STARTTLS (Phase 3): End suspend\n");
                             if ($retryCnt == $Net::SSLhello::retry) { # signal to do an additional retry
                                 $retryCnt++;
-                                _trace4 ("openTcpSSLconnection: STARTTLS (Phase 3): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
+                                _trace4 (" openTcpSSLconnection: STARTTLS (Phase 3): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
                             }
                             next RETRY_TO_OPEN_SSL_CONNECTION;
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) {
@@ -2857,7 +2779,7 @@ sub openTcpSSLconnection ($$) {
                             last RETRY_TO_OPEN_SSL_CONNECTION;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a fatal error message
                             $my_error = "STARTTLS (Phase 3): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             last RETRY_TO_OPEN_SSL_CONNECTION;
                         } else {
@@ -2867,28 +2789,28 @@ sub openTcpSSLconnection ($$) {
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
                             $my_error = "STARTTLS (Phase 3): Did *NOT* get a $starttls_matrix[$starttlsType][0] Server Hello Answer from $host:$port; target ignored. Server-Error: >"._chomp_r($input)."<"; # error message received from the SMTP-Server
-                            _trace2 ("openTcpSSLconnection: $my_error; try to retry\n");
+                            _trace2 (" openTcpSSLconnection: $my_error; try to retry\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             next RETRY_TO_OPEN_SSL_CONNECTION;
                         }
                     }
                 } else { # did receive a message with length = 0 ?!
                     $my_error = ("STARTTLS (Phase 3): Did *NOT* get any answer to".$starttls_matrix[$starttlsType][0]." client message from $host:$port -> slow down and try to retry target.");
-                    _trace ("openTcpSSLconnection: $my_error\n");
+                    _trace (" openTcpSSLconnection: $my_error\n");
                     $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global variable 1 step later
                     $sleepSecs += $retryCnt + 2;
                      close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                      next RETRY_TO_OPEN_SSL_CONNECTION; # next retry
                 }
             } else {
-                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+                _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 3): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][3]
 
             #### STARTTLS_Phase4: Do STARTTLS
             if ($starttls_matrix[$starttlsType][4]) {
                 local $@ = "";
                 eval {
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): $starttls_matrix[$starttlsType][0] Do STARTTLS message: >"._chomp_r($starttls_matrix[$starttlsType][4])."<\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 4): $starttls_matrix[$starttlsType][0] Do STARTTLS message: >"._chomp_r($starttls_matrix[$starttlsType][4])."<\n");
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                     alarm($Net::SSLhello::timeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][4], 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
@@ -2896,7 +2818,7 @@ sub openTcpSSLconnection ($$) {
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #4 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
-                    _trace2 ("openTcpSSLconnection: $my_error\n");
+                    _trace2 (" openTcpSSLconnection: $my_error\n");
                     close ($socket) or carp("**WARNING: openTcpSSLconnection: ## $my_error Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
@@ -2906,7 +2828,7 @@ sub openTcpSSLconnection ($$) {
                 osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
-                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+                _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
              } # endi-if $starttls_matrix[$starttlsType][4]
 
             #### STARTTLS_Phase 5: receive STARTTLS answer
@@ -2914,7 +2836,7 @@ sub openTcpSSLconnection ($$) {
                 local $@ = "";
                 eval {
                     $input = "";
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): Try to receive the $starttls_matrix[$starttlsType][0] STARTTLS answer from the server $host:$port\n");
+                    _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 5): Try to receive the $starttls_matrix[$starttlsType][0] STARTTLS answer from the server $host:$port\n");
                     osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -2928,11 +2850,11 @@ sub openTcpSSLconnection ($$) {
                 }};                                                 # end of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0)  { # received Data => 220
-                    _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
-                    _trace4 ("openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." bytes\n      >"._chomp_r($input)."<\n");
+                    _trace3 (" openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
+                    _trace4 (" openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." bytes\n      >"._chomp_r($input)."<\n");
                     if ($input =~ /$starttls_matrix[$starttlsType][5]/) { # e.g. SMTP: 220
                         $my_error = "";     # server is ready to do SSL/TLS
-                        _trace2 ("openTcpSSLconnection: ## STARTTLS: Server is ready to do SSL/TLS\n");
+                        _trace2 (" openTcpSSLconnection: ## STARTTLS: Server is ready to do SSL/TLS\n");
                     } else {
                         $input=_chomp_r($input);
                         if ( ($starttls_matrix[$starttlsType][6]) && ($input =~ /$starttls_matrix[$starttlsType][6]/) ) { # did receive a temporary error message
@@ -2944,14 +2866,14 @@ sub openTcpSSLconnection ($$) {
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs = 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 5): Error 1: Too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             carp ("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
-                            _trace4 ("openTcpSSLconnection: STARTTLS (Phase 5): End suspend\n");
+                            _trace4 (" openTcpSSLconnection: STARTTLS (Phase 5): End suspend\n");
                             if ($retryCnt == $Net::SSLhello::retry) { # signal to do an additional retry
                                 $retryCnt++;
-                                _trace4 ("openTcpSSLconnection: STARTTLS (Phase 5): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
+                                _trace4 (" openTcpSSLconnection: STARTTLS (Phase 5): 1 additional final retry after too many requests => retry number $retryCnt represented by $retryCnt+1\n");
                             }
                             next RETRY_TO_OPEN_SSL_CONNECTION;
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) {
@@ -2966,7 +2888,7 @@ sub openTcpSSLconnection ($$) {
                             last RETRY_TO_OPEN_SSL_CONNECTION;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a Fatal Error Message
                             $my_error = "STARTTLS (Phase 5): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
-                            _trace2  ("openTcpSSLconnection: $my_error\n");
+                            _trace2  (" openTcpSSLconnection: $my_error\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             last RETRY_TO_OPEN_SSL_CONNECTION;
                         } else {
@@ -2976,21 +2898,21 @@ sub openTcpSSLconnection ($$) {
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
                             $my_error = "STARTTLS (Phase 5): Did *NOT* get a server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: >"._chomp_r($input)."<"; # error message received from the SMTP-Server
-                            _trace2 ("openTcpSSLconnection: ## $my_error; try to retry;\n");
+                            _trace2 (" openTcpSSLconnection: ## $my_error; try to retry;\n");
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             next RETRY_TO_OPEN_SSL_CONNECTION;
                         }
                     }
                 } else { # did not receive a message
                     $my_error = ("STARTTLS (Phase 5): Did *NOT* get any answer to".$starttls_matrix[$starttlsType][0]." STARTTLS request from $host:$port -> slow down and try to retry target.");
-                    _trace ("openTcpSSLconnection: $my_error\n");
+                    _trace (" openTcpSSLconnection: $my_error\n");
                     $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global variable 1 step later
                     $sleepSecs += $retryCnt + 2;
                     close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION; # next retry
                 }
             } else {
-                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+                _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 5): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][5]
         } ###############    End STARTTLS Support  ##################
     } while ( ($my_error) && ( ($retryCnt++ < $Net::SSLhello::retry) || ($retryCnt == $Net::SSLhello::retry + 2) ) ); } # 1 Extra retry if $retryCnt++ == $Net::SSLhello::retry +2
@@ -3001,7 +2923,7 @@ sub openTcpSSLconnection ($$) {
         return (undef);
     }
     alarm (0);   # race condition protection
-    _trace2 ("openTcpSSLconnection: Connected to '$host:$port'\n");
+    _trace2 ("openTcpSSLconnection: Connected to '$host:$port' }\n");
     return ($socket);
 } # openTcpSSLconnection
 
@@ -3060,7 +2982,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         $ssl = "--unknown protocol--";
     }
 
-    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
+    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") ."<) {\n");
     local $my_error = ""; # reset error message
     OSaft::error_handler->reset_err( {module => ($SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 3), trace => $Net::SSLhello::trace} );
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
@@ -3088,9 +3010,9 @@ sub _doCheckSSLciphers ($$$$;$$) {
     } else { # udp (no proxy nor STARTTLS)
         if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
             _trace_ ("\n");
-            _trace  ("_doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s)\n");
+            _trace  (" _doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s)\n");
             sleep($Net::SSLhello::connect_delay);
-            _trace4 ("_doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s) [End]\n");
+            _trace4 (" _doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s) [End]\n");
         }
         { # >> start a block
             $my_error = "";
@@ -3110,7 +3032,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 return ("");
             }
         } # << end a block
-        _trace4 ("_doCheckSSLciphers: ## New UDP socket to >$host:$port<\n");
+        _trace4 (" _doCheckSSLciphers: ## New UDP socket to >$host:$port<\n");
     } # end udp socket
 
     $retryCnt = 0;
@@ -3120,8 +3042,8 @@ sub _doCheckSSLciphers ($$$$;$$) {
         $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie);
 
         #### send ClientHello
-        _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." bytes)\n\n");
-        _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." bytes)\n\n");
+        _trace3 (" _doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." bytes)\n\n");
+        _trace4 (" _doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." bytes)\n\n");
         local $@ = "";
         eval {
             local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -3156,18 +3078,18 @@ sub _doCheckSSLciphers ($$$$;$$) {
             return ("");
         }
         if ( ($my_error) && ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) ) {
-            _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
+            _trace2 (" _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
             carp ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
             return ("");
         } elsif (length($input) ==0) { # len == 0 without any timeout
             $my_error= "... Received NO Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
-            _trace2 ("_doCheckSSLciphers: $my_error\n");
+            _trace2 ("_doCheckSSLciphers: $my_error }\n");
             return ("");
         } elsif ($my_error) { # any other error
-             _trace2 ("_doCheckSSLciphers: Error-Message: $my_error\n");
+             _trace2 ("_doCheckSSLciphers: Error-Message: $my_error }\n");
             return ("");
         }
-        _trace2("_doCheckSSLciphers: Server '$host:$port': (protocol $ssl [".sprintf ("0x%04X", $protocol)."], (record) type $recordType: received a record with ".length($recordData)." bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
+        _trace2(" _doCheckSSLciphers: Server '$host:$port': (protocol $ssl [".sprintf ("0x%04X", $protocol)."], (record) type $recordType: received a record with ".length($recordData)." bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
 
         if ($recordVersion <= 0) { # got no SSL/TLS/DTLS-PDU
             # Try to read the whole input buffer
@@ -3175,7 +3097,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
             if ($Net::SSLhello::starttls)  {
                 if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/ix)  { # 554 Security failure; TBD: perhaps more general in the future
-                _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignored and try to Retry\n");
+                _trace2  (" _doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignored and try to Retry\n");
                     # retry to send clientHello
                     $my_error = ""; # reset error message
                     $input = ""; # reset input data
@@ -3190,13 +3112,13 @@ sub _doCheckSSLciphers ($$$$;$$) {
             $my_error = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service (1) -> Received data ignored -> target ignored\n";
             carp ($my_error);
             _trace_ ("\n") if ($retryCnt <=1);
-            _trace ("_doCheckSSLciphers: Ignored data: ".length($input)." bytes\n        >".hexCodedString($input,"        ")."<\n        >"._chomp_r($input)."<\n");
+            _trace ("_doCheckSSLciphers: Ignored data: ".length($input)." bytes\n        >".hexCodedString($input,"        ")."<\n        >"._chomp_r($input)."< }\n");
             $input  = "";
             $pduLen = 0;
             return ("");
         }
         if (length($input) >0) {
-            _trace2 ("_doCheckSSLciphers: Total data received: ". length($input). " bytes\n");
+            _trace2 ("_doCheckSSLciphers: Total data received: ". length($input). " bytes }\n");
             ($buffer, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie, $acceptedCipher) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol);
             if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) {
                 if ((OSaft::error_handler->get_err_type()) == (OERR_SSLHELLO_RETRY_HOST)) { # no more retries
@@ -3210,22 +3132,22 @@ sub _doCheckSSLciphers ($$$$;$$) {
             }
 
             if ( ($acceptedCipher ne "") && ($parseAllRecords > 0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) {
-                _trace4 ("_doCheckSSLciphers: Try to get and parse next records\n");
+                _trace4 (" _doCheckSSLciphers: Try to get and parse next records\n");
                 while ( (length($input) >0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) {
                     ###### receive next record
-                    _trace4 ("_doCheckSSLciphers: receive next record\n");
+                    _trace4 (" _doCheckSSLciphers: receive next record\n");
                     $input = $buffer;
                     $buffer = "";
                     ($recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr, $my_error) = _readRecord ($socket, $isUdp, \$input, $host, $port, $protocol);
                     last if ( (length($input)==0) || ($my_error) );
-                    _trace4 ("_doCheckSSLciphers: record type '$recordType' is no handshake record -> stop receiving records\n") if ($recordType ne $RECORD_TYPE{'handshake'});
+                    _trace4 (" _doCheckSSLciphers: record type '$recordType' is no handshake record -> stop receiving records\n") if ($recordType ne $RECORD_TYPE{'handshake'});
 #TBD: wieder aktivieren                    last if ($recordType ne $RECORD_TYPE{'handshake'});
                     last if ($recordType eq $RECORD_TYPE{'application_data'}); ## replace the 'last' command above by this to test or to develop
                     if ( ($lastMsgType == $HANDSHAKE_TYPE {'<<fragmented_message>>'}) && ($recordType == $lastRecordType) ) { # last message was fragmented
                         $recordData = $lastRecordData.$recordData;
                         $recordLen += length($lastRecordData);
                         $lastRecordData = "";
-                        _trace4 ("_doCheckSSLciphers: recompiled fragmented message -> compiled RecordLen: $recordLen\n");
+                        _trace4 (" _doCheckSSLciphers: recompiled fragmented message -> compiled RecordLen: $recordLen\n");
                     }
                     # parse the next record (no cipher expected...)
                     ($buffer, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie, $dummy) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, $acceptedCipher, $protocol); # get more information received together with the accepted cipher
@@ -3241,7 +3163,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 last;
             }
             if ($my_error ne "") {
-                _trace4 ("_doCheckSSLciphers: Exit with error: '$my_error'\n");
+                _trace4 ("_doCheckSSLciphers: Exit with error: '$my_error' }\n");
                 return ("");
             }
             if ( ($dtlsNewCookieLen > 0) && $isUdp) {
@@ -3249,10 +3171,10 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 $dtlsCookie = $dtlsNewCookie;
                 $dtlsNewCookieLen = 0;
                 $dtlsNewCookie = "";
-                _trace2 ("_doCheckSSLciphers: received a cookie ($dtlsCookieLen bytes): >".hexCodedString($dtlsCookie,"        ")."<\n");
+                _trace2 (" _doCheckSSLciphers: received a cookie ($dtlsCookieLen bytes): >".hexCodedString($dtlsCookie,"        ")."<\n");
                 $retryCnt--;
             }
-            _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
+            _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
             osaft::osaft_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
             # select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
         }
@@ -3286,7 +3208,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         carp("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
     }
     if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
-        _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
+        _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
         # select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
         osaft::osaft_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
     }
@@ -5259,11 +5181,11 @@ Manually parse a Server Kex Exchange packet and detect KeyExchange length, accor
 ~        RFC 8422: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS) Versions 1.2 and Earlier
 - RSA:   RFC 6101: The Secure Sockets Layer (SSL) Protocol Version 3.0, e.g. EXPORT ciphers
 - PSK:   Pre-Shared Keys can be used alone or in combination with all other 3 server key types:
-~        RFC 4279: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS), 
+~        RFC 4279: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS),
 ~        RFC 4785: Pre-Shared Key (PSK) Ciphersuites with NULL Encryption for Transport Layer Security (TLS),
 ~        RFC 5487: Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode,
 ~        RFC 5489: ECDHE_PSK Cipher Suites for Transport Layer Security (TLS)
-            
+
 =cut
 
 sub parseServerKeyExchange($$$) {
