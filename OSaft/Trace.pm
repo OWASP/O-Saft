@@ -35,7 +35,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) Trace.pm 1.1 24/01/07 01:48:02";
+my  $SID_trace      = "@(#) Trace.pm 2.1 24/01/07 12:07:06";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -1177,7 +1177,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-1.1 2024/01/07
+2.1 2024/01/07
 
 =head1 AUTHOR
 
