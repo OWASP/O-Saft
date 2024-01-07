@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 1.11 23/12/13 19:23:25
+#?      @(#) Makefile.mod 1.12 24/01/07 13:30:44
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 1.11
+_SID.mod           := 1.12
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -112,12 +112,12 @@ LIST.o-saft-man.pm     := \
     #   o-saft-man.pm --test-toc
     # only the first form is tested here, as they all produce the same output
 
-LIST.o-saft-dbx.pm     := \
+LIST.OSaft-Trace.pm    := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
 	--test-avail --test-init --test-maps --test-prot --test-vars
-# o-saft-dbx.pm doesn't handle the options, hence call o-saft.pl with them
+# OSaft/Trace.pm doesn't handle the options, hence call o-saft.pl with them
 
-LIST.o-saft.pl         += $(LIST.o-saft-dbx.pm)
+LIST.o-saft.pl         += $(LIST.OSaft-Trace.pm)
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same commands_notyet in osaft.pm
@@ -154,8 +154,8 @@ endif
 # it's found automatically when using o-saft.pl but not with OSaft/Doc/Data.pm
 testarg-mod-OSaft-Doc-Data.pm_%: TEST.args  = help.txt
 
-# o-saft-dbx.pm does not make sense without a calling parent
-testarg-mod-o-saft-dbx.pm_%:    EXE.pl      = ../$(SRC.pl)
+# OSaft/Trace.pm does not make sense without a calling parent
+testarg-mod-OSaft-Trace.pm_%:   EXE.pl      = ../$(SRC.pl)
 
 # more info with pretty printed output: --header
 testarg-mod-o-saft-man.pm_%:    TEST.args   = --header
