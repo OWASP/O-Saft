@@ -24,6 +24,8 @@ package OSaft::Trace;
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
 #        We have a lot of single character strings, herein, that's ok.
 
+## no critic qw(Variables::ProhibitPackageVars)
+
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
 #  `use strict;' not useful here, as we mainly use our global variables
 use warnings;
@@ -35,20 +37,17 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) Trace.pm 2.1 24/01/07 12:07:06";
+my  $SID_trace      = "@(#) Trace.pm 2.2 24/01/07 22:54:43";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
 # public package variables
-{
-## no critic qw(Variables::ProhibitPackageVars)
 our $trace          = 0;
 our $verbose        = 0;
 our $prefix_trace   = "#". __PACKAGE__ . ":";
 our $prefix_verbose = "#". __PACKAGE__ . ":";
-}
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
@@ -1177,7 +1176,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.1 2024/01/07
+2.2 2024/01/07
 
 =head1 AUTHOR
 
