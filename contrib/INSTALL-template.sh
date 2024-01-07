@@ -82,6 +82,7 @@
 #=#        OSaft::Ciphers	22.11.22 OSaft/Ciphers.pm
 #=#           OSaft::Data	22.06.22 OSaft/Data.pm
 #=#           OSaft::Text	22.11.22 OSaft/Text.pm
+#=#          OSaft::Trace	24.01.24 OSaft/Trace.pm
 #=#  OSaft::error_handler	19.11.19 OSaft/error_handler.pm
 #=#      OSaft::Doc::Data	22.11.13 OSaft/Doc/Data.pm
 #=#----------------------+---------------------------------------
@@ -117,7 +118,7 @@
 #=# /opt/o-saft/o-saft.pl	/usr/local/openssl/bin/openssl (1.0.2k-dev) 
 #=#----------------------+---------------------------------------
 #=
-#=# check for optional tools to view documentation:
+#=# check for optional tools to view documentation
 #=#----------------------+---------------------------------------
 #=#                   aha	/usr/bin/aha
 #=#               perldoc	/usr/bin/perldoc
@@ -257,7 +258,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#)  1.109 23/04/23 19:35:01
+#?      @(#) kí‰^ 1.110 24/01/07 21:52:29
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -272,7 +273,7 @@ dir=${0%/*}
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
 useenv=0                # 1 to change shebang lines to /usr/bin/env
-useenv=0                # 1 to change shebang lines to /usr/bin/env
+gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
 other=0
 force=0
 optx=0
@@ -309,19 +310,19 @@ osaft_modules="
 
 files_contrib="
 	INSERTED_BY_MAKE_CONTRIB
-		"
+	"
 
 files_install="
 	INSERTED_BY_MAKE_OSAFT
-		"
+	"
 
 files_install_cgi="
 	INSERTED_BY_MAKE_OSAFT_CGI
-		"
+	"
 
 files_install_doc="
 	INSERTED_BY_MAKE_OSAFT_DOC
-		"
+	"
 
 tools_intern="
 	INSERTED_BY_MAKE_DEVTOOLSINT
@@ -350,6 +351,7 @@ tools_other="
 
 files_ancient="
 	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
+	o-saft-dbx.pm o-saft-usr.pm
 	INSTALL-devel.sh .perlcriticrc o-saft_bench
 	contrib/.o-saft.tcl contrib/o-saft.cgi contrib_dir/o-saft.php
 	"
@@ -552,7 +554,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.109 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.110 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -981,18 +983,19 @@ for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		(
 		cd "$p" # ensure that $r is used
 		$o --no-warn +version >/dev/null && \
-		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{print $NF}' | tr '\012' ' '` && \
-		echo_label "$o" && echo_green "$openssl" || echo_red "missing"
+		openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{if(3==NF){print $NF}}'` && \
+		version=`$o --no-warn +version 2>/dev/null | awk '/external executable/{if(4<NF){sub(/^.*  O/,"");print}}'` && \
+		echo_label "$o" && echo_green "$openssl ($version)" || echo_red "missing"
 		)
 	fi
 done
 echo_foot
 
-echo_head "# check for optional tools to view documentation:"
+echo_head "# check for optional tools to view documentation"
 check_commands $tools_optional
 echo_foot
 
-echo_head "# check for contributed files (in $inst_directory/$contrib_dir ):"
+echo_head "# check for contributed files (in $inst_directory/$contrib_dir )"
 for c in $files_contrib $osaft_one ; do
 	skip=0
 	for f in $files_not_installed $files_develop ; do
