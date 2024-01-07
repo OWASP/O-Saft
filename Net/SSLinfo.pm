@@ -37,7 +37,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.305 24/01/04 13:52:33";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.306 24/01/07 01:56:59";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -1418,12 +1418,12 @@ sub test_sclient    {
 
 sub test_sslmap     {
     #? return internal data structure %_SSLmap
-    my $line = "#---------------+--------+-------------";
-    my $data = "$line\n# _SSLmap{ key    SSLeay  bitmask\n$line\n";
+    my $line = "#-----------------------+--------+-------------";
+    my $data = "$line\n# _SSLmap{ key            SSLeay  bitmask\n$line\n";
     foreach my $_ssl (sort keys %_SSLmap) {
         my $mask = "<<undef>>";
            $mask = $_SSLmap{$_ssl}[1] if defined $_SSLmap{$_ssl}[1];
-        $data  .= sprintf("#%14s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
+        $data  .= sprintf("#%21s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
     }
     $data .= "$line";
     return $data;
