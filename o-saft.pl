@@ -64,7 +64,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OSaft::Trace not included
 
-our $SID_main   = "@(#) yeast.pl 2.164 24/01/07 01:56:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.165 24/01/07 12:53:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -611,7 +611,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.164");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.165");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -773,30 +773,30 @@ if (exists $INC{'OSaft/Trace.pm'}) {
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
-    $err = _load_file("o-saft-usr.pm", "user file");
+    $err = _load_file("OSaft/Usr.pm", "user file");
     if ($err ne "") {
         # continue without warning, it's already printed in "read ... " line
         # OSAFT_STANDALONE no warnings 'redefine'; # avoid: "Subroutine ... redefined"
-        sub usr_version     { return ""; }; # dummy stub, see o-saft-usr.pm
-        sub usr_pre_init    {}; #  "
-        sub usr_pre_file    {}; #  "
-        sub usr_pre_args    {}; #  "
-        sub usr_pre_exec    {}; #  "
-        sub usr_pre_cipher  {}; #  "
-        sub usr_pre_main    {}; #  "
-        sub usr_pre_host    {}; #  "
-        sub usr_pre_info    {}; #  "
-        sub usr_pre_open    {}; #  "
-        sub usr_pre_cmds    {}; #  "
-        sub usr_pre_data    {}; #  "
-        sub usr_pre_print   {}; #  "
-        sub usr_pre_next    {}; #  "
-        sub usr_pre_exit    {}; #  "
-        # user functions are defined in o-saft-user.pm and loaded on demand
+        sub OSaft::Usr::version     { return ""; };
+        sub OSaft::Usr::pre_init    {}; #  "
+        sub OSaft::Usr::pre_file    {}; #  "
+        sub OSaft::Usr::pre_args    {}; #  "
+        sub OSaft::Usr::pre_exec    {}; #  "
+        sub OSaft::Usr::pre_cipher  {}; #  "
+        sub OSaft::Usr::pre_main    {}; #  "
+        sub OSaft::Usr::pre_host    {}; #  "
+        sub OSaft::Usr::pre_info    {}; #  "
+        sub OSaft::Usr::pre_open    {}; #  "
+        sub OSaft::Usr::pre_cmds    {}; #  "
+        sub OSaft::Usr::pre_data    {}; #  "
+        sub OSaft::Usr::pre_print   {}; #  "
+        sub OSaft::Usr::pre_next    {}; #  "
+        sub OSaft::Usr::pre_exit    {}; #  "
+        # user functions are defined in OSaft::Usr.pm and loaded on demand
     }
 }
 
-usr_pre_init();
+OSaft::Usr::pre_init();
 
 #| initialise defaults
 #| -------------------------------------
@@ -1154,7 +1154,7 @@ if (defined $ENV{'LIBPATH'}) {
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 _trace_info("INIT9   - initialisation end");
-usr_pre_file();
+OSaft::Usr::pre_file();
 
 #_____________________________________________________________________________
 #_______________________________________________________ internal functions __|
@@ -6512,7 +6512,7 @@ EoUSAGE
     exit 2;
 } # printusage_exit
 
-usr_pre_args();
+OSaft::Usr::pre_args();
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
@@ -7622,7 +7622,7 @@ trace_args();           # all arguments parsed; print with --traceARG
 _vprint_me();
 _trace_info("ARGS    - options and arguments completed");
 
-usr_pre_exec();
+OSaft::Usr::pre_exec();
 
 #| call with other libraries
 #| -------------------------------------
@@ -7892,7 +7892,7 @@ if (0 > $#{$cfg{'do'}}) {
 
 trace_arg("commands=@{$cfg{'do'}}");
 
-usr_pre_cipher(); # weg?
+OSaft::Usr::pre_cipher(); # weg?
 
 #| SEE Note:Duplicate Commands
 #| -------------------------------------
@@ -7902,7 +7902,7 @@ usr_pre_cipher(); # weg?
 
 _trace_info("MAIN0   - start");
 trace_ciphers_list((_need_cipher()||0)) if _is_trace();;
-usr_pre_main();
+OSaft::Usr::pre_main();
 
 #| do the work for all targets
 #| -------------------------------------
@@ -7961,7 +7961,7 @@ _trace_info("TARGETS0 - start");
 #| perform commands for all hosts
 #| -------------------------------------
 
-usr_pre_host();
+OSaft::Usr::pre_host();
 
 _vprint("check all targets ...");
 
@@ -8163,11 +8163,11 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     next if _trace_next("  DATA0   - get target data start");
-    usr_pre_info();
+    OSaft::Usr::pre_info();
     _get_data0($host, $port);   # uses Net::SSLinfo::do_ssl_open() and ::do_ssl_close()
     next if _trace_next("  DATA9   - get target data end");
 
-    usr_pre_open();
+    OSaft::Usr::pre_open();
 
     # SEE Note:Connection Test
     if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
@@ -8205,7 +8205,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
 
     next if _trace_next("  PREPARE0 - start");
-    usr_pre_cmds();
+    OSaft::Usr::pre_cmds();
 
     if (_is_cfg_do('dump')) {
         _vprint("  +dump");
@@ -8216,7 +8216,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         printdump($legacy, $host, $port);
     }
 
-    usr_pre_data();
+    OSaft::Usr::pre_data();
 
     # following sequence important!
     # if conditions are just to improve performance
@@ -8253,7 +8253,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _trace_next("  PREPARE9 - end");
 
     next if _trace_next("  PRINT0  - start");
-    usr_pre_print();
+    OSaft::Usr::pre_print();
 
     if (0 < $check) {
         _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
@@ -8287,14 +8287,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     $cfg{'done'}->{'hosts'}++;
 
-    usr_pre_next();
+    OSaft::Usr::pre_next();
     next if _trace_next("HOST9   - end");
 
 } # foreach host
 
 _trace_info("TARGETS9 - end");
 
-usr_pre_exit();
+OSaft::Usr::pre_exit();
 trace_exit() if _is_trace();    # for --trace=\d only, not --traceKEY and alike
 _trace_info("MAIN9   - end");   # for symetric reason, rather useless here
 
