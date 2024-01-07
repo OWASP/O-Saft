@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.130 23/12/28 16:41:39
+# SID   @(#) help.txt 1.131 24/01/07 13:55:58
 
 NAME
 
@@ -1212,7 +1212,7 @@ OPTIONS
             * 'socket'      - the internal functionality with sockets is used
             * 'openssl'     - the exteranl openssl executable is used
             * 'user'        - the external special function,  as specified in
-                              user's  o-saft-usr.pm,  is used.
+                              user's  OSaft/Usr.pm,  is used.
 
           Example:
               --call=cipher-openssl
@@ -2066,13 +2066,13 @@ OPTIONS
 
       --usr
 
-          Execute functions defined in  o-saft-usr.pm.
+          Execute functions defined in  OSaft/Usr.pm.
 
       --usr-*
       --user-*
 
           Options ignored, but stored as is internal in  $cfg{usr-args} .
-          These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
+          These options can be used in  OSaft/Usr.pm  or  OSaft/Trace.pm.
 
       --experimental
 
@@ -3276,21 +3276,21 @@ CUSTOMISATION
 
     DEBUG-FILE
 
-        All debugging functionality is defined in  o-saft-dbx.pm , which will
+        All debugging functionality is defined in  OSaft/Trace.pm, which will
         be searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is Perl code.  For details see  DEBUG  below.
 
     USER-FILE
 
-        All user functionality is defined in   o-saft-usr.pm ,  which will be
+        All user functionality is defined in   OSaft/Usr.pm ,  which  will be
         searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is Perl code.
 
-        All functions defined in   o-saft-usr.pm   are called when the option
+        All functions defined in   OSaft/Usr.pm   are called  when the option
         --usr  was given.  The functions are defined as empty stub,  any code
-        can be inserted as need.  Please see   perldoc o-saft-usr.pm   to see
+        can be inserted as need.  Please see   perldoc OSaft/Usr.pm   to see
         when and how these functions are called.
 
     SHELL TWEAKS
@@ -3719,7 +3719,7 @@ LIMITATIONS
     User provided files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE  o-saft-dbx.pm  or  USER-FILE  o-saft-usr.pm  will
+        in the  DEBUG-FILE  OSaft/Trace.pm  or  USER-FILE  OSaft/Usr.pm  will
         work flawless. Obviously this is the user's responsibility.
 
     Problems and errors
@@ -3866,11 +3866,11 @@ DEPENDENCIES
     Additional files used if requested
 
         * .o-saft.pl
-        * o-saft-dbx.pm
         * o-saft-man.pm
-        * o-saft-usr.pm
         * o-saft-docker
         * o-saft-README
+        * OSaft/Trace.pm
+        * OSaft/Usr.pm
 
 
 INSTALLATION
@@ -4534,7 +4534,7 @@ HACKER's INFO
 
         There are some functions called within the program flow, which can be
         filled with any Perl code.  Empty stubs of the functions are prepared
-        in  o-saft-usr.pm.  See also  USER-FILE .
+        in  OSaft/Usr.pm.  See also  USER-FILE .
 
 
 DEBUG
