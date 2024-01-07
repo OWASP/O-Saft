@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.37 23/12/14 19:57:27
+#?      @(#) Makefile 2.38 24/01/07 13:03:52
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.37
+_SID            = 2.38
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -80,16 +80,13 @@ OSD.txt         = \
 SRC.txt         = $(OSD.txt:%=$(OSD.dir)/%)
 NET.pm          = SSLinfo.pm \
 		  SSLhello.pm
-OSAFT.pm        = Ciphers.pm Data.pm Text.pm error_handler.pm
-USR.pm          = \
-		  $(O-Project)-dbx.pm \
-		  $(O-Project)-man.pm \
-		  $(O-Project)-usr.pm
+LIB.pm          = Ciphers.pm Data.pm Text.pm Trace.pm Usr.pm error_handler.pm
+MAN.pm          = $(O-Project)-man.pm
 SRC.pm          = \
 		  osaft.pm \
 		  $(NET.pm:%=Net/%)   \
-		  $(OSAFT.pm:%=OSaft/%) \
-		  $(USR.pm) \
+		  $(LIB.pm:%=OSaft/%) \
+		  $(MAN.pm) \
 		  $(OSD.pm)
 SRC.sh          = $(O-Project)
 SRC.pl          = $(O-Project).pl
@@ -282,7 +279,7 @@ ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::INET IO::Socket::SSL Time::Lo
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 #                 defined in t/Makefile.misc
-ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(OSAFT.pm:%.pm=OSaft::%) OSaft::Doc::Data
+ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(LIB.pm:%.pm=OSaft::%) OSaft::Doc::Data
 
 # following for documentation, not yet used (2022)
 #_ALL.tools.dbian.pkg  = aha libtk-pod-perl perl-doc perl-doc-html pod2pdf
@@ -299,8 +296,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.37 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.37
+_INST.genbytext = generated data by Makefile 2.38 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.38
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -566,8 +563,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.37
-tar:     _INST.is_edit  = 2.37
+_INST.is_edit           = 2.38
+tar:     _INST.is_edit  = 2.38
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -656,27 +653,27 @@ $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 	$(EXE.single) --s                              > $@
 	@chmod 555 $@
 
-$(GEN.man):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt) $(GEN.pod)
+$(GEN.man):  $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt) $(GEN.pod)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
 
-$(GEN.pod):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+$(GEN.pod):  $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
-$(GEN.text): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+$(GEN.text): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help          > $@
 
-$(GEN.wiki): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+$(GEN.wiki): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
-$(GEN.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+$(GEN.html): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
-$(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
+$(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
