@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 2.3 23/12/17 12:51:35
+# SID   @(#) devel.txt 2.4 24/01/07 13:51:33
 
 
 NAME
@@ -62,7 +62,7 @@ OVERVIEW
 
         Configurations
 
-          make testarg-mod-o-saft-dbx.pm_--test-vars
+          make testarg-mod-OSaft-Trace.pm_--test-vars
           o-saft.pl --test-vars
           o-saft.pl +quit --trace
           o-saft.pl +quit --trace=3
@@ -116,7 +116,7 @@ DEBUGGING
         multiple times to increase amount of listed information. Also keep in
         mind that it's best to specify  --v  as very first argument.
 
-        Note that the file  o-saft-dbx.pm  is required,  if any  --trace*  or
+        Note that the file  OSaft/Trace.pm  is required, if any  --trace*  or
         --v   option is used.
 
     Commands
