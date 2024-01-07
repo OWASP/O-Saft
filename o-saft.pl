@@ -64,7 +64,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OSaft::Trace not included
 
-our $SID_main   = "@(#) yeast.pl 2.165 24/01/07 12:53:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.166 24/01/07 21:31:33"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -611,7 +611,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.165");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.166");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6305,7 +6305,7 @@ sub printversion        {
     print "= openssl =";
     print "    external executable              " . (($cmd{'openssl'} eq "")  ? "<<executable not found>>" : $cmd{'openssl'});
     print "    external executable (TLSv1.3)    " . (($cmd{'openssl3'} eq "") ? "<<executable not found>>" : $cmd{'openssl3'});
-    print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
+    print "    external executable version      " . Net::SSLinfo::do_openssl('version', '', '', '');
     print "    used environment variable (name) " . $cmd{'envlibvar'};
    #print "    used environment variable 3(name)" . $cmd{'envlibvar3'};
     print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || $STR{UNDEF});
