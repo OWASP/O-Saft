@@ -28,6 +28,25 @@
 
 package Net::SSLinfo;
 
+## no critic qw(ErrorHandling::RequireCarping)
+#  NOTE: See NOTE above.
+
+## no critic qw(Subroutines::ProhibitExcessComplexity)
+#  it's the nature of some checks to be complex
+#  a max_mccabe = 40 would be nice, but cannot be set per file
+
+## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
+#  NOTE: See t/.perlcriticrc
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  because we use /x as needed for human readability
+
+##### critic qw(InputOutput::ProhibitBacktickOperators)
+#  used at commands where we need backticks or qx()
+
+## no critic qw(Variables::ProhibitPackageVars)
+#  using package variables are considered ok in this package, check in future again
+
 use strict;
 use warnings;
 use constant {
@@ -37,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.306 24/01/07 01:56:59";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.307 24/01/07 22:37:50";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -164,25 +183,6 @@ BEGIN {
 # unexpected behaviours in the calling program. Exception are:
 #       warn()  when used to inform about ancient modules
 #       print() when used in trace mode (0 < $trace).
-
-## no critic qw(ErrorHandling::RequireCarping)
-#  NOTE: See NOTE above.
-
-## no critic qw(Subroutines::ProhibitExcessComplexity)
-#  it's the nature of some checks to be complex
-#  a max_mccabe = 40 would be nice, but cannot be set per file
-
-## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
-#  NOTE: See t/.perlcriticrc
-
-## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#  because we use /x as needed for human readability
-
-##### critic qw(InputOutput::ProhibitBacktickOperators)
-#  used at commands where we need backticks or qx()
-
-## no critic qw(Variables::ProhibitPackageVars)
-#  using package variables are considered ok in this package, check in future again
 
 =pod
 
@@ -4172,7 +4172,7 @@ sub _main           {
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)          { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
+        if ($arg =~ m/^--?h(?:elp)?$/)          { print_pod($0, __PACKAGE__, $SID_sslinfo); }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $Net::SSLinfo::verbose++; next; }
         # ----------------------------- commands
