@@ -258,7 +258,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) kí‰^ 1.110 24/01/07 21:52:29
+#?      @(#) Ø] 1.111 24/01/07 22:18:09
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -303,6 +303,7 @@ osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
 inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
 perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
+osaft_subdirs="INSERTED_BY_MAKE_OSAFT_DIRS"
 
 osaft_modules="
 	INSERTED_BY_MAKE_OSAFT_MODULES
@@ -379,13 +380,6 @@ files_develop="o-saft-docker-dev Dockerfile Makefile t/ $contrib_dir/critic.sh"
 files_info="CHANGES README o-saft.tgz"
 
 # HARDCODED }
-
-osaft_subdirs="
-	$contrib_dir
-	Net
-	OSaft/Doc
-	docs
-	"
 
 osaft_exerc=".$osaft_exe"
 osaft_guirc=".$osaft_gui"
@@ -554,7 +548,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.110 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.111 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
