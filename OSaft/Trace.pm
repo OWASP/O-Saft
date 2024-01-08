@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) Trace.pm 2.2 24/01/07 22:54:43";
+my  $SID_trace      = "@(#) Trace.pm 2.3 24/01/08 11:42:36";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -746,8 +746,8 @@ sub trace_ciphers_list  {
 sub trace_targets       {
     #? print information about targets to be processed
     # full list if 1<trace
-    return if (0 >= $cfg{'trace'});
     my @targets = @_;
+    return if (0 >= $cfg{'trace'});
     #print " === print internal data structures for a targets === ";
     if (2 > $cfg{'trace'}) { # simple list
         printf("%s%14s= [ ", $cfg{'prefix_trace'}, "targets");
@@ -784,7 +784,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _pnull();
     _ptext("#") if (3 > $cfg{'trace'});
     _pline("");
-    _p_k_v("trace_init::SID", $SID_trace);
+    #_p_k_v("trace_init::SID", $SID_trace) if (2 < $cfg{'trace'}); # 24.01.24 removed
     _p_k_v("$0", main::_VERSION()); ## no critic qw(Subroutines::ProtectPrivateSubs)
         # TBD: $0 is same as $ARG0 but wrong when called as standalone
     # official VERSIONs, not those of the current files !
@@ -1176,7 +1176,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-2.2 2024/01/07
+2.3 2024/01/08
 
 =head1 AUTHOR
 
