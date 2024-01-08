@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) Trace.pm 3.1 24/01/08 15:42:36";
+my  $SID_trace      = "@(#) Trace.pm 3.3 24/01/08 17:52:57";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -195,7 +195,7 @@ sub __trac      {
         /SCALAR/&& do { $data .= ___K_V($key, $ref->{$key}); last SWITCH; };
         /ARRAY/ && do { $data .= ___K_V($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});  # print hashes for full trace only
-                        $data .= __TEXT("# - - - - HASH: $key = {\n");
+                        $data .= __TEXT("# - - - - HASH: $key= {\n");
                         foreach my $k (sort keys %{$ref->{$key}}) {
                             my $val = "";
                             if (defined ${$ref->{$key}}{$k}) {
@@ -700,7 +700,7 @@ sub trace_ciphers_list  {
     _pline("ciphers {");
     my $_cnt = scalar @{$cfg{'ciphers'}};
     my $ciphers = "@{$cfg{'ciphers'}}"; # not yet used
-    _ptext("  _need_cipher= $need");
+    _p_k_v("_need_cipher", $need);
     if (0 < $need) {
         # avoid printing huge lists
         my @range;
@@ -721,23 +721,22 @@ sub trace_ciphers_list  {
             $_cnt = scalar @range;
         }
         $_cnt = sprintf("%5s", $_cnt);  # format count
-        _ptext("   cmd{extciphers}= " . $::cmd{'extciphers'} . " (1=use cipher from openssl)");
-        _ptext("      starttls= " . $cfg{'starttls'});
-        _ptext("    ciphermode= " . $cfg{'ciphermode'});
-        _ptext(" cipherpattern= " . $cfg{'cipherpattern'});
-        _ptext("   cipherrange= " . $cfg{'cipherrange'});
+        _p_k_v("cmd{extciphers}", $::cmd{'extciphers'} . " (1=use cipher from openssl)");
+        foreach my $key (qw(starttls ciphermode cipherpattern cipherrange)) {
+            _p_k_v($key,    $cfg{$key});
+        }
         # format range text
         foreach my $txt (split(/\n/, $cfg{'cipherranges'}->{$cfg{'cipherrange'}})) {
             next if $txt =~ m/^\s*$/;
             $txt =~ s/^\s*/                /;
             _ptext($txt);
         }
-        _ptext(" $_cnt ciphers= @range");
-        _ptext("     cipher_dh= " . $cfg{'cipher_dh'});
-        _ptext("    cipher_md5= " . $cfg{'cipher_md5'});
-        _ptext("   cipher_ecdh= " . $cfg{'cipher_ecdh'});
-        _ptext("   cipher_npns= " . ___ARR(@{$cfg{'cipher_npns'}}));
-        _ptext("  cipher_alpns= " . ___ARR(@{$cfg{'cipher_alpns'}}));
+        _p_k_v("$_cnt ciphers", "@range");
+        _p_k_v("cipher_dh",     $cfg{'cipher_dh'});
+        _p_k_v("cipher_md5",    $cfg{'cipher_md5'});
+        _p_k_v("cipher_ecdh",   $cfg{'cipher_ecdh'});
+        _p_k_v("cipher_npns",   ___ARR(@{$cfg{'cipher_npns'}}));
+        _p_k_v("cipher_alpns",  ___ARR(@{$cfg{'cipher_alpns'}}));
     }
     _pline("ciphers }");
     return;
@@ -749,23 +748,24 @@ sub trace_targets       {
     my @targets = @_;
     return if (0 >= $cfg{'trace'});
     #print " === print internal data structures for a targets === ";
+    my $data = "";
     if (2 > $cfg{'trace'}) { # simple list
-        printf("%s%14s= [ ", $cfg{'prefix_trace'}, "targets");
         foreach my $target (@targets) {
-            next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s:%s%s ", @{$target}[2..3,6]);
+            next if (0 == @{$target}[0]);       # first entry with default settings
+            $data .= sprintf("%s:%s%s ", @{$target}[2..3,6]);
                # the perlish way instead of get_target_{host,port,path}
         }
-        printf("]\n");
+        _p_k_v("targets", "[ $data]");
     } else {
-        printf("%s%14s targets = [\n", $cfg{'prefix_trace'}, "# - - - -ARRAY");
-        printf("%s#  Index %6s %24s : %5s %10s %5s %-16s %s\n",
-                $cfg{'prefix_trace'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
+        $data  = "# - - - -ARRAY: targets= [\n";
+        $data .= __TEXT(sprintf(" #  Index %6s %24s : %5s %10s %5s %-16s %s\n",
+                "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter"));
         foreach my $target (@targets) {
-            #next if (0 == @{$target}[0]);       # first entry conatins default settings
-            printf("%s   [%3s] %6s %24s : %5s %10s %5s %-16s %s\n", $cfg{'prefix_trace'}, @{$target}[0,1..7]);
+            # first entry with default settings printed also
+            $data .= __TEXT(sprintf("    [%3s] %6s %24s : %5s %10s %5s %-16s %s\n", @{$target}[0,1..7]));
         }
-        printf("%s%14s ]\n", $cfg{'prefix_trace'}, "# - - - -ARRAY");
+        $data .= __TEXT("# - - - -ARRAY: targets ]\n");
+        _ptext($data);
     }
     return;
 } # trace_targets
@@ -825,16 +825,16 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     _pline("%cmd {");
     if (2 > $cfg{'trace'}) {    # user-friendly information
-        _ptext("          path= " . ___ARR(@{$::cmd{'path'}}));
-        _ptext("          libs= " . ___ARR(@{$::cmd{'libs'}}));
-        _ptext("     envlibvar= $::cmd{'envlibvar'}");
-        _ptext("       timeout= $::cmd{'timeout'}");
-        _ptext("       openssl= $::cmd{'openssl'}");
+        _p_k_v("path",      ___ARR(@{$::cmd{'path'}}));
+        _p_k_v("libs",      ___ARR(@{$::cmd{'libs'}}));
+        _p_k_v("envlibvar", $::cmd{'envlibvar'});
+        _p_k_v("timeout",   $::cmd{'timeout'});
+        _p_k_v("openssl",   $::cmd{'openssl'});
     } else {    # full information
         foreach my $key (sort keys %::cmd) { _ptype(\%::cmd, $key); }
     }
-    _ptext("    extopenssl= $::cmd{'extopenssl'}");   # user-friendly always
-    _ptext("use cipher from openssl= $::cmd{'extciphers'}");  # dito.
+    _p_k_v("extopenssl",    $::cmd{'extopenssl'} . " (1= use openssl to check ciphers)");
+    _p_k_v("extciphers",    $::cmd{'extciphers'} . " (1= use cipher from openssl)");
     _pline("%cmd }");
 
     if (1 < $cfg{'trace'}) {    # full information
@@ -842,7 +842,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         foreach my $key (sort keys %cfg) {
             if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
                 # TODO: ugly data structures ... should be done by _p_k_v()
-                _ptext("# - - - - HASH: $key = {");
+                _ptext("# - - - - HASH: $key= {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
                     if ($key =~ m/openssl/) {
                         _p_k_v($k, ___ARR(@{$cfg{$key}{$k}}));
@@ -875,32 +875,30 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $sni_name = __undef($cfg{'sni_name'});   # default is Perl's undef
     my $port     = __undef($cfg{'port'});       # default is Perl's undef
     _pline("user-friendly cfg {");
-    _ptext("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
-    _ptext("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
-    _ptext("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-    _ptext("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'use'}->{'forcesni'}, sni_name=$sni_name");
-    _ptext("  default port= $port (last specified)");
-    trace_targets(@{$cfg{'targets'}});
-    _ptext("     use->http= $cfg{'use'}->{'http'}");
-    _ptext("    use->https= $cfg{'use'}->{'https'}");
-    _ptext(" out->hostname= $cfg{'out'}->{'hostname'}");
-    _ptext("   out->header= $cfg{'out'}->{'header'}");
-    foreach my $key (qw(format legacy starttls starttls_delay slow_server_delay cipherrange)) {
+    foreach my $key (qw(ca_depth ca_path ca_file)) {
         _p_k_v($key, $cfg{$key});
     }
-    _ptext("        cipher= " . ___ARR(@{$cfg{'cipher'}}));
-    foreach my $key (qw(starttls_phase starttls_error)) {
-        _ptext(      "$key= " . ___ARR(@{$cfg{$key}}));
+    _p_k_v("default port", "$port (last specified)");
+    trace_targets(@{$cfg{'targets'}});
+    _ptext("              use_SNI=", $Net::SSLinfo::use_SNI . ", force-sni=$cfg{'use'}->{'forcesni'}, sni_name=$sni_name");
+        # _ptext() because of multiple values; concatenation with . to avoid spaces
+    _p_k_v("use->http",     $cfg{'use'}->{'http'});
+    _p_k_v("use->https",    $cfg{'use'}->{'https'});
+    _p_k_v("out->hostname", $cfg{'out'}->{'hostname'});
+    _p_k_v("out->header",   $cfg{'out'}->{'header'});
+    foreach my $key (qw(format legacy cipherrange slow_server_delay starttls starttls_delay)) {
+        _p_k_v($key,        $cfg{$key});
     }
-    _ptext("   SSL version= " . ___ARR(@{$cfg{'version'}}));
-    printf("%s",___K_V("SSL versions", "[ "));  # no \n !
-    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
-    printf("]\n");
-    _ptext(" special SSLv2= null-sslv2=$cfg{'use'}->{'nullssl2'}, ssl-lazy=$cfg{'use'}->{'ssl_lazy'}");
-    _ptext(" ignore output= " . ___ARR(@{$cfg{'ignore-out'}}));
-    _ptext(" user commands= " . ___ARR(@{$cfg{'commands_usr'}}));
-    _ptext("given commands= " . ___ARR(@{$cfg{'done'}->{'arg_cmds'}}));
-    _ptext("      commands= " . ___ARR(@{$cfg{'do'}}));
+    foreach my $key (qw(starttls_phase starttls_error cipher)) {
+        _p_k_v($key,        ___ARR(@{$cfg{$key}}));
+    }
+    _p_k_v("SSL version",   ___ARR(@{$cfg{'version'}}));
+    _p_k_v("SSL versions",  ___ARR(map{$_."=".$cfg{$_}} sort(@{$cfg{versions}})));
+    _p_k_v("special SSLv2", "null-sslv2=$cfg{'use'}->{'nullssl2'}, ssl-lazy=$cfg{'use'}->{'ssl_lazy'}");
+    _p_k_v("ignore output", ___ARR(@{$cfg{'ignore-out'}}));
+    _p_k_v("user commands", ___ARR(@{$cfg{'commands_usr'}}));
+    _p_k_v("given commands", ___ARR(@{$cfg{'done'}->{'arg_cmds'}}));
+    _p_k_v("commands",      ___ARR(@{$cfg{'do'}}));
     _pline("user-friendly cfg }");
     _ptext("(more information with: --trace=2  or  --trace=3 )") if (1 > $cfg{'trace'});
     # $cfg{'ciphers'} may not yet set, print with Trace::trace_ciphers_list()
@@ -1176,7 +1174,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.1 2024/01/08
+3.3 2024/01/08
 
 =head1 AUTHOR
 
