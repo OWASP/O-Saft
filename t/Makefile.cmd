@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 1.64 24/01/04 14:59:24
+#?      @(#) Makefile.cmd 1.65 24/01/08 12:32:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 1.64
+_SID.cmd           := 1.65
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -133,10 +133,10 @@ testcmd-cmd-+http_%:                TEST.args  += --no-out=sts_expired
 testcmd-cmd-+hsts_%:                TEST.args  += --no-out=sts_expired
 testcmd-cmd-+sts_%:                 TEST.args  += --no-out=sts_expired
 testcmd-cmd-+sts--noout_%:          TEST.args  += +sts   $(LIST.no-out.opt)
-testcmd-cmd-+https_body--httpbody_%:  TEST.args += +https_body --https_body
-testcmd-cmd-+info--tracekey--norc_%:  TEST.args += +info  --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check--tracekey--norc_%: TEST.args += +check --trace-key --norc $(LIST.no-out.opt)
-testcmd-cmd-+check--trace--norc_%:  TEST.args  += +check --trace-time --norc --trace=2 --v $(LIST.no-out.opt)
+testcmd-cmd-+https_body--httpbody_%:    TEST.args += +https_body --https_body
+testcmd-cmd-+info--tracekey--norc_%:    TEST.args += +info  --trace-key  --norc $(LIST.no-out.opt)
+testcmd-cmd-+check--tracekey--norc_%:   TEST.args += +check --trace-key  --norc $(LIST.no-out.opt)
+testcmd-cmd-+check--tracetime--norc_%:  TEST.args += +check --trace-time --norc --trace=2 --v $(LIST.no-out.opt)
 testcmd-cmd-+quick--tracearg_%:     TEST.args  += +quick --trace-arg
 testcmd-cmd-+check--nossltls_%:     TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
