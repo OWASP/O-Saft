@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.307 24/01/07 22:37:50";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.308 24/01/08 11:49:04";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
 use OSaft::Text qw(print_pod %STR);
@@ -832,6 +832,12 @@ sub _traceset   {
     return;
 }
 
+sub _trace_value_or_text {
+    # return given $val if --trace > 1; text otherwise
+    my $val = shift;
+    return (1 < $trace) ? $val : "<<use --trace=2 to print pointer>>";
+} # _trace_value_or_text
+
 sub _setcommand {
     #? check for external command $command; returns command or empty string
     my $command = shift;
@@ -882,7 +888,7 @@ sub _traceSSLbitmasks   {
     # print bitmasks of available SSL constants
     my $txt  = shift; # prefix string as in _trace()
     my $mask = shift;
-    # cannot use _trace() 'cause we want our own formatting
+    return if (0 >= $trace);
     _traceset();
     ## no critic (TestingAndDebugging::ProhibitProlongedStrictureOverride)
     #  NOTE: perlcritic is too pedantic
@@ -934,16 +940,17 @@ sub _traceSSLbitmasks   {
             )) {
         no strict;  ## no critic (TestingAndDebugging::ProhibitNoStrict)
             # necessary as we use {"Net::SSLeay::$op"}
-        printf("#%s: %-30s ", $txt, $op);
         ## my $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
+        my $bit;
         my $opt;
         my $_ok = eval { $opt = &{"Net::SSLeay::$op"}; };
         if (defined $_ok) {
-            my $bit = (($mask & $opt)>0) || 0;
-            printf("0x%08x %s\n", $opt, $bit);
+            $bit = (($mask & $opt)>0) || 0;
+            $bit = sprintf("0x%08x %s", $opt, $bit);
         } else {
-            printf("<<$@>>\n"); # error string from Net::SSLeay instead <<undef>>
+            $bit = sprintf("<<$@>>");   # error string from Net::SSLeay instead <<undef>>
         }
+        _trace(sprintf("%s: %-30s %s", $txt, $op, $bit));
     }
     return;
 } # _traceSSLbitmasks
@@ -1631,7 +1638,7 @@ sub _check_port     {
 sub _check_peer     {
     # TBD
     my ($ok, $x509_store_ctx) = @_;
-    _trace("_check_peer($ok, $x509_store_ctx)");
+    _trace("_check_peer($ok, " . _trace_value_or_text($x509_store_ctx) . ")");
     $_SSLinfo{'verify_cnt'} += 1;
     return $ok;
 } # _check_peer
@@ -1765,7 +1772,7 @@ sub _ssleay_socket  {
     }; # TRY
     push(@{$_SSLinfo{'errors'}}, "_ssleay_socket() failed calling $src: $err");
     FIN:
-    _trace("_ssleay_socket()\t= $socket }");
+    _trace("_ssleay_socket()\t= " . _trace_value_or_text($socket) . " }");
     return $socket;
 } # _ssleay_socket
 
@@ -1780,7 +1787,7 @@ sub _ssleay_ctx_new {
     _traceset();
     _trace("_ssleay_ctx_new($method) {");
     $src = "Net::SSLeay::$method";
-    _trace2("_ssleay_ctx_new: $src");
+    _trace2(" _ssleay_ctx_new: $src");
     local $! = undef;   # avoid using cached error messages
 
     TRY: {
@@ -1905,19 +1912,15 @@ sub _ssleay_ctx_new {
                 Net::SSLeay::CTX_set_options($ctx, $options);
         $src = 'Net::SSLeay::CTX_set_timeout()';
         ($old = Net::SSLeay::CTX_set_timeout($ctx, $Net::SSLinfo::timeout_sec)) or do {$err = $!; } and last;
-        _trace("_ssleay_ctx_new ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
-        _trace("_ssleay_ctx_new ::CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
-        _trace("_ssleay_ctx_new ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
-        _traceSSLbitmasks(
-               SSLINFO . "::_ssleay_ctx_new CTX options",
-               Net::SSLeay::CTX_get_options($ctx)
-              ) if (0 < $trace);
+        _trace(" CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
+        _trace(" CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
+        _trace(" CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
+        _traceSSLbitmasks( " CTX options", Net::SSLeay::CTX_get_options($ctx));
         goto FIN;
     } # TRY
     # reach here if ::CTX_* failed
     push(@{$_SSLinfo{'errors'}}, "_ssleay_ctx_new() failed calling $src: $err");
     FIN:
-    _trace("_ssleay_ctx_new()\t= $ctx }");
     return $ctx;
 } # _ssleay_ctx_new
 
@@ -1932,7 +1935,7 @@ sub _ssleay_ctx_ca  {
     my $cafile  = '';
     my $capath  = '';
     _traceset();
-    _trace("_ssleay_ctx_ca($ctx) {");
+    _trace("_ssleay_ctx_ca(" . _trace_value_or_text($ctx) . ") {");
     TRY: {
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
             # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
@@ -1995,7 +1998,7 @@ sub _ssleay_ssl_new {
     my $src     = '';   # function (name) where something failed
     my $err     = '';
     _traceset();
-    _trace("_ssleay_ssl_new($ctx) {");
+    _trace("_ssleay_ssl_new(" . _trace_value_or_text($ctx) . ") {");
     TRY: {
         #3. prepare SSL object
         $src = 'Net::SSLeay::new()';
@@ -2006,7 +2009,7 @@ sub _ssleay_ssl_new {
                 Net::SSLeay::set_cipher_list($ssl, $cipher)    or do {$err = $!} and last;
         if (0 < $Net::SSLinfo::use_SNI) {
             my $sni  = $Net::SSLinfo::sni_name;
-            _trace("_ssleay_ssl_new: SNI");
+            _trace(" use SNI");
             if (1.45 <= $Net::SSLeay::VERSION) {
                 # set_tlsext_host_name() vanished somewhen after 1.88
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
@@ -2030,7 +2033,7 @@ sub _ssleay_ssl_new {
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "_ssleay_ssl_new() failed calling $src: $err");
     FIN:
-    _trace("_ssleay_ssl_new()\t= $ssl }");
+    _trace("_ssleay_ssl_new()\t= " . _trace_value_or_text($ssl) . " }");
     return $ssl;
 } # _ssleay_ssl_new
 
@@ -2543,10 +2546,7 @@ sub do_ssl_open($$$@) {
     _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ") {");
     goto FIN if (defined $_SSLinfo{'ssl'});
-    #_traceSSLbitmasks(
-    #    SSLINFO . "::do_ssl_open SSL version bitmask",
-    #    &Net::SSLeay::OP_ALL
-    #) if (0 < $trace);
+    #_traceSSLbitmasks("do_ssl_open SSL version bitmask", &Net::SSLeay::OP_ALL);
     # TODO: no real value for _traceSSLbitmasks() 
 
     $Net::SSLinfo::target_url =~ s:^\s*$:/:;# set to / if empty
@@ -4172,7 +4172,7 @@ sub _main           {
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)          { print_pod($0, __PACKAGE__, $SID_sslinfo); }
+        if ($arg =~ m/^--?h(?:elp)?$/)          { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $Net::SSLinfo::verbose++; next; }
         # ----------------------------- commands
