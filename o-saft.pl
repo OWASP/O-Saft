@@ -64,7 +64,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OSaft::Trace not included
 
-our $SID_main   = "@(#) yeast.pl 2.166 24/01/07 21:31:33"; # version of this file
+our $SID_main   = "@(#) yeast.pl 2.167 24/01/08 11:51:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -611,7 +611,7 @@ our %check_http = %OSaft::Data::check_http;
 our %check_size = %OSaft::Data::check_size;
 
 $cfg{'time0'}   = $time0;
-osaft::set_user_agent("$cfg{'me'}/2.166");# use version of this file not $VERSION
+osaft::set_user_agent("$cfg{'me'}/2.167");# use version of this file not $VERSION
 osaft::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3004,7 +3004,7 @@ sub _get_data0          {
         _warn("203: connection without SNI succeded with errors; errors ignored");
             # fails often with: Error in cipher list; SSL_CTX_set_cipher_list:no cipher match
             # TODO: don't show warning 203 if only this in Net::SSLinfo::errors
-        if (0 < ($cfg{'verbose'} + $cfg{'trace'})) {
+        if ((0 < $cfg{'verbose'}) or (1 < $cfg{'trace'})) {
             _warn("206: $_") foreach Net::SSLinfo::errors();
             # following OK, i.e. if SSLv2 or SSLv3 is not supported:
             #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
