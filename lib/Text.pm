@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-#!# Copyright (c) 2023, Achim Hoffmann
+#!# Copyright (c) 2024, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package Text;
@@ -9,7 +9,7 @@ package Text;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) Text.pm 3.2 24/01/09 17:21:20";
+my  $SID_text   =  "@(#) Text.pm 3.3 24/01/09 17:27:27";
 our $VERSION    =  "23.11.23";
 
 #_____________________________________________________________________________
@@ -129,7 +129,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.2 2024/01/09
+3.3 2024/01/09
 
 
 =head1 AUTHOR
