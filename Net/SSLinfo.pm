@@ -1,8 +1,8 @@
-#! /usr/bin/perl -I . -I ..
+#! /usr/bin/perl -I . -I .. -I lib
 ## PACKAGE {
 
 #!#############################################################################
-#!#             Copyright (c) 2023, Achim Hoffmann
+#!#             Copyright (c) 2024, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -56,10 +56,10 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.308 24/01/08 11:49:04";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 1.310 24/01/09 22:19:58";
 our $VERSION        =  "23.11.23";  # official verion number of this file
 
-use OSaft::Text qw(print_pod %STR);
+use Text        qw(print_pod %STR);
 use Socket;
 use Net::SSLeay;
 
@@ -235,7 +235,7 @@ I<Net::SSLinfo::errors()> method.
 
 =head1 DEBUGGING
 
-Simple tracing can be activated with I<$Net::SSLinfo::trace=1>. If set to 2
+Simple tracing can be activated with I<$Net::SSLinfo::trace=1>. If set to "2"
 or greater, more data will be printed, for example the complete request and
 response data as well as data which covers more than one line.
 
@@ -381,7 +381,7 @@ This can be used to check if the target supports SNI; default: 1
 =item $Net::SSLinfo::sni_name
 
 The specified string will be used as hostname for SNI.  It will be used if
-$Net::SSLinfo::use_SNI is set to 1.
+$Net::SSLinfo::use_SNI is set to "1".
 supports SNI; default: ""
 
 =item $Net::SSLinfo::use_http
@@ -490,8 +490,8 @@ the CA's hash value. Therefore the library uses the  CAPFILE and/or CAPATH
 environment variable. The tools, like openssl, have options to pass proper
 values for the file and path.
 
-We provide these settings in the variables:  I<$Net::SSLinfo::ca_file>,
-I<$Net::SSLinfo::ca_path>,  I<$Net::SSLinfo::ca_depth> .
+We provide these settings in the variables:
+    I<$Net::SSLinfo::ca_file>,  I<$Net::SSLinfo::ca_path>,  I<$Net::SSLinfo::ca_depth> .
 
 Please see  B<VARIABLES>  for details.
 
@@ -789,18 +789,17 @@ our @EXPORT = qw(
     # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
 our $HAVE_XS = eval {
-        local $SIG{'__DIE__'} = 'DEFAULT';
-        eval {
-            require XSLoader;
-            XSLoader::load('Net::SSLinfo', $VERSION);
-            1;
-        } or do {
-            require DynaLoader;
-            bootstrap Net::SSLinfo $VERSION;
-            1;
-        };
-
-    } ? 1 : 0;
+    local $SIG{'__DIE__'} = 'DEFAULT';
+    eval {
+        require XSLoader;
+        XSLoader::load('Net::SSLinfo', $VERSION);
+        1;
+    } or do {
+        require DynaLoader;
+        bootstrap Net::SSLinfo $VERSION;
+        1;
+    };
+} ? 1 : 0;
 
 #_____________________________________________________________________________
 #___________________________________________________________ initialisation __|
@@ -2529,6 +2528,7 @@ is not available,  the next one will be used.  The sequence of used methods
 is hardcoded with most modern first. The current sequence can be seen with:
 
 C<perl -MNet::SSLinfo -le 'print join"\n",Net::SSLinfo::ssleay_methods();'>
+
 =cut
 
 # from openssl/x509_vfy.h
@@ -2584,8 +2584,8 @@ sub do_ssl_open($$$@) {
 
         #0. first reset Net::SSLinfo objects if they exist
         # note that $ctx and $ssl is still local and not in %_SSLinfo
-        Net::SSLeay::free($ssl)      if (defined $ssl);
-        Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
+        Net::SSLeay::free($ssl)     if (defined $ssl);
+        Net::SSLeay::CTX_free($ctx) if (defined $ctx);
         if (1 > $Net::SSLinfo::socket_reuse) {
             close($Net::SSLinfo::socket) if (defined $Net::SSLinfo::socket);
             $Net::SSLinfo::socket = undef;
@@ -4176,13 +4176,13 @@ sub _main           {
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $Net::SSLinfo::verbose++; next; }
         # ----------------------------- commands
-        if ($arg =~ m/^version$/)               { print "$SID_sslinfo";     next; }
-        if ($arg =~ m/^[+-]?VERSION/i)          { print "$VERSION";         next; }
-        if ($arg =~ m/^(?:--test)?.?ssleay/)    { print test_ssleay();      next; }
-        if ($arg =~ m/^(?:--test)?.?sslmap/)    { print test_sslmap();      next; }
-        if ($arg =~ m/^(?:--test)?.?s_?client/) { print test_sclient();     next; }
-        if ($arg =~ m/^(?:--test)?.?methods/)   { print test_methods();     next; }
-        if ($arg =~ m/^(?:--test)?.?openssl/)   { print test_openssl();     next; }
+        if ($arg =~ m/^version$/)               { print "$SID_sslinfo"; next; }
+        if ($arg =~ m/^[+-]?VERSION/i)          { print "$VERSION";     next; }
+        if ($arg =~ m/^(?:--test)?.?ssleay/)    { print test_ssleay();  next; }
+        if ($arg =~ m/^(?:--test)?.?sslmap/)    { print test_sslmap();  next; }
+        if ($arg =~ m/^(?:--test)?.?s_?client/) { print test_sclient(); next; }
+        if ($arg =~ m/^(?:--test)?.?methods/)   { print test_methods(); next; }
+        if ($arg =~ m/^(?:--test)?.?openssl/)   { print test_openssl(); next; }
         if ($arg =~ m/^[+-]/)                   { next; }   # silently ignore unknown options
         # treat remaining args as hostname to test
         do_ssl_open( $arg, 443, '');
