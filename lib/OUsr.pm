@@ -19,7 +19,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_ousr       = "@(#) %M% %I% %E% %U%";
+my  $SID_ousr       = "@(#) OUsr.pm 3.5 24/01/10 20:57:12";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -313,7 +313,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-%I% 20%E%
+3.5 2024/01/10
 
 =head1 AUTHOR
 
