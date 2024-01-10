@@ -9,7 +9,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_data   =  "@(#) OData.pm 3.3 24/01/10 21:14:02";
+my  $SID_odata  =  "@(#) OData.pm 3.4 24/01/10 21:37:55";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -22,7 +22,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-use Text        qw(print_pod);
+use OText       qw(print_pod);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -301,7 +301,7 @@ our %data   = (         # connection and certificate details
     'http_sts'          => {'val' => sub { SSLinfo::http_sts(              $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     'options'           => {'val' => sub { SSLinfo::options(               $_[0], $_[1])}, 'txt' => "internal used SSL options bitmask"},
-    'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _data_init');},'txt' => "Target's fallback SSL Protocol"},
+    'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _odata_init');},'txt' => "Target's fallback SSL Protocol"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     # following not printed by default, but can be used as command
 #   'PROT'              => {'val' => sub { return $prot{'PROT'}->{'default'}           }, 'txt' => "Target default PROT     cipher"},
@@ -885,7 +885,7 @@ EoHelp
 #_____________________________________________________________________________
 #___________________________________________________ initialisation methods __|
 
-sub _data_init  {
+sub _odata_init {
     #? initialise variables
 
     # construct %checks from %check_* and set 'typ'
@@ -906,7 +906,7 @@ sub _data_init  {
     #}
 
     return;
-} # _data_init
+} # _odata_init
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
@@ -918,11 +918,11 @@ sub _odata_main {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_data)   if ($arg =~ m/^--?h(?:elp)?$/x);
+        print_pod($0, __PACKAGE__, $SID_odata)  if ($arg =~ m/^--?h(?:elp)?$/x);
         # ----------------------------- options
 #       if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         # ----------------------------- commands
-        if ($arg =~ /^version$/x)        { print "$SID_data\n"; next; }
+        if ($arg =~ /^version$/x)        { print "$SID_odata\n";next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
         $arg =~ s/^(?:--test.?data)//x;
 show($arg);
@@ -934,7 +934,7 @@ show($arg);
 
 sub odata_done  {}; # dummy to check successful include
 
-_data_init();
+_odata_init();
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -947,7 +947,7 @@ _data_init();
 
 =head1 VERSION
 
-3.3 2024/01/10
+3.4 2024/01/10
 
 =head1 AUTHOR
 
