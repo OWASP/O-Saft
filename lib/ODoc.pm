@@ -34,12 +34,12 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.3 24/01/10 17:28:40";
+my  $SID_odoc   = "@(#) ODoc.pm 3.4 24/01/10 21:35:10";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
-use Text        qw(print_pod);
+use OText       qw(print_pod);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -638,7 +638,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.3 2024/01/10
+3.4 2024/01/10
 
 
 =head1 AUTHOR
