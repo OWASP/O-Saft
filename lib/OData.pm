@@ -9,7 +9,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.4 24/01/10 21:37:55";
+my  $SID_odata  =  "@(#) OData.pm 3.5 24/01/11 19:37:05";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -34,7 +34,7 @@ use OText       qw(print_pod);
 
 =head1 NAME
 
-=Data - common SSL/TLS-connection data for O-Saft and related tools
+Data - common SSL/TLS-connection data for O-Saft and related tools
 
 
 =head1 DESCRIPTION
@@ -947,7 +947,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.4 2024/01/10
+3.5 2024/01/11
 
 =head1 AUTHOR
 
