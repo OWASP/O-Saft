@@ -19,7 +19,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.5 24/01/10 20:57:12";
+my  $SID_ousr       = "@(#) OUsr.pm 3.6 24/01/11 19:44:45";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -38,11 +38,11 @@ BEGIN { # mainly required for testing ...
     # SEE Perl:BEGIN perlcritic
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
     unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
-    unshift(@INC, "./lib")  if (1 > (grep{/^\.[\/\\]lib$/}  @INC));
+    unshift(@INC, "lib")    if (1 > (grep{/^lib$/}    @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-use Text     qw(%STR print_pod);
+use OText    qw(%STR print_pod);
 use osaft;
 
 use Exporter qw(import);
@@ -313,7 +313,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.5 2024/01/10
+3.6 2024/01/11
 
 =head1 AUTHOR
 
