@@ -69,7 +69,7 @@ use osaft;
 use ODoc;
 use Ciphers;    # required if called standalone only
 
-my  $SID_oman= "@(#) OMan.pm 3.4 24/01/10 22:15:10";
+my  $SID_oman= "@(#) OMan.pm 3.5 24/01/12 01:27:06";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -812,7 +812,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.4'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.5'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2049,7 +2049,6 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ !~ m/^cfg/) {
         $pod .= _man_head(16, $types{$typ}->[0], $types{$typ}->[2]);
     }
-
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
     TABLE: {
@@ -2114,27 +2113,27 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         last;
     }
     if ($typ =~ m/check/) {
-        foreach my $key (sort keys %checks) {
-            $pod .= _man_cfg($typ, $key, $sep, $checks{$key}->{txt});
+        foreach my $key (sort keys %::checks) {
+            $pod .= _man_cfg($typ, $key, $sep, $::checks{$key}->{txt});
         }
         last;
     }
     if ($typ =~ m/(?:data|info)/) {
-        foreach my $key (sort keys %data) {
-            $pod .= _man_cfg($typ, $key, $sep, $data{$key}->{txt});
+        foreach my $key (sort keys %::data) {
+            $pod .= _man_cfg($typ, $key, $sep, $::data{$key}->{txt});
         }
         last;
     }
     if ($typ =~ m/text/) {
-        foreach my $key (sort keys %text) {
-            #_dbx "$key : " . ref($text{$key});
-            if ('' eq ref($text{$key})) {   # string
-                $pod .= _man_txt($typ, $key, $sep, $text{$key});
+        foreach my $key (sort keys %::text) {
+            #_dbx "$key : " . ref($::text{$key});
+            if ('' eq ref($::text{$key})) {   # string
+                $pod .= _man_txt($typ, $key, $sep, $::text{$key});
             }
-            if ('HASH' eq ref($text{$key})) {
+            if ('HASH' eq ref($::text{$key})) {
                 # TODO: not yet printed, as it may confuse the user
-                #foreach my $k (sort keys $text{$key}) {
-                #    $txt  = $text{$key}->{$k};
+                #foreach my $k (sort keys $::text{$key}) {
+                #    $txt  = $::text{$key}->{$k};
                 #    $pod .= _man_txt($typ, "$key($k)", $sep, $txt);
                 #}
             }
@@ -2363,7 +2362,7 @@ sub man_help        {
         $hlp .= "\n  NOT YET IMPLEMENTED\n";
         foreach my $label (sort keys %checks) {
             next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
-            $hlp .= "        $label\t- " . $checks{$label}->{txt} . "\n";
+            $hlp .= "        $label\t- " . $::checks{$label}->{txt} . "\n";
         }
     }
     return $hlp;
@@ -2408,7 +2407,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
     my $txt;
-    _man_dbx("printhelp($hlp) ...");
+    _man_dbx("man_printhelp($hlp) ...");
     _man_use_tty();
     _man_html_init();   # must be called here, because function may be call anywhere
     # NOTE: some lower case strings are special
@@ -2478,7 +2477,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $txt = join("", ODoc::get("devel.txt", $parent, $version));
     }
     if (not $txt)               { # nothing matched so far, print special section from help
-        _man_dbx("printhelp: " . uc($hlp));
+        _man_dbx("man_printhelp: " . uc($hlp));
         $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
     }
     print $txt || "";
@@ -2692,7 +2691,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.4 2024/01/10
+3.5 2024/01/12
 
 
 =head1 AUTHOR
