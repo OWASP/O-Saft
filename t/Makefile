@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.154 23/11/15 00:52:42
+#?      @(#) Makefile 3.2 24/01/15 20:36:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 1.154
+_SID.test          := 3.2
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -96,6 +96,7 @@ ifndef TEST.remove-environment-variables
     # behaviour and to keep our list of variables clean;
     # first define list of required variables, then get list of existing
     # environment variables and remove all except the required ones
+    # PERL5LIB and PERL_HASH_SEED are removed also because used internal
     $(eval _keep = OSAFT_MAKE   LANG    LC_CTYPE \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
@@ -120,7 +121,7 @@ TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 TEST.dir       := t
 TEST.logdir     = $(TEST.dir)/log
 TEST.logtxt    := <<random value replaced by make>>
-TEST.symlinks  := ../contrib ../osaft.pm ../.o-saft.pl ../Net ../docs ../OSaft
+TEST.symlinks  := ../contrib ../lib ../.o-saft.pl ../docs
 
 # following may be redefined in any included t/Makefile*
 #TEST.init      := --header
@@ -491,6 +492,14 @@ help.test.makevars:
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
+
+# Tests are started in $(TEST.dir) which is ./t/ usually, and calls the tools
+# most likely like ../tool . Therefore we need  ..  in Perl's list of include
+# paths also. Using the environment variable PERL5LIB ensures that it will be
+# added while testing with Makefiles only.
+test%:  export PERL5LIB        := ..
+test%:  export PERL_HASH_SEED  := cafe
+    # SEE Note:Testing, sort
 
 # FIXME: missing public (not internal) documentation for pattern rules:
 #       message-%:
