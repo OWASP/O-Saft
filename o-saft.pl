@@ -8938,6 +8938,11 @@ Hence, arrays are sorted (after defining them) when they are used. It is a
 small perfomance penulty in production because the 'sort' is only required
 while testing. Using a pragma like in C would be nice ...
 
+Also the sort trick described above does not work for all hashes. Therefor
+Perl's special environment variable PERL_HASH_SEED is used for all targets
+used for testing (target which start with test). Please see  "man perlrun"
+for details about the behaviour of this environment variable.
+
 Unfortunately there are arrays preset with a special order, these must not
 be sorted. These are most likely the settings read from RC-FILE. For that,
 sorting is not done for data read from RC-FILE. The --no-rc option is used
