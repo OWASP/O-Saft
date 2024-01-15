@@ -9,7 +9,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.5 24/01/11 19:37:05";
+my  $SID_odata  =  "@(#) OData.pm 3.7 24/01/15 13:37:37";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -17,9 +17,12 @@ BEGIN {
     # SEE Perl:BEGIN perlcritic
     my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
-    unshift(@INC, "lib")    if (1 > (grep{/^\.\.$/}   @INC));
-    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
+    if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
+        unshift(@INC, $ENV{'PWD'});
+    }
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
 use OText       qw(print_pod);
@@ -947,7 +950,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.5 2024/01/11
+3.7 2024/01/15
 
 =head1 AUTHOR
 
