@@ -4,7 +4,7 @@
 #!# Copyright (c) 2024, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
-package Trace;
+package OTrace;
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.6 24/01/15 13:46:00";
+my  $SID_trace      = "@(#) OTrace.pm 3.7 24/01/15 18:29:17";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -97,7 +97,7 @@ our @EXPORT_OK  = qw(
 #        1;
 #    } or do {
 #        require DynaLoader;
-#        bootstrap Trace $VERSION;
+#        bootstrap OTrace $VERSION;
 #        1;
 #    };
 #} ? 1 : 0;
@@ -904,7 +904,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _p_k_v("commands",      ___ARR(@{$cfg{'do'}}));
     _pline("user-friendly cfg }");
     _ptext("(more information with: --trace=2  or  --trace=3 )") if (1 > $cfg{'trace'});
-    # $cfg{'ciphers'} may not yet set, print with Trace::trace_ciphers_list()
+    # $cfg{'ciphers'} may not yet set, print with OTrace::trace_ciphers_list()
     return;
 } # trace_init
 
@@ -1040,18 +1040,18 @@ sub trace_done  {}; # dummy to check successful include
 
 =head1 NAME
 
-Trace.pm - module for tracing o-saft.pl
+OTrace.pm - module for tracing o-saft.pl
 
 
 =head1 SYNOPSIS
 
 =over 2
 
-=item require "Trace.pm";   # from within Perl code
+=item require "OTrace.pm";  # from within Perl code
 
-=item use Trace;            # from within Perl code
+=item use OTrace;           # from within Perl code
 
-=item Trace.pm <L<OPTIONS|OPTIONS>>  # on command line
+=item OTrace.pm <L<OPTIONS|OPTIONS>>  # on command line
 
 =back
 
@@ -1124,27 +1124,27 @@ as empty stub there, for example:
 
     sub trace_init() {}
 
-=head3 Trace::trace_ciphers_list( )
+=head3 OTrace::trace_ciphers_list( )
 
-=head3 Trace::trace_targets( )
+=head3 OTrace::trace_targets( )
 
-=head3 Trace::trace_rcfile( )
+=head3 OTrace::trace_rcfile( )
 
-=head3 Trace::trace_arg( )
+=head3 OTrace::trace_arg( )
 
-=head3 Trace::trace_args( )
+=head3 OTrace::trace_args( )
 
-=head3 Trace::trace_init( )
+=head3 OTrace::trace_init( )
 
-=head3 Trace::trace_exit( )
+=head3 OTrace::trace_exit( )
 
-=head3 Trace::trace( )
+=head3 OTrace::trace( )
 
-=head3 Trace::trace2( )
+=head3 OTrace::trace2( )
 
-=head3 Trace::trace3( )
+=head3 OTrace::trace3( )
 
-=head3 Trace::trace4( )
+=head3 OTrace::trace4( )
 
 =head3 trace_test( )
 
@@ -1177,7 +1177,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.6 2024/01/15
+3.7 2024/01/15
 
 =head1 AUTHOR
 
