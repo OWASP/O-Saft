@@ -19,7 +19,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.6 24/01/11 19:44:45";
+my  $SID_ousr       = "@(#) OUsr.pm 3.7 24/01/15 13:41:14";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -37,9 +37,12 @@ BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
-    unshift(@INC, "lib")    if (1 > (grep{/^lib$/}    @INC));
-    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
+    if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
+        unshift(@INC, $ENV{'PWD'});
+    }
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
 use OText    qw(%STR print_pod);
@@ -313,7 +316,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.6 2024/01/11
+3.7 2024/01/15
 
 =head1 AUTHOR
 
