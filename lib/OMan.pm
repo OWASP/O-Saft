@@ -56,9 +56,12 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
-    unshift(@INC, "lib")    if (1 > (grep{/^\.\.$/}   @INC));
-    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
+    if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
+        unshift(@INC, $ENV{'PWD'});
+    }
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}   @INC);
+    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 use Exporter qw(import);
 use base     qw(Exporter);
@@ -69,7 +72,7 @@ use osaft;
 use ODoc;
 use Ciphers;    # required if called standalone only
 
-my  $SID_oman= "@(#) OMan.pm 3.5 24/01/12 01:27:06";
+my  $SID_oman= "@(#) OMan.pm 3.6 24/01/15 13:24:40";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -812,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.5'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.6'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1446,8 +1449,8 @@ sub _man_cmd_from_source {
     my $txt  = "";
     my $skip = 1;
     my $fh   = undef;
-    _man_dbx("_man_cmd_from_source: lib/Data.pm");
-    if (open($fh, '<:encoding(UTF-8)', _get_filename("lib/Data.pm"))) { # file must be hardcoded here
+    _man_dbx("_man_cmd_from_source: lib/OData.pm");
+    if (open($fh, '<:encoding(UTF-8)', _get_filename("lib/OData.pm"))) { # file must be hardcoded here
         while(<$fh>) {
             # find start of data structure
             # all structure look like:
@@ -2691,7 +2694,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.5 2024/01/12
+3.6 2024/01/15
 
 
 =head1 AUTHOR
