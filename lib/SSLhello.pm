@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.3 24/01/11 23:05:22";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.4 24/01/15 23:59:44";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -651,7 +651,7 @@ sub _decode_val ($$$;$$$$$$) {
                                             $_decode_str .= _sprintf_val_description ($_def_hash_ref, \$ele3, $_next_indent + 2);
                                         } else {                    # deeply nested array is not supported
                                             _trace2_ (" " x ($_next_indent + 2) ."# --|||> **WARNING: SSLhello::_decode_val: try to print unsupported or deeply nested val type (\$ele3): '" . ref(\$ele3) ."/". ref($ele3) ."' <|||\n");
-                                            carp ("**WARNING: SSLhello::_decode_val: try to print unsupported or deeply nested val type (\$ele3): '" . ref(\$ele3) ."/". ref($ele3) ."'\n");
+                                            carp("**WARNING: SSLhello::_decode_val: try to print unsupported or deeply nested val type (\$ele3): '" . ref(\$ele3) ."/". ref($ele3) ."'\n");
 
                                             $_decode_str .= "[ --- unsupported or deeply nested val type (\$ele3): '". ref(\$ele3) ."/". ref($ele3) ."' --- ]";
                                         } # ref (\$ele3)
@@ -661,7 +661,7 @@ sub _decode_val ($$$;$$$$$$) {
                                 $_next_indent -= 2;
                             } else {                                # unsupported val type of $ele_ele
                                 _trace2_ (" " x ($_next_indent + 2) ."**WARNING: SSLhello::_decode_val: try to print unsupported val-refref-Type (\$ele_ele):    ".ref($ele_ele)."<\n");
-                                carp ("**WARNING: SSLhello::_decode_val: try to print unsupported val type (\$ele_ele): '" . ref(\$ele_ele) ."/". ref($ele_ele) ."'\n");
+                                carp("**WARNING: SSLhello::_decode_val: try to print unsupported val type (\$ele_ele): '" . ref(\$ele_ele) ."/". ref($ele_ele) ."'\n");
                                 $_decode_str .= "[ --- unsupported val type (\$ele_ele): '". ref(\$ele_ele) ."/". ref($ele_ele) ."' --- ]";
                             } # ref (\$ele_ele)
                         } # foreach $ele_ele
@@ -670,7 +670,7 @@ sub _decode_val ($$$;$$$$$$) {
                     $_next_indent -= 2;
                 } else {                                            # unsupported val type of $ele
                     _trace2_ (" " x ($_next_indent + 2) ."**WARNING: SSLhello::_decode_val: try to print unsupported val-refref-Type (\$ele):    ".ref($ele)."<\n");
-                    carp ("**WARNING: SSLhello::_decode_val: try to print unsupported val type (\$ele): '" . ref(\$ele) ."/". ref($ele) . "'\n");
+                    carp("**WARNING: SSLhello::_decode_val: try to print unsupported val type (\$ele): '" . ref(\$ele) ."/". ref($ele) . "'\n");
                     $_decode_str .= "[ --- unsupported val type (\$ele_ele): '". ref(\$ele) ."/". ref($ele) ."' --- ]";
                 } # ref (\$ele)
             } # foreach $ele
@@ -679,7 +679,7 @@ sub _decode_val ($$$;$$$$$$) {
         $_next_indent -= 2;
     } else {                                                        # unsupported val type of $$_val_ref
         _trace2_ (" " x ($_next_indent + 2) ."**WARNING: SSLhello::_decode_val: try to print unsupported val-refref-Type:             " . ref($_val_ref)."<\n");
-        carp ("**WARNING: SSLhello::_decode_val: try to print unsupported val type: '" . ref(\$_val_ref) ."/". ref($_val_ref) ."'\n");
+        carp("**WARNING: SSLhello::_decode_val: try to print unsupported val type: '" . ref(\$_val_ref) ."/". ref($_val_ref) ."'\n");
         $_decode_str .= "[ --- unsupported val type: '". ref(\$_val_ref) ."/". ref($_val_ref) ."' --- ]";
     } # if ref ($_val_ref)
 #    $_next_indent -= 3;
@@ -1832,7 +1832,7 @@ sub checkSSLciphers ($$$@) {
                     if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { #accepted cipher that was in the checklist
                         @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
                     } else { # cipher was *NOT* in the checklist
-                        carp ("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (1): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'.");
+                        carp("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (1): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'.");
                         @cipherSpecArray = (); # => Empty @cipherSpecArray
                      }
                     push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the list of accepted ciphers
@@ -1859,7 +1859,7 @@ sub checkSSLciphers ($$$@) {
                       || ($my_error =~ /protocol.*?ignored/x) ) {
                          #### Fatal Errors -> Useless to check more ciphers
                         _trace2 (" checkSSLciphers (1.3): \'$my_error\'\n") if ($my_error);
-                        carp ("**WARNING: checkSSLciphers => Exit loop (1.3)");
+                        carp("**WARNING: checkSSLciphers => Exit loop (1.3)");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
                     } elsif ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_CIPHERS)) || ($my_error =~ /\-> Received NO Data/)) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
@@ -1870,11 +1870,11 @@ sub checkSSLciphers ($$$@) {
                             next;
                         } else { # noDataEqNoCipher == 0
                             _trace2 (" checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported. Retry to test the following cipheres individually:\n");
-                            carp ("**WARNING: checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported.");
+                            carp("**WARNING: checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported.");
                         }
                     } elsif ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_RECORD)) || ($my_error =~ /Error 1: too many requests/)) {   #### Too many connections: Automatic suspension and higher timeout did not help
                         _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
-                        carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
+                        carp("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                         next;
                     } elsif ((error_handler->is_err) || $my_error) { # error found
                         unless (error_handler->is_err) { # no error set, but no socket obtaied
@@ -1909,7 +1909,7 @@ sub checkSSLciphers ($$$@) {
                 if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { # accepted cipher that was in the checklist
                     @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
                 } else { # cipher was *NOT* in the checklist
-                    carp ("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (2): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'.");
+                    carp("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (2): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'.");
                     @cipherSpecArray = (); # => Empty @cipherSpecArray
                 }
                 push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the list of accepted ciphers
@@ -1917,7 +1917,7 @@ sub checkSSLciphers ($$$@) {
                 _trace1_ ("=> no cipher found\n");
                 if ( ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
                     _trace2 (" checkSSLciphers (2.1): '$my_error'\n");
-                    carp ("**WARNING: checkSSLciphers => Exit loop (2.1)");
+                    carp("**WARNING: checkSSLciphers => Exit loop (2.1)");
                     @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                     last;
                 } elsif ( ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) { # just stop, no warning
@@ -1926,7 +1926,7 @@ sub checkSSLciphers ($$$@) {
                     last;       # no more ciphers to test
                 } elsif ( ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {   #### Fatal Errors -> Useless to check more ciphers
                     _trace2 (" checkSSLciphers (2.3): '$my_error'\n");
-                    carp ("**WARNING: checkSSLciphers => Exit loop (2.3)");
+                    carp("**WARNING: checkSSLciphers => Exit loop (2.3)");
                     @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                     last;
                 } elsif ( $my_error =~ /\-> Received NO Data/) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
@@ -1937,15 +1937,15 @@ sub checkSSLciphers ($$$@) {
                         next;   # here: eq last
                     } else {    # noDataEqNoCipher == 0
                         _trace2 (" checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
-                        carp ("**WARNING: checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported.");
+                        carp("**WARNING: checkSSLciphers (2.5): '$my_error', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported.");
                     }
                 } elsif ($my_error =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
                     _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
-                    carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
+                    carp("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($my_error) {  # error found
                     _trace2 (" checkSSLciphers (2.6): Unexpected Error Message ignored: '$my_error'\n");
-                    carp (" checkSSLciphers (2.6): Unexpected Error Message ignored: '$my_error'\n");
+                    carp(" checkSSLciphers (2.6): Unexpected Error Message ignored: '$my_error'\n");
                     $my_error = ""; # reset error message
                 }
                 @cipherSpecArray =(); # => Empty @cipherSpecArray
@@ -1973,18 +1973,18 @@ sub checkSSLciphers ($$$@) {
                 my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                 if ( ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
                     _trace1 (" checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
-                    carp ("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     $my_error = ""; # reset error message
                     last;
                 } elsif ( ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/x) ) { # Just stop, no warning
                     _trace1 (" checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
-                    carp ("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
-                    carp ("**WARNING: checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
@@ -2024,7 +2024,7 @@ sub checkSSLciphers ($$$@) {
                 if ( (grep { $_ eq $acceptedCipher } @acceptedCipherArray) || (($arrayLen == 1) && ($acceptedCipher eq $acceptedCipherSortedArray[1])) ) { # accepted cipher was in the checklist
                     @acceptedCipherArray = grep { $_ ne $acceptedCipher } @acceptedCipherArray;    # delete accepted cipher in ToDo-Array '@acceptedCipherArray'
                 } else { # cipher was *NOT* in the checklist
-                    carp ("**WARNING: checkSSLciphers: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (3): ('0x".hexCodedCipher($acceptedCipherArray[0])." ... 0x".hexCodedCipher($acceptedCipherArray[-1])."'. Untested Ciphers:");
+                    carp("**WARNING: checkSSLciphers: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (3): ('0x".hexCodedCipher($acceptedCipherArray[0])." ... 0x".hexCodedCipher($acceptedCipherArray[-1])."'. Untested Ciphers:");
                     # list untested ciphers
                     my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                     @acceptedCipherArray = (); # => Empty @cipherSpecArray
@@ -2037,22 +2037,22 @@ sub checkSSLciphers ($$$@) {
                 my $str = _trace_array2str(compileTLSCipherArray(join("",@acceptedCipherArray)));
                 if (  ($my_error =~ /Fatal Exit/) || ($my_error =~ /make a connection/ ) || ($my_error =~ /create a socket/) || ($my_error =~ /target.*?ignored/x) || ($my_error =~ /protocol.*?ignored/x) ) {
                     _trace1 (" checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
-                    carp ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     $my_error = ""; # reset error message
                     last;
                 } elsif ($my_error =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
                     _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
-                    carp ("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
+                    carp("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($my_error) { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
-                    carp ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
-                    carp ("**WARNING: checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
+                    carp("**WARNING: checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
                     _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
@@ -2354,7 +2354,7 @@ sub openTcpSSLconnection ($$) {
             }
         } else {
             $starttlsType=0;
-            carp ("openTcpSSLconnection: Undefined StarttlsType, use $starttls_matrix[$starttlsType][0] instead");
+            carp("openTcpSSLconnection: Undefined StarttlsType, use $starttls_matrix[$starttlsType][0] instead");
         }
     }
 
@@ -2393,9 +2393,9 @@ sub openTcpSSLconnection ($$) {
                 if (! $_protocol) {
                     $_protocol = Socket::IPPROTO_TCP;
                 }
-                socket($socket, PF_INET, SOCK_STREAM, $_protocol) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
-                setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
-                setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
+                socket($socket, PF_INET, SOCK_STREAM, $_protocol) or croak("Can't create a socket \'$!\' -> target $host:$port ignored ");
+                setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"); #L!L! => compatible to 32 and 64-bit
+                setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored");
                 alarm (0);      # clear alarm
             } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {  # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                 $my_error = $@;                             # save the error message as soon as possible
@@ -2418,7 +2418,7 @@ sub openTcpSSLconnection ($$) {
                 $connect2ip = inet_aton($SSLhello::proxyhost);
                 if (!defined ($connect2ip) ) {                      # no IP address
                     $my_error = "Can't get the IP address of the proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored";
-                    carp "$my_error";
+                    carp($my_error);
                     error_handler->new( {
                         type    => (OERR_SSLHELLO_ABORT_HOST),
                         id      => 'get proxy IP',
@@ -2435,7 +2435,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
-                    connect($socket, pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak "Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored";
+                    connect($socket, pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak("Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored");
                     # TBD will be: TBD
                     # $sock = new IO::Socket::INET(
                     #   Proto     => "tcp",
@@ -2470,7 +2470,7 @@ sub openTcpSSLconnection ($$) {
                     _trace4 (" openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
-                    defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via proxy $SSLhello::proxyhost:$SSLhello::proxyport [".inet_ntoa($connect2ip).":$SSLhello::proxyport] -> target $host:$port ignored";
+                    defined(send($socket, $proxyConnect, 0)) || croak("Can't make a connection to $host:$port via proxy $SSLhello::proxyhost:$SSLhello::proxyport [".inet_ntoa($connect2ip).":$SSLhello::proxyport] -> target $host:$port ignored");
                     alarm (0);
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) { # end of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                         # save the error message as soon as possible
@@ -2563,8 +2563,7 @@ sub openTcpSSLconnection ($$) {
                 $connect2ip = inet_aton($host);
                 if (!defined ($connect2ip) ) {                      # no IP address
                     $my_error = "Can't get the IP address of $host -> target $host:$port ignored in openTcpSSLconnection";
-                    #croak "$my_error";
-                    carp "$my_error";
+                    carp($my_error);
                     error_handler->new( {
                         type    => (OERR_SSLHELLO_ABORT_HOST),
                         id      => 'get host IP',
@@ -2581,7 +2580,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);                           # set alarm for connect
-                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
+                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak("Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ");
                     alarm (0);
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
@@ -2648,7 +2647,7 @@ sub openTcpSSLconnection ($$) {
                             $suspendSecs= 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  (" openTcpSSLconnection: $my_error\n");
-                            carp ("**WARNING: openTcpSSLconnection: ... $my_error"); #if ($retryCnt > 1); # warning if at least 2nd retry
+                            carp("**WARNING: openTcpSSLconnection: ... $my_error"); #if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
                             _trace4 (" openTcpSSLconnection: STARTTLS (Phase 1): End suspend\n");
@@ -2758,7 +2757,7 @@ sub openTcpSSLconnection ($$) {
                             $suspendSecs= 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  (" openTcpSSLconnection: $my_error\n");
-                            carp ("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
+                            carp("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
                             _trace4 (" openTcpSSLconnection: STARTTLS (Phase 3): End suspend\n");
@@ -2866,7 +2865,7 @@ sub openTcpSSLconnection ($$) {
                             $suspendSecs = 60 * ($retryCnt +1);
                             $my_error = "STARTTLS (Phase 5): Error 1: Too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  (" openTcpSSLconnection: $my_error\n");
-                            carp ("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
+                            carp("**WARNING: openTcpSSLconnection: ... $my_error"); # if ($retryCnt > 1); # warning if at least 2nd retry
                             close ($socket) or carp("**WARNING: STARTTLS: $my_error; Can't close socket, too: $!");
                             sleep($suspendSecs);
                             _trace4 (" openTcpSSLconnection: STARTTLS (Phase 5): End suspend\n");
@@ -2916,7 +2915,7 @@ sub openTcpSSLconnection ($$) {
     } while ( ($my_error) && ( ($retryCnt++ < $SSLhello::retry) || ($retryCnt == $SSLhello::retry + 2) ) ); } # 1 Extra retry if $retryCnt++ == $SSLhello::retry +2
     if ($my_error) { #error
         chomp($my_error);
-        carp ("**WARNING: openTcpSSLconnection: $my_error");
+        carp("**WARNING: openTcpSSLconnection: $my_error");
         _trace2 ("openTcpSSLconnection: Exit openTcpSSLconnection }\n");
         return (undef);
     }
@@ -3077,7 +3076,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         }
         if ( ($my_error) && ((length($input)==0) && ($SSLhello::noDataEqNoCipher==0)) ) {
             _trace2 (" _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
-            carp ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
+            carp("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." bytes): Eval-Message: >$my_error<\n");
             return ("");
         } elsif (length($input) ==0) { # len == 0 without any timeout
             $my_error= "... Received NO Data from $host:$port (protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
@@ -3104,11 +3103,11 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 }
             } elsif ($input =~ /(?:^|\s)220(?:\s|-).*?$/x)  { # service might need STARTTLS
                 $my_error= "**WARNING: _doCheckSSLciphers: $host:$port looks like an SMTP-Service, probably the option '--starttls' is needed -> target ignored\n";
-                carp ($my_error);
+                carp($my_error);
                 return ("");
             }
             $my_error = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service (1) -> Received data ignored -> target ignored\n";
-            carp ($my_error);
+            carp($my_error);
             _trace_ ("\n") if ($retryCnt <=1);
             _trace ("_doCheckSSLciphers: Ignored data: ".length($input)." bytes\n        >".hexCodedString($input,"        ")."<\n        >"._chomp_r($input)."< }\n");
             $input  = "";
@@ -3196,7 +3195,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 message => $my_error,
                 warn    => 0,
             } );
-            # carp ("_doCheckSSLciphers: $my_error");
+            # carp("_doCheckSSLciphers: $my_error");
             return ("");
         }};                                                         # End of the section 'or do { if () { ...'. Do NOT forget the;
         alarm (0);                                                  # protection against race conditions
@@ -3294,7 +3293,7 @@ sub _readRecord ($$$;$$$$) {
                     message => $my_error,
                     warn    => 0,
                 } );
-                carp ("_readRecord (udp): $my_error");
+                carp("_readRecord (udp): $my_error");
                 _trace4 ("_readRecord (udp) from Server '$host:$port' -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($$input_ref)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                 last RETRY_TO_RECEIVE_A_RECORD;
             }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the; => '}};'
@@ -3328,7 +3327,7 @@ sub _readRecord ($$$;$$$$) {
                         message => $my_error,
                         warn    => 0,
                     } );
-                    carp ("_readRecord (udp): $my_error");
+                    carp("_readRecord (udp): $my_error");
                     _trace4 ("_readRecord (udp) -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($$input_ref)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                     last RETRY_TO_RECEIVE_A_RECORD;                 # resend the UDP packet
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the; '}};'
@@ -3393,7 +3392,7 @@ sub _readRecord ($$$;$$$$) {
                     message => $my_error,
                     warn    => 0,
                 } );
-                carp ("_readRecord (tcp): $my_error");
+                carp("_readRecord (tcp): $my_error");
                 _trace4 ("_readRecord (tcp): recv -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($$input_ref)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                 last RETRY_TO_RECEIVE_A_RECORD;
             }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the; => '}};'
@@ -3494,7 +3493,7 @@ sub _readRecord ($$$;$$$$) {
                 _trace2_ (" $pduLen (including the SSL/TLS header)\n");
                 if ($recordLen > $MAXLEN) { # check the raw length without the specific size of the header
                     _trace1 ("_readRecord: Server '$host:$port': Expected len of the SSL/TLS record ($recordLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                    carp ("_readRecord: Server '$host:$port': Expected len of the SSL/TLS record ($recordLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
+                    carp("_readRecord: Server '$host:$port': Expected len of the SSL/TLS record ($recordLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
                     $pduLen += -$recordLen +$MAXLEN; # => MAXLEN + size of record header
                 }
                 $readLen = $pduLen; # read only pduLen octets (-> only by one record)
@@ -3585,7 +3584,7 @@ RECEVICE_ANSWER:
         alarm (0);                                          # protection against race conditions
         if ($my_local_error) {
             $my_local_error = "_readText: unknown Timeout-Error (1): $my_error";
-             carp ("_readText: $my_local_error");
+             carp("_readText: $my_local_error");
              return ($input, $my_local_error);
         }
         if (vec($rout, fileno($socket),1)) { # got data
@@ -3607,7 +3606,7 @@ RECEVICE_ANSWER:
             alarm (0);                                      # protection against race conditions
             if ($my_local_error) {
                 $my_local_error = "_readText unknown Timeout-Error (2): $my_error";
-                 carp ("_readText: $my_local_error");
+                 carp("_readText: $my_local_error");
                  last RECEVICE_ANSWER;
             }
             $len = length($input2);
@@ -3956,7 +3955,7 @@ sub compileClientHello ($$$$;$$$$) {
             _trace ("compileClientHello: WARNING: Server $host (protocol: $ssl): use of ClientHellos > $SSLhello::max_sslHelloLen bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
         } else { # use of experimental functions is not permitted (option is not activated)
             local $my_error = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $SSLhello::max_sslHelloLen bytes, this caused sometimes virtual servers to stall, e.g. 256 bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
-            carp ($my_error);
+            carp($my_error);
         }
     }
     return ($clientHello);
@@ -3996,7 +3995,7 @@ sub compileAlertRecord ($$$$;$$) {
 #        _trace2 ("compileAlertRecord: Protocol: SSL2\n");
         $my_error = "compileAlert for SSL2 is not yet supported";
         _trace1 ("compileAlertRecord: $my_error\n");
-        carp ($my_error);
+        carp($my_error);
 
 #        $alertRecord_tmp = pack ("C n ",
 #            $alertRecord{'msg_type'},       #C
@@ -4125,7 +4124,7 @@ sub compileAlertRecord ($$$$;$$) {
             _trace ("compileAlertRecord: WARNING: Server $host (protocol: $ssl): use of alert message > $SSLhello::max_sslHelloLen bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
         } else { # use of experimental functions is not permitted (option is not activated)
             $my_error = "**WARNING: compileAlertRecord: Server $host: the alert message is longer than $SSLhello::max_sslHelloLen bytes, this caused sometimes virtual servers to stall, e.g. 256 bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
-            carp ($my_error);
+            carp($my_error);
         }
     }
     return ($alertRecord);
@@ -4161,7 +4160,7 @@ sub __compile_bytes_len1 ($$$$$$;$$) {
     $_size = _compileAllBytes ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, \$_next_data, $__format_text_ref, $__indent);
     my $__len = length ($_next_data);
     _trace4_ (_decode_val ("%02X", \$__len, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (len1)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_len1 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_len1 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("C a*",
             $__len,                                                 #C
             $_next_data,                                            #a[$len]
@@ -4183,7 +4182,7 @@ sub __compile_bytes_len2 ($$$$$$;$$) {
     $_size = _compileAllBytes ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, \$_next_data, $__format_text_ref, $__indent);
     my $__len = length ($_next_data);
     _trace4_ (_decode_val ("%04X", \$__len, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (len2)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_len2 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFFFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_len2 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFFFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("n a*",
             $__len,                                                 #n
             $_next_data,                                            #a[$len]
@@ -4207,7 +4206,7 @@ sub __compile_bytes_len3 ($$$$$$;$$) {
     my $__len1 = $__len >> 16;
     my $__len2 = $__len & 0xFFFF;
     _trace4_ (_decode_val ("%06X", \$__len, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (len3)\n");
-    carp ("**WARNING: SSLhello::_compile_bytes_len3 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFFFFFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::_compile_bytes_len3 for '$__pdu_name': Length $__len too big\n") if ($__len > 0xFFFFFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("C n a*",
             $__len1,                                                #C
             $__len2,                                                #n
@@ -4280,7 +4279,7 @@ sub __compile_bytes_size1 ($$$$$$;$$) {
     $$__format_pos_ref++;                                           # Next format element
     $_size = _compileNextByte ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, \$_next_data, $__format_text_ref, $__indent);
     _trace4_ (_decode_val ("%02X", \$_size, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (size1)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_size1 for '$__pdu_name': Length $_size too big\n") if ($_size > 0xFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_size1 for '$__pdu_name': Length $_size too big\n") if ($_size > 0xFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("C a*",
             $_size,                                                 #C
             $_next_data,                                            #a[$len]
@@ -4301,7 +4300,7 @@ sub __compile_bytes_size2 ($$$$$$;$$) {
     $$__format_pos_ref++;                                           # Next format element
     $_size = _compileNextByte ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, \$_next_data, $__format_text_ref, $__indent);
     _trace4_ (_decode_val ("%04X", \$_size, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (size2)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_size2 for '$__pdu_name': Length $_size too big\n") if ($_size > 0xFFFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_size2 for '$__pdu_name': Length $_size too big\n") if ($_size > 0xFFFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("n a*",
             $_size,                                                 #n
             $_next_data,                                            #a[$len]
@@ -4321,7 +4320,7 @@ sub __compile_bytes_val1 ($$$$$$;$$) {
     return (0) if (! defined ($__param_ref->[$$__param_pos_ref]) ); # no value
     my $__val = $__param_ref->[$$__param_pos_ref++];
     _trace4_ (_decode_val ("%02X", \$__val, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (val1)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_val1 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_val1 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("C",
             $__val,                                                 #C
         );
@@ -4340,7 +4339,7 @@ sub __compile_bytes_val2 ($$$$$$;$$) {
     return (0) if (! defined ($__param_ref->[$$__param_pos_ref]) ); # no value
     my $__val = $__param_ref->[$$__param_pos_ref++];
     _trace4_ (_decode_val ("%04X", \$__val, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (val2)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_val2 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFFFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_val2 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFFFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("n",
             $__val,                                                 #n
         );
@@ -4359,7 +4358,7 @@ sub __compile_bytes_val4 ($$$$$$;$$) {
     return (0) if (! defined ($__param_ref->[$$__param_pos_ref]) ); # no value
     my $__val = $__param_ref->[$$__param_pos_ref++];
     _trace4_ (_decode_val ("%04X", \$__val, $__format_text_ref->[$$__format_pos_ref], $__indent, $__indent, ":\n" . " " x $__indent, ",\n" . " " x $__indent, " | ", " / ") . " (val4)\n");
-    carp ("**WARNING: SSLhello::__compile_bytes_val4 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFFFFFFFF); ### TBD: add WARNING Nr
+    carp("**WARNING: SSLhello::__compile_bytes_val4 for '$__pdu_name': value $__val too big\n") if ($__val > 0xFFFFFFFF); ### TBD: add WARNING Nr
     $$__buffer_ref .= pack ("N",
             $__val,                                                 #N
         );
@@ -4444,7 +4443,7 @@ sub _compileNextByte ($$$$$$;$$) {
         $_size = $__compile_bytes_subs{$__format_ref->[$$__format_pos_ref]}->($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref, $__format_text_ref, $__indent);
         _trace5_ ("\n");
     } else {
-        carp ("**WARNING: SSLhello::_compileNextByte  for '$__pdu_name': \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash 'CH'-format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
+        carp("**WARNING: SSLhello::_compileNextByte  for '$__pdu_name': \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash 'CH'-format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
     }
     _trace4_ (" " x ($__indent + 3). "# SSLhello: _CompileNextByte for '$__pdu_name' ->" . _sprintf_hex_val ("", $__buffer_ref, ($__indent + 31)) ."\n" );
     $$__format_pos_ref++;                                           # Next format element
@@ -4922,7 +4921,7 @@ sub _parseNextByte ($$$$$$;$$) {
     if ($__parse_bytes_subs{$__format_ref->[$$__format_pos_ref]}) {
         $__buffer_size = $__parse_bytes_subs{$__format_ref->[$$__format_pos_ref]}->($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size, $__format_text_ref, $__indent);
     } else {
-        carp ("**WARNING: SSLhello::_parseNextByte ($__pdu_name): \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
+        carp("**WARNING: SSLhello::_parseNextByte ($__pdu_name): \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
     }
     $$__format_pos_ref++;                                           # Next format element
     return ($__buffer_size);
@@ -4981,7 +4980,7 @@ sub _parseExtensions ($$$$;$$) {
         $_extension_type_hash{format_positions}  = ();              # reset array to store format positions
         $_buffer_size       = __parse_bytes_val2 ($_name, undef, \%_extension_type_hash, \$__local_format_pos, \$_extensions_data, $_buffer_size, \@__local_format_text, $_indent);  # get extensions type
         if (!defined ($_extension_type_hash{values}[0])) {          # found no extension
-            carp ("**WARNING: SSLhello::_parseExtensions: warn: no (more) defined extensionus found parsing the record\n");
+            carp("**WARNING: SSLhello::_parseExtensions: warn: no (more) defined extensionus found parsing the record\n");
             next PARSE_EXTENSION;
         }
         my $_extension      = $osaft::TLS_ID_TO_EXTENSIONS{$_extension_type_hash{values}[0]}[0]; # get Extension type from $extension{description}[0]
@@ -5032,7 +5031,7 @@ sub _parseExtensions ($$$$;$$) {
                             # TBD: different format: move stored format to 1st emement of a nested array, add new sequence of new formats to 2nd element; Do the same with the values
                             _trace4_ (" " x ($_indent + 4) . "#      ---> merging values and format_positions to the result hash with different format sequences is not yet implemented! New values are lost: "
                                       . _decode_val (undef, \@{$_param_hash{values}}, $osaft::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") . "\n");
-                            carp ("**WARNING: SSLhello::_parseExtensions: merging values and format_positions to the result hash with different format sequences is not yet implemented! New values are lost: "
+                            carp("**WARNING: SSLhello::_parseExtensions: merging values and format_positions to the result hash with different format sequences is not yet implemented! New values are lost: "
                                       . _decode_val (undef, \@{$_param_hash{values}}, $osaft::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") ."\n");
                             $found = 0; # false
                             last CHECK_FORMAT; # exit the loop
@@ -5065,7 +5064,7 @@ sub _parseExtensions ($$$$;$$) {
                                     next FOREACH_NEW_VALUE; # check next new value
                                 } else {
                                     _trace (" " x ($_indent + 4)."**WARNING: SSLhello::_parseExtensions: internal error in result hash: new values-ref-type (\$_new_ele):       ".ref(\$_new_ele)."<| !=  (\$_stored_ele): ".ref(\$_stored_ele)."<| OR both neiter a SCALAR nor an ARRAY\n");
-                                    carp ("**WARNING: SSLhello::_parseExtensions: internal error in result hash: can't compare and store new values: "
+                                    carp("**WARNING: SSLhello::_parseExtensions: internal error in result hash: can't compare and store new values: "
                                           . _decode_val (undef, \$_new_ele, undef, 0, $_indent + 4, ", ", " | ", " / ") . "\n");
                                     next FOREACH_NEW_VALUE; # check next new value # TBD check if 'next' should change to 'last'?
                                 } # if ref \$new_ele ...
@@ -5079,7 +5078,7 @@ sub _parseExtensions ($$$$;$$) {
             } else { # nested format arrays => not used and not implemented, yet!
                 _trace4_ (" " x ($_indent + 4) . "#      ---> merging values and format_positions to the result hash with various formats is not yet implemented! New values are lost: "
                           . _decode_val (undef, \@{$_param_hash{values}}, undef, 0, $_indent + 17, ", ", " | ", " / ") ."\n");
-                carp ("**WARNING: SSLhello::_parseExtensions: merging values and format_positions to the result hash with various formats is not yet implemented! New values are lost: "
+                carp("**WARNING: SSLhello::_parseExtensions: merging values and format_positions to the result hash with various formats is not yet implemented! New values are lost: "
                           . _decode_val (undef, \@{$_param_hash{values}}, undef, 0, $_indent + 17, ", ", " | ", " / ") ."\n");
             }
         } # end of check if formats are identical and if values have not been stored before
@@ -5150,7 +5149,7 @@ sub _doCheckAllExtensions ($$$$;$) {
                 last if ( (@{$SSLhello::extensions_params_hash{$_extension}[0]}) < 1); # no more elements to check
                 if ($found_values > $SSLhello::extensions_max_values) { ## protect ftom staying in an endless loop
                     _trace2_ ("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%osaft::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
-                    carp ("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%osaft::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
+                    carp("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%osaft::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
                     last; ## protect ftom staying in an endless loop
                 }
                 _trace5_ ("#     ---> check next extension '$_extension' parameter for cipher: " . hexCodedCipher($cipher) . ":\n");
@@ -5162,7 +5161,7 @@ sub _doCheckAllExtensions ($$$$;$) {
             _trace1_ ("# _doCheckAllExtensions (Cipher: " . hexCodedCipher($cipher) . ") ==> extension '$_extension': found $found_values values.\n");
         } else {
             _trace_ ("SSLhello::_doCheckAllExtensions ($_extension): Detailled checks for extensions with multiple parameters are not supported, yet. Please check variable '\$SSLhello::check_extensions').");
-            carp ("**WARNING: SSLhello::_doCheckAllExtensions ($_extension): Detailled checks for extensions with multiple parameters are not supported, yet. Please check variable '\$SSLhello::check_extensions').");
+            carp("**WARNING: SSLhello::_doCheckAllExtensions ($_extension): Detailled checks for extensions with multiple parameters are not supported, yet. Please check variable '\$SSLhello::check_extensions').");
         }
         delete ($SSLhello::extensions_params_hash{$_extension}); # delete temporary hash
     }
@@ -5208,7 +5207,7 @@ sub parseServerKeyExchange($$$) {
     _trace2("parseServerKeyExchange($keyExchange, $len, ...)\n");
     _trace4("parseServerKeyExchange(KeyExchange= $keyExchange, Len= $len, Data= ".unpack("H*",$d)."\n");
     $_tmpLen = length (unpack("H*",$d))/2;
-    carp ("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected len ($_tmpLen) should be $len bytes") if ($len != $_tmpLen);
+    carp("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected len ($_tmpLen) should be $len bytes") if ($len != $_tmpLen);
     return ("-- Error in ServerKeyExchange --", "", undef) if ($len != $_tmpLen);
     if ($keyExchange =~ /PSK/) { # PSK-Cipher => 'Prefix': psk_identity_hint, rfc4279)
         ($_mySSLinfo{'psk_identity_hint_len'},     # n
@@ -5412,7 +5411,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
 
                 _trace2 ("parseHandshakeRecord: Server '$host:$port': received a SSLv2 error message, code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
                 unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher, TBD: this could be improved later (if needed)
-                    carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received a SSLv2 error message: , code: >0x".hexCodedString ($serverHello{'err_code'})." -> answer ignored\n");
+                    carp("**WARNING: parseHandshakeRecord: Server '$host:$port': received a SSLv2 error message: , code: >0x".hexCodedString ($serverHello{'err_code'})." -> answer ignored\n");
                 }
                 return ("", $lastMsgType, 0, "", "");
             } else { # if ($serverHello{'msg_type'} == 0 => unsupported protocol (?!)
@@ -5478,7 +5477,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             _trace ("parseHandshakeRecord: $host:$port: Received a huge fragment offset of $serverHello{'fragment_offset'} bytes\n") if ($serverHello{'fragment_offset_3rd_byte'} > 0);
                             $my_error= "$host:$port: sorry, fragmented DTLS packets are not yet supported -> Retry";   ####TBD TBD TBD ###
                             _trace2 ("parseHandshakeRecord: $my_error\n");
-                            carp ("parseHandshakeRecord: $my_error");
+                            carp("parseHandshakeRecord: $my_error");
                             # return ($nextMessages, $lastMsgType, 0, "", ""); # maybe later, if fragmented dtls messages will be isupported
                             return ("", $lastMsgType, 0, "", "");
                         }
@@ -5537,11 +5536,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             if (length ($serverHello{'cookie'}) != $serverHello{'cookie_length'}) {
                                 $my_error = "Server '$host:$port': DTLS-HelloVerifyRequest: Len of Cookie (".length ($serverHello{'cookie'}).") <> 'cookie_length' ($serverHello{'cookie_length'})";
                                 $serverHello{'cookie_length'} = length ($serverHello{'cookie'});
-                                carp ("parseHandshakeRecord: $my_error");
+                                carp("parseHandshakeRecord: $my_error");
                             }
                             if ($serverHello{'cookie_length'} > 32) {
                                 $my_error = "Server '$host:$port': DTLS-HelloVerifyRequest: 'cookie_length' ($serverHello{'cookie_length'}) out of Range <0..32)";
-                                carp ("parseHandshakeRecord: $my_error");
+                                carp("parseHandshakeRecord: $my_error");
                             }
                             return ($rest.$buffer, $lastMsgType, $serverHello{'cookie_length'}, $serverHello{'cookie'},""); # TBD: check if .$buffer is really needed
                         }
@@ -5571,7 +5570,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 $_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{format_positions}[0] = 1; # -> supported_groups{RX}[1]
                                 @{$_SSLhello{$lastProtocolCipher}{param}{ServerKey}{values}} = ();                     # define the hash; it may stay empty, e.g for PSK (only) keys
                             } elsif ($_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description} ne $_description) {  ## Error in parseServerKeyExchange: found different types of ServerKeys for the same Cipher
-                                carp ("**WARNING: SSLhello::parseHandshakeRecord: found different types of ServerKeys for the same Cipher '$lastProtocolCipher': '$_description' != '"
+                                carp("**WARNING: SSLhello::parseHandshakeRecord: found different types of ServerKeys for the same Cipher '$lastProtocolCipher': '$_description' != '"
                                       . $_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description} . "'\n");
                                 $_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description} .= " ## " . $_description; # segregate next parameter with '##'
                                 $_param = " ## " . $_param;         # segregate next parameter with '##'
@@ -5636,11 +5635,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 }
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning: Description: $description ($serverHello{'description'}) -> check of virtual server $sni aborted!\n");
                                 _trace4 ($my_error);
-                                carp ("**WARNING: $my_error\n");
+                                carp("**WARNING: $my_error\n");
                             } else {                            # NO SNI extension sent
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning: Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
                                 _trace4 ($my_error);
-                                carp ("**WARNING: $my_error\n");
+                                carp("**WARNING: $my_error\n");
                                 _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication) for TLSv1 and higher");
                             }
                             return ("", $lastMsgType, 0 , "", "");
@@ -5648,7 +5647,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             _trace2_ ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS closure alert (1) has been ignored: Description: $description ($serverHello{'description'})\n");
                         } else {
                             _trace4_ ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning (1): Description: $description ($serverHello{'description'})\n");
-                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning (1): Description: $description ($serverHello{'description'})\n");
+                            carp("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning (1): Description: $description ($serverHello{'description'})\n");
                         }
                     } elsif ($serverHello{'level'} == 2) { # fatal
                         if (($serverHello{'description'} == 70)
@@ -5676,23 +5675,23 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 }
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2a): Description: $description ($serverHello{'description'}) -> check of virtual server $sni aborted!\n");
                                 _trace4 ($my_error);
-                                carp ("**WARNING: $my_error\n");
+                                carp("**WARNING: $my_error\n");
                             } else {                                # NO SNI extension sent
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2b): Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
                                 _trace4 ($my_error);
-                                carp ("**WARNING: $my_error\n");
+                                carp("**WARNING: $my_error\n");
                                 _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication)for TLSv1 and higher");
                             }
                             return ("", $lastMsgType, 0 , "", "");
                         } else {
                             _trace4 ($my_error);
-                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2c): Description: $description ($serverHello{'description'})\n");
+                            carp("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2c): Description: $description ($serverHello{'description'})\n");
                             if ($serverHello{'description'} == 50) { # decode_error (50)
                                 _hint("The server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
                             }
                         }
                     } else { # unknown
-                        carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received unknown SSL/TLS error level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
+                        carp("**WARNING: parseHandshakeRecord: Server '$host:$port' ($client_ssl): received unknown SSL/TLS error level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
                     }
                 }
                 if ($recordVersion == 0x0000) { # some servers use this dummy version to indicate that the requested version is not supported
@@ -5747,10 +5746,10 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                 _trace_ ("#        Record type:     Unknown value (0x".hexCodedString($recordType)."), not (yet) defined in SSLhello.pm\n");
                 _trace_ ("#        Record version:  $recordVersion (0x".hexCodedString ($recordVersion).")\n");
                 _trace_ ("#        Record len:      $recordLen (0x".hexCodedString ($recordLen).")\n\n");
-                carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': Unknown SSL/TLS record type received that is not (yet) defined in SSLhello.pm:\n");
-                carp ("#        Record type:     Unknown value (0x".hexCodedString($recordType)."), not (yet) defined in SSLhello.pm\n");
-                carp ("#        Record version:  $recordVersion (0x".hexCodedString ($recordVersion).")\n");
-                carp ("#        Record len:      $recordLen (0x".hexCodedString ($recordLen).")\n\n");
+                carp("**WARNING: parseHandshakeRecord: Server '$host:$port': Unknown SSL/TLS record type received that is not (yet) defined in SSLhello.pm:\n");
+                carp("#        Record type:     Unknown value (0x".hexCodedString($recordType)."), not (yet) defined in SSLhello.pm\n");
+                carp("#        Record version:  $recordVersion (0x".hexCodedString ($recordVersion).")\n");
+                carp("#        Record len:      $recordLen (0x".hexCodedString ($recordLen).")\n\n");
                 #($serverHello{'--unknown record type--'},           # a[$record len]
                 # $rest) = unpack("a[$recordLen] a*", $recordData);
                 return ("", $lastMsgType, 0 , "", "");
@@ -5758,12 +5757,12 @@ sub parseHandshakeRecord ($$$$$$$;$) {
             return ($buffer, $lastMsgType, 0 , "", "");
         } #End SSL3/TLS or DTLS
     } else {
-        carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS record) : ".hexCodedString ($recordData)."\n");
+        carp("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS record) : ".hexCodedString ($recordData)."\n");
         ($serverHello{'--unknown record type--'},           # a[$record len]
          $rest) = unpack("a[$recordLen] a*", $recordData);
         return ($rest, $lastMsgType, 0 , "", "");
     }
-    carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': Internal error: ".hexCodedString ($recordData)."\n");
+    carp("**WARNING: parseHandshakeRecord: Server '$host:$port': Internal error: ".hexCodedString ($recordData)."\n");
     ($serverHello{'--unknown record type--'},           # a[$record len]
      $rest) = unpack("a[$recordLen] a*", $recordData);
     return ($rest, $lastMsgType, 0 , "", "");
@@ -6025,7 +6024,7 @@ sub parseTLS_ServerHello {
                 return ("");
             }
         } else {
-            carp ("**WARNING: parseTLS_ServerHello: server '$host:$port': internal error: All server protocol versions are accepted, because there is no information provided which version the client has requested.\n");
+            carp("**WARNING: parseTLS_ServerHello: server '$host:$port': internal error: All server protocol versions are accepted, because there is no information provided which version the client has requested.\n");
         }
         _trace2_ ( sprintf (
             # added to check the supported version
@@ -6039,7 +6038,7 @@ sub parseTLS_ServerHello {
 
 
 sub _timedOut {
-    croak "NET::SSLhello: Receive data timed out -> Received NO data (timeout)";
+    croak("NET::SSLhello: Receive data timed out -> Received NO data (timeout)");
 }
 
 sub _chomp_r { # chomp \r\n
