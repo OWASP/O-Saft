@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.4 24/01/10 21:35:10";
+my  $SID_odoc   = "@(#) ODoc.pm 3.5 24/01/15 12:59:37";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -414,10 +414,11 @@ Print VERSION version.
 =cut
 
 sub list        {
-    #? return sorted list of available .txt files
+    #? return sorted list of available .txt files in Doc directory
     #  sorted list simplifies tests ...
     my $dir = $0;
        $dir =~ s#[/\\][^/\\]*$##;
+       $dir .= "/Doc" if $dir !~ m#Doc/?$#;
     my @txt;
     opendir(my $dh, $dir) or return $!;
     while (my $file = readdir($dh)) {
@@ -473,7 +474,7 @@ sub _odoc_main  {
         print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ /^--?h(?:elp)?$/);
         _odoc_usage()           if ($cmd eq '--usage');
         # ----------------------------- commands
-        print list() . "\n"     if ($cmd =~ /^list$/);
+        print list($0) . "\n"     if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
         print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
@@ -638,7 +639,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.4 2024/01/10
+3.5 2024/01/15
 
 
 =head1 AUTHOR
