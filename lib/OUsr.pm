@@ -19,7 +19,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.8 24/01/15 13:50:50";
+my  $SID_ousr       = "@(#) OUsr.pm 3.9 24/01/15 18:31:11";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -84,7 +84,7 @@ our @EXPORT_OK  = qw(
 #} ? 1 : 0;
 
 if (exists $INC{'lib/OTrace.pm'}) {
-    *trace              = \&Trace::trace;
+    *trace      = \&OTrace::trace;
 } else {
     sub trace   {
         my @txt = @_;
@@ -316,7 +316,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.8 2024/01/15
+3.9 2024/01/15
 
 =head1 AUTHOR
 
