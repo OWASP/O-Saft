@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.4 24/01/15 23:59:44";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.5 24/01/16 09:31:26";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -72,7 +72,7 @@ BEGIN {
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
-use OText       qw(print_pod %STR);
+use OText       qw(%STR);
 use error_handler qw (:sslhello_contants);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
