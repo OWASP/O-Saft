@@ -19,7 +19,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.9 24/01/15 18:31:11";
+my  $SID_ousr       = "@(#) OUsr.pm 3.10 24/01/16 09:45:25";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -45,11 +45,11 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
-use OText    qw(%STR print_pod);
+use OText       qw(%STR);
 use osaft;
 
-use Exporter qw(import);
-use base     qw(Exporter);
+use Exporter    qw(import);
+use base        qw(Exporter);
 our @EXPORT_OK  = qw(
     pre_init
     pre_file
@@ -303,7 +303,7 @@ sub _ousr_main   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __FILE__, $SID_ousr)  if ($arg =~ m/--?h(elp)?$/x);
+    OText::print_pod($0, __FILE__, $SID_ousr) if ($arg =~ m/--?h(elp)?$/x);
     # no other options implemented yet
     print "$SID_ousr\n"     if ($arg =~ /^version$/);
     print "$VERSION\n"      if ($arg =~ /^[-+,]?V(ERSION)?$/);
@@ -316,7 +316,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.9 2024/01/15
+3.10 2024/01/16
 
 =head1 AUTHOR
 
