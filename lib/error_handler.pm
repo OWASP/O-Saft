@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+## PACKAGE {
 # Filename: error_handler.pm
 #!#############################################################################
 #!#                     Copyright (c) 2024, Torsten Gigler
@@ -79,8 +80,8 @@ use strict;
 use warnings;
 use Carp;
 
+my  $SID_error  = "@(#) 5G%b 3.3 24/01/16 14:19:57";
 our $VERSION    = "24.01.24"; # TBD: should be OERR_VERSION
-my  $SID_error  = "@(#) ̃jb 3.2 24/01/09 18:43:51";
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # the version number of this package
@@ -450,5 +451,12 @@ sub get_all_err_types {
     }
     return ($err_types_str);
 } # get_all_err_types
+
+## PACKAGE }
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+# _error_main(@ARGV) if (not defined caller); # if avaialabel ...
 
 1;
