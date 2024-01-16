@@ -67,12 +67,12 @@ use Exporter qw(import);
 use base     qw(Exporter);
 our @EXPORT_OK  = qw( man_printhelp man_docs_write );
 
-use OText       qw(%STR print_pod);
+use OText       qw(%STR);
 use osaft;
 use ODoc;
 use Ciphers;    # required if called standalone only
 
-my  $SID_oman= "@(#) OMan.pm 3.6 24/01/15 13:24:40";
+my  $SID_oman= "@(#) OMan.pm 3.7 24/01/16 09:48:19";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.6'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.7'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2498,8 +2498,7 @@ sub _oman_main      {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     while (my $arg = shift @ARGV) {
         # --help and --gen-docs is special, anything else handled in man_printhelp()
-        #TODO: __FILE__ must be __PACKAGE__ if this file is a perl module
-        print_pod($0, __FILE__, $SID_oman) if ($arg =~ m/--?h(?:elp)?$/x);
+        OText::print_pod($0, __FILE__, $SID_oman) if ($arg =~ m/--?h(?:elp)?$/x);
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $TRACE++; next; }  # allow --v
         # ----------------------------- commands
@@ -2694,7 +2693,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.6 2024/01/15
+3.7 2024/01/16
 
 
 =head1 AUTHOR
