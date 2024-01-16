@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.2 24/01/10 23:11:30";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.3 24/01/16 09:32:57";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -69,7 +69,7 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-use OText       qw(print_pod %STR);
+use OText       qw(%STR);
 use Socket;
 use Net::SSLeay;
 
@@ -4182,7 +4182,7 @@ sub _main           {
     local $\="\n";
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)          { local undef $\; print_pod($0, __PACKAGE__, $SID_sslinfo); }
+        if ($arg =~ m/^--?h(?:elp)?$/)          { local undef $\; OText::print_pod($0, __PACKAGE__, $SID_sslinfo); }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $SSLinfo::verbose++;  next; }
         # ----------------------------- commands
