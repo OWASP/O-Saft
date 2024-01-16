@@ -28,6 +28,9 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
+my  $SID_ciphers= "@(#) Ciphers.pm 3.4 24/01/16 15:02:31";
+our $VERSION    = "24.01.24";   # official verion number of this file
+
 BEGIN {
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
@@ -41,10 +44,7 @@ BEGIN {
     unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.3 24/01/15 13:39:40";
-our $VERSION    = "24.01.24";   # official verion number of this file
-
-use OText       qw(print_pod %STR);
+use OText       qw(%STR);
 use osaft;
 
 # SEE Note:Stand-alone
@@ -1576,10 +1576,10 @@ sub _ciphers_main   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    if (0 > $#argv) { print_pod($0, __PACKAGE__, $SID_ciphers);    exit; }
+    if (0 > $#argv) { OText::print_pod($0, __FILE__, $SID_ciphers);exit; }
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)  { print_pod($0, __PACKAGE__, $SID_ciphers); exit; }
+        if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit; }
         if ($arg eq '--usage')          { _ciphers_usage();        next; }
         # ----------------------------- options
         if ($arg eq '--v')              { $cfg{'verbose'}++;       next; }
@@ -1721,7 +1721,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.3 2024/01/15
+3.4 2024/01/16
 
 
 =head1 AUTHOR
