@@ -34,7 +34,7 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.6 24/01/16 09:37:35";
+my  $SID_odoc   = "@(#) ODoc.pm 3.7 24/01/16 09:58:49";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
@@ -471,7 +471,7 @@ sub _odoc_main  {
     # got arguments, do something special
     while (my $cmd = shift @argv) {
         my $arg    = shift @argv; # get 2nd argument, which is filename
-        print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ /^--?h(?:elp)?$/);
+        OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ /^--?h(?:elp)?$/);
         _odoc_usage()           if ($cmd eq '--usage');
         # ----------------------------- commands
         print list($0) . "\n"     if ($cmd =~ /^list$/);
@@ -639,7 +639,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.6 2024/01/16
+3.7 2024/01/16
 
 
 =head1 AUTHOR
