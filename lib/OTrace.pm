@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.7 24/01/15 18:29:17";
+my  $SID_trace      = "@(#) OTrace.pm 3.8 24/01/16 09:50:24";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -135,7 +135,7 @@ our @EXPORT_OK  = qw(
 #-------------------------------------------------------------------------
 
 use Data::Dumper qw(Dumper);
-use OText        qw(%STR print_pod);
+use OText        qw(%STR);
 use osaft;  # sets %cfg
 # TODO: 01jan24: must use %::cmd, %::data, %::checks instead of %data; reason unknown
 
@@ -1015,7 +1015,7 @@ sub _trace_main {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    print_pod($0, __FILE__, $SID_trace) if ($arg =~ m/--?h(elp)?$/x);   # print own help
+    OText::print_pod($0, __FILE__, $SID_trace) if ($arg =~ m/--?h(elp)?$/x);
     # else
     # ----------------------------- commands
     if ($arg =~ m/^--?trace/)           { $trace++; }
@@ -1177,7 +1177,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.7 2024/01/15
+3.8 2024/01/16
 
 =head1 AUTHOR
 
