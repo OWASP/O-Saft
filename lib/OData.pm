@@ -9,7 +9,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.7 24/01/15 13:37:37";
+my  $SID_odata  =  "@(#) OData.pm 3.8 24/01/16 09:35:46";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -25,7 +25,7 @@ BEGIN {
     unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
-use OText       qw(print_pod);
+use OText       qw(%STR);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -921,7 +921,7 @@ sub _odata_main {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_odata)  if ($arg =~ m/^--?h(?:elp)?$/x);
+        OText::print_pod($0, __PACKAGE__, $SID_odata) if ($arg =~ m/^--?h(?:elp)?$/x);
         # ----------------------------- options
 #       if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         # ----------------------------- commands
@@ -950,7 +950,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.7 2024/01/15
+3.8 2024/01/16
 
 =head1 AUTHOR
 
