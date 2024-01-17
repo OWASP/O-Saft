@@ -24,6 +24,9 @@ package ODoc;
 use strict;
 use warnings;
 
+my  $SID_odoc   = "@(#) ODoc.pm 3.8 24/01/17 12:58:22";
+our $VERSION    = "24.01.24";   # official verion number of this file
+
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
@@ -33,9 +36,6 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, "lib")    if (1 > (grep{/^\.\.$/}   @INC));
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
-
-my  $SID_odoc   = "@(#) ODoc.pm 3.7 24/01/16 09:58:49";
-our $VERSION    = "24.01.24";   # official verion number of this file
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -92,10 +92,12 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
     # hence various places for help.txt are checked
     my $file = shift;
     my $orig = $file;
+    my $name = $file;
+       $name =~ s#(.*[/\\]+)##g;
     $file =~ s#^\.\./##;
     $file =~ s#contrib/##;              # remove if in path
-    $file =  "lib/Doc/$file";           # try this one ..
-    $file =  "../$file" if (not -e $file);  # .. or this one
+    $file =~ s#/Doc/#/lib/Doc/# if (not -e $file);  # try this one ..
+    $file =  "lib/Doc/$name"    if (not -e $file);  # try this one ..
     $file =  ""         if (not -e $file);
     _warn("189: no '$orig' found, consider installing") if "" eq $file;
     return $file;
@@ -639,7 +641,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.7 2024/01/16
+3.8 2024/01/17
 
 
 =head1 AUTHOR
