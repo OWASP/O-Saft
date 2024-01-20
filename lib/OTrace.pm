@@ -6,7 +6,7 @@
 
 package OTrace;
 
-my  $SID_trace      = "@(#) OTrace.pm 3.10 24/01/20 15:17:29";
+my  $SID_trace      = "@(#) OTrace.pm 3.11 24/01/20 15:34:13";
 our $VERSION        = "24.01.24";
 
 # HACKER's INFO
@@ -203,7 +203,7 @@ sub __trac      {
                             my $val = "";
                             if (defined ${$ref->{$key}}{$k}) {
                                if ('ARRAY' eq ref(${$ref->{$key}}{$k})) {
-                                   $val = "[ " . join(", ",@{$ref->{$key}{$k}}) . " ]";
+                                   $val = ___ARR(@{$ref->{$key}{$k}});
                                        # ,-separated list hence not ___ARR()
                                } else {
                                    $val = join("-", ${$ref->{$key}}{$k});
@@ -801,7 +801,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _p_k_v("verbose",   $cfg{'verbose'});
     _p_k_v("trace",    "$cfg{'trace'}, traceARG=$cfg{'out'}->{'traceARG'}, traceKEY=$cfg{'out'}->{'traceKEY'}, traceTIME=$cfg{'out'}->{'traceTIME'}");
     _p_k_v("time_absolut", $cfg{'out'}->{'time_absolut'});
-    _p_k_v("dbx{files}", ___ARR(@{$dbx{'file'}}));
+    _p_k_v("dbx{files}", ___ARR(@{$dbx{'files'}}));
 
     if (1 < $cfg{'trace'}) {
         _pline("SSLinfo {");
@@ -1177,7 +1177,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.10 2024/01/20
+3.11 2024/01/20
 
 =head1 AUTHOR
 
