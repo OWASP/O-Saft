@@ -6,6 +6,9 @@
 
 package Ciphers;
 
+my  $SID_ciphers= "@(#) Ciphers.pm 3.6 24/01/20 14:28:33";
+our $VERSION    = "24.01.24";   # official verion number of this file
+
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #  We believe it's better readable (severity 2 only).
 
@@ -28,9 +31,6 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.4 24/01/16 15:02:31";
-our $VERSION    = "24.01.24";   # official verion number of this file
-
 BEGIN {
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
@@ -45,7 +45,7 @@ BEGIN {
 }
 
 use OText       qw(%STR);
-use osaft;
+use OCfg;
 
 # SEE Note:Stand-alone
 $::osaft_standalone = 0 if not defined $::osaft_standalone;
@@ -924,7 +924,7 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             next;
         }
         my $sec_osaft = lc(get_sec($key));# lower case
-        my $sec_owasp = osaft::get_cipher_owasp($cipher);
+        my $sec_owasp = OCfg::get_cipher_owasp($cipher);
            $sec_owasp = "N/A" if ('-?-' eq $sec_owasp); # sort at end
         # Idea about sorting according severity/security risk of a cipher:
         #   * sort first according OWASP rating A, B, C
@@ -1499,10 +1499,11 @@ sub _ciphers_init   {
     #? initialisations of %cihers data structures from <DATA>
     # example:   #0     #1      #2      #3      #4          #5      #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
-    my $du = *DATA; # avoid Perl warning "... used only once: possible typo ..."
-       $du = *main::DATA; # ...
     my $fh = *DATA;
-       $fh = *main::DATA if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
+    if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
+        open($fh, "<", $0) or warn($OText::STR{ERROR}, "013: open '$0' failed with: $!");
+        while (<$fh>) { last if m(^__DATA__); } # skip to definition of ciphers
+    }
     while (my $line = <$fh>) {
         chomp $line;
         next if ($line =~ m/^\s*$/);
@@ -1721,7 +1722,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.4 2024/01/16
+3.6 2024/01/20
 
 
 =head1 AUTHOR
