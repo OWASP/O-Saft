@@ -6,7 +6,7 @@
 
 package Ciphers;
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.6 24/01/20 14:28:33";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.7 24/01/20 15:36:27";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
@@ -1540,6 +1540,7 @@ sub _ciphers_init   {
         @{$ciphers{$key}->{'notes'}}= split(/,/, $fields[12]);
        #$ciphers{$key}->{'suite'}   = # is first in $fields[10], 
     }
+    push(@{$dbx{'files'}}, "lib/Ciphers.pm"); # set myself
     return;
 } # _ciphers_init
 
@@ -1722,7 +1723,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.6 2024/01/20
+3.7 2024/01/20
 
 
 =head1 AUTHOR
