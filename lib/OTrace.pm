@@ -6,6 +6,9 @@
 
 package OTrace;
 
+my  $SID_trace      = "@(#) OTrace.pm 3.10 24/01/20 15:17:29";
+our $VERSION        = "24.01.24";
+
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_cfg_intern()
@@ -36,9 +39,6 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # warnings pragma is local to this file!
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
-
-my  $SID_trace      = "@(#) OTrace.pm 3.8 24/01/16 09:50:24";
-our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -136,7 +136,7 @@ our @EXPORT_OK  = qw(
 
 use Data::Dumper qw(Dumper);
 use OText        qw(%STR);
-use osaft;  # sets %cfg
+use OCfg;   # sets %cfg
 # TODO: 01jan24: must use %::cmd, %::data, %::checks instead of %data; reason unknown
 
 #_____________________________________________________________________________
@@ -718,8 +718,8 @@ sub trace_ciphers_list  {
             @range = "<<huge list not printed>>";
         } else {
             # expand smaller list
-            @range = osaft::get_ciphers_range('TLSv13', $cfg{'cipherrange'});
-               # NOTE: osaft::get_ciphers_range() first arg is the SSL version,
+            @range = OCfg::get_ciphers_range('TLSv13', $cfg{'cipherrange'});
+               # NOTE: OCfg::get_ciphers_range() first arg is the SSL version,
                #       which is usually unknown here, hence TLSv13 is passed
             $_cnt = scalar @range;
         }
@@ -791,7 +791,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _p_k_v("$0", main::_VERSION()); ## no critic qw(Subroutines::ProtectPrivateSubs)
         # TBD: $0 is same as $ARG0 but wrong when called as standalone
     # official VERSIONs, not those of the current files !
-    _p_k_v("::osaft",   __undef($osaft::VERSION));
+    _p_k_v("OCfg",      __undef($OCfg::VERSION));
     _p_k_v("SSLhello",  __undef($SSLhello::VERSION));
     _p_k_v("SSLinfo",   __undef($SSLinfo::VERSION));
     # quick info first
@@ -801,7 +801,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _p_k_v("verbose",   $cfg{'verbose'});
     _p_k_v("trace",    "$cfg{'trace'}, traceARG=$cfg{'out'}->{'traceARG'}, traceKEY=$cfg{'out'}->{'traceKEY'}, traceTIME=$cfg{'out'}->{'traceTIME'}");
     _p_k_v("time_absolut", $cfg{'out'}->{'time_absolut'});
-    _p_k_v("dbx{file}", "[ " . join(", ", @{$dbx{'file'}}) . " ]");
+    _p_k_v("dbx{files}", ___ARR(@{$dbx{'file'}}));
 
     if (1 < $cfg{'trace'}) {
         _pline("SSLinfo {");
@@ -992,7 +992,7 @@ sub trace_test  {
     _trace_test_methods()       if ('--testmethods'   eq $arg); # SSLinfo
     _trace_test_memory()        if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    osaft::test_cipher_regex()  if ('regex'           eq $arg);
+    OCfg::test_cipher_regex()   if ('regex'           eq $arg);
     _trace_test_avail()         if ($arg =~ m/^avail(?:able)?$/);
     _trace_test_init()          if ('init'            eq $arg);
     _trace_test_maps()          if ('maps'            eq $arg);
@@ -1177,7 +1177,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.8 2024/01/16
+3.10 2024/01/20
 
 =head1 AUTHOR
 
