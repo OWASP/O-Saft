@@ -6,7 +6,7 @@
 
 package OCfg;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.6 24/01/20 14:17:00";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.7 24/01/20 15:12:42";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 # TODO: implement
@@ -2978,7 +2978,7 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'argv'      => undef,       # normal options and arguments
     'cfg'       => undef,       # config options and arguments
     'exe'       => undef,       # executable, library, environment
-    'file'      => undef,       # read files
+    'files'     => undef,       # read files
     'cmd-check' => undef,
     'cmd-http'  => undef,
     'cmd-info'  => undef,
@@ -3482,7 +3482,7 @@ sub _dbx_init       {
     $dbx{'cmd-http'}  = $cfg{'cmd-http'};
     $dbx{'cmd-info'}  = $cfg{'cmd-info'};
     $dbx{'cmd-quick'} = $cfg{'cmd-quick'};
-    push(@{$dbx{file}}, "lib/OCfg.pm"); # set myself
+    push(@{$dbx{'files'}}, "lib/OCfg.pm");  # set myself
     return;
 } # _dbx_init
 
@@ -3504,7 +3504,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.6"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.7"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3551,7 +3551,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.6 2024/01/20
+3.7 2024/01/20
 
 =head1 AUTHOR
 
