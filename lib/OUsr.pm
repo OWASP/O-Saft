@@ -6,6 +6,11 @@
 
 package OUsr;
 
+my  $SID_ousr       = "@(#) OUsr.pm 3.11 24/01/17 14:56:26";
+our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
 ## no critic qw(Documentation::RequirePodSections)
 # SEE Perl:perlcritic
 
@@ -18,11 +23,6 @@ use warnings;
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
-
-my  $SID_ousr       = "@(#) OUsr.pm 3.10 24/01/16 09:45:25";
-our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
-#_____________________________________________________________________________
-#___________________________________________________ package initialisation __|
 
 # public package variables
 {
@@ -46,7 +46,7 @@ BEGIN { # mainly required for testing ...
 }
 
 use OText       qw(%STR);
-use osaft;
+use OCfg;
 
 use Exporter    qw(import);
 use base        qw(Exporter);
@@ -316,7 +316,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.10 2024/01/16
+3.11 2024/01/17
 
 =head1 AUTHOR
 
