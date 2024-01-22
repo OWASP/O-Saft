@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 2.39 24/01/07 22:15:56
+#?      @(#) Makefile 2.42 24/01/22 21:55:42
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 2.39
+_SID            = 2.42
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -66,9 +66,22 @@ O-INSTALL.dir   = /usr/local/$(O-Project)
 SRC.lic         = yeast.lic
 DEV.pl          = yeast.pl
 CHK.pl          = checkAllCiphers.pl
-OSD.dir         = OSaft/Doc
-OSD.pm          = OSaft/Doc/Data.pm
-OSD.txt         = \
+O-LIB.dir       = lib
+O-LIB.pm        = \
+		  OCfg.pm \
+		  Ciphers.pm \
+		  error_handler.pm \
+		  SSLinfo.pm \
+		  SSLhello.pm \
+		  OData.pm \
+		  ODoc.pm \
+		  OMan.pm \
+		  OText.pm \
+		  OTrace.pm \
+		  OUsr.pm
+O-DOC.dir       = $(O-LIB.dir)/Doc
+O-DOC.pm        = $(O-LIB.dir)/ODoc.pm
+O-TXT.txt       = \
 		  coding.txt \
 		  glossary.txt \
 		  help.txt \
@@ -77,17 +90,9 @@ OSD.txt         = \
 		  openssl.txt \
 		  rfc.txt \
 		  tools.txt
-SRC.txt         = $(OSD.txt:%=$(OSD.dir)/%)
-NET.pm          = SSLinfo.pm \
-		  SSLhello.pm
-LIB.pm          = Ciphers.pm Data.pm Text.pm Trace.pm Usr.pm error_handler.pm
-MAN.pm          = $(O-Project)-man.pm
-SRC.pm          = \
-		  osaft.pm \
-		  $(NET.pm:%=Net/%)   \
-		  $(LIB.pm:%=OSaft/%) \
-		  $(MAN.pm) \
-		  $(OSD.pm)
+O-SRC.txt       = $(O-TXT.txt:%=$(O-DOC.dir)/%)
+O-MAN.pm        = $(O-LIB.dir)/OMan.pm
+SRC.pm          = $(O-LIB.pm:%=lib/%)
 SRC.sh          = $(O-Project)
 SRC.pl          = $(O-Project).pl
 SRC.tcl         = $(O-Project).tcl
@@ -227,11 +232,11 @@ GEN.DOC.data    = $(LIST.DOC_data:%=$(DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = Net OSaft $(OSD.dir) $(DOC.dir) $(WEB.dir) $(SRC.contrib.dir)
+O-DIRS          = lib $(O-DOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.contrib.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
-ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
+ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
@@ -247,7 +252,7 @@ ALL.docs        = $(SRC.odg) $(GEN.docs) $(SRC.info)
 ALL.src         = \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
-		  $(SRC.txt) \
+		  $(O-SRC.txt) \
 		  $(SRC.rc) \
 		  $(SRC.misc) \
 		  $(SRC.odg) \
@@ -280,7 +285,7 @@ ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::INET IO::Socket::SSL Time::Lo
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 #                 defined in t/Makefile.misc
-ALL.osaftmodules= osaft $(NET.pm:%.pm=Net::%) $(LIB.pm:%.pm=OSaft::%) OSaft::Doc::Data
+ALL.osaftmodules= $(O-LIB.pm:%.pm=%)
 
 # following for documentation, not yet used (2022)
 #_ALL.tools.dbian.pkg  = aha libtk-pod-perl perl-doc perl-doc-html pod2pdf
@@ -297,8 +302,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 2.39 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 2.39
+_INST.genbytext = generated data by Makefile 2.42 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 2.42
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
@@ -565,8 +570,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 2.39
-tar:     _INST.is_edit  = 2.39
+_INST.is_edit           = 2.42
+tar:     _INST.is_edit  = 2.42
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -631,14 +636,14 @@ clean.tgz: clean.tar
 clean.docker: docker.rm
 
 # avoid matching implicit rule help% in some of following targets
-$(OSD.dir)/help.txt: 
+$(O-DOC.dir)/help.txt: 
 	@$(TRACE.target)
 
 #_____________________________________________________________________________
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(O-TMP.dir)/Net $(O-TMP.dir)/OSaft $(O-TMP.dir)/OSaft/Doc $(O-TMP.dir)/$(SRC.contrib.dir) $(O-TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/lib $(O-TMP.dir)/lib/Doc $(O-TMP.dir)/usr $(O-TMP.dir)/$(SRC.contrib.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
@@ -652,30 +657,30 @@ $(SRC.pl): $(DEV.pl)
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 	@$(TRACE.target)
 	@rm -rf $@
-	$(EXE.single) --s                              > $@
+	$(EXE.single) --exe=$(SRC.pl) --s --t          > $@
 	@chmod 555 $@
 
-$(GEN.man):  $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt) $(GEN.pod)
+$(GEN.man):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt) $(GEN.pod)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
 
-$(GEN.pod):  $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
+$(GEN.pod):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
-$(GEN.text): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
+$(GEN.text): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help          > $@
 
-$(GEN.wiki): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
+$(GEN.wiki): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
-$(GEN.html): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
+$(GEN.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
-$(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(MAN.pm) $(SRC.txt)
+$(GEN.cgi.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
@@ -720,7 +725,7 @@ $(DOC.dir)/%.pdf: $(DOC.dir)/%.odg
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
-_notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
+_notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(O-SRC.txt)
 	@$(TRACE.target)
 	@grep -q '$(_INST.is_edit)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
