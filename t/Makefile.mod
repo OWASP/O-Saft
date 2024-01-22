@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.4 24/01/22 21:28:17
+#?      @(#) Makefile.mod 3.5 24/01/22 21:32:52
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.4
+_SID.mod           := 3.5
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -79,23 +79,17 @@ LIST.lib-Ciphers.pm    := \
 #    --test-ciphers-version --test-ciphers-get_keys_list --test-ciphers-get_keys_list
 # doesn't harm, they produce nearly emty output
 LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=--test-ciphers-%)
+LIST.o-saft.pl         += $(LIST.lib-Ciphers--test)
+
+LIST.lib-OCfg.pm       := --test-regex
 
 LIST.lib-OData.pm      := \
 	check_cert  check_conn  check_dest  check_http  check_size \
 	checks      data        shorttexts
 
-LIST.o-saft.pl         += $(LIST.lib-Ciphers--test)
-
 LIST.lib-ODoc.pm       := \
 	--usage version         +VERSION    list  print \
 	get     get-markup      get-text    get-as-text \
-
-LIST.lib-SSLinfo.pm-t  := \
-	--test-openssl --test-sclient --test-sslmap \
-	--test-methods --test-ssleay
-LIST.lib-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
-LIST.lib-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
-#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
 LIST.lib-OMan.pm       := \
@@ -115,8 +109,14 @@ LIST.lib-OTrace.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
 	--test-avail --test-init --test-maps --test-prot --test-vars
 # lib/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
-
 LIST.o-saft.pl         += $(LIST.lib-OTrace.pm)
+
+LIST.lib-SSLinfo.pm-t  := \
+	--test-openssl --test-sclient --test-sslmap \
+	--test-methods --test-ssleay
+LIST.lib-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
+LIST.lib-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
+#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same as cfg{commands_notyet} in lib/OCfg.pm
