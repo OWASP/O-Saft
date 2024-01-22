@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.5 24/01/16 09:31:26";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.6 24/01/17 14:56:38";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -76,7 +76,7 @@ use OText       qw(%STR);
 use error_handler qw (:sslhello_contants);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
-use osaft;  # main parameters, lists and functions that are used by o-saft and SSLhello
+use OCfg;   # main parameters, lists and functions that are used by o-saft and SSLhello
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
@@ -1533,28 +1533,28 @@ sub printConstants {
     my $line = "#--------------------+-------------------------------------------";
     print __print("#----------------------------------- SSLhello::Constants {");
     print __print($line);
-    print ("#O-Saft::osaft::TLS_EXTENSIONS:\n");
-    foreach my $key (sort {lc $a cmp lc $b} keys %osaft::TLS_EXTENSIONS) {
+    print ("#OCfg::TLS_EXTENSIONS:\n");
+    foreach my $key (sort {lc $a cmp lc $b} keys %OCfg::TLS_EXTENSIONS) {
         print "TLS_EXTENSIONS\{$key\}:\n";
-        print "    \{ID\}          \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{ID}))            { print "$osaft::TLS_EXTENSIONS{$key}{ID}\n";               }
-        print "    \{CH\}          \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{CH}))            { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{CH}})         { print "$val, "; } } print "\n";
-#        print "    \{CH_TEXT\}     \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{CH_TEXT}))       { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{CH_TEXT}})    { print "$val, "; } } print "\n";
-        print "    \{RX\}          \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{RX}))            { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{RX}})         { print "$val, "; } } print "\n";
-#        print "    \{RX_TEXT\}     \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{RX_TEXT}))       { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{RX_TEXT}})    { print "$val, "; } } print "\n";
-        print "    \{RECOMMENDED\} \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{RECOMMENDED}))   { print "$osaft::TLS_EXTENSIONS{$key}{RECOMMENDED}\n";      }
-        print "    \{TLS13\}       \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{TLS13}))         { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{TLS13}})      { print "$val, "; } } print "\n";
-        print "    \{RFC\}         \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{RFC}))           { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{RFC}})        { print "$val, "; } } print "\n";
-        print "    \{DEFAULT\}     \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{DEFAULT}))       { foreach my $val (@{$osaft::TLS_EXTENSIONS{$key}{DEFAULT}}){
+        print "    \{ID\}          \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{ID}))            { print "$OCfg::TLS_EXTENSIONS{$key}{ID}\n";               }
+        print "    \{CH\}          \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{CH}))            { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{CH}})         { print "$val, "; } } print "\n";
+#        print "    \{CH_TEXT\}     \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{CH_TEXT}))       { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{CH_TEXT}})    { print "$val, "; } } print "\n";
+        print "    \{RX\}          \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{RX}))            { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{RX}})         { print "$val, "; } } print "\n";
+#        print "    \{RX_TEXT\}     \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{RX_TEXT}))       { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{RX_TEXT}})    { print "$val, "; } } print "\n";
+        print "    \{RECOMMENDED\} \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{RECOMMENDED}))   { print "$OCfg::TLS_EXTENSIONS{$key}{RECOMMENDED}\n";      }
+        print "    \{TLS13\}       \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{TLS13}))         { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{TLS13}})      { print "$val, "; } } print "\n";
+        print "    \{RFC\}         \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{RFC}))           { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{RFC}})        { print "$val, "; } } print "\n";
+        print "    \{DEFAULT\}     \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{DEFAULT}))       { foreach my $val (@{$OCfg::TLS_EXTENSIONS{$key}{DEFAULT}}){
                                                                                                                 my $__first_indent = 0;
                                                                                                                 _trace2_ (", \n" . " " x $__first_indent) if ($__first_indent > 0); # add a newline if not the first line
-                                                                                                                my $__decode_str = _decode_val (undef, \$val, \$osaft::TLS_EXTENSIONS{$key}, $__first_indent, 20, ": ", ", ", " | ", " / ");
+                                                                                                                my $__decode_str = _decode_val (undef, \$val, \$OCfg::TLS_EXTENSIONS{$key}, $__first_indent, 20, ": ", ", ", " | ", " / ");
 
                                                                                                                 _trace5_ (" " x 20) if ($__first_indent < 1);
                                                                                                                 print $__decode_str;
                                                                                                                 $__first_indent = 20;
                                                                                                                                                                                       } } print "\n";
-        print "    \{CHECK\}       \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{CHECK}))         { print "$osaft::TLS_EXTENSIONS{$key}{CHECK}\n";            }
-        print "    \{COMMENT\}     \= "; if (defined ($osaft::TLS_EXTENSIONS{$key}{COMMENT}))       { print "$osaft::TLS_EXTENSIONS{$key}{COMMENT}\n";          }
+        print "    \{CHECK\}       \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{CHECK}))         { print "$OCfg::TLS_EXTENSIONS{$key}{CHECK}\n";            }
+        print "    \{COMMENT\}     \= "; if (defined ($OCfg::TLS_EXTENSIONS{$key}{COMMENT}))       { print "$OCfg::TLS_EXTENSIONS{$key}{COMMENT}\n";          }
         print "\n";
     }
     print __print($line);
@@ -2499,7 +2499,7 @@ sub openTcpSSLconnection ($$) {
                     $input = "";
                     _trace2 (" openTcpSSLconnection ## CONNECT via proxy: try to receive the Connected-Message from the proxy $SSLhello::proxyhost:$SSLhello::proxyport, Retry = $retryCnt\n");
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
@@ -2507,7 +2507,7 @@ sub openTcpSSLconnection ($$) {
                         _trace4 (" openTcpSSLconnection: ... Received Connected-Message from proxy (1a): received NO Data\n");
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
-                        osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
+                        OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ);
                         # select(undef, undef, undef, _SLEEP_B4_2ND_READ);
                         recv ($socket, $input, 32767, 0); # 2nd try
                         #### TBD TBD received NO Data TBD TBD ###
@@ -2619,7 +2619,7 @@ sub openTcpSSLconnection ($$) {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
                     #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
@@ -2713,9 +2713,9 @@ sub openTcpSSLconnection ($$) {
                 alarm (0);                                          # clear alarm if not done before
                 # wait before next read
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
-                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             } else {
                 _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
@@ -2727,7 +2727,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n");
-                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
@@ -2821,9 +2821,9 @@ sub openTcpSSLconnection ($$) {
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 # wait before next read
-                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
                 _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
@@ -2835,7 +2835,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 5): Try to receive the $starttls_matrix[$starttlsType][0] STARTTLS answer from the server $host:$port\n");
-                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
@@ -3172,7 +3172,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 $retryCnt--;
             }
             _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
-            osaft::osaft_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
+            OCfg::ocfg_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
             # select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
         }
     } # end while (RETRY_TO_EXCHANGE_CLIENT_AND_SERVER_HELLO)
@@ -3207,7 +3207,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
         _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
         # select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
-        osaft::osaft_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
+        OCfg::ocfg_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
     }
     _trace2 ("_doCheckSSLciphers: }\n");
     return ($acceptedCipher);
@@ -3357,7 +3357,7 @@ sub _readRecord ($$$;$$$$) {
                         @socketsReady = $select->can_read(0) if ($SSLhello::trace > 1); ###additional debug (use IO::select needed)
                         _trace1 ("_readRecord (udp): can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($$input_ref)." bytes)\n") if (scalar (@socketsReady));
                         #select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-                        osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
+                        OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ);
                         next RETRY_TO_RECEIVE_A_RECORD;
                     }
                 }
@@ -4443,7 +4443,7 @@ sub _compileNextByte ($$$$$$;$$) {
         $_size = $__compile_bytes_subs{$__format_ref->[$$__format_pos_ref]}->($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref, $__format_text_ref, $__indent);
         _trace5_ ("\n");
     } else {
-        carp("**WARNING: SSLhello::_compileNextByte  for '$__pdu_name': \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash 'CH'-format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
+        carp("**WARNING: SSLhello::_compileNextByte  for '$__pdu_name': \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash 'CH'-format definition in OCfg.pm e.g. in \%TLS_EXTENSIONS");
     }
     _trace4_ (" " x ($__indent + 3). "# SSLhello: _CompileNextByte for '$__pdu_name' ->" . _sprintf_hex_val ("", $__buffer_ref, ($__indent + 31)) ."\n" );
     $$__format_pos_ref++;                                           # Next format element
@@ -4475,7 +4475,7 @@ sub _compileClientHelloExtensions ($$$$@) {
     #?      $SSLhello::usesni
     #?      $SSLhello::sni_name
     #?      $SSLhello::use_sni_name
-    #?      %osaft::TLS_EXTENSIONS defines and describes the extensions (add there new extensions if needed)
+    #?      %OCfg::TLS_EXTENSIONS defines and describes the extensions (add there new extensions if needed)
     #?      $SSLhello::extensions_params_hash{$_extension}: temporary parameters defined for an extension if not empty
     #?
     #?      return ($clientHello_extensions): returns all compiled extensions headed by the total length
@@ -4529,7 +4529,7 @@ sub _compileClientHelloExtensions ($$$$@) {
             $clientHello{'extension_sni_name'}     = ($SSLhello::sni_name) ? $SSLhello::sni_name : ""; # Server Name, should be a Name no IP
         }
         _trace2 ("compileClientHelloExtensions ($ssl): extension server_name for '$clientHello{'extension_sni_name'}' will be added\n");
-        $osaft::TLS_EXTENSIONS{server_name}{DEFAULT}[0][1] = $clientHello{'extension_sni_name'};    # add servername as 2nd parameter of first sequence element; TBD: move to {$cfg}....
+        $OCfg::TLS_EXTENSIONS{server_name}{DEFAULT}[0][1] = $clientHello{'extension_sni_name'};    # add servername as 2nd parameter of first sequence element; TBD: move to {$cfg}....
         if (!grep {/^server_name$/x} @{$SSLhello::extensions_by_prot->{$ssl}}) {               # sni_name not listed as extension, yet
             unshift @{$SSLhello::extensions_by_prot->{$ssl}}, 'server_name';                   # Add sni_name extension as 1st extension
         }
@@ -4544,15 +4544,15 @@ sub _compileClientHelloExtensions ($$$$@) {
         $_indent = 6;                                               # reset $_indent
         _trace4_ (" " x $_indent . "extension '$_extension':\n");
         $_extensions_data = "";
-        if (defined $osaft::TLS_EXTENSIONS{$_extension}) {
-            _trace4_(" " x $_indent . "ID = ($osaft::TLS_EXTENSIONS{$_extension}{ID}: CH:");
-            if (@{$osaft::TLS_EXTENSIONS{$_extension}{CH}}) {
-                for (my $nr = 0; $nr < (@{$osaft::TLS_EXTENSIONS{$_extension}{CH}}); $nr++) {
+        if (defined $OCfg::TLS_EXTENSIONS{$_extension}) {
+            _trace4_(" " x $_indent . "ID = ($OCfg::TLS_EXTENSIONS{$_extension}{ID}: CH:");
+            if (@{$OCfg::TLS_EXTENSIONS{$_extension}{CH}}) {
+                for (my $nr = 0; $nr < (@{$OCfg::TLS_EXTENSIONS{$_extension}{CH}}); $nr++) {
                     _trace4_ (", ") if $nr > 0;
-                    _trace4_ ("$osaft::TLS_EXTENSIONS{$_extension}{CH}[$nr]");
+                    _trace4_ ("$OCfg::TLS_EXTENSIONS{$_extension}{CH}[$nr]");
                 }
                 _trace5_ ("\n" . " " x $_indent . "#  ---> Use temporary defined parameters for extension '$_extension': ". exists ($SSLhello::extensions_params_hash{$_extension}));
-                $_extensions_params_ref = (exists ($SSLhello::extensions_params_hash{$_extension})) ? \@{$SSLhello::extensions_params_hash{$_extension}}: \@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}}; # use special params for this extension if defined
+                $_extensions_params_ref = (exists ($SSLhello::extensions_params_hash{$_extension})) ? \@{$SSLhello::extensions_params_hash{$_extension}}: \@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}}; # use special params for this extension if defined
                 _trace4_ (" (");
                 if (@$_extensions_params_ref)  {
 #                    _trace5_ ("\n");
@@ -4566,11 +4566,11 @@ sub _compileClientHelloExtensions ($$$$@) {
                 $_ext_format_pos     = 0;
                 $_ext_param_pos      = 0;
                 $_indent            += 3;                           # for trace
-                _trace5_(" " x $_indent . _sprintf_hex_val ("ID: 0x%04X", \$osaft::TLS_EXTENSIONS{$_extension}{ID}, $_indent + 3) . "\n");
+                _trace5_(" " x $_indent . _sprintf_hex_val ("ID: 0x%04X", \$OCfg::TLS_EXTENSIONS{$_extension}{ID}, $_indent + 3) . "\n");
                 $_extensions_data = pack ("n",
-                    $osaft::TLS_EXTENSIONS{$_extension}{ID},        #n
+                    $OCfg::TLS_EXTENSIONS{$_extension}{ID},        #n
                 );
-                _compileAllBytes ($_extension, \@{$osaft::TLS_EXTENSIONS{$_extension}{CH}}, $_extensions_params_ref, \$_ext_format_pos, \$_ext_param_pos, \$_extensions_data, \@{$osaft::TLS_EXTENSIONS{$_extension}{CH_TEXT}}, $_indent + 3);
+                _compileAllBytes ($_extension, \@{$OCfg::TLS_EXTENSIONS{$_extension}{CH}}, $_extensions_params_ref, \$_ext_format_pos, \$_ext_param_pos, \$_extensions_data, \@{$OCfg::TLS_EXTENSIONS{$_extension}{CH_TEXT}}, $_indent + 3);
                 _trace5_ (" " x ($_indent  + 3). _sprintf_hex_val ("", \$_extensions_data, ($_indent + 6)) . " " x ($_indent). ")\n" );
 
                 _trace5_ ("------------- show the compiled extension --------------\n");
@@ -4921,7 +4921,7 @@ sub _parseNextByte ($$$$$$;$$) {
     if ($__parse_bytes_subs{$__format_ref->[$$__format_pos_ref]}) {
         $__buffer_size = $__parse_bytes_subs{$__format_ref->[$$__format_pos_ref]}->($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size, $__format_text_ref, $__indent);
     } else {
-        carp("**WARNING: SSLhello::_parseNextByte ($__pdu_name): \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash format definition in osaft.pm e.g. in \%TLS_EXTENSIONS");
+        carp("**WARNING: SSLhello::_parseNextByte ($__pdu_name): \'No such format sub: $__format_ref->[$$__format_pos_ref]\', => Please verify hash format definition in OCfg.pm e.g. in \%TLS_EXTENSIONS");
     }
     $$__format_pos_ref++;                                           # Next format element
     return ($__buffer_size);
@@ -4943,7 +4943,7 @@ sub _parseAllBytes ($$$$$$;$$) {
 #? END of: sub subs that parse parts of records, e.g. bytes for extensions ####################
 
 sub _parseExtensions ($$$$;$$) {
-    #? Parse one or more TLS extensions according %osaft::TLS_EXTENSIONS and its reverse hash %osaft::TLS_ID_TO_EXTENSIONS
+    #? Parse one or more TLS extensions according %OCfg::TLS_EXTENSIONS and its reverse hash %OCfg::TLS_ID_TO_EXTENSIONS
     #? and store the values in the hash $_param_hash_ref->{$_extension}{$_ext_ch_rx} if defined
     #? redundant values and value arrays are skipped
     #? $_ext_ch_rx:       Clienthello 'CH' or received record 'RX'
@@ -4962,7 +4962,7 @@ sub _parseExtensions ($$$$;$$) {
     my $_format_pos         = 0;
     my $_name               = "_parseExtensions: ";
     my $_extensions_data    = $$_buffer_ref;                        # do not chance referenced data
-    my @__local_format_text = ( \%osaft::TLS_ID_TO_EXTENSIONS );    # array with a reference to the reverse TLS_EXTENSIONS hash
+    my @__local_format_text = ( \%OCfg::TLS_ID_TO_EXTENSIONS );    # array with a reference to the reverse TLS_EXTENSIONS hash
     my $__local_format_pos  = 0;                                    # use first element to decode extension type
 
     _trace4_ (" " x $_indent . "# SSLhello::_parseExtensions ():\n");
@@ -4983,14 +4983,14 @@ sub _parseExtensions ($$$$;$$) {
             carp("**WARNING: SSLhello::_parseExtensions: warn: no (more) defined extensionus found parsing the record\n");
             next PARSE_EXTENSION;
         }
-        my $_extension      = $osaft::TLS_ID_TO_EXTENSIONS{$_extension_type_hash{values}[0]}[0]; # get Extension type from $extension{description}[0]
+        my $_extension      = $OCfg::TLS_ID_TO_EXTENSIONS{$_extension_type_hash{values}[0]}[0]; # get Extension type from $extension{description}[0]
         $_extension         = "-- unknown (" . $_extension_type_hash{values}[0] . ") --" if (!defined ($_extension));
         _trace5_ (" " x ($_indent + 4) . "== Extension '$_extension' ($_extension_type_hash{values}[0]):\n");
 
         my %_param_hash;
         $_param_hash{values}            = ();                       # initialize array to store values
         $_param_hash{format_positions}  = ();                       # initialize array to store format positions
-        $_buffer_size       = _parseAllBytes ($_extension, \@{$osaft::TLS_EXTENSIONS{$_extension}{$_ext_ch_rx}}, \%_param_hash, \$_format_pos, \$_extensions_data, $_buffer_size, \@{$osaft::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}}, $_indent + 3);
+        $_buffer_size       = _parseAllBytes ($_extension, \@{$OCfg::TLS_EXTENSIONS{$_extension}{$_ext_ch_rx}}, \%_param_hash, \$_format_pos, \$_extensions_data, $_buffer_size, \@{$OCfg::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}}, $_indent + 3);
         next PARSE_EXTENSION if (!defined ($_param_hash_ref));# do not store the results
         _trace5_ (" " x ($_indent + 4) . "#      ---> _parseExtensions: ref (\$_param_hash_ref) = " . ref ($_param_hash_ref) ."\n" );#
         next PARSE_EXTENSION if (ref ($_param_hash_ref) ne "HASH");                 # reference is no hash
@@ -5030,9 +5030,9 @@ sub _parseExtensions ($$$$;$$) {
                        if ($_param_hash{format_positions}[$__pos] ne $_param_hash_ref->{$_extension}{$_ext_ch_rx}{format_positions}[$__pos]) { # format is not equal
                             # TBD: different format: move stored format to 1st emement of a nested array, add new sequence of new formats to 2nd element; Do the same with the values
                             _trace4_ (" " x ($_indent + 4) . "#      ---> merging values and format_positions to the result hash with different format sequences is not yet implemented! New values are lost: "
-                                      . _decode_val (undef, \@{$_param_hash{values}}, $osaft::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") . "\n");
+                                      . _decode_val (undef, \@{$_param_hash{values}}, $OCfg::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") . "\n");
                             carp("**WARNING: SSLhello::_parseExtensions: merging values and format_positions to the result hash with different format sequences is not yet implemented! New values are lost: "
-                                      . _decode_val (undef, \@{$_param_hash{values}}, $osaft::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") ."\n");
+                                      . _decode_val (undef, \@{$_param_hash{values}}, $OCfg::TLS_EXTENSIONS{$_extension}{"$_ext_ch_rx"."_TEXT"}[$_format_pos], 0, $_indent + 17, ", ", " | ", " / ") ."\n");
                             $found = 0; # false
                             last CHECK_FORMAT; # exit the loop
                        }
@@ -5119,37 +5119,37 @@ sub _doCheckAllExtensions ($$$$;$) {
         _trace4_ ("#  ---> _doCheckAllExtensions: extension '$_extension': ");
         next if ( (! exists ($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values})) || ((@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}) < 1) );
         $_last_extension = $_extension;
-        for (my $_i = 0; $_i < (@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}} ); $_i++) { # copy all values of 2 dim array
-            for (my $_j = 0; $_j < (@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}[$_i]} ); $_j++) {
-                $SSLhello::extensions_params_hash{$_extension}[$_i][$_j] = $osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}[$_i][$_j]; # copy default value
+        for (my $_i = 0; $_i < (@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}} ); $_i++) { # copy all values of 2 dim array
+            for (my $_j = 0; $_j < (@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}[$_i]} ); $_j++) {
+                $SSLhello::extensions_params_hash{$_extension}[$_i][$_j] = $OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}[$_i][$_j]; # copy default value
             }
             _trace5_ (" (copied values         = [$_i][" . (@{$SSLhello::extensions_params_hash{$_extension}[$_i]}) . "], ");
         }
-        _trace5_ (" parameter arrays       = " . (@{$SSLhello::extensions_params_hash{$_extension}}) . "/" . (@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}}) . ", ");
+        _trace5_ (" parameter arrays       = " . (@{$SSLhello::extensions_params_hash{$_extension}}) . "/" . (@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}}) . ", ");
         _trace5_ (" format_positions       = " . (@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{format_positions}}) . ", ") if (exists ($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{format_positions}) );
         _trace5_ (" found values           = " . (@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}) ) if (exists ($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}) );
         _trace5_ ("):\n");
-        if ((@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}}) == 1) {
-##        if ( ((@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}}) == 1)
+        if ((@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}}) == 1) {
+##        if ( ((@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}}) == 1)
 ##          && (exists ($SSLhello::{param}{$_extension}{RX}{format_positions}) )
 ##          && ((@{$SSLhello::{param}{$_extension}{RX}{format_positions}}) == 1)) { # only one parameter array ([0][x]) as default and only one dimensional result array ### }
             _trace5_ ("#    ---> extension '$_extension':\n");
             $found_values = 0;
             while ( (exists ($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values})) && ((@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}) > $found_values) ) { # received a new value
-                _trace5_ ("#     ---> parameter arrays[0]    = " . (@{$SSLhello::extensions_params_hash{$_extension}[0]}) . "/" . (@{$osaft::TLS_EXTENSIONS{$_extension}{DEFAULT}[0]}) . "\n");
+                _trace5_ ("#     ---> parameter arrays[0]    = " . (@{$SSLhello::extensions_params_hash{$_extension}[0]}) . "/" . (@{$OCfg::TLS_EXTENSIONS{$_extension}{DEFAULT}[0]}) . "\n");
                 _trace5_ ("#     ---> parameter values type  = " . (ref($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values})) . "\n");
                 last if (!defined($_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}]) ); # found value is not defined => Exit Loop
                 last if (!(grep { $_ eq $_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}] } @{$SSLhello::extensions_params_hash{$_extension}[0]})); # found value has NOT been in the offered list => Exit Loop
                 $found_values++;
-                _trace5_ ("#     ---> extension found $found_values value(s) " . _decode_val (undef, \@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}, \$osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
+                _trace5_ ("#     ---> extension found $found_values value(s) " . _decode_val (undef, \@{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}, \$OCfg::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
                 @{$SSLhello::extensions_params_hash{$_extension}[0]} = grep { $_ ne $_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}->[$#{$_SSLhello{$protocolCipher}{param}{$_extension}{RX}{values}}] }
                                                                                    @{$SSLhello::extensions_params_hash{$_extension}[0]};  # delete accepted cipher from ToDo-Array '@cipherSpecArray'
-                _trace5_ ("#     ---> extensions_params_hash: " . _decode_val (undef, \@{$SSLhello::extensions_params_hash{$_extension}[0]}, \$osaft::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
+                _trace5_ ("#     ---> extensions_params_hash: " . _decode_val (undef, \@{$SSLhello::extensions_params_hash{$_extension}[0]}, \$OCfg::TLS_EXTENSIONS{$_extension}, 12, 12, ": ", ", ", " | ", " / ") . "\n");
 
                 last if ( (@{$SSLhello::extensions_params_hash{$_extension}[0]}) < 1); # no more elements to check
                 if ($found_values > $SSLhello::extensions_max_values) { ## protect ftom staying in an endless loop
-                    _trace2_ ("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%osaft::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
-                    carp("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%osaft::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
+                    _trace2_ ("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%OCfg::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
+                    carp("**WARNING: SSLhello::_doCheckAllExtension ($_extension): To much checks for this extension. Watchdog aborted checks after getting $found_values values.\n**Hint: Please verify the hash '%OCfg::TLS_EXTENSIONS' and the variable '\$SSLhello::check_extensions', or '\$SSLhello::extensions_max_values' if necessary.\n");
                     last; ## protect ftom staying in an endless loop
                 }
                 _trace5_ ("#     ---> check next extension '$_extension' parameter for cipher: " . hexCodedCipher($cipher) . ":\n");
@@ -5280,7 +5280,7 @@ sub parseServerKeyExchange($$$) {
             ($_mySSLinfo{'ECDH_namedCurve'},    # n
             $d) = unpack("n a*", $d);
             $_mySSLinfo{'ECDH_serverParam'} = "<<unknown: ".$_mySSLinfo{'ECDH_namedCurve'}.">>"; # set a default value
-            $_mySSLinfo{'ECDH_serverParam'} = $osaft::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[0] ." (". $osaft::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[1] . " bits)" if ( defined ($osaft::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[0]) );
+            $_mySSLinfo{'ECDH_serverParam'} = $OCfg::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[0] ." (". $OCfg::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[1] . " bits)" if ( defined ($OCfg::TLS_SUPPORTED_GROUPS{$_mySSLinfo{'ECDH_namedCurve'}}[0]) );
             _trace4("parseServerKeyExchange: ECDH_serverParam supported group: '" . $_mySSLinfo{'ECDH_serverParam'} . "'\n");
             _trace2("parseServerKeyExchange() done.\n");
             return ("ecdh"  . $psk . " supported_group(s)", $_mySSLinfo{'ECDH_serverParam'}, $_mySSLinfo{'ECDH_namedCurve'});
@@ -5560,11 +5560,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             if (defined ($_param)) {
                                 _trace2_("\n   parseHandshakeRecord: $host:$port, $client_ssl, Cipher: $lastProtocolCipher -> SeverKey Type: $_description: $_param\n");
                             }
-                            _trace5_ ("#     ---> values of 'supported_groups': " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
+                            _trace5_ ("#     ---> values of 'supported_groups': " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$OCfg::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
                             push (@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, $_supported_group)
                                  if ( (defined ($_supported_group)) && (!grep {$_supported_group eq $_ } @{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}) );
                                                                     # add new supported_group to array in the result hash
-                            _trace4_ ("#     ---> found 'supported_groups':     " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$osaft::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
+                            _trace4_ ("#     ---> found 'supported_groups':     " . _decode_val (undef, \@{$_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{values}}, \$OCfg::TLS_EXTENSIONS{supported_groups}, 0, 12, ": ", ", ", " | ", " / ") . "\n");
                             if (! exists ($_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description}) ) {
                                 $_SSLhello{$lastProtocolCipher}{param}{ServerKey}{description} = $_description;
                                 $_SSLhello{$lastProtocolCipher}{param}{supported_groups}{RX}{format_positions}[0] = 1; # -> supported_groups{RX}[1]
