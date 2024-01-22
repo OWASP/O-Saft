@@ -6,7 +6,7 @@
 
 package Ciphers;
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.7 24/01/20 15:36:27";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.9 24/01/22 16:35:01";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
@@ -1500,6 +1500,7 @@ sub _ciphers_init   {
     # example:   #0     #1      #2      #3      #4          #5      #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $fh = *DATA;
+    my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..
     if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
         open($fh, "<", $0) or warn($OText::STR{ERROR}, "013: open '$0' failed with: $!");
         while (<$fh>) { last if m(^__DATA__); } # skip to definition of ciphers
@@ -1540,7 +1541,7 @@ sub _ciphers_init   {
         @{$ciphers{$key}->{'notes'}}= split(/,/, $fields[12]);
        #$ciphers{$key}->{'suite'}   = # is first in $fields[10], 
     }
-    push(@{$dbx{'files'}}, "lib/Ciphers.pm"); # set myself
+    push(@{$OCfg::dbx{'files'}}, "lib/Ciphers.pm"); # set myself
     return;
 } # _ciphers_init
 
@@ -1723,7 +1724,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.7 2024/01/20
+3.9 2024/01/22
 
 
 =head1 AUTHOR
