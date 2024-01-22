@@ -6,7 +6,7 @@
 
 package OCfg;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.7 24/01/20 15:12:42";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.8 24/01/22 17:14:10";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 # TODO: implement
@@ -31,6 +31,18 @@ $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 use strict;
 use warnings;
 use utf8;
+
+BEGIN {
+    # SEE Perl:@INC
+    # SEE Perl:BEGIN perlcritic
+    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
+    my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
+    if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
+        unshift(@INC, $ENV{'PWD'});
+    }
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+}
 
 use OText       qw(%STR);
 
@@ -3001,6 +3013,13 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 *_trace2  = sub { _trace(@_) if (2 < $cfg{'trace'});        return; } if not defined &_trace2;
 *_trace3  = sub { _trace(@_) if (3 < $cfg{'trace'});        return; } if not defined &_trace3;
 
+sub _get_keys_list {
+    # workaround to avoid "Undefined subroutine ... " if called standalone
+    # only used in test_cipher_regex()
+    return Ciphers::get_keys_list() if (defined(&Ciphers::get_keys_list));
+    return ();
+} # _get_keys_list
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -3361,7 +3380,7 @@ sub test_cipher_regex   {
 ";
     print _regex_head();
     print _regex_line();
-    foreach my $key (sort (Ciphers::get_keys_list())) {
+    foreach my $key (sort (_get_keys_list())) {
         my $ssl    = Ciphers::get_ssl( $key);
         my $cipher = Ciphers::get_name($key);
         my $is_pfs = (::_is_ssl_pfs($ssl, $cipher) eq "") ? "no" : "yes";
@@ -3504,7 +3523,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.7"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.8"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3528,6 +3547,7 @@ sub _ocfg_main      {
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$OCfg::VERSION\n";   next; }
         if ($arg =~ m/^--(?:test[_.-]?)regex/) {
             $arg = "--test-regex";
+            test_cipher_regex();    # fails with: Undefined subroutine &Ciphers::get_keys_list called at ...
             printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
         }
     }
@@ -3551,7 +3571,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.7 2024/01/20
+3.8 2024/01/22
 
 =head1 AUTHOR
 
