@@ -66,7 +66,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.1 24/01/22 22:18:30"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.2 24/01/22 22:36:51"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -615,7 +615,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.1"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.2"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6888,8 +6888,8 @@ while ($#argv >= 0) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
         if (0 == $::osaft_standalone) {     # SEE Note:Stand-alone
-            my $err = _load_file('lib/OMan.pm', "help file");
-            warn $STR{ERROR}, "009: $err" if ("" ne $err);
+            my $_err = _load_file('lib/OMan.pm', "help file");
+            warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
         }
         if ($arg =~ /^gen[._=-]?docs$/) {   # --help=gen-docs
             OMan::man_docs_write($arg);
@@ -7502,26 +7502,26 @@ while ($#argv >= 0) {
         }
         #    use previously defined port || default port
         my $default_port = ($cfg{'port'} || $OCfg::target_defaults[0]->[3]);
-        my ($prot, $host, $port, $auth, $path) = _get_target($default_port, $arg);
-        if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/)){
+        my ($_prot, $_host, $_port, $_auth, $_path) = _get_target($default_port, $arg);
+        if (($_host =~ m/^\s*$/) or ($_port =~ m/^\s*$/)){
             _warn("043: invalid port argument '$arg'; ignored");
             # TODO: occours i.e with --port=' ' but not with --host=' '
         } else {
             my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
-            my $proxy = 0; # TODO: target parameter for proxy not yet supported
-            trace_arg("host=$host:$port,  auth=$auth,  path=$path");
-            trace("host: $host:$port") if ($cfg{'trace'} > 0);
+            my $_proxy = 0; # TODO: target parameter for proxy not yet supported
+            trace_arg("host=$_host:$_port,  auth=$_auth,  path=$_path");
+            trace("host: $_host:$_port") if ($cfg{'trace'} > 0);
             # if perlish programming
-            # push(@{$cfg{'targets'}}, [$idx, $prot, $host, $port, $auth, $proxy, $path, $arg]);
+            # push(@{$cfg{'targets'}}, [$idx, $_prot, $_host, $_port, $_auth, $_proxy, $_path, $arg]);
             # elsif people expecting object-oriented programming
             OCfg::set_target_orig( $idx, $arg);
             OCfg::set_target_nr(   $idx, $idx);
-            OCfg::set_target_prot( $idx, $prot);
-            OCfg::set_target_host( $idx, $host);
-            OCfg::set_target_port( $idx, $port);
-            OCfg::set_target_auth( $idx, $auth);
-            OCfg::set_target_proxy($idx, $proxy);
-            OCfg::set_target_path( $idx, $path);
+            OCfg::set_target_prot( $idx, $_prot);
+            OCfg::set_target_host( $idx, $_host);
+            OCfg::set_target_port( $idx, $_port);
+            OCfg::set_target_auth( $idx, $_auth);
+            OCfg::set_target_proxy($idx, $_proxy);
+            OCfg::set_target_path( $idx, $_path);
             OCfg::set_target_start($idx, 0);
             OCfg::set_target_open( $idx, 0);
             OCfg::set_target_stop( $idx, 0);
@@ -7600,10 +7600,9 @@ if (2 == @{$cfg{'targets'}}) {
     # Latest given port can be found in  $cfg{'port'}. If it differs from the
     # port stored in the list @{$cfg{'targets'}}, redefine port for the host.
     # NOTE: the documentation always recommends to use --port first.
-    my $host = OCfg::get_target_host(1);
-    my $port = OCfg::get_target_port(1);
+    my $_host = OCfg::get_target_host(1);
     if (defined $cfg{'port'}) {
-        _warn("045: '--port' used with single host argument; using '$host:$cfg{'port'}'");
+        _warn("045: '--port' used with single host argument; using '$_host:$cfg{'port'}'");
         OCfg::set_target_port(1, $cfg{'port'});
     }
 }
