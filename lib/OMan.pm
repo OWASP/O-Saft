@@ -6,6 +6,8 @@
 
 package OMan;
 
+my  $SID_oman= "@(#) OMan.pm 3.10 24/01/22 16:33:28";
+
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 # NOTE:  This often happens in comma separated statements, see above.
 #        It may also happen after postfix statements.
@@ -68,11 +70,10 @@ use base     qw(Exporter);
 our @EXPORT_OK  = qw( man_printhelp man_docs_write );
 
 use OText       qw(%STR);
-use osaft;
+use OCfg;
 use ODoc;
 use Ciphers;    # required if called standalone only
 
-my  $SID_oman= "@(#) OMan.pm 3.7 24/01/16 09:48:19";
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -717,7 +718,7 @@ EoWARN
 *_dbx  = sub { print($STR{DBX},  join(" ", @_), "\n"); } if not defined &_dbx;
 
 sub _get_filename   {
-# TODO: move to osaft.pm or alike
+# TODO: move to OCfg.pm or alike
     my $src = shift || "o-saft.pl";
     foreach my $dir (@INC) {    # find the proper file
         if (-e "$dir/$src") {
@@ -815,7 +816,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.7'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.10'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2117,26 +2118,26 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     if ($typ =~ m/check/) {
         foreach my $key (sort keys %::checks) {
-            $pod .= _man_cfg($typ, $key, $sep, $::checks{$key}->{txt});
+            $pod .= _man_cfg($typ, $key, $sep, $main::checks{$key}->{txt});
         }
         last;
     }
     if ($typ =~ m/(?:data|info)/) {
         foreach my $key (sort keys %::data) {
-            $pod .= _man_cfg($typ, $key, $sep, $::data{$key}->{txt});
+            $pod .= _man_cfg($typ, $key, $sep, $main::data{$key}->{txt});
         }
         last;
     }
     if ($typ =~ m/text/) {
         foreach my $key (sort keys %::text) {
-            #_dbx "$key : " . ref($::text{$key});
-            if ('' eq ref($::text{$key})) {   # string
-                $pod .= _man_txt($typ, $key, $sep, $::text{$key});
+            #_dbx "$key : " . ref($main::text{$key});
+            if ('' eq ref($main::text{$key})) {   # string
+                $pod .= _man_txt($typ, $key, $sep, $main::text{$key});
             }
-            if ('HASH' eq ref($::text{$key})) {
+            if ('HASH' eq ref($main::text{$key})) {
                 # TODO: not yet printed, as it may confuse the user
-                #foreach my $k (sort keys $::text{$key}) {
-                #    $txt  = $::text{$key}->{$k};
+                #foreach my $k (sort keys $main::text{$key}) {
+                #    $txt  = $main::text{$key}->{$k};
                 #    $pod .= _man_txt($typ, "$key($k)", $sep, $txt);
                 #}
             }
@@ -2363,9 +2364,10 @@ sub man_help        {
     }
     if ($label =~ m/^todo/i)    {
         $hlp .= "\n  NOT YET IMPLEMENTED\n";
-        foreach my $label (sort keys %checks) {
-            next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
-            $hlp .= "        $label\t- " . $::checks{$label}->{txt} . "\n";
+        foreach my $label (sort keys %OData::checks) {
+            #next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
+            next if (0 >= grep({lc($label) eq lc($_)} \@{$cfg{'commands_notyet'}}));
+            $hlp .= "        $label\t- " . $OData::checks{$label}->{txt} . "\n";
         }
     }
     return $hlp;
@@ -2693,7 +2695,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.7 2024/01/16
+3.10 2024/01/22
 
 
 =head1 AUTHOR
