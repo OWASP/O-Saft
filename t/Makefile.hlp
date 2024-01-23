@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 1.51 23/11/15 00:54:12
+#?      @(#) Makefile.hlp 3.1 24/01/23 13:35:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 1.51
+_SID.hlp           := 3.1
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -70,7 +70,7 @@ LIST.hlp.list-legacy   := \
 # To get a list of used (at least documented)  --help*  options, use:
 #   o-saft.pl --help=help
 # or:
-#   grep help= OSaft/Doc/help.txt
+#   grep help= lib/Doc/help.txt
 LIST.hlp.help-section  := \
 	--help-no-arg  --legacy=simple  --legacy=dump \
 	--help=FAQ   --help=WHY   --help=CHECK   --help=SECURITY    \
