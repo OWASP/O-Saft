@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 1.97 23/11/15 00:53:49
+#?      @(#) Makefile.help 3.1 24/01/23 13:39:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 1.97
+_SID.help          := 3.1
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
