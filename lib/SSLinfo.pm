@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.3 24/01/16 09:32:57";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.4 24/01/23 11:37:23";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -1761,9 +1761,9 @@ sub _ssleay_socket  {
             $src = '_check_host(' . ($host||'') . ')'; if (not defined _check_host($host)) { $err = $!; last; }
             $src = '_check_port(' . ($port||'') . ')'; if (not defined _check_port($port)) { $err = $!; last; }
             $src = 'socket()';
-                    socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
+                    socket( $socket, Socket::AF_INET, Socket::SOCK_STREAM, 0) or do {$err = $!} and last;
             $src = 'connect()';
-            $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
+            $dum=()=connect($socket, Socket::sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
         } else {
             #1b. starttls or via proxy
             require SSLhello;   # ok here, as perl handles multiple includes proper
