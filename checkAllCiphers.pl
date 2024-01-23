@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Filename : checkAllCiphers.pl
 #!#############################################################################
-#!#                    Copyright (c) Torsten Gigler 
+#!#                    Copyright (c) 2024m Torsten Gigler 
 #!#             This script is part of the OWASP-Project 'o-saft'
 #!#                  It's a simple wrapper the SSLhello.
 #!#----------------------------------------------------------------------------
@@ -35,26 +35,45 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
+our $SID_check  = "@(#) yÕZ 3.1 24/01/23 09:56:18"; # version of this file
+my  $VERSION    = "24.01.24";
+
 BEGIN {
     # SEE Perl:BEGIN perlcritic
+    # SEE Perl:@INC
     my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, ".", $_path, "/bin" ); # /bin for special installation on portable media
+    my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
+    if ("." ne $_path and not (grep{/^$_path$/} @INC)) {
+        # add location of executable if not "."
+        unshift(@INC, "$_path/lib");# lazy, no check if already there
+        unshift(@INC, $_path);
+    }
+    unshift(@INC, "lib", "/bin" );  # /bin for special installation on portable media
 }
 
-use osaft;
-use OSaft::error_handler qw (:sslhello_contants);   # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
+use OText qw(%STR);
+use OCfg;
+use error_handler qw (:sslhello_contants);  # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung error_handler-><sub>)$
 
-my $VERSION = "20.11.09";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 my  $mename = "checkAllCiphers";
     $mename = "O-Saft " if ($me !~ /checkAllCiphers/);
 
+sub _vprint         {
+    #? print information when --v is given
+    my @txt = @_;
+    return if (0 >= (grep{/(?:--v$)/} @ARGV));
+    printf("%s%s\n", $STR{'INFO'}||'**INFO: ', join(" ", @txt));
+        # hardcoded '**INFO: ' is necessary in standalone mode only
+    return; 
+} # _vprint
+
 sub printhelp {
     print << "EoT";
 NAME
-    $me - simple wrapper for Net::SSLhello to test for all ciphers
+    $me - simple wrapper for SSLhello to test for all ciphers
 
 SYNOPSIS
     $me [OPTIONS] hostname[:port] | mx-domain-name[:port]
@@ -163,7 +182,7 @@ OPTIONS
                 prints additional timestamps in trace output for benchmarking and debugging
 
 DESCRIPTION
-    This is just a very simple wrapper for the Net::SSLhello module to test
+    This is just a very simple wrapper for the SSLhello module to test
     a target for all available ciphers. It is a shortcut for
     o-saft.pl +cipherall YOUR-HOST
 
@@ -172,8 +191,8 @@ INSTALLATION
                 IO::Socket::INET     (preferred >= 1.31)
                 Net::DNS             (if option '--mx' is used)
 
-                Module Net::SSLhello is part of O-Saft and should be
-                installed in ./Net .
+                Module SSLhello is part of O-Saft and should be installed
+                in ./lib .
                 All dependencies for these modules must also be installed.
 
 EoT
@@ -182,17 +201,17 @@ return;
 
 ##no critic qw(Modules::RequireBarewordIncludes)
 # Modul name includes a hyphen -> '' and .pm are necessary
-if (! eval {require 'o-saft-dbx.pm';} ) {
+if (! eval {require 'lib/OTrace.pm';} ) {
     # o-saft-dbx may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require("o-saft-dbx.pm");
+    require('lib/OTrace.pm');
 }
 ##use critic
 
-if (! eval {require Net::SSLhello;} ) {
-    # Net::SSLhello may not be installed, try to find in program's directory
+if (! eval {require('lib/SSLhello.pm');} ) {
+    # SSLhello may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require Net::SSLhello;
+    require('lib/SSLhello.pm');
 }
 
 my $arg = "";
@@ -204,7 +223,7 @@ push(@argv, @ARGV);
 # -------------------------------------
 my @dbx = grep {/--(?:trace|v$|yeast)/} @argv;  # option can be in .rc-file, hence @argv
 if ($#dbx >= 0) {
-    $arg =  "./o-saft-dbx.pm";
+    $arg =  "./lib/OTrace.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     if (! -e $arg) {
@@ -218,6 +237,10 @@ if ($#dbx >= 0) {
     push(@{$dbx{file}}, $arg);
     printf("=== reading trace file ===\n") if(grep {/(:?--no.?header)/i} @ARGV <= 0);
     require $arg;   # `our' variables are available there
+} else {
+    sub trace         {}
+    sub trace2        {}
+    sub trace3        {}
 }
 
 # initialize defaults
@@ -264,7 +287,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)$/i)                 { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)$/i)               { $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(\d+)$/i)                     { $cfg{'trace'}    = $1; next; }
-    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'traceTIME'}++;  $cfg{'trace'} ||= 1; next; } # Timestamp on; trace on if it was off
+    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'out'}->{'traceTIME'}++; $cfg{'trace'} ||= 1; next; } # Timestamp on; trace on if it was off
     if ($arg =~ /^--?p(?:ort)?=(\d+)$/i)                { $cfg{'port'}     = $1; next; }
     if ($arg =~ /^--?h(?:ost)?=(.+)$/i)                 { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); next; }     
     # proxy options
@@ -275,18 +298,18 @@ while ($#argv >= 0) {
     if ($arg =~ /^--proxyuser=(.+)$/i)                  { $cfg{'proxyuser'}= $1; next; }
     if ($arg =~ /^--proxypass=(.+)$/i)                  { $cfg{'proxypass'}= $1; next; }
     if ($arg =~ /^--proxyauth=(.+)$/i)                  { $cfg{'proxyauth'}= $1; next; }
-    if ($arg =~ /^--slow[_-]?server[_-]?delay=(\d+)$/i) {$cfg{'slowServerDelay'}=$1; next; }
+    if ($arg =~ /^--slow[_-]?server[_-]?delay=(\d+)$/i) { $cfg{'slow_server_delay'}=$1; next; }
     if ($arg =~ /^--starttls$/i)                        { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--starttls=(\w+)$/i)                  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                         # 9 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP, CUSTOM
     if ($arg =~ /^--starttls[_-]?phase(\d)=(.+)$/i){ $cfg{'starttls_phase'}[$1] = $2 if (($1 >0) && ($1<=5)); next; } # starttl, CUSTOM starttls-sequence 
     if ($arg =~ /^--starttls[_-]?err(?:or)?(\d)=(.+)$/i){ $cfg{'starttls_error'}[($1)] = $2 if (($1 >0) && ($1<=3)); next; } # starttls, error-handling for CUSTOMized starttls
-    if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)        {$cfg{'starttlsDelay'}=$1; next;}
+    if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)        { $cfg{'starttls_delay'}=$1; next;}
     # option
-    if ($arg =~ /^--sni$/i)                             { $cfg{'usesni'}    = 1; next; }
-    if ($arg =~ /^--no[_-]?sni$/i)                      { $cfg{'usesni'}    = 0; next; } 
-    if ($arg =~ /^--toggle[_-]?sni$/i)                  { $cfg{'usesni'}    = 2; next; } # test with and without SNI
-    if ($arg =~ /^--sni[_-]?toggle$/i)                  { $cfg{'usesni'}    = 2; next; } # test with and without SNI
+    if ($arg =~ /^--sni$/i)                             { $cfg{'use'}->{'sni'}  = 1; next; }
+    if ($arg =~ /^--no[_-]?sni$/i)                      { $cfg{'use'}->{'sni'}  = 0; next; } 
+    if ($arg =~ /^--toggle[_-]?sni$/i)                  { $cfg{'use'}->{'sni'}  = 2; next; } # test with and without SNI
+    if ($arg =~ /^--sni[_-]?toggle$/i)                  { $cfg{'use'}->{'sni'}  = 2; next; } # test with and without SNI
     if ($arg =~ /^--sni[_-]?name$/i)                    { $cfg{'sni_name'}  = ""; $cfg{'use_sni_name'} = 1; next; } # sniname=""
     if ($arg =~ /^--sni[_-]?name=(.*)$/i)               { $cfg{'sni_name'}  = $1; $cfg{'use_sni_name'} = 1; next; } # sniname=SNINAME 
     if ($arg =~ /^--no[_-]?sni[_-]?name$/i)             { $cfg{'use_sni_name'} = 0; $cfg{'sni_name'} = "1"; next; } # go back to hostname; ##FIX: reset 'sni_name'="1" until o-saft migrated to get 'use_sni_name', too
@@ -367,7 +390,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nodataneqnocipher$/i)               { $cfg{'sslhello'}->{'nodatanocipher'}   = 0; next; } # alias
     if ($arg =~ /^--ssl[_-]?nodata(?:eq)?nocipher$/i)   { $cfg{'sslhello'}->{'nodatanocipher'}   = 1; next; }
     if ($arg =~ /^--nodata(?:eq)?nocipher$/i)           { $cfg{'sslhello'}->{'nodatanocipher'}   = 1; next; } # alias
-    if ($arg =~ /^--?experimental$/i)                   { $cfg{'experimental'}                   = 1; next; }
+    if ($arg =~ /^--?experimental$/i)                   { $cfg{'use'}->{'experimental'}          = 1; next; }
     #} +---------+----------------------+-------------------------
 
     if ($arg =~ /^[+-]/) {
@@ -377,45 +400,45 @@ while ($#argv >= 0) {
     push(@{$cfg{'hosts'}}, $arg . ":" . ($cfg{'port'}||443));
 } # while
 
-# set defaults for Net::SSLhello
+# set defaults for SSLhello
 # -------------------------------------
 {
     no warnings qw(once); ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-        # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-    $Net::SSLhello::trace           = $cfg{'trace'} if ($cfg{'trace'} > 0);
-    $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
-    $Net::SSLhello::usesni          = $cfg{'usesni'};
-    $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
-    $Net::SSLhello::sni_name        = $cfg{'sni_name'};
-    $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
-    $Net::SSLhello::starttls        = $cfg{'starttls'};
-    $Net::SSLhello::starttlsType    = $cfg{'starttlsType'}; 
-    @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
-    # add 'starttls_error' array elements according Net::SSLhello's internal
+        # avoid: Name "SSLhello::trace" used only once: possible typo at ...
+    $SSLhello::trace            = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    $SSLhello::traceTIME        = $cfg{'out'}->{'traceTIME'};
+    $SSLhello::usesni           = $cfg{'use'}->{'sni'};
+    $SSLhello::use_sni_name     = $cfg{'use_sni_name'};
+    $SSLhello::sni_name         = $cfg{'sni_name'};
+    $SSLhello::connect_delay    = $cfg{'connect_delay'};
+    $SSLhello::starttls         = $cfg{'starttls'};
+    $SSLhello::starttlsType     = $cfg{'starttlsType'}; 
+    @SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
+    # add 'starttls_error' array elements according SSLhello's internal
     # representation
-    push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}}[1..3]);
+    push(@SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}}[1..3]);
     if ($cfg{'trace'} > 3) {
         for my $i (1..5) {
-            _trace ("  \$cfg{'starttls_phase'}[$i]=$cfg{'starttls_phase'}[$i]\n") if (defined($cfg{'starttls_phase'}[$i]));
+            trace("  \$cfg{'starttls_phase'}[$i]=$cfg{'starttls_phase'}[$i]\n") if (defined($cfg{'starttls_phase'}[$i]));
         }
         for my $i (1..3) {
-            _trace ("  \$cfg{'starttls_error'}[$i]=$cfg{'starttls_error'}[$i]\n") if (defined($cfg{'starttls_error'}[$i]));
+            trace("  \$cfg{'starttls_error'}[$i]=$cfg{'starttls_error'}[$i]\n") if (defined($cfg{'starttls_error'}[$i]));
         }
     }
-    $Net::SSLhello::starttlsDelay       = $cfg{'starttlsDelay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
-    $Net::SSLhello::slowServerDelay     = $cfg{'slowServerDelay'}; 
-    $Net::SSLhello::timeout         = $cfg{'sslhello'}->{'timeout'};
-    $Net::SSLhello::retry           = $cfg{'sslhello'}->{'retry'};
-    $Net::SSLhello::usereneg        = $cfg{'sslhello'}->{'usereneg'};
-    $Net::SSLhello::useecc          = $cfg{'sslhello'}->{'useecc'};
-    $Net::SSLhello::useecpoint      = $cfg{'sslhello'}->{'useecpoint'};
-    $Net::SSLhello::double_reneg    = $cfg{'sslhello'}->{'double_reneg'};
-    $Net::SSLhello::proxyhost       = $cfg{'proxyhost'};
-    $Net::SSLhello::proxyport       = $cfg{'proxyport'};
-    $Net::SSLhello::max_ciphers     = $cfg{'sslhello'}->{'maxciphers'};
-    $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};
-    $Net::SSLhello::experimental    = $cfg{'experimental'};
-    $Net::SSLhello::noDataEqNoCipher    = $cfg{'sslhello'}->{'nodatanocipher'};
+    $SSLhello::starttlsDelay    = $cfg{'starttls_delay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
+    $SSLhello::slowServerDelay  = $cfg{'slow_server_delay'}; 
+    $SSLhello::timeout          = $cfg{'sslhello'}->{'timeout'};
+    $SSLhello::retry            = $cfg{'sslhello'}->{'retry'};
+    $SSLhello::usereneg         = $cfg{'sslhello'}->{'usereneg'};
+    $SSLhello::useecc           = $cfg{'sslhello'}->{'useecc'};
+    $SSLhello::useecpoint       = $cfg{'sslhello'}->{'useecpoint'};
+    $SSLhello::double_reneg     = $cfg{'sslhello'}->{'double_reneg'};
+    $SSLhello::proxyhost        = $cfg{'proxyhost'};
+    $SSLhello::proxyport        = $cfg{'proxyport'};
+    $SSLhello::max_ciphers      = $cfg{'sslhello'}->{'maxciphers'};
+    $SSLhello::cipherrange      = $cfg{'cipherrange'};
+    $SSLhello::experimental     = $cfg{'use'}->{'experimental'};
+    $SSLhello::noDataEqNoCipher = $cfg{'sslhello'}->{'nodatanocipher'};
 }
 
 print "##############################################################################\n";
@@ -423,21 +446,21 @@ print "# '$me' (part of OWASP project 'O-Saft'),\n";
 print "#     Version (yy.mm.dd):           $VERSION\n";
 print "# using (internal) modules:\n";
 print "#     O-Saft::";
-Net::SSLhello::version();
+SSLhello::version();
 print "#     O-Saft::";
-OSaft::error_handler::version();
+error_handler::version();
 print "##############################################################################\n\n";
 
 #reset error_handler and set basic information for this sub$
-OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
 
-Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
+SSLhello::printParameters() if ($cfg{'trace'} > 1);
 
 my $protocols;
 print "Protocols to check:\n";
 # check ssl protocols
 foreach my $ssl (@{$cfg{'versions'}}) {
-    if ( ($ssl =~ /DTLS/) && ($cfg{$ssl} == 1) && ($cfg{'experimental'} !=1 ) ) { # DTLS support is experimental
+    if ( ($ssl =~ /DTLS/) && ($cfg{$ssl} == 1) && ($cfg{'use'}->{'experimental'} !=1 ) ) { # DTLS support is experimental
         $protocols .= ", " if ($protocols);
         $protocols .= "$ssl";
         next;
@@ -450,7 +473,7 @@ print "Use of Protocol(s) '$protocols' is experimental, please use the option '-
 print "\n";
 
 if ($cfg{'usemx'}) { # get mx-records
-    _trace2 (" \$cfg{'usemx'} = $cfg{'usemx'}\n");
+    trace2(" \$cfg{'usemx'} = $cfg{'usemx'}\n");
     print "\n# get MX-Records:\n";
     @{$cfg{'mx_domains'}} = @{$cfg{'hosts'}}; #we have got mx domains no hosts, yet
     $cfg{'hosts'} = [];
@@ -459,14 +482,14 @@ if ($cfg{'usemx'}) { # get mx-records
         if ($mx_domain =~ m#.*?:\d+#) { 
             ($mx_domain, $port) = split(":", $mx_domain); 
         }
-        _trace3 (" get MX-Records for '$mx_domain'\n");
+        trace3(" get MX-Records for '$mx_domain'\n");
         my $dns = Net::DNS::Resolver->new;
         my $mx = $dns->query($mx_domain, 'MX');
         my $sep =", ";
 
         if (defined ($mx) && defined($mx->answer)) {
             foreach my $mxRecord ($mx->answer) {
-                _trace3 (" => ". $mxRecord->exchange. ' ('. $mxRecord->preference. ")\n");
+                trace3(" => ". $mxRecord->exchange. ' ('. $mxRecord->preference. ")\n");
                 push(@{$cfg{'hosts'}}, $mxRecord->exchange . ":" . ($port||25));
                 printf "%16s%s%5s%s%-6s%s%32s%-6s%s%-4s%s\n",
                     $mx_domain, $sep,           # %16s%s
@@ -491,16 +514,16 @@ if ($cfg{'usemx'}) { # get mx-records
 
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     #reset error_handler and set basic information for this sub$
-    OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+    error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
 
     if ($host =~ m#.*?:\d+#) { 
        ($host, $port) = split(":", $host);
         $cfg{'port'}  = $port;  #
         $cfg{'host'}  = $host;
     }
-    _trace("host{ " . ($host||"") . ":" . $port . "\n");
+    trace("host{ " . ($host||"") . ":" . $port . "\n");
     $cfg{'host'} = $host;
-    $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host 
+    $SSLhello::starttlsDelay = $cfg{'starttls_delay'}; #reset to original value for each host 
     foreach my $ssl (@{$cfg{'version'}}) {
         my @accepted = (); # List of all Ciphers that are supported by the server with the tested Protocol
         my @testing  = ();
@@ -508,43 +531,43 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
            $range = 'SSLv2_long' if ($ssl eq 'SSLv2');          # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
 
         #reset error_handler and set basic information for this sub$
-        OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+        error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
 
         ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         #  NOTE: this eval must not use the block form because the value needs to be evaluated
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
         ## use critic
-        if ($Net::SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set 
-            if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
-                $Net::SSLhello::usesni = 0;
-                @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-                if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
-                    _trace ("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
+        if ($SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set 
+            if ( ($SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
+                $SSLhello::usesni = 0;
+                @accepted = SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+                if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+                    trace("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port' caused by ".error_handler->get_err_str."\n");
                     carp   ("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port'");
                     last;
                 }
-                _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-                _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-                _trace("accepted ciphers: @accepted\n");
-                Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
-                $Net::SSLhello::usesni=$cfg{'usesni'}; # restore
+                trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+                _vprint(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+                trace("accepted ciphers: @accepted\n");
+                SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
+                $SSLhello::usesni=$cfg{'use'}->{'sni'}; # restore
             }
             next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
             next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
 #            next if ($ssl eq 'DTLSv09');# DTLSv09 has originally no SNI(??)
         }
-        @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-        if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
-            _trace ("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
+        @accepted = SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+        if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+            trace("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port' caused by ".error_handler->get_err_str."\n");
             carp   ("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port'");
             last;
         }
-        _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-        _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-        _trace("accepted ciphers: @accepted\n");
-        Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+        trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+        _vprint(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+        trace("accepted ciphers: @accepted\n");
+        SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $SSLhello::usesni, @accepted);
     }
-    _trace("host}" . "\n");
+    trace("host}" . "\n");
 }
 
 exit;
