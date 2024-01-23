@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 2.4 24/01/07 13:51:33
+# SID   @(#) devel.txt 3.1 24/01/23 12:08:21
 
 
 NAME
@@ -62,7 +62,7 @@ OVERVIEW
 
         Configurations
 
-          make testarg-mod-OSaft-Trace.pm_--test-vars
+          make testarg-mod-lib-OTrace.pm_--test-vars
           o-saft.pl --test-vars
           o-saft.pl +quit --trace
           o-saft.pl +quit --trace=3
@@ -79,10 +79,10 @@ OVERVIEW
           o-saft.pl +list --header --no-rc --legacy=openssl
           o-saft.pl +ciphers -v
           o-saft.pl +ciphers -V
-          OSaft/Ciphers.pm key=ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-          OSaft/Ciphers.pm getter=0x0300CCA9
-          OSaft/Ciphers.pm description
-          OSaft/Ciphers.pm ovrview
+          lib/Ciphers.pm key=ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+          lib/Ciphers.pm getter=0x0300CCA9
+          lib/Ciphers.pm description
+          lib/Ciphers.pm ovrview
 
         Special Informations
 
@@ -97,10 +97,10 @@ OVERVIEW
 # Tests returning same or similar results:
 #
 #           make testarg-hlp-o-saft.pl_--help-warnings.log
-#           make testarg-mod-o-saft-man.pm_warnings
+#           make testarg-mod-lib-OMan.pm_warnings
 #
 #           make testarg-hlp-o-saft.pl_--legacy-owasp
-#           make testarg-mod-OSaft-Ciphers.pm_sorted
+#           make testarg-mod-lib-Ciphers.pm_sorted
 #
 #           make testcmd-cipher-+cipher---cipher-IS-UNKNOWN--ciphermode-openssl_localhost
 #           make testcmd-cipher-+cipher---cipher-is_invalid--ciphermode-openssl_localhost
@@ -116,7 +116,7 @@ DEBUGGING
         multiple times to increase amount of listed information. Also keep in
         mind that it's best to specify  --v  as very first argument.
 
-        Note that the file  OSaft/Trace.pm  is required, if any  --trace*  or
+        Note that the file  lib/OTrace.pm  is required, if any  --trace*  or
         --v   option is used.
 
     Commands
@@ -163,7 +163,7 @@ DEBUGGING
              Internal variable name (--trace-key options).
 
            #o-saft.pl::
-           #Net::SSLinfo::
+           #SSLinfo::
              Trace information for  --trace  options.
 
            #{
@@ -290,23 +290,29 @@ DEBUGGING
                   .                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA,
                   .                                0x0300EAEA, 0x0300FAFA,
               = Required (and used) Modules =
-                  @INC                 ./ ./lib . /bin /usr/share/perl5 \
-                  .                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
-                  .                    /usr/lib/x86_64-linux-gnu/perl/5.20 \
-                  .                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
+                  @INC                 . lib /bin /usr/share/perl5 \
+                  .                    /usr/lib/x86_64-linux-gnu/perl5/5.36 \
+                  .                    /usr/lib/x86_64-linux-gnu/perl/5.36 \
+                  .                    /usr/share/perl/5.36 /usr/local/lib/site_perl .
               =   module name            VERSION  found in
               =   ----------------------+--------+------------------------------------------
-                  IO::Socket::INET       1.41     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
-                  IO::Socket::SSL        2.069    /usr/share/perl5/IO/Socket/SSL.pm
-                  Time::Local            1.2300   /usr/share/perl/5.24/Time/Local.pm
-                  Net::DNS               1.29     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
-                  Net::SSLeay            1.88     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
-                  Net::SSLinfo           22.11.22 Net/SSLinfo.pm
-                  Net::SSLhello          22.06.22 Net/SSLhello.pm
-                  Ciphers
-                  osaft                  22.11.22 osaft.pm
+                  IO::Socket::INET       1.49     /usr/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
+                  IO::Socket::SSL        2.081    /usr/share/perl5/IO/Socket/SSL.pm
+                  Time::Local            1.30     /usr/share/perl/5.36/Time/Local.pm
+                  Net::DNS               1.36     /usr/share/perl5/Net/DNS.pm
+                  Net::SSLeay            1.92     /usr/lib/x86_64-linux-gnu/perl5/5.36/Net/SSLeay.pm
+                  OCfg                   24.01.24 lib/OCfg.pm
+                  OData                  24.01.24 lib/OData.pm
+                  Ciphers                24.01.24 lib/Ciphers.pm
+                  SSLinfo                24.01.24 lib/SSLinfo.pm
+                  SSLhello               24.01.24 lib/SSLhello.pm
+                  OMan                            <<not loaded>>
+                  OText                  24.01.24 lib/OText.pm
+                  OTrace                          <<not loaded>>
+                  OUsr                            <<not loaded>>
 
-        Following example shows the result with warnings (line nr. may vary):
+        Following example shows the result with warnings (line nr. may vary),
+        example is for version < 24.01.24:
 
               === reading: ./.o-saft.pl (RC-FILE done) ===
               === reading: ./Net/SSLhello.pm (O-Saft module done) ===
@@ -485,7 +491,7 @@ TESTING
       --test-ciphers-ssltest
 
           These options are aliases for:  +list --legacy=TYP  .
-          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+          Print ciphers in various formats, please see: lib/Ciphers.pm .
 
       --test-ciphers-alias
       --test-ciphers-const
@@ -498,12 +504,12 @@ TESTING
       --test-ciphers-rfcs
       --test-ciphers-sort
 
-          Print ciphers in various formats, please see: OSaft/Ciphers.pm .
+          Print ciphers in various formats, please see: lib/Ciphers.pm .
 
       --test-ciphers-getter=*
       --test-ciphers-get_CMD=*
 
-          Print some special information, please see: OSaft/Ciphers.pm .
+          Print some special information, please see: lib/Ciphers.pm .
 
       --test-avail
 
