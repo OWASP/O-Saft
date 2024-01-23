@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 1.19 23/09/04 17:23:58
+#?      @(#) Makefile.make 3.1 24/01/23 13:39:29
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 1.19
+_SID.make          := 3.1
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
