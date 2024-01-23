@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 1.7 23/11/15 01:09:23
+#?      @(#) Makefile.init 3.1 24/01/23 13:39:28
 #?
 #? AUTHOR
 #?      19-dez-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-_SID.init          := 1.7
+_SID.init          := 3.1
 
 _MYSELF.init       := t/Makefile.init
 ALL.includes       += $(_MYSELF.init)
