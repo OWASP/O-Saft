@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.9 22/04/20 10:05:34
+# SID   @(#) tools.txt 3.1 24/01/23 13:22:54
 
 NAME
 
@@ -185,11 +185,11 @@ CUSTOMISATION
 
         * o-saft.pl
            .o-saft.pl
-           o-saft-usr.pl
+           lib/OUsr.pl
 
         * o-saft.tcl
            .o-saft.tcl
-           o-saft-img.tcl
+           lib/o-saft-img.tcl
 
         * o-saft.cgi
            none, but see contrib/o-saft.php
