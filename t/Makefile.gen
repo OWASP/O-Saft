@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 1.6 23/11/15 00:54:55
+#?      @(#) Makefile.gen 3.1 24/01/23 13:39:25
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 1.6
+_SID.gen           := 3.1
 
 _MYSELF.gen        := t/Makefile.gen
 ALL.includes       += $(_MYSELF.gen)
