@@ -40,9 +40,9 @@ package error_handler;
 #? The latest error can be called back, eg. if the last retry missed.
 #? This package uses static class methods and static data within the handler
 #? to store and read the last error.
-#? To use it call 'use OSaft::error_handler qw(:subs :sslhello_constants)'
+#? To use it call 'use error_handler qw(:subs :sslhello_constants)'
 #? exported subs:
-#?     error_handler->new({<hash-key>=><value>}); set new values for a new error
+#?     error_handler::new({<hash-key>=><value>}); set new values for a new error
 #?         with <hash-key>=
 #?             type:    no error (OERR_NO_ERROR(=1)) or type of the error(<0)
 #?                      (see sslhello_constants, constant OERR_...), needs to be
@@ -55,32 +55,32 @@ package error_handler;
 #?             print:   1: prints a standardized warning to stdout; 0: no output (default)
 #?             warn:    1: prints a standardized warning to stderr; 0: no output (default)
 #?             trace:   1: prints a standardized trace to stdouti (default); 0: no output
-#?     error_handler->reset_err(<hash_ref (optional)>):
+#?     error_handler::reset_err(<hash_ref (optional)>):
 #?                                                reset the last error, optionally set a new error using hash_ref
-#?     error_handler->is_err():                   returns '1' if an error has occured
-#?     error_handler->get_err_type():             get (internal) number of the last error type
-#?     error_handler->get_err_type_name():        get name of the last error type
-#?     error_handler->get_err_val():              get a value of the error hash
-#?     error_handler->get_err_str():              get and print an error message
+#?     error_handler::is_err():                   returns '1' if an error has occured
+#?     error_handler::get_err_type():             get (internal) number of the last error type
+#?     error_handler::get_err_type_name():        get name of the last error type
+#?     error_handler::get_err_val():              get a value of the error hash
+#?     error_handler::get_err_str():              get and print an error message
 #?
 #? mainly used for testing and debugging:
-#?     error_handler->get_err_hash(<prefix>, <hash_ref (optional)>):
+#?     error_handler::get_err_hash(<prefix>, <hash_ref (optional)>):
 #?                                                get the error hash as string, <prefix> is an optional prefix after a new
 #?                                                line (e.g. some spaces for the indent),
 #?                                                if the optional 'hash_ref' is valid this hash is used
-#?     error_handler->get_all_err_types():        get all possible defined error types and their internal representation
+#?     error_handler::get_all_err_types():        get all possible defined error types and their internal representation
 #?                                                as a string
 #? ----------------------------------------------------------------------------
 #? constants:
 #? sslhello_contants:                             CONSTANTS used for SSLHello: import them using 
-#?                                                'use OSaft::error_handler qw(:subs :sslhello_constants)'
+#?                                                'use error_handler qw(:subs :sslhello_constants)'
 #?#############################################################################
 
 use strict;
 use warnings;
 use Carp;
 
-my  $SID_error  = "@(#) 5G%b 3.3 24/01/16 14:19:57";
+my  $SID_error  = "@(#) error_handler.pm 3.5 24/01/23 18:52:29";
 our $VERSION    = "24.01.24"; # TBD: should be OERR_VERSION
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
@@ -203,7 +203,7 @@ my %err_hash = (
 #? prints the official version number of error_handler (yy-mm-dd)
 sub version {
     local $\ = ""; # no auto '\n' at the end of the line
-    print "OSaft::error_handler (". OERR_VERSION .")\n";
+    print "error_handler (". OERR_VERSION .")\n";
     return;
 } # version
 
@@ -264,7 +264,7 @@ sub new {
     # undefined/unknown error type in static err_hash
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) {
         $tmp_err_str = _compile_err_str();
-        $tmp_text    = "OSaft::error_handler->new: internal error: unknown error type in";
+        $tmp_text    = "error_handler::new: internal error: unknown error type in";
         print qq($tmp_text "$tmp_err_str".) if ($err_hash{trace});
         carp (qq($tmp_text "$tmp_err_str".));
         $err_hash{type} = OERR_UNKNOWN_TYPE;    # define error type to 'unknown', which is the most fatal
@@ -272,7 +272,7 @@ sub new {
         # undefined $arg_ref: no new error
         unless (defined ($arg_ref)) {
             $arg_ref->{type}    = OERR_UNKNOWN_TYPE; # define error type to 'unknown', which is the most fatal
-            $arg_ref->{module}  = 'OSaft::error_handler';
+            $arg_ref->{module}  = 'error_handler';
             $arg_ref->{sub}     = 'new';
             $arg_ref->{message} = "internal error: undefined \$arg_ref";
             $tmp_err_str        = _compile_err_str($arg_ref);
@@ -290,7 +290,7 @@ sub new {
         if ($err_hash{type} < $arg_ref->{type}) { # new error is less important than the previous
              my $old_err_str =  _compile_err_str();
              $tmp_err_str    =  _compile_err_str($arg_ref);
-             $tmp_text       = "OSaft::error_handler->new: new error type in";
+             $tmp_text       = "error_handler::new: new error type in";
              print qq($tmp_text "$tmp_err_str" is less important than the previous "$old_err_str".) if ($err_hash{trace});
              carp (qq($tmp_text "$tmp_err_str" is less important than the previous "$old_err_str".));
              return 0;
@@ -343,7 +343,7 @@ sub is_err {
     if ( (exists ($err_hash{type})) && (defined ($err_hash{type})) ) {
         return ($err_hash{type} != OERR_NO_ERROR);
     } else { # internal error: no type defined
-       my $err_str = "OSaft::error_handler->is_err: internal error: undefined error type in \$error_hash: ";
+       my $err_str = "error_handler::is_err: internal error: undefined error type in \$error_hash: ";
        $err_str .= _compile_err_str();
        print "$err_str\n" if (2<$err_hash{trace});
        carp ($err_str);
@@ -401,7 +401,7 @@ sub get_err_val {
 sub get_err_str {
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) { # undefined Error Type
         my $tmp_err_str = _compile_err_str();
-        my$tmp_text     = "OSaft::error_handler->get_err_str: internal error: unknown error type in";
+        my$tmp_text     = "error_handler::get_err_str: internal error: unknown error type in";
         print qq($tmp_text "$tmp_err_str".\n) if ($err_hash{trace});
         carp (qq($tmp_text "$tmp_err_str".\n));
         $err_hash{type} = OERR_UNKNOWN_TYPE;    # overwrite error type to unknown, which is the most fatal
