@@ -6,7 +6,8 @@
 
 package OMan;
 
-my  $SID_oman= "@(#) OMan.pm 3.10 24/01/22 16:33:28";
+my  $SID_oman   = "@(#) OMan.pm 3.11 24/01/23 20:54:32";
+our $VERSION    = "24.01.24";
 
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 # NOTE:  This often happens in comma separated statements, see above.
@@ -816,7 +817,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.10'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.11'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2695,7 +2696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.10 2024/01/22
+3.11 2024/01/23
 
 
 =head1 AUTHOR
