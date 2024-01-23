@@ -258,7 +258,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) �] 1.111 24/01/07 22:18:09
+#?      @(#) INSTALL-template.sh 1.113 24/01/23 20:50:14
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -304,6 +304,7 @@ contrib_dir="INSERTED_BY_MAKE_CONTRIBDIR"
 inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
 perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
 osaft_subdirs="INSERTED_BY_MAKE_OSAFT_DIRS"
+osaft_libdir="INSERTED_BY_MAKE_OSAFT_LIBDIR"
 
 osaft_modules="
 	INSERTED_BY_MAKE_OSAFT_MODULES
@@ -548,7 +549,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.111 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 1.113 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -873,9 +874,8 @@ echo_head "# check for installed Perl modules (started in $inst_directory )"
 for m in $perl_modules $osaft_modules ; do
 	echo_label "$m"
 	text_cpan="»cpan $m«"
-	# NOTE: -I . used to ensure that local ./Net is found
-	v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
-	p=`perl -I . -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
+	v=`perl -I $osaft_libdir -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
+	p=`perl -I $osaft_libdir -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 	if [ -n "$v" ]; then
 		if check_pm "$m" ; then c="green"; fi
 		case "$m" in
