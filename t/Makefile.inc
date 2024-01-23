@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.40 23/11/15 00:53:30
+#?      @(#) Makefile.inc 3.1 24/01/23 13:39:27
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 1.40
+_SID.inc       := 3.1
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
