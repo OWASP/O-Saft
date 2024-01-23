@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.131 24/01/07 13:55:58
+# SID   @(#) help.txt 3.1 24/01/23 13:18:44
 
 NAME
 
@@ -183,7 +183,7 @@ TECHNICAL INFORMATION
 
         Starting with version 23.11.23 all checks for ciphers are done by our
         own plain Perl code, just the SSL/TLS-related checks and informations
-        use Net::SSLeay and openssl.
+        use  Net::SSLeay(3pm) and openssl.
         Since version 23.12.23 OpenSSL 3.0.x is supported also.
 
         Beside  new and removed funtionality  in OpenSSL (details see below),
@@ -484,7 +484,7 @@ COMMANDS
           all commands listed below but not including  +cipher.
 
           This command is intended for debugging as it prints some details of
-          the used  Net::SSLinfo  module.
+          the used  lib/SSLinfo  module.
 
       +quick
 
@@ -546,7 +546,7 @@ COMMANDS
           commands (except  +cipher).
           Each key-value pair is enclosed in  '#{'  and  '#}' .
 
-          Using  --trace  --trace  dumps data of  Net::SSLinfo  too.
+          Using  --trace  --trace  dumps data of  lib/SSLinfo  too.
 
       +exec
 
@@ -1072,10 +1072,10 @@ OPTIONS
               compression, expansion, renegotiation, resumption,
               selfsigned, verify, chain, protocols, DH parameters
 
-          See  Net::SSLinfo  for details.
+          See  lib/SSLinfo  for details.
 
           If used together with  --trace, s_client  data will also be printed
-          in debug output of  Net::SSLinfo.
+          in debug output of  lib/SSLinfo.
 
       --no-openssl
 
@@ -1212,7 +1212,7 @@ OPTIONS
             * 'socket'      - the internal functionality with sockets is used
             * 'openssl'     - the exteranl openssl executable is used
             * 'user'        - the external special function,  as specified in
-                              user's  OSaft/Usr.pm,  is used.
+                              user's  lib/OUsr.pm,  is used.
 
           Example:
               --call=cipher-openssl
@@ -1421,11 +1421,11 @@ OPTIONS
       --no-cert --no-cert
 
           Do not get data from  target's certificate,  return  default string
-          of Net::SSLinfo (see  --no-cert-text=TEXT  option).
+          of lib/SSLinfo (see  --no-cert-text=TEXT  option).
 
       --no-cert-text=TEXT
 
-          Set 'TEXT' to be returned from  Net::SSLinfo if no certificate data
+          Set 'TEXT' to be returned from  lib/SSLinfo  if no certificate data
           is collected due to use of  --no-cert.
 
       --ca-depth=INT
@@ -1526,8 +1526,8 @@ OPTIONS
           as pattern (RegEx) to match cipher suite names. For example:
           'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
           2 ciphers, see:
-              OSaft/Ciphers.pm find-names=AES256-SHA
-              OSaft/Ciphers.pm find-names=AES256-SHA$
+              lib/Ciphers.pm find-names=AES256-SHA
+              lib/Ciphers.pm find-names=AES256-SHA$
 
           To be sure that exactly one cipher suite matches, use for example:
               --cipher=^AES256-SHA$
@@ -1549,7 +1549,7 @@ OPTIONS
           'CIPHER' can also be any pattern accepted by openssl, for example:
             * --cipher='!DES:!ADH:!aNULL'
 
-          Default is 'ALL:NULL:eNULL:aNULL:LOW:EXP' as specified in Net::SSLinfo.
+          Default is 'ALL:NULL:eNULL:aNULL:LOW:EXP' as specified in lib/SSLinfo.
 
           See  LIMITATIONS  also.
 
@@ -1811,7 +1811,7 @@ OPTIONS
           This option is used to specify the format of the result lines. This
           covers the value of the result line only.
 
-          * 'raw'       - Print raw data as passed from  Net::SSLinfo.
+          * 'raw'       - Print raw data as passed from  lib/SSLinfo.
             Note:  all data will be printed as is,  without  additional label
             or formatting. It's recommended to use the  option in conjunction
             with exactly one command.  Otherwise the user needs  to know  how
@@ -2066,13 +2066,13 @@ OPTIONS
 
       --usr
 
-          Execute functions defined in  OSaft/Usr.pm.
+          Execute functions defined in  lib/OUsr.pm.
 
       --usr-*
       --user-*
 
           Options ignored, but stored as is internal in  $cfg{usr-args} .
-          These options can be used in  OSaft/Usr.pm  or  OSaft/Trace.pm.
+          These options can be used in  lib/OUsr.pm  or  lib/OTrace.pm.
 
       --experimental
 
@@ -2135,12 +2135,12 @@ OPTIONS
       --trace --trace
 
           Print more debugging messages and pass 'trace=2' to Net::SSLeay and
-          Net::SSLinfo.
+          lib/SSLinfo.
 
       --trace --trace --trace
 
           Print more debugging messages and pass 'trace=3' to Net::SSLeay and
-          Net::SSLinfo.
+          lib/SSLinfo.
 
       --trace --trace --trace --trace
 
@@ -3276,22 +3276,22 @@ CUSTOMISATION
 
     DEBUG-FILE
 
-        All debugging functionality is defined in  OSaft/Trace.pm, which will
+        All debugging functionality is defined in  lib/OTrace.pm,  which will
         be searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is Perl code.  For details see  DEBUG  below.
 
     USER-FILE
 
-        All user functionality is defined in   OSaft/Usr.pm ,  which  will be
+        All user functionality is defined in   lib/OUsr.pm ,  which  will be
         searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is Perl code.
 
-        All functions defined in   OSaft/Usr.pm   are called  when the option
-        --usr  was given.  The functions are defined as empty stub,  any code
-        can be inserted as need.  Please see   perldoc OSaft/Usr.pm   to see
-        when and how these functions are called.
+        All functions defined in   lib/OUsr.pm   are called  when the  option
+        --usr  was used. The functions are defined as empty stub and any code
+        can be inserted as need.  Please see   perldoc lib/OUsr.pm   when and
+        how these functions are called.
 
     SHELL TWEAKS
 
@@ -3511,9 +3511,9 @@ KNOWN PROBLEMS
         This error cannot be omitted or handled properly.
 
         Workaround: try to use same call again (no guarantee, unfortunatelly)
-# see Net::SSLinfo.pm for details
+# see lib/SSLinfo.pm for details
 
-    Odd number of elements in anonymous hash at Net/SSLinfo.pm line 1613.
+    Odd number of elements in anonymous hash at lib/SSLinfo.pm line 1613.
 
         This warning from perl have been observed  when the connection to the
         target to check for supported ciphers cannot be established.
@@ -3584,7 +3584,7 @@ KNOWN PROBLEMS
         which then may produce:
               **WARNING: on MSWin32 additional option  --v  required, sometimes ...
               === reading: ./.o-saft.pl (RC-FILE done) ===
-              === reading: Net/SSLinfo.pm (O-Saft module done) ===
+              === reading: lib/SSLinfo.pm (O-Saft module done) ===
               **USAGE: no command given
               # most common usage:
                 o-saft.pl +info   your.tld
@@ -3719,7 +3719,7 @@ LIMITATIONS
     User provided files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE  OSaft/Trace.pm  or  USER-FILE  OSaft/Usr.pm  will
+        in the  DEBUG-FILE lib/OTrace.pm  or the  USER-FILE lib/OUsr.pm  will
         work flawless. Obviously this is the user's responsibility.
 
     Problems and errors
@@ -3855,8 +3855,8 @@ DEPENDENCIES
         * IO::Socket::SSL(3pm)
         * IO::Socket::INET(3pm)
         * Net::SSLeay(3pm)
-        * Net::SSLinfo
-        * Net::SSLhello
+        * lib/SSLinfo
+        * lib/SSLhello
 
         Perl modules loaded and used for some options only:
 
@@ -3866,19 +3866,19 @@ DEPENDENCIES
     Additional files used if requested
 
         * .o-saft.pl
-        * o-saft-man.pm
         * o-saft-docker
         * o-saft-README
-        * OSaft/Trace.pm
-        * OSaft/Usr.pm
+        * lib/OTrace.pm
+        * lib/OMan.pm
+        * lib/OUsr.pm
 
 
 INSTALLATION
 
         The tool can be installed in any path. It just requres the modules as
         described in  DEPENDENCIES  above. However, it's recommended that the
-        modules  Net::SSLhello  and  Net::SSLinfo  are found in the directory
-        './Net/'  where  '$0'  is installed.
+        modules  SSLhello  and  SSLinfo  are found  in the directory  './lib'
+        where  '$0'  is installed.
 
         For security reasons, most modern libraries  disabled or even removed
         insecure or "dirty" functionality.  As the purpose of this tool is to
@@ -4101,7 +4101,7 @@ INSTALLATION
         Following command can be used to check  which methods are avilable in
         Net::SSLeay, hence above patches can be verified:
 
-              perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'
+              perl -MSSLinfo -le 'print SSLinfo::ssleay_test();'
 
     Testing OpenSSL
 
@@ -4157,16 +4157,16 @@ INSTALLATION
           * perl with PAR::Packer module
               pp -C -c $0
               pp -C -c $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                  -M Net::SSLinfo -M Net::SSLhello -M osaft
+                  -M SSLinfo -M SSLhello -M OCfg
               pp -C -c checkAllCiphers.pl
               pp -C -c checkAllCiphers.pl -M Net::DNS
 
           * ActiveState perl with its perlapp
               perlapp --clean $0
               perlapp --clean $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                  -M Net::SSLinfo -M Net::SSLhello -M osaft
+                  -M SSLinfo -M SSLhello -M OCfg
               perlapp --clean checkAllCiphers.pl
-              perlapp --clean checkAllCiphers.pl -M Net::DNS -M osaft
+              perlapp --clean checkAllCiphers.pl -M Net::DNS -M OCfg
 
           * perl2exe from IndigoSTar
               perl2exe $0
@@ -4291,7 +4291,7 @@ BUILD DOCKER IMAGE
 
 SEE ALSO
 
-        * openssl(1), Net::SSLeay(3pm), Net::SSLhello, Net::SSLinfo, timeout(1)
+        * openssl(1), Net::SSLeay(3pm), lib/SSLhello, lib/SSLinfo, timeout(1)
         * http://www.openssl.org/docs/apps/ciphers.html
         * IO::Socket::SSL(3pm), IO::Socket::INET(3pm)
         * o-saft, o-saft-docker, o-saft-docker-dev, Dockerfile, docker
@@ -4534,7 +4534,7 @@ HACKER's INFO
 
         There are some functions called within the program flow, which can be
         filled with any Perl code.  Empty stubs of the functions are prepared
-        in  OSaft/Usr.pm.  See also  USER-FILE .
+        in  lib/OUsr.pm.  See also  USER-FILE .
 
 
 DEBUG
@@ -4890,8 +4890,8 @@ TODO
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
         * verify CA chain:
-          ** Net::SSLinfo.pm implement verify*
-          ** implement +check_chain (see Net::SSLinfo.pm implement verify* also)
+          ** lib/SSLinfo.pm implement verify*
+          ** implement +check_chain (see lib/SSLinfo.pm implement verify* also)
           ** implement +ca = +verify +chain +rootcert +expired +fingerprint
 
         * postprocessing
@@ -4903,13 +4903,13 @@ TODO
           ** write postprocessor for tabular data, like
              ssl-cert-check -p 443 -s mail.google.com -i -V
 
-        * Net::SSLinfo
+        * lib/SSLinfo
           ** Net::SSLeay::ctrl()  sometimes fails, but doesn't return error message
           ** Net::SSLeay::CTX_clear_options()
              Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
              SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
              see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
-          ** Net::SSLinfo::do_ssl_close()  does not really work
+          ** lib/SSLinfo::do_ssl_close()  does not really work
 
         * Windows
           ** Unicode:
@@ -4936,5 +4936,5 @@ TODO
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
           ** (nicht wichtig, aber sauber programmieren)
-             _get_default(): Net::SSLinfo::default() benutzen
+             _get_default(): lib/SSLinfo::default() benutzen
 
