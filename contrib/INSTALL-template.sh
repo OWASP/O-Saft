@@ -76,15 +76,17 @@
 #=#                                      ancient module found, try installing newer version, at least  1.49
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
-#=#                 osaft	22.11.22 osaft.pm
-#=#          Net::SSLinfo	22.11.12 Net/SSLinfo.pm
-#=#         Net::SSLhello	22.06.22 Net/SSLhello.pm
-#=#        OSaft::Ciphers	22.11.22 OSaft/Ciphers.pm
-#=#           OSaft::Data	22.06.22 OSaft/Data.pm
-#=#           OSaft::Text	22.11.22 OSaft/Text.pm
-#=#          OSaft::Trace	24.01.24 OSaft/Trace.pm
-#=#  OSaft::error_handler	19.11.19 OSaft/error_handler.pm
-#=#      OSaft::Doc::Data	22.11.13 OSaft/Doc/Data.pm
+#=#                  OCfg	24.01.24 lib/OCfg.pm
+#=#               Ciphers	24.01.24 lib/Ciphers.pm
+#=#         error_handler	24.01.24 lib/error_handler.pm
+#=#               SSLinfo	24.01.24 lib/SSLinfo.pm
+#=#              SSLhello	24.01.24 lib/SSLhello.pm
+#=#                 OData	24.01.24 lib/OData.pm
+#=#                  ODoc	24.01.24 lib/ODoc.pm
+#=#                  OMan	24.01.24 lib/OMan.pm
+#=#                 OText	24.01.24 lib/OText.pm
+#=#                OTrace	24.01.24 lib/OTrace.pm
+#=#                  OUsr	24.01.24 lib/OUsr.pm
 #=#----------------------+---------------------------------------
 #=
 #=# check for important Perl modules used by installed O-Saft
@@ -258,7 +260,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.113 24/01/23 20:50:14
+#?      @(#) INSTALL-template.sh 3.1 24/01/23 21:04:23
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -440,7 +442,7 @@ echo_red    () {
 
 check_pm    () {
 	# check if passed name is own perl module; return 0 if it is own module
-	# name can be path like Net/SSLinfo.pm or module name like Net::SSLinfo
+	# name can be path like Net/SSLinfo.pm or module name like  lib/SSLinfo
 	# NOTE: extension in name (anything right of rightmost . including.) is
 	#       removed; this assumes that module names  (wether perl syntax or
 	#       path name) cannot contain . (dot).
@@ -549,7 +551,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.113 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.1 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -897,7 +899,8 @@ for m in $perl_modules $osaft_modules ; do
 				c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; 
 			fi
 			;;
-		  *) c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
+		  *) # our own modules
+		     c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
 		   # NOTE: need to compare for example: 1.23 > 1.230
 		   # Comparing version strings is tricky,  best method would be
 		   # to use Perl's Version module.  But this script should work
