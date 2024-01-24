@@ -6,9 +6,6 @@
 
 package OCfg;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.8 24/01/22 17:14:10";
-$OCfg::VERSION  =  "24.01.24";  # official version number of this file
-
 # TODO: implement
 #    require "o-saft-lib" "full";  # or "raw"
 #       full: anything for o-saft.pl; raw partial for SSLhello.pm
@@ -31,6 +28,9 @@ $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 use strict;
 use warnings;
 use utf8;
+
+our $SID_ocfg   =  "@(#) OCfg.pm 3.9 24/01/24 23:10:22";
+$OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
     # SEE Perl:@INC
@@ -3523,7 +3523,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.8"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.9"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3571,7 +3571,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.8 2024/01/22
+3.9 2024/01/24
 
 =head1 AUTHOR
 
