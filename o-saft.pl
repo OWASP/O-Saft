@@ -59,6 +59,9 @@
 ## no critic qw(Modules::ProhibitExcessMainComplexity)
 #  NOTE: Yes, it's a high, very high complexity here.
 #       BUG: this pragma does not work here, needs mccabe value ...
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#       most RegEx are human readable.
 ## }
 
 use strict;
@@ -66,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.5 24/01/24 22:54:09"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.6 24/01/25 00:12:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -257,21 +260,6 @@ sub _warn   {
     _trace_exit("WARN - exit on first warning");
     return;
 } # _warn
-
-sub _warn_and_exit  {
-    #? print warning that --experimental option is required
-    #-method:  name of function where this message is called
-    #-command: name of command subject to this message
-    my @txt = @_;
-    if (0 < _is_argv('(?:--experimental)')) {
-        my $method = shift;
-        trace("_warn_and_exit $method: " . join(" ", @txt));
-    } else {
-        printf($STR{WARN} . "099: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
-        exit(1);
-    }
-    return;
-} # _warn_and_exit
 
 sub _warn_nosni     {
     #? print warning and hint message if SNI is not supported by SSL
@@ -614,7 +602,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.5"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.6"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
