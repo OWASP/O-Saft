@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.1 24/01/23 13:18:44
+# SID   @(#) help.txt 3.2 24/01/24 23:02:42
 
 NAME
 
@@ -1035,7 +1035,7 @@ OPTIONS
           Parts of these checks can be diasabled,  see  --exitcode-*  options
           below.
 
-          Use  --v or  --exitcode-v to see details about the performed checks.
+          Use  --v or --exitcode-v  to see details about the performed checks.
 
           Functionality implemented experimental, may change in future.
 
@@ -1101,6 +1101,8 @@ OPTIONS
           for details about specifying alternate  openssl.cnf  files.
 
       --openssl-ciphers --force-openssl
+
+          Options are obsolete. Please use  --ciphermode=openssl  instead.
 
           Use openssl to check for supported ciphers; default: IO::Socket(3pm)
 
@@ -2065,6 +2067,7 @@ OPTIONS
           See  X&Options for SSL tool&.
 
       --usr
+      --user
 
           Execute functions defined in  lib/OUsr.pm.
 
@@ -2103,17 +2106,16 @@ OPTIONS
 
           Print more information about checks.
 
-          Note that this option should be first otherwise some debug messages
-          are missing.
-
           Note that  --v  is different from  -v  (see above).
 
-      --v-cipher --cipher-v
-
-          Print remotely checked ciphers.
-          In contrast to  --v --v  above,  this just prints the ciphers while
-          being checked, but no other verbose messages.
-
+# following option still there, but behaves like --v since 24.01.24
+#
+#      --v-cipher --cipher-v
+#
+#          Print remotely checked ciphers.
+#          In contrast to  --v --v  above,  this just prints the ciphers while
+#          being checked, but no other verbose messages.
+#
 # following no longer implemented (8/2016, 12/2023)
 #
 #      --v --v
@@ -3215,6 +3217,8 @@ CUSTOMISATION
             The user program file is included only  if the  --usr  option was
             used. For details see  USER-FILE  below.
 
+        DEBUG-FILE  and  USER-FILE  will be searched for in paths of '@INC'.
+
 
     CONFIGURATION OPTIONS
 
@@ -3276,15 +3280,13 @@ CUSTOMISATION
 
     DEBUG-FILE
 
-        All debugging functionality is defined in  lib/OTrace.pm,  which will
-        be searched for using paths available in  '@INC'  variable.
+        All debugging functionality is defined in  lib/OTrace.pm .
 
         Syntax in this file is Perl code.  For details see  DEBUG  below.
 
     USER-FILE
 
-        All user functionality is defined in   lib/OUsr.pm ,  which  will be
-        searched for using paths available in  '@INC'  variable.
+        All user functionality is defined in   lib/OUsr.pm .
 
         Syntax in this file is Perl code.
 
@@ -4510,8 +4512,8 @@ HACKER's INFO
         on  STDERR instead  STDOUT.  Therefore multiple  --v  and/or  --trace
         options behave slightly different.
 
-        No additional external files like  RC-FILE  or  DEBUG-FILE  are read
-        in CGI mode; they are silently ignored.
+        No additional external files like  RC-FILE or DEBUG-FILE  are read in
+        CGI mode; they are silently ignored.
         Some options are disabled in CGI mode  because they are dangerous  or
         don't make any sense.
 
@@ -4520,6 +4522,7 @@ HACKER's INFO
           There are  no  input data validation checks implemented herein. All
           input data is url-decoded once and then used verbatim.
           More advanced checks must be done outside before calling this tool.
+          Please see  o-saft.cgi  .
 
         It is not recommended to run this tool in CGI mode.
         You have been warned!
