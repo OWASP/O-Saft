@@ -6,9 +6,6 @@
 
 package Ciphers;
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.9 24/01/22 16:35:01";
-our $VERSION    = "24.01.24";   # official verion number of this file
-
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #  We believe it's better readable (severity 2 only).
 
@@ -31,17 +28,18 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
+my  $SID_ciphers= "@(#) Ciphers.pm 3.10 24/01/24 23:46:36";
+our $VERSION    = "24.01.24";   # official verion number of this file
+
 BEGIN {
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
     if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
         unshift(@INC, $ENV{'PWD'});
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
-    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
 use OText       qw(%STR);
@@ -719,7 +717,7 @@ sub find_keys   {
     #? find all hex key for which given cipher pattern matches in %ciphers
     my $pattern = shift;
     _trace("find_keys($pattern)");
-    return map({get_key($_);} grep(/$pattern/, get_names_list()));
+    return map({get_key($_);} grep{/$pattern/} get_names_list());
 } # find_keys
 
 sub find_names  {
@@ -729,7 +727,7 @@ sub find_names  {
     my $pattern =  shift;
        $pattern =~ s/:/|/g;
     _trace("find_names($pattern)");
-    return grep(/$pattern/, get_names_list());
+    return grep{/$pattern/} get_names_list();
 } # find_names
 
 sub find_name   {
@@ -1058,9 +1056,10 @@ sub show_description {
     #? print textual description for columns %ciphers hash
     _v_print((caller(0))[3]);
     local $\ = "\n";
-    print "
+    print << 'EoT';
+
 === internal data structure: overview of %ciphers ===
-";
+EoT
 
     my $hex = '0x0300003D'; # our sample
     my $idx = 0;
@@ -1225,6 +1224,7 @@ EoT
 sub show_all_names  {
     #? show aliases, constants or RFCs for cipher suite names depending on $type
     #  $type: name | const | rfc
+    ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
     my $type = shift;
     _v_print((caller(0))[3]);
     my $text = $type;
@@ -1238,13 +1238,14 @@ sub show_all_names  {
 "=       cipher name - cipher suite name as used in openssl
 =       RFC         - RFC numbers, where cipher suite is described" if ("rfc" eq $type);
     local $\ = "\n";
-    print "
+    print <<"EoT";
+
 === internal data structure: overview of various cipher suite ${text}s ===
 =
 =   description of columns:
 =       key         - hex key for cipher suite
 $txt_cols
-";
+EoT
     my $line = sprintf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
     printf("$line");
     printf("= %-13s\t%-37s\t%s\n", "key", "cipher name", "$text  names");
@@ -1502,6 +1503,7 @@ sub _ciphers_init   {
     my $fh = *DATA;
     my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..
     if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
+        ## no critic qw(InputOutput::RequireBriefOpen)
         open($fh, "<", $0) or warn($OText::STR{ERROR}, "013: open '$0' failed with: $!");
         while (<$fh>) { last if m(^__DATA__); } # skip to definition of ciphers
     }
@@ -1724,7 +1726,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.9 2024/01/22
+3.10 2024/01/24
 
 
 =head1 AUTHOR
