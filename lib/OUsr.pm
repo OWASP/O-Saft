@@ -6,11 +6,6 @@
 
 package OUsr;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.11 24/01/17 14:56:26";
-our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
-#_____________________________________________________________________________
-#___________________________________________________ package initialisation __|
-
 ## no critic qw(Documentation::RequirePodSections)
 # SEE Perl:perlcritic
 
@@ -19,6 +14,12 @@ our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 
 use strict;
 use warnings;
+
+my  $SID_ousr       = "@(#) OUsr.pm 3.12 24/01/24 23:15:15";
+our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
@@ -316,7 +317,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.11 2024/01/17
+3.12 2024/01/24
 
 =head1 AUTHOR
 
