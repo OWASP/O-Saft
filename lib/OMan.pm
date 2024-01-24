@@ -6,9 +6,6 @@
 
 package OMan;
 
-my  $SID_oman   = "@(#) OMan.pm 3.11 24/01/23 20:54:32";
-our $VERSION    = "24.01.24";
-
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 # NOTE:  This often happens in comma separated statements, see above.
 #        It may also happen after postfix statements.
@@ -55,22 +52,23 @@ use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
+my  $SID_oman   = "@(#) OMan.pm 3.12 24/01/24 23:19:08";
+our $VERSION    = "24.01.24";
+
 BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
         unshift(@INC, $ENV{'PWD'});
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}   @INC);
-    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 use Exporter qw(import);
 use base     qw(Exporter);
-our @EXPORT_OK  = qw( man_printhelp man_docs_write );
+our @EXPORT_OK  = qw( man_printhelp man_docs_write oman_done );
 
-use OText       qw(%STR);
+use OText    qw(%STR);
 use OCfg;
 use ODoc;
 use Ciphers;    # required if called standalone only
@@ -817,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.11'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.12'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2517,7 +2515,7 @@ sub _oman_main      {
     exit 0;
 } # _oman_main
 
-sub _oman_done  {}; # dummy to check successful include
+sub oman_done   {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -2696,7 +2694,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.11 2024/01/23
+3.12 2024/01/24
 
 
 =head1 AUTHOR
