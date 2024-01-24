@@ -9,7 +9,9 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.8 24/01/16 09:35:46";
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+
+my  $SID_odata  =  "@(#) OData.pm 3.9 24/01/24 23:13:02";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -22,7 +24,6 @@ BEGIN {
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
-    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
 }
 
 use OText       qw(%STR);
@@ -950,7 +951,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.8 2024/01/16
+3.9 2024/01/24
 
 =head1 AUTHOR
 
