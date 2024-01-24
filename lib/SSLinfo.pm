@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.5 24/01/24 20:14:39";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.6 24/01/24 20:28:26";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -456,7 +456,7 @@ matches the other parameters, in particular the host and port.
 
 =item $SSLinfo::verbose
 
-Print some verbose messages.
+Print some verbose messages. If set > 1 prints call to external openssl.
 
 =item $SSLinfo::user_agent
 
@@ -3360,6 +3360,7 @@ sub do_openssl($$$$)  {
     _trace("do_openssl($mode,$host,$port...).");
     _setcmd();
 #printf("#dbx# %s -> %s -> %s : %s : %s #\n", (caller(5))[3], (caller(3))[3], (caller(0))[3], $mode, $pipe);
+    _vprint("do_openssl $mode");
     if ('' eq $_openssl) {
         _trace("do_openssl($mode): WARNING: no openssl");
         return SSLINFO_HASH;
@@ -3409,7 +3410,7 @@ sub do_openssl($$$$)  {
     }
     $host = $port = '' if ($mode =~ m/^-?(ciphers)/);   # TODO: may be scary
     _trace("do_openssl($mode): echo '' | $_timeout $_openssl $mode $host:$port 2>&1"); 
-    _vprint("$_timeout $_openssl $mode $host:$port");
+    _vprint2("$_timeout $_openssl $mode $host:$port");
         # TODO: both, _trace and _vprint, may produce useless trailing : 
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
