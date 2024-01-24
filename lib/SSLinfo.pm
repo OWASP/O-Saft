@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.4 24/01/23 11:37:23";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.5 24/01/24 20:14:39";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -828,7 +828,8 @@ sub do_ssl_open($$$@);
 sub do_ssl_close($$);
 sub do_openssl($$$$);
 
-sub _verbose    { my $txt=shift; printf("$SSLinfo::prefix_verbose $txt\n") if (0 < $SSLinfo::verbose); return; }
+sub _vprint     { my $txt=shift; printf("$SSLinfo::prefix_verbose $txt\n") if (0 < $SSLinfo::verbose); return; }
+sub _vprint2    { my $txt=shift; printf("$SSLinfo::prefix_verbose $txt\n") if (1 < $SSLinfo::verbose); return; }
 
 sub _traceset   {
     $trace = $SSLinfo::trace;       # set global variable
@@ -2560,7 +2561,7 @@ sub do_ssl_open($$$@) {
     # TODO: no real value for _traceSSLbitmasks() 
 
     $SSLinfo::target_url =~ s:^\s*$:/:;# set to / if empty
-    _verbose("do_ssl_open " . ($host||'') . ":" . ($port||'') . $SSLinfo::target_url );
+    _vprint("do_ssl_open " . ($host||'') . ":" . ($port||'') . $SSLinfo::target_url );
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
     if ($cipher =~ m/^\s*$/) {
         $cipher = $_SSLinfo{'cipherlist'};
@@ -3408,8 +3409,8 @@ sub do_openssl($$$$)  {
     }
     $host = $port = '' if ($mode =~ m/^-?(ciphers)/);   # TODO: may be scary
     _trace("do_openssl($mode): echo '' | $_timeout $_openssl $mode $host:$port 2>&1"); 
-    _verbose("$_timeout $_openssl $mode $host:$port");
-        # TODO: both, _trace and _verbose, may produce useless trailing : 
+    _vprint("$_timeout $_openssl $mode $host:$port");
+        # TODO: both, _trace and _vprint, may produce useless trailing : 
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
