@@ -66,7 +66,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.2 24/01/22 22:36:51"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.5 24/01/24 22:54:09"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -179,14 +179,13 @@ BEGIN {
     _trace_info("BEGIN0  - start");
     sub _VERSION { return "24.01.24"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
     # SEE Perl:@INC
     if ("." ne $_path and not (grep{/^$_path$/} @INC)) {
         # add location of executable if not "."
         unshift(@INC, "$_path/lib");# lazy, no check if already there
-        unshift(@INC, $_path);
+        unshift(@INC,  $_path);
     }
     unshift(@INC, $_pwd)    if (1 > (grep{/^$_pwd$/}  @INC));
     unshift(@INC, "lib")    if (1 > (grep{/^lib$/}    @INC));
@@ -293,7 +292,7 @@ sub _vprint         {
     printf("%s%s\n", $STR{'INFO'}||'**INFO: ', join(" ", @txt));
         # hardcoded '**INFO: ' is necessary in standalone mode only
     return;
-} # _vprint {
+} # _vprint
 
 sub _vprint2        {
     #? print information when --v --v is given
@@ -301,7 +300,7 @@ sub _vprint2        {
     return if (1 >= _is_cfg_verbose());
     _vprint(@txt);
     return;
-} # _vprint {
+} # _vprint2
 
 sub _vprint_read    {
     #? print information which file will be read
@@ -615,7 +614,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.2"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.5"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3006,7 +3005,7 @@ sub _get_data0          {
         _warn("203: connection without SNI succeded with errors; errors ignored");
             # fails often with: Error in cipher list; SSL_CTX_set_cipher_list:no cipher match
             # TODO: don't show warning 203 if only this in SSLinfo::errors
-        if ((0 < $cfg{'verbose'}) or (1 < $cfg{'trace'})) {
+        if (_is_cfg_verbose() or (1 < $cfg{'trace'})) {
             _warn("206: $_") foreach SSLinfo::errors();
             # following OK, i.e. if SSLv2 or SSLv3 is not supported:
             #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
@@ -3238,11 +3237,16 @@ sub ciphers_prot_openssl {
                 # this may indicate wrong cipher name in our configuration
                 # or the server returned no data  or closed TCP connection
                 # or connection timed out, see _is_ssl_error()
+                # or OpenSSL 3.x is in use
                 # no complain for SSLv2, which may return an empty string
+                printf("\n") if _is_cfg_verbose();  # keep last printed line (see above)
                 _warn("411: checked $ssl cipher '$c' does not match returned cipher '$supported'");
             }
         }
-        if ($c =~ /^(?:TLS(?:13)?)/) {
+        if (($c =~ /^(?:TLS(?:13)?)/) and (3 gt $cmd{'version'})) {
+                # NOTE: Perl 5.9's "version" module would be more accurate for "gt"
+                # some older OpenSSL 0.9x, 1.x are picky with modern cipher names
+                printf("\n") if _is_cfg_verbose();  # keep last printed line (see above)
                 _warn("413: some openssl fail with '-cipher $c', the cipher may not be listed then");
         }
         push(@res, "$version:$supported") if ($supported ne "");
@@ -3250,7 +3254,7 @@ sub ciphers_prot_openssl {
         _vprint("  check cipher: $ssl:$c\t$yesno") if (1 < $cfg{'verbose'});
         # TODO: should close dangling sockets here
     } # foreach @ciphers
-    printf("\n") if (0 < _is_cfg_verbose());# keep last printed line (see above)
+    printf("\n") if _is_cfg_verbose();  # keep last printed line (see above)
     trace("connection errors: $cfg{'done'}->{'ssl_errors'}                  ");
         # spaces to overwrite remaining cipher suite names
     trace("ciphers_prot_openssl()\t= " . $#res . " @res }");
@@ -3278,7 +3282,7 @@ sub ciphers_scan_openssl {
         trace( " using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
-            if (_is_cfg_do('cipher') or $cfg{'verbose'} > 0) {
+            if (_is_cfg_do('cipher') or _is_cfg_verbose()) {
                 _warn_nosni("410:", $ssl, $cfg{'use'}->{'sni'});
                 # ciphers are collected for various checks, this would result
                 # in above warning, even then if  SSLv3 is not needed for the
@@ -3448,10 +3452,10 @@ sub check_certchars     {
             $checks{'ev+'}->{val}      .= $txt;
             $checks{'ev-'}->{val}      .= $txt;
             $checks{'dv'}->{val}       .= $txt;
-             if ($cfg{'verbose'} > 0) {
-                 $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
-                 _vprint2("  EV:  wrong characters in $label: $value");
-             }
+            if (_is_cfg_verbose()) {
+                $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
+                _vprint2("  EV:  wrong characters in $label: $value");
+            }
         }
     }
     trace("check_certchars() }");
@@ -4142,7 +4146,7 @@ sub checkcert($$)   {
     check_certchars($host, $port);
 
     # certificate
-    if ($cfg{'verbose'} > 0) { # TODO
+    if (_is_cfg_verbose()) { # TODO
         foreach my $label (qw(verify selfsigned)) {
             $value = $data{$label}->{val}($host);
             $checks{$label}->{val}   = $value if ($value eq "");
@@ -5985,7 +5989,7 @@ sub printciphersummary  {
         print_line($legacy, $host, $port, 'cipher_selected',
                    $data{'cipher_selected'}->{txt}, $OCfg::prot{'cipher_selected'});
     }
-    _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
+    _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if _is_cfg_verbose();
     trace("printciphersummary() }");
     return;
 } # printciphersummary
@@ -6150,7 +6154,7 @@ sub printdata($$$)      {
         if (_is_member( $key, \@{$cfg{'cmd-NL'}})) {
             # for +info print multiline data only if --v given
             # if command given explicitly, i.e. +text, print
-            if (_is_cfg_do('info') and (0 >= _is_cfg_verbose())) {
+            if (_is_cfg_do('info') and not _is_cfg_verbose()) {
                 _hint("use '--v' to print multiline data of '+$key' for '+info'");
                 next;
             }
@@ -6273,7 +6277,7 @@ sub printversion        {
     #? print program and module versions
     trace("printversion() {");
     local $\ = "\n";
-    if ($cfg{'verbose'} > 0) {
+    if (_is_cfg_verbose()) {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
@@ -6291,7 +6295,7 @@ sub printversion        {
     if (1.49 > $Net::SSLeay::VERSION) {
         _warn("851: ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
     } else {
-      if ($cfg{'verbose'} > 0) {
+      if (_is_cfg_verbose()) {
         # TODO: not all versions of Net::SSLeay have constants like
         # Net::SSLeay::SSLEAY_CFLAGS, hence we use hardcoded integers
         print "       ::SSLEAY_DIR                  " . Net::SSLeay::SSLeay_version(5);
@@ -6331,13 +6335,13 @@ sub printversion        {
     print "    directory with PEM files for CAs " . ($cfg{'ca_path'}     || $STR{UNDEF});
     print "    PEM format file with CAs         " . ($cfg{'ca_file'}     || $STR{UNDEF});
     print "    common paths to PEM files for CAs ". join(" ", @{$cfg{'ca_paths'}});
-    if ($cfg{'verbose'} > 0) {
+    if (_is_cfg_verbose()) {
         foreach my $p (@{$cfg{'ca_paths'}}) {
             print "       existing path to CA PEM files " . $p if -e $p;
         }
     }
     print "    common PEM filenames for CAs     " . join(" ", @{$cfg{'ca_files'}});
-    if ($cfg{'verbose'} > 0) {
+    if (_is_cfg_verbose()) {
         foreach my $p (@{$cfg{'ca_paths'}}) {
             foreach my $f (@{$cfg{'ca_files'}}) {
                 print "       existing PEM file for CA      " . "$p/$f" if -e "$p/$f";
@@ -6348,7 +6352,7 @@ sub printversion        {
     print "= $me =";
     print "    list of supported elliptic curves ". join(" ", @{$cfg{'ciphercurves'}});
     print "    list of supported ALPN, NPN      " . join(" ", $cfg{'protos_next'});
-    if ($cfg{'verbose'} > 0) {
+    if (_is_cfg_verbose()) {
         print "    list of supported ALPN       " . join(" ", @{$cfg{'protos_alpn'}});
         print "    list of supported NPN        " . join(" ", @{$cfg{'protos_npn'}});
     }
@@ -6358,8 +6362,8 @@ sub printversion        {
     my $cnt    = 0;
        $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
     print "    number of supported ciphers      " . $cnt;
-    print "    list of supported ciphers        " . join(" ", @ciphers) if (0 < $cfg{'verbose'});
-    _hint("use '--v' to get list of ciphers") if (0 == $cfg{'verbose'});
+    print "    list of supported ciphers        " . join(" ", @ciphers) if _is_cfg_verbose();
+    _hint("use '--v' to get list of ciphers") if not _is_cfg_verbose();
     print "    openssl supported SSL versions   " . join(" ", @{$cfg{'version'}});
     print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
     printversionmismatch();
@@ -6371,7 +6375,7 @@ sub printversion        {
     print "    used cipherrange                 " . $cfg{'cipherrange'};
     print "    number of supported ciphers      " . scalar @cnt;
     print "    default list of ciphers          " . $list;
-    if ($cfg{'verbose'} > 0) {
+    if (_is_cfg_verbose()) {
         # these lists are for special purpose, so with --v only
         print "    long list of ciphers         " . $cfg{'cipherranges'}->{'long'};
         print "    huge list of ciphers         " . $cfg{'cipherranges'}->{'huge'};
@@ -6408,8 +6412,8 @@ sub printversion        {
             # our own modues are in lib/ which is not part of the module name
             # (see list in foreach above), hence the additional || $INC{"lib/$d"}
     }
-    _hint("use '--v' to get list of all modules") if (0 == $cfg{'verbose'});
-    if ($cfg{'verbose'} > 0) {
+    _hint("use '--v' to get list of all modules") if not _is_cfg_verbose();
+    if (_is_cfg_verbose()) {
         print "\n= Loaded Modules =";
         foreach my $m (sort keys %INC) {
             $d = $INC{$m} || $STR{UNDEF};   # defensive progamming; sometimes undefined, reason unknown
@@ -6867,7 +6871,7 @@ while ($#argv >= 0) {
     next if ($arg =~ /^-post=(.*)/);
 
     # all options starting with  --usr or --user  are not handled herein
-    # push them on $cfg{'usr_args'} so they can be accessd in o-saft-*.pm
+    # push them on $cfg{'usr_args'} so they can be accessd in lib/O*.pm
     trace_arg("opt_usr? $arg");
     if ($arg =~ /^--use?r/) {
         $arg =~ s/^(?:--|\+)//; # strip leading chars
@@ -7837,7 +7841,7 @@ if (defined $SSLhello::VERSION) {
     $SSLhello::timeout          = $cfg{'sslhello'}->{'timeout'};
     $SSLhello::retry            = $cfg{'sslhello'}->{'retry'};
     $SSLhello::max_ciphers      = $cfg{'sslhello'}->{'maxciphers'};
-    $SSLhello::use_signature_alg = $cfg{'sslhello'}->{'usesignaturealg'};
+    $SSLhello::use_signature_alg= $cfg{'sslhello'}->{'usesignaturealg'};
     $SSLhello::usereneg         = $cfg{'sslhello'}->{'usereneg'};
     $SSLhello::useecc           = $cfg{'sslhello'}->{'useecc'};
     $SSLhello::useecpoint       = $cfg{'sslhello'}->{'useecpoint'};
@@ -7942,7 +7946,7 @@ foreach my $cmd (@{$cfg{'ignore-out'}}) {
 }
 if ($fail > 0) {
     _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
-    if (0 < $cfg{'verbose'}) {
+    if (_is_cfg_verbose()) {
         _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
         _warn("068:  given:  +"    . join(" +", @{$cfg{'do'}}));
     } else {
