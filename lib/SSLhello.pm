@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.6 24/01/17 14:56:38";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.7 24/01/24 23:32:27";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -126,11 +126,10 @@ BEGIN {
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     # define trace functions, required if called standalone
     if (not exists &_trace) {   # lazy check
-        sub _ytime     { my $now = 1; return (0 >= $SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
+        sub __ytime    { my $now = 1; return (0 >= $SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
               #$now = time() if ($cfg_out('time_absolut'));# not supported here
-        sub _y_me_ts   { return sprintf("#%s%s:", $SSLHELLO, _ytime()); }
-        sub __trace    { my @txt = @_; printf("%s %s", _y_me_ts(), "@txt"); return; }
-        sub _trace0($) { my @txt = @_; printf("%s",    _y_me_ts()) if ($SSLhello::trace > 0); return; }
+        sub __y_me_ts  { return sprintf("#%s%s:", $SSLHELLO, __ytime()); }
+        sub __trace    { my @txt = @_; printf("%s %s", __y_me_ts(), "@txt"); return; }
         sub _trace($)  { my @txt = @_; __trace($txt[0])     if ($SSLhello::trace > 0); return; }
         sub _trace1($) { my @txt = @_; __trace(@txt)        if ($SSLhello::trace > 1); return; }
         sub _trace2($) { my @txt = @_; __trace(@txt)        if ($SSLhello::trace > 2); return; }
