@@ -6,9 +6,6 @@
 
 package OTrace;
 
-my  $SID_trace      = "@(#) OTrace.pm 3.11 24/01/20 15:34:13";
-our $VERSION        = "24.01.24";
-
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_cfg_intern()
@@ -40,6 +37,9 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
+my  $SID_trace      = "@(#) OTrace.pm 3.12 24/01/24 23:21:12";
+our $VERSION        = "24.01.24";
+
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
@@ -52,14 +52,12 @@ our $prefix_verbose = "#". __PACKAGE__ . ":";
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
     if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
         unshift(@INC, $ENV{'PWD'});
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
-    unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
     if (not exists &_is_cfg_intern) {
         sub _is_member      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} @{$ref}); }
         sub _is_cfg_intern  { return _is_member(shift, \@{$cfg{'commands_int'}});}
@@ -1177,7 +1175,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.11 2024/01/20
+3.12 2024/01/24
 
 =head1 AUTHOR
 
