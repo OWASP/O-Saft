@@ -23,8 +23,9 @@
 #	tcsh	tcsh_completion_o-saft
 #	-------+-------------------------
 #
-# These files are located in the contrib/ directory. For installing and using
-# them, please see the files itself and the shell's manual pages.
+# These files are located in the  usr/  directory.
+# For installing and using them them, please see the files itself and the
+# shell's manual pages.
 
 
 ###############################################################################
@@ -39,11 +40,11 @@ o-saft.pl --help=OUTPUT
 o-saft.pl --help=RESULTS
 
 # For converting (postprocessing)  the results to other formats,  some filter
-# scripts are provided in the  contrib/  directory. The usage i.g. is like:
-#	o-saft.pl ... | contrib/filter-script
+# scripts are provided in the  usr/  directory. The usage i.g. is like:
+#	o-saft.pl ... | usr/filter-script
 # for example:
 
-o-saft.pl +cipher --header --enabled your.tld | contrib/HTML-table.awk
+o-saft.pl +cipher --header --enabled your.tld | usr/HTML-table.awk
 
 # If you write your own filter script, it's probably best to use  o-saft.pl's
 # --legacy=quick  option, which separates label and value by a TAB character.
@@ -54,7 +55,7 @@ o-saft.pl +cipher --header --enabled your.tld | contrib/HTML-table.awk
 # to align in columns, followed by a TAB character (aka \t aka 0x09) followed
 # by the value (the result).
 #
-# For practical examples, please see  contrib/filter_examples .
+# For practical examples, please see  usr/filter_examples .
 
 
 ###############################################################################
@@ -62,26 +63,26 @@ o-saft.pl +cipher --header --enabled your.tld | contrib/HTML-table.awk
 ### Postprocessing output with colours
 ###
 
-# To colourize the results, the script  contrib/bunt.pl  (or contrib/bunt.sh)
-# can be used. It generates ANSI codes for the termnal. Example:
+# To colourize the results,  the script  usr/bunt.pl  (or usr/bunt.sh) can be
+# used. It generates ANSI codes for the termnal. Example:
 
-o-saft.pl some.tld +check | contrib/bunt.pl
+o-saft.pl some.tld +check | usr/bunt.pl
 
 # Sometimes colours need to be adapted, i.e. for red-green visual impairments
 # or when a light background is used.
 
-o-saft.pl some.tld +check | contrib/bunt.pl --blind
-o-saft.pl some.tld +check | contrib/bunt.pl --purple
+o-saft.pl some.tld +check | usr/bunt.pl --blind
+o-saft.pl some.tld +check | usr/bunt.pl --purple
 
 # If the  "aha - Ansi HTML Adapter"  (from https://github.com/theZiz/aha)  is
 # available, the output can be converted to an HTML page:
 
-o-saft.pl some.tld +check | contrib/bunt.pl | aha -w -b -t "some.tld +check" > some.tld_check.html
+o-saft.pl some.tld +check | usr/bunt.pl | aha -w -b -t "some.tld +check" > some.tld_check.html
 
 # If  "ansi2html"  is availabe (sometimes in package colorized-logs),  output
 # can be converted to an HTML page:
 
-o-saft.pl some.tld +check | contrib/bunt.pl | ansi2html > some.tld_check.html
+o-saft.pl some.tld +check | usr/bunt.pl | ansi2html > some.tld_check.html
 
 
 ###############################################################################
@@ -91,11 +92,11 @@ o-saft.pl some.tld +check | contrib/bunt.pl | ansi2html > some.tld_check.html
 
 # Replace values  yes  and  no  by character symbols.
 
-o-saft.pl some.tld +check | contrib/symbol.pl
+o-saft.pl some.tld +check | usr/symbol.pl
 
 # Just print data from certificate
 
-o-saft.pl some.tld +info  | contrib/Cert-beautify.pl
+o-saft.pl some.tld +info  | usr/Cert-beautify.pl
 
 
 ###############################################################################
