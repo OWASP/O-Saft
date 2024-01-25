@@ -28,7 +28,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.10 24/01/24 23:46:36";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.11 24/01/25 22:50:17";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN {
@@ -1501,7 +1501,7 @@ sub _ciphers_init   {
     # example:   #0     #1      #2      #3      #4          #5      #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $fh = *DATA;
-    my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..
+    my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..."
     if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
         ## no critic qw(InputOutput::RequireBriefOpen)
         open($fh, "<", $0) or warn($OText::STR{ERROR}, "013: open '$0' failed with: $!");
@@ -1726,7 +1726,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.10 2024/01/24
+3.11 2024/01/25
 
 
 =head1 AUTHOR
