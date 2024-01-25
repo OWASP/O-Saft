@@ -9,7 +9,7 @@
 #? DESCRIPTION
 #?      Calls  o-saft.pl or o-saft.tcl  with all specified arguments.
 #?      o-saft.pl's  output is piped to the command specified with the  -post=
-#?      option. The program given there must be located in contrib/ directory,
+#?      option. The program given there must be located in  usr/ directory, or
 #?      or must be found via  PATH  environment variable. The default is  cat,
 #?      which means that all output is on  STDOUT.
 #?
@@ -19,7 +19,7 @@
 #?      -n      just show command to be executed
 #?      -help=* grep for *  in 'o-saft.pl --help'
 # TODO: should also grep in --help=commads and some other programs
-#?      -list   list available programs in ./contrib/ directory
+#?      -list   list available programs in ./usr/ directory
 #?      -cli    start o-saft.pl  with remaining arguments; this is the default
 #?      -cgi    start o-saft.cgi with remaining arguments
 #?      -gui    start o-saft.tcl with remaining arguments
@@ -33,7 +33,7 @@
 #       -prg="program"
 #               use program instead of  o-saft.pl; intended for debugging only
 #?      -post="program [options]"
-#?              program in ./contrib to pipe output of  o-saft.pl  to
+#?              program in ./usr to pipe output of  o-saft.pl  to
 #?      -colour alias for  -post=bunt.pl
 #?      -blind  alias for  -post='bunt.pl --blind'
 #?      -line   alias for  -post='bunt.pl --line'
@@ -71,7 +71,7 @@
 #?          $0 -docker -gui target
 #?
 #?      Specify program to execute script (if shebang in script file fails):
-#?          $0 -docker -post='perl contrib/bunt.pl' ' +cmd --option target
+#?          $0 -docker -post='perl usr/bunt.pl' ' +cmd --option target
 #?
 # 
 # Hacker's INFO
@@ -79,7 +79,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.30 23/11/15 10:53:39
+#?      @(#) o-saft 3.1 24/01/26 00:58:34
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -103,7 +103,7 @@ dok=$dir/$ich-docker
 [ ! -x "$cgi" ] && cgi=$ich.cgi
 [ ! -x "$dok" ] && dok=$ich-docker
 
-contrib=$dir/contrib
+usr=$dir/usr
 try=
 post="cat"      # default, avoids special handling if -post= missing
 post_args=
@@ -136,7 +136,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "1.30"; exit 0; ;;
+        +VERSION)       echo "3.1"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -144,7 +144,7 @@ EoT
             post_args="--color -i -C 3 "
             ;;
         -list)
-            for exe in $contrib/* ; do
+            for exe in $usr/* ; do
                 [ -d "$exe" ] && continue
                 [ -x "$exe" ] && echo "$exe"
             done
@@ -159,24 +159,24 @@ EoT
         -docker | --docker) docker=1    ; ;;
         -id*)           docker_id="$1"  ; ;;
         -tag*)          docker_tag="$1" ; ;;
-        -colour | --colour) post="$contrib/bunt.pl" ; ;;
-        -color  | --color)  post="$contrib/bunt.pl" ; ;;
-        -blind  | --blind)  post="$contrib/bunt.pl --blind" ; ;;
-        -line   | --line)   post="$contrib/bunt.pl --line"  ; ;;
+        -colour | --colour) post="$usr/bunt.pl" ; ;;
+        -color  | --color)  post="$usr/bunt.pl" ; ;;
+        -blind  | --blind)  post="$usr/bunt.pl --blind" ; ;;
+        -line   | --line)   post="$usr/bunt.pl --line"  ; ;;
         -less   | --less)   post="less" ; ;;
         -more   | --more)   post="more" ; ;;
         -prg=*) prg="`expr "$1" ':' '-prg=\(.*\)'`" ; ;;  # for debugging only
         -post=*)
             post="`expr "$1" ':' '-post=\(.*\)'`" ;
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
-            [ -x "$contrib/$cmd" ] && post="$contrib/$post"
+            [ -x "$usr/$cmd" ] && post="$usr/$post"
             shift
             break
             ;;
         --post=*)
             post="`expr "$1" ':' '--post=\(.*\)'`" ;
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
-            [ -x "$contrib/$cmd" ] && post="$contrib/$post"
+            [ -x "$usr/$cmd" ] && post="$usr/$post"
             shift
             break
             ;;
