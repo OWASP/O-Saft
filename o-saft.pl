@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.9 24/01/25 10:47:48"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.10 24/01/26 00:26:24"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -369,7 +369,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.9"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.10"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1251,7 +1251,7 @@ sub _load_modules       {
 
 sub _check_modules      {
     # check for minimal version of a module;
-    # verbose output with --v=2 ; uses string "yes" for contrib/bunt.*
+    # verbose output with --v=2 ; uses string "yes" for usr/bunt.*
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # SEE Perl:import include
     trace("_check_modules() {");
@@ -1409,7 +1409,7 @@ sub _enable_functions   {
 sub _check_functions    {
     # check for required functionality
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
-    # verbose messages with --v=2 ; uses string "yes" for contrib/bunt.*
+    # verbose messages with --v=2 ; uses string "yes" for usr/bunt.*
 
     trace("_check_functions() {");
     my $txt = "";
@@ -8284,7 +8284,7 @@ in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
 format in the  __DATA__ section of each file. The overhead compared to the
 %man_text  variable is just the Perl module file with its  POD texts.  The
 disadvantage is, that it's more complicated to import the data in a stand-
-alone script, see  contrib/gen_standalone.sh .
+alone script, see  usr/gen_standalone.sh .
 
 =head3 Since VERSION 17.06.17
 
@@ -9112,7 +9112,7 @@ does not exist.
 Please refer to the  INSTALLATION  section,  in particular the sub-section
 Stand-alone Executable  there, for more details on generating  stand-alone
 scripts.
-Generating a stand-alone script is done by contrib/gen_standalone.sh .
+Generating a stand-alone script is done by usr/gen_standalone.sh .
 
 
 =head2 Note:root-CA
