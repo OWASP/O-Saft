@@ -86,9 +86,9 @@ Sends HTTP header:
 
   Content-type: text/html;charset=utf-8
 
-and convert output to HTML format using contrib/HTML-table.awk .
-Note that  contrib/HTML-table.awk  will be executed using  /usr/bin/gawk
-which must be installed on the system, if not, empty result is returned.
+and convert output to HTML format using usr/HTML-table.awk .
+Note that usr/HTML-table.awk will be executed using  /usr/bin/gawk which
+must be installed on the system, if not, empty result is returned.
 
 =item --content-type=html
 
@@ -141,7 +141,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 1.73 24/01/22 22:54:36";
+my $SID_cgi = "@(#) o-saft.cgi 1.74 24/01/26 00:49:48";
 my $VERSION = '24.01.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -236,7 +236,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.73\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 1.74\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -504,9 +504,9 @@ if ($me =~/\.cgi$/) {
 		# 11/2021 ah: experimental: generate HTML output
 		# need to use system, as exec can't pipe
 		my $cmd = join(" ", $osaft, @argv);
-		my $awk = 'contrib/HTML-table.awk'; # default HTML5, see script
-		   $awk = 'contrib/HTML4-table.awk' if ($qs =~ m/--html4/);
-		   $awk = 'contrib/HTML5-table.awk' if ($qs =~ m/--html5/);
+		my $awk = 'usr/HTML-table.awk'; # default HTML5, see script
+		   $awk = 'usr/HTML4-table.awk' if ($qs =~ m/--html4/);
+		   $awk = 'usr/HTML5-table.awk' if ($qs =~ m/--html5/);
 		   # 03/2023 ah: not sure if HTML4 necessary, we provide it anyway
 		#dbx# print "# system($cmd | /usr/bin/gawk -f $mepath/$awk)\n";
 		system("$cmd | /usr/bin/gawk -f $mepath/$awk");
