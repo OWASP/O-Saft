@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.8 24/01/25 10:01:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.9 24/01/25 10:47:48"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -369,7 +369,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.8"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.9"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7583,6 +7583,9 @@ if (defined $SSLhello::VERSION) {
     if (1 > $cfg{'traceME'}) {
         $SSLhello::trace        = $cfg{'trace'};
     }
+    $SSLhello::verbose          = $cfg{'verbose'};
+    $SSLhello::prefix_verbose   = "$STR{'INFO'}  SSLhello: ";
+#   $SSLhello::prefix_trace     = ""; # set in module
     $SSLhello::traceTIME        = $cfg{'out'}->{'traceTIME'};
     $SSLhello::experimental     = $cfg{'use'}->{'experimental'};
     $SSLhello::usemx            = $cfg{'use'}->{'mx'};
