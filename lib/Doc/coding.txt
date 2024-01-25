@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 3.1 24/01/23 11:58:14
+# SID   @(#) coding.txt 3.2 24/01/26 00:40:14
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -126,7 +126,7 @@ HACKER's INFO
 
           *  Annotations at end of $0
           *  .perlcriticrc
-          *  contrib/critic.sh .
+          *  usr/critic.sh .
 
         All tests can be done with make, see:
 
@@ -229,7 +229,7 @@ HACKER's INFO
           #?            Description of sub.
           #|            Code sections (documents program flow).
           ##            Comments used by third-party programs  (for example:
-                        contrib/gen_standalone.sh, perlcritic).
+                        usr/gen_standalone.sh, perlcritic).
           # sub-name    Name of sub behind the closing bracket of the sub.
 
         Comments usually precede the code line(s) or are placed at end of the
@@ -484,7 +484,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23 
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 3.1 24/01/23 11:58:14";
+            my $SID = "coding.txt 3.2 24/01/26 00:40:14";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
