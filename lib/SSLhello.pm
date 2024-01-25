@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.9 24/01/25 10:44:28";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.11 24/01/25 23:00:19";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -123,6 +123,9 @@ $SSLhello::noDataEqNoCipher     = 1; # 1= for some TLS intolerant servers 'NoDat
 $SSLhello::extensions_by_prot   = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
 $SSLhello::check_extensions     = [ qw(supported_groups) ]; # List of extensions to be checked for all supported params
 $SSLhello::extensions_max_values= 50; # max retries to check for additional variables of extensions. Acts as watchdog protecting against endless loops while checking for extensions
+# avoid Perl warning "... used only once: possible typo ..."
+my $dumm = $SSLhello::prefix_trace;
+   $dumm = $SSLhello::prefix_verbose;
 
 BEGIN {
     # section required only when called as: lib/SSLhello.pm or ./SSLhello.pm
@@ -1800,7 +1803,14 @@ sub checkSSLciphers ($$$@) {
     } else { # SSL3, TLS, DTLS .... check by the cipher
         $cipher_spec = ""; # collect cipher specs
         _trace4_ ("\n");
+        my $tot = scalar(@cipher_str_array);;
+        my $cnt = 0;
+        my $len = 0;
         foreach my $cipher_str (@cipher_str_array) {
+            $cnt++;
+            $len = ($len < length($cipher_str)) ? 1 : ($len - length($cipher_str));
+            printf("$STR{'INFO'}  cipher %4d/%d %s%s\n", $cnt, $tot, $cipher_str, " "x $len) if (1 < $SSLhello::verbose);
+                # TBD: \r not possible due to too many following messages
             _trace5 (" checkSSLciphers: add cipher >$cipher_str< to cipher-string -> ");
             if ($cipher_str !~ /0x02/x) { # No SSL2 cipher
                 ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
