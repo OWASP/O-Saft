@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.3 24/01/25 23:54:05
+# SID   @(#) help.txt 3.4 24/01/26 00:43:44
 
 NAME
 
@@ -1255,7 +1255,7 @@ OPTIONS
           * 'openssl'   - scan for ciphers using external openssl executable
           * 'ssleay'    - scan for ciphers using  IO::Socket and  Net::SSLeay
           * 'dump'      - same as 'intern' but print  all cipher information,
-                          useful when postprocessed by contrib/* tools
+                          useful when postprocessed by usr/* tools
 
       --socket-reuse
 
@@ -3108,7 +3108,7 @@ OUTPUT
               Label of the performed checkTABresult
 
         More examples for postprocessing the output can be found here:
-              https://github.com/OWASP/O-Saft/blob/master/contrib
+              https://github.com/OWASP/O-Saft/blob/master/usr
 
 #    Overview of Special Formattings
 #        #----------------------+---------------+----------------
@@ -3302,7 +3302,7 @@ CUSTOMISATION
         it can simplify your life, somehow.
 
         There exist customisations for some commonly used shells,  please see
-        the files in the ./contrib/ directory.
+        the files in the ./usr/ directory.
 
     COMMANDS
 
@@ -3929,7 +3929,7 @@ INSTALLATION
     OpenSSL
 
         Currently (since 18.06.18) it is recommend to build openssl using:
-              contrib/install_openssl.sh
+              usr/install_openssl.sh
 
         Other possibilities are:
           * compiling openssl using following sources
@@ -3974,7 +3974,7 @@ INSTALLATION
         files as well as the include files in  /usr/local/ .
         The shared version of the libraries are necessary for  Net::SSLeay.
 
-        For a more complete build, plese see:  contrib/install_openssl.sh .
+        For a more complete build, plese see:  usr/install_openssl.sh .
 
         OpenSSL.org
         Building openssl from the offical  openssl.org  sources requires some
