@@ -13,7 +13,7 @@ LABEL \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
 	SOURCE3="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz" \
-	SID="@(#) Dockerfile.alpine:3.6 1.1 17/07/25 23:01:19" \
+	SID="@(#) ٱ^ 3.1 24/01/26 00:33:37" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV o-saft-docker-build "Dockerfile 17.06.17"                                     
@@ -21,7 +21,7 @@ ENV OSAFT_DIR	/O-Saft
 ENV OPENSSL_DIR	/openssl
 ENV OPENSSL_VERSION  1.0.2-chacha
 ENV TERM xterm
-ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
+ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
 
 # Install required packages
 RUN apk update && \
@@ -41,7 +41,7 @@ RUN \
 	\
 	tar   -xzf o-saft.tgz			&& \
 	chown -R root:root   $OSAFT_DIR		&& \
-	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
+	chown -R osaft:osaft $OSAFT_DIR/usr	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl	&& \
 	mv       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
 	sed -e "s:^#--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" \
