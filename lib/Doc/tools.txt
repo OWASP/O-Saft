@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 3.1 24/01/23 13:22:54
+# SID   @(#) tools.txt 3.2 24/01/26 00:41:43
 
 NAME
 
@@ -31,15 +31,15 @@ SYNOPSIS
 
         INSTALL.sh
 
-        contrib/install_openssl.sh
+        usr/install_openssl.sh
 
-        contrib/install_perl_modules.pl
+        usr/install_perl_modules.pl
 
-        contrib/gen_standalone.sh
+        usr/gen_standalone.sh
 
-        contrib/cipher_check.sh
+        usr/cipher_check.sh
 
-        contrib/critic.sh
+        usr/critic.sh
 
         where  [COMMANDS]  and  [OPTIONS]  are described in the corresponding
         documentation of the tool.
@@ -61,8 +61,8 @@ CONCEPTS
           CGI             o-saft.cgi      # use o-saft.pl from web server
           VM              o-saft-docker   # use o-saft.pl inside docker
           CLI             checkAllCiphers.pl    # simple quick cipher check
-          Postprocess     contrib/*       # prostprocessor tools
-          Advanced Tools  contrib/*       # use o-saft.pl in advanced modes
+          Postprocess     usr/*           # prostprocessor tools
+          Advanced Tools  usr/*           # use o-saft.pl in advanced modes
           Installation    INSTALL.sh      # simple installation tool
           Development     make            # functional testing
           Development     ....            # ... comming soon
@@ -131,25 +131,25 @@ TOOLS
         Various postprocessors exist.  They all change the  content or format
         of o-saft.pl's output. See the files itself what they do.
 
-          contrib/bunt.pl
-          contrib/Cert-beautify.pl
-          contrib/symbol.pl
-          contrib/*.awk
-          contrib/* TBD
+          usr/bunt.pl
+          usr/Cert-beautify.pl
+          usr/symbol.pl
+          usr/*.awk
+          usr/* TBD
 
         They are used in general like:
 
-          o-saft.pl ... target | contrib/.....
+          o-saft.pl ... target | usr/.....
 
         Formatting quick cipher check:
 
           checkAllCiphers.pl target > target-alerts.csv
-          contrib/alertscript.pl --csv=target-alerts.csv
+          usr/alertscript.pl --csv=target-alerts.csv
 
     Advanced Tools
         Check a target for ciphers with various methods:
 
-          contrib/cipher_check.sh
+          usr/cipher_check.sh
 
         In legacy systems,  or when resources are limited,  a special version
         o-saft-standalone.pl  can be used.  It is a single Perl script, which
@@ -162,11 +162,11 @@ TOOLS
         can also be used to check and cleanup the installation.
 
           INSTALL.sh
-          contrib/install_openssl.sh
-          contrib/install_perl_modules.pl
-          contrib/distribution_install.sh
-          contrib/*_completion_o-saft
-          contrib/zap_config.*
+          usr/install_openssl.sh
+          usr/install_perl_modules.pl
+          usr/distribution_install.sh
+          usr/*_completion_o-saft
+          usr/zap_config.*
 
     Development
 
@@ -176,7 +176,7 @@ TOOLS
         Other files for development are:
           o-saft-docker-dev
           t/.perlcriticrc
-          contrib/critic.sh
+          usr/critic.sh
 
 
 CUSTOMISATION
@@ -192,15 +192,15 @@ CUSTOMISATION
            lib/o-saft-img.tcl
 
         * o-saft.cgi
-           none, but see contrib/o-saft.php
+           none, but see usr/o-saft.php
 
         * o-saft-docker
            none, but see o-saft-docker-dev
 
         * SHELL TWEAKS
-           contrib/bash_completion_o-saft
-           contrib/fish_completion_o-saft
-           contrib/tcsh_completion_o-saft
+           usr/bash_completion_o-saft
+           usr/fish_completion_o-saft
+           usr/tcsh_completion_o-saft
 
 
 EXAMPLES
@@ -213,7 +213,7 @@ EXAMPLES
           o-saft          +check --header some.tld
 
         Using postprocessors is done as usual:
-          o-saft.pl       +check --header some.tld | contrib/bunt.pl
+          o-saft.pl       +check --header some.tld | usr/bunt.pl
         which is the same as:
           o-saft          -post=bunt.pl +check --header some.tld
 
@@ -222,8 +222,8 @@ EXAMPLES
           o-saft -docker  -post=bunt.pl +check --header some.tld
           o-saft-docker   -post=bunt.pl +check --header some.tld
         or do it the traditional way with postprocessing on the calling host:
-          o-saft -docker  +check --header some.tld | contrib/bunt.pl
-          o-saft-docker   +check --header some.tld | contrib/bunt.pl
+          o-saft -docker  +check --header some.tld | usr/bunt.pl
+          o-saft-docker   +check --header some.tld | usr/bunt.pl
 
         The GUI  o-saft.tcl  can also be run in docker:
           o-saft -docker  -gui
