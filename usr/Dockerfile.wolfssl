@@ -48,7 +48,7 @@
 #?              Default:${WOLFSSL_DIR}/lib
 #?          PATH
 #?              PATH for shell, set to:
-#?                  $OSAFT_DIR:$OSAFT_DIR/contrib:$WOLFSSL_DIR/bin:$PATH
+#?                  $OSAFT_DIR:$OSAFT_DIR/usr:$WOLFSSL_DIR/bin:$PATH
 #?          WORK_DIR
 #?              Directory where to build the packages (used for Dockerfile's
 #?              WORKDIR  dierective.
@@ -90,9 +90,9 @@ LABEL \
 	\
 	DESCRIPTION="Build docker image with wolfssl"	\
 	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile.wolfssl -t o-saft/wolfssl:$OSAFT_VERSION -t o-saft/wolfssl ." \
-	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/contrib/Dockerfile.wolfssl" \
+	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/usr/Dockerfile.wolfssl" \
 	SOURCE2="$OSAFT_VM_SRC_WOLFSSL" \
-	SID="@(#) Dockerfile.wolfssl 1.1 18/10/15 23:38:12" \
+	SID="@(#) h“ç` 3.1 24/01/26 00:31:04" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
