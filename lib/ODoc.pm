@@ -24,7 +24,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.8 24/01/17 12:58:22";
+my  $SID_odoc   = "@(#) ODoc.pm 3.9 24/01/26 00:45:23";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -88,14 +88,14 @@ sub _replace_var    {
 
 sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubroutines)
     #? return help.txt with path in standalone mode
-    # o-saft-standalone.pl may be in installtion path or in contrib/ directory
+    # o-saft-standalone.pl may be in installtion path or in usr/ directory
     # hence various places for help.txt are checked
     my $file = shift;
     my $orig = $file;
     my $name = $file;
        $name =~ s#(.*[/\\]+)##g;
     $file =~ s#^\.\./##;
-    $file =~ s#contrib/##;              # remove if in path
+    $file =~ s#usr/##;          # remove if in path
     $file =~ s#/Doc/#/lib/Doc/# if (not -e $file);  # try this one ..
     $file =  "lib/Doc/$name"    if (not -e $file);  # try this one ..
     $file =  ""         if (not -e $file);
@@ -641,7 +641,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.8 2024/01/17
+3.9 2024/01/26
 
 
 =head1 AUTHOR
