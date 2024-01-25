@@ -14,9 +14,9 @@
 #?
 #?      Depending on the operating system and/or it's configuration,  the awk
 #?      scripts need to be used like:
-#?           gawk -f contrib/script
+#?           gawk -f usr/script
 #?      instead of (as shown in our examples):
-#?           contrib/script
+#?           usr/script
 #?
 
 ###############################################################################
@@ -24,14 +24,14 @@
 ### Using filters (overview)
 ###
 
-o-saft.pl +cipher localhost | contrib/bunt.pl
-o-saft.pl +info   localhost | contrib/HTML-simple.awk
-o-saft.pl +check  localhost | contrib/HTML-table.awk
-o-saft.pl +info   localhost --tracekey --tab | contrib/JSON-array.awk 
-o-saft.pl +info   localhost --tracekey --tab | contrib/JSON-struct.awk 
-o-saft.pl +check  localhost --tracekey --tab | contrib/JSON-array.awk 
-o-saft.pl +info   localhost | contrib/XML-value.awk
-o-saft.pl +check  localhost | contrib/XML-attribute.awk
+o-saft.pl +cipher localhost | usr/bunt.pl
+o-saft.pl +info   localhost | usr/HTML-simple.awk
+o-saft.pl +check  localhost | usr/HTML-table.awk
+o-saft.pl +info   localhost --tracekey --tab | usr/JSON-array.awk 
+o-saft.pl +info   localhost --tracekey --tab | usr/JSON-struct.awk 
+o-saft.pl +check  localhost --tracekey --tab | usr/JSON-array.awk 
+o-saft.pl +info   localhost | usr/XML-value.awk
+o-saft.pl +check  localhost | usr/XML-attribute.awk
 
 
 ###############################################################################
@@ -56,7 +56,7 @@ o-saft.pl +info localhost --legacy=compact --no-header --sep=,
 
 ### +info output: label and value per line (full html)
 
-o-saft.pl +info localhost | contrib/HTML-simple.awk
+o-saft.pl +info localhost | usr/HTML-simple.awk
 
 # or
 
@@ -70,7 +70,7 @@ o-saft.pl +info --legacy=quick localhost \
 
 ### +check output: label and value in table; header lines
 
-o-saft.pl +check localhost | contrib/HTML-table.awk
+o-saft.pl +check localhost | usr/HTML-table.awk
 
 # or
 
@@ -88,8 +88,8 @@ o-saft.pl +check --legacy=quick localhost \
 o-saft.pl +info --legacy=quick localhost \
 | gawk 'BEGIN{FS="\t";print "info=["}(NF>0){gsub(/\\/,"&&");gsub(/"/,"\\\"");}/^\s*$/{next}($1~/^[#=]/){print "// "$0;next}{printf(" \"%s\": \"%s\",\n",$1,$NF)}END{print " dumm:\"dumm\"\n];"}'
 
-o-saft.pl +info --tracekey --tab localhost | contrib/JSON-array.awk 
-o-saft.pl +info --tracekey --tab localhost | contrib/JSON-struct.awk 
+o-saft.pl +info --tracekey --tab localhost | usr/JSON-array.awk 
+o-saft.pl +info --tracekey --tab localhost | usr/JSON-struct.awk 
 
 ###############################################################################
 ###
@@ -98,7 +98,7 @@ o-saft.pl +info --tracekey --tab localhost | contrib/JSON-struct.awk
 
 ### +info output: label and value per line
 
-o-saft.pl +info localhost | contrib/XML-value.awk
+o-saft.pl +info localhost | usr/XML-value.awk
 
 # or
 
@@ -119,7 +119,7 @@ o-saft.pl +info --legacy=quick localhost \
 
 ### +info output: one line per label and value as attribute
 
-o-saft.pl +info localhost | contrib/XML-attribute.awk
+o-saft.pl +info localhost | usr/XML-attribute.awk
 
 # or
 
