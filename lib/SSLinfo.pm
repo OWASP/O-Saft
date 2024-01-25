@@ -56,7 +56,7 @@ use constant {
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
 };
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.6 24/01/24 20:28:26";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.7 24/01/25 22:48:23";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -136,9 +136,7 @@ $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
 $SSLinfo::slowly        = 0; # passed to Net::SSLeay::slowly
 
-$Net::SSLeay::slowly       = 0;
-
-# avoid perl warning "... used only once: possible typo ..."
+# avoid Perl warning "... used only once: possible typo ..."
 my $dumm_1  = $SSLinfo::linux_debug;
 my $dumm_2  = $SSLinfo::proxyport;
 my $dumm_3  = $SSLinfo::proxypass;
