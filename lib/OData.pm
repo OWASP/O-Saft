@@ -11,7 +11,7 @@ use warnings;
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-my  $SID_odata  =  "@(#) OData.pm 3.9 24/01/24 23:13:02";
+my  $SID_odata  =  "@(#) OData.pm 3.10 24/01/25 00:30:29";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -182,55 +182,55 @@ our %data   = (         # connection and certificate details
     # +command                    => value from SSLinfo::*()                               => label to be printed
     #----------------------+-------------------------------------------------------------+-----------------------------------
     'cn_nosni'          => {'val' => "",                                                  'txt' => "Certificate CN without SNI"},
-    'pem'               => {'val' => sub { SSLinfo::pem(             $_[0], $_[1])}, 'txt' => "Certificate PEM"},
-    'text'              => {'val' => sub { SSLinfo::text(            $_[0], $_[1])}, 'txt' => "Certificate PEM decoded"},
-    'cn'                => {'val' => sub { SSLinfo::cn(              $_[0], $_[1])}, 'txt' => "Certificate Common Name"},
-    'subject'           => {'val' => sub { SSLinfo::subject(         $_[0], $_[1])}, 'txt' => "Certificate Subject"},
-    'issuer'            => {'val' => sub { SSLinfo::issuer(          $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
-    'altname'           => {'val' => sub { SSLinfo::altname(         $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
-    'cipher_selected'   => {'val' => sub { SSLinfo::selected(        $_[0], $_[1])}, 'txt' => "Selected Cipher"},  # SEE Note:Selected Cipher
-    'ciphers_local'     => {'val' => sub { SSLinfo::cipher_openssl()              }, 'txt' => "Local SSLlib Ciphers"},
+    'pem'               => {'val' => sub { SSLinfo::pem(               $_[0], $_[1])}, 'txt' => "Certificate PEM"},
+    'text'              => {'val' => sub { SSLinfo::text(              $_[0], $_[1])}, 'txt' => "Certificate PEM decoded"},
+    'cn'                => {'val' => sub { SSLinfo::cn(                $_[0], $_[1])}, 'txt' => "Certificate Common Name"},
+    'subject'           => {'val' => sub { SSLinfo::subject(           $_[0], $_[1])}, 'txt' => "Certificate Subject"},
+    'issuer'            => {'val' => sub { SSLinfo::issuer(            $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
+    'altname'           => {'val' => sub { SSLinfo::altname(           $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
+    'cipher_selected'   => {'val' => sub { SSLinfo::selected(          $_[0], $_[1])}, 'txt' => "Selected Cipher"},  # SEE Note:Selected Cipher
+    'ciphers_local'     => {'val' => sub { SSLinfo::cipher_openssl()                }, 'txt' => "Local SSLlib Ciphers"},
     'ciphers'           => {'val' => sub { join(" ",  SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'             => {'val' => sub { join(" .. ", SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
-    'before'            => {'val' => sub { SSLinfo::before(          $_[0], $_[1])}, 'txt' => "Certificate valid since"},
-    'after'             => {'val' => sub { SSLinfo::after(           $_[0], $_[1])}, 'txt' => "Certificate valid until"},
-    'aux'               => {'val' => sub { SSLinfo::aux(             $_[0], $_[1])}, 'txt' => "Certificate Trust Information"},
-    'email'             => {'val' => sub { SSLinfo::email(           $_[0], $_[1])}, 'txt' => "Certificate Email Addresses"},
-    'pubkey'            => {'val' => sub { SSLinfo::pubkey(          $_[0], $_[1])}, 'txt' => "Certificate Public Key"},
-    'pubkey_algorithm'  => {'val' => sub { SSLinfo::pubkey_algorithm($_[0], $_[1])}, 'txt' => "Certificate Public Key Algorithm"},
-    'pubkey_value'      => {'val' => sub { ::__SSLinfo('pubkey_value',   $_[0], $_[1])}, 'txt' => "Certificate Public Key Value"},
-    'modulus_len'       => {'val' => sub { SSLinfo::modulus_len(     $_[0], $_[1])}, 'txt' => "Certificate Public Key Length"},
-    'modulus'           => {'val' => sub { SSLinfo::modulus(         $_[0], $_[1])}, 'txt' => "Certificate Public Key Modulus"},
-    'modulus_exponent'  => {'val' => sub { SSLinfo::modulus_exponent($_[0], $_[1])}, 'txt' => "Certificate Public Key Exponent"},
-    'serial'            => {'val' => sub { SSLinfo::serial(          $_[0], $_[1])}, 'txt' => "Certificate Serial Number"},
-    'serial_hex'        => {'val' => sub { SSLinfo::serial_hex(      $_[0], $_[1])}, 'txt' => "Certificate Serial Number (hex)"},
-    'serial_int'        => {'val' => sub { SSLinfo::serial_int(      $_[0], $_[1])}, 'txt' => "Certificate Serial Number (int)"},
-    'certversion'       => {'val' => sub { SSLinfo::version(         $_[0], $_[1])}, 'txt' => "Certificate Version"},
-    'sigdump'           => {'val' => sub { SSLinfo::sigdump(         $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
-    'sigkey_len'        => {'val' => sub { SSLinfo::sigkey_len(      $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
-    'signame'           => {'val' => sub { SSLinfo::signame(         $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
-    'sigkey_value'      => {'val' => sub { ::__SSLinfo('sigkey_value',     $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
+    'before'            => {'val' => sub { SSLinfo::before(            $_[0], $_[1])}, 'txt' => "Certificate valid since"},
+    'after'             => {'val' => sub { SSLinfo::after(             $_[0], $_[1])}, 'txt' => "Certificate valid until"},
+    'aux'               => {'val' => sub { SSLinfo::aux(               $_[0], $_[1])}, 'txt' => "Certificate Trust Information"},
+    'email'             => {'val' => sub { SSLinfo::email(             $_[0], $_[1])}, 'txt' => "Certificate Email Addresses"},
+    'pubkey'            => {'val' => sub { SSLinfo::pubkey(            $_[0], $_[1])}, 'txt' => "Certificate Public Key"},
+    'pubkey_algorithm'  => {'val' => sub { SSLinfo::pubkey_algorithm(  $_[0], $_[1])}, 'txt' => "Certificate Public Key Algorithm"},
+    'pubkey_value'      => {'val' => sub { __SSLinfo('pubkey_value',   $_[0], $_[1])}, 'txt' => "Certificate Public Key Value"},
+    'modulus_len'       => {'val' => sub { SSLinfo::modulus_len(       $_[0], $_[1])}, 'txt' => "Certificate Public Key Length"},
+    'modulus'           => {'val' => sub { SSLinfo::modulus(           $_[0], $_[1])}, 'txt' => "Certificate Public Key Modulus"},
+    'modulus_exponent'  => {'val' => sub { SSLinfo::modulus_exponent(  $_[0], $_[1])}, 'txt' => "Certificate Public Key Exponent"},
+    'serial'            => {'val' => sub { SSLinfo::serial(            $_[0], $_[1])}, 'txt' => "Certificate Serial Number"},
+    'serial_hex'        => {'val' => sub { SSLinfo::serial_hex(        $_[0], $_[1])}, 'txt' => "Certificate Serial Number (hex)"},
+    'serial_int'        => {'val' => sub { SSLinfo::serial_int(        $_[0], $_[1])}, 'txt' => "Certificate Serial Number (int)"},
+    'certversion'       => {'val' => sub { SSLinfo::version(           $_[0], $_[1])}, 'txt' => "Certificate Version"},
+    'sigdump'           => {'val' => sub { SSLinfo::sigdump(           $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
+    'sigkey_len'        => {'val' => sub { SSLinfo::sigkey_len(        $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
+    'signame'           => {'val' => sub { SSLinfo::signame(           $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
+    'sigkey_value'      => {'val' => sub { __SSLinfo('sigkey_value',       $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'          => {'val' => sub { SSLinfo::trustout(              $_[0], $_[1])}, 'txt' => "Certificate trusted"},
-    'extensions'        => {'val' => sub { ::__SSLinfo('extensions',       $_[0], $_[1])}, 'txt' => "Certificate extensions"},
-    'tlsextdebug'       => {'val' => sub { ::__SSLinfo('tlsextdebug',      $_[0], $_[1])}, 'txt' => "TLS extensions (debug)"},
-    'tlsextensions'     => {'val' => sub { ::__SSLinfo('tlsextensions',    $_[0], $_[1])}, 'txt' => "TLS extensions"},
-    'ext_authority'     => {'val' => sub { ::__SSLinfo('ext_authority',    $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
-    'ext_authorityid'   => {'val' => sub { ::__SSLinfo('ext_authorityid',  $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
-    'ext_constraints'   => {'val' => sub { ::__SSLinfo('ext_constraints',  $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
-    'ext_cps'           => {'val' => sub { ::__SSLinfo('ext_cps',          $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
-    'ext_cps_cps'       => {'val' => sub { ::__SSLinfo('ext_cps_cps',      $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
-    'ext_cps_policy'    => {'val' => sub { ::__SSLinfo('ext_cps_policy',   $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
-    'ext_cps_notice'    => {'val' => sub { ::__SSLinfo('ext_cps_notice',   $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: User Notice"},
-    'ext_crl'           => {'val' => sub { ::__SSLinfo('ext_crl',          $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
-    'ext_subjectkeyid'  => {'val' => sub { ::__SSLinfo('ext_subjectkeyid', $_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
-    'ext_keyusage'      => {'val' => sub { ::__SSLinfo('ext_keyusage',     $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
-    'ext_extkeyusage'   => {'val' => sub { ::__SSLinfo('ext_extkeyusage',  $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
-    'ext_certtype'      => {'val' => sub { ::__SSLinfo('ext_certtype',     $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
-    'ext_issuer'        => {'val' => sub { ::__SSLinfo('ext_issuer',       $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
+    'extensions'        => {'val' => sub { __SSLinfo('extensions',         $_[0], $_[1])}, 'txt' => "Certificate extensions"},
+    'tlsextdebug'       => {'val' => sub { __SSLinfo('tlsextdebug',        $_[0], $_[1])}, 'txt' => "TLS extensions (debug)"},
+    'tlsextensions'     => {'val' => sub { __SSLinfo('tlsextensions',      $_[0], $_[1])}, 'txt' => "TLS extensions"},
+    'ext_authority'     => {'val' => sub { __SSLinfo('ext_authority',      $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
+    'ext_authorityid'   => {'val' => sub { __SSLinfo('ext_authorityid',    $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
+    'ext_constraints'   => {'val' => sub { __SSLinfo('ext_constraints',    $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
+    'ext_cps'           => {'val' => sub { __SSLinfo('ext_cps',            $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
+    'ext_cps_cps'       => {'val' => sub { __SSLinfo('ext_cps_cps',        $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
+    'ext_cps_policy'    => {'val' => sub { __SSLinfo('ext_cps_policy',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
+    'ext_cps_notice'    => {'val' => sub { __SSLinfo('ext_cps_notice',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: User Notice"},
+    'ext_crl'           => {'val' => sub { __SSLinfo('ext_crl',            $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
+    'ext_subjectkeyid'  => {'val' => sub { __SSLinfo('ext_subjectkeyid',   $_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
+    'ext_keyusage'      => {'val' => sub { __SSLinfo('ext_keyusage',       $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
+    'ext_extkeyusage'   => {'val' => sub { __SSLinfo('ext_extkeyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
+    'ext_certtype'      => {'val' => sub { __SSLinfo('ext_certtype',       $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
+    'ext_issuer'        => {'val' => sub { __SSLinfo('ext_issuer',         $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
     'ocsp_uri'          => {'val' => sub { SSLinfo::ocsp_uri(              $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
-    'ocspid'            => {'val' => sub { ::__SSLinfo('ocspid',           $_[0], $_[1])}, 'txt' => "Certificate OCSP Hashes"},
-    'ocsp_subject_hash' => {'val' => sub { ::__SSLinfo('ocsp_subject_hash',$_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
-    'ocsp_public_hash'  => {'val' => sub { ::__SSLinfo('ocsp_public_hash', $_[0], $_[1])}, 'txt' => "Certificate OCSP Public Key Hash"},
+    'ocspid'            => {'val' => sub { __SSLinfo('ocspid',             $_[0], $_[1])}, 'txt' => "Certificate OCSP Hashes"},
+    'ocsp_subject_hash' => {'val' => sub { __SSLinfo('ocsp_subject_hash',  $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
+    'ocsp_public_hash'  => {'val' => sub { __SSLinfo('ocsp_public_hash',   $_[0], $_[1])}, 'txt' => "Certificate OCSP Public Key Hash"},
     'ocsp_response'     => {'val' => sub { SSLinfo::ocsp_response(         $_[0], $_[1])}, 'txt' => "Target's OCSP Response"},
     'ocsp_response_data'=> {'val' => sub { SSLinfo::ocsp_response_data(    $_[0], $_[1])}, 'txt' => "Target's OCSP Response Data"},
     'ocsp_response_status'=> {'val' => sub { SSLinfo::ocsp_response_status($_[0], $_[1])}, 'txt' => "Target's OCSP Response Status"},
@@ -241,11 +241,11 @@ our %data   = (         # connection and certificate details
     'issuer_hash'       => {'val' => sub { SSLinfo::issuer_hash(           $_[0], $_[1])}, 'txt' => "Certificate Issuer Name Hash"},
     'selfsigned'        => {'val' => sub { SSLinfo::selfsigned(            $_[0], $_[1])}, 'txt' => "Certificate Validity (signature)"},
     'fingerprint_type'  => {'val' => sub { SSLinfo::fingerprint_type(      $_[0], $_[1])}, 'txt' => "Certificate Fingerprint Algorithm"},
-    'fingerprint_hash'  => {'val' => sub { ::__SSLinfo('fingerprint_hash', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint Hash Value"},
-    'fingerprint_sha2'  => {'val' => sub { ::__SSLinfo('fingerprint_sha2', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA2"},
-    'fingerprint_sha1'  => {'val' => sub { ::__SSLinfo('fingerprint_sha1', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
-    'fingerprint_md5'   => {'val' => sub { ::__SSLinfo('fingerprint_md5',  $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
-    'fingerprint'       => {'val' => sub { ::__SSLinfo('fingerprint',      $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
+    'fingerprint_hash'  => {'val' => sub { __SSLinfo('fingerprint_hash',   $_[0], $_[1])}, 'txt' => "Certificate Fingerprint Hash Value"},
+    'fingerprint_sha2'  => {'val' => sub { __SSLinfo('fingerprint_sha2',   $_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA2"},
+    'fingerprint_sha1'  => {'val' => sub { __SSLinfo('fingerprint_sha1',   $_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
+    'fingerprint_md5'   => {'val' => sub { __SSLinfo('fingerprint_md5',    $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
+    'fingerprint'       => {'val' => sub { __SSLinfo('fingerprint',        $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
     'cert_type'         => {'val' => sub { SSLinfo::cert_type(             $_[0], $_[1])}, 'txt' => "Certificate Type (bitmask)"},
     'sslversion'        => {'val' => sub { SSLinfo::SSLversion(            $_[0], $_[1])}, 'txt' => "Selected SSL Protocol"},
     'resumption'        => {'val' => sub { SSLinfo::resumption(            $_[0], $_[1])}, 'txt' => "Target supports Resumption"},
@@ -256,7 +256,7 @@ our %data   = (         # connection and certificate details
     'psk_hint'          => {'val' => sub { SSLinfo::psk_hint(              $_[0], $_[1])}, 'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'      => {'val' => sub { SSLinfo::psk_identity(          $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'               => {'val' => sub { SSLinfo::srp(                   $_[0], $_[1])}, 'txt' => "Target supports SRP"},
-    'heartbeat'         => {'val' => sub { ::__SSLinfo('heartbeat',        $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
+    'heartbeat'         => {'val' => sub { __SSLinfo('heartbeat',          $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
     'master_secret'     => {'val' => sub { SSLinfo::master_secret(         $_[0], $_[1])}, 'txt' => "Target supports Extended Master Secret"},
 #    master_secret  is alias for extended_master_secret, TLS 1.3 and later
     'next_protocols'    => {'val' => sub { SSLinfo::next_protocols(        $_[0], $_[1])}, 'txt' => "Target's advertised protocols"},
@@ -832,6 +832,243 @@ our %shorttexts = (
 *_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
+sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+    #? wrapper for SSLinfo::*() functions
+    # SSLinfo::*() return raw data, depending on $cfg{'format'}
+    # these values will be converted to o-saft's preferred format
+    my ($cmd, $host, $port) = @_;
+    my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
+    my $ext = "";
+    my %cfg = %OCfg::cfg;   # import from main, this method only called there
+    my %dum = %OCfg::cfg;   # avoid Perl's "Name "OCfg::cfg" used only once ..."
+    $val =  SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
+    $val =  SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
+    $val =  SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
+    $val =  SSLinfo::fingerprint_sha1( $host, $port) if ($cmd eq 'fingerprint_sha1');
+    $val =  SSLinfo::fingerprint_md5(  $host, $port) if ($cmd eq 'fingerprint_md5');
+    $val =  SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
+    $val =  SSLinfo::sigkey_value(     $host, $port) if ($cmd eq 'sigkey_value');
+    $val =  SSLinfo::heartbeat(        $host, $port) if ($cmd eq 'heartbeat');
+    $val =  SSLinfo::extensions(       $host, $port) if ($cmd =~ /^ext(?:ensions|_)/);
+    $val =  SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
+    if ($cmd eq 'tlsextensions') {
+        $val =  SSLinfo::tlsextensions($host, $port);
+        $val =~ s/^\s*//g;
+        $val =~ s/([\n\r])/; /g;
+    }
+    # ::ocspid may return multiple lines, something like:
+    #   Subject OCSP hash: 57F4D68F870A1698065F803BE9D967B1B2B9E491
+    #   Public key OCSP hash: BF788D39424E219C62538F72701E1C87C4F667EA
+    # it's also assumed that both lines are present
+    if ($cmd =~ /ocspid/) {
+        $val =  SSLinfo::ocspid($host, $port);
+        $val =~ s/^\n?\s+//g;           # remove leading spaces
+        $val =~ s/([\n\r])/; /g;        # remove newlines
+    }
+    if ($cmd =~ /ocsp_subject_hash/) {
+        $val =  SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/.ublic[^:]+:\s*.*//;
+    }
+    if ($cmd =~ /ocsp_public_hash/) {
+        $val =  SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/^[^:]+:\s*//;     # TODO: quick&dirty
+    }
+    if ($cmd =~ m/ext_/) {
+        # all following are part of SSLinfo::extensions(), now extract parts
+        # The extension section in the certificate starts with
+        #    X509v3 extensions:
+        # then each extension starts with a string prefixed by  X509v3
+        # except following:
+        #    Authority Information Access
+        #    Netscape Cert Type
+        #    CT Precertificate SCTs
+        #
+        # Example www.microsoft.com (03/2016)
+        #    X509v3 extensions:
+        #        X509v3 Subject Alternative Name:
+        #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
+        #        X509v3 Basic Constraints:
+        #            CA:FALSE
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        X509v3 Certificate Policies:
+        #            Policy: 2.16.840.1.113733.1.7.23.6
+        #              CPS: https://d.symcb.com/cps
+        #              User Notice:
+        #                Explicit Text: https://d.symcb.com/rpa
+        #        X509v3 Authority Key Identifier:
+        #            keyid:0159ABE7DD3A0B59A66463D6CF200757D591E76A
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://sr.symcb.com/sr.crl
+        #        Authority Information Access:
+        #            OCSP - URI:http://sr.symcd.com
+        #            CA Issuers - URI:http://sr.symcb.com/sr.crt
+        #        CT Precertificate SCTs:
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : DDEB1D2B7A0D4FA6208B81AD8168707E:
+        #                            2E8E9D01D55C888D3D11C4CDB6ECBECC
+        #                Timestamp : Mar 24 212018.939 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            304602210095B30A493A8E8B253004AD:
+        #                            A971E0106BE0CC97B6FF2908FDDBBB3D:
+        #                            B8CEBFFCF8022100F37AA34DE5BE38D8:
+        #                            5A03EE8B3AAE451C0014A802C079AA34:
+        #                            9C20BAF44C54CF36
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : A4B90990B418581487BB13A2CC67700A:
+        #                            3C359804F91BDFB8E377CD0EC80DDC10
+        #                Timestamp : Mar 24 212018.983 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            3046022100C877DC1DBBDA2FBC7E5E63:
+        #                            60A7EAB31EED42066F91C724963EE0CE:
+        #                            80C8EBCE8C022100D5865704F32487CF:
+        #                            FF021F1C8A955303E496630CAE3C0F18:
+        #                            B8CDDFD4798365FD
+        #        ...
+        #
+        # Example microsoft.com
+        #    X509v3 extensions:
+        #        X509v3 Key Usage:
+        #            Digital Signature, Key Encipherment, Data Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        S/MIME Capabilities:
+        #            0000 - 30 69 30 0e 06 08 2a 86-48 86 f7 0d 03   0i0...*.H....
+        #            000d - 02 02 02 00 80 30 0e 06-08 2a 86 48 86   .....0...*.H.
+        #            001a - f7 0d 03 04 02 02 00 80-30 0b 06 09 60   ........0...`
+        #            0027 - 86 48 01 65 03 04 01 2a-30 0b 06 09 60   .H.e...*0...`
+        #            0034 - 86 48 01 65 03 04 01 2d-30 0b 06 09 60   .H.e...-0...`
+        #            0041 - 86 48 01 65 03 04 01 02-30 0b 06 09 60   .H.e....0...`
+        #            004e - 86 48 01 65 03 04 01 05-30 07 06 05 2b   .H.e....0...+
+        #            005b - 0e 03 02 07 30 0a 06 08-2a 86 48 86 f7   ....0...*.H..
+        #            0068 - 0d 03 07                                 ...
+        #        X509v3 Subject Key Identifier:
+        #            84C60E3B0FA69BF6EE0640CB02041B5F59340F73
+        #        X509v3 Authority Key Identifier:
+        #            keyid:51AF24269CF468225780262B3B4662157B1ECCA5
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #              URI:http://crl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #        Authority Information Access:
+        #            CA Issuers - URI:http://www.microsoft.com/pki/mscorp/msitwww2.crt
+        #            OCSP - URI:http://ocsp.msocsp.com
+        #        X509v3 Certificate Policies:
+        #            Policy: 1.3.6.1.4.1.311.42.1
+        #              CPS: http://www.microsoft.com/pki/mscorp/cps
+        #        1.3.6.1.4.1.311.21.10:
+        #            0000 - 30 18 30 0a 06 08 2b 06-01 05 05 07 03   0.0...+......
+        #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
+        #        ...
+        #
+        # Example bsi.bund.de (03/2016)
+        #    X509v3 extensions:
+        #        X509v3 Authority Key Identifier:
+        #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage:
+        #            TLS Web Client Authentication, TLS Web Server Authentication
+        #        X509v3 Subject Key Identifier:
+        #            1BA42D9746798AE2AE91D60AA60BE40FAA8A299E
+        #        X509v3 Certificate Policies:
+        #            Policy: 1.3.6.1.4.1.7879.13.2
+        #              CPS: http://www.telesec.de/serverpass/cps.html
+        #            Policy: 2.23.140.1.2.2
+        #        X509v3 CRL Distribution Points:
+        #            Full Name:
+        #              URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #            Full Name:
+        #              URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #        Authority Information Access:
+        #            OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #            CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #            CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #        X509v3 Basic Constraints: critical
+        #            CA:FALSE
+        #        X509v3 Subject Alternative Name:
+        #            DNS:www.bsi.bund.de
+        #
+        # Example www.bsi.de (06/2016)
+        #    X509v3 CRL Distribution Points:
+        #
+        #         Full Name:
+        #           URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #
+        #         Full Name:
+        #           URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #     Authority Information Access:
+        #         OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #
+        # handled in RegEx below which matches next extension, if any.
+        $val .= " X509";# add string to match last extension also
+        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
+            # FIXME: the RegEx should match OIDs also
+            # FIXME: otherwise OID extensions are added as value to the
+            #        preceding extension, see example above (4/2016)
+        # TODO: replace following list of RegEx with a loop over the extensions
+        $ext = $val;
+        $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
+        $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
+        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constraints');
+        $val =~ s#.*?Key Usage:$rex#$1#ms                       if ($cmd eq 'ext_keyusage');
+        $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
+        $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
+        $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
+        $val =~ s#.*?Policy\s*:\s*(.*?)(?:\n|CPS|User).*#$1#ims if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?User\s*Notice:\s*(.*?)(?:\n|CPS|Policy).*#$1#ims  if ($cmd eq 'ext_cps_notice');
+        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd eq 'ext_crl');
+        $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
+        $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
+        $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
+        if ($cmd eq 'ext_crl') {
+            $val =~ s#\s*Full Name:\s*##imsg;   # multiple occourances possible
+            $val =~ s#(\s*URI\s*:)# #msg;
+        }
+        $val =  "" if ($ext eq $val);   # nothing changed, then expected pattern is missing
+    }
+# TODO: move code for formatting to print*()
+    if ($cmd =~ /ext(?:ensions|debug|_)/) {
+        # grrr, formatting extensions is special, take care for traps ...
+        if ($cfg{'format'} ne "raw") {
+            $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+            # it was quick&dirty, correct some failures
+            $val =~ s/(keyid)/$1:/i;
+            $val =~ s/(CA)(FALSE)/$1:$2/i;
+            if ($cmd eq 'extensions') {
+                # extensions are special as they contain multiple values
+                # values are separated by emty lines
+                $val =~ s/\n\n+/\n/g;   # remove empty lines
+            } else {
+                $val =~ s/\s\s+/ /g;    # remove multiple spaces
+            }
+        }
+        return $val; # ready!
+    }
+# TODO: move code for formatting to print*()
+    if ($cfg{'format'} ne "raw") {
+        $val =  "" if not defined $val; # avoid warnings
+        $val =~ s/^\s+//g;      # remove leading spaces
+        $val =~ s/\n\s+//g;     # remove trailing spaces
+        $val =~ s/\n/ /g;
+        $val =~ s/\s\s+/ /g;    # remove multiple spaces
+        $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+    }
+    return $val;
+} # __SSLinfo
+
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -951,7 +1188,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.9 2024/01/24
+3.10 2024/01/25
 
 =head1 AUTHOR
 
