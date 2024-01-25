@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.2 24/01/24 23:02:42
+# SID   @(#) help.txt 3.3 24/01/25 23:54:05
 
 NAME
 
@@ -565,7 +565,6 @@ COMMANDS
           with  --cipher=CIPHER  option.
 
           Use  --v  option to see all ciphers being checked.
-#          For  --ciphermode=openssl  only
 
       +cipher-default
 
@@ -1520,14 +1519,14 @@ OPTIONS
 
           for known, valid keys and cipher names.
 
-          'CIPHER' can be also be any of the intern defined patterns, see:
+          'CIPHER' can also be any of the internal defined patterns, see:
 
              $0 --header --help=cipherpattern
 
           If 'CIPHER' does not match a hex key, i.e. '0x03000035', it is used
           as pattern (RegEx) to match cipher suite names. For example:
-          'AES256-SHA' matches 23 cipher suites,  while 'AES256-SHA$' matches
-          2 ciphers, see:
+          'AES256-SHA' matches 28 cipher suites,  while 'AES256-SHA$' matches
+          14 ciphers, see:
               lib/Ciphers.pm find-names=AES256-SHA
               lib/Ciphers.pm find-names=AES256-SHA$
 
@@ -1542,11 +1541,11 @@ OPTIONS
           style pattern are also accepted, for example: 'AES:ECDH'.
 
           When  --ciphermode=openssl or --ciphermode=ssleay is used, 'CIPHER'
-          can be any string accepted by openssl or a hex key. Examples:
+          can only be any string or a hex key accepted by openssl. Examples:
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
 
-          will be mapped to   'DHE-DSS-RC4-SHA'
+          will be mapped to  'DHE-DSS-RC4-SHA'
 
           'CIPHER' can also be any pattern accepted by openssl, for example:
             * --cipher='!DES:!ADH:!aNULL'
@@ -2198,15 +2197,16 @@ OPTIONS
 
           Use FILE instead of the default  RC-FILE, for example '.$0'.
 
-      --trace-me
-
-          Print debugging messages for  $0  only but not for called methods of
-          any used module.
-
-      --trace-not-me
-
-          Print debugging messages for modules only, but not  $0  itself.
-
+# following option still there in 24.01.24, needs to be improved
+#      --trace-me
+#
+#          Print debugging messages for  $0  only but not for called methods of
+#          any used module.
+#
+#      --trace-not-me
+#
+#          Print debugging messages for modules only, but not  $0  itself.
+#
       --hint
 
           Print hint messages (!!Hint:).
