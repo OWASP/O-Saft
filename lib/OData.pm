@@ -11,7 +11,7 @@ use warnings;
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-my  $SID_odata  =  "@(#) OData.pm 3.10 24/01/25 00:30:29";
+my  $SID_odata  =  "@(#) OData.pm 3.11 24/01/25 22:51:51";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -840,7 +840,7 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
     my $ext = "";
     my %cfg = %OCfg::cfg;   # import from main, this method only called there
-    my %dum = %OCfg::cfg;   # avoid Perl's "Name "OCfg::cfg" used only once ..."
+    my %dum = %OCfg::cfg;   # avoid Perl warning "... used only once: possible typo ..."
     $val =  SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
     $val =  SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
     $val =  SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
@@ -1188,7 +1188,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.10 2024/01/25
+3.11 2024/01/25
 
 =head1 AUTHOR
 
