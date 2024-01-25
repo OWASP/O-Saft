@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.7 24/01/24 23:32:27";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.8 24/01/25 10:38:45";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -92,6 +92,7 @@ use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
+$SSLhello::verbose              = 0;# 1=print checked ciphers
 $SSLhello::trace                = 0;# 1=simple debugging SSLhello
 $SSLhello::traceTIME            = 0;# 1=trace prints timestamp
 $SSLhello::usesni               = 1;# 0=do not use SNI extension, 1=use SNI extension (protocol >=tlsv1), 2(or 3): toggle sni (run twice per protocol without and with sni)
