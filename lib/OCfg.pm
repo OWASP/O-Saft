@@ -29,7 +29,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.9 24/01/24 23:10:22";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.10 24/01/26 15:22:42";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
@@ -2942,18 +2942,18 @@ our %cfg = (    # main data structure for configuration
         'tools'     => "tools.txt",
         # following are used in o-saft.tcl, but are generate with o-saft-man.pm
         # the keys --help* are used as pattern
-        # TODO: hardcoded  docs/  and  o-saft.pl  should be configurable
-        '--help'                => "docs/o-saft.pl.--help",
-        '--help=alias'          => "docs/o-saft.pl.--help=alias",
-        '--help=checks'         => "docs/o-saft.pl.--help=checks",
-        '--help=commands'       => "docs/o-saft.pl.--help=commands",
-        '--help=data'           => "docs/o-saft.pl.--help=data",
-        '--help=glossar'        => "docs/o-saft.pl.--help=glossar",
-        '--help=opts'           => "docs/o-saft.pl.--help=opts",
-        '--help=regex'          => "docs/o-saft.pl.--help=regex",
-        '--help=rfc'            => "docs/o-saft.pl.--help=rfc",
-        '--help=warnings'       => "docs/o-saft.pl.--help=warnings",
-        '--help=ciphers-text'   => "docs/o-saft.pl.--help=ciphers-text",
+        # TODO: hardcoded  doc/  and  o-saft.pl  should be configurable
+        '--help'                => "doc/o-saft.pl.--help",
+        '--help=alias'          => "doc/o-saft.pl.--help=alias",
+        '--help=checks'         => "doc/o-saft.pl.--help=checks",
+        '--help=commands'       => "doc/o-saft.pl.--help=commands",
+        '--help=data'           => "doc/o-saft.pl.--help=data",
+        '--help=glossar'        => "doc/o-saft.pl.--help=glossar",
+        '--help=opts'           => "doc/o-saft.pl.--help=opts",
+        '--help=regex'          => "doc/o-saft.pl.--help=regex",
+        '--help=rfc'            => "doc/o-saft.pl.--help=rfc",
+        '--help=warnings'       => "doc/o-saft.pl.--help=warnings",
+        '--help=ciphers-text'   => "doc/o-saft.pl.--help=ciphers-text",
     }, # files
    #------------------+-----------------+--------------------------------------
     'done'      => {},          # defined in caller
@@ -3523,7 +3523,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.9"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.10"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3571,7 +3571,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.9 2024/01/24
+3.10 2024/01/26
 
 =head1 AUTHOR
 
