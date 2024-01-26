@@ -77,14 +77,13 @@ Following files are optional:
 | File / Tool          | Description |
 |:---------------------|:------------|
 | `.o-saft.pl`         | (private user configuration) |
-| `o-saft-dbx.pm`      | (for debugging, tracing) |
-| `o-saft-usr.pm`      | (private functions, some kind of API) |
-| `o-saft-man.pm`      | (documentation and generation functions) |
-| `o-saft.pod`         | (documentation in POD format) |
-| `checkAllCiphers.pl` | (simple script for checking all ciphers) |
 | `.o-saft.tcl`        | (private user configuration for GUI) |
-| `o-saft-img.tcl`     | (images for buttons in GUI) |
-| `contrib/*`          | (additional programs and tools) |
+| `lib/OTrace.pm`      | (functions for debugging) |
+| `lib/OMan.pm`        | (documentation and generation functions) |
+| `doc/o-saft.pod`     | (documentation in POD format) |
+| `lib/o-saft-img.tcl` | (images for buttons in GUI) |
+| `checkAllCiphers.pl` | (simple script for checking all ciphers) |
+| `usr/*`              | (additional programs and tools) |
 
 ## QUICK START
 
@@ -99,11 +98,16 @@ o-saft.pl --help=commands
 o-saft.tcl      # (simple GUI; requires Tcl/Tk 8.5 or newer)
 
 o-saft-docker   # (simple wrapper to call o-saft.pl in docker image)
+
+o-saft          # (simple wrapper to call o-saft.pl or o-saft.tcl or o-saft-docker)
 ```
 
 * Project home is https://www.owasp.org/index.php/O-Saft
-* Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
+* Project repo is https://github.com/OWASP/O-Saft
 * Historic Project home https://www.owasp.org/index.php/Projects/O-Saft
+<!--
+* Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
+-->
 
 Get a Copy (latest stable release)
 ```
@@ -123,7 +127,7 @@ docker pull owasp/o-saft
 
 ## VERSION
 
-**23.11.23**
+**24.01.24**
 
 The version of the tarball  o-saft.tgz  represents the version listed on top
 herein. All other files in the repository may be ahead of this tarball version.
@@ -133,7 +137,7 @@ SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saf
 bcb9e2927808300cd2158fa644798590b3f49b31591c4dc7639ce896a1ffdd56
 ```
 
-[//]: # (above checksum for version 23.04.23)
+[//]: # (above checksum for version 23.11.23)
 <!--
 # comment not rendered in HTML
 -->
@@ -145,3 +149,11 @@ b85423d142c186c1cf10494aa0e993f6f2030ab769977aca9584d7d650421697
 
 NOTE that the checksums listed here are the previous versions if this
 file is from  o-saft.tgz  itself, or inside the docker image.
+
+### Older version
+
+Version 24.01.24 is a major redesign (refactoring) of the project. The top directory now contains the main tools only. All modules, documentation and (user) contributed tools are in sub-directories.
+These changes are also reflected in the directories available at github.
+
+If older versions should be used, please get the correspondig o-saft.tgz from github's releases, see:
+   https://github.com/OWASP/O-Saft/releases (as of January 2024).
