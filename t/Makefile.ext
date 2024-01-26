@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 1.30 23/11/15 00:56:49
+#?      @(#) Makefile.ext 3.1 24/01/23 13:39:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 1.30
+_SID.ext           := 3.1
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
