@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 3.1 24/01/23 13:39:22
+#?      @(#) Makefile.critic 3.2 24/01/26 08:27:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 3.1
+_SID.critic        := 3.2
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -107,7 +107,7 @@ HELP.critic         = $(_NL)\
 \# Note about perlcritic used here:$(_NL)\
 \#   * perlcritic is executed in directory '$(TEST.critic.dir)'$(_NL)\
 \#   * perlcritic uses '$(TEST.critic.dir)/$(TEST.critic.rc)'$(_NL)\
-\# See also '$(SRC.contrib.dir)/critic.sh'
+\# See also '$(SRC.usr.dir)/critic.sh'
 
 HELP.test.critic.all= # no special documentation yet
 
