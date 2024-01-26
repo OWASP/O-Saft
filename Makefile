@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.3 24/01/23 20:47:31
+#?      @(#) Makefile 3.5 24/01/26 01:04:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.3
+_SID            = 3.5
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -109,25 +109,25 @@ SRC.exe         = $(SRC.pl) $(SRC.gui) $(CHK.pl) $(DEV.pl) $(SRC.sh)
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
-SRC.inst        = $(SRC.contrib.dir)/INSTALL-template.sh
+SRC.inst        = $(SRC.usr.dir)/INSTALL-template.sh
 
-# contrib files
-SRC.contrib.dir     = contrib
-SRC.contrib.examples= filter_examples usage_examples
-SRC.contrib.post.awk= \
+# contrib / usr files
+SRC.usr.dir     = usr
+SRC.usr.examples= filter_examples usage_examples
+SRC.usr.post.awk= \
 		  Cert-beautify.awk \
 		  HTML-simple.awk   HTML-table.awk \
 		  JSON-struct.awk   JSON-array.awk \
 		  XML-attribute.awk XML-value.awk \
 		  lazy_checks.awk
-SRC.contrib.post    = \
+SRC.usr.post    = \
 		  Cert-beautify.pl \
 		  alertscript.pl \
 		  alertscript.cfg \
 		  bunt.pl \
 		  bunt.sh \
 		  symbol.pl
-SRC.contrib.misc    = \
+SRC.usr.misc    = \
 		  cipher_check.sh \
 		  critic.sh \
 		  gen_standalone.sh \
@@ -137,20 +137,20 @@ SRC.contrib.misc    = \
 		  INSTALL-template.sh \
 		  Dockerfile.alpine-3.6
 
-SRC.contrib.zap     = zap_config.sh zap_config.xml
+SRC.usr.zap     = zap_config.sh zap_config.xml
 # some file should get the $(O-Project) suffix, which is appended later
-SRC.contrib.complete= \
+SRC.usr.complete= \
 		  bash_completion \
 		  dash_completion \
 		  fish_completion \
 		  tcsh_completion
-SRC.contrib     = \
-		  $(SRC.contrib.complete:%=$(SRC.contrib.dir)/%_$(O-Project)) \
-		  $(SRC.contrib.examples:%=$(SRC.contrib.dir)/%) \
-		  $(SRC.contrib.post.awk:%=$(SRC.contrib.dir)/%) \
-		  $(SRC.contrib.post:%=$(SRC.contrib.dir)/%) \
-		  $(SRC.contrib.misc:%=$(SRC.contrib.dir)/%) \
-		  $(SRC.contrib.zap:%=$(SRC.contrib.dir)/%)
+SRC.usr         = \
+		  $(SRC.usr.complete:%=$(SRC.usr.dir)/%_$(O-Project)) \
+		  $(SRC.usr.examples:%=$(SRC.usr.dir)/%) \
+		  $(SRC.usr.post.awk:%=$(SRC.usr.dir)/%) \
+		  $(SRC.usr.post:%=$(SRC.usr.dir)/%) \
+		  $(SRC.usr.misc:%=$(SRC.usr.dir)/%) \
+		  $(SRC.usr.zap:%=$(SRC.usr.dir)/%)
 
 
 TEST.dir        = t
@@ -212,7 +212,7 @@ GEN.text        = $(DOC.dir)/$(O-Project).txt
 GEN.wiki        = $(DOC.dir)/$(O-Project).wiki
 GEN.man         = $(DOC.dir)/$(O-Project).1
 GEN.pod         = $(DOC.dir)/$(O-Project).pod
-GEN.src         = $(SRC.contrib.dir)/$(O-Project)-standalone.pl
+GEN.src         = $(SRC.usr.dir)/$(O-Project)-standalone.pl
 GEN.pdf         = $(SRC.odg:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
@@ -232,14 +232,14 @@ GEN.DOC.data    = $(LIST.DOC_data:%=$(DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = lib $(O-DOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.contrib.dir)
+O-DIRS          = lib $(O-DOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.usr.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
-ALL.contrib     = $(SRC.contrib)
+ALL.usr         = $(SRC.usr)
 ALL.doc         = $(SRC.odg) $(SRC.info) $(SRC.web)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.docs) $(GEN.DOC.data)
@@ -260,7 +260,7 @@ ALL.src         = \
 		  $(ALL.gen) \
 		  $(ALL.Makefiles) \
 		  $(ALL.tst) \
-		  $(ALL.contrib)
+		  $(ALL.usr)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
 ALL.tgz        += O-Saft/$(GEN.inst) O-Saft/$(GEN.rel)
 
@@ -269,7 +269,7 @@ MAKE            = $(MAKE_COMMAND)
 # some rules need to have a command, otherwise they are not evaluated
 EXE.dummy       = /bin/echo -n ""
 # internal used tools (paths hardcoded!)
-EXE.single      = contrib/gen_standalone.sh
+EXE.single      = $(SRC.usr.dir)/gen_standalone.sh
 EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
@@ -294,7 +294,7 @@ ALL.osaftmodules= $(O-LIB.pm:%.pm=%)
 # is sorted using make's built-in sort which removes duplicates
 _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
-_INST.contrib   = $(sort $(ALL.contrib))
+_INST.usr       = $(sort $(ALL.usr))
 _INST.osaft     = $(sort $(ALL.osaft))
 _INST.devtools  = $(sort $(ALL.devtools))
 _INST.tools_int = $(sort $(_ALL.devtools.intern))
@@ -302,11 +302,11 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.3 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.3
+_INST.genbytext = generated data by Makefile 3.5 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.5
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
-		  -e 's@INSERTED_BY_MAKE_CONTRIBDIR@$(SRC.contrib.dir)@'     \
-		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.contrib)@'          \
+		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
+		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@'      \
 		  -e 's@INSERTED_BY_MAKE_DEVTOOLSINT@$(_INST.tools_int)@'    \
@@ -510,7 +510,7 @@ release.here: $(ALL.src)
 	| sort -f -k 4;
 
     # TODO: release.here not yet perfect, as it may contain multiple lines for
-    #       some files (mainly in docs/ and contrib/)
+    #       some files (mainly in docs/ and usr/)
 
 # release.diff:
 #	@diff $(GEN.rel) $(release.here)
@@ -571,8 +571,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.3
-tar:     _INST.is_edit  = 3.3
+_INST.is_edit           = 3.5
+tar:     _INST.is_edit  = 3.5
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -644,7 +644,7 @@ $(O-DOC.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(O-TMP.dir)/lib $(O-TMP.dir)/lib/Doc $(O-TMP.dir)/usr $(O-TMP.dir)/$(SRC.contrib.dir) $(O-TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/lib $(O-TMP.dir)/lib/Doc $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
