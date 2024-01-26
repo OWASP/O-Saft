@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 1.8 23/11/15 01:00:31
+#?      @(#) Makefile.docker 3.1 24/01/26 08:33:34
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 1.8
+_SID.docker        := 3.1
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -56,7 +56,7 @@ LIST.docker.opts    = -help     inspect     status      usage
     # TODO: build apk rmi gui sshx shell root cp
 # in following: = used to simulate a space, see $(subst =, ,) below
 LIST.docker.call    = -list     call=env    call=pwd    call=id \
-		      call=o-saft-docker    call=ls     call=ls=contrib
+		      call=o-saft-docker    call=ls     call=ls=usr
 LIST.docker.tool    = +VERSION  +version    +quit=--traceARG=localhost
 
 # SEE Make:target name
