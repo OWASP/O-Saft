@@ -197,7 +197,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#)  1.7 19/08/01 16:34:26
+#?       @(#)  a 3.1 24/01/26 08:57:39
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -476,7 +476,7 @@ EoRUN
         tar   -xzf $_tar_9		&& \\
         chown -R root:root   $_dir_9		&& \\
         chown    osaft:osaft $_dir_9		&& \\
-        chown -R osaft:osaft $_dir_9/contrib	&& \\
+        chown -R osaft:osaft $_dir_9/usr	&& \\
         chown    osaft:osaft $_dir_9/.o-saft.pl	&& \\
 EoRUN
 	_run_osaftrc $_dir_9 /openssl
@@ -491,11 +491,11 @@ dockerfile ()   {
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.7"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 3.1"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
-ENV     PATH ${dir__o_saft}:${dir__o_saft}/contrib:${dir_openssl}/bin:$_path
+ENV     PATH ${dir__o_saft}:${dir__o_saft}/usr:${dir_openssl}/bin:$_path
 
 RUN     $upd && $apt $apt_add $apt__dev $apt__tcl $apt_wget
 WORKDIR /
@@ -546,7 +546,7 @@ docker_build_file () {
 
 	cat > $_dockerfile_f <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.7" \
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 3.1" \
 	SOURCE="$_file_f"
 WORKDIR /
 COPY  $_file_f /
