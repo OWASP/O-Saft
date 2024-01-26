@@ -201,7 +201,7 @@
 #?                        Applies the change to shebang lines with arguments.
 #?                        Implies  --useenv .
 #?
-#?      Please see  docs/concepts.txt  for details about /usr/bin/env .
+#?      Please see  doc/concepts.txt  for details about /usr/bin/env .
 #?      It's up to user then, which solution fits better.
 #?
 #? EXAMPLES
@@ -260,7 +260,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) ZC·[ 3.2 24/01/26 00:27:25
+#?      @(#) INSTALL.template 3.3 24/01/26 15:25:53
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -551,7 +551,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.2 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.3 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
