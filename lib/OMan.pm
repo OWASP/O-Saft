@@ -52,7 +52,7 @@ use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.14 24/01/26 15:31:53";
+my  $SID_oman   = "@(#) OMan.pm 3.15 24/01/27 00:05:05";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.14'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.15'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1729,7 +1729,7 @@ sub man_docs_write  {
     # TODO: anything hardcoded here, at least directory should be a parameter
     # NOTE: $cfg{'files'} should be same as $cfg(docs-help-all) in o-saft.tcl
     _man_dbx("man_docs_write() ...");
-    if ($ich eq $cfg{me}) {
+    if ($ich =~ m/^OMan/) {     # ugly, match should be against __PACKAGE__
         _warn("094:", "'$parent' used as program name in generated files");
         _hint("documentation files should be generated using '$cfg{files}{SELF} --help=gen-docs'");
     }
@@ -2550,7 +2550,8 @@ in various formats. Supported formats are:
 =back
 
 Additionally various parts of the  documentation can be generated.  Please
-see  L<METHODS>  below.
+see  L<METHODS>  below which also describes valid values for the "$format"
+parameter.
 
 
 =head1 SYNOPSIS
@@ -2594,7 +2595,7 @@ For compatibility with other programs and modules it also supports:
 =head3 * man_printhelp($format)
 
 Public method for  all functionality.  The generated output format depends
-on the $format parameter, which is a literal string, as follows:
+on the "$format" parameter, which is a literal string, as follows:
 
 =over 2
 
@@ -2608,9 +2609,7 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * NAME    -> all documentation in plain text (man-style) format
 
-=item * <empty>
-
-=item * NAME    -> all documentation in plain text (man-style) format
+=item * <empty> -> same as  "o-saft.pl --help"
 
 =item * ciphers-text -> list all ciphers with all information in text format
 
@@ -2680,6 +2679,9 @@ on the $format parameter, which is a literal string, as follows:
 
 =item * Development   -> description for developers
 
+=item * gen-docs -> generates all static documentation files in directory
+doc/ . Files are mainly used in L<o-saft.tcl|o-saft.tcl>.
+
 =back
 
 If any other string is used,  'man_printhelp()' extracts just the section
@@ -2694,7 +2696,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.14 2024/01/26
+3.15 2024/01/27
 
 
 =head1 AUTHOR
