@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 1.62 23/11/15 00:54:37
+@(#) Makefile.pod 3.2 24/01/26 08:28:32
 
 =head1 AUTHOR
 
@@ -187,20 +187,18 @@ To get brief (mainly technical) information about the Makefile, use:
 =head1 O-Saft Makefile Preconditions
 
 The tools used and tested by make are called in the  $(TEST.dir) directory
-(usually ./t ), but they are located in  ../  (or ../contrib). Some (most)
+(usually ./t ), but they are located in  ../ or ../usr . Some (most) tools
 tools expect "includes" in  ./ ,  i.e.  o-saft.pl  itself includes private
-modules from  ./Net  and  ./OSaft.  This may result in perl warnings like:
+modules from  ./lib  This may result in perl warnings like:
 
     "Can't locate ...".
 
 To avoid this, following symbolic links exist in  $(TEST.dir) :
 
     ./t             -> .
-    ./Net           -> ../Net
-    ./OSaft         -> ../OSaft
-    ./osaft.pm      -> ../osaft.pm
+    ./lib           -> ../lib
+    ./usr           -> ../usr
     ./.o-saft.pl    -> ../.o-saft.pl
-    ./contrib       -> ../contrib
     ./docs          -> ../docs
 
 
@@ -421,7 +419,7 @@ Following name prefixes are used for variables:
     EXE             - defines tools to be used (or parameters for it)
     ALL             - defines summary variables
     LIST            - defines lists of something
-    SRC.contrib     - something related to the contrib/ directory
+    SRC.usr         - something related to the usr/ directory
     TEST            - something related to the t/ directory
     TEST.critic     - something related to perlcritic targets
     HELP            - defines texts to be used in  help  and  doc  targets
