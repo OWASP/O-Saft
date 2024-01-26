@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 1.96 24/01/05 09:55:26
+#?      @(#) Makefile.dev 3.2 24/01/26 08:31:36
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 1.96
+_SID.dev           := 3.2
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -37,8 +37,8 @@ help.test.dev-vv:     HELP_TYPE = dev
 
 TEST.dev.hosts      =
 
-# TODO: other tools should go to Makefile.contrib
-#       these targets require the symbolic link: contrib -> ../contrib
+# TODO: other tools should go to Makefile.usr
+#       these targets require the symbolic link: usr -> ../usr
 
 # list of source files (executables) to be used for some "grep"-targets
 # NOTE: contains only source files with potentionally marked control flow. This
@@ -53,9 +53,9 @@ LIST.programs      := \
 	$(SRC.pl) $(SRC.tcl)    $(SRC.pm)  \
 	$(TEST.dir)/Makefile.pod \
 	INSTALL.sh \
-	$(SRC.contrib.dir)/bunt.pl \
-	$(SRC.contrib.dir)/install_openssl.sh \
-	$(SRC.contrib.dir)/gen_standalone.sh
+	$(SRC.usr.dir)/bunt.pl \
+	$(SRC.usr.dir)/install_openssl.sh  \
+	$(SRC.usr.dir)/gen_standalone.sh
 #EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
 
 # no targets are generated for empty LIST.* variables
@@ -79,9 +79,9 @@ LIST.INSTALL.sh    :=   --install  --clean  --check     --checkdev  --expected -
 
 _TEST.dev.tmpfile  := /tmp/tmpfile
 
-LIST.contrib-bunt.pl   := --test
-LIST.contrib-install_openssl.sh := --n --m
-LIST.contrib-gen_standalone.sh  := --n --s --t
+LIST.usr-bunt.pl   := --test
+LIST.usr-install_openssl.sh := --n --m
+LIST.usr-gen_standalone.sh  := --n --s --t
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
 # should be the same commands_notyet in osaft.pm
@@ -198,7 +198,7 @@ $(_TEST.dev.tmpfile):
 # to print some verbose information
 testarg-dev-o-saft_-log:          TEST.args += --d
 
-# more individual targets for SRC.sh (calling contrib/bunt.pl)
+# more individual targets for SRC.sh (calling usr/bunt.pl)
 # TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
 #       testarg-dev-o-saft_--colour%:    TEST.dev.hosts  = localhost
 testarg-dev-o-saft_--colour:      TEST.args = --colour +unknown-cmd $(TEST.host)
@@ -210,7 +210,7 @@ ALL.test.dev            += \
 	testarg-dev-o-saft_--colour-line
 
 # do not execute script, just show: --n
-testarg-dev-contrib-install_openssl_%:  TEST.args = --n
+testarg-dev-usr-install_openssl_%:  TEST.args = --n
 testarg-dev-INSTALL.sh_%:       TEST.args = --n /tmp/o-saft
 #   # returns following errors, which is OK for --n :
 #   #   ../INSTALL.sh: 787: cd: can't cd to /tmp/o-saft
@@ -231,12 +231,12 @@ ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other \
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
 # TODO: target works but gen_standalone.sh returns errors (needs to be improved)
-testarg-dev-contrib-standalone-tmp: EXE.pl    = $(SRC.contrib.dir)/gen_standalone.sh
-testarg-dev-contrib-standalone-tmp: TEST.args = $(_TEST.dev.tmpfile)
-testarg-dev-contrib-standalone_tmpfile: testarg-dev-contrib-standalone-tmp
+testarg-dev-usr-standalone-tmp: EXE.pl    = $(SRC.usr.dir)/gen_standalone.sh
+testarg-dev-usr-standalone-tmp: TEST.args = $(_TEST.dev.tmpfile)
+testarg-dev-usr-standalone_tmpfile: testarg-dev-usr-standalone-tmp
 	@rm -f $(_TEST.dev.tmpfile)
 
-ALL.test.dev            += testarg-dev-contrib-standalone_tmpfile
+ALL.test.dev            += testarg-dev-usr-standalone_tmpfile
 
 
 # targets: EXE.* --help
@@ -252,7 +252,7 @@ testarg-dev-o-saft_pod:
 	@$(TRACE.target)
 testarg-dev-o-saft-docker_pod:
 	@$(TRACE.target)
-testarg-dev-contrib-openssl_pod:
+testarg-dev-usr-openssl_pod:
 	@$(TRACE.target)
 testarg-dev-INSTALL.sh_pod:
 	@$(TRACE.target)
