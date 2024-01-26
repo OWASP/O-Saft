@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.4 24/01/26 00:43:44
+# SID   @(#) help.txt 3.5 24/01/26 15:46:16
 
 NAME
 
@@ -148,7 +148,7 @@ CONCEPTS
         However, the user "should do something" if necessary depending on the
         reported results.
 
-        Developers may read more details on the concept in  docs/concepts.txt
+        Developers may read more details on the concept in  doc/concepts.txt.
 
     This help text
 
@@ -4821,7 +4821,7 @@ DOCUMENTATION
 
         To get used to documentation for developers, best start reading:
 
-          docs/concepts.txt
+          doc/concepts.txt
           perldoc t/Makefile.pod
 
 
