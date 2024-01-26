@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.7 24/01/26 14:59:02
+#?      @(#) Makefile 3.8 24/01/26 15:11:24
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.7
+_SID            = 3.8
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -302,8 +302,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.7 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.7
+_INST.genbytext = generated data by Makefile 3.8 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.8
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -571,8 +571,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.7
-tar:     _INST.is_edit  = 3.7
+_INST.is_edit           = 3.8
+tar:     _INST.is_edit  = 3.8
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -644,7 +644,7 @@ $(O-LIBDOC.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIB.dir)/Doc $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIBDOC.dir) $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(DOC.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
