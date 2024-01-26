@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.5 24/01/22 21:32:52
+#?      @(#) Makefile.mod 3.6 24/01/26 15:04:16
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.5
+_SID.mod           := 3.6
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -108,7 +108,7 @@ LIST.lib-OMan.pm       := \
 LIST.lib-OTrace.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
 	--test-avail --test-init --test-maps --test-prot --test-vars
-# lib/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
+# $(O_LIB.dir)/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft.pl         += $(LIST.lib-OTrace.pm)
 
 LIST.lib-SSLinfo.pm-t  := \
@@ -119,7 +119,7 @@ LIST.lib-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-paramet
 #LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
-# should be the same as cfg{commands_notyet} in lib/OCfg.pm
+# should be the same as cfg{commands_notyet} in $(O_LIB.dir)/OCfg.pm
 LIST.o-saft.notyet     := \
 	+closure    +cipher_order   +cipher_weak    +cps_valid  +fallback \
 	+open_pgp   +lzo    +sgc    +scsv   +time   +zlib   \
@@ -149,11 +149,11 @@ endif
 
 # some special adaptions to generated targets
 
-# lib/ODoc.pm function needs a file where to read the information
-# it's found automatically when using o-saft.pl but not with lib/ODoc.pm
+# $(O_LIB.dir)/ODoc.pm function needs a file where to read the information
+# it's found automatically when using o-saft.pl but not with $(O_LIB.dir)/ODoc.pm
 testarg-mod-lib-ODoc.pm_%:      TEST.args   = help.txt
 
-# lib/OTrace.pm does not make sense without a calling parent
+# $(O_LIB.dir)/OTrace.pm does not make sense without a calling parent
 testarg-mod-lib-OTrace.pm_%:    EXE.pl      = ../$(SRC.pl)
 
 # more info with pretty printed output: --header
