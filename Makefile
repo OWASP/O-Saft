@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.10 24/01/26 18:15:20
+#?      @(#) Makefile 3.11 24/01/26 18:24:38
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.10
+_SID            = 3.11
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -65,7 +65,7 @@ O-ProjectName   = O-Saft
 O-DOC.dir       = doc
 O-LIB.dir       = lib
 O-LIBDOC.dir    = $(O-LIB.dir)/doc
-SRC.usr.dir     = usr
+O-USR.dir       = usr
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
 O-WEB.dir       = $(O-DOC.dir)/img
@@ -118,7 +118,7 @@ SRC.exe         = $(SRC.pl) $(SRC.gui) $(CHK.pl) $(DEV.pl) $(SRC.sh)
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
-SRC.inst        = $(SRC.usr.dir)/INSTALL-template.sh
+SRC.inst        = $(O-USR.dir)/INSTALL-template.sh
 
 # contrib / usr files
 SRC.usr.examples= filter_examples usage_examples
@@ -153,12 +153,12 @@ SRC.usr.complete= \
 		  fish_completion \
 		  tcsh_completion
 SRC.usr         = \
-		  $(SRC.usr.complete:%=$(SRC.usr.dir)/%_$(O-Project)) \
-		  $(SRC.usr.examples:%=$(SRC.usr.dir)/%) \
-		  $(SRC.usr.post.awk:%=$(SRC.usr.dir)/%) \
-		  $(SRC.usr.post:%=$(SRC.usr.dir)/%) \
-		  $(SRC.usr.misc:%=$(SRC.usr.dir)/%) \
-		  $(SRC.usr.zap:%=$(SRC.usr.dir)/%)
+		  $(SRC.usr.complete:%=$(O-USR.dir)/%_$(O-Project)) \
+		  $(SRC.usr.examples:%=$(O-USR.dir)/%) \
+		  $(SRC.usr.post.awk:%=$(O-USR.dir)/%) \
+		  $(SRC.usr.post:%=$(O-USR.dir)/%) \
+		  $(SRC.usr.misc:%=$(O-USR.dir)/%) \
+		  $(SRC.usr.zap:%=$(O-USR.dir)/%)
 
 
 TEST.exe        = SSLinfo.pl \
@@ -215,7 +215,7 @@ GEN.text        = $(O-DOC.dir)/$(O-Project).txt
 GEN.wiki        = $(O-DOC.dir)/$(O-Project).wiki
 GEN.man         = $(O-DOC.dir)/$(O-Project).1
 GEN.pod         = $(O-DOC.dir)/$(O-Project).pod
-GEN.src         = $(SRC.usr.dir)/$(O-Project)-standalone.pl
+GEN.src         = $(O-USR.dir)/$(O-Project)-standalone.pl
 GEN.pdf         = $(SRC.odg:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
@@ -235,7 +235,7 @@ GEN.DOC.data    = $(LIST.DOC_data:%=$(O-DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(O-DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = $(O-LIB.dir) $(O-LIBDOC.dir) $(O-DOC.dir) $(O-WEB.dir) $(SRC.usr.dir)
+O-DIRS          = $(O-LIB.dir) $(O-LIBDOC.dir) $(O-DOC.dir) $(O-WEB.dir) $(O-USR.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
@@ -272,7 +272,7 @@ MAKE            = $(MAKE_COMMAND)
 # some rules need to have a command, otherwise they are not evaluated
 EXE.dummy       = /bin/echo -n ""
 # internal used tools (paths hardcoded!)
-EXE.single      = $(SRC.usr.dir)/gen_standalone.sh
+EXE.single      = $(O-USR.dir)/gen_standalone.sh
 EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
@@ -305,10 +305,10 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.10 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.10
+_INST.genbytext = generated data by Makefile 3.11 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.11
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
-		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
+		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@'      \
@@ -574,8 +574,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.10
-tar:     _INST.is_edit  = 3.10
+_INST.is_edit           = 3.11
+tar:     _INST.is_edit  = 3.11
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -647,7 +647,7 @@ $(O-LIBDOC.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIBDOC.dir) $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIBDOC.dir) $(O-TMP.dir)/$(O-USR.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
