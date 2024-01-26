@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.8 24/01/26 15:11:24
+#?      @(#) Makefile 3.9 24/01/26 15:20:21
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.8
+_SID            = 3.9
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -176,16 +176,16 @@ TEST.Makefiles   = \
 SRC.Makefiles   = $(TEST.Makefiles:%=$(TEST.dir)/%)
 
 # documentation files
-DOC.dir         = docs
-DOC.odg         = o-saft_CLI_data_flow.odg \
+O-DOC.dir       = doc
+O-DOC.odg       = o-saft_CLI_data_flow.odg \
 		  o-saft_GUI_data_flow.odg \
 		  o-saft_docker.de.odg \
 		  o-saft_docker.en.odg
-SRC.odg         = $(DOC.odg:%=$(DOC.dir)/%)
-DOC.info        = concepts.txt
-SRC.info        = $(DOC.info:%=$(DOC.dir)/%)
-WEB.dir         = docs/img
-WEB.src         = \
+O-DOC.info      = concepts.txt
+SRC.odg         = $(O-DOC.odg:%=$(O-DOC.dir)/%)
+SRC.info        = $(O-DOC.info:%=$(O-DOC.dir)/%)
+O-WEB.dir       = $(O-DOC.dir)/img
+O-WEB.src       = \
 		  img.css \
 		  O-Saft_CLI-cipher.png \
 		  O-Saft_CLI-altname.png \
@@ -202,21 +202,21 @@ WEB.src         = \
 		  O-Saft_GUI-vulns.png \
 		  O-Saft_CLI-vulns.png \
 		  O-Saft_CLI__faked.txt
-SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
+SRC.web         = $(O-WEB.src:%=$(O-WEB.dir)/%)
 
 # generated files
 O-TMP.dir         = /tmp/$(O-Project)
-GEN.html        = $(DOC.dir)/$(O-Project).html
-GEN.cgi.html    = $(DOC.dir)/$(O-Project).cgi.html
-GEN.text        = $(DOC.dir)/$(O-Project).txt
-GEN.wiki        = $(DOC.dir)/$(O-Project).wiki
-GEN.man         = $(DOC.dir)/$(O-Project).1
-GEN.pod         = $(DOC.dir)/$(O-Project).pod
+GEN.html        = $(O-DOC.dir)/$(O-Project).html
+GEN.cgi.html    = $(O-DOC.dir)/$(O-Project).cgi.html
+GEN.text        = $(O-DOC.dir)/$(O-Project).txt
+GEN.wiki        = $(O-DOC.dir)/$(O-Project).wiki
+GEN.man         = $(O-DOC.dir)/$(O-Project).1
+GEN.pod         = $(O-DOC.dir)/$(O-Project).pod
 GEN.src         = $(SRC.usr.dir)/$(O-Project)-standalone.pl
 GEN.pdf         = $(SRC.odg:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
-GEN.rel         = $(DOC.dir)/$(O-Project).rel
+GEN.rel         = $(O-DOC.dir)/$(O-Project).rel
 
 GEN.tgz         = $(O-Project).tgz
 GEN.tmptgz      = $(O-TMP.dir)/$(GEN.tgz)
@@ -228,11 +228,11 @@ LIST.DOC_data   = --help --help=opts --help=commands --help=glossar --help=alias
 		  --help=data --help=data --help=checks --help=regex --help=rfc \
 		  --help=ciphers-html --help=ciphers-text
 # --help=warnings  uses a different command to be generated
-GEN.DOC.data    = $(LIST.DOC_data:%=$(DOC.dir)/$(SRC.pl).%)
-GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
+GEN.DOC.data    = $(LIST.DOC_data:%=$(O-DOC.dir)/$(SRC.pl).%)
+GEN.DOC.data   += $(O-DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = $(O-LIB.dir) $(O-LIBDOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.usr.dir)
+O-DIRS          = $(O-LIB.dir) $(O-LIBDOC.dir) $(O-DOC.dir) $(O-WEB.dir) $(SRC.usr.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
@@ -302,8 +302,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.8 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.8
+_INST.genbytext = generated data by Makefile 3.9 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.9
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -510,7 +510,7 @@ release.here: $(ALL.src)
 	| sort -f -k 4;
 
     # TODO: release.here not yet perfect, as it may contain multiple lines for
-    #       some files (mainly in docs/ and usr/)
+    #       some files (mainly in doc/ and usr/)
 
 # release.diff:
 #	@diff $(GEN.rel) $(release.here)
@@ -571,8 +571,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.8
-tar:     _INST.is_edit  = 3.8
+_INST.is_edit           = 3.9
+tar:     _INST.is_edit  = 3.9
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -644,7 +644,7 @@ $(O-LIBDOC.dir)/help.txt:
 #_______________________________________________ targets for generated files__|
 
 # targets for generation
-$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIBDOC.dir) $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(DOC.dir) $(O-TMP.dir)/$(TEST.dir):
+$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-LIBDOC.dir) $(O-TMP.dir)/$(SRC.usr.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(TRACE.target)
 	mkdir -p $@
 
@@ -701,14 +701,14 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 # most files could also be generated with: $(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
-$(DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(TEST.dir)/Makefile.warnings
+$(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(TEST.dir)/Makefile.warnings
 	@$(TRACE.target)
 	$(MAKE_COMMAND) -s warnings-info > $@
 
-# pattern rule for generating docs/$(SRC.pl).--help=*
+# pattern rule for generating $(O-DOC.dir)/$(SRC.pl).--help=*
 # unfortunately the target name does not contain any hint on which source file
 # it depends, hence all possible dependencies are used
-$(DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
+$(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 	@$(TRACE.target)
 	$(SRC.pl) --no-rc $* > $@
 
@@ -720,9 +720,9 @@ $(DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 # FIXME: (11/2021) libreoffice --headless  generates a file slighly different
 #        compared to the file generated interactively (reason yet unknown)
 #        we keep the generation here, to avoid missing files
-$(DOC.dir)/%.pdf: $(DOC.dir)/%.odg
+$(O-DOC.dir)/%.pdf: $(O-DOC.dir)/%.odg
 	@$(TRACE.target)
-	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(DOC.dir)/ $^ 
+	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(O-DOC.dir)/ $^ 
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
