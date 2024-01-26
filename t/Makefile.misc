@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.3 24/01/26 14:56:45
+#?      @(#) Makefile.misc 3.4 24/01/26 18:20:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.3
+_SID.misc          := 3.4
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -79,8 +79,8 @@ _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
 _ALL.devmodules.optional   := Debug::LTrace Devel::CallTrace Devel::TraceCalls
 #                         not used, but may be useful for debugging
 
-ifndef SRC.usr.dir
-    SRC.usr.dir = usr
+ifndef O-USR.dir
+    O-USR.dir = usr
 endif
 
 # cloc detect file types (language) on file extension primarily. Unfortunately
@@ -106,7 +106,7 @@ _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 HELP-_misc1         = ____________________________________________ testing misc. _
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
-HELP-test.bunt      = test '$(SRC.usr.dir)/bunt.pl' with sample file
+HELP-test.bunt      = test '$(O-USR.dir)/bunt.pl' with sample file
 
 HELP.misc           = $(_NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
@@ -127,11 +127,11 @@ test.bench.log: $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
-	-cat $(EXE.test.bunt) | $(SRC.usr.dir)/bunt.pl
+	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl
 $(TEST.bunt.log):
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	-cat $(EXE.test.bunt) | $(SRC.usr.dir)/bunt.pl > $@
+	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl > $@
 test.bunt.log: $(TEST.bunt.log)
 # TODO: test.bunt.log should use testarg%log target
 
@@ -217,7 +217,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.3: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.4: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -468,7 +468,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.3: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.4: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
