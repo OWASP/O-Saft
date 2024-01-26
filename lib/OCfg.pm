@@ -29,7 +29,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.10 24/01/26 15:22:42";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.11 24/01/27 00:13:53";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
@@ -1929,6 +1929,14 @@ our %cfg = (    # main data structure for configuration
     'prefix_trace'  => "",      # prefix string used in trace   messages
     'prefix_verbose'=> "",      # prefix string used in verbose messages
 
+   #--------------+-------------+----------------------------------------------
+    'dirs' => { # list of directories used for the tool, in ./ usually
+        'lib'   =>  "lib",      # modules and documentation
+        'doc'   =>  "doc",      # additional documentation
+        'usr'   =>  "usr",      # additional documentation
+        'test'  =>  "t",        # Canything for functional and quality tests
+    }, # dirs
+
    # config. key        default   description
    #------------------+---------+----------------------------------------------
     'try'           => 0,       # 1: do not execute openssl, just show
@@ -3523,7 +3531,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.10"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.11"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3571,7 +3579,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.10 2024/01/26
+3.11 2024/01/27
 
 =head1 AUTHOR
 
