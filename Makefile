@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.9 24/01/26 15:20:21
+#?      @(#) Makefile 3.10 24/01/26 18:15:20
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.9
+_SID            = 3.10
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -60,13 +60,23 @@ first-target-is-default: help
 
 O-Project       = o-saft
 O-ProjectName   = O-Saft
+
+# tool directories (i.g. related to ./ )
+O-DOC.dir       = doc
+O-LIB.dir       = lib
+O-LIBDOC.dir    = $(O-LIB.dir)/doc
+SRC.usr.dir     = usr
+TEST.dir        = t
+TEST.logdir     = $(TEST.dir)/log
+O-WEB.dir       = $(O-DOC.dir)/img
+O-TGZ.dir       = $(O-ProjectName)
+O-TMP.dir       = /tmp/$(O-Project)
 O-INSTALL.dir   = /usr/local/$(O-Project)
 
 # tool source files
 SRC.lic         = yeast.lic
 DEV.pl          = yeast.pl
 CHK.pl          = checkAllCiphers.pl
-O-LIB.dir       = lib
 O-LIB.pm        = \
 		  OCfg.pm \
 		  Ciphers.pm \
@@ -80,7 +90,6 @@ O-LIB.pm        = \
 		  OTrace.pm \
 		  OUsr.pm
 O-DOC.pm        = $(O-LIB.dir)/ODoc.pm
-O-LIBDOC.dir    = $(O-LIB.dir)/doc
 O-TXT.txt       = \
 		  coding.txt \
 		  glossary.txt \
@@ -112,7 +121,6 @@ SRC.misc        = README.md CHANGES
 SRC.inst        = $(SRC.usr.dir)/INSTALL-template.sh
 
 # contrib / usr files
-SRC.usr.dir     = usr
 SRC.usr.examples= filter_examples usage_examples
 SRC.usr.post.awk= \
 		  Cert-beautify.awk \
@@ -153,8 +161,6 @@ SRC.usr         = \
 		  $(SRC.usr.zap:%=$(SRC.usr.dir)/%)
 
 
-TEST.dir        = t
-TEST.logdir     = $(TEST.dir)/log
 TEST.exe        = SSLinfo.pl \
                   o-saft_bench.sh \
                   cloc-total.awk \
@@ -176,7 +182,6 @@ TEST.Makefiles   = \
 SRC.Makefiles   = $(TEST.Makefiles:%=$(TEST.dir)/%)
 
 # documentation files
-O-DOC.dir       = doc
 O-DOC.odg       = o-saft_CLI_data_flow.odg \
 		  o-saft_GUI_data_flow.odg \
 		  o-saft_docker.de.odg \
@@ -184,7 +189,6 @@ O-DOC.odg       = o-saft_CLI_data_flow.odg \
 O-DOC.info      = concepts.txt
 SRC.odg         = $(O-DOC.odg:%=$(O-DOC.dir)/%)
 SRC.info        = $(O-DOC.info:%=$(O-DOC.dir)/%)
-O-WEB.dir       = $(O-DOC.dir)/img
 O-WEB.src       = \
 		  img.css \
 		  O-Saft_CLI-cipher.png \
@@ -205,7 +209,6 @@ O-WEB.src       = \
 SRC.web         = $(O-WEB.src:%=$(O-WEB.dir)/%)
 
 # generated files
-O-TMP.dir         = /tmp/$(O-Project)
 GEN.html        = $(O-DOC.dir)/$(O-Project).html
 GEN.cgi.html    = $(O-DOC.dir)/$(O-Project).cgi.html
 GEN.text        = $(O-DOC.dir)/$(O-Project).txt
@@ -261,8 +264,8 @@ ALL.src         = \
 		  $(ALL.Makefiles) \
 		  $(ALL.tst) \
 		  $(ALL.usr)
-ALL.tgz         = $(ALL.src:%=O-Saft/%)
-ALL.tgz        += O-Saft/$(GEN.inst) O-Saft/$(GEN.rel)
+ALL.tgz         = $(ALL.src:%=$(O-TGZ.dir)/%)
+ALL.tgz        += $(O-TGZ.dir)/$(GEN.inst) $(O-TGZ.dir)/$(GEN.rel)
 
 # internal used make
 MAKE            = $(MAKE_COMMAND)
@@ -302,8 +305,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.9 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.9
+_INST.genbytext = generated data by Makefile 3.10 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.10
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -531,7 +534,7 @@ HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-docs       = generate '$(GEN.docs)'; see also target doc.data
-HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
+HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with '$(O-TGZ.dir)/'
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-doc.data   = generate '$(GEN.DOC.data)' for $(SRC.tcl)
 HELP-gen.all    = generate most "generatable" file
@@ -571,8 +574,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.9
-tar:     _INST.is_edit  = 3.9
+_INST.is_edit           = 3.10
+tar:     _INST.is_edit  = 3.10
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
