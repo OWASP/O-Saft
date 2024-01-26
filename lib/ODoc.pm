@@ -24,7 +24,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.9 24/01/26 00:45:23";
+my  $SID_odoc   = "@(#) ODoc.pm 3.10 24/01/26 15:34:52";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -96,8 +96,8 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
        $name =~ s#(.*[/\\]+)##g;
     $file =~ s#^\.\./##;
     $file =~ s#usr/##;          # remove if in path
-    $file =~ s#/Doc/#/lib/Doc/# if (not -e $file);  # try this one ..
-    $file =  "lib/Doc/$name"    if (not -e $file);  # try this one ..
+    $file =~ s#/doc/#/lib/doc/# if (not -e $file);  # try this one ..
+    $file =  "lib/doc/$name"    if (not -e $file);  # try this one ..
     $file =  ""         if (not -e $file);
     _warn("189: no '$orig' found, consider installing") if "" eq $file;
     return $file;
@@ -106,7 +106,7 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
 sub _get_filehandle {
     #? return open file handle for passed filename,
     #? return Perl's DATA file handle of this file if file does not exist
-    # passed file is searched for as is, in lib/ and finally lib/Doc
+    # passed file is searched for as is, in lib/ and finally lib/doc
     # this function is a wrapper for Perl's DATA
     my $file = shift || "";
     my $fh; # same as *FH
@@ -126,7 +126,7 @@ sub _get_filehandle {
             if (-e "$path/$file") {
                 $file = "$path/$file";
             } else {
-                $file = "$path/Doc/$file";
+                $file = "$path/doc/$file";
             }
             # following line for gen_standalone.sh (used with make)
             # OSAFT_STANDALONE $file =  _get_standalone($file);
@@ -416,11 +416,11 @@ Print VERSION version.
 =cut
 
 sub list        {
-    #? return sorted list of available .txt files in Doc directory
+    #? return sorted list of available .txt files in lib/doc directory
     #  sorted list simplifies tests ...
     my $dir = $0;
        $dir =~ s#[/\\][^/\\]*$##;
-       $dir .= "/Doc" if $dir !~ m#Doc/?$#;
+       $dir .= "/doc" if $dir !~ m#doc/?$#;
     my @txt;
     opendir(my $dh, $dir) or return $!;
     while (my $file = readdir($dh)) {
@@ -641,7 +641,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.9 2024/01/26
+3.10 2024/01/26
 
 
 =head1 AUTHOR
