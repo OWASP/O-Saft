@@ -52,7 +52,7 @@ use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.13 24/01/26 15:24:34";
+my  $SID_oman   = "@(#) OMan.pm 3.14 24/01/26 15:31:53";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -97,10 +97,10 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone;
 #_____________________________________________ texts for user documentation __|
 
 # Following texts are excerpts or abstracts of the user documentation defined
-# in   lib/Doc/help.txt .
+# in   lib/doc/help.txt .
 # Currently (2021) it is difficult to extract them programmatically from that
 # file. For better maintenance, they are defined here as internal variables.
-# TODO needs to be computed from lib/Doc/help.txt, somehow ...
+# TODO needs to be computed from lib/doc/help.txt, somehow ...
 
 my $_cmd_brief  = <<'EoBrief';
 +info             Overview of most important details of the SSL connection.
@@ -577,7 +577,7 @@ EoSTYLE
  td[typ]                {border:1px solid #fff; }
  [typ]:hover            {border:1px solid #aaa; }
  [typ]:hover ::after    {border:1px solid #000; border-radius:3px; position:absolute; margin-left:0.5em; background:#fd8; min-width:19em; }
- /* following definitons should be generated from lib/Doc/glossar.txt    */
+ /* following definitons should be generated from lib/doc/glossar.txt    */
  /* sequence of following definitions important: more lacy pattern first */
  [typ="-"]:hover       ::after  {content:"\2014  none / null / nothing";}
  [typ="-?-"]:hover     ::after  {content:"\2014  unknown";}
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.13'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.14'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2687,14 +2687,14 @@ of the documention which is headed by that string.
 
 The  I<--header>  option can be used for simple formatting.
 
-Note that above list is also documented in ./lib/Doc/help.txt  in section
+Note that above list is also documented in ./lib/doc/help.txt  in section
 "Options for help and documentation".
 In a perfect world it would be extracted from there (or vice versa).
 
 
 =head1 VERSION
 
-3.13 2024/01/26
+3.14 2024/01/26
 
 
 =head1 AUTHOR
