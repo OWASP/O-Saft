@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 1.82 23/12/03 12:34:23
+#?      @(#) Makefile.misc 3.2 24/01/26 08:26:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 1.82
+_SID.misc          := 3.2
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -79,8 +79,8 @@ _ALL.devmodules.extern += Devel::NYTProf Devel::DProf
 _ALL.devmodules.optional   := Debug::LTrace Devel::CallTrace Devel::TraceCalls
 #                         not used, but may be useful for debugging
 
-ifndef SRC.contrib.dir
-    SRC.contrib.dir = contrib
+ifndef SRC.usr.dir
+    SRC.usr.dir = usr
 endif
 
 # cloc detect file types (language) on file extension primarily. Unfortunately
@@ -91,12 +91,12 @@ endif
 #   _TEST.cloc.src += $(foreach src, $(filter t/Makefile.%,$(ALL.src)), \
 #     $(patsubst t/Makefile%,--force-lang=make $(src),$(src)) \
 #     )
-#   _TEST.cloc.src += $(foreach src, $(filter contrib/%_o-saft,$(ALL.src)), \
-#     $(patsubst contrib/%_o-saft,--force-lang="Bourne Shell" $(src),$(src)) \
+#   _TEST.cloc.src += $(foreach src, $(filter usr/%_o-saft,$(ALL.src)), \
+#     $(patsubst usr/%_o-saft,--force-lang="Bourne Shell" $(src),$(src)) \
 #     )
 #   ...
-# Up to now (03/2022), cloc detects one file  contrib/%_o-saft  incorrectly as
-# Ruby, not worth for more complicated code here ...
+# Up to now (01/2024), cloc detects one file  usr/%_o-saft incorrectly as Ruby
+# , not worth for more complicated code here ...
 _TEST.cloc.src = $(sort $(ALL.src))
 _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 
@@ -106,7 +106,7 @@ _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 HELP-_misc1         = ____________________________________________ testing misc. _
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
-HELP-test.bunt      = test '$(SRC.contrib.dir)/bunt.pl' with sample file
+HELP-test.bunt      = test '$(SRC.usr.dir)/bunt.pl' with sample file
 
 HELP.misc           = $(_NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
@@ -127,11 +127,11 @@ test.bench.log: $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(TRACE.target)
-	-cat $(EXE.test.bunt) | $(SRC.contrib.dir)/bunt.pl
+	-cat $(EXE.test.bunt) | $(SRC.usr.dir)/bunt.pl
 $(TEST.bunt.log):
 	@$(TRACE.target)
 	@$(TRACE.target.log)
-	-cat $(EXE.test.bunt) | $(SRC.contrib.dir)/bunt.pl > $@
+	-cat $(EXE.test.bunt) | $(SRC.usr.dir)/bunt.pl > $@
 test.bunt.log: $(TEST.bunt.log)
 # TODO: test.bunt.log should use testarg%log target
 
@@ -151,15 +151,15 @@ HELP-docs.subs  = generate graph with defined and used perl subroutines
 # only one target, as it generates multiple files anyway
 docs.anno:
 	@$(TRACE.target)
-	@$(EXE.graph-anno) --dir=$(DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
-	@$(EXE.graph-anno) --dir=$(DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
+	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 docs.annotations: docs.anno
 
 # only one target, as it generates multiple files anyway
 docs.subs:
 	@$(TRACE.target)
-	@$(EXE.graph-subs) --dir=$(DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
-	@$(EXE.graph-subs) --dir=$(DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
+	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 
 ALL.testdocs   := docs.anno docs.subs
 
@@ -217,7 +217,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 1.82: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.2: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -258,7 +258,7 @@ HELP-nytprof.html   = generate profiling data in HTML format
 HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
 
 _TEST.analyse.src  := ./
-_TEST.analyse.dst  := ./$(DOC.dir)/perl-analyzer
+_TEST.analyse.dst  := ./$(O-DOC.dir)/perl-analyzer
 _TEST.analyse.dat  := $(_TEST.analyse.dst)/o-saft.dat
 _TEST.analyse.html := $(_TEST.analyse.dst)/index.html
 TEST.opt.analyse    =
@@ -468,7 +468,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 1.82: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.2: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
