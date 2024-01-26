@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.5 24/01/26 01:04:53
+#?      @(#) Makefile 3.6 24/01/26 14:54:27
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.5
+_SID            = 3.6
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -79,8 +79,8 @@ O-LIB.pm        = \
 		  OText.pm \
 		  OTrace.pm \
 		  OUsr.pm
-O-DOC.dir       = $(O-LIB.dir)/Doc
 O-DOC.pm        = $(O-LIB.dir)/ODoc.pm
+O-LIBDOC.dir    = $(O-LIB.dir)/doc
 O-TXT.txt       = \
 		  coding.txt \
 		  glossary.txt \
@@ -90,7 +90,7 @@ O-TXT.txt       = \
 		  openssl.txt \
 		  rfc.txt \
 		  tools.txt
-O-SRC.txt       = $(O-TXT.txt:%=$(O-DOC.dir)/%)
+O-SRC.txt       = $(O-TXT.txt:%=$(O-LIBDOC.dir)/%)
 O-MAN.pm        = $(O-LIB.dir)/OMan.pm
 SRC.pm          = $(O-LIB.pm:%=lib/%)
 SRC.sh          = $(O-Project)
@@ -232,7 +232,7 @@ GEN.DOC.data    = $(LIST.DOC_data:%=$(DOC.dir)/$(SRC.pl).%)
 GEN.DOC.data   += $(DOC.dir)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = lib $(O-DOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.usr.dir)
+O-DIRS          = lib $(O-LIBDOC.dir) $(DOC.dir) $(WEB.dir) $(SRC.usr.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
@@ -302,8 +302,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.5 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.5
+_INST.genbytext = generated data by Makefile 3.6 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.6
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(SRC.usr.dir)@'            \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -571,8 +571,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.5
-tar:     _INST.is_edit  = 3.5
+_INST.is_edit           = 3.6
+tar:     _INST.is_edit  = 3.6
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -637,7 +637,7 @@ clean.tgz: clean.tar
 clean.docker: docker.rm
 
 # avoid matching implicit rule help% in some of following targets
-$(O-DOC.dir)/help.txt: 
+$(O-LIBDOC.dir)/help.txt: 
 	@$(TRACE.target)
 
 #_____________________________________________________________________________
