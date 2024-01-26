@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.3 24/01/26 08:23:04
+#?      @(#) Makefile 3.4 24/01/26 18:18:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.3
+_SID.test          := 3.4
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -142,8 +142,8 @@ TEST.symlinks  := ../usr ../lib ../.o-saft.pl ../docs
 
 # $(SRC.rc)  may not be defined here, hence hardcoded
 
-ifndef SRC.usr.dir
-    SRC.usr.dir = usr
+ifndef O-USR.dir
+    O-USR.dir = usr
 endif
 
 # Tracing just the log-targets is special. Using  $(TRACE.target)  is not an
