@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 1.84 23/12/14 19:00:20
+#?      @(#) Makefile.warnigs 3.2 24/01/26 08:24:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 1.84
+_SID.warnings      := 3.2
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -184,10 +184,10 @@ warning-006: TEST.args  = TODO: testing missing IO/Socket/INET.pm, disabled ...
 warning-007: TEST.args  = TODO: testing missing Net/DNS.pm
 warning-008: TEST.args  = TODO: testing missing Time/Local.pm
 #warning-009: TEST.args  = free
-warning-010: TEST.args  = TODO: testing die, missing Net/SSLhello.pm
-warning-011: TEST.args  = TODO: testing die, missing Net/SSLinfo.pm
+warning-010: TEST.args  = TODO: testing die, missing lib/SSLhello.pm
+warning-011: TEST.args  = TODO: testing die, missing lib/SSLinfo.pm
 warning-012: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
-warning-013: TEST.args  = TODO: testing die, missing o-saft-man.pm, disabled ...
+warning-013: TEST.args  = TODO: testing die, missing lib/Man.pm, disabled ...
 warning-014: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
 warning-015: TEST.args  = --cipher=UNKNOWN +cipher --ciphermode=openssl $(TEST.host)
 # 016, 017: programing error
@@ -244,16 +244,16 @@ warning-075: TEST.args  = --cfg-init=ca_path=force-message  +quit
 warning-076: TEST.args  = --cfg_score=dummy=invalid_value   +quit
 warning-080: TEST.args  = TODO: testing Net::SSLeay < 1.49
 warning-081: TEST.args  = TODO: ancient Net::SSLeay Net::SSLeay::VERSION < 1.49, difficult ...
-warning-090: TEST.args  = TODO: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead, difficult ...
+warning-090: TEST.args  = TODO: SSLinfo::next_protos no longer supported, please use SSLinfo::protos_alpn instead, difficult ...
 warning-091: TEST.args  = TODO: help file cannot be opened, difficult ...
 warning-092: TEST.args  = TODO: help file unknown syntax:, difficult ...
 warning-093: TEST.args  = TODO: help file cannot be opened, difficult ...
-# warning-189 .. warning-191 are for missing OSaft/Doc/file.txt
+# warning-189 .. warning-191 are for missing lib/Doc/file.txt
 # testing with o-saft-standalone.pl with full path may trigger the warning
-warning-189: EXE.pl     = $(CURDIR)/contrib/o-saft-standalone.pl
+warning-189: EXE.pl     = $(CURDIR)/$(SRC.usr.dir)/o-saft-standalone.pl
 warning-189: TEST.args  = --help +quit
-warning-190: TEST.args  = TODO: open(OSaft/Doc/file.txt): failed, difficult ...
-warning-191: EXE.pl     = $(CURDIR)/contrib/o-saft-standalone.pl
+warning-190: TEST.args  = TODO: open(lib/Doc/file.txt): failed, difficult ...
+warning-191: EXE.pl     = $(CURDIR)/$(SRC.usr.dir)/o-saft-standalone.pl
 warning-191: TEST.args  = --help +quit
 warning-111: TEST.args  = --mx --nodns                      +quit
 warning-111: TEST.args  = TODO: testing missing Net/DNS.pm
@@ -287,7 +287,7 @@ warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLea
 warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
 warning-145: TEST.args  = --cipher-openssl +cipher --dtls11 +quit
 warning-146: TEST.args  = TODO: testing missing openssl -tlsextdebug option
-warning-147: TEST.args  = TODO: testing missing openssl executable in Net::SSLinfo
+warning-147: TEST.args  = TODO: testing missing openssl executable in SSLinfo
 warning-148: TEST.args  = TODO: testing missing openssl version -d failed, difficult ...
 warning-149: TEST.args  = --openssl=/does/not/exist         +quit
 warning-201: TEST.args  = +cn                               unknown-host
@@ -296,7 +296,7 @@ warning-202: TEST.args  = +cn --exit=HOST1                  www.skype.com
 warning-203: TEST.args  = TODO: testing connection without SNI (errors), difficult ...
 warning-204: TEST.args  = TODO: testing connection without SNI, difficult ...
 warning-205: TEST.args  = TODO: testing connection failed, difficult ...
-warning-206: TEST.args  = TODO: testing connection witout SNI errors from Net::SSLinfo, difficult ...
+warning-206: TEST.args  = TODO: testing connection witout SNI errors from SSLinfo, difficult ...
 warning-207: TEST.args  = TODO: testing connection with openssl failed, difficult ...
 warning-208: TEST.args  = TODO: testing +check without openssl on Windows, difficult ...
 warning-209: TEST.args  = TODO: testing missing SSL version, difficult ...
@@ -351,29 +351,29 @@ warning-862: TEST.args  = TODO: unknown cipher key '$key', key ignored, difficul
 warning-863: TEST.args  = TODO: unknown cipher key '$key', key ignored, difficult ...
 
 # not yet used in o-saft.pl (1/2019)
-warning-501: TEST.args  = TODO: cannot read OSaft/_ciphers_openssl_all.pm
-warning-501: EXE.pl     = ../OSaft/Ciphers.pm
-warning-502: TEST.args  = TODO: cannot read OSaft/_ciphers_iana.pm
-warning-502: EXE.pl     = ../OSaft/Ciphers.pm
-warning-503: TEST.args  = TODO: cannot read OSaft/_ciphers_osaft.pm
-warning-503: EXE.pl     = ../OSaft/Ciphers.pm
+warning-501: TEST.args  = TODO: cannot read lib/_ciphers_openssl_all.pm
+warning-501: EXE.pl     = ../lib/Ciphers.pm
+warning-502: TEST.args  = TODO: cannot read lib/_ciphers_iana.pm
+warning-502: EXE.pl     = ../lib/Ciphers.pm
+warning-503: TEST.args  = TODO: cannot read lib/_ciphers_osaft.pm
+warning-503: EXE.pl     = ../lib/Ciphers.pm
 warning-504: TEST.args  = TODO: DATA line%4d: wrong hex key
-warning-504: EXE.pl     = ../OSaft/Ciphers.pm
+warning-504: EXE.pl     = ../lib/Ciphers.pm
 warning-505: TEST.args  = TODO: DATA line%4d: wrong number of TAB-separated fields
-warning-505: EXE.pl     = ../OSaft/Ciphers.pm
+warning-505: EXE.pl     = ../lib/Ciphers.pm
 warning-511: TEST.args  = getter=0x42
-warning-511: EXE.pl     = ../OSaft/Ciphers.pm
+warning-511: EXE.pl     = ../lib/Ciphers.pm
 warning-513: TEST.args  = TODO: partial match for cipher name found, difficult ...
-warning-513: EXE.pl     = ../OSaft/Ciphers.pm
+warning-513: EXE.pl     = ../lib/Ciphers.pm
 
 # Ciphers.pm
 warning-520: TEST.args  = testing ciphers unknown format
-warning-520: EXE.pl     = ../OSaft/Ciphers.pm
+warning-520: EXE.pl     = ../lib/Ciphers.pm
 # Ciphers.pm: programming error
 warning-521: TEST.args  = TODO: no key found for '$txt'
-warning-521: EXE.pl     = ../OSaft/Ciphers.pm
+warning-521: EXE.pl     = ../lib/Ciphers.pm
 #warning-522: TEST.args  = TODO: testing duplicate openssl key, difficult ...
-#warning-522: EXE.pl     = ../OSaft/Ciphers.pm
+#warning-522: EXE.pl     = ../lib/Ciphers.pm
 
 ALL.test.warnings   = $(shell awk -F: '/^warning-...:/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.warnings))
 
@@ -425,7 +425,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 1.84: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.2: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
