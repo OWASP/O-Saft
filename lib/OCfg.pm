@@ -29,7 +29,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.11 24/01/27 00:13:53";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.12 24/01/27 00:58:02";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
@@ -1919,7 +1919,7 @@ our %cfg = (    # main data structure for configuration
     'need_timelocal'=> 0,       # -"-
     'need_netinfo'  => 1,       # 0: do not load Net::SSLinfo
     # following initialised in _ocfg_init()
-    'me'            => "",
+    'me'            => "",      # set in main
     'ARG0'          => "",
     'ARGV'          => [],      # arguments passed on command-line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
@@ -2948,20 +2948,15 @@ our %cfg = (    # main data structure for configuration
         'links'     => "links.txt",
         'rfc'       => "rfc.txt",
         'tools'     => "tools.txt",
-        # following are used in o-saft.tcl, but are generate with o-saft-man.pm
-        # the keys --help* are used as pattern
-        # TODO: hardcoded  doc/  and  o-saft.pl  should be configurable
-        '--help'                => "doc/o-saft.pl.--help",
-        '--help=alias'          => "doc/o-saft.pl.--help=alias",
-        '--help=checks'         => "doc/o-saft.pl.--help=checks",
-        '--help=commands'       => "doc/o-saft.pl.--help=commands",
-        '--help=data'           => "doc/o-saft.pl.--help=data",
-        '--help=glossar'        => "doc/o-saft.pl.--help=glossar",
-        '--help=opts'           => "doc/o-saft.pl.--help=opts",
-        '--help=regex'          => "doc/o-saft.pl.--help=regex",
-        '--help=rfc'            => "doc/o-saft.pl.--help=rfc",
-        '--help=warnings'       => "doc/o-saft.pl.--help=warnings",
-        '--help=ciphers-text'   => "doc/o-saft.pl.--help=ciphers-text",
+        # following are used in o-saft.tcl, but are generate with lib/OMan.pm
+        # keys and values are initilized dynamically, see _ocfg_init() below
+        # the keys --help* are used as pattern;
+        # key=value looks like:  '--help=opts'  => "o-saft.pl.--help=opts"
+        'pattern-help'  => [ qw( --help --help=rfc --help=alias --help=checks
+                                 --help=commands   --help=data  --help=opts
+                                 --help=warnings --help=glossar --help=regex
+                                 --help=ciphers-text   --help=ciphers-text
+                               ) ],
     }, # files
    #------------------+-----------------+--------------------------------------
     'done'      => {},          # defined in caller
@@ -3503,6 +3498,18 @@ sub _cmd_init       {
     return;
 } # _cmd_init
 
+sub _doc_init       {
+    #? initialise dynamic settings for path names, mainly documentation files
+    # key=value looks like:  '--help=opts'  => "doc/o-saft.pl.--help=opts"
+    # o-saft.pl must be hardcoded
+    # ensure that files are located in directory where executed $0 resides
+    foreach my $k (@{$cfg{'files'}->{'pattern-help'}}) {
+        my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
+        $cfg{'files'}->{$k} = join("/", $_path, $cfg{'dirs'}->{'doc'}, "o-saft.pl.$k");
+    }
+    return;
+} # _cmd_init
+
 sub _dbx_init       {
     #? initialise settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
@@ -3527,11 +3534,12 @@ sub _ocfg_init      {
     _cfg_init();        # initallise dynamic data in %cfg
     _cmd_init();        # initallise dynamic commands in %cfg
     _dbx_init();        # initallise debugging data in %dbx
+    _doc_init();        # initialise dynamic settings for documentation files
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.11"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.12"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3579,7 +3587,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.11 2024/01/27
+3.12 2024/01/27
 
 =head1 AUTHOR
 
