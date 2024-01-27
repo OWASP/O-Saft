@@ -55,14 +55,6 @@ here are some examples of the most common use cases:
 
 =over
 
-=item * Show supported (enabled) ciphers with their DH parameters:
-
-=back
-
-	o-saft.pl +cipher-dh example.tld
-
-=over
-
 =item * Show details of certificate and connection of target:
 
 =back
@@ -84,15 +76,6 @@ here are some examples of the most common use cases:
 =back
 
 	o-saft.pl +vulns example.tld
-
-=over
-
-=item * Check for all known ciphers (independant of SSL library):
-
-=back
-
-	checkAllCiphers.pl example.tld
-	checkAllCiphers.pl example.tld --range=full --v
 
 =over
 
@@ -286,7 +269,7 @@ learn a new tool or to install "newer" software first.
 However, the user "should do something" if necessary depending on the
 reported results.
 
-Developers may read more details on the concept in  docs/concepts.txt
+Developers may read more details on the concept in  doc/concepts.txt.
 
 =head2 This help text
 
@@ -316,6 +299,74 @@ It is important to understand, which provided information is based on
 data returned by underlaying (used) libraries and the information
 computed directly.
 
+=head2 Version 23.11.23 and later
+
+Starting with version 23.11.23 all checks for ciphers are done by our
+own plain Perl code, just the SSL/TLS-related checks and informations
+use L<Net::SSLeay(3pm)|Net::SSLeay(3pm)> and openssl.
+Since version 23.12.23 OpenSSL 3.0.x is supported also.
+
+Beside  new and removed funtionality  in OpenSSL (details see below),
+OpenSSL also changed some texts in its responses. Again this makes it
+hard to parse openssl's output properly. Therfore checking for cipher
+is now done without openssl.  Using openssl for checking ciphers must
+be requested explicitly with the  I<--ciphermode=openssl>  option.
+
+Keep in mind that it is not possible  to check if the target supports
+ancient ciphers with openssl 3.x. There even does not exist a patched
+version, as we used before, to do it. However, any openssl 1.x can be
+be used if specified with the  I<--openssl=>  option.
+
+Following changes in OpenSSL have been observed (incomplete list):
+
+=over
+
+=item *            # our command/option| OpenSSL 1.x           | OpenSSL 3.0.x
+
+=back
+
+=over
+
+=item *            #-------------------+-----------------------+---------------------
+
+=back
+
+-ssl2 -no_ssl2     | -ssl2 -no_ssl2        | <<not supported>>
+-ssl3 -no_ssl3     | -ssl3 -no_ssl3        | <<not supported>>
+-tls1_3 -no_tls1_3 | <<not supported>>     | -tls1_3 -no_tls1_3
+-dtls1  -dtls1_2   | <<not supported>>     | -dtls1  -dtls1_2
+                  | <<not supported>>     | -legacy_renegotiation
+                  | <<not supported>>     | -prioritize_chacha
+I<+selfsigned>        | self signed           | num=18:self-signed
+I<+sslversion>        | TLSv1.2               | TLSv12
+I<+renegotiation>     | renegotiation info" (id=65281), len=1
+                  |         Secure Renegotiation IS NOT supported
+I<+sigkey_len>        | 2048                  | 2104
+I<+sigkey_value>      | hexhex                | Signature Value hexhex
+I<+dh_parameter>      | ECDH, P-256, 256 bits | X25519, 253 bits
+I<+cipher-selected>   | New, TLSv1/SSLv3, ... | New, TLSv1.3, ...
+
+=over
+
+=item *            #-------------------+-----------------------+---------------------
+
+=back
+
+As the purpose of this tool is to check for any cipher,  wether known
+or not, using modern OpenSSL 3.x is not feasible because it is simply
+not possible. This restriction may apply to other tools which rely on
+openssl or the underlying libssl too.
+
+Beyond this limitation, checking old protocols and ciphers on targets
+which use modern libraries, may result in a bunch of warnings.  If it
+happens, following can be done to get a better overview:
+
+	o-saft.pl target --header +cipher
+	o-saft.pl target --header +cipher --nossl2 --nossl3 --notls1
+	o-saft.pl target --header +cipher --no-warnings
+	o-saft.pl target --header +cipher --nossl2 --nossl3 --notls1 --no-warnings
+	o-saft.pl target --header +cipher --ciphermode=openssl --openssl=/path/openssl
+
 =head2 Version 19.11.19 and later
 
 Starting with version 19.11.19 the  I<+cipher>  command does not use any
@@ -330,71 +381,108 @@ Therefore following commands and options changed:
 
 =over
 
-=item * +cipher     uses internal method
+=item *            # VERSION < 19.11.19       |  change ...
 
 =back
 
 =over
 
-=item * +cipherall  command obsolete, !!Hint is printed
+=item *            #--------------------------+---------------------------------
 
 =back
 
 =over
 
-=item * +cipherraw  command obsolete, !!Hint is printed
+=item * +cipher                 | uses internal method
 
 =back
 
 =over
 
-=item * --openssl-ciphers  --force-openssl  changed to  --ciphermode=openssl
+=item * +cipherall              | command obsolete, !!Hint is printed
 
 =back
 
 =over
 
-=item * --openssl=TOOL  TOOL only used for  +cipher  --ciphermode=openssl
+=item * +cipherraw              | command obsolete, !!Hint is printed
 
 =back
 
 =over
 
-=item * --legacy=owasp  option obsolete
+=item * --force-openssl         | 
+
+=back
+
+=over
+
+=item * --openssl-ciphers       | changed to  --ciphermode=openssl
+
+=back
+
+=over
+
+=item * --openssl=TOOL          | TOOL only used for  +cipher  --ciphermode=openssl
+
+=back
+
+=over
+
+=item * --legacy=owasp          | option obsolete
+
+=back
+
+=over
+
+=item *            #--------------------------+---------------------------------
 
 =back
 
 The historic commands  I<+cipherall>  and  I<+cipherraw> should be replaced
 with the new syntax, as follows:
 
-	VERSION < 19.11.19           VERSION > 19.11.19
-#----------------------------+---------------------------------
-
 =over
 
-=item * +cipher                      +cipher  --ciphermode=ssleay
+=item *            # VERSION < 19.11.19       |  VERSION > 19.11.19
 
 =back
 
 =over
 
-=item * +cipher  --force-openssl     +cipher  --ciphermode=openssl
+=item *            #--------------------------+---------------------------------
 
 =back
 
 =over
 
-=item * +cipherall                   +cipher
+=item * +cipher                 |  +cipher  --ciphermode=ssleay
 
 =back
 
 =over
 
-=item * +cipherraw                   +cipher  --ciphermode=intern
+=item * +cipher --force-openssl |  +cipher  --ciphermode=openssl
 
 =back
 
-#----------------------------+---------------------------------
+=over
+
+=item * +cipherall              |  +cipher
+
+=back
+
+=over
+
+=item * +cipherraw              |  +cipher  --ciphermode=intern
+
+=back
+
+=over
+
+=item *            #--------------------------+---------------------------------
+
+=back
 
 =head2 Version before 19.11.19
 
@@ -627,9 +715,10 @@ should be available:
 There are commands for various tests according the  SSL connection to
 the target, the targets certificate and the used ciphers.
 
-All commands are preceded by a  C<+>  to easily distinguish from other
-arguments and options. However, some I<--OPTIONS> options are treated as
-commands for historical reason or compatibility to other programs.
+All commands are prepended by a  C<+>  character to easily distinguish
+from other arguments and options. However, some I<--OPTIONS> options are
+treated as commands for historical reason or compatibility with other
+programs.
 
 The most important commands are (in alphabetical order):
 I<+check> I<+cipher> I<+info> I<+http> I<+list> I<+quick> I<+sni> I<+sni_check> I<+version>
@@ -666,7 +755,7 @@ with other commands).
 =head3 +ciphers
 
 Show known ciphers in format like "openssl ciphers".
-It also accepts the  -v  and  -V  option.
+It also accepts the  -v  and  -V  option (like openssl).
 Use  I<+list>  command for more information according ciphers.
 
 =head3 +list
@@ -678,31 +767,31 @@ Different output formats are used for the  I<--legacy=*>  option:
 
 =over
 
-=item * --legacy=simple   simple space-separated output
+=item * --legacy=simple   - simple space-separated output
 
 =back
 
 =over
 
-=item * --legacy=full     TAB-separated output with more data
+=item * --legacy=full     - TAB-separated output with more data
 
 =back
 
 =over
 
-=item * --legacy=owasp    simple output sorted according OWASP scoring
+=item * --legacy=owasp    - simple output sorted according OWASP scoring
 
 =back
 
 =over
 
-=item * --legacy=openssl  output like with  +ciphers  command
+=item * --legacy=openssl  - output same as with  +ciphers  command
 
 =back
 
 =over
 
-=item * --legacy=ssltest  output like "ssltest --list"
+=item * --legacy=ssltest  - output like "ssltest --list"
 
 =back
 
@@ -759,7 +848,7 @@ Overview of all details of the SSL connection. It is a shortcut for
 all commands listed below but not including  I<+cipher>.
 
 This command is intended for debugging as it prints some details of
-the used L<Net::SSLinfo|Net::SSLinfo> module.
+the used  lib/SSLinfo  module.
 
 =head3 +quick
 
@@ -824,7 +913,7 @@ is mainly for debugging and  should not be used together with other
 commands (except  I<+cipher>).
 Each key-value pair is enclosed in  C<#{>  and  C<#}> .
 
-Using  I<--trace>  I<--trace>  dumps data of L<Net::SSLinfo|Net::SSLinfo> too.
+Using  I<--trace>  I<--trace>  dumps data of  lib/SSLinfo  too.
 
 =head3 +exec
 
@@ -962,8 +1051,8 @@ specified order of the ciphers.
 
 I. g. it is expected that the order is according the cipher suite's
 strength, meaning the most strongest first, and the weakest last.
-It does not make sense to use an order where a weak cipher preceeds
-a stronger one. Such a (mis-)configuration should be detected.
+It doesn't make sense to use an order where a weak cipher preceds a
+stronger one. Such a (mis-)configuration should be detected.
 
 Having this in mind, the algorithm to detect a  proper cipher order
 is as simply as follows:
@@ -1365,7 +1454,7 @@ checks. The status code will also be printed at end, like:
 Parts of these checks can be diasabled,  see  I<--exitcode-*>  options
 below.
 
-Use  I<--v> or  I<--exitcode-v> to see details about the performed checks.
+Use  I<--v> or I<--exitcode-v>  to see details about the performed checks.
 
 Functionality implemented experimental, may change in future.
 
@@ -1403,10 +1492,10 @@ following information are missing:
 	compression, expansion, renegotiation, resumption,
 	selfsigned, verify, chain, protocols, DH parameters
 
-See L<Net::SSLinfo|Net::SSLinfo> for details.
+See  lib/SSLinfo  for details.
 
 If used together with  I<--trace>, s_client  data will also be printed
-in debug output of L<Net::SSLinfo|Net::SSLinfo>.
+in debug output of  lib/SSLinfo.
 
 =head3 --no-openssl
 
@@ -1427,6 +1516,8 @@ If set, environment variable OPENSSL_CONF will be set to given path
 for details about specifying alternate  openssl.cnf  files.
 
 =head3 --openssl-ciphers --force-openssl
+
+Options are obsolete. Please use  I<--ciphermode=openssl>  instead.
 
 Use openssl to check for supported ciphers; default: L<IO::Socket(3pm)|IO::Socket(3pm)>
 
@@ -1518,37 +1609,37 @@ Available methods:
 
 =over
 
-=item * C<info-socket>       use internal socket to retrieve information
+=item * C<info-socket>    - use internal socket to retrieve information
 
 =back
 
 =over
 
-=item * C<info-openssl>      use external openssl to retrieve information
+=item * C<info-openssl>   - use external openssl to retrieve information
 
 =back
 
 =over
 
-=item * C<info-user>         use usr_getinfo() to retrieve information
+=item * C<info-user>      - use usr_getinfo() to retrieve information
 
 =back
 
 =over
 
-=item * C<cipher-socket>     use internal socket to ckeck for ciphers
+=item * C<cipher-socket>  - use internal socket to ckeck for ciphers
 
 =back
 
 =over
 
-=item * C<cipher-openssl>    use external openssl to ckeck for ciphers
+=item * C<cipher-openssl> - use external openssl to ckeck for ciphers
 
 =back
 
 =over
 
-=item * C<cipher-user>       use usr_getciphers() to ckeck for ciphers
+=item * C<cipher-user>    - use usr_getciphers() to ckeck for ciphers
 
 =back
 
@@ -1593,23 +1684,23 @@ The second part of the name denotes which kind of method to call:
 
 =over
 
-=item * C<socket>    the internal functionality with sockets is used
+=item * C<socket>      - the internal functionality with sockets is used
 
 =back
 
 =over
 
-=item * C<openssl>   the exteranl openssl executable is used
+=item * C<openssl>     - the exteranl openssl executable is used
 
 =back
 
 =over
 
-=item * C<user>      the external special function, as specified in user's
+=item * C<user>        - the external special function,  as specified in
 
 =back
 
-           o-saft-usr.pm,  is used.
+                 user's  lib/OUsr.pm,  is used.
 
 Example:
 
@@ -1657,72 +1748,29 @@ Following C<MODE>s are supported:
 
 =over
 
-=item * C<intern>    scan for ciphers using internal method; (default)
+=item * C<intern>    - scan for ciphers using internal method; (default)
 
 =back
 
 =over
 
-=item * C<openssl>   scan for ciphers using external openssl executable
+=item * C<openssl>   - scan for ciphers using external openssl executable
 
 =back
 
 =over
 
-=item * C<ssleay>    scan for ciphers using  IO::Socket  and  Net::SSLeay
+=item * C<ssleay>    - scan for ciphers using  IO::Socket and  Net::SSLeay
 
 =back
 
 =over
 
-=item * C<dump>      same as C<intern> but print  all cipher information,
+=item * C<dump>      - same as C<intern> but print  all cipher information,
 
 =back
 
-           useful when postprocessed by contrib/* tools
-
-=head3 --cipher=CIPHER
-
-C<CIPHER> can be any cipher suite name or (internal) hex constant.
-If C<CIPHER> does not match a hex key, for example 0x03000035, it is
-used as pattern (RegEx) to match cipher suite names. For example:
-C<AES256-SHA> matches 23 cipher suites, 
-For example C<AES256-SHA> matches 23 ciphers,  while C<AES256-SHA$>
-matches 2 ciphers, see:
-
-	OSaft/Ciphers.pm find-names=AES256-SHA
-	OSaft/Ciphers.pm find-names=AES256-SHA$
-
-To be sure that exactly one cipher suite matches, use for example:
-
-	--cipher=^AES256-SHA$
-
-When  I<--ciphermode=openssl> or I<--ciphermode=ssleay> is used, C<CIPHER>
-can be any string accepted by openssl or a hex constant. Examples:
-
-=over
-
-=item * --cipher=DHE_DSS_WITH_RC4_128_SHA
-
-=back
-
-=over
-
-=item * --cipher=0x03000066
-
-=back
-
-=over
-
-=item * --cipher=66
-
-=back
-
-will be mapped to   C<DHE-DSS-RC4-SHA>
-
-Note: if more than one cipher matches, just one will be selected.
-
-Default is C<ALL:NULL:eNULL:aNULL:LOW> as specified in L<Net::SSLinfo|Net::SSLinfo>.
+             useful when postprocessed by usr/* tools
 
 =head3 --socket-reuse
 
@@ -1860,6 +1908,10 @@ C<HTTPS_DEBUG>.
 
 Do not make HTTP request.
 
+=head3 --http-user-agent=UA
+
+Use C<UA> for HTTP header "User-Agent:" in HTTP(s) requests.
+
 =head3 --sni
 
 Make SSL connection in SNI mode.
@@ -1910,11 +1962,11 @@ Do not get data from target's certificate, return empty string.
 =head3 --no-cert --no-cert
 
 Do not get data from  target's certificate,  return  default string
-of L<Net::SSLinfo|Net::SSLinfo> (see  I<--no-cert-text=TEXT>  option).
+of lib/SSLinfo (see  I<--no-cert-text=TEXT>  option).
 
 =head3 --no-cert-text=TEXT
 
-Set C<TEXT> to be returned from L<Net::SSLinfo|Net::SSLinfo> if no certificate data
+Set C<TEXT> to be returned from  lib/SSLinfo  if no certificate data
 is collected due to use of  I<--no-cert>.
 
 =head3 --ca-depth=INT
@@ -1999,21 +2051,102 @@ Additional delay in seconds  after each connect for a cipher check.
 This is useful when connecting to servers which have IPS in place,
 or are slow in accepting new connections or requests.
 
+=head3 --cipher=CIPHER
+
+Only check for C<CIPHER> instead of using ciphers from internal list
+(default). Multiple options are can be specified.
+
+C<CIPHER> can be any cipher suite name or (internal) hex key, see:
+
+	o-saft.pl +list
+
+for known, valid keys and cipher names.
+
+C<CIPHER> can also be any of the internal defined patterns, see:
+
+	o-saft.pl --header --help=cipherpattern
+
+If C<CIPHER> does not match a hex key, i.e. C<0x03000035>, it is used
+as pattern (RegEx) to match cipher suite names. For example:
+C<AES256-SHA> matches 28 cipher suites,  while C<AES256-SHA$> matches
+14 ciphers, see:
+
+	lib/Ciphers.pm find-names=AES256-SHA
+	lib/Ciphers.pm find-names=AES256-SHA$
+
+To be sure that exactly one cipher suite matches, use for example:
+
+	--cipher=^AES256-SHA$
+	--cipher=0x03000035
+
+Hex keys must be specified with a leading C<0x>  followed by exactly
+8 uper case hex characters C<[0-9A-F]>.
+
+The pattern can be common RegEx like C<GCM|CHACHA>.  Simple OpenSSL-
+style pattern are also accepted, for example: C<AES:ECDH>.
+
+When  I<--ciphermode=openssl> or I<--ciphermode=ssleay> is used, C<CIPHER>
+can only be any string or a hex key accepted by openssl. Examples:
+
+=over
+
+=item * --cipher=DHE_DSS_WITH_RC4_128_SHA
+
+=back
+
+=over
+
+=item * --cipher=0x03000066
+
+=back
+
+will be mapped to  C<DHE-DSS-RC4-SHA>
+
+C<CIPHER> can also be any pattern accepted by openssl, for example:
+
+=over
+
+=item * --cipher=C<!DES:!ADH:!aNULL>
+
+=back
+
+Default is C<ALL:NULL:eNULL:aNULL:LOW:EXP> as specified in lib/SSLinfo.
+
+See  L</LIMITATIONS>  also.
+
 =head3 --cipher-alpn=NAME
 
 Name of protocol to be added to list of  applcation layer protocols
 (ALPN), which is used for cipher checks.
 
-I<--cipher-alpn=>,   sets empty list.
-I<--cipher-alpn=>,,  sets list to empty element "".
+=over
+
+=item * --cipher-alpn=,     - sets empty list.
+
+=back
+
+=over
+
+=item * --cipher-alpn=,,    - sets list to empty element "".
+
+=back
 
 =head3 --cipher-npn=NAME
 
 Name of protocol to be added to list of  next protocol negotiations
 (NPN), which is used for cipher checks.
 
-I<--cipher-npn=>,   sets empty list.
-I<--cipher-npn=>,,  sets list to empty element "".
+=over
+
+=item * --cipher-npn=,      - sets empty list.
+
+=back
+
+=over
+
+=item * --cipher-npn=,,     - sets list to empty element "".
+
+=back
 
 Note:  setting empty list or element most likely does not work with
 openssl executable (for example  I<--force-openssl>).
@@ -2023,8 +2156,17 @@ openssl executable (for example  I<--force-openssl>).
 Name of ecliptic curve to be added to list of ecliptic curves (EC),
 which is used for cipher checks.
 
-I<--cipher-curve=>,   sets empty list.
-I<--cipher-curve=>,,  sets list to empty element "".
+=over
+
+=item * --cipher-curve=,    - sets empty list.
+
+=back
+
+=over
+
+=item * --cipher-curve=,,   - sets list to empty element "".
+
+=back
 
 Note:  setting empty list or element most likely does not work with
 openssl executable (for example  I<--force-openssl>).
@@ -2038,102 +2180,103 @@ Following C<RANGE>s are supported:
 
 =over
 
-=item * C<rfc>               all ciphers defined in various RFCs; default
+=item * C<rfc>             - all ciphers defined in various RFCs; default
 
 =back
 
 =over
 
-=item * C<shifted>           C<rfc>, shifted by 64 bytes to the right
+=item * C<shifted>         - C<rfc>, shifted by 64 bytes to the right
 
 =back
 
 =over
 
-=item * C<long>              like C<rfc> but more lazy list of constants
+=item * C<long>            - like C<rfc> but more lazy list of constants
 
 =back
 
 =over
 
-=item * C<huge>              all constants  0x03000000 .. 0x0300FFFF
+=item * C<huge>            - all constants  0x03000000 .. 0x0300FFFF
 
 =back
 
 =over
 
-=item * C<safe>              all constants  0x03000000 .. 0x032FFFFF
+=item * C<safe>            - all constants  0x03000000 .. 0x032FFFFF
 
 =back
 
 =over
 
-=item * C<full>              all constants  0x03000000 .. 0x03FFFFFF
+=item * C<full>            - all constants  0x03000000 .. 0x03FFFFFF
 
 =back
 
 =over
 
-=item * C<SSLv2>             all ciphers according RFC for SSLv2
+=item * C<SSLv2>           - all ciphers according RFC for SSLv2
 
 =back
 
 =over
 
-=item * C<SSLv2_long>        more lazy list of constants for SSLv2 ciphers
+=item * C<SSLv2_long>      - more lazy list of constants for SSLv2 ciphers
 
 =back
 
 =over
 
-=item * C<SSLv3>             all ciphers according RFC for SSLv3
+=item * C<SSLv3>           - all ciphers according RFC for SSLv3
 
 =back
 
 =over
 
-=item * C<SSLv3_SSLv2>       all ciphers for SSLv3 with SSLv2
+=item * C<SSLv3_SSLv2>     - all ciphers for SSLv3 with SSLv2
 
 =back
 
 =over
 
-=item * C<TLSv12>            all ciphers according RFC for TLSv12
+=item * C<TLSv12>          - all ciphers according RFC for TLSv12
 
 =back
 
 =over
 
-=item * C<TLSv13>            all ciphers according RFC for TLSv13
+=item * C<TLSv13>          - all ciphers according RFC for TLSv13
 
 =back
 
 =over
 
-=item * C<c0xx>              constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
+=item * C<c0xx>            - constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
 
 =back
 
 =over
 
-=item * C<ccxx>              constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
+=item * C<ccxx>            - constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
 
 =back
 
 =over
 
-=item * C<ecc>               all constants for ciphers using ECC
+=item * C<ecc>             - all constants for ciphers using ECC
 
 =back
 
 Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
 It does not make sense to use it for other protocols; however ...
 
-For details about the ranges, please see:
+For the full list and details about the ranges, please see:
 
-	o-saft.pl --help=range
+	o-saft.pl --header --help=range
 
 If any  I<--cipher=CIPHER>  is used,  I<--cipherrange=RANGE>  is ignored.
+See  L</LIMITATIONS>  also.
 
 =head3 --slow-server-delay=SEC
 
@@ -2275,79 +2418,79 @@ result of the  I<+cipher>  command can be adjusted to mimic the format
 of other SSL testing tools.
 
 The argument to the  I<--legacy=TOOL >  option  is the name of the tool
-to be simulated.
+who's format of output is to be simulated.
 
 Following C<TOOL>s are supported:
 
 =over
 
-=item * C<sslaudit>          format of output similar to  sslaudit
+=item * C<sslaudit>          - similar to  sslaudit
 
 =back
 
 =over
 
-=item * C<sslcipher>         format of output similar to  ssl-cipher-check
+=item * C<sslcipher>         - similar to  ssl-cipher-check
 
 =back
 
 =over
 
-=item * C<ssldiagnos>        format of output similar to  ssldiagnos
+=item * C<ssldiagnos>        - similar to  ssldiagnos
 
 =back
 
 =over
 
-=item * C<sslscan>           format of output similar to  sslscan
+=item * C<sslscan>           - similar to  sslscan
 
 =back
 
 =over
 
-=item * C<ssltest>           format of output similar to  ssltest
+=item * C<ssltest>           - similar to  ssltest
 
 =back
 
 =over
 
-=item * C<ssltestg>          format of output similar to  ssltest -g
+=item * C<ssltestg>          - similar to  ssltest -g
 
 =back
 
 =over
 
-=item * C<ssltest-g>         format of output similar to  ssltest -g
+=item * C<ssltest-g>         - similar to  ssltest -g
 
 =back
 
 =over
 
-=item * C<sslyze>            format of output similar to  sslyze
+=item * C<sslyze>            - similar to  sslyze
 
 =back
 
 =over
 
-=item * C<ssl-cipher-check>  same as sslcipher
+=item * C<ssl-cipher-check>  - same as sslcipher
 
 =back
 
 =over
 
-=item * C<ssl-cert-check>    format of output similar to  ssl-cert-check
+=item * C<ssl-cert-check>    - similar to  ssl-cert-check
 
 =back
 
 =over
 
-=item * C<testsslserver>     format of output similar to  TestSSLServer.jar
+=item * C<testsslserver>     - similar to  TestSSLServer.jar
 
 =back
 
 =over
 
-=item * C<thcsslcHeck>       format of output similar to  THCSSLCheck
+=item * C<thcsslcHeck>       - similar to  THCSSLCheck
 
 =back
 
@@ -2399,7 +2542,7 @@ covers the value of the result line only.
 
 =over
 
-=item * C<raw>       Print raw data as passed from L<Net::SSLinfo|Net::SSLinfo>.
+=item * C<raw>       - Print raw data as passed from  lib/SSLinfo.
 
 =back
 
@@ -2410,31 +2553,31 @@ to "read" the printed data.
 
 =over
 
-=item * C<hex>       Convert some data to hex: 2 bytes separated by C<:>.
+=item * C<hex>       - Convert some data to hex: 2 bytes separated by C<:>.
 
 =back
 
 =over
 
-=item * C<0x>        Convert some data with hex values:
+=item * C<0x>        - Convert some data with hex values:
 
 =back
 
-              2 bytes preceded by C<0x> and separated by a space.
+             2 bytes prepended by C<0x> and separated by a space.
 
 =over
 
-=item * C</x>        Same as  --format=\x
+=item * C</x>        - Same as  --format=\x
 
 =back
 
 =over
 
-=item * C<\x>        Convert some data with hex values:
+=item * C<\x>        - Convert some data with hex values:
 
 =back
 
-              2 bytes preceded by C<\x> and no separating char.
+             2 bytes prepended by C<\x> and no separating char.
 
 =head3 --tty
 
@@ -2544,7 +2687,7 @@ Following values are supported:
 
 =over
 
-=item * C<unix>      Print raw data, binary in bytes without conversion.
+=item * C<unix>      - Print raw data, binary in bytes without conversion.
 
 =back
 
@@ -2552,24 +2695,24 @@ Note:  binary here just means characters (as all output is text).
 
 =over
 
-=item * C<utf8>      Convert all characters to UTF-8.
+=item * C<utf8>      - Convert all characters to UTF-8.
 
 =back
 
 =over
 
-=item * C<crlf>      Use CR LF as end of line.
+=item * C<crlf>      - Use CR LF as end of line.
 
 =back
 
 =over
 
-=item * C<CHARSET>   C<CHARSET> can be any of the local installed character
+=item * C<CHARSET>   - can be any of the local installed  character sets,
 
 =back
 
-           sets, like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
-           This conversion may print its own warnings.
+             like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
+             This conversion may print its own warnings.
 
 The option can be used multiple times with different values.
 To reset the  default behaviour, either  C<raw>  or  C<unix>  must be
@@ -2603,82 +2746,82 @@ Following list contains only those options not shown with:
 
 	o-saft.pl --help=alias
 
-   Tool's Option       (Tool)          o-saft.pl Option
-#---------------------+---------------+------------------------
+# Tool's Option         | (Tool)          o-saft.pl Option
+#-----------------------+--------------+------------------------
 
 =over
 
-=item * --checks CMD        (TLS-Check.pl)  same as  +CMD
+=item * --checks CMD          | (TLS-Check.pl)  same as  +CMD
 
 =back
 
 =over
 
-=item * -h, -h=HOST         (various tools) same as  --host HOST
+=item * -h, -h=HOST           | (various tools) same as  --host HOST
 
 =back
 
 =over
 
-=item * -p, -p=PORT         (various tools) same as  --port PORT
+=item * -p, -p=PORT           | (various tools) same as  --port PORT
 
 =back
 
 =over
 
-=item * -t HOST             (ssldiagnos)    same as  --host HOST
+=item * -t HOST               | (ssldiagnos)    same as  --host HOST
 
 =back
 
 =over
 
-=item * --UDP               (ssldiagnos)    same as  --udp
+=item * --UDP                 | (ssldiagnos)    same as  --udp
 
 =back
 
 =over
 
-=item * --timeout, --grep   (ssltest.pl)    ignored
+=item * --timeout, --grep     | (ssltest.pl)    ignored
 
 =back
 
 =over
 
-=item * -r,  -s,  -t,  -x   (ssltest.pl)    ignored
+=item * -r,  -s,  -t,  -x     | (ssltest.pl)    ignored
 
 =back
 
 =over
 
-=item * --insecure          (cnark.pl)      ignored
+=item * --insecure            | (cnark.pl)      ignored
 
 =back
 
 =over
 
-=item * --nopct --nocolor   (ssldiagnos)    ignored
+=item * --nopct --nocolor     | (ssldiagnos)    ignored
 
 =back
 
 =over
 
-=item * -connect, -H, -u, -url, -U          ignored
+=item * -connect, -H, -u, -url, -U            ignored
 
 =back
 
 =over
 
-=item * -noSSL                              same as  --no-SSL
+=item * -noSSL                |                 same as  --no-SSL
 
 =back
 
 =over
 
-=item * -no_SSL                             same as  --no-SSL
+=item * -no_SSL               |                 same as  --no-SSL
 
 =back
 
-#---------------------+---------------+------------------------
+#-----------------------+--------------+------------------------
 
 For definition of  C<SSL>  see  I<--SSL >  and  I<--no-SSL >  above.
 
@@ -2760,14 +2903,16 @@ See  L</Options for SSL tool>.
 
 =head3 --usr
 
-Execute functions defined in L<o-saft-usr.pm|o-saft-usr.pm>.
+=head3 --user
+
+Execute functions defined in  lib/OUsr.pm.
 
 =head3 --usr-*
 
 =head3 --user-*
 
 Options ignored, but stored as is internal in  $cfg{usr-args} .
-These options can be used in L<o-saft-usr.pm|o-saft-usr.pm> or L<o-saft-dbx.pm|o-saft-dbx.pm>.
+These options can be used in  lib/OUsr.pm  or  lib/OTrace.pm.
 
 =head3 --experimental
 
@@ -2777,6 +2922,10 @@ when this option is given.
 
 =head2 Options for tracing and debugging
 
+The terms "trace" and "debug" are used interchangeable herein.  The
+functionality enabled by the options described below is more likely
+considered "tracing".
+
 =head3 --n
 
 Do not execute, just show commands (only useful in conjunction with
@@ -2784,9 +2933,9 @@ using openssl).
 
 =head3 Difference --trace vs. --v
 
-While  I<--v>  is used to print more data,  I<--trace>  is used to  print
+I<--v>  prints more information what actually is done. I<--trace>  prints
 more information about internal data such as procedure names and/or
-variable names and program flow.
+variable names with their values.
 
 =head3 --v
 
@@ -2794,34 +2943,21 @@ variable names and program flow.
 
 Print more information about checks.
 
-Note that this option should be first otherwise some debug messages
-are missing.
-
 Note that  I<--v>  is different from  -v  (see above).
-
-=head3 --v --v
-
-Print remotely checked ciphers.
-
-=head3 --v-cipher --cipher-v
-
-Print remotely checked ciphers.
-In contrast to  I<--v> I<--v>  above,  this just prints the ciphers while
-being checked, but no other verbose messages.
 
 =head3 --trace
 
-Print debugging messages.
+Print debugging messages, function names, variable names or values.
 
 =head3 --trace --trace
 
 Print more debugging messages and pass C<trace=2> to Net::SSLeay and
-L<Net::SSLinfo|Net::SSLinfo>.
+lib/SSLinfo.
 
 =head3 --trace --trace --trace
 
 Print more debugging messages and pass C<trace=3> to Net::SSLeay and
-L<Net::SSLinfo|Net::SSLinfo>.
+lib/SSLinfo.
 
 =head3 --trace --trace --trace --trace
 
@@ -2839,7 +2975,7 @@ Print command-line argument processing.
 
 =head3 --trace-cmd
 
-Trace execution of command processing (those given as  I<+CMD>).
+Option obsolete since Version 23.11.23. Please use  I<--v>  instead.
 
 =head3 --trace-key
 
@@ -2857,71 +2993,56 @@ Example with     I<--trace-key> :
 
 =head3 --trace-time
 
-Prints trace output with timestamps. More timestamps are printed if
-used together with  I<--trace-cmd>.
+Prints trace output with timestamps.
 
 =head3 --trace=VALUE
 
 Alias for  I<--trace-VALUE>  options (see above).
 
-Trace Option          Alias Option
-#--------------------+----------------------------
+# Trace Option      | Alias Option
+#-------------------+-----------------------------
 
 =over
 
-=item * --trace=1           same as  --trace
+=item * --trace=1         | same as  --trace
 
 =back
 
 =over
 
-=item * --trace=2           same as  --trace  --trace
+=item * --trace=2         | same as  --trace  --trace
 
 =back
 
 =over
 
-=item * --trace=arg         same as  --trace-arg
+=item * --trace=arg       | same as  --trace-arg
 
 =back
 
 =over
 
-=item * --trace=cmd         same as  --trace-cmd
+=item * --trace=cli       | same as  --trace-cli
 
 =back
 
 =over
 
-=item * --trace=cli         same as  --trace-cli
+=item * --trace=key       | same as  --trace-key
 
 =back
 
 =over
 
-=item * --trace=key         same as  --trace-key
+=item * --trace=time      | same as  --trace-time
 
 =back
 
-=over
-
-=item * --trace=time        same as  --trace-time
-
-=back
-
-#--------------------+----------------------------
+#-------------------+-----------------------------
 
 =head3 --trace=FILE
 
 Use FILE instead of the default  L</RC-FILE>, for example C<.o-saft.pl>.
-
-=head3 --trace-me
-
-Print debugging messages for  o-saft.pl  only, but not any modules.
-
-=head3 --trace-not-me
-
-Print debugging messages for modules only, but not o-saft.pl itself.
 
 =head3 --hint
 
@@ -2943,7 +3064,7 @@ Do not print warning messages (**WARNING:).
 
 =head3 --no-warnings-no-dups
 
-	  Do not suppress duplicate warning messages (**WARNING:).
+Do not suppress duplicate warning messages (**WARNING:).
 
 =head3 --exit=KEY
 
@@ -3725,31 +3846,31 @@ become  C<yes>  or  C<no>:
 
 =over
 
-=item * +sts_maxage1d       - yes if HSTS maxage < 1 day
+=item * +sts_maxage1d       - C<yes> if HSTS maxage < 1 day
 
 =back
 
 =over
 
-=item * +sts_maxage1m       - yes if HSTS maxage < 1 month
+=item * +sts_maxage1m       - C<yes> if HSTS maxage < 1 month
 
 =back
 
 =over
 
-=item * +sts_maxage1y       - yes if HSTS maxage < 1 year
+=item * +sts_maxage1y       - C<yes> if HSTS maxage < 1 year
 
 =back
 
 =over
 
-=item * +sts_maxage18       - yes if HSTS maxage < 18 weeks (5 months)
+=item * +sts_maxage18       - C<yes> if HSTS maxage < 18 weeks (5 months)
 
 =back
 
 =over
 
-=item * +sts_maxagexy       - yes if HSTS maxage > 1 year
+=item * +sts_maxagexy       - C<yes> if HSTS maxage > 1 year
 
 =back
 
@@ -4271,7 +4392,7 @@ TAB) to separate the label text from the text of the result. Example:
 
 More examples for postprocessing the output can be found here:
 
-	https://github.com/OWASP/O-Saft/blob/master/contrib
+	https://github.com/OWASP/O-Saft/blob/master/usr
 
 =head1 EXIT STATUS
 
@@ -4320,6 +4441,15 @@ Following environment variables are incorporated:
 =back
 
                  directory where to find openssl.cnf
+
+=over
+
+=item * OSAFT_MAKE      - if set, some  random values  in the result  are
+
+=back
+
+                 replaced by constant strings; it is set for all
+                 targets in all Makefile*
 
 =head1 CUSTOMISATION
 
@@ -4427,6 +4557,8 @@ For details see  L</DEBUG-FILE>  below.
 The user program file is included only  if the  I<--usr>  option was
 used. For details see  L</USER-FILE>  below.
 
+L</DEBUG-FILE>  and  L</USER-FILE>  will be searched for in paths of C<@INC>.
+
 =head2 CONFIGURATION OPTIONS
 
 Configuration options are used to redefine  texts and labels or score
@@ -4517,22 +4649,20 @@ found in the rc-file.
 
 =head2 DEBUG-FILE
 
-All debugging functionality is defined in L<o-saft-dbx.pm|o-saft-dbx.pm> , which will
-be searched for using paths available in  C<@INC>  variable.
+All debugging functionality is defined in  lib/OTrace.pm .
 
 Syntax in this file is Perl code.  For details see  L</DEBUG>  below.
 
 =head2 USER-FILE
 
-All user functionality is defined in  L<o-saft-usr.pm|o-saft-usr.pm> ,  which will be
-searched for using paths available in  C<@INC>  variable.
+All user functionality is defined in   lib/OUsr.pm .
 
 Syntax in this file is Perl code.
 
-All functions defined in  L<o-saft-usr.pm|o-saft-usr.pm>  are called when the option
-I<--usr>  was given.  The functions are defined as empty stub,  any code
-can be inserted as need.  Please see   perldoc L<o-saft-usr.pm|o-saft-usr.pm>  to see
-when and how these functions are called.
+All functions defined in   lib/OUsr.pm   are called  when the  option
+I<--usr>  was used. The functions are defined as empty stub and any code
+can be inserted as need.  Please see   perldoc lib/OUsr.pm   when and
+how these functions are called.
 
 =head2 SHELL TWEAKS
 
@@ -4541,7 +4671,7 @@ done before the tool starts. It isn't a task for the tool itself, but
 it can simplify your life, somehow.
 
 There exist customisations for some commonly used shells,  please see
-the files in the ./contrib/ directory.
+the files in the ./usr/ directory.
 
 =head2 COMMANDS
 
@@ -4807,7 +4937,7 @@ This error cannot be omitted or handled properly.
 
 Workaround: try to use same call again (no guarantee, unfortunatelly)
 
-=head2 Odd number of elements in anonymous hash at Net/SSLinfo.pm line 1613.
+=head2 Odd number of elements in anonymous hash at lib/SSLinfo.pm line 1613.
 
 This warning from perl have been observed  when the connection to the
 target to check for supported ciphers cannot be established.
@@ -4886,7 +5016,7 @@ which then may produce:
 
 	**WARNING: on MSWin32 additional option  --v  required, sometimes ...
 	=== reading: ./.o-saft.pl (RC-FILE done) ===
-	=== reading: Net/SSLinfo.pm (O-Saft module done) ===
+	=== reading: lib/SSLinfo.pm (O-Saft module done) ===
 	**USAGE: no command given
 	# most common usage:
 	o-saft.pl I+info&   your.tld&
@@ -4963,75 +5093,21 @@ Use  I<--ssl-error>
 For a detailed description, please see L</Connection problems>.
 
 Other options which may help to get closer to the problem's cause:
-I<--trace-time>,  I<--timeout=SEC>,  I<--trace>,  I<--trace-cmd>
+I<--trace-time>,  I<--timeout=SEC>,  I<--trace>
 
 Using  I<--trace-time>   should show following times:
 
-=over
-
-=item * DNS:             1 -  10 sec
-
-=back
-
-=over
-
-=item * need_default:    <5 sec
-
-=back
-
-=over
-
-=item * need_cipher:     1 - 299 sec (+cipher with socket)
-
-=back
-
-=over
-
-=item * no SNI:          1 -  10 sec
-
-=back
-
-=over
-
-=item * connection test: 1 -   5 sec
-
-=back
-
-=over
-
-=item * prepare checks:  2 -  20 sec
-
-=back
-
-=over
-
-=item *   checkalpn.     1 -  15 sec
-
-=back
-
-=over
-
-=item *   checkprot.     1 -  15 sec
-
-=back
-
-=over
-
-=item * cipher:          <1 sec
-
-=back
-
-=over
-
-=item * info:            <1 sec
-
-=back
-
-=over
-
-=item * check:           <1 sec
-
-=back
+	DNS:             1 .. 10 sec
+	need_default:    <5 sec
+	need_cipher:     1 ..299 sec (+cipher with socket)
+	no SNI:          1 .. 10 sec
+	connection test: 1 ..  5 sec
+	prepare checks:  2 .. 20 sec
+	checkalpn.   1 .. 15 sec
+	checkprot.   1 .. 15 sec
+	cipher:          <1 sec
+	info:            <1 sec
+	check:           <1 sec
 
 =head1 LIMITATIONS
 
@@ -5050,7 +5126,7 @@ option. Otherwise the value will be empty.
 
 =head2 Options
 
-The option  I<--port=PORT>  must preceed  I<--host=HOST>  for a target like
+The option  I<--port=PORT>  must precede  I<--host=HOST>  for a target like
 HOST:PORT  .
 
 The characters  C<+> and C<=>  cannot be used for  I<--separator=CHAR>
@@ -5065,6 +5141,15 @@ L<openssl(1)|openssl(1)> can with the  I<--openssl=path/to/openssl> .
 
 I<--cfg-text=FILE>  cannot be used to redefine the texts  C<yes> and C<no>
 as used in the output for  I<+cipher>  command.
+
+I<--cipher=CIPHER>  accepts keys, names and patterns for ciphers.
+Keys must start with C<0x> followed by exactly 8 uppercase hex chars.
+If C<CIPHER> should match a cipher suite name, it must be written with
+uppercase letters. If it should match a predefined pattern it must be
+written with lowercase letters.
+Note that currently not all OpenSSL-style patterns are supported.
+
+I<--cipherrange=RANGE>  accepts only lowercase names.
 
 =head2 Checks (general)
 
@@ -5121,7 +5206,7 @@ Following commands and options are useful to get more information:
 =head2 User provided files
 
 Please note that there cannot be any guarantee that the code provided
-in the  L</DEBUG-FILE> L<o-saft-dbx.pm|o-saft-dbx.pm> or  L</USER-FILE> L<o-saft-usr.pm|o-saft-usr.pm> will
+in the  L</DEBUG-FILE> lib/OTrace.pm  or the  L</USER-FILE> lib/OUsr.pm  will
 work flawless. Obviously this is the user's responsibility.
 
 =head2 Problems and errors
@@ -5148,30 +5233,33 @@ for right at the beginning. Proper warnings and hints are printed.
 Following table shows the openssl option and how to disable it within
 
 	o-saft.pl:
+#-------------------+---------------------
 
 =over
 
-=item * -nextprotoneg       --no-nextprotoneg
+=item * -nextprotoneg     | --no-nextprotoneg
 
 =back
 
 =over
 
-=item * -reconnect          --no-reconnect
+=item * -reconnect        | --no-reconnect
 
 =back
 
 =over
 
-=item * -tlsextdebug        --no-tlsextdebug
+=item * -tlsextdebug      | --no-tlsextdebug
 
 =back
 
 =over
 
-=item * -alpn               --no-alpn
+=item * -alpn             | --no-alpn
 
 =back
+
+#-------------------+---------------------
 
 =head2 Connection problems
 
@@ -5189,24 +5277,27 @@ in a loss of information and consequentely, leads to wrong checks.
 It is a trade-off to wait for all information done accurately,  or to
 get the results quickly. The logic to stop connecting for I<--ssl-error>
 can be controlled with following additional options:
+#-----------------------+----------------------------------------
 
 =over
 
-=item * --ssl-error-max=CNT      - max. continous errors
+=item * --ssl-error-max=CNT     | max. continous errors
 
 =back
 
 =over
 
-=item * --ssl-error-timeout=SEC  - treat a failure as error after timeout
+=item * --ssl-error-timeout=SEC | treat failure as error after timeout
 
 =back
 
 =over
 
-=item * --ssl-error-total=CNT    - max. amount of errors
+=item * --ssl-error-total=CNT   | max. amount of errors
 
 =back
+
+#-----------------------+----------------------------------------
 
 This means that no more connections are made when more than
 
@@ -5334,12 +5425,6 @@ You have to fiddle around to find the proper one.
 
 =head2 Debug and trace output
 
-When both  I<--trace-key>  and  I<--trace-cmd>  options are used, output is
-mixed, obviously.
-Hint: output for  I<--trace-cmd>  always contains "CMD".
-
-Any  I<--trace*>  option implies  I<--trace-time> .
-
 =head1 DEPENDENCIES
 
 All Perl modules and all  private moduels and files  will be searched
@@ -5397,13 +5482,13 @@ To see which files have been included use:
 
 =over
 
-=item * L<Net::SSLinfo|Net::SSLinfo>
+=item * lib/SSLinfo
 
 =back
 
 =over
 
-=item * L<Net::SSLhello|Net::SSLhello>
+=item * lib/SSLhello
 
 =back
 
@@ -5431,24 +5516,6 @@ Perl modules loaded and used for some options only:
 
 =over
 
-=item * L<o-saft-dbx.pm|o-saft-dbx.pm>
-
-=back
-
-=over
-
-=item * L<o-saft-man.pm|o-saft-man.pm>
-
-=back
-
-=over
-
-=item * L<o-saft-usr.pm|o-saft-usr.pm>
-
-=back
-
-=over
-
 =item * o-saft-docker
 
 =back
@@ -5459,12 +5526,30 @@ Perl modules loaded and used for some options only:
 
 =back
 
+=over
+
+=item * lib/OTrace.pm
+
+=back
+
+=over
+
+=item * lib/OMan.pm
+
+=back
+
+=over
+
+=item * lib/OUsr.pm
+
+=back
+
 =head1 INSTALLATION
 
 The tool can be installed in any path. It just requres the modules as
 described in  L</DEPENDENCIES>  above. However, it's recommended that the
-modules L<Net::SSLhello|Net::SSLhello> and L<Net::SSLinfo|Net::SSLinfo> are found in the directory
-C<./Net/>  where  C<o-saft.pl>  is installed.
+modules  SSLhello  and  SSLinfo  are found  in the directory  C<./lib>
+where  C<o-saft.pl>  is installed.
 
 For security reasons, most modern libraries  disabled or even removed
 insecure or "dirty" functionality.  As the purpose of this tool is to
@@ -5586,7 +5671,7 @@ Also, following Perl modules should be installed:
 
 Currently (since 18.06.18) it is recommend to build openssl using:
 
-	contrib/install_openssl.sh
+	usr/install_openssl.sh
 
 Other possibilities are:
 
@@ -5673,7 +5758,7 @@ which will install openssl, libssl.so, libcrypto.so  and some include
 files as well as the include files in  /usr/local/ .
 The shared version of the libraries are necessary for  Net::SSLeay.
 
-For a more complete build, plese see:  contrib/install_openssl.sh .
+For a more complete build, plese see:  usr/install_openssl.sh .
 
 OpenSSL.org
 Building openssl from the offical  openssl.org  sources requires some
@@ -5813,7 +5898,7 @@ and  C<DESTDIR>  parameter.
 Following command can be used to check  which methods are avilable in
 Net::SSLeay, hence above patches can be verified:
 
-	perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'
+	perl -MSSLinfo -le 'print SSLinfo::ssleay_test();'
 
 =head2 Testing OpenSSL
 
@@ -5875,7 +5960,7 @@ stand-alone executable:
 
 	pp -C -c o-saft.pl
 	pp -C -c o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \
-	-M Net::SSLinfo -M Net::SSLhello -M osaft
+	-M SSLinfo -M SSLhello -M OCfg
 	pp -C -c checkAllCiphers.pl
 	pp -C -c checkAllCiphers.pl -M Net::DNS
 
@@ -5887,9 +5972,9 @@ stand-alone executable:
 
 	perlapp --clean o-saft.pl
 	perlapp --clean o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \
-	-M Net::SSLinfo -M Net::SSLhello -M osaft
+	-M SSLinfo -M SSLhello -M OCfg
 	perlapp --clean checkAllCiphers.pl
-	perlapp --clean checkAllCiphers.pl -M Net::DNS -M osaft
+	perlapp --clean checkAllCiphers.pl -M Net::DNS -M OCfg
 
 =over
 
@@ -5931,12 +6016,12 @@ same way as the  o-saft.pl  itself. Use them at your own risk.
 This script can be used as CGI application.  Output is the same as in
 common CLI mode. The output will be prefixed with the HTTP header
 C<Content-Type:text/plain>.
-The script  o-saft.cgi  should be used as wrapper for o-saft.pl .
-The HTML form  o-saft.cgi.html  which can be generated with:
+The script  "o-saft.cgi"  should be used as wrapper for "o-saft.pl" .
+The HTML form  "o-saft.cgi.html"  which can be generated with:
 
 	o-saft.pl --help=gen-cgi
 
-should be used as front-end for  o-saft.cgi.
+should be used as front-end for  "o-saft.cgi".
 
 =head2 CGI-form functionality
 
@@ -5950,25 +6035,25 @@ This form provides following functionality:
 
 =over
 
-=item * ☰           - general informations about CGI usage
+=item ** ☰          - general informations about CGI usage
 
 =back
 
 =over
 
-=item * Cmd         - quick commands menu
+=item ** Cmd        - quick commands menu
 
 =back
 
 =over
 
-=item * Opt         - quick options menu
+=item ** Opt        - quick options menu
 
 =back
 
 =over
 
-=item * Help        - various help pages
+=item ** Help       - various help pages
 
 =back
 
@@ -5986,7 +6071,7 @@ This form provides following functionality:
 
 =over
 
-=item * Simple GUI  - simple form with most common commands and options
+=item ** Simple GUI - simple form with most common commands and options
 
 =back
 
@@ -5995,7 +6080,7 @@ This form provides following functionality:
 
 =over
 
-=item * Full GUI Commands & Options
+=item ** Full GUI Commands & Options
 
 =back
 
@@ -6048,11 +6133,12 @@ more targets ...
 
 =over
 
-=item * The  --format=html  option should be used together with  --header ,
+=item * The  --html4  or  --html5  option should be used together  with the
 
 =back
 
-otherwise the generated HTML may be corrupted for some commands.
+I<--header>  option, otherwise the generated HTML may be corrupted for
+some commands.
 
 =head2 CGI script limitations
 
@@ -6112,7 +6198,7 @@ For more details, please refer to:
 
 =over
 
-=item * L<openssl(1)|openssl(1)>, L<Net::SSLeay(3pm)|Net::SSLeay(3pm)>, L<Net::SSLhello|Net::SSLhello>, L<Net::SSLinfo|Net::SSLinfo>, L<timeout(1)|timeout(1)>
+=item * L<openssl(1)|openssl(1)>, L<Net::SSLeay(3pm)|Net::SSLeay(3pm)>, lib/SSLhello, lib/SSLinfo, L<timeout(1)|timeout(1)>
 
 =back
 
@@ -6427,8 +6513,8 @@ the used modules like L<Net::SSLeay(3pm)|Net::SSLeay(3pm)> will write some debug
 on  STDERR instead  STDOUT.  Therefore multiple  I<--v>  and/or  I<--trace>
 options behave slightly different.
 
-No additional external files like  L</RC-FILE>  or  L</DEBUG-FILE>  are read
-in CGI mode; they are silently ignored.
+No additional external files like  L</RC-FILE> or L</DEBUG-FILE>  are read in
+CGI mode; they are silently ignored.
 Some options are disabled in CGI mode  because they are dangerous  or
 don't make any sense.
 
@@ -6437,6 +6523,7 @@ don't make any sense.
 There are  no  input data validation checks implemented herein. All
 input data is url-decoded once and then used verbatim.
 More advanced checks must be done outside before calling this tool.
+Please see  o-saft.cgi  .
 
 It is not recommended to run this tool in CGI mode.
 You have been warned!
@@ -6445,367 +6532,20 @@ You have been warned!
 
 There are some functions called within the program flow, which can be
 filled with any Perl code.  Empty stubs of the functions are prepared
-in L<o-saft-usr.pm|o-saft-usr.pm>.  See also  L</USER-FILE> .
+in  lib/OUsr.pm.  See also  L</USER-FILE> .
 
 =head1 DEBUG
 
-=head2 Debugging, Tracing
+For debugging, tracing or using outdated modules, please see:
 
-Following  options and commands  are useful for hunting problems with
-SSL connections and/or this tool. Note that some options can be given
-multiple times to increase amount of listed information. Also keep in
-mind that it's best to specify  I<--v>  as very first argument.
-
-Note that the file L<o-saft-dbx.pm|o-saft-dbx.pm> is required,  if any  I<--trace*>  or
-I<--v>   option is used.
-
-=head2 Commands
-
-=over
-
-=item * +dump
-
-=back
-
-=over
-
-=item * +libversion
-
-=back
-
-=over
-
-=item * +s_client
-
-=back
-
-=over
-
-=item * +todo
-
-=back
-
-=over
-
-=item * +version
-
-=back
-
-=head2 Options
-
-=over
-
-=item * --v
-
-=back
-
-=over
-
-=item * --v--
-
-=back
-
-=over
-
-=item * --trace
-
-=back
-
-=over
-
-=item * --trace-arg
-
-=back
-
-=over
-
-=item * --trace-cmd
-
-=back
-
-=over
-
-=item * --trace-cli
-
-=back
-
-=over
-
-=item * --trace-key
-
-=back
-
-=over
-
-=item * --trace-me
-
-=back
-
-=over
-
-=item * --trace-time
-
-=back
-
-=over
-
-=item * --trace=FILE
-
-=back
-
-Please see  L</OPTIONS>  section above for detailed description.
-
-Empty or undefined strings are written as  C<<<undefined>>>  in texts.
-Some parameters, in particular those of  HTTP responses,  are written
-as  C<<<response>>>.  Long parameter lists are abbreviated with C<...>.
-In general, single-line values are always printed,  multi-line values
-are printed with  I<--trace=2>  only.
-
-Hint: start with  I<--trace-me>, then  I<--trace>  and finally  I<--trace=2> .
-
-=head2 Output
-
-When using  I<--v>  and/or  I<--trace>  options,  additional output will be
-prefixed with a  C<#>  (mainly as first, left-most character.
-Following formats are used:
-
-=over
-
-=item *            #[space]
-
-=back
-
-Additional text for verbosity (--v options).
-
-=over
-
-=item *            #[variable name][TAB]
-
-=back
-
-Internal variable name (--trace-key options).
-
-=over
-
-=item *            #o-saft.pl::
-
-=back
-
-=over
-
-=item *            #L&Net::SSLinfo&::
-
-=back
-
-Trace information for  I<--trace>  options.
-
-=over
-
-=item *            #{
-
-=back
-
-Trace information from  NET::SSLinfo  for  I<--trace>  options.
-These are data lines in the format:
-
-	#{ variable name : value #}
-
-Note that C<value>  here can span multiple lines and ends with:
-
-	#}
-
-=head2 Using outdated modules
-
-This tool was designed to work with old Perl modules too.  When using
-old modules, a proper  C<**WARNING:>  will be printed. These warinings
-cannot be switched of using  I<--no-warning>  .
-The warning also informs about the missing functionality or check.
-
-I.g. it is best to install newer versions of the module if possible.
-A good practice to check if modules are available in a proper version
-is to call:
-
-	o-saft.pl +version
-	o-saft.pl +version --v --v
-
-Following example shows the result without warnings:
-
-	=== reading: ./.o-saft.pl (RC-FILE done) ===
-	=== reading: Net/SSLhello.pm (O-Saft module done) ===
-	=== reading: Net/SSLinfo.pm (O-Saft module done) ===
-	=== ./o-saft.pl 16.09.09 ===
-	Net::SSLeay::
-	::OPENSSL_VERSION_NUMBER()       0x268443744
-	::SSLeay()                       0x268443744
-	::SSLEAY_DIR                     ENGINESDIR: "/usr/lib/x86_64-linux-gnu/engines-1.1"
-	::SSLEAY_BUILD_ON                platform: debian-amd64
-	::SSLEAY_PLATFORM                OPENSSLDIR: "/usr/lib/ssl"
-	::SSLEAY_CFLAGS                  built on: Fri Jun 24 20:22:19 2022 UTC
-	Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
-	= openssl =
-	external executable              /opt/openssl-chacha/bin/openssl
-	external executable (TLSv1.3)    openssl
-	version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
-	used environment variable (name) LD_LIBRARY_PATH
-	environment variable (content)   <<undef>>
-	path to shared libraries
-	full path to openssl.cnf file    <<undef>>
-	common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-	.                                /etc/ssl/openssl.cnf \
-	.                                /System//Library/OpenSSL/openssl.cnf \
-	.                                /usr/ssl/openssl.cnf
-	URL where to find CRL file       <<undef>>
-	directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
-	PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
-	common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
-	.                                 /System/Library/OpenSSL
-	.  existing path to CA PEM files /etc/ssl/certs
-	common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-	.  existing PEM file for CA      /etc/ssl/certs/ca-certificates.crt
-	number of supported ciphers      201
-	openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
-	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-	.                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-	= o-saft.pl +cipher --ciphermode=intern =
-	used cipherrange                 intern
-	number of supported ciphers      2640
-	default list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
-	.                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
-	.                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
-	.                                0x0300D000 .. 0x0300D0FF,
-	.                                0x0300FE00 .. 0x0300FFFF,
-	.                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
-	.                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
-	.                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA, 0x0300EAEA, 0x0300FAFA,
-	long list of ciphers             0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF
-	huge list of ciphers             0x03000000 .. 0x0300FFFF
-	safe list of ciphers             0x03000000 .. 0x032FFFFF
-	full list of ciphers             0x03000000 .. 0x03FFFFFF
-	C0xx list, range C0xx..C0FF      0x0300C000 .. 0x0300C0FF
-	CCxx list, range CCxx..CCFF      0x0300C000 .. 0x0300C0FF
-	ECC list, ephermeral ciphers     0x0300C000 .. 0x0300C0FF, 0x0300CC00 .. 0x0300CCFF
-	SSLv2 list of ciphers            0x02000000,   0x02010080, 0x02020080, 0x02030080,
-	.                                0x02040080,
-	.                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-	.                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
-	.                                0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C,
-	.                                0x030000FF,0x0300FEE0,
-	.                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
-	SSLv2_long list of ciphers       0x02000000,   0x02010080, 0x02020080, 0x02030080,
-	.                                0x02040080,
-	.                                0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-	.                                0x02FF0800,   0x02FF0810, 0x02FFFFFF,
-	.                                0x03000000 .. 0x0300002F, 0x030000FF,0x0300FEE0,
-	.                                0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
-	shifted list of ciphers          0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,
-	.                                0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
-	.                                0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
-	.                                0x0300D000 .. 0x0300D0FF,
-	.                                0x0300FE00 .. 0x0300FFFF,
-	.                                0x03000A0A, 0x03001A1A, 0x03002A2A, 0x03003A3A, 0x03004A4A,
-	.                                0x03005A5A, 0x03006A6A, 0x03007A7A, 0x03008A8A, 0x03009A9A,
-	.                                0x0300AAAA, 0x0300BABA, 0x0300CACA, 0x0300DADA,
-	.                                0x0300EAEA, 0x0300FAFA,
-	= Required (and used) Modules =
-	@INC                 ./ ./lib . /bin /usr/share/perl5 \
-	.                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
-	.                    /usr/lib/x86_64-linux-gnu/perl/5.20 \
-	.                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
-	=   module name            VERSION  found in
-	=   ----------------------+--------+------------------------------------------
-	IO::Socket::INET       1.41     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
-	IO::Socket::SSL        2.069    /usr/share/perl5/IO/Socket/SSL.pm
-	Time::Local            1.2300   /usr/share/perl/5.24/Time/Local.pm
-	Net::DNS               1.29     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
-	Net::SSLeay            1.88     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
-	Net::SSLinfo           22.11.22 Net/SSLinfo.pm
-	Net::SSLhello          22.06.22 Net/SSLhello.pm
-	Ciphers
-	osaft                  22.11.22 osaft.pm
-
-Following example shows the result with warnings (line nr. may vary):
-
-	=== reading: ./.o-saft.pl (RC-FILE done) ===
-	=== reading: ./Net/SSLhello.pm (O-Saft module done) ===
-	**WARNING: 121: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialise at /Net/SSLinfo.pm line 481.
-	=== reading: ./Net/SSLinfo.pm (O-Saft module done) ===
-	**WARNING: 120: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
-	**WARNING: 121: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
-	**WARNING: 121: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
-	**WARNING: 124: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
-	!!Hint: --force-openssl can be used to disables this check
-	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
-	**WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
-	**WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
-	**WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
-	=== o-saft.pl 16.09.09 ===
-	Net::SSLeay::
-	::OPENSSL_VERSION_NUMBER()       0x9470143
-	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-	::SSLeay()                       0x1.35
-	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
-	= openssl =
-	version of external executable   OpenSSL 0.9.8y 5 Feb 2013
-	external executable              /usr/bin/openssl
-	used environment variable (name) LD_LIBRARY_PATH
-	environment variable (content)   <<undef>>
-	path to shared libraries
-	full path to openssl.cnf file    <<undef>>
-	common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-	.                                /etc/ssl/openssl.cnf \
-	.                                /System//Library/OpenSSL/openssl.cnf \
-	.                                /usr/ssl/openssl.cnf
-	URL where to find CRL file       <<undef>>
-	directory with PEM files for CAs /System/Library/OpenSSL/certs
-	PEM format file with CAs         <<undef>>
-	common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
-	common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-	number of supported ciphers      43
-	openssl supported SSL versions   SSLv2 SSLv3 TLSv1
-	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-	.                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-	**WARNING: 851: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-	**WARNING: 841: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
-	= o-saft.pl +cipherall =
-	default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-	.                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-	= Required (and used) Modules =
-	@INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
-	.                    /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
-	.                    /System/Library/Perl/5.10.0 \
-	.                    /Library/Perl/5.10.0/darwin-thread-multi-2level \
-	.                    /Library/Perl/5.10.0 \
-	.                    /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
-	.                    /Network/Library/Perl/5.10.0 \
-	.                    /Network/Library/Perl \
-	.                    /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
-	.                    /System/Library/Perl/Extras/5.10.0 .
-	=   module name            VERSION  found in
-	=   ----------------------+--------+------------------------------------------
-	IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
-	IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
-	Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
-	Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
-	Net::SSLinfo           16.06.01 ./Net/SSLinfo.pm
-	Net::SSLhello          16.05.16 ./Net/SSLhello.pm
-	osaft                  16.05.10 /osaft.pm
-
-Please keep in mind that the shown version numbers and the shown line
-numbers are examples and may differ on your system.
-
-When starting o-saft.pl with outdated modules, more C<**WARNING:> will
-be shown. The warnings depend on the installed version of the module.
-
-	o-saft.pl  is known to work with at least:
-	IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
-	Net::SSLeay 1.30
+	o-saft.pl --help=development
 
 =head1 TESTING
 
 What is "testing"?
 This tool itself is for testing something (TLS etc.),  so it needs to
 be explained what testing here is about.  Following testing types are
-distinguished and then described:
+distinguished:
 
 =over
 
@@ -6825,8 +6565,15 @@ distinguished and then described:
 
 =back
 
-All descriptions below, except  "User testing", are only intended for
-development.
+=over
+
+=item * Testing results
+
+=back
+
+All descriptions intended for development and can be found with:
+
+	o-saft.pl --help=development
 
 =head2 User testing
 
@@ -6845,149 +6592,11 @@ For more details, please see  L</Options for tracing and debugging> .
 
 =head2 Functional testing
 
-This section describes "developer" rather than "user" testing.
-
-Functional testing mainly means testing the functionality of the tool
-itself, for example: do the commands and options work as described in
-the documentation:  o-saft.pl I<--help>
-
-Makefiles are used for testing  functionality and code quality during
-development. These tests are implemented in the  ./t/  directory, see
-all C<Makefile.*> there, start with C<Makefile.pod>.
-
 =head2 Developer (internal) testing
-
-Testing SSL/TLS  is a challenging task. Beside the oddities described
-elsewhere, for example  L</Name Rodeo>,  there are a bunch of problems
-and errors which may occour during runtime.
-
-Following options and commands for  o-saft.pl  are available to improve
-testing.  They mainly can simulate error conditions or stop execution
-properly (they are not intended for other use cases):
-
-=head3 +quit
-
-Stop execution after processing all arguments and before precessing
-any target. The runtime configuration is complete at this point.
-
-=head3 --exit=KEY
-
-Terminate tool at specified C<KEY>. For available C<KEY>, please see:
-
-	o-saft.pl --help=exit
-	grep exit= o-saft.pl
-
-=head3 --cfg-init=KEY=VALUE
-
-With this option values in the internal  C<%cfg>  hash can be set:
-
-	$cfg{KEY} = VALUE
-
-Only (perl) scalars or arrays can be set. The type will be detected
-automatically.
-
-Example,  this option can be used to change the text used as prefix
-in each output line triggerd by the  I<--v>  option:
-
-	o-saft.pl --cfg-init=prefix_verbose="#VERBOSE: "
-
-or the text used as prefix triggerd by the  I<--trace>  option:
-
-	o-saft.pl --cfg-init=prefix_trace="#TRACE: "
-
-The options which provide information about  internal data structures
-and alike described below, behave like the command  I<+quit>  and do not
-perform any checks on the target(s).  
-See C<t/Makefile.*> how to use these tests.
-
-=head3 --tests
-
-Print overview of following commands/options.
-
-=head3 --test-data
-
-Print overview of all available commands and checks.
-
-=head3 --test-maps
-
-Print internal data strucures  C<%cfg{openssl}>,  C<%cfg{ssleay}>.
-
-=head3 --test-prot
-
-Print internal data according protocols.
-
-=head3 --test-regex
-
-Print results for applying various texts to defined regex.
-
-=head3 --test-ciphers-dump
-
-=head3 --test-ciphers-overview
-
-=head3 --test-ciphers-openssl
-
-=head3 --test-ciphers-show
-
-=head3 --test-ciphers-simple
-
-=head3 --test-ciphers-sorted
-
-=head3 --test-ciphers-ssltest
-
-Print ciphers in various formats, please see: OSaft/Ciphers.pm .
-These options are aliases for:  I<+list> I<--legacy=TYP>  .
-
-=head3 --test-ciphers-hex=*
-
-=head3 --test-ciphers-key=*
-
-=head3 --test-ciphers-list
-
-Print some special information, please see: OSaft/Ciphers.pm .
-
-=head3 --test-init
-
-Print parts of  data structure  C<%cfg>.  In contrast to the options
-described above,  I<--test-init>  exits straight before performing the
-specified commands on the target.  Therefore it prints the settings
-in  C<%cfg>  containing all applied commands and options.
-
-=head3 --test-memory
-
-Print overview of variables' memory usage, used for debugging only.
-
-=head3 --test-methods
-
-Print available methods for C<openssl> in Net::SSLeay.
-
-=head3 --test-sclient
-
-Print available options for C<openssl s_client> from Net::SSLeay.
-
-=head3 --test-sslmap
-
-Print SSL protocols constants from Net::SSLeay.
-
-=head3 --test-ssleay
-
-Print information about Net::SSLeay capabilities.
-
-=head3 --test-sub
-
-Obsolete, please use:
-
-	make test.dev.grep.sub
-	make test.dev-grep.subs
-	make test.dev-grep.desc
 
 =head2 Testing results
 
-Finally there should be tests, which prove that the results of  o-saft.pl
-are really what they should be. A test target is necessary therefore,
-which produces reliable results.
-However, some of the implemented tests in C<t/Makefile.*> (see section
-"Functional testing" above) already work properly. This test coverage
-needs to be improved ...
+Please see:  C<o-saft.pl I<--help=development>>
 
 =head1 EXAMPLES
 
@@ -7068,14 +6677,6 @@ needs to be improved ...
 
 =over
 
-=item * Show supported (enabled) ciphers with their DH parameters:
-
-=back
-
-	o-saft.pl +cipher-dh some.tld
-
-=over
-
 =item * Test using a private libssl.so, libcrypto.so and openssl
 
 =back
@@ -7097,6 +6698,23 @@ needs to be improved ...
 =back
 
 	o-saft.pl +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
+
+=over
+
+=item * Show supported (enabled) ciphers with their DH parameters:
+
+=back
+
+	o-saft.pl +cipher-dh --ciphermode=openssl example.tld
+
+=over
+
+=item * Check for all known ciphers (simple internal test function):
+
+=back
+
+	checkAllCiphers.pl example.tld
+	checkAllCiphers.pl example.tld --range=full --v
 
 =over
 
@@ -7253,7 +6871,8 @@ edit as needed: .o-saft.pl
 
 =back
 
-	o-saft.pl +info some.tld --trace-cmd
+	o-saft.pl +info some.tld --v
+	o-saft.pl +info some.tld --trace-me
 
 =over
 
@@ -7269,7 +6888,15 @@ edit as needed: .o-saft.pl
 
 =back
 
-	o-saft.pl +cipher some.tld --v --v
+	o-saft.pl +cipher some.tld --v
+
+=over
+
+=item * Show checking ciphers
+
+=back
+
+	o-saft.pl +cipher some.tld --v --v --ciphermode=openssl
 
 =over
 
@@ -7289,7 +6916,7 @@ edit as needed: .o-saft.pl
 
 =over
 
-=item * Avoid most performance and timeout problems (don't use  --v)
+=item * Avoid most performance and timeout problems (don't use  --v --trace)
 
 =back
 
@@ -7302,7 +6929,7 @@ edit as needed: .o-saft.pl
 
 =back
 
-	o-saft.pl +info some.tld --trace-cmd
+	o-saft.pl +info some.tld --v --trace-time
 
 this will show lines containing:
 #O-Saft  CMD: test ...
@@ -7328,12 +6955,12 @@ get an overview which  I<--help=*>  options are available, use:
 	o-saft.pl --help=HELP
 
 It can be used to get well known parts of the documentation specified
-by the keyword, (HELP in example above).
+by the keyword, (C<HELP> in example above).
 To find any text with some lines of context, following could be used:
 
 	o-saft.pl --help | egrep -i -C 3 "some text"
 
-This is simply avaiable with:
+This is simply avaiable with the wrapper tool "o-saft":
 
 o-saft --help="some text"
 
@@ -7342,11 +6969,14 @@ window there:
 
 	o-saft.tcl 
 
+All files used for documentation, wether source files, or contributed
+files, or generated files, are located in the  doc/  directory.
+
 =head2 Developer documentation
 
 To get used to documentation for developers, best start reading:
 
-docs/concepts.txt
+doc/concepts.txt
 perldoc t/Makefile.pod
 
 =head1 ATTRIBUTION
@@ -7396,7 +7026,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 22.11.22
+@(#) OMan.pm 3.18 24/01/27 12:51:57
 
 =head1 AUTHOR
 
@@ -7568,13 +7198,13 @@ authenticated and encrypted)
 
 =over
 
-=item ** L<Net::SSLinfo|Net::SSLinfo>.pm implement verify*
+=item ** lib/SSLinfo.pm implement verify*
 
 =back
 
 =over
 
-=item ** implement +check_chain (see L<Net::SSLinfo|Net::SSLinfo>.pm implement verify* also)
+=item ** implement +check_chain (see lib/SSLinfo.pm implement verify* also)
 
 =back
 
@@ -7612,7 +7242,7 @@ ssl-cert-check -p 443 -s mail.google.com -i -V
 
 =over
 
-=item * L<Net::SSLinfo|Net::SSLinfo>
+=item * lib/SSLinfo
 
 =back
 
@@ -7634,7 +7264,7 @@ see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
 
 =over
 
-=item ** L<Net::SSLinfo|Net::SSLinfo>::do_ssl_close()  does not really work
+=item ** lib/SSLinfo::do_ssl_close()  does not really work
 
 =back
 
@@ -7727,7 +7357,7 @@ see t.client-cert.txt
 
 =back
 
-_get_default(): L<Net::SSLinfo|Net::SSLinfo>::default() benutzen
+_get_default(): lib/SSLinfo::default() benutzen
 
 Generated with:
 
@@ -7740,7 +7370,7 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.31 22/11/01 19:28:24
+# # SID	@(#) glossary.txt 3.1 24/01/23 13:26:16
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
@@ -7751,6 +7381,9 @@ Generated with:
 # AAD	Additional Authenticated Data
 # ACME	Automated Certificate Management Environment
 # ACL	Access Control List
+# Achterbahn	80-, 128-bit key stream cipher (2006)
+# ACHTERBAHN-80	see Achterbahn
+# ACHTERBAHN-128	see Achterbahn
 # Adiantum	ChaCha stream cipher with Poly1305 and XChaCha12
 # ADH	Anonymous Diffie-Hellman
 # Adler32	hash function
@@ -7758,7 +7391,7 @@ Generated with:
 # AEAD	Authenticated Encryption with Additional Data
 # AECDHE	Anonymous Ephemeral ECDH
 # AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
-# AES	Advanced Encryption Standard, block cipher
+# AES	Advanced Encryption Standard, symmetric block cipher
 # AESCCM	AES with CCM
 # AESCCM8	AES with CCM8
 # AESGCM	AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM
@@ -7773,7 +7406,8 @@ Generated with:
 # AKID	Authority Key IDentifier
 # ALPN	Application Layer Protocol Negotiation
 # ALPACA	Application Layer and Content Confusion Attack	(Exploit SSL/TLS)
-# AMASTRID	stream cipher algorithm
+# AMASTRID	stream cipher
+# Anubis	128-bit symmetric block cipher
 # ARC4	Alleged RC4 (see RC4)
 # ARCFOUR	alias for ARC4
 # Argon2	Password hashing function (J. Aumasson, 2014)
@@ -7795,7 +7429,7 @@ Generated with:
 # BDH	Bilinear Diffie-Hellman
 # BEAR	block cipher combining stream cipher and hash function
 # BEAST	Browser Exploit Against SSL/TLS	(Exploit SSL/TLS)
-# BEAST .	fast block cipher for arbitrary blocksizes
+# BEAST .	fast block cipher for arbitrary blocksizes (rarely)
 # BER	Basic Encoding Rules
 # BGP	Boorder Gateway Protocol
 # bcrypt	hash function (Niels Provos, David Mazières, 1999)
@@ -7811,17 +7445,17 @@ Generated with:
 # BLAKE-256	see BLAKE (256 bit)
 # BLAKE-384	see BLAKE (384 bit)
 # BLAKE-512	see BLAKE (512 bit)
-# Blowfish	symmetric block cipher
+# Blowfish	64-bit symmetric block cipher (1993)
 # boomerang attack	attack on BLAKE
 # BPA	Branch Prediction Analysis
 # Brainpool	signature algorithm, from BSI
 # BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext; a variant of CRIME	(Exploit SSL/TLS)
 # Bullrun	NSA program to break encrypted communication
-# CAMELLIA	symmetric key block cipher; encryption algorithm 128 bit (by Mitsubishi and NTT)
-# CAST	Carlisle Adams and Stafford Tavares, block cipher
-# CAST-128	Carlisle Adams and Stafford Tavares, block cipher
+# CAMELLIA	encryption algorithm (by Mitsubishi and NTT), 128-bit symmetric block cipher
+# CAST	Carlisle Adams and Stafford Tavares, symmetric block cipher
+# CAST-128	Carlisle Adams and Stafford Tavares, 64-bit symmetric block cipher
 # CAST5	alias for CAST-128
-# CAST-256	Carlisle Adams and Stafford Tavares, block cipher
+# CAST-256	Carlisle Adams and Stafford Tavares, 128-bit symmetric block cipher
 # CAST6	alias for CAST-256
 # cipher suite	cipher suite is a named combination of authentication, encryption, and message authentication code algorithms
 # CA	Certificate Authority (aka root CA)
@@ -7847,13 +7481,13 @@ Generated with:
 # CFBx	Cipher Feedback x bit mode
 # CFRG	Crypto Forum Research Group
 # CGN	Carrier- Grade NAT (RFC6598)
-# ChaCha	stream cipher algorithm (with 256-bit key)
+# ChaCha	256-bit key stream cipher
 # ChaCha8	see ChaCha
 # ChaCha12	see ChaCha (aka 12-round ChaCha)
 # ChaCha20	see ChaCha (aka 20-round ChaCha)
 # ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 # CHAP	Challenge Handshake Authentication Protocol
-# CLEFIA	lightweight block cipher algorithm
+# CLEFIA	lightweight 128-bit block cipher
 # CKA	(PKCS#11)
 # CKK	(PKCS#11)
 # CKM	(PKCS#11)
@@ -7877,7 +7511,7 @@ Generated with:
 # CRAM	Challenge Response Authentication Mechanism
 # CRIME	Compression Ratio Info-leak Made Easy	(Exploit SSL/TLS)
 # CRL	Certificate Revocation List
-# CRYPTON	128 bit block cipher (1998)
+# CRYPTON	128-bit block cipher (1998)
 # CRYPTREC	Cryptography Research and Evaluation Committees
 # CRYSTALS	post-quantum hash function, signature
 # CRYSTALS-Dilithium	post-quantum hash function, signature
@@ -7902,7 +7536,7 @@ Generated with:
 # DANE	DNS-based Authentication of Named Entities
 # DDH	Decisional Diffie-Hellman (Problem)
 # DEA	Data Encryption Algorithm (sometimes a synonym for DES)
-# DEAL	128, 192, 256 bit block cipher (Lars Knudsen, 1998)
+# DEAL	128-bit symmetric block cipher (Lars Knudsen, 1998)
 # DECIPHER	synonym for decryption
 # DEK	Data Encryption Key
 # DER	Distinguished Encoding Rules
@@ -7925,7 +7559,7 @@ Generated with:
 # DN	Distinguished Name
 # DNSSEC	DNS Security Extension
 # DPA	Dynamic Passcode Authentication (see CAP)
-# DRAGON	stream cipher algorithm
+# DRAGON	stream cipher (2007)
 # DRG	Deterministic Random Generator
 # DRBG	Deterministic Random Bit Generator
 # DROWN	Decrypting RSA with Obsolete and Weakened eNcryption	(Exploit SSL/TLS)
@@ -8025,19 +7659,20 @@ Generated with:
 # GMAC	MAC for GCM
 # Grøstl	hash function (Lars Knudsen, 2010)
 # Goldilocks	see Curve448
-# GOST	Gossudarstwenny Standard, block cipher
+# GOST	Gossudarstwenny Standard, 64-bit symmetric block cipher (1994)
 # GOST 	hash function (used in GOST cipher suite)
-# GOST28147-89	block cipher
+# GOST28147-89	block cipher (RFC5830)
 # GOST3410-2012	signature algorithm
 # GOST3411-2012	hash algorithm
 # GOST3412-2015	block cipher
 # GOST3413-2015	modes of operation for block ciphers
-# GOST3431095	cryptographic algorithm?
-# GOST3431004	cryptographic algorithm?
-# GOST3431195	cryptographic algorithm?
-# GOSTR341001	cryptographic algorithm?
-# GOSTR341094	cryptographic algorithm?
-# GOSTR341194	cryptographic algorithm?
+# GOST3431095	see GOST28147-89
+# GOST3431004	see GOST28147-89
+# GOST3431195	see GOST28147-89
+# GOSTR341001	see GOST28147-89
+# GOSTR341094	see GOST28147-89
+# GOSTR341194	see GOST28147-89
+# GOSTR341122015	GOST R 34.12-2015 (RFC7801, RFC8891), see GOST28147-89
 # Grainv1	stream cipher (64-bit IV)
 # Grainv128	stream cipher (96-bit IV)
 # GREASE	Generate Random Extensions And Sustain Extensibility
@@ -8052,8 +7687,8 @@ Generated with:
 # HAS-V	hash function
 # HC128	alias for HC128
 # HC256	alias for HC256
-# HC-128	stream cipher algorithm
-# HC-256	stream cipher algorithm
+# HC-128	128-bit key stream cipher (2004)
+# HC-256	256-bit key stream cipher (2004)
 # HCH	Hash-Coputer-Hash
 # HCTR	a variable-input-length encryption mode
 # HEARTBLEED	attack against TLS extension heartbeat
@@ -8097,8 +7732,9 @@ Generated with:
 # JH-512	see JH (512 bits)
 # Jolkit-BC	tweakable block cipher
 # JSSE	Java Secure Socket Extension
-# KATAN	lightweight block cipher algorithm
-# KLEIN	lightweight block cipher algorithm
+# KATAN	lightweight block cipher
+# KASUMI	64-bit symmetric block cipher (successor of MISTY1, broken 2005)
+# KLEIN	lightweight block cipher
 # Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 # KCI	Key Compromise Impersonation
 # KDC	Key Distribution Center (mainly Kerberos)
@@ -8119,10 +7755,11 @@ Generated with:
 # LEA	? algorithm
 # LEA-128	see LEA
 # LEA-256	see LEA
-# LED	lightweight block cipher algorithm
-# LEXv2	stream cipher algorithm
+# LED	lightweight block cipher
+# LEXv2	stream cipher
 # LFSR	Linear Feedback Shift Register
-# LION	block cipher combining stream cipher and hash function
+# LION	variable block-length symmetric block cipher (2007)
+# LION 	hash function (2007)
 # LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
 # LM hash	LAN Manager hash aka LanMan hash
 # LogJam	Attack to force server to downgrade to export ciphers	(Exploit SSL/TLS)
@@ -8134,8 +7771,9 @@ Generated with:
 # Lucky13	Break SSL/TLS Protocol with ciphers using CBC-mode	(Exploit SSL/TLS)
 # Lucky 13	Break SSL/TLS Protocol	(Exploit SSL/TLS)
 # Lucky Thirteen	see Lucky 13
+# Magenta	128-bit symmetric block cipher (Deutsche Telekom 1990, broken 1998)
 # MANTIS	block cipher, low-latency variant of SKINNY
-# MARS	128-bit block cipher (developed at IBM)
+# MARS	128-bit symmetric block cipher (developed at IBM)
 # MAC	Message Authentication Code
 # MCF	Modular Crypt Format
 # MDC	Modification Detection Code
@@ -8148,17 +7786,19 @@ Generated with:
 # MEK	Message Encryption Key
 # MECAI	Mutually Endorsing CA Infrastrukture
 # MGF	Mask Generation Function
-# MIDORI	lightweight block cipher algorithm (64 or 128 bit) (2015)
+# MIDORI	lightweight 64-, 128-bit block cipher (2015)
 # Midori64	see MIDORI
 # Midori128	see MIDORI
-# MISTY1	block cipher algorithm
+# MISTY	Mitsubishi Improved Security Technology aka Matsui, Ischikawa, Sorimachi, Yamagishi
+# MISTY1	64-bit symmetric block cipher (1995)
+# MISTY2	?
 # MPQS	Multiple Polynomial Quadratic Sieve
 # MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 # MS-SSTP	see SSTP
 # MtE	MAC-then-encrypt (see also AtE)
 # NaCl	"Salt", crypto library (by D. Bernstein, Tanja Lange, Peter Schwabe)
 # NCP	Normalized Certification Policy (according TS 102 042)
-# NOEKEON	symmetric block cipher algorithm
+# NOEKEON	128-bit symmetric block cipher (2000)
 # Neokeon	see NOEKEON (probaly typo)
 # NewHope	post-quantum key exchange
 # nistp192	alias for P-192
@@ -8166,13 +7806,13 @@ Generated with:
 # nistp256	alias for P-256
 # nistp384	alias for P-384
 # nistp521	alias for P-521
-# NLSv2	stream cipher algorithm
+# NLSv2	stream cipher
 # nonce	(arbitrary) number used only once
 # NPN	Next Protocol Negotiation
 # NSS	Network Security Services
 # NTG	none-Deterministic Random Generator
 # NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
-# NTRU	asymetric cipher algorithm using lattice reduction
+# NTRU	asymmetric cipher using lattice reduction (1996)
 # NTRUEncrypt	alias for NTRU
 # NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
 # NULL	no encryption
@@ -8182,8 +7822,8 @@ Generated with:
 # OCB1	same as OCB
 # OCB2	improved OCB aka AEM
 # OCB3	improved OCB2
-# OCELOT1	stream cipher algorithm
-# OCELOT2	stream cipher algorithm
+# OCELOT1	stream cipher
+# OCELOT2	stream cipher
 # OCSP	Online Certificate Status Protocol
 # OCSP stapling	formerly known as: TLS Certificate Status Request
 # OFB	Output Feedback
@@ -8193,6 +7833,7 @@ Generated with:
 # OMAC1	same as CMAC
 # OMAC2	same as OMAC
 # OPIE	One-time pad Password system
+# ORYX	96-bit key stream cipher (broken 1998)
 # OTP	One Time Pad
 # OV	Organisational Validation
 # OV-SSL	Organisational Validated Certificate
@@ -8206,7 +7847,8 @@ Generated with:
 # PACE	Password Authenticated Connection Establishment
 # PAD	Peer Authorization Database
 # PAKE	Password Authenticated Key Exchange
-# Panama	stream cipher algorithm
+# Panama	256-bit key stream cipher (1998)
+# Panama 	hash funcrion (1998, broken 2001)
 # PCN	Pre-Congestion Notification
 # PBE	Password Based Encryption
 # PBKDF2	Password Based Key Derivation Function
@@ -8220,7 +7862,7 @@ Generated with:
 # PFX	see PKCS#12 (Personal Information Exchange)
 # PGP	Pretty Good Privacy
 # PII	Personally Identifiable Information
-# Picollo	lightweight block cipher algorithm
+# Picollo	lightweight block cipher
 # PKCS	Public Key Cryptography Standards
 # PKCS1	PKCS #1: RSA Encryption Standard
 # PKCS3	PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol
@@ -8243,10 +7885,10 @@ Generated with:
 # POP	Proof of Possession
 # POODLE	Padding Oracle On Downgraded Legacy Encryption	(Exploit SSL/TLS)
 # PQC	Post-Quantum Crypto
-# PRESENT	block cipher algorithm (80 or 128 bit) (2007)
+# PRESENT	64-bit block symmetric cipher (2007)
 # PRF	Pseudo-Random Function
 # PRP	Pseudo-Random Permutation
-# PRINCE	low-latency block cipher algorithm (64 bit) (2012)
+# PRINCE	low-latency 64-bit symmetric block cipher (2012)
 # prime192v1	alias for P-192
 # prime224v1	alias for P-224
 # prime256v1	alias for P-256
@@ -8258,22 +7900,26 @@ Generated with:
 # PTG	Physical Random Generator
 # PVT	Public Validation Token
 # PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
+# QARMA	Qualcomm ARM Authenticator, lightweight 64-, 128-bit block cipher (2016)
+# QARMA-64	see QARMA
+# QARMA-128	see QARMA
+# QUAD	80-bit key stream cipher (2002)
 # QUIC	Quick UDP Internet Connection
 # RA	Registration Authority (aka Registration CA)
-# Rabbit	stream cipher algorithm
+# Rabbit	128-bit key stream cipher (2003)
 # RACCOON	Timing vulnerability in TLS' DH key exchange	(Exploit SSL/TLS)
 # RADIUS	Remote Authentication Dial-In User Service
 # Radix-64	alias for Base-64
 # RAINBOW	post-quantum signature (broken 2/2022)
 # RBG	Random Bit Generator
-# RC2	Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)
+# RC2	Rivest Cipher 2, 64-bit symmetric block cipher by Ron Rivest
 # RC4	Rivest Cipher 4, stream cipher (aka Ron's Code)
-# RC5	Rivest Cipher 5, block cipher (32-bit word)
-# RC5-64	Rivest Cipher 5, block cipher (64-bit word)
-# RC6	Rivest Cipher 6
+# RC5	Rivest Cipher 5, 32-bit symmetric block cipher
+# RC5-64	Rivest Cipher 5, 64-bit symmetric block cipher
+# RC6	Rivest Cipher 6, 128-bit symmetric block cipher
 # RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 # RFC	Request for Comments
-# Rijndael	symmetric block cipher algorithm (AES)
+# Rijndael	symmetric block cipher (AES)
 # RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 # RIPE-MD	alias for RIPEMD
 # RLWE	Ring Learning-with-Errors
@@ -8293,7 +7939,9 @@ Generated with:
 # SACL	System Access Control List
 # SAD	Security Association Database
 # SAE	Simultaneous Authentication of Equals
-# SAFER	Secure And Fast Encryption Routine, block cipher
+# SAFER	Secure And Fast Encryption Routine, 64-bit symmetric block cipher (1993)
+# SAFER+	128-bit symmetric block cipher (1998)
+# SAFER++	128-bit symmetric block cipher (1998)
 # Salsa20	stream cipher (by D. Bernstein, 2005), see ChaCha20
 # Salsa20/8	see scrypt
 # Salsa20/12	see Salsa20
@@ -8320,7 +7968,7 @@ Generated with:
 # secp521r1	alias for P-521
 # SEAL	Software-Optimized Encryption Algorithm; 32-bit word stream cipher (1994)
 # SEED	128-bit symmetric block cipher (1998)
-# Serpent	symmetric key block cipher (128 bit)
+# Serpent	128-bit symmetric block cipher (1998)
 # SGC	Server-Gated Cryptography
 # SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
 # SIV	Synthetic Initialization Vector
@@ -8355,7 +8003,7 @@ Generated with:
 # SIKEp503	post-quantum hash function, signature (broken 7/2022)
 # SIKEp610	post-quantum hash function, signature (broken 7/2022)
 # SIKEp751	post-quantum hash function, signature (broken 7/2022)
-# SIMON	lightweight block cipher (NSA algorithm, questionable security)
+# SIMON	lightweight 32-, 48-, 64-, 96-, 128-bit symmetric block cipher (NSA algorithm, questionable security) (2013)
 # SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
 # Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 # Skein-256-256	see Skein (256 bits)
@@ -8367,31 +8015,39 @@ Generated with:
 # SKINNY-128-256	see SLINNY
 # SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 # SKIP-TLS	see SKIP
-# Skipjack	block cipher encryption algorithm specified as part of the Fortezza
+# Skipjack	64-bit block cipher (part of the Fortezza) (1998, partially brocken)
 # SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 # SM2	ShangMi authentication function
 # SM3	ShangMi hash function
-# SM4	ShangMi block cipher algorithm (Chinese gouvernment algorithm, questionable but no objections yet)
+# SM4	ShangMi block cipher (Chinese gouvernment algorithm, questionable but no objections yet)
 # SM4CCM	AEAD algorithms AEAD_SM4_CCM
 # SM4GCM	AEAD algorithms AEAD_SM4_GCM
 # SMS4	see SM4
 # SMACK	State Machine AttaCKs	(Exploit SSL/TLS)
 # Snefu	hash function
-# Snow20	stream cipher algorithm
+# Snow20	see SNOW
 # SNI	Server Name Indication
-# SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
+# SNOW	32-bit word synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
+# SNOW 1.0	see SNOW
+# SNOW 2.0	see SNOW
+# SNOW 3G	see SNOW
 # Snuffle 2005	see Salsa20
 # Snuffle 2008	see ChaCha
-# Sosemanuk	stream cipher algorithm
+# Sosemanuk	128-bit stream cipher (2005)
+# SOBER	Seventeen Octet Byte Enabled Register, 8-, 16-, 32-bit key stream cipher (1997)
+# SOBER-2	see SOBER
+# SOBER-t8	see SOBER
+# SOBER-t16	see SOBER
+# SOBER-t32	see SOBER
+# SOBER-128	see SOBER
 # SPARX	? algorithm
-# SPECK	lightweight block cipher algorithm (NSA algorithm, questionable security)
-# Speck64	see Speck
-# Speck128	see Speck
-# Speck256	see Speck
-# Speck256-XTS	see Speck
+# SPECK	lightweight 16-, 24-, 32-, 48-, 64-bit symmetric block cipher (NSA algorithm, questionable security) (2013, broken 2018)
+# Speck64	see SPECK
+# Speck128	see SPECK
+# Speck256	see SPECK
+# Speck256-XTS	see SPECK
 # SPD	Security Policy Database
 # SPDY	Google's application-layer protocol on top of SSL
-# SPECK	block cipher combining
 # SPHINCS	Stateless hash-based signatures, post-quantum hash function, signature
 # SPHINCS-256	alias for SPHINCS
 # SPHINCS-SHAKE256	alias for SPHINCS
@@ -8400,7 +8056,7 @@ Generated with:
 # SPKI	Subject Public Key Infrastructure
 # SPN	Substitution-Permutation Network
 # SPRP	Strong Pseudo-Random Permutation
-# Square	block cipher
+# Square	128-bit symmetric block cipher (1997, broken with Square attack))
 # SRI	Subresource Integrity
 # SRP	Secure Remote Password protocol
 # SRTP	Secure RTP
@@ -8414,7 +8070,7 @@ Generated with:
 # SSPI	Security Support Provider Interface
 # SST	Serialized Certificate Store format
 # SSTP	Secure Socket Tunneling Protocol
-# STES	stream cipher algorithm
+# STES	stream cipher
 # Streebog	hash function
 # Streebog-256	see Streebog
 # Streebog-512	see Streebog
@@ -8436,7 +8092,7 @@ Generated with:
 # Tiger	hash function
 # TIME	Timing Info-leak Made Easy	(Exploit SSL/TLS)
 # TIME 	A Perfect CRIME? TIME Will Tell
-# Threefish	hash function
+# Threefish	256-, 512-, 1024-bit symmetric block cipher (part of Skein hash function) (2008)
 # TLS	Transport Layer Security
 # TLSA	TLS Trust Anchors
 # TLSv1	Transport Layer Security version 1
@@ -8446,24 +8102,30 @@ Generated with:
 # TOFU	Trust on First Use
 # TR-02102	Technische Richtlinie 02102 (des BSI)
 # TR-03116	Technische Richtlinie 03116 (des BSI)
-# Trivium	stream cipher algorithm
+# Trivium	80-bit key synchronous stream cipher (2005, broken 4/2015)
 # TSK	Transmission Security Key
 # TSK 	TACK signing key
 # TSP	trust-Management Service Provider
 # TSS	Time Stamp Service
 # TTP	trusted Third Party
-# Twofish	symmetric key block cipher (128 bit)
+# Twofish	128-bit symmetric block cipher (1998)
 # UC 	Unified Capabilities
 # UC	Unified Communications (SSL Certificate using SAN)
 # UCC	Unified Communications Certificate (rarley used)
 # UMAC	Message Authentication Code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
 # URI	Uniform Resource Identifier
 # URL	Uniform Resource Locator
+# VEST	Very Efficient Substitution Transposition, cipher with T-functions (2005, brocken 2007)
+# VEST-4	see VEST
+# VEST-8	see VEST
+# VEST-16	see VEST
+# VEST-32	see VEST
 # VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
-# VMPC	stream cipher algorithm
+# VMPC	Variably Modified Permutation Composition, stream cipher (2007)
 # VR-224	alias for BADA55-VR-224
 # VR-256	alias for BADA55-VR-256
 # VR-384	alias for BADA55-VR-384
+# WAKE	32-bit word stream cipher (1993, broken)
 # WHIRLPOOL	hash function
 # WPAD	Web Proxy Auto-Discovery
 # wolfSSL	SSL library mainly intended and used for embedded and real-time systems
@@ -8476,7 +8138,7 @@ Generated with:
 # X3DH	Extended Triple Diffie-Hellman
 # XCBC	eXtended CBC-MAC
 # XCBC-MAC	same as XCBC
-# XChaCha	stream cipher algorithm (with 512-bit key)
+# XChaCha	512-bit key stream cipher
 # XChaCha12	see ChaCha (aka 12-round XChaCha)
 # XChaCha20	see ChaCha (aka 20-round XChaCha)
 # XEX	XOR Encrypt XOR
@@ -8503,7 +8165,7 @@ Generated with:
 # =head1 rfc
 
 
-# # SID	@(#) rfc.txt 1.18 22/11/05 11:37:10
+# # SID	@(#) rfc.txt 1.19 23/11/28 12:49:03
 # 
 # # number| title / description
 # #------+----------------------------------------------------------------------+
@@ -8581,6 +8243,7 @@ Generated with:
 # 6520	TLS Extension: Heartbeat
 # 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
 # 7633	TLS Extension: Feature Extension: Must Staple
+# 7924	TLS Extension: Cached Information Extension
 # 8449	TLS Extension: Record Size Limit
 # 5077	TLS session resumption without Server-Side State
 # 6961	TLS Multiple Certificate Status Request Extension
@@ -8689,6 +8352,12 @@ Generated with:
 # 9155	Deprecating MD5 and SHA-1 Signature Hashes in TLS 1.2 and DTLS 1.2
 # 8398	Internationalized Email Addresses in X.509 Certificates
 # 8399	Internationalization Updates to RFC 5280
+# 8447	IANA Registry Updates for TLS and DTLS
+# 8478	Zstandard Compression and the application/zstd Media Type
+# 8879	TLS Certificate Compression
+# 7250	Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)
+# 7924	Transport Layer Security (TLS) Cached Information Extension
+# 7932	Brotli Compressed Data Format
 # 
 #
 # end rfc
