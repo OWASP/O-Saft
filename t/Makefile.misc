@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.4 24/01/26 18:20:09
+#?      @(#) Makefile.misc 3.5 24/01/27 10:48:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.4
+_SID.misc          := 3.5
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -151,15 +151,15 @@ HELP-docs.subs  = generate graph with defined and used perl subroutines
 # only one target, as it generates multiple files anyway
 docs.anno:
 	@$(TRACE.target)
-	@$(EXE.graph-anno) --dir=$(O-LIBDOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
-	@$(EXE.graph-anno) --dir=$(O-LIBDOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
+	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 docs.annotations: docs.anno
 
 # only one target, as it generates multiple files anyway
 docs.subs:
 	@$(TRACE.target)
-	@$(EXE.graph-subs) --dir=$(O-LIBDOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
-	@$(EXE.graph-subs) --dir=$(O-LIBDOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
+	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 
 ALL.testdocs   := docs.anno docs.subs
 
@@ -217,7 +217,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.4: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.5: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -468,7 +468,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.4: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.5: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
