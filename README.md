@@ -8,6 +8,24 @@
 
 # [ O-Saft - OWASP SSL advanced forensic tool](https://owasp.org/www-project-o-saft/)
 
+**Download [Version 24.01.24](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)**
+
+## QUICK START
+
+```
+  o-saft.pl --help
+  o-saft.pl +check  your.tld
+  o-saft.pl +info   your.tld
+  o-saft.pl +quick  your.tld
+  o-saft.pl +cipher your.tld
+  o-saft.pl --help=commands
+
+  o-saft.tcl      # (simple GUI; requires Tcl/Tk 8.5 or newer)
+
+  o-saft-docker   # (simple wrapper to call o-saft.pl in docker image)
+
+  o-saft          # (simple wrapper to call o-saft.pl or o-saft.tcl or o-saft-docker)
+```
 
 ## DESCRIPTION
 
@@ -26,6 +44,7 @@ and tests the remote target according given list of ciphers.
 
 Why a new tool for checking SSL  when there already exist a dozens or
 more good tools in 2012? Some (but not all) reasons are:
+
 * lack of tests of unusual ciphers
 * different results returned for the same check on same target
 * missing functionality (checks) according modern SSL/TLS
@@ -35,7 +54,7 @@ more good tools in 2012? Some (but not all) reasons are:
 For more details, please use:
 
 ```
-o-saft.pl --help
+  o-saft.pl --help
 ```
 or read the source ;-)
 
@@ -46,31 +65,32 @@ or read the source ;-)
 
 ## INSTALLATION
 
-o-saft.pl requires following Perl modules:
+`o-saft.pl` requires following Perl modules:
 
 | Module               | Version |
 |:---------------------|:--------|
-| Net::SSLeay          | (prefered >= 1.51, recommended 1.85)     |
-| IO::Socket::SSL      | (prefered >= 1.37, recommended 2.002)    |
-| IO::Socket::INET     | (prefered >= 2.31)  |
-| Net::DNS             | (prefered >= 0.65, for --mx option only) |
+| `Net::SSLeay`        | (prefered >= 1.51, recommended 1.85)     |
+| `IO::Socket::SSL`    | (prefered >= 1.37, recommended 2.002)    |
+| `IO::Socket::INET`   | (prefered >= 2.31)  |
+| `Net::DNS`           | (prefered >= 0.65, for --mx option only) |
 
-O-Saft  can be executed from within the unpacked or cloned directory,
+It can be executed from within the unpacked or cloned directory,
 installation is not necessary. However, a  `INSTALL.sh`  script will be
 provided, which can be called as follows:
 
 ```
-INSTALL.sh
-INSTALL.sh --clean
-INSTALL.sh --check
-INSTALL.sh --n /path/to/install --force
-INSTALL.sh     /path/to/install --force
+  INSTALL.sh /path/to/install
+  INSTALL.sh --check
+```
+For more details on installation, please see:
+```
+  INSTALL.sh --help
 ```
 
-There're no dependencies to other perl modules for `checkAllCiphers.pl`
+There're no dependencies to other Perl modules for `checkAllCiphers.pl`
 so the test of all ciphers will work with it.
-The modules `Net::SSLinfo`, `Net::SSLhello` are part of O-Saft and should
-be installed in `./Net` .
+The modules  `SSLinfo`,  `SSLhello`  beside som others, are part of the tool
+and should be installed in  `./lib` .
 
 Following files are optional:
 
@@ -85,23 +105,7 @@ Following files are optional:
 | `checkAllCiphers.pl` | (simple script for checking all ciphers) |
 | `usr/*`              | (additional programs and tools) |
 
-## QUICK START
-
-```
-o-saft.pl --help
-o-saft.pl +check your.tld
-o-saft.pl +info  your.tld
-o-saft.pl +quick your.tld
-o-saft.pl +cipher    your.tld
-o-saft.pl --help=commands
-
-o-saft.tcl      # (simple GUI; requires Tcl/Tk 8.5 or newer)
-
-o-saft-docker   # (simple wrapper to call o-saft.pl in docker image)
-
-o-saft          # (simple wrapper to call o-saft.pl or o-saft.tcl or o-saft-docker)
-```
-
+## Sources 
 * Project home is https://www.owasp.org/index.php/O-Saft
 * Project repo is https://github.com/OWASP/O-Saft
 * Historic Project home https://www.owasp.org/index.php/Projects/O-Saft
@@ -111,30 +115,30 @@ o-saft          # (simple wrapper to call o-saft.pl or o-saft.tcl or o-saft-dock
 
 Get a Copy (latest stable release)
 ```
-wget https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz
+  wget https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz
 ```
 
 Get a Copy (development version)
 ```
-git clone https://github.com/OWASP/O-Saft.git
-git clone git@github.com:OWASP/O-Saft.git
+  git clone https://github.com/OWASP/O-Saft.git
+  git clone git@github.com:OWASP/O-Saft.git
 ```
 
 Get Docker Image (latest stable release)
 ```
-docker pull owasp/o-saft
+  docker pull owasp/o-saft
 ```
 
 ## VERSION
 
 **24.01.24**
 
-The version of the tarball  o-saft.tgz  represents the version listed on top
+The version of the tarball `o-saft.tgz` represents the version listed on top
 herein. All other files in the repository may be ahead of this tarball version.
 
 SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)
 ```
-bcb9e2927808300cd2158fa644798590b3f49b31591c4dc7639ce896a1ffdd56
+3332af75f20933b4be4dd2e49c8d67cd505fc7856f4844211671e2fd304bbefb
 ```
 
 [//]: # (above checksum for version 23.11.23)
@@ -142,7 +146,7 @@ bcb9e2927808300cd2158fa644798590b3f49b31591c4dc7639ce896a1ffdd56
 # comment not rendered in HTML
 -->
 
-SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:18.11.18
+SHA256 checksum of docker image owasp/o-saft:latest and owasp/o-saft:18.11.18
 ```
 b85423d142c186c1cf10494aa0e993f6f2030ab769977aca9584d7d650421697
 ```
@@ -152,8 +156,11 @@ file is from  o-saft.tgz  itself, or inside the docker image.
 
 ### Older version
 
-Version 24.01.24 is a major redesign (refactoring) of the project. The top directory now contains the main tools only. All modules, documentation and (user) contributed tools are in sub-directories.
+Version 24.01.24 is a major redesign (refactoring) of the project. The top
+directory now contains the main tools only. All modules, documentation and
+(user) contributed tools are in sub-directories.
 These changes are also reflected in the directories available at github.
 
-If older versions should be used, please get the correspondig o-saft.tgz from github's releases, see:
-   https://github.com/OWASP/O-Saft/releases (as of January 2024).
+If older versions should be used, please get the correspondig `o-saft.tgz`
+from github's releases, see:
+   [https://github.com/OWASP/O-Saft/releases](https://github.com/OWASP/O-Saft/releases) (as of January 2024).
