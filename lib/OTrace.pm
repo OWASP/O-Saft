@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.13 24/01/26 15:33:16";
+my  $SID_trace      = "@(#) OTrace.pm 3.14 24/01/27 12:21:07";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -287,7 +287,7 @@ sub _trace_test_help    {
 EoT
     # o-saft.tcl --test-o-saft  # just for completeness, not used here
     # NOTE: description above should be similar to those in
-    #       lib/doc/help.txt
+    #       doc/help.txt
     return $data;
 } # _trace_test_help
 
@@ -1175,7 +1175,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.13 2024/01/26
+3.14 2024/01/27
 
 =head1 AUTHOR
 
