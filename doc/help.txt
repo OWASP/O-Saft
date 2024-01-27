@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.5 24/01/26 15:46:16
+# SID   @(#) help.txt 3.6 24/01/27 12:38:37
 
 NAME
 
@@ -4816,6 +4816,9 @@ DOCUMENTATION
         window there:
 
           o-saft.tcl 
+
+        All files used for documentation, wether source files, or contributed
+        files, or generated files, are located in the  doc/  directory.
 
     Developer documentation
 
