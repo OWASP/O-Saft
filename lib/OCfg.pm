@@ -29,7 +29,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.12 24/01/27 00:58:02";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.13 24/01/27 12:18:30";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
@@ -1931,9 +1931,9 @@ our %cfg = (    # main data structure for configuration
 
    #--------------+-------------+----------------------------------------------
     'dirs' => { # list of directories used for the tool, in ./ usually
-        'lib'   =>  "lib",      # modules and documentation
+        'lib'   =>  "lib",      # own modules
         'doc'   =>  "doc",      # additional documentation
-        'usr'   =>  "usr",      # additional documentation
+        'usr'   =>  "usr",      # additional tools
         'test'  =>  "t",        # Canything for functional and quality tests
     }, # dirs
 
@@ -3539,7 +3539,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.12"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.13"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3587,7 +3587,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.12 2024/01/27
+3.13 2024/01/27
 
 =head1 AUTHOR
 
