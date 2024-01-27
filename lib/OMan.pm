@@ -52,7 +52,7 @@ use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.15 24/01/27 00:05:05";
+my  $SID_oman   = "@(#) OMan.pm 3.16 24/01/27 09:49:01";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.15'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.16'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1738,7 +1738,7 @@ sub man_docs_write  {
         next if $mode !~ m/^--help/;
         next if $mode =~ m/^--help=warnings/;   # TODO:
         my $doc = "$cfg{'files'}{$mode}";
-        #_dbx# print("doc=$doc\n");
+        _man_dbx("man_docs_write: mode=$mode  ->  doc=$doc");
         open($fh, '>:encoding(UTF-8)', $doc) or do {
             _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
             next;
@@ -1748,7 +1748,7 @@ sub man_docs_write  {
         print $fh man_options()         if ($mode =~ /opts$/);
         print $fh man_ciphers('text')   if ($mode =~ /ciphers.?text$/);
         print $fh man_help('NAME')      if ($mode =~ /help$/);
-        print $fh man_help('CHECKS')    if ($mode =~ /checks$/);
+        print $fh man_table('check')    if ($mode =~ /checks$/);
         print $fh man_table('rfc')      if ($mode =~ /rfc$/);
         print $fh man_table('regex')    if ($mode =~ /regex$/);
         print $fh man_table('abbr')     if ($mode =~ /glossary?$/);
@@ -2225,6 +2225,7 @@ EoHelp
 
 sub man_options     {
     #? print program's options
+    _man_dbx("man_options() ..");
     my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
     foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
     my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
@@ -2696,7 +2697,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.15 2024/01/27
+3.16 2024/01/27
 
 
 =head1 AUTHOR
