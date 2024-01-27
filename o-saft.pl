@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.10 24/01/26 00:26:24"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.11 24/01/27 15:46:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -369,7 +369,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.10"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.11"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -486,7 +486,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "lib/OTrace.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
-    $err = _load_file($arg, "trace file");
+    $err = _load_file($arg, "trace file") if not $::osaft_standalone;
     if ($err ne "") {
         die $STR{ERROR}, "012: $err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
@@ -531,7 +531,7 @@ if (exists $INC{'lib/OTrace.pm'}) {
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
-    $err = _load_file("lib/OUsr.pm", "user file");
+    $err = _load_file("lib/OUsr.pm", "user file") if not $::osaft_standalone;
     if ($err ne "") {
         # continue without warning, it's already printed in "read ... " line
         # OSAFT_STANDALONE no warnings 'redefine'; # avoid: "Subroutine ... redefined"
@@ -1229,7 +1229,7 @@ sub _load_modules       {
 
     goto FIN if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
 
-    $_err = _load_file("lib/SSLhello.pm", "O-Saft module"); # must be found with @INC
+    $_err = _load_file("lib/SSLhello.pm", "O-Saft module") if not $::osaft_standalone; # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "010: $_err"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "010: $_err"; # no reason to die for +version
@@ -1239,7 +1239,7 @@ sub _load_modules       {
         # TODO: not (yet) supported for proxy
     }
     goto FIN if (1 > $cfg{'need_netinfo'});
-    $_err = _load_file("lib/SSLinfo.pm", "O-Saft module");  # must be found with @INC
+    $_err = _load_file("lib/SSLinfo.pm", "O-Saft module") if not $::osaft_standalone;  # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "011: $_err"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "011: $_err"; # no reason to die for +version
@@ -6647,7 +6647,7 @@ while ($#argv >= 0) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
         if (0 == $::osaft_standalone) {     # SEE Note:Stand-alone
-            my $_err = _load_file('lib/OMan.pm', "help file");
+            my $_err = _load_file('lib/OMan.pm', "help file") if not $::osaft_standalone;
             warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
         }
         if ($arg =~ /^gen[._=-]?docs$/) {   # --help=gen-docs
