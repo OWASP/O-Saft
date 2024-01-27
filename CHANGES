@@ -1,4 +1,143 @@
 
+Version: 24.01.24
+### NOTE
+    This release is a major redesign (refactoring) of the project. The top
+    directory now contains the main tools only. All modules, documentations and
+    (user) contributed tools are in sub-directories.
+    These changes are also reflected in the directories available at github.
+
+    If older versions should be used, please get the correspondig `o-saft.tgz`
+    from that version, see below.
+
+    Functionally the options `--v`  and  `--trace`  behave different now.
+
+    Beside many formal changes, following bugfixes and chages have been done.
+
+### BUGFIX
+    * o-saft.pl: BT: print sorted list of ciphers for --ciphermode=dump (important for testing only)
+    * o-saft.pl: BF: avoid "Use of ..." for --legacy=testsslserver
+      output for --legacy=testsslserver  may now miss some informations values
+    * t/Makefile.warnings: BT: duplicate target warning-141 removed
+    * OSaft/Ciphers: BD: description for $cipher_results adapted to new definitions
+    * Net/SSLhello.pm: BF: typos in cipher suite names corrected
+    * o-saft-dbx.pm: BF: avoid "Use of uninitialized value in join or string ..."; output for --trace=3 improved
+    * o-saft-man.pm: BF: <details> tag with overflow-y:auto
+    * o-saft-man.pm: BF: <aside> tag with higher z-index
+### CHANGES
+    * o-saft-man.pm: EF: man_src_grep() improved and adapted to new syntax for --help=exit
+    * t/Makefile.warnings: ET: warning-061 and warning-145 added
+    * t/Makefile.exit: ET: targets adapted to changes in o-saft.pl 2.163
+    * t/Makefile.cmd: ET: adapted to changes in o-saft.pl 2.163: --trace-CMD is now --v
+    * t/Makefile.dev: ET: testarg-dev-grep_subs improved
+    * t/Makefile.dev: EF: additional filter in target testcmd-dev-grep_desc
+    * t/Makefile: ET: environment variable PERL5LIB and PERL_HASH_SEED are set for all test* targets
+    * t/Makefile: ED: OSAFT.pm renamed to LIB.pm; o-saft-usr.pm renamed to OSaft/Usr.pm
+    * OSaft/Data.pm: EF: text fpr cnt_ciphers, cnt_totals improved
+    * OSaft/Doc/devel.txt: ED: OVERVIEW section added
+    * Net/SSLinfo.pm: EF: definition of variables and subs done at begnning; trace output improved
+    * Net/SSLhello.pm: EF: using _trace_* functions for some output with --trace*
+    * Net/SSLhello.pm: EF: definition of variables and subs done at begnning; trace output improved
+    * Net/SSLhello.pm: EF: using normalised timestamp for --trace-time
+    * Net/SSLhello.pm: EF: format of timestamp for --trace-time adapted to main
+    * Net/SSLhello.pm: EF: print %SSLINFO with --trace instead of --v
+    * Net/SSLhello.pm: ED: formal changes for trace output
+    * Net/SSLhello.pm: EF: don't pass -nextprotoneg together with -tls1_3 to openssl
+    * o-saft-dbx.pm: EF: output of HASH for --trace=3 improved
+    * osaft.pm: EF: DTLSv1* enabled
+    * osaft.pm: EF: hints 'openssl3' and 'openssl3c' added
+    * osaft.pm: EF: regex for 'OWASP_D' and 'OWASP_NA' improved
+    * osaft.pm: EF: get_ciphers_range() improved
+    * o-saft.pl: EF: --v and --trace improved (_y_CMD() repleced by_vprint())
+    * o-saft.pl: EF: sort some values for +check output
+    * o-saft.pl: EF: "local $\ =" removed to avoid unexpected behaviour in subs
+    * o-saft.pl: EF: avoid PFS checks with --ciphermode=openssl; may lead to wrong PFS output
+    * o-saft.pl: EF: --tracekey does not print "= reading file ..." information
+    * o-saft.pl: EF: check --legacy= option for +cipher; print warning
+    * o-saft.pl: EF: print hint when using openssl >2.0 and --ciphermode=openssl
+    * o-saft.pl: _get_cipherlist_*() replace by _get_cipherslist()
+    * o-saft.pl: EF: _eval_cipherranges() replaced by osaft::get_ciphers_range()
+    * o-saft.pl: EF: checking openssl's protocol options adapated to OpenSSL 3.0.11
+    * o-saft.pl: EF: printing "Total number of ciphers" 'cnt_totals' unified
+    * o-saft.pl: EF: +cipher-sh reimplemented
+    * OSaft/Ciphers: EF: sort_results() improved
+    * OSaft/Ciphers: EF: cipher 0x02FFFFFF added for internal use
+    * OSaft/Ciphers: EF: find_names() allows OpenSSL-style patterns
+    * OSaft/Ciphers: EF: sort_names() adapted to new ciphers (added in 2.89)
+    * OSaft/Ciphers: EF: aliases for some ciphers added
+    * OSaft/Doc/rfc.txt: ED: more RFCs added
+    * OSaft/Doc/help.txt: ED: HTML layout for some list items improved
+    * o-saft.pm EF: openssl configuration cfg{openssl} improved
+    * o-saft-man.pm EF: EF: support --trace option; --v supported for tool itself only
+    * o-saft-man.pm EF: parent caller defines file to retrieve (grep) data from
+    * o-saft-man.pm ED: <li> tags improved
+    * o-saft-dbx.pm EF: _vprintme() removed
+### NEW
+    * OSaft/Doc/openssl.txt: ND: file for internal (developer) documentation
+    * Net/SSLinfo.pm: EF: test_openssl() for --test-openssl implemented
+    * t/Makefile.mod: ET: target testarg-mod-Net-SSLinfo.pm_--test-openssl added
+    * t/Makefile.cipher: ET: targets added to test +cipher --trace*
+    * t/Makefile.cipher: ET: target testcmd-cipher-+cipher---openssl-local_ added
+    * t/Makefile.warnings: ET: warning-015 implemented, warning-413 implemented
+    * osaft.pm EF: cfg{openssl_version} added
+    * OSaft/Ciphers: EF: cophers TLS13_GOSTR341112_256* added
+    * OSaft/Trace.pm: NF: added (replace o-saft-dbx.pm 2.44)
+    * OSaft/USR.pm: NF: added (replace o-saft-usr.pm 2.8)
+
+Version: 23.11.23
+  BUGFIX
+    * o-saft-dbx.pm BF: avoid Perl's "Use of uninitialized value ..." when printing values
+    * OSaft/Ciphers.pm: BF: ckeck for own commands improved; fully handle --test-ciphers-* options
+    * Net/SSLhello.pm: BF: proper parameter type for Net::SSLeay::CTX_set_options() to avoid perl warning
+    * Makefile: BF: more dependencies for targets generating static help files $(DOC.dir)/$(SRC.pl).% improved
+    * t/Makefile.warnings: BT: macro EXE.extract_warn to extract warnings and errors corrected
+    * t/Makefile: BT: compute _SID.pod directly
+    * t/Makefile: BT: help.test.targets corrected
+    * Net/SSLinfo.pm: BF: Net::SSLeay::set_tlsext_host_name() behaves strange for openssl>2.0; dirty workaround implemented
+    * Net/SSLinfo.pm: BF: send HTTP verb line with \r to avoid "\n" in the logfiles
+    * osaft.pm: BF: +compression needs to call checkdest()
+    * osaft.pm: BF: OWASP scoring for TLS13-* ciphers corrected
+    * o-saft.pl: BF: implementation of need_netinfo improved
+    * o-saft.pl: BF: check for given command improved (avoid ambiguity)
+    * o-saft.tcl: BF: using correct widget for saving results
+    * o-saft.tcl: BF: Config Tool window has no Save button
+    * o-saft.tcl: BF: tooltip for Save button in Options tab corrected
+    * o-saft.tcl: BF: Save button for configuration settings corrected
+    * o-saft.tcl: BF: key bindings disabled, because they also apply for entry widgets, where they should not
+    * o-saft-man.pm: BF: remove internal markup in output for --h
+  CHANGES
+    * o-saft.cgi: EF: option --format=html4 --format=html5 renamed to --html4 --html5 (--format= already used by o-saft.pl)
+    * o-saft: EF: -log improved
+    * o-saft: ET: use non-random logfile name to avoid diff results with make
+    * OSaft/Ciphers.pm: EF: unified format for warn() messages
+    * OSaft/Data.pm: EF: adapted to modern TLS: use of TLSv1 or TLSv11 not considered good
+    * o-saft.pl: EF: --test-ciphers* options simplified; --traceCMD improved
+    * o-saft.pl: EF: adapted to modern TLS: use of TLSv1 or TLSv11 not considered good
+    * o-saft.pl: EF: warning if +cipher-dh --ciphermode=intern
+    * o-saft.pl: EF: checking for identified PFS ciphers improved (for --ciphermode=intern only)
+    * Net/SSLinfo.pm: EF: print Hint if server does not support protocol
+    * Net/SSLinfo.pm: EF: Net::SSLeay make HTTP requests with User-Agent header
+    * o-saft-dbx.pm: ED: description for --test-data improved
+    * o-saft-dbx.pm: EF: use texts from OSaft::Text
+    * OSaft/Doc/help.txt: ED: ENVIRONMENT section improved
+    * OSaft/Doc/help.txt: ED: o-saft.cgi's option --format=html4 --format=html5 renamed to --html4 --html5 (--format= already used by o-saft.pl)
+    * OSaft/Doc/help.txt: ED: DEBUG section removed, now available with --help=development
+    * t/Makefile.dev: ET: target testarg-dev-o-saft_-log improved
+    * t/Makefile.dev: ET: _EXE.log-filterarg improved (to compare results)
+    * t/Makefile.make: ET: ALL.testmake completed
+    * Makefile: EF: enforce LC_CTYPE=C.UTF-8 (necessary at least for o-saft.tcl)
+    * o-saft.tcl: ED: sequence of menu items as in o-saft.cgi
+    * o-saft.tcl: EF: missing Save button to Commands tab added
+    * o-saft.tcl: EF: debug (really trace) output improvd for --d=2
+  NEW
+    * o-saft-dbx.pm EF: --test-vars implemented; _yeast_test_vars()
+    * o-saft.pl: EF: --http-user-agent= added
+    * osaft.pm: EF: set_user_agent() implemented
+    * Net/SSLinfo.pm: EF: $Net::SSLinfo::user_agent added
+    * osaft.pm: EF: cfg{use}{user_agent} added
+    * OSaft/Doc/devel.txt: ND: new file
+    * Makefile: ET: release.here added; GEN.rel is now in docs/; generated tgz contains $(GEN.rel)
+    * o-saft: EF: mode -log implemented
+
 Version: 23.04.23
   BUGFIX
     * contrib/INSTALL-template.sh: BF: overlong message corrected when modules are missing
