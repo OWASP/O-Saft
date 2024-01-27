@@ -24,22 +24,21 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.10 24/01/26 15:34:52";
+my  $SID_odoc   = "@(#) ODoc.pm 3.11 24/01/27 11:57:34";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
-    unshift(@INC, $_path)   if (1 > (grep{/^$_path$/} @INC));
-    unshift(@INC, "lib")    if (1 > (grep{/^\.\.$/}   @INC));
-    unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
 }
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
 use OText       qw(%STR);
+use OCfg        qw(%cfg);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -95,10 +94,9 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
     my $name = $file;
        $name =~ s#(.*[/\\]+)##g;
     $file =~ s#^\.\./##;
-    $file =~ s#usr/##;          # remove if in path
-    $file =~ s#/doc/#/lib/doc/# if (not -e $file);  # try this one ..
-    $file =  "lib/doc/$name"    if (not -e $file);  # try this one ..
-    $file =  ""         if (not -e $file);
+    $file =~ s#usr/##;              # remove if in path
+    $file =  "$OCfg::cfg{'dirs'}->{'doc'}/$name" if (not -e $file);  # try this one ..
+    $file =  "" if (not -e $file);  # not found
     _warn("189: no '$orig' found, consider installing") if "" eq $file;
     return $file;
 } # _get_standalone
@@ -106,33 +104,33 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
 sub _get_filehandle {
     #? return open file handle for passed filename,
     #? return Perl's DATA file handle of this file if file does not exist
-    # passed file is searched for as is, in lib/ and finally lib/doc
+    # passed file is searched for as is, in  .  and finally  doc/
     # this function is a wrapper for Perl's DATA
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
-    #dbx# print "#Data.pm $0, file=$file, ",__FILE__;
+    #dbx# print "#_get_filehandle: $0, file=$file, ",__FILE__;
     if ("" ne $file) {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
-                $path =~ s#^/(lib/.*)#$1#;  # own module directory
+                $path =~ s#^/($OCfg::cfg{'dirs'}->{'lib'}/.*)#$1#;  # own module directory
                 $path =~ s#/[^/\\]*$##;     # relative path of this file
                 # Dirty hack: some OS return an absolute path for  __FILE__ ;
                 # then $file would not be found because that path is wrong. If
                 # the path begins with /OSaft the leading / is simply removed.
                 # NOTE: This behaviour (on older Mac OSX) is considered a bug
                 #       in Perl there.
-            if (-e "$path/$file") {
-                $file = "$path/$file";
-            } else {
-                $file = "$path/doc/$file";
+            if (not -e "$path/$file") {
+                $path =  $OCfg::cfg{'dirs'}->{'doc'}; # doc directory
             }
+            $file = "$path/$file";
             # following line for gen_standalone.sh (used with make)
             # OSAFT_STANDALONE $file =  _get_standalone($file);
         }
     }
-    #dbx# print "#Data.pm file=$file ";
+    #dbx# print "#_get_filehandle: file=$file ";
+    #dbx# _trace("_get_filehandle: file=$file");
     if ("" ne $file and -e $file) {
         ## no critic qw(InputOutput::RequireBriefOpen)
         #  file hadnle needs to be closd by caller
@@ -143,7 +141,7 @@ sub _get_filehandle {
         $fh = __PACKAGE__ . "::DATA";   # same as:  *ODoc::DATA
         _warn("191: no '$file' found, using '$fh'") if not -e $file;
     }
-    #dbx# print "#Data.pm file=$file , FH=*$fh";
+    #dbx# print "#_get_filehandle: file=$file , FH=*$fh";
     return $fh;
 } # _get_filehandle
 
@@ -416,11 +414,12 @@ Print VERSION version.
 =cut
 
 sub list        {
-    #? return sorted list of available .txt files in lib/doc directory
+    #? return sorted list of available .txt files in ./doc or doc/ directory
     #  sorted list simplifies tests ...
-    my $dir = $0;
+    my $dir = shift;
        $dir =~ s#[/\\][^/\\]*$##;
-       $dir .= "/doc" if $dir !~ m#doc/?$#;
+       $dir .= "/$OCfg::cfg{'dirs'}->{'doc'}" if $dir !~ m#$OCfg::cfg{'dirs'}->{'doc'}/?$#;
+       $dir  =   $OCfg::cfg{'dirs'}->{'doc'}  if not -d $dir; # last resort
     my @txt;
     opendir(my $dh, $dir) or return $!;
     while (my $file = readdir($dh)) {
@@ -641,7 +640,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.10 2024/01/26
+3.11 2024/01/27
 
 
 =head1 AUTHOR
