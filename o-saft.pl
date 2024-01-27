@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.11 24/01/27 15:46:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.12 24/01/27 23:51:08"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -369,7 +369,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.11"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.12"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3822,8 +3822,8 @@ sub checkdates($$)  {
     trace(" valid dates = " . $checks{'dates'}->{val});
     trace(" valid_years = " . $data{'valid_years'}->{val});
     trace(" valid_months= " . $data{'valid_months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
-    if (60 > $data{'valid_days'}->{val} < 60) { # see calculation above
-        trace(" valid_days  = " . $data{'valid_days'}->{val} . " = ($until[1] - $since[1])")
+    if (60 > $data{'valid_days'}->{val}) { # see calculation above
+        trace(" valid_days  = " . $data{'valid_days'}->{val} . " = ($until[1] - $since[1])");
     } else {
         trace(" valid_days  = " . $data{'valid_days'}->{val} . " = (" . $data{'valid_years'}->{val} . "*5) + (" . $data{'valid_months'}->{val} . "*30)");
     }
