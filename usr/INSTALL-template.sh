@@ -260,7 +260,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL.template 3.3 24/01/26 15:25:53
+#?      @(#) INSTALL-template.sh 3.4 24/01/27 15:30:39
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -551,7 +551,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.3 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.4 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -716,6 +716,7 @@ if [ "$mode" = "dest" ]; then
 		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
 		copy_file "$f" "$inst_directory/$f"
 	done
+	echo "# generate $osaft_guirc ..."
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
 		if [ -n "$osaft_gui" -a -n "$w" ]; then
@@ -735,7 +736,11 @@ if [ "$mode" = "dest" ]; then
 		done
 	fi
 
-	echo    "# consider calling: $0 --clean $inst_directory"
+	echo "# generate static help files ..."
+	( $try cd $inst_directory && $try ./$osaft_exe --help=gen-docs )
+
+	echo    "# consider calling:    $0 --clean $inst_directory"
+	echo    "# installaion details: $0 --check $inst_directory"
 	echo -n "# installation in $inst_directory "; echo_green "completed."
 	exit 0
 fi; # install mode }
