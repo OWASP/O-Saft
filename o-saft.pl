@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.13 24/01/28 01:21:15"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.14 24/01/28 16:15:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.13"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.14"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6640,18 +6640,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
-        trace_arg("handle --help= ...");
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
+        trace_arg("handle --help= ...");
         my $_err = _load_file('lib/OMan.pm', "help file");
         warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
-        if ($arg =~ /^gen[._=-]?docs$/) {   # --help=gen-docs
-            OMan::man_docs_write($arg);
-        } else {
-            OMan::man_printhelp($arg);
-        }
+        OMan::man_printhelp($arg);  # handles also OMan::man_docs_write("--help=gen-docs")
         exit 0;
     }
 
