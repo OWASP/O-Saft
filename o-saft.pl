@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.12 24/01/27 23:51:08"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.13 24/01/28 01:21:15"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -328,6 +328,7 @@ sub _load_file      {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
+    return $err if (grep{/$fil/} @{$OCfg::dbx{'files'}});   # avoid multiple loads
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or _warn("101: 'require $fil' failed");
     $err = $@;
@@ -369,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.12"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.13"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -486,7 +487,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "lib/OTrace.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
-    $err = _load_file($arg, "trace file") if not $::osaft_standalone;
+    $err = _load_file($arg, "trace file");
     if ($err ne "") {
         die $STR{ERROR}, "012: $err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
@@ -531,7 +532,7 @@ if (exists $INC{'lib/OTrace.pm'}) {
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
-    $err = _load_file("lib/OUsr.pm", "user file") if not $::osaft_standalone;
+    $err = _load_file("lib/OUsr.pm", "user file");
     if ($err ne "") {
         # continue without warning, it's already printed in "read ... " line
         # OSAFT_STANDALONE no warnings 'redefine'; # avoid: "Subroutine ... redefined"
@@ -1222,14 +1223,12 @@ sub _load_modules       {
             # TODO: need to remove +sts_expired from cfg{do}
         }
     }
-    $_err = _load_file("Encode.pm", "Encode module");  # must be found with @INC
+    $_err = _load_file("Encode.pm", "Encode module");       # must be found with @INC
     if ("" ne $_err) {
         warn $STR{ERROR}, "008: $_err";
     }
 
-    goto FIN if (0 < $::osaft_standalone);  # SEE Note:Stand-alone
-
-    $_err = _load_file("lib/SSLhello.pm", "O-Saft module") if not $::osaft_standalone; # must be found with @INC
+    $_err = _load_file("lib/SSLhello.pm", "O-Saft module"); # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "010: $_err"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "010: $_err"; # no reason to die for +version
@@ -1239,7 +1238,7 @@ sub _load_modules       {
         # TODO: not (yet) supported for proxy
     }
     goto FIN if (1 > $cfg{'need_netinfo'});
-    $_err = _load_file("lib/SSLinfo.pm", "O-Saft module") if not $::osaft_standalone;  # must be found with @INC
+    $_err = _load_file("lib/SSLinfo.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "011: $_err"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "011: $_err"; # no reason to die for +version
@@ -6646,10 +6645,8 @@ while ($#argv >= 0) {
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
-        if (0 == $::osaft_standalone) {     # SEE Note:Stand-alone
-            my $_err = _load_file('lib/OMan.pm', "help file") if not $::osaft_standalone;
-            warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
-        }
+        my $_err = _load_file('lib/OMan.pm', "help file");
+        warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
         if ($arg =~ /^gen[._=-]?docs$/) {   # --help=gen-docs
             OMan::man_docs_write($arg);
         } else {
@@ -7469,7 +7466,7 @@ if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_strong'));
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_weak')); 
 }
-_load_modules() if (0 == $::osaft_standalone);
+_load_modules();
 
 _trace_info("  LOAD9   - load modules end");
 _trace_info("  CHECK0  - check configuration start");
@@ -9106,9 +9103,8 @@ compile-time (use).
 Unfortunately there exist modules, which must be loaded with Perl's use.
 When generating a stand-alone executable script, the complete file of each
 module is simply copied into the main script file (o-saft.pl usually).  In
-that case, the corresponding use statement must be removed. Modules loaded
-with  _load_file()  read the files only if the variable  $osaft_standalone
-does not exist.
+that case, the corresponding use statement must be removed.
+ _load_file()  must take care not to load modules in stand-alone mode.
 Please refer to the  INSTALLATION  section,  in particular the sub-section
 Stand-alone Executable  there, for more details on generating  stand-alone
 scripts.
