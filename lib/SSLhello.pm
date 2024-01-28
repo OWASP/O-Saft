@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.11 24/01/25 23:00:19";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.12 24/01/28 15:19:43";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -69,7 +69,8 @@ BEGIN {
     unshift(@INC, ".")      if (1 > (grep{/^\.$/}     @INC));
 }
 
-use Socket; ## TBD will be deleted soon TBD ###
+use Socket;     # constants and methods are used with full qualified name
+#               # (contribution to standalone mode)
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
 use OText       qw(%STR);
@@ -1617,17 +1618,17 @@ sub printParameters {
     print __print("# information about the OS and some socket constants and functions");
     print __print($line);
     print _yprint("OS",                  $^O)                         if (defined($^O));
-    my $_pf_inet =                                      PF_INET;
+    my $_pf_inet =                                      Socket::PF_INET;
     print _yprint("socket::PF"."_INET",  $_pf_inet);
-    my $_af_inet =                                      AF_INET;
+    my $_af_inet =                                      Socket::AF_INET;
     print _yprint("socket::AF"."_INET",  $_af_inet);
-    my $_sock_stream =  (defined(SOCK_STREAM))        ? SOCK_STREAM   : $STR{'UNDEF'};
+    my $_sock_stream = (defined(Socket::SOCK_STREAM)) ? Socket::SOCK_STREAM : $STR{'UNDEF'};
     print _yprint("socket::SOCK_STREAM", $_sock_stream);
-    my $_sol_socket =   (defined(SOL_SOCKET))         ? SOL_SOCKET    : $STR{'UNDEF'};
+    my $_sol_socket =  (defined(Socket::SOL_SOCKET))  ? Socket::SOL_SOCKET  : $STR{'UNDEF'};
     print _yprint("socket::SOL_SOCKET",  $_sol_socket);
-    my $_so_sndtimeo = (defined(SO_SNDTIMEO))         ? SO_SNDTIMEO   : $STR{'UNDEF'};
+    my $_so_sndtimeo = (defined(Socket::SO_SNDTIMEO)) ? Socket::SO_SNDTIMEO : $STR{'UNDEF'};
     print _yprint("socket::SO_SNDTIMEO", $_so_sndtimeo);
-    my $_so_rcvtimeo = (defined(SO_RCVTIMEO))         ? SO_RCVTIMEO   : $STR{'UNDEF'};
+    my $_so_rcvtimeo = (defined(Socket::SO_RCVTIMEO)) ? Socket::SO_RCVTIMEO : $STR{'UNDEF'};
     print _yprint("socket::SO_RCVTIMEO", $_so_rcvtimeo);
     my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
         if (! $_protocol) {
@@ -2405,9 +2406,9 @@ sub openTcpSSLconnection ($$) {
                 if (! $_protocol) {
                     $_protocol = Socket::IPPROTO_TCP;
                 }
-                socket($socket, PF_INET, SOCK_STREAM, $_protocol) or croak("Can't create a socket \'$!\' -> target $host:$port ignored ");
-                setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"); #L!L! => compatible to 32 and 64-bit
-                setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored");
+                socket($socket, Socket::PF_INET, Socket::SOCK_STREAM, $_protocol) or croak("Can't create a socket \'$!\' -> target $host:$port ignored ");
+                setsockopt($socket, Socket::SOL_SOCKET, Socket::SO_SNDTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"); #L!L! => compatible to 32 and 64-bit
+                setsockopt($socket, Socket::SOL_SOCKET, Socket::SO_RCVTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored");
                 alarm (0);      # clear alarm
             } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {  # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                 $my_error = $@;                             # save the error message as soon as possible
@@ -2427,7 +2428,7 @@ sub openTcpSSLconnection ($$) {
         if ( ($SSLhello::proxyhost) && ($SSLhello::proxyport) ) { # via proxy
             GET_PROXY_IP: { # >> start a block
                 $my_error = "";
-                $connect2ip = inet_aton($SSLhello::proxyhost);
+                $connect2ip = Socket::inet_aton($SSLhello::proxyhost);
                 if (!defined ($connect2ip) ) {                      # no IP address
                     $my_error = "Can't get the IP address of the proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored";
                     carp($my_error);
@@ -2482,7 +2483,7 @@ sub openTcpSSLconnection ($$) {
                     _trace4 (" openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
-                    defined(send($socket, $proxyConnect, 0)) || croak("Can't make a connection to $host:$port via proxy $SSLhello::proxyhost:$SSLhello::proxyport [".inet_ntoa($connect2ip).":$SSLhello::proxyport] -> target $host:$port ignored");
+                    defined(send($socket, $proxyConnect, 0)) || croak("Can't make a connection to $host:$port via proxy $SSLhello::proxyhost:$SSLhello::proxyport [".Socket::inet_ntoa($connect2ip).":$SSLhello::proxyport] -> target $host:$port ignored");
                     alarm (0);
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) { # end of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                         # save the error message as soon as possible
@@ -2572,7 +2573,7 @@ sub openTcpSSLconnection ($$) {
         } else { #### no proxy ####
             { # >> start a block
                 $my_error = "";
-                $connect2ip = inet_aton($host);
+                $connect2ip = Socket::inet_aton($host);
                 if (!defined ($connect2ip) ) {                      # no IP address
                     $my_error = "Can't get the IP address of $host -> target $host:$port ignored in openTcpSSLconnection";
                     carp($my_error);
@@ -2592,13 +2593,13 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);                           # set alarm for connect
-                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak("Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ");
+                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak("Can't make a connection to $host:$port [".Socket::inet_ntoa($connect2ip).":$port]; -> target ignored ");
                     alarm (0);
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     if (defined ($connect2ip) ) {
-                        $my_error .= " -> No connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored in openTcpSSLconnection";
+                        $my_error .= " -> No connection to $host:$port [".Socket::inet_ntoa($connect2ip).":$port]; -> target ignored in openTcpSSLconnection";
                     } else {
                         $my_error .= " -> No connection to $host:$port; -> target ignored in openTcpSSLconnection";
                     }
@@ -6280,7 +6281,7 @@ sub _main_help  {
     #? print own help
     # if ($#argv < 0) { _main_help(); exit 0; }
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    local undef $\;
+    local $\ =""; undef $\; # not very perlish, but keeps perlcritic happy
     if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
