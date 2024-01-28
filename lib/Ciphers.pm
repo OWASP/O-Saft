@@ -28,7 +28,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.11 24/01/25 22:50:17";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.12 24/01/28 15:57:06";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN {
@@ -315,10 +315,10 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
 # SEE Perl:Undefined subroutine
 *_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $cfg{'trace'});   return; } if not defined &_trace;
-*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $cfg{'trace'});   return; } if not defined &_trace2;
-*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $cfg{'verbose'}); return; } if not defined &_v_print;
-*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $cfg{'verbose'}); return; } if not defined &_v2print;
+*_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $OCfg::cfg{'trace'});   return; } if not defined &_trace;
+*_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $OCfg::cfg{'trace'});   return; } if not defined &_trace2;
+*_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $OCfg::cfg{'verbose'}); return; } if not defined &_v_print;
+*_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $OCfg::cfg{'verbose'}); return; } if not defined &_v2print;
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -1587,7 +1587,7 @@ sub _ciphers_main   {
         if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit; }
         if ($arg eq '--usage')          { _ciphers_usage();        next; }
         # ----------------------------- options
-        if ($arg eq '--v')              { $cfg{'verbose'}++;       next; }
+        if ($arg eq '--v')              { $OCfg::cfg{'verbose'}++; next; }
         # ----------------------------- commands
         if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
@@ -1726,7 +1726,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.11 2024/01/25
+3.12 2024/01/28
 
 
 =head1 AUTHOR
