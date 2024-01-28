@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.12 24/01/28 15:19:43";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.13 24/01/28 16:09:14";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -2448,7 +2448,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
-                    connect($socket, pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak("Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored");
+                    connect($socket, Socket::Socket::pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak("Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored");
                     # TBD will be: TBD
                     # $sock = new IO::Socket::INET(
                     #   Proto     => "tcp",
@@ -2593,7 +2593,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);                           # set alarm for connect
-                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak("Can't make a connection to $host:$port [".Socket::inet_ntoa($connect2ip).":$port]; -> target ignored ");
+                    connect( $socket, Socket::pack_sockaddr_in($port, $connect2ip) ) or croak("Can't make a connection to $host:$port [".Socket::inet_ntoa($connect2ip).":$port]; -> target ignored ");
                     alarm (0);
                 } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
