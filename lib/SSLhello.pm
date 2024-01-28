@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.13 24/01/28 16:09:14";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.14 24/01/28 20:32:28";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -2448,7 +2448,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
-                    connect($socket, Socket::Socket::pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak("Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored");
+                    connect($socket, Socket::pack_sockaddr_in($SSLhello::proxyport, $connect2ip) ) or croak("Can't make a connection to proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored");
                     # TBD will be: TBD
                     # $sock = new IO::Socket::INET(
                     #   Proto     => "tcp",
