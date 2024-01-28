@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.13 24/01/28 14:38:10
+#?      @(#) Makefile 3.14 24/01/28 16:17:31
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.13
+_SID            = 3.14
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -106,7 +106,7 @@ SRC.pl          = $(O-Project).pl
 SRC.tcl         = $(O-Project).tcl
 SRC.gui         = $(O-Project).tcl $(O-LIB.dir)/$(O-Project)-img.tcl
 SRC.cgi         = $(O-Project).cgi
-SRC.php         = $(O-USR.pm)/$(O-Project).php
+SRC.php         = $(O-USR.dir)/$(O-Project).php
 SRC.docker      = \
 		  $(O-Project)-docker \
 		  $(O-Project)-docker-dev \
@@ -304,8 +304,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.13 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.13
+_INST.genbytext = generated data by Makefile 3.14 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.14
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -573,8 +573,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.13
-tar:     _INST.is_edit  = 3.13
+_INST.is_edit           = 3.14
+tar:     _INST.is_edit  = 3.14
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
