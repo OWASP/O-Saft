@@ -52,7 +52,7 @@ use vars qw(%checks %data %text);
 use utf8;
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.18 24/01/27 12:51:57";
+my  $SID_oman   = "@(#) OMan.pm 3.19 24/01/28 16:05:51";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.18'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.19'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2413,6 +2413,8 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $hlp = shift;
     my $txt;
     _man_dbx("man_printhelp($hlp) ...");
+     man_docs_write() if ($hlp =~ m/^gen[_.=-]?docs$/); # same as in _oman_main()
+              return; if ($hlp =~ m/^gen[_.=-]?docs$/); #
     _man_use_tty();
     _man_html_init();   # must be called here, because function may be call anywhere
     # NOTE: some lower case strings are special
@@ -2697,7 +2699,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.18 2024/01/27
+3.19 2024/01/28
 
 
 =head1 AUTHOR
