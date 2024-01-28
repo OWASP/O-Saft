@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.14 24/01/28 16:17:31
+#?      @(#) Makefile 3.15 24/01/28 16:28:48
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.14
+_SID            = 3.15
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -120,10 +120,16 @@ SRC.misc        = README.md CHANGES
 SRC.inst        = $(O-USR.dir)/INSTALL-template.sh
 
 # contrib / usr files
+$(O-USR.dir)/HTML%-table.awk: $(O-USR.dir)/HTML-table.awk
+	@$(TRACE.target)
+	cp $< $@
+# should be ln -s $< $@ ; but some systems are too stupid for symlinks
+	
 SRC.usr.examples= filter_examples usage_examples
 SRC.usr.post.awk= \
 		  Cert-beautify.awk \
 		  HTML-simple.awk   HTML-table.awk \
+		  HTML4-table.awk   HTML5-table.awk \
 		  JSON-struct.awk   JSON-array.awk \
 		  XML-attribute.awk XML-value.awk \
 		  lazy_checks.awk
@@ -304,8 +310,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.14 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.14
+_INST.genbytext = generated data by Makefile 3.15 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.15
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -573,8 +579,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.14
-tar:     _INST.is_edit  = 3.14
+_INST.is_edit           = 3.15
+tar:     _INST.is_edit  = 3.15
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
