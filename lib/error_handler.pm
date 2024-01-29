@@ -80,7 +80,7 @@ use strict;
 use warnings;
 use Carp;
 
-my  $SID_error  = "@(#) Å˝vc 3.8 24/01/29 10:40:34";
+my  $SID_error  = "@(#) error_hander 3.8 24/01/29 10:40:34";
 our $VERSION    = "24.01.24";
 
 use Exporter qw(import);
