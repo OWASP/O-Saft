@@ -275,7 +275,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.8 24/01/29 19:52:04
+#?      @(#) INSTALL-template.sh 3.9 24/01/29 20:14:56
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -580,7 +580,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.8 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.9 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -679,6 +679,7 @@ if [ "$mode" = "cgi" ]; then
 	for f in $files_install_cgi ; do
 		file=${f##*/}
 		[ -e "$inst_directory/$file" ] && echo -n "# " && echo_yellow "existing $file; ignored" && continue
+		f="$src_directory/$f"
 		$try \mv $f "$inst_directory/" || echo_red "**ERROR: 052: moving $f failed"
 	done
 	lnk=cgi-bin
@@ -694,7 +695,9 @@ if [ "$mode" = "openssl" ]; then
 	[ 0 -lt "$optx" ] && set -x
 	$build_openssl $optn $@
 	status=$?
-	if [ $status -ne 0 ]; then
+	if [ $status -eq 0 ]; then
+		echo_green "# building openssl completed."
+	else
 		cat << EoT
 # $build_openssl uses its default settings. To check the settings, use:
 #     $0 --openssl --n
@@ -704,6 +707,7 @@ if [ "$mode" = "openssl" ]; then
 #     $build_openssl /path/to/install
 #     $build_openssl /path/to/install --debian --i --m
 EoT
+		echo_red   "# building openssl failed."
 	fi
 	exit $status
 fi; # openssl mode }
@@ -751,8 +755,8 @@ if [ "$mode" = "install" ]; then
 		$try \mkdir -p "$inst_directory/$d"
 	done
 	for f in $files ; do
-		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
-		copy_file "$f" "$inst_directory/$f"
+		[ -e "$src_directory/$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
+		copy_file "$src_directory/$f" "$inst_directory/$f"
 	done
 	echo_info "generate $osaft_guirc ..."
 	if [ -z "$try" ]; then
@@ -761,7 +765,7 @@ if [ "$mode" = "install" ]; then
 			$try $inst_directory/$osaft_gui --rc > "$inst_directory/$osaft_guirc" \
 			|| echo_red "**ERROR: 041: generating $osaft_guirc failed"
 		else
-			echo -n "# " && echo_yellow "missing wish; $osaft_guirc not installed"
+			echo_yellow "# missing wish; $osaft_guirc not installed"
 		fi
 	else
 		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
@@ -770,7 +774,7 @@ if [ "$mode" = "install" ]; then
 	if [ $force -eq 1 ]; then
 		echo_info 'installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
-			$try \cp $f "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
+			$try \cp "$src_directory/$f" "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
 		done
 	fi
 
