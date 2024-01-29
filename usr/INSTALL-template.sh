@@ -260,7 +260,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.4 24/01/27 15:30:39
+#?      @(#) INSTALL-template.sh 3.5 24/01/29 11:56:01
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -404,6 +404,13 @@ if [ 0 -lt $_cols ]; then
 fi
 
 # --------------------------------------------- internal functions
+echo_info   () {
+	if [ -z "$colour" ]; then
+		echo "# $@"
+	else
+		\echo "\033[7;37m\033[1;30m# $@"
+	fi
+}
 echo_head   () {
 	echo ""
 	if [ -z "$colour" ]; then
@@ -551,7 +558,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.4 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.5 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -565,6 +572,8 @@ text_dev="did you run »$0 --clean $inst_directory«?"
 text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
 # --------------------------------------------- main
+
+# no echo_info() used for empty mode or mode=expected
 
 # ------------------------ expected mode --------- {
 if [ "$mode" = "expected" ]; then
@@ -628,7 +637,7 @@ fi
 
 # ------------------------ cgi mode -------------- {
 if [ "$mode" = "cgi" ]; then
-	echo "# prepare $inst_directory for use in CGI mode"
+	echo_info "prepare $inst_directory for use in CGI mode"
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 050: $inst_directory does not exist; exit"
 		[ "$try" = "echo" ] || exit 2
@@ -651,7 +660,7 @@ fi; # cgi mode }
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
-	echo "# call $build_openssl"
+	echo_info "call $build_openssl"
 	[ ! -x "$build_openssl" ] && echo_red "**ERROR: 020: $build_openssl does not exist; exit" && exit 2
 	[ 0 -lt "$optx" ] && set -x
 	$build_openssl $optn $@
@@ -672,7 +681,7 @@ fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
-	echo "# cleanup installation in $inst_directory"
+	echo_info "cleanup installation in $inst_directory"
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
 	[ -d "$clean_directory" ] || $try echo_red "**ERROR: 030: $clean_directory does not exist; exit"
 	[ -d "$clean_directory" ] || $try exit 2
@@ -686,7 +695,7 @@ if [ "$mode" = "clean" ]; then
 		f="$inst_directory/$f"
 		[ -e "$f" ]                  && $try \mv "$f" "$clean_directory" && cnt=`expr $cnt + 1`
 	done
-	echo -n "# moved $cnt files to $clean_directory "; echo_green "completed."
+	echo_green "# moved $cnt files to $clean_directory completed."
 	exit 0
 fi; # clean mode }
 
@@ -700,7 +709,7 @@ if [ "$mode" = "dest" ]; then
 
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
 	[ 0 -lt "$optx" ] && set -x
-	echo "# remove old files ..."
+	echo_info "remove old files ..."
 	for f in $files ; do
 		f="$inst_directory/$f"
 		if [ -e "$f" ]; then
@@ -708,7 +717,7 @@ if [ "$mode" = "dest" ]; then
 		fi
 	done
 
-	echo "# installing ..."
+	echo_info "installing ..."
 	for d in $osaft_subdirs ; do
 		$try \mkdir -p "$inst_directory/$d"
 	done
@@ -716,7 +725,7 @@ if [ "$mode" = "dest" ]; then
 		[ -e "$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
 		copy_file "$f" "$inst_directory/$f"
 	done
-	echo "# generate $osaft_guirc ..."
+	echo_info "generate $osaft_guirc ..."
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
 		if [ -n "$osaft_gui" -a -n "$w" ]; then
@@ -730,30 +739,29 @@ if [ "$mode" = "dest" ]; then
 	fi
 
 	if [ $force -eq 1 ]; then
-		echo '# installing RC-FILEs in $HOME ...'
+		echo_info 'installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
 			$try \cp $f "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
 		done
 	fi
 
-	echo "# generate static help files ..."
+	echo_info  "generate static help files ..."
 	( $try cd $inst_directory && $try ./$osaft_exe --help=gen-docs )
 
-	echo    "# consider calling:    $0 --clean $inst_directory"
-	echo    "# installaion details: $0 --check $inst_directory"
-	echo -n "# installation in $inst_directory "; echo_green "completed."
+	echo_info  "consider calling:    $0 --clean $inst_directory"
+	echo_info  "installaion details: $0 --check $inst_directory"
+	echo_green "# installation in $inst_directory completed."
 	exit 0
 fi; # install mode }
 
 # ------------------------- checkdev mode -------- {
 if [ "$mode" = "checkdev" ]; then
-	echo ""
-	echo "# check system for development usage"
+	echo_info "check system for development usage ..."
 	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
-	echo "#"
-	echo "# $text_tool"
+	echo_info ""
+	echo_info "$text_tool"
 	echo_foot
 	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
@@ -767,8 +775,8 @@ if [ "$mode" = "checkdev" ]; then
 			err=`expr $err + 1`
 		fi
 	done
-	echo "#"
-	echo "# $text_prof"
+	echo_info ""
+	echo_info "$text_prof"
 	echo_foot
 	echo ""
 
@@ -808,8 +816,8 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		fi
 	done
 done
-echo "#"
-echo "# $text_path"
+echo_info ""
+echo_info "$text_path"
 [ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
@@ -827,7 +835,7 @@ cd "$inst_directory"
 err=0
 
 echo_head "# check installation in $inst_directory"
-echo "# (warnings are ok if »git clone« will be used for development)"
+echo_info "(warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
