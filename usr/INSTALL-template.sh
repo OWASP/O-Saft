@@ -32,6 +32,9 @@
 #?          --expected  - show sample output expected for  --check
 #                         All lines starting with #= are the sample output.
 #?          --checkdev  - check system for development (make) requirements
+#?
+#?      With --install  only warnings or errors are reported. Use option --v
+#?      to get a detailed report.
 #=
 #=# check for O-Saft programs found via environment variable PATH
 #=#--------------------------------------------------------------
@@ -186,6 +189,7 @@
 #       --help  got it
 #?      --n     do not execute, just show (ignored for  --check)
 #?      --i     ignore error while installing;  default: exit with status 4
+#?      --v     print verbose information about performed actions
 #?      -x      debug using shell's "set -x"
 #?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
 #?                        $HOME, overwrites existing ones
@@ -275,7 +279,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.9 24/01/29 20:14:56
+#?      @(#) INSTALL-template.sh 3.10 24/01/29 21:09:21
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -292,11 +296,12 @@ _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
 useenv=0                # 1 to change shebang lines to /usr/bin/env
 gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
-ignore=0                # 1 ignore errores, continue script instead of exit
+ignore=0                # 1 ignore errors, continue script instead of exit
 other=0
 force=0
-optx=0
 optn=""
+optv=                   # 1 print verbose information
+optx=0
 mode="";                # "", cgi, check, clean-up, install, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	                # TODO: check path for each platform
@@ -316,6 +321,7 @@ text_alt="file from previous installation, try running »$0 --clean« "
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
 osaft_pm="INSERTED_BY_MAKE_OSAFT_PM"
 osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
+osaft_cgi="INSERTED_BY_MAKE_OSAFT_CGI"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
@@ -381,6 +387,7 @@ files_ancient="
 # remember the inserted "" to avoid substitutions here
 [ "INSERTED_""BY_MAKE_OSAFT_SH"   = "$osaft_sh"     ] && osaft_sh=o-saft
 [ "INSERTED_""BY_MAKE_OSAFT_PL"   = "$osaft_exe"    ] && osaft_exe=o-saft.pl
+[ "INSERTED_""BY_MAKE_OSAFT_CGI"  = "$osaft_cgi"    ] && osaft_gui=o-saft.cgi
 [ "INSERTED_""BY_MAKE_OSAFT_GUI"  = "$osaft_gui"    ] && osaft_gui=o-saft.tcl
 [ "INSERTED_""BY_MAKE_OSAFT_DOCKER" = "$osaft_dock" ] && osaft_dock=o-saft-docker
 [ "INSERTED_""BY_MAKE_USR_DIR"    = "$usr_dir"      ] && usr_dir=usr
@@ -426,6 +433,7 @@ __exit      () {
 	exit $@
 }
 echo_info   () {
+	[ -z "$optv" ] && return
 	if [ -z "$colour" ]; then
 		echo "# $@"
 	else
@@ -516,6 +524,7 @@ copy_file   () {
 	#dbx# \perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || echo skip $src ...
 	\perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || convert=0
 	if [ 1 -eq $convert ]; then
+		echo_info "install converted $src"
 		# only the very first line $. ist changed
 		if [ "$try" = "echo" ]; then
 		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\!/usr/bin/env $1|;}print;" '"'$src' > '$dst'"
@@ -534,6 +543,7 @@ copy_file   () {
 		\chmod 555 "$dst" # assuming that it is and should be executable
 
 	else
+		echo_info "install copy of   $src"
 		$try \cp --preserve=all "$src"  "$dst"  || __exit 4
 	fi
 	return
@@ -549,6 +559,7 @@ while [ $# -gt 0 ]; do
 		;;
 	 '-n' | '--n')          optn="--n"; try=echo; ;;
 	#			#	#	#
+	 '-v' | '--v')          optv=1;         ;;
 	 '-x' | '--x')          optx=1;         ;;
 	  '--cgi')              mode=cgi;       ;;
 	  '--check')            mode=check;     ;;
@@ -580,7 +591,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.9 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.10 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -678,13 +689,13 @@ if [ "$mode" = "cgi" ]; then
 	fi
 	for f in $files_install_cgi ; do
 		file=${f##*/}
-		[ -e "$inst_directory/$file" ] && echo -n "# " && echo_yellow "existing $file; ignored" && continue
+		[ -e "$inst_directory/$file" ] && echo_yellow "# existing $file; ignored" && continue
 		f="$src_directory/$f"
 		$try \mv $f "$inst_directory/" || echo_red "**ERROR: 052: moving $f failed"
 	done
 	lnk=cgi-bin
-	[ -e "$inst_directory/$lnk" ] && echo -n "# " && echo_yellow "existing $lnk; ignored" && continue
-	$try \ln -s "$inst_directory" $lnk  || echo_red "**ERROR: 053: symlink $lnk failed"
+	[ -e "$inst_directory/$lnk" ]          && echo_yellow "# existing $lnk; ignored" && continue
+	$try \ln -s "$inst_directory" $lnk     || echo_red "**ERROR: 053: symlink $lnk failed"
 	exit 0
 fi; # cgi mode }
 
@@ -696,7 +707,7 @@ if [ "$mode" = "openssl" ]; then
 	$build_openssl $optn $@
 	status=$?
 	if [ $status -eq 0 ]; then
-		echo_green "# building openssl completed."
+		[ -n "$optv" ] && echo_green "# building openssl completed."
 	else
 		cat << EoT
 # $build_openssl uses its default settings. To check the settings, use:
@@ -742,23 +753,25 @@ if [ "$mode" = "install" ]; then
 
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
 	[ 0 -lt "$optx" ] && set -x
-	echo_info "remove old files ..."
+	echo_info "remove old files in $inst_directory ..."
 	for f in $files ; do
 		f="$inst_directory/$f"
 		if [ -e "$f" ]; then
+			echo_info "delete $f"
 			$try \rm -f "$f" || __exit 3
 		fi
 	done
 
-	echo_info "installing ..."
+	echo_info "installing $inst_directory ..."
 	for d in $osaft_subdirs ; do
+		echo_info "create $inst_directory/$d"
 		$try \mkdir -p "$inst_directory/$d"
 	done
 	for f in $files ; do
 		[ -e "$src_directory/$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
 		copy_file "$src_directory/$f" "$inst_directory/$f"
 	done
-	echo_info "generate $osaft_guirc ..."
+	echo_info "generate $inst_directory/$osaft_guirc ..."
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
 		if [ -n "$osaft_gui" -a -n "$w" ]; then
@@ -774,27 +787,30 @@ if [ "$mode" = "install" ]; then
 	if [ $force -eq 1 ]; then
 		echo_info 'installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
-			$try \cp "$src_directory/$f" "$HOME/" || echo_red "**ERROR: 042: copying $f failed"
+			echo_info "cp $src_directory/$f $HOME/" \
+			$try   \cp "$src_directory/$f" "$HOME/" \
+			|| echo_red "**ERROR: 042: copying $f failed"
 		done
 	fi
 
-	echo_info  "generate static help files ..."
+	echo_info "generate static help files in $inst_directory ..."
 	( $try cd $inst_directory && $try ./$osaft_exe --help=gen-docs )
 
-	echo_info  "consider calling:    »$0 --clean $inst_directory«"
-	echo_info  "installaion details: »$0 --check $inst_directory«"
-	echo_green "# installation in $inst_directory completed."
+	echo_info "consider calling:    »$0 --clean $inst_directory«"
+	echo_info "installaion details: »$0 --check $inst_directory«"
+	[ -n "$optv" ] && echo_green "# installation in $inst_directory completed."
 	exit 0
 fi; # install mode }
 
 # ------------------------- checkdev mode -------- {
 if [ "$mode" = "checkdev" ]; then
-	echo_info "check system for development usage ..."
+	# does not use echo_info(), because text always printed
+	echo      "# check system for development usage ..."
 	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
-	echo_info ""
-	echo_info "$text_tool"
+	echo      "#"
+	echo      "# $text_tool"
 	echo_foot
 	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
@@ -808,8 +824,8 @@ if [ "$mode" = "checkdev" ]; then
 			err=`expr $err + 1`
 		fi
 	done
-	echo_info ""
-	echo_info "$text_prof"
+	echo      "#"
+	echo      "# $text_prof"
 	echo_foot
 	echo ""
 
@@ -849,8 +865,8 @@ for p in `echo $PATH|tr ':' ' '` ; do
 		fi
 	done
 done
-echo_info ""
-echo_info "$text_path"
+echo "#"
+echo "# $text_path"
 [ 0 -eq $cnt   -o   0 -eq $gui ] && echo "#"
 [ 0 -eq $cnt ]  && echo_label  "$osaft_exe" \
 		&& echo_yellow "not found in PATH, consider adding $inst_directory to PATH"
@@ -868,7 +884,7 @@ cd "$inst_directory"
 err=0
 
 echo_head "# check installation in $inst_directory"
-echo_info "(warnings are ok if »git clone« will be used for development)"
+echo      "# (warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
@@ -880,6 +896,7 @@ echo_foot
 
 echo_head '# check for used O-Saft programs (according $PATH)'
 for o in $all_exe ; do
+	# $osaft_cgi cannot be checked here because it behaves different
 	echo_label "$o"
 	e=`\command -v $o`
 	if [ -n "$e" ] ; then
