@@ -275,7 +275,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.7 24/01/29 13:21:37
+#?      @(#) INSTALL-template.sh 3.8 24/01/29 19:52:04
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -287,6 +287,7 @@ try=''
 ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
+src_directory="$dir"
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
 useenv=0                # 1 to change shebang lines to /usr/bin/env
@@ -296,7 +297,7 @@ other=0
 force=0
 optx=0
 optn=""
-mode="";                # "", cgi, check, clean, dest, openssl
+mode="";                # "", cgi, check, clean-up, install, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	                # TODO: check path for each platform
 tab="	"               # need a real TAB (0x09) for /bin/echo
@@ -371,9 +372,9 @@ tools_other="
 
 files_ancient="
 	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
-	o-saft-dbx.pm o-saft-usr.pm
+	o-saft-dbx.pm o-saft-usr.pm osaft.pm
 	INSTALL-devel.sh .perlcriticrc o-saft_bench
-	contrib/.o-saft.tcl contrib/o-saft.cgi contrib/o-saft.php
+	contrib/.o-saft.tcl contrib/o-saft.cgi
 	"
 
 # first, dirty hack to make tests in development mode possible
@@ -551,8 +552,8 @@ while [ $# -gt 0 ]; do
 	 '-x' | '--x')          optx=1;         ;;
 	  '--cgi')              mode=cgi;       ;;
 	  '--check')            mode=check;     ;;
-	  '--clean')            mode=clean;     ;;
-	  '--install')          mode=dest;      ;;
+	  '--clean')            mode=clean-up;  ;;
+	  '--install')          mode=install;   ;;
 	  '--openssl')          mode=openssl;   ;;
 	  '--expect')           mode=expected;  ;; # alias
 	  '--expected')         mode=expected;  ;;
@@ -579,14 +580,14 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.7 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.8 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
 done
 if [ -n "$new_dir" ]; then
 	inst_directory="$new_dir"
-	[ -z "$mode" ] && mode=dest              # no mode given, set default
+	[ -z "$mode" ] && mode=install           # no mode given, set default
 fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 text_dev="did you run »$0 --clean $inst_directory«?"
@@ -596,6 +597,18 @@ text_alt="file from previous installation, try running »$0 --clean $inst_direct
 
 # no echo_info() used for empty mode or mode=expected
 
+#dbx# echo_info "ich=$ich"
+echo_info "$mode $inst_directory"
+if [ "$mode" = "install" ]; then
+	echo_info "$mode from $src_directory"
+	echo_info "mode=$mode , force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
+fi
+
+if [ '..' = "$src_directory" ]; then
+	# avoid errors in $0 if called by own make
+	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
+fi
+
 # ------------------------ expected mode --------- {
 if [ "$mode" = "expected" ]; then
 	echo "## Expected output (sample) when called like:"
@@ -603,11 +616,6 @@ if [ "$mode" = "expected" ]; then
 	\sed -ne '/^#=/s/#=//p' $0
 	exit 0
 fi; # expected mode }
-
-if [ '..' = "$dir" ]; then
-	# avoid errors in $0 if called by own make
-	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
-fi
 
 # ------------------------- default mode --------- {
 if [ -z "$mode" ]; then
@@ -701,8 +709,8 @@ EoT
 fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
-if [ "$mode" = "clean" ]; then
-	echo_info "cleanup installation in $inst_directory"
+if [ "$mode" = "clean-up" ]; then
+	echo_info "clean-up installation in $inst_directory"
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
 	[ -d "$clean_directory" ] || $try echo_red "**ERROR: 030: $clean_directory does not exist; exit"
 	[ -d "$clean_directory" ] || $try exit 2
@@ -711,17 +719,17 @@ if [ "$mode" = "clean" ]; then
 	cnt=0
 	files="$files_info $files_ancient $files_develop $files_install_cgi $files_install_doc $files_not_installed"
 	for f in $files ; do
-		#dbx echo "$clean_directory/$f"
+		#dbx# echo "$clean_directory/$f"
 		[ -e "$clean_directory/$f" ] && $try \rm  -f  "$clean_directory/$f"
 		f="$inst_directory/$f"
 		[ -e "$f" ]                  && $try \mv "$f" "$clean_directory" && cnt=`expr $cnt + 1`
 	done
 	echo_green "# moved $cnt files to $clean_directory completed."
 	exit 0
-fi; # clean mode }
+fi; # clean-up mode }
 
 # ------------------------- install mode  -------- {
-if [ "$mode" = "dest" ]; then
+if [ "$mode" = "install" ]; then
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
 		[ "$try" = "echo" ] || exit 2
@@ -1047,6 +1055,7 @@ if [ $err -eq 0 ]; then
 	echo_green "passed"
 else
 	echo_red   "failed , $err error(s) detected"
+	# more hints, if no installation directory was given; uses echo!
 	[ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used;"
 	[ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
 fi
