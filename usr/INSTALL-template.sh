@@ -75,7 +75,7 @@
 #=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
 #=#                                      ancient module found, try installing newer version, at least  1.49
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
 #=#                  OCfg	24.01.24 lib/OCfg.pm
 #=#               Ciphers	24.01.24 lib/Ciphers.pm
 #=#         error_handler	24.01.24 lib/error_handler.pm
@@ -96,22 +96,34 @@
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
 #=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.28/Time/Local.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
+#=
+#=# Note: above examples are from 2018, more modern (2024) versions are:
+#=#               openssl	  3.0.11
+#=#                  Perl	    5.38
+#=#         Tcl/Tk (wish)	  8.6.13/8.6.13
+#=#              Net::DNS	    1.36
+#=#           Net::SSLeay	    1.92
+#=#                Socket	   2.033
+#=#            IO::Socket	    1.49
+#=#       IO::Socket::SSL	   2.081
+#=#           Time::Local	    1.30
 #=#----------------------+---------------------------------------
 #=
 #=# summary of warnings from installed O-Saft (should be empty)
 #=#----------------------+---------------------------------------
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
+#=# **WARNING: 841: used openssl version '805306448' differs from compiled Net::SSLeay '805306544'; ignored
 #=#----------------------+---------------------------------------
 #=
 #=# check for openssl executable in PATH
 #=#----------------------+---------------------------------------
-#=#               openssl	/usr/bin/openssl (OpenSSL 1.1.1n  15 Mar 2022)
+#=#               openssl	/usr/bin/openssl (OpenSSL 3.0.11 19 Sep 2023 (Library: OpenSSL 3.0.11 19 Sep 2023))
 #=#----------------------+---------------------------------------
 #=
 #=# check for openssl executable used by O-Saft
@@ -143,6 +155,8 @@
 #=#      Cert-beautify.pl	/opt/o-saft/usr/Cert-beautify.pl
 #=#       HTML-simple.awk	/opt/o-saft/usr/HTML-simple.awk
 #=#        HTML-table.awk	/opt/o-saft/usr/HTML-table.awk
+#=#       HTML4-table.awk	/opt/o-saft/usr/HTML4-table.awk
+#=#       HTML5-table.awk	/opt/o-saft/usr/HTML5-table.awk
 #=#        JSON-array.awk	/opt/o-saft/usr/JSON-array.awk
 #=#       JSON-struct.awk	/opt/o-saft/usr/JSON-struct.awk
 #=#     XML-attribute.awk	/opt/o-saft/usr/XML-attribute.awk
@@ -202,7 +216,7 @@
 #?                        Implies  --useenv .
 #?
 #?      Please see  doc/concepts.txt  for details about /usr/bin/env .
-#?      It's up to user then, which solution fits better.
+#?      It's up to the user then, which solution fits better.
 #?
 #? EXAMPLES
 #?      $0
@@ -243,16 +257,16 @@
 #       I.g. we'd like to use traditional bourne shell, where all behaviours
 #       are well defined. Unfortunately, some platforms seem to be a hostage
 #       of their developers who believe that  their favorite shell has to be
-#       used by all users (linking to /bin/sh to whatever, without informing
-#       the user).
+#       used by all users (for example by using a symbolic link for  /bin/sh
+#       to whatever, without informing the user).
 #       Best effort to get this script working on most platforms was:
 #           * mainly use /bin/echo (aliased to echo, to keep code readable)
 #           * TABs (aka \t aka 0x09) are used verbatim (see $t variable)
 #           * shell's built-in echo used when ANSI escape sequences are used
 #       There's no guarantee that it works flawless on everywhere, currently
 #       (8/2019) it works for BSD, debian (including Mac OSX).
-#       Functionallity of this script is not harmed, if the output with echo
-#       fails  (prints ANSI escapes and/or \-escapes verbatim, and/or prints
+#       Functionality of this script is not harmed,  if the output with echo
+#       fails (prints ANSI escapes and/or \-escapes verbatim,  and/or prints
 #       -n verbatim, etc.).
 #
 #? DEPENDENCIES
@@ -260,7 +274,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.5 24/01/29 11:56:01
+#?      @(#) INSTALL-template.sh 3.6 24/01/29 12:57:56
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -303,7 +317,7 @@ osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 usr_dir="INSERTED_BY_MAKE_USR_DIR"
-inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"}
+inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"} # use environment varaibale inst if set
 perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
 osaft_subdirs="INSERTED_BY_MAKE_OSAFT_DIRS"
 osaft_libdir="INSERTED_BY_MAKE_OSAFT_LIBDIR"
@@ -558,7 +572,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.5 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.6 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -748,8 +762,8 @@ if [ "$mode" = "dest" ]; then
 	echo_info  "generate static help files ..."
 	( $try cd $inst_directory && $try ./$osaft_exe --help=gen-docs )
 
-	echo_info  "consider calling:    $0 --clean $inst_directory"
-	echo_info  "installaion details: $0 --check $inst_directory"
+	echo_info  "consider calling:    »$0 --clean $inst_directory«"
+	echo_info  "installaion details: »$0 --check $inst_directory«"
 	echo_green "# installation in $inst_directory completed."
 	exit 0
 fi; # install mode }
