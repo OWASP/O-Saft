@@ -185,6 +185,7 @@
 #?      --h     got it
 #       --help  got it
 #?      --n     do not execute, just show (ignored for  --check)
+#?      --i     ignore error while installing;  default: exit with status 4
 #?      -x      debug using shell's "set -x"
 #?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
 #?                        $HOME, overwrites existing ones
@@ -274,7 +275,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.6 24/01/29 12:57:56
+#?      @(#) INSTALL-template.sh 3.7 24/01/29 13:21:37
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -290,6 +291,7 @@ _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
 useenv=0                # 1 to change shebang lines to /usr/bin/env
 gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
+ignore=0                # 1 ignore errores, continue script instead of exit
 other=0
 force=0
 optx=0
@@ -418,6 +420,10 @@ if [ 0 -lt $_cols ]; then
 fi
 
 # --------------------------------------------- internal functions
+__exit      () {
+	[ 0 -lt $ignore ] && return
+	exit $@
+}
 echo_info   () {
 	if [ -z "$colour" ]; then
 		echo "# $@"
@@ -516,18 +522,18 @@ copy_file   () {
 		fi
 		# convert only  "#! /some/path/tool"
 		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\!/usr/bin/env $1|;}print;' \
-			"$src" > "$dst"  || exit 4
+			"$src" > "$dst"  || __exit 4
 		if [ 0 -lt $gnuenv ]; then
 		# convert only  "#! /some/path/tool arg..."
 		\perl -lane 'if(1==$.){exit 1 if m|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|;}' "$src" || \
 		\perl -lane 'if(1==$.){s|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|#\!/usr/bin/env -S $1 $2|;}print;' \
-			"$src" > "$dst"  || exit 4
+			"$src" > "$dst"  || __exit 4
 		fi
 		# set proper modes
 		\chmod 555 "$dst" # assuming that it is and should be executable
 
 	else
-		$try \cp --preserve=all "$src"  "$dst"  || exit 4
+		$try \cp --preserve=all "$src"  "$dst"  || __exit 4
 	fi
 	return
 }
@@ -564,6 +570,7 @@ while [ $# -gt 0 ]; do
           '--color-not-blind')  colour="32m";   ;; # alias
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
+          '--i' | '--ignore')   ignore=1;       ;;
           '--useenv')           useenv=1;       ;;
           '--use-env')          useenv=1;       ;; # alias
           '--gnuenv')           gnuenv=1; useenv=1; ;;
@@ -572,7 +579,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.6 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.7 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -727,7 +734,7 @@ if [ "$mode" = "dest" ]; then
 	for f in $files ; do
 		f="$inst_directory/$f"
 		if [ -e "$f" ]; then
-			$try \rm -f "$f" || exit 3
+			$try \rm -f "$f" || __exit 3
 		fi
 	done
 
