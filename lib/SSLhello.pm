@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.14 24/01/28 20:32:28";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.15 24/01/29 09:48:35";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -73,8 +73,8 @@ use Socket;     # constants and methods are used with full qualified name
 #               # (contribution to standalone mode)
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
-use OText       qw(%STR);
-use error_handler qw (:sslhello_contants);
+use OText         qw(%STR);
+use error_handler qw(%OERR);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
 use OCfg;   # main parameters, lists and functions that are used by o-saft and SSLhello
@@ -1851,7 +1851,7 @@ sub checkSSLciphers ($$$@) {
                     push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the list of accepted ciphers
                 } else { # no ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
-                if ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST))
+                if ( ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_HOST'})
                      || ($my_error =~ /Fatal Exit/)
                      || ($my_error =~ /make a connection/ )
                      || ($my_error =~ /create a socket/) ) {
@@ -1861,7 +1861,7 @@ sub checkSSLciphers ($$$@) {
                         _trace ("**WARNING: checkSSLciphers => Exit loop (1.1): -> Abort '$host:$port' caused by ".error_handler->get_err_str."\n");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
-                    } elsif ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL))
+                    } elsif ( ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_PROTOCOL'})
                       || ($my_error =~ /answer ignored/)
                       || ($my_error =~ /protocol_version.*?not supported/)
                       || ($my_error =~ /check.*?aborted/x) ) { # Just stop, no warning
@@ -1875,7 +1875,7 @@ sub checkSSLciphers ($$$@) {
                         carp("**WARNING: checkSSLciphers => Exit loop (1.3)");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
-                    } elsif ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_CIPHERS)) || ($my_error =~ /\-> Received NO Data/)) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
+                    } elsif ( ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_CIPHERS'}) || ($my_error =~ /\-> Received NO Data/)) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
                         if ($SSLhello::noDataEqNoCipher == 1) { # ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported
                             _trace2 (" checkSSLciphers (1.4): Ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported. Ignored: '$my_error'\n");
                             @cipherSpecArray =(); # => empty @cipherSpecArray
@@ -1885,14 +1885,14 @@ sub checkSSLciphers ($$$@) {
                             _trace2 (" checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported. Retry to test the following cipheres individually:\n");
                             carp("**WARNING: checkSSLciphers (1.5): \'$my_error\', => Please use the option \'--noDataEqNoCipher\' for servers not answeing if none of the requested ciphers are supported.");
                         }
-                    } elsif ( ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_RECORD)) || ($my_error =~ /Error 1: too many requests/)) {   #### Too many connections: Automatic suspension and higher timeout did not help
+                    } elsif ( ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_RECORD'}) || ($my_error =~ /Error 1: too many requests/)) {   #### Too many connections: Automatic suspension and higher timeout did not help
                         _trace2 (" checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                         carp("**WARNING: checkSSLciphers (1.6): \'$my_error\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                         next;
                     } elsif ((error_handler->is_err) || $my_error) { # error found
                         unless (error_handler->is_err) { # no error set, but no socket obtaied
                             error_handler->new( {
-                                type    => (OERR_SSLHELLO_ERROR_MESSAGE_IGNORED),
+                                type    => $OERR{'SSLHELLO_ERROR_MESSAGE_IGNORED'},
                                 id      => '(1.9)',
                                 message => "Unexpected Error Message ignored: \'$my_error\'",
                                 warn    => 1,
@@ -2329,14 +2329,14 @@ sub openTcpSSLconnection ($$) {
                 } else {                                        # use of experimental functions is not permitted (option is not activated)
                     if ( grep {/^$starttlsType$/x} ('12', '13', '14', '15') ) { # experimental and untested
                         error_handler->new( {
-                            type    => (OERR_SSLHELLO_ABORT_PROGRAM),
+                            type    => $OERR{'SSLHELLO_ABORT_PROGRAM'},
                             id      => 'ckeck starttls type (1)',
                             message => "WARNING: use of STARTTLS type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org",
                             warn    => 1,
                         } );
                     } else {                                    # tested, but still experimental # experimental but tested
                         error_handler->new( {
-                            type    => (OERR_SSLHELLO_ABORT_PROGRAM),
+                            type    => $OERR{'SSLHELLO_ABORT_PROGRAM'},
                             id      => 'ckeck starttls type (2)',
                             message => "WARNING: use of STARTTLS type $starttls_matrix[$starttlsType][0] is experimental! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org",
                             warn    => 1,
@@ -2414,7 +2414,7 @@ sub openTcpSSLconnection ($$) {
                 $my_error = $@;                             # save the error message as soon as possible
                 alarm (0);                                  # clear alarm if not done before
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_RETRY_HOST),
+                    type    => $OERR{'SSLHELLO_RETRY_HOST'},
                     id      => 'socket (1)',
                     message => $my_error,
                     warn    => 0,
@@ -2433,7 +2433,7 @@ sub openTcpSSLconnection ($$) {
                     $my_error = "Can't get the IP address of the proxy $SSLhello::proxyhost:$SSLhello::proxyport -> target $host:$port ignored";
                     carp($my_error);
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_HOST),
+                        type    => $OERR{'SSLHELLO_ABORT_HOST'},
                         id      => 'get proxy IP',
                         message => $my_error,
                         warn    => 0,
@@ -2461,7 +2461,7 @@ sub openTcpSSLconnection ($$) {
                     $my_error = $@;                         # save the error message as soon as possible
                     alarm (0);                              # clear alarm if not done before
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        type    => $OERR{'SSLHELLO_RETRY_HOST'},
                         id      => 'connection via proxy (1)',
                         message => $my_error,
                         warn    => 0,
@@ -2489,7 +2489,7 @@ sub openTcpSSLconnection ($$) {
                     $my_error = $@;                         # save the error message as soon as possible
                     alarm (0);                              # clear alarm if not done before
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        type    => $OERR{'SSLHELLO_RETRY_HOST'},
                         id      => 'connection via proxy (2)',
                         message => $my_error,
                         warn    => 0,
@@ -2530,7 +2530,7 @@ sub openTcpSSLconnection ($$) {
                     $my_error = $@;                         # save the error message as soon as possible
                     alarm (0);                              # clear alarm if not done before
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        type    => $OERR{'SSLHELLO_RETRY_HOST'},
                         id      => 'connection via proxy (3)',
                         message => $my_error,
                         warn    => 0,
@@ -2557,7 +2557,7 @@ sub openTcpSSLconnection ($$) {
                         $input = _chomp_r($1); ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
                     }
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        type    => $OERR{'SSLHELLO_RETRY_HOST'},
                         id      => 'connection via proxy (4)',
                         message => "Can't make a connection to $host:$port via proxy $SSLhello::proxyhost:$SSLhello::proxyport; target ignored. Proxy error: ".$input, # error message received from the proxy
                         warn    => 0,
@@ -2578,7 +2578,7 @@ sub openTcpSSLconnection ($$) {
                     $my_error = "Can't get the IP address of $host -> target $host:$port ignored in openTcpSSLconnection";
                     carp($my_error);
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_HOST),
+                        type    => $OERR{'SSLHELLO_ABORT_HOST'},
                         id      => 'get host IP',
                         message => $my_error,
                         warn    => 0,
@@ -2604,7 +2604,7 @@ sub openTcpSSLconnection ($$) {
                         $my_error .= " -> No connection to $host:$port; -> target ignored in openTcpSSLconnection";
                     }
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        type    => $OERR{'SSLHELLO_RETRY_HOST'},
                         id      => 'connect (1)',
                         message => $my_error,
                         warn    => 0,
@@ -2672,7 +2672,7 @@ sub openTcpSSLconnection ($$) {
                             next RETRY_TO_OPEN_SSL_CONNECTION;          # next retry
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) { # did receive a protocol error message
                             error_handler->new( {
-                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                                 id      => 'STARTTLS (Phase 1): Error 2',
                                 message => "unsupported protocol: $host:$port \'$input\'",
                                 warn    => 0,
@@ -2782,7 +2782,7 @@ sub openTcpSSLconnection ($$) {
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) {
                             # did receive a protocol error message
                             error_handler->new( {
-                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                                 id      => 'STARTTLS (Phase 3): Error 2',
                                 message => "unsupported protocol: $host:$port \'$input\'",
                                 warn    => 0,
@@ -2890,7 +2890,7 @@ sub openTcpSSLconnection ($$) {
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) {
                             # did receive a protocol error message
                             error_handler->new( {
-                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                                 id      => 'STARTTLS (Phase 5): Error 2',
                                 message => "unsupported protocol: $host:$port \'$input\'",
                                 warn    => 0,
@@ -3001,15 +3001,15 @@ sub _doCheckSSLciphers ($$$$;$$) {
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested
         $socket=openTcpSSLconnection ($host, $port); # open TCP/IP, connect to the server (via proxy if needes) and STARTTLS if nedded
         if ( (!defined ($socket)) || (error_handler->is_err()) || ($@) ) { # no SSL connection
-            if ((error_handler->get_err_type) == OERR_SSLHELLO_RETRY_HOST) { # no more retries
+            if ((error_handler->get_err_type) == $OERR{'SSLHELLO_RETRY_HOST'}) { # no more retries
                 error_handler->new( {
-                   type     => (OERR_SSLHELLO_ABORT_HOST),
+                   type     => $OERR{'SSLHELLO_ABORT_HOST'},
 #                   warn     => 1,
                 } );
             }
             unless (error_handler->is_err) { # no error set, but no socket obtaied
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_ABORT_HOST),
+                    type    => $OERR{'SSLHELLO_ABORT_HOST'},
                     id      => 'open TCP SSL connection (1)',
                     message => "WARNING: Did not get a valid SSL-socket from function openTcpSSLconnection -> fatal exit of openTcpSSLconnection", # generic error message
 #                    warn    => 1,
@@ -3034,7 +3034,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             ) or $my_error = " \'$@\', \'$!\'";
             if ( (!defined ($socket)) || ($my_error) ) { # no UDP socket
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_ABORT_HOST),
+                    type    => $OERR{'SSLHELLO_ABORT_HOST'},
                     id      => 'open UDP socket (1)',
                     message => "WARNING: Did not get a valid socket for UDP: $my_error -> fatal exit of _doCheckSSLciphers (udp)",
 #                    warn    => 1,
@@ -3064,7 +3064,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             $my_error = "send client hello failed: $@";     # save the error message as soon as possible
             alarm (0);                                      # protection against race conditions
             error_handler->new( {
-                type    => (OERR_SSLHELLO_ABORT_HOST),
+                type    => $OERR{'SSLHELLO_ABORT_HOST'},
                 id      => 'send client hello failed',
                 message => $my_error,
                 warn    => 0,
@@ -3077,10 +3077,10 @@ sub _doCheckSSLciphers ($$$$;$$) {
         ###### errors are reported in local $my_error
         ($recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr, $my_error) = _readRecord ($socket, $isUdp, \$input, $host, $port, $protocol);
         # error handling
-        if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) {
-            if ((error_handler->get_err_type()) == (OERR_SSLHELLO_RETRY_HOST)) { # no more retries
+        if ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_PROTOCOL'}) {
+            if ((error_handler->get_err_type()) == $OERR{'SSLHELLO_RETRY_HOST'}) { # no more retries
                 error_handler->new( {
-                    type     => (OERR_SSLHELLO_ABORT_HOST), # upgrade error to abort
+                    type     => $OERR{'SSLHELLO_ABORT_HOST'}, # upgrade error to abort
 #                   warn     => 1,
                 } );
             }
@@ -3130,10 +3130,10 @@ sub _doCheckSSLciphers ($$$$;$$) {
         if (length($input) >0) {
             _trace2 ("_doCheckSSLciphers: Total data received: ". length($input). " bytes }\n");
             ($buffer, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie, $acceptedCipher) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol);
-            if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) {
-                if ((error_handler->get_err_type()) == (OERR_SSLHELLO_RETRY_HOST)) { # no more retries
+            if ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_PROTOCOL'}) {
+                if ((error_handler->get_err_type()) == $OERR{'SSLHELLO_RETRY_HOST'}) { # no more retries
                     error_handler->new( {
-                        type     => (OERR_SSLHELLO_ABORT_HOST),
+                        type     => $OERR{'SSLHELLO_ABORT_HOST'},
 #                       warn     => 1,
                     } );
                 }
@@ -3203,7 +3203,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             $my_error = "reset DTLS failed: $@";                    # save the error message as soon as possible
             alarm (0);                                              # protection against race conditions
             error_handler->new( {
-                type    => (OERR_SSLHELLO_RETRY_PROTOCOL),
+                type    => $OERR{'SSLHELLO_RETRY_PROTOCOL'},
                 id      => 'reset DTLS failed',
                 message => $my_error,
                 warn    => 0,
@@ -3301,7 +3301,7 @@ sub _readRecord ($$$;$$$$) {
                 $my_error = "failed to select data: $@";            # save the error message as soon as possible
                 alarm (0);                                          # clear alarm if not done before
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                    type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                     id      => '_readRecord (udp): unknown Timeout error (1)',
                     message => $my_error,
                     warn    => 0,
@@ -3313,7 +3313,7 @@ sub _readRecord ($$$;$$$$) {
             alarm (0);                                              # protection against race conditions
             if ( ! $success) { # nor data NEITHER special event => timeout
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                    type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                     id      => '_readRecord (udp): Timeout error (1)',
                     message => $my_error,
                     warn    => 0,
@@ -3335,7 +3335,7 @@ sub _readRecord ($$$;$$$$) {
                     $my_error = "failed to read data with sysread: $@";     # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                        type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                         id      => '_readRecord (udp): unknown Timeout error (2)',
                         message => $my_error,
                         warn    => 0,
@@ -3351,7 +3351,7 @@ sub _readRecord ($$$;$$$$) {
                     if (length ($$input_ref) == 0) { # Disconnected, no Data
                         $my_error = "Server '$host:$port': received EOF (Disconnect), no Data\n";
                         error_handler->new( {
-                            type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                            type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                             id      => '_readRecord (udp): no Data',
                             message => $my_error,
                             warn    => 0,
@@ -3361,7 +3361,7 @@ sub _readRecord ($$$;$$$$) {
                     } else {
                         $my_error = "Server '$host:$port': No data (EOF) after ".length($$input_ref)." of expected $pduLen bytes: '$!' -> Retry to read\n";
                         error_handler->new( {
-                            type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                            type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                             id      => '_readRecord (udp): EOF',
                             message => $my_error,
                             warn    => 0,
@@ -3377,7 +3377,7 @@ sub _readRecord ($$$;$$$$) {
             } else {# got NO data
                 $my_error = "Server '$host:$port': No data in _readRecord after reading $len of $pduLen expected bytes; $!";
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                    type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                     id      => '_readRecord (udp): Received (no more) data',
                     message => $my_error,
                     warn    => 0,
@@ -3400,7 +3400,7 @@ sub _readRecord ($$$;$$$$) {
                 $my_error = "failed to receive data (recv) $@";     # save the error message as soon as possible
                 alarm (0);                                          # clear alarm if not done before
                 error_handler->new( {
-                    type    => (OERR_SSLHELLO_RETRY_CIPHERS),
+                    type    => $OERR{'SSLHELLO_RETRY_CIPHERS'},
                     id      => '_readRecord (tcp): recv: unknown Timeout error',
                     message => $my_error,
                     warn    => 0,
@@ -3523,7 +3523,7 @@ sub _readRecord ($$$;$$$$) {
                 }
                 if ($recordVersion == 0) { # some servers respond with the dummy protocol '0x0000' if they do *not* support the requested protocol
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                         id      => 'check record protocol (1)',
                         message => sprintf ("unsupported protocol $client_ssl (0x%04X) by $host:$port, answered with (0x%04X)", $client_protocol, $recordVersion),
                         warn    => 0,
@@ -5668,7 +5668,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             # protocol_version(70) SSLv2, protocol_version(80) SSLv3:
                             # (old) protocol recognised but not supported, is suppressed
                             error_handler->new( {
-                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                                 id      => 'parse alert record (2)',
                                 message => sprintf ("unsupported protocol $client_ssl (0x%04X) by $host:$port: received a SSL/TLS-Warning: Description: $description ($serverHello{'description'})", $client_protocol),
                                 warn    => 0,
@@ -5709,7 +5709,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                 }
                 if ($recordVersion == 0x0000) { # some servers use this dummy version to indicate that the requested version is not supported
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                         id      => 'parse alert record (1)',
                         message => sprintf ("unsupported protocol $client_ssl (0x%04X) by $host:$port, answered with (0x%04X)", $client_protocol, $recordVersion),
                         warn    => 0,
@@ -6021,14 +6021,14 @@ sub parseTLS_ServerHello {
                 if ($server_protocol == 0) {
                     # some servers respond with the dummy prtotocol '0x0000' if they do *not* support the requested protocol
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                         id      => 'check record protocol (1)',
                         message => sprintf ("unsupported protocol $client_ssl (0x%04X) by $host:$port, answered with $server_ssl (0x%04X)", $client_protocol, $server_protocol),
                         warn    => 0,
                     } );
                 } else { # unknown protocol
                     error_handler->new( {
-                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        type    => $OERR{'SSLHELLO_ABORT_PROTOCOL'},
                         id      => 'check record protocol (2)',
                         message => sprintf ("unsupported protocol $client_ssl (0x%04X) by $host:$port, answered with $server_ssl (0x%04X)", $client_protocol, $server_protocol),
                         warn    => 0,
