@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.3 24/01/26 18:22:16
+#?      @(#) Makefile.dev 3.4 24/01/30 09:13:45
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.3
+_SID.dev           := 3.4
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -196,14 +196,14 @@ $(_TEST.dev.tmpfile):
 # o-saft -log calls o-saft.tcl but +quit ensures that the GUI is not shown, the
 # option --d is added which is passed from o-saft to o-saft.tcl and then forces
 # to print some verbose information
-testarg-dev-o-saft_-log:          TEST.args += --d
+testarg-dev-o-saft_-log:            TEST.args += --d
 
 # more individual targets for SRC.sh (calling usr/bunt.pl)
 # TODO: use pattern rule to define TEST.dev.hosts instead hardcoded localhost
 #       testarg-dev-o-saft_--colour%:    TEST.dev.hosts  = localhost
-testarg-dev-o-saft_--colour:      TEST.args = --colour +unknown-cmd $(TEST.host)
-testarg-dev-o-saft_--colour+ocsp: TEST.args = --colour        +ocsp $(TEST.host)
-testarg-dev-o-saft_--colour-line: TEST.args = --colour --line +ocsp $(TEST.host)
+testarg-dev-o-saft_--colour:        TEST.args = --colour +unknown-cmd $(TEST.host)
+testarg-dev-o-saft_--colour+ocsp:   TEST.args = --colour        +ocsp $(TEST.host)
+testarg-dev-o-saft_--colour-line:   TEST.args = --colour --line +ocsp $(TEST.host)
 ALL.test.dev            += \
 	testarg-dev-o-saft_--colour \
 	testarg-dev-o-saft_--colour+ocsp \
@@ -211,11 +211,14 @@ ALL.test.dev            += \
 
 # do not execute script, just show: --n
 testarg-dev-usr-install_openssl_%:  TEST.args = --n
-testarg-dev-INSTALL.sh_%:       TEST.args = --n /tmp/o-saft
-#   # returns following errors, which is OK for --n :
-#   #   ../INSTALL.sh: 787: cd: can't cd to /tmp/o-saft
+testarg-dev-INSTALL.sh_%:           TEST.args = --n --v /tmp/o-saft
+# targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
+# intendet to install anything, hence they are called with --n  which results
+# in some error messsages. Returns following errors, which is OK for --n :
+#   #   ../INSTALL.sh: 877: cd: can't cd to /tmp/o-saft
 #   #   **ERROR: 040: /tmp/o-saft does not exist; exit
 #   #   **ERROR: 043: missing XXXX; file ignored
+#   #   **ERROR: 050: /tmp/o-saft does not exist; exit
 # additional special option for INSTALL.sh
 testarg-dev-INSTALL.sh_--checkdev--other:   TEST.args += --checkdev --other
 testarg-dev-INSTALL.sh_--install--gnuenv:   TEST.args += --install  --gnuenv
