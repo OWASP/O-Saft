@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.16 24/01/30 12:48:25";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.17 24/01/30 14:09:53";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -81,16 +81,16 @@ use error_handler qw(%OERR);
 # OSAFT_STANDALONE my  %OERR = %error_handler::OERR;
     # in standalone mode %OERR must be used as %error_handler::OERR
 
-use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
-    _MY_PRINT_CIPHERS_PER_LINE          =>  8, # Nr of ciphers printed in a trace
-    _PROXY_CONNECT_MESSAGE1             => "CONNECT ",
-    _PROXY_CONNECT_MESSAGE2             => " HTTP/1.1\n\n",
-    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 16, # Max number og TCP-Segments that can reset the retry counter to '0' for next read
-    _SLEEP_B4_2ND_READ                  => 0.5,  # Sleep before second read (STARTTLS and proxy) [in sec.x]
-    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER    => 0.75, # DTLS-Protocol: Sleep after found a cipher to segregate the following request [in sec.x]
-    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND  => 0.05  # DTLS-Protocol: Sleep after not found a cipher to segregate the following request [in sec.x]
-};
+my %CST = (
+    '_MY_SSL3_MAX_CIPHERS'                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
+    '_MY_PRINT_CIPHERS_PER_LINE'          =>  8, # Nr of ciphers printed in a trace
+    '_PROXY_CONNECT_MESSAGE1'             => "CONNECT ",
+    '_PROXY_CONNECT_MESSAGE2'             => " HTTP/1.1\n\n",
+    '_MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT' => 16, # Max number og TCP-Segments that can reset the retry counter to '0' for next read
+    '_SLEEP_B4_2ND_READ'                  => 0.5,  # Sleep before second read (STARTTLS and proxy) [in sec.x]
+    '_DTLS_SLEEP_AFTER_FOUND_A_CIPHER'    => 0.75, # DTLS-Protocol: Sleep after found a cipher to segregate the following request [in sec.x]
+    '_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND'  => 0.05  # DTLS-Protocol: Sleep after not found a cipher to segregate the following request [in sec.x]
+); # %CST
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -120,7 +120,7 @@ $SSLhello::double_reneg         = 0;# 0=Protection against double renegotiation 
 $SSLhello::proxyhost            = "";#
 $SSLhello::proxyport            = "";#
 $SSLhello::experimental         = 0;# 0: experimental functions are protected (=not active)
-$SSLhello::max_ciphers          = _MY_SSL3_MAX_CIPHERS; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
+$SSLhello::max_ciphers          = $CST{'_MY_SSL3_MAX_CIPHERS'}; # max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server
 $SSLhello::max_sslHelloLen      = 16388; # according RFC: 16383+5 bytes; max len of SSLhello messages (some implementations had issues with packets longer than 256 bytes)
 $SSLhello::noDataEqNoCipher     = 1; # 1= for some TLS intolerant servers 'NoData or timeout equals to no cipher' supported -> Do NOT abort to test next ciphers
 $SSLhello::extensions_by_prot   = \%{$cfg{extensions_by_prot}}; # get the list of all extensions used by protocol, SSLv2 does not support any extensions by design
@@ -462,7 +462,7 @@ sub _trace_array2str {
     my $str = "";
     my $i   = 0;
     foreach my $item (@arr) {
-        $str .= "\n  " if (($i++) % _MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
+        $str .= "\n  " if (($i++) % $CST{'_MY_PRINT_CIPHERS_PER_LINE'} == 0);  #  print up to $CST{'_MY_PRINT_CIPHERS_PER_LINE'} ciphers per line
         $str .= " >$item<";
     }
     return $str;
@@ -1826,7 +1826,7 @@ sub checkSSLciphers ($$$@) {
 
             push (@cipherSpecArray, $cipher_str); # add cipher to next test
             $arrayLen = @cipherSpecArray;
-            if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
+            if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($SSLhello::max_ciphers = $CST{'_MY_SSL3_MAX_CIPHERS'}) with 1 doCheckSSLciphers (=> Client Hello)
                 $my_error = ""; # reset error message
                 # reset error_handler and set basic information for this sub
                 error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
@@ -2481,7 +2481,7 @@ sub openTcpSSLconnection ($$) {
                 $my_error = "";
                 local $@ = "";
                 eval {
-                    $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
+                    $proxyConnect=$CST{'_PROXY_CONNECT_MESSAGE1'}.$host.":".$port.$CST{'_PROXY_CONNECT_MESSAGE2'};
                     _trace4 (" openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout); # set Alarm for Connect
@@ -2513,8 +2513,8 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection ## CONNECT via proxy: try to receive the Connected-Message from the proxy $SSLhello::proxyhost:$SSLhello::proxyport, Retry = $retryCnt\n");
-                    # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
@@ -2522,8 +2522,8 @@ sub openTcpSSLconnection ($$) {
                         _trace4 (" openTcpSSLconnection: ... Received Connected-Message from proxy (1a): received NO Data\n");
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
-                        OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ);
-                        # select(undef, undef, undef, _SLEEP_B4_2ND_READ);
+                        OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'});
+                        # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'});
                         recv ($socket, $input, 32767, 0); # 2nd try
                         #### TBD TBD received NO Data TBD TBD ###
                     }
@@ -2621,11 +2621,11 @@ sub openTcpSSLconnection ($$) {
 
         if ( !(error_handler->is_err) && ($SSLhello::starttls) )  { # no error and starttls ###############  Begin STARTTLS Support #############
             _trace2 (" openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]." protocol for server $host:$port, Retry = $retryCnt\n");
-            # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+            # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
             if (($slowServerDelay > 0) || ($retryCnt > 0)) { # slow server or retry: sleep some secs
                 _trace2 (" openTcpSSLconnection: $host:$port: wait ".($slowServerDelay||1)." sec(s) to cope with slow servers\n");
                 sleep ($slowServerDelay||1); # sleep $slowServerDelay secs or min 1 sec
-                #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                #select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 1); # if retry: sleep some ms
             }
             ### STARTTLS_Phase1 (receive)
             if ($starttls_matrix[$starttlsType][1]) {
@@ -2633,8 +2633,8 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
-                    #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    #select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
@@ -2727,10 +2727,10 @@ sub openTcpSSLconnection ($$) {
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 # wait before next read
-                # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
-                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 1); # if retry: sleep some ms
+                OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             } else {
                 _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
@@ -2742,8 +2742,8 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n");
-                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
+                    # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
@@ -2836,10 +2836,10 @@ sub openTcpSSLconnection ($$) {
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
                 }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 # wait before next read
-                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
-                # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 1); # if retry: sleep some ms
+                # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
                 _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
              } # endi-if $starttls_matrix[$starttlsType][4]
@@ -2850,8 +2850,8 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input = "";
                     _trace2 (" openTcpSSLconnection: ## STARTTLS (Phase 5): Try to receive the $starttls_matrix[$starttlsType][0] STARTTLS answer from the server $host:$port\n");
-                    OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
+                    # select(undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'}) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "SSLhello::_timedOut";
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
@@ -3186,9 +3186,9 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 _trace2 (" _doCheckSSLciphers: received a cookie ($dtlsCookieLen bytes): >".hexCodedString($dtlsCookie,"        ")."<\n");
                 $retryCnt--;
             }
-            _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
-            OCfg::ocfg_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
-            # select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
+            _trace4 (" _doCheckSSLciphers: DTLS: sleep ".$CST{'_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND'}." sec(s) after *NO* cipher found\n");
+            OCfg::ocfg_sleep($CST{'_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND'}); # sleep after NO cipher found
+            # select(undef, undef, undef, $CST{'_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND'}); # sleep after NO cipher found
         }
     } # end while (RETRY_TO_EXCHANGE_CLIENT_AND_SERVER_HELLO)
 
@@ -3220,9 +3220,9 @@ sub _doCheckSSLciphers ($$$$;$$) {
         carp("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
     }
     if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
-        _trace4 (" _doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
-        # select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
-        OCfg::ocfg_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
+        _trace4 (" _doCheckSSLciphers: DTLS: sleep ".$CST{'_DTLS_SLEEP_AFTER_FOUND_A_CIPHER'}." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
+        # select(undef, undef, undef, $CST{'_DTLS_SLEEP_AFTER_FOUND_A_CIPHER'});
+        OCfg::ocfg_sleep($CST{'_DTLS_SLEEP_AFTER_FOUND_A_CIPHER'});
     }
     _trace2 ("_doCheckSSLciphers: }\n");
     return ($acceptedCipher);
@@ -3371,8 +3371,8 @@ sub _readRecord ($$$;$$$$) {
                         _trace1 ("_readRecord (udp): $my_error\n");
                         @socketsReady = $select->can_read(0) if ($SSLhello::trace > 1); ###additional debug (use IO::select needed)
                         _trace1 ("_readRecord (udp): can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($$input_ref)." bytes)\n") if (scalar (@socketsReady));
-                        #select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-                        OCfg::ocfg_sleep (_SLEEP_B4_2ND_READ);
+                        #select (undef, undef, undef, $CST{'_SLEEP_B4_2ND_READ'});
+                        OCfg::ocfg_sleep($CST{'_SLEEP_B4_2ND_READ'});
                         next RETRY_TO_RECEIVE_A_RECORD;
                     }
                 }
@@ -3516,7 +3516,7 @@ sub _readRecord ($$$;$$$$) {
             } else {
                 $segmentCnt++;
                 _trace4 ("_readRecord: Server '$host:$port': ... Received $len bytes in $segmentCnt segment(s)\n");
-                $retryCnt = 0 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset retry count to 0 (in next loop)
+                $retryCnt = 0 if ($segmentCnt <= $CST{'_MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT'}); # reset retry count to 0 (in next loop)
             }
             if (defined ($client_protocol)) {
                 my $client_ssl = $PROTOCOL_NAME_BY_HEX{$client_protocol};
