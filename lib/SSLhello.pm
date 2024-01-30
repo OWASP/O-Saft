@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.17 24/01/30 14:09:53";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.18 24/01/30 14:14:51";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -484,9 +484,9 @@ sub _trace_cipher_array {
 
 #   trace output for known and unknown formts
 sub _sprintf_hex_val ($$;$) {
-    my $_format         = shift(@_);
-    my $_val_ref        = shift(@_);
-    my $_indent         = shift(@_) || 0;
+    my $_format         = shift;
+    my $_val_ref        = shift;
+    my $_indent         = shift || 0;
     my $_hex_str        = "";
     my $_format_string  = $_format || $STR{'UNDEF'};
 
@@ -531,10 +531,10 @@ sub _sprintf_hex_val ($$;$) {
 }
 
 sub _sprintf_val_description ($$;$$) {
-    my $_def_hash_ref   = shift(@_);
-    my $_val_ref        = shift(@_);
-    my $_indent         = shift(@_) || 0;
-    my $_descr_sep      = shift(@_) || " ";
+    my $_def_hash_ref   = shift;
+    my $_val_ref        = shift;
+    my $_indent         = shift || 0;
+    my $_descr_sep      = shift || " ";
     my $_descr_str      = "";
     my $_text_sep       = ": ";                                     # add a colon and a space between value and description
     if ($SSLhello::trace >= 5) {                               #               ? value if TRUE                         : value if FALSE
@@ -583,15 +583,15 @@ sub _sprintf_val_description ($$;$$) {
 sub _decode_val ($$$;$$$$$$) {
     #? decodes and (s)sprints values and up to double nested arrays (= arrays of arrays of arrays)
     #? prints and adds warnings to the output if the variable is even more deeply nestested or in an unsupported format
-    my $_format         = shift(@_);                                # reference to a sprintf-format to print the value, or "" for unformatted strings or undef for autoformat for unknown formats (best effort)
-    my $_val_ref        = shift(@_);                                # reference to a scalar or an up to double nested array (= array of array of array)
-    my $_def_hash_ref   = shift(@_);                                # definition to decode the value: might be a ref to a hash, a ref to this ref or a simple scalara or undef
-    my $_first_indent   = shift(@_) || 0;                           # optional: ident in the first line
-    my $_next_indent    = shift(@_) || 0;                           # optional: ident from the second line onwards
-    my $_text_sep       = shift(@_) || ":\n". " " x $_next_indent;  # optional: add a colon, a new line and an indent between section headline (e.g. 'sequence') and value
-    my $_sub_sep        = shift(@_) || ", ";                        # optional: sub seperators of elements or arrays
-    my $_sub_sub_sep    = shift(@_) || " | ";                       # optional: sub-sub seperators of array elements or nested arrays (arrays of arrays)
-    my $_sub3_sep       = shift(@_) || " / ";                       # optional: sub³ seperators of nested array elements (or error messages for more deeply nested attays
+    my $_format         = shift;            # reference to a sprintf-format to print the value, or "" for unformatted strings or undef for autoformat for unknown formats (best effort)
+    my $_val_ref        = shift;            # reference to a scalar or an up to double nested array (= array of array of array)
+    my $_def_hash_ref   = shift;            # definition to decode the value: might be a ref to a hash, a ref to this ref or a simple scalara or undef
+    my $_first_indent   = shift || 0;       # optional: ident in the first line
+    my $_next_indent    = shift || 0;       # optional: ident from the second line onwards
+    my $_text_sep       = shift || ":\n". " " x $_next_indent;  # optional: add a colon, a new line and an indent between section headline (e.g. 'sequence') and value
+    my $_sub_sep        = shift || ", ";    # optional: sub seperators of elements or arrays
+    my $_sub_sub_sep    = shift || " | ";   # optional: sub-sub seperators of array elements or nested arrays (arrays of arrays)
+    my $_sub3_sep       = shift || " / ";   # optional: sub³ seperators of nested array elements (or error messages for more deeply nested attays
     my $_sub_lines      = 0;
     my $_sub_sub_lines  = 0;
     my $_sub3_lines     = 0;
@@ -4164,9 +4164,9 @@ sub compileAlertRecord ($$$$;$$) {
 
 sub __compile_bytes_len1 ($$$$$$;$$) {
     #? compiles the len1 byte the following value fields
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
     my $_next_data = "";
 
@@ -4186,9 +4186,9 @@ sub __compile_bytes_len1 ($$$$$$;$$) {
 
 sub __compile_bytes_len2 ($$$$$$;$$) {
     #? compiles the len2 bytes the following value fields
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
     my $_next_data = "";
 
@@ -4208,9 +4208,9 @@ sub __compile_bytes_len2 ($$$$$$;$$) {
 
 sub __compile_bytes_len3 ($$$$$$;$$) {
     #? compiles the len3 bytes the following value fields
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
     my $_next_data = "";
 
@@ -4233,9 +4233,9 @@ sub __compile_bytes_len3 ($$$$$$;$$) {
 
 sub __compile_bytes_raw ($$$$$$;$$) {
     #? compiles a raw bytes value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
 
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_raw  for '$__pdu_name'     ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4251,9 +4251,9 @@ sub __compile_bytes_raw ($$$$$$;$$) {
 
 sub __compile_bytes_sequence ($$$$$$;$$) {
     #? compiles a sequence of fields
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size               = 0;
     my $_sequence_data      = "";
@@ -4284,9 +4284,9 @@ sub __compile_bytes_sequence ($$$$$$;$$) {
 
 sub __compile_bytes_size1 ($$$$$$;$$) {
     #? compiles the size1 byte the following value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
     my $_next_data = "";
 
@@ -4305,9 +4305,9 @@ sub __compile_bytes_size1 ($$$$$$;$$) {
 
 sub __compile_bytes_size2 ($$$$$$;$$) {
     #? compiles the size2 bytes the following value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     my $_next_data = "";
@@ -4326,9 +4326,9 @@ sub __compile_bytes_size2 ($$$$$$;$$) {
 
 sub __compile_bytes_val1 ($$$$$$;$$) {
     #? compiles a val1 byte value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_val1 for '$__pdu_name'     ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4345,9 +4345,9 @@ sub __compile_bytes_val1 ($$$$$$;$$) {
 
 sub __compile_bytes_val2 ($$$$$$;$$) {
     #? compiles a val2 bytes value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_val2 for '$__pdu_name'     ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4364,9 +4364,9 @@ sub __compile_bytes_val2 ($$$$$$;$$) {
 
 sub __compile_bytes_val4 ($$$$$$;$$) {
     #? compiles a val4 bytes value field
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_val4 for '$__pdu_name'     ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4383,9 +4383,9 @@ sub __compile_bytes_val4 ($$$$$$;$$) {
 
 sub __compile_bytes_val1List ($$$$$$;$$) {
     #? compiles a value list of val1 bytes
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_val1List for '$__pdu_name' ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4401,9 +4401,9 @@ sub __compile_bytes_val1List ($$$$$$;$$) {
 
 sub __compile_bytes_val2List ($$$$$$;$$) {
     #? compiles a value list of val2 bytes
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     _trace4_ (" " x $__indent . "# SSLhello: __compile_bytes_val2List for '$__pdu_name' ($$__format_pos_ref, $$__param_pos_ref)\n");
@@ -4449,9 +4449,9 @@ my %__compile_bytes_subs = (
 
 sub _compileNextByte ($$$$$$;$$) {
     #? compiles the next byte(s) to a PDU, e.g. extension
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_size = 0;
     return (0) if (! defined ($__format_ref->[$$__format_pos_ref]) );
     if ($__compile_bytes_subs{$__format_ref->[$$__format_pos_ref]}) {
@@ -4467,9 +4467,9 @@ sub _compileNextByte ($$$$$$;$$) {
 
 sub _compileAllBytes ($$$$$$;$$) {
     #? compile all byte(s) according the $__format_ref and the $__param_ref to a PDU, e.g. extension
-    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_ref, $__format_pos_ref, $__param_pos_ref, $__buffer_ref) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     my $_size = 0;
     while (defined ($__format_ref->[$$__format_pos_ref]) ) {        # $$__format_pos_ref is increased by _compileNextByte and subs '__compile_bytes_*'
@@ -4625,9 +4625,9 @@ sub _compileClientHelloExtensions ($$$$@) {
 
 sub __parse_bytes_len1 ($$$$$$;$$) {
     #? parses a len1 bytes field
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__next_data = "";
     my $__len;
 
@@ -4647,9 +4647,9 @@ sub __parse_bytes_len1 ($$$$$$;$$) {
 
 sub __parse_bytes_len2 ($$$$$$;$$) {
     #? parses a len2 bytes field
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__next_data = "";
     my $__len;
 
@@ -4669,9 +4669,9 @@ sub __parse_bytes_len2 ($$$$$$;$$) {
 
 sub __parse_bytes_len3 ($$$$$$;$$) {
     #? parses a len3 bytes field
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__next_data = "";
     my $__len;
     my $__len1;
@@ -4696,9 +4696,9 @@ sub __parse_bytes_len3 ($$$$$$;$$) {
 
 sub __parse_bytes_raw ($$$$$$;$$) {
     #? parses a raw bytes field
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_hex_str = "";
 
     _trace4_ (" " x $__indent);
@@ -4718,9 +4718,9 @@ sub __parse_bytes_raw ($$$$$$;$$) {
 
 sub __parse_bytes_sequence ($$$$$$;$$) {
     #? parses a sequence of bytes fields
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__sequence_pos = 0;
     my %__sequence_param_hash;
     my $__sequence_param_hash_ref = (defined ($__param_hash_ref))? \%__sequence_param_hash : undef;   # (condition)? <value if true> : <value if false>
@@ -4748,9 +4748,9 @@ sub __parse_bytes_sequence ($$$$$$;$$) {
 
 sub __parse_bytes_size1 ($$$$$$;$$) {
     #? parses a size1 bytes field and the next value(s)
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__next_data = "";
     my $__len = 0;
 
@@ -4770,9 +4770,9 @@ sub __parse_bytes_size1 ($$$$$$;$$) {
 
 sub __parse_bytes_size2 ($$$$$$;$$) {
     #? parses a size2 bytes field and the next value(s)
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $__next_data = "";
     my $__len = 0;
 
@@ -4792,9 +4792,9 @@ sub __parse_bytes_size2 ($$$$$$;$$) {
 
 sub __parse_bytes_val1 ($$$$$$;$$) {
     #? parses a val1 bytes value
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace4_ (" " x $__indent);
     _trace4  ("__parse_bytes_val1 for '$__pdu_name':     ($$__format_pos_ref, $__buffer_size)\n");
@@ -4812,9 +4812,9 @@ sub __parse_bytes_val1 ($$$$$$;$$) {
 
 sub __parse_bytes_val2 ($$$$$$;$$) {
     #? parses a val2 bytes value
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace4_ (" " x $__indent);
     _trace4  ("__parse_bytes_val2 for '$__pdu_name':     ($$__format_pos_ref, $__buffer_size)\n");
@@ -4832,9 +4832,9 @@ sub __parse_bytes_val2 ($$$$$$;$$) {
 
 sub __parse_bytes_val4 ($$$$$$;$$) {
     #? parses a val4 bytes value
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace4_ (" " x $__indent);
     _trace4  ("__parse_bytes_val4 for '$__pdu_name':     ($$__format_pos_ref, $__buffer_size)\n");
@@ -4852,9 +4852,9 @@ sub __parse_bytes_val4 ($$$$$$;$$) {
 
 sub __parse_bytes_val1List ($$$$$$;$$) {
     #? parses a list of val1 byte values
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace4_ (" " x $__indent);
     _trace4  ("__parse_bytes_val1List for '$__pdu_name': ($$__format_pos_ref, $__buffer_size):\n");
@@ -4873,9 +4873,9 @@ sub __parse_bytes_val1List ($$$$$$;$$) {
 
 sub __parse_bytes_val2List ($$$$$$;$$) {
     #? parses a list of val2 bytes values
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace4_ (" " x $__indent);
     _trace4  ("__parse_bytes_val2List for '$__pdu_name': ($$__format_pos_ref, $__buffer_size):\n");
@@ -4924,9 +4924,9 @@ my %__parse_bytes_subs = (
 
 sub _parseNextByte ($$$$$$;$$) {
     #? parse the next byte(s)
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
     my $_hex_str = "";
 
     _trace5_ (" " x ($__indent). "_parseNextByte for '$__pdu_name' ($$__format_pos_ref, $__buffer_size)\n" );
@@ -4944,9 +4944,9 @@ sub _parseNextByte ($$$$$$;$$) {
 
 sub _parseAllBytes ($$$$$$;$$) {
     #? parse all byte(s) according the $__buffer_size
-    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_), shift(@_), shift(@_));
-    my $__format_text_ref   = shift(@_);
-    my $__indent            = shift(@_) || 0;
+    my ($__pdu_name, $__format_ref, $__param_hash_ref, $__format_pos_ref, $__buffer_ref, $__buffer_size) = (shift, shift, shift, shift, shift, shift);
+    my $__format_text_ref   = shift;
+    my $__indent            = shift || 0;
 
     _trace5_ (" " x ($__indent). "_parseAllBytes for '$__pdu_name' ($$__format_pos_ref, $__buffer_size)\n");
     while ( ($$__format_pos_ref < (@$__format_ref)) && (defined ($__format_ref->[$$__format_pos_ref])) && ($__buffer_size > 0) ) {
@@ -4971,9 +4971,9 @@ sub _parseExtensions ($$$$;$$) {
     #? $protocolCipher:   internal Hex value of the cipher, for tracing
     #? $_indent:          indent for tracing, default = 12
     #? ---------------------------------------------------------------------------
-    my ($_ext_ch_rx, $_param_hash_ref, $_buffer_ref, $_buffer_size) = (shift(@_), shift(@_), shift(@_), shift(@_));
-    my $protocolCipher      = shift(@_) || "";
-    my $_indent             = shift(@_) || 12;
+    my ($_ext_ch_rx, $_param_hash_ref, $_buffer_ref, $_buffer_size) = (shift, shift, shift, shift);
+    my $protocolCipher      = shift || "";
+    my $_indent             = shift || 12;
     my $_format_pos         = 0;
     my $_name               = "_parseExtensions: ";
     my $_extensions_data    = $$_buffer_ref;                        # do not chance referenced data
