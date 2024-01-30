@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.15 24/01/29 09:48:35";
+my  $SID_sslhelo= "@(#) SSLhello.pm 3.16 24/01/30 12:48:25";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -74,10 +74,12 @@ use Socket;     # constants and methods are used with full qualified name
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
 use OText         qw(%STR);
+use OCfg;   # main parameters, lists and functions that are used by o-saft and SSLhello
 use error_handler qw(%OERR);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
-use OCfg;   # main parameters, lists and functions that are used by o-saft and SSLhello
+# OSAFT_STANDALONE my  %OERR = %error_handler::OERR;
+    # in standalone mode %OERR must be used as %error_handler::OERR
 
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
