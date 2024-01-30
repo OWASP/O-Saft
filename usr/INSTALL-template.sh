@@ -279,7 +279,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.10 24/01/29 21:09:21
+#?      @(#) INSTALL-template.sh 3.11 24/01/30 08:32:58
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -420,7 +420,7 @@ _cols=0
 if [ 0 -lt $_cols ]; then
 	# adapt _line to screen width
 	[ -n "$OSAFT_MAKE" ] && _cols=78    # SEE Make:OSAFT_MAKE
-	[ 51 -gt $_cols ] && _break=1       # see echo_label()
+	[ 51 -gt $_cols ]    && _break=1    # see echo_label()
 	while [ 42 -lt $_cols ]; do
 		_line="$_line-"
 		_cols=`expr $_cols - 1`
@@ -591,7 +591,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.10 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.11 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -613,11 +613,6 @@ echo_info "$mode $inst_directory"
 if [ "$mode" = "install" ]; then
 	echo_info "$mode from $src_directory"
 	echo_info "mode=$mode , force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
-fi
-
-if [ '..' = "$src_directory" ]; then
-	# avoid errors in $0 if called by own make
-	[ "${OSAFT_MAKE:+1}"  ] && cd .. && echo "cd ..  # due to OSAFT_MAKE"
 fi
 
 # ------------------------ expected mode --------- {
