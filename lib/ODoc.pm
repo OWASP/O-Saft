@@ -16,6 +16,9 @@ package ODoc;
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #        We believe it's better readable (severity 2 only)
 
+## no critic qw(Variables::ProhibitPackageVars)
+#        OCfg::* variables are used to keep generated -o-saft-standalone happy.
+
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #        Most of our regex are easy to read, it's the nature of the code herein
 #        to have simple and complex regex.  /x is used for human readability as
@@ -24,7 +27,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.11 24/01/27 11:57:34";
+my  $SID_odoc   = "@(#) ODoc.pm 3.12 24/01/31 13:40:21";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -640,7 +643,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.11 2024/01/27
+3.12 2024/01/31
 
 
 =head1 AUTHOR
