@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 3.1 24/01/23 13:39:31
+#?      @(#) Makefile.tcl 3.2 24/01/31 20:43:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(O-Project).tcl'
 
-_SID.tcl           := 3.1
+_SID.tcl           := 3.2
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -52,7 +52,7 @@ HELP.test.tcl.all   = # no special documentation yet
 # SEE Make:target name prefix
 
 testarg-tcl-o-saft.tcl_%:               EXE.pl      = ../$(SRC.tcl)
-testarg-tcl-o-saft.tcl_%:               TEST.init   = localhost +quit
+testarg-tcl-o-saft.tcl_%:               TEST.init   = localhost --trace-CLI +quit
     # ensure that o-saft.tcl exits and does not build the GUI
 
 LIST.tcl.args  := \
