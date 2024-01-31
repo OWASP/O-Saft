@@ -21,14 +21,14 @@ package Ciphers;
 # 0.02  0.00  0:00.02 100%  0k  9496k  # 3/2022
 # 0.02  0.00  0:00.03 100%  0k  9924k  # 11/2022
 # 0.02  0.00  0:00.02 100%  0k  8804k  # 12/2023
-# 0.03  0.00  0:00.03 100%  0k  9844k  # 01/2024
+# 0.03  0.00  0:00.03 100%  0k 10176k  # 01/2024
 
 use strict;
 use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.12 24/01/28 15:57:06";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.13 24/01/31 13:37:19";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN {
@@ -1504,6 +1504,7 @@ sub _ciphers_init   {
     my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..."
     if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
         ## no critic qw(InputOutput::RequireBriefOpen)
+        ## no critic qw(ErrorHandling::RequireCarping)
         open($fh, "<", $0) or warn($OText::STR{ERROR}, "013: open '$0' failed with: $!");
         while (<$fh>) { last if m(^__DATA__); } # skip to definition of ciphers
     }
@@ -1726,7 +1727,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.12 2024/01/28
+3.13 2024/01/31
 
 
 =head1 AUTHOR
