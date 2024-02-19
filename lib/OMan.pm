@@ -7,35 +7,35 @@
 package OMan;
 
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-# NOTE:  This often happens in comma separated statements, see above.
-#        It may also happen after postfix statements.
-#        Need to check regularily for this problem ...
+# NOTE: This often happens in comma separated statements, see above.
+#       It may also happen after postfix statements.
+#       Need to check regularily for this problem ...
 
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
-#        Yes, we have very complex regex here.
+#       Yes, we have very complex regex here.
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#        We believe that most RegEx are not too complex.
+#       We believe that most RegEx are not too complex.
 
 ## no critic qw(InputOutput::RequireBriefOpen)
-#        We always close our filehandles, Perl::Critic is too stupid to read
-#        over 15 lines.
+#       We always close our filehandles, Perl::Critic is too stupid to read
+#       over 15 lines.
 
 ## no critic qw(InputOutput::RequireCheckedClose)
-#        There is no harm if closing a file fails.
+#       There is no harm if closing a file fails.
 
 ## no critic qw(Documentation::RequirePodSections)
-#        Perl::Critic is uses a strange list of required sections in POD.
-#        See  t/.perlcriticrc .
+#       Perl::Critic is uses a strange list of required sections in POD.
+#       See  t/.perlcriticrc .
 
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-#        SEE Perlcritic:LocalVars
+#       SEE Perlcritic:LocalVars
 
 ## no critic qw(Variables::ProhibitPunctuationVar)
-#        We want to use $\ $0 etc.
+#       We want to use $\ $0 etc.
 
 ## no critic qw(Variables::ProhibitPackageVars)
-#        There is mainly ::osaft_standalone, which is ok.
+#       There is mainly ::osaft_standalone, which is ok.
 
 ## no critic qw(ControlStructures::ProhibitPostfixControls  Modules::RequireVersionVar)
 ## no critic qw(RegularExpressions::RequireDotMatchAnything RegularExpressions::RequireLineBoundaryMatching)
@@ -43,16 +43,16 @@ package OMan;
 ## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers  ValuesAndExpressions::RequireUpperCaseHeredocTerminator)
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes   )
 ## no critic qw(BuiltinFunctions::ProhibitBooleanGrep       BuiltinFunctions::ProhibitStringySplit)
-#        Keep severity 2 silent.
-# NOTE:  Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
+#       Keep severity 2 silent.
+# NOTE: Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
 
 use strict;
 use warnings;
-use vars qw(%checks %data %text);
 use utf8;
+use vars qw(%checks %data %text);
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.20 24/01/28 16:07:36";
+my  $SID_oman   = "@(#) OMan.pm 3.21 24/02/19 11:31:24";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -815,7 +815,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.20'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.21'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2507,7 +2507,7 @@ sub _oman_main      {
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $TRACE++; next; }  # allow --v
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_oman\n"; next; }
-       #if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
         man_docs_write()            if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
         # testing this module is technically the same as getting the text
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
@@ -2699,7 +2699,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.20 2024/01/28
+3.21 2024/02/19
 
 
 =head1 AUTHOR
