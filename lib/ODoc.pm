@@ -27,7 +27,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.12 24/01/31 13:40:21";
+my  $SID_odoc   = "@(#) ODoc.pm 3.13 24/02/19 12:12:27";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -478,7 +478,7 @@ sub _odoc_main  {
         OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ /^--?h(?:elp)?$/);
         _odoc_usage()           if ($cmd eq '--usage');
         # ----------------------------- commands
-        print list($0) . "\n"     if ($cmd =~ /^list$/);
+        print list($0) . "\n"   if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
         print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
@@ -643,7 +643,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.12 2024/01/31
+3.13 2024/02/19
 
 
 =head1 AUTHOR
