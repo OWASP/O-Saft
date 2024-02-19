@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_text   =  "@(#) OText.pm 3.4 24/01/10 21:31:09";
+my  $SID_otext  =  "@(#) OText.pm 3.7 24/02/19 12:22:38";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -129,7 +129,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.4 2024/01/10
+3.7 2024/02/19
 
 
 =head1 AUTHOR
@@ -190,11 +190,10 @@ sub _otext_main {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        print_pod($0, __PACKAGE__, $SID_text)   if ($arg =~ m/^--?h(?:elp)?$/msx);# print own help
-        if ($arg =~ m/^--(?:test[_.-]?)text/mx) {
-            $arg = "--testtext";
-            otext_test($arg);
-        }
+        if ($arg =~ m/^--?h(?:elp)?$/msx)       { print_pod($0, __PACKAGE__, $SID_otext); } # print own help
+        if ($arg =~ /^version$/x)               { print "$SID_otext\n"; next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/x)       { print "$VERSION\n";   next; }
+        if ($arg =~ m/^--(?:test[_.-]?)text/mx) { otext_test($arg); }
     }
     exit 0;
 } # _otext_main
