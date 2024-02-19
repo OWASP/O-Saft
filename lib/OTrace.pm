@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.14 24/01/27 12:21:07";
+my  $SID_trace      = "@(#) OTrace.pm 3.15 24/02/19 15:31:22";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -1038,7 +1038,7 @@ sub trace_done  {}; # dummy to check successful include
 
 =head1 NAME
 
-OTrace.pm - module for tracing o-saft.pl
+OTrace.pm - Perl module for tracing o-saft.pl
 
 
 =head1 SYNOPSIS
@@ -1175,7 +1175,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.14 2024/01/27
+3.15 2024/02/19
 
 =head1 AUTHOR
 
