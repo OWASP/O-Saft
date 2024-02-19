@@ -29,7 +29,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.13 24/01/27 12:18:30";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.14 24/02/19 15:34:16";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN {
@@ -65,7 +65,7 @@ use OText       qw(%STR);
 
 =head1 NAME
 
-OCfg.pm - common perl modul for O-Saft and related tools
+OCfg.pm - Perl module for O-Saft configuration
 
 
 =head1 SYNOPSIS
@@ -3539,7 +3539,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.13"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.14"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3587,7 +3587,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.13 2024/01/27
+3.14 2024/02/19
 
 =head1 AUTHOR
 
