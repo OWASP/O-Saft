@@ -27,7 +27,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.13 24/02/19 12:12:27";
+my  $SID_odoc   = "@(#) ODoc.pm 3.14 24/02/19 15:29:08";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -53,7 +53,7 @@ use OCfg        qw(%cfg);
 
 =head1 NAME
 
-ODoc - common Perl module to read data for user documentation
+ODoc - common Perl module to read O-Saft data for user documentation
 
 
 =head1 SYNOPSIS
@@ -643,7 +643,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.13 2024/02/19
+3.14 2024/02/19
 
 
 =head1 AUTHOR
