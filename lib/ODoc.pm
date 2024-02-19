@@ -27,7 +27,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.14 24/02/19 15:29:08";
+my  $SID_odoc   = "@(#) ODoc.pm 3.15 24/02/19 21:20:48";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -92,16 +92,21 @@ sub _get_standalone {   ##  no critic qw(Subroutines::ProhibitUnusedPrivateSubro
     #? return help.txt with path in standalone mode
     # o-saft-standalone.pl may be in installtion path or in usr/ directory
     # hence various places for help.txt are checked
-    my $file = shift;
-    my $orig = $file;
+    my $file = shift;               # doc/help.txt
     my $name = $file;
-       $name =~ s#(.*[/\\]+)##g;
-    $file =~ s#^\.\./##;
-    $file =~ s#usr/##;              # remove if in path
-    $file =  "$OCfg::cfg{'dirs'}->{'doc'}/$name" if (not -e $file);  # try this one ..
-    $file =  "" if (not -e $file);  # not found
-    _warn("189: no '$orig' found, consider installing") if "" eq $file;
-    return $file;
+       $name =~ s#(.*[/\\]+)##g;    # help.txt
+    my $path = __FILE__;
+       $path =~ s#/[^/\\]*$##;
+    foreach my $f ("$file,     $path/$file",      "$path/$name",
+                      "$path/$OCfg::cfg{'dirs'}->{'doc'}/$name",
+                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$name",
+                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$file",
+                      "$path/../$OCfg::cfg{'dirs'}->{'lib'}/$file"
+                     ) {
+        return $f if -e $f;
+    }
+    _warn("189: no '$file' found, consider installing");
+    return "";
 } # _get_standalone
 
 sub _get_filehandle {
@@ -643,7 +648,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.14 2024/02/19
+3.15 2024/02/19
 
 
 =head1 AUTHOR
