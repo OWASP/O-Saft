@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.8 24/01/31 12:26:20";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.9 24/02/19 15:25:23";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -196,7 +196,7 @@ BEGIN {
 
 =head1 NAME
 
-SSLinfo -- perl extension for SSL connection and certificate data
+SSLinfo -- Perl module to retrieve SSL connection and certificate data
 
 =head1 SYNOPSIS
 
