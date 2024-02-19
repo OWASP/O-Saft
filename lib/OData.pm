@@ -11,7 +11,7 @@ use warnings;
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-my  $SID_odata  =  "@(#) OData.pm 3.11 24/01/25 22:51:51";
+my  $SID_odata  =  "@(#) OData.pm 3.12 24/02/19 11:56:14";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
@@ -1112,10 +1112,11 @@ sub show        {
     if ('check_http' eq $arg) {
         printf("%21s -\t%s\n", $_, $check_http{$_}->{txt}) foreach (sort keys %check_http);
     }
-    if ('shorttexts' eq $arg) {
+    if ($arg =~ m/shorttexts?$/) {
         printf("%21s -\t%s\n", $_, $shorttexts{$_})        foreach (sort keys %shorttexts);
     }
     return if ($arg =~ /check_/); # cert conn dest size http
+    # some settings are done in o-saft.pl, which uses OMan::man_table(), hence ...
     print <<"EoHelp";
 
 = Please use  o-saft.pl --help=$arg  for formated output.
@@ -1166,9 +1167,7 @@ sub _odata_main {
         if ($arg =~ /^version$/x)        { print "$SID_odata\n";next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
         $arg =~ s/^(?:--test.?data)//x;
-show($arg);
-            $arg = "--test-data";
-#?#         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
+        show($arg);
     }
     exit 0;
 } # _odata_main
@@ -1188,7 +1187,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.11 2024/01/25
+3.12 2024/02/19
 
 =head1 AUTHOR
 
