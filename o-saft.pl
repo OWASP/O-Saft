@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.14 24/01/28 16:15:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.15 24/02/19 12:41:59"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.14"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.15"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6161,8 +6161,14 @@ sub printversion        {
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';    # convert string to key for %INC
         $v  = $m . "::VERSION";                 # compute module's VERSION variable
-        printf("    %-22s %-9s%s\n", $m, ($$v || " "), ($INC{$d} || $INC{"lib/$d"} || "<<not loaded>>"));
-            # use a single space if value is not defined
+        if (defined $$v) {
+            $v = $$v;
+        } else {
+            $v = qx(lib/$m.pm +VERSION);        # get version from module directly if not loaded
+            chomp $v;
+            $v = " " if ($v =~ m/^\s*$/);
+        }
+        printf("    %-22s %-9s%s\n", $m, $v, ($INC{$d} || $INC{"lib/$d"} || "<<not loaded>>"));
             # our own modues are in lib/ which is not part of the module name
             # (see list in foreach above), hence the additional || $INC{"lib/$d"}
     }
