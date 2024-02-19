@@ -52,7 +52,7 @@ use utf8;
 use vars qw(%checks %data %text);
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.21 24/02/19 11:31:24";
+my  $SID_oman   = "@(#) OMan.pm 3.22 24/02/19 21:32:45";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -72,6 +72,8 @@ use OText    qw(%STR);
 use OCfg;
 use ODoc;
 use Ciphers;    # required if called standalone only
+
+# OSAFT_STANDALONE my %cfg = %OCfg::cfg;
 
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
@@ -815,7 +817,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.21'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.22'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2699,7 +2701,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.21 2024/02/19
+3.22 2024/02/19
 
 
 =head1 AUTHOR
