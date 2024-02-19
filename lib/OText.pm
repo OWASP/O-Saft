@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.7 24/02/19 12:22:38";
+my  $SID_otext  =  "@(#) OText.pm 3.8 24/02/19 15:26:59";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -54,7 +54,7 @@ our @EXPORT_OK  = qw( %STR print_pod otext_done );
 
 =head1 NAME
 
-OText - common texts for O-Saft and related tools
+OText - Perl module providing texts for O-Saft and related tools
 
 
 =head1 SYNOPSIS
@@ -129,7 +129,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.7 2024/02/19
+3.8 2024/02/19
 
 
 =head1 AUTHOR
