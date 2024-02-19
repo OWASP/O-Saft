@@ -15,7 +15,7 @@ package OUsr;
 use strict;
 use warnings;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.12 24/01/24 23:15:15";
+my  $SID_ousr       = "@(#) OUsr.pm 3.13 24/02/19 15:32:40";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 
 #_____________________________________________________________________________
@@ -105,7 +105,7 @@ if (exists $INC{'lib/OTrace.pm'}) {
 
 =head1 NAME
 
-OUsr.pm - module for L<o-saft.pl|o-saft.pl>'s user definable functions
+OUsr.pm - Perl module for O-Saft user definable functions
 
 =head1 SYNOPSIS
 
@@ -317,7 +317,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.12 2024/01/24
+3.13 2024/02/19
 
 =head1 AUTHOR
 
