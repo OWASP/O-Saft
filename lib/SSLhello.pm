@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhelo= "@(#) SSLhello.pm 3.18 24/01/30 14:14:51";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.19 24/02/19 12:24:46";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -6301,16 +6301,16 @@ sub _main       {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    local $\="\n";
     if ($#argv < 0) { _main_help(); exit 0; }
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ /^--?h(?:elp)?$/)       { _main_help();         }
-        if ($arg =~ /^[+-]?version/i)       { print "$VERSION";     }
-        if ($arg =~ /^--test.?init/)            { printParameters();}
-        if ($arg =~ /^--test.?para(?:meter)?/)  { printParameters();}
-        if ($arg =~ /^--test.?const(?:ant)?/)   { printConstants(); }
-        if ($arg =~ /^[+-]/)                { exit 0; } # silently ignore unknown options
+        if ($arg =~ /^--?h(?:elp)?$/x)          { _main_help();         }
+        if ($arg =~ /^version$/x)               { print "$SID_sslhello\n";}
+        if ($arg =~ /^[+-]?VERSION/x)           { print "$VERSION\n";   }
+        if ($arg =~ /^--test.?init/x)           { printParameters();    }
+        if ($arg =~ /^--test.?para(?:meter)?/x) { printParameters();    }
+        if ($arg =~ /^--test.?const(?:ant)?/x)  { printConstants();     }
+        if ($arg =~ /^[+-]/)                    { exit 0; } # silently ignore unknown options
     }
     exit 0;
 } # _main
