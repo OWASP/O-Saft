@@ -163,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 1.40 24/03/23 08:45:38
+#?      @(#) install_openssl.sh 1.41 24/03/23 08:57:22
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -341,17 +341,20 @@ check_modules   () {
 
 check_libraries () {
 	lib=0
+	_log=/tmp/${0##*/}.$$.find_lib.log
 	echo_head "# required libraries:"
 	txt=`find /usr/lib -name libidn\.\*`
 	[ -z "$txt" ] && txt="**ERROR: libidn.so missing, consider installing libidn11-dev" && miss="$miss libidn,"
 	echo "	libidn.so $txt"
 	for pack in $lib_packages ; do
 		ok=1
-		txt=`find /usr -name $pack`
+		txt=`find /usr -name $pack 2>>$_log`
 		[ -z "$txt" ] && txt="**ERROR: $pack missing, consider installing $pack" && ok=0 && lib=1
 		[ 1 -eq $ok ] && txt="\tOK $txt"
 		echo "	$pack $txt"
 	done
+	[ -s "$_log" ] && echo "**WARNING: searching for libraries returned following errors:" && cat "$_log"
+	rm $_log
 	[ 1 -eq $lib ] && miss="$miss libraries," && err=1
 	return
 } # check_libraries
@@ -394,7 +397,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.40 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.41 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
