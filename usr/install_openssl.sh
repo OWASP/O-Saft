@@ -163,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#)  1.39 21/11/11 01:13:11
+#?      @(#) install_openssl.sh 1.40 24/03/23 08:45:38
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -201,9 +201,11 @@ exe_mandatory="
 	make
 "
 # packages required for building openssl
+# libidn2-0-dev is an ancient package name (back in 2017); it was replaced by
+# libidn2-dev in later debian distributions
 debian_packages="
 	libidn11-dev
-	libidn2-0-dev
+	libidn2-dev
 	libgmp-dev
 	libzip-dev
 	libsctp-dev
@@ -392,7 +394,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.39 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.40 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
