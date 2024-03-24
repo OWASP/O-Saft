@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.10 24/03/24 15:20:43";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.11 24/03/24 17:27:11";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -654,6 +654,7 @@ our @EXPORT = qw(
         net_sslinfo_done
         ssleay_methods
         test_methods
+        test_openssl
         test_sclient
         test_sslmap
         test_ssleay
