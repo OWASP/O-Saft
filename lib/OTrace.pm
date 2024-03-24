@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.17 24/03/24 15:15:56";
+my  $SID_trace      = "@(#) OTrace.pm 3.18 24/03/24 15:22:06";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -233,7 +233,7 @@ sub __data_head { return __data_title("key", "command", " %data ", "%checks", "c
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 
-# subs for fomated maps
+# subs for formatted maps
 sub __prot_option       {
     my $data;
     foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
@@ -1190,7 +1190,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.17 2024/03/24
+3.18 2024/03/24
 
 =head1 AUTHOR
 
