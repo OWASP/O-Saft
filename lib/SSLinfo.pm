@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.9 24/02/19 15:25:23";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.10 24/03/24 15:20:43";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -1405,19 +1405,19 @@ sub ssleay_methods  {
 sub test_openssl    {
     #? return internal data structure %_OpenSSL_opt (openssl options)
     s_client_check();
-    my $line = "#-----------------------+----------------";
-    my $data = "$line\n# _OpenSSL_opt          | 1=available\n$line\n";
+    my $line = "=-----------------------+----------------";
+    my $data = "$line\n= _OpenSSL_opt          | 1=available\n$line\n";
     foreach my $_opt (sort keys %_OpenSSL_opt) {
         if ('data' eq $_opt) {  # huge internal data from from openssl call
             if (0 >= $SSLinfo::verbose) {
                 $_OpenSSL_opt{$_opt} = '<<use  --v  or  --trace to see openssl usage>>';
             }
         }
-        $data  .= sprintf("#%22s\t= %s\n", $_opt, $_OpenSSL_opt{$_opt});
+        $data  .= sprintf("%23s\t= %s\n", $_opt, $_OpenSSL_opt{$_opt});
     }
     $data .= "$line";
     return $data;
-} # test_methods
+} # test_openssl
 
 sub test_methods    {
     #? return openssl s_client availabilities (options for s_client)
@@ -1431,12 +1431,12 @@ sub test_sclient    {
 
 sub test_sslmap     {
     #? return internal data structure %_SSLmap
-    my $line = "#-----------------------+--------+-------------";
-    my $data = "$line\n# _SSLmap{ key            SSLeay  bitmask\n$line\n";
+    my $line = "=-----------------------+--------+-------------";
+    my $data = "$line\n= _SSLmap    key        | SSLeay  bitmask\n$line\n";
     foreach my $_ssl (sort keys %_SSLmap) {
         my $mask = "<<undef>>";
            $mask = $_SSLmap{$_ssl}[1] if defined $_SSLmap{$_ssl}[1];
-        $data  .= sprintf("#%21s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
+        $data  .= sprintf("%23s\t= 0x%04X  %s\n", $_ssl, $_SSLmap{$_ssl}[0], $mask);
     }
     $data .= "$line";
     return $data;
@@ -1448,79 +1448,82 @@ sub test_ssleay     {
     #  a here document is not possible here, or at least more cumbersome,
     #  because Perl code is used inside
     my @list = ssleay_methods();
-    my $line = "#------------+------------------+-------------";
-    my $data = "# Net::SSLeay{ function           1=available
+    my $line = "=------------+------------------+-------------";
+    my $data = "$line
+= Net::SSLeay{ function         | 1=available
 $line
-#            ::SSLv2_method     = " . ((grep{/^SSLv2_method$/}     @list) ? 1 : 0) . "
-#            ::SSLv3_method     = " . ((grep{/^SSLv3_method$/}     @list) ? 1 : 0) . "
-#            ::SSLv23_method    = " . ((grep{/^SSLv23_method$/}    @list) ? 1 : 0) . "
-#            ::TLSv1_method     = " . ((grep{/^TLSv1_method$/}     @list) ? 1 : 0) . "
-#            ::TLSv1_1_method   = " . ((grep{/^TLSv1_1_method$/}   @list) ? 1 : 0) . "
-#            ::TLSv1_2_method   = " . ((grep{/^TLSv1_2_method$/}   @list) ? 1 : 0) . "
+             ::SSLv2_method     = " . ((grep{/^SSLv2_method$/}     @list) ? 1 : 0) . "
+             ::SSLv3_method     = " . ((grep{/^SSLv3_method$/}     @list) ? 1 : 0) . "
+             ::SSLv23_method    = " . ((grep{/^SSLv23_method$/}    @list) ? 1 : 0) . "
+             ::TLSv1_method     = " . ((grep{/^TLSv1_method$/}     @list) ? 1 : 0) . "
+             ::TLSv1_1_method   = " . ((grep{/^TLSv1_1_method$/}   @list) ? 1 : 0) . "
+             ::TLSv1_2_method   = " . ((grep{/^TLSv1_2_method$/}   @list) ? 1 : 0) . "
 #{ following missing in Net::SSLeay (up to 1.72):
-#            ::TLSv1_3_method   = " . ((grep{/^TLSv1_3_method$/}   @list) ? 1 : 0) . "
-#            ::DTLSv1_method    = " . ((grep{/^DTLSv1_method$/}    @list) ? 1 : 0) . "
-#            ::DTLSv1_2_method  = " . ((grep{/^DTLSv1_2_method$/}  @list) ? 1 : 0) . "
-#            ::DTLS_method      = " . ((grep{/^DTLS_method$/}      @list) ? 1 : 0) . "
+             ::TLSv1_3_method   = " . ((grep{/^TLSv1_3_method$/}   @list) ? 1 : 0) . "
+             ::DTLSv1_method    = " . ((grep{/^DTLSv1_method$/}    @list) ? 1 : 0) . "
+             ::DTLSv1_2_method  = " . ((grep{/^DTLSv1_2_method$/}  @list) ? 1 : 0) . "
+             ::DTLS_method      = " . ((grep{/^DTLS_method$/}      @list) ? 1 : 0) . "
 #}
-#            ::CTX_new_with_method  = " . ((grep{/^CTX_new_with_method$/} @list) ? 1 : 0) . "
-#            ::CTX_new          = " . ((grep{/^CTX_new$/}          @list) ? 1 : 0) . "
-#            ::CTX_v2_new       = " . ((grep{/^CTX_v2_new$/}       @list) ? 1 : 0) . "
-#            ::CTX_v3_new       = " . ((grep{/^CTX_v3_new$/}       @list) ? 1 : 0) . "
-#            ::CTX_v23_new      = " . ((grep{/^CTX_v23_new$/}      @list) ? 1 : 0) . "
-#            ::CTX_tlsv1_new    = " . ((grep{/^CTX_tlsv1_new$/}    @list) ? 1 : 0) . "
-#            ::CTX_tlsv1_0_new  = " . ((grep{/^CTX_tlsv1_0_new$/}  @list) ? 1 : 0) . "
-#            ::CTX_tlsv1_1_new  = " . ((grep{/^CTX_tlsv1_1_new$/}  @list) ? 1 : 0) . "
-#            ::CTX_tlsv1_2_new  = " . ((grep{/^CTX_tlsv1_2_new$/}  @list) ? 1 : 0) . "
-#            ::CTX_tlsv1_3_new  = " . ((grep{/^CTX_tlsv1_3_new$/}  @list) ? 1 : 0) . "
-#            ::CTX_dtlsv1_new   = " . ((grep{/^CTX_dtlsv1_new$/}   @list) ? 1 : 0) . "
-#            ::CTX_dtlsv1_2_new = " . ((grep{/^CTX_dtlsv1_2_new$/} @list) ? 1 : 0) . "
-#            ::CTX_dtlsv1_3_new = " . ((grep{/^CTX_dtlsv1_3_new$/} @list) ? 1 : 0) . "
-#            ::CTX_get_options  = " . ((grep{/^CTX_get_options$/}  @list) ? 1 : 0) . "
-#            ::CTX_set_options  = " . ((grep{/^CTX_set_options$/}  @list) ? 1 : 0) . "
-#            ::CTX_set_timeout  = " . ((grep{/^CTX_set_timeout$/}  @list) ? 1 : 0) . "
-#            ::CTX_set_alpn_protos  = " . ((grep{/^CTX_set_alpn_protos$/}  @list) ? 1 : 0) . "
-#            ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
+             ::CTX_new_with_method  = " . ((grep{/^CTX_new_with_method$/} @list) ? 1 : 0) . "
+             ::CTX_new          = " . ((grep{/^CTX_new$/}          @list) ? 1 : 0) . "
+             ::CTX_v2_new       = " . ((grep{/^CTX_v2_new$/}       @list) ? 1 : 0) . "
+             ::CTX_v3_new       = " . ((grep{/^CTX_v3_new$/}       @list) ? 1 : 0) . "
+             ::CTX_v23_new      = " . ((grep{/^CTX_v23_new$/}      @list) ? 1 : 0) . "
+             ::CTX_tlsv1_new    = " . ((grep{/^CTX_tlsv1_new$/}    @list) ? 1 : 0) . "
+             ::CTX_tlsv1_0_new  = " . ((grep{/^CTX_tlsv1_0_new$/}  @list) ? 1 : 0) . "
+             ::CTX_tlsv1_1_new  = " . ((grep{/^CTX_tlsv1_1_new$/}  @list) ? 1 : 0) . "
+             ::CTX_tlsv1_2_new  = " . ((grep{/^CTX_tlsv1_2_new$/}  @list) ? 1 : 0) . "
+             ::CTX_tlsv1_3_new  = " . ((grep{/^CTX_tlsv1_3_new$/}  @list) ? 1 : 0) . "
+             ::CTX_dtlsv1_new   = " . ((grep{/^CTX_dtlsv1_new$/}   @list) ? 1 : 0) . "
+             ::CTX_dtlsv1_2_new = " . ((grep{/^CTX_dtlsv1_2_new$/} @list) ? 1 : 0) . "
+             ::CTX_dtlsv1_3_new = " . ((grep{/^CTX_dtlsv1_3_new$/} @list) ? 1 : 0) . "
+             ::CTX_get_options  = " . ((grep{/^CTX_get_options$/}  @list) ? 1 : 0) . "
+             ::CTX_set_options  = " . ((grep{/^CTX_set_options$/}  @list) ? 1 : 0) . "
+             ::CTX_set_timeout  = " . ((grep{/^CTX_set_timeout$/}  @list) ? 1 : 0) . "
+             ::CTX_set_alpn_protos  = " . ((grep{/^CTX_set_alpn_protos$/}  @list) ? 1 : 0) . "
+             ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
 $line
-# Net::SSLeay} function\n";
+= Net::SSLeay} function\n";
     no warnings 'once'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
         # NOTE: perl's strict is picky for OP_NO_DTLS* below
-    $data .= "# Net::SSLeay{ constant           hex value
+    $data .= "= Net::SSLeay{ constant           hex value
 $line
-#            ::OP_NO_SSLv2      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv2) . "
-#            ::OP_NO_SSLv3      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv3) . "
-#            ::OP_NO_TLSv1      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1) . "
-#            ::OP_NO_TLSv1_1    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_1)  . "
-#            ::OP_NO_TLSv1_2    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_2)  . "
-#            ::OP_NO_TLSv1_3    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_3)  . "
-#            ::OP_NO_DTLSv09    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv09)  . "
-#            ::OP_NO_DTLSv1     = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1)   . "
-#            ::OP_NO_DTLSv1_1   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_1) . "
-#            ::OP_NO_DTLSv1_2   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_2) . "
-#            ::OP_NO_DTLSv1_3   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_3) . "
+             ::OP_NO_SSLv2      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv2) . "
+             ::OP_NO_SSLv3      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_SSLv3) . "
+             ::OP_NO_TLSv1      = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1) . "
+             ::OP_NO_TLSv1_1    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_1)  . "
+             ::OP_NO_TLSv1_2    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_2)  . "
+             ::OP_NO_TLSv1_3    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_TLSv1_3)  . "
+             ::OP_NO_DTLSv09    = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv09)  . "
+             ::OP_NO_DTLSv1     = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1)   . "
+             ::OP_NO_DTLSv1_1   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_1) . "
+             ::OP_NO_DTLSv1_2   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_2) . "
+             ::OP_NO_DTLSv1_3   = " . _ssleay_value_get('OP', *Net::SSLeay::OP_NO_DTLSv1_3) . "
 $line
-# Net::SSLeay} constant\n";
-    $data .= "# Net::SSLeay{ call
+= Net::SSLeay} constant\n";
+    $data .= "= Net::SSLeay{ call
+$line
 #      experimental ...
-# Net::SSLeay::CTX_new {
-#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_new) . "
-# Net::SSLeay::CTX_new }
-# Net::SSLeay::CTX_v3_new {
-#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v3_new)  . "
-# Net::SSLeay::CTX_v3_new }
-# Net::SSLeay::CTX_v23_new {
-#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_v23_new) . "
-#            ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_v23_new) . "
-# Net::SSLeay::CTX_v23_new }
-# Net::SSLeay::CTX_tlsv1_2_new {
-#            ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_tlsv1_2_new) . "
-#            ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_tlsv1_2_new) . "
-# Net::SSLeay::CTX_tlsv1_2_new }
-# Net::SSLeay} call\n";
+  Net::SSLeay::CTX_new {
+             ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_new) . "
+  Net::SSLeay::CTX_new }
+  Net::SSLeay::CTX_v3_new {
+             ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v3_new)  . "
+  Net::SSLeay::CTX_v3_new }
+  Net::SSLeay::CTX_v23_new {
+             ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_v23_new) . "
+             ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_v23_new) . "
+             ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_v23_new) . "
+             ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_v23_new) . "
+  Net::SSLeay::CTX_v23_new }
+  Net::SSLeay::CTX_tlsv1_2_new {
+             ::CTX_get_options(CTX)= " . _ssleay_value_get('options', *Net::SSLeay::CTX_tlsv1_2_new) . "
+             ::CTX_get_timeout(CTX)= " . _ssleay_value_get('timeout', *Net::SSLeay::CTX_tlsv1_2_new) . "
+             ::CTX_get_verify_mode(CTX) = " . _ssleay_value_get('verify_mode',  *Net::SSLeay::CTX_tlsv1_2_new) . "
+             ::CTX_get_verify_depth(CTX)= " . _ssleay_value_get('verify_depth', *Net::SSLeay::CTX_tlsv1_2_new) . "
+  Net::SSLeay::CTX_tlsv1_2_new }
+$line
+= Net::SSLeay} call\n";
 
     return $data;
 } # test_ssleay
