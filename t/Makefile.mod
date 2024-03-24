@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.6 24/01/26 15:04:16
+#?      @(#) Makefile.mod 3.7 24/03/24 20:00:19
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.6
+_SID.mod           := 3.7
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -107,7 +107,8 @@ LIST.lib-OMan.pm       := \
 
 LIST.lib-OTrace.pm     := \
 	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
-	--test-avail --test-init --test-maps --test-prot --test-vars
+	--test-avail --test-init --test-maps --test-prot --test-vars \
+	--test-methods  --test-sclient  --test-sslmap   --test-ssleay
 # $(O_LIB.dir)/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft.pl         += $(LIST.lib-OTrace.pm)
 
@@ -118,7 +119,7 @@ LIST.lib-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
 LIST.lib-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
 #LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
 
-# command and checks NOT YET IMPLEMENTED are hardcoded here,
+# command and checks "NOT YET IMPLEMENTED" are hardcoded here,
 # should be the same as cfg{commands_notyet} in $(O_LIB.dir)/OCfg.pm
 LIST.o-saft.notyet     := \
 	+closure    +cipher_order   +cipher_weak    +cps_valid  +fallback \
