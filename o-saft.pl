@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.16 24/03/22 18:13:14"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.17 24/03/24 17:53:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.16"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.17"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -567,7 +567,6 @@ my $legacy  = "";       # the legacy mode used in main
 my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
-my $test    = "";       # set to argument if --test* or +test* was used
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
@@ -6627,6 +6626,9 @@ while ($#argv >= 0) {
         _warn("023: old (pre 19.01.14) syntax '--legacy=key' obsolete, please use '--label=key'; option ignored");
         next;
     }
+    if ($arg =~ /^--yeast[_.-]?(.*)/)   { $arg = "--test-$1";    }
+    if ($arg eq  '--openssl')           { $arg = '--extopenssl'; }
+
     # ignore -post= option passed from shell script; ugly but defensive programming
     next if ($arg =~ /^-post=(.*)/);
 
@@ -6657,6 +6659,29 @@ while ($#argv >= 0) {
         exit 0;
     }
 
+    # all options starting with  --test  are not handled herein
+    trace_arg("opt_--t? $arg");
+    if ($arg =~ /^(?:--|\+|,)test/) {   # SEE Note:--test-*
+        # handles also --test-* and --tests-*
+        _trace_info("  TEST    - prepare for test functions");
+        _vprint("  test $arg");
+        $arg =~ s/^(?:--|[+,])(test.*)/--$1/;
+        $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g;
+        # some --test-* are special (need other data like %cfg)
+        $cfg{'need_netdns'}     = 1;
+        $cfg{'need_timelocal'}  = 1;
+        $cfg{'need_netinfo'}    = 1;
+        _load_modules();
+        if ($arg =~ m/ciphers.*regex/) {
+            _vprint("  test regex ");
+            OCfg::test_cipher_regex(); exit 0;
+        } else {
+            _vprint("  test any   ");
+            trace_test($arg);    exit 0;
+        }
+        exit 0;
+    }
+
     #{ handle some specials
     trace_arg("optmisc? $arg");
     #!#--------+------------------------+--------------------------+------------
@@ -6671,10 +6696,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
-    if ($arg eq  '--yeast')             { $arg = '--test-data';           } # TODO: should become a more general check
-    if ($arg =~ /^--yeast[_.-]?(.*)/)   { $arg = "--test-$1";             } # -"-
         # in CGI mode commands need to be passed as --cmd=* option
-    if ($arg eq  '--openssl')           { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
@@ -6808,9 +6830,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
     if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     if ($arg eq  '--anonoutput')        { $typ = 'ANON_OUT';        } # SEE Note:anon-out
-    if ($arg =~ /^--tests?/)            { $test = $arg;             } # SEE Note:--test-*
-    if ($arg =~ /^[+,]tests?/)          { $test = $arg;       next; } # SEE Note:--test-*
-        # handles also --test-* and --tests-*; no further check if +test*
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PROXY_HOST';      }
     if ($arg eq  '--proxyport')         { $typ = 'PROXY_PORT';      }
@@ -7459,7 +7478,7 @@ _trace_info("  LOAD0   - load modules start");
 
 #| import common and private modules
 #| -------------------------------------
-if (1 > _need_netinfo() and (not $test)) {  # --test* need need_netinfo=1
+if (1 > _need_netinfo()) {
     # SEE Note:need SSLinfo
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     # TODO: following necessary for _get_data0(), if called as single command
@@ -7630,12 +7649,6 @@ _trace_info("CONF9   - runtime configuration end");
 #| first all commands which do not make a connection
 #| -------------------------------------
 _vprint("check for no connection commands");
-trace(" --test= $test");
-# all --test-ciphers-* are special (need other data like %cfg or alike)
-$test =~ s/^(?:[+]|--)(test.*)/--$1/;   # SEE Note:--test-*
-if ($test =~ m/testciphersregex/)   { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
-if ($test =~ m/testciphers.+/)      { _vprint("  test cipher"); trace_test($test);    exit 0; }
-if ($test !~ m/^\s*$/)              { _vprint("  test any   "); trace_test($test);    exit 0; }
 # interanl information commands
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))             { _vprint("  list       "); printciphers_list('list'); exit 0; }
@@ -9248,8 +9261,7 @@ do not toggle the opposite one.
 The options  --test-*  are used for testing, showing internal information.
 Actually these are commands, hence the form  +test-*  is also supported.
 All these commands do not perform any checks on the specified targets, but
-exit right before the checks start. It is the same behaviour as the  +quit
-command.
+exit right before the checks start.
 
 Until VERSION 19.12.21, only the options  --test-*  where supported. Using
 these options exited the program. This behaviour resulted in incomplete or
