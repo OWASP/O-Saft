@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.19 24/03/24 16:02:42";
+my  $SID_trace      = "@(#) OTrace.pm 3.20 24/03/24 17:40:46";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -518,7 +518,7 @@ sub _trace_test_methods {
 EoT
     my $list = SSLinfo::test_methods();
        $list =~ s/ /\n  /g;
-    print "  $list";
+    print "  $list\n";
     return;
 } # _trace_test_methods
 
@@ -533,7 +533,7 @@ sub _trace_test_openssl {
 EoT
     my $list = SSLinfo::test_openssl();
        #$list =~ s/ /\n# /g;
-    print $list;
+    print "$list\n";
     return;
 } # _trace_test_openssl
 
@@ -548,7 +548,7 @@ sub _trace_test_sclient {
 EoT
     my $list = SSLinfo::test_sclient();
        $list =~ s/ /\n  /g;
-    print "  $list";
+    print "  $list\n";
     return;
 } # _trace_test_sclient
 
@@ -561,7 +561,7 @@ sub _trace_test_sslmap  {
 = Print available constants for SSL protocols in Net::SSLeay.
 =
 EoT
-    print SSLinfo::test_sslmap();
+    print SSLinfo::test_sslmap() . "\n";
     return;
 } # _trace_test_sslmap
 
@@ -623,7 +623,7 @@ EoT
     #foreach my $k (keys %data) {       # most entries report 42k, which is wrong
     #    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
     #}
-    print "$line";
+    print "$line\n";
     my $bytes = 0;
     # get all global variables and grep for our ones
     # ugly code, but generic
@@ -639,7 +639,7 @@ EoT
         $bytes += $size;
         printf("%7s\t%s\n", $size, "%$v");
     }
-    print "$line";
+    print "$line\n";
     printf("%7s\t(%2.2f MB) total\n", $bytes, $bytes/1024/1024);
     # the traditional way ...
     #print "%cfg    : ", Devel::Size::total_size(\%cfg);
@@ -1192,7 +1192,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.19 2024/03/24
+3.20 2024/03/24
 
 =head1 AUTHOR
 
