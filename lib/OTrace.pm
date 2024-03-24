@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.15 24/02/19 15:31:22";
+my  $SID_trace      = "@(#) OTrace.pm 3.16 24/03/24 14:52:59";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -105,16 +105,16 @@ our @EXPORT_OK  = qw(
 #o-saft.pl::Net::SSLinfo
 #SSLinfo::do_ssl_open(localhost,443,,) {
 #SSLinfo::do_ssl_open cipherlist: ALL:NULL:eNULL:aNULL:LOW:EXP
-#SSLinfo::do_ssl_open ::use_http: 1		<== inkonsistent
-#SSLinfo::do_ssl_open: request localhost:443	<== inkonsistent
+#SSLinfo::do_ssl_open ::use_http: 1             <== inkonsistent
+#SSLinfo::do_ssl_open: request localhost:443    <== inkonsistent
 # ...
 #o-saft.pl::checkdates(localhost, 443) {
-#o-saft.pl:: valid-years = 0				<== inkonsistent
+#o-saft.pl:: valid-years = 0                            <== inkonsistent
 #o-saft.pl::checkdates() }
 # ...
-#o-saft.pl::check_nextproto: type=ALPN, np=http/1.1	<== inkonsistent
+#o-saft.pl::check_nextproto: type=ALPN, np=http/1.1     <== inkonsistent
 # ...
-#o-saft.pl:: do=certversion cn ...			<== inkonsistent
+#o-saft.pl:: do=certversion cn ...                      <== inkonsistent
 #o-saft.pl::printdata(simple, localhost, 443) {
 
 # --trace-ARG
@@ -229,7 +229,7 @@ sub _ptype { my $d = __trac(@_); printf("%s\n", $d) if ($d !~ m/^\s*$/); return;
 # subs for formatted table
 sub __data      { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub __data_title{ return sprintf("=%19s %s %s %s %s %s %s %s", @_); }
-sub __data_head { return __data_title("key", "command", " %data  ", "%checks", "cmd-ch.", "short ", "intern ", ""); }
+sub __data_head { return __data_title("key", "command", " %data ", "%checks", "cmd-ch.", " short ", "intern ", ""); }
 sub __data_line { return sprintf("=%19s+%s+%s+%s+%s+%s+%s+%s", "-"x19, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7); }
 sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 
@@ -296,7 +296,7 @@ sub _trace_test_avail   {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
-=== internal data structure: overview of commands, %data and %checks ===
+=== internal data structures: overview of commands, %data and %checks ===
 =
 = Print a simple overview of all available commands for  +info  and  +check .
 = The purpose is to show if a proper key is defined in  %data and %checks  for
@@ -306,10 +306,10 @@ sub _trace_test_avail   {
 =  ------------+--------------------------------------------------
 =   key         key in %cfg{'commands'}
 =   command     key (see above) available as command: +key
-=   data        command returns %data  (part of +info)
-=   checks      command returns %check (part of +check)
+=   %data       command returns %data  (part of +info)
+=   %checks     command returns %check (part of +check)
 =   cmd-ch.     command listed in ...
-=   short       desciption of command available as short text
+=   short       description of command available as short text
 =   intern      internal command only, not avaialable as +key
 =  ------------+--------------------------------------------------
 =
@@ -382,9 +382,9 @@ sub _trace_test_init    {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
-=== internal data structure: initialisation of %cfg, %data and %checks ===
+=== internal data structures: initialisation of %cfg, %data and %checks ===
 =
-= Print initialised data structure  %data and %checks  after all  command-line
+= Print initialised data structures  %data and %checks  after all command-line
 = options have been applied.
 =
 EoT
@@ -415,8 +415,8 @@ EoT
         #             };
         # or example 2:
         #     $VAR1 = sub {
-        #         'txt'	=> 'Target default DTLS 0.9 cipher',
-        #         'val'	=> sub {
+        #         'txt' => 'Target default DTLS 0.9 cipher',
+        #         'val' => sub {
         #             BEGIN {${^WARNING_BITS} = "\x55\x55\ ... x55"}
         #             use strict;
         #             return $main::prot{$ssl}{'default'};
@@ -452,14 +452,14 @@ sub _trace_test_maps    {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
-=== internal data structure %cfg{openssl}, %cfg{ssleay} ===
+=== internal data structures: %cfg{openssl}, %cfg{ssleay} ===
 =
 = Print internal mappings for openssl functionality (mainly options).
 =
 EoT
     local $\ = "\n";
     my $data = SSLinfo::test_sslmap();
-       $data =~ s/^#/#$cfg{'me'}/smg;
+       $data =~ s/^#/#$cfg{'me'}: #/smg;
     print $data;
     _pline("%cfg{openssl_option_map} {");
     print __prot_option();
@@ -554,7 +554,7 @@ sub _trace_test_ssleay  {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
  
-=== internal data of from Net::SSLeay ===
+=== internal data of Net::SSLeay ===
 =
 = Print information about Net::SSLeay capabilities.
 =
@@ -588,31 +588,30 @@ sub _trace_test_memory  {
 
 === memory usage of internal variables ===
 =
-= Use  --v  to get more details.
+= Print memory usage of internal variables.
 =
 EoT
-    if (0 < $cfg{'trace'}) {
-        foreach my $k (keys %cfg) {
-	    printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
-        }
-        foreach my $k (keys %::checks) {
-	    printf("%6s\t%s\n", Devel::Size::total_size(\$checks{$k}), "%checks{$k}");
-        }
-        #foreach my $k (keys %ciphers) {    # useless, as each entry is about 2k
-	#    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%ciphers{$k}");
-        #}
-        foreach my $k (keys %dbx) {
-	    printf("%6s\t%s\n", Devel::Size::total_size(\$dbx{$k}),    "%dbx{$k}");
-        }
-        #foreach my $k (keys %data) {       # most entries report 42k, which is wrong
-	#    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
-        #}
-    }
-    my $bytes = 0;
     my $line  = "=------+----------------";
+    print "= Bytes variable\n$line";
+    foreach my $k (keys %cfg) {
+        printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
+    }
+    foreach my $k (keys %::checks) {
+        printf("%6s\t%s\n", Devel::Size::total_size(\$checks{$k}), "%checks{$k}");
+    }
+    foreach my $k (keys %dbx) {
+        printf("%6s\t%s\n", Devel::Size::total_size(\$dbx{$k}),    "%dbx{$k}");
+    }
+    #foreach my $k (keys %ciphers) {    # useless, as each entry is about 2k
+    #    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%ciphers{$k}");
+    #}
+    #foreach my $k (keys %data) {       # most entries report 42k, which is wrong
+    #    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
+    #}
+    print "$line";
+    my $bytes = 0;
     # get all global variables and grep for our ones
     # ugly code, but generic
-    print "= Bytes variable\n$line";
     foreach my $v (sort keys %main::) {
         #print Dumper $v; # liefert den gesamten Hash
         next if ("*{$main::{$v}}" !~ m/\*main::/);
@@ -623,7 +622,7 @@ EoT
         #dbx print "K $v $main::{$v} => $t";
         my $size = Devel::Size::total_size(\$main::{$v});
         $bytes += $size;
-        printf("%7s\t%s\n", $size, $v);#if (exists $main::{$v});
+        printf("%7s\t%s\n", $size, "%$v");
     }
     print "$line";
     printf("%7s\t(%2.2f MB) total\n", $bytes, $bytes/1024/1024);
@@ -675,7 +674,7 @@ sub _trace_test_vars    {
 
     print <<'EoT';
 
-=== internal data structures %ciphers %prot %cfg %data %info %checks ===
+=== internal data structures: %ciphers %prot %cfg %data %info %checks ===
 =
 = Print initialised internal data structures using Perl's Data::Dumper.
 =
@@ -1175,7 +1174,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.15 2024/02/19
+3.16 2024/03/24
 
 =head1 AUTHOR
 
