@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.16 24/03/24 14:52:59";
+my  $SID_trace      = "@(#) OTrace.pm 3.17 24/03/24 15:15:56";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -517,10 +517,25 @@ sub _trace_test_methods {
 =
 EoT
     my $list = SSLinfo::test_methods();
-       $list =~ s/ /\n# /g;
-    print "# $list";
+       $list =~ s/ /\n  /g;
+    print "  $list";
     return;
 } # _trace_test_methods
+
+sub _trace_test_openssl {
+    printf("#%s:\n", (caller(0))[3]);
+    print <<'EoT';
+
+=== internal data structure %_OpenSSL_opt ===
+=
+= Print internal data structure from SSLinfo.
+=
+EoT
+    my $list = SSLinfo::test_openssl();
+       #$list =~ s/ /\n# /g;
+    print $list;
+    return;
+} # _trace_test_openssl
 
 sub _trace_test_sclient {
     printf("#%s:\n", (caller(0))[3]);
@@ -532,8 +547,8 @@ sub _trace_test_sclient {
 =
 EoT
     my $list = SSLinfo::test_sclient();
-       $list =~ s/ /\n# /g;
-    print "# $list";
+       $list =~ s/ /\n  /g;
+    print "  $list";
     return;
 } # _trace_test_sclient
 
@@ -986,6 +1001,7 @@ sub trace_test  {
     _trace_test_sclient()       if ('--testsclient'   eq $arg); # SSLinfo
     _trace_test_ssleay()        if ('--testssleay'    eq $arg); # SSLinfo
     _trace_test_sslmap()        if ('--testsslmap'    eq $arg); # SSLinfo
+    _trace_test_openssl()       if ('--testopenssl'   eq $arg); # SSLinfo
     _trace_test_methods()       if ('--testmethods'   eq $arg); # SSLinfo
     _trace_test_memory()        if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
@@ -1174,7 +1190,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.16 2024/03/24
+3.17 2024/03/24
 
 =head1 AUTHOR
 
