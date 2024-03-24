@@ -37,7 +37,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.18 24/03/24 15:22:06";
+my  $SID_trace      = "@(#) OTrace.pm 3.19 24/03/24 16:02:42";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -1122,6 +1122,8 @@ For example  I<--test-maps>  calls  C<_trace_test_maps()>.
 
 =head3 _trace_test_methods( )
 
+=head3 _trace_test_openssl( )
+
 =head3 _trace_test_sclient( )
 
 =head3 _trace_test_sslmap( )
@@ -1190,7 +1192,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.18 2024/03/24
+3.19 2024/03/24
 
 =head1 AUTHOR
 
