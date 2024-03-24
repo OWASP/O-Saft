@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.17 24/03/24 17:53:20"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.18 24/03/24 19:28:06"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.17"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.18"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -567,6 +567,7 @@ my $legacy  = "";       # the legacy mode used in main
 my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
+my $test    = "";       # set to argument ist it bwgins with --test*
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
@@ -6659,27 +6660,20 @@ while ($#argv >= 0) {
         exit 0;
     }
 
-    # all options starting with  --test  are not handled herein
+    # all options starting with  --test  are not handled herein, they must be
+    # handled after parsing all arguments, which may contain more options
+    # see testing $test near "no connection commands" below
     trace_arg("opt_--t? $arg");
-    if ($arg =~ /^(?:--|\+|,)test/) {   # SEE Note:--test-*
+    if ($arg =~ /^(?:--|\+|,)(test.*)/) {   # SEE Note:--test-*
         # handles also --test-* and --tests-*
+        _vprint("test $arg");
+        $test = "--$1";
+        $test =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g;
         _trace_info("  TEST    - prepare for test functions");
-        _vprint("  test $arg");
-        $arg =~ s/^(?:--|[+,])(test.*)/--$1/;
-        $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g;
         # some --test-* are special (need other data like %cfg)
         $cfg{'need_netdns'}     = 1;
         $cfg{'need_timelocal'}  = 1;
         $cfg{'need_netinfo'}    = 1;
-        _load_modules();
-        if ($arg =~ m/ciphers.*regex/) {
-            _vprint("  test regex ");
-            OCfg::test_cipher_regex(); exit 0;
-        } else {
-            _vprint("  test any   ");
-            trace_test($arg);    exit 0;
-        }
-        exit 0;
     }
 
     #{ handle some specials
@@ -7478,7 +7472,7 @@ _trace_info("  LOAD0   - load modules start");
 
 #| import common and private modules
 #| -------------------------------------
-if (1 > _need_netinfo()) {
+if (1 > _need_netinfo() and not $test) {
     # SEE Note:need SSLinfo
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     # TODO: following necessary for _get_data0(), if called as single command
@@ -7646,16 +7640,19 @@ _init_checks_val(); # initialise default values in %checks again depending on gi
 
 _trace_info("CONF9   - runtime configuration end");
 
-#| first all commands which do not make a connection
+#| now all commands which do not make a connection
 #| -------------------------------------
 _vprint("check for no connection commands");
+# --test*  are not handled herein
+if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
+if ($test !~ /^\s*$/)           { _vprint("  test any   "); trace_test($test);    exit 0; }
 # interanl information commands
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
-if (_is_cfg_do('list'))             { _vprint("  list       "); printciphers_list('list'); exit 0; }
-if (_is_cfg_do('ciphers'))          { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
-if (_is_cfg_do('version'))          { _vprint("  version    "); printversion();       exit 0; }
-if (_is_cfg_do('libversion'))       { _vprint("  libversion "); printopenssl();       exit 0; }
-if (_is_cfg_do('quit'))             { _vprint("  quit       "); printquit();          exit 0; }
+if (_is_cfg_do('list'))         { _vprint("  list       "); printciphers_list('list'); exit 0; }
+if (_is_cfg_do('ciphers'))      { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
+if (_is_cfg_do('version'))      { _vprint("  version    "); printversion();       exit 0; }
+if (_is_cfg_do('libversion'))   { _vprint("  libversion "); printopenssl();       exit 0; }
+if (_is_cfg_do('quit'))         { _vprint("  quit       "); printquit();          exit 0; }
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
