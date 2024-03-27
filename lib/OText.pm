@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.8 24/02/19 15:26:59";
+my  $SID_otext  =  "@(#) OText.pm 3.9 24/03/27 21:09:32";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -51,6 +51,7 @@ our @EXPORT_OK  = qw( %STR print_pod otext_done );
 =pod
 
 =encoding utf8
+
 
 =head1 NAME
 
@@ -115,7 +116,7 @@ Perlish spoken, all texts are L</VARIABLES>.
 
 =head3 otext_test( )
 
-Print text constant defined herein.
+Print text constants defined herein.
 
 =head3 print_pod($file)
 
@@ -129,7 +130,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.8 2024/02/19
+3.9 2024/03/27
 
 
 =head1 AUTHOR
@@ -182,10 +183,10 @@ EoT
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-
 sub _otext_main {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
+    # SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
