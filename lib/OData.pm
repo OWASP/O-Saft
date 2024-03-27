@@ -6,18 +6,21 @@
 
 package OData;
 
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
+# SEE Perl:perlcritic
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+## no critic qw(Variables::ProhibitPackageVars)
+
 use strict;
 use warnings;
 
-## no critic qw(RegularExpressions::RequireExtendedFormatting)
-
-my  $SID_odata  =  "@(#) OData.pm 3.12 24/02/19 11:56:14";
+my  $SID_odata  =  "@(#) OData.pm 3.13 24/03/27 20:59:31";
 our $VERSION    =  "24.01.24";
 
 BEGIN {
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
     if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
         unshift(@INC, $ENV{'PWD'});
@@ -38,7 +41,7 @@ use OText       qw(%STR);
 
 =head1 NAME
 
-Data - common SSL/TLS-connection data for O-Saft and related tools
+OData - common SSL/TLS-connection data for O-Saft and related tools
 
 
 =head1 DESCRIPTION
@@ -52,7 +55,7 @@ All variables and methods are defined in the  OData  namespace.
 
 =over 2
 
-=item use OData;            # in perl code
+=item use OData;            # from within perl code
 
 =item OData.pm --help       # on command-line will print help
 
@@ -130,7 +133,6 @@ Same as %data with values only.
 #________________________________________________ public (export) variables __|
 
 # SEE Perl:perlcritic
-## no critic qw(Variables::ProhibitPackageVars)
 
 use Exporter qw(import);
 use base     qw(Exporter);
@@ -1156,6 +1158,7 @@ sub _odata_init {
 sub _odata_main {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
+    #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
@@ -1185,9 +1188,11 @@ _odata_init();
 
 # ...
 
+
 =head1 VERSION
 
-3.12 2024/02/19
+3.13 2024/03/27
+
 
 =head1 AUTHOR
 
