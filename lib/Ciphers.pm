@@ -6,14 +6,11 @@
 
 package Ciphers;
 
-## no critic qw(ControlStructures::ProhibitPostfixControls)
-#  We believe it's better readable (severity 2 only).
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
+# SEE Perl:perlcritic
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#  We use /x as needed for human readability only.
-
 ## no critic qw(Variables::ProhibitPackageVars)
-#  SEE Perl:perlcritic
 
 # test resources with:
 # /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" lib/Ciphers.pm  alias
@@ -28,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.13 24/01/31 13:37:19";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.14 24/03/27 21:54:49";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN {
@@ -60,7 +57,7 @@ $::osaft_standalone = 0 if not defined $::osaft_standalone;
 
 =head1 NAME
 
-Ciphers - common Perl module to define cipher suites for O-Saft
+Ciphers - Perl module to define cipher suites for O-Saft
 
 
 =head1 SYNOPSIS
@@ -1576,13 +1573,11 @@ sub _ciphers_usage  {
 
 sub _ciphers_main   {
     #? print own documentation or special required one
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
+    push(@argv, "--help") if (0 > $#argv);
     #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
-    if (0 > $#argv) { OText::print_pod($0, __FILE__, $SID_ciphers);exit; }
+    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
         if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit; }
@@ -1727,7 +1722,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.13 2024/01/31
+3.14 2024/03/27
 
 
 =head1 AUTHOR
