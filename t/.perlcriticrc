@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.16 23/11/15 01:01:07
+#?      @(#) .perlcriticrc 1.17 24/03/27 21:41:37
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -63,13 +63,13 @@ verbose     = 8
 # theme       = o-saft
 
 [ControlStructures::ProhibitPostfixControls]
-    allow   = if unless
+    allow   = if unless for
     #allow  = foreach
 	# as the severity is already 2, its okay to report foreach violations
 
 
     # Message
-	# Postfix control "if" used at line ...
+	# Postfix control "if" used at line ... (Severity: 2)
 
     # CHECK adapted
 	# Postfix controls are used often to have the relevant code far left!
@@ -116,11 +116,11 @@ verbose     = 8
         #  "For consistency's sake, this policy checks files opened for output
         #   as well as input, For complete coverage it also checks `binmode()'
         #   calls, where the direction the operation can not be determined."
-        # This is wrong, as binmode() usually uses the common  bare word  file
+        # This is wrong, as `binmode()' usually uses the common bare word file
         # handles like STDOUT, STDERR, STDIN undoublty.
-        # Our code uses binmode() only for output, hence this check is a false
-        # positive. As this check should be active for future changes, we mark
-        # all our binmode() calls with a proper  ## no critic .
+        # Our code uses  `binmode();'  only for output,  hence this check is a
+        # false positive. As the check should be active for future changes, we
+        # mark all our  `binmode();'  calls with a proper  `## no critic ..'.
 
 
 [InputOutput::ProhibitBacktickOperators]
@@ -252,7 +252,7 @@ verbose     = 8
 [-RegularExpressions::RequireDotMatchAnything]
 
     # Message
-	# Regular expression without "/s" flag at line ...
+	# Regular expression without "/s" flag at line ... (Severity: 2)
 
     # CHECK DISABLED
 	# cause we know about meta character . and /s modifier in RegEx ;-)
@@ -261,7 +261,7 @@ verbose     = 8
 [-RegularExpressions::RequireLineBoundaryMatching]
 
     # Message
-	# Regular expression without "/m" flag at line ...
+	# Regular expression without "/m" flag at line ... (Severity: 2)
 
     # CHECK DISABLED
 	# cause we use /m as needed
@@ -274,6 +274,8 @@ verbose     = 8
 
     # CHECK DISABLED
 	# because we use /x as needed for human readability
+	# Most of our RegEx -wether simple or complex- are easy to read. It is
+	# the nature of our code to make extensive use of RegEx.
 
 
 [Subroutines::ProhibitBuiltinHomonyms]
@@ -382,20 +384,24 @@ verbose     = 8
 
 
 [Variables::ProhibitPackageVars]
-    add_packages = Net::SSLinfo Net::SSLhello Net::SSLeay
+    add_packages = SSLinfo SSLhello OCfg OData OText OTace Net::SSLeay
 
     # Message
 	# Package variable declared or used at line ...
 
     # CHECK adapted
 	# Add our private modules, this leaves unwanted global variables to be
-	# reported only.
+	# reported only. # NOTE: not working in Perl::Critic 1.148 .
 	# Net::SSLeay is configured using its private variables.
 
 
 [Variables::ProhibitPunctuationVars]
     allow = $@ $! $? $0 $. $^O $\
 
+    # Message
+	# Magic punctuation variable $0 used in ... (Severity: 2)
+
+    # CHECK adapted
 	# we make regular use of these variables as we know them;-)
 
 
@@ -413,7 +419,7 @@ verbose     = 8
 
 
 [Variables::ProhibitReusedNames]
-    allow   = $host $port $legacy $arg
+    allow   = $host $port $legacy $arg $txt
 
     # Message
 	# Reused variable name in lexical scope: ...
@@ -441,11 +447,12 @@ verbose     = 8
 	# Workaround: disable selectively where appropriate with:
 
 
-#[RegularExpressions::ProhibitComplexRegexes]
+[RegularExpressions::ProhibitComplexRegexes]
 
     # Message
 	# Split long regexps into smaller qr// chunks at line ...
 
+    # CHECK ENABLED
 	# FIXME: to be discussed
 	# Workaround: disable selectively where appropriate with:
 
@@ -461,7 +468,7 @@ verbose     = 8
 [-ValuesAndExpressions::ProhibitEmptyQuotes]
 
     # Message
-	# Quotes used with a string containing no non-whitespace characters at line ...
+	# Quotes used with a string containing no non-whitespace characters at line ... (Severity: 2)
 
     # CHECK DISABLED
 	# cause we consider following correct and useful:  my $var = '';
@@ -480,7 +487,7 @@ verbose     = 8
 [ValuesAndExpressions::ProhibitEscapedCharacters]
 
     # Message
-	# Numeric escapes in interpolated string at line ...
+	# Numeric escapes in interpolated string at line ...  (Severity: 2)
 
     # CHECK ENABLED
 
@@ -491,18 +498,23 @@ verbose     = 8
 	# Literal line breaks in a string at line ...
 
     # CHECK DISABLED
-	# yes, there are a lot of constructs using nwelines in texts, that's ok
+	# yes, there're a lot of constructs using newlines in texts, that's ok
 
 
 [ValuesAndExpressions::ProhibitMagicNumbers]
-    allowed_values = 0..99
-    allowed_values = 443
+    allowed_values = -1 0..99 443
+	# Perl::Critic seems to be buggy as it does not honor the allow option
+	# Perl::Critic also complains  when numbers in the code are mandatory,
+	# for example: print("%s", "word " x42);
 
     # allowed_types  =
     # constant_creator_subroutines = 
 	# FIXME: to be discussed
 	# Workaround: disable selectively where appropriate with:
 		## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+
+    # Message
+	# 101 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module .. (Severity: 2)
 
     # CHECK adapted
 	# we use some integers
@@ -539,7 +551,7 @@ verbose     = 8
 [-ValuesAndExpressions::RequireUpperCaseHeredocTerminator]
 
     # Message
-	# Heredoc terminator not alphanumeric and upper-case at line ...
+	# Heredoc terminator not alphanumeric and upper-case at line ... (Severity: 2)
 
     # CHECK DISABLED
 	# other people, other opinions
@@ -553,14 +565,15 @@ verbose     = 8
     # CHECK ENABLED
 
 
-#[RegularExpressions::ProhibitFixedStringMatches]
+[-RegularExpressions::ProhibitFixedStringMatches]
 
     # Message
-	# Use 'eq' or hash instead of fixed-pattern regexps at line ...
+	# Use 'eq' or hash instead of fixed-pattern regexps ... (Severity: 2)
 
-	# FIXME: to be discussed
-	# we often use something like:  if (m/^$/)
-	# which is hard to be expressed as a hash
+    # CHECK DISABLED
+	# we consider  "if (m/^strg$/)"  correct and useful,  but Perl::Critic
+	# also complains about  "grep{/^str$/} @ARR", which is hard to express
+	# as a hash or rewrite with recommended 'eq'.
 
 
 #[TestingAndDebugging::ProhibitNoStrict]
@@ -592,8 +605,8 @@ verbose     = 8
 	# Code before strictures are enabled at line ...
 
     # Note:
-	# This check produces false positives in module files, if there is no
-	#  "use strict"  , but this is not necessary as long as the module is
+	# This check produces false positives in module files,  if there is no
+	#  "use strict"  , but this is not necessary  as long as the module is
 	# executed itself.
 	# Anyway, "use strict" and "use warnings" is added to modules too.
 
@@ -601,13 +614,15 @@ verbose     = 8
 [-BuiltinFunctions::ProhibitBooleanGrep]
 
     # Message
-	# "grep" used in boolean context at line  ...
-	# "grep" used in void context at line  ...
+	# "grep" used in boolean context at line  ... (Severity: 2)
+	# "grep" used in void context at line  ... (Severity: 2)
 
     # CHECK DISABLED
 	# Perl::Critic  is too noicy and may have false positives, see its own
         # description:
 	#    perlcritic --doc BuiltinFunctions::ProhibitBooleanGrep
+	# The described performance penulty with grep is also not important in
+	# our code.
 
 
 #[BuiltinFunctions::ProhibitStringyEval]
@@ -653,13 +668,22 @@ verbose     = 8
 	# other people, other opinions
 
 
-
 [BuiltinFunctions::ProhibitStringySplit]
 
     # Message:
 	# String delimiter used with "split" at line ...
 
     # CHECK ENABLED
+
+
+[BuiltinFunctions::ProhibitUselessTopic]
+
+    # Message:
+	# Useless use of $_ at line ...  (Severity: 2)
+
+    # CHECK ENABLED
+	# FIXME: to be discussed
+	# Workaround: disable selectively where appropriate with:
 
 
 [Miscellanea::ProhibitUnrestrictedNoCritic]
@@ -671,13 +695,12 @@ verbose     = 8
     lib_sections = NAME | SYNOPSIS | DESCRIPTION | AUTHOR
 
     # Message:
-	# Missing "OPTIONS" section in POD at line ...
+	# Missing "OPTIONS" section in POD at line ... (Severity: 2)
 
     # CHECK DISABLED
-	# cause we consider following correct and useful:  my $last = '';
-	# Perl::Critic is uses a strange list of required sections in POD.
-	# Also there is no possibility to disable Perl::Critic's required
-	# sections, hence generally disabled.
+	# Perl::Critic uses a strange list of required sections in POD. There
+	# is also no possibility to disable Perl::Critic's required sections.
+	# I.g. our POD is fine, hence generally disabled.
 
 
 [-NamingConventions::ProhibitAmbiguousNames]
@@ -687,5 +710,15 @@ verbose     = 8
 
     # CHECK DISABLED
 	# cause we consider following correct and useful:  my $last = '';
-	# Perl::Critic is too pedantic here as it is no problem at all with perl.
+	# Perl::Critic is too pedantic as it's not a problem with perl at all.
+
+[-Miscellanea::ProhibitUselessNoCritic]
+    severity = 2
+
+    # Message:
+	# Useless '## no critic' annotation at line ...  (Severity: 2)
+
+    # CHECK DISABLED
+	# because pragmas for higher severity may exist in our code; when this
+	# code is checked for severity, Perl::Critic complains with this error
 
