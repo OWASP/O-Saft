@@ -10,32 +10,26 @@ package OCfg;
 #    require "o-saft-lib" "full";  # or "raw"
 #       full: anything for o-saft.pl; raw partial for SSLhello.pm
 
-## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-#       SEE Perl:binmode() (in o-saft.pl)
-
-## no critic qw(Subroutines::RequireArgUnpacking)
-#       Because we use @_ for better human readability.
-
-## no critic qw(## no critic qw(Variables::ProhibitPackageVars)
-#       Because variables are defined herein.
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
+# SEE Perl:perlcritic
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#       We believe that most RegEx are not too complex.
-
 ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
-#       That's intended in strings; perlcritic is too pedantic.
+## no critic qw(Variables::ProhibitPackageVars)
+## no critic qw(ValuesAndExpressions::ProhibitEscapedCharacters) # Severity: 2
+##    critic qw(ValuesAndExpressions::ProhibitMagicNumbers) # Severity: 2
+#       may print a lot of information, it's everity: 2 only
 
 use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.14 24/02/19 15:34:16";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.15 24/03/27 21:38:52";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
-BEGIN {
+BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
-    my $_me   = $0;     $_me   =~ s#.*[/\\]##x;
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
     if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
         unshift(@INC, $ENV{'PWD'});
@@ -55,9 +49,6 @@ use OText       qw(%STR);
 #       Following (internal) functions from o-saft.pl are used:
 #       _is_ssl_pfs()
 
-## no critic qw(Documentation::RequirePodSections)
-#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
-
 =pod
 
 =encoding utf8
@@ -72,7 +63,7 @@ OCfg.pm - Perl module for O-Saft configuration
 
 =over 2
 
-=item use OCfg;         # in perl code
+=item use OCfg;         # from within perl code
 
 =item OCfg.pm --help    # on command-line will print help
 
@@ -205,17 +196,14 @@ purpose of this module is defining variables. Hence we export them.
 
 =back
 
-
-=head1 METHODS
-
 =cut
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
 
 ## no critic qw(Modules::ProhibitAutomaticExportation)
-#  perlcritic complains to use @EXPORT_OK instead of @EXPORT, but we want any-
-#  thing exported.
+#  Perl::Critic complains to use @EXPORT_OK instead of @EXPORT, but we want
+#  anything exported.
 
 # See NOTES below also.
 
@@ -3028,6 +3016,8 @@ sub _get_keys_list {
 
 =pod
 
+=head1 METHODS
+
 =head3 tls_text2key($text)
 
 Convert text to internal key: 0x00,0x26 -> 0x03000026
@@ -3333,8 +3323,8 @@ sub ocfg_sleep      {
 
 sub printhint       {
     #? Print hint for specified command.
-    my $cmd  = shift;
     my @args = @_;
+    my $cmd  = $args[0];
     print $STR{HINT}, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
@@ -3539,7 +3529,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.14"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.15"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3550,8 +3540,9 @@ sub _ocfg_main      {
     #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
+    # SEE Perl:binmode()
+    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
         # ----------------------------- commands
@@ -3587,7 +3578,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.14 2024/02/19
+3.15 2024/03/27
 
 =head1 AUTHOR
 
