@@ -6,16 +6,15 @@
 
 package OUsr;
 
-## no critic qw(Documentation::RequirePodSections)
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#        We believe that most RegEx are not too complex.
 
 use strict;
 use warnings;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.13 24/02/19 15:32:40";
+my  $SID_ousr       = "@(#) OUsr.pm 3.14 24/03/27 21:16:10";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 
 #_____________________________________________________________________________
@@ -299,11 +298,9 @@ sub pre_exit    {
 
 sub _ousr_main   {
     my $arg = shift || "--help";    # without argument print own help
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #   see t/.perlcriticrc for detailed description of "no critic"
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
+    # SEE Perl:binmode()
+    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     OText::print_pod($0, __FILE__, $SID_ousr) if ($arg =~ m/--?h(elp)?$/x);
     # no other options implemented yet
     print "$SID_ousr\n"     if ($arg =~ /^version$/);
@@ -313,11 +310,14 @@ sub _ousr_main   {
 
 sub ousr_done   {}; # dummy to check successful include
 
+#_____________________________________________________________________________
+#_____________________________________________________ public documentation __|
+
 =pod
 
 =head1 VERSION
 
-3.13 2024/02/19
+3.14 2024/03/27
 
 =head1 AUTHOR
 
