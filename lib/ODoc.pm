@@ -14,7 +14,7 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.16 24/03/27 19:32:04";
+my  $SID_odoc   = "@(#) ODoc.pm 3.17 24/03/27 20:58:11";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -46,17 +46,246 @@ use OCfg        qw(%cfg);
 ODoc - Perl module to read O-Saft data for user documentation
 
 
+=head1 DESCRIPTION
+
+Utility package for O-Saft (o-saft.pl and related tools) to provide methods
+which return user documentation from text files in various formats.
+
+
 =head1 SYNOPSIS
 
 =over 2
 
 =item use ODoc;             # from within perl code
 
-=item ODoc.pm --usage       # on command line will print short usage
+=item ODoc.pm --usage       # on command line prints short usage
 
-=item ODoc.pm [COMMANDS]    # on command line will print help
+=item ODoc.pm [COMMANDS] F  # on command line prints text of specified file
 
 =back
+
+
+=head1 METHODS
+
+=head3 get($file,$name,$version)
+
+Return all data from file and replace $0 by $name. Returns data as string.
+
+=head3 get_as_text($file)
+
+Return all data from file as is. Returns data as string.
+
+=head3 get_markup($file,$name,$version)
+
+Return all data converted to internal markup format. Returns array of lines.
+
+=head3 print_as_text($file)
+
+Same as  get()  but prints text directly.
+
+
+=head1 COMMANDS
+
+If called from command line, like:
+
+  ODoc.pm COMMANDS filename
+
+this modules provides following COMMANDS:
+
+=over 4
+
+=item VERSION
+
+Print VERSION version.
+
+=item version
+
+Print internal version.
+
+=item list
+
+Print list of *.txt files in current directory. These files may be used for
+following commands.
+
+=item get filename
+
+Call get(filename).
+
+=item get_as_text filename
+
+Call get_as_text(filename).
+
+=item get_markup filename
+
+Call get_markup(filename).
+
+=item get_text filename
+
+Call get_text(filename).
+
+=item print_as_text filename
+
+Call print_as_text(filename).
+
+=back
+
+
+=head1 OPTIONS
+
+=over 4
+
+=item --help
+
+Print this help.
+
+=item --usage
+
+Print brief usage.
+
+=item --V
+
+Print VERSION version.
+
+=back
+
+
+=head1 MARKUP
+
+Following notations / markups are used for public (user) documentation (for
+example help.txt):
+
+=over 2
+
+=item TITLE
+
+Titles start at beginning of a line, i.g. all upper case characters.
+
+=item SUB-Title
+
+Sub-titles start at beginning of a line prepended by 4 or 6 spaces.
+
+=item code
+
+Code lines start at beginning of a line prepended by 14 or more spaces.
+
+=item "text in double quotes"
+
+References to text or cite.
+
+=item 'text in single quotes'
+
+References to verbatim text elsewhere or constant string in description.
+
+It is difficult to markup character classes like  a-zA-Z-  this way (using
+quotes), because any character may be part of the class, including quotes or
+those used for markup. For Example will  a-zA-Z-  look like  C<a-zA-Z->  in
+POD format. Hence character classes are defined literally without markup to
+avoid confusion.  However, when generating documentation it is assumed that
+strings (words) beginning with  a-zA-Z  are character classes.
+
+=item '*' list item (SEE Note:POD ERRORS)
+
+Force list item (first level) in generated markup.
+
+=item ** list item
+
+Force list item (second level) in generated markup.
+
+=item d) list item
+
+Force list item in generated markup (d may be a digit or character).
+
+=item $VERSION
+
+Will be replaced by current version string (as defined in caller).
+
+=item $0
+
+Will be replaced by caller's name (i.g. o-saft.pl).
+
+=item `$0'
+
+Will not be replaced, but kept as is.
+
+=back
+
+Referenses to titles are written in all upper case characters  and prefixed
+with 2 spaces and suffixed with 2 spaces or a . (dot) or , (comma).
+
+There is only one special markup used:
+
+=over 2
+
+=item X&Some title here&
+
+Referenses to sub-titles. It must be used to properly markup internal links
+to sub-sections if the title is not written in all upper case.
+
+=back
+
+All head lines for sections (see TITLE above)  must be prepended by 2 empty
+lines. A head line describing commands or options  should contain just this
+command or option. Aliases for them should be written in their own line (to
+avoid confusion in some other parsers, like Tcl).
+
+List items should be followed by an empty line.
+
+Texts in head lines for a section should not contain any quote characters.
+
+I.g. no other markup is used in head lines.
+
+Even lines starting with  '#' as first character are usually not treated as
+comment line but verbatim text.
+
+=head2 Special markups
+
+=head3 Left hand space
+
+=over 6
+
+=item none        - head line level 1
+
+=item exactly 4   - head line level 2
+
+=item exactly 6   - head line level 3
+
+=item exactly 11  - list item
+
+=item exactly 14  - code line
+
+=back
+
+=head3 Left hand *:
+
+=over 6
+
+=item spaces *    - list item level 1
+
+=item spaces **   - list item level 2
+
+=back
+
+=head3 Left hand digit or letter followed by )
+
+List item may start with letter or digit followed by ) .
+
+=head3 Special markups for o-saft.tcl
+
+The sub-titles in the COMMANDS and OPTIONS sections must look like:
+
+=over 6
+
+=item Commands for whatever text
+
+=item Commands to whatever text
+
+=item Options for whatever text
+
+=back
+
+Means that the prefixes  "Commands for",  "Commands to"  and  "Options for"
+are used to identify groups of commands and options. If a sub-title doesn't
+start with these prefixes, all following commands and options are ignored.
 
 =cut
 
@@ -159,16 +388,6 @@ sub get_egg     {
     return scalar reverse "\n$egg";
 } # get_egg
 
-=pod
-
-=head1 METHODS
-
-=head3 get($file,$name,$version)
-
-Return all data from file and replace $0 by $name. Returns data as string.
-
-=cut
-
 sub get         {
     #? return data from file as string, replace $0 by $name
     my $file    = shift;
@@ -179,24 +398,8 @@ sub get         {
     # TODO: misses  close($fh);
 } # get
 
-=pod
-
-=head3 get_as_text($file)
-
-Return all data from file as is. Returns data as string.
-
-=cut
-
 sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
 # TODO: misses  close($fh);
-
-=pod
-
-=head3 get_markup($file,$name,$version)
-
-Return all data converted to internal markup format. Returns array of lines.
-
-=cut
 
 sub get_markup    {
     #? return data with internal markup, returns array of lines
@@ -344,75 +547,7 @@ sub get_text    {
     return $txt;
 } # get_text
 
-=pod
-
-=head3 print_as_text($file)
-
-Same as  get()  but prints text directly.
-
-=cut
-
 sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; close($fh); return; }
-
-=pod
-
-=head1 COMMANDS
-
-If called from command line, like
-
-  ODoc.pm COMMANDS [file]
-
-this modules provides following COMMANDS:
-
-=over 4
-
-=item VERSION
-
-Print VERSION version.
-
-=item version
-
-Print internal version.
-
-=item list
-
-Print list of *.txt files in current directory. These files may be used for
-following commands.
-
-=item get filename
-
-Call get(filename).
-
-=item get_as_text filename
-
-Call get_as_text(filename).
-
-=item get_markup filename
-
-Call get_markup(filename).
-
-=item get_text filename
-
-Call get_text(filename).
-
-=item print_as_text filename
-
-Call print_as_text(filename).
-
-=back
-
-
-=head1 OPTIONS
-
-=over 4
-
-=item --V
-
-Print VERSION version.
-
-=back
-
-=cut
 
 sub list        {
     #? return sorted list of available .txt files in ./doc or doc/ directory
@@ -458,29 +593,28 @@ sub _odoc_usage {
     foreach my $cmd (qw(get get-markup get-text get-as-text print)) {
         printf("\t%s %s help.txt\n", $name, $cmd);
     }
-    printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
     return;
 }; # _odoc_usage
 
 sub _odoc_main  {
     #? print own documentation or that from specified file
     my @argv = @_;
+    push(@argv, "--help") if (0 > $#argv);
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    OText::print_pod($0, __PACKAGE__, $SID_odoc) if (0 > $#argv);
     # got arguments, do something special
     while (my $cmd = shift @argv) {
+        OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ m/^--?h(?:elp)?$/x);
         my $arg    = shift @argv; # get 2nd argument, which is filename
-        OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ /^--?h(?:elp)?$/);
-        _odoc_usage()           if ($cmd eq '--usage');
         # ----------------------------- commands
+        _odoc_usage()           if ($cmd eq '--usage');
         print list($0) . "\n"   if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
         print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
         print get_text($arg)    if ($cmd =~ /^get.?text/);
-        print_as_text($arg)     if ($cmd =~ /^print$/);
+        print_as_text($arg)     if ($cmd =~ /^print(?:.?as.?text)?$/);
         print "$SID_odoc\n"     if ($cmd =~ /^version$/);
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
     }
@@ -494,145 +628,6 @@ sub odoc_done   {}; # dummy to check successful include
 
 =pod
 
-=head1 MARKUP
-
-Following notations / markups are used for public (user) documentation (for
-example help.txt):
-
-=over 2
-
-=item TITLE
-
-Titles start at beginning of a line, i.g. all upper case characters.
-
-=item SUB-Title
-
-Sub-titles start at beginning of a line prepended by 4 or 6 spaces.
-
-=item code
-
-Code lines start at beginning of a line prepended by 14 or more spaces.
-
-=item "text in double quotes"
-
-References to text or cite.
-
-=item 'text in single quotes'
-
-References to verbatim text elsewhere or constant string in description.
-
-It is difficult to markup character classes like  a-zA-Z-  this way (using
-quotes), because any character may be part of the class, including quotes or
-those used for markup. For Example will  a-zA-Z-  look like  C<a-zA-Z->  in
-POD format. Hence character classes are defined literally without markup to
-avoid confusion.  However, when generating documentation it is assumed that
-strings (words) beginning with  a-zA-Z  are character classes.
-
-=item '*' list item (SEE Note:POD ERRORS)
-
-Force list item (first level) in generated markup.
-
-=item ** list item
-
-Force list item (second level) in generated markup.
-
-=item d) list item
-
-Force list item in generated markup (d may be a digit or character).
-
-=item $VERSION
-
-Will be replaced by current version string (as defined in caller).
-
-=item $0
-
-Will be replaced by caller's name (i.g. o-saft.pl).
-
-=item `$0'
-
-Will not be replaced, but kept as is.
-
-=back
-
-Referenses to titles are written in all upper case characters  and prefixed
-with 2 spaces and suffixed with 2 spaces or a . (dot) or , (comma).
-
-There is only one special markup used:
-
-=over 2
-
-=item X&Some title here&
-
-Referenses to sub-titles. It must be used to properly markup internal links
-to sub-sections if the title is not written in all upper case.
-
-=back
-
-All head lines for sections (see TITLE above)  must be prepended by 2 empty
-lines. A head line describing commands or options  should contain just this
-command or option. Aliases for them should be written in their own line (to
-avoid confusion in some other parsers, like Tcl).
-
-List items should be followed by an empty line.
-
-Texts in head lines for a section should not contain any quote characters.
-
-I.g. no other markup is used in head lines.
-
-Even lines starting with  '#' as first character are usually not treated as
-comment line but verbatim text.
-
-=head2 Special markups
-
-=head3 Left hand space
-
-=over 6
-
-=item none        - head line level 1
-
-=item exactly 4   - head line level 2
-
-=item exactly 6   - head line level 3
-
-=item exactly 11  - list item
-
-=item exactly 14  - code line
-
-=back
-
-=head3 Left hand *:
-
-=over 6
-
-=item spaces *    - list item level 1
-
-=item spaces **   - list item level 2
-
-=back
-
-=head3 Left hand digit or letter followed by )
-
-List item may start with letter or digit followed by ) .
-
-=head3 Special markups for o-saft.tcl
-
-The sub-titles in the COMMANDS and OPTIONS sections must look like:
-
-=over 6
-
-=item Commands for whatever text
-
-=item Commands to whatever text
-
-=item Options for whatever text
-
-=back
-
-Means that the prefixes  "Commands for",  "Commands to"  and  "Options for"
-are used to identify groups of commands and options. If a sub-title doesn't
-start with these prefixes, all following commands and options are ignored.
-
-
 =head1 SEE ALSO
 
 # ...
@@ -640,7 +635,7 @@ start with these prefixes, all following commands and options are ignored.
 
 =head1 VERSION
 
-3.16 2024/03/27
+3.17 2024/03/27
 
 
 =head1 AUTHOR
