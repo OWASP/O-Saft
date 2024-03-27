@@ -11,23 +11,24 @@ package OTrace;
 #       _is_cfg_intern()
 #       _is_member()
 
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
+# SEE Perl:perlcritic
+
 ## no critic qw(Subroutines::RequireArgUnpacking)
-#        Parameters are ok for trace output.
+#       Parameters are ok for trace output.
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#        We believe that most RegEx are not too complex.
-
-# for Severity 2 only:
-## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
-#        We have some constants herein, that's ok.
-
-## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
-#        We have a lot of single character strings, herein, that's ok.
 
 ## no critic qw(Variables::ProhibitPackageVars)
+#       Because variables are defined herein and global variables are used.
 
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
-#  `use strict;' not useful here, as we mainly use our global variables
+#       `use strict;' not useful here, as mainly global variables are used.
+
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+#       Severity 2 only; otherwise  "perlcritic -p t/.perlcriticrc"  reports
+#       effusive messages for that directive.
+
 use warnings;
 # use strict;
 
@@ -37,7 +38,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.20 24/03/24 17:40:46";
+my  $SID_trace      = "@(#) OTrace.pm 3.21 24/03/27 21:39:55";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -403,7 +404,6 @@ EoT
     _pline("%data {");
     _ptext("#                key | value (function code)");
     _ptext($line);
-    ## no critic qw(Variables::ProhibitPackageVars); they are intended here
     foreach my $key (sort keys %::data) { # ugly and slow code
         my $code = Dumper($::data{$key}->{val});
         # use Dumper() to get code, returns something like example 1:
@@ -660,10 +660,12 @@ sub __trace_dump_var    {
     my $var  = shift;
     my $name = "$type$var";
     _pline("$name {");
-    $var = $::{$var};   # see NOTE: 01jan24
+    ## no critic qw(References::ProhibitDoubleSigils)   # see NOTE: 01jan24
+    $var = $::{$var};
     printf("%s = %s\n", $name, Dumper($$var))  if ('$' eq $type);
     printf("%s = %s\n", $name, Dumper(\%$var)) if ('%' eq $type);
     printf("%s = %s\n", $name, Dumper(\@$var)) if ('@' eq $type);
+    ## use critic
     _pline("$name }");
     return;
 } # __trace_dump_var
@@ -791,7 +793,6 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return if (0 >= $cfg{'trace'});
     local $\ = "\n";
     my $arg = " (does not exist)";
-    ## no critic qw(Variables::ProhibitPackageVars); they are intended here
     if (-f $cfg{'RC-FILE'}) { $arg = " (exists)"; }
     _ptext("!!Hint: use --trace=2  to see SSLinfo variables")   if (2 > $cfg{'trace'});
     _ptext("!!Hint: use --trace=2  to see external commands")   if (2 > $cfg{'trace'});
@@ -1023,11 +1024,9 @@ sub _trace_main {
         # SEE Make:OSAFT_MAKE (in Makefile.pod)
         # dirty hack here which asumes that _trace_main() is called to print
         # information only and does not need time0
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #   see t/.perlcriticrc for detailed description of "no critic"
     #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
+    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     OText::print_pod($0, __FILE__, $SID_trace) if ($arg =~ m/--?h(elp)?$/x);
     # else
     # ----------------------------- commands
@@ -1192,7 +1191,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.20 2024/03/24
+3.21 2024/03/27
 
 =head1 AUTHOR
 
