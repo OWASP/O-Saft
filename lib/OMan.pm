@@ -34,12 +34,13 @@ use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.26 24/03/28 19:45:05";
+my  $SID_oman   = "@(#) OMan.pm 3.27 24/03/28 21:10:54";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
+use Exporter qw(import);
 BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
@@ -48,10 +49,8 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}   @INC);
+    our @EXPORT_OK = qw( man_printhelp man_docs_write oman_done );
 }
-use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT_OK  = qw( man_printhelp man_docs_write oman_done );
 
 use OText    qw(%STR);
 use OCfg;
@@ -802,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.26'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.27'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2746,7 +2745,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.26 2024/03/28
+3.27 2024/03/28
 
 
 =head1 AUTHOR
