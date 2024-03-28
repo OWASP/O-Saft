@@ -14,7 +14,7 @@ package OUsr;
 use strict;
 use warnings;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.14 24/03/27 21:16:10";
+my  $SID_ousr       = "@(#) OUsr.pm 3.15 24/03/28 21:18:01";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 
 #_____________________________________________________________________________
@@ -33,6 +33,8 @@ our $prefix_trace   = "#". __PACKAGE__ . ":";
 our $prefix_verbose = "#". __PACKAGE__ . ":";
 }
 
+use Exporter    qw(import);
+
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
@@ -43,45 +45,28 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
     unshift(@INC, ".")      if not (grep{/^\.$/}     @INC);
+    our @EXPORT_OK = qw(
+        pre_init
+        pre_file
+        pre_args
+        pre_exec
+        pre_cipher
+        pre_main
+        pre_host
+        pre_info
+        pre_open
+        pre_cmds
+        pre_data
+        pre_print
+        pre_next
+        pre_exit
+        version
+        ousr_done
+    );
 }
 
 use OText       qw(%STR);
 use OCfg;
-
-use Exporter    qw(import);
-use base        qw(Exporter);
-our @EXPORT_OK  = qw(
-    pre_init
-    pre_file
-    pre_args
-    pre_exec
-    pre_cipher
-    pre_main
-    pre_host
-    pre_info
-    pre_open
-    pre_cmds
-    pre_data
-    pre_print
-    pre_next
-    pre_exit
-    version
-    ousr_done
-);
-
-# NOTE: following probably needed for ancient Perl 4.x, 5.0x
-#our $HAVE_XS = eval {
-#    local $SIG{'__DIE__'} = 'DEFAULT';
-#    eval {
-#        require XSLoader;
-#        XSLoader::load(__PACKAGE__, $VERSION);
-#        1;
-#    } or do {
-#        require DynaLoader;
-#        bootstrap OUsr $VERSION;
-#        1;
-#    };
-#} ? 1 : 0;
 
 if (exists $INC{'lib/OTrace.pm'}) {
     *trace      = \&OTrace::trace;
@@ -317,7 +302,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.14 2024/03/27
+3.15 2024/03/28
 
 =head1 AUTHOR
 
