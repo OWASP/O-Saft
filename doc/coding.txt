@@ -1,9 +1,9 @@
 
-# SID   @(#) coding.txt 3.3 24/01/26 15:44:14
+# SID   @(#) coding.txt 3.4 24/03/28 20:37:37
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
-# Note that  $0  is used herin for the tool. It will be replaced by the
+# Note that  $0  is used herein for the tool. It will be replaced by the
 # proper tool name when called by  $0  itsef.
 
 HACKER's INFO
@@ -16,6 +16,9 @@ HACKER's INFO
           * {}  - curly  brackets (brace, accolades, llave)
           * ()  - round  brackets (paranthese, paranthèse, paréntesis)
           * []  - square brackets (bracket, crochet, corchete)
+
+        This description does not use text decorations for  Perl keywords, as
+        they are most likely identified by the context.
 
     Program Code
 
@@ -52,7 +55,7 @@ HACKER's INFO
 
         Calls of subs are written in  K&R-style using round brackets, and the
         perlisch way without round brackets. This may be unitised in future.
-        Main exception is  print, which is used without brackets.
+        Main exception is  print, which is often used without brackets.
 
         Short subs and conditions may be written in just one line.
         Note: there is no need for each command in its one line, as debugging
@@ -85,7 +88,7 @@ HACKER's INFO
         Round brackets are sometimes omitted for:
 
           * LHS condition
-          * built-in functions, like 'keys', 'print', 'sort', 'scalar'
+          * built-in functions, like: keys, print, sort, scalar
 
       Code style
 
@@ -102,9 +105,9 @@ HACKER's INFO
         else condition is used, it is written in one line:   } else {  .
         elsif is used in "borrowed" code only ;-)
 
-        if constructs are used to deal with exceptions of the  normal control
-        flow. The flow will continue behind or exit (break, continue, return)
-        the loop or function.
+        if-constructs are used to deal with exceptions of the  normal control
+        flow. The flow will continue behind the loop  or exit the loop or sub
+        using: break, continue, last, return.
 
         As described before, "early breaks" (next, last in loops; return from
         function) are prefered, rather than complicated or nested conditions.
@@ -113,7 +116,7 @@ HACKER's INFO
 
         Most code is seqential instead of using functions, except the code is
         used multiple times. This is currenlty changed ...
-        It is not intended to have OO-code,  even perl's  OO capabilities are
+        It is not intended to have OO-code,  even Perl's  OO capabilities are
         used when rational.
 
       Code quality
@@ -125,7 +128,7 @@ HACKER's INFO
         For details please see:
 
           *  Annotations at end of $0
-          *  .perlcriticrc
+          *  t/.perlcriticrc
           *  usr/critic.sh .
 
         All tests can be done with make, see:
@@ -138,7 +141,7 @@ HACKER's INFO
         processed data, the generated data or the program code.  These quotes
         are written literally in data, whereas  Perl provides various methods
         to handles different types of quotes. Coding gets complicated if both
-        quotes are part of the data, in particular when printing data.
+        quote types are part of the data, in particular when printing data.
 
         The  code  mainly uses  'text enclosed in single quotes'  for program
         internal strings such as hash keys. It uses  "double quoted text" for
@@ -146,10 +149,10 @@ HACKER's INFO
         Strings used for  RegEx are always enclosed in single quotes.  Reason
         is mainly to make searching texts a bit easier.
 
-        Perl's operators  'q()' and 'qq()' are used only to avoid escaping of
+        Perl's operators  q() and  qq()  are used  only to avoid  escaping of
         character, because all types of quotes can smoothly mixed there.
         In general  "double quoted text" is used for interpolated strings. In
-        some cases, it is necessary to use Perl's  'sprintf()'  function.
+        some cases, it is necessary to use Perl's  sprintf()  function.
         For details, please see:
 
             perldoc -f q
@@ -163,16 +166,17 @@ HACKER's INFO
       General
 
         Exceptions are not used, there is no need for them. Please see also:
+
           doc/concepts.txt
 
         In general, the code *must not* use any additional libraries. We know
         that there exist infinite marvellous libraries and frameworks (called
-        modules in perl), which would make some programming simpler,  but one
+        modules in Perl), which would make some programming simpler,  but one
         of the main goals of this tool is that it  should work on  any system
         with just the core language (i.e. perl) installed. We do not want any
         additional dependency, in particular no dependency on versions beside
-        the core language.  Currently some perl modules are an exception, and
-        will be removed in future.
+        the core language.  Currently some Perl modules are an exception, and
+        will be removed in future, if possible.
         However, libraries part of perl5 are assumed to be "core language".
 
         Because of our goal to support running on old systems too (see above)
@@ -181,21 +185,21 @@ HACKER's INFO
         Keep in mind: the code knows how to do the work, the user most likely
         does not know.
 
-        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
-        message printed will always start with '**ERROR: '.
-        warnings are printed using perl's  'warn()'  function and the message
-        always starts with '**WARNING: '.
+        Perl's die() is used whenever an unrecoverable error occurs. The text
+        printed will always start with '**ERROR: '.
+        Warnings are printed using Perl's warn(  function and the text always
+        starts with '**WARNING: '.
 
-        All output is written to STDOUT.  However perl's 'die()' and 'warn()'
+        All output is written to STDOUT. However Perl's die() and warn() will
         write on STDERR. Only debug messages inside $0 are written to
         STDERR.
 
-        All 'print*()' functions write to STDOUT directly.  They are slightly
+        All  print*()' functions write to STDOUT directly.  They are slightly
         prepared for using texts from  the configuration (%cfg, %checks),  so
         these texts can be adapted easily (either with  OPTIONS  or in code).
 
-        Calling external programs uses 'qx()' rather than backticks or perl's
-        'system()' function.  Also note that it uses round brackets insted of
+        Calling external programs uses  qx()  rather than backticks or Perl's
+        system() function.  Also note that  round brackets are used insted of
         slashes to avoid confusion with RegEx.
 
         The code flow often uses postfix conditions, means the  if-conditions
@@ -213,7 +217,7 @@ HACKER's INFO
         It's a common (human) error to write assignments where conditions are
         required, in paricular in  if(), while()  and  until()  statements.
         To avoid such unintended statements, which often happen when changing
-        the code,  the conditions are written with the constant  LHS  and the 
+        the code,  the conditions are written with the constant  LHS  and the
         variable  RHS, for example:   if (0 < $var) { print "$var > 0"; }
         This works with constants (integers, strings) and variables only, but
         not when matching RegEx (probably with Perl 6.x).
@@ -240,13 +244,16 @@ HACKER's INFO
 
         To reduce the huge amount of comments, and to write them only once if
         needed multiple times,  an annotation section  have been added at the
-        end of some files. Such an annotation looks like:
+        end of some files. Such an annotation is written in POD format, It is
+        referenced like:
+
+            # SEE Title of Annotation
 
         For more details  SEE Annotations, Internal Notes (in o-saft.pl)
 
             perldoc $0
 
-        This helps  to make the control flow of code more readable by humans,
+        This helps to make the control flow of code  more readable by humans,
         but keep the full documentation.
 
       Modules
@@ -269,10 +276,10 @@ HACKER's INFO
         complex subs with various parameters.
 
         Most subs use global variables (even if they are defined in main with
-        'my'). These variables are mainly: @DATA, @results, %cmd, %data, %cfg,
+        my).  These variables are mainly: @DATA, @results, %cmd, %data, %cfg,
         %checks, %ciphers, %prot, %text.
 
-        Variables defined with 'our' can be used in   Trace.pm   and  Usr.pm.
+        Variables defined with  our can be used in  OTrace.pm  and  OUsr.pm.
 
         For a detailed description of the used variables, please refer to the
         text starting at the line  '#| set defaults'  in  o-saft.pl.
@@ -290,7 +297,7 @@ HACKER's INFO
           _v*print      Print information when  --v  is in use.
 
         Function (sub) definitions are followed by a short description, which
-        is just one line right after the 'sub' line.  Such lines always start
+        is just one line right after the  sub  line.  Such lines always start
         with  '#?'  (see below how to get an overview).
 
         Subs are ordered to avoid forward declarations as much as possible.
@@ -301,13 +308,13 @@ HACKER's INFO
 
       Code information
 
-        Examples to get an overview of perl functions (sub):
+        Examples to get an overview of Perl functions (sub):
           egrep '^(sub|\s*#\?)' $0
 
         Examples to get an overview of programs workflow:
           egrep '(^#\|\s|\s\susr_)' $0
 
-        Following to get perl's variables for checks:
+        Example to get Perl's variables for checks:
           $0 +check localhost --trace-key \
           | awk -F'#' '($2~/^ /){a=$2;gsub(" ","",a);next}(NF>1){printf"%s{%s}\n",a,$2}' \
           | tr '%' '$'
@@ -327,7 +334,7 @@ HACKER's INFO
         lib/OTrace.pm.
 
         Debug messages always start with    '#dbx#'.
-        verbose messages always start with  '#$0: '.
+        Verbose messages always start with  '#$0: '.
         Trace messages always start with    '#$0::'.
         Following formats are used in trace messages:
           #$0:: some data           - output from $0's main
@@ -337,6 +344,7 @@ HACKER's INFO
         However, these rules are implemented very lazy.
 
         The prefix for verbose and trace message can be configured like:
+
           $0 --cfg-init=prefix_verbose="#VERBOSE: "
           $0 --cfg-init=prefix_trace="#my-trace:: "
 
@@ -345,13 +353,14 @@ HACKER's INFO
         because it automatically "scopes" other output with  '{'  and  '}'.
 
         Other special coding  for debugging other than that in  lib/OTrace.pm
-        is not provided. It's recommended to use perl's  -d  option  for full
+        is not provided.  It's recommended to use perl's  -d  option for full
         debugging.
 
         Note: in contrast to the name of the RC-FILE, the name  lib/OTrace.pm
         is hard-coded.
 
       Abstract program flow
+
           check special options and command (+exec, +cgi, --envlibvar)
           read RC-FILE, DEBUG-FILE and USER-FILE if necessary
           initialise internal data structure
@@ -372,7 +381,7 @@ HACKER's INFO
         various formats of commands and options.
         A simple method to allow variants of  a string (command or option) is
         to match it against RegEx.  Unfortunately it is hard to use a generic
-        way to parse commands and options. perl's Getopt module would be nice
+        way to parse commands and options. Perl's Getopt module would be nice
         but requires a hash with fixed keys.  Using a hash,  which conatins a
         proper RegEx for each command and option, could be done, but the code
         for such a sophisticated parser may be hard to understand.  So a loop
@@ -478,13 +487,13 @@ HACKER's INFO
 
       Rules
 
-        * Each file has at least one string containing  the unuique id of the
+        * Each file has at least one string containing  the unique id  of the
           file version in the repository. This id is named  SID  or SID_<id>.
           This string looks like:
             filename ID_in_repository date_of_last_change time_of_last_change
-          example:     filename 1.42 18/10/23 23:42:23 
+          example:     filename 1.42 18/10/23 23:42:23
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 3.3 24/01/26 15:44:14";
+            my $SID = "coding.txt 3.4 24/03/28 20:37:37";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
