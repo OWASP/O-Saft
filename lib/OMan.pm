@@ -52,7 +52,7 @@ use utf8;
 use vars qw(%checks %data %text);
 # binmode(...); # inherited from parent
 
-my  $SID_oman   = "@(#) OMan.pm 3.22 24/02/19 21:32:45";
+my  $SID_oman   = "@(#) OMan.pm 3.23 24/03/28 07:34:02";
 our $VERSION    = "24.01.24";
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -817,7 +817,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.22'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.23'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1863,6 +1863,7 @@ sub man_warnings    {
         next if (m/^\s*#/);
         next if (m/^\s*$/);
         if (not m/$rex/) {
+            chomp $_;
             warn($STR{WARN}, "092:", " help file '$doc' unknown syntax: '$_' ; ignored"); ## no critic qw(ErrorHandling::RequireCarping)
             next;
         }
@@ -2701,7 +2702,7 @@ In a perfect world it would be extracted from there (or vice versa).
 
 =head1 VERSION
 
-3.22 2024/02/19
+3.23 2024/03/28
 
 
 =head1 AUTHOR
