@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.15 24/03/27 21:38:52";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.16 24/03/28 07:51:39";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 BEGIN { # mainly required for testing ...
@@ -3324,7 +3324,7 @@ sub ocfg_sleep      {
 sub printhint       {
     #? Print hint for specified command.
     my @args = @_;
-    my $cmd  = $args[0];
+    my $cmd  = shift @args;
     print $STR{HINT}, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
@@ -3529,7 +3529,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.15"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.16"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3578,7 +3578,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.15 2024/03/27
+3.16 2024/03/28
 
 =head1 AUTHOR
 
