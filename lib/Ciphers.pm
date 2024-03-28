@@ -25,8 +25,13 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.14 24/03/27 21:54:49";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.15 24/03/28 21:22:52";
 our $VERSION    = "24.01.24";   # official verion number of this file
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+use Exporter qw(import);
 
 BEGIN {
     # SEE Perl:@INC
@@ -37,6 +42,14 @@ BEGIN {
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    our @EXPORT_OK = qw(
+        %ciphers
+        %ciphers_desc
+        %ciphers_notes
+        $cipher_results
+        ciphers_done
+    );
+#   methods not exported, see METHODS description above
 }
 
 use OText       qw(%STR);
@@ -176,17 +189,6 @@ Pointer to hash with all checked ciphers.
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
-
-use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT_OK  = qw(
-        %ciphers
-        %ciphers_desc
-        %ciphers_notes
-        $cipher_results
-        ciphers_done
-);
-#   methods not exported, see METHODS description above
 
 our %ciphers_desc   = ( # description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
@@ -1722,7 +1724,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.14 2024/03/27
+3.15 2024/03/28
 
 
 =head1 AUTHOR
