@@ -15,8 +15,13 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.13 24/03/27 20:59:31";
+my  $SID_odata  =  "@(#) OData.pm 3.14 24/03/28 21:15:33";
 our $VERSION    =  "24.01.24";
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+use Exporter qw(import);
 
 BEGIN {
     # SEE Perl:@INC
@@ -27,6 +32,19 @@ BEGIN {
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    our @EXPORT_OK  = qw(
+        %checks
+        %check_cert
+        %check_conn
+        %check_dest
+        %check_http
+        %check_size
+        %data
+        %data0
+        %info
+        %shorttexts
+        odata_done
+    );
 }
 
 use OText       qw(%STR);
@@ -131,38 +149,6 @@ Same as %data with values only.
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
-
-# SEE Perl:perlcritic
-
-use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT_OK  = qw(
-        %checks
-        %check_cert
-        %check_conn
-        %check_dest
-        %check_http
-        %check_size
-        %data
-        %data0
-        %info
-        %shorttexts
-        odata_done
-);
-
-# NOTE: following probably needed for ancient Perl 4.x, 5.0x
-#our $HAVE_XS = eval {
-#    local $SIG{'__DIE__'} = 'DEFAULT';
-#    eval {
-#        require XSLoader;
-#        XSLoader::load(__PACKAGE__, $VERSION);
-#        1;
-#    } or do {
-#        require DynaLoader;
-#        bootstrap OData $VERSION;
-#        1;
-#    };
-#} ? 1 : 0;
 
 # NOTE: do not change names of keys in %data and all %check_* as these keys
 #       are used in output with --trace-key
@@ -1191,7 +1177,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.13 2024/03/27
+3.14 2024/03/28
 
 
 =head1 AUTHOR
