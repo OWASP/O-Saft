@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.20 24/03/28 07:55:49"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.21 24/03/28 21:28:53"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.20"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.21"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -8382,7 +8382,7 @@ See following table  how changing POD to plain ASCII (VERSION 14.11.14 vs.
 The term  perlcritic  (name of the program) and  Perl::Critic (name of the
 Perl module) is used synonymous here.
 
-perlcritic  is used for general code quality. Our code isn't accademically
+perlcritic  is used for general code quality.  Our code isn't academically
 perfect, nor is perlcritic. Hence perlcritic's pragmas are used to disable
 some checks as needed. It is done in general in perlcritic's config file:
 
@@ -8542,6 +8542,36 @@ the source.
 Also SEE L<Perl:BEGIN perlcritic>.
 Also SEE L<Perl:constant>.
 Also SEE L<Perl:Undefined subroutine>.
+
+
+=head2 Perl:EXPORT
+
+Perl's module Exporter is used to export/import functions and variables to
+or from other code files. This module can be use in various ways which all
+have their pros and cons.
+
+As the code should Run on ancient systems or with ancient versions of Perl
+too, following code is prefered used:
+
+    use Exporter qw(import);
+    BEGIN { our @EXPORT_OK = qw(mysub %myhash); }
+
+In rare cases, for example with Perl 4.x, it needs to be written:
+
+    BEGIN {
+        use vars qw(@ISA @EXPORT_OK);
+        require Exporter;
+        our @ISA = qw(Exporter);
+        our @EXPORT_OK = qw(mysub %myhash);
+    }
+
+In such cases, the code must be changed manually. Sick.
+
+The variant `use base qw(Exporter)' is not used, it is available with Perl
+5.004 and later, and it' depricated when `use parent;'  is available..
+
+For more details about  "Exporter",  please see Perl's documentation (for
+example "man Exporter"), section "Playing Safe".
 
 
 =head2 Perl:constant
