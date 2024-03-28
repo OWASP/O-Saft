@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.1 24/01/23 12:08:21
+# SID   @(#) devel.txt 3.2 24/03/28 21:31:17
 
 
 NAME
@@ -17,12 +17,12 @@ DESCRIPTION
         This is about hints and tricks for debugging, tracing and testing. It
         is the documentation for development!
 
-	For user documentation please refer to  help.txt  or use:.
+        For user documentation please refer to  help.txt  or use:.
 
               $0 --help
               $0 --help=HELP
 
-	For a general overview how documentation is organised, please see:
+        For a general overview how documentation is organised, please see:
 
               perldoc $0
 
@@ -121,13 +121,20 @@ DEBUGGING
 
     Commands
 
-        * +dump
+        Some commands to get an overview of the configuration:
+
         * +libversion
-        * +s_client
-        * +todo
         * +version
+        * +todo
+
+        Some commands to get an overview of the connection (needs a target):
+
+        * +dump
+        * +s_client
 
     Options
+
+        Following option to increase verbosity:
 
         * --v
         * --v--
@@ -149,6 +156,14 @@ DEBUGGING
         are printed with  --trace=2  only.
 
         Hint: start with  --trace-me, then  --trace  and finally  --trace=2 .
+
+    Difference --trace vs. --v
+          
+          --v  prints more information what actually is done. --trace  prints
+          more information about internal data such as procedure names and/or
+          variable names with their values.
+
+          --v  is intended for users,  --trace is intended for developers.
 
     Output
 
@@ -174,6 +189,18 @@ DEBUGGING
              Note that 'value'  here can span multiple lines and ends with:
               #}
 
+        Some  --test-*  options produce output with lines starting with '=',
+        which is intended as header line for descriptions.
+
+    Debugging BEGIN and @EXPORT
+
+        To get an overview of what is exported andimported, usw:
+
+            BEGIN { $Exporter::Verbose=1; }
+
+        Keep in mind that this setting applies to all following code, even in
+        following `use'd modules.
+
     Debugging with Perl modules
 
         * Debug::Trace
@@ -183,19 +210,19 @@ DEBUGGING
 
         Examples to get method/function calls (be prepared for huge output):
 
-	perl -MDevel::CallTrace $0 --help=cipherpattern --header
-	perl -MDevel::CallTrace $0 demo +info   |& wc  # >  53k lines
-	perl -MDevel::CallTrace $0 demo +cipher |& wc  # > 600k lines
+        perl -MDevel::CallTrace $0 --help=cipherpattern --header
+        perl -MDevel::CallTrace $0 demo +info   |& wc  # >  53k lines
+        perl -MDevel::CallTrace $0 demo +cipher |& wc  # > 600k lines
 
-	perl -d:TraceCalls=_cfg_set $0 demo +cipher 
-	    # Note that the exact name of the sub must be provided, it then
-	    # also prints input parameters;
+        perl -d:TraceCalls=_cfg_set $0 demo +cipher 
+            # Note that the exact name of the sub must be provided, it then
+            # also prints input parameters;
             # you may add a filter for better readability:
-	perl -d:TraceCalls=_cfg_set $0 demo +cipher | & perl -pe 's/\(.*\)/(...)/'
+        perl -d:TraceCalls=_cfg_set $0 demo +cipher | & perl -pe 's/\(.*\)/(...)/'
 
-	perl -MDebug::LTrace='*' $0 --help=cipherpattern --header | & perl -pe 's/\(.*\) / (...)/'
-	# liefert nur sub aus main::
-	# liefert Level mit  | | | ...
+        perl -MDebug::LTrace='*' $0 --help=cipherpattern --header | & perl -pe 's/\(.*\) / (...)/'
+        # liefert nur sub aus main::
+        # liefert Level mit  | | | ...
 
     Using outdated modules
 
