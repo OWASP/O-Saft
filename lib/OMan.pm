@@ -6,6 +6,9 @@
 
 package OMan;
 
+# for description of "no critic" pragmas, please see  t/.perlcriticrc  and
+# SEE Perl:perlcritic
+
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 # NOTE: This often happens in comma separated statements, see above.
 #       It may also happen after postfix statements.
@@ -15,7 +18,6 @@ package OMan;
 #       Yes, we have very complex regex here.
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
-#       We believe that most RegEx are not too complex.
 
 ## no critic qw(InputOutput::RequireBriefOpen)
 #       We always close our filehandles, Perl::Critic is too stupid to read
@@ -24,35 +26,19 @@ package OMan;
 ## no critic qw(InputOutput::RequireCheckedClose)
 #       There is no harm if closing a file fails.
 
-## no critic qw(Documentation::RequirePodSections)
-#       Perl::Critic is uses a strange list of required sections in POD.
-#       See  t/.perlcriticrc .
-
-## no critic qw(Variables::RequireLocalizedPunctuationVars)
-#       SEE Perlcritic:LocalVars
-
-## no critic qw(Variables::ProhibitPunctuationVar)
-#       We want to use $\ $0 etc.
-
 ## no critic qw(Variables::ProhibitPackageVars)
-#       There is mainly ::osaft_standalone, which is ok.
-
-## no critic qw(ControlStructures::ProhibitPostfixControls  Modules::RequireVersionVar)
-## no critic qw(RegularExpressions::RequireDotMatchAnything RegularExpressions::RequireLineBoundaryMatching)
-## no critic qw(ValuesAndExpressions::ProhibitEmptyQuotes   RegularExpressions::ProhibitFixedStringMatches)
-## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers  ValuesAndExpressions::RequireUpperCaseHeredocTerminator)
-## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes   )
-## no critic qw(BuiltinFunctions::ProhibitBooleanGrep       BuiltinFunctions::ProhibitStringySplit)
-#       Keep severity 2 silent.
-# NOTE: Modules::RequireVersionVar fails because the "no critic" pragma is to late here.
+#       Many variables from ::main are used here, that's ok.
 
 use strict;
 use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.25 24/03/28 19:08:28";
+my  $SID_oman   = "@(#) OMan.pm 3.26 24/03/28 19:45:05";
 our $VERSION    = "24.01.24";
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
 
 BEGIN {     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
@@ -84,11 +70,11 @@ my  $version= "$SID_oman";              # version of myself
     $version=~ s:^.{5}::;               # remove leading @(#) as already part of the *.txt files
     $version=  _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
-    $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
+    $cfg_header = 1       if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = ODoc::get_markup("help.txt", $parent, $version);
-our $TRACE  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
-    $TRACE++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));    # if called via o-saft.pl
+my  $trace  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
+    $trace++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));    # if called via o-saft.pl
 local $\    = "";
 
 # SEE Note:Stand-alone
@@ -741,7 +727,7 @@ sub _man_dbx        {   # similar to _trace()
         $anf = "<!-- "; $end = " -->";
         # TODO: need to sanitise @txt : remove <!-- and/or -->
     }
-    if (0 < $TRACE) {
+    if (0 < $trace) {
         print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
     }
     return;
@@ -816,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.25'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.26'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1118,6 +1104,7 @@ sub _man_html       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     while ($_ = shift @help) {
         # NOTE: sequence of following m// and s/// is important
         # FIXME: need  s!<<!&lt;&lt;!g; before any print
+        ## no critic qw(Variables::RequireLocalizedPunctuationVars) #  SEE Perlcritic:LocalVars
         last if/^TODO/;
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
@@ -1206,10 +1193,10 @@ m!<<\s*undef! or s!<<!&lt;&lt;!g;                   # encode special markup
     return $txt;
 } # _man_html
 
-sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _man_head       {
     #? print table header line (dashes)
-    my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
-    my @args = @_;      # .. hence "no critic" pragma above
+    my @args = @_;
+    my $len1 = shift @args;
     _man_dbx("_man_head(..) ...");
     my $len0 = $len1 - 1;
     return "" if (1 > $cfg_header);
@@ -1328,7 +1315,7 @@ sub _man_pod_text   {
     my $pod;
     while ($_ = shift @help) {          # @help already looks like POD
         last if m/^(?:=head[1] )?END\s+#/;# very last line in this file
-        m/^$/ && do {  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+        m/^$/ && do {
             if (0 == $empty)  { $pod .= $_; $empty++; } # empty line, but only one
             next;
         };
@@ -1985,7 +1972,7 @@ sub man_ciphers_text{
     my $txt = shift;
     my $keys= "";
     _man_dbx("man_ciphers_text() ..");
-    if (0 < $TRACE) {
+    if (0 < $trace) {
         foreach my $key (keys %Ciphers::ciphers_desc) {
             next if "additional_notes" eq $key;
             $keys .= "#\t$key\t$Ciphers::ciphers_desc{$key}\n";
@@ -2431,8 +2418,8 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _man_html_init();   # must be called here, because function may be call anywhere
     # NOTE: some lower case strings are special
     # commands which also call man_help(): <empty> NAME checks data faq options 
-    $txt = man_help('NAME')             if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-    $txt = man_help('TODO')             if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+    $txt = man_help('NAME')             if ($hlp =~ /^$/);
+    $txt = man_help('TODO')             if ($hlp =~ /^todo$/i);
     $txt = man_help('KNOWN PROBLEMS')   if ($hlp =~ /^(err(?:or)?|problem)s?$/i);
     $txt = man_help('KNOWN PROBLEMS')   if ($hlp =~ /^faq/i);
     $txt .= man_help('LIMITATIONS')     if ($hlp =~ /^faq/i);
@@ -2531,7 +2518,7 @@ sub _oman_main      {
         # --help and --gen-docs is special, anything else handled in man_printhelp()
         OText::print_pod($0, __FILE__, $SID_oman) if ($arg =~ m/--?h(?:elp)?$/x);
         # ----------------------------- options
-        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $TRACE++; next; }  # allow --v
+        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $trace++; next; }  # allow --v
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_oman\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
@@ -2759,7 +2746,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.25 2024/03/28
+3.26 2024/03/28
 
 
 =head1 AUTHOR
