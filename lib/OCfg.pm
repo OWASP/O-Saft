@@ -24,8 +24,16 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.16 24/03/28 07:51:39";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.17 24/03/28 21:27:33";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
+    $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
+
+use Exporter qw(import);
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
@@ -36,6 +44,79 @@ BEGIN { # mainly required for testing ...
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+
+    ## no critic qw(Modules::ProhibitAutomaticExportation)
+    #  Perl::Critic complains to use @EXPORT_OK instead of @EXPORT, but we
+    #  want anything exported.
+
+    # See NOTES below also.
+
+    our @EXPORT     = qw(
+        %ciphers
+        %prot
+        %prot_txt
+        %tls_compression_method
+        %tls_handshake_type
+        %tls_key_exchange_type
+        %tls_record_type
+        %tls_error_alerts
+        %TLS_EXTENSIONS
+        %TLS_EC_POINT_FORMATS
+        %TLS_MAX_FRAGMENT_LENGTH
+        %TLS_NAME_TYPE
+        %TLS_PROTOCOL_VERSION
+        %TLS_PSK_KEY_EXCHANGE_MODE
+        %TLS_SIGNATURE_SCHEME
+        %TLS_SUPPORTED_GROUPS
+        %TLS_ID_TO_EXTENSIONS
+        %ec_curve_types
+        %tls_curves
+        %target_desc
+        @target_defaults
+        %data_oid
+        %dbx
+        %cfg
+        get_ciphers_range
+        get_cipher_owasp
+        get_openssl_version
+        get_dh_paramter
+        get_target_nr
+        get_target_prot
+        get_target_host
+        get_target_port
+        get_target_auth
+        get_target_proxy
+        get_target_path
+        get_target_orig
+        get_target_start
+        get_target_open
+        get_target_stop
+        get_target_error
+        set_target_nr
+        set_target_prot
+        set_target_host
+        set_target_port
+        set_target_auth
+        set_target_proxy
+        set_target_path
+        set_target_orig
+        set_target_start
+        set_target_open
+        set_target_stop
+        set_target_error
+        set_user_agent
+        tls_const2text
+        tls_key2text
+        tls_text2key
+        printhint
+        test_cipher_regex
+        ocfg_done
+    );
+    # not yet exported: ocfg_sleep
+    # insert above in vi with:
+    # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
+    # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
+    # :r !sed -ne 's/^ *\($STR_[A-Z][^ ]*\).*/\t\t\1/p' %
 }
 
 use OText       qw(%STR);
@@ -200,84 +281,6 @@ purpose of this module is defining variables. Hence we export them.
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
-
-## no critic qw(Modules::ProhibitAutomaticExportation)
-#  Perl::Critic complains to use @EXPORT_OK instead of @EXPORT, but we want
-#  anything exported.
-
-# See NOTES below also.
-
-use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT     = qw(
-        %ciphers
-        %prot
-        %prot_txt
-        %tls_compression_method
-        %tls_handshake_type
-        %tls_key_exchange_type
-        %tls_record_type
-        %tls_error_alerts
-        %TLS_EXTENSIONS
-        %TLS_EC_POINT_FORMATS
-        %TLS_MAX_FRAGMENT_LENGTH
-        %TLS_NAME_TYPE
-        %TLS_PROTOCOL_VERSION
-        %TLS_PSK_KEY_EXCHANGE_MODE
-        %TLS_SIGNATURE_SCHEME
-        %TLS_SUPPORTED_GROUPS
-        %TLS_ID_TO_EXTENSIONS
-        %ec_curve_types
-        %tls_curves
-        %target_desc
-        @target_defaults
-        %data_oid
-        %dbx
-        %cfg
-        get_ciphers_range
-        get_cipher_owasp
-        get_openssl_version
-        get_dh_paramter
-        get_target_nr
-        get_target_prot
-        get_target_host
-        get_target_port
-        get_target_auth
-        get_target_proxy
-        get_target_path
-        get_target_orig
-        get_target_start
-        get_target_open
-        get_target_stop
-        get_target_error
-        set_target_nr
-        set_target_prot
-        set_target_host
-        set_target_port
-        set_target_auth
-        set_target_proxy
-        set_target_path
-        set_target_orig
-        set_target_start
-        set_target_open
-        set_target_stop
-        set_target_error
-        set_user_agent
-        tls_const2text
-        tls_key2text
-        tls_text2key
-        printhint
-        test_cipher_regex
-        ocfg_done
-);
-# not yet exported: ocfg_sleep
-# insert above in vi with:
-# :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
-# :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
-# :r !sed -ne 's/^ *\($STR_[A-Z][^ ]*\).*/\t\t\1/p' %
-
-my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
-    $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
 
 #branch
 our %ciphers    = ();   # defined in lib/Ciphers.pm; need forward here
@@ -3529,7 +3532,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.16"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.17"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3578,7 +3581,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.16 2024/03/28
+3.17 2024/03/28
 
 =head1 AUTHOR
 
