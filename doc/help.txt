@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.6 24/01/27 12:38:37
+# SID   @(#) help.txt 3.7 24/03/28 21:29:54
 
 NAME
 
@@ -477,14 +477,15 @@ COMMANDS
           Overview of most important details of the SSL connection.
 
           Use  --v  option to show details also, which span multiple lines.
-
-      +info--v
-
-          Overview of all details of the SSL connection. It is a shortcut for
-          all commands listed below but not including  +cipher.
-
-          This command is intended for debugging as it prints some details of
-          the used  lib/SSLinfo  module.
+#
+# 24.01.24: funktionier jetzt ähnlich wie +quick, neue Beschreibung nötig:
+#      +info--v
+#
+#          Overview of all details of the SSL connection. It is a shortcut for
+#          all commands listed below but not including  +cipher.
+#
+#          This command is intended for debugging as it prints some details of
+#          the used  lib/SSLinfo  module.
 
       +quick
 
@@ -2339,7 +2340,7 @@ RESULTS
             * high:
               ** all *DHE*AES(128|256)* ciphers
               ** all *CHACHA* ciphers
-              ** all *PSK* ciphers (except those using 
+              ** all *PSK* ciphers (except those using
 
       +check
 
@@ -3075,11 +3076,11 @@ OUTPUT
             Replace  'N/A'  by whatever you think is adequate:  "No answer",
             "Not available",  "Not applicable",  ...
 
-        Examples:                                                             
-              === Title line ===                                              
-              = this is a comment                                             
+        Examples:
+              === Title line ===
+              = this is a comment
 
-              Label for information or check:  TABresult                      
+              Label for information or check:  TABresult
               !!Hint: above result depends on the target
 
         For more details on these lines, please refer to  RESULTS  above.
@@ -3129,7 +3130,7 @@ EXIT STATUS
           * 0   - normal usage and execution
           * 2   - command-line parsing failed, command or option missing
           * >0  - only if  --exitcode  was used
-        
+
 ENVIRONMENT
 
         Following environment variables are incorporated:
