@@ -38,7 +38,7 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.21 24/03/27 21:39:55";
+my  $SID_trace      = "@(#) OTrace.pm 3.22 24/03/28 21:20:24";
 our $VERSION        = "24.01.24";
 
 #_____________________________________________________________________________
@@ -49,6 +49,8 @@ our $trace          = 0;
 our $verbose        = 0;
 our $prefix_trace   = "#". __PACKAGE__ . ":";
 our $prefix_verbose = "#". __PACKAGE__ . ":";
+
+use Exporter qw(import);
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
@@ -63,43 +65,26 @@ BEGIN { # mainly required for testing ...
         sub _is_member      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} @{$ref}); }
         sub _is_cfg_intern  { return _is_member(shift, \@{$cfg{'commands_int'}});}
     }
+    our @EXPORT_OK = qw(
+        trace_
+        trace
+        trace0
+        trace1
+        trace2
+        trace3
+        trace_arg
+        trace_cmd
+        trace_args
+        trace_init
+        trace_exit
+        trace_test
+        trace_time
+        trace_ciphers_list
+        trace_ciphers_list
+        trace_targets
+        trace_done
+    );
 }
-
-use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT_OK  = qw(
-    trace_
-    trace
-    trace0
-    trace1
-    trace2
-    trace3
-    trace_arg
-    trace_cmd
-    trace_args
-    trace_init
-    trace_exit
-    trace_test
-    trace_time
-    trace_ciphers_list
-    trace_ciphers_list
-    trace_targets
-    trace_done
-);
-
-# NOTE: following probably needed for ancient Perl 4.x, 5.0x
-#our $HAVE_XS = eval {
-#    local $SIG{'__DIE__'} = 'DEFAULT';
-#    eval {
-#        require XSLoader;
-#        XSLoader::load(__PACKAGE__, $VERSION);
-#        1;
-#    } or do {
-#        require DynaLoader;
-#        bootstrap OTrace $VERSION;
-#        1;
-#    };
-#} ? 1 : 0;
 
 #-------------------------------------------------------------------------
 # Version < 24.01.24
@@ -1191,7 +1176,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.21 2024/03/27
+3.22 2024/03/28
 
 =head1 AUTHOR
 
