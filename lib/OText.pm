@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.9 24/03/27 21:09:32";
+my  $SID_otext  =  "@(#) OText.pm 3.10 24/03/28 21:06:11";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -28,22 +28,9 @@ our %STR = (
 );
 
 use Exporter qw(import);
-use base     qw(Exporter);
-our @EXPORT_OK  = qw( %STR print_pod otext_done );
-
-# NOTE: following probably needed for ancient Perl 4.x, 5.0x
-#our $HAVE_XS = eval {
-#    local $SIG{'__DIE__'} = 'DEFAULT';
-#    eval {
-#        require XSLoader;
-#        XSLoader::load(__PACKAGE__, $VERSION);
-#        1;
-#    } or do {
-#        require DynaLoader;
-#        bootstrap OText $VERSION;
-#        1;
-#    };
-#} ? 1 : 0;
+BEGIN { our @EXPORT_OK  = qw( %STR );
+   # print_pod otext_done must be used full qualified
+}
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -130,7 +117,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.9 2024/03/27
+3.10 2024/03/28
 
 
 =head1 AUTHOR
