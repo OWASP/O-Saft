@@ -42,7 +42,7 @@
 
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
 #  NOTE: Perl::Critic seems to be buggy as it does not honor the  allow  option
-#        for this policy (see  .perlcriticrc  also).  It even doesn't honor the
+#        for this policy (see  t/.perlcriticrc also). It even doesn't honor the
 #        setting here, hence it's disabled at each line using  $ENV{} = ...
 
 ## no critic qw(Variables::ProhibitPackageVars)
@@ -66,10 +66,10 @@
 
 use strict;
 use warnings;
-no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)   
+no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.18 24/03/24 19:28:06"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.20 24/03/28 07:55:49"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.18"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.20"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -899,7 +899,6 @@ our %text = (
 ); # %text
 
 $cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
-$cmd{'extsclient'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 
 #| incorporate some environment variables
 #| -------------------------------------
@@ -1015,8 +1014,8 @@ sub _set_cfg_from_file  {
     trace("_set_cfg_from_file($typ, $fil) {");
     my $line ="";
     my $fh;
-    # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
-    #       is a false positive, because  Perl::Critic  seems not to understand
+    # NOTE: Perl::Critic complains with InputOutput::RequireCheckedOpen,  which
+    #       is a false positive, it seems that Perl::Critic does not understand
     #       the logic of "open() && do{}; warn();",  hence the code was changed
     #       to use an  if-condition
     if (open($fh, '<:encoding(UTF-8)', $fil)) { ## no critic qw(InputOutput::RequireBriefOpen)
@@ -1338,7 +1337,7 @@ sub _enable_functions   {
     my $txt = "improper Net::SSLeay version;";
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn $STR{WARN}, "122: ancient Net::SSLeay $version_ssleay cannot detect openssl version";
+        warn $STR{WARN}, "122: ancient Net::SSLeay $version_ssleay cannot detect OpenSSL version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
         warn $STR{WARN}, "123: ancient or unknown version of IO::Socket detected";
@@ -1392,7 +1391,7 @@ sub _enable_functions   {
     }
     trace(" cfg{use}->{npn}= $cfg{'use'}->{'npn'}");
 
-    if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  openssl 1.0.0
+    if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  OpenSSL 1.0.0
         warn $STR{WARN}, "133: $txt tests for OCSP disabled";
         #_hint("use '--no-ocsp' to disable this check");
     }
@@ -1558,7 +1557,7 @@ sub _check_ssl_methods  {
         # protocols is not checked dynamically when building Net::SSLeay.
         # Net::SSLeay's config script simply relies on the definitions found in
         # the specified include files of the underlaying  SSL library (which is
-        # openssl usually).
+        # OpenSSL usually).
         # Unfortunately,  there are situations where the assumptions at compile
         # time do not match the conditions at runtime. Then  Net::SSLeay  bails
         # out with an error like:
@@ -1978,7 +1977,7 @@ sub _init_all           {
     _init_checks_val();
     $cfg{'hints'}->{$_} = $text{'hints'}->{$_} foreach (keys %{$text{'hints'}});
     # _init_openssldir();
-        # not done here because it needs openssl command, which may be set by
+        # not done here because it needs openssl program, which may be set by
         # options, hence the call must be done after reading arguments
     _tprint("_init_all() }") if _is_trace();
     return;
@@ -2189,7 +2188,7 @@ sub _is_ssl_ccs     {
     };
 #################
 # $ccs = _is_ssl_ccs($host, $port, $ssl);
-#    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
+#    'openssl_version_map' => {  # map our internal option to OpenSSL version (hex value)
 #        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,  }
 #################
 #\x14\x03\tls_version\x00\x01\x01    sed 's/tls_version/'"$2"'/g'
@@ -2600,7 +2599,7 @@ sub _useopenssl($$$$)   {
     }
     # else check for errors ...
 
-    # grrrr, it's a pain that openssl changes error messages for each version
+    # grrrr, it's a pain that OpenSSL changes error messages for each version
     # we may get any of following errors:
     #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
     #   New, (NONE), Cipher is (NONE)
@@ -2609,7 +2608,7 @@ sub _useopenssl($$$$)   {
     #   TIME:error:140740B5:SSL routines:SSL23_CLIENT_HELLO:no ciphers available:s23_clnt.c:367:
     # if SSL version not supported (by openssl):
     #   29153:error:140A90C4:SSL routines:SSL_CTX_new:null ssl method passed:ssl_lib.c:1453:
-    # openssl 1.0.1e :
+    # OpenSSL 1.0.1e :
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
@@ -2799,7 +2798,7 @@ sub _get_cipherslist    {
     # (3) use default ciphers if no options given (@ciphers empty so far)
     #     otherwise get ciphers matching pattern
     # (4) convert array items according given $mode
-    # for usage and limitations, please see lib/Doc/help.txt
+    # for usage and limitations, please see doc/help.txt
     # TODO: use is_valid_cipherkey() below instead of regex
     foreach my $name (@{$cfg{'cipher'}}) {
         # $name can be a hex key like 0x0300002F, which maps to a unique cipher
@@ -2840,7 +2839,7 @@ sub _get_cipherslist    {
     if (0 >= @ciphers) {        # empty list, check range
         # $range should not be used when --cipher= was given
         # however, if --cipher= did not result in valid ciphers, range is used
-        # this slighly differs from documentation in lib/Doc/help.txt
+        # this slighly differs from documentation in doc/help.txt
             trace(" get list --range  = $pattern");
             $pattern = $cfg{'cipherrange'} if $pattern =~ m/^\s*$/;
             $pattern = 'SSLv2' if 'sslv2' eq lc($pattern);  # ancient targets don't support anything else
@@ -2861,8 +2860,7 @@ sub _get_cipherslist    {
     if ('keys'  eq $mode) {   # convert to cipher hex keys
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
-            $ciphers[$i] = Ciphers::get_key( $c)||"" if not _is_cipher_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators)
-               # "no critic" because perlcritic is too stupid for this
+            $ciphers[$i] = Ciphers::get_key( $c)||"" if not _is_cipher_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators) # because Perl::Critic is too stupid for this
         }
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
@@ -3020,8 +3018,8 @@ sub ciphers_scan_openssl {
     # returns hash with accepted ciphers
     my ($host, $port) = @_;
     trace("ciphers_scan_openssl($host, $port) {");
-# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# FIXME: 6/2015 es kommt eine Fehlermeldung wenn OpenSSL 1.0.2 verwendet wird:
+#    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
@@ -3664,7 +3662,7 @@ sub checkciphers        {
     foreach my $ssl (keys %$results) {      # all checked SSL versions with ciphers
       next if '_admin' eq $ssl;
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
-      foreach my $key (keys %{$results->{$ssl}}) { # check all accepted 
+      foreach my $key (keys %{$results->{$ssl}}) { # check all accepted
         # SEE Note:Testing, sort
         next if ($key =~ m/^\s*$/);         # defensive programming (key missing in %ciphers)
         next if not $results->{$ssl}{$key}; # defensive programming ..
@@ -4743,7 +4741,7 @@ sub checkprot($$)   {
         $checks{'poodle'}   ->{val} = (0 < $OCfg::prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
         # FIXME: should uses $cfg{'regex'}->{'POODLE'}, hence check in checkcipher() would be better
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
-        # FIXME: lib/Doc/help.txt ok now, but needs to be fixed too
+        # FIXME: doc/help.txt ok now, but needs to be fixed too
     }
     if (_is_cfg_ssl('TLSv1')) {
         $checks{'hastls10_old'}->{val}  = " " if ($OCfg::prot{'TLSv1'}->{'cnt'}  <= 0);
@@ -4926,7 +4924,7 @@ sub checkhttp($$)   {
             $checks{$key}   ->{val} = $text{'na_STS'};
         }
     }
-    $checks{'hsts_fqdn'}    ->{val} = $text{'na'} if ($http_location eq "");  # useless without redirect
+    $checks{'hsts_fqdn'}    ->{val} = $text{'na'} if ($http_location eq "");  # useless without redirecl
 # TODO: invalid certs are not allowed for HSTS
     $checks{'https_pins'}   ->{val} = $notxt      if ($data{'https_pins'}->{val}($host) eq "");
 # TODO: pins= ==> fingerprint des Zertifikats
@@ -5533,7 +5531,7 @@ sub print_cipherline($$$$$$) {
                 'C', $host . ":" . $port, $ssl, $cipher,
                 Ciphers::get_enc( $key), $bits,
                 Ciphers::get_auth($key), Ciphers::get_mac( $key),
-                Ciphers::get_keyx($key), 
+                Ciphers::get_keyx($key),
               );
     }
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
@@ -5623,7 +5621,7 @@ sub printciphers_dh_openssl {
 # cipher dhe oder edh, ecdh dann muss server temp key da sein
 # sonst kommt kein temp key z.B RSA oder camellia
 #
-# wenn dh kommen muesste aber fehlt, dann bei openssl -msg probieren
+# wenn dh kommen müsste aber fehlt, dann bei openssl -msg probieren
 # -------
 # RFC 4492 wenn im cert ec oder ecdsa steht (extension) dann duerfen nur solche
 # akzeptiert werden; wenn nix im cert steht dann durfen nur rsa akzeptiert werden
@@ -7477,9 +7475,9 @@ if (1 > _need_netinfo() and not $test) {
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     # TODO: following necessary for _get_data0(), if called as single command
     $cfg{'need_netinfo'} = 1 if (_is_do_cmdvulns());
-    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_order')); 
+    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_order') );
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_strong'));
-    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_weak')); 
+    $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_weak')  );
 }
 _load_modules();
 
@@ -8086,7 +8084,7 @@ exit $status;
 # no  __END__   here, because it causes problems in generated gen_standalone.sh
 # no  __DATA__  here, because ...
 
-# public user documentation, please see  lib/Doc/*.txt  and  lib/ODoc.pm
+# public user documentation, please see  doc/*.txt  and  lib/ODoc.pm
 
 # following annotations are avalable by using:  perldoc o-saft.pl
 
@@ -8127,7 +8125,7 @@ accessed programmatically with the  --help  option and various variants of
 it. All plain texts are designed for human readability and simple editing,
 see:
 
-    ./lib/Doc/*.txt
+    ./doc/*.txt
 
 For details on documentation texts (format, syntax, etc.) from files, see:
 
@@ -8139,7 +8137,7 @@ For details on documentation texts (format, syntax, etc.) from files, see:
 Documentation for development such as tracing, debugging, testing and make
 can be found in:
 
-    lib/Doc/devel.txt
+    ./doc/devel.txt
     o-saft.pl --help=developer
 
 =head3 Internal Code Documentation
@@ -8148,9 +8146,9 @@ All comments/documentation/explanation of code details is written close to
 the corresponding code lines.  Note that these comments describe *why* the
 code is written in some way  (means the logic of the code), and not *what*
 the code does (which is most likely obvious).
-Some special syntax for comment lines are used, see  "Comments" section in
+Some special syntax for comment lines are used, see "Comments" section in:
 
-    lib/Doc/coding.txt
+    ./doc/coding.txt
     o-saft.pl --help=Program.Code
 
 Additional documentation in POD format  is avaialble at end of many files,
@@ -8172,7 +8170,7 @@ Documentation of the make system is mainly done in POD format in:
     perldoc t/Makefile.pod
 
 It contains the general documentation as well as the Annotations used from
-within the other Makefile*.
+within all other Makefile*.
 
 =head3 Terminology
 
@@ -8202,7 +8200,7 @@ Is used when the program  perlcritic  is meant.
 
 Is used when  a particular file is meant (usually the file itself in which
 the term is used).  The term Makefile* is used when any of our  Makefile.*
-is means.
+is meant.
 
 =item  makefile(s)
 
@@ -8228,6 +8226,52 @@ or command for this tool, please see also  COMMANDS  and  OPTIONS  in
 
 =back
 
+=head3 Syntax
+
+Quick note about the syntax used herein, mainly text decorations.
+
+=over
+
+=item  Sections in help-texts
+
+For referencing sections in documentations, like from:
+
+    o-saft.pl  --help
+
+the section's title in all upper case letters is used.  This title is also
+prefixed and suffixed by two spaces; Example:
+
+   For command, please see also  COMMANDS  above.
+
+Note that Annotations in our POD are referenced as described before.
+
+=item  Code examples
+
+Code (Perl, others) literally used in the documentation is mainly enclosed
+in ` (backtick) and ' (single quote), example: `$me = "my variable;' .
+
+Code examples written as (indented) paragraphs are not enclosed in quotes.
+
+=item  Constant strings
+
+Constants (literals) string, number, whatever,  which are used in the code
+and referenced here, are enclosed in ' (single quote), for example:
+
+    The status returned by this function is '42' always.
+
+=item  Labels, Headers
+
+Tests used as labels or headers elsewhere are enclosed in " (double quote)
+for example:
+
+    For more descrtions, please see section "Important Text" in ...
+
+=back
+
+However, keep in mind that cited text, for example from error messages, is
+written literally which then, obciously, contains any character, even such
+used for our decorations.
+
 
 =head1 Testing (Development)
 
@@ -8241,7 +8285,7 @@ See  L<Documentation>  above and  L<Note:--test-*>  below and
 The annotations from here on describe behaviours, observations, and alike,
 which lead to special program logic.  The intention is to have one central
 place where to do the documentation.
-Up to now --2023-- this is an internal documentation only. It is available
+Up to now --2024-- this is an internal documentation only. It is available
 for the developer also with:
 
     perldoc o-saft.pl
@@ -8268,13 +8312,13 @@ All following texts from here on are Annotations.
 =head3 Since VERSION 24.01.24
 
 All own Perl modules moved to  ./lib .
-All public user documentation moved from  ./OSaft/Doc/  to ./lib/Doc .
+All public user documentation moved from  ./OSaft/Doc/  to ./doc .
 
 =head3 Since VERSION 18.12.18
 
 Switching to CGI mode if the script is named *.cgi is no longer supported,
-this script should be called by a proper wrapper, i.e o-saft.cgi .
-The functionality was silently removed, no warning or error is printed.
+this script should be called by a proper wrapper, i.e.  o-saft.cgi .
+This functionality was silently removed, no warning or error is printed.
 
 =head3 Since VERSION 18.01.18
 
@@ -8285,6 +8329,7 @@ Reading plain text from external files instead of  Perl's DATA also avoids
 sophisticated computation of the correct file and DATA handle, for example
 when  ./OSaft/Doc/*.pm  is imported in  Perl's BEGIN section,  please also
 SEE L<Perl:BEGIN> below.
+Note that  ./OSaft/Doc/  is the directory used in that version.
 
 =head3 Since VERSION 17.07.17
 
@@ -8294,10 +8339,11 @@ format in the  __DATA__ section of each file. The overhead compared to the
 %man_text  variable is just the Perl module file with its  POD texts.  The
 disadvantage is, that it's more complicated to import the data in a stand-
 alone script, see  usr/gen_standalone.sh .
+Note that  ./OSaft/Doc/  is the directory used in that version.
 
 =head3 Since VERSION 17.06.17
 
-All user documentation is now in  ./lib/OMan.pm  which uses a mix of texts
+All user documentation is now in ./o-saft-man.pm which uses a mix of texts
 defined in Perl variables,  i.e. %man_text.  The public user documentation
 is defined in the  __DATA__  section (mainly all the documentation).
 
@@ -8333,9 +8379,12 @@ See following table  how changing POD to plain ASCII (VERSION 14.11.14 vs.
 
 =head2 Perl:perlcritic
 
+The term  perlcritic  (name of the program) and  Perl::Critic (name of the
+Perl module) is used synonymous here.
+
 perlcritic  is used for general code quality. Our code isn't accademically
 perfect, nor is perlcritic. Hence perlcritic's pragmas are used to disable
-some checks as needed. This is done in general in perlcritic's config file
+some checks as needed. It is done in general in perlcritic's config file:
 
     t/.perlcriticrc
 
@@ -8343,35 +8392,35 @@ and selectively in the code using the pragma:
 
     ## no critic ...
 
-All disabled checks are documented, in  t/.perlcriticrc  or as pragma.
+All disabled checks are documented in  t/.perlcriticrc  or near the pragma
+used in the code.
 
-Following pragmas are used in various files:
+Only pragmas for perlcritic's severity 5, 4, and 3  are used explicitly in
+the code. This simplifies tests when not using  t/.perlcriticrc .
+Pragmas for severity 2 or less are not used in the code, 'cause too noisy.
 
-* InputOutput::ProhibitBacktickOperators)
+It's recommended to check the files using:
 
-    This check seems to be a perosnal opinion of perlcritic's author,  see
-    descriptions like   "... but I find that they make a lot of noise" and
-    "... I think its better to use ..." .
-    Using IPC::Open3 here is simply over-engineered.
+    perlcritic -p t/.perlcriticrc ...
 
-* Documentation::RequirePodSections
+Unfortunately this may result in the additional message:
 
-    Our POD in *pm is fine, perlcritic (severity 2) is too pedantic here.
+    Useless '## no critic' annotation at line .., column 1.  (Severity: 2)
 
-* Variables::ProhibitPackageVars
+caused by Miscellanea::ProhibitUselessNoCritic  which cannot be disabled.
 
-    perlcritic  complains to not declare  (global) package variables.  The
-    purpose of some modules is to do that.
+For detailed description of the pragmas, the reasons why they are modified
+or disabled, please see  t/.perlcriticrc .
 
 
 =head2 Perl:BEGIN perlcritic
 
-perlcritic  cannot handle  BEGIN{}  sections semantically correct. If this
+Perl::Critic cannot handle  BEGIN{} sections semantically correct. If this
 section is defined before the  `use strict;'  statement, it complains with
-the error 'TestingAndDebugging::ProhibitNoStrict'.
+the pragma TestingAndDebugging::ProhibitNoStrict.
 
-Therefore any  BEGIN{}  section is defined after  `use strict;',  ugly but
-avoids clumsy  `## no critic'  pragmas.
+Therefore any  `BEGIN'  section is defined after  `use strict;',  ugly but
+avoids clumsy  `## no critic ...'  pragmas.
 
 
 =head2 Perl:import include
@@ -8382,15 +8431,15 @@ module is missing.  The script fails immediately at startup if modules are
 loaded with `use', or at runtime if loaded with `require'.
 
 One goal is to be able to run on  ancient or incomplete configured systems
-too. Hence we try to load all modules with our own function  _load_file(),
+too. Loading modules is mainly done with our own function `_load_file();',
 which uses `require' to load the module at runtime. This way it's possible
-that  some functionality is disabled selectively, if loading of the module
+that some functionality is disabled selectively,  if loading of the module
 fails for various reasons (i.e. wrong version).
 
 Perl's `use autouse' is also not possible, as to much functions need to be
 declared for that pragma then.
 Unfortunately some common Perl modules resist to be loaded with `require'.
-They are still imported using  use  .
+They are still imported using `use'.
 
 
 =head2 Perl:EXPORT
@@ -8401,10 +8450,12 @@ TODO
 
 =head2 Perl:Undefined subroutine
 
+TODO: this section needs to be adapted to changes since VERSION 24.01.24
+
 Perl requires that subroutines are defined before first use, obviously. As
 we have some subroutines which should be used in the main script, and also
 in our modules, another separate module would be necessary to achieve this.
-This module then needs to be imported ('use' or 'require') in all scripts.
+This module then needs to be imported (`use' or `require') in all scripts.
 
 In practice, only a small number of these subroutines  are required in our
 modules.  Hence we avoid building a special purpose module.  Unfortunately
@@ -8420,8 +8471,8 @@ Following approach is used:
 
      if (not exists &_warn) { = sub _warn { print($STR{WARN}, @_); } }
 
-This ensures, that the definition is used only, if it doesn't exists. This
-also avoids use of Perl's eval(). The disadvantage is, that the subroutine
+This ensures that the definition is used only if it doesn't exist and also
+avoids use of Perl's .`eval();'.  The disadvantage is, that the subroutine
 may not have the same functionality or output as the module's definition.
 
 Also SEE L<Perl:BEGIN>.
@@ -8430,23 +8481,23 @@ Also SEE L<Perl:BEGIN>.
 =head2 Perl:@INC
 
 Perl includes modules with the `use' or `require' statement. Therefore the
-@INC  array is used which contains  a predefined list of directories where
+`@INC' array is used which contains a predefined list of directories where
 to search for the files to be included. Following disadvantages are known:
 
   - the list of directories depends on the system (OS and distribution)
   - this list must be known before any Perl command is executed
   - it's tricky to use private directories
-  - using "-I . lib/" in shebang line will pre- and append to @INC
+  - using `-I . lib/' in shebang line will pre- and append to @INC
 
-Therefore  @INC  needs to be adapted properly in Perl's  BEGIN  scope (see
+Therefore `@INC' needs to be adapted properly in Perl's `BEGIN' scope (see
 next annotation also). The added directories are:
 
-  - $_path          # user-friendly: add path of the called script also
-  - lib  $_path/lib # we support some local lib directories
-  - $ENV{PWD}       # calling directory, some kind of fallback
-  - /bin"           # special installation on portable media
+  - $_path      # user-friendly: add path of the called script also
+  - lib/        # we support some local lib directories
+  - $ENV{PWD}   # calling directory, some kind of fallback
+  - /bin        # special installation on portable media
 
-Note that  $ENV{PWD}  may be undefined, it will obviously not used then.
+Note that `$ENV{PWD}' may be undefined, it will obviously not used then.
 Note that  /  works here even for Windoze.
 
 Some logic is used to prepend these directories to @INC,  avoiding useless
@@ -8467,23 +8518,23 @@ Two of the above exmples need special settings:
 =head2 Perl:BEGIN
 
 Loading `require'd  files and modules  as well as parsing the command-line
-in Perl's  BEGIN section  increases performance and lowers the memory foot
+in Perl's `BEGIN' section increases performance and lowers the memory foot
 print for some commands (see lib/OMan.pm also).
 Therefore it's important to understand how Perl's compile phases work, see
-section "BEGIN, UNITCHECK, CHECK, INIT and END" in
+section "BEGIN, UNITCHECK, CHECK, INIT and END" in:
 
   man perlmod
 
-In short about BEGIN{}:
+In short about `BEGIN{}':
 
-  - constants can be defined before and used in BEGIN{}
+  - constants can be defined before and used in `BEGIN{}'
   - sub can be defined and used later
   - variables can not be defined there and used later
   - some file handles (like <DATA>) are not yet available
   - strict sequence of definitions and usage (even for variables in subs)
 
-Perl subs used in the  BEGIN section must be defined there also, or before
-the BEGIN section.
+Perl subs used in the `BEGIN' section must be defined there also or before
+the `BEGIN' section.
 To make the program work as needed,  the limitations  force us to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
@@ -8495,8 +8546,10 @@ Also SEE L<Perl:Undefined subroutine>.
 
 =head2 Perl:constant
 
+TODO: this section needs to be adapted to changes since VERSION 24.01.24
+
 Perl has no "real" concept and implementation  of constants.  Using Perl's
-pragma constant  declares in fact subroutines. Beside others, this has the
+pragma `constant' declares in fact subroutines. Beside others this has the
 disadvantage,  that such constants cannot be used in strings, they are not
 interpolated there.
 
@@ -8504,21 +8557,20 @@ Our texts are rather variables than real constants, because it is possible
 to overwrite them (beside some exceptions). Therefore it's more consequent
 to use variables anywhere.
 
-Perl's constants have the advantage that they are replaced at compile time
+The `constant's  have the advantage that they are replaced at compile time
 and therefore the code may result in better performance. That's not really
 relevant for the tool's intended purpose.
 
-Unfortunately using Perl's  Readonly instead of constant  is not possible,
-because constants are used in the  BEGIN  section also.  Constants  can be
-used there but not Readonly variables.
+Unfortunately using Perl's `Readonly' instead of constant is not possible,
+because constants are used in the `BEGIN' section also. `constant's can be
+used there but not `Readonly' variables.
 
 A hash is used for our texts. This has the advantage, that many values can
 be defined without the need to care about every value everywhere. This has
-the disadvantage,  that runtime errors like  "Undefined variable ..."  may
+the disadvantage,  that runtime errors like  'Undefined variable ...'  may
 occour.
 
-Instead of using  constant , the corrsponding  sub  are defined verbatim.
-
+Instead of using `constant', corresponding `sub's are defined verbatim.
 
 Also SEE L<Perl:BEGIN perlcritic>.
 
@@ -8527,8 +8579,8 @@ Also SEE L<Perl:BEGIN perlcritic>.
 
 Perl uses various layers for I/O operations. It's called  I/O layers -also
 known as discipline. Layers to be used are defined globally with binmode()
-or individually in each open() call. All the glory details can be found in
-Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
+or individually in each `open();' call. All the glory details can be found
+in Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
 
 The tool here roughly destingushes two types of I/O:
 
@@ -8547,18 +8599,18 @@ humans, only these channels are handled explicitly.  The idea is, that all
 texts consist of printable characters only, probably in various languages.
 Hence UTF-8 is used as default character set.  The channels are configured
 to expect UTF-8 characters.
-Perl destingushes between ':utf8' and ':encoding(UTF-8)' layer,  where the
-':utf8' does not check for valid encodings. ':utf8' is sufficient here, as
+Perl destingushes between `:utf8' and `:encoding(UTF-8)' layer,  where the
+`:utf8' does not check for valid encodings. `:utf8' is sufficient here, as
 we only want to ensure UTF-8 on output.
 The I/O layers need to be set in the main script only, all modules inherit
-the settings from there. However, modules need to use the proper binmode()
+the settings from there. However, modules must use the proper `binmode();'
 call itself, if they are called from command-line.
 
-Unfortunately  Perl::Critic  complains that  ':encoding(UTF-8)'  should be
+Unfortunately  Perl::Critic  complains that  `:encoding(UTF-8)'  should be
 used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
-Note that we use STDOUT and STDERR  and not the pseudo layer ':std' or the
--S flag/option, because they also contain STDIN.
+Note that we use STDOUT and STDERR  and not the pseudo layer `:std' or the
+-S flag/option, because they also include STDIN.
 
 
 =head2 Perl:map()
@@ -8573,10 +8625,11 @@ examples:
 
 we prefer the perlish one (3. above).  Because it does not copy the array,
 it is the most performant solution also.
-Unfortunately  Perl::Critic complains about postfix controls with
-ControlStructures::ProhibitPostfixControls  which seems to be misleading.
+
+Unfortunately  Perl::Critic  complains with  'Postfix controls at line...'
+(ControlStructures::ProhibitPostfixControls) which seems to be misleading.
 If there are multiple substitutions to be done, it is better to use a loop
-like (which then keeps Perl::Critic happy too):
+(which then keeps Perl::Critic happy too) like:
 
     while (@arr) {
         s/old/new/;
@@ -8586,9 +8639,9 @@ like (which then keeps Perl::Critic happy too):
 
 =head2 Perl:warn _warn
 
-I.g. Perl's warn() is not used, but our private  _warn(). Using the option
---no-warning  _warn() can suppress messages. However, some warnings should
-never be suppressed, hence  warn()  is used in rare cases.
+I.g. our private `_warn();' is used instead of Perl's `warn();'. Using the
+option  --no-warning  instructs `_warn();' to suppress messages.  However,
+some warnings should never be suppressed, in rare cases `warn();' is used.
 Each warning should have a unique number, SEE L<Note:Message Numbers>.
 See also  CONCEPTS  (if it exists in our help texts).
 
@@ -8621,27 +8674,28 @@ we have:
 To make (programmer's) life simple,  complex data structures are avoided.
 Global variables are used (mostly defined in OCfg.pm). This should be ok,
 as there are no plans to run this tool in threaded mode.
-Please see lib/Doc/coding.txt also.
+Please see doc/coding.txt also.
 
-Here's an overview of the used global variables:
+Here's an overview of the used global variables.
+
 Data structures with (mainly) static data:
 
-    %cmd            - configuration for external commands (like openssl)
-    %text           - configuration for message texts
-    %ciphers        - definition of our cipher suites
-    %shorttexts     - short texts (labels) for %data and %checks
+    %cmd        - configuration for external commands (like openssl)
+    %text       - configuration for message texts
+    %ciphers    - definition of our cipher suites
+    %shorttexts - short texts (labels) for %data and %checks
 
 Data structures with runtime data:
 
-    %cfg            - configuration for commands and options herein
-    %data           - labels and correspondig value (from SSLinfo)
-    %checks         - collected and checked certificate data
-                      collected and checked target (connection) data
-                      collected and checked connection data
-                      collected and checked length and count data
-    %info           - like %data, but for data which could not be retrieved
-                      from SSLinfo like HTTP vs. HTTPS checks
-    %prot           - collected data per protocol (from SSLinfo)
+    %cfg        - configuration for commands and options herein
+    %data       - labels and correspondig value (from SSLinfo)
+    %checks     - collected and checked certificate data
+                  collected and checked target (connection) data
+                  collected and checked connection data
+                  collected and checked length and count data
+    %info       - like %data, but for data which could not be retrieved
+                  from SSLinfo like HTTP vs. HTTPS checks
+    %prot       - collected data per protocol (from SSLinfo)
     %cipher_results - collected results as:  SSL=>cipher=>["yes|no","DH"]
 
 NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
@@ -8656,8 +8710,8 @@ Note according perlish programming style:
 
 =head3 Initialisation
 
-Most data structures are statically initalised. Some, mainly %checks, will
-be initilised programmatically. The values in  %checks  must be initilised
+Most data structures are statically initialised. Some, mainly %checks, are
+be initialised programmatically. The values in %checks must be initialised
 also before the check result will be assigned. This default initialisation
 could be:
 
@@ -8669,7 +8723,7 @@ Each method has its pros and cons. This has been changed, see below.
 
 =head3 Initialisation since VERSION 19.12.26
 
-All values in %check are set to  "<<undef>", which means neither 'yes' nor
+All values in %check are set to '<<undef>>', which means neither 'yes' nor
 'no'. The advantage is that missing checks are reported as:
 
     no (<<undef>>)
@@ -8693,7 +8747,7 @@ ported as 'yes'.
 
 =head3 Shortened variable names
 
-Some varaible names are abrevated,  instead of using full blown "speaking"
+Some varaible names are abbrevated, instead of using full blown "speaking"
 names. The main reason is to avoid overlong coding lines. Some examples:
 
     cn                  - common_name
@@ -8711,7 +8765,7 @@ When values are assigned to arrays, or values are pushed on arrays, Perl's
 final order in the array is random.
 This results in  different orders  of the values when the array values are
 printed,  means that the order changes for each program call.  Such random
-orders in output makes internal testing difficult.
+orders in output makes comparing results of internal testing difficult.
 Hence, arrays are sorted (after defining them) when they are used. It is a
 small perfomance penulty in production because the 'sort' is only required
 while testing. Using a pragma like in C would be nice ...
@@ -8737,8 +8791,8 @@ The data to be sorted is for example:
 
 Command-line arguments are read after some other internal initialisations.
 Unfortunately sometimes options need to be checked before argument parsing
-is completed. Therfore following is needed: '(grep{/--trace)/} @ARGV)'.
-These check are implemented as simple functions and return grep's result.
+is completed. Therfore following is needed: `(grep{/--trace)/} @ARGV)'.
+Such checks are implemented as simple functions and return grep's result.
 
 
 =head2 Note:SSL protocol versions
@@ -8751,14 +8805,14 @@ TLSv1 etc..
 =head2 Note:ALPN, NPN
 
 Traditionally first known as NPN, the  "protocol negotiation",  is used in
-in the two flaviours NPN and ALPN. The internal variable names are adapted
-to these acronyms and use "alpn" and "npn" in their names.  For historical
-reason, the list of the protocol names was stored in "cfg{'next_protos'}",
+the two flaviours NPN and ALPN. The internal variable names are adapted to
+these acronyms and use "alpn" and "npn" in their names.  Due to historical
+reason, the list of the protocol names was stored in `$cfg{'next_protos'}'
 which reflects the openssl option (-nextprotoneg),  and the function names
 used in some Perl modules.
-As newer versions of openssl uses the option  -alpn,  and some other tools
+As newer versions of openssl  use the option  -alpn,  and some other tools
 also use  -alpn  and/or  -npn  as option, the internal variable names have
-been adapted to this naming scheme after version 17.04.17.
+been adapted to this naming scheme after VERSION 17.04.17.
 The primary variable names containing ALPN or NPN protocol names are now:
 
     protos_next     - internal list of all protocol names
@@ -8768,7 +8822,7 @@ The primary variable names containing ALPN or NPN protocol names are now:
     cipher_npns     - used with/for  NPN options for +cipher command only
 
 I.g. these are arrays. But as the common syntax for most other tools is to
-use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
+use a comma-separated list of names, the value in `$cfg{'protos_next'}' is
 stored as a string.  Using a string instead of an array also simplifies to
 pass the value to functions.
 
@@ -8776,20 +8830,19 @@ Note that openssl uses a comma-separated list for ALPN and NPN, but uses a
 colon-separated list for ecliptic curves and also for ciphers.  Confusing.
 Hence we allow both separators for all lists on command-line.
 
-See also Note:OpenSSL Version
+Also SEE L<Note:OpenSSL Version>.
 
 
 =head2 Note:alias
 
-The code for parsing options and arguments uses some special syntax:
-
-* following comment at end of the line:
+The code for parsing  options and arguments  uses following special syntax
+as comment at end of the line:
 
     # alias: any other text
 
-is used for aliases of commands or options. These lines are extracted by
+for aliases of commands or options. These lines are extracted by:
 
-   --help=alias
+    o-saft.pl  --help=alias
 
 
 =head2 Note:anon-out
@@ -8801,11 +8854,12 @@ be anonymised in output.
 The use, hence definition, of this pattern is intended in CGI mode and can
 there be done in the RC-FILE. Therefore it is also necessary that the tool
 has an corresponding command-line option:  --anon-output .
-The pattern is stored in  %cfg.  The correspondig string for anonymisation
-(replacement) is defined in %text.
+The pattern is stored in `%cfg'. The correspondig string for anonymisation
+(replacement) is defined in `%text'.
 
 Note that the corresponding variable names (in %cfg and %text) should also
-be part of the pattern to avoid its disclosure with --v or --trace option.
+be part of the pattern to avoid its disclosure with the  --v  or  --trace
+option.
 
 Known (9/2020) variables and texts with potential information disclosure:
 
@@ -8821,13 +8875,13 @@ Known (9/2020) variables and texts with potential information disclosure:
 =head2 Note:ignore-out
 
 The option  --ignore-out  (same as  --no-cmd) adds commands to the list of
-commands  @cfg{out}->{ignore}.   The purpose is that values of the  listed
+commands `@cfg{out}->{ignore}'.  The purpose is that values of the  listed
 commands should not be printed in output. This is used mainly for commands
-where theoutput will be noisy (like some +bsi* commands).
+where the output will be noisy (like some +bsi* commands).
 All data collections and checks are still done, just output of results are
-omitted. Technically these commands are not removed from cfg{do}, but just
-skipped in printdata() and printchecks(),  which makes implementation much
-easier.
+omitted. Technically these commands are not removed from  `$cfg{do}',  but
+simply skipped in `printdata();' and `printchecks();',  which makes coding
+much easier.
 
 
 =head2 Note:--https_body
@@ -8835,34 +8889,33 @@ easier.
 +https_body  prints the HTTP response body of the target. This may be very
 noisy and is disabled by default. The option  --https_body  can be used to
 force printing the HTTP data. The option removes  'https_body'  from array
-cfg{out}->{ignore}.  For convenience and lacy users, some variants of this
-options are allowed.
+`$cfg{out}->{ignore}'.  For convenience and lacy users, this option can be
+written in some variants.
 
 
 =head2 Note:warning-no-duplicates
 
-Due to the program logic, for example nested looping (targets, protocols,
+Due to the program logic, for example  nested looping (targets, protocols,
 ciphers), the same message may be printed multiple times (in each loop).
-As the duplicate warning doesn't give additional information to the user,
-the duplicates are ignored by default. The option  --warnings_dups can be
+As the duplicate warning does not give additional information to the user,
+the duplicates are ignored by default. The option  --warnings_dups  can be
 used to enable printing of all messages.
 
-As the tool traditionally supports complementary options for enabling and
-disabling a functionality,  there is  --no-warnings_no_dups  respectively
---warnings_dups  too.
-Note that using both options  --no-warnings --no-warnings_no_dups  is not
-supported, means that no messages are printed.  This behaviour may change
+As the tool traditionally supports  complementary options for enabling and
+disabling a functionality,  there is  --no-warnings_no_dups  too.
+Note that using  both options  --no-warnings --no-warnings_no_dups  is not
+supported, means that  no messages are printed.  This behaviour may change
 in future.
 
-Technically the list (array)  "cfg{'warnings_no_dups'}"  contains message
-numbers not to be printed multiple times. This list is set empty when the
+Technically the list (array)  `$cfg{'warnings_no_dups'}'  contains message
+numbers not to be printed multiple times.  This list is set empty when the
 option  --warnings_dups  is given.
 
-Some messages contain variable values,  therefore the printed text of the
-message sligtly differs for several messages. Such messages should not be
-subject to the "don't print duplicates" mechanism, in practice: don't add
-their message number to  "cfg{'warnings_no_dups'}".
-The array  "cfg{'warnings_printed'}"  is used internally and contains the
+Some messages contain variable values/texts, therefore the printed text of
+the message sligtly differs for several messages. Such messages should not
+be subject to the "don't print duplicates" mechanism, in practice:  do not
+add their message number to  `$cfg{'warnings_no_dups'}'
+The array  `$cfg{'warnings_printed'}'  is used internally and contains the
 numbers of messages already printed.
 
 SEE L<Note:Message Numbers> also.
@@ -8886,19 +8939,20 @@ About OpenSSL's version numbers see openssl/opensslv.h . Examples:
 
 =head2 Note:need SSLinfo
 
-The module lib/SSLinfo.pm provides methods to retieve some SSL/TLS-related
+The module lib/SSLinfo.pm provides methods to extract some SSL/TLS-related
 informations. it should only be loaded if necessary. Loading is controlled
-by $cfg{'need_netinfo'} . If just ciphers are checked, it's not necessary.
+by `$cfg{'need_netinfo'}'. It's not necessary if just ciphers are checked.
 
 I.g. it is loaded if commands like  +check,  +quick  or  +vulns  are used.
 Some commands, like  +beast or +robot, do not need the module. But because
 these commands are handled like +check  the configuration needed by +check
 must be prepared. Otherwise Perl may complain with:
-    "Undefined subroutine &SSLinfo::do_ssl_open called ..."
-This can happen in printchecks() or _get_data0(). To avoid these warnings,
-the module will be loaded for some commands,  even it is not need  and may
-performs useless connections to the target. Otherwise a more sophisticated
-configuration of  $cfg{'need_netinfo'}  needs to be implemented.
+
+    Undefined subroutine &SSLinfo::do_ssl_open called ...
+
+This can happen with  `printchecks();' or `_get_data0();'. The warning can
+be avoided if the module is not loaded for commands which don't need it. A
+more sophisticated precise of  `$cfg{'need_netinfo'}' must be implemented.
 
 
 =head2 Note:OpenSSL CApath
@@ -8924,36 +8978,38 @@ capability can be queried with  SSLinfo::s_client_opt_get().
 Even  SSLinfo::s_client_*()  will check the capabilities,  no proper error
 messages could be printed there. Hence checks are done herein first, which
 disables unavailable functionality and avoids warnings. Results (supported
-or no capability) are stored  in $cfg{'openssl'} .
+or no capability) are stored in `$cfg{'openssl'}'.
 
 Some options for s_client are implemented, see  lib/SSLinfo.pm , or use:
+
     lib/SSLinfo.pm --test-sclient
 
-More details can be found in  lib/Doc/openssl.txt .
+More details can be found in  doc/openssl.txt .
 
 
 =head2 Note:Selected Protocol
 
-'sslversion' returns protocol as used in our data structure (like TLSv12)
+'sslversion' returns protocol as used in our data structure (like TLSv12).
 
-example (output from openssl 1.x):
+Example (output from openssl 1.x):
 
     New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
 
-example (output from openssl 3.x):
+Example (output from openssl 3.x):
 
     New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
 
-example Net::SSLeay:
+Example Net::SSLeay:
 
     Net::SSLeay::version(..)
 
-example (output from openssl):
-'session_protocol' retruns string used by openssl (like TLSv1.2)
+Example (output from openssl):
+
+'session_protocol' retruns string used by openssl (like TLSv1.2):
 
     Protocol  : TLSv1.2
 
-'fallback_protocol'
+'fallback_protocol':
 
     Note: output from openssl:      TLSv1.2
     Note: output from Net::SSLeay:  TLSv1_2
@@ -8964,11 +9020,12 @@ example (output from openssl):
 SEE L<Note:term default cipher>.
 
 'cipher_selected' returns the cipher as used in our data structure (like
- DHE-DES-CBC), this is the one selected if the client provided a list
-example (output from openssl):
+ DHE-DES-CBC), this is the one selected if the client provided a list.
+
+Example (output from openssl):
         TBD
 
-example Net::SSLeay:
+Example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
 
 For Programming internals see L<Note:+cipher-selected> also.
@@ -9005,14 +9062,15 @@ timeout settings, which then results in "hanging" connections.
 
 The option  --ssl-error  in conjunction with error counts  --ssl-error-max
 and --ssl-error-total controls wether to try to connect to the target even
-if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
-returns an error in $!. Unfortunately the error may be different according
-the used version.  Hence the check herein  does not use the returned error
-but relies on the time passed during the connection.  The assumtion (based
-on experience) is, that successful or rejected connection take less than a
-second, even on slow connections.  If the connection cannot be established
-(because not supported or blocked), we run into a timeout, which is always
-more than 0, at least 1 second (see --timeout=SEC option).
+if there are errors or timeouts. I.g. the used API IO::Socket:SSL, returns
+errors in `$!' if openssl fails.  Unfortunately the error may be different
+according the used OpenSSL version. Hence the check herein doesn't use the
+returned error but checks  the time passed while connected.  The assumtion
+(based on experience) is, that successful or rejected connection take less
+than a second, even on slow networks.  The connection attempt times out if
+the connection cannot be established (because not supported or blocked).
+This timeout is always more than 0, at least 1 second.  For details please
+see  --timeout=SEC  and  --ssl-error-timeout=SEC  options.
 
 Timeout cannot be set less than  one second.  Also measuring the times and
 their difference is in seconds.  A more accurate time measurement requires
@@ -9026,17 +9084,18 @@ More descriptions are in the section  LIMITATIONS  of the man page, see
 
 =head2 Note:%prot
 
-Using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
-in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol
+Using SSL/TLS protocols can be done using `%prot' or `$cfg{'versions'}' in
+contrast to `keys %prot', `$cfg{'versions'}'  is sorted according protocol
 like: SSLv2 SSLv3 TLSv1 ...
 
 
 =head2 Note:--exitcode
 
 Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
+
 By default  --exitcode  counts all settings considered weak or insecure.
 This behaviour can be controlled with the  --exitcode-no-*  options.
-The reasons and calculations of the returned status are printed withh  --v
+The reasons and calculations of the returned status are printed with  --v
 or the special  --trace-exit  option.
 By default, the "EXIT status" messages is printed, which can be suppressed
 with  --exitcode-quiet .
@@ -9085,6 +9144,8 @@ some additional checks are necessary then to avoid misuse.
 
 * The caller is also responsible to print proper HTTP headers.
 
+The special script  o-saft.cgi  is provided as wrapper for  o-saft.pl .
+
 Following special options are available for CGI mode:
 
     * --cgi         - must be passed to  o-saft.cgi  as first parameter
@@ -9093,7 +9154,7 @@ Following special options are available for CGI mode:
 
 The option  --cgi-trace is for debugging when used from command-line only.
 
-It is recommended that this script is called by  o-saft.cgi  in CGI mode.
+It is recommended that  o-saft.pl  is called by  o-saft.cgi  in CGI mode.
 
 
 =head2 Note:Option in CGI mode
@@ -9109,23 +9170,24 @@ The trailing  =  can always be removed, empty values are not possible.
 A stand-alone script is a single script,  which executes without any other
 module to be included (read) at run-time.
 Most modules --means modules in Perl context and syntax-- are already read
-using a private function  _load_file(),  which uses Perl's require instead
-of use. This way the modules are loaded at  run-time (require)  and not at
-compile-time (use).
-Unfortunately there exist modules, which must be loaded with Perl's use.
+using the private function `_load_file();' which uses Perl's `require' in-
+stead of `use'. This way the modules are loaded at run-time (require)  and
+not at compile-time (use).
+Unfortunately there exist modules, which must be loaded with Perl's `use'.
 When generating a stand-alone executable script, the complete file of each
 module is simply copied into the main script file (o-saft.pl usually).  In
 that case, the corresponding use statement must be removed.
- _load_file()  must take care not to load modules in stand-alone mode.
+`_load_file();'  must take care not to load modules in stand-alone mode.
 Please refer to the  INSTALLATION  section,  in particular the sub-section
-Stand-alone Executable  there, for more details on generating  stand-alone
+"Stand-alone Executable" there, for more details on generating stand-alone
 scripts.
 Generating a stand-alone script is done by usr/gen_standalone.sh .
 
 
 =head2 Note:root-CA
 
-Some texts from: http://www.zytrax.com/tech/survival/ssl.html
+Some texts from: http://www.zytrax.com/tech/survival/ssl.html , cite:
+
 The term Certificate Authority is defined as being an entity which signs
 certificates in which the following are true:
 
@@ -9153,7 +9215,8 @@ intermediate certificate and could thus encompass an RA or a subordinate CA.
 
 Cross certificates (a.k.a. Chain or Bridge certificate):
 A cross-certificate is one in which the subject and the issuer are not the
-same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
+same but in both cases they are CAs (BasicConstraints extension is present
+and has cA set True).
 
 
 Intermediate certificates (a.k.a. Chain certificates):
@@ -9164,8 +9227,8 @@ expensive) and simply indicates that the certificate forms part of a chain.
 
 Qualified certificates: Defined in RFC 3739
 the term Qualified certificates relates to personal certificates (rather than
-server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
-see check02102() above
+server certificates) and references the European Directive on Electronic
+Signature (1999/93/EC) see check02102() above
 
 
 Multi-host certificates (a.k.a wildcard certificates)
@@ -9181,6 +9244,8 @@ checkev() above:
            cA:FALSE
            pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
     RFC 4158
+
+(end cite).
 
 
 =head2 Note:term default cipher
@@ -9209,16 +9274,16 @@ are ignored.
 
 SEE L<Note:term default cipher>.
 
-In October 2017 (VERSION 17.09.17), the +cipherall command is no longer an
-alias for +cipherraw. It is now using the the same technique as +cipherraw
-to detect the targets ciphers, but prints the results like the traditional
-+cipher command.
+Since VERSION 17.09.17, the  +cipherall  command is no longer an alias for
++cipherraw. It is now using the same technique as +cipherraw to detect the
+targets ciphers, but prints results like the traditional +cipher command.
+
 Getting the selected (default) cipher is different for --ciphermode=intern
 and --ciphermode=openssl . Also computing other checks, like the strongest
 and weakest selected cipher is affected.
 
 One problem is, that  --ciphermode=openssl needs to use the underlying SSL
-library's methods.  ciphers_default_openssl()  does this and also computes
+library's methods. `ciphers_default_openssl()' does this and also computes
 the weakest and strongest selected cipher.
 
 
@@ -9234,10 +9299,10 @@ ciphers are listed now. This makes the options  --enabled  and  --disabled
 also obsolete.
 
 More information, which is also important for users,  can be found in user
-documentation  lib/Doc/help.txt  section "Version 19.11.19 and later".
+documentation  doc/help.txt  section "Version 19.11.19 and later".
 
 Internally, the commands  cipher_intern, cipher_openssl, cipher_ssleay and
-cipher_dump are used; the command cipher still remains in $cfg{do}.
+cipher_dump are used; the command cipher still remains in `$cfg{do}'.
 
 SEE L<Note:Cipher and Protocol>.
 
@@ -9269,13 +9334,13 @@ misleading information.
 
 The output may contain  !!Hint  messages, see  --help=output  for details.
 
-The texts used for hint messages can be hardcoded in %cfg, set dynamically
-in %cfg in the code, or set using command-line options at startup.
-The hash %{$cfg{'hints'}} contains all these texts.
+The texts used for hint messages can be hardcoded in `%cfg', it can be set
+dynamically in `%cfg' in the code, or can be set with command-line options
+at startup. The hash `%{$cfg{'hints'}}' contains all these texts.
 
 There're at least following types (places of definition) of hints:
 
-    * permanent hints   -- defined in %{$cfg{'hints'}} directly
+    * permanent hints   -- defined in `%{$cfg{'hints'}}' directly
     * dynamic hints     -- defined at command line with option --cfg_hint=
     * hints for new or experimental code    -- defined in the code itself
 
@@ -9285,7 +9350,7 @@ A definition for a hint may look like:
 
 KEY can be any string. If KEY (without leading +) is a known valid command
 the message is printed automatically with the commands output (see below).
-The text may contain formatting characters like \t and \n.
+The text may contain formatting characters like '\t' and '\n'.
 
 To set new hints dynamicly, following option can be used:
 
@@ -9302,10 +9367,10 @@ the option was given before  --help=hint , example:
 
 Automatic printing works as follows:
 
-    print_check() and print_data()  will automatically print hint texts if
+    `print_check();' and `print_data();' automatically print hint texts if
     defined for the corresponding command.
 
-They can be printed immediately (without being specified in  $cfg{hints} :
+They can be printed immediately (without being specified in `$cfg{hints}':
 
     printhint('your-key'),
 
@@ -9345,10 +9410,10 @@ These options are mainly (for details please see  OPTIONS  section):
     --format-arrow=CHR
 
 By default, the format settings are not used.  The settings are grouped in
-the  %cfg{tty}  structure.
+the  `%cfg{tty}'  structure.
 
 All special formatting according the tty is done in  lib/OMan.pm  (because
-only documentation is effected). The function  _man_squeeze()  is used for
+only documentation is effected). The function `_man_squeeze()' is used for
 that. It tries to optimize the ouput for the device. Text preformatted for
 better readability will be respected.
 
@@ -9361,7 +9426,7 @@ Following restrictions, oddities exist:
     * dashed lines (used for headings) are mainly not adapted (split)
 
 To clearly mark the special formatting,  an additional  "return" character
-is inserted where text was split.
+is inserted where text was split, see  --format-arrow=CHR  option.
 
 If the (human) user decided to use  --tty , the output is  most likely not
 subject to further postprocessing,  hence each leading TAB can be replaced
@@ -9376,7 +9441,7 @@ provided by the default behaviour. Simply use the  --tty  option.
 If a print statements should overwrite the text they printed earlier, '\r'
 is used instead of '\n' or '\r\n'.  Most system handle it depending on the
 final device, for example terminal (tty) or file, correctly. For terminals
-it is most likely controlled by/with "stty". 
+it is most likely controlled by/with "stty".
 
 Inestead of wiping the line separately, spaces are added to the end of the
 text. Finally a single '\n' is written to keep the last line.
