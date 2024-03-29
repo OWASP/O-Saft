@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.29 24/03/29 15:58:15";
+my  $SID_oman   = "@(#) OMan.pm 3.30 24/03/29 18:09:35";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -59,9 +59,13 @@ use Ciphers;    # required if called standalone only
 
 # OSAFT_STANDALONE my %cfg  = %OCfg::cfg;
 
+# SEE Note:Stand-alone
+$::osaft_standalone = 0 if not defined $::osaft_standalone;
+
 my  $parent = (caller(0))[1] || "o-saft.pl";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
+    $parent =  $0 if (0 < $::osaft_standalone);
 my  $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
     $ich    = "OMan.pm"   if (not defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
@@ -75,9 +79,6 @@ my  @help   = ODoc::get_markup("help.txt", $parent, $version);
 my  $trace  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
     $trace++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));    # if called via o-saft.pl
 local $\    = "";
-
-# SEE Note:Stand-alone
-$::osaft_standalone = 0 if not defined $::osaft_standalone;
 
 #_____________________________________________________________________________
 #_____________________________________________ texts for user documentation __|
@@ -801,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.29'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.30'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2327,48 +2328,30 @@ sub man_help        {
     my $label   = lc(shift) || "";      # || to avoid uninitialised value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
-    my $hlp;
     _man_dbx("man_help($anf, $end) ...");
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
-        return ODoc::get_egg("help.txt");
+       return ODoc::get_egg("help.txt");
     }
-    if (0 < $::osaft_standalone) {
-        # in standalone mode use $0 instead of $parent (which is "O-Saft")
-        @help   = ODoc::get_markup("help.txt", $0, $version);
-    }
+    @help   = ODoc::get_custom("help.txt", $parent, $version);
     my $txt = join ('', @help);
         # = ODoc::get_custom("help.txt", $parent, $version);
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
-    $txt =~ s/.*?\n=head1 $anf//ms;
-    $txt =~ s/\n=head1 $end.*//ms;      # grep all data
+    $txt =~ s/.*?\n$anf//ms;
+    $txt =~ s/\n$end.*//ms;
+    $txt =  "\n$anf" . $txt;
         # $txt contains now anthing between and including $anf and $end
-    # remove markup
-    $txt =  "\n=head1 $anf" . $txt;
-    $txt =~ s/\n=head2 ([^\n]*)/\n    $1/msg;
-    $txt =~ s/\n=head3 ([^\n]*)/\n      $1/msg;
-    $txt =~ s/\n=(?:[^ ]+ (?:\* )?)([^\n]*)/\n$1/msg;# remove inserted markup
-    $txt =~ s/\nS&([^&]*)&/\n$1/g;
-    $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
-    $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
     $txt =  _man_squeeze(undef, $txt);
-    if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
-        # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
-        print "**WARNING: using workaround to print large strings.\n\n";
-        $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
-    } else {
-        $hlp .= $txt;
-    }
     if ($label =~ m/^todo/i)    {
-        $hlp .= "\n  NOT YET IMPLEMENTED\n";
+        $txt .= "\n  NOT YET IMPLEMENTED\n";
         foreach my $label (sort keys %OData::checks) {
             #next if (0 >= _is_member($label, \@{$cfg{'commands_notyet'}}));
             next if (0 >= grep({lc($label) eq lc($_)} \@{$cfg{'commands_notyet'}}));
-            $hlp .= "        $label\t- " . $OData::checks{$label}->{txt} . "\n";
+            $txt .= "        $label\t- " . $OData::checks{$label}->{txt} . "\n";
         }
     }
-    return $hlp;
+    return $txt;
 } # man_help
 
 sub man_src_grep    {
@@ -2499,6 +2482,14 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _man_dbx("man_printhelp: " . uc($hlp));
         $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
     }
+#    $hlp = "";
+#    if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
+#        # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
+#        print "**WARNING: using workaround to print large strings.\n\n";
+#        $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
+#    } else {
+#        $hlp .= $txt;
+#    }
     print $txt || "";
     return;
 } # man_printhelp
@@ -2745,7 +2736,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.29 2024/03/29
+3.30 2024/03/29
 
 
 =head1 AUTHOR
