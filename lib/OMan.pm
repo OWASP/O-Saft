@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.27 24/03/28 21:10:54";
+my  $SID_oman   = "@(#) OMan.pm 3.28 24/03/29 09:05:05";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -801,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.27'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.28'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2334,7 +2334,7 @@ sub man_help        {
         @help   = ODoc::get_markup("help.txt", $0, $version);
     }
     my $txt = join ('', @help);
-        # = ODoc::get("help.txt", $parent, $version);
+        # = ODoc::get_custom("help.txt", $parent, $version);
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
         return ODoc::get_egg("help.txt");
     }
@@ -2458,17 +2458,17 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_table($1)        if ($hlp =~ /^(compl|hint|intern|pattern|range|regex)s?$/);
     $txt = man_table($1)        if ($hlp =~ /^(cipher[_.-]?(?:pattern|range|regex|ourstr)?)s?$/);
     if ($hlp eq "tools")    { # description for O-Saft tools
-        my @txt = ODoc::get("tools.txt", $parent, $version);
+        my @txt = ODoc::get_custom("tools.txt", $parent, $version);
         #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
         $txt = join("", @txt);
     }
     if ($hlp =~ m/^(coding|Program.?Code)$/i) { # print Program Code description
-        my @txt = ODoc::get("coding.txt", $parent, $version);
+        my @txt = ODoc::get_custom("coding.txt", $parent, $version);
         #$txt = _man_squeeze(undef, "@txt"); # TODO: does not work well here
         $txt = join("", @txt);
     }
     if ($hlp =~ m/^(devel|developer|development)$/i) { # print developer description
-        $txt = join("", ODoc::get("devel.txt", $parent, $version));
+        $txt = join("", ODoc::get_custom("devel.txt", $parent, $version));
     }
     $txt = man_src_grep(qr/\s*_trace_(exit|info|next)\(/n, "--exit=") if ($hlp =~ /^exit$/);
     # anything below requires data defined in parent (usually o-saft.pl)
@@ -2745,7 +2745,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.27 2024/03/28
+3.28 2024/03/29
 
 
 =head1 AUTHOR
