@@ -14,7 +14,12 @@ package ODoc;
 use strict;
 use warnings;
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.17 24/03/27 20:58:11";
+# binmode(...); # inherited from parent, SEE Perl:binmode()
+
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+my  $SID_odoc   = "@(#) ODoc.pm 3.19 24/03/29 08:46:01";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -26,12 +31,14 @@ BEGIN { # mainly required for testing ...
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    # our @EXPORT_OK  = qw( .. );   # not used, should be used full qualified
 }
-
-# binmode(...); # inherited from parent, SEE Perl:binmode()
 
 use OText       qw(%STR);
 use OCfg        qw(%cfg);
+
+# OSAFT_STANDALONE my %cfg  = %OCfg::cfg; ## no critic qw(Variables::ProhibitPackageVars)
+#    # only $OCfg::cfg{dirs} used
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -289,8 +296,6 @@ start with these prefixes, all following commands and options are ignored.
 
 =cut
 
-# our @EXPORT_OK  = qw( .. );   # not used, should be used full qualified
-
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
@@ -317,10 +322,10 @@ sub _get_standalone {
     my $path = __FILE__;
        $path =~ s#/[^/\\]*$##;
     foreach my $f ("$file,     $path/$file",      "$path/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'doc'}/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$file",
-                      "$path/../$OCfg::cfg{'dirs'}->{'lib'}/$file"
+                      "$path/$cfg{'dirs'}->{'doc'}/$name",
+                      "$path/$cfg{'dirs'}->{'lib'}/$name",
+                      "$path/$cfg{'dirs'}->{'lib'}/$file",
+                      "$path/../$cfg{'dirs'}->{'lib'}/$file"
                      ) {
         return $f if -e $f;
     }
@@ -343,7 +348,7 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
-                $path =~ s#^/($OCfg::cfg{'dirs'}->{'lib'}/.*)#$1#;  # own module directory
+                $path =~ s#^/($cfg{'dirs'}->{'lib'}/.*)#$1#;# own module directory
                 $path =~ s#/[^/\\]*$##;     # relative path of this file
                 # Dirty hack: some OS return an absolute path for  __FILE__ ;
                 # then $file would not be found because that path is wrong. If
@@ -351,8 +356,7 @@ sub _get_filehandle {
                 # NOTE: This behaviour (on older Mac OSX) is considered a bug
                 #       in Perl there.
             if (not -e "$path/$file") {
-                ## no critic qw(Variables::ProhibitPackageVars) # OCfg::* to keep generated o-saft-standalone happy.
-                $path =  $OCfg::cfg{'dirs'}->{'doc'}; # doc directory
+                $path =  $cfg{'dirs'}->{'doc'}; # doc directory
             }
             $file = "$path/$file";
             # following line for gen_standalone.sh (used with make)
@@ -552,11 +556,10 @@ sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; close($fh); r
 sub list        {
     #? return sorted list of available .txt files in ./doc or doc/ directory
     #  sorted list simplifies tests ...
-    ## no critic qw(Variables::ProhibitPackageVars) # OCfg::* to keep generated o-saft-standalone happy.
     my $dir = shift;
        $dir =~ s#[/\\][^/\\]*$##;
-       $dir .= "/$OCfg::cfg{'dirs'}->{'doc'}" if $dir !~ m#$OCfg::cfg{'dirs'}->{'doc'}/?$#;
-       $dir  =   $OCfg::cfg{'dirs'}->{'doc'}  if not -d $dir; # last resort
+       $dir .= "/$cfg{'dirs'}->{'doc'}" if $dir !~ m#$cfg{'dirs'}->{'doc'}/?$#;
+       $dir  =   $cfg{'dirs'}->{'doc'}  if not -d $dir; # last resort
     my @txt;
     opendir(my $dh, $dir) or return $!;
     while (my $file = readdir($dh)) {
@@ -635,7 +638,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.17 2024/03/27
+3.19 2024/03/29
 
 
 =head1 AUTHOR
