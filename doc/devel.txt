@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.2 24/03/28 21:31:17
+# SID   @(#) devel.txt 3.3 24/03/29 08:34:30
 
 
 NAME
@@ -194,7 +194,7 @@ DEBUGGING
 
     Debugging BEGIN and @EXPORT
 
-        To get an overview of what is exported andimported, usw:
+        To get an overview of what is exported and imported, use:
 
             BEGIN { $Exporter::Verbose=1; }
 
