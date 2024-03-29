@@ -38,11 +38,11 @@ no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when called as main only
 
-my  $SID_trace      = "@(#) OTrace.pm 3.22 24/03/28 21:20:24";
-our $VERSION        = "24.01.24";
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_trace      = "@(#) OTrace.pm 3.23 24/03/29 08:12:02";
+our $VERSION        = "24.01.24";
 
 # public package variables
 our $trace          = 0;
@@ -593,19 +593,19 @@ sub _trace_test_memory  {
 EoT
     my $line  = "=------+----------------";
     print "= Bytes variable\n$line";
-    foreach my $k (keys %cfg) {
+    foreach my $k (sort keys %cfg) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
     }
-    foreach my $k (keys %::checks) {
+    foreach my $k (sort keys %::checks) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$checks{$k}), "%checks{$k}");
     }
-    foreach my $k (keys %dbx) {
+    foreach my $k (sort keys %dbx) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$dbx{$k}),    "%dbx{$k}");
     }
-    #foreach my $k (keys %ciphers) {    # useless, as each entry is about 2k
+    #foreach my $k (sort keys %ciphers) {    # useless, as each entry is about 2k
     #    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%ciphers{$k}");
     #}
-    #foreach my $k (keys %data) {       # most entries report 42k, which is wrong
+    #foreach my $k (sort keys %data) {       # most entries report 42k, which is wrong
     #    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
     #}
     print "$line\n";
@@ -1176,7 +1176,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.22 2024/03/28
+3.23 2024/03/29
 
 =head1 AUTHOR
 
