@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.21 24/03/29 15:56:53";
+my  $SID_odoc   = "@(#) ODoc.pm 3.22 24/03/29 18:11:00";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -76,17 +76,19 @@ which return user documentation from text files in various formats.
 
 =head3 get($file)
 
-Return all data from file as is, no conversions. Returns data as string.
+Return all data from file as is, no conversions.
+Returns data as array of lines.
 
 =head3 get_custom($file,$name,$version)
 
 Return all data from file replacing '$0' by $name and '$VERSION' by $version.
-Returns data as string.
+Returns data as array of lines.
 
 =head3 get_markup($file,$name,$version)
 
 Return all data converted to internal markup format.
-Replaces '$0' by $name and '$VERSION' by $version. Returns array of lines.
+Replaces '$0' by $name and '$VERSION' by $version.
+Returns array of lines.
 
 =head3 get_section($file,$start)
 
@@ -385,8 +387,16 @@ sub get_custom  {
     my $file    = shift;
     my $name    = shift || "o-saft.pl";
     my $version = shift || $VERSION;
+    my @txt;
     my $fh      = _get_filehandle($file);
-    return _replace_var($name, $version, <$fh>);
+    return "" if ("" eq $fh);           # defensive programming
+    for (<$fh>) {   ## no critic qw(InputOutput::ProhibitReadlineInForLoop)
+        next if (m/^#begin/..m/^#end/); # remove egg
+        next if (/^#/);                 # remove comments
+        next if (/^\s*#.*#$/);          # remove formatting lines
+        push(@txt, $_);
+    }
+    return _replace_var($name, $version, @txt);
     # TODO: misses  close($fh);
 } # get_custom
 
@@ -490,7 +500,9 @@ sub get_section {
     my $hlp;
 #   _dbx("get_section($anf, $end) ...");
     # no special help, print full one or parts of it
-    my $txt = join ("", _get_filehandle($file));
+    my $fh  = _get_filehandle($file);
+    my $txt = join ("", <$fh>);
+    close($fh);
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
@@ -599,7 +611,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.21 2024/03/29
+3.22 2024/03/29
 
 
 =head1 AUTHOR
