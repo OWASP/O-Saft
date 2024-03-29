@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.19 24/03/29 08:46:01";
+my  $SID_odoc   = "@(#) ODoc.pm 3.20 24/03/29 09:00:42";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -74,9 +74,10 @@ which return user documentation from text files in various formats.
 
 =head1 METHODS
 
-=head3 get($file,$name,$version)
+=head3 get_custom($file,$name,$version)
 
-Return all data from file and replace $0 by $name. Returns data as string.
+Return all data from file replacing '$0' by $name and '$VERSION' by $version.
+Returns data as string.
 
 =head3 get_as_text($file)
 
@@ -85,10 +86,6 @@ Return all data from file as is. Returns data as string.
 =head3 get_markup($file,$name,$version)
 
 Return all data converted to internal markup format. Returns array of lines.
-
-=head3 print_as_text($file)
-
-Same as  get()  but prints text directly.
 
 
 =head1 COMMANDS
@@ -114,9 +111,9 @@ Print internal version.
 Print list of *.txt files in current directory. These files may be used for
 following commands.
 
-=item get filename
+=item get_custom filename
 
-Call get(filename).
+Call get_custom(filename).
 
 =item get_as_text filename
 
@@ -129,10 +126,6 @@ Call get_markup(filename).
 =item get_text filename
 
 Call get_text(filename).
-
-=item print_as_text filename
-
-Call print_as_text(filename).
 
 =back
 
@@ -392,15 +385,15 @@ sub get_egg     {
     return scalar reverse "\n$egg";
 } # get_egg
 
-sub get         {
-    #? return data from file as string, replace $0 by $name
+sub get_custom  {
+    #? return data from file as string, replace $0 by $name and $VERSION by $version
     my $file    = shift;
     my $name    = shift || "o-saft.pl";
     my $version = shift || $VERSION;
     my $fh      = _get_filehandle($file);
     return _replace_var($name, $version, <$fh>);
     # TODO: misses  close($fh);
-} # get
+} # get_custom
 
 sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
 # TODO: misses  close($fh);
@@ -501,7 +494,7 @@ sub get_markup    {
 #
 #=head3 get_text($file)
 #
-#Same as  get()  but with some variables substituted.
+#Same as  get_custom()  but with some variables substituted.
 #
 #=cut
 
@@ -550,8 +543,6 @@ sub get_text    {
     }
     return $txt;
 } # get_text
-
-sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; close($fh); return; }
 
 sub list        {
     #? return sorted list of available .txt files in ./doc or doc/ directory
@@ -613,11 +604,10 @@ sub _odoc_main  {
         # ----------------------------- commands
         _odoc_usage()           if ($cmd eq '--usage');
         print list($0) . "\n"   if ($cmd =~ /^list$/);
-        print get($arg)         if ($cmd =~ /^get$/);
+        print get_custom($arg)  if ($cmd =~ /^get.?custom$/);
         print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
         print get_text($arg)    if ($cmd =~ /^get.?text/);
-        print_as_text($arg)     if ($cmd =~ /^print(?:.?as.?text)?$/);
         print "$SID_odoc\n"     if ($cmd =~ /^version$/);
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
     }
@@ -638,7 +628,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.19 2024/03/29
+3.20 2024/03/29
 
 
 =head1 AUTHOR
