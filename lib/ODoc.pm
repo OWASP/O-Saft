@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.20 24/03/29 09:00:42";
+my  $SID_odoc   = "@(#) ODoc.pm 3.21 24/03/29 15:56:53";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -74,27 +74,39 @@ which return user documentation from text files in various formats.
 
 =head1 METHODS
 
+=head3 get($file)
+
+Return all data from file as is, no conversions. Returns data as string.
+
 =head3 get_custom($file,$name,$version)
 
 Return all data from file replacing '$0' by $name and '$VERSION' by $version.
 Returns data as string.
 
-=head3 get_as_text($file)
-
-Return all data from file as is. Returns data as string.
-
 =head3 get_markup($file,$name,$version)
 
-Return all data converted to internal markup format. Returns array of lines.
+Return all data converted to internal markup format.
+Replaces '$0' by $name and '$VERSION' by $version. Returns array of lines.
+
+=head3 get_section($file,$start)
+
+Return data for section starting at $start until next section from file.
+Replace POD format by plain text. Returns data as string.
+
+=head3 list
+
+Print list of *.txt files in current directory. These files may be used for
+following commands.
 
 
 =head1 COMMANDS
 
 If called from command line, like:
 
-  ODoc.pm COMMANDS filename
+  ODoc.pm COMMAND filename
 
-this modules provides following COMMANDS:
+this modules provides each method listed above as COMMAND.
+Additionally following commands are available:
 
 =over 4
 
@@ -105,27 +117,6 @@ Print VERSION version.
 =item version
 
 Print internal version.
-
-=item list
-
-Print list of *.txt files in current directory. These files may be used for
-following commands.
-
-=item get_custom filename
-
-Call get_custom(filename).
-
-=item get_as_text filename
-
-Call get_as_text(filename).
-
-=item get_markup filename
-
-Call get_markup(filename).
-
-=item get_text filename
-
-Call get_text(filename).
 
 =back
 
@@ -385,6 +376,10 @@ sub get_egg     {
     return scalar reverse "\n$egg";
 } # get_egg
 
+sub get         { my $fh = _get_filehandle(shift); return <$fh>; }
+    #? return data from file as string, no conversions
+# TODO: misses  close($fh);
+
 sub get_custom  {
     #? return data from file as string, replace $0 by $name and $VERSION by $version
     my $file    = shift;
@@ -394,9 +389,6 @@ sub get_custom  {
     return _replace_var($name, $version, <$fh>);
     # TODO: misses  close($fh);
 } # get_custom
-
-sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
-# TODO: misses  close($fh);
 
 sub get_markup    {
     #? return data with internal markup, returns array of lines
@@ -489,34 +481,23 @@ sub get_markup    {
     return _replace_var($parent, $version, @txt);
 } # get_markup
 
-# NOTE: NOT YET READY, not yet used (hence no POD also)
-#=pod
-#
-#=head3 get_text($file)
-#
-#Same as  get_custom()  but with some variables substituted.
-#
-#=cut
-
-sub get_text    {
+sub get_section {
+    #? return data of section $start from file as string, removes POD format
     my $file    = shift;
-    my $label   = shift || "";  # || to avoid "Use of uninitialised value"
-       $label   = lc($label);
+    my $label   = lc(shift) || "";  # || to avoid "Use of uninitialised value"
     my $anf     = uc($label);
     my $end     = "[A-Z]";
-#   _man_dbx("man_help($anf, $end) ...");
+    my $hlp;
+#   _dbx("get_section($anf, $end) ...");
     # no special help, print full one or parts of it
-    my $txt = join ("", get_markup($file));
-#   #if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
-#   #    print scalar reverse "\n\n$egg";
-#   #    return;
-#   #}
-#print "T $txt T";
+    my $txt = join ("", _get_filehandle($file));
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
     $txt =~ s/.*?\n=head1 $anf//ms;
     $txt =~ s/\n=head1 $end.*//ms;      # grep all data
+        # $txt contains now anthing between and including $anf and $end     
+    # remove markup
     $txt = "\n=head1 $anf" . $txt;
     $txt =~ s/\n=head2 ([^\n]*)/\n    $1/msg;
     $txt =~ s/\n=head3 ([^\n]*)/\n      $1/msg;
@@ -527,22 +508,12 @@ sub get_text    {
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         _warn("192: using workaround to print large strings.\n\n");
-        print foreach split(//, $txt);  # print character by character :-((
+        $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
     } else {
-        #print $txt;
+        $hlp .= $txt;
     }
-#print "t $txt t";
-    if ($label =~ m/^todo/i)    {
-        print "\n  NOT YET IMPLEMENTED\n";
-# TODO: {
-#        foreach my $label (sort keys %checks) {
-#            next if (0 >= _is_member($label, \@{$cfg{'commands-NOTYET'}}));
-#            print "        $label\t- " . $checks{$label}->{txt} . "\n";
-#        }
-# TODO: }
-    }
-    return $txt;
-} # get_text
+    return $hlp;
+} # get_section
 
 sub list        {
     #? return sorted list of available .txt files in ./doc or doc/ directory
@@ -604,12 +575,12 @@ sub _odoc_main  {
         # ----------------------------- commands
         _odoc_usage()           if ($cmd eq '--usage');
         print list($0) . "\n"   if ($cmd =~ /^list$/);
+        print get($arg)         if ($cmd =~ /^get$/);
         print get_custom($arg)  if ($cmd =~ /^get.?custom$/);
-        print get_as_text($arg) if ($cmd =~ /^get.?as.?text/);
-        print get_markup($arg)  if ($cmd =~ /^get.?mark(up)?/);
-        print get_text($arg)    if ($cmd =~ /^get.?text/);
+        print get_markup($arg)  if ($cmd =~ /^get.?mark(?:up)?/);
+        print get_section($arg,"NAME") if ($cmd =~ /^get.?section/);
         print "$SID_odoc\n"     if ($cmd =~ /^version$/);
-        print "$VERSION\n"      if ($cmd =~ /^[-+]?V(ERSION)?$/);
+        print "$VERSION\n"      if ($cmd =~ /^[-+]?V(?:ERSION)?$/);
     }
     exit 0;
 } # _odoc_main
@@ -628,7 +599,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.20 2024/03/29
+3.21 2024/03/29
 
 
 =head1 AUTHOR
