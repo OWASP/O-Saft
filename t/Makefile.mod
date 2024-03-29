@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.7 24/03/24 20:00:19
+#?      @(#) Makefile.mod 3.8 24/03/29 18:18:45
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.7
+_SID.mod           := 3.8
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -88,8 +88,8 @@ LIST.lib-OData.pm      := \
 	checks      data        shorttexts
 
 LIST.lib-ODoc.pm       := \
-	--usage version         +VERSION    list  print \
-	get     get-markup      get-text    get-as-text \
+	--usage version +VERSION        list  get \
+	get-custom      get-markup      get-section
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
 LIST.lib-OMan.pm       := \
