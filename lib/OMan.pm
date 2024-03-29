@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.28 24/03/29 09:05:05";
+my  $SID_oman   = "@(#) OMan.pm 3.29 24/03/29 15:58:15";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -801,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.28'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.29'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -820,14 +820,14 @@ sub _man_html_init  {
     return;
 } # _man_html_init
 
-sub _man_file_get   {
+sub _get_file       {
     #? get filename containing text for specified keyword
     my $typ = shift;
-    return ODoc::get_as_text('glossary.txt')    if ('abbr'  eq $typ);
-    return ODoc::get_as_text('links.txt')       if ('links' eq $typ);
-    return ODoc::get_as_text('rfc.txt')         if ('rfc'   eq $typ);
+    return ODoc::get('glossary.txt')    if ('abbr'  eq $typ);
+    return ODoc::get('links.txt')       if ('links' eq $typ);
+    return ODoc::get('rfc.txt')         if ('rfc'   eq $typ);
     return '';
-} # _man_file_get
+} # _get_file
 
 sub _man_http_head  {
     #? print HTTP headers (for CGI mode)
@@ -1248,7 +1248,7 @@ sub _man_doc_opt    {
     #  format is: opt, POD
     my ($typ, $sep, $format) = @_;  # format is POD or opt
     my  $url  = "";
-    my  @txt  = _man_file_get($typ);
+    my  @txt  = _get_file($typ);
     my  $opt;
     # ODoc::*::get()  returns one line for each term;  format is:
     #   term followd by TAB (aka \t) followed by description text
@@ -1272,7 +1272,7 @@ sub _man_doc_opt    {
 sub _man_doc_pod    {
     #? print text from file $typ in  POD  format
     my ($typ, $sep) = @_;
-    my  @txt  = _man_file_get($typ);
+    my  @txt  = _get_file($typ);
     # print comment lines only, hence add # to each line
     my  $help = "@txt";
         $help =~ s/\n/\n#/g;
@@ -2329,15 +2329,15 @@ sub man_help        {
     my $end     = "[A-Z]";
     my $hlp;
     _man_dbx("man_help($anf, $end) ...");
+    if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
+        return ODoc::get_egg("help.txt");
+    }
     if (0 < $::osaft_standalone) {
         # in standalone mode use $0 instead of $parent (which is "O-Saft")
         @help   = ODoc::get_markup("help.txt", $0, $version);
     }
     my $txt = join ('', @help);
         # = ODoc::get_custom("help.txt", $parent, $version);
-    if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
-        return ODoc::get_egg("help.txt");
-    }
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
@@ -2745,7 +2745,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.28 2024/03/29
+3.29 2024/03/29
 
 
 =head1 AUTHOR
