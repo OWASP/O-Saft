@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.14 24/03/28 21:15:33";
+my  $SID_odata  =  "@(#) OData.pm 3.15 24/04/05 16:52:05";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -1073,7 +1073,7 @@ None.
 
 sub show        {
     #? dispatcher for various --test-data-* options to show information
-    # output similar (but not identical) to o-saft-man::man_table()
+    # output similar (but not identical) to lib/OMan::man_table()
     my $arg = shift;
     printf("= %%$arg\n");
     #if ('info' eq $arg)   { # not yet used
@@ -1177,7 +1177,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.14 2024/03/28
+3.15 2024/04/05
 
 
 =head1 AUTHOR
