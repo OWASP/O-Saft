@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.23 24/04/04 13:19:01";
+my  $SID_odoc   = "@(#) ODoc.pm 3.24 24/04/05 16:48:16";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -394,12 +394,12 @@ sub get_custom  {
         next if (m/^#begin/..m/^#end/); # remove egg
         next if (/^#/);                 # remove comments
         next if (/^\s*#.*#$/);          # remove formatting lines
-            # special markup for tools, tool name ending with (1), ... (3pm)
-            s/ {1,2}((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d(?:pm)?\))/ "$1"/g;
-            # special markup for own tools
-            ##s#([a-zA-Z0-9.,;:/] )(o-saft(?:\.(?:pl|tcl)?)|lib/[^./]*\.pm)#$1 "$2"#g;
-            s/[IX]&([^&]*)&/$1/g;       # internal links without markup
-            #s/L&([^&]*)&/"$1"/g;        # external links, must be last one
+        # special markup for tools, tool name ending with (1), ... (3pm)
+        s/ {1,2}((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d(?:pm)?\))/ "$1"/g; ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+        # special markup for own tools
+        ##s#([a-zA-Z0-9.,;:/] )(o-saft(?:\.(?:pl|tcl)?)|lib/[^./]*\.pm)#$1 "$2"#g;
+        s/[IX]&([^&]*)&/$1/g;       # internal links without markup
+        #s/L&([^&]*)&/"$1"/g;        # external links, must be last one
         push(@txt, $_);
     }
     return _replace_var($name, $version, @txt);
@@ -507,7 +507,7 @@ sub get_section {
 #   _dbx("get_section($anf, $end) ...");
     # no special help, print full one or parts of it
     my $fh  = _get_filehandle($file);
-    my $txt = join ("", <$fh>);
+    my $txt = join ("", <$fh>); ## no critic qw(InputOutput::ProhibitJoinedReadline)
     close($fh);
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
@@ -617,7 +617,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.23 2024/04/04
+3.24 2024/04/05
 
 
 =head1 AUTHOR
