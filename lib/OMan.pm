@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data %text);
 
-my  $SID_oman   = "@(#) OMan.pm 3.30 24/03/29 18:09:35";
+my  $SID_oman   = "@(#) OMan.pm 3.31 24/04/05 18:56:30";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -802,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.30'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.31'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1730,7 +1730,7 @@ sub man_docs_write  {
         _hint("documentation files should be generated using '$cfg{files}{SELF} --help=gen-docs'");
     }
     my $fh  = undef;
-    foreach my $mode (keys %{$cfg{'files'}}) {
+    foreach my $mode (sort keys %{$cfg{'files'}}) {
         next if $mode !~ m/^--help/;
         next if $mode =~ m/^--help=warnings/;   # TODO:
         my $doc = "$cfg{'files'}{$mode}";
@@ -1739,6 +1739,7 @@ sub man_docs_write  {
             _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
             next;
         };
+        #           $mode contains for example --help=alias$/);
         print $fh man_alias()           if ($mode =~ /alias$/);
         print $fh man_commands()        if ($mode =~ /commands?$/);
         print $fh man_options()         if ($mode =~ /opts$/);
@@ -2113,7 +2114,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         last;
     }
     if ($typ =~ m/check/) {
-        foreach my $key (sort keys %::checks) {
+        foreach my $key (sort keys %main::checks) {
             $pod .= _man_cfg($typ, $key, $sep, $main::checks{$key}->{txt});
         }
         last;
@@ -2332,8 +2333,9 @@ sub man_help        {
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
        return ODoc::get_egg("help.txt");
     }
-    @help   = ODoc::get_custom("help.txt", $parent, $version);
-    my $txt = join ('', @help);
+    # get plain text (without markup), convert some variable texts
+    my @helptext= ODoc::get_custom("help.txt", $parent, $version);
+    my $txt     = join ('', @helptext);
         # = ODoc::get_custom("help.txt", $parent, $version);
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
@@ -2391,11 +2393,11 @@ sub man_src_grep    {
 sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
-    my $hlp = shift;
+    my $hlp = shift;    # reqested help: option without --help* or --test* prefix
     my $txt;
     _man_dbx("man_printhelp($hlp) ...");
-     man_docs_write() if ($hlp =~ m/^gen[_.=-]?docs$/); # same as in _oman_main()
-               return if ($hlp =~ m/^gen[_.=-]?docs$/); #
+     man_docs_write() if ($hlp =~ m/^gen[_.=-]?docs$/);
+               return if ($hlp =~ m/^gen[_.=-]?docs$/);
     _man_use_tty();
     _man_html_init();   # must be called here, because function may be call anywhere
     # NOTE: some lower case strings are special
@@ -2524,7 +2526,7 @@ sub _oman_main      {
             @help = ODoc::get_markup($file, __FILE__, $VERSION) if (-e $file);
             next;
         }
-        man_docs_write()            if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
+        $arg = "gen-docs"   if ($arg =~ m/--(?:help=)?gen[_.=-]?docs/x);
         # testing this module is technically the same as getting the text
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
         $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
@@ -2736,7 +2738,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.30 2024/03/29
+3.31 2024/04/05
 
 
 =head1 AUTHOR
