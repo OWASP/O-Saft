@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.20 24/04/06 09:47:22";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.21 24/04/06 09:58:01";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -453,8 +453,7 @@ sub _warn   {
     # don't print if --no-warning given
     my @txt = @_;
     return if ((grep{/(:?--no.?warn)/ix} @main::ARGV) > 0);
-    local $\ = "\n";
-    warn($STR{WARN}, join(" ", @txt));  ## no critic qw(ErrorHandling::RequireCarping)
+    printf("%s%s\n", $STR{WARN}, join(" ", @txt));
     return;
 }
 
@@ -463,7 +462,7 @@ sub _hint   {
     # don't print if --no-hint given
     my @txt = @_;
     return if ((grep{/(:?--no.?hint)/ix} @main::ARGV) > 0);
-    local $\ = "\n"; print($STR{HINT}, join(" ", @txt));
+    print("%s%s\n", $STR{HINT}, join(" ", @txt));
     return;
 }
 
