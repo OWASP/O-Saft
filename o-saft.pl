@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.21 24/03/28 21:28:53"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.24 24/04/07 11:06:59"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.21"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.24"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2622,7 +2622,7 @@ sub _useopenssl($$$$)   {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
         _warn("312: SSL version '$ssl': unknown result from openssl or '$cipher'");
-        _warn("312: result from openssl: '$data'") if _is_trace();
+        _warn("312: result from openssl: '$data'") if _is_trace(); # same warning number intended!
     }
     trace2("_useopenssl: #{ $data }");
     if ($cfg{'verbose'} < 1) {
@@ -2995,9 +2995,11 @@ sub ciphers_prot_openssl {
                 _warn("411: checked $ssl cipher '$c' does not match returned cipher '$supported'");
             }
         }
-        if (($c =~ /^(?:TLS(?:13)?)/) and (3 gt $cmd{'version'})) {
+        if (($c =~ /^(?:TLS(?:13)?)/) and (3 gt $cmd{'version'})) { ## no critic qw(ValuesAndExpressions::ProhibitMismatchedOperators)
                 # NOTE: Perl 5.9's "version" module would be more accurate for "gt"
                 # some older OpenSSL 0.9x, 1.x are picky with modern cipher names
+                # operator "gt" can compare x.y.z too, see "man perldata";
+                # unfortunately Perl::Critic doesn't honor that, hence disabled
                 printf("\n") if _is_cfg_verbose();  # keep last printed line (see above)
                 _warn("413: some openssl fail with '-cipher $c', the cipher may not be listed then");
         }
@@ -8678,16 +8680,8 @@ See also  CONCEPTS  (if it exists in our help texts).
 
 =head2 Note:Message Numbers
 
-Each warning has a unique number. The numbers are grouped as follows:
-
-    0xx     startup check, options, arguments
-    1xx     check (runtime) functionality
-    2xx     loop targets (hosts)
-    3xx     connect functions
-    4xx     cipher check functions
-    5xx     inernal check functions
-    6xx     check functions
-    8xx     print functions
+Each warning has a unique number. Please see section  OUTPUT in particular
+"Errors, Warnings, Hints" in doc/help.txt for details.
 
 Check for used numbers with:
 
