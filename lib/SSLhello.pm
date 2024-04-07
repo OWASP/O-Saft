@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.21 24/04/06 09:58:01";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.22 24/04/07 09:18:10";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -462,7 +462,7 @@ sub _hint   {
     # don't print if --no-hint given
     my @txt = @_;
     return if ((grep{/(:?--no.?hint)/ix} @main::ARGV) > 0);
-    print("%s%s\n", $STR{HINT}, join(" ", @txt));
+    printf("%s%s\n", $STR{HINT}, join(" ", @txt));
     return;
 }
 
