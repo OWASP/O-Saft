@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.5 24/04/07 09:56:14
+#?      @(#) Makefile.warnigs 3.6 24/04/07 13:00:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.5
+_SID.warnings      := 3.6
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -249,7 +249,7 @@ warning-080: TEST.args  = TODO: testing Net::SSLeay < 1.49
 warning-081: TEST.args  = TODO: ancient Net::SSLeay Net::SSLeay::VERSION < 1.49, difficult ...
 warning-090: TEST.args  = TODO: SSLinfo::next_protos no longer supported, please use SSLinfo::protos_alpn instead, difficult ...
 warning-091: TEST.args  = TODO: help file cannot be opened, difficult ...
-warning-092: TEST.args  = TODO: help file unknown syntax:, difficult ...
+#warning-092: TEST.args  = free
 warning-093: TEST.args  = TODO: help file cannot be opened, difficult ...
 # warning-189 .. warning-191 are for missing $(O-LIB.dir)/doc/file.txt
 # testing with o-saft-standalone.pl with full path may trigger the warning
@@ -428,7 +428,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.5: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.6: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
