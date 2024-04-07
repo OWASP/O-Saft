@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.8 24/04/04 19:02:43
+# SID   @(#) help.txt 3.9 24/04/07 11:07:42
 
 NAME
 
@@ -3066,7 +3066,8 @@ OUTPUT
         Following rules are used:
           * Lines for formatting or header lines start with  '='.
           * Lines for verbosity or tracing start with  '#'.
-          * Errors and warnings start with  '**', hints start with '!!'.
+          * Errors, warnings and information start with  '**'.
+          * Hints start with '!!'.
           * Empty lines are comments ;-)
           * Label texts end with a separation character; default is  ':'.
           * Label and value for all checks are separated by at least one  TAB
@@ -3094,7 +3095,21 @@ OUTPUT
         errors and warnings are printed immediately as they occour during the
         program flow, hints are printed right after the corresponding result.
 
-        Errors and warnings start with a unique 3-digit number.
+        Errors and warnings start with a unique  3-digit number.  The numbers
+        are grouped as follows:
+
+         #-------------+------------------------------------
+          number range | description
+         #-------------+------------------------------------
+                0xx    | startup check, options, arguments
+                1xx    | check (runtime) functionality
+                2xx    | loop targets (hosts)
+                3xx    | connect functions
+                4xx    | cipher check functions
+                5xx    | inernal check functions
+                6xx    | check functions
+                8xx    | print functions
+         #-------------+------------------------------------
 
         Hints print an additional explanation of a specific result.  They are
         are defined statically in the program code, or can be added on demand
