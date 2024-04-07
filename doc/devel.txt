@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.3 24/03/29 08:34:30
+# SID   @(#) devel.txt 3.4 24/04/07 10:28:26
 
 
 NAME
@@ -25,6 +25,10 @@ DESCRIPTION
         For a general overview how documentation is organised, please see:
 
               perldoc $0
+
+        For documentation about coding and such, please see:
+              doc/coding.txt
+              $0 --help=coding
 
         Documentation for development is provided in various ways.  It can be
         found for example in/with:
@@ -69,6 +73,7 @@ OVERVIEW
 
         Warnings
 
+          make warnings-info
           make testarg-hlp-o-saft.pl_--help-warnings.log
           o-saft.pl --header --no-rc --help=warnings
 
