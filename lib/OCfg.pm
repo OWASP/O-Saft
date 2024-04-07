@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.18 24/04/07 11:25:41";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.19 24/04/07 11:27:30";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2640,8 +2640,8 @@ our %cfg = (    # main data structure for configuration
     'regex' => {
         # RegEx for matching other (own and foreign) tools
         'tools-ext'     => '(?:ldd|openssl|timeout|Net::SSLeay|IO::Socket(?:::SSL|::INET)?)',
-        'tools-own'     => '(?:\$0|o-saft(?:\.(?:cgi|pl|tcl))?|o-saft-docker|lib/[^./]*\.pm|checkAllCiphers.pl|perl|perl2exe|perlapp)'
-        # RegEx for matching commands and options
+        'tools-own'     => '(?:\$0|o-saft(?:\.(?:cgi|pl|tcl))?|o-saft-docker|lib/[^./]*\.pm|checkAllCiphers.pl|perl|perl2exe|perlapp)',
+        # RegEx for matching commands and options.
         'cmd-http'      => '^h?(?:ttps?|sts)_', # match keys for HTTP
         'cmd-hsts'      => '^h?sts',            # match keys for (H)STS
         'cmd-sizes'     => '^(?:cnt|len)_',     # match keys for length, sizes etc.
@@ -3536,7 +3536,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.18"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.19"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3585,7 +3585,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.18 2024/04/07
+3.19 2024/04/07
 
 =head1 AUTHOR
 
