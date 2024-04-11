@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.25 24/04/11 23:37:00"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.26 24/04/12 00:21:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.25"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.26"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6042,6 +6042,8 @@ sub printversion        {
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || $STR{UNDEF};
     my $me = $cfg{'me'};
     print( "=== $0 " . _VERSION() . " ===");
+    print( "= perl " . $] . " =");  # SEE Perl:version
+    print( "= Net::SSLeay " . $Net::SSLeay::VERSION . " =");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
@@ -8377,6 +8379,13 @@ See following table  how changing POD to plain ASCII (VERSION 14.11.14 vs.
     * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
     * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
     -------------------------+----+-------------+------+----------
+
+
+=head2 Perl:version
+
+The Perl interpreter's version is stored in  $]  in all versions of Perl.
+While the more modern  $^V is known in Perl 5.6 and later but undefined in
+older versions.
 
 
 =head2 Perl:perlcritic
