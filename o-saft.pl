@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.24 24/04/07 11:06:59"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.25 24/04/11 23:37:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -370,7 +370,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.24"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.25"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1332,12 +1332,14 @@ sub _enable_functions   {
     my $version_ssleay   = shift;
     my $version_iosocket = shift;
     trace("_enable_functions($version_openssl, $version_ssleay, $version_iosocket) {");
-    my $txo = sprintf("ancient version openssl 0x%x", $version_openssl);
-    my $txs = "ancient version Net::SSLeay $version_ssleay";
-    my $txt = "improper Net::SSLeay version;";
+    my $txo = sprintf("ancient openssl 0x%x", $version_openssl);
+    my $txi = "ancient IO::Socket::SSL $version_iosocket";
+    my $txs = "ancient Net::SSLeay $version_ssleay";
+    my $txt = "improper Net::SSLeay $version_ssleay";
+    my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn $STR{WARN}, "122: ancient Net::SSLeay $version_ssleay cannot detect OpenSSL version";
+        warn $STR{WARN}, "122: $txs; cannot detect OpenSSL version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
         warn $STR{WARN}, "123: ancient or unknown version of IO::Socket detected";
@@ -1346,9 +1348,8 @@ sub _enable_functions   {
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
         if((_is_cfg_use('sni')) and ($cmd{'extciphers'} == 0)) {
             $cfg{'use'}->{'sni'} = 0;
-            my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
             if ($version_iosocket < 1.90) {
-                warn $STR{WARN}, "124: ancient version IO::Socket::SSL $version_iosocket < 1.90; $txt_buggysni";
+                warn $STR{WARN}, "124: $txi < 1.90; $txt_buggysni";
             }
             if ($version_openssl  < 0x01000000) {
                 warn $STR{WARN}, "125: $txo < 1.0.0; $txt_buggysni";
@@ -1363,10 +1364,7 @@ sub _enable_functions   {
         # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
         if (_is_cfg_use('alpn')) {
             $cfg{'use'}->{'alpn'} = 0;
-            warn $STR{WARN}, "126: $txt tests with/for ALPN disabled";
-            if ($version_ssleay   < 1.56) {  # is also < 1.46
-                warn $STR{WARN}, "127: $txs < 1.56"  if ($cfg{'verbose'} > 1);
-            }
+            warn $STR{WARN}, "126: $txt; tests with/for ALPN disabled";
             if ($version_openssl  < 0x10002000) {
                 warn $STR{WARN}, "128: $txo < 1.0.2" if ($cfg{'verbose'} > 1);
             }
@@ -1379,10 +1377,7 @@ sub _enable_functions   {
         # warnings only if NPN functionality required
         if (_is_cfg_use('npn')) {
             $cfg{'use'}->{'npn'}  = 0;
-            warn $STR{WARN}, "129: $txt tests with/for NPN disabled";
-            if ($version_ssleay   < 1.46) {
-                warn $STR{WARN}, "130: $txs < 1.46"  if ($cfg{'verbose'} > 1);
-            }
+            warn $STR{WARN}, "129: $txt; tests with/for NPN disabled";
             if ($version_openssl  < 0x10001000) {
                 warn $STR{WARN}, "132: $txo < 1.0.1" if ($cfg{'verbose'} > 1);
             }
@@ -1392,12 +1387,12 @@ sub _enable_functions   {
     trace(" cfg{use}->{npn}= $cfg{'use'}->{'npn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  OpenSSL 1.0.0
-        warn $STR{WARN}, "133: $txt tests for OCSP disabled";
+        warn $STR{WARN}, "133: $txt; tests for OCSP disabled";
         #_hint("use '--no-ocsp' to disable this check");
     }
 
     if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {    # Net::SSLeay < 1.56
-        warn $STR{WARN}, "134: $txt setting curves disabled";
+        warn $STR{WARN}, "134: $txt; setting curves disabled";
         #_hint("use '--no-cipher-ecdh' to disable this check");
     }
     trace("_enable_functions() }");
@@ -1478,6 +1473,11 @@ sub _check_functions    {
     } else {
         trace("$text_ssleay  NPN\tyes");
     }
+    #if ($version_ssleay < 1.94) {
+        # default installation in /usr/local/lib
+    #} else {
+        # default installation in /usr/lib
+    #}
 
     if (not exists &Net::SSLeay::CTX_set_alpn_protos) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
@@ -6006,10 +6006,10 @@ sub printquit           {
 sub __SSLeay_version    {
     #? internal wrapper for Net::SSLeay::SSLeay()
     if (1.49 > $Net::SSLeay::VERSION) {
-        my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
+        my $txt  = "ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
            $txt .= " cannot compare SSLeay with openssl version";
-        warn $STR{WARN}, "080: $txt";    # not _warn(), SEE Perl:warn
-        return "$Net::SSLeay::VERSION";
+        warn $STR{WARN}, "080: $txt";   # not _warn(), SEE Perl:warn
+        return "$Net::SSLeay::VERSION"; # return something like a "version"
     } else {
         return Net::SSLeay::SSLeay();
     }
@@ -6047,7 +6047,7 @@ sub printversion        {
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
     printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay_version(), __SSLeay_version());
     if (1.49 > $Net::SSLeay::VERSION) {
-        _warn("851: ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
+        _warn("851: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
     } else {
       if (_is_cfg_verbose()) {
         # TODO: not all versions of Net::SSLeay have constants like
