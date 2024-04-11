@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.6 24/04/07 13:00:28
+#?      @(#) Makefile.warnigs 3.7 24/04/12 01:37:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.6
+_SID.warnings      := 3.7
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -270,10 +270,10 @@ warning-123: TEST.args  = TODO: testing ancient IO::Socket
 warning-124: TEST.args  = TODO: testing ancient IO::Socket::SSL
 warning-125: TEST.args  = TODO: testing openssl < 1.0.0
 warning-126: TEST.args  = TODO: testing missing ALPN functionality
-warning-127: TEST.args  = TODO: testing Net::SSLeay < 1.56, ALPN disabled
+#warning-127: TEST.args  = free
 warning-128: TEST.args  = TODO: testing openssl < 1.0.2, ALPN disabled
 warning-129: TEST.args  = TODO: testing missing NPN functionality
-warning-130: TEST.args  = TODO: testing Net::SSLeay < 1.46, NPN disabled
+#warning-130: TEST.args  = free
 #warning-131: TEST.args  = free
 warning-132: TEST.args  = TODO: testing openssl < 1.0.1, NPN disabled
 warning-133: TEST.args  = TODO: testing Net::SSLeay without OCSP
@@ -428,7 +428,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.6: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.7: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
