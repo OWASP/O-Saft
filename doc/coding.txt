@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 3.4 24/03/28 20:37:37
+# SID   @(#) coding.txt 3.5 24/04/12 10:31:58
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -201,6 +201,10 @@ HACKER's INFO
         Calling external programs uses  qx()  rather than backticks or Perl's
         system() function.  Also note that  round brackets are used insted of
         slashes to avoid confusion with RegEx.
+
+        Even security of the tool itself is not important (see help.txt), for
+        example command injections, the parameters for qx() should be checked
+        and documented why it is considered secure.
 
         The code flow often uses postfix conditions, means the  if-conditions
         are written right of the command to be executed. This is done to make
@@ -493,7 +497,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 3.4 24/03/28 20:37:37";
+            my $SID = "coding.txt 3.5 24/04/12 10:31:58";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
