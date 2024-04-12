@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.9 24/04/07 11:07:42
+# SID   @(#) help.txt 3.10 24/04/12 02:19:58
 
 NAME
 
@@ -1131,6 +1131,19 @@ OPTIONS
 
           Check your system for the proper name, for example:
               DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.
+
+      --inc=PATH
+
+          'PATH'        is a full path where to find additional Perl modules
+
+          This option is not avaliable as "--inc PATH".
+
+      --no-inc=REGEX
+
+          'REGEX'       all paths matching this RegEx are removed from @INC
+
+          This option is not avaliable as "--no-inc REGEX".
+          See  HACKER's INFO  below for a detailed description.
 
       --ssl-error
 
@@ -4364,6 +4377,33 @@ HACKER's INFO
 
         However, there are some dirty hacks where  SSLv2 and SSLv3 is checked
         again.
+
+    Manipulating Perl's @INC
+
+        Most perl executables use a compiled-in  list of directories where to
+        find its modules. This list is available in Perl's @INC variable.
+
+        There are various ways to add more directories to @INC  but no simple
+        method to remove directories from it.
+
+        The option  --no-inc=PATTERN  can be used to  remove directories from
+        @INC. Note that PATTERN is a RegEx and will remove all matching paths
+        from @INC. Example:
+
+          remove all directories starting with "/usr/local/":
+              $0 --no-inc=^/usr/local/ ...
+
+          remove all directories containing "/local/":
+              $0 --no-inc=/local/ ...
+
+          just remove "/usr/local/lib/site_perl"
+              $0 --no-inc=^/usr/local/lib/site_perl$ ...
+
+        For convenience the option  --inc=PATH  exists and adds the specified
+        path to @INC (same as using "perl -IPATH ...".
+
+        The patterns given with  --no-inc=  are removed from @INC  late, when
+        all default directories and those passed with  --inc=  were added.
 
     Using private libssl.so and libcrypt.so
 
