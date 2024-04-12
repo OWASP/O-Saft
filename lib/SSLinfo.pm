@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.11 24/03/24 17:27:11";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.12 24/04/12 10:26:25";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -848,12 +848,13 @@ sub _trace_value_or_text {
 sub _setcommand {
     #? check for external command $command; returns command or empty string
     my $command = shift;
-    return '' if ('' eq $command);
+    return '' if not $command;
     my $cmd;
     my $opt = "version";
        $opt = "--version" if ($command =~ m/timeout$/);
     _trace("_setcommand($command) $opt 2>&1");
-    $cmd = qx($command $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
+    $cmd = qx("$command" $opt 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        #  qx() is safe here as checked before
     if (defined $cmd) {
         # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
         chomp $cmd;
@@ -862,7 +863,7 @@ sub _setcommand {
         if ($cmd =~ m#timeout$#) {
             # some timout implementations require -t option, i.e. BusyBox v1.26.2
             # hence we check if it works with -t and add it to $cmd
-            $cmd = "$cmd -t " if (qx($cmd -t 2 pwd 2>&1) !~ m/timeout/);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            $cmd = "$cmd -t " if (qx("$cmd" -t 2 pwd 2>&1) !~ m/timeout/);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         _trace("_setcommand: $command = ''");
@@ -2132,6 +2133,7 @@ sub _openssl_MS     {
         #dbx# print `cat $tmp`;
         $src = 'cmd.exe';
         ($data = qx(cmd.exe /D /S /C $tmp)) or do {$err = $!} and last; ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            # qx() is safe here because `$tmp' is hardcoded here
         $src = 'unlink';
         unlink  $tmp                        or do {$err = $!} and last;
          $data =~ s#^[^)]*[^\r\n]*.##s;          # remove cmd.exe's output
@@ -2203,6 +2205,7 @@ sub _openssl_x509   {
     }
     if ($^O !~ m/MSWin32/) {
         $data = qx(echo '$pem' | $_openssl $mode 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            # qx() is safe here because `$_openssl' checked in _setcommand()
     } else { # it's sooooo simple, except on Windows :-(
         $data = _openssl_MS($mode, '', '', $pem);
     }
@@ -2288,6 +2291,7 @@ sub s_client_check  {
         $_OpenSSL_opt{'data'} = _openssl_MS('s_client -help', '', '', '');  # no host:port
     } else {
         $_OpenSSL_opt{'data'} = qx($_openssl s_client -help 2>&1);  ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            # qx() is safe here because `$_openssl' checked in _setcommand()
     }
     #_trace("data{ $_OpenSSL_opt{'data'} }";
 
@@ -3421,6 +3425,7 @@ sub do_openssl($$$$)  {
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
+        # qx() below should be safe here because `$_openssl' and `$timeout' checked in _setcommand()
         $data  = qx(echo "$pipe" | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
