@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.29 24/04/12 08:32:01"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.30 24/04/12 09:58:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -386,7 +386,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.29"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.30"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1763,7 +1763,8 @@ sub _init_openssldir    {
     # SEE Note:OpenSSL CApath
     # $cmd{'openssl'} not passed as parameter, as it will be changed here
     return "" if ($cmd{'openssl'} eq "");       # defensive programming
-    my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
+    my $dir = qx("$cmd{'openssl'}" version -d); # get something like: OPENSSLDIR: "/usr/local/openssl"
+        # qx() should be save here because `$cmd{'openssl'}' checked before
     chomp $dir;
         # if qx() above failed, we get: "Use of uninitialized value $dir in ..."
     my $status  = $?;
@@ -6099,8 +6100,11 @@ sub printversion        {
                   $lib = "<<$p/$l not found>>" if (! -e $lib);
                print "    library                          " . $lib;
                if ($cfg{'verbose'} > 1) {
-                   print "#   strings $lib | grep 'part of OpenSSL')";
-                   print qx(strings $lib | grep 'part of OpenSSL');
+                   next if not -e "$lib";
+                   print "#   strings '$lib' | grep 'part of OpenSSL')";
+                   print   qx(strings "$lib" | grep 'part of OpenSSL');
+                       # qx() should be save here because `$lib' is quoted
+                       # and contains an existing path 
                }
            }
         }
@@ -6185,13 +6189,18 @@ sub printversion        {
         if (defined $$v) {
             $v = $$v;
         } else {
+            # our own modules lib/*pm all contain the $VERSION variable,
+            # hence this else is executed only if the module was not loaded
+            # NOTE: this also happens if the module is loaded using Perl's
+            # require, for example with: `$0 version --v'
             $v = qx(lib/$m.pm +VERSION);        # get version from module directly if not loaded
+               # qx() is save here because `$m' contains our well known names
             chomp $v;
             $v = " " if ($v =~ m/^\s*$/);
         }
         printf("    %-22s %-9s%s\n", $m, $v, ($INC{$d} || $INC{"lib/$d"} || "<<not loaded>>"));
             # our own modues are in lib/ which is not part of the module name
-            # (see list in foreach above), hence the additional || $INC{"lib/$d"}
+            # (see list in foreach above), hence the additional `|| $INC{"lib/$d"}`
     }
     _hint("use '--v' to get list of all modules") if not _is_cfg_verbose();
     if (_is_cfg_verbose()) {
@@ -6219,8 +6228,10 @@ sub printversion        {
         # quick&dirty, don't want to use ::Find module
         foreach my $d (sort keys %p) {
              next if ($d =~ m/^\s*$/);
-             print "# find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
-             print qx(find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
+             next if not -e $d;
+             print "# find '$d' -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
+             print qx(find "$d" -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
+                # qx() should be save here because `$d' is quoted and exists
         }
     }
     trace("printversion() }");
