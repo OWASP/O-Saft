@@ -141,7 +141,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 3.1 24/01/26 00:52:25";
+my $SID_cgi = "@(#) o-saft.cgi 3.2 24/04/12 10:01:15";
 my $VERSION = '24.01.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -236,7 +236,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.1\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.2\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
@@ -321,6 +321,9 @@ if ($me =~/\.cgi$/) {
 		qr/&--(?:env|exe|lib|call|openssl)/i,
 		qr/=--(?:env|exe|lib|call|openssl)/i,   # see comment for $ignore above
 			# dangerous commands and options
+		qr/&--(?:inc|no.?inc)/i,
+			# --inc= would allow includes from unknown path
+			# --no-inc=usr may bail out with "Can't locate ..." and return more content in @INC
 
 		# RFC addresses are not allowed, see https://tools.ietf.org/html/rfc5735
 		#     0.0.0.0/8       This Network
