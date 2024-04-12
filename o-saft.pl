@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.30 24/04/12 09:58:20"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.31 24/04/12 10:18:09"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -386,7 +386,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.30"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.31"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1681,7 +1681,7 @@ sub _check_openssl      {
     trace("_check_openssl() {");
     $SSLinfo::openssl = $cmd{'openssl'};# this version should be checked
     $SSLinfo::trace   = $cfg{'trace'};
-        # save to set $SSLinfo::* here,
+        # safe to set $SSLinfo::* here,
         # will be redifined later, see: set defaults for SSLinfo
     if (not defined SSLinfo::s_client_check()) {
         _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
@@ -1764,7 +1764,7 @@ sub _init_openssldir    {
     # $cmd{'openssl'} not passed as parameter, as it will be changed here
     return "" if ($cmd{'openssl'} eq "");       # defensive programming
     my $dir = qx("$cmd{'openssl'}" version -d); # get something like: OPENSSLDIR: "/usr/local/openssl"
-        # qx() should be save here because `$cmd{'openssl'}' checked before
+        # qx() should be safe here because `$cmd{'openssl'}' checked before
     chomp $dir;
         # if qx() above failed, we get: "Use of uninitialized value $dir in ..."
     my $status  = $?;
@@ -6103,7 +6103,7 @@ sub printversion        {
                    next if not -e "$lib";
                    print "#   strings '$lib' | grep 'part of OpenSSL')";
                    print   qx(strings "$lib" | grep 'part of OpenSSL');
-                       # qx() should be save here because `$lib' is quoted
+                       # qx() should be safe here because `$lib' is quoted
                        # and contains an existing path 
                }
            }
@@ -6194,7 +6194,7 @@ sub printversion        {
             # NOTE: this also happens if the module is loaded using Perl's
             # require, for example with: `$0 version --v'
             $v = qx(lib/$m.pm +VERSION);        # get version from module directly if not loaded
-               # qx() is save here because `$m' contains our well known names
+               # qx() is safe here because `$m' contains our well known names
             chomp $v;
             $v = " " if ($v =~ m/^\s*$/);
         }
@@ -6231,7 +6231,7 @@ sub printversion        {
              next if not -e $d;
              print "# find '$d' -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
              print qx(find "$d" -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
-                # qx() should be save here because `$d' is quoted and exists
+                # qx() should be safe here because `$d' is quoted and exists
         }
     }
     trace("printversion() }");
