@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.20 24/04/12 10:13:16";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.21 24/04/12 10:19:08";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -3139,7 +3139,7 @@ sub get_openssl_version {
     my $cmd     = shift;    # assume that $cmd cannot be injected
     return $STR{UNDEF} if not $cmd;
     my $data    = qx("$cmd" version); ## no critic qw(InputOutput::ProhibitBacktickOperators)
-        # qx() should be save, as it contains a previously checked command
+        # qx() should be safe, as it contains a previously checked command
     chomp $data;
     _trace("get_openssl_version: $data");
     $data =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
@@ -3538,7 +3538,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.20"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.21"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3587,7 +3587,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.20 2024/04/12
+3.21 2024/04/12
 
 =head1 AUTHOR
 
