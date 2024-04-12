@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.26 24/04/12 00:21:00"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.29 24/04/12 08:32:01"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -83,6 +83,9 @@ use autouse 'Data::Dumper' => qw(Dumper);
 # SEE Make:OSAFT_MAKE (in Makefile.pod)
 our $time0  = time();   # must be set very early, cannot be done in OCfg.pm
     $time0  = 0 if (defined $ENV{'OSAFT_MAKE'});
+our @perl_inc   ;   # add to @INC
+our @perl_noinc ;   # remove from @INC
+my  @perl_incorig;  # save orginial @INC
 
 #_____________________________________________________________________________
 #______________________________________________ functions needed in BEGIN{} __|
@@ -185,6 +188,7 @@ BEGIN {
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
     # SEE Perl:@INC
+    @perl_incorig = @INC;
     if ("." ne $_path and not (grep{/^$_path$/} @INC)) {
         # add location of executable if not "."
         unshift(@INC, "$_path/lib");# lazy, no check if already there
@@ -196,8 +200,20 @@ BEGIN {
     _version_exit()         if _is_ARGV('(?:([+,]|--)VERSION)');
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
+    # setting @INC according options --inc= and --no-inc=
+    foreach my $arg (@ARGV) {
+        push(@perl_inc,   $1) if ($arg =~ m/^--inc=(.*)/);  # get all --inc=*
+        push(@perl_noinc, $1) if ($arg =~ m/^--no[,._-]?inc=(.*)/); 
+        if ($arg =~ m/^--inc=(.*)/) {
+            unshift(@INC, $1) if (1 > (grep{/^$1$/} @INC));
+        }
+    }
+    foreach my $arg (@perl_noinc) {
+        @INC = grep $_ !~ m#$arg#, @INC;
+    }
     _trace_info("BEGIN9  - end");
 } # BEGIN
+
 _trace_info("INIT0   - initialisation start");
 
 $::osaft_standalone = 0;        # SEE Note:Stand-alone
@@ -370,7 +386,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.26"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.29"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6043,6 +6059,10 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "=== $0 " . _VERSION() . " ===");
     print( "= perl " . $] . " =");  # SEE Perl:version
+    print '    @perl_incorig        ', "@perl_incorig";
+    print '    @perl_inc            ', "@perl_inc";
+    print '    @perl_noinc          ', "@perl_noinc";
+    print '    @INC                 ', "@INC";
     print( "= Net::SSLeay " . $Net::SSLeay::VERSION . " =");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");# next two should be identical
@@ -6152,7 +6172,6 @@ sub printversion        {
     # get a quick overview also
     # SEE Perl:import include
     print "= Required (and used) Modules =";
-    print '    @INC                 ', "@INC";
     my ($d, $v, %p);
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
@@ -6177,6 +6196,8 @@ sub printversion        {
     _hint("use '--v' to get list of all modules") if not _is_cfg_verbose();
     if (_is_cfg_verbose()) {
         print "\n= Loaded Modules =";
+        printf("=   %-22s %s\n", "module name", "found in");
+        printf("=   %s+%s\n",    "-"x22,        "-"x51);
         foreach my $m (sort keys %INC) {
             $d = $INC{$m} || $STR{UNDEF};   # defensive progamming; sometimes undefined, reason unknown
             printf("    %-22s %6s\n", $m, $d);
@@ -6689,6 +6710,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.?(?:exec|trace)/){$cgi = 1;                 next; } # SEE Note:CGI mode
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
+    if ($arg =~ /^--inc=/)              {                           next; } # ignore, already handled
+    if ($arg =~ /^--no[,._-]?inc=/)     {                           next; } # ignore, already handled
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
     if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
@@ -8524,6 +8547,9 @@ Two of the above exmples need special settings:
 
   - /path/to/lib/ODoc.pm    # the path matches ^/
   - OData.pm                # the path matches the script name
+
+Perl's module "lib" is not used, as it's available with Perl 5.x and later
+only. The traditional `unshift(@INC, LIST)' is used to modify `@INC'.
 
 
 =head2 Perl:BEGIN
