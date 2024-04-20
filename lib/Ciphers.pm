@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.15 24/03/28 21:22:52";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.16 24/04/20 13:38:47";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -45,8 +45,9 @@ BEGIN {
     our @EXPORT_OK = qw(
         %ciphers
         %ciphers_desc
-        %ciphers_notes
         $cipher_results
+        %ciphers_notes
+        %ciphers_cfg
         ciphers_done
     );
 #   methods not exported, see METHODS description above
@@ -176,19 +177,33 @@ Hash with all cipher suites and paramters of each suite. Indexed by cipher ID.
 
 Describes the data structure in C<%ciphers>.
 
+=head3 $cipher_results
+
+Pointer to hash with all checked ciphers.
+
 =head3 %ciphers_notes
 
 Notes and comments for a specific cipher, documentation only.
 Will be referenced in C<%ciphers>.
 
-=head3 $cipher_results
+=head3 $cipher_cfg
 
-Pointer to hash with all checked ciphers.
+Cipher-specific settings and configurations.
+They are not used here, but they're all related to ciphers, hence defined here.
 
 =cut
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
+
+our %ciphers        = ( # list of all ciphers
+    # will be generated in _ciphers_init() from <DATA>
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
+    # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
+    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
+# ...
+); # %ciphers
 
 our %ciphers_desc   = ( # description of %ciphers table
     'head'          => [qw( openssl sec  ssl  keyx auth enc  bits mac  rfc  names const notes)],
@@ -257,25 +272,6 @@ Note about TLS version:
 EoNOTE
 ); # %ciphers_desc
 
-our %ciphers        = ( # list of all ciphers
-    # will be generated in _ciphers_init() from <DATA>
-    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
-    # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
-    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
-    #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
-# ...
-); # %ciphers
-
-our @cipher_iana_recomended =
-    #? list of all ciphers (hex keys) recommended by IANA, see
-    # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
-    qw(
-    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x0300130$
-    0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
-    0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
-    0x0300D001 0x0300D002 0x0300D005
-); # cipher_iana_recomended
-
 our $cipher_results = {};
     #? list of checked ciphers per SSL/TLS version
 my  $cipher_results_desc = <<'EoDESC';
@@ -307,6 +303,20 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
     #------------------+---------,
 # ...
 ); # %ciphers_notes
+
+our %ciphers_cfg    = ( #  cipher-specific configurations
+); # %ciphers_cfg
+
+our @cipher_iana_recomended =
+    #? list of all ciphers (hex keys) recommended by IANA, see
+    # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
+    # NOT YET USED
+    qw(
+    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x0300130$
+    0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
+    0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
+    0x0300D001 0x0300D002 0x0300D005
+); # cipher_iana_recomended
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
@@ -1724,7 +1734,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.15 2024/03/28
+3.16 2024/04/20
 
 
 =head1 AUTHOR
