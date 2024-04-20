@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.33 24/04/20 13:22:52"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.35 24/04/20 15:44:54"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -368,10 +368,42 @@ sub _is_cfg_intern($);
 #________________________________________________________________ variables __|
 
 my  $arg    = "";
-my  @argv   = ();   # all options, including those from RC-FILE
-                    # will be used when ever possible instead of @ARGV
+my  @argv   = ();       # all options, including those from RC-FILE
+                        # will be used when ever possible instead of @ARGV
+
+# some temporary variables used in main
+my $host    = "";       # the host currently processed in main
+my $port    = "";       # the port currently used in main
+my $legacy  = "";       # the legacy mode used in main
+my $verbose = 0;        # verbose mode used in main; option --v
+   # above host, port, legacy and verbose are just shortcuts for corresponding
+   # values in $OCfg::cfg{}, used for better human readability
+my $test    = "";       # set to argument ist it bwgins with --test*
+my $info    = 0;        # set to 1 if +info
+my $check   = 0;        # set to 1 if +check was used
+my $quick   = 0;        # set to 1 if +quick was used
+my $cmdsni  = 0;        # set to 1 if +sni  or +sni_check was used
+my $sniname = undef;    # will be set to $cfg{'sni_name'} as this changes for each host
+
+our %cmd = (
+   # contains all OpenSSL related informations and settings
+    'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
+    'openssl'       => "openssl",   # OpenSSL
+    'openssl3'      => "openssl",   # OpenSSL which supports TLSv1.3
+    'libs'          => [],      # where to find libssl.so and libcrypto.so
+    'path'          => [],      # where to find openssl executable
+    'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
+    'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
+    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check
+    'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
+    'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
+    'call'          => [],      # list of special (internal) function calls
+                                # see --call=METHOD option in description below
+    'version'       => "",      # OpenSSL's version number, see OCfg::get_openssl_version
+); # %cmd
 
 # simplify use of variables
+# SEE Note:Data Structures
 our %ciphers    = %Ciphers::ciphers;
 our %cfg        = %OCfg::cfg;
 our %checks     = %OData::checks;
@@ -386,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.33"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.35"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -427,6 +459,131 @@ OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'
         'check_url' => 0,       # not used, as it's called multiple times
         'check_certchars' => 0,
 );
+
+our %text = (   # our instead of my required for --help=cfg-text --help=text
+    'separator'     => ":",# separator character between label and value
+    # texts may be redefined
+    'undef'         => "<<undefined>>",
+    'response'      => "<<response>>",
+    'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
+    'need_cipher'   => "<<check possible in conjunction with +cipher only>>",
+    'na'            => "<<N/A>>",
+    'na_STS'        => "<<N/A as STS not set>>",
+    'na_sni'        => "<<N/A as --no-sni in use>>",
+    'na_dns'        => "<<N/A as --no-dns in use>>",
+    'na_cert'       => "<<N/A as --no-cert in use>>",
+    'na_http'       => "<<N/A as --no-http in use>>",
+    'na_tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
+    'na_nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
+    'na_reconnect'  => "<<N/A as --no_reconnect in use>>",
+    'na_openssl'    => "<<N/A as --no-openssl in use>>",
+    'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
+    'disabled_protocol' => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
+    'disabled_test' => "tests with/for @@ disabled",  # not yet used
+    'miss_cipher'   => "<<N/A as no ciphers found>>",
+    'miss_protocol' => "<<N/A as no protocol found>>",
+    'miss_RSA'      => " <<missing ECDHE-RSA-* cipher>>",
+    'miss_ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
+    'missing'       => " <<missing @@>>",
+    'enabled_extension' => " <<@@ extension enabled>>",
+    'unexpected'    => " <<unexpected @@>>",
+    'insecure'      => " <<insecure @@>>",
+    'invalid'       => " <<invalid @@>>",
+    'bit256'        => " <<keysize @@ < 256>>",
+    'bit512'        => " <<keysize @@ < 512>>",
+    'bit2048'       => " <<keysize @@ < 2048>>",
+    'bit4096'       => " <<keysize @@ < 4096>>",
+    'EV_large'      => " <<too large @@>>",
+    'EV_subject_CN' => " <<missmatch: subject CN= and commonName>>",
+    'EV_subject_host'=>" <<missmatch: subject CN= and given hostname>>",
+    'no_reneg'      => " <<secure renegotiation not supported>>",
+    'cert_dates'    => " <<invalid certificate date>>",
+    'cert_valid'    => " <<certificate validity to large @@>>",
+    'cert_chars'    => " <<invalid charcters in @@>>",
+    'wildcards'     => " <<uses wildcards:@@>>",
+    'gethost'       => " <<gethostbyaddr() failed>>",
+    'out_target'    => "\n==== Target: @@ ====\n",
+    'out_ciphers'   => "\n=== Ciphers: Checking @@ ===",
+    'out_infos'     => "\n=== Information ===",
+    'out_scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
+    'out_checks'    => "\n=== Performed Checks ===",
+    'out_list'      => "=== List @@ Ciphers ===",
+    'out_summary'   => "=== Ciphers: Summary @@ ===",
+    # hostname texts
+    'host_name'     => "Given hostname",
+    'host_IP'       => "IP for given hostname",
+    'host_rhost'    => "Reverse resolved hostname",
+    'host_DNS'      => "DNS entries for given hostname",
+    # misc texts
+    'cipher'        => "Cipher",
+    'support'       => "supported",
+    'security'      => "Security",
+    'dh_param'      => "DH Parameters",
+    'desc'          => "Description",
+    'desc_check'    => "Check Result (yes is considered good)",
+    'desc_info'     => "Value",
+    'desc_score'    => "Score (max value 100)",
+    'anon_text'     => "<<anonymised>>",    # SEE Note:anon-out
+
+    # texts used for legacy mode; DO NOT CHANGE!
+    'legacy' => {      #----------------+------------------------+---------------------
+        #header     => # not implemented  supported               unsupported
+        #              #----------------+------------------------+---------------------
+        'compact'   => { 'not' => '-',   'yes' => "yes",         'no' => "no" },
+        'simple'    => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
+        'full'      => { 'not' => '-?-', 'yes' => "Yes",         'no' => "No" },
+        'key'       => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
+        'owasp'     => { 'not' => '-?-', 'yes' => "",            'no' => ""   },
+        #              #----------------+------------------------+---------------------
+        # following keys are roughly the names of the tool they are used
+        #              #----------------+------------------------+---------------------
+        'sslaudit'  => { 'not' => '-?-', 'yes' => "successfull", 'no' => "unsuccessfull" },
+        'sslcipher' => { 'not' => '-?-', 'yes' => "ENABLED",     'no' => "DISABLED"  },
+        'ssldiagnos'=> { 'not' => '-?-', 'yes' => "CONNECT_OK CERT_OK", 'no' => "FAILED" },
+        'sslscan'   => { 'not' => '-?-', 'yes' => "Accepted",    'no' => "Rejected"  },
+        'ssltest'   => { 'not' => '-?-', 'yes' => "Enabled",     'no' => "Disabled"  },
+        'ssltest-g' => { 'not' => '-?-', 'yes' => "Enabled",     'no' => "Disabled"  },
+        'sslyze'    => { 'not' => '-?-', 'yes' => "%s",          'no' => "SSL Alert" },
+        'testsslserver'=>{'not'=> '-?-', 'yes' => "",            'no' => ""          },
+        'thcsslcheck'=>{ 'not' => '-?-', 'yes' => "supported",   'no' => "unsupported"   },
+        #              #----------------+------------------------+---------------------
+        #                -?- means "not implemented"
+        # all other text used in headers titles, etc. are defined in the
+        # corresponding print functions:
+        #     print_title, print_cipherhead, print_footer, print_cipherpreferred
+        # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
+    },
+
+    # SEE Note:hints
+    'hints' => {       # define hints here only if not feasable in OCfg.pm
+                       # will be added to $cfg{hints} in _init_all()
+    },
+
+    'mnemonic'      => { # NOT YET USED
+        'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
+        'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
+        'explain'   => "TLS Version1 _ Ephemeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
+    },
+
+    # just for information, some configuration options in Firefox
+    'firefox' => { # NOT YET USED
+        'browser.cache.disk_cache_ssl'        => "En-/Disable caching of SSL pages",        # false
+        'security.enable_tls_session_tickets' => "En-/Disable Session Ticket extension",    # false
+        'security.ssl.allow_unrestricted_renego_everywhere__temporarily_available_pref' =>"",# false
+        'security.ssl.renego_unrestricted_hosts' => '??',   # list of hosts
+        'security.ssl.require_safe_negotiation'  => "",     # true
+        'security.ssl.treat_unsafe_negotiation_as_broken' => "", # true
+        'security.ssl.warn_missing_rfc5746'      => "",     # true
+        'pfs.datasource.url' => '??', #
+        'browser.identity.ssl_domain_display'    => "coloured non EV-SSL Certificates", # true
+        },
+    'IE' => { # NOT YET USED
+        'HKLM\\...' => "sequence of ciphers",   #
+        },
+
+    # for more information about definitions and RFC, see lib/OMan.pm
+
+); # %text
 
 #| CGI
 #| -------------------------------------
@@ -576,32 +733,6 @@ OUsr::pre_init();
 #| initialise defaults
 #| -------------------------------------
 
-# some temporary variables used in main
-my $host    = "";       # the host currently processed in main
-my $port    = "";       # the port currently used in main
-my $legacy  = "";       # the legacy mode used in main
-my $verbose = 0;        # verbose mode used in main; option --v
-   # above host, port, legacy and verbose are just shortcuts for corresponding
-   # values in $cfg{}, used for better human readability
-my $test    = "";       # set to argument ist it bwgins with --test*
-my $info    = 0;        # set to 1 if +info
-my $check   = 0;        # set to 1 if +check was used
-my $quick   = 0;        # set to 1 if +quick was used
-my $cmdsni  = 0;        # set to 1 if +sni  or +sni_check was used
-my $sniname = undef;    # will be set to $cfg{'sni_name'} as this changes for each host
-
-# SEE Note:Data Structures
-# our %info   = ();
-# our %data0  = ();
-# our %data   = ();
-# our %checks = ();
-# our %check_cert = ();
-# our %check_conn = ();
-# our %check_dest = ();
-# our %check_size = ();
-# our %check_http = ();
-# our %shorttexts = ();
-
 # more initialisation for %data
 # add keys from %OCfg::prot to %data,
 $data{'fallback_protocol'}->{'val'} = sub { return $OCfg::prot{'fallback'}->{val}  };
@@ -615,7 +746,7 @@ foreach my $ssl (keys %OCfg::prot) {
     $shorttexts{$key} = "Default $OCfg::prot{$ssl}->{txt} cipher";
 }
 
-my %scores = (
+my %scores = (  # will be removed in future ...
     # keys starting with 'check_' are for total values
     # all other keys are for individual score values
     #------------------+-------------+----------------------------------------
@@ -723,23 +854,6 @@ my %info_gnutls = ( # NOT YET USED
    'S' => "256       15424      512      ULTRA       Foreseeable future",
 ); # %info_gnutls
 
-our %cmd = (
-   # contains all OpenSSL related informations and settings
-    'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
-    'openssl'       => "openssl",   # OpenSSL
-    'openssl3'      => "openssl",   # OpenSSL which supports TLSv1.3
-    'libs'          => [],      # where to find libssl.so and libcrypto.so
-    'path'          => [],      # where to find openssl executable
-    'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
-    'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
-    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check
-    'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
-    'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
-    'call'          => [],      # list of special (internal) function calls
-                                # see --call=METHOD option in description below
-    'version'       => "",      # OpenSSL's version number, see OCfg::get_openssl_version
-);
-
 #| construct list for special commands: 'cmd-*'
 #| -------------------------------------
 # SEE Note:Testing, sort
@@ -779,140 +893,6 @@ if (0 < _is_argv('(?:--no.?rc)')) {
 }
 
 _trace_info("INIT    - RC-FILE merged");
-
-our @ciphers_keys;  # temp. use until defined in OCfg.pm
-    # similar to @{$cfg{'ciphers'} but contains hex-keys instead of names
-
-# following defined in lib/Ciphers.pm
-#   %ciphers_desc();
-#   %ciphers();
-#   %ciphers_notes();
-#   %cipher_results();
-
-our %text = (
-    'separator'     => ":",# separator character between label and value
-    # texts may be redefined
-    'undef'         => "<<undefined>>",
-    'response'      => "<<response>>",
-    'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
-    'need_cipher'   => "<<check possible in conjunction with +cipher only>>",
-    'na'            => "<<N/A>>",
-    'na_STS'        => "<<N/A as STS not set>>",
-    'na_sni'        => "<<N/A as --no-sni in use>>",
-    'na_dns'        => "<<N/A as --no-dns in use>>",
-    'na_cert'       => "<<N/A as --no-cert in use>>",
-    'na_http'       => "<<N/A as --no-http in use>>",
-    'na_tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
-    'na_nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
-    'na_reconnect'  => "<<N/A as --no_reconnect in use>>",
-    'na_openssl'    => "<<N/A as --no-openssl in use>>",
-    'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
-    'disabled_protocol' => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
-    'disabled_test' => "tests with/for @@ disabled",  # not yet used
-    'miss_cipher'   => "<<N/A as no ciphers found>>",
-    'miss_protocol' => "<<N/A as no protocol found>>",
-    'miss_RSA'      => " <<missing ECDHE-RSA-* cipher>>",
-    'miss_ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
-    'missing'       => " <<missing @@>>",
-    'enabled_extension' => " <<@@ extension enabled>>",
-    'unexpected'    => " <<unexpected @@>>",
-    'insecure'      => " <<insecure @@>>",
-    'invalid'       => " <<invalid @@>>",
-    'bit256'        => " <<keysize @@ < 256>>",
-    'bit512'        => " <<keysize @@ < 512>>",
-    'bit2048'       => " <<keysize @@ < 2048>>",
-    'bit4096'       => " <<keysize @@ < 4096>>",
-    'EV_large'      => " <<too large @@>>",
-    'EV_subject_CN' => " <<missmatch: subject CN= and commonName>>",
-    'EV_subject_host'=>" <<missmatch: subject CN= and given hostname>>",
-    'no_reneg'      => " <<secure renegotiation not supported>>",
-    'cert_dates'    => " <<invalid certificate date>>",
-    'cert_valid'    => " <<certificate validity to large @@>>",
-    'cert_chars'    => " <<invalid charcters in @@>>",
-    'wildcards'     => " <<uses wildcards:@@>>",
-    'gethost'       => " <<gethostbyaddr() failed>>",
-    'out_target'    => "\n==== Target: @@ ====\n",
-    'out_ciphers'   => "\n=== Ciphers: Checking @@ ===",
-    'out_infos'     => "\n=== Information ===",
-    'out_scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
-    'out_checks'    => "\n=== Performed Checks ===",
-    'out_list'      => "=== List @@ Ciphers ===",
-    'out_summary'   => "=== Ciphers: Summary @@ ===",
-    # hostname texts
-    'host_name'     => "Given hostname",
-    'host_IP'       => "IP for given hostname",
-    'host_rhost'    => "Reverse resolved hostname",
-    'host_DNS'      => "DNS entries for given hostname",
-    # misc texts
-    'cipher'        => "Cipher",
-    'support'       => "supported",
-    'security'      => "Security",
-    'dh_param'      => "DH Parameters",
-    'desc'          => "Description",
-    'desc_check'    => "Check Result (yes is considered good)",
-    'desc_info'     => "Value",
-    'desc_score'    => "Score (max value 100)",
-    'anon_text'     => "<<anonymised>>",    # SEE Note:anon-out
-
-    # texts used for legacy mode; DO NOT CHANGE!
-    'legacy' => {      #----------------+------------------------+---------------------
-        #header     => # not implemented  supported               unsupported
-        #              #----------------+------------------------+---------------------
-        'compact'   => { 'not' => '-',   'yes' => "yes",         'no' => "no" },
-        'simple'    => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
-        'full'      => { 'not' => '-?-', 'yes' => "Yes",         'no' => "No" },
-        'key'       => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
-        'owasp'     => { 'not' => '-?-', 'yes' => "",            'no' => ""   },
-        #              #----------------+------------------------+---------------------
-        # following keys are roughly the names of the tool they are used
-        #              #----------------+------------------------+---------------------
-        'sslaudit'  => { 'not' => '-?-', 'yes' => "successfull", 'no' => "unsuccessfull" },
-        'sslcipher' => { 'not' => '-?-', 'yes' => "ENABLED",     'no' => "DISABLED"  },
-        'ssldiagnos'=> { 'not' => '-?-', 'yes' => "CONNECT_OK CERT_OK", 'no' => "FAILED" },
-        'sslscan'   => { 'not' => '-?-', 'yes' => "Accepted",    'no' => "Rejected"  },
-        'ssltest'   => { 'not' => '-?-', 'yes' => "Enabled",     'no' => "Disabled"  },
-        'ssltest-g' => { 'not' => '-?-', 'yes' => "Enabled",     'no' => "Disabled"  },
-        'sslyze'    => { 'not' => '-?-', 'yes' => "%s",          'no' => "SSL Alert" },
-        'testsslserver'=>{'not'=> '-?-', 'yes' => "",            'no' => ""          },
-        'thcsslcheck'=>{ 'not' => '-?-', 'yes' => "supported",   'no' => "unsupported"   },
-        #              #----------------+------------------------+---------------------
-        #                -?- means "not implemented"
-        # all other text used in headers titles, etc. are defined in the
-        # corresponding print functions:
-        #     print_title, print_cipherhead, print_footer, print_cipherpreferred
-        # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
-    },
-
-    # SEE Note:hints
-    'hints' => {       # define hints here only if not feasable in OCfg.pm
-                       # will be added to $cfg{hints} in _init_all()
-    },
-
-    'mnemonic'      => { # NOT YET USED
-        'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
-        'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
-        'explain'   => "TLS Version1 _ Ephemeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
-    },
-
-    # just for information, some configuration options in Firefox
-    'firefox' => { # NOT YET USED
-        'browser.cache.disk_cache_ssl'        => "En-/Disable caching of SSL pages",        # false
-        'security.enable_tls_session_tickets' => "En-/Disable Session Ticket extension",    # false
-        'security.ssl.allow_unrestricted_renego_everywhere__temporarily_available_pref' =>"",# false
-        'security.ssl.renego_unrestricted_hosts' => '??',   # list of hosts
-        'security.ssl.require_safe_negotiation'  => "",     # true
-        'security.ssl.treat_unsafe_negotiation_as_broken' => "", # true
-        'security.ssl.warn_missing_rfc5746'      => "",     # true
-        'pfs.datasource.url' => '??', #
-        'browser.identity.ssl_domain_display'    => "coloured non EV-SSL Certificates", # true
-        },
-    'IE' => { # NOT YET USED
-        'HKLM\\...' => "sequence of ciphers",   #
-        },
-
-    # for more information about definitions and RFC, see lib/OMan.pm
-
-); # %text
 
 $cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 
