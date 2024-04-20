@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.8 24/04/20 11:02:00
+#?      @(#) Makefile.warnigs 3.9 24/04/20 13:23:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.8
+_SID.warnings      := 3.9
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -290,6 +290,8 @@ warning-142: TEST.args  = TODO: testing ancient openssl version: using '-msg' op
 warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLeay, difficult ...
 warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
 warning-145: TEST.args  = --cipher-openssl +cipher --dtls11 +quit
+#warning-145: TEST.args  = --cipher-openssl +cipher --sslv2 --notlsv1 --notlsv11 --notlsv12 --notlsv13 --openssl=/usr/local/openssl/bin/openssl +quit
+#     various combinations possible to trigger 145; i.e. --cipher-ssleay
 warning-146: TEST.args  = TODO: testing missing openssl -tlsextdebug option
 warning-147: TEST.args  = TODO: testing missing openssl executable in SSLinfo
 warning-148: TEST.args  = TODO: testing missing openssl version -d failed, difficult ...
@@ -308,6 +310,7 @@ warning-301: TEST.args  = TODO: testing continous connection errors, difficult .
 warning-302: TEST.args  = TODO: testing max connection errors, difficult ...
 warning-303: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v2_new, difficult ...
 warning-304: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v3_new, difficult ...
+# testing 303 and 304 is difficult, they are considered programming errors
 warning-305: TEST.args  = TODO: testing connection _usesocket failed, difficult ...
 #warning-306 .. warning-310: TEST.args  = free
 warning-311: TEST.args  = TODO: testing  empty  result from openssl, difficult ...
@@ -428,7 +431,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.8: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.9: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
