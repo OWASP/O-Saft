@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.32 24/04/20 12:26:37"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.33 24/04/20 13:22:52"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -386,7 +386,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.32"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.33"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1551,6 +1551,7 @@ sub _check_ssl_methods  {
     }
     trace(" SSLeay methods= [ @list ]");
     foreach my $ssl (@{$cfg{'versions'}}) {
+        # $ssl may be disabled in _check_openssl() and warning printed in _enable_sclient()
         next if ($cfg{$ssl} == 0);          # don't check what's disabled by option
         if (_is_cfg_ciphermode('intern|dump')) {
             # internal method does not depend on other libraries
@@ -1699,7 +1700,7 @@ sub _check_openssl      {
            $val = 0 if ($val eq '<<openssl>>');
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
-        _enable_sclient($opt);  # may print propper _warn()
+        _enable_sclient($opt);  # may print propper _warn(), for example 145
         my $ssl;
         # NOTE: grep() uses %prot instead of %{$cfg{'openssl_option_map'}}
         #       for better human readability
@@ -1714,6 +1715,7 @@ sub _check_openssl      {
             # nothing to do if protocol disabled by user
             $cfg{$ssl} = $val if 0 < $cfg{$ssl};
                 # _check_ssl_methods() sets @{$cfg{'versions'}} depending on $cfg{$ssl}
+                # no need for warning, already done in _enable_sclient()
         }
     }
     $cmd{'version'} = OCfg::get_openssl_version($cmd{'openssl'});
@@ -2488,6 +2490,9 @@ sub _usesocket($$$$)    {
     trace1("_usesocket($ssl, $host, $port, $ciphers) { sni: $sni");
     # _warn_nosni(); # not here, because too noisy
     # following ugly if conditions: because one or both functions may be there
+    # _usesocket() should not be called for SSLv2 and SSLv3, because they are
+    # already disabled in _check_openssl(),  hence 303 and 304 are considered
+    # programming errors
     if (($ssl eq "SSLv2") && (not defined &Net::SSLeay::CTX_v2_new)) {
         _warn("303: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
@@ -7909,7 +7914,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         $cipher_results = {};           # new list for every host (array of arrays)
         _vprint("  test protocols @{$cfg{'version'}} ...");
         if (_is_cfg_ciphermode('intern|dump')) {
-            trace(" use SSLhello +cipher ...");
+            trace(" use SSLhello ...");
             SSLhello::printParameters() if ($cfg{'trace'} > 1);
             $cipher_results = ciphers_scan_intern($host, $port);
         }
