@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.21 24/04/12 10:19:08";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.22 24/04/20 14:01:55";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -1915,8 +1915,6 @@ our %cfg = (    # main data structure for configuration
     'ARGV'          => [],      # arguments passed on command-line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
     'RC-FILE'       => "",      # our RC-FILE, search in pwd only!
-    # following should be in %text, but as %cfg is available everywhere,
-    # it's better defined here and initialised in _ocfg_init()
     'prefix_trace'  => "",      # prefix string used in trace   messages
     'prefix_verbose'=> "",      # prefix string used in verbose messages
 
@@ -3538,7 +3536,7 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.21"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.22"); # default version; needs to be corrected by caller
     return;
 } # _ocfg_init
 
@@ -3587,7 +3585,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.21 2024/04/12
+3.22 2024/04/20
 
 =head1 AUTHOR
 
