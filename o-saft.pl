@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.31 24/04/12 10:18:09"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.32 24/04/20 12:26:37"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -386,7 +386,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.31"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.32"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7539,7 +7539,7 @@ _check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot(
 
 #| check for proper openssl support
 #| -------------------------------------
-_vprint("  check openssl capabilities");
+_vprint("  check openssl capabilities for '$cmd{'openssl'}'");
 _check_openssl()    if (0 < $do_checks); # TODO: if (0 < _need_openssl()); cfg{need-openssl}
 
 #| check for supported SSL versions
@@ -7907,8 +7907,9 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
         $cipher_results = {};           # new list for every host (array of arrays)
+        _vprint("  test protocols @{$cfg{'version'}} ...");
         if (_is_cfg_ciphermode('intern|dump')) {
-            trace(" use SSLhello +cipher$typ ...");
+            trace(" use SSLhello +cipher ...");
             SSLhello::printParameters() if ($cfg{'trace'} > 1);
             $cipher_results = ciphers_scan_intern($host, $port);
         }
