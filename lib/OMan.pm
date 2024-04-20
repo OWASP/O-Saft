@@ -32,9 +32,9 @@ package OMan;
 use strict;
 use warnings;
 use utf8;
-use vars qw(%checks %data %text);
+use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.33 24/04/07 10:20:56";
+my  $SID_oman   = "@(#) OMan.pm 3.34 24/04/20 14:03:22";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -802,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.33'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.34'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2712,7 +2712,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.33 2024/04/07
+3.34 2024/04/20
 
 
 =head1 AUTHOR
