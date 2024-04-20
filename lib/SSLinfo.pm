@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.12 24/04/12 10:26:25";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.13 24/04/20 12:06:51";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -1406,9 +1406,11 @@ sub ssleay_methods  {
 
 sub test_openssl    {
     #? return internal data structure %_OpenSSL_opt (openssl options)
+    # also prints openssl executable which returned capabilities/options
     s_client_check();
-    my $line = "=-----------------------+----------------";
-    my $data = "$line\n= _OpenSSL_opt          | 1=available\n$line\n";
+    my $line  = "=-----------------------+----------------";
+    my $data  = "= using $SSLinfo::openssl\n";
+       $data .= "$line\n= _OpenSSL_opt          | 1=available\n$line\n";
     foreach my $_opt (sort keys %_OpenSSL_opt) {
         if ('data' eq $_opt) {  # huge internal data from from openssl call
             if (0 >= $SSLinfo::verbose) {
