@@ -14,7 +14,7 @@ package OUsr;
 use strict;
 use warnings;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.15 24/03/28 21:18:01";
+my  $SID_ousr       = "@(#) OUsr.pm 3.16 24/04/21 13:14:06";
 our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
 
 #_____________________________________________________________________________
@@ -61,7 +61,6 @@ BEGIN { # mainly required for testing ...
         pre_next
         pre_exit
         version
-        ousr_done
     );
 }
 
@@ -281,7 +280,7 @@ sub pre_exit    {
     return;
 };
 
-sub _ousr_main   {
+sub _main       {
     my $arg = shift || "--help";    # without argument print own help
     # SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -291,9 +290,9 @@ sub _ousr_main   {
     print "$SID_ousr\n"     if ($arg =~ /^version$/);
     print "$VERSION\n"      if ($arg =~ /^[-+,]?V(ERSION)?$/);
     exit 0;
-} # _ousr_main
+} # _main
 
-sub ousr_done   {}; # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -302,7 +301,7 @@ sub ousr_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.15 2024/03/28
+3.16 2024/04/21
 
 =head1 AUTHOR
 
@@ -315,6 +314,6 @@ sub ousr_done   {}; # dummy to check successful include
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_ousr_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
