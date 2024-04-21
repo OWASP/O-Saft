@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.11 24/04/21 13:12:23";
+my  $SID_otext  =  "@(#) OText.pm 3.12 24/04/21 18:38:24";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -101,7 +101,7 @@ Perlish spoken, all texts are L</VARIABLES>.
 
 =head2 Functions for internal testing; initiated with option  I<--test-*>
 
-=head3 test( )
+=head3 test_show( )
 
 Print text constants defined herein.
 
@@ -117,7 +117,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.11 2024/04/21
+3.12 2024/04/21
 
 
 =head1 AUTHOR
