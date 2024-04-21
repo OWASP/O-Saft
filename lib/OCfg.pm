@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.22 24/04/20 14:01:55";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.23 24/04/21 13:18:12";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -110,7 +110,6 @@ BEGIN { # mainly required for testing ...
         tls_text2key
         printhint
         test_cipher_regex
-        ocfg_done
     );
     # not yet exported: ocfg_sleep
     # insert above in vi with:
@@ -1909,7 +1908,7 @@ our %cfg = (    # main data structure for configuration
     'need_netdns'   => 0,       # used for better error message handling only
     'need_timelocal'=> 0,       # -"-
     'need_netinfo'  => 1,       # 0: do not load Net::SSLinfo
-    # following initialised in _ocfg_init()
+    # following initialised in _init()
     'me'            => "",      # set in main
     'ARG0'          => "",
     'ARGV'          => [],      # arguments passed on command-line
@@ -2941,7 +2940,7 @@ our %cfg = (    # main data structure for configuration
         'rfc'       => "rfc.txt",
         'tools'     => "tools.txt",
         # following are used in o-saft.tcl, but are generate with lib/OMan.pm
-        # keys and values are initilized dynamically, see _ocfg_init() below
+        # keys and values are initilized dynamically, see _init() below
         # the keys --help* are used as pattern;
         # key=value looks like:  '--help=opts'  => "o-saft.pl.--help=opts"
         'pattern-help'  => [ qw( --help --help=rfc --help=alias --help=checks
@@ -3450,7 +3449,7 @@ sub _prot_init_value    {
     return;
 } # _prot_init_value
 
-sub _cfg_init       {
+sub _cfg_init   {
     #? initialise dynamic settings in %cfg, copy data from %prot
     # initialise targets with entry containing defaults
     push(@{$cfg{'targets'}}, @target_defaults);
@@ -3484,7 +3483,7 @@ sub _cfg_init       {
     return;
 } # _cfg_init
 
-sub _cmd_init       {
+sub _cmd_init   {
     #? initialise dynamic settings in %cfg for commands
     foreach my $key (sort keys %cfg) {  # well-known "summary" commands
         push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
@@ -3495,7 +3494,7 @@ sub _cmd_init       {
     return;
 } # _cmd_init
 
-sub _doc_init       {
+sub _doc_init   {
     #? initialise dynamic settings for path names, mainly documentation files
     # key=value looks like:  '--help=opts'  => "doc/o-saft.pl.--help=opts"
     # o-saft.pl must be hardcoded
@@ -3507,7 +3506,7 @@ sub _doc_init       {
     return;
 } # _cmd_init
 
-sub _dbx_init       {
+sub _dbx_init   {
     #? initialise settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
     $dbx{'cmd-http'}  = $cfg{'cmd-http'};
@@ -3517,7 +3516,7 @@ sub _dbx_init       {
     return;
 } # _dbx_init
 
-sub _ocfg_init      {
+sub _init       {
     #? additional generic initialisations for data structures
     my $me =  $0;       # done here to instead of package's "main" to avoid
        $me =~ s#.*[/\\]##;  # multiple variable definitions of $me
@@ -3536,14 +3535,14 @@ sub _ocfg_init      {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.22"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.23"); # default version; needs to be corrected by caller
     return;
-} # _ocfg_init
+} # _init
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _ocfg_main      {
+sub _main       {
     #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -3566,11 +3565,11 @@ sub _ocfg_main      {
         }
     }
     exit 0;
-} # _ocfg_main
+} # _main
 
-sub ocfg_done      {};  # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
-_ocfg_init();           # complete initialisations
+_init();           # complete initialisations
 
 ## PACKAGE }
 
@@ -3585,7 +3584,7 @@ _ocfg_init();           # complete initialisations
 
 =head1 VERSION
 
-3.22 2024/04/20
+3.23 2024/04/21
 
 =head1 AUTHOR
 
@@ -3596,7 +3595,7 @@ _ocfg_init();           # complete initialisations
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_ocfg_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
