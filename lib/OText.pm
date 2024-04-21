@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.10 24/03/28 21:06:11";
+my  $SID_otext  =  "@(#) OText.pm 3.11 24/04/21 13:12:23";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -29,7 +29,7 @@ our %STR = (
 
 use Exporter qw(import);
 BEGIN { our @EXPORT_OK  = qw( %STR );
-   # print_pod otext_done must be used full qualified
+   # print_pod done must be used full qualified
 }
 
 #_____________________________________________________________________________
@@ -101,7 +101,7 @@ Perlish spoken, all texts are L</VARIABLES>.
 
 =head2 Functions for internal testing; initiated with option  I<--test-*>
 
-=head3 otext_test( )
+=head3 test( )
 
 Print text constants defined herein.
 
@@ -117,7 +117,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.10 2024/03/28
+3.11 2024/04/21
 
 
 =head1 AUTHOR
@@ -150,7 +150,7 @@ sub print_pod   {
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub otext_test  {
+sub test_show   {
     #? dispatcher for internal tests, initiated with option --test-*
     my $arg = shift;    # normalised option, like --testinit, --testcipherlist
     printf("#%s:\n", (caller(0))[3]);
@@ -165,12 +165,12 @@ EoT
     printf(" STR{'%s'}\t%s\n", $_, $STR{$_}) foreach (sort keys(%STR));
     printf("=--------------+-------------------\n");
     return;
-} # otext_test
+} # test
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _otext_main {
+sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     # SEE Perl:binmode()
@@ -181,19 +181,19 @@ sub _otext_main {
         if ($arg =~ m/^--?h(?:elp)?$/msx)       { print_pod($0, __PACKAGE__, $SID_otext); } # print own help
         if ($arg =~ /^version$/x)               { print "$SID_otext\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/x)       { print "$VERSION\n";   next; }
-        if ($arg =~ m/^--(?:test[_.-]?)text/mx) { otext_test($arg); }
+        if ($arg =~ m/^--(?:test[_.-]?)text/mx) { test_show($arg); }
     }
     exit 0;
-} # _otext_main
+} # _main
 
-sub otext_done  {};      # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
 ## PACKAGE }
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_otext_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
