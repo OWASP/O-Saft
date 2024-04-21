@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.16 24/04/20 13:38:47";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.17 24/04/21 18:48:57";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -48,7 +48,6 @@ BEGIN {
         $cipher_results
         %ciphers_notes
         %ciphers_cfg
-        ciphers_done
     );
 #   methods not exported, see METHODS description above
 }
@@ -1583,7 +1582,7 @@ sub _ciphers_usage  {
     return;
 } # _ciphers_usage
 
-sub _ciphers_main   {
+sub _main   {
     #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -1606,9 +1605,9 @@ sub _ciphers_main   {
         show("--test-ciphers$arg");
     }
     exit 0;
-} # _ciphers_main
+} # _main
 
-sub ciphers_done    {}; # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
 _ciphers_init();
 
@@ -1734,7 +1733,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.16 2024/04/20
+3.17 2024/04/21
 
 
 =head1 AUTHOR
@@ -1748,7 +1747,7 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_ciphers_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
