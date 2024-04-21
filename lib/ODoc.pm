@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.24 24/04/05 16:48:16";
+my  $SID_odoc   = "@(#) ODoc.pm 3.25 24/04/21 13:09:08";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -406,7 +406,7 @@ sub get_custom  {
     # TODO: misses  close($fh);
 } # get_custom
 
-sub get_markup    {
+sub get_markup  {
     #? return data with internal markup, returns array of lines
     my $file    = shift;
     my $parent  = shift || "o-saft.pl";
@@ -533,7 +533,7 @@ sub get_section {
     return $hlp;
 } # get_section
 
-sub list        {
+sub list    {
     #? return sorted list of available .txt files in ./doc or doc/ directory
     #  sorted list simplifies tests ...
     my $dir = shift;
@@ -564,7 +564,7 @@ sub list        {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _odoc_usage {
+sub _usage  {
     #? print usage
     my $name = (caller(0))[1];
     print "# various commands:\n";
@@ -577,9 +577,9 @@ sub _odoc_usage {
         printf("\t%s %s help.txt\n", $name, $cmd);
     }
     return;
-}; # _odoc_usage
+}; # _usage
 
-sub _odoc_main  {
+sub _main   {
     #? print own documentation or that from specified file
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -591,7 +591,7 @@ sub _odoc_main  {
         OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ m/^--?h(?:elp)?$/x);
         my $arg    = shift @argv; # get 2nd argument, which is filename
         # ----------------------------- commands
-        _odoc_usage()           if ($cmd eq '--usage');
+        _usage()                if ($cmd eq '--usage');
         print list($0) . "\n"   if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
         print get_custom($arg)  if ($cmd =~ /^get.?custom$/);
@@ -601,9 +601,9 @@ sub _odoc_main  {
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(?:ERSION)?$/);
     }
     exit 0;
-} # _odoc_main
+} # _main
 
-sub odoc_done   {}; # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -617,7 +617,7 @@ sub odoc_done   {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.24 2024/04/05
+3.25 2024/04/21
 
 
 =head1 AUTHOR
@@ -631,7 +631,7 @@ sub odoc_done   {}; # dummy to check successful include
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_odoc_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
