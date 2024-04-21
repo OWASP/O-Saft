@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.15 24/04/05 16:52:05";
+my  $SID_odata  =  "@(#) OData.pm 3.16 24/04/21 13:06:00";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -43,7 +43,6 @@ BEGIN {
         %data0
         %info
         %shorttexts
-        odata_done
     );
 }
 
@@ -293,7 +292,7 @@ our %data   = (         # connection and certificate details
     'http_sts'          => {'val' => sub { SSLinfo::http_sts(              $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     'options'           => {'val' => sub { SSLinfo::options(               $_[0], $_[1])}, 'txt' => "internal used SSL options bitmask"},
-    'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _odata_init');},'txt' => "Target's fallback SSL Protocol"},
+    'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _init');},     'txt' => "Target's fallback SSL Protocol"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     # following not printed by default, but can be used as command
 #   'PROT'              => {'val' => sub { return $prot{'PROT'}->{'default'}           }, 'txt' => "Target default PROT     cipher"},
@@ -1071,7 +1070,7 @@ None.
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub show        {
+sub show    {
     #? dispatcher for various --test-data-* options to show information
     # output similar (but not identical) to lib/OMan::man_table()
     my $arg = shift;
@@ -1115,7 +1114,7 @@ EoHelp
 #_____________________________________________________________________________
 #___________________________________________________ initialisation methods __|
 
-sub _odata_init {
+sub _init   {
     #? initialise variables
 
     # construct %checks from %check_* and set 'typ'
@@ -1136,12 +1135,12 @@ sub _odata_init {
     #}
 
     return;
-} # _odata_init
+} # _init
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _odata_main {
+sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     #  SEE Perl:binmode()
@@ -1159,11 +1158,11 @@ sub _odata_main {
         show($arg);
     }
     exit 0;
-} # _odata_main
+} # _main
 
-sub odata_done  {}; # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
-_odata_init();
+_init();
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1177,7 +1176,7 @@ _odata_init();
 
 =head1 VERSION
 
-3.15 2024/04/05
+3.16 2024/04/21
 
 
 =head1 AUTHOR
@@ -1191,7 +1190,7 @@ _odata_init();
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_odata_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
