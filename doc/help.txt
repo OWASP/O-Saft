@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.10 24/04/12 02:19:58
+# SID   @(#) help.txt 3.11 24/04/24 00:27:11
 
 NAME
 
@@ -1018,6 +1018,10 @@ OPTIONS
       --no-rc
 
           Do not read  RC-FILE.
+
+      --rc=FILE
+
+          Use FILE instead of the default  RC-FILE  '.$0'.
 
       --exitcode
 
@@ -2206,10 +2210,6 @@ OPTIONS
             * --trace=key       | same as  --trace-key
             * --trace=time      | same as  --trace-time
             #-------------------+-----------------------------
-
-      --trace=FILE
-
-          Use FILE instead of the default  RC-FILE, for example '.$0'.
 
 # following option still there in 24.01.24, needs to be improved
 #      --trace-me
