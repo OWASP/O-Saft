@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.34 24/04/20 14:03:22";
+my  $SID_oman   = "@(#) OMan.pm 3.36 24/04/21 18:44:22";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -49,7 +49,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}   @INC);
-    our @EXPORT_OK = qw( man_printhelp man_docs_write oman_done );
+    our @EXPORT_OK = qw( man_printhelp man_docs_write );
 }
 
 use OText    qw(%STR);
@@ -802,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.34'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.36'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2430,6 +2430,8 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $txt = join("", ODoc::get_custom("devel.txt", $parent, $version));
     }
     $txt = man_src_grep(qr/\s*_trace_(exit|info|next)\(/n, "--exit=") if ($hlp =~ /^exit$/);
+        # NOTE: searching for functions named _trace_* in o-saft.pl,
+        # while they are originaly named OTrace::*_show
     # anything below requires data defined in parent (usually o-saft.pl)
     # TODO: move to o-saft.pl
     $txt = man_table($1)        if ($hlp =~ /^(cmd|check|data|info|ourstr|text)s?$/);
@@ -2473,7 +2475,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _oman_main      {
+sub _main   {
     #? print own documentation or special required one
     push(@ARGV, "--help") if 0 > $#ARGV;
     #  SEE Perl:binmode()
@@ -2508,9 +2510,9 @@ sub _oman_main      {
         man_printhelp($arg);
     }
     exit 0;
-} # _oman_main
+} # _main
 
-sub oman_done   {}; # dummy to check successful include
+sub done    {}; # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -2712,7 +2714,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.34 2024/04/20
+3.36 2024/04/21
 
 
 =head1 AUTHOR
@@ -2726,7 +2728,7 @@ this tool, for example:
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_oman_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
