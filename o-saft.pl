@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.35 24/04/20 15:44:54"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.37 24/04/24 00:33:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.35"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.37"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -609,13 +609,14 @@ _tprint("RC-FILE: $cfg{'RC-FILE'}") if _is_trace();
 my @rc_argv = "";
 if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
+    _hint("use  --trace  to see complete settings") if _is_argv('(?:--v(?:=[0-9]+)?)');
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
         push(@{$OCfg::dbx{'files'}}, $cfg{'RC-FILE'});
         _vprint_read("$cfg{'RC-FILE'}", "RC-FILE done");
         ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
         #  NOTE: the purpose here is to *change the source array"
-        @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
-        @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
+        @rc_argv = grep{!/^\s*[#=][^\r\n]*/} <$rc>; # get all but comment lines
+        @rc_argv = grep{s/[\r\n]//} @rc_argv;       # remove newlines
         @rc_argv = grep{s/\s*([+,-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
         ## use critic
         close($rc);
@@ -625,7 +626,6 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         if (_is_trace()) {
             my @cfgs;
             _tprint("$cfg{'RC-FILE'}");
-            _tprint("!!Hint: use  --trace  to see complete settings");
             _tprint("#------------------------------------------------- RC-FILE {");
             foreach my $val (@rc_argv) {
                 #print join("\n  ", "", @rc_argv);
@@ -674,10 +674,8 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     sub trace2        {}
     sub trace_arg     {}
     sub trace_args    {}
-    sub trace_test    {}
     sub trace_init    {}
     sub trace_exit    {}
-    sub trace_ciphers_list {}
     # debug functions are defined in OTrace.pm and loaded on demand
     # they must be defined always as they are used whether requested or not
     # NOTE: these comment lines at end of else scope so that some make targets
@@ -690,12 +688,10 @@ if (exists $INC{'lib/OTrace.pm'}) {
     *trace_             = \&OTrace::trace_;
     *trace1             = \&OTrace::trace1;
     *trace2             = \&OTrace::trace2;
-    *trace_arg          = \&OTrace::trace_arg;
-    *trace_args         = \&OTrace::trace_args;
-    *trace_init         = \&OTrace::trace_init;
-    *trace_exit         = \&OTrace::trace_exit;
-    *trace_test         = \&OTrace::trace_test;
-    *trace_ciphers_list = \&OTrace::trace_ciphers_list;
+    *trace_arg          = \&OTrace::arg_show;
+    *trace_args         = \&OTrace::args_show;
+    *trace_init         = \&OTrace::init_show;
+    *trace_exit         = \&OTrace::exit_show;
     # $OTrace:: variables; Perl is clever enough to set them here
     $OTrace::trace          = $cfg{'trace'};
     $OTrace::prefix_trace   = $cfg{'prefix_trace'};
@@ -7666,7 +7662,7 @@ _trace_info("CONF9   - runtime configuration end");
 _vprint("check for no connection commands");
 # --test*  are not handled herein
 if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
-if ($test !~ /^\s*$/)           { _vprint("  test any   "); trace_test($test);    exit 0; }
+if ($test !~ /^\s*$/)           { _vprint("  test any   "); OTrace::test_show($test);  exit 0; }
 # interanl information commands
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))         { _vprint("  list       "); printciphers_list('list'); exit 0; }
@@ -7696,7 +7692,7 @@ OUsr::pre_cipher(); # weg?
 @{$cfg{'do'}} = do { my %seen; grep { !$seen{$_}++ } @{$cfg{'do'}} };
 
 _trace_info("MAIN0   - start");
-trace_ciphers_list((_need_cipher()||0)) if _is_trace();;
+OTrace::ciphers_show((_need_cipher()||0)) if _is_trace();;
 OUsr::pre_main();
 
 #| do the work for all targets
