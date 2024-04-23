@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.37 24/04/24 00:33:16"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.39 24/04/24 01:29:07"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -101,10 +101,10 @@ sub _set_binmode    {
 _set_binmode(":unix:utf8"); # set I/O layers very early
 
 # SEE Note:ARGV
-sub _is_ARGV    { my $rex = shift; return (grep{/$rex/}  @ARGV); }  # case-sensitive!
-sub _is_argv    { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # case-insensitive!
-sub _is_trace   { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/}   @ARGV); }
-sub _is_v_trace { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! because of --v
+sub _is_ARGV        { my $rex = shift; return (grep{/$rex/}  @ARGV); }  # case-sensitive!
+sub _is_argv        { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # case-insensitive!
+sub _is_trace       { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/}   @ARGV); }
+sub _is_v_trace     { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! because of --v
     # return 1 if value in command-line arguments @ARGV
 
 our $make_text = "OSAFT_MAKE exists";
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.37"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.39"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -621,14 +621,20 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         ## use critic
         close($rc);
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
-        push(@argv, @rc_argv);
+        push(@argv, @rc_argv);      # store arguments
         # OTrace::trace_rcfile();   # function cannot be used here
         if (_is_trace()) {
             my @cfgs;
             _tprint("$cfg{'RC-FILE'}");
             _tprint("#------------------------------------------------- RC-FILE {");
             foreach my $val (@rc_argv) {
-                #print join("\n  ", "", @rc_argv);
+                if ($val !~ m/^\s*([+,-]-?)/) {
+                    _warn("040: invalid argument in RC-FILE '$val'; setting ignored");
+                    @argv = grep{!/$val/} @argv;# remove from stored arguments
+                    # should be fixed: $val still in @rc_argv, which is stored
+                    # in $cfg{'RC-ARGV'} later
+                    next;
+                }
                 $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
                 _tprint("     $val");
                 if ($val =~ m/--cfg[^=]*=[^=]*/) {
@@ -911,9 +917,9 @@ OUsr::pre_file();
 
 #| definitions: functions to "convert" values
 #| -------------------------------------
-sub __subst($$)     { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
+sub __subst         { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
     # return given text with '@@' replaced by given value
-sub _get_text($$)   { my ($is,$txt)=@_; return __subst($text{$is}, $txt); }
+sub _get_text       { my ($is,$txt)=@_; return __subst($text{$is}, $txt); }
     # for given index of %text return text with '@@' replaced by given value
 sub _get_yes_no     { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
@@ -934,7 +940,7 @@ sub _get_base2      {
     return ($value + ($value/100*44));
 } # _get_base2
 
-sub _hex_like_openssl   {
+sub _hex_like_openssl {
     # return full hex constant formatted as used by openssl's output
     my $c = shift;
     $c =~ s/0x(..)(..)(..)(..)/0x$2,0x$3,0x$4 - /; # 0x0300C029 ==> 0x00,0xC0,0x29
@@ -944,62 +950,62 @@ sub _hex_like_openssl   {
 
 #| definitions: %cfg functions
 #| -------------------------------------
-sub __need_this($)      {
+sub __need_this     {
     # returns >0 if any of the given commands is listed in $cfg{'do'}
     my $key = shift;
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;      # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 } # __need_this
-sub _need_netinfo()     {
+sub _need_netinfo   {
     # returns >0 if $cfg{'do'} contains commands other than cipher*
     # compares with $cfg{'need-cipher'}
     my $need_cipher = join("|", @{$cfg{'need-cipher'}});
     return grep{not /^(?:$need_cipher)$/} @{$cfg{'do'}};
 } # _need_netinfo
-#sub _need_openssl()     { return __need_this('need-openssl');   }
-sub _need_cipher()      { return __need_this('need-cipher');    }
-sub _need_default()     { return __need_this('need-default');   }
-sub _need_checkssl()    { return __need_this('need-checkssl');  }
-sub _need_checkalpn()   { return __need_this('need-checkalpn'); }
-sub _need_checkbleed()  { return __need_this('need-checkbleed');}
-sub _need_checkchr()    { return __need_this('need-checkchr');  }
-sub _need_checkdest()   { return __need_this('need-checkdest'); }
-sub _need_check_dh()    { return __need_this('need-check_dh');  }
-sub _need_checkhttp()   { return __need_this('need-checkhttp'); }
-sub _need_checkprot()   { return __need_this('need-checkprot'); }
+#sub _need_openssl   { return __need_this('need-openssl');   }
+sub _need_cipher    { return __need_this('need-cipher');    }
+sub _need_default   { return __need_this('need-default');   }
+sub _need_checkssl  { return __need_this('need-checkssl');  }
+sub _need_checkalpn { return __need_this('need-checkalpn'); }
+sub _need_checkbleed {return __need_this('need-checkbleed');}
+sub _need_checkchr  { return __need_this('need-checkchr');  }
+sub _need_checkdest { return __need_this('need-checkdest'); }
+sub _need_check_dh  { return __need_this('need-check_dh');  }
+sub _need_checkhttp { return __need_this('need-checkhttp'); }
+sub _need_checkprot { return __need_this('need-checkprot'); }
     # returns >0 if any  of the given commands is listed in $cfg{need-*}
-sub _is_do_cmdvulns()   { return __need_this('cmd-vulns');      }
+sub _is_do_cmdvulns { return __need_this('cmd-vulns');      }
     # returns >0 if any  of the given commands is listed in $cfg{cmd-vulns}
-sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
-sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
+sub _is_hashkey     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
+sub _is_member      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
     # returns list of matching entries in specified array @cfg{*}
-sub _is_cfg_do($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
-sub _is_cfg_intern($)   { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
-sub _is_cfg_hexdata($)  { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
-sub _is_cfg_call($)     { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
+sub _is_cfg_do      { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
+sub _is_cfg_intern  { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
+sub _is_cfg_hexdata { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
+sub _is_cfg_call    { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
     # returns >0 if the given string is listed in $cfg{*}
-sub _is_cfg($)          { my  $is=shift;    return $cfg{$is};   }
-sub _is_cfg_ssl($)      { my  $is=shift;    return $cfg{$is};   }
+sub _is_cfg         { my  $is=shift;    return $cfg{$is};   }
+sub _is_cfg_ssl     { my  $is=shift;    return $cfg{$is};   }
     # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
-sub _is_cfg_out($)      { my  $is=shift;    return $cfg{'out'}->{$is};  }
-sub _is_cfg_tty($)      { my  $is=shift;    return $cfg{'tty'}->{$is};  }
-sub _is_cfg_use($)      { my  $is=shift;    return $cfg{'use'}->{$is};  }
+sub _is_cfg_out     { my  $is=shift;    return $cfg{'out'}->{$is};  }
+sub _is_cfg_tty     { my  $is=shift;    return $cfg{'tty'}->{$is};  }
+sub _is_cfg_use     { my  $is=shift;    return $cfg{'use'}->{$is};  }
     # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
-sub _is_cfg_trace()     { return $cfg{'trace'};   }
-sub _is_cfg_verbose()   { return $cfg{'verbose'}; }
+sub _is_cfg_trace   { return $cfg{'trace'};   }
+sub _is_cfg_verbose { return $cfg{'verbose'}; }
 sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); }
     # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
-sub _is_cfg_legacy($)   { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
+sub _is_cfg_legacy  { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
     # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
 
-sub _set_cfg_out($$)    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
-sub _set_cfg_tty($$)    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
-sub _set_cfg_use($$)    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
+sub _set_cfg_out    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
+sub _set_cfg_tty    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
+sub _set_cfg_use    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
 
-sub _set_cfg($$);       # forward toavoid: main::_set_cfg() called too early to check prototype at ...
-sub _set_cfg_from_file  {
+sub _set_cfg;       # forward to avoid: main::_set_cfg() called too early to check prototype at ...
+sub _set_cfg_from_file {
     # read values to be set in configuration from file
     my $typ = shift;    # type of config value to be set
     my $fil = shift;    # filename
@@ -1038,7 +1044,7 @@ sub _set_cfg_from_file  {
     return;
 } #  _set_cfg_from_file
 
-sub _set_cfg($$)        {
+sub _set_cfg        {
     # set value in configuration %cfg, %checks, %data, %text
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
@@ -1140,7 +1146,7 @@ sub _set_cfg($$)        {
     return;
 } # _set_cfg
 
-sub _set_cfg_init       {
+sub _set_cfg_init   {
     # set value in configuration %cfg; for debugging and test only
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2);  # left of first = is key
@@ -1157,11 +1163,11 @@ sub _set_cfg_init       {
 
 #| definitions: internal wrapper functions for lib/Ciphers.pm
 #| -------------------------------------
-sub _is_cipher_key      { return Ciphers::is_valid_key(shift); }
+sub _is_cipher_key  { return Ciphers::is_valid_key(shift); }
 # following wrappers are called with cipher suite name, while Ciphers methods
 # need to be called with cipher hex key
-sub _get_cipher_sec     { return Ciphers::get_sec( Ciphers::get_key(shift)); }
-sub _set_cipher_sec     {
+sub _get_cipher_sec { return Ciphers::get_sec( Ciphers::get_key(shift)); }
+sub _set_cipher_sec {
     # set cipher's security value in %ciphers; can be called with key or name
     # parameter looks like: 0x030000BA=sec or CAMELLIA128-SHA=sec
     my ($typ, $arg) = @_;
@@ -1175,7 +1181,7 @@ sub _set_cipher_sec     {
 
 #| definitions: internal functions
 #| -------------------------------------
-sub __is_number         {
+sub __is_number     {
     # return 1 if given parameter is a number; return 0 otherwise
     my $val = shift;
     return 0 if not defined $val;
@@ -1184,7 +1190,7 @@ sub __is_number         {
 } # __is_number
 
 use IO::Socket::INET;
-sub _load_modules       {
+sub _load_modules   {
     # load required modules
     # SEE Perl:import include
     trace("_load_modules() {");
@@ -1239,7 +1245,7 @@ sub _load_modules       {
     return;
 } # _load_modules
 
-sub _check_modules      {
+sub _check_modules  {
     # check for minimal version of a module;
     # verbose output with --v=2 ; uses string "yes" for usr/bunt.*
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
@@ -1604,7 +1610,7 @@ sub _check_ssl_methods  {
     return;
 } # _check_ssl_methods
 
-sub _enable_sclient     {
+sub _enable_sclient {
     # enable internal functionality based on available functionality of openssl s_client
     # SEE Note:OpenSSL s_client
     my $opt = shift;
@@ -1639,7 +1645,7 @@ sub _enable_sclient     {
     return;
 } # _enable_sclient
 
-sub _reset_openssl      {
+sub _reset_openssl  {
     # reset all %cfg and %cmd settings according openssl executable
     $cmd{'openssl'}     = "";
     $cmd{'extopenssl'}  = 0;
@@ -1652,7 +1658,7 @@ sub _reset_openssl      {
     return;
 } # _reset_openssl
 
-sub _check_openssl      {
+sub _check_openssl  {
     # check cpapbilities of openssl
     return if ($cmd{'openssl'} eq "");  # already checked and warning printed
     trace("_check_openssl() {");
@@ -1964,7 +1970,7 @@ sub _init_checks_val    {
     return;
 } # _init_checks_val
 
-sub _init_all           {
+sub _init_all       {
     # set all default values here
     _tprint("_init_all() {") if _is_trace();    # trace() not yet available
     $cfg{'done'}->{'init_all'}++;
@@ -1979,7 +1985,7 @@ sub _init_all           {
 } # _init_all
 _init_all();   # initialise defaults in %checks (score, val); parts be done again later
 
-sub _resetchecks        {
+sub _resetchecks    {
     # reset values
     foreach (keys %{$cfg{'done'}}) {
         next if (!m/^check/);  # only reset check*
@@ -1991,7 +1997,7 @@ sub _resetchecks        {
     return;
 } # _resetchecks
 
-sub _prot_cipher        { my @txt = @_; return " " . join(":", @txt); }
+sub _prot_cipher    { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
 
 sub _prot_cipher_or_empty {
@@ -2003,7 +2009,7 @@ sub _prot_cipher_or_empty {
     return _prot_cipher($p1, $p2);
 } # _prot_cipher_or_empty
 
-sub _getscore           {
+sub _getscore       {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
     my $value   = shift || "";
@@ -2328,7 +2334,7 @@ sub _is_tls12only   {
     return join(" ", @ret);
 } # _is_tls12only
 
-sub _is_tr02102         {
+sub _is_tr02102     {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     # this is valid vor TR-02102 2013 and 2016
     my ($ssl, $cipher) = @_;
@@ -2398,7 +2404,7 @@ sub _is_beast_skipped   {
     return join(" ", @ret);
 } # _is_beast_skipped
 
-sub _is_ssl_error       {
+sub _is_ssl_error   {
     # returns 1 if probably a SSL connection error occoured; 0 otherwise
     # increments counters in $cfg{'done'}
     my ($anf, $end, $txt) = @_;
@@ -2419,7 +2425,7 @@ sub _is_ssl_error       {
     return 0;
 } # _is_ssl_error
 
-sub _checkwildcard($$)  {
+sub _checkwildcard  {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
     my ($cn_host, $rex);
@@ -2444,7 +2450,7 @@ sub _checkwildcard($$)  {
     return;
 } # _checkwildcard
 
-sub _usesocket($$$$)    {
+sub _usesocket      {
     # return protocol and cipher accepted by SSL connection
     # should return the target's preferred cipher if none are given in $ciphers
     # NOTE: this function is used to check for supported ciphers only, hence
@@ -2560,7 +2566,7 @@ sub _usesocket($$$$)    {
     return $version, $cipher;
 } # _usesocket
 
-sub _useopenssl($$$$)   {
+sub _useopenssl     {
     # return cipher accepted by SSL connection
     # should return the target's preferred cipher if none are given in $ciphers
     # $ciphers must be colon (:) separated list
@@ -2632,7 +2638,7 @@ sub _useopenssl($$$$)   {
     return "", "", "";
 } # _useopenssl
 
-sub _can_connect        {
+sub _can_connect    {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
     trace("_can_connect($host, $port', $sni, $timeout, $ssl) {");
@@ -2679,7 +2685,7 @@ sub _can_connect        {
     return $ret;
 } # _can_connect
 
-sub _get_target         {
+sub _get_target     {
     # check argument and return array: protocol, host, port, auth
     # allow host, host:port, URL with IPv4, IPv6, FQDN
     #   http://user:pass@f.q.d.n:42/aa*foo=bar:23/
@@ -2722,7 +2728,7 @@ sub _get_target         {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
-sub _get_data0          {
+sub _get_data0      {
     #? get %data for connection without SNI
     #  this function currently only returns data for:  cn_nosni, session_ticket
     my ($host, $port) = @_;
@@ -3173,7 +3179,7 @@ sub ciphers_scan_intern {
 #_____________________________________________________________________________
 #__________________________________________________________ check functions __|
 
-sub check_certchars     {
+sub check_certchars {
     #? check for invalid characters in certificate
     my ($host, $port) = @_;
     $cfg{'done'}->{'check_certchars'}++;
@@ -3214,7 +3220,7 @@ sub check_certchars     {
     return;
 } # check_certchars
 
-sub check_dh            {
+sub check_dh        {
     #? check if target is vulnerable to Logjam attack; uses \$cipher_results
     my ($host, $port) = @_;
     $cfg{'done'}->{'check_dh'}++;
@@ -3264,7 +3270,7 @@ sub check_dh            {
     return;
 } # check_dh
 
-sub check_url           {
+sub check_url       {
     #? request given URL and check if it is a valid CRL or OCSP site
     #? returns result of check; empty string if anything OK
     my ($uri, $type) = @_;      # type is 'ext_crl' or 'ocsp_uri'
@@ -3435,7 +3441,7 @@ sub check_url           {
     return $txt;
 } # check_url
 
-sub check_nextproto     {
+sub check_nextproto {
     #? check target for ALPN or NPN support; returns list of supported protocols
     my ($host, $port, $type, $mode) = @_;
     # $type is ALPN or NPN; $mode is all or single
@@ -3495,7 +3501,7 @@ sub check_nextproto     {
     return @npn;
 } # check_nextproto
 
-sub checkalpn           {
+sub checkalpn       {
     #? check target for ALPN or NPN support; returns void
     # stores list of supported protocols in corresponding $info{}
     # uses protocols from $cfg{'protos_next'} only
@@ -3540,7 +3546,7 @@ sub checkpreferred      {
     return;
 } # checkpreferred
 
-sub checkcipher         {
+sub checkcipher     {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $key) = @_;
     my $c    = Ciphers::get_name($key);  # $cipher = $c;
@@ -3593,7 +3599,7 @@ sub checkcipher         {
     return;
 } # checkcipher
 
-sub checkciphers_pfs    {
+sub checkciphers_pfs {
     #? test if given ciphers support PFS, set corresponding %checks
     my $cnt_all = shift;
     my $cnt_pfs = shift;
@@ -3618,7 +3624,7 @@ sub checkciphers_pfs    {
     return;
 } # checkciphers_pfs
 
-sub checkciphers        {
+sub checkciphers    {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port, $results) = @_;
     $cfg{'done'}->{'checkciphers'}++;
@@ -3715,7 +3721,7 @@ sub checkciphers        {
     return;
 } # checkciphers
 
-sub checkbleed($$)  {
+sub checkbleed      {
     #? check if target supports vulnerable TLS extension 15 (hearbeat)
     # SEE Note:heartbleed
     my ($host, $port) = @_;
@@ -3729,7 +3735,7 @@ sub checkbleed($$)  {
     return;
 } # checkbleed
 
-sub checkdates($$)  {
+sub checkdates      {
     # check validation of certificate's before and after date
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkdates'}++;
@@ -3829,7 +3835,7 @@ sub checkdates($$)  {
     return;
 } # checkdates
 
-sub checkcert($$)   {
+sub checkcert       {
     #? check certificate settings
     my ($host, $port) = @_;
     my ($value, $label);
@@ -3943,7 +3949,7 @@ sub checkcert($$)   {
     return;
 } # checkcert
 
-sub checksni($$)    {
+sub checksni        {
     #? check if given FQDN needs to use SNI
     # sets $checks{'sni'}, $checks{'certfqdn'}
     # DNS strings are case insensitive, hence values are compared lowercase
@@ -3984,7 +3990,7 @@ sub checksni($$)    {
     return;
 } # checksni
 
-sub checksizes($$)  {
+sub checksizes      {
     #? compute some lengths and counts from certificate values
     # sets %checks
     my ($host, $port) = @_;
@@ -4067,7 +4073,7 @@ sub checksizes($$)  {
     return;
 } # checksizes
 
-sub check02102($$)  {
+sub check02102      {
     #? check if target is compliant to BSI TR-02102-2 2016-01
     # assumes that checkciphers() and checkdest() already done
     my ($host, $port) = @_;
@@ -4164,7 +4170,7 @@ sub check02102($$)  {
     return;
 } # check02102
 
-sub check2818($$)   {
+sub check2818       {
     #? check if subjectAltNames is RFC 2818 compliant
     my ($host, $port) = @_;
     $cfg{'done'}->{'check2818'}++;
@@ -4174,7 +4180,7 @@ sub check2818($$)   {
     return;
 } # check2818
 
-sub check03116($$)  {
+sub check03116      {
     #? check if target is compliant to BSI TR-03116-4
     my ($host, $port) = @_;
     # BSI TR-03116-4 is similar to BSI TR-02102-2
@@ -4269,7 +4275,7 @@ sub check03116($$)  {
     return;
 } # check03116
 
-sub check6125($$)   {
+sub check6125       {
     #? check if certificate identifiers are RFC 6125 compliant
     my ($host, $port) = @_;
     $cfg{'done'}->{'check6125'}++;
@@ -4532,7 +4538,7 @@ sub check7525       {
     return;
 } # check7525
 
-sub checkdv($$)     {
+sub checkdv         {
     #? check if certificate is DV-SSL
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkdv'}++;
@@ -4589,7 +4595,7 @@ sub checkdv($$)     {
     return;
 } # checkdv
 
-sub checkev($$)     {
+sub checkev         {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkev'}++;
@@ -4706,7 +4712,7 @@ sub checkev($$)     {
     return;
 } # checkev
 
-sub checkroot($$)   {
+sub checkroot       {
     #? check if certificate is root CA
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkroot'}++;
@@ -4717,7 +4723,7 @@ sub checkroot($$)   {
     return;
 } # checkroot
 
-sub checkprot($$)   {
+sub checkprot       {
     #? check anything related to SSL protocol versions and ALPN, NPN
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkprot'}++;
@@ -4782,7 +4788,7 @@ sub checkprot($$)   {
 } # checkprot
 
 
-sub checkdest($$)   {
+sub checkdest       {
     #? check anything related to target and connection
     my ($host, $port) = @_;
     my $ciphers = shift;
@@ -4867,7 +4873,7 @@ sub checkdest($$)   {
     return;
 } # checkdest
 
-sub checkhttp($$)   {
+sub checkhttp       {
     #? HTTP(S) checks
     my ($host, $port) = @_;
     my $key = "";
@@ -5020,7 +5026,7 @@ sub checksstp       {
     return;
 } # checksstp
 
-sub checkssl($$)    {
+sub checkssl        {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
@@ -5287,7 +5293,7 @@ sub print_title     {
     return;
 } # print_title
 
-sub print_line($$$$$$)  {
+sub print_line      {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
@@ -5322,7 +5328,7 @@ sub print_line($$$$$$)  {
     return;
 } # print_line
 
-sub print_data($$$$)    {
+sub print_data      {
     # print given label and text from %data according given legacy format
     my ($legacy, $host, $port, $key) = @_;
     if (_is_hashkey($key, \%data) < 1) {        # silently ignore unknown labels
@@ -5389,7 +5395,7 @@ sub print_data($$$$)    {
     return;
 } # print_data
 
-sub print_check($$$$$)  {
+sub print_check     {
     #? print label and result of check
     my ($legacy, $host, $port, $key, $value) = @_;
     $value = $checks{$key}->{val} if not defined $value;# defensive programming ..
@@ -5400,7 +5406,7 @@ sub print_check($$$$$)  {
     return;
 } # print_check
 
-sub print_size($$$$)    {
+sub print_size      {
     #? print label and result for length, count, size, ...
     my ($legacy, $host, $port, $key) = @_;
     my $value = "";
@@ -5414,7 +5420,7 @@ sub print_cipherruler_dh {printf("=   %s+%s\n", "-"x35, "-"x25) if (_is_cfg_out(
     #? print header ruler line for ciphers with DH parameters
 sub print_cipherruler   { printf("=   %s+%s+%s\n", "-"x35, "-"x7, "-"x8) if (_is_cfg_out('header')); return; }
     #? print header ruler line for ciphers
-sub print_cipherhead($) {
+sub print_cipherhead    {
     #? print header line according given legacy format
     my $legacy  = shift;
     return if (not _is_cfg_out('header'));
@@ -5436,7 +5442,7 @@ sub print_cipherhead($) {
     return;
 } # print_cipherhead
 
-sub print_cipherline($$$$$$) {
+sub print_cipherline    {
     #? print cipher check result according given legacy format
     my ($legacy, $ssl, $host, $port, $key, $support) = @_;
     my $cipher= Ciphers::get_name($key);
@@ -5538,7 +5544,7 @@ sub print_cipherline($$$$$$) {
     return;
 } # print_cipherline
 
-sub print_cipherpreferred   {
+sub print_cipherpreferred {
     #? print preferred cipher according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
     trace("print_cipherpreferred($legacy, $ssl, $host, $port) {");
@@ -5556,7 +5562,7 @@ sub print_cipherpreferred   {
     return;
 } # print_cipherpreferred
 
-sub print_ciphertotals($$$$) {
+sub print_ciphertotals  {
     #? print total number of ciphers supported for SSL version according given legacy format
     # TODO: 11/2023: check if necessary for --legacy=ssldiagnos
     my ($legacy, $ssl, $host, $port) = @_;
