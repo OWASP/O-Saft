@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.42 24/04/26 22:40:17"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.43 24/04/27 01:09:03"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.42"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.43"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -659,7 +659,15 @@ $cfg{'done'}->{'rc_file'}++ if (0 < $#rc_argv);
 
 _trace_info("RCFILE9 - RC-FILE end");
 
-push(@argv, @ARGV); # got all now; from hereon "grep{/.../} @argv" is used instead of _is_argv()
+#| add arguments from environment, then from command-line
+#| -------------------------------------
+if (defined $ENV{'OSAFT_OPTIONS'}) {
+    push(@argv, split(" ", $ENV{'OSAFT_OPTIONS'}));
+        # simply add to @argv, no checks
+        # because of simple split(), only single words are possible as options
+}
+
+push(@argv, @ARGV); # from hereon "grep{/.../} @argv" is used instead of _is_argv()
 push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC-FILE, needed in _warn()
 
 #| read DEBUG-FILE, if any (source for trace and verbose)
@@ -3528,7 +3536,7 @@ sub checkalpn       {
     return;
 } # checkalpn
 
-sub checkpreferred      {
+sub checkpreferred  {
     #? test if target prefers strong ciphers, aka SSLHonorCipherOrder
     my ($host, $port) = @_;     # not yet used
     $cfg{'done'}->{'checkpreferred'}++;
