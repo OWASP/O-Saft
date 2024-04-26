@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.40 24/04/24 09:25:58"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.41 24/04/26 22:15:54"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.40"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.41"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -596,6 +596,8 @@ if (0 < _is_argv('(?:--rc)')) {                 # (re-)compute default RC-File w
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
+#if (defined $ENV{'OSAFT_CONFIG'}) {
+#}
 if (0 < _is_argv('(?:--rc=)')) {                # other RC-FILE given
     $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
     $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
@@ -619,25 +621,27 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);      # store arguments
         # OTrace::trace_rcfile();   # function cannot be used here
+        my @cfgs;
         if (_is_trace()) {
-            my @cfgs;
             _tprint("$cfg{'RC-FILE'}");
             _tprint("#------------------------------------------------- RC-FILE {");
-            foreach my $val (@rc_argv) {
-                if ($val !~ m/^\s*([+,-]-?)/) {
-                    _warn("040: invalid argument in RC-FILE '$val'; setting ignored");
-                    @argv = grep{!/$val/} @argv;# remove from stored arguments
-                    # should be fixed: $val still in @rc_argv, which is stored
-                    # in $cfg{'RC-ARGV'} later
-                    next;
-                }
-                $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
-                _tprint("     $val");
-                if ($val =~ m/--cfg[^=]*=[^=]*/) {
-                    $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
-                    push(@cfgs, $val);
-                }
+        }
+        foreach my $val (@rc_argv) {
+            if ($val !~ m/^\s*([+,-]-?)/) {
+                _warn("040: invalid argument in RC-FILE '$val'; setting ignored");
+                @argv = grep{!/$val/} @argv;# remove from stored arguments
+                # should be fixed: $val still in @rc_argv, which is stored
+                # in $cfg{'RC-ARGV'} later
+                next;
             }
+            $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
+            _tprint("     $val") if (_is_trace());
+            if ($val =~ m/--cfg[^=]*=[^=]*/) {
+                $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
+                push(@cfgs, $val);
+            }
+        }
+        if (_is_trace()) {
             _tprint("added/modified= @cfgs");
             _tprint("#------------------------------------------------- RC-FILE }");
         }
