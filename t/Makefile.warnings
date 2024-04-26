@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.9 24/04/20 13:23:41
+#?      @(#) Makefile.warnigs 3.10 24/04/26 22:20:43
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.9
+_SID.warnings      := 3.10
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -200,21 +200,22 @@ warning-020: TEST.args  = TODO: testing die, CGI mode requires strict settings, 
 warning-021: TEST.args  = --set-score=unknown               +quit
 warning-022: TEST.args  = --cfgcmd-is=unknown               +quit
 warning-023: TEST.args  = --legacy=key                      +quit
-#warning-040: TEST.args  = free
+warning-040: TEST.args  = --exit=INIT --v --rc=$(TEST.tmp.rc) +quit
+warning-040: TEST.rc    = arguments --invalid
 warning-041: TEST.args  = s_client                          +quit
 warning-042: TEST.args  = +cn /unknown-host                 +quit
 warning-043: TEST.args  = +cn --port=' ' unknown-host       +quit
 warning-044: TEST.args  = +zlib +lzo +open_pgp +fallback    +quit
 warning-045: TEST.args  = any-host --port 45                +quit
 warning-046: TEST.args  = --rc=$(TEST.tmp.rc) --v           +quit
-warning-046:                                     TEST.rc = --cfg_cmd=new_command=quit
+warning-046: TEST.rc = --cfg_cmd=new_command=quit
 warning-047: TEST.args  = +info  +cn                        any-host
 warning-048: TEST.args  = +check +cn                        any-host
 warning-049: TEST.args  = +unknown_command                  +quit
 warning-050: TEST.args  = +cn --port=                       +quit
 warning-051: TEST.args  = --label=unknown                   +quit
 warning-052: TEST.args  = --rc=$(TEST.tmp.rc)
-warning-052:                                     TEST.rc = "--option=-with_trailing_spaces   "
+warning-052: TEST.rc = "--option=-with_trailing_spaces   "
 warning-053: TEST.args  = --capath='/path with spaces'      +quit
 warning-054: TEST.args  = --legacy=unknown_legacy           +quit
 warning-055: TEST.args  = --format=unknown_format           +quit
@@ -252,6 +253,7 @@ warning-090: TEST.args  = TODO: SSLinfo::next_protos no longer supported, please
 warning-091: TEST.args  = TODO: help file cannot be opened, difficult ...
 #warning-092: TEST.args  = free
 warning-093: TEST.args  = TODO: help file cannot be opened, difficult ...
+warning-101: TEST.args  = TODO: 'require $file' failed, difficult ...
 # warning-189 .. warning-191 are for missing $(O-LIB.dir)/doc/file.txt
 # testing with o-saft-standalone.pl with full path may trigger the warning
 warning-189: EXE.pl     = $(CURDIR)/$(O-USR.dir)/o-saft-standalone.pl
@@ -431,7 +433,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.9: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.10: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
