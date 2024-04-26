@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.11 24/04/24 00:27:11
+# SID   @(#) help.txt 3.12 24/04/27 01:53:17
 
 NAME
 
@@ -20,6 +20,17 @@ SYNOPSIS
 
         I.g. all commands start with a  '+'  character and options start with
         '-'  or  '--'  characters. Anything else is treated as target name.
+
+        Arguments (commands, options and targets) can be used in any order.
+        If options are given multiple times,  or when they configure the same
+        behaviour (for example toggles like --tlsv2 and --no-tlsv2), the last
+        given one wins.
+
+        Arguments are read from following sources in that sequence:
+          1. RC-FILE  if not disabled with --no-rc
+             for details, please see section  RC-FILE  below
+          2. environment variable OSAFT_OPTIONS
+          3. command-line
 
 
 DESCRIPTION
@@ -3167,6 +3178,14 @@ ENVIRONMENT
           * OPENSSL         - if set, full path to openssl executable
           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
                               directory where to find openssl.cnf
+          * OSAFT_CONFIG    - if set to an existing file, use it as  RC-FILE
+                              don't read any file if given file doesn't exist
+                              file will be overwritten with  --rc=FILE option
+          * OSAFT_OPTIONS   - if set, all words will be used as  command-line
+                              argument (option, command, target)
+                              note that whitespaces are not possible in given
+                              arguments, 'cause each word is used as a single
+                              argument
           * OSAFT_MAKE      - if set, some  random values  in the result  are
                               replaced by constant strings; it is set for all
                               targets in all Makefile*
@@ -3287,10 +3306,13 @@ CUSTOMISATION
 
     RC-FILE
 
-        The rc-file will be searched for in the working directory only.
+        The rc-file will be searched in following sources:
 
-        The name of the rc-file is the name of the program file prefixed by a
-        '.'  (dot),  for example:  '.$0'.
+              a. fle given in environment variable OSAFT_CONFIG
+              b. default name: program file prefixed by a '.' (dot) 
+              c. file given with  --rc=FILE  option
+
+        By default only '.$0' in the working directory is used.
 
         A  rc-file  can contain any of the commands and options valid for the
         tool itself. The syntax for them is the same as on command-line. Each
