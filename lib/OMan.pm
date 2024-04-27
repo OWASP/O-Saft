@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.39 24/04/27 10:01:50";
+my  $SID_oman   = "@(#) OMan.pm 3.40 24/04/27 10:16:57";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -203,7 +203,11 @@ EoMETA
     'script_func1'  => << 'EoFUNC',
 
   function _i(id){return document.getElementById(id);}
-  function toggle_checked(id){id=_i(id);id.checked=(id.checked=='false')?'true':'false';}
+  function toggle_checked(id){
+	id=_i(id);
+	if(null !== id){ id.checked=(id.checked=='false')?'true':'false'; };
+	return false;
+  }
   function toggle_display(id){
 	if("string" === typeof id){ id=_i(id).style; } else { id=id.style };
 	if("" === id.display){ id.display='none';} /* Chrome hack */
@@ -472,7 +476,7 @@ EoButton
  body h4 [class="i"] {margin-left:    -1em; }       /* mainly +cmd and --opt */
  fieldset           { margin:     0px;  }
  fieldset > details:nth-child(2) > div  { z-index:calc(var(--z-index)); } /* "Simple GUI" on top */
- fieldset > details > div       { margin:0.1em 0.55em 0px -0.85em; background:white; overflow-y:scroll; }
+ fieldset > details > div       { margin:0.1em 0.4em 0px -0.85em; background:white; overflow-y:scroll; }
 /*
 fieldset > details > div:focus  { display:block; } // geht nicht
 */
@@ -806,7 +810,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.39'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.40'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2719,7 +2723,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.39 2024/04/27
+3.40 2024/04/27
 
 
 =head1 AUTHOR
