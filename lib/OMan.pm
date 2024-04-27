@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.37 24/04/27 08:19:21";
+my  $SID_oman   = "@(#) OMan.pm 3.38 24/04/27 08:23:39";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -388,6 +388,10 @@ EoFUNC
   toggle_checked("o--header");      // .. also as option ..
   toggle_checked("o--enabled");     // .. also as option ..
   toggle_checked("o--html5");       // .. also as option ..
+  toggle_checked("o--no-dtlsv1");   // disabled by default because some targets hang
+  toggle_checked("o--no-dtlsv11");  // ..
+  toggle_checked("o--no-dtlsv12");  // ..
+  toggle_checked("o--no-dtlsv13");  // ..
  </script>
 EoFUNC
 
@@ -802,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.37'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.38'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2715,7 +2719,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.37 2024/04/27
+3.38 2024/04/27
 
 
 =head1 AUTHOR
