@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.40 24/04/27 10:16:57";
+my  $SID_oman   = "@(#) OMan.pm 3.41 24/04/27 13:22:22";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -497,6 +497,7 @@ fieldset > details > div:focus  { display:block; } // geht nicht
  .navdiv > details > div > input[type="submit"]  { display:block; }
  .navdiv > details > div > label         { font-weight:normal; display:block; }
  .navdiv > details > div > details > div { margin-left:0.8em; } /* submenu */
+ .navdiv > details[open]>summary::before { content: ""; position:fixed; top:-1em; right:-1em; bottom:-1em; left:-1em; } /* any click outside closes submenu */
  details > div           { padding:0.5em; border:var(--border-1); border-radius:var(--radius-10); position:absolute; }
  details > div > li      { margin-left: 2.2em; }    /* lists in texts        */
  details > div > table   { font-size:   100%;  }    /* Simple GUI (unsure why necessary)*/
@@ -810,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.40'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.41'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2723,7 +2724,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.40 2024/04/27
+3.41 2024/04/27
 
 
 =head1 AUTHOR
