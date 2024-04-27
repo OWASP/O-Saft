@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.38 24/04/27 08:23:39";
+my  $SID_oman   = "@(#) OMan.pm 3.39 24/04/27 10:01:50";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -387,11 +387,11 @@ EoFUNC
   toggle_checked("q--html5");       // nice output in browser
   toggle_checked("o--header");      // .. also as option ..
   toggle_checked("o--enabled");     // .. also as option ..
-  toggle_checked("o--html5");       // .. also as option ..
-  toggle_checked("o--no-dtlsv1");   // disabled by default because some targets hang
-  toggle_checked("o--no-dtlsv11");  // ..
-  toggle_checked("o--no-dtlsv12");  // ..
-  toggle_checked("o--no-dtlsv13");  // ..
+//toggle_checked("o--html5");       // TODO: noch nicht als Option da
+  toggle_checked("q--no-dtlsv1");   // disabled by default because some targets hang
+  toggle_checked("q--no-dtlsv11");  // ..
+  toggle_checked("q--no-dtlsv12");  // ..
+  toggle_checked("q--no-dtlsv13");  // ..
  </script>
 EoFUNC
 
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.38'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.39'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -951,7 +951,7 @@ sub _man_cgi_simple {
         # <div class=n> contains checkboxes for some options.These checkboxes
         # are added in following  foreach loop.
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
-                     no-dtlsv1 no-dtlsv11 no-dtlsv12 -no-dtlsv13  BR
+                     no-dtlsv1 no-dtlsv11 no-dtlsv12 no-dtlsv13   BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
                      no-http http BR
@@ -2719,7 +2719,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.38 2024/04/27
+3.39 2024/04/27
 
 
 =head1 AUTHOR
