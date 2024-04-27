@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.36 24/04/21 18:44:22";
+my  $SID_oman   = "@(#) OMan.pm 3.37 24/04/27 08:19:21";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -802,7 +802,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.36'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.37'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -912,8 +912,8 @@ sub _man_menu_bar   {
               . qq(        <a target="_help" href="doc/o-saft.html" >? Help (complete help)</a>);
     my $cmds;
        $cmds .= _man_cmd_button($_)     foreach qw(+check +cipher +info +quick +vulns +protocols);
-    my $opts  = _man_opt_button('--format', 'html');
-       $opts .= _man_opt_button($_, '') foreach qw(--header --enabled --no-dns --no-http --no-sni --no-sslv2 --no-sslv3);
+    my $opts  = _man_opt_button('--format', 'html');# --format=html
+       $opts .= _man_opt_button($_, '') foreach qw(--header --enabled --no-dns --no-http --no-sni --no-sslv2 --no-sslv3); # simple toggle options --opt=
     my $help  =
          _man_help_button("--help",         '', "open window with complete help (plain text)")
        . _man_help_button("--help=command", '', "open window with help for commands")
@@ -947,6 +947,7 @@ sub _man_cgi_simple {
         # <div class=n> contains checkboxes for some options.These checkboxes
         # are added in following  foreach loop.
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
+                     no-dtlsv1 no-dtlsv11 no-dtlsv12 -no-dtlsv13  BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
                      no-http http BR
@@ -2714,7 +2715,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.36 2024/04/21
+3.37 2024/04/27
 
 
 =head1 AUTHOR
