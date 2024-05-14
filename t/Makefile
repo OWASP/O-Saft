@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.4 24/01/26 18:18:14
+#?      @(#) Makefile 3.5 24/05/14 10:06:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.4
+_SID.test          := 3.5
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -452,8 +452,11 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKE_VERSION)  = $(MAKE_VERSION)'
 	@echo '# $$(MAKE_HOST)     = $(MAKE_HOST)'
 	@echo '# $$(MAKE_RESTARTS) = $(MAKE_RESTARTS)'
+	@echo '# $$(MAKE_TERMERR)  = $(MAKE_TERMERR)'
+	@echo '# $$(MAKE_TERMOUT)  = $(MAKE_TERMOUT)'
 	@echo '# $$(MFLAGS)        = $(MFLAGS)'
 	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
+	@echo '# $$(MAKEINFO)      = $(MAKEINFO)'
 	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
 	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
 	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
@@ -464,6 +467,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKECMDGOALS)  = $(MAKECMDGOALS)'
 	@echo '# $$(GNUMAKEFLAGS)  = $(GNUMAKEFLAGS)'
 	@echo '# $$(.DEFAULT_GOAL) = $(.DEFAULT_GOAL)'
+	@echo '# $$(.EXTRA_PREREQS)= $(.EXTRA_PREREQS)'
 	@echo '# $$(.INCLUDE_DIRS) = $(.INCLUDE_DIRS)'
 	@echo '# $$(.INTERMEDIATE) = $(.INTERMEDIATE)'
 	@echo '# $$(.PRECIOUS)     = $(.PRECIOUS)'
