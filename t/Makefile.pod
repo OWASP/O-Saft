@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.2 24/01/26 08:28:32
+@(#) Makefile.pod 3.3 24/05/14 10:05:46
 
 =head1 AUTHOR
 
@@ -568,24 +568,55 @@ Some words about the terms and words used in GNU Make in this project.
 
 * GNU Make refers sometimes to targets as  goals (i.e. .DEFAULT_GOAL).
 
+* GNU Make uses different terms for the same thing:
+
+** "recursively expanded variables", "recursive assignment", "deferred
+   definition"
+
+** "simply expanded variables", "simple assignment", "immediate definition"
+
+** "immediately expanded variables", "immediate assignment", "immediate
+   definition"
+
+=head3 GNU Make:Terms Comparsion
+
+   # GNU Make Terms           |  Terms used in our Makefile*
+   #--------------------------+-----------------------------------------
+    macro                     |  variable
+    user defined functions    |  macro
+    explicit rule             |  target
+    static pattern rule       |  pattern rule
+    recipe                    |  commands
+    deferred definition       |  deferred variable (or simply variable)
+    immediate definition      |  static variable
+    implicit variables        |  (not used)
+   #--------------------------+-----------------------------------------
+
 
 =head2 GNU Make:macros
 
 * macro  is a synonym for  variable  in GNU Make makefiles.
 
-* macro definitions in makefiles must not be sequential!
+* macro definitions in makefiles must not be sequential! Exceptions are
+  immediate definitions.
 
 * $$ avoids evaluating  $ (the variable) when reading the makefile, but it
   is evaluated when the corresponding target is executed.
 
 * deferred  definition using    =   - variable expanded when used.
 
+* conditional definition using ?=   - variable expanded when not defined.
+
 * immediate definition using   :=   - variable expanded when defined.
 
 * immediate definition using  ::=   - variable expanded when defined.
 
+* immediate definition using :::=   - expanded when defined and used.
+
 Note that  :=  (traditional GNU Make) is equivalent to  ::=  (POSIX). Only
 :=  is used in our Makefile*.
+
+:::=  is available since GNU Make 4.4, it is not used in our Makefile*.
 
 
 =head2 GNU Make:include
@@ -661,6 +692,7 @@ Remember GNU Make's automatic variables:
     $@    - target (file name)
     $*    - matching files of the rule, the stem of the pattern rule
     $+    - all dependencies of the target
+    $-    - ??
     $^    - all dependencies of the target (without duplicates)
     $<    - first dependency of the target
     $?    - dependencies newer than the target
@@ -669,6 +701,12 @@ Remember GNU Make's automatic variables:
     $%    - target (archive) member name (rarely used)
 
 Use of $$ avoids evaluating $ .
+
+Keep in mind that GNU Make sets $* depending on the rule definition.  For
+example $* should contain  dir/foo  in a rule  dir/foo.%  or to the files
+matching that rule. For compatibility with traditional make, $* is set to
+the %-part of the rule, example: $* contains  bar  if  dir/foo.%  is used
+as  dir/foo.bar . We expect and use the traditional behaviour.
 
 
 =head2 GNU Make:pattern-specific variables
@@ -998,6 +1036,8 @@ description is about defining and using such variables with random texts.
 In general it is not necessary to use quotes for variable values. However,
 reading the values would be easyer and syntax highlighting in some editors
 more accurate using quotes.
+
+Note that quotes in the definition of the variable are part of its value.
 
 It is more a personal preference if quotes for variable definitions should
 be used or not. The decision here is to not use quotes for definition, but
