@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.6 24/05/14 19:16:43
+#?      @(#) Makefile.misc 3.7 24/05/15 07:59:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.6
+_SID.misc          := 3.7
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -78,6 +78,13 @@ _ALL.devmodules.extern += Perl::Analyzer Text::MicroTemplate GraphViz2 Storable
 _ALL.devmodules.extern += Devel::NYTProf Devel::DProf Devel::Size Devel::Trace 
 _ALL.devmodules.optional   := Debug::LTrace Devel::CallTrace Devel::TraceCalls
 #                         not used, but may be useful for debugging
+
+# libs and modules required for building openssl (used in install_openssl.sh)
+# TODO: move to its own Makefile.openssl
+_ALL.openssl.debian    += libidn11-dev  libsctp-dev libidn2-dev libkrb5-dev  libgmp-dev libzip-dev
+_ALL.openssl.debian.mod+= libmodule-build-perl libnet-dns-perl libnet-libidn-perl libnet-libidn2-perl libmozilla-ca-perl
+_ALL.openssl.alpine.mod+= perl-net-dns  perl-mozilla-ca  perl-net-libidn
+_ALL.devmodules.openssl+= Module::Build Mozilla::CA Net::LibIDN Net::LibIDN2 Net::DNS
 
 O-USR.dir  ?= usr
 
@@ -215,7 +222,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.6: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.7: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -466,7 +473,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.6: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.7: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
