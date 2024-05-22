@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.5 24/05/14 10:06:35
+#?      @(#) Makefile 3.6 24/05/23 00:39:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.5
+_SID.test          := 3.6
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -221,7 +221,8 @@ define EXE.log-compare
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
 	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
-	done
+	done ; \
+	exit 0
 endef
 
 define EXE.log-compare-hint
@@ -239,7 +240,8 @@ define EXE.log-move
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
 	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    mv $${f}$(TEST.log-suffix) $${f} ; \
-	done
+	done ; \
+	exit 0
 endef
 
 # FIXME: does not set _stub properly if $* is set
@@ -254,6 +256,19 @@ define EXE.log-move-hint
 	echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
+# EXE.log-make_or_print simply prints instead of executing sub-make
+# Usage: $(call EXE.log-make_or_print,target-name,EXE-filter-varibalename)
+# keep in mind that 'echo "$(MAKEFLAGS)x"' is used to force grep to return
+# status in case of $(MAKEFLAGS) being empty
+# using a sub-shell (..) requires using \ to avvoid sh syntax errors
+define EXE.log-make_or_print
+        ( \
+          echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null || \
+          echo "$(MAKE) $(MFLAGS) -s $(1)" ; \
+          echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null && \
+                $(MAKE) $(MFLAGS) -s $(1) 2>&1 | $($(2)) ; \
+        )
+endef
 
 HELP.test       = $(_NL)\
 \# The term '%'  in the targets names described here, may be any of:$(_NL)\
@@ -633,17 +648,13 @@ testarg-%:
 testarg-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target)
 	@$(TRACE.target.log)
+	@$(eval _target  := $(basename     $@) )   # remove .log in name
+	@$(eval _OLD.log := $(TEST.logdir)/$@)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
-	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.log-filterarg) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testarg-$* 2>&1 | $(EXE.log-filterarg) > $@ 2>&1
-	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
-	    && rm $@ \
-	    || mv $@ $(_NEW.log)
-	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
-	@-ls -l  $(TEST.logdir)/testarg-$(*)*
-# TODO: target should fail if there is a diff
-
+	@$(call EXE.log-make_or_print,$(_target),EXE.log-filterarg) > $(_NEW.log)
+	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
+	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null   && rm $(_NEW.log)
+	@-ls -l   $(_OLD.log)*
 
 # The goal for test targets is to perform (test) all commands with all hosts.
 # The hostnames are provided in a simple list: $(TEST.hosts) .
@@ -716,8 +727,7 @@ testcmd-%:
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
 # created logfile to name which contains the current date.
-# Finally, if current logfile is/was missing, use newly created one:
-# "test ... || mv ..." . This ensures that the file exists afterwards.
+# If current logfile is/was missing, use newly created one.
 # diff's STDERR is discarded (may return: "file does not exist").
 # The target's command output is piped to  $(EXE.log-filtercmd),  which is cat
 # by default. This filter can be redefined as needed.  SEE Make:OSAFT_MAKE
@@ -728,18 +738,13 @@ testcmd-%:
 testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(TRACE.target)
 	@$(TRACE.target.log)
+	@$(eval _target  := $(basename     $@) )   # remove .log in name
+	@$(eval _OLD.log := $(TEST.logdir)/$@)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
-	@expr "$(MAKEFLAGS)" : n >/dev/null \
-	    && echo "$(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.log-filtercmd) > $@ 2>&1" \
-	    ||       $(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 | $(EXE.log-filtercmd) > $@ 2>&1
-	@-diff $(TEST.logdir)/$@ $@  >/dev/null 2>&1 || echo "diff $(TEST.logdir)/$@ ..."
-	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
-	    && rm $@ \
-	    || mv $@ $(_NEW.log)
-	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
-	@-ls -l  $(TEST.logdir)/testcmd-$(*)*
-# TODO: target should fail if there is a diff
-
+	@$(call EXE.log-make_or_print,$(_target),EXE.log-filtercmd) > $(_NEW.log)
+	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
+	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null   && rm $(_NEW.log)
+	@-ls -l   $(_OLD.log)*
 
 # The pattern rule  testcmd-%  executes an individual target, for example:
 # testcmd-c001_localhost . The following pattern executes all matching targets
