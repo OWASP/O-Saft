@@ -44,7 +44,7 @@ TERMINOLGY
 
         For better readability of the descriptions herein, texts used/written
         by the tools literally are flagged with single quotes, like: 'N/A' or
-        '+'. However, options and command for the tools are  written in plain
+        '+'. However, options and commands for the tools are written in plain
         text without quotes, as they are no natural lanuauage, usually.
 
 
@@ -60,7 +60,7 @@ CONCEPTS
 
         Before the concepts can be described,  we need to explained the words
         and terms. In particular:  developer vs. user,  commands vs. options,
-        debug vs. trace vs. results/output,  code. For the deatils please see
+        debug vs. trace vs. results/output, code.  For the deatils please see
         GLOSSAR  below.
 
         Following concepts are described first:
@@ -117,11 +117,11 @@ CONCEPTS
           o-saft     -help  # print help for o-saft itself
 
         For some special tracing or debugging,  the sequence of arguments and
-        options may be important. This most likely is necessary for  --v  and
+        options may be important. This is most likely necessary for  --v  and
         --trace*  options. Example:
-          $0 +cn target             --exit=ARGS --traceargs
-          $0 +cn target --traceargs --exit=ARGS
-          $0            --traceargs +cn target  --exit=ARGS
+          o-saft.pl +cn target             --exit=ARGS --traceargs
+          o-saft.pl +cn target --traceargs --exit=ARGS
+          o-saft.pl            --traceargs +cn target  --exit=ARGS
 
     Verbose vs. trace (and debug)
 
@@ -181,7 +181,9 @@ CONCEPTS
 
         Hints print an additional explanation of a specific result.
 
-        Errors and warnings start with a unique 3-digit number.
+        Errors start with '**ERROR:' followed by a unique 3-digit number.
+
+        Warnings start with '**WARNING:' followed by a unique 3-digit number.
 
         > See also: doc/help.txt  OUTPUT
 
@@ -215,7 +217,7 @@ DEVELOPMENT
 
         Following concepts are described first:
           * Documentation (user and development)
-          * Progrmming (code) style
+          * Programming (code) style
           * Handling erros and exceptions
           * Debugging code
           * Programming: arguments in general
@@ -264,7 +266,8 @@ DEVELOPMENT
         may disturb or bore the user, but we don't hide what we detect, which
         might be suspiscious somehow.
 
-        This tool checks security accurate, it does'nt give a "good feeling".
+        This tool checks security  accurate  and it is not intended to give a
+        "good feeling".
 
     Debugging code
 
@@ -282,7 +285,7 @@ DEVELOPMENT
         A strong syntax for arguments is used to distinguish the commands and
         options (as decribed above).
         As a lot of spelling variants and aliases are supported, this results
-        currently (2018 ..) in an ugly parser.
+        currently (2024 ..) in an ugly parser.
 
         Known drawbacks, traps:
 
@@ -410,7 +413,7 @@ STATUS CODE
         Short answer: 
 
         The option  --exitcode  does the trick. For details, please see:
-          $0 --help
+          o-saft.pl --help
 
         Long answer: 
 
@@ -422,16 +425,16 @@ STATUS CODE
           * leaves the proper interpretation, if "good" or "bad" to the user.
         This means that all reported results are unbiased.
 
-        Said this, it's obvious that $0 cannot return any other status
+        Said this, it's obvious that o-saft.pl cannot return any other status
         beside the printed results (which *are* the status).
         The idea is that postprocessors should be used to use the results for
-        scoring or alike. This is another concept, and  $0 is prepared
+        scoring or alike. This is another concept, and  o-saft.pl is prepared
         for the ease use of prostprocessors.
 
         As it is common sense that a status code other then  0 indicates that
         something is wrong,  such a status code would violate this concept as
         it is biased.
-        A status code other than 0 would also make using  $0 in a pipe
+        A status code other than 0 would also make using  o-saft.pl in a pipe
         much more difficult.
 
         On the other hand, using pipes or process chains  are of practical as
@@ -461,16 +464,16 @@ STATUS CODE
         How to deal with these questions?
 
         I.g. the "--fail" functionality needs to be configurable by the user.
-        Agood example why this is necessary, is the  +cipher  command. Is any
+        The  +cipher  command is a good example why this is necessary. Is any
         supported cipher other than  'HIGH' subject for fail? Should 'MEDIUM'
         ciphers not fail?  Or ask your marketing people what they think about
         disabling  DES-CBC3-SHA (which is 'weak' now), just to pass the test?
 
-        The authors opinion is that a configurable --fail in conjunction with
-        the existing configuration of the checks to be performed,  can do the
-        trick.
+        The author's opinions are that a configurable  --fail  in conjunction
+        with the existing configuration of the checks to be performed, can do
+        the trick.
 
-        Conclusion: there is no --and will not be-- a general --fail option.
+        Conclusion: there is no --and will not be-- a general  --fail option.
         Instead, options are provided to control how  various kinds of checks
         should be subject for an exit code. 
         With this concepts, it's up to the user to configure when to return a
@@ -479,7 +482,7 @@ STATUS CODE
 
         The option are  --exitcode  and for fine tuning  --exitcode-*. Please
         see:
-           $0 --help=OPTIONS
+           o-saft.pl --help=OPTIONS
 
         This desciption for "--fail functionality" is subject for discussion.
         Please provide your opinions.
@@ -494,7 +497,7 @@ STATUS CODE
 
         Using something like:
 
-          $0 mysite.org --exitcode +vulns
+          o-saft.pl mysite.org --exitcode +vulns
 
         would return results like shown in the very first comment above.
         Looking at these results, we see 6 'no' checks: BEAST, BREACH, DROWN,
@@ -506,20 +509,20 @@ STATUS CODE
         Currently, having  docs/concepts.txt  in mind, the solution to filter
         the improper checks would be to use a prostprocessor, for example:
 
-          $0 mysite.org --exitcode +vulns \
+          o-saft.pl mysite.org --exitcode +vulns \
           |grep -v '(<<'|egrep -q 'no( |$)' || echo fail
 
         Using configurations, there are at least three other ways to do it:
 
         1. using proper commands only:
 
-          $0 mysite.org --exitcode +crime +freak +heartbleed +logjam \
+          o-saft.pl mysite.org --exitcode +crime +freak +heartbleed +logjam \
              +lucky13 +poodle +rc4 +sloth +sweet32 +time +hassslv3 \
              +pfs_cipher +session_random
 
         2. using the traditional way:
 
-          cat > .o-saft.pl <<EoConf && $0
+          cat > .o-saft.pl <<EoConf && o-saft.pl
             --host=mysite.org
             --exitcode
             +crime
@@ -539,7 +542,7 @@ EoConf
 
         3. using .o-saft.pl (advanced usage):
 
-          cat > .o-saft.pl <<EoConf && $0
+          cat > .o-saft.pl <<EoConf && o-saft.pl
             --host=mysite.org
             --exitcode
             +heureca
@@ -548,7 +551,7 @@ EoConf
 EoConf
 
         Note that .o-saft.pl must be created only once in the directory where
-        $0 will be started.
+        o-saft.pl will be started.
 
         Hope this helps to understand how configuration can be used to handle
         very spezial purposes.
@@ -556,7 +559,7 @@ EoConf
 
 GLOSSAR
 
-        This glossar explains the words and terms used herein this document.
+        This glossar explains the words, terms used herein in this document.
 
 # TODO: ... 
         developer
@@ -572,7 +575,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.4 24/04/07 11:03:43
+        @(#) concepts.txt 1.5 24/05/26 00:01:57
 
 
 AUTHOR
