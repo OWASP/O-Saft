@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.13 24/05/26 13:37:36
+# SID   @(#) help.txt 3.14 24/05/26 14:48:30
 
 NAME
 
@@ -27,7 +27,7 @@ SYNOPSIS
         given one wins.
 
         Arguments are read from following sources in that sequence:
-          1. RC-FILE  if not disabled with --no-rc
+          1. rc-file  if not disabled with --no-rc
              for details, please see section  RC-FILE  below
           2. environment variable OSAFT_OPTIONS
           3. command-line
@@ -788,13 +788,13 @@ OPTIONS
       --help=cfg-cmd
 
           Show additional and user specified commands.  Output can be used in
-          RC-FILE  or as option.
+          rc-file or as option.
 
       --help=check-cfg
       --help=cfg-check
 
           Show texts used as labels in output for checks (see  +check)  ready
-          for use in  RC-FILE  or as option.
+          for use in rc-file or as option.
 
       --help=data
 
@@ -805,7 +805,7 @@ OPTIONS
       --help=cfg-info
 
           Show texts used  as labels in output for  data  (see  +info)  ready
-          for use in  RC-FILE  or as option.
+          for use in rc-file or as option.
 
       --help=hint
 
@@ -814,7 +814,7 @@ OPTIONS
       --help=hint-cfg
       --help=cfg-hint
 
-          Show texts used in hint messages ready for use in  RC-FILE  or as
+          Show texts used in hint messages ready for use in the rc-file or as
           option.
 
       --help=text
@@ -824,7 +824,7 @@ OPTIONS
       --help=text-cfg
       --help=cfg-text
 
-          Show texts used in various messages ready for use in  RC-FILE  or
+          Show texts used in various messages ready for use in the rc-file or
           as option.
 
       --help=legacy
@@ -1024,15 +1024,15 @@ OPTIONS
 
       --rc
 
-          Read  RC-FILE  if exists, from directory where program was found.
+          Read rc-file if exists, from directory where program was found.
 
       --no-rc
 
-          Do not read  RC-FILE.
+          Do not read rc-file.
 
       --rc=FILE
 
-          Use FILE instead of the default  RC-FILE  '.$0'.
+          Use FILE instead of the default rc-file '.$0'.
 
       --exitcode
 
@@ -2072,7 +2072,7 @@ OPTIONS
               $0 --help=cfg-text
 
           Note that \n, \r and \t are replaced by the corresponding character
-          when read from RC-FILE.
+          when read from rc-file.
 
       --cfg-text=FILE
 
@@ -2299,7 +2299,7 @@ LAZY SYNOPSIS
           * --port=PORT
 
         This applies to most such options,  --port  is just an example.  When
-        used in the  RC-FILE, the  --OPTION=VALUE  variant must be used.
+        used in the rc-file, the  --OPTION=VALUE  variant must be used.
 # does not apply to  --trace  option
 
       Option Names
@@ -2803,7 +2803,7 @@ CHECKS
         some compliance checks are not completely implemented.
         For details see below please.
 
-        Also note that in the  RC-FILE  the output of results for some checks
+        Also note that in the  rc-file  the output of results for some checks
         is disabled by default. A  '!!Hint:'  message will be printed, if any
         of these checks are used.
 
@@ -3178,7 +3178,7 @@ ENVIRONMENT
           * OPENSSL         - if set, full path to openssl executable
           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
                               directory where to find openssl.cnf
-          * OSAFT_CONFIG    - if set to an existing file, use it as  RC-FILE
+          * OSAFT_CONFIG    - if set to an existing file, use it as rc-file
                               don't read any file if given file doesn't exist
                               file will be overwritten with  --rc=FILE option
           * OSAFT_OPTIONS   - if set, all words will be used as  command-line
@@ -3213,7 +3213,7 @@ CUSTOMISATION
 
             A resource file can contain multiple command-line options. Syntax
             is the same as for command-line options iteself.  Each  directory
-            may contain its own resource file. Please see  RC-FILE  below.
+            may contain its own resource file. Please see rc-file below.
 
         * Using debugging files
 
@@ -3308,7 +3308,7 @@ CUSTOMISATION
 
         The rc-file will be searched in following sources:
 
-              a. fle given in environment variable OSAFT_CONFIG
+              a. file given in environment variable OSAFT_CONFIG
               b. default name: program file prefixed by a '.' (dot) 
               c. file given with  --rc=FILE  option
 
@@ -4736,7 +4736,7 @@ EXAMPLES
         * Use your private texts in output
           $0 +check some.tld --cfg-text=desc="my special description"
 
-        * Use your private texts from RC-FILE
+        * Use your private texts from rc-file
           $0 --help=cfg-text >> .$0
             edit as needed: .$0
           $0 +check some.tld
@@ -4780,7 +4780,7 @@ EXAMPLES
 
     Specials for hunting problems with connections etc.
 
-        * Do not read RC-FILE .$0
+        * Do not read rc-file .$0
           $0 +info some.tld --no-rc
 
         * Show command-line argument processing
