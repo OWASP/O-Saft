@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.12 24/04/27 01:53:17
+# SID   @(#) help.txt 3.13 24/05/26 13:37:36
 
 NAME
 
@@ -3183,9 +3183,9 @@ ENVIRONMENT
                               file will be overwritten with  --rc=FILE option
           * OSAFT_OPTIONS   - if set, all words will be used as  command-line
                               argument (option, command, target)
-                              note that whitespaces are not possible in given
-                              arguments, 'cause each word is used as a single
-                              argument
+                              note that whitespace characters aren't possible
+                              in given arguments, 'cause each word is used as
+                              a single argument
           * OSAFT_MAKE      - if set, some  random values  in the result  are
                               replaced by constant strings; it is set for all
                               targets in all Makefile*
