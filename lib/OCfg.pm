@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.24 24/05/26 14:50:24";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.25 24/05/26 15:24:57";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2839,7 +2839,7 @@ our %cfg = (    # main data structure for configuration
        # 'key'      => "any string, may contain \t and \n",
        #--------------+--------------------------------------------------------
         'help=warnings' => "consider building the file using: 'make warnings-info'",
-        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC 5746 ",
+        'renegotiation' => "checks only if renegotiation is implemented server-side according RFC 5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
         'cipher'    => "+cipher : functionality changed, please see '$cfg__me --help=TECHNIC'",
@@ -3535,7 +3535,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.24"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.25"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3584,7 +3584,7 @@ _init();           # complete initialisations
 
 =head1 VERSION
 
-3.24 2024/05/26
+3.25 2024/05/26
 
 =head1 AUTHOR
 
