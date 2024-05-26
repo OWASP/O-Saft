@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.25 24/04/21 13:09:08";
+my  $SID_odoc   = "@(#) ODoc.pm 3.26 24/05/26 13:24:26";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -65,9 +65,9 @@ which return user documentation from text files in various formats.
 
 =item use ODoc;             # from within perl code
 
-=item ODoc.pm --usage       # on command line prints short usage
+=item ODoc.pm --usage       # on command-line prints short usage
 
-=item ODoc.pm [COMMANDS] F  # on command line prints text of specified file
+=item ODoc.pm [COMMANDS] F  # on command-line prints text of specified file
 
 =back
 
@@ -103,7 +103,7 @@ following commands.
 
 =head1 COMMANDS
 
-If called from command line, like:
+If called from command-line, like:
 
   ODoc.pm COMMAND filename
 
@@ -617,7 +617,7 @@ sub done    {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.25 2024/04/21
+3.26 2024/05/26
 
 
 =head1 AUTHOR
