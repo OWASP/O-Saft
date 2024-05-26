@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.23 24/03/29 08:12:02";
+my  $SID_trace      = "@(#) OTrace.pm 3.26 24/05/26 13:25:12";
 our $VERSION        = "24.01.24";
 
 # public package variables
@@ -72,17 +72,15 @@ BEGIN { # mainly required for testing ...
         trace1
         trace2
         trace3
-        trace_arg
-        trace_cmd
-        trace_args
-        trace_init
-        trace_exit
-        trace_test
-        trace_time
-        trace_ciphers_list
-        trace_ciphers_list
-        trace_targets
-        trace_done
+        time_get
+        arg_show
+        args_show
+        init_show
+        exit_show
+        test_show
+        ciphers_show
+        target_show
+        done
     );
 }
 
@@ -126,7 +124,7 @@ use OCfg;   # sets %cfg
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
-sub trace_time  {
+sub time_get    {
     #? compute timestamp, absolute or relative time
     #? return empty string if no --trace-time given
     # %cfg is set when this function is called, if not it's ok to die
@@ -139,10 +137,10 @@ sub trace_time  {
     }
     $now -= 3600;               # remove 1 hour, otherwise we get 01:00:00
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
-} # trace_time
+} # time_get
 
-#sub __trace     { my @txt = @_; return sprintf("#%s%s %s", $cfg{'prefix_trace'}, trace_time(), "@txt"); }
-sub __trace     { my @txt = @_; return sprintf("%s%s %s", $prefix_trace, trace_time(), "@txt"); }
+#sub __trace     { my @txt = @_; return sprintf("#%s%s %s", $cfg{'prefix_trace'}, time_get(), "@txt"); }
+sub __trace     { my @txt = @_; return sprintf("%s%s %s", $prefix_trace, time_get(), "@txt"); }
 sub trace_      { my @txt = @_; printf("%s"  , "@txt")           if (0 < $cfg{'trace'}); return; }
 sub trace       { my @txt = @_; printf("%s\n", __trace($txt[0])) if (0 < $cfg{'trace'}); return; }
 sub trace0      { my @txt = @_; printf("%s\n", __trace(""))      if (0 < $cfg{'trace'}); return; }
@@ -150,7 +148,7 @@ sub trace1      { my @txt = @_; printf("%s\n", __trace(@txt))    if (1 < $cfg{'t
 sub trace2      { my @txt = @_; printf("%s\n", __trace(@txt))    if (2 < $cfg{'trace'}); return; }
 sub trace3      { my @txt = @_; printf("%s\n", __trace(@txt))    if (3 < $cfg{'trace'}); return; }
 # if --trace-arg given
-sub trace_arg   { my @txt = @_; printf("%s\n", __trace(" ARG: ", @txt)) if $cfg{'out'}->{'traceARG'}; return; }
+sub arg_show    { my @txt = @_; printf("%s\n", __trace(" ARG: ", @txt)) if $cfg{'out'}->{'traceARG'}; return; }
 
 # more methods see below: public test methods
 
@@ -161,6 +159,7 @@ sub __LINE      { return "#----------------------------------------------------"
 sub __undef     { my $v = shift; $v = $STR{'UNDEF'} if not defined $v; return $v; }
     # empty string should not return $STR{'UNDEF'}
 sub ___ARR      { return join(" ", "[", sort(@_), "]"); }
+sub _q_ARR      { return ___ARR(map{"`".$_."'"} @_); }
 sub __TEXT      { return $prefix_verbose . "@_"; }
 sub ___K_V      { my ($k, $v) = @_; return sprintf("%s%21s= %s", $prefix_verbose, $k, __undef($v)); }
 sub _p_k_v      { printf("%s\n", ___K_V(@_));               return; }
@@ -244,7 +243,7 @@ sub __prot_version      {
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
-sub _trace_test_help    {
+sub _test_help  {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
@@ -275,9 +274,9 @@ EoT
     # NOTE: description above should be similar to those in
     #       doc/help.txt
     return $data;
-} # _trace_test_help
+} # _test_help
 
-sub _trace_test_avail   {
+sub _test_avail {
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
@@ -359,9 +358,9 @@ EoT
 EoT
     print "=      " . join(" ", @yeast) . "\n";
     return;
-} # _trace_test_avail
+} # _test_avail
 
-sub _trace_test_init    {
+sub _test_init  {
     local $\ = "\n";
     local $Data::Dumper::Deparse=1; # parse code, see man Data::Dumper
     my $line = "#--------------------+-------------------------------------------";
@@ -431,9 +430,9 @@ EoT
     _ptext($line);
     _pline("%checks }");
     return;
-} # _trace_test_init
+} # _test_init
 
-sub _trace_test_maps    {
+sub _test_maps  {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -451,9 +450,9 @@ EoT
     _pline("%cfg{openssl_version_map} {");
     print __prot_version();
     return;
-} # _trace_test_maps
+} # _test_maps
 
-sub _trace_test_prot    {
+sub _test_prot  {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -490,9 +489,9 @@ EoT
     }
     _pline("}");
     return;
-} # _trace_test_prot
+} # _test_prot
 
-sub _trace_test_methods {
+sub _test_methods {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -505,9 +504,9 @@ EoT
        $list =~ s/ /\n  /g;
     print "  $list\n";
     return;
-} # _trace_test_methods
+} # _test_methods
 
-sub _trace_test_openssl {
+sub _test_openssl {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -520,9 +519,9 @@ EoT
        #$list =~ s/ /\n# /g;
     print "$list\n";
     return;
-} # _trace_test_openssl
+} # _test_openssl
 
-sub _trace_test_sclient {
+sub _test_sclient {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -535,9 +534,9 @@ EoT
        $list =~ s/ /\n  /g;
     print "  $list\n";
     return;
-} # _trace_test_sclient
+} # _test_sclient
 
-sub _trace_test_sslmap  {
+sub _test_sslmap  {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -548,9 +547,9 @@ sub _trace_test_sslmap  {
 EoT
     print SSLinfo::test_sslmap() . "\n";
     return;
-} # _trace_test_sslmap
+} # _test_sslmap
 
-sub _trace_test_ssleay  {
+sub _test_ssleay  {
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
  
@@ -561,9 +560,9 @@ sub _trace_test_ssleay  {
 EoT
     print SSLinfo::test_ssleay();
     return;
-} # _trace_test_ssleay
+} # _test_ssleay
 
-sub _trace_test_memory  {
+sub _test_memory  {
     #? print overview of memory usage of variables
     # This is not part of the functionality of O-Saft itself, but more like
     # a quality or performance check.
@@ -635,9 +634,9 @@ EoT
     #print "%text   : ", Devel::Size::total_size(\%text);
     #print "%_SSLinfo   : ", Devel::Size::total_size(\%SSLinfo::_SSLinfo);
     return;
-} # _trace_test_memory
+} # _test_memory
 
-sub __trace_dump_var    {
+sub __dump_var  {
     #? print varable name and it's content using Data::Dumper()
     #  unfortunately Data::Dumper is not able to print the name of the variable
     #  hence this cumbersome approach (see settings in calling function)
@@ -653,14 +652,14 @@ sub __trace_dump_var    {
     ## use critic
     _pline("$name }");
     return;
-} # __trace_dump_var
+} # __dump_var
 
-sub _trace_test_vars    {
+sub _test_vars  {
     printf("#%s:\n", (caller(0))[3]);
     local $\ = "\n";
     # for details on used $Data::Dumper:: varaibles, see man Data::Dumper
     local $Data::Dumper::Deparse    = 1;# we want the code references
-        # TODO: use Deparse=1 and filter code, see _trace_test_init()
+        # TODO: use Deparse=1 and filter code, see _test_init()
     local $Data::Dumper::Sparseseen = 1;# not needed here
     local $Data::Dumper::Purity     = 0;# no warnings for "DUMMY"
     local $Data::Dumper::Sortkeys   = 1;# 
@@ -681,21 +680,21 @@ sub _trace_test_vars    {
 = Print initialised internal data structures using Perl's Data::Dumper.
 =
 EoT
-    __trace_dump_var('$', 'cipher_results');
-    __trace_dump_var('%', 'ciphers');
-    __trace_dump_var('%', 'ciphers_desc');
-    __trace_dump_var('%', 'prot');
-    __trace_dump_var('%', 'cfg');
-    __trace_dump_var('%', 'data');
-    __trace_dump_var('%', 'info');
-    __trace_dump_var('%', 'checks');
+    __dump_var('$', 'cipher_results');
+    __dump_var('%', 'ciphers');
+    __dump_var('%', 'ciphers_desc');
+    __dump_var('%', 'prot');
+    __dump_var('%', 'cfg');
+    __dump_var('%', 'data');
+    __dump_var('%', 'info');
+    __dump_var('%', 'checks');
     return;
-} # _trace_test_vars
+} # _test_vars
 
 #_____________________________________________________________________________
 #______________________________________________________ public test methods __|
 
-sub trace_ciphers_list  {
+sub ciphers_show {
     #? print ciphers fromc %cfg (output optimised for +cipher)
     return if (0 >= $cfg{'trace'});
     my $need = shift;
@@ -742,9 +741,9 @@ sub trace_ciphers_list  {
     }
     _pline("ciphers }");
     return;
-} # trace_ciphers_list
+} # ciphers_show
 
-sub trace_targets       {
+sub target_show {
     #? print information about targets to be processed
     # full list if 1<trace
     my @targets = @_;
@@ -770,9 +769,9 @@ sub trace_targets       {
         _ptext($data);
     }
     return;
-} # trace_targets
+} # target_show
 
-sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %cmd hashes
     #? more output if 1<trace; full output if 2<trace
     return if (0 >= $cfg{'trace'});
@@ -785,7 +784,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _pnull();
     _ptext("#") if (3 > $cfg{'trace'});
     _pline("");
-    #_p_k_v("trace_init::SID", $SID_trace) if (2 < $cfg{'trace'}); # 24.01.24 removed
+    #_p_k_v("init_show::SID", $SID_trace) if (2 < $cfg{'trace'}); # 24.01.24 removed
     _p_k_v("$0", main::_VERSION()); ## no critic qw(Subroutines::ProtectPrivateSubs)
         # TBD: $0 is same as $ARG0 but wrong when called as standalone
     # official VERSIONs, not those of the current files !
@@ -855,7 +854,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                 _ptext("# - - - - HASH: $key }");
             } else {
                 if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
-                    trace_targets(@{$cfg{'targets'}});
+                    target_show(@{$cfg{'targets'}});
                 } else {
                     if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
                         # SEE Make:OSAFT_MAKE (in Makefile.pod)
@@ -864,7 +863,12 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                         _ptype(\%cfg, $key);
                         $cfg{'time0'} = $t0;
                     } else {
-                        _ptype(\%cfg, $key);
+                        if ("RC-ARGV" eq $key) {
+                            # dirty hack because values may contain whitespace
+                            print(___K_V($key, _q_ARR(@{$cfg{'RC-ARGV'}})));
+                        } else {
+                            _ptype(\%cfg, $key);
+                        }
                     }
                 }
             }
@@ -880,7 +884,7 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _p_k_v($key, $cfg{$key});
     }
     _p_k_v("default port", "$port (last specified)");
-    trace_targets(@{$cfg{'targets'}});
+    target_show(@{$cfg{'targets'}});
     _ptext("              use_SNI=", $SSLinfo::use_SNI . ", force-sni=$cfg{'use'}->{'forcesni'}, sni_name=$sni_name");
         # _ptext() because of multiple values; concatenation with . to avoid spaces
     _p_k_v("use->http",     $cfg{'use'}->{'http'});
@@ -902,11 +906,11 @@ sub trace_init  {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _p_k_v("commands",      ___ARR(@{$cfg{'do'}}));
     _pline("user-friendly cfg }");
     _ptext("(more information with: --trace=2  or  --trace=3 )") if (1 > $cfg{'trace'});
-    # $cfg{'ciphers'} may not yet set, print with OTrace::trace_ciphers_list()
+    # $cfg{'ciphers'} may not yet set, print with OTrace::ciphers_show()
     return;
-} # trace_init
+} # init_show
 
-sub trace_exit  {
+sub exit_show   {
     #? print collected information at program exit
     return if (0 >= $cfg{'trace'});
     _p_k_v("cfg'exitcode'", $cfg{'use'}->{'exitcode'});
@@ -918,53 +922,54 @@ sub trace_exit  {
     }
     _pline('@cfg{done} }');
     return;
-} # trace_exit
+} # exit_show
 
-sub trace_args  {
-    #? print information about command line arguments
-    # using trace_arg() may be a performance penulty, but it's trace anyway ...
+sub args_show   {
+    #? print information about command-line arguments
+    # using arg_show() may be a performance penulty, but it's trace anyway ...
     return if (0 >= $cfg{'out'}->{'traceARG'});
     _pline("ARGV {");
-    trace_arg("# summary of all arguments and options from command-line");
-    trace_arg("       called program ARG0= " . $cfg{'ARG0'});
-    trace_arg("     passed arguments ARGV= " . ___ARR(@{$cfg{'ARGV'}}));
-    trace_arg("                   RC-FILE= " . $cfg{'RC-FILE'});
-    trace_arg("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
+    arg_show("# summary of all arguments and options from command-line");
+    arg_show("       called program ARG0= " . $cfg{'ARG0'});
+    arg_show("     passed arguments ARGV= " . ___ARR(@{$cfg{'ARGV'}}));
+    arg_show("                   RC-FILE= " . $cfg{'RC-FILE'});
+    arg_show("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
     if (2 > $cfg{'trace'}) {
-    trace_arg("      !!Hint:  use --trace=2 to get the list of all RC-ARGV");
-    trace_arg("      !!Hint:  use --trace=3 to see the processed RC-ARGV");
+    arg_show("      !!Hint:  use --trace=2 to get the list of all RC-ARGV");
+    arg_show("      !!Hint:  use --trace=3 to see the processed RC-ARGV");
                   # NOTE: ($cfg{'trace'} does not work here
     }
-    trace_arg("      from RC-FILE RC-ARGV= " . ___ARR(@{$cfg{'RC-ARGV'}})) if (1 < $cfg{'trace'});
+    arg_show("      from RC-FILE RC-ARGV= " . _q_ARR(@{$cfg{'RC-ARGV'}})) if (1 < $cfg{'trace'});
     my $txt = "[ ";
     foreach my $target (@{$cfg{'targets'}}) {
         next if (0 == @{$target}[0]);   # first entry conatins default settings
         $txt .= sprintf("%s:%s ", @{$target}[2..3]); # the perlish way
     }
     $txt .= "]";
-    trace_arg("         collected targets= " . $txt);
+    arg_show("         collected targets= " . $txt);
     if (2 < $cfg{'trace'}) {
-    trace_arg(" #--v { processed files, arguments and options");
-    trace_arg("    read files and modules= ". ___ARR(@{$dbx{file}}));
-    trace_arg("processed  exec  arguments= ". ___ARR(@{$dbx{exe}}));
-    trace_arg("processed normal arguments= ". ___ARR(@{$dbx{argv}}));
-    trace_arg("processed config arguments= ". ___ARR(map{"`".$_."'"} @{$dbx{cfg}}));
-    trace_arg(" #--v }");
+    arg_show(" #--v { processed files, arguments and options");
+    arg_show("    read files and modules= ". ___ARR(@{$dbx{file}}));
+    arg_show("processed  exec  arguments= ". ___ARR(@{$dbx{exe}}));
+    arg_show("processed normal arguments= ". ___ARR(@{$dbx{argv}}));
+    arg_show("processed config arguments= ". _q_ARR(@{$dbx{cfg}}));
+    arg_show(" #--v }");
     }
     _pline("ARGV }");
     return;
-} # trace_args
+} # args_show
 
-sub trace_rcfile {
+sub rcfile_show {
     #? print content read from RC-FILE ## NOT YET USED ##
     return if (0 >= $cfg{'trace'});
     _pline("RC-FILE {");
     _pline("RC-FILE }");
     return;
-} # trace_rcfile {
+} # rcfile_show {
 
-sub trace_test  {
+sub test_show   {
     #? dispatcher for internal tests, initiated with option --test-*
+    #  cannot be called using __FILE__ itself
     my $arg = shift;    # normalised option, like --testinit, --testcipherlist
     _ptext($arg);
     if ($arg =~ /^--test.?ciphers?.?list$/) {   # allow not normalised also
@@ -974,40 +979,41 @@ sub trace_test  {
         # enforce printing, also at least one TLS version must be used;
         # changing the configuration here should  not harm other functionality
         # changing the $cfg{} here should not harm other functionality because
-        # _trace_test() is for debugging only and will exit then
+        # test_show() is for debugging only and will exit then
         push(@{$cfg{'do'}}, 'cipher'); # enforce printing cipher informations
         push(@{$cfg{'version'}}, 'TLSv1') if (0 > $#{$cfg{'version'}});
         $cfg{'trace'} = 1;
-        trace_ciphers_list(1); # simulate _need_cipher()
+        ciphers_show(1); # simulate _need_cipher()
         return;
     }
-    Ciphers::show($arg)         if ($arg =~ /^--test.?cipher/);
-    _trace_test_help()          if ('--test'          eq $arg);
-    _trace_test_help()          if ('--tests'         eq $arg);
-    _trace_test_sclient()       if ('--testsclient'   eq $arg); # SSLinfo
-    _trace_test_ssleay()        if ('--testssleay'    eq $arg); # SSLinfo
-    _trace_test_sslmap()        if ('--testsslmap'    eq $arg); # SSLinfo
-    _trace_test_openssl()       if ('--testopenssl'   eq $arg); # SSLinfo
-    _trace_test_methods()       if ('--testmethods'   eq $arg); # SSLinfo
-    _trace_test_memory()        if ('--testmemory'    eq $arg);
+    Ciphers::show($arg) if ($arg =~ /^--test.?cipher/);
+    _test_help()        if ('--test'          eq $arg);
+    _test_help()        if ('--tests'         eq $arg);
+    _test_help()        if ('--testtest'      eq $arg);
+    _test_sclient()     if ('--testsclient'   eq $arg); # SSLinfo
+    _test_ssleay()      if ('--testssleay'    eq $arg); # SSLinfo
+    _test_sslmap()      if ('--testsslmap'    eq $arg); # SSLinfo
+    _test_openssl()     if ('--testopenssl'   eq $arg); # SSLinfo
+    _test_methods()     if ('--testmethods'   eq $arg); # SSLinfo
+    _test_memory()      if ('--testmemory'    eq $arg);
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    OCfg::test_cipher_regex()   if ('regex'           eq $arg);
-    _trace_test_avail()         if ($arg =~ m/^avail(?:able)?$/);
-    _trace_test_init()          if ('init'            eq $arg);
-    _trace_test_maps()          if ('maps'            eq $arg);
-    _trace_test_prot()          if ('prot'            eq $arg);
-    _trace_test_vars()          if ('vars'            eq $arg);
+    OCfg::test_cipher_regex()   if ('regex'   eq $arg);
+    _test_avail()       if ($arg =~ m/^avail(?:able)?$/);
+    _test_init()        if ('init'            eq $arg);
+    _test_maps()        if ('maps'            eq $arg);
+    _test_prot()        if ('prot'            eq $arg);
+    _test_vars()        if ('vars'            eq $arg);
     return;
-} # trace_test
+} # test_show
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _trace_main {
+sub _main       {
     my $arg = shift || "--help";    # without argument print own help
     $cfg{'time0'} = $STR{MAKEVAL} if (defined $ENV{'OSAFT_MAKE'});
         # SEE Make:OSAFT_MAKE (in Makefile.pod)
-        # dirty hack here which asumes that _trace_main() is called to print
+        # dirty hack here which asumes that _main() is called to print
         # information only and does not need time0
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -1018,15 +1024,15 @@ sub _trace_main {
     if ($arg =~ m/^--?trace/)           { $trace++; }
     if ($arg eq 'version')              { print "$SID_trace\n"; exit 0; }
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n";   exit 0; }
-    if ($arg =~ m/--tests?$/)           { _trace_test_help();   exit 0; }
+    if ($arg =~ m/--tests?$/)           { _test_help();         exit 0; }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
     }
     exit 0;
-} # _trace_main
+} # _main
 
-sub trace_done  {}; # dummy to check successful include
+sub done  {};   # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1048,7 +1054,7 @@ OTrace.pm - Perl module for tracing o-saft.pl
 
 =item use OTrace;           # from within Perl code
 
-=item OTrace.pm <L<OPTIONS|OPTIONS>>  # on command line
+=item OTrace.pm <L<OPTIONS|OPTIONS>>  # on command-line
 
 =back
 
@@ -1090,52 +1096,52 @@ Defines all functions needed for trace and debug output in  L<o-saft.pl|o-saft.p
 =head1 METHODS
 
 =head2 Functions for internal testing; initiated with option  I<--test-*>
-For example  I<--test-maps>  calls  C<_trace_test_maps()>.
+For example  I<--test-maps>  calls  C<_test_maps()>.
 
-=head3 _trace_test_help( )
+=head3 _test_help( )
 
-=head3 _trace_test_avail( )
+=head3 _test_avail( )
 
-=head3 _trace_test_init( )
+=head3 _test_init( )
 
-=head3 _trace_test_maps( )
+=head3 _test_maps( )
 
-=head3 _trace_test_prot( )
+=head3 _test_prot( )
 
-=head3 _trace_test_vars( )
+=head3 _test_vars( )
 
-=head3 _trace_test_methods( )
+=head3 _test_methods( )
 
-=head3 _trace_test_openssl( )
+=head3 _test_openssl( )
 
-=head3 _trace_test_sclient( )
+=head3 _test_sclient( )
 
-=head3 _trace_test_sslmap( )
+=head3 _test_sslmap( )
 
-=head3 _trace_test_ssleay( )
+=head3 _test_ssleay( )
 
-=head3 _trace_test_memory( )
+=head3 _test_memory( )
 
 =head2 Public functions
 
 Hint: if functions are not used in the calling program, they should be defined
 as empty stub there, for example:
 
-    sub trace_init() {}
+    sub init_show() {}
 
-=head3 OTrace::trace_ciphers_list( )
+=head3 OTrace::ciphers_show( )
 
-=head3 OTrace::trace_targets( )
+=head3 OTrace::target_show( )
 
-=head3 OTrace::trace_rcfile( )
+=head3 OTrace::rcfile_show( )
 
-=head3 OTrace::trace_arg( )
+=head3 OTrace::arg_show( )
 
-=head3 OTrace::trace_args( )
+=head3 OTrace::args_show( )
 
-=head3 OTrace::trace_init( )
+=head3 OTrace::init_show( )
 
-=head3 OTrace::trace_exit( )
+=head3 OTrace::exit_show( )
 
 =head3 OTrace::trace( )
 
@@ -1145,7 +1151,7 @@ as empty stub there, for example:
 
 =head3 OTrace::trace4( )
 
-=head3 trace_test( )
+=head3 OTrace::test_show( )
 
 =head2 VARIABLES
 
@@ -1168,7 +1174,7 @@ Variables which may be used herein must be defined as `our' in L<o-saft.pl|o-saf
 
 If you want to do special debugging, you can define proper functions here.
 They don't need to be defined in L<o-saft.pl|o-saft.pl> if they are used only
-here. In that case simply call the function in C<trace_init> or C<trace_exit>
+here. In that case simply call the function in C<init_show> or C<exit_show>
 they are called at beginning and end of L<o-saft.pl|o-saft.pl>.
 It's just important that  L<o-saft.pl|o-saft.pl>  was called with either the
 I<--v> or any I<--trace*>  option, which then loads this file automatically.
@@ -1176,7 +1182,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.23 2024/03/29
+3.26 2024/05/26
 
 =head1 AUTHOR
 
@@ -1189,6 +1195,6 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_trace_main(@ARGV) if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
