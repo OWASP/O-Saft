@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.18 24/05/26 13:23:22";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.19 24/05/26 13:45:23";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1733,7 +1733,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.18 2024/05/26
+3.19 2024/05/26
 
 
 =head1 AUTHOR
@@ -1773,9 +1773,9 @@ __DATA__
 #       notes   - list of notes and comments
 #
 #   All columns must be separated by TABs (0x9 aka \t), no spaces are allowed.
-#   The left-most column must not be prepended by white spaces.  It must begin
-#   iwith the cipher suite hex key, like:  0x  followed by exactly 8 hex chars
-#   [0-9A-F]. Only such lines are used for ciphers.
+#   The left-most word must not be prepended by whitespace characters. It must
+#   begin with the cipher suite hex key, like:  0x  followed by exactly  8 hex
+#   chars [0-9A-F]. Only such lines are used for ciphers.
 #   If additional characters  [a-zA-Z-]  are used in the hex key  it then does
 #   not match  ^0x[0-9a-fA-F]{8} . The definition is stored in  %ciphers , but
 #   will not be used anywhere (except informational lists).  These definitions
