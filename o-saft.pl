@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.47 24/05/26 13:40:54"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.48 24/05/26 15:29:41"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.47"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.48"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3969,7 +3969,7 @@ sub checkcert       {
 sub checksni        {
     #? check if given FQDN needs to use SNI
     # sets $checks{'sni'}, $checks{'certfqdn'}
-    # DNS strings are case insensitive, hence values are compared lowercase
+    # DNS strings are case-insensitive, hence values are compared lowercase
     my ($host, $port) = @_;
     $cfg{'done'}->{'checksni'}++;
     return if (1 < $cfg{'done'}->{'checksni'});
@@ -6344,7 +6344,7 @@ while ($#argv >= 0) {
     push(@{$OCfg::dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
     # First check for arguments of options.
-    # Options are not case sensitive.  Options may contain  .  and  -  and  _
+    # Options are not case-sensitive.  Options may contain  .  and  -  and  _
     # anywhere in its name. These characters are silently ignored.  These are
     # all the same:  --no-DNS  --no_DNS  --no.dns  --NoDns  --n-o_D.N.s
     # Options may have an argument, either as separate word or as part of the
@@ -6355,9 +6355,9 @@ while ($#argv >= 0) {
     # be taken from command-line.
     # $typ='HOST' is handled at end of loop, as it may appear anywhere in the
     # command-line and does not require an option.
-    # Commands are case sensitive  because they are used directly as key in a
+    # Commands are case-sensitive  because they are used directly as key in a
     # hash (see %_SSLinfo SSLinfo.pm). Just commands for the tool itself (not
-    # those returning collected data) are case insensitive.
+    # those returning collected data) are case-insensitive.
     # NOTE: the sequence of following code must be:
     #   1. check argument (otherwise relooped before)
     #   2. check for options (as they may have arguments)
@@ -6952,7 +6952,7 @@ while ($#argv >= 0) {
     }
     # some options are for compatibility with other programs
     #   example openssl: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
-    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
+    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case-insensitive
     if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # -"-
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    }
     if ($arg =~ /^--?tlsv?11$/i)        { $cfg{'TLSv11'}    = 1;    }
