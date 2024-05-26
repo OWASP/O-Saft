@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.41 24/04/27 13:22:22";
+my  $SID_oman   = "@(#) OMan.pm 3.42 24/05/26 13:42:55";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -811,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.41'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.42'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1966,7 +1966,7 @@ sub man_ciphers_text{
     # _man_head() and _man_food() doesn't make sense here
     foreach my $key (keys %Ciphers::ciphers_desc) {
         # convert internal keys to human readable text
-	# $key must be followed by white space
+	# $key must be followed by whitespace character
         $txt =~ s/\n$key\s/\n\t$Ciphers::ciphers_desc{$key}\t/g;
     }
     my $note= $Ciphers::ciphers_desc{'additional_notes'};
@@ -2724,7 +2724,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.41 2024/04/27
+3.42 2024/05/26
 
 
 =head1 AUTHOR
