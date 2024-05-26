@@ -89,7 +89,7 @@ CONCEPTS
 
         The tool(s) have many features that ease the user's tasks. It results
         in expense of  greater complexity  in parts of the code  (for example
-        the parser for command line options and arguments).
+        the parser for command-line options and arguments).
 
         The design of the commands and options is very much influenced by
         linguistic principles. For examples, most options can be abrevated in
@@ -97,7 +97,7 @@ CONCEPTS
         "concise and natural for humans".
 
         It's often a matter of opinion or taste how something should be done,
-        for example command line arguments. Hence we try to allow all options
+        for example command-line arguments. Hence we try to allow all options
         and arguments a user might be used to (i.e. from other tools).
 
         Following general rules are used:
@@ -575,7 +575,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.5 24/05/26 00:01:57
+        @(#) concepts.txt 1.6 24/05/26 13:26:42
 
 
 AUTHOR
