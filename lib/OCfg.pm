@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.25 24/05/26 15:24:57";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.26 24/05/26 15:27:07";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -1811,7 +1811,7 @@ our %data_oid   = (     # list of texts for some OIDs
         #   print "oid ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_txt2obj("CN"), 1); # --> 2.5.4.3
         #   print "OID ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_nid2obj( 13 ), 1); # --> 2.5.4.3
         # we should use NIDs to generate the hash, as all other strings are
-        # case sensitive. get NIDs with:
+        # case-sensitive. get NIDs with:
         #   grep NID_ openssl/crypto/objects/objects.h | awk '{print $3}' | sort -n
         # so we can loop from 0..180 (or 300 if checks are possible)
         # see also: http://www.zytrax.com/books/ldap/apa/oid.html
@@ -3535,7 +3535,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.25"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.26"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3584,7 +3584,7 @@ _init();           # complete initialisations
 
 =head1 VERSION
 
-3.25 2024/05/26
+3.26 2024/05/26
 
 =head1 AUTHOR
 
