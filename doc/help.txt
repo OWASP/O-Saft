@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.14 24/05/26 14:48:30
+# SID   @(#) help.txt 3.15 24/05/26 15:38:02
 
 NAME
 
@@ -353,7 +353,7 @@ TECHNICAL INFORMATION
 
         Note: if you want to use advanced features of openssl or Net::SSLeay,
         please see  INSTALLATION section how to compile and install the tools
-        fully customised. Requirements for  openssl  are described there.
+        fully customised. Requirements for  OpenSSL  are described there.
 
         Also an openssl executable should be available, but is not mandatory.
 
@@ -1721,11 +1721,11 @@ OPTIONS
 
       --ignorecase
 
-          Checks are done case insensitive.
+          Checks are done case-insensitive.
 
       --no-ignorecase
 
-          Checks are done case sensitive. Default: case insensitive.
+          Checks are done case-sensitive. Default: case-insensitive.
           Currently only checks according CN, alternate names in the target's
           certificate compared to the given hostname are effected.
 
@@ -2302,7 +2302,7 @@ LAZY SYNOPSIS
         used in the rc-file, the  --OPTION=VALUE  variant must be used.
 # does not apply to  --trace  option
 
-      Option Names
+      Option names
 
         Dash '-', dot '.' and/or underscore '_' in option names are optional,
         all following are the same:
@@ -3113,7 +3113,7 @@ OUTPUT
         When used in  --legacy=full  or  --legacy=simple mode, the output may
         contain formatting lines for better (human) readability.
 
-    Errors, Warnings, Hints
+    Errors, warnings, hints
 
         Errors, warnings and hints may be part of the output as needed. While
         errors and warnings are printed immediately as they occour during the
@@ -3150,7 +3150,7 @@ OUTPUT
         More examples for postprocessing the output can be found here:
               https://github.com/OWASP/O-Saft/blob/master/usr
 
-#    Overview of Special Formattings
+#    Overview of special formattings
 #        #----------------------+---------------+----------------
 #                               |    label has
 #        +cmd and/or --legacy=* |   :    spaces    TAB
@@ -3378,14 +3378,14 @@ CIPHER NAMES
         As such integer or hex numbers are difficult to handle by humans,  we
         decided to use human readable texts. Unfortunately no common standard
         exists how to construct the names and map them to the correct number.
-        Some, but by far not all, oddities are described in  X&Name Rodeo&.
+        Some, but by far not all, oddities are described in  X&Name rodeo&.
 
         The rules for specifying cipher names are:
           1) textual names as defined by IANA (see [IANA])
           2) mapping of names and numbers as defined by IANA (see [IANA])
           3) '-'  and  '_'  are treated the same
           4) abbreviations are allowed, as long as they are unique
-          5) beside IANA, openssl's cipher names are preferred
+          5) beside IANA, OpenSSL's cipher names are preferred
           6) name variants are supported, as long as they are unique
           7) hex numbers can be used
           8) our internal hex numbers for ciphers are like '0x0300CCA9'
@@ -3409,7 +3409,7 @@ CIPHER NAMES
         actually mapped to. In particular when  --lib,  --exe  or  --openssl
         options are in use. Always use these options with  +list command too.
 
-    Name Rodeo
+    Name rodeo
 
         As said above, the  SSL/TLS protocol uses integer numbers to identify
         ciphers, but almost all tools use some kind of  human readable  texts
@@ -4156,7 +4156,7 @@ INSTALLATION
 
               perl -MSSLinfo -le 'print SSLinfo::ssleay_test();'
 
-    Testing OpenSSL
+    Testing openssl
 
         After installation as descibed above finished, openssl may be tested:
 
@@ -4457,7 +4457,7 @@ HACKER's INFO
           * prepend  'LD_LIBRARY_PATH'  with all values given by  --lib=PATH
 
 
-        This is exactly, what X&Cumbersome Approach& below describes. So these
+        This is exactly, what X&Cumbersome approach& below describes. So these
         option simply provide a shortcut for that.
 
         Note that  --openssl=TOOL  is a full path to the  openssl  executable
@@ -4483,8 +4483,8 @@ HACKER's INFO
         Why so many options?  Exactly as described above, these options allow
         the users to tune the behaviour of the tool to their needs.  A common
         use case is to enable the use of a separate openssl build independent
-        of the openssl package used by the operating system.  This allows the
-        user fine grained control over openssl's encryption suites  which are
+        of the OpenSSL package used by the operating system.  This allows the
+        user fine grained control over OpenSSL's encryption suites  which are
         compiled/available, without affecting the core system.
 
     Caveats
@@ -4564,7 +4564,7 @@ HACKER's INFO
         To fix the problem, either use  --openssl-cnf=FILE  option or set the
         the environment variable OPENSSL_CONF properly.
 
-      Cumbersome Approach
+      Cumbersome approach
 
         A more cumbersome approach to call  this program is to set  following
         environment variables in your shell:
@@ -4572,7 +4572,7 @@ HACKER's INFO
               PATH=/tmp/dada-1.42/apps:$PATH
               LD_LIBRARY_PATH=/tmp/dada-1.42
 
-      Windows Caveats
+      Windows caveats
 
         I.g. the used libraries on Windows are libeay32.dll and ssleay32.dll.
 
