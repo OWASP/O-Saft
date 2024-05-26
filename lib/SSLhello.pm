@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.23 24/05/26 13:46:26";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.24 24/05/26 14:54:25";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -70,7 +70,7 @@ BEGIN {
 }
 
 use Socket;     # constants and methods are used with full qualified name
-#               # (contribution to standalone mode)
+#               # (contribution to stand-alone mode)
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
 use OText         qw(%STR);
@@ -79,7 +79,7 @@ use error_handler qw(%OERR);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
 # OSAFT_STANDALONE my  %OERR = %error_handler::OERR;
-    # in standalone mode %OERR must be used as %error_handler::OERR
+    # in stand-alone mode %OERR must be used as %error_handler::OERR
 
 my %CST = (
     '_MY_SSL3_MAX_CIPHERS'                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
@@ -133,7 +133,7 @@ my $dumm = $SSLhello::prefix_trace;
 BEGIN {
     # section required only when called as: lib/SSLhello.pm or ./SSLhello.pm
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
-    # define trace functions, required if called standalone
+    # define trace functions, required if called in stand-alone mode
     if (not exists &_trace) {   # lazy check
         sub __ytime    { my $now = 1; return (0 >= $SSLhello::traceTIME) ? "" : sprintf(" [%02s:%02s:%02s]", (localtime($now))[2,1,0]); }
               #$now = time() if ($cfg_out('time_absolut'));# not supported here
