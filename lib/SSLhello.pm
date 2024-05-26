@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.22 24/04/07 09:18:10";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.23 24/05/26 13:46:26";
 our $VERSION    = "24.01.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -534,7 +534,7 @@ sub _sprintf_hex_val ($$;$) {
         _trace5_ ("val: unformated string: ");
         $_hex_str = sprintf("%*v2.2x", ' ', $$_val_ref);
     }
-    $_hex_str =~ s/\s*$//;                                          # remove white spaces at line ends
+    $_hex_str =~ s/\s*$//;                                          # remove whitespaces at line ends
     $_hex_str =~ s/((?:[0-9A-Fa-f]{2}\s){16})(?=[0-9A-Fa-f]{2})/"$&\n"." " x $_indent/eigx; # addd a colon and a space between value and descriptiond a new line each 16 HEX-octetts if last octett has not been reached
     _trace5_ ("$_hex_str\n");
     return ($_hex_str);
