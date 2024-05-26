@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 3.5 24/04/12 10:31:58
+# SID   @(#) coding.txt 3.6 24/05/26 00:55:38
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -187,11 +187,11 @@ HACKER's INFO
 
         Perl's die() is used whenever an unrecoverable error occurs. The text
         printed will always start with '**ERROR: '.
-        Warnings are printed using Perl's warn(  function and the text always
+        Warnings are printed using Perl's warn() function and the text always
         starts with '**WARNING: '.
 
         All output is written to STDOUT. However Perl's die() and warn() will
-        write on STDERR. Only debug messages inside $0 are written to
+        write on STDERR.  Only debug messages inside $0 are written to
         STDERR.
 
         All  print*()' functions write to STDOUT directly.  They are slightly
@@ -310,6 +310,10 @@ HACKER's INFO
         is prefered. However, there are some exceptions for wrapper functions
         for  Net::SSLinfo  and  Net::SSLeay .
 
+        There're no strict rules how to construct function names. For example
+        "object_action", "object_subobj_action" or "action_object". Currently
+         (2024) we tend to prefer "object_action".
+
       Code information
 
         Examples to get an overview of Perl functions (sub):
@@ -337,8 +341,8 @@ HACKER's INFO
         As long as these options are not used,  $0  works without
         lib/OTrace.pm.
 
+        Verbose messages always start with  '**INFO '.
         Debug messages always start with    '#dbx#'.
-        Verbose messages always start with  '#$0: '.
         Trace messages always start with    '#$0::'.
         Following formats are used in trace messages:
           #$0:: some data           - output from $0's main
@@ -359,9 +363,6 @@ HACKER's INFO
         Other special coding  for debugging other than that in  lib/OTrace.pm
         is not provided.  It's recommended to use perl's  -d  option for full
         debugging.
-
-        Note: in contrast to the name of the RC-FILE, the name  lib/OTrace.pm
-        is hard-coded.
 
       Abstract program flow
 
@@ -497,7 +498,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 3.5 24/04/12 10:31:58";
+            my $SID = "coding.txt 3.6 24/05/26 00:55:38";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
