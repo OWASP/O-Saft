@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.44 24/04/27 01:13:10"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.46 24/05/26 13:30:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.44"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.46"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -632,7 +632,10 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
             _tprint("$cfg{'RC-FILE'}");
             _tprint("#------------------------------------------------- RC-FILE {");
         }
-        foreach my $val (@rc_argv) {
+        my @tmp_argv = @rc_argv;
+            # following foreach seems to modify @rc_argv, reason unknown ...
+            # hence we use a temporary variable
+        foreach my $val (@tmp_argv) {
             if ($val !~ m/^\s*([+,-]-?)/) {
                 _warn("040: invalid argument in RC-FILE '$val'; setting ignored");
                 @argv = grep{!/$val/} @argv;# remove from stored arguments
@@ -6331,7 +6334,7 @@ OUsr::pre_args();
 # we do not use any argument as key drectly, but always compare with the keys
 # and assign values using keys literally, like: $cfg{'key'} = $arg .
 
-_vprint("read command line arguments");
+_vprint("read command-line arguments");
 my $typ = 'HOST';
 push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
@@ -7346,7 +7349,7 @@ while ($#argv >= 0) {
 
 #| prepare %cfg according options
 #| -------------------------------------
-_vprint("check command line arguments");
+_vprint("check command-line arguments");
 
 local $\ = "\n";
 
@@ -9413,7 +9416,7 @@ at startup. The hash `%{$cfg{'hints'}}' contains all these texts.
 There're at least following types (places of definition) of hints:
 
     * permanent hints   -- defined in `%{$cfg{'hints'}}' directly
-    * dynamic hints     -- defined at command line with option --cfg_hint=
+    * dynamic hints     -- defined at command-line with option --cfg_hint=
     * hints for new or experimental code    -- defined in the code itself
 
 A definition for a hint may look like:
