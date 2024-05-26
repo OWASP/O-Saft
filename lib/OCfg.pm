@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.23 24/04/21 13:18:12";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.24 24/05/26 14:50:24";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -3009,7 +3009,7 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 *_trace3  = sub { _trace(@_) if (3 < $cfg{'trace'});        return; } if not defined &_trace3;
 
 sub _get_keys_list {
-    # workaround to avoid "Undefined subroutine ... " if called standalone
+    # workaround to avoid "Undefined subroutine ... " if called stand-alone
     # only used in test_cipher_regex()
     return Ciphers::get_keys_list() if (defined(&Ciphers::get_keys_list));
     return ();
@@ -3535,7 +3535,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.23"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.24"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3584,7 +3584,7 @@ _init();           # complete initialisations
 
 =head1 VERSION
 
-3.23 2024/04/21
+3.24 2024/05/26
 
 =head1 AUTHOR
 
