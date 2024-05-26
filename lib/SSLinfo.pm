@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.14 24/05/26 13:29:28";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.15 24/05/26 14:53:13";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -152,7 +152,7 @@ BEGIN {
     } else {
         Net::SSLeay::initialize();
     }
-    # define trace functions, required if called standalone
+    # define trace functions, required if called in stand-alone mode
     # SEE Perl:Undefined subroutine
     if (not exists &_trace) {   # lazy check
         sub __trace { my @txt=@_; printf("$SSLinfo::prefix_trace %s\n", "@txt"); return; }
