@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.17 24/04/21 18:48:57";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.18 24/05/26 13:23:22";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -79,7 +79,7 @@ Ciphers - Perl module to define cipher suites for O-Saft
 
 =item  use Ciphers;     # from within Perl code
 
-=item  Ciphers.pm       # on command line will print help
+=item  Ciphers.pm       # on command-line will print help
 
 =back
 
@@ -1618,7 +1618,7 @@ _ciphers_init();
 
 =head1 COMMANDS
 
-If called from command line, like
+If called from command-line, like
 
   Ciphers.pm [OPTIONS ..] [COMMANDS]
 
@@ -1733,7 +1733,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.17 2024/04/21
+3.18 2024/05/26
 
 
 =head1 AUTHOR
