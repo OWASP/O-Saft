@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.26 24/05/26 13:24:26";
+my  $SID_odoc   = "@(#) ODoc.pm 3.27 24/05/26 14:51:28";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -299,7 +299,7 @@ sub _replace_var    {
 } # _replace_var
 
 sub _get_standalone {
-    #? return help.txt with path in standalone mode
+    #? return help.txt with path in stand-alone mode
     # o-saft-standalone.pl may be in installtion path or in usr/ directory
     # hence various places for help.txt are checked
     my $file = shift;               # doc/help.txt
@@ -617,7 +617,7 @@ sub done    {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.26 2024/05/26
+3.27 2024/05/26
 
 
 =head1 AUTHOR
