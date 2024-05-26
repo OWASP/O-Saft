@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.46 24/05/26 13:30:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.47 24/05/26 13:40:54"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.46"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.47"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1043,7 +1043,7 @@ sub _set_cfg_from_file {
             #    Anthing following (and including) a hash is a comment
             #    and ignored. Empty lines are ignored.
             #    Settings must be in format:  key=value
-            #       where white spaces are allowed around =
+            #       where whitespace characters are allowed around =
             chomp $line;
             $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
                 # remove trailing comments, but CFG-text may contain hash (#)
@@ -5392,7 +5392,7 @@ sub print_data      {
     $value = "\n" . $value if (_is_member($key, \@{$cfg{'cmd-NL'}})); # multiline data
     if ($legacy eq 'compact') {
         $value =~ s#:\n\s+#:#g; # join lines ending with :
-        $value =~ s#\n\s+# #g;  # squeeze leading white spaces
+        $value =~ s#\n\s+# #g;  # squeeze leading whitespaces
         $value =~ s#[\n\r]#; #g;# join all lines
         $label =~ s#[\n]##g;
     }
