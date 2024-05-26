@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.42 24/05/26 13:42:55";
+my  $SID_oman   = "@(#) OMan.pm 3.43 24/05/26 14:52:27";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -55,7 +55,7 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 use OText    qw(%STR);
 use OCfg;
 use ODoc;
-use Ciphers;    # required if called standalone only
+use Ciphers;    # required if called stand-alone only
 
 # OSAFT_STANDALONE my %cfg  = %OCfg::cfg;
 
@@ -811,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.42'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.43'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2724,7 +2724,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.42 2024/05/26
+3.43 2024/05/26
 
 
 =head1 AUTHOR
