@@ -280,7 +280,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) J±^ 3.12 24/05/27 18:09:53
+#?      @(#) ötú^ 3.13 24/05/27 18:12:37
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -592,7 +592,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.12 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.13 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -906,7 +906,6 @@ for o in $all_exe ; do
 		echo_red   "not found"
 	fi
 done
-exit
 echo_foot
 
 echo_head "# check for installed O-Saft resource files"
