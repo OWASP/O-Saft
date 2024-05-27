@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 3.2 24/01/31 20:43:23
+#?      @(#) Makefile.tcl 3.3 24/05/27 14:45:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(O-Project).tcl'
 
-_SID.tcl           := 3.2
+_SID.tcl           := 3.3
 
 _MYSELF.tcl        := t/Makefile.tcl
 ALL.includes       += $(_MYSELF.tcl)
@@ -56,11 +56,13 @@ testarg-tcl-o-saft.tcl_%:               TEST.init   = localhost --trace-CLI +qui
     # ensure that o-saft.tcl exits and does not build the GUI
 
 LIST.tcl.args  := \
-	+VERSION --version  --rc  --v  --d  --d=2  --d=6  --trace  --gui \
-	--gui-layout=classic --gui-layout=tablet --test-osaft --test-docs \
-	--unknown
+	+VERSION --version --d --d=2 --d=6 --trace --rc --rc=unknown --no-rc \
+	--gui --gui-layout=classic --gui-layout=tablet \
+	--test-osaft --test-docs   --unknown
 
 # some special targets
+testarg-tcl-o-saft.tcl_--no-rc:         TEST.init  += --v
+testarg-tcl-o-saft.tcl_--rc-invalid:    TEST.init  += --v
 testarg-tcl-o-saft.tcl_--v--no-docs:    TEST.args  += --v --no-docs
 testarg-tcl-o-saft.tcl_--v--load:       TEST.args  += --v --load=Makefile
 #               returns: different count and TAB tabs: .... .note.oX3XXMake
@@ -87,6 +89,7 @@ ALL.test.tcl   += \
 	testarg-tcl-o-saft.tcl_--v--img     testarg-tcl-o-saft.tcl_--v--text \
 	testarg-tcl-o-saft.tcl_--v-host     testarg-tcl-o-saft.tcl_--v-host-host \
 	testarg-tcl-o-saft.tcl_--v-host1-host2
+ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
 # test command which require user interaction (in GUI)
 testarg-tclinteractive-%:   EXE.pl      = ../$(SRC.tcl)
@@ -95,8 +98,6 @@ testarg-tclinteractive---gui--gui-classic:  TEST.args  += --gui --gui-layout=cla
 testarg-tclinteractive---gui--gui-tablet:   TEST.args  += --gui --gui-layout=tablet
 testarg-tclinteractive---gui--docker:       TEST.args  += --gui --docker
 testarg-tclinteractive---test-tcl:          TEST.args  += --test-tcl
-
-ALL.test.tcl.log    = $(ALL.test.tcl:%=%.log)
 
 # *test-interactive* targets are not added to common variables,
 # because they cannot be used in scripted make
