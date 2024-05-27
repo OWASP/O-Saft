@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.8 24/03/29 18:18:45
+#?      @(#) Makefile.mod 3.9 24/05/27 22:33:40
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.8
+_SID.mod           := 3.9
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -81,18 +81,20 @@ LIST.lib-Ciphers.pm    := \
 LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=--test-ciphers-%)
 LIST.o-saft.pl         += $(LIST.lib-Ciphers--test)
 
-LIST.lib-OCfg.pm       := --test-regex
+LIST.lib-options       := version +VERSION --usage
+    # these options should be implemented in all tools
 
-LIST.lib-OData.pm      := \
+LIST.lib-OCfg.pm       := $(LIST.lib-options)
+
+LIST.lib-OData.pm      := $(LIST.lib-options) \
 	check_cert  check_conn  check_dest  check_http  check_size \
 	checks      data        shorttexts
 
-LIST.lib-ODoc.pm       := \
-	--usage version +VERSION        list  get \
-	get-custom      get-markup      get-section
+LIST.lib-ODoc.pm       := $(LIST.lib-options) \
+	get-custom      get-markup      get-section     list  get
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
-LIST.lib-OMan.pm       := \
+LIST.lib-OMan.pm       := $(LIST.lib-options) \
 	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
@@ -105,19 +107,20 @@ LIST.lib-OMan.pm       := \
     #   lib-OMan.pm --test-toc
     # only the first form is tested here, as they all produce the same output
 
-LIST.lib-OTrace.pm     := \
-	--tests $(LIST.Net-SSLinfo.pm-t)  --test-memory --test-regex \
+LIST.lib-SSLinfo.pm-t  := \
+	--test-openssl --test-sclient --test-sslmap \
+	--test-methods --test-ssleay
+
+LIST.lib-OTrace.pm     := $(LIST.lib-options) \
+	--tests $(LIST.lib-SSLinfo.pm-t)  --test-memory --test-regex \
 	--test-avail --test-init --test-maps --test-prot --test-vars \
 	--test-methods  --test-sclient  --test-sslmap   --test-ssleay
 # $(O_LIB.dir)/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft.pl         += $(LIST.lib-OTrace.pm)
 
-LIST.lib-SSLinfo.pm-t  := \
-	--test-openssl --test-sclient --test-sslmap \
-	--test-methods --test-ssleay
-LIST.lib-SSLinfo.pm    :=   +VERSION  localhost $(LIST.Net-SSLinfo.pm-t)
-LIST.lib-SSLhello.pm   :=   +VERSION  --test-init --test-constant --test-parameter
-#LIST.o-saft.pl        += $(LIST.Net-SSLinfo.pm-t)
+LIST.lib-SSLinfo.pm    := $(LIST.lib-options)  localhost $(LIST.lib-SSLinfo.pm-t)
+LIST.lib-SSLhello.pm   := $(LIST.lib-options)  --test-init --test-constant --test-parameter
+#LIST.o-saft.pl        += $(LIST.lib-SSLinfo.pm-t)
 
 # command and checks "NOT YET IMPLEMENTED" are hardcoded here,
 # should be the same as cfg{commands_notyet} in $(O_LIB.dir)/OCfg.pm
@@ -141,8 +144,9 @@ endif
 
 # all targets are generated, see Makefile.gen
 
+# generate targets for all *pm and SRC.pl
 ifndef mod-macros-generated
-    $(foreach _prg, $(SRC.pm),\
+    $(foreach _prg, $(SRC.pm) $(SRC.pl),\
         $(call GEN.targets-init,testarg,mod,$(_prg),LIST.$(subst /,-,$(_prg))) \
     )
     undefine _prg
