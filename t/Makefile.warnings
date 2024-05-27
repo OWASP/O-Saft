@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.11 24/04/26 22:38:45
+#?      @(#) Makefile.warnigs 3.12 24/05/27 10:55:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.11
+_SID.warnings      := 3.12
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -200,8 +200,9 @@ warning-020: TEST.args  = TODO: testing die, CGI mode requires strict settings, 
 warning-021: TEST.args  = --set-score=unknown               +quit
 warning-022: TEST.args  = --cfgcmd-is=unknown               +quit
 warning-023: TEST.args  = --legacy=key                      +quit
-warning-039: TEST.args  = --exit=INIT                       +quit
-warning-039: OSAFT_CONFIG=/file/does/not/exist
+warning-038: TEST.args  = --exit=INIT                       +quit
+warning-038: OSAFT_CONFIG=/file/does/not/exist
+#warning-039: TEST.args  = free
 warning-040: TEST.args  = --exit=INIT --v --rc=$(TEST.tmp.rc) +quit
 warning-040: TEST.rc    = arguments --invalid
 warning-041: TEST.args  = s_client                          +quit
@@ -435,7 +436,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.11: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.12: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
