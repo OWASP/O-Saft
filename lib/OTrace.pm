@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.26 24/05/26 13:25:12";
+my  $SID_trace      = "@(#) OTrace.pm 3.27 24/05/27 22:07:39";
 our $VERSION        = "24.01.24";
 
 # public package variables
@@ -490,6 +490,25 @@ EoT
     _pline("}");
     return;
 } # _test_prot
+
+sub _test_regex {
+    #? print content of %cfg{regex}
+    printf("#%s:\n", (caller(0))[3]);
+    print <<'EoT';
+
+=== internal data structure %cfg{regex} ===
+=
+= Print information internal data structure %cfg{regex}.
+=
+EoT
+    local $\ = "\n";
+    _pline("%cfg{regex} {");
+    foreach my $key (sort keys %{$cfg{'regex'}}) {
+	_p_k_v($key, $cfg{'regex'}->{$key});
+    }
+    _pline("%cfg{regex} }");
+    return;
+} # _test_regex
 
 sub _test_methods {
     printf("#%s:\n", (caller(0))[3]);
@@ -986,7 +1005,8 @@ sub test_show   {
         ciphers_show(1); # simulate _need_cipher()
         return;
     }
-    Ciphers::show($arg) if ($arg =~ /^--test.?cipher/);
+    OCfg::test_cipher_regex()   if ($arg =~ m/cipher.?regex/);
+    Ciphers::show($arg)         if ($arg =~ /^--test.?cipher/);
     _test_help()        if ('--test'          eq $arg);
     _test_help()        if ('--tests'         eq $arg);
     _test_help()        if ('--testtest'      eq $arg);
@@ -996,8 +1016,8 @@ sub test_show   {
     _test_openssl()     if ('--testopenssl'   eq $arg); # SSLinfo
     _test_methods()     if ('--testmethods'   eq $arg); # SSLinfo
     _test_memory()      if ('--testmemory'    eq $arg);
+    _test_regex()       if ('--testregex'     eq $arg); # %cfg{regex}
     $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
-    OCfg::test_cipher_regex()   if ('regex'   eq $arg);
     _test_avail()       if ($arg =~ m/^avail(?:able)?$/);
     _test_init()        if ('init'            eq $arg);
     _test_maps()        if ('maps'            eq $arg);
@@ -1024,6 +1044,7 @@ sub _main       {
     if ($arg =~ m/^--?trace/)           { $trace++; }
     if ($arg eq 'version')              { print "$SID_trace\n"; exit 0; }
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n";   exit 0; }
+    if ($arg =~ m/--test.?regex$/)      { _test_regex();        exit 0; }
     if ($arg =~ m/--tests?$/)           { _test_help();         exit 0; }
     if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
         $arg = "--test-$2";
@@ -1182,7 +1203,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.26 2024/05/26
+3.27 2024/05/27
 
 =head1 AUTHOR
 
