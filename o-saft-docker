@@ -186,7 +186,7 @@
 #?       If the image is trustworthy (see before),  the tools executed in the
 #?       image may have security impacts. 
 #?       This script creates a Docker image for O-Saft. O-Saft is supposed to
-#?       checks a target for SSL/TLS related issues.  I. g. it doesn not harm
+#?       check a target for  SSL/TLS related issues.  I. g. it doesn not harm
 #?       the target using  penetration or attacking techniques  (except check
 #?       for Heartbleed vulnerability). So o-saft.pl itself should not be any
 #?       security issue. However, to perform the checks, O-Saft recommends to
@@ -201,10 +201,10 @@
 #?       below also.
 #
 #        We do not use shortcut commands for docker like run, rmi, save, etc.
-#        because they are depricated according docker documentation.
+#        because they are depricated according docker documentation (6/2016).
 #
 #        Keep in mind that docker is picky about the sequence of commands and
-#        options. In particular all options must preced the IMAGE argument.
+#        options. In particular all options must precede the IMAGE argument.
 #
 #        "docker commit ..." is used without the --message option because the
 #        documentation about  --message and/or -m  is ambigious.  Also passed
@@ -240,7 +240,7 @@
 #?
 #? ENVIONMENT VARIABLES
 #?       Following environment variables can be used to pass settings to the
-#?       script:
+#?       script (used for the build mode only):
 #?
 #?           OSAFT_VERSION          - version to be passed to Dockerfile
 #?           OSAFT_VM_SRC_OSAFT     - URL to o-saft.tgz
@@ -261,7 +261,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.45 24/05/27 16:49:11
+#?       @(#) o-saft-docker 1.46 24/05/27 17:23:34
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -383,7 +383,7 @@ docker_status () {
 # using ...
 #     registry name = ${registry}
 #     tag           = ${tag}
-#    registry:tag  = ${image_name}
+#     registry:tag  = ${image_name}
 
 # docker image id for ${image_name} is  $image_id
 
