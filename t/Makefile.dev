@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.4 24/01/30 09:13:45
+#?      @(#) Makefile.dev 3.5 24/05/27 17:10:49
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.4
+_SID.dev           := 3.5
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -251,6 +251,7 @@ test.dev.pod.all:   $(ALL.test.dev.pod)
 test.dev.pod.log:   $(ALL.test.dev.pod:%=%.log)
 
 # useless generated targets (as these are shell not perl programs)
+# disabled target produces then: make 'testarg-dev-...' is up to date.
 testarg-dev-o-saft_pod:
 	@$(TRACE.target)
 testarg-dev-o-saft-docker_pod:
