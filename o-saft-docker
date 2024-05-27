@@ -261,7 +261,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.44 22/04/22 22:22:10
+#?       @(#) o-saft-docker 1.45 24/05/27 16:49:11
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -383,7 +383,7 @@ docker_status () {
 # using ...
 #     registry name = ${registry}
 #     tag           = ${tag}
-#?    registry:tag  = ${image_name}
+#    registry:tag  = ${image_name}
 
 # docker image id for ${image_name} is  $image_id
 
