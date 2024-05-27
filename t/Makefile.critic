@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 3.3 24/01/26 18:19:08
+#?      @(#) Makefile.critic 3.4 24/05/27 11:36:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 3.3
+_SID.critic        := 3.4
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -47,7 +47,6 @@ TEST.critic.opt        :=
 TEST.critic.pretty     :=
 
 ALL.critic              = $(SRC.pl) $(ALL.pm) $(GEN.pod)
-# $(CHK.pl)
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.extern   += $(EXE.critic)
