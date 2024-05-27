@@ -61,6 +61,7 @@
 #=#             o-saft.pl	22.11.22 /opt/o-saft/o-saft.pl
 #=#            o-saft.tcl	    2.35 /opt/o-saft/o-saft.tcl
 #=#                o-saft	    1.26 /opt/o-saft/o-saft
+#=#         o-saft-docker	    1.48 /opt/o-saft/o-saft-docker
 #=# usr/o-saft-standalone.pl	22.11.22 usr/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
@@ -279,7 +280,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.11 24/01/30 08:32:58
+#?      @(#) J±^ 3.12 24/05/27 18:09:53
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -591,7 +592,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.11 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.12 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -892,10 +893,12 @@ echo_foot
 echo_head '# check for used O-Saft programs (according $PATH)'
 for o in $all_exe ; do
 	# $osaft_cgi cannot be checked here because it behaves different
+	_opt="+VERSION"
+	[ "o-saft-docker" = $o ] && _opt="+V" # has no own +VERSION, see source there
 	echo_label "$o"
 	e=`\command -v $o`
 	if [ -n "$e" ] ; then
-		v=`$o +VERSION`
+		v=`$o $_opt`
 		txt=`echo "$v $e"|awk '{printf("%8s %s",$1,$2)}'`
 		echo_green "$txt"
 	else
@@ -903,6 +906,7 @@ for o in $all_exe ; do
 		echo_red   "not found"
 	fi
 done
+exit
 echo_foot
 
 echo_head "# check for installed O-Saft resource files"
