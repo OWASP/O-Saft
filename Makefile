@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.17 24/03/24 18:01:33
+#?      @(#) Makefile 3.18 24/05/27 11:29:14
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.17
+_SID            = 3.18
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -75,7 +75,6 @@ O-INSTALL.dir   = /usr/local/$(O-Project)
 # tool source files
 SRC.lic         = yeast.lic
 DEV.pl          = yeast.pl
-CHK.pl          = checkAllCiphers.pl
 O-LIB.pm        = \
 		  OCfg.pm \
 		  Ciphers.pm \
@@ -113,7 +112,7 @@ SRC.docker      = \
 		  Dockerfile
 SRC.rc          = .$(SRC.pl)
 
-SRC.exe         = $(SRC.pl) $(SRC.gui) $(CHK.pl) $(DEV.pl) $(SRC.sh)
+SRC.exe         = $(SRC.pl) $(SRC.gui) $(DEV.pl) $(SRC.sh)
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
@@ -124,7 +123,7 @@ $(O-USR.dir)/HTML%-table.awk: $(O-USR.dir)/HTML-table.awk
 	@$(TRACE.target)
 	cp $< $@
 # should be ln -s $< $@ ; but some systems are too stupid for symlinks
-	
+
 SRC.usr.examples= filter_examples usage_examples
 SRC.usr.post.awk= \
 		  Cert-beautify.awk \
@@ -141,6 +140,7 @@ SRC.usr.post    = \
 		  bunt.sh \
 		  symbol.pl
 SRC.usr.misc    = \
+		  checkAllCiphers.pl \
 		  cipher_check.sh \
 		  critic.sh \
 		  gen_standalone.sh \
@@ -244,7 +244,7 @@ O-DIRS          = $(O-LIB.dir) $(O-DOC.dir) $(O-WEB.dir) $(O-USR.dir) $(TEST.dir
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man) $(GEN.DOC.data)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
-ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(CHK.pl)  $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.rc) $(SRC.docker)
+ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.usr         = $(SRC.usr)
@@ -310,8 +310,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.17 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.17
+_INST.genbytext = generated data by Makefile 3.18 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.18
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -580,8 +580,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.17
-tar:     _INST.is_edit  = 3.17
+_INST.is_edit           = 3.18
+tar:     _INST.is_edit  = 3.18
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
