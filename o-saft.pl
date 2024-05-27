@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.50 24/05/27 21:29:45"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.51 24/05/27 22:09:42"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.50"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.51"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7685,7 +7685,7 @@ _trace_info("CONF9   - runtime configuration end");
 _vprint("check for no connection commands");
 # --test*  are not handled herein
 if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
-if ($test !~ /^\s*$/)           { _vprint("  test any   "); OTrace::test_show($test);  exit 0; }
+if ($test !~ /^\s*$/)           { _vprint("  show any   "); OTrace::test_show($test);  exit 0; }
 # interanl information commands
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))         { _vprint("  list       "); printciphers_list('list'); exit 0; }
