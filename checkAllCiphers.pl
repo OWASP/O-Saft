@@ -35,7 +35,7 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) yÕZ 3.1 24/01/23 09:56:18"; # version of this file
+our $SID_check  = "@(#) ¨ÿº\ 3.2 24/05/27 11:14:16"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
@@ -53,7 +53,7 @@ BEGIN {
 
 use OText qw(%STR);
 use OCfg;
-use error_handler qw (:sslhello_contants);  # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung error_handler-><sub>)$
+use error_handler qw (%OERR);  # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung error_handler-><sub>)$
 
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
@@ -541,7 +541,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             if ( ($SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
                 $SSLhello::usesni = 0;
                 @accepted = SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-                if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+                if ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_HOST'}) { # severe error
                     trace("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port' caused by ".error_handler->get_err_str."\n");
                     carp   ("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port'");
                     last;
@@ -557,7 +557,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 #            next if ($ssl eq 'DTLSv09');# DTLSv09 has originally no SNI(??)
         }
         @accepted = SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-        if ((error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+        if ((error_handler->get_err_type()) <= $OERR{'SSLHELLO_RETRY_HOST'}) { # severe error
             trace("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port' caused by ".error_handler->get_err_str."\n");
             carp   ("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port'");
             last;
