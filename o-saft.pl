@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.48 24/05/26 15:29:41"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.49 24/05/27 10:53:38"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.48"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.49"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -601,7 +601,7 @@ if (defined $ENV{'OSAFT_CONFIG'}) {
         $cfg{'RC-FILE'} = $ENV{'OSAFT_CONFIG'};
     } else {
         $cfg{'RC-FILE'} = "";   # don't read default file
-        _warn("039: OSAFT_CONFIG '$ENV{'OSAFT_CONFIG'}' does not exit; no RC-FILE read");
+        _warn("038: OSAFT_CONFIG '$ENV{'OSAFT_CONFIG'}' does not exit; no RC-FILE read");
     }
 }
 if (0 < _is_argv('(?:--rc=)')) {                # other RC-FILE given
