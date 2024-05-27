@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.7 24/05/15 07:59:19
+#?      @(#) Makefile.misc 3.8 24/05/27 11:35:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.7
+_SID.misc          := 3.8
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -222,7 +222,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.7: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.8: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -287,7 +287,7 @@ ALL.test.analyse   := analyse analyse-output
 ALL.testmisc       += $(ALL.test.analyse)
 test.analyse:         $(ALL.test.analyse)
 
-$(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
+$(GEN.tags): $(SRC.pl) $(ALL.pm) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
 	ctags $^
 
 ALL.gen        += $(GEN.tags)
@@ -473,7 +473,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.7: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.8: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
