@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.3 24/05/27 17:06:34
+#?      @(#) Makefile.docker 3.4 24/05/27 18:34:18
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.3
+_SID.docker        := 3.4
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -52,7 +52,7 @@ HELP.docker     = $(_NL)\
 
 HELP.test.docker.all = # no special documentation yet
 
-LIST.docker.opts    = -help     inspect     status      usage   hacker
+LIST.docker.opts    = -help +V  inspect     status      usage   hacker
     # TODO: build apk rmi gui sshx shell root cp
 # in following: = used to simulate a space, see $(subst =, ,) below
 LIST.docker.call    = -list     call=env    call=pwd    call=id \
