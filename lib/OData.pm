@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.16 24/04/21 13:06:00";
+my  $SID_odata  =  "@(#) OData.pm 3.17 24/05/27 19:00:48";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -76,21 +76,7 @@ All variables and methods are defined in the  OData  namespace.
 
 =item OData.pm --help       # on command-line will print help
 
-=item OData.pm data         # show content of %data
-
-=item OData.pm checks       # show content of %checks
-
-=item OData.pm check_cert   # show content of %check_cert
-
-=item OData.pm check_conn   # show content of %check_conn
-
-=item OData.pm check_http   # show content of %check_http
-
-=item OData.pm check_dest   # show content of %check_dest
-
-=item OData.pm check_size   # show content of %check_size
-
-=item OData.pm shorttexts   # show content of %shorttexts
+=item OData.pm --usage      # on command-line will show commands to print data
 
 =back
 
@@ -100,6 +86,12 @@ All variables and methods are defined in the  OData  namespace.
 =over 4
 
 =item --help
+
+Print this text.
+
+=item --usage
+
+Print usage for COMMANDS of CLI mode.
 
 =back
 
@@ -1140,6 +1132,17 @@ sub _init   {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
+sub _data_usage {
+    #? print usage
+    my $name = (caller(0))[1];
+    print "# commands to show internal data:\n";
+    printf("\t%s info\t# show %%data\n", $name); # info is alias for data
+    foreach my $cmd (qw(data checks check_cert check_conn check_http check_dest check_size shorttexts)) {
+        printf("\t%s %s\t# show %%%s\n", $name, $cmd, $cmd);
+    }
+    return;
+} # _data_usage
+
 sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
@@ -1148,13 +1151,15 @@ sub _main   {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        OText::print_pod($0, __PACKAGE__, $SID_odata) if ($arg =~ m/^--?h(?:elp)?$/x);
+        if ($arg =~ m/^--?h(?:elp)?$/x) { OText::print_pod($0, __PACKAGE__, $SID_odata); exit; }
+        if ($arg eq '--usage')          { _data_usage();        next; }
         # ----------------------------- options
 #       if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         # ----------------------------- commands
         if ($arg =~ /^version$/x)        { print "$SID_odata\n";next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
-        $arg =~ s/^(?:--test.?data)//x;
+        $arg =~ s/^(?:--test.?data[_.-]?)//x; # allow short option without prefix --test-data
+        if ($arg eq 'info') { $arg = "data"; }
         show($arg);
     }
     exit 0;
@@ -1176,7 +1181,7 @@ _init();
 
 =head1 VERSION
 
-3.16 2024/04/21
+3.17 2024/05/27
 
 
 =head1 AUTHOR
