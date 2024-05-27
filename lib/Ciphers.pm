@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.19 24/05/26 13:45:23";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.20 24/05/27 19:05:29";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -80,6 +80,8 @@ Ciphers - Perl module to define cipher suites for O-Saft
 =item  use Ciphers;     # from within Perl code
 
 =item  Ciphers.pm       # on command-line will print help
+
+=item  Ciphers.pm --usage   # on command-line will show commands to print data
 
 =back
 
@@ -1600,8 +1602,7 @@ sub _main   {
         if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
         if ($arg =~ /^--test.?ciphers.?version/i) { print "$VERSION\n"; next; }
             # round brackets because print is not a sub but an operator
-        # allow short option without --test-ciphers- prefix
-        $arg =~ s/^--test.?ciphers//;   # remove if there
+        $arg =~ s/^--test.?ciphers[_.-]?//; # allow short option without prefix --test-ciphers
         show("--test-ciphers$arg");
     }
     exit 0;
@@ -1733,7 +1734,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.19 2024/05/26
+3.20 2024/05/27
 
 
 =head1 AUTHOR
