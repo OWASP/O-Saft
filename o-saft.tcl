@@ -37,14 +37,15 @@ exec wish "$0" ${1+"$@"}
 #?
 #? DESCRIPTION
 #?      This is a simple GUI for  O-Saft - OWASP SSL advanced forensic tool.
-#?      The GUI supports all commands (Commands TAB) and options (Options TAB)
-#?      available in  o-saft.pl. For each command  o-saft.pl  will be executed
-#?      as specified. Results are printed in a new TAB of the GUI. A filter to
-#?      markup some important texts is applied to the results in the GUI. This
-#?      filter can be modified and extended in the  Filter TAB.
+#?      The GUI supports all commands (Cmd menu  or  Commands TAB) and options
+#?      (Opt menu  or  Options TAB) available in  o-saft.pl.  For each command
+#?      o-saft.pl  will be executed as specified. Results are printed in a new
+#?      TAB of the GUI.  A filter to markup some important texts is applied to
+#?      the results in the GUI.  This filter can be modified and extended (see
+#?      Config menu  or  Filter TAB).
 #?      All results and settings (commands and options) can be saved to files.
 #?
-#?      It can be used to read saved results from other calls of o-saft.pl.
+#?      It can be used to read saved results from other calls of  o-saft.pl.
 #?
 #?      Any argument starting with  +  are considered a command for  o-saft.pl
 #?      and  o-saft.pl  will be started with all other  options,  commands and
@@ -53,7 +54,7 @@ exec wish "$0" ${1+"$@"}
 #?   Result TAB
 #?      The results of  o-saft.pl  are shown in a new TAB. The format (layout)
 #?      of the result can be simple "text" or "table".  This can be configured
-#?      in the  Options TAB.
+#?      in the  Config menu  or  Options TAB.
 #?
 #?      The difference between the formats are:
 #?      "table"
@@ -77,32 +78,32 @@ exec wish "$0" ${1+"$@"}
 #?
 #?   Examples for Filter
 #?      Match complete line containing Certificate:
-#?         r=1 e=0 #=0 Regex=Certificate
+#?         r=1 e=0 #=0 RegEx=Certificate
 #?      Match word Target:
-#?         r=0 e=1 #=6 Regex=Target
+#?         r=0 e=1 #=6 RegEx=Target
 #?      Match label text and emphase:
-#?         r=1 e=0 #=1 Regex=^[A-Za-z][^:]*\s* Font=osaftHead
+#?         r=1 e=0 #=1 RegEx=^[A-Za-z][^:]*\s* Font=osaftHead
 #?
 #?   Configuration
 #?      Some parts of the GUI, for example widget fonts or widget label texts,
 #?      can be customised in  .o-saft.tcl , which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
-#?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
-#?      available in the usr/ directory or can be created with  --rc .
+#?      A sample  .o-saft.tcl  can be generated with  --rc  option. Please see
+#?      there for details.
 #?
-#?     Buttons
+#?   Buttons
 #?      By default, an image will be used for  most buttons.  Images look more
 #?      modern than the standard Tcl/Tk buttons. Tcl/Tk does not support round
 #?      edges, images as background, or different look for activated buttons.
 #?      The images are read from a separate file: o-saft-img.tcl . If the file
-#?      is missing, no images will be used, but the simple texts.
+#?      is missing, no images will be used, but the simple text.
 #?      For each button an image can be specified in o-saft-img.tcl , example:
 #?          set IMG(my-file) [image create photo -file path/to/your-file ]
 #?          set cfg_images(+info)  {my-file};   # where +info is your command
 #?
 #?   Help / Search
-#?      The help [?] button opens a new window with the complete documentation
-#?      of O-Saft (in particular the result of: o-saft.pl +help ).
+#?      The  [?] button  or  "? Help" menu entry opens a new window containing
+#?      the complete documentation of O-Saft, the result of: o-saft.pl +help .
 #?      The documentation contains clickable links (in blue) to other sections
 #?      in the text. Patterns may be specified to be searched for in the text.
 #?      All texts matching the pattern are highligted.
@@ -136,27 +137,11 @@ exec wish "$0" ${1+"$@"}
 #?      The GUI contains various [?] buttons. Clicking such a button will show
 #?      the corresponding section in the help window (context sensitive).
 #?
-#?   Copy Texts
-#?      All texts visible in the GUI,  wether a label, a button, an entry or a
-#?      text itself, can be copied to the systems clipboard, using the systems
-#?      standard copy&paste methods, or with:
-#?         <Control-ButtonPress-1>
-#?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
-#?      the pathname and the class of the object containing the text.
-#?      Keep in mind that it also copies the huge text in the help window.
-#?      With  <Control-ButtonPress-1>  or  <Shift-Control-ButtonPress-1>   the
-#?      text will be copied to the (ICCCM) buffer CLIPBOARD. This ensures that
-#?      it will not interfere with the usual copy&paste buffer  PRIMARY.
-#?      <ButtonPress-1> is the "select button", usually the left mouse button.
-#?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
-#?      (which is most likely the <left click>).
-#?      This behaviour is disabled with the  --test-tcl  option.
-#?
-#?   Key Bindings
+#?   Key bindings
 #?      Following key bindings are defined:
 #?        <ButtonPress>                 start browser with selected link
-#?        <Control-ButtonPress-1>       copy text to clipboard (see above)
-#?        <Shift-Control-ButtonPress-1> copy text to clipboard (see above)
+#?        <Control-ButtonPress-1>       copy text to clipboard
+#?        <Shift-Control-ButtonPress-1> copy text to clipboard
 #?        <Control-v>      copy text from clipboard
 #?        <Control-c>      copy selected text to clipboard
 #?        q         (quit) terminate Window or program (not in main window)
@@ -173,6 +158,7 @@ exec wish "$0" ${1+"$@"}
 #? OPTIONS
 #?   Options for information and help:
 #?      --h         print this text
+# ?                 --h  prints also the section HACKER's INFO
 #?      --help=opts print options (for compatibility with o-saft.pl)
 #?      --version   print version number
 #?      +VERSION    print version number (for compatibility with o-saft.pl)
@@ -326,6 +312,8 @@ exec wish "$0" ${1+"$@"}
 #?      o-saft-docker
 #?
 #. LAYOUT
+#.      Following layouts (selected with  --gui-layout= option) are available:
+#.
 #.      --gui-layout=tablet
 #.           +---------------------------------------------------------------+
 #.       (M) | ☰  Cmd  Opt  Config                                           |
@@ -418,7 +406,7 @@ exec wish "$0" ${1+"$@"}
 #.       - mixes layout and functions and application logic
 #.       - some widget names are hardcoded
 #.
-#.   Data Used to Build GUI
+#.   Data used to build GUI
 #.      Generation of all objects (widgets in Tk slang) is done  based on data
 #.      provided by  o-saft.pl  itself, in praticular some  --help=*  options,
 #.      see  CONFIGURATION o-saft.pl  below. Output of all  --help=*  must  be
@@ -491,7 +479,8 @@ exec wish "$0" ${1+"$@"}
 #.   Coding (GUI)
 #.      Images (i.e. for buttons) are defined in o-saft-img.tcl, which must be
 #.      installed in same path as  o-saft.tcl  itself.  The definitions are in
-#.      a separate file to keep the code more clean herein.
+#.      a separate file to keep the code more clean herein. If the file is not
+#.      found, a warning will be printed and Tcl/Tk buttons will be used.
 #.
 #.      All buttons for the GUI are defined in a tabular array,  where the key
 #.      is used as part of the object name. For details please see comments at
@@ -525,6 +514,22 @@ exec wish "$0" ${1+"$@"}
 #.      details. Tracing does not yet work for buttons created in sub-windows.
 #.      Tracing is invoked with the  --trace  option.
 #.
+#.     Copy Texts
+#.      All texts visible in the GUI,  wether a label, a button, an entry or a
+#.      text itself, can be copied to the system's clipboard. This can be done
+#.      using the system's standard copy&paste methods, or with:
+#.         <Control-ButtonPress-1>
+#.      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
+#.      the pathname and the class of the object containing the text.
+#.      Keep in mind that it also copies the huge text in the help window.
+#.      With  <Control-ButtonPress-1>  or  <Shift-Control-ButtonPress-1>   the
+#.      text will be copied to the (ICCCM) buffer CLIPBOARD. This ensures that
+#.      it will not interfere with the usual copy&paste buffer  PRIMARY.
+#.      <ButtonPress-1> is the "select button", usually the left mouse button.
+#.      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
+#.      (which is most likely the <left click>).
+#.      This behaviour is disabled with the  --test-tcl  option.
+#.
 #.   Tracing (program flow)
 #.      --d=X         - see description above
 #.
@@ -546,8 +551,9 @@ exec wish "$0" ${1+"$@"}
 #.          data of the file.
 #.
 #.   Tracing and Debugging with Alias Names
-#.      If arguments (options) can not be passed to the script, alias names of
-#.      the script can be used to simulate passed options:
+#.      If arguments (options) can not be passed to the script (for example on
+#.      Android),  alias names of the script can be used to simulate using the
+#.      options:
 #.      # alias name            # behaves as called like
 #.      #-----------------------#-------------------------------
 #.      o-saft--test-docs.tcl   $0 --test-docs
@@ -570,7 +576,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 3.14 Winter Edition 2024
+#?      @(#) 3.15 Spring Edition 2024
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -681,10 +687,10 @@ proc config_docker  {mode}  {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 3.14 24/05/27 12:04:37"
+set cfg(SID)    "@(#) o-saft.tcl 3.15 24/05/27 14:01:29"
 set cfg(mySID)  "$cfg(SID) Winter Edition 2024"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.14}
+set cfg(VERSION) {3.15}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -3792,7 +3798,7 @@ proc osaft_write_rc     {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.14 24/05/27 12:04:37
+ #?      @(#) .o-saft.tcl generated by 3.15 24/05/27 14:01:29
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
