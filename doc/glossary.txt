@@ -1,8 +1,9 @@
 
-# SID	@(#) glossary.txt 3.1 24/01/23 13:26:16
+# SID	@(#) glossary.txt 3.2 24/05/27 10:39:10
 
 # acronym | description
 #------+----------------------------------------------------------------------+
+0-Length OpenSSL	invalid MAC, valid padding with 0-length record (variant of POODLE exploit)
 0-RTT	zero Round-Trip Time
 3Fish	see Threefish
 3SHAKE	sometimes for: TLS Triple Handshake Attack
@@ -287,6 +288,7 @@ GCM	Galois/Counter Mode (authenticated encryption block cipher mode)
 GHASH	Hash funtion used in GCM
 GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
+GOLDENPOODLE	valid padding with an invalid MAC (variant of POODLE exploit)
 Goldilocks	see Curve448
 GOST	Gossudarstwenny Standard, 64-bit symmetric block cipher (1994)
 GOST 	hash function (used in GOST cipher suite)
@@ -645,6 +647,7 @@ SKINNY-128-256	see SLINNY
 SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
 Skipjack	64-bit block cipher (part of the Fortezza) (1998, partially brocken)
+Sleeping POODLE	invalid padding with valid MAC (variant of POODLE exploit)
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 SM2	ShangMi authentication function
 SM3	ShangMi hash function
@@ -783,6 +786,7 @@ XUDA	Xcert Universal Database API
 XXTEA	enhanced/corrected Tiny Encryption Algorithm
 yaSSL	same as CyaSSL
 ZLIB	Lossless compression file format
+Zombie POODLE	invalid padding with valid MAC (variant of POODLE exploit)
 ZRTP	SRTP for VoIP
 ZSK	Zone Signing Key (DNSSEC)
 
