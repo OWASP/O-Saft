@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.2 24/05/27 17:00:04
+#?      @(#) Makefile.docker 3.3 24/05/27 17:06:34
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.2
+_SID.docker        := 3.3
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -73,10 +73,15 @@ ifndef docker-macros-generated
     undefine _LIST.docker.all
 endif
 
+# special target
+testarg-docker-:        EXE.pl      = ../$(EXE.docker)
+testarg-docker-:        TEST.args   =
+
 testarg-docker-%.log:   EXE.log-filterarg  = sed -e 's@\(HOSTNAME\)=.*@\1=$(TEST.logtxt)@'
 testarg-docker-%:       EXE.pl      = ../$(EXE.docker)
 testarg-docker-%:       TEST.init   =
 
+ALL.test.docker    += testarg-docker-
 ALL.test.docker.log = $(ALL.test.docker:%=%.log)
 
 test.docker.log-compare:TEST.target_prefix  = testarg-docker-
