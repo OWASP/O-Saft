@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.26 24/05/26 15:27:07";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.27 24/05/27 19:46:53";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -147,6 +147,8 @@ OCfg.pm - Perl module for O-Saft configuration
 
 =item OCfg.pm --help    # on command-line will print help
 
+=item OCfg.pm --usage   # on command-line will show commands to print data
+
 =back
 
 Thinking perlish, there are two variants to use this module and its constants
@@ -186,7 +188,11 @@ otherwise the calling script must handle warnings properly.
 
 =item --help
 
-=item --regex, --test-regex
+Print this text.
+
+=item --usage
+
+Print usage for COMMANDS of CLI mode.
 
 =back
 
@@ -3379,6 +3385,7 @@ sub test_cipher_regex   {
 ";
     print _regex_head();
     print _regex_line();
+    my $cnt = 0;
     foreach my $key (sort (_get_keys_list())) {
         my $ssl    = Ciphers::get_ssl( $key);
         my $cipher = Ciphers::get_name($key);
@@ -3396,7 +3403,10 @@ sub test_cipher_regex   {
             $o[0]   = "-";
         }
         printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
+	$cnt++;
     }
+    print "= Please use  o-saft.pl --test-regex  for data." if (1 > $cnt);
+        # TODO: may be fixed by loading lib/Ciphers.pm is here
     print _regex_line();
     print _regex_head();
     print <<'EoT';
@@ -3535,12 +3545,23 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.26"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.27"); # default version; needs to be corrected by caller
     return;
 } # _init
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
+
+sub _cfg_usage  {
+    #? print usage
+    my $name = (caller(0))[1];
+    print "# commands to show internal configuration data:\n";
+    foreach my $cmd (qw(regex)) {   
+        printf("\t%s %s\t# show %%cfg{'regex'}\n", $name, $cmd);
+    }
+    # TODO: show %cfg already implemented in OTrace::_test_init() 
+    return;
+} # _cfg_usage
 
 sub _main       {
     #? print own documentation or special required one
@@ -3551,18 +3572,13 @@ sub _main       {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     # got arguments, do something special
     while (my $arg = shift @argv) {
+        if ($arg =~ m/^--?h(?:elp)?$/)   { OText::print_pod($0, __FILE__, $SID_ocfg); exit 0; }
+        if ($arg eq '--usage')           { _cfg_usage();        next; }
         # ----------------------------- commands
-        if ($arg =~ m/^--?h(?:elp)?$/)   {
-            OText::print_pod($0, __FILE__, $SID_ocfg);
-            exit 0;
-        }
         if ($arg =~ /^version$/)         { print "$SID_ocfg\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$OCfg::VERSION\n";   next; }
-        if ($arg =~ m/^--(?:test[_.-]?)regex/) {
-            $arg = "--test-regex";
-            test_cipher_regex();    # fails with: Undefined subroutine &Ciphers::get_keys_list called at ...
-            printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
-        }
+        $arg =~ s/^--test[_.-]?//;  # allow short option without prefix --test
+        if ($arg eq 'regex')             { test_cipher_regex(); }
     }
     exit 0;
 } # _main
@@ -3580,11 +3596,11 @@ _init();           # complete initialisations
 
 =head1 SEE ALSO
 
-# ...
+lib/OData.pm
 
 =head1 VERSION
 
-3.26 2024/05/26
+3.27 2024/05/27
 
 =head1 AUTHOR
 
