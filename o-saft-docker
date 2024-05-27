@@ -262,14 +262,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.47 24/05/27 17:50:55
+#?       @(#) o-saft-docker 1.48 24/05/27 17:53:18
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="o-saft-docker"
+SID="1.48"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
