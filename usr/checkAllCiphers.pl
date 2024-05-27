@@ -35,20 +35,18 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) ¨ÿº\ 3.2 24/05/27 11:14:16"; # version of this file
+our $SID_check  = "@(#) checkAllCiphers.pl 3.3 24/05/27 11:21:02"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
-    my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
-    if ("." ne $_path and not (grep{/^$_path$/} @INC)) {
-        # add location of executable if not "."
-        unshift(@INC, "$_path/lib");# lazy, no check if already there
-        unshift(@INC, $_path);
+   if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
+        unshift(@INC, $ENV{'PWD'});
     }
-    unshift(@INC, "lib", "/bin" );  # /bin for special installation on portable media
+    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
+    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
 }
 
 use OText qw(%STR);
