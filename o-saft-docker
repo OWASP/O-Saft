@@ -25,6 +25,7 @@
 #        -help   got it
 #?       -n      do not execute, just show what would be done
 #?       -v      be a bit verbose
+#?       +V      show ohn version (SID)
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
 #?       -tag=23 use Docker image ID with tag; default: (empty)
 #?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
@@ -228,7 +229,7 @@
 #?       These options can only be passed to  o-saft.pl  in the Docker image,
 #?       if they are preceeded by the  --  parameter.
 #?       The option  +VERSION  is not supported for this tool, it's passed to
-#?       the Docker image.
+#?       the Docker image, use  +V  instead.
 #?       Unknown parameters to this script will be treated as arguments to be
 #?       passed to o-saft.pl and will terminate internal argument scanning in
 #?       this script.
@@ -261,13 +262,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.46 24/05/27 17:23:34
+#?       @(#) o-saft-docker 1.47 24/05/27 17:50:55
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
+SID="o-saft-docker"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
@@ -561,6 +563,7 @@ while [ $# -gt 0 ]; do
 	  '-h' | '-?' | '-help')  my_help;  exit 0; ;;
 	  '-n')     try=echo; ;;
 	  '-v')     set -x  ; ;;
+	  '+V')     echo $SID ; exit 0; ;;
 	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
 	            image_name="${registry}:$tag" 
 	            ;;
