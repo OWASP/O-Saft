@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.13 24/05/28 11:17:46";
+my  $SID_otext  =  "@(#) OText.pm 3.14 24/05/28 16:12:20";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -53,6 +53,8 @@ OText - Perl module providing texts for O-Saft and related tools
 
 =item OText.pm --help   # on command-line will print help
 
+=item OText.pm --usage # on command-line prints short usage
+
 =back
 
 
@@ -61,6 +63,12 @@ OText - Perl module providing texts for O-Saft and related tools
 =over 4
 
 =item --help
+
+Print this help.            
+
+=item --usage 
+
+Print brief usage.
 
 =back
 
@@ -121,7 +129,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.13 2024/05/28
+3.14 2024/05/28
 
 
 =head1 AUTHOR
