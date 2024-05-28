@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.28 24/05/28 11:27:42";
+my  $SID_odoc   = "@(#) ODoc.pm 3.29 24/05/28 16:09:38";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -134,10 +134,6 @@ Print this help.
 =item --usage
 
 Print brief usage.
-
-=item --V
-
-Print VERSION version.
 
 =back
 
@@ -616,7 +612,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.28 2024/05/28
+3.29 2024/05/28
 
 
 =head1 AUTHOR
