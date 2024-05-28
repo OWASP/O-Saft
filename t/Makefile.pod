@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.3 24/05/14 10:05:46
+@(#) Makefile.pod 3.4 24/05/29 01:38:24
 
 =head1 AUTHOR
 
@@ -1160,6 +1160,8 @@ For generating documentation of the own Perl modules and a calling tree of
 them, perl-analyzer is used. The tools require the Perl modules  JSON  and
 Text::MicroTemplate  (beside some mor commonly installed Perl modules).
 
+See also: INSTALL.sh --checkdev
+
 
 =head2 Make:Profiling
 
@@ -1168,11 +1170,15 @@ Profiling is mainly done with Perl's built-in functionality: perldebug.
 There are also targets which require the Perl modules  Devel::DProf and/or
 Devel::NYTProf  to do the profiling.
 
+See also: INSTALL.sh --checkdev
+
 =head3 Perl packages
 
   * debian: libdevel-trace-perl libdebug-trace-perl
   * debian: libdevel-dprof-perl libdevel-nytprof-perl
   * debian: libjson-perl libtext-microtemplate-perl
+  * debian: libgraph-easy-perl  libgraph-easy-as-svg-perl
+  * debian: libgraphviz-perl    libgetopt-simple-perl
 
 
 =head2 Make:profile.sub
