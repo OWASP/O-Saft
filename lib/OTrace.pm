@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.28 24/05/28 10:10:11";
+my  $SID_trace      = "@(#) OTrace.pm 3.29 24/05/28 11:22:20";
 our $VERSION        = "24.01.24";
 
 # public package variables
@@ -80,7 +80,6 @@ BEGIN { # mainly required for testing ...
         ciphers_show
         target_show
         test_show
-        usage_show
         done
     );
 }
@@ -1027,31 +1026,6 @@ sub test_show   {
     return;
 } # test_show
 
-sub usage_show  {
-    #? print data from given hash (used for --usage option)
-    #  example of hash:
-    #  %data = (
-    #    '# some  text' => {'opt1'->'desc 1', 'opt1'->'desc 2', ...},
-    #    '# other text' => {'opt1'->'desc 1', 'opt1'->'desc 2', ...},
-    #  );
-    #  will print:
-    #  # other text:
-    #          caller-filename opt1     # desc 2
-    #  # some  text:
-    #          caller-filename opt1     # desc 2
-    my $prefix  = shift || "";  # prefix to be printed for each line
-    my $data    = shift;        # hash to be printed
-    my $name    = (caller(0))[1];   # name of caller to be printed
-    foreach my $key (sort keys %{$data}) {
-        printf("%s%s:\n", $prefix, $key);
-        # foreach my ($opt, $txt) (%{$data}) # perlish, but unsorted
-        foreach my $opt (sort keys %{$data->{$key}}) {
-            printf("%s\t%s %s\t# %s\n", $prefix, $name, $opt, $data->{$key}{$opt});
-        }
-    }
-    return;
-} # usage_show
-
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
@@ -1066,14 +1040,9 @@ sub _main       {
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
       '# commands to print data' => {'--test-regex'=>'show %cfg{regex}'},
-      '# general commands' => {
-          '--usage'     =>'show this text',
-          'version'     =>'show own SID',
-          '+VERSION'    =>'show official version SID',
-          },
     );
     if ($arg =~ m/--?h(elp)?$/x)        { OText::print_pod($0, __FILE__, $SID_trace); exit 0; }
-    if ($arg =~ m/--usage?$/)           { usage_show("", \%usage); exit 0; }
+    if ($arg =~ m/--usage?$/)           { OText::usage_show("", \%usage); exit 0; }
     # else
     # ----------------------------- commands
     if ($arg =~ m/^--?trace/)           { $trace++; }
@@ -1081,7 +1050,7 @@ sub _main       {
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n";   exit 0; }
     if ($arg =~ m/--test.?regex$/)      { _test_regex();        exit 0; }
     if ($arg =~ m/--tests?$/)           { _test_help();         exit 0; }
-    if ($arg =~ m/--(yeast|test)[_.-]?(.*)/) {
+    if ($arg =~ m/--test[_.-]?(.*)/)    {
         $arg = "--test-$2";
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
     }
@@ -1238,7 +1207,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.28 2024/05/28
+3.29 2024/05/28
 
 =head1 AUTHOR
 
