@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.21 24/05/28 12:25:25";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.22 24/05/28 13:14:51";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1593,7 +1593,7 @@ sub _main   {
             'key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => '',
             'is_valid_key=0300Cca9'     => '',
         },
-        "## all commands can also be used as '--test-ciphers-CMD" => {},
+        "## all commands can also be used as '--test-ciphers-CMD'" => {},
     );
     # got arguments, do something special
     while (my $arg = shift @argv) {
@@ -1738,7 +1738,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.21 2024/05/28
+3.22 2024/05/28
 
 
 =head1 AUTHOR
