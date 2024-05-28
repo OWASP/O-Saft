@@ -46,7 +46,7 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.15 24/05/26 14:53:13";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.16 24/05/28 12:58:44";
 our $VERSION        =  "24.01.24";  # official verion number of this file
 
 BEGIN {
@@ -4188,10 +4188,23 @@ sub _main           {
     push(@argv, "--help") if (0 > $#argv);
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
-    local $\="\n";
+    my %usage = (
+      '# commands to show internal data' => {
+          'sclient' => "show available options for 'openssl s_client'",
+          'ssleay'  => 'show information about Net::SSLeay capabilities',
+          'sslmap'  => 'show constants for SSL protocols',
+          'openssl' => 'show information about openssl capabilities',
+          'methods' => 'show available methods in Net::SSLeay',
+          'unknown-host' => 'show empty data structure',
+          'your.tld' => 'show data from your.tld',
+      },
+      "## some commands can also be used as '--test-CMD'" => {},
+    );
+    local $\="\n";  # wegen eigenen test_*()
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)          { local $\=""; undef $\; OText::print_pod($0, __PACKAGE__, $SID_sslinfo); }
+        if ($arg =~ m/^--?h(?:elp)?$/)          { local $\; undef $\; OText::print_pod($0, __PACKAGE__, $SID_sslinfo); exit 0; }
+        if ($arg eq '--usage')  { local $\; undef $\; OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $SSLinfo::verbose++;  next; }
         # ----------------------------- commands
