@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.18 24/05/28 11:37:02";
+my  $SID_odata  =  "@(#) OData.pm 3.19 24/05/28 13:09:36";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -1160,7 +1160,7 @@ sub _main   {
         # ----------------------------- commands
         if ($arg =~ /^version$/x)        { print "$SID_odata\n";next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
-        $arg =~ s/^(?:--test.?data[_.-]?)//x; # allow short option without prefix --test-data
+        $arg =~ s/^--test[_.-]?//x; # allow short option without prefix --test
         if ($arg eq 'info') { $arg = "data"; }
         show($arg);
     }
@@ -1183,7 +1183,7 @@ _init();
 
 =head1 VERSION
 
-3.18 2024/05/28
+3.19 2024/05/28
 
 
 =head1 AUTHOR
