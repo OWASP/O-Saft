@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.29 24/05/28 11:22:20";
+my  $SID_trace      = "@(#) OTrace.pm 3.30 24/05/28 16:18:43";
 our $VERSION        = "24.01.24";
 
 # public package variables
@@ -1042,7 +1042,7 @@ sub _main       {
       '# commands to print data' => {'--test-regex'=>'show %cfg{regex}'},
     );
     if ($arg =~ m/--?h(elp)?$/x)        { OText::print_pod($0, __FILE__, $SID_trace); exit 0; }
-    if ($arg =~ m/--usage?$/)           { OText::usage_show("", \%usage); exit 0; }
+    if ($arg eq '--usage')              { OText::usage_show("", \%usage); exit 0; }
     # else
     # ----------------------------- commands
     if ($arg =~ m/^--?trace/)           { $trace++; }
@@ -1089,6 +1089,12 @@ OTrace.pm - Perl module for tracing o-saft.pl
 =over 2
 
 =item --help
+
+Print this help.
+
+=item --usage
+
+Print brief usage.
 
 =item --tests
 
@@ -1207,7 +1213,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.29 2024/05/28
+3.30 2024/05/28
 
 =head1 AUTHOR
 
