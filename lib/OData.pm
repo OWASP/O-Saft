@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.17 24/05/27 19:00:48";
+my  $SID_odata  =  "@(#) OData.pm 3.18 24/05/28 11:37:02";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -1132,27 +1132,29 @@ sub _init   {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _data_usage {
-    #? print usage
-    my $name = (caller(0))[1];
-    print "# commands to show internal data:\n";
-    printf("\t%s info\t# show %%data\n", $name); # info is alias for data
-    foreach my $cmd (qw(data checks check_cert check_conn check_http check_dest check_size shorttexts)) {
-        printf("\t%s %s\t# show %%%s\n", $name, $cmd, $cmd);
-    }
-    return;
-} # _data_usage
-
 sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    my %usage = (
+        '# commands to show internal data' => {
+            'info'       => 'show %data',
+            'data'       => 'show %data',
+            'checks'     => 'show %checks',
+            'check_cert' => 'show %check_cert',
+            'check_conn' => 'show %check_conn',
+            'check_http' => 'show %check_http',
+            'check_dest' => 'show %check_dest',
+            'check_size' => 'show %check_size',
+            'shorttexts' => 'show %shorttexts',
+        },
+    );
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/x) { OText::print_pod($0, __PACKAGE__, $SID_odata); exit; }
-        if ($arg eq '--usage')          { _data_usage();        next; }
+        if ($arg =~ m/^--?h(?:elp)?$/x) { OText::print_pod($0, __PACKAGE__, $SID_odata); exit 0; }
+        if ($arg eq '--usage')          { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
 #       if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $VERBOSE++; next; }  # allow --v
         # ----------------------------- commands
@@ -1181,7 +1183,7 @@ _init();
 
 =head1 VERSION
 
-3.17 2024/05/27
+3.18 2024/05/28
 
 
 =head1 AUTHOR
