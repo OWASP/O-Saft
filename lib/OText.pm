@@ -9,7 +9,7 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.12 24/04/21 18:38:24";
+my  $SID_otext  =  "@(#) OText.pm 3.13 24/05/28 11:17:46";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -29,7 +29,7 @@ our %STR = (
 
 use Exporter qw(import);
 BEGIN { our @EXPORT_OK  = qw( %STR );
-   # print_pod done must be used full qualified
+   # print_pod, usage_show must be used full qualified
 }
 
 #_____________________________________________________________________________
@@ -109,6 +109,10 @@ Print text constants defined herein.
 
 Print POD for specified file, exits program.
 
+=head3 usage_show(%data)
+
+Print data from given hash (used for --usage option).
+
 
 =head1 SEE ALSO
 
@@ -117,7 +121,7 @@ Print POD for specified file, exits program.
 
 =head1 VERSION
 
-3.12 2024/04/21
+3.13 2024/05/28
 
 
 =head1 AUTHOR
@@ -147,6 +151,42 @@ sub print_pod   {
     exit 0;
 } # print_pod
 
+sub usage_show  {
+    #? print data from given hash (used for --usage option)
+    #  example of hash: 
+    #  %data = (
+    #    '# some  text' => {'opt1'->'desc 1', 'opt1'->'desc 2', ...},
+    #    '# other text' => {'opt1'->'desc 1', 'opt1'->'desc 2', ...},
+    #  );
+    #  will print:
+    #  # other text:
+    #          caller-filename opt1     # desc 2
+    #  # some  text:
+    #          caller-filename opt1     # desc 2
+    my $prefix  = shift || "";  # prefix to be printed for each line
+    my $data    = shift;        # hash to be printed
+    my $name    = (caller(0))[1];   # name of caller to be printed
+    # first print general usage
+    printf("# general commands:\n");
+    my %usage = (
+        '--help'    =>'show own help',
+        '--usage'   =>'show this text',
+        'version'   =>'show own SID',
+        '+VERSION'  =>'show official version SID',
+    );
+    foreach my $opt (sort keys %usage) {
+        printf("%s\t%s %s\t# %s\n", $prefix, $name, $opt, $usage{$opt});
+    }
+    foreach my $key (sort keys %{$data}) {
+        printf("%s%s:\n", $prefix, $key); 
+        # foreach my ($opt, $txt) (%{$data}) # perlish, but unsorted
+        foreach my $opt (sort keys %{$data->{$key}}) {
+            printf("%s\t%s %s\t# %s\n", $prefix, $name, $opt, $data->{$key}{$opt});
+        }
+    }
+    return;
+} # usage_show
+
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
@@ -165,7 +205,7 @@ EoT
     printf(" STR{'%s'}\t%s\n", $_, $STR{$_}) foreach (sort keys(%STR));
     printf("=--------------+-------------------\n");
     return;
-} # test
+} # test_show
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
@@ -176,9 +216,11 @@ sub _main   {
     # SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    my %usage = ( '# commands to show data' => { '--test-text' => 'show %STR' } );
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/msx)       { print_pod($0, __PACKAGE__, $SID_otext); } # print own help
+        if ($arg =~ m/^--?h(?:elp)?$/msx)       { print_pod($0, __PACKAGE__, $SID_otext); exit 0; } # print own help
+        if ($arg =~ /^--usage$/x)               { usage_show("", \%usage);  exit 0; }
         if ($arg =~ /^version$/x)               { print "$SID_otext\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/x)       { print "$VERSION\n";   next; }
         if ($arg =~ m/^--(?:test[_.-]?)text/mx) { test_show($arg); }
