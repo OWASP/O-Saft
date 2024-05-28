@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.44 24/05/28 11:53:27";
+my  $SID_oman   = "@(#) OMan.pm 3.45 24/05/28 16:47:27";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -71,7 +71,7 @@ my  $ich    = (caller(1))[1];           # tricky to get filename of myself when 
     $ich    =~ s:.*/::;
 my  $version= "$SID_oman";              # version of myself
     $version=~ s:^.{5}::;               # remove leading @(#) as already part of the *.txt files
-    $version=  _VERSION() if (defined &_VERSION); # or parent's if available
+    $version=  ::_VERSION() if (defined &::_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1       if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
@@ -811,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.44'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.45'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2738,7 +2738,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.44 2024/05/28
+3.45 2024/05/28
 
 
 =head1 AUTHOR
