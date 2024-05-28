@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.27 24/05/26 14:51:28";
+my  $SID_odoc   = "@(#) ODoc.pm 3.28 24/05/28 11:27:42";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -564,21 +564,6 @@ sub list    {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _usage  {
-    #? print usage
-    my $name = (caller(0))[1];
-    print "# various commands:\n";
-    foreach my $cmd (qw(version +VERSION)) {
-        printf("\t%s %s\n", $name, $cmd);
-    }
-    printf("\t$name list\t# list available files\n");
-    print "# commands to get text from file in various formats(examples):\n";
-    foreach my $cmd (qw(get get-markup get-text get-as-text print)) {
-        printf("\t%s %s help.txt\n", $name, $cmd);
-    }
-    return;
-}; # _usage
-
 sub _main   {
     #? print own documentation or that from specified file
     my @argv = @_;
@@ -586,17 +571,31 @@ sub _main   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    my %usage = (
+      '# internal commands' => {
+          'list'        =>'list available files',
+      },
+      '# commands to get text from file in various formats(examples)' => {
+          'get help.txt'        =>'show own SID',
+          'get-custom help.txt' =>'show text with some variables replaced',
+          'get-markup help.txt' =>'show text with internal makup',
+          'get-section help.txt SECTION'=>'show specified section from file',
+      },
+    );
     # got arguments, do something special
     while (my $cmd = shift @argv) {
         OText::print_pod($0, __PACKAGE__, $SID_odoc) if ($cmd =~ m/^--?h(?:elp)?$/x);
-        my $arg    = shift @argv; # get 2nd argument, which is filename
+        OText::usage_show("", \%usage) if ($cmd eq '--usage');
+        my $arg    = shift @argv;   # get 2nd argument, which is filename
+        my $sec    = "NAME";        # used for get_section only
+           $sec    = shift @argv || "NAME" if ($cmd =~ /^get.?section/);
         # ----------------------------- commands
-        _usage()                if ($cmd eq '--usage');
+        #_usage()                if ($cmd eq '--usage');
         print list($0) . "\n"   if ($cmd =~ /^list$/);
         print get($arg)         if ($cmd =~ /^get$/);
         print get_custom($arg)  if ($cmd =~ /^get.?custom$/);
         print get_markup($arg)  if ($cmd =~ /^get.?mark(?:up)?/);
-        print get_section($arg,"NAME") if ($cmd =~ /^get.?section/);
+        print get_section($arg, $sec) if ($cmd =~ /^get.?section/);
         print "$SID_odoc\n"     if ($cmd =~ /^version$/);
         print "$VERSION\n"      if ($cmd =~ /^[-+]?V(?:ERSION)?$/);
     }
@@ -612,12 +611,12 @@ sub done    {}; # dummy to check successful include
 
 =head1 SEE ALSO
 
-# ...
+lib/OText.pm
 
 
 =head1 VERSION
 
-3.27 2024/05/26
+3.28 2024/05/28
 
 
 =head1 AUTHOR
