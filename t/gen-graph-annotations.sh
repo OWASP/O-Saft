@@ -40,7 +40,7 @@
 #?      make which expects one result (file) for each target.
 #?
 #? VERSION
-#?      @(#) ¥∫ó≈êU 3.2 24/05/29 01:27:55
+#?      @(#) gen-graph-annotations.sh 3.2 24/05/29 01:27:55
 #?
 #? AUTHOR
 #?      13-mar23 Achim Hoffmann
