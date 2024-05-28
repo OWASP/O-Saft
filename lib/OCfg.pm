@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.27 24/05/27 19:46:53";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.28 24/05/28 12:00:10";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -3545,23 +3545,12 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.27"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.28"); # default version; needs to be corrected by caller
     return;
 } # _init
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
-
-sub _cfg_usage  {
-    #? print usage
-    my $name = (caller(0))[1];
-    print "# commands to show internal configuration data:\n";
-    foreach my $cmd (qw(regex)) {   
-        printf("\t%s %s\t# show %%cfg{'regex'}\n", $name, $cmd);
-    }
-    # TODO: show %cfg already implemented in OTrace::_test_init() 
-    return;
-} # _cfg_usage
 
 sub _main       {
     #? print own documentation or special required one
@@ -3570,10 +3559,15 @@ sub _main       {
     # SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    my %usage = (
+        '# commands to show internal configuration data' => {
+            'regex' => 'show %cfg{regex}',
+        },
+    );
     # got arguments, do something special
     while (my $arg = shift @argv) {
         if ($arg =~ m/^--?h(?:elp)?$/)   { OText::print_pod($0, __FILE__, $SID_ocfg); exit 0; }
-        if ($arg eq '--usage')           { _cfg_usage();        next; }
+        if ($arg eq '--usage')           { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_ocfg\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$OCfg::VERSION\n";   next; }
@@ -3600,7 +3594,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.27 2024/05/27
+3.28 2024/05/28
 
 =head1 AUTHOR
 
