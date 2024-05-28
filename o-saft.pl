@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.51 24/05/27 22:09:42"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.52 24/05/28 09:13:53"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.51"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.52"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6184,7 +6184,7 @@ sub printversion        {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     # TODO: following list should be same as in _check_modules()
-    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay OCfg OData Ciphers SSLinfo SSLhello OMan OText OTrace OUsr)) {
+    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay Ciphers OCfg OData ODoc error_handler SSLinfo SSLhello OMan OText OTrace OUsr)) {
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
             # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
