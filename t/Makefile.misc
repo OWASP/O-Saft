@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.8 24/05/27 11:35:14
+#?      @(#) Makefile.misc 3.9 24/05/29 01:34:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.8
+_SID.misc          := 3.9
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -57,27 +57,35 @@ TEST.opt.nytprof   :=
 EXE.wc             := wc
 EXE.cloc           := cloc
 EXE.cloc.filter    := cat
-EXE.cloc.total     := t/cloc-total.awk
+EXE.cloc.total     := $(TEST.dir)/cloc-total.awk
 EXE.analyse        := perl-analyzer
 EXE.analyse-output := perl-analyzer-output
 EXE.dprofpp        := dprofpp
 EXE.nytprof        := nytprofhtml
 EXE.podchecker     := podchecker
-EXE.graph-anno     := t/gen-graph-annotations.sh
-EXE.graph-src      := t/gen-graph-sources.sh
-EXE.graph-subs     := t/gen-graph-sub-calls.sh
+EXE.graph-easy     := graph-easy
+#   or depending on platform: vcg
+EXE.graph-anno     := $(TEST.dir)/gen-graph-annotations.sh
+EXE.graph-src      := $(TEST.dir)/gen-graph-sources.sh
+EXE.graph-subs     := $(TEST.dir)/gen-graph-sub-calls.sh
+#   vcg or xvcg needs to be build from vcg.tgz;
+#   build requires imake and/or xmkmf and X11 header files; 
+#   debian packages: libx11-dev xutils-dev
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt) $(EXE.cloc.total)
 _ALL.devtools.extern   += ctags
 _ALL.devtools.extern   += $(EXE.dprofpp) $(EXE.nytprof)  $(EXE.podchecker)
 _ALL.devtools.extern   += $(EXE.analyse) $(EXE.analyse-output) $(EXE.cloc)
-_ALL.devmodules.extern += Data::Dumper   Debug::Trace File::Find   
+_ALL.devtools.extern   += $(EXE.graph-anno) $(EXE.graph-src) $(EXE.graph-subs)
+_ALL.devtools.extern   += $(EXE.graph-easy) dot dotty xvcg xdot
+_ALL.devmodules.extern += Data::Dumper   Debug::Trace File::Find Getopt::Simple
 _ALL.devmodules.extern += Pod::Perldoc   Perl::Critic JSON   Tk::Pod
-_ALL.devmodules.extern += Perl::Analyzer Text::MicroTemplate GraphViz2 Storable
+_ALL.devmodules.extern += Perl::Analyzer Text::MicroTemplate GraphViz Storable
 _ALL.devmodules.extern += Devel::NYTProf Devel::DProf Devel::Size Devel::Trace 
 _ALL.devmodules.optional   := Debug::LTrace Devel::CallTrace Devel::TraceCalls
 #                         not used, but may be useful for debugging
+# on some platforms Perl module GraphViz2 is also necessary
 
 # libs and modules required for building openssl (used in install_openssl.sh)
 # TODO: move to its own Makefile.openssl
@@ -222,7 +230,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.8: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.9: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -473,7 +481,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.8: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.9: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(TRACE.target)
