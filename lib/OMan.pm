@@ -34,7 +34,7 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.43 24/05/26 14:52:27";
+my  $SID_oman   = "@(#) OMan.pm 3.44 24/05/28 11:53:27";
 our $VERSION    = "24.01.24";
 
 #_____________________________________________________________________________
@@ -811,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.43'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.44'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2492,9 +2492,15 @@ sub _main   {
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my $file;
+    my %usage = (
+        '# commands to show help text in various formats' => {
+            '$format' => 'see ' . (caller(0))[1] . ' (section METHODS)',
+        },
+    );
     while (my $arg = shift @ARGV) {
         # --help and --gen-docs is special, anything else handled in man_printhelp()
-        OText::print_pod($0, __FILE__, $SID_oman) if ($arg =~ m/--?h(?:elp)?$/x);
+        if ($arg =~ m/--?h(?:elp)?$/x)   { OText::print_pod($0, __FILE__, $SID_oman); exit 0; }
+        if ($arg eq '--usage')           { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $trace++; next; }  # allow --v
         # ----------------------------- commands
@@ -2591,6 +2597,14 @@ For compatibility with other programs and modules it also supports:
 =head1 OPTIONS
 
 =over 2
+
+=item * --help
+
+Print this text.
+
+=item * --usage
+
+Print usage for COMMANDS of CLI mode.
 
 =item * --v, --trace        # enable trace output for $0 itself
 
@@ -2724,7 +2738,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.43 2024/05/26
+3.44 2024/05/28
 
 
 =head1 AUTHOR
