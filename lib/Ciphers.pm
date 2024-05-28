@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.20 24/05/27 19:05:29";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.21 24/05/28 12:25:25";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1561,29 +1561,6 @@ sub _ciphers_init   {
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
-sub _ciphers_usage  {
-    #? print usage
-    my $name = (caller(0))[1];
-    print "# commands to show internal cipher tables:\n";
-    foreach my $cmd (qw(alias const dump description openssl rfc simple sort ssltest overview )) {
-        printf("\t%s %s\n", $name, $cmd);
-    }
-    print "# commands to show cipher data:\n";
-    foreach my $cmd (qw(key=CIPHER-NAME getter=KEY is_valid_key=KEY)) {
-        printf("\t%s %s\n", $name, $cmd);
-    }
-    print "# various commands (examples):\n";
-    printf("\t$name version\n");
-    printf("\t$name getter=0x0300CCA9\n");
-    printf("\t$name getter=0xCC,0xA9\n");  # avoid: Possible attempt to separate words with commas at ...
-    printf("\t$name getter=0x03,0x00,0xCC,0xA9\n");
-    foreach my $cmd (qw(key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 is_valid_key=0300Cca9)) {
-        printf("\t%s %s\n", $name, $cmd);
-    }
-    print "#\n# all commands can also be used as '--test-ciphers-CMD\n";
-    return;
-} # _ciphers_usage
-
 sub _main   {
     #? print own documentation or special required one
     my @argv = @_;
@@ -1591,10 +1568,37 @@ sub _main   {
     #  SEE Perl:binmode()
     binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    my %usage = (
+        '# commands to show internal cipher tables' => {
+            'alias'     => '',
+            'const'     => '',
+            'dump'      => '',
+            'description' => '',
+            'openssl'  => '',
+            'rfc'      => '',
+            'simple'   => '',
+            'sort'     => '',
+            'ssltest'  => '',
+            'overview' => '',
+        },
+        '# commands to show cipher data' => {
+            'getter=KEY'        => 'show example for get_*() functions',
+            'key=CIPHER-NAME  ' => 'show (internal) cipher key if it is known',
+            'is_valid_key=KEY'  => 'show (internal) cipher key if it is known',
+        },
+        '# commands to show cipher data (various examples)' => {
+            'getter=0x0300CCA9' => '',
+            'getter=0xCC,0xA9 ' => '',
+            'getter=0x03,0x00,0xCC,0xA9'=> '',
+            'key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => '',
+            'is_valid_key=0300Cca9'     => '',
+        },
+        "## all commands can also be used as '--test-ciphers-CMD" => {},
+    );
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit; }
-        if ($arg eq '--usage')          { _ciphers_usage();        next; }
+        if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit 0; }
+        if ($arg eq '--usage')          { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
         if ($arg eq '--v')              { $OCfg::cfg{'verbose'}++; next; }
         # ----------------------------- commands
@@ -1734,7 +1738,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.20 2024/05/27
+3.21 2024/05/28
 
 
 =head1 AUTHOR
