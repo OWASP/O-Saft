@@ -234,6 +234,12 @@
 #?      Please see  doc/concepts.txt  for details about /usr/bin/env .
 #?      It's up to the user then, which solution fits better.
 #?
+#? ENVIRONMENT
+#?      Environment variable  OSAFT_DIR is used for the default installation
+#?      directory.
+#?          env OSAFT_DIR=/some/dir $0 --install
+#?          env OSAFT_DIR=. $0 --check
+#?
 #? EXAMPLES
 #?      $0
 #?      $0 --clean
@@ -258,10 +264,6 @@
 #
 #       All output is pretty printed. Yes, this adds some complexity, but it
 #       is assumed that mainly humans read the output.
-#
-#       Environment variable inst can be set to installation directory: This
-#       is useful for development only, hence not officially documented.
-#           env inst=. $0 --check
 #
 #       Silently accepts the options  -n  or  -h  or  --x  also.
 #
@@ -290,7 +292,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.15 24/05/29 10:34:02
+#?      @(#) INSTALL-template.sh 3.16 24/05/29 10:41:10
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -336,7 +338,7 @@ osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 usr_dir="INSERTED_BY_MAKE_USR_DIR"
-inst_directory=${inst:="INSERTED_BY_MAKE_INSTALLDIR"} # use environment varaibale inst if set
+inst_directory=${OSAFT_DIR:="INSERTED_BY_MAKE_INSTALLDIR"} # use environment varaibale OSAFT_DIR if set
 perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
 osaft_subdirs="INSERTED_BY_MAKE_OSAFT_DIRS"
 osaft_libdir="INSERTED_BY_MAKE_OSAFT_LIBDIR"
@@ -601,7 +603,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.15 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.16 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
