@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.19 24/05/29 00:14:33
+#?      @(#) Makefile 3.20 24/05/29 10:00:19
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.19
+_SID            = 3.20
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -296,7 +296,7 @@ ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 ALL.osaftmodules= $(O-LIB.pm:%.pm=%)
 
 # following for documentation, not yet used (2022)
-#_ALL.tools.dbian.pkg  = aha libtk-pod-perl perl-doc perl-doc-html pod2pdf
+#_ALL.tools.debian.pkg = aha libtk-pod-perl perl-doc perl-doc-html pod2pdf
 
 # INSTALL.sh must not contain duplicate files, hence the variable's content
 # is sorted using make's built-in sort which removes duplicates
@@ -310,8 +310,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.19 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.19
+_INST.genbytext = generated data by Makefile 3.20 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.20
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
@@ -580,8 +580,8 @@ wiki:       $(GEN.wiki)
 docs:       $(GEN.docs)
 standalone: $(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.19
-tar:     _INST.is_edit  = 3.19
+_INST.is_edit           = 3.20
+tar:     _INST.is_edit  = 3.20
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
