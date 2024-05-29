@@ -42,44 +42,47 @@
 #=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
 #=#            o-saft.tcl	not found in PATH, consider adding /opt/o-saft to PATH
 #=#                o-saft	not found in PATH, consider adding /opt/o-saft to PATH
+#=# ./usr/o-saft-standalone.pl	.
 #=# Note: all found executables in PATH are listed
 #=#--------------------------------------------------------------
 #=
 #=# check installation in /opt/o-saft
 #=#--------------------------------------------------------------
 #=# (warnings are ok if »git clone« will be used for development)
-#=#            Dockerfile	found; did you run »INSTALL.sh --clean«?
-#=#              Makefile	found; did you run »INSTALL.sh --clean«?
-#=#                    t/	found; did you run »INSTALL.sh --clean«?
-#=#        usr/critic.sh	found; did you run »INSTALL.sh --clean«?
-#=#               CHANGES	found; did you run »INSTALL.sh --clean«?
-#=#                README	found; did you run »INSTALL.sh --clean«?
+#=   contrib/.o-saft.tcl	found; file from previous installation
+#=#            Dockerfile	found; file for development
+#=#              Makefile	found; file for development
+#=#                    t/	found; file for development
+#=#        usr/critic.sh	found; file for development
+#=#               CHANGES	found; file for development
+#=#                README	found; file for development
+#=# consider running »INSTALL.sh --clean«
 #=#--------------------------------------------------------------
 #=
 #=# check for used O-Saft programs (according $PATH)
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	22.11.22 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	    2.35 /opt/o-saft/o-saft.tcl
-#=#                o-saft	    1.26 /opt/o-saft/o-saft
-#=#         o-saft-docker	    1.48 /opt/o-saft/o-saft-docker
-#=# usr/o-saft-standalone.pl	22.11.22 usr/o-saft-standalone.pl
+#=#             o-saft.pl	24.01.24 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	    3.18 /opt/o-saft/o-saft.tcl
+#=#                o-saft	     3.1 /opt/o-saft/o-saft
+#=#         o-saft-docker	    1.49 /opt/o-saft/o-saft-docker
+#=# usr/o-saft-standalone.pl	24.01.24 usr/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
 #=#----------------------+---------------------------------------
 #=#          ./.o-saft.pl	will be used when started in . only
 #=# /opt/o-saft/.o-saft.pl	will be used when started in /opt/o-saft only
-#=# /home/usr/.o-saft.tcl	missing, consider generating: »o-saft.tcl --rc > /home/user/.o-saft.tcl«
+#=# /home/USER/.o-saft.tcl	missing, consider generating: »o-saft.tcl --rc > /home/USER/.o-saft.tcl«
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
-#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
+#=#              Net::DNS	    1.36 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.94 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.49 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
 #=#                                      ancient module found, try installing newer version, at least  1.49
-#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
+#=#       IO::Socket::SSL	   2.081 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.30 /usr/share/perl/5.24/Time/Local.pm
 #=#                  OCfg	24.01.24 lib/OCfg.pm
 #=#               Ciphers	24.01.24 lib/Ciphers.pm
 #=#         error_handler	24.01.24 lib/error_handler.pm
@@ -106,17 +109,6 @@
 #=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
 #=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
 #=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
-#=
-#=# Note: above examples are from 2018, more modern (2024) versions are:
-#=#               openssl	  3.0.11
-#=#                  Perl	    5.38
-#=#         Tcl/Tk (wish)	  8.6.13/8.6.13
-#=#              Net::DNS	    1.36
-#=#           Net::SSLeay	    1.92
-#=#                Socket	   2.033
-#=#            IO::Socket	    1.49
-#=#       IO::Socket::SSL	   2.081
-#=#           Time::Local	    1.30
 #=#----------------------+---------------------------------------
 #=
 #=# summary of warnings from installed O-Saft (should be empty)
@@ -170,6 +162,7 @@
 #=# bash_completion_o-saft	/opt/o-saft/usr/bash_completion_o-saft
 #=#               bunt.pl	/opt/o-saft/usr/bunt.pl
 #=#               bunt.sh	/opt/o-saft/usr/bunt.sh
+#=#    checkAllCiphers.pl	/opt/o-saft/usr/checkAllCiphers.pl
 #=#       cipher_check.sh	/opt/o-saft/usr/cipher_check.sh
 #=# dash_completion_o-saft	/opt/o-saft/usr/dash_completion_o-saft
 #=#       filter_examples	/opt/o-saft/usr/filter_examples
@@ -184,6 +177,20 @@
 #=#----------------------+---------------------------------------
 #=
 #=# checks	passed
+#=# default installation directory »/opt/o-saft« used
+#=
+#=#-------------------+--------------------- not part of output {
+#=# Note: above examples are from 2018, more modern (2024) versions are:
+#=#               openssl	  3.0.11
+#=#                  Perl	    5.38
+#=#         Tcl/Tk (wish)	  8.6.13/8.6.13
+#=#              Net::DNS	    1.36
+#=#           Net::SSLeay	    1.94
+#=#                Socket	   2.033
+#=#            IO::Socket	    1.49
+#=#       IO::Socket::SSL	   2.081
+#=#           Time::Local	    1.30
+#=#-------------------+--------------------- not part of output }
 #?
 #? OPTIONS
 #?      --h     got it
@@ -192,6 +199,8 @@
 #?      --i     ignore error while installing;  default: exit with status 4
 #?      --v     print verbose information about performed actions
 #?      -x      debug using shell's "set -x"
+#?      --check --checkdev --clean --cgi --expected --install --openssl
+#?                      - commands, see  DESCRIPTION  above
 #?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
 #?                        $HOME, overwrites existing ones
 #?      --no-colour     - do not use coloured texts; default
@@ -200,6 +209,7 @@
 #?      --colour-not-blind  - use green instead of blue coloured texts
 #?      --other         - check for other SSL-related tool with  --checkdev
 #?      --useenv        - change #! (shebang) lines to  #!/usr/bin/env
+#?                        Involves  --install .
 #?                        Applies only to files with following extensions:
 #?                          .awk  .cgi .pl  .sh  .tcl  .txt
 #?                        also applies to all Makefile* .
@@ -218,8 +228,8 @@
 #?                            #!/usr/bin/perl -w
 #?                            #!/usr/bin/perl -w -I .
 #?      --gnuenv        - change #! (shebang) lines to  #!/usr/bin/env -S
+#?                        Involves  --install --useenv .
 #?                        Applies the change to shebang lines with arguments.
-#?                        Implies  --useenv .
 #?
 #?      Please see  doc/concepts.txt  for details about /usr/bin/env .
 #?      It's up to the user then, which solution fits better.
@@ -280,7 +290,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.14 24/05/29 09:42:06
+#?      @(#) INSTALL-template.sh 3.15 24/05/29 10:34:02
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -312,8 +322,8 @@ text_miss="missing, try installing from/with";
 text_old="ancient module found, try installing newer version, at least "
 text_one="missing, consider generating with »make standalone«"
 text_path="Note: all found executables in PATH are listed"
-text_prof="note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
-text_tool="Note: podman is a tool to view pod files, it's not the container engine"
+text_prof="Note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
+text_podm="Note: podman is a tool to view pod files, it's not the container engine"
 text_dev="file for development"
 text_alt="file from previous installation"
 
@@ -591,7 +601,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.14 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.15 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -803,7 +813,7 @@ if [ "$mode" = "checkdev" ]; then
 	check_commands $tools_intern
 	check_commands $tools_extern
 	echo      "#"
-	echo      "# $text_tool"
+	echo      "# $text_podm"
 	echo_foot
 	echo_head "# check for Perl modules used with/in make targets"
 	for m in $tools_modules ; do
@@ -1049,6 +1059,8 @@ echo_foot
 
 echo_head "# check for optional tools to view documentation"
 check_commands $tools_optional
+echo      "#"
+echo      "# $text_podm"
 echo_foot
 
 echo_head "# check for contributed files (in $inst_directory/$usr_dir )"
@@ -1072,10 +1084,10 @@ if [ $err -eq 0 ]; then
 	echo_green "passed"
 else
 	echo_red   "failed , $err error(s) detected"
-	# more hints, if no installation directory was given; uses echo!
-	[ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used;"
-	[ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
 fi
+# more hints, if no installation directory was given; uses echo!
+[ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used"
+[ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
 
 # check mode }
 
