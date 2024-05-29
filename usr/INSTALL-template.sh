@@ -292,7 +292,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.16 24/05/29 10:41:10
+#?      @(#) INSTALL-template.sh 3.17 24/05/29 10:49:06
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -390,8 +390,8 @@ tools_other="
 
 files_ancient="
 	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
-	o-saft-dbx.pm o-saft-usr.pm osaft.pm
-	INSTALL-devel.sh .perlcriticrc o-saft_bench
+	o-saft-dbx.pm o-saft-lib.pm o-saft-man.pm o-saft-usr.pm osaft.pm
+	checkAllCiphers.pl INSTALL-devel.sh .perlcriticrc o-saft_bench
 	contrib/.o-saft.tcl contrib/o-saft.cgi
 	"
 
@@ -603,7 +603,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.16 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.17 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
