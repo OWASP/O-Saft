@@ -292,7 +292,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.18 24/05/29 10:56:08
+#?      @(#) INSTALL-template.sh 3.19 24/05/29 11:46:36
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -537,7 +537,7 @@ copy_file   () {
 	#dbx# \perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || echo skip $src ...
 	\perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || convert=0
 	if [ 1 -eq $convert ]; then
-		echo_info "install converted $src"
+		echo_info "install converted $src ..."
 		# only the very first line $. ist changed
 		if [ "$try" = "echo" ]; then
 		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\!/usr/bin/env $1|;}print;" '"'$src' > '$dst'"
@@ -556,7 +556,7 @@ copy_file   () {
 		\chmod 555 "$dst" # assuming that it is and should be executable
 
 	else
-		echo_info "install copy of   $src"
+		echo_info "  cp    $src $dst"
 		$try \cp --preserve=all "$src"  "$dst"  || __exit 4
 	fi
 	return
@@ -566,7 +566,7 @@ copy_file   () {
 new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
-	 '-h' | '--h' | '--help' | '-?')
+	 '-h' | '--h' | '--help' | '-?' | '/?')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
@@ -604,7 +604,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.18 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.19 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -620,7 +620,7 @@ clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
 # no echo_info() used for empty mode or mode=expected
 
 #dbx# echo_info "ich=$ich"
-echo_info "$mode $inst_directory"
+echo_info "$mode $inst_directory ..."
 if [ "$mode" = "install" ]; then
 	echo_info "$mode from $src_directory"
 	echo_info "mode=$mode , force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
@@ -683,7 +683,7 @@ fi
 
 # ------------------------ cgi mode -------------- {
 if [ "$mode" = "cgi" ]; then
-	echo_info "prepare $inst_directory for use in CGI mode"
+	echo_info "prepare $inst_directory for use in CGI mode ..."
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 050: $inst_directory does not exist; exit"
 		[ "$try" = "echo" ] || exit 2
@@ -707,7 +707,7 @@ fi; # cgi mode }
 
 # ------------------------- openssl mode --------- {
 if [ "$mode" = "openssl" ]; then
-	echo_info "call $build_openssl"
+	echo_info "start $build_openssl ..."
 	[ ! -x "$build_openssl" ] && echo_red "**ERROR: 020: $build_openssl does not exist; exit" && exit 2
 	[ 0 -lt "$optx" ] && set -x
 	$build_openssl $optn $@
@@ -731,10 +731,10 @@ fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean-up" ]; then
-	echo_info "clean-up installation in $inst_directory"
+	echo_info "clean-up installation in $inst_directory ..."
 	[ -d "$clean_directory" ] || $try \mkdir "$clean_directory/$f"
 	[ -d "$clean_directory" ] || $try echo_red "**ERROR: 030: $clean_directory does not exist; exit"
-	[ -d "$clean_directory" ] || $try exit 2
+	[ -d "$clean_directory" ] || $try exit 2  # check OK with --n also
 	# do not move $usr_dir/ as all examples are right there
 	[ 0 -lt "$optx" ] && set -x
 	cnt=0
@@ -743,9 +743,17 @@ if [ "$mode" = "clean-up" ]; then
 		#dbx# echo "$clean_directory/$f"
 		[ -e "$clean_directory/$f" ] && $try \rm  -f  "$clean_directory/$f"
 		f="$inst_directory/$f"
-		[ -e "$f" ]                  && $try \mv "$f" "$clean_directory" && cnt=`expr $cnt + 1`
+		[ -e "$f" ] && echo_info "  mv -f    $f $clean_directory" \
+		            &&        $try \mv -f "$f" "$clean_directory" \
+		            && cnt=`expr $cnt + 1`
 	done
-	echo_green "# moved $cnt files to $clean_directory completed."
+	for f in $dirs__ancient ; do
+		f="$inst_directory/$f"
+		[ -d "$f" ] && echo_info "  mv -f    $f $clean_directory" \
+		            &&        $try \mv -f "$f" "$clean_directory" \
+		            && cnt=`expr $cnt + 1`
+	done
+	echo_green "# moving $cnt file(s) to $clean_directory completed."
 	exit 0
 fi; # clean-up mode }
 
@@ -763,14 +771,14 @@ if [ "$mode" = "install" ]; then
 	for f in $files ; do
 		f="$inst_directory/$f"
 		if [ -e "$f" ]; then
-			echo_info "delete $f"
+			echo_info "  rm -f $f"
 			$try \rm -f "$f" || __exit 3
 		fi
 	done
 
 	echo_info "installing $inst_directory ..."
 	for d in $osaft_subdirs ; do
-		echo_info "create $inst_directory/$d"
+		echo_info "  mkdir $inst_directory/$d"
 		$try \mkdir -p "$inst_directory/$d"
 	done
 	for f in $files ; do
@@ -793,7 +801,7 @@ if [ "$mode" = "install" ]; then
 	if [ $force -eq 1 ]; then
 		echo_info 'installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
-			echo_info "cp $src_directory/$f $HOME/" \
+			echo_info "  cp    $src_directory/$f $HOME/" \
 			$try   \cp "$src_directory/$f" "$HOME/" \
 			|| echo_red "**ERROR: 042: copying $f failed"
 		done
@@ -1094,6 +1102,7 @@ fi
 # more hints, if no installation directory was given; uses echo!
 [ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used"
 [ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
+    # last message also occours if OSAFT_DIR was used; that's OK
 
 # check mode }
 
