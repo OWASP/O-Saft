@@ -280,7 +280,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) �t�^ 3.13 24/05/27 18:12:37
+#?      @(#) $Rn�U 3.14 24/05/29 09:42:06
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -314,9 +314,8 @@ text_one="missing, consider generating with »make standalone«"
 text_path="Note: all found executables in PATH are listed"
 text_prof="note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 text_tool="Note: podman is a tool to view pod files, it's not the container engine"
-# must be redefined after reading arguments
-text_dev="did you run »$0 --clean«?"
-text_alt="file from previous installation, try running »$0 --clean« "
+text_dev="file for development"
+text_alt="file from previous installation"
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
@@ -592,7 +591,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.13 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.14 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -602,8 +601,6 @@ if [ -n "$new_dir" ]; then
 	[ -z "$mode" ] && mode=install           # no mode given, set default
 fi
 clean_directory="$inst_directory/.files_to_be_removed"  # set on command line
-text_dev="did you run »$0 --clean $inst_directory«?"
-text_alt="file from previous installation, try running »$0 --clean $inst_directory« "
 
 # --------------------------------------------- main
 
@@ -874,20 +871,21 @@ echo_foot
 
 PATH=${inst_directory}:$PATH    # ensure that given directory is in PATH
 
-[ -n "$optn"  ] && echo cd "$inst_directory"
+[ -n "$optn"  ] && echo "cd $inst_directory"
 cd "$inst_directory"
 
+cnt=0
 err=0
-
 echo_head "# check installation in $inst_directory"
 echo      "# (warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
 for f in $files_ancient ; do
-	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt"
+	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt" && cnt=`expr $cnt + 1`
 done
 for f in $files_develop $files_info ; do
-	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_dev"
+	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_dev" && cnt=`expr $cnt + 1`
 done
+[ 0 -ne $cnt ]  && echo -n "# " && echo_yellow "consider running »$0 --clean $inst_directory« "
 echo_foot
 
 echo_head '# check for used O-Saft programs (according $PATH)'
