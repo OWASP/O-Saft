@@ -292,7 +292,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.17 24/05/29 10:49:06
+#?      @(#) INSTALL-template.sh 3.18 24/05/29 10:56:08
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -327,7 +327,7 @@ text_path="Note: all found executables in PATH are listed"
 text_prof="Note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
 text_podm="Note: podman is a tool to view pod files, it's not the container engine"
 text_dev="file for development"
-text_alt="file from previous installation"
+text_alt="from previous installation"
 
 # INSERTED_BY_MAKE {
 osaft_sh="INSERTED_BY_MAKE_OSAFT_SH"
@@ -388,6 +388,7 @@ tools_other="
 # HARDCODED {
 # because newer Makefiles may no longer know about them
 
+dirs__ancient="contrib Net OSaft/Doc OSaft"
 files_ancient="
 	generate_ciphers_hash openssl_h-to-perl_hash o-saft-README
 	o-saft-dbx.pm o-saft-lib.pm o-saft-man.pm o-saft-usr.pm osaft.pm
@@ -603,7 +604,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.17 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.18 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -891,8 +892,11 @@ err=0
 echo_head "# check installation in $inst_directory"
 echo      "# (warnings are ok if »git clone« will be used for development)"
 # err=`expr $err + 1` ; # errors not counted here
+for f in $dirs__ancient ; do
+	[ -d "$f" ] && echo_label "$f" && echo_yellow "found; directory $text_alt" && cnt=`expr $cnt + 1`
+done
 for f in $files_ancient ; do
-	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_alt" && cnt=`expr $cnt + 1`
+	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; file $text_alt" && cnt=`expr $cnt + 1`
 done
 for f in $files_develop $files_info ; do
 	[ -e "$f" ] && echo_label "$f" && echo_yellow "found; $text_dev" && cnt=`expr $cnt + 1`
