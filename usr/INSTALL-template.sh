@@ -280,7 +280,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) $Rn‚U 3.14 24/05/29 09:42:06
+#?      @(#) INSTALL-template.sh 3.14 24/05/29 09:42:06
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
