@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.1 24/01/23 13:39:21
+#?      @(#) Makefile.cmd 3.2 24/05/30 19:34:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 3.1
+_SID.cmd           := 3.2
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -170,6 +170,17 @@ testarg-cmd-host_url+cn.log:        EXE.log-filterarg  = awk -F= '\
 	($$1~/master_key/)              {$$2="$(TEST.logtxt)"}\
 	($$1~/session_(id|ticket)$$/)   {$$2="$(TEST.logtxt)"}\
 	($$1~/session_start(date|time)/){$$2="$(TEST.logtxt)"}\
+	($$0~/routines:SSL_CTX_set_cipher_list:no/) {next;}   \
+	{print}'
+
+# following tests may print Warning 206 which contains random data
+# avoid such random data in our *.log files; example:
+#   077B72EA17F0000:error:0A0000B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:../ssl/ssl_lib.c:2760:
+testcmd-cmd-+check--v_%:            EXE.log-filtercmd  = awk -F= '\
+	($$0~/routines:SSL_CTX_set_cipher_list:no/) {next;} \
+	{print}'
+testcmd-cmd-+info--v_%:             EXE.log-filtercmd  = awk -F= '\
+	($$0~/routines:SSL_CTX_set_cipher_list:no/) {next;} \
 	{print}'
 
 ALL.test.cmd        = $(foreach host,$(TEST.cmd.hosts),$(ALL.testcmd:%=%$(host)))
