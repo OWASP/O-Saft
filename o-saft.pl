@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.52 24/05/28 09:13:53"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.53 24/05/30 18:57:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -264,7 +264,7 @@ sub _warn   {
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
     my $_no =  "@txt";
-       $_no =~ s/^\s*([0-9(]{3}):?.*/$1/;   # message number, usually
+       $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
     return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't pass $cfg{use}{warning}
     # other configuration values can be retrieved from %cfg
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
@@ -414,7 +414,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.52"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.53"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6439,8 +6439,14 @@ while ($#argv >= 0) {
         if ($typ eq 'STARTTLSP4')   { $cfg{'starttls_phase'}[4]       = $arg; }
         if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5]       = $arg; }
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
-        #if ($typ eq 'HOST')    # not done here, but at end of loop
+        if ($typ eq 'WARN_IGNORE')  {
+            # dirty hack: simulate that warning is already printed
+            printf("#$cfg{'me'}: ignore warning $arg because $make_text\n") if (defined $ENV{'OSAFT_MAKE'});
+            push(@{$cfg{out}->{'warnings_no_dups'}}, $arg);
+            push(@{$cfg{out}->{'warnings_printed'}}, $arg);
+        }
         if ($typ eq 'HTTP_USER_AGENT')  { $cfg{'use'}->{'user_agent'} = $arg; }
+        #if ($typ eq 'HOST')    # not done here, but at end of loop
         #  +---------+--------------+------------------------------------------
         if ($typ eq 'NO_OUT') {
             if ($arg =~ /^[,:]*$/) {            # special to set empty string
@@ -6844,6 +6850,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nowarnings?$/)      { _set_cfg_out('warning',      0);  }
     if ($arg =~ /^--warningsdups?$/)    { _set_cfg_out('warnings_no_dups', []); }
     if ($arg =~ /^--nowarningsnodups?$/){ _set_cfg_out('warnings_no_dups', []); }
+    if ($arg eq  '--warningignore')     { $typ = 'WARN_IGNORE';     }
+    if ($arg eq  '--ignorewarning')     { $typ = 'WARN_IGNORE';     }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias: --n
     if ($arg =~ /^--tracearg/i)         { _set_cfg_out('traceARG',     1);  } # special internal tracing
@@ -7346,6 +7354,7 @@ while ($#argv >= 0) {
 } # while options and arguments
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
+
 
 #| prepare %cfg according options
 #| -------------------------------------
