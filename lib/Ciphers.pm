@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.26 24/05/30 17:04:21";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.27 24/05/30 17:10:06";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1003,27 +1003,27 @@ sub show_getter03   {
     printf("# testing example: $cipher (aka 0x00,0x03) ...\n");
     printf("# %s(%s)\t%s\t%-14s\t# %s\n", "function", "cipher key", "key", "value", "(expected)");
     printf("#----------------------+-------+----------------+---------------\n");
-    #printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls",  $cipher, "dtls", get_dtls( $cipher), "N");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_bits",  $cipher, "bits", get_bits( $cipher), "40");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_enc",   $cipher, "enc",  get_enc(  $cipher), "RC4");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_keyx",  $cipher, "keyx", get_keyx( $cipher), "RSA(512)");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_auth",  $cipher, "auth", get_auth( $cipher), "RSA");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_mac",   $cipher, "mac",  get_mac(  $cipher), "MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_rfc",   $cipher, "rfc",  get_rfc(  $cipher), "4346,6347");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",   $cipher, "sec",  get_sec(  $cipher), "WEAK");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",   $cipher, "ssl",  get_ssl(  $cipher), "SSLv3");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_aliases", $cipher, "aliases",scalar(get_aliases($cipher))||"", "");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_const", $cipher, "const",get_const($cipher), "RSA_WITH_RC4_40_MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_consts",$cipher, "consts",scalar(get_consts($cipher)), "RSA_WITH_RC4_40_MD5 RSA_RC4_40_MD5 RSA_EXPORT_WITH_RC4_40_MD5 RC4_128_EXPORT40_WITH_MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_note",  $cipher, "note", get_note( $cipher), "EXPORT");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "notes",get_notes($cipher), "EXPORT");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_iana",  $cipher, "iana", get_iana( $cipher), "no");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_pfs",   $cipher, "pfs",  get_iana( $cipher), "no");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_encsize",$cipher,"encsize", get_encsize( $cipher), "-");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_data",  $cipher, "data", get_data( $cipher), "WEAK WEAK SSLv3 RSA(512) RSA RC4 40 MD5 4346,6347 EXP-RC4-MD5 RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5 export");
+    #printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_dtls",  $cipher, "dtls", get_dtls( $cipher), "N");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_bits",  $cipher, "bits", get_bits( $cipher), "40");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_enc",   $cipher, "enc",  get_enc(  $cipher), "RC4");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_keyx",  $cipher, "keyx", get_keyx( $cipher), "RSA(512)");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_auth",  $cipher, "auth", get_auth( $cipher), "RSA");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_mac",   $cipher, "mac",  get_mac(  $cipher), "MD5");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_rfc",   $cipher, "rfc",  get_rfc(  $cipher), "4346,6347");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_sec",   $cipher, "sec",  get_sec(  $cipher), "WEAK");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_ssl",   $cipher, "ssl",  get_ssl(  $cipher), "SSLv3");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_names", $cipher, "names",   scalar(get_names($cipher)), "EXP-RC4-MD5");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_aliases", $cipher,"aliases",scalar(get_aliases($cipher))||"", "");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_const", $cipher, "const",get_const($cipher), "RSA_WITH_RC4_40_MD5");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_consts",$cipher, "consts",  scalar(get_consts($cipher)), "RSA_WITH_RC4_40_MD5 RSA_RC4_40_MD5 RSA_EXPORT_WITH_RC4_40_MD5 RC4_128_EXPORT40_WITH_MD5");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_note",  $cipher, "note", get_note( $cipher), "EXPORT");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "notes",get_notes($cipher), "EXPORT");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_iana",  $cipher, "iana", get_iana( $cipher), "no");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_pfs",   $cipher, "pfs",  get_iana( $cipher), "no");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_encsize",$cipher,"encsize", get_encsize( $cipher), "-");
+    printf("%-10s(%s)\t%s\t%-14s\t# %s\n", "get_data",  $cipher, "data", get_data( $cipher), "WEAK WEAK SSLv3 RSA(512) RSA RC4 40 MD5 4346,6347 EXP-RC4-MD5 RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5 export");
     printf("#----------------------+-------+----------------+---------------\n");
-#0x03000003	RSA_WITH_RC4_40_MD5,RSA_RC4_40_MD5,RSA_EXPORT_WITH_RC4_40_MD5,RC4_128_EXPORT40_WITH_MD5	EXPORT
     return;
 } # show_getter03
 
@@ -1044,7 +1044,7 @@ sub show_getter     {
     }
     printf("= %s(%s)\t%s\t%s\n", "function", "cipher key", "key", "value");
     printf("=----------------------+-------+----------------\n");
-    #printf("%-8s %s\t%s\t%s\n", "get_dtls",  $key, "dtls",  get_dtls( $key) );
+    #printf("%-10s(%s)\t%s\t%s\n", "get_dtls",  $key, "dtls",  get_dtls( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_bits",  $key, "bits",  get_bits( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_enc",   $key, "enc",   get_enc(  $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_keyx",  $key, "keyx",  get_keyx( $key) );
@@ -1744,7 +1744,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.26 2024/05/30
+3.27 2024/05/30
 
 
 =head1 AUTHOR
