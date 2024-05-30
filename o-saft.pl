@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.53 24/05/30 18:57:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.54 24/05/30 19:03:08"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -107,7 +107,8 @@ sub _is_trace       { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/}   @
 sub _is_v_trace     { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! because of --v
     # return 1 if value in command-line arguments @ARGV
 
-our $make_text = "OSAFT_MAKE exists";
+our $make_text = "(OSAFT_MAKE exists)";
+our $time_text = $make_text;
 sub _trace_time     {
     # print timestamp if --trace-time was given; similar to trace_time
     # time0 does not exist in early calls in BEGIN{} and until arguments are
@@ -126,8 +127,8 @@ sub _trace_time     {
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
         # SEE Make:OSAFT_MAKE (in Makefile.pod)
         $now  = "HH:MM:SS";
-        printf("#$me timstamp printed as $now because $make_text\n") if $make_text;
-        $make_text = ""; # no more messages
+        printf("#$me timstamp printed as $now $time_text\n") if $time_text;
+        $time_text = ""; # no more messages
     }
     printf("#$me $now @txt\n");
     return;
@@ -331,7 +332,7 @@ sub _vprint_me      {
     _vprint($cfg{'me'}, _VERSION());
     _vprint($cfg{'me'}, @{$cfg{'ARGV'}});
     if (defined $ENV{'OSAFT_MAKE'}) {   # SEE Make:OSAFT_MAKE (in Makefile.pod)
-        _vprint("$cfg{'me'}: dd.mm.yyyy HH:MM:SS (OSAFT_MAKE exists)");
+        _vprint("$cfg{'me'}: dd.mm.yyyy HH:MM:SS $make_text");
     } else {
             _vprint(sprintf("%s: %02s.%02s.%s %02s:%02s:%02s", $cfg{'me'}, $mday, ($mon +1), ($year +1900), $h, $m, $s));
     }
@@ -414,7 +415,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.53"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.54"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6441,7 +6442,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
         if ($typ eq 'WARN_IGNORE')  {
             # dirty hack: simulate that warning is already printed
-            printf("#$cfg{'me'}: ignore warning $arg because $make_text\n") if (defined $ENV{'OSAFT_MAKE'});
+            printf("#$cfg{'me'}: ignore warning $arg $make_text\n") if (defined $ENV{'OSAFT_MAKE'});
             push(@{$cfg{out}->{'warnings_no_dups'}}, $arg);
             push(@{$cfg{out}->{'warnings_printed'}}, $arg);
         }
