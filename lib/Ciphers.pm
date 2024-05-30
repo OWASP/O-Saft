@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.22 24/05/28 13:14:51";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.23 24/05/30 16:42:11";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1051,7 +1051,7 @@ sub show_getter     {
     printf("%-10s(%s)\t%s\t%s\n", "get_name",  $key, "name",  get_name( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names", get_names($key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_consts", $key, "consts", scalar(get_consts($key)) );
     printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_iana",  $key, "iana",  get_iana( $key) );
@@ -1738,7 +1738,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.22 2024/05/28
+3.23 2024/05/30
 
 
 =head1 AUTHOR
