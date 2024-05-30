@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.25 24/05/30 16:56:10";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.26 24/05/30 17:04:21";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1013,8 +1013,9 @@ sub show_getter03   {
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",   $cipher, "sec",  get_sec(  $cipher), "WEAK");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",   $cipher, "ssl",  get_ssl(  $cipher), "SSLv3");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name",  $cipher, "name", get_name( $cipher), "EXP-RC4-MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_aliases", $cipher, "aliases",get_const($cipher), "");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_const", $cipher, "const",get_const($cipher), "RSA_WITH_RC4_40_MD5 RSA_RC4_40_MD5 RSA_EXPORT_WITH_RC4_40_MD5 RC4_128_EXPORT40_WITH_MD5");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_aliases", $cipher, "aliases",scalar(get_aliases($cipher))||"", "");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_const", $cipher, "const",get_const($cipher), "RSA_WITH_RC4_40_MD5");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_consts",$cipher, "consts",scalar(get_consts($cipher)), "RSA_WITH_RC4_40_MD5 RSA_RC4_40_MD5 RSA_EXPORT_WITH_RC4_40_MD5 RC4_128_EXPORT40_WITH_MD5");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_note",  $cipher, "note", get_note( $cipher), "EXPORT");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_notes", $cipher, "notes",get_notes($cipher), "EXPORT");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_iana",  $cipher, "iana", get_iana( $cipher), "no");
@@ -1053,9 +1054,10 @@ sub show_getter     {
     printf("%-10s(%s)\t%s\t%s\n", "get_sec",   $key, "sec",   get_sec(  $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_ssl",   $key, "ssl",   get_ssl(  $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_name",  $key, "name",  get_name( $key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names", scalar(get_names($key)) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names",     scalar(get_names($key)) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_aliases", $key, "aliases", scalar(get_aliases($key))||"" ); # "" to avoid perl warning if there are no aliases
     printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_consts", $key, "consts", scalar(get_consts($key)) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_consts", $key, "consts",   scalar(get_consts($key)) );
     printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_iana",  $key, "iana",  get_iana( $key) );
@@ -1742,7 +1744,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.25 2024/05/30
+3.26 2024/05/30
 
 
 =head1 AUTHOR
