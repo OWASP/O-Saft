@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.15 24/05/26 15:38:02
+# SID   @(#) help.txt 3.16 24/05/31 10:10:42
 
 NAME
 
@@ -3477,6 +3477,25 @@ KNOWN PROBLEMS
         This section describes knwon problems, and known error messages which
         may occour when using $0. This sections can be used as FAQ too
         as it gives hints and workarounds.
+
+    +cipher hangs
+
+        There're various reason why this may happen:
+
+          * target does not support SSL protocol on specified port
+          * target has a rate limitation or IPS is in place
+
+        Start the test with the  --v  option  which then reports the protocol
+        currently tested, like:
+
+          **INFO:   test 2640 ciphers for DTLSv12 ... (SSLhello)
+
+        Workaround: disable the protocol with the  --noSSL  option  (would be
+        --no-dtls12  in this example).
+        Most likely this happens with old servers not supporting DTLS or with
+        modern servers not supporting SSLv2, SSLv3.
+
+        Other options to test are  --timeout=SEC  or  --connect-delay=SEC .
 
     Segmentation fault
 
