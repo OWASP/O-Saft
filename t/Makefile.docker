@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.8 24/05/31 12:39:17
+#?      @(#) Makefile.docker 3.9 24/05/31 13:02:55
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.8
+_SID.docker        := 3.9
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -94,7 +94,8 @@ test.docker.log: $(ALL.test.docker.log) test.log-compare-hint
 
 HELP-_mbedtls       = _________________________ docker image for Mbed TLS server _
 HELP-mbedtls.build  = build docker image '$(TEST.mbedtls.image)' form '$(SRC.mbedtls.dockerfile)'
-HELP-mbedtls.run    = start docker image '$(TEST.mbedtls.image)'
+HELP-mbedtls.runtls = start docker image '$(TEST.mbedtls.image)' listening for  TLS
+HELP-mbedtls.rundtls= start docker image '$(TEST.mbedtls.image)' listening for DTLS
 HELP-mbedtls.inspect= inspect docker image '$(TEST.mbedtls.image)'
 HELP-mbedtls.shell  = give a shell in docker image '$(TEST.mbedtls.image)'
 HELP-mbedtls.kill   = kill running container of image '$(TEST.mbedtls.image)'
@@ -111,9 +112,13 @@ mbedtls.build:
 mbedtls.shell:
 	@$(TRACE.target)
 	@$(EXE.docker) run   --rm -it -p 4433:4433 -p 4433:4433/udp --entrypoint=/bin/sh $(TEST.mbedtls.image)
-mbedtls.run:
+mbedtls.rundtls:
+	@$(TRACE.target)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp $(TEST.mbedtls.image) force_version=dtls1_2
+mbedtls.runtls:
 	@$(TRACE.target)
 	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp $(TEST.mbedtls.image)
+mbedtls.run: mbedtls.runtls
 mbedtls.kill:
 	@$(TRACE.target)
 	@$(EXE.docker) kill `docker ps -a --format "{{.ID}} {{.Image}}"|awk '/$(TEST.mbedtls.image)/{print $$1}'`
