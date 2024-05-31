@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.22 24/05/31 10:54:36
+#?      @(#) Makefile 3.23 24/05/31 11:55:20
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.22
+_SID            = 3.23
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -278,7 +278,7 @@ MAKE            = $(MAKE_COMMAND)
 EXE.dummy       = /bin/echo -n ""
 # internal used tools (paths hardcoded!)
 EXE.single      = $(O-USR.dir)/gen_standalone.sh
-EXE.docker      = o-saft-docker
+EXE.o_docker    = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
 
@@ -310,8 +310,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.22 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.22
+_INST.genbytext = generated data by Makefile 3.23 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.23
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -332,7 +332,7 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_GUI@$(SRC.tcl)@'              \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI@$(_INST.osaft_cgi)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_STAND@$(GEN.src)@'            \
-		  -e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.docker)@'        \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.o_docker)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_MODULES@$(ALL.osaftmodules)@' \
 		  -e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'              \
@@ -583,8 +583,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.22
-tar:     _INST.is_edit  = 3.22
+_INST.is_edit           = 3.23
+tar:     _INST.is_edit  = 3.23
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -608,14 +608,14 @@ tcldata:    tcl.data
 # docker target uses project's own script to build and remove the image
 docker.build:
 	@$(TRACE.target)
-	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
-	$(EXE.docker) cp Dockerfile
-	$(EXE.docker) cp README.md
+	$(EXE.o_docker) -OSAFT_VERSION=$(_RELEASE) build
+	$(EXE.o_docker) cp Dockerfile
+	$(EXE.o_docker) cp README.md
 docker: docker.build
 
 docker.rm:
 	@$(TRACE.target)
-	$(EXE.docker) rmi
+	$(EXE.o_docker) rmi
 
 docker.dev:
 	@$(TRACE.target)
