@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.24 24/05/31 12:01:36
+#?      @(#) Makefile 3.25 24/05/31 12:19:18
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.24
+_SID            = 3.25
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -148,7 +148,8 @@ SRC.usr.misc    = \
 		  install_openssl.sh \
 		  install_perl_modules.pl \
 		  INSTALL-template.sh \
-		  Dockerfile.alpine-3.6
+		  Dockerfile.alpine-3.6 \
+		  Dockerfile.mbedtls
 
 SRC.usr.zap     = zap_config.sh zap_config.xml
 # some file should get the $(O-Project) suffix, which is appended later
@@ -311,8 +312,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.24 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.24
+_INST.genbytext = generated data by Makefile 3.25 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.25
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -584,8 +585,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.24
-tar:     _INST.is_edit  = 3.24
+_INST.is_edit           = 3.25
+tar:     _INST.is_edit  = 3.25
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
