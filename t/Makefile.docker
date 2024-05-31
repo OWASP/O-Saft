@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.4 24/05/27 18:34:18
+#?      @(#) Makefile.docker 3.5 24/05/31 11:50:53
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.4
+_SID.docker        := 3.5
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -37,7 +37,8 @@ help.test.docker:       HELP_TYPE   = docker
 help.test.docker-v:     HELP_TYPE   = docker
 help.test.docker-vv:    HELP_TYPE   = docker
 
-HELP-_docker1       = ________________ testing o-saft-docker and o-saft in docker_
+
+HELP-_docker1       = _______________ testing o-saft-docker and o-saft in docker _
 HELP-test.docker    = test functionality of '$(EXE.docker)'
 HELP-test.docker.log = same as test.docker but store output in '$(TEST.logdir)/'
 
@@ -91,3 +92,39 @@ test.docker.log:        TEST.target_prefix  = testarg-docker-
 test.docker:     $(ALL.test.docker)
 test.docker.log: $(ALL.test.docker.log) test.log-compare-hint
 
+HELP-_mbedtls       = _________________________ docker image for Mbed TLS server _
+HELP-mbedtls.build  = build docker image '$(TEST.mbedtls.image)' form Dockerfile
+HELP-mbedtls.run    = start docker image '$(TEST.mbedtls.image)'
+HELP-mbedtls.inspect= inspect docker image '$(TEST.mbedtls.image)'
+HELP-mbedtls.shell  = give a shell in docker image '$(TEST.mbedtls.image)'
+HELP-mbedtls.kill   = kill running container of image '$(TEST.mbedtls.image)'
+HELP-mbedtls.rmi    = delete docker image '$(TEST.mbedtls.image)'
+HELP-mbedtls.help   = show help of ssl_server in docker image '$(TEST.mbedtls.image)'
+HELP-"              = mbedtls.* targets are not part of target test and test.log
+#  dirty hack  HELP-"   which adds a simple text line for help
+# Mbed TLS is a server for testing only, hence all targets are named without test* prefix
+TEST.mbedtls.image  = mbedtls-ah
+mbedtls.build:
+	@$(TRACE.target)
+	@docker build --rm --force-rm -f Dockerfile.mbedtls . --tag $(TEST.mbedtls.image)
+mbedtls.shell:
+	@$(TRACE.target)
+	@docker run   --rm -it -p 4433:4433 -p 4433:4433/udp --entrypoint=/bin/sh $(TEST.mbedtls.image)
+mbedtls.run:
+	@$(TRACE.target)
+	@docker run   --rm     -p 4433:4433 -p 4433:4433/udp $(TEST.mbedtls.image)
+mbedtls.kill:
+	@$(TRACE.target)
+	@docker kill `docker ps -a --format "{{.ID}} {{.Image}}"|awk '/$(TEST.mbedtls.image)/{print $$1}'`
+mbedtls.rmi:
+	@$(TRACE.target)
+	@docker rmi `docker image ls $(TEST.mbedtls.image) -q`
+mbedtls.help:
+	@$(TRACE.target)
+	@docker run   --rm -it --entrypoint=/mbedtls/bin/mbedtls_ssl_server2 $(TEST.mbedtls.image) --help
+mbedtls.inspect:
+	@$(TRACE.target)
+	@docker inspect $(TEST.mbedtls.image)
+
+ALL.mbedtls         = mbedtls.build mbedtls.run mbedtls.kill mbedtls.rmi mbedtls.shell mbedtls.help mbedtls.inspect
+# mbedtls.all:      $(ALL.mbedtls)  # target dangerous and doesn't make any sense
