@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.16 24/05/31 10:10:42
+# SID   @(#) help.txt 3.17 24/05/31 11:16:05
 
 NAME
 
@@ -2252,6 +2252,13 @@ OPTIONS
       --no-warnings-no-dups
 
           Do not suppress duplicate warning messages (**WARNING:).
+          Warning messages not printed multiple times by default: 303 304 412
+
+      --warning-ignore=NNN
+      --ignore-warning=NNN
+
+          Supress printing of warning messages with number NNN (**WARNING:).
+          Mainly used for internal testing.
 
       --exit=KEY
 
