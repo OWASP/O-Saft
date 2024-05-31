@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.5 24/05/31 11:50:53
+#?      @(#) Makefile.docker 3.6 24/05/31 12:00:09
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.5
+_SID.docker        := 3.6
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -39,14 +39,14 @@ help.test.docker-vv:    HELP_TYPE   = docker
 
 
 HELP-_docker1       = _______________ testing o-saft-docker and o-saft in docker _
-HELP-test.docker    = test functionality of '$(EXE.docker)'
+HELP-test.docker    = test functionality of '$(EXE.o_docker)'
 HELP-test.docker.log = same as test.docker but store output in '$(TEST.logdir)/'
 
 HELP.docker     = $(_NL)\
 \# Testing docker functionality consist of two parts:$(_NL)\
 \#    - building, installing, pushing the docker image$(_NL)\
 \#    - testing the docker image$(_NL)\
-\# This Makefile is about testing '$(EXE.docker)' working with the docker image.$(_NL)\
+\# This Makefile is about testing '$(EXE.o_docker)' working with the docker image.$(_NL)\
 \# Examples:$(_NL)\
 \#    $(MAKE_COMMAND) testarg-docker-status$(_NL)\
 \#    $(MAKE_COMMAND) testarg-docker-call-env
@@ -75,11 +75,11 @@ ifndef docker-macros-generated
 endif
 
 # special target
-testarg-docker-:        EXE.pl      = ../$(EXE.docker)
+testarg-docker-:        EXE.pl      = ../$(EXE.o_docker)
 testarg-docker-:        TEST.args   =
 
 testarg-docker-%.log:   EXE.log-filterarg  = sed -e 's@\(HOSTNAME\)=.*@\1=$(TEST.logtxt)@'
-testarg-docker-%:       EXE.pl      = ../$(EXE.docker)
+testarg-docker-%:       EXE.pl      = ../$(EXE.o_docker)
 testarg-docker-%:       TEST.init   =
 
 ALL.test.docker    += testarg-docker-
