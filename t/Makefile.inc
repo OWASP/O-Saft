@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.1 24/01/23 13:39:27
+#?      @(#) Makefile.inc 3.2 24/05/31 11:58:54
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 3.1
+_SID.inc       := 3.2
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -130,8 +130,8 @@ ifndef EXE.tcl
     EXE.tcl    := o-saft.tcl
 endif
 
-ifndef EXE.docker
-    EXE.docker := o-saft-docker
+ifndef EXE.o_docker
+    EXE.o_docker := o-saft-docker
 endif
 
 ifndef EXE.dummy
