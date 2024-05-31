@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.5 24/05/27 17:10:49
+#?      @(#) Makefile.dev 3.6 24/05/31 11:57:45
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.5
+_SID.dev           := 3.6
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -49,14 +49,14 @@ LIST.sources       := $(SRC.tcl:%=../%)  $(SRC.pm:%=../%)  $(SRC.pl:%=../%)
 
 # list of programs 
 LIST.programs      := \
-	$(SRC.sh) $(EXE.docker) $(GEN.src) \
-	$(SRC.pl) $(SRC.tcl)    $(SRC.pm)  \
+	$(SRC.sh) $(EXE.o_docker) $(GEN.src) \
+	$(SRC.pl) $(SRC.tcl)      $(SRC.pm)  \
 	$(TEST.dir)/Makefile.pod \
 	INSTALL.sh \
 	$(O-USR.dir)/bunt.pl \
 	$(O-USR.dir)/install_openssl.sh  \
 	$(O-USR.dir)/gen_standalone.sh
-#EXE.o-saft-docker-dev  := ../$(EXE.docker)-dev
+#EXE.o-saft-docker-dev  := ../$(EXE.o_docker)-dev
 
 # no targets are generated for empty LIST.* variables
 
