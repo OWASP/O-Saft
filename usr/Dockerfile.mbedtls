@@ -1,0 +1,142 @@
+#!/bin/cat
+#?
+#? NAME
+#?      Dockerfile.mbedtls - Dockerfile to build docker image with Mbed TLS
+#?
+#? SYNOPSIS
+#?      docker build --rm --force-rm -f Dockerfile.mbedtls --tag myname
+#?
+#? DESCRIPTION
+#?      Docker(-configuration) file to build a Mbed TLS server.
+# ? TODO: adduser
+# ? TODO: use MBED_VM_TLS_TAR instead of MBED_VM_TLS_SRC
+# ? TODO: checksum
+# ? TODO: describe:
+# ssl_server2  has 79 Cipher, mbedtls_ssl_server only 44
+# ssl_server2  can be terminated with Ctrl-C
+# ssl_server   must be terminated with "docker kill ..."
+# ssl_server2  force_version=dtls1_2  does not support TLS
+#?
+#? VARIABLES
+#?      This Dockerfile uses "buildargs" variables to build the Docker image.
+#?      For default settings, please use:  awk '/^ARG/{print $2}' Dockerfile
+#?
+#?          MBED_VM_FROM
+#?              Base image to be used for this build. Tested images are:
+#?              alpine:3.6 alpine:3.20
+#?
+#?          MBED_VM_NAME=owasp/o-saft-mbedtls
+#?              The name of the build docker image.
+#?
+#?          MBED_VM_USER
+#?              Username to be added in the build image. This user starts the
+#?              ssl_server in the image.
+#?
+#?          MBED_VM_PORT
+#?              The port to of the image to be exposed.
+#?
+#?          MBED_VM_VERSION
+#?              Version of archive.
+#?
+#?          MBED_VM_TLS_SRC
+#?              URL to fetch archive.
+#?
+#?          MBED_VM_TLS_TAR
+#?              Name of archive file used instead of MBED_VM_TLS_SRC.
+#?
+#?          MBED_VM_TLS_SHA
+#?              SHA256 checksum for archive.
+#?
+# FAILED -
+# FAILED 30mai24 docker 20.10.24 doesn't allow variables in CMD and ENTRYPOINT
+# TESTOK 30mai24 alpine:3.6
+# TESTOK 30mai24 alpine:3.20    # but CC warnings when building mbedtls
+# TESTOK 30mai24 mbedtls-3.0.0p1
+#
+#? VERSION
+#?      @(#) Ëõ.[ 3.1 24/05/31 14:51:05
+#? AUTHOR
+#?      30-Mai-2024 Achim Hoffmann
+#?
+#-------------------------------------------------------------------------------
+
+ARG     MBED_VM_FROM=alpine:3.20
+
+FROM    $MBED_VM_FROM AS builder
+
+# Parameters passed to build
+      # MBED_VM_FROM must be defined again, otherwise its value is not available
+ARG     MBED_VM_FROM
+ARG     MBED_VM_NAME=owasp/o-saft-mbedtls
+ARG     MBED_VM_USER=mbed
+ARG     MBED_VM_PORT=4433
+ARG	MBED_VM_VERSION="mbedtls-3.0.0p1"
+ARG	MBED_VM_TLS_SRC="https://github.com/ARMmbed/mbedtls.git"
+ARG	MBED_VM_TLS_TAR="mbedtls.tgz"
+ARG	MBED_VM_TLS_SHA="TODO: SHA checksum"
+
+# Environment variables in the image
+ENV     BUILD_DIR /tmp_src
+ENV     WORK_DIR  /mbedtls
+#ENV     PATH ${WORK_DIR}/bin:$PATH
+
+# MAINTAINER becomes "Author" in docker's inspect, crazy ...
+MAINTAINER Achim <achim@owasp.org>
+LABEL   \
+	VERSION="3.1" \
+	\
+	DESCRIPTION="Build Mbed-TLS docker image for testing O-Saft" \
+	SYNOPSIS="docker build --rm --force-rm -f ./Dockerfile.mbedtls . --tag ${MBED_VM_NAME}" \
+	USAGE_TCP="docker run --rm -p 4433:${MBED_VM_PORT}/tcp ${MBED_VM_NAME}" \
+	USAGE_UDP="docker run --rm -p 4433:${MBED_VM_PORT}/udp ${MBED_VM_NAME} force_version=dtls1_2" \
+	MBED_VM_VERSION="$MBED_VM_VERSION" \
+	MBED_VM_TLS_SRC="$MBED_VM_TLS_SRC" \
+	SID="@(#) Ëõ.[ 3.1 24/05/31 14:51:05"
+
+WORKDIR $BUILD_DIR
+
+#RUN    apk update   # no update needed and not wanted
+RUN     \
+	packages="gcc make musl-dev git"   && \
+	#=== install build system (using GNU Make, not cmake)
+	apk  add --no-cache $packages      && \
+	#=== get Mbed TLS sources
+	git  clone --branch ${MBED_VM_VERSION} --depth 1 --recurse-submodules \
+		${MBED_VM_TLS_SRC} .       && \
+	#=== build without tests (which requires python)
+	make no_test                       && \
+	mkdir -p ${WORK_DIR}/bin           && \
+	cp   programs/ssl/ssl_server  ${WORK_DIR}/bin && \
+	cp   programs/ssl/ssl_server2 ${WORK_DIR}/bin && \
+	#=== clean up
+	cd / && rm -rf ${BUILD_DIR}        && \
+	apk  del --purge    $packages      && \
+	#=== print help at end of build
+	${WORK_DIR}/bin/ssl_server2 --help
+
+# if all executables should be available, it would be better to use
+#       make install
+# therefor change follwing in above RUN:
+#    # replace
+#       mkdir -p ${WORK_DIR}/bin
+#       cp   programs/ssl/ssl_server  ${WORK_DIR}/bin
+#       cp   programs/ssl/ssl_server2 ${WORK_DIR}/bin
+#    # by
+#       make install DESTDIR=$WORK_DIR
+#       rm -rf ${WORK_DIR}/include
+#       rm -rf ${WORK_DIR}/lib
+# also changes name ssl_server to mbedtls_ssl_server :-(
+
+WORKDIR $WORK_DIR
+# USER    $MBED_VM_USER
+
+# variables not possible, grrrrr :-(
+# using 2 CMD will work, but only the last server handles the connections
+# hence we use ENTRYPOINT which enforce to run with arguments as needed,
+# see USAGE_TCP and USAGE_UDP above
+#CMD     ["/mbedtls/bin/ssl_server2"]
+#CMD     ["/mbedtls/bin/ssl_server2", "force_version=dtls1_2"] 
+ENTRYPOINT ["/mbedtls/bin/ssl_server2"]
+EXPOSE  ${MBED_VM_PORT}/tcp
+EXPOSE  ${MBED_VM_PORT}/udp
+
