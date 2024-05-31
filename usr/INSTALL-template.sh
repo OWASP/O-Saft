@@ -292,7 +292,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.19 24/05/29 11:46:36
+#?      @(#) ÚôPå%V 3.20 24/05/31 11:05:15
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -337,6 +337,8 @@ osaft_cgi="INSERTED_BY_MAKE_OSAFT_CGI"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
+doc_dir="INSERTED_BY_MAKE_DOC_DIR"
+lib_dir="INSERTED_BY_MAKE_LIB_DIR"
 usr_dir="INSERTED_BY_MAKE_USR_DIR"
 inst_directory=${OSAFT_DIR:="INSERTED_BY_MAKE_INSTALLDIR"} # use environment varaibale OSAFT_DIR if set
 perl_modules="INSERTED_BY_MAKE_PERL_MODULES"
@@ -407,12 +409,13 @@ files_ancient="
 
 # some files "not to be installed" are ancient, they are kept here in
 # $files_not_installed to ensure that outdated content is also handled
+# the generated "graph" files are also hardcoded here
 files_not_installed="
-	$usr_dir/o-saft.cgi  $usr_dir/o-saft.php
-	$usr_dir/Dockerfile.alpine-3.6   $usr_dir/Dockerfile.wolfssl
-	$usr_dir/distribution_install.sh $usr_dir/gen_standalone.sh
-	$usr_dir/install_perl_modules.pl $usr_dir/install_openssl.sh
+	$usr_dir/o-saft.cgi  $usr_dir/o-saft.php  $usr_dir/Dockerfile*
+	$usr_dir/distribution_install.sh   $usr_dir/gen_standalone.sh
+	$usr_dir/install_perl_modules.pl   $usr_dir/install_openssl.sh
 	$usr_dir/INSTALL-template.sh
+	$doc_dir/*graph-annotations.*      $doc_dir/*graph-sub-call*
 	"
 
 files_develop="o-saft-docker-dev Dockerfile Makefile t/ $usr_dir/critic.sh"
@@ -604,7 +607,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.19 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.20 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
