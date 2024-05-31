@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.6 24/05/31 12:00:09
+#?      @(#) Makefile.docker 3.7 24/05/31 12:05:44
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.6
+_SID.docker        := 3.7
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -106,25 +106,25 @@ HELP-"              = mbedtls.* targets are not part of target test and test.log
 TEST.mbedtls.image  = mbedtls-ah
 mbedtls.build:
 	@$(TRACE.target)
-	@docker build --rm --force-rm -f Dockerfile.mbedtls . --tag $(TEST.mbedtls.image)
+	@$(EXE.docker) build --rm --force-rm -f Dockerfile.mbedtls . --tag $(TEST.mbedtls.image)
 mbedtls.shell:
 	@$(TRACE.target)
-	@docker run   --rm -it -p 4433:4433 -p 4433:4433/udp --entrypoint=/bin/sh $(TEST.mbedtls.image)
+	@$(EXE.docker) run   --rm -it -p 4433:4433 -p 4433:4433/udp --entrypoint=/bin/sh $(TEST.mbedtls.image)
 mbedtls.run:
 	@$(TRACE.target)
-	@docker run   --rm     -p 4433:4433 -p 4433:4433/udp $(TEST.mbedtls.image)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp $(TEST.mbedtls.image)
 mbedtls.kill:
 	@$(TRACE.target)
-	@docker kill `docker ps -a --format "{{.ID}} {{.Image}}"|awk '/$(TEST.mbedtls.image)/{print $$1}'`
+	@$(EXE.docker) kill `docker ps -a --format "{{.ID}} {{.Image}}"|awk '/$(TEST.mbedtls.image)/{print $$1}'`
 mbedtls.rmi:
 	@$(TRACE.target)
-	@docker rmi `docker image ls $(TEST.mbedtls.image) -q`
+	@$(EXE.docker) rmi `docker image ls $(TEST.mbedtls.image) -q`
 mbedtls.help:
 	@$(TRACE.target)
-	@docker run   --rm -it --entrypoint=/mbedtls/bin/mbedtls_ssl_server2 $(TEST.mbedtls.image) --help
+	@$(EXE.docker) run   --rm -it --entrypoint=/mbedtls/bin/mbedtls_ssl_server2 $(TEST.mbedtls.image) --help
 mbedtls.inspect:
 	@$(TRACE.target)
-	@docker inspect $(TEST.mbedtls.image)
+	@$(EXE.docker) inspect $(TEST.mbedtls.image)
 
 ALL.mbedtls         = mbedtls.build mbedtls.run mbedtls.kill mbedtls.rmi mbedtls.shell mbedtls.help mbedtls.inspect
 # mbedtls.all:      $(ALL.mbedtls)  # target dangerous and doesn't make any sense
