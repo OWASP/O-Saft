@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.6 24/05/23 00:39:58
+#?      @(#) Makefile 3.7 24/06/03 12:53:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.6
+_SID.test          := 3.7
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -482,20 +482,28 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKECMDGOALS)  = $(MAKECMDGOALS)'
 	@echo '# $$(GNUMAKEFLAGS)  = $(GNUMAKEFLAGS)'
 	@echo '# $$(.DEFAULT_GOAL) = $(.DEFAULT_GOAL)'
+	@echo '# $$(.DELETE_ON_ERROR)= $(.DELETE_ON_ERROR)'
 	@echo '# $$(.EXTRA_PREREQS)= $(.EXTRA_PREREQS)'
+	@echo '# $$(.IGNORE)       = $(.IGNORE)'
 	@echo '# $$(.INCLUDE_DIRS) = $(.INCLUDE_DIRS)'
 	@echo '# $$(.INTERMEDIATE) = $(.INTERMEDIATE)'
+	@echo '# $$(.NOTINTERMEDIATE)= $(.NOTINTERMEDIATE)'
+	@echo '# $$(.NOTPARALLEL)  = $(.NOTPARALLEL)'
+	@echo '# $$(.ONESHELL)     = $(.ONESHELL)'
+	@echo '# $$(.POSIX)        = $(.POSIX)'
 	@echo '# $$(.PRECIOUS)     = $(.PRECIOUS)'
 	@echo '# $$(.RECIPEPREFIX) = $(.RECIPEPREFIX)'
 	@echo '# $$(.SECONDARY)    = $(.SECONDARY)'
 	@echo '# $$(.SHELLFLAGS)   = $(.SHELLFLAGS)'
+	@echo '# $$(.SILENT)       = $(.SILENT)'
 	@echo '# $$(.SUFFIXES)     = $(.SUFFIXES)'
 	@echo '# $$(.FEATURES)     = $(.FEATURES)'
 	@echo '# $$(.VARIABLES)    = $(words $(.VARIABLES)) variables'
 	@echo '#                    huge list .VARIABLES not shown (includes own names),'
 	@echo '#                    use: make help.test.makevars'
-# not printed because different for each call: $(MAKE_TERMOUT) $(MAKE_TERMERR)
-# not used as most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION
+	@echo '# folowing variables are not printed because'
+	@echo '#     different for each call:     MAKE_TERMOUT  MAKE_TERMERR'
+	@echo '#     most likely not a variable: .DEFAULT  .PHONY  .SECONDEXPANSION'
 
 # TODO taget testcmd-test.internal-v does not work
 
