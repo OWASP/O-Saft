@@ -337,14 +337,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) SíÑU 1.3 24/06/05 09:58:44
+#?      @(#) ‘K\ 1.4 24/06/05 13:28:21
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.3
+_SID.testssl       := 1.4
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # for user-defined arguments, see description in section LIMITATIONS above
@@ -627,10 +627,21 @@ TESTSSL.vm.build.cleanup = \
 	apk  del --purge $(TESTSSL.vm.packages)    ; \\ $(_NL)\
 	rm   -rf $(TESTSSL.vm.tmp) && echo "\# $(TESTSSL.vm.tmp) removed."
 
+# it's a pain to find the directory to which tar extracts, in most tarballs the
+# very first line can be used, simply like:
+#    tar tvf tarball | awk '(1==NR){print $NF}'
+# but we've seen tarballs without that line, means that all line contain a full
+# path, then following works:
+#    tar tvf tarball | awk '(1==NR){split($NF,parts,"/";print parts[1]}'
+# the latter works for the simple line too, hence it is used,  but it breaks if
+# the first line does not contain a / in the rightmost field
+# examples of expected (first) line:
+#       -rw-r--r-- 1000/1000   42 2012-12-20 23:23 vendor-1.1.1/
+#       -rw-r--r-- 1000/1000   42 2012-12-20 23:23 vendor-1.1.1/some-file.txt
 TESTSSL.vm.build.getpack = \
 	$(call _TESTSSL.echo,"Extract tool source"); \\ $(_NL)\
 	cd $(TESTSSL.vm.tmp)              && \\ $(_NL)\
-	_dir=\`tar tvf $(TESTSSL.vm.src.tar) | awk '(1==NR){print \$$NF}'\` && \\ $(_NL)\
+	_dir=\`tar tvf $(TESTSSL.vm.src.tar) | awk '(1==NR){split(\$$NF,a,\"/\");print a[1]}'\` && \\ $(_NL)\
 	echo \"$(TESTSSL.vm.src.sig)  $(TESTSSL.vm.src.tar)\" \
 		| sha1sum -c -            && \\ $(_NL)\
 	tar xf $(TESTSSL.vm.src.tar)      && \\ $(_NL)\
@@ -705,7 +716,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.3'                           $(_NL)\
+LABEL	VERSION='1.4'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -721,7 +732,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.3'                           $(_NL)\
+LABEL	VERSION='1.4'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
