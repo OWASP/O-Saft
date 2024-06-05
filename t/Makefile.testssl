@@ -199,6 +199,8 @@
 #       * implement checksum for files from http:...
 #       * implement %.dtls targets
 #       * wolfssl: use own instead of $TESTSSL.vm.configure.openssl
+#       * store all TESTSSL.sig.* in external Makefile to be included here;
+#         avoids editing this file for changes (wasting the repository)
 #       * currently each brand and/or version builds its own docker image,
 #         provide a mode where they are all in the same image;
 #         ** user (in /etc/passwd) is already ok, just one for each brand
@@ -209,6 +211,14 @@
 #       * the docker container should not be removed when compiling fails
 #         (necessary to hunt problems while compiling, installing)
 #       * implement docker's  commit, export, import, pull, save
+#
+# CHANGELOG
+#       List fixed TODOs, bugs ets. here.
+#
+#       # issue fixed   SID     description
+#       #------+-------+-------+-----------------------------------------------
+#        5/2024 6/2024  1.2     implement examples targets showing preconfigured tarballs
+#       #------+-------+-------+-----------------------------------------------
 #
 # HACKER's INFO
 #    General
@@ -327,14 +337,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) X0S` 1.2 24/06/05 09:20:53
+#?      @(#) SÌ—U 1.3 24/06/05 09:58:44
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.2
+_SID.testssl       := 1.3
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # for user-defined arguments, see description in section LIMITATIONS above
@@ -695,7 +705,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.2'                           $(_NL)\
+LABEL	VERSION='1.3'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -711,7 +721,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.2'                           $(_NL)\
+LABEL	VERSION='1.3'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -841,6 +851,21 @@ list:
 	@echo "#--------------+----------------------"
 	@$(EXE.docker) ps -a --filter label=$(TESTSSL.label) --format '{{.Image}}\t{{.Label "DESCRIPTION"}}'
 	@echo "#--------------+----------------------"
+
+HELP-examples   = list preconfigured tarballs with their SHA1 checksum
+define _TESTSSL.get-sigs
+	\
+	# SHA1 checksum                             tarball$(_NL)\
+	#------------------------------------------+---------------------$(_NL)\
+        $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+                $(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
+        )
+endef
+examples:
+	@echo "$(call _TESTSSL.get-sigs,TESTSSL.sig.)"
+# TODO: $TESTSSL.vm.src.suffix is the default, may be different for som tarballs
+# TODO: prepend tarball by $TESTSSL.host.copy/ ; then output checked like:
+#       make examples | sha1sum -c -
 
 
 # TODO: following pattern rule get wrong $* ; seems to be a bug in GNU Make
