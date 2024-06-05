@@ -35,11 +35,26 @@
 #?      Please see at end.
 #?
 #? EXAMPLES
+#?      List build (availabe) images:
+#?          make list
+#?      Build image using 4.7.0 ./t.docker/wolfssl-4.7.0-stable.tar.gz:
+#?          make wolfssl-4.7.0-build
+#?      Show help of server wolfssl version 4.7.0 in image:
+#?          make wolfssl-4.7.0-help.server
+#?      Start image with server wolfssl version 4.7.0:
+#?          make wolfssl-4.7.0-run
+#?      List running containers:
+#?          make ps
+#?      Stop image with server wolfssl version 4.7.0:
+#?          make wolfssl-4.7.0-rmi
+#?
+#?      Unsorted examples
 #?          make mbedtls-2.28.8-build
-#?          make mbedtls-2.28.8-runtls
+#?          make mbedtls-2.28.8-run
+#?          make mbedtls-3.6.0-help.client
 #?          make wolfssl-4.3.0-rmi
 #?          make wolfssl-4.7.0-inspect
-#?          make wolfssl-4.7.0-help
+#?          make wolfssl-4.7.0-help.server
 #?          make wolfssl-5.6.6-run
 #?
 #? CONFIGURATION
@@ -312,14 +327,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) žç\d 1.1 24/06/05 02:57:35
+#?      @(#) X0S` 1.2 24/06/05 09:20:53
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.1
+_SID.testssl       := 1.2
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # for user-defined arguments, see description in section LIMITATIONS above
@@ -680,7 +695,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.1'                           $(_NL)\
+LABEL	VERSION='1.2'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -696,7 +711,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.1'                           $(_NL)\
+LABEL	VERSION='1.2'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
