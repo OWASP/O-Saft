@@ -205,6 +205,7 @@
 #       * build proper server.pem and install it (openssl)
 #       * provide variable TESTSSL.vm.server.env (to be pass with docker run)
 #       * wolfssl: use own instead of $TESTSSL.vm.configure.openssl
+#       * include custom Makefile; remove custom settings here
 #       * store all TESTSSL.sig.* in external Makefile to be included here;
 #         avoids editing this file for changes (wasting the repository)
 #       * provide variable TESTSSL.vm.server.cert (for building sef-signed cert)
@@ -232,6 +233,7 @@
 #
 #       # issue fixed   SID     description
 #       #------+-------+-------+-----------------------------------------------
+#        6/2024 6/2024  1.7     include custom Makefile
 #        5/2024 6/2024  1.2     implement examples targets showing preconfigured tarballs
 #       #------+-------+-------+-----------------------------------------------
 #
@@ -349,15 +351,15 @@
 #       Take care that depending on your shell, some meta-characters part of an
 #       argument need to be properly escaped (for example spaces, quotes).
 #       Even with these workarounds, make may decide to use arguments itself.
-#       For testing correct argument interpretation,  -args  can be appended to
+#       For testing correct argument interpretation,  -dbx  can be  appended to
 #       any targetname. The target prints the passed arguments and does nothing
 #       else. For example:
-#           make my-1.1-build-args --                   'key=val    --opt arg'
-#           make my-1.1-build-args --      args='strange key=va" "l --opt arg'
-#           make my-1.1-build-args --           'wrong   key=va" "l --opt arg'
+#           make my-1.1-build-dbx --                   'key=val    --opt arg'
+#           make my-1.1-build-dbx --      args='strange key=va" "l --opt arg'
+#           make my-1.1-build-dbx --           'wrong   key=va" "l --opt arg'
 #       and note the difference to:
-#           make my-1.1-build-args         args='strange key=va" "l --opt arg'
-#           make my-1.1-build-args TESTSSL.args='strange key=va" "l --opt arg'
+#           make my-1.1-build-dbx         args='strange key=va" "l --opt arg'
+#           make my-1.1-build-dbx TESTSSL.args='strange key=va" "l --opt arg'
 # 
 #       It's GNU Make, name it feature or trap ;-)
 #         
@@ -370,15 +372,35 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) €§¼_ 1.6 24/06/05 18:22:04
+#?      @(#) 7¯] 1.7 24/06/05 20:51:26
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.6
+_SID.testssl       := 1.7
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
+
+# including custom Makefiles
+# TODO: file selection needs to be improved
+TESTSSL.include = t/Makefile.testssl.*
+
+-include $(TESTSSL.include)
+
+## by default only filenames are included which have the tag as extension, for
+## example:
+##       make               testssl-1.1.1-run
+## will include
+##       t/Makefile.testssl.testssl-1.1.1
+## for some targets all t/Makefile.testssl.* should be included, hence the
+## following target-dependent settings
+## TODO following not ye working as expected
+#.INCLUDE_DIRS   = . ./t ..
+#TESTSSL.include = Makefile.testssl.$(*)
+#all-dbx:    TESTSSL.include = Makefile.testssl.*
+#%-list:     TESTSSL.include = Makefile.testssl.*
+#%-dbx:      TESTSSL.include = Makefile.testssl.$(*)
 
 # for user-defined arguments, see description in section LIMITATIONS above
 # following must be defered definition with = not :=
@@ -410,11 +432,21 @@ help::
 	@echo "$(HELP_examples)"
 .PHONY: help
 
-# target for testing passed arguments; always fails to avoid execution of other targets
-%-args:
-	@echo "# arguments to be passed to commands in target '$(subst -args,,$(MAKECMDGOALS))':"
-	@echo "MAKEFLAGS\t= $(MAKEFLAGS)"
-	@echo "TESTSSL.args\t= $(TESTSSL.args)"
+HELP-%-dbx = debug: show information about includes,$(_NL)\t\t  show passed arguments in TESTSSL.args
+# always fails to avoid execution of other targets
+%-dbx:
+	@echo "# .INCLUDE_DIRS\t= $(.INCLUDE_DIRS)"
+	@echo "# PWD\t\t= $(PWD)"
+	@echo "# include\t= $(TESTSSL.include)"
+	@echo "# version of each included file:"
+	@echo $(foreach _t,$(filter _SID.testssl%,$(sort $(.VARIABLES))),\
+		"#   $(_t)\t= $($(_t))$(_NL)"\
+	)
+	@echo "# arguments to be passed to commands in target '$(subst -dbx,,$(MAKECMDGOALS))':"
+	@echo "# MAKEFLAGS\t= $(MAKEFLAGS)"
+	@echo "# TESTSSL.args\t= $(TESTSSL.args)"
+	@echo "#"
+	@echo "# target is intended to fail with erro from make"
 	@false
 
 #_____________________________________________________________________________
@@ -806,7 +838,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.6'                           $(_NL)\
+LABEL	VERSION='1.7'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -822,7 +854,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.6'                           $(_NL)\
+LABEL	VERSION='1.7'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -863,7 +895,7 @@ USER	$(TESTSSL.vm.user)              $(_NL)\
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
 
-HELP-%-build-n= show context for building docker image$(_NL)\t\t   (like 'make %-build -n' but pretty printed)
+HELP-%-build-n= debug: show context for building docker image$(_NL)\t\t   (like 'make %-build -n' but pretty printed)
 %-build-n:
 	@$(_TESTSSL.vm.get._tag)
 	@echo $(_TESTSSL.print-config)
