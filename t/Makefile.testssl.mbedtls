@@ -1,0 +1,86 @@
+#!/usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile.testssl.* - additional settings for Makefile.testssl
+#?
+#? DESCRIPTION
+#?      This Makefile contains addition settings for Makefile.testssl.
+#?      For a detailled description, please see there.
+#?
+#? SYNOPSIS
+#?      include Makefile.testssl.inc
+#?
+#? VERSION
+#?      @(#) jè-_ 1.1 24/06/06 01:00:23
+#?
+#? AUTHOR
+#?      04-jun-24 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.testssl.mbedtls := 1.1
+_MYSELF            := $(firstword $(MAKEFILE_LIST))
+
+# not possible, because it becomes first target in parent when included, grrr
+#first-testssl-inc-target-is-default:
+#	@echo "This Makefile has no own help, please see Makefile.testssl ."
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+# for description of available variables please see: make vars
+
+TESTSSL.vm.configure.mbedtls    =
+
+# define setting per brand (type) of SSL-/TLS-server (use brand's default)
+mbedtls-%:            TESTSSL.vm.type       = mbedtls
+mbedtls-%:            TESTSSL.vm.port       = 4433
+mbedtls-%:            TESTSSL.vm.packages  += gcc make musl-dev zlib-dev git
+mbedtls-%:            TESTSSL.vm.client     = ssl_client
+mbedtls-%:            TESTSSL.vm.client.help= help
+mbedtls-%:            TESTSSL.vm.server.help= help
+mbedtls-%:            TESTSSL.vm.server.dtls= dssl_server  server_port=$(TESTSSL.vm.port) force_version=dtls1_2
+mbedtls-%:            TESTSSL.vm.server.tls = ssl_server
+mbedtls-%:            TESTSSL.vm.server.args= server_port=$(TESTSSL.vm.port)
+# TODO: mbedtls-3.0.0p1-build: TESTSSL.vm.context  = $(O-USR.dir)/Dockerfile.mbedtls
+
+# dirty hacks for mbedtls :-(standard tools have no help option)-:
+mbedtls%-help.client: TESTSSL.vm.help   = $(TESTSSL.vm.client)2
+mbedtls%-help.server: TESTSSL.vm.help   = $(TESTSSL.vm.server)2
+
+# SHA1 checksums for some tarballs:
+TESTSSL.sig.mbedtls-2.28.8 = 269c05f41ad53cc153c00b6506d16ac11727ebab
+TESTSSL.sig.mbedtls-2.7.8  = 0e8963cc159cb19c75ad51c4dfb9514b64daba97
+TESTSSL.sig.mbedtls-3.6.0  = 1175837831ac32c5f26c4113ea1a946db4822557
+
+TESTSSL.vm.build.compile.mbedtls = \
+	make no_test
+
+# manuall installation keeps the original names of the executables, no mbedtls_ prefix
+TESTSSL.vm.build.install.mbedtls = \
+	mv programs/ssl/*client     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*client2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*server     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*server2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/ssl*info    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv library/lib*             $(TESTSSL.vm.home)/bin/
+
+# optional
+TESTSSL.vm.build.testing.mbedtls = \
+	echo '\# mbedtls client does not list cipher suites'
+
+#_____________________________________________________________________________
+#________________________________________ private targets, not fully tested __|
+
+# NOTE: only pattern rules are alliwed, the first explizit target will become
+# the first target in the parent too, usually not wanted ...
+
+# Mbed TLS uses different executables for TLS and DTLS
+mbedtls-%-rundtls:
+	@$(EXE.trace_target)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image) force_version=dtls1_2
+mbedtls-%-runtls:
+	@$(EXE.trace_target)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image)
+# mbedtls.run: mbedtls.runtls
+
