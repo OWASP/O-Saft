@@ -245,7 +245,7 @@
 #           build a docker image
 #           install the server and client in this docker image
 #           start the server or client in the docker image
-#       Other targets simpla√Ω perfom something like:
+#       Other targets simply perfom something like:
 #           docker run myserver
 #
 #       In details these step may look like:
@@ -255,9 +255,10 @@
 #           docker run myserver
 #
 #       That's all.
-#       The targets herein create the image and install the SSL-/TLS-servers in
+#       The targets herein create the image and install lilb, server and client
 #       in it. The targets are intended to be used as simple command to  build,
-#       start and stop the server, aswell as removing the complete image.
+#       start and stop the server, as well as removing the complete image.
+#       Additionally some targets for oberview or information are available.
 #
 #       The steps to build the docker image performed herein are as follows:
 #            Configure user in docker
@@ -271,8 +272,25 @@
 #       Each step is labled, like:
 #            #[TESTSSL]#===== Compile executables
 #
+#    Special requirement
+#       Another goal is to provide one file (this one)  which contains anything
+#       needed to build the image and the server.  However, the base context OS
+#       (for example alpine) and the server sources  are not part of this file,
+#       obviously.
+#       Customized settings can be provided in other Makefiles being included.
+#
 #    Nested scripting syntax
-#       TBD
+#       Because there should be no dependencies (see Special requirement above)
+#       code and such is generated from herein. Even worse, such code is nested
+#       in variables and targets.  Ugly, sophisticated, a challenge ...
+#
+#       Following scripting syntax is in used:
+#           GNU Make
+#           Docker context
+#           Bourne shell
+#
+#       As usual in such cases, most meta characters (including spaces) have to
+#       be handled special. Most important chachters to take care are: \ $ # "
 #
 #    Naming scheme for targets
 #       The naming scheme for the docker targets uses  -  as seperator, not . .
@@ -283,7 +301,7 @@
 #
 #       The shell command to be used in Docker's RUN statement are not inclosed
 #       in double quotes "" in the definition of the make variable. This avoids
-#       escaping some meta-characters like # ) < > $  in the definition.
+#       escaping some meta-characters like # ) < > $  in make's definitions.
 #
 #    Alpine
 #       The alpine base image uses busybox as shell. This avoids adding special
@@ -352,14 +370,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) DÂ)c 1.5 24/06/05 17:23:00
+#?      @(#) Äßº_ 1.6 24/06/05 18:22:04
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.5
+_SID.testssl       := 1.6
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # for user-defined arguments, see description in section LIMITATIONS above
@@ -377,9 +395,9 @@ first-testssl-target-is-default: help
 # take care for the space is $(subst ...)
 define _TESTSSL.get-values
 	\
-        $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-                $(subst $1,,   $(_t))\t- $($(_t))$(_NL)\
-        )
+	$(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+		$(subst $1,,   $(_t))\t- $($(_t))$(_NL)\
+	)
 endef
 
 HELP-help   = print this text; help for file '$(_MYSELF)'
@@ -472,11 +490,11 @@ libressl-%:           TESTSSL.vm.type       = libressl
 libressl-%:           TESTSSL.vm.port       = 5443
 # default is 4433, but we want it different from mbedtls
 libressl-%:           TESTSSL.vm.packages  += $(TESTSSL.vm.apk.packages)
-libressl-%:           TESTSSL.vm.configure += $(TESTSSL.vm.configure.libressl)
+libressl-%:           TESTSSL.vm.configure  = $(TESTSSL.vm.configure.libressl)
 libressl-%:           TESTSSL.vm.client     = openssl
 libressl-%:           TESTSSL.vm.client.help= s_client help
 libressl-%:           TESTSSL.vm.server.help= s_server help
-libressl-%:           TESTSSL.vm.server.dtls= openssl s_server -dtls -key $(TESTSSL.vm.home)/etc/key.pm -cert $(TESTSSL.vm.home)/etc/cert.pm
+libressl-%:           TESTSSL.vm.server.dtls= openssl s_server -dtls -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
 libressl-%:           TESTSSL.vm.server.tls = openssl
 libressl-%:           TESTSSL.vm.server.args= s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
 # TODO: s_server -servername $(TESTSSL.vm.hostname)
@@ -591,7 +609,7 @@ TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
 TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
 TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 
-define testssl-print-config
+define _TESTSSL.print-config
     $(foreach _arg, $(TESTSSL.vm.ALL), "# $(_arg)\t= $($(_arg))\n" )
 endef
 
@@ -619,7 +637,7 @@ echo \#[TESTSSL]\#===== $1
 endef
 
 define _TESTSSL.trace
-  [ -n "$(TESTSSL.trace)" ] && set -x || true
+[ -n "$(TESTSSL.trace)" ] && set -x || true
 endef
 
 define _TESTSSL.gen-by
@@ -683,6 +701,7 @@ TESTSSL.vm.build.getpack = \
 	tar xf $(TESTSSL.vm.src.tar)      && \\ $(_NL)\
 	cd   \"\$$_dir\" && pwd && ls -l
 
+# sometimes ./autogen.sh does not exist, call is if available only
 TESTSSL.vm.build.compile.libressl = \
 	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
 	./configure $(TESTSSL.vm.configure)  && \\ $(_NL)\
@@ -692,8 +711,8 @@ TESTSSL.vm.build.compile.mbedtls = \
 	make no_test
 
 TESTSSL.vm.build.compile.wolfssl = \
-	./autogen.sh && \\ $(_NL)\
-	./configure $(TESTSSL.vm.configure) && \\ $(_NL)\
+	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
+	./configure $(TESTSSL.vm.configure)  && \\ $(_NL)\
 	make
 
 TESTSSL.vm.build.compile = \
@@ -728,30 +747,30 @@ TESTSSL.vm.build.install.libressl = \
 
 # manuall installation keeps the original names of the executables, no mbedtls_ prefix
 TESTSSL.vm.build.install.mbedtls = \
-        mv programs/ssl/*client     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-        mv programs/ssl/*client2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-        mv programs/ssl/*server     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-        mv programs/ssl/*server2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-        mv programs/ssl/ssl*info    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-        mv library/lib*             $(TESTSSL.vm.home)/bin/
+	mv programs/ssl/*client     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*client2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*server     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/*server2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv programs/ssl/ssl*info    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+	mv library/lib*             $(TESTSSL.vm.home)/bin/
 
 TESTSSL.vm.build.install.wolfssl = \
-        mv examples/echoclient/.libs/echoclient $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/echoserver/.libs/echoserver $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/client/.libs/client         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/server/.libs/server         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/sctp/.libs/sctp-client-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/sctp/.libs/sctp-server-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/sctp/sctp-client            $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv examples/pem/.libs/pem               $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv src/.libs/libwolfssl.so*             $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        mv certs/ $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-        ln -s     $(TESTSSL.vm.home)/bin/certs /certs
+	mv examples/echoclient/.libs/echoclient $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/echoserver/.libs/echoserver $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/client/.libs/client         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/server/.libs/server         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/.libs/sctp-client-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/.libs/sctp-server-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/sctp-client            $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/pem/.libs/pem               $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv src/.libs/libwolfssl.so*             $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv certs/ $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	ln -s     $(TESTSSL.vm.home)/bin/certs /certs
 
 TESTSSL.vm.build.install = \
 	$(call _TESTSSL.echo,"Install executables"); \\ $(_NL)\
 	pwd          && \\ $(_NL)\
-        mkdir $(TESTSSL.vm.home)/bin/             && \\ $(_NL)\
+	mkdir $(TESTSSL.vm.home)/bin/             && \\ $(_NL)\
 	$(TESTSSL.vm.build.install.$(TESTSSL.vm.type))
 
 # TODO:
@@ -768,13 +787,13 @@ TESTSSL.vm.build.testing.mbedtls = \
 TESTSSL.vm.build.testing.wolfssl = \
 	export OPENSSL_CONF=$(TESTSSL.vm.home)/etc/ssl/openssl.cnf ; \\ $(_NL)\
 	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
-        $(TESTSSL.vm.client) -e|tr ':' ' ' | wc -l ; \\ $(_NL)\
-        $(TESTSSL.vm.client) -e
+	$(TESTSSL.vm.client) -e|tr ':' ' ' | wc -l ; \\ $(_NL)\
+	$(TESTSSL.vm.client) -e
 TESTSSL.vm.build.testing = \
 	$(call _TESTSSL.echo,"List installation")  ; \\ $(_NL)\
 	echo "PATH=\$$PATH"                        ; \\ $(_NL)\
-        cd        $(TESTSSL.vm.home)/bin  ; pwd    ; \\ $(_NL)\
-        ls -l     $(TESTSSL.vm.home)/bin/          ; \\ $(_NL)\
+	cd        $(TESTSSL.vm.home)/bin  ; pwd    ; \\ $(_NL)\
+	ls -l     $(TESTSSL.vm.home)/bin/          ; \\ $(_NL)\
 	$(TESTSSL.vm.build.testing.$(TESTSSL.vm.type)) ; \\ $(_NL)\
 	true
 
@@ -787,7 +806,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.5'                           $(_NL)\
+LABEL	VERSION='1.6'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -803,7 +822,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.5'                           $(_NL)\
+LABEL	VERSION='1.6'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -847,11 +866,11 @@ USER	$(TESTSSL.vm.user)              $(_NL)\
 HELP-%-build-n= show context for building docker image$(_NL)\t\t   (like 'make %-build -n' but pretty printed)
 %-build-n:
 	@$(_TESTSSL.vm.get._tag)
-	@echo $(testssl-print-config)
+	@echo $(_TESTSSL.print-config)
 	@echo "# context used with '$(EXE.docker) build --rm --force-rm . --tag $(_tag)'"
 	@echo "$(TESTSSL.vm.context)"
 
-HELP-%-build  = build docker image '%' form '$(SRC.mbedtls.dockerfile)'
+HELP-%-build  = build docker image '%'
 HELP-%-build-v= same as %-build but use shell's \"set -x\" for verbose output
 %-build-v: TESTSSL.trace=1
 %-build-v: %-build
@@ -876,6 +895,7 @@ HELP-%-runtls = start docker image '%' listening for  TLS
 		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port)/udp \
 		--hostname $(TESTSSL.vm.hostname) \
 		--name $(*).run --detach \
+		--env OPENSSL_CONF=/dev/null \
 		$(_tag) \
 		$(TESTSSL.args)
 
@@ -939,9 +959,9 @@ define _TESTSSL.get-sigs
 	\
 	# SHA1 checksum                             tarball$(_NL)\
 	#------------------------------------------+---------------------$(_NL)\
-        $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-                $(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
-        )
+	$(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+		$(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
+	)
 endef
 examples:
 	@echo "$(call _TESTSSL.get-sigs,TESTSSL.sig.)"
