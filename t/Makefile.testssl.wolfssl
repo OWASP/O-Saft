@@ -1,0 +1,98 @@
+#!/usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile.testssl.wolfssl - additional settings for Makefile.testssl
+#?
+#? DESCRIPTION
+#?      This Makefile contains addition settings for Makefile.testssl.
+#?      For a detailled description, please see there.
+#?
+#? SYNOPSIS
+#?      include Makefile.testssl.wolfssl
+#?
+#? VERSION
+#?      @(#) M>ÿV 1.2 24/06/06 00:58:48
+#?
+#? AUTHOR
+#?      04-jun-24 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.testssl.wolfssl    := 1.2
+#_MYSELF                 := $(firstword $(MAKEFILE_LIST))
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+# for description of available variables please see: make vars
+
+TESTSSL.vm.configure.wolfssl    = --prefix=$(TESTSSL.home) --enable-all
+
+# define setting per brand (type) of SSL-/TLS-server (use brand's default)
+wolfssl-%:            TESTSSL.vm.type       = wolfssl
+wolfssl-%:            TESTSSL.vm.port       = 11111
+wolfssl-%:            TESTSSL.vm.packages  += $(TESTSSL.vm.apk.packages)
+wolfssl-%:            TESTSSL.vm.configure += $(TESTSSL.vm.configure.wolfssl)
+# TODO: .configure option need to be optimized (currently from openssl)
+wolfssl-%:            TESTSSL.vm.client     = client
+wolfssl-%:            TESTSSL.vm.client.help= --help
+wolfssl-%:            TESTSSL.vm.server.help= --help
+wolfssl-%:            TESTSSL.vm.server.dtls= server -p $(TESTSSL.vm.port) -i -x -v 3 -dtls
+wolfssl-%:            TESTSSL.vm.server.tls = server
+wolfssl-%:            TESTSSL.vm.server.args= -p $(TESTSSL.vm.port) -i -x -v 1 -v 2 -v 3 -v 4
+#                     -S $(TESTSSL.vm.hostname)
+# je einen Testserver:
+#	-M          Allow Secure Renegotiation
+#	-m          Force Server Initiated Secure Renegotiation
+# for Debugging:
+#	-x          Print server errors but do not close connection
+
+# wolfssl's tarball name have differnent suffix
+wolfssl-%-build-n:    TESTSSL.vm.src.suffix = -stable.tar.gz
+wolfssl-%-build:      TESTSSL.vm.src.suffix = -stable.tar.gz
+
+# SHA1 checksums for some tarballs:
+TESTSSL.sig.wolfssl-3.15.3 = db52169fd00825c55d6f8a66a01fe9f793e2a290
+TESTSSL.sig.wolfssl-4.3.0  = 4174af818c9900ece2ad725bf0882f008a1aceb9
+TESTSSL.sig.wolfssl-4.7.0  = d9f99ac451b2f063ddb80d9661afbe0063bfc169
+TESTSSL.sig.wolfssl-5.1.0  = 28ee16cd404795e1ce77456d762e46278f68f533
+TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
+TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
+TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
+
+# sometimes ./autogen.sh does not exist, call is if available only
+TESTSSL.vm.build.compile.wolfssl = \
+	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
+	./configure $(TESTSSL.vm.configure) && \\ $(_NL)\
+	make
+
+TESTSSL.vm.build.install.wolfssl = \
+	mv examples/echoclient/.libs/echoclient $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/echoserver/.libs/echoserver $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/client/.libs/client         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/server/.libs/server         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/.libs/sctp-client-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/.libs/sctp-server-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/sctp/sctp-client            $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv examples/pem/.libs/pem               $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv src/.libs/libwolfssl.so*             $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv certs/ $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	ln -s     $(TESTSSL.vm.home)/bin/certs /certs
+# TODO: wolfssl-5.5.4 (and probably older one) miss:
+#    examples/sctp/.libs/sctp-client-dtls examples/sctp/.libs/sctp-server-dtls
+#    examples/sctp/sctp-client examples/pem/.libs/pem
+# forces error message vor mv above, not critical
+
+# optional
+TESTSSL.vm.build.testing.wolfssl = \
+	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
+	$(TESTSSL.vm.client) -e|tr ':' ' ' | wc -l ; \\ $(_NL)\
+	$(TESTSSL.vm.client) -e
+
+#_____________________________________________________________________________
+#________________________________________ private targets, not fully tested __|
+
+# NOTE: only pattern rules are alliwed, the first explizit target will become
+# the first target in the parent too, usually not wanted ...
+# Mbed TLS uses different executables for TLS and DTLS
+
