@@ -1,0 +1,877 @@
+#!/usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile.testssl    - building VM with SSL-/TLS-server for testing
+#?
+#? OVERVIEW
+#?      The goal of this Makefile is to provide targets  - used like commands -
+#?      for ease handling of various kinds of SSL-TLS-servers and -clients.
+#?      For example to start a server:
+#?           make mbedtls-run
+#?
+#?      For a complete list of targets, please see section  TARGETS  at end.
+#?
+#? DESCRIPTION
+#?      The build target herein creates  a minimal docker image with the server
+#?      and the client. The build targets do all the configuration and cleanup.
+#?
+#?      Target names contain the commands provided by docker, for example:
+#?          build, rmi, run, inspect, ...
+#?      Scheme for target name is as follows:
+#?          BRAND-VERSION-CMD
+#?      which means:
+#?          BRAND   - the type or vendor of the tool
+#?          VERSION - the version of the tool installed in the docker image
+#?          CMD     - the command to be performed
+#?      For example:
+#?          mbedtls-3.0.0p1-run
+#?          wolfssl-5.6.6-build
+#?          wolfssl-4.3.0-rmi
+#?
+#?      All targets print the finally used docker command-line,  so C&P can be
+#?      used easily for further private adaptions.
+#?
+#? TARGETS
+#?      Please see at end.
+#?
+#? EXAMPLES
+#?          make mbedtls-2.28.8-build
+#?          make mbedtls-2.28.8-runtls
+#?          make wolfssl-4.3.0-rmi
+#?          make wolfssl-4.7.0-inspect
+#?          make wolfssl-4.7.0-help
+#?          make wolfssl-5.6.6-run
+#?
+#? CONFIGURATION
+#?      All configuration for building or running is done with make variables.
+#?      The variables are:
+#?          TESTSSL.host.copy       - directory on hosts to copy data for build
+#?          TESTSSL.host.port       - listening port on host connect to server
+#?          TESTSSL.vm.from         - base context (OS) to be used for build
+#?          TESTSSL.vm.tmp          - temporary directory during build
+#?          TESTSSL.vm.type         - type of the server (usually the vendor)
+#?          TESTSSL.vm.user         - user to be used for executing commands
+#?          TESTSSL.vm.home         - user's home directory
+#?          TESTSSL.vm.port         - listening port of the server in the image
+#?          TESTSSL.vm.hostname     - hostname of the image
+#?          TESTSSL.vm.client       - client program to be started
+#?          TESTSSL.vm.client.help  - client's argument to show its help
+#?          TESTSSL.vm.server.dtls  - client program to be started for DTLS
+#?          TESTSSL.vm.server.tls   - server program to be started for TLS
+#?          TESTSSL.vm.server.args  - additional arguments to start server
+#?          TESTSSL.vm.server.help  - server's rgument to show its help
+#?          TESTSSL.vm.src.suffix   - filname suffix of the tarball in build
+#?          TESTSSL.vm.src.tar      - complete filename of the tarball
+#?          TESTSSL.vm.src.url      - URL of the tarball
+#?          TESTSSL.vm.src.sig      - SHA1 signature of the tarball
+#?          TESTSSL.vm.packages     - packages required for building the server
+#?          TESTSSL.vm.configure    - arguments for "configure" command
+#?          TESTSSL.vm.apk.packages - required packages for apk (alpine)
+#?          TESTSSL.vm.apt.packages - required packages for apt (debian)
+#?          TESTSSL.vm.configure.openssl - arguments for "configure" command
+#?
+#?      Any variable defined on the command-line will  overwrite the default or
+#?      computed value.
+#?
+#?      Following variables must be configure for each image:
+#?          TESTSSL.vm.type         TESTSSL.vm.port
+#?          TESTSSL.vm.packages     TESTSSL.vm.configure
+#?          TESTSSL.vm.client       TESTSSL.vm.client.help
+#?          TESTSSL.vm.server.dtls  TESTSSL.vm.server.tls
+#?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
+#?
+#?      Most others are computed based on these settings.
+#?
+#?      To see the configured and computed values, use following target:
+#?          make dummy-build-v
+#?
+#?      The port number of the listening port on the host and the exported port
+#?      are identical by default. No check is (can be) done. All ports can be
+#?      set with make environment variable:
+#?          TESTSSL.host.port      - listening port on the host
+#?          TESTSSL.vm.port        - exported port of the server in the VM
+#?
+#?   TODO currently (5/2024) only TESTSSL.vm.server = TESTSSL.vm.server.tls is
+#?        supported, TESTSSL.vm.server.dtls needs to be implemented.
+#?
+#?      This Makefile contains some configurations for wolfssl and mbedtls.
+# ?
+# ? TODO Dockerfile
+# ?      Instead of a tarball a Dockerfile can be used as context for docker build.
+# ?      Therefore set  TESTSSL.vm.dockerfile  on command-line to the name of the
+# ?      Dockerfile. It must be found in the directory specified with  TESTSSL.vm.tmp
+# ?      Example:
+# ?          make mytls-42.42-build TESTSSL.vm.dockerfile=Dockerfile.mytls
+#?
+#? ALIASES
+#?      The primary targets are named like the commands for docker:
+#?          build inspect kill run rmi
+#?
+#?      Other people, other opinions, other likings. Following aliases exist:
+#?
+#?          (docker) command    alias name
+#?          -------------------+-------------
+#?          build               create
+#?          rmi                 delete remove
+#?          run                 start
+#?          kill                stop
+#?          inspect             info
+#?          run /bin/sh         shell
+#?          - - - - - - - - - -+- - - - - - -
+#?          shell --user <user> user
+#?          shell --user root   root
+#?          -------------------+-------------
+#?
+#?      Alias means that (for example) following targets are identical:
+#?          make mytls-42.42-run
+#?          make mytls-42.42-start
+# ? TODO currently (5/2024) create-n and create-v are not implemented.
+#?
+#?      Keep in mind that docker's "start" and "stop" have different behaviour.
+#?
+#? LIMITATIONS
+#?   hostname
+#?      During build of the SSL-server, a hostname is set in the build image.
+#?      Unfortunately docker overwrites the hostname setting at end of each RUN
+#?      command. To use a hostname, the image are started like:
+#?          docker run --rm ... --hostname testssl image
+#?
+#?   Ports
+#?      All port numbers used for SSL-servers must be >1024  because the docker
+#?      image runs as a dedicated user and not as user root.
+#?
+#?   Version numbers
+#?      Many targetnames use a version number of the server to be build.  These 
+#?      numbers are assumed to be in format  1.42.23  (or alike), means that it
+#?      consist of numbers, latin letters and the dot character only.  The dash
+#?      character must not be part of such a version number, because dashes are
+#?      used in the naming scheme of targets (see above).
+#?
+#?   -n --dry-run
+#?      Using the  --dry-run option to inspect the executed commands may return
+#?      a clumsy result (means hard to read for humans).  Following can be used
+#?      as workaround (example):
+#?          make wolfssl-5.6.6-build-n
+#?          make wolfssl-5.6.6-build -n | sed -e 's/\\\\012/\n/g' -e 's/\\\\/\\/g'
+#?
+#?   Arguments
+#?      Due to the nature of make, it is difficult (or even impossible) to pass
+#?      user-defined arguments to the command executed in a target. Reasons are
+#?      that make
+#?          * uses all arguments starting with - as option itself
+#?          * uses arguments containing = as defnition of a make variable
+#?          * uses all other arguments as target
+#?
+#?      Following workarounds are can be used to pass own arguments:
+#?          make testssl-client TESTSSL.args="any -option argument key=val"
+#?          make testssl-client --           "any -option argument key=val"
+#?
+#? PREREQUISITES
+#?      GNU Make, awk, sed, sha1sum, tr, wc
+#?
+#? TERMINOLOGY
+#?      This documentation uses % as wildcard in target names, and it uses * as
+#?      wildcard for filenames.
+#?      Simply use "client" when we mean the tools for "SSL-/TLS-client".
+#?      Simply use "server" when we mean the tools for "SSL-/TLS-server".
+#?      "docker" is used when the executable "docker" or "docker-cli" is meant.
+#?      "Docker" is used when refering to the tool, system of docker.
+#?
+# TODO
+#       List of feature, likes, etc. to be done in future:
+#
+#       * implement using files from https:/// or using git
+#       * implement checksum for files from http:...
+#       * implement %.dtls targets
+#       * wolfssl: use own instead of $TESTSSL.vm.configure.openssl
+#       * currently each brand and/or version builds its own docker image,
+#         provide a mode where they are all in the same image;
+#         ** user (in /etc/passwd) is already ok, just one for each brand
+#         ** need a sub-directory for each version in TESTSSL.vm.home
+#            this will break compitibililty of older images created by this Makefile
+#         ** starting a specific version is difficult with make
+#       * provide a %-latest target which tags the "newest" image of a type
+#       * the docker container should not be removed when compiling fails
+#         (necessary to hunt problems while compiling, installing)
+#       * implement docker's  commit, export, import, pull, save
+#
+# HACKER's INFO
+#    General
+#       To achieve the goal described in  OVERVIEW  above, the targets provided
+#       in this Makefile  build or run a requested server or client in a docker
+#       image.
+#
+#       In short, the %-build targets combine following three steps:
+#           build a docker image
+#           install the server and client in this docker image
+#           start the server or client in the docker image
+#       Other targets simpla√Ω perfom something like:
+#           docker run myserver
+#
+#       In details these step may look like:
+#           create a Dockerfile && docker build --rm . --tag myserver
+#           docker run myserver && \
+#             tar xf server.tgz && ./autogen.sh && ./configure && make install
+#           docker run myserver
+#
+#       That's all.
+#       The targets herein create the image and install the SSL-/TLS-servers in
+#       in it. The targets are intended to be used as simple command to  build,
+#       start and stop the server, aswell as removing the complete image.
+#
+#       The steps to build the docker image performed herein are as follows:
+#            Configure user in docker
+#            Prepare build system
+#            Extract tool source
+#            Compile executables
+#            Install executables
+#            Install executables
+#            List installation
+#
+#       Each step is labled, like:
+#            #[TESTSSL]#===== Compile executables
+#
+#    Nested scripting syntax
+#       TBD
+#
+#    Naming scheme for targets
+#       The naming scheme for the docker targets uses  -  as seperator, not . .
+#       Reason is that the targets contain the version numbers of the server to
+#       be build. Such version numbers are most likely of the form  1.42  which
+#       would make extracting proper parts of the target name, for example with
+#       make's  %  in pattern rules, difficult.
+#
+#       The shell command to be used in Docker's RUN statement are not inclosed
+#       in double quotes "" in the definition of the make variable. This avoids
+#       escaping some meta-characters like # ) < > $  in the definition.
+#
+#    Alpine
+#       The alpine base image uses busybox as shell. This avoids adding special
+#       packages like coreutils, util-linux, etc.
+#
+#    BusyBox
+#       BusyBox is a multi-call binary and contains many common UNIX utilities.
+#       It describes itself as "Swiss Army Knife of Embedded Linux" but it is a
+#       beast too. Some notes, traps, etc.:
+#
+#       * .ash_history
+#         By default it uses the shell's history and it stores used commands in
+#         the users $HOME/.ash_history .  BusyBox's documentation (man in 2024)
+#         does not mention it. There's also no information in the man-page that
+#         ash is used as shell.
+#         Knowing this, it's no suprise that the environment variables HISTFILE
+#         and HISTFILESIZE are also not mentioned.
+#         Anyway, in our use case, the history is not important.  The generated
+#         history file vanishes when the container is closed (removed). There's
+#         no avoid history persistence, for example with:
+#           echo "HISTFILESIZE=1" >> /etc/profile
+#
+#    Checksum
+#       The general method for testing checksums is:
+#           echo "sha-sum-here name-of-file-to-be-checked" | sha1sum -c -
+#       Depending on the platform and/or version of sha1sum,  there must be one
+#       or two blanks  between the checksum left, and the filename right.  Some
+#       sha1sum  allow one or more blanks. Hence we use exactly two blanks.
+#
+#    Docker
+#       Some notes about functionality and terms used/implemented by docker.
+#
+#       * .dockerignore
+#         Docker documentation claims that the system-wide file and the file in
+#         in the root of the build context are always used.
+#         No special checks are done here. Beware of side effects!
+#         
+#    GNU Make
+#       If the dependency of a pattern rules is just another (pattern) rule, it
+#       must also have at least one command in its recipe.
+#       A simple emtpy "echo" is used here (see definition of alias targets).
+#
+#    GNU Make arguments
+#       See section Arguments above also.
+#       Take care that depending on your shell, some meta-characters part of an
+#       argument need to be properly escaped (for example spaces, quotes).
+#       Even with these workarounds, make may decide to use arguments itself.
+#       For testing correct argument interpretation,  -args  can be appended to
+#       any targetname. The target prints the passed arguments and does nothing
+#       else. For example:
+#           make my-1.1-build-args --                   'key=val    --opt arg'
+#           make my-1.1-build-args --      args='strange key=va" "l --opt arg'
+#           make my-1.1-build-args --           'wrong   key=va" "l --opt arg'
+#       and note the difference to:
+#           make my-1.1-build-args         args='strange key=va" "l --opt arg'
+#           make my-1.1-build-args TESTSSL.args='strange key=va" "l --opt arg'
+# 
+#       It's GNU Make, name it feature or trap ;-)
+#         
+#    Image sizes
+#       Sometimes it is difficult to identify the source of an unexpected image
+#       (big) size.  Reason may be missing to purge unused packages  or failure
+#       when removing the build artefacts (for example remains of make).
+#       For debugging sizes in the image following command can be used, it must
+#       be added manually to the build stages:
+#           du -h /|awk -F/ '(2==NF){print}'
+#?
+#? VERSION
+#?      @(#) ûÁ\d 1.1 24/06/05 02:57:35
+#?
+#? AUTHOR
+#?      24-mai-24 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.testssl       := 1.1
+_MYSELF            := $(firstword $(MAKEFILE_LIST))
+
+# for user-defined arguments, see description in section LIMITATIONS above
+# following must be defered definition with = not :=
+#TESTSSL.args        = $(wordlist 2,$(words $(MAKEFLAGS)),$(MAKEFLAGS))
+TESTSSL.args        = $(subst ^-- ,,$(wordlist 2,$(words $(MAKEFLAGS)),$(MAKEFLAGS)))
+
+first-testssl-target-is-default: help
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ help __|
+
+# return values of all make variables matching $1; returns pretty printed text
+# topmost \ necessary to avoid superfluous spaces
+# take care for the space is $(subst ...)
+define _TESTSSL.get-values
+	\
+        $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+                $(subst $1,,   $(_t))\t- $($(_t))$(_NL)\
+        )
+endef
+
+HELP-help   = print this text; help for file '$(_MYSELF)'
+help::
+	@sed -ne '/^#?/s/#?//p' $(_MYSELF)
+	@echo " TARGETS"
+	@echo "      List of available targets. The '%' in pattern rule targets '%-NAME'"
+	@echo "      must be replaced by any valid tag, see section EXAMPLES  above."
+	@echo "$(call _TESTSSL.get-values,HELP-)"
+	@echo "$(HELP_examples)"
+.PHONY: help
+
+# target for testing passed arguments; always fails to avoid execution of other targets
+%-args:
+	@echo "# arguments to be passed to commands in target '$(subst -args,,$(MAKECMDGOALS))':"
+	@echo "MAKEFLAGS\t= $(MAKEFLAGS)"
+	@echo "TESTSSL.args\t= $(TESTSSL.args)"
+	@false
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TESTSSL.vm.source  ?= file
+# TODO             or: http git tar
+
+# define defaults (if not passed via make command-line or environment)
+TESTSSL.label       = TESTSSL
+TESTSSL.host.port  ?= 42443
+TESTSSL.host.copy  ?= t.docker
+TESTSSL.vm.tmp     ?= /tmp_src
+TESTSSL.vm.from    ?= alpine:3.20
+TESTSSL.vm.type    ?=  testssl
+TESTSSL.vm.user    ?=  testssl
+TESTSSL.vm.home    ?= /testssl
+TESTSSL.vm.port    ?= 3443
+TESTSSL.vm.hostname ?= testssl
+TESTSSL.vm.client   =
+TESTSSL.vm.client.help  =
+TESTSSL.vm.server.dtls  =
+TESTSSL.vm.server.tls   =
+TESTSSL.vm.server.args  =
+TESTSSL.vm.server.help  =
+TESTSSL.vm.src.suffix   = .tar.gz
+TESTSSL.vm.src.tar ?=  testssl.tgz
+TESTSSL.vm.src.url ?=  http://demo/testssl.tgz
+TESTSSL.vm.src.sig ?=  undef
+#       this filename checksum will be computed for %-build targets only
+#       (due to GNU Make's limitations with $*)
+TESTSSL.vm.packages =
+TESTSSL.vm.configure=
+TESTSSL.vm.apk.packages ?= gcc make automake autoconf musl-dev libtool util-linux-misc zlib-dev git
+TESTSSL.vm.apt.packages ?= gcc make zlib1g-dev git
+TESTSSL.vm.configure.openssl =\
+	--prefix=$(TESTSSL.home)        --enable-static \
+	--disable-option-checking       \
+	--enable-rng    --with-libz     \
+	--enable-sslv3  --enable-dtls   \
+	--enable-tlsv10 --enable-tlsv12 --enable-tls13  --enable-oldtls \
+	--enable-tls13-draft18  --enable-tls13-draft22  --enable-tls13-draft23 \
+	--enable-tls13-draft26  --enable-tls13-draft28  \
+	--enable-aescbc --enable-aesccm --enable-aesgcm --enable-aesctr \
+	--enable-aescfb --enable-aesni  \
+	--enable-md2    --enable-md4    --enable-md5    \
+	--enable-sha2   --enable-sha3   --enable-sha224 --enable-sha512 \
+	--enable-cmac   --enable-dsa    --enable-des3   --enable-dh     \
+	--enable-ecc    --enable-ecccustcurves  --enable-eccshamir      \
+	--enable-ecccustcurves  --enable-eccshamir      --enable-ecc    \
+	--enable-eccencrypt     --enable-curve25519     --enable-ed25519 \
+	--enable-supportedcurves        --enable-fpecc  --enable-compkey \
+	--enable-hkdf   --enable-arc4   --enable-psk    --enable-sep    \
+	--enable-blake2 --enable-ripemd --enable-camellia --enable-x963kdf \
+	--enable-rabbit --enable-hc128  --enable-anon   --enable-nullcipher \
+	--enable-idea   --enable-chacha --enable-poly1305 \
+	--enable-alpn   --enable-sni    --enable-crl    --enable-truncatedhmac \
+	--enable-mcast  --enable-sctp   --enable-srp    \
+	--enable-rsa    --enable-rsapss --enable-xts    \
+	--enable-coding --enable-base16 --enable-base64encode \
+	--enable-enckeys --enable-oldnames --enable-errorstrings \
+	--enable-ocsp   --enable-ocspstapling   --enable-ocspstapling2  \
+	--enable-tlsx   --enable-session-ticket --enable-extended-master \
+	--enable-secure-renegotiation \
+	--enable-opensslall --enable-opensslextra \
+	--enable-lighty --enable-webclient --enable-earlydata
+
+# define setting per brand (type) of SSL-/TLS-server (use brand's default)
+mbedtls-%:            TESTSSL.vm.type       = mbedtls
+mbedtls-%:            TESTSSL.vm.port       = 4433
+mbedtls-%:            TESTSSL.vm.packages  += gcc make musl-dev zlib-dev git
+mbedtls-%:            TESTSSL.vm.client     = ssl_client
+mbedtls-%:            TESTSSL.vm.client.help= help
+mbedtls-%:            TESTSSL.vm.server.help= help
+mbedtls-%:            TESTSSL.vm.server.dtls= dssl_server  server_port=$(TESTSSL.vm.port) force_version=dtls1_2
+mbedtls-%:            TESTSSL.vm.server.tls = ssl_server
+mbedtls-%:            TESTSSL.vm.server.args= server_port=$(TESTSSL.vm.port)
+# TODO: mbedtls-3.0.0p1-build: TESTSSL.vm.context  = $(O-USR.dir)/Dockerfile.mbedtls
+
+openssl-%:            TESTSSL.vm.type       = openssl
+openssl-%:            TESTSSL.vm.port       = 4443
+
+wolfssl-%:            TESTSSL.vm.type       = wolfssl
+wolfssl-%:            TESTSSL.vm.port       = 11111
+wolfssl-%:            TESTSSL.vm.packages  += $(TESTSSL.vm.apk.packages)
+wolfssl-%:            TESTSSL.vm.configure  = $(TESTSSL.vm.configure.openssl)
+# TODO: .configure option need to be optimized (currently from openssl)
+wolfssl-%:            TESTSSL.vm.client     = client
+wolfssl-%:            TESTSSL.vm.client.help= --help
+wolfssl-%:            TESTSSL.vm.server.help= --help
+wolfssl-%:            TESTSSL.vm.server.dtls= server -p $(TESTSSL.vm.port) -i -x -v 3 -dtls
+wolfssl-%:            TESTSSL.vm.server.tls = server
+wolfssl-%:            TESTSSL.vm.server.args= -p $(TESTSSL.vm.port) -i -x -v 1 -v 2 -v 3 -v 4
+#                     -S $(TESTSSL.vm.hostname)
+# je einen Testserver:
+#	-M          Allow Secure Renegotiation
+#	-m          Force Server Initiated Secure Renegotiation
+# for Debugging:
+#	-x          Print server errors but do not close connection
+
+# wolfssl's tarball name have differnent suffix
+wolfssl-%-build-n:    TESTSSL.vm.src.suffix = -stable.tar.gz
+wolfssl-%-build:      TESTSSL.vm.src.suffix = -stable.tar.gz
+
+# now get name and checksum of tarball, needed for %-build target only
+%-build-n:            TESTSSL.vm.src.tar    = $(*)$(TESTSSL.vm.src.suffix)
+%-build:              TESTSSL.vm.src.tar    = $(*)$(TESTSSL.vm.src.suffix)
+%-build-n:            TESTSSL.vm.src.url    = TODO
+%-build:              TESTSSL.vm.src.url    = TODO
+%-build-n:            TESTSSL.vm.src.sig    = $(TESTSSL.sig.$(*))
+%-build:              TESTSSL.vm.src.sig    = $(TESTSSL.sig.$(*))
+
+# settings done automatically (but can be done with make environment)
+TESTSSL.host.port   = $(TESTSSL.vm.port)
+TESTSSL.vm.hostname = $(TESTSSL.vm.type)
+TESTSSL.vm.user     = $(TESTSSL.vm.type)
+TESTSSL.vm.home     = /$(TESTSSL.vm.type)
+TESTSSL.vm.image    = $(TESTSSL.vm.type)
+TESTSSL.vm.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
+TESTSSL.vm.context  = $(TESTSSL.vm.build.context) $(TESTSSL.vm.build.server)
+TESTSSL.vm.help     = $(TESTSSL.vm.server.help)
+# use TLS as default server; may change in future
+TESTSSL.vm.server   = $(TESTSSL.vm.server.tls)
+# distingush client and server
+# note that suffix is .client instead of -client because latter would tricker %-client
+# this may change in future
+%-help.client:        TESTSSL.vm.help   = $(TESTSSL.vm.client)
+%-help.client:        TESTSSL.args      = $(TESTSSL.vm.client.help)
+%-help.server:        TESTSSL.vm.help   = $(TESTSSL.vm.server)
+%-help.server:        TESTSSL.args      = $(TESTSSL.vm.server.help)
+# dirty hacks for mbedtls :-(standard tools have no help option)-:
+mbedtls%-help.client: TESTSSL.vm.help   = $(TESTSSL.vm.client)2
+mbedtls%-help.server: TESTSSL.vm.help   = $(TESTSSL.vm.server)2
+
+TESTSSL.vm.ALL  =\
+	TESTSSL.vm.type    \
+	TESTSSL.host.port  \
+	TESTSSL.host.copy  \
+	TESTSSL.vm.from    \
+	TESTSSL.vm.tmp     \
+	TESTSSL.vm.user    \
+	TESTSSL.vm.home    \
+	TESTSSL.vm.image   \
+	TESTSSL.vm.port    \
+	TESTSSL.vm.client  \
+	TESTSSL.vm.client.help \
+	TESTSSL.vm.server.dtls \
+	TESTSSL.vm.server.tls  \
+	TESTSSL.vm.server.help \
+	TESTSSL.vm.server.args \
+	TESTSSL.vm.server  \
+	TESTSSL.vm.hostname\
+	TESTSSL.vm.packages\
+	TESTSSL.vm.dockerfile\
+	TESTSSL.vm.src.suffix\
+	TESTSSL.vm.src.tar \
+	TESTSSL.vm.src.url \
+	TESTSSL.vm.src.sig \
+	TESTSSL.vm.configure
+# TESTSSL.vm.context  not part of TESTSSL.vm.ALL; printed individually
+
+# SHA1 checksums for some tarballs:
+TESTSSL.sig.mbedtls-2.28.8 = 269c05f41ad53cc153c00b6506d16ac11727ebab
+TESTSSL.sig.mbedtls-2.7.8  = 0e8963cc159cb19c75ad51c4dfb9514b64daba97
+TESTSSL.sig.mbedtls-3.6.0  = 1175837831ac32c5f26c4113ea1a946db4822557
+TESTSSL.sig.wolfssl-3.15.3 = db52169fd00825c55d6f8a66a01fe9f793e2a290
+TESTSSL.sig.wolfssl-4.3.0  = 4174af818c9900ece2ad725bf0882f008a1aceb9
+TESTSSL.sig.wolfssl-4.7.0  = d9f99ac451b2f063ddb80d9661afbe0063bfc169
+TESTSSL.sig.wolfssl-5.1.0  = 28ee16cd404795e1ce77456d762e46278f68f533
+TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
+TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
+TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
+
+define testssl-print-config
+    $(foreach _arg, $(TESTSSL.vm.ALL), "# $(_arg)\t= $($(_arg))\n" )
+endef
+
+EXE.docker         := docker
+EXE.podman         := podman
+EXE.trace_target    = echo "\\012\#\# $@: $(^)"
+
+_NL    ?= \\012
+_TAB   ?= \\009
+
+#_____________________________________________________________________________
+#___________________________________________________ defines, code snippets __|
+
+# Variables for (shell-)commands run inside docker's build.
+# The definitions contain $(_NL) at end of each line, which is a contribution
+# to GNU Make.
+# No possibility found to avoid docker's warning (5/2024: not criticial):
+#       [WARNING]: Empty continuation line found in
+# Note that variables in following defines are make variables, not those of the
+# docker context, hence they're enclosed in round () and not curly {} brackets.
+
+# do not use quotes, as they are printed; probably because $1 contains them
+define _TESTSSL.echo
+echo \#[TESTSSL]\#===== $1
+endef
+
+define _TESTSSL.trace
+  [ -n "$(TESTSSL.trace)" ] && set -x || true
+endef
+
+define _TESTSSL.gen-by
+#{ generated by $1 from $(_MYSELF.testssl)
+endef
+
+define _TESTSSL.vm.get._tag
+$(eval _tag=$(shell echo $(*)|tr '-' ':'))
+endef
+
+define _TESTSSL.hint
+echo "#[TESTSSL]# consider calling:"
+echo "#[TESTSSL]#    'docker container prune' and/or 'docker system prune'"
+endef
+
+TESTSSL.vm.build.adduser = $(_NL)\
+	$(call _TESTSSL.echo,"Configure user in docker") ; \\ $(_NL)\
+	_gecos='$(TESTSSL.vm.type) server user'    ; \\ $(_NL)\
+	case '$(TESTSSL.vm.from)' in                 \\ $(_NL)\
+	  alpine*) \\ $(_NL)\
+		adduser -D -g \"\$$_gecos\" -h $(TESTSSL.vm.home) $(TESTSSL.vm.user) ; ;; \\ $(_NL)\
+	  *)       \\ $(_NL)\
+		adduser --quiet --home $(TESTSSL.vm.home) $(TESTSSL.vm.user) ; \\ $(_NL)\
+		passwd  --delete $(TESTSSL.vm.user) \; \\ $(_NL)\
+		;; \\ $(_NL)\
+	esac
+# TODO: alpine:  adduser -g "$_gecos"
+# TODO: debian:  adduser --comment "$_gecos"
+#	grep $(TESTSSL.vm.user) /etc/passwd $(_NL)\#
+
+TESTSSL.vm.build.hostname = $(_NL)\
+	echo '127.0.0.1 $(TESTSSL.vm.hostname)' \> /etc/hosts \; \
+	echo '$(TESTSSL.vm.hostname)' \> /etc/hostname
+
+TESTSSL.vm.build.package = \
+	$(call _TESTSSL.echo,"Prepare build system"); \\ $(_NL)\
+	apk  add --no-cache $(TESTSSL.vm.packages)
+
+TESTSSL.vm.build.cleanup = \
+	$(call _TESTSSL.echo,"Cleanup")            ; \\ $(_NL)\
+	apk  del --purge $(TESTSSL.vm.packages)    ; \\ $(_NL)\
+	rm   -rf $(TESTSSL.vm.tmp) && echo "\# $(TESTSSL.vm.tmp) removed."
+
+TESTSSL.vm.build.getpack = \
+	$(call _TESTSSL.echo,"Extract tool source"); \\ $(_NL)\
+	cd $(TESTSSL.vm.tmp)              && \\ $(_NL)\
+	_dir=\`tar tvf $(TESTSSL.vm.src.tar) | awk '(1==NR){print \$$NF}'\` && \\ $(_NL)\
+	echo \"$(TESTSSL.vm.src.sig)  $(TESTSSL.vm.src.tar)\" \
+		| sha1sum -c -            && \\ $(_NL)\
+	tar xf $(TESTSSL.vm.src.tar)      && \\ $(_NL)\
+	cd   \"\$$_dir\" && pwd && ls -l
+
+TESTSSL.vm.build.compile.mbedtls = \
+	make no_test
+
+TESTSSL.vm.build.compile.wolfssl = \
+	./autogen.sh && \\ $(_NL)\
+	./configure $(TESTSSL.vm.configure) && \\ $(_NL)\
+	make
+
+TESTSSL.vm.build.compile = \
+	$(call _TESTSSL.echo,"Compile executables"); \\ $(_NL)\
+	pwd          && \\ $(_NL)\
+	$(TESTSSL.vm.build.compile.$(TESTSSL.vm.type))
+
+# manuall installation keeps the original names of the executables, no mbedtls_ prefix
+TESTSSL.vm.build.install.mbedtls = \
+        mv programs/ssl/*client     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+        mv programs/ssl/*client2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+        mv programs/ssl/*server     $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+        mv programs/ssl/*server2    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+        mv programs/ssl/ssl*info    $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
+        mv library/lib*             $(TESTSSL.vm.home)/bin/
+
+TESTSSL.vm.build.install.wolfssl = \
+        mv examples/echoclient/.libs/echoclient $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/echoserver/.libs/echoserver $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/client/.libs/client         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/server/.libs/server         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/sctp/.libs/sctp-client-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/sctp/.libs/sctp-server-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/sctp/sctp-client            $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv examples/pem/.libs/pem               $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv src/.libs/libwolfssl.so*             $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        mv certs/ $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+        ln -s     $(TESTSSL.vm.home)/bin/certs /certs
+
+TESTSSL.vm.build.install = \
+	$(call _TESTSSL.echo,"Install executables"); \\ $(_NL)\
+	pwd          && \\ $(_NL)\
+        mkdir $(TESTSSL.vm.home)/bin/             && \\ $(_NL)\
+	$(TESTSSL.vm.build.install.$(TESTSSL.vm.type))
+
+# TODO:
+#	$(if $(value $(TESTSSL.vm.build.install.$(TESTSSL.vm.type))),, \\ $(_NL)\
+#	  $(TESTSSL.vm.build.install.$(TESTSSL.vm.type)) true)
+
+# optional
+TESTSSL.vm.build.testing.mbedtls = \
+	echo '\# mbedtls client does not list cipher suites'
+TESTSSL.vm.build.testing.wolfssl = \
+	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
+        $(TESTSSL.vm.client) -e|tr ':' ' ' | wc -l ; \\ $(_NL)\
+        $(TESTSSL.vm.client) -e
+TESTSSL.vm.build.testing = \
+	$(call _TESTSSL.echo,"List installation")  ; \\ $(_NL)\
+	echo "PATH=\$$PATH"                        ; \\ $(_NL)\
+        cd        $(TESTSSL.vm.home)/bin  ; pwd    ; \\ $(_NL)\
+        ls -l     $(TESTSSL.vm.home)/bin/          ; \\ $(_NL)\
+	$(TESTSSL.vm.build.testing.$(TESTSSL.vm.type)) ; \\ $(_NL)\
+	true
+
+# The generated context does not use "buildargs", anything is hardcoded.
+# COPY only copies the tarball; take care: $PATH is that from the image!
+TESTSSL.vm.build.context = $(_NL)\
+$(_TESTSSL.vm.get._tag) $(_NL)\
+$(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
+\# syntax=docker/dockerfile:1 $(_NL)\
+FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
+COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
+        $(_NL)\
+LABEL	VERSION='1.1'                           $(_NL)\
+LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
+        $(_NL)\
+RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
+        $(_NL)\
+WORKDIR $(TESTSSL.vm.tmp)                       $(_NL)\
+        $(_NL)\
+\#}
+
+# .testing and .cleanup are not critical, hence no "||exit 1"
+# others will force an error, so the remaining system can be inspected later
+TESTSSL.vm.build.server = $(_NL)\
+$(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
+FROM	testos AS $(*)             $(_NL)\
+        $(_NL)\
+LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
+LABEL	VERSION='1.1'                           $(_NL)\
+LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
+LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
+ENV	TERM            xterm                   $(_NL)\
+ENV	TESTSSL_DIR     /$(TESTSSL.vm.type)     $(_NL)\
+ENV	LD_RUN_PATH     /$(TESTSSL.vm.type)/bin $(_NL)\
+ENV	LD_LIBRARY_PATH /$(TESTSSL.vm.type)/bin $(_NL)\
+ENV	PATH    /$(TESTSSL.vm.type)/bin:\$$PATH $(_NL)\
+        $(_NL)\
+USER	root $(_NL)\
+RUN \\\
+    $(call _TESTSSL.trace)       ; \\   $(_NL)\
+    $(TESTSSL.vm.build.package) || exit 1 && \\ $(_NL)\
+    $(TESTSSL.vm.build.getpack) || exit 1 && \\ $(_NL)\
+    $(TESTSSL.vm.build.compile) || exit 1 && \\ $(_NL)\
+    $(TESTSSL.vm.build.install) || exit 1 && \\ $(_NL)\
+    $(TESTSSL.vm.build.testing)  ; \\   $(_NL)\
+    $(TESTSSL.vm.build.cleanup)         $(_NL)\
+        $(_NL)\
+WORKDIR	$(TESTSSL.vm.home)              $(_NL)\
+ENTRYPOINT "$(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)" $(_NL)\
+CMD	"$(TESTSSL.vm.client)"          $(_NL)\
+EXPOSE	$(TESTSSL.vm.port)/tcp          $(_NL)\
+EXPOSE	$(TESTSSL.vm.port)/udp          $(_NL)\
+        $(_NL)\
+USER	$(TESTSSL.vm.user)              $(_NL)\
+\#}
+
+# bug? need an empty line before the last USER statement in context above,
+# otherwise the line "USER user" will be added to the CMD; reason unknown
+
+# TODO: ENTRYPOINT and CMD should use a JSSON array instead of a string
+#       (see docker's documentation)
+
+# TODO: not used in TESTSSL.vm.build.server :
+#   $(TESTSSL.vm.build.hostname)   &&
+#       because docker does not set support hostnames
+
+#_____________________________________________________________________________
+#__________________________________________________________________ targets __|
+
+HELP-%-build-n= show context for building docker image$(_NL)\t\t   (like 'make %-build -n' but pretty printed)
+%-build-n:
+	@$(_TESTSSL.vm.get._tag)
+	@echo $(testssl-print-config)
+	@echo "# context used with '$(EXE.docker) build --rm --force-rm . --tag $(_tag)'"
+	@echo "$(TESTSSL.vm.context)"
+
+HELP-%-build  = build docker image '%' form '$(SRC.mbedtls.dockerfile)'
+HELP-%-build-v= same as %-build but use shell's \"set -x\" for verbose output
+%-build-v: TESTSSL.trace=1
+%-build-v: %-build
+	@echo
+#dbx# @echo "# TESTSSL.trace=$(TESTSSL.trace) $(_TESTSSL.trace)"
+%-build:
+	@$(EXE.trace_target)
+	@$(call _TESTSSL.echo,"Build docker image")
+	@$(call _TESTSSL.trace)
+	@$(_TESTSSL.vm.get._tag)
+	@echo "$(TESTSSL.vm.build.context) $(TESTSSL.vm.build.server)" \
+	   | $(EXE.docker) build --rm --force-rm -f - . --tag $(_tag)
+	@$(_TESTSSL.hint)
+	@$(call _TESTSSL.echo,"done.")
+
+HELP-%-runtls = start docker image '%' listening for  TLS
+# TODO HELP-%-rundtls= start docker image '%' listening for DTLS
+%-run:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run --rm -it \
+		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port) \
+		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port)/udp \
+		--hostname $(TESTSSL.vm.hostname) \
+		--name $(*).run --detach \
+		$(_tag) \
+		$(TESTSSL.args)
+
+HELP-%-rmi    = delete docker image '%'
+%-rmi:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) rmi `docker image ls $(_tag) -q`
+
+HELP-%-kill   = kill running container of image '%'
+%-kill:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) kill `docker ps -a --format "{{.ID}} {{.Image}}"|awk '/$(_tag)/{print $$1}'`
+
+HELP-%-inspect= inspect docker image '%'
+%-inspect:
+	$(_TESTSSL.vm.get._tag)
+	@echo TAG $(_tag)
+	$(EXE.docker) inspect $(_tag)
+
+HELP-%-shell  = give a shell in docker image '%'
+# --user is not required for common use 'cause it's already set as context USER
+# but it is required if we want to be root; to keep only one target it's always
+# used with the proper username
+%-shell:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run   --rm -it -p 4433:$(TESTSSL.vm.port) -p 4433:$(TESTSSL.vm.port)/udp --entrypoint=/bin/sh --hostname $(TESTSSL.vm.hostname) --user $(TESTSSL.vm.user) $(_tag)
+
+HELP-%-client = execute SSL-/TLS-client with given arguments in docker image '%'
+%-client:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run   --rm -it --entrypoint=$(TESTSSL.vm.client) --hostname $(TESTSSL.vm.hostname) $(_tag) $(TESTSSL.args)
+
+HELP-%-exec   = execute SSL-/TLS-client with given arguments in docker image '%'
+%-exec:
+	@echo "# TODO: target not yet working proper, need to get valid container ..."
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) exec $(_tag) $(TESTSSL.vm.client) $(TESTSSL.args)
+# TODO: exec need container-ID
+# TODO: pass other arguments ...
+
+HELP-%-help = show help of SSL-/TLS-server in docker image '%'
+%-help:
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run   --rm -it --entrypoint=$(TESTSSL.vm.help) $(_tag) $(TESTSSL.args)
+
+HELP-%-ps = just a wrapper for: 'docker ps --filter label=$(TESTSSL.label)'
+%-ps:
+	$(EXE.docker) ps --filter label=$(TESTSSL.label) 
+ps: %-ps
+	echo
+
+HELP-list  = list all docker images which have a LABEL named '$(TESTSSL.label)' (our ones, usually)
+list:
+	@echo "# tag ID\tdescription"
+	@echo "#--------------+----------------------"
+	@$(EXE.docker) ps -a --filter label=$(TESTSSL.label) --format '{{.Image}}\t{{.Label "DESCRIPTION"}}'
+	@echo "#--------------+----------------------"
+
+
+# TODO: following pattern rule get wrong $* ; seems to be a bug in GNU Make
+# wolfssl-%-build: TESTSSL.vm.image = wolfssl:$*
+
+#_____________________________________________________________________________
+#____________________________________________________________ alias targets __|
+# some aliases (GNU Make requires at least one command, grrr)
+# TODO: not yet perfect
+%-create: %-build
+	@echo
+%-delete: %-rmi
+	@echo
+%-remove: %-rmi
+	@echo
+%-start:  %-run
+	@echo
+%-stop:   %-kill
+	@echo
+%-info:   %-inspect
+	@echo
+%-user:   %-shell
+	@echo
+%-root:         TESTSSL.vm.user = root
+%-root:   %-shell
+	@echo
+HELP-%-help.client = show help of client in docker image '%'
+HELP-%-help.server = show help of server in docker image '%'
+%-help.client:  %-help
+	@echo
+%-help.server:  %-help
+	@echo
+
+# ugly hack to avoid GNU Make's "Removing intermediate files..."
+#.PRECIOUS: %-start
+.SECONDARY:
+
+#_____________________________________________________________________________
+#________________________________________ private targets, not fully tested __|
+
+# Mbed TLS uses different executables for TLS and DTLS
+mbedtls-%-rundtls:
+	@$(EXE.trace_target)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image) force_version=dtls1_2
+mbedtls-%-runtls:
+	@$(EXE.trace_target)
+	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image)
+mbedtls.run: mbedtls.runtls
+
