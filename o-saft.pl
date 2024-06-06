@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.54 24/05/30 19:03:08"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.55 24/06/07 01:10:55"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -415,7 +415,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.54"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.55"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5007,7 +5007,8 @@ EoREQ
     $response =~ s#HTTP/1.. #STATUS: #; # first line is status line, add :
     $response =~ s#(?:\r\n\r\n|\n\n|\r\r).*$##ms;   # remove HTTP body
     trace2("_get_sstp_https: response= #{\n$response\n#}");
-    return "<<empty response>>" if ($response =~ m/^\s*-1/);    # something wrong
+    return "<<empty response -1>>" if ($response =~ m/^\s*-1/);    # something wrong
+    return "<<empty response  1>>" if ($response =~ m/^\s*1\s*$/); # something wrong, 6/2024 seen with wolfSSL
     %headers  = map { split(/:/, $_, 2) } split(/[\r\n]+/, $response);
     # FIXME: map() fails if any header contains [\r\n] (split over more than one line)
     # use elaborated trace with --trace=3 because some servers return strange results
