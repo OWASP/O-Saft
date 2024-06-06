@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.25 24/05/31 12:19:18
+#?      @(#) Makefile 3.26 24/06/06 16:49:31
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.25
+_SID            = 3.26
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -187,6 +187,12 @@ TEST.Makefiles   = \
 		  Makefile.docker  Makefile.FQDN  Makefile.examples
 SRC.Makefiles   = $(TEST.Makefiles:%=$(TEST.dir)/%)
 
+# Makefiles not used directly by O-Project; only added to ALL.tgz
+TEST.Makefiles.ssl = \
+		  Makefile.testssl \
+		  Makefile.testssl.mbedtls Makefile.testssl.libressl Makefile.testssl.wolfssl
+SRC.Makefiles.ssl  = $(TEST.Makefiles.ssl:%=$(TEST.dir)/%)
+
 # documentation files
 O-DOC.odg       = o-saft_CLI_data_flow.odg \
 		  o-saft_GUI_data_flow.odg \
@@ -272,6 +278,7 @@ ALL.src         = \
 		  $(ALL.usr)
 ALL.tgz         = $(ALL.src:%=$(O-TGZ.dir)/%)
 ALL.tgz        += $(O-TGZ.dir)/$(GEN.inst) $(O-TGZ.dir)/$(GEN.rel)
+ALL.tgz        += $(SRC.Makefiles.ssl)
 
 # internal used make
 MAKE            = $(MAKE_COMMAND)
@@ -312,8 +319,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.25 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.25
+_INST.genbytext = generated data by Makefile 3.26 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.26
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -585,8 +592,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.25
-tar:     _INST.is_edit  = 3.25
+_INST.is_edit           = 3.26
+tar:     _INST.is_edit  = 3.26
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
