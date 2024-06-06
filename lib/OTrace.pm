@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.30 24/05/28 16:18:43";
+my  $SID_trace      = "@(#) OTrace.pm 3.31 24/06/06 18:10:05";
 our $VERSION        = "24.01.24";
 
 # public package variables
@@ -443,7 +443,8 @@ sub _test_maps  {
 EoT
     local $\ = "\n";
     my $data = SSLinfo::test_sslmap();
-       $data =~ s/^#/#$cfg{'me'}: #/smg;
+       $data =~ s/^../#$cfg{'me'}:/smg;
+           # dirty hack for pretty printing
     print $data;
     _pline("%cfg{openssl_option_map} {");
     print __prot_option();
@@ -1213,7 +1214,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.30 2024/05/28
+3.31 2024/06/06
 
 =head1 AUTHOR
 
