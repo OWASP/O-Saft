@@ -35,9 +35,6 @@
 #?      settings and all targets. 
 #?      Please see section CONFIGURATION, CUSTOMIZATION below for more details. 
 #?
-#? TARGETS
-#?      Please see at end.
-#?
 #? EXAMPLES
 #?      List build (available) images:
 #?          make list
@@ -52,7 +49,7 @@
 #?      Stop image with server wolfssl version 4.7.0:
 #?          make wolfssl-4.7.0-rmi
 #?
-#?      Unsorted examples
+#?      Unsorted examples:
 #?          make mbedtls-2.28.8-build
 #?          make mbedtls-2.28.8-run
 #?          make mbedtls-3.6.0-help.client
@@ -64,32 +61,7 @@
 #? CONFIGURATION, CUSTOMIZATION
 #?      This Makefile only provides common used defaults for all settings.  All
 #?      configuration used for building or running a server is done with make's
-#?      variables. The variables are:
-#?          TESTSSL.host.copy       - directory on hosts to copy data for build
-#?          TESTSSL.host.port       - listening port on host connect to server
-#?          TESTSSL.vm.from         - base context (OS) to be used for build
-#?          TESTSSL.vm.tmp          - temporary directory during build
-#?          TESTSSL.vm.type         - type of the server (usually the vendor)
-#?          TESTSSL.vm.user         - user to be used for executing commands
-#?          TESTSSL.vm.home         - user's home directory
-#?          TESTSSL.vm.port         - listening port of the server in the image
-#?          TESTSSL.vm.hostname     - hostname of the image
-#?          TESTSSL.vm.client       - client program to be started
-#?          TESTSSL.vm.client.help  - client's argument to show its help
-#?          TESTSSL.vm.server.dtls  - client program to be started for DTLS
-#?          TESTSSL.vm.server.tls   - server program to be started for TLS
-#?          TESTSSL.vm.server.args  - additional arguments to start server
-#?          TESTSSL.vm.server.help  - server's rgument to show its help
-#?          TESTSSL.vm.server.env   - additional environment used for run, exec
-#?          TESTSSL.vm.src.suffix   - filname suffix of the tarball in build
-#?          TESTSSL.vm.src.tar      - complete filename of the tarball
-#?          TESTSSL.vm.src.url      - URL of the tarball
-#?          TESTSSL.vm.src.sig      - SHA1 signature of the tarball
-#?          TESTSSL.vm.packages     - packages required for building the server
-#?          TESTSSL.vm.configure    - arguments for "configure" command
-#?          TESTSSL.vm.apk.packages - required packages for apk (alpine)
-#?          TESTSSL.vm.apt.packages - required packages for apt (debian)
-#?          TESTSSL.vm.configure.openssl - arguments for "configure" command
+#?      variables. Please see section  VARIABLES  at end for list of variables.
 #?
 #?      As this Makefile only provides defaults, all customization must be done
 #?      in other Makefiles. They are included automatically if they are named:
@@ -224,7 +196,7 @@
 #
 #       6/2024
 #       * remove description of variables in section CONFIGURATION and use
-#         TESTSSL.vm.ALL for it, then use TESTSSL.vm.ALL in help target
+#         TESTSSL.vars.ALL for it, then use TESTSSL.vars.ALL in help target
 #       * provide variable TESTSSL.vm.install as list of files to be installed
 #         (simplifies macro TESTSSL.vm.build.install.VENDOR )
 #       * set defaults and inherit custom settings from Makefile.testssl.VENDOR
@@ -250,11 +222,12 @@
 #       * implement docker's  commit, export, import, pull, save
 #
 # CHANGELOG
-#       List fixed TODOs, bugs ets. here (internal documenation).
+#       List fixed TODOs, bugs etc. here (internal documenation).
 #
 #       # issue fixed   _SID    description
 #       #------+-------+-------+-----------------------------------------------
-#        6/2024 6/2024  1.9     provide variable TESTSSL.vm.server.env (for run, exec)
+#        6/2024 6/2024  1.11    
+#        6/2024 6/2024  1.10    provide variable TESTSSL.vm.server.env (for run, exec)
 #        6/2024 6/2024  1.8     store all TESTSSL.sig.* in external Makefile to
 #                               be included here; avoids editing this file for
 #                               changes in custom-specific variables
@@ -322,6 +295,10 @@
 #       As usual in such cases, most meta characters (including spaces) have to
 #       be handled special. Most important chachters to take care are: \ $ # "
 #
+#    Naming scheme in this file
+#       TESTSSL.*       - our variables (variables are intended for public use)
+#       _TESTSSL.*      - our (GNU Make) defines (code or text snippets)
+#
 #    Naming scheme for targets
 #       The naming scheme for the docker targets uses  -  as seperator, not . .
 #       Reason is that the targets contain the version numbers of the server to
@@ -378,6 +355,12 @@
 #       All other comments are intended for developers.
 #       Hence, the section  HACKER's INFO  is for developers too.
 #
+#       The description of our variables TESTSSL.*  is not part of this comment
+#       here but defined as make variable  TESTSSL.vars.ALL . The advantage is:
+#           * the description is close by the definition of the variables
+#           * there's only on place to define and describe the names
+#           * description is easy availabel, just print the variable's content
+#
 #    Docker
 #       Some notes about functionality and terms used/implemented by docker.
 #
@@ -417,14 +400,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Jjì` 1.10 24/06/06 10:28:59
+#?      @(#) ‹yÀ[ 1.11 24/06/06 12:43:46
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.10
+_SID.testssl       := 1.11
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # including custom Makefiles
@@ -459,20 +442,25 @@ first-testssl-target-is-default: help
 
 # return values of all make variables matching $1; returns pretty printed text
 # topmost \ necessary to avoid superfluous spaces
-# take care for the space is $(subst ...)
+# take care for the spaces in $(subst ...)
 define _TESTSSL.get-values
-	\
-	$(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-		$(subst $1,,   $(_t))\t- $($(_t))$(_NL)\
-	)
+    \
+    $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+        $(subst $1,,   $(_t))\t- $($(_t))$(_NL)\
+    )
 endef
 
 HELP-help   = print this text; help for file '$(_MYSELF)'
 help::
 	@sed -ne '/^#?/s/#?//p' $(_MYSELF)
+	@echo " VARIABLES"
+	@echo "      List of variables to be configured for each build:"
+	@echo "$(call _TESTSSL.ALL2text)"
+	@echo ""
 	@echo " TARGETS"
 	@echo "      List of available targets. The '%' in pattern rule targets '%-NAME'"
 	@echo "      must be replaced by any valid tag, see section EXAMPLES  above."
+	@echo ""
 	@echo "$(call _TESTSSL.get-values,HELP-)"
 	@echo "$(HELP_examples)"
 .PHONY: help
@@ -496,6 +484,50 @@ HELP-%-dbx = debug: show information about includes,$(_NL)\t\t  show passed argu
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
+
+# describe our variables
+TESTSSL.vars.ALL  =\
+    TESTSSL.host.copy       - directory on hosts to copy data for build $(_NL)\
+    TESTSSL.host.port       - listening port on host connect to server  $(_NL)\
+    TESTSSL.vm.from         - base context (OS) to be used for build    $(_NL)\
+    TESTSSL.vm.tmp          - temporary directory during build          $(_NL)\
+    TESTSSL.vm.type         - type of the server (usually the vendor)   $(_NL)\
+    TESTSSL.vm.user         - user to be used for executing commands    $(_NL)\
+    TESTSSL.vm.home         - user's home directory                     $(_NL)\
+    TESTSSL.vm.port         - listening port of the server in the image $(_NL)\
+    TESTSSL.vm.hostname     - hostname of the image                     $(_NL)\
+    TESTSSL.vm.client       - client program to be started              $(_NL)\
+    TESTSSL.vm.client.help  - client program's argument to show its help$(_NL)\
+    TESTSSL.vm.server.dtls  - server program to be started for DTLS     $(_NL)\
+    TESTSSL.vm.server.tls   - server program to be started for TLS      $(_NL)\
+    TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
+    TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
+    TESTSSL.vm.server.env   - additional environment used for run, exec $(_NL)\
+    TESTSSL.vm.src.suffix   - filename suffix of the tarball            $(_NL)\
+    TESTSSL.vm.src.tar      - complete filename of the tarball          $(_NL)\
+    TESTSSL.vm.src.url      - URL of the tarball                        $(_NL)\
+    TESTSSL.vm.src.sig      - SHA1 signature of the tarball             $(_NL)\
+    TESTSSL.vm.packages     - packages required for building the server $(_NL)\
+    TESTSSL.vm.configure    - arguments for "configure" command         $(_NL)\
+    TESTSSL.vm.apk.packages - required packages for apk (alpine)        $(_NL)\
+    TESTSSL.vm.apt.packages - required packages for apt (debian)        $(_NL)\
+    TESTSSL.vm.configure.openssl - arguments for "configure" command 
+# TESTSSL.vm.context  not part of TESTSSL.vars.ALL  because:
+#   always computed internal and  printed individually
+
+# pretty print TESTSSL.vars.ALL
+define _TESTSSL.ALL2text
+    $(shell echo "$(TESTSSL.vars.ALL)"|sed -e 's/^ */$(_NL)      /')
+endef
+
+# just get variable names (first word in each line) from TESTSSL.vars.ALL
+define _TESTSSL.ALL2vars
+    $(shell echo "$(TESTSSL.vars.ALL)"|awk '{print $$1}')
+endef
+
+define _TESTSSL.print-config
+    $(foreach _arg, $(_TESTSSL.ALL2vars), "# $(_arg)\t= $($(_arg))\n" )
+endef
 
 TESTSSL.vm.source  ?= file
 # TODO             or: http git tar
@@ -559,38 +591,6 @@ TESTSSL.vm.server   = $(TESTSSL.vm.server.tls)
 %-help.client:        TESTSSL.args      = $(TESTSSL.vm.client.help)
 %-help.server:        TESTSSL.vm.help   = $(TESTSSL.vm.server)
 %-help.server:        TESTSSL.args      = $(TESTSSL.vm.server.help)
-
-TESTSSL.vm.ALL  =\
-	TESTSSL.vm.type    \
-	TESTSSL.host.port  \
-	TESTSSL.host.copy  \
-	TESTSSL.vm.from    \
-	TESTSSL.vm.tmp     \
-	TESTSSL.vm.user    \
-	TESTSSL.vm.home    \
-	TESTSSL.vm.image   \
-	TESTSSL.vm.port    \
-	TESTSSL.vm.client  \
-	TESTSSL.vm.client.help \
-	TESTSSL.vm.server.dtls \
-	TESTSSL.vm.server.tls  \
-	TESTSSL.vm.server.help \
-	TESTSSL.vm.server.args \
-	TESTSSL.vm.server.env \
-	TESTSSL.vm.server  \
-	TESTSSL.vm.hostname\
-	TESTSSL.vm.packages\
-	TESTSSL.vm.dockerfile\
-	TESTSSL.vm.src.suffix\
-	TESTSSL.vm.src.tar \
-	TESTSSL.vm.src.url \
-	TESTSSL.vm.src.sig \
-	TESTSSL.vm.configure
-# TESTSSL.vm.context  not part of TESTSSL.vm.ALL; printed individually
-
-define _TESTSSL.print-config
-    $(foreach _arg, $(TESTSSL.vm.ALL), "# $(_arg)\t= $($(_arg))\n" )
-endef
 
 EXE.docker         := docker
 EXE.podman         := podman
@@ -716,7 +716,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.10'                           $(_NL)\
+LABEL	VERSION='1.11'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -732,7 +732,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.10'                           $(_NL)\
+LABEL	VERSION='1.11'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -873,12 +873,12 @@ list:
 
 HELP-examples   = list preconfigured tarballs with their SHA1 checksum
 define _TESTSSL.get-sigs
-	\
-	# SHA1 checksum                             tarball$(_NL)\
-	#------------------------------------------+---------------------$(_NL)\
-	$(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-		$(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
-	)
+    \
+    # SHA1 checksum                             tarball$(_NL)\
+    #------------------------------------------+---------------------$(_NL)\
+    $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
+        $(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
+    )
 endef
 examples:
 	@echo "$(call _TESTSSL.get-sigs,TESTSSL.sig.)"
