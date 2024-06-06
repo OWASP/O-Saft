@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.28 24/06/07 01:39:39";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.29 24/06/07 01:57:28";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1744,7 +1744,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.28 2024/06/07
+3.29 2024/06/07
 
 
 =head1 AUTHOR
@@ -1808,6 +1808,7 @@ __DATA__
 # hex const	openssl	sec	ssl	keyx	auth	enc	bits	mac	rfc	cipher,aliases	const	comment
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+---------------+-------+---------------+
 0x03005600	-	None	SSL/TLS	None	None	-	0	None	7507	SCSV,TLS_FALLBACK_SCSV	TLS_FALLBACK_SCSV	SCSV
+0x030000FE	-	-?-	TLSv13	None	None	-	-?-	SHA256	-	WDM-NULL-SHA256	WDM_WITH_NULL_SHA256	wolfSSL DTLS Multicast
 0x030000FF	-	None	SSL/TLS	None	None	-	0	None	5746	INFO_SCSV	EMPTY_RENEGOTIATION_INFO_SCSV	DOC
 0x03000A0A	-	-	TLSv13	None	None	-	0	None	8701	GREASE-0A	GREASE_0A	-
 0x03001A1A	-	-	TLSv13	None	None	-	0	None	8701	GREASE-1A	GREASE_1A	-
