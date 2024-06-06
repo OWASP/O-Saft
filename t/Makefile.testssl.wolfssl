@@ -11,29 +11,38 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @(#) M>ÿV 1.2 24/06/06 00:58:48
+#?      @(#) ì:†³ÍU 1.3 24/06/06 16:32:04
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl    := 1.2
-#_MYSELF                 := $(firstword $(MAKEFILE_LIST))
+_SID.testssl.wolfssl   := 1.3
+#_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 # for description of available variables please see: make vars
 
-TESTSSL.vm.configure.wolfssl    = --prefix=$(TESTSSL.home) --enable-all
+# SHA1 checksums for some tarballs:
+TESTSSL.sig.wolfssl-3.15.3 = db52169fd00825c55d6f8a66a01fe9f793e2a290
+TESTSSL.sig.wolfssl-4.3.0  = 4174af818c9900ece2ad725bf0882f008a1aceb9
+TESTSSL.sig.wolfssl-4.7.0  = d9f99ac451b2f063ddb80d9661afbe0063bfc169
+TESTSSL.sig.wolfssl-5.1.0  = 28ee16cd404795e1ce77456d762e46278f68f533
+TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
+TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
+TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 
-# define setting per brand (type) of SSL-/TLS-server (use brand's default)
+TESTSSL.vm.configure.wolfssl    = --enable-all
+
+# define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
+wolfssl-%:            TESTSSL.vm.version    = 1.3
 wolfssl-%:            TESTSSL.vm.type       = wolfssl
 wolfssl-%:            TESTSSL.vm.port       = 11111
-wolfssl-%:            TESTSSL.vm.packages  += $(TESTSSL.vm.apk.packages)
+wolfssl-%:            TESTSSL.vm.packages   = $(TESTSSL.default.apk)
 wolfssl-%:            TESTSSL.vm.configure += $(TESTSSL.vm.configure.wolfssl)
-# TODO: .configure option need to be optimized (currently from openssl)
 wolfssl-%:            TESTSSL.vm.client     = client
 wolfssl-%:            TESTSSL.vm.client.help= --help
 wolfssl-%:            TESTSSL.vm.server.help= --help
@@ -49,16 +58,8 @@ wolfssl-%:            TESTSSL.vm.server.args= -p $(TESTSSL.vm.port) -i -x -v 1 -
 
 # wolfssl's tarball name have differnent suffix
 wolfssl-%-build-n:    TESTSSL.vm.src.suffix = -stable.tar.gz
+wolfssl-%-build-v:    TESTSSL.vm.src.suffix = -stable.tar.gz
 wolfssl-%-build:      TESTSSL.vm.src.suffix = -stable.tar.gz
-
-# SHA1 checksums for some tarballs:
-TESTSSL.sig.wolfssl-3.15.3 = db52169fd00825c55d6f8a66a01fe9f793e2a290
-TESTSSL.sig.wolfssl-4.3.0  = 4174af818c9900ece2ad725bf0882f008a1aceb9
-TESTSSL.sig.wolfssl-4.7.0  = d9f99ac451b2f063ddb80d9661afbe0063bfc169
-TESTSSL.sig.wolfssl-5.1.0  = 28ee16cd404795e1ce77456d762e46278f68f533
-TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
-TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
-TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 
 # sometimes ./autogen.sh does not exist, call is if available only
 TESTSSL.vm.build.compile.wolfssl = \
@@ -92,7 +93,6 @@ TESTSSL.vm.build.testing.wolfssl = \
 #_____________________________________________________________________________
 #________________________________________ private targets, not fully tested __|
 
-# NOTE: only pattern rules are alliwed, the first explizit target will become
+# NOTE: only pattern rules are allowed, the first explizit target will become
 # the first target in the parent too, usually not wanted ...
-# Mbed TLS uses different executables for TLS and DTLS
 
