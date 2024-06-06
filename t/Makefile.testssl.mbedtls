@@ -11,14 +11,14 @@
 #?      include Makefile.testssl.inc
 #?
 #? VERSION
-#?      @(#) jè-_ 1.1 24/06/06 01:00:23
+#?      @(#) gôU 1.2 24/06/06 13:01:49
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.mbedtls := 1.1
+_SID.testssl.mbedtls := 1.2
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # not possible, because it becomes first target in parent when included, grrr
@@ -77,10 +77,10 @@ TESTSSL.vm.build.testing.mbedtls = \
 
 # Mbed TLS uses different executables for TLS and DTLS
 mbedtls-%-rundtls:
-	@$(EXE.trace_target)
-	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image) force_version=dtls1_2
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(_tag) force_version=dtls1_2
 mbedtls-%-runtls:
-	@$(EXE.trace_target)
-	@$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(TESTSSL.vm.image)
+	$(_TESTSSL.vm.get._tag)
+	$(EXE.docker) run   --rm     -p 4433:4433 -p 4433:4433/udp --hostname $(TESTSSL.vm.hostname) $(_tag)
 # mbedtls.run: mbedtls.runtls
 
