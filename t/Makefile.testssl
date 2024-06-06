@@ -80,6 +80,7 @@
 #?          TESTSSL.vm.server.tls   - server program to be started for TLS
 #?          TESTSSL.vm.server.args  - additional arguments to start server
 #?          TESTSSL.vm.server.help  - server's rgument to show its help
+#?          TESTSSL.vm.server.env   - additional environment used for run, exec
 #?          TESTSSL.vm.src.suffix   - filname suffix of the tarball in build
 #?          TESTSSL.vm.src.tar      - complete filename of the tarball
 #?          TESTSSL.vm.src.url      - URL of the tarball
@@ -98,7 +99,7 @@
 #?      Any variable defined on the command-line will  overwrite the default or
 #?      computed value.
 #?
-#?      Following variables must be configure for each image:
+#?      Following variables must be configured for each image:
 #?          TESTSSL.vm.type         TESTSSL.vm.port
 #?          TESTSSL.vm.packages     TESTSSL.vm.configure
 #?          TESTSSL.vm.client       TESTSSL.vm.client.help
@@ -106,6 +107,8 @@
 #?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
 #?
 #?      Most others are computed based on these settings.
+# TODO: describe the dependencies, at dependency on TESTSSL.vm.type
+# TODO: see "settings done automatically" below
 #?
 #?      To see the configured and computed values, use following target:
 #?          make dummy-build-v
@@ -220,11 +223,12 @@
 #       List of feature, likes, etc. to be done in future:
 #
 #       6/2024
-#       * provide variable TESTSSL.vm.server.bin as list of files to be installed
+#       * remove description of variables in section CONFIGURATION and use
+#         TESTSSL.vm.ALL for it, then use TESTSSL.vm.ALL in help target
+#       * provide variable TESTSSL.vm.install as list of files to be installed
 #         (simplifies macro TESTSSL.vm.build.install.VENDOR )
 #       * set defaults and inherit custom settings from Makefile.testssl.VENDOR
 #       * build proper server.pem and install it (openssl)
-#       * provide variable TESTSSL.vm.server.env (to be pass with docker run)
 #       * provide variable TESTSSL.vm.server.cert (for building sef-signed cert)
 #       * implement general mechanism to use custom Makefile.testssl.VENDOR
 #         (vendor-specific settings should go away here, so we just have the
@@ -250,6 +254,7 @@
 #
 #       # issue fixed   _SID    description
 #       #------+-------+-------+-----------------------------------------------
+#        6/2024 6/2024  1.9     provide variable TESTSSL.vm.server.env (for run, exec)
 #        6/2024 6/2024  1.8     store all TESTSSL.sig.* in external Makefile to
 #                               be included here; avoids editing this file for
 #                               changes in custom-specific variables
@@ -412,14 +417,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) £—ÓV 1.9 24/06/06 02:19:43
+#?      @(#) Jjì` 1.10 24/06/06 10:28:59
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.9
+_SID.testssl       := 1.10
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # including custom Makefiles
@@ -512,6 +517,7 @@ TESTSSL.vm.server.dtls  =
 TESTSSL.vm.server.tls   =
 TESTSSL.vm.server.args  =
 TESTSSL.vm.server.help  =
+TESTSSL.vm.server.env   =
 TESTSSL.vm.src.suffix   = .tar.gz
 TESTSSL.vm.src.tar ?=  testssl.tgz
 TESTSSL.vm.src.url ?=  http://demo/testssl.tgz
@@ -570,6 +576,7 @@ TESTSSL.vm.ALL  =\
 	TESTSSL.vm.server.tls  \
 	TESTSSL.vm.server.help \
 	TESTSSL.vm.server.args \
+	TESTSSL.vm.server.env \
 	TESTSSL.vm.server  \
 	TESTSSL.vm.hostname\
 	TESTSSL.vm.packages\
@@ -709,7 +716,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.9'                           $(_NL)\
+LABEL	VERSION='1.10'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -725,7 +732,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.9'                           $(_NL)\
+LABEL	VERSION='1.10'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -797,6 +804,7 @@ HELP-%-runtls = start docker image '%' listening for  TLS
 		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port) \
 		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port)/udp \
 		--hostname $(TESTSSL.vm.hostname) \
+		--env  $(TESTSSL.vm.server.env) \
 		--name $(*).run --detach \
 		$(_tag) \
 		$(TESTSSL.args)
@@ -823,25 +831,32 @@ HELP-%-shell  = give a shell in docker image '%'
 # used with the proper username
 %-shell:
 	$(_TESTSSL.vm.get._tag)
-	$(EXE.docker) run   --rm -it -p 4433:$(TESTSSL.vm.port) -p 4433:$(TESTSSL.vm.port)/udp --entrypoint=/bin/sh --hostname $(TESTSSL.vm.hostname) --user $(TESTSSL.vm.user) $(_tag)
+	$(EXE.docker) run --rm -it \
+		-p 4433:$(TESTSSL.vm.port) \
+		-p 4433:$(TESTSSL.vm.port)/udp \
+		--hostname $(TESTSSL.vm.hostname) \
+		--env  $(TESTSSL.vm.server.env) \
+		--user $(TESTSSL.vm.user) \
+		--entrypoint=/bin/sh \
+		$(_tag)
 
 HELP-%-client = execute SSL-/TLS-client with given arguments in docker image '%'
 %-client:
 	$(_TESTSSL.vm.get._tag)
-	$(EXE.docker) run   --rm -it --entrypoint=$(TESTSSL.vm.client) --hostname $(TESTSSL.vm.hostname) $(_tag) $(TESTSSL.args)
+	$(EXE.docker) run --rm -it --entrypoint=$(TESTSSL.vm.client) --hostname $(TESTSSL.vm.hostname) $(_tag) $(TESTSSL.args)
 
 HELP-%-exec   = execute SSL-/TLS-client with given arguments in docker image '%'
 %-exec:
 	@echo "# TODO: target not yet working proper, need to get valid container ..."
 	$(_TESTSSL.vm.get._tag)
-	$(EXE.docker) exec $(_tag) $(TESTSSL.vm.client) $(TESTSSL.args)
+	$(EXE.docker) exec --env $(TESTSSL.vm.server.env) $(_tag) $(TESTSSL.vm.client) $(TESTSSL.args)
 # TODO: exec need container-ID
 # TODO: pass other arguments ...
 
 HELP-%-help = show help of SSL-/TLS-server in docker image '%'
 %-help:
 	$(_TESTSSL.vm.get._tag)
-	$(EXE.docker) run   --rm -it --entrypoint=$(TESTSSL.vm.help) $(_tag) $(TESTSSL.args)
+	$(EXE.docker) run --rm -it --entrypoint=$(TESTSSL.vm.help) $(_tag) $(TESTSSL.args)
 
 HELP-%-ps = just a wrapper for: 'docker ps --filter label=$(TESTSSL.label)'
 %-ps:
