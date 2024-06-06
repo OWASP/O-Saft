@@ -1,43 +1,44 @@
 #!/usr/bin/make -rRf
 #?
 #? NAME
-#?      Makefile.testssl.* - additional settings for Makefile.testssl
+#?      Makefile.testssl.libressl - additional settings for Makefile.testssl
 #?
 #? DESCRIPTION
 #?      This Makefile contains addition settings for Makefile.testssl.
 #?      For a detailled description, please see there.
 #?
 #? SYNOPSIS
-#?      include Makefile.testssl.inc
+#?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) ZXFc 1.1 24/06/06 01:02:09
+#?      @(#) Makefile.testssl.libressl 1.2 24/06/06 16:39:18
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl   := 1.1
-_MYSELF            := $(firstword $(MAKEFILE_LIST))
-
-# not possible, because it becomes first target in parent when included, grrr
-#first-testssl-inc-target-is-default:
-#	@echo "This Makefile has no own help, please see Makefile.testssl ."
+_SID.testssl.libressl  := 1.2
+#_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 # for description of available variables please see: make vars
 
-TESTSSL.vm.configure.libressl =\
-	--prefix=$(TESTSSL.home)        --enable-static \
-	--disable-option-checking       --disable-tests --enable-nc
+# SHA1 checksums for some tarballs:
+TESTSSL.sig.libressl-3.8.3 = 9d39cd629255863689a5b9caab7b96f898119edf
+TESTSSL.sig.libressl-3.8.4 = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
+TESTSSL.sig.libressl-3.9.2 = e2397fd72dd3d213985a6309cd75de5c945bd035
 
-# define setting per brand (type) of SSL-/TLS-server (use brand's default)
+TESTSSL.vm.configure.libressl =\
+	--enable-static --disable-option-checking --disable-tests --enable-nc
+
+# define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
+libressl-%:           TESTSSL.vm.version    = 1.2
 libressl-%:           TESTSSL.vm.type       = libressl
 libressl-%:           TESTSSL.vm.port       = 5443
-libressl-%:           TESTSSL.vm.packages  += $(TESTSSL.vm.apk.packages)
+libressl-%:           TESTSSL.vm.packages  = $(TESTSSL.default.apk)
 libressl-%:           TESTSSL.vm.configure += $(TESTSSL.vm.configure.libressl)
 libressl-%:           TESTSSL.vm.client     = openssl
 libressl-%:           TESTSSL.vm.client.help= s_client help
@@ -47,11 +48,6 @@ libressl-%:           TESTSSL.vm.server.tls = openssl
 libressl-%:           TESTSSL.vm.server.args= s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
 # TODO: s_server -servername $(TESTSSL.vm.hostname)
 # TODO: s_server -tls1_2 -tls1_3  # are both together possible?
-
-# SHA1 checksums for some tarballs:
-TESTSSL.sig.libressl-3.8.3 = 9d39cd629255863689a5b9caab7b96f898119edf
-TESTSSL.sig.libressl-3.8.4 = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
-TESTSSL.sig.libressl-3.9.2 = e2397fd72dd3d213985a6309cd75de5c945bd035
 
 # sometimes ./autogen.sh does not exist, call is if available only
 TESTSSL.vm.build.compile.libressl = \
@@ -84,16 +80,16 @@ TESTSSL.vm.build.install.libressl = \
 	export OPENSSL_CONF=$(TESTSSL.vm.home)/etc/ssl/openssl.cnf && \\ $(_NL)\
 	$(TESTSSL.vm.home)/bin/openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=DE/ST=stateless/L=here/O=TESTSSL/OU=none/CN=127.0.0.1"
 
-# optional
 TESTSSL.vm.build.testing.libressl = \
 	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
 	$(TESTSSL.vm.client) ciphers ALL:eNULL:kNULL |tr ':' ' ' | wc -w ; \\ $(_NL)\
 	$(TESTSSL.vm.client) ciphers ALL:eNULL:kNULL
 
+TESTSSL.vm.build.cleanup.libressl =
+
 #_____________________________________________________________________________
 #________________________________________ private targets, not fully tested __|
 
-# NOTE: only pattern rules are alliwed, the first explizit target will become
+# NOTE: only pattern rules are allowed, the first explizit target will become
 # the first target in the parent too, usually not wanted ...
-# Mbed TLS uses different executables for TLS and DTLS
 
