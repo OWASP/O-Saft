@@ -11,7 +11,7 @@
 #?      include Makefile.testssl.mbedtls
 #?
 #? VERSION
-#?      @(#) Îí•ÒU 1.3 24/06/06 16:31:08
+#?      @(#) Makefile.testssl.mbedtls 1.3 24/06/06 16:31:08
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
