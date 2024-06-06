@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.28 24/05/28 12:00:10";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.29 24/06/06 21:18:17";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -3415,7 +3415,8 @@ sub test_cipher_regex   {
 =   no    cipher does not supports PFS
 =   -     pseudo cipher
 = OWASP values:
-=   x     value A or B or C or D or -?- as returned by get_cipher_owasp()
+=   x     value A or B or C or D as returned by get_cipher_owasp()
+=   -?-   cypher not rated by OWASP
 =   miss  cipher not matched by any RegEx, programming error
 =   -     pseudo cipher
 = owasp values:
@@ -3545,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.28"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.29"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3594,7 +3595,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.28 2024/05/28
+3.29 2024/06/06
 
 =head1 AUTHOR
 
