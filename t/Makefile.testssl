@@ -28,14 +28,18 @@
 #?          wolfssl-5.6.6-build
 #?          wolfssl-4.3.0-rmi
 #?
-#?      All targets print the finally used docker command-line,  so C&P can be
+#?      All targets print the  finally used docker command-line,  so C&P can be
 #?      used easily for further private adaptions.
+#?
+#?      This Makefile provides the general functionality, means all the default
+#?      settings and all targets. 
+#?      Please see section CONFIGURATION, CUSTOMIZATION below for more details. 
 #?
 #? TARGETS
 #?      Please see at end.
 #?
 #? EXAMPLES
-#?      List build (availabe) images:
+#?      List build (available) images:
 #?          make list
 #?      Build image using 4.7.0 ./t.docker/wolfssl-4.7.0-stable.tar.gz:
 #?          make wolfssl-4.7.0-build
@@ -57,9 +61,10 @@
 #?          make wolfssl-4.7.0-help.server
 #?          make wolfssl-5.6.6-run
 #?
-#? CONFIGURATION
-#?      All configuration for building or running is done with make variables.
-#?      The variables are:
+#? CONFIGURATION, CUSTOMIZATION
+#?      This Makefile only provides common used defaults for all settings.  All
+#?      configuration used for building or running a server is done with make's
+#?      variables. The variables are:
 #?          TESTSSL.host.copy       - directory on hosts to copy data for build
 #?          TESTSSL.host.port       - listening port on host connect to server
 #?          TESTSSL.vm.from         - base context (OS) to be used for build
@@ -85,6 +90,11 @@
 #?          TESTSSL.vm.apt.packages - required packages for apt (debian)
 #?          TESTSSL.vm.configure.openssl - arguments for "configure" command
 #?
+#?      As this Makefile only provides defaults, all customization must be done
+#?      in other Makefiles. They are included automatically if they are named:
+#?          Makefile.testssl.ANY-NAME
+#?      They should reside in the same directory as this file.
+#?
 #?      Any variable defined on the command-line will  overwrite the default or
 #?      computed value.
 #?
@@ -100,6 +110,16 @@
 #?      To see the configured and computed values, use following target:
 #?          make dummy-build-v
 #?
+#?      I.g. this Makefile can be used as is. No other files to be included are
+#?      necessary if the configuration is done on command-line. We recommend to
+#?      use a separate Makefile for each server.
+#?
+#?      Following customized Makefiles are avaialbel:
+#?          Makefile.testssl.mbedtls
+#?          Makefile.testssl.libressl
+#?          Makefile.testssl.openssl
+#?          Makefile.testssl.wolfssl
+#?
 #?      The port number of the listening port on the host and the exported port
 #?      are identical by default. No check is (can be) done. All ports can be
 #?      set with make environment variable:
@@ -108,8 +128,6 @@
 #?
 #?   TODO currently (5/2024) only TESTSSL.vm.server = TESTSSL.vm.server.tls is
 #?        supported, TESTSSL.vm.server.dtls needs to be implemented.
-#?
-#?      This Makefile contains some configurations for wolfssl and mbedtls.
 # ?
 # ? TODO Dockerfile
 # ?      Instead of a tarball a Dockerfile can be used as context for docker build.
@@ -196,6 +214,7 @@
 #?      Simply use "server" when we mean the tools for "SSL-/TLS-server".
 #?      "docker" is used when the executable "docker" or "docker-cli" is meant.
 #?      "Docker" is used when refering to the vendor or system of docker.
+#?      GNU Make uses the term macro, but we prefer variable.
 #?
 # TODO
 #       List of feature, likes, etc. to be done in future:
@@ -227,9 +246,9 @@
 #       * implement docker's  commit, export, import, pull, save
 #
 # CHANGELOG
-#       List fixed TODOs, bugs ets. here.
+#       List fixed TODOs, bugs ets. here (internal documenation).
 #
-#       # issue fixed   SID     description
+#       # issue fixed   _SID    description
 #       #------+-------+-------+-----------------------------------------------
 #        6/2024 6/2024  1.8     store all TESTSSL.sig.* in external Makefile to
 #                               be included here; avoids editing this file for
@@ -337,6 +356,23 @@
 #       or two blanks  between the checksum left, and the filename right.  Some
 #       sha1sum  allow one or more blanks. Hence we use exactly two blanks.
 #
+#    Comments, Documentation
+#       All documentation for the user is shown with the target help.  In fact,
+#       this target extract the documenation from this file: all lines starting
+#       with  #?  are used as documention text.
+#       Each target is prepended by a variable containing a brief description.
+#       This description is also shown by the help target.  These variables are
+#       named:  HELP-*  where  * is the targetname it describes. Example:
+#           HELP-sampletarget = brief description
+#           sampletarget:
+#                   do somthing
+#       The help target  will use the variable  HELP-sampletarget  and generate
+#       following text line:
+#           sampletarget    - brief description
+#
+#       All other comments are intended for developers.
+#       Hence, the section  HACKER's INFO  is for developers too.
+#
 #    Docker
 #       Some notes about functionality and terms used/implemented by docker.
 #
@@ -376,14 +412,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Cjb 1.8 24/06/06 01:35:00
+#?      @(#) £—ÓV 1.9 24/06/06 02:19:43
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.8
+_SID.testssl       := 1.9
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # including custom Makefiles
@@ -673,7 +709,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.8'                           $(_NL)\
+LABEL	VERSION='1.9'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -689,7 +725,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.label)'              $(_NL)\
-LABEL	VERSION='1.8'                           $(_NL)\
+LABEL	VERSION='1.9'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
