@@ -72,8 +72,8 @@
 #?      computed value.
 #?
 #?      Following variables must be configured for each image:
+#?          TESTSSL.src.packages    TESTSSL.src.configure
 #?          TESTSSL.vm.type         TESTSSL.vm.port
-#?          TESTSSL.vm.packages     TESTSSL.vm.configure
 #?          TESTSSL.vm.client       TESTSSL.vm.client.help
 #?          TESTSSL.vm.server.dtls  TESTSSL.vm.server.tls
 #?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
@@ -115,10 +115,10 @@
 # ?
 # ? TODO Dockerfile
 # ?      Instead of a tarball a Dockerfile can be used as context for docker build.
-# ?      Therefore set  TESTSSL.vm.src.dockerfile  on command-line to the name of the
+# ?      Therefore set  TESTSSL.src.dockerfile  on command-line to the name of the
 # ?      Dockerfile. It must be found in the directory specified with  TESTSSL.vm.tmp
 # ?      Example:
-# ?          make mytls-42.42-build TESTSSL.vm.src.dockerfile=Dockerfile.mytls
+# ?          make mytls-42.42-build TESTSSL.src.dockerfile=Dockerfile.mytls
 #?
 #? ALIASES
 #?      The primary targets are named like the commands for docker:
@@ -316,8 +316,13 @@
 #           "\012"
 #
 #    Naming scheme in this file
-#       TESTSSL.*       - our variables (variables are intended for public use)
 #       _TESTSSL.*      - our (GNU Make) defines (code or text snippets)
+#       TESTSSL.*       - our variables (variables are intended for public use)
+#       TESTSSL.default - variables used as default, usually not changed
+#       TESTSSL.src.*   - setting for building (make) the server in the image
+#                         these variables are used for %-build targets only
+#       TESTSSL.host.*  - setting related to the host running the docker image
+#       TESTSSL.vm.*    - setting related to (mainly) server in a docker image
 #
 #    Naming scheme for targets
 #       The naming scheme for the docker targets uses  -  as seperator, not . .
@@ -420,14 +425,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) ¯;c\ 1.14 24/06/07 11:30:43
+#?      @(#) Makefile.testssl 1.15 24/06/07 12:09:19
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.14
+_SID.testssl       := 1.15
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -511,17 +516,17 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.tls   - server program to be started for TLS      $(_NL)\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
-    TESTSSL.vm.src.suffix   - filename suffix of the tarball            $(_NL)\
-    TESTSSL.vm.src.tar      - complete filename of the tarball          $(_NL)\
-    TESTSSL.vm.src.sig      - SHA1 signature of the tarball             $(_NL)\
-    TESTSSL.vm.packages     - packages required for building the server $(_NL)\
-    TESTSSL.vm.configure    - arguments for "configure" command 
+    TESTSSL.src.suffix      - filename suffix of the tarball            $(_NL)\
+    TESTSSL.src.tar         - complete filename of the tarball          $(_NL)\
+    TESTSSL.src.sig         - SHA1 signature of the tarball             $(_NL)\
+    TESTSSL.src.packages    - packages required for building the server $(_NL)\
+    TESTSSL.src.configure   - arguments for "configure" command 
 # TESTSSL.vm.context  not part of TESTSSL.vars.ALL  because:
 #   always computed internal and  printed individually
 
 TESTSSL.vars.ALL-not-yet-implemented =\
-    TESTSSL.vm.src.url      - URL of the tarball                        $(_NL)\
-    TESTSSL.vm.src.dockerfile - Dockerfile to be used for build         $(_NL)\
+    TESTSSL.src.url         - URL of the tarball                        $(_NL)\
+    TESTSSL.src.dockerfile  - Dockerfile to be used for build           $(_NL)\
     #
 
 # pretty print TESTSSL.vars.ALL
@@ -565,25 +570,25 @@ TESTSSL.vm.server.dtls  =
 TESTSSL.vm.server.tls   =
 TESTSSL.vm.server.args  =
 TESTSSL.vm.server.help  =
-TESTSSL.vm.src.suffix   = .tar.gz
-TESTSSL.vm.src.tar     ?=  testssl.tgz
-TESTSSL.vm.src.url     ?=  http://demo/testssl.tgz
-TESTSSL.vm.src.sig     ?=  undef
+TESTSSL.src.suffix      = .tar.gz
+TESTSSL.src.tar        ?=  testssl.tgz
+TESTSSL.src.url        ?=  http://demo/testssl.tgz
+TESTSSL.src.sig        ?=  undef
 #       this filename checksum will be computed for %-build targets only
 #       (due to GNU Make's limitations with $*)
-TESTSSL.vm.packages     = $(TESTSSL.default.apt)
-TESTSSL.vm.configure    = --prefix=$(TESTSSL.vm.home)
+TESTSSL.src.packages    = $(TESTSSL.default.apt)
+TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
 
 # now get name and checksum of tarball, needed for %-build target only
-%-build-n:            TESTSSL.vm.src.tar    = $(*)$(TESTSSL.vm.src.suffix)
-%-build:              TESTSSL.vm.src.tar    = $(*)$(TESTSSL.vm.src.suffix)
-%-build-n:            TESTSSL.vm.src.url    = TODO
-%-build:              TESTSSL.vm.src.url    = TODO
-%-build-n:            TESTSSL.vm.src.sig    = $(TESTSSL.sig.$(*))
-%-build:              TESTSSL.vm.src.sig    = $(TESTSSL.sig.$(*))
+%-build-n:            TESTSSL.src.tar       = $(*)$(TESTSSL.src.suffix)
+%-build:              TESTSSL.src.tar       = $(*)$(TESTSSL.src.suffix)
+%-build-n:            TESTSSL.src.url       = TODO
+%-build:              TESTSSL.src.url       = TODO
+%-build-n:            TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
+%-build:              TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
 
 # settings done automatically (but can be done with make environment)
-TESTSSL.vm.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
+TESTSSL.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
 TESTSSL.host.port   = $(TESTSSL.vm.port)
 TESTSSL.vm.hostname = $(TESTSSL.vm.type)
 TESTSSL.vm.user     = $(TESTSSL.vm.type)
@@ -661,7 +666,7 @@ TESTSSL.vm.build.hostname = $(_NL)\
 
 TESTSSL.vm.build.package = \
 	$(call _TESTSSL.echo,"Prepare build system"); \\ $(_NL)\
-	apk  add --no-cache $(TESTSSL.vm.packages)
+	apk  add --no-cache $(TESTSSL.src.packages)
 
 # it's a pain to find the directory to which tar extracts, in most tarballs the
 # very first line can be used, simply like:
@@ -677,10 +682,10 @@ TESTSSL.vm.build.package = \
 TESTSSL.vm.build.getpack = \
 	$(call _TESTSSL.echo,"Extract tool source"); \\ $(_NL)\
 	cd $(TESTSSL.vm.tmp)              && \\ $(_NL)\
-	_dir=\`tar tvf $(TESTSSL.vm.src.tar) | awk '(1==NR){split(\$$NF,a,\"/\");print a[1]}'\` && \\ $(_NL)\
-	echo \"$(TESTSSL.vm.src.sig)  $(TESTSSL.vm.src.tar)\" \
+	_dir=\`tar tvf $(TESTSSL.src.tar) | awk '(1==NR){split(\$$NF,a,\"/\");print a[1]}'\` && \\ $(_NL)\
+	echo \"$(TESTSSL.src.sig)  $(TESTSSL.src.tar)\" \
 		| sha1sum -c -            && \\ $(_NL)\
-	tar xf $(TESTSSL.vm.src.tar)      && \\ $(_NL)\
+	tar xf $(TESTSSL.src.tar)      && \\ $(_NL)\
 	cd   \"\$$_dir\" && pwd && ls -l
 
 # defaults if not set in Makefile.testssl.* ; avoids empty commands
@@ -712,7 +717,7 @@ TESTSSL.vm.build.testing = \
 
 TESTSSL.vm.build.cleanup = \
 	$(call _TESTSSL.echo,"Cleanup")            ; \\ $(_NL)\
-	apk  del --purge $(TESTSSL.vm.packages)    ; \\ $(_NL)\
+	apk  del --purge $(TESTSSL.src.packages)   ; \\ $(_NL)\
 	rm   -rf $(TESTSSL.vm.tmp) && echo "\# $(TESTSSL.vm.tmp) removed." ; \\ $(_NL)\
 	$(TESTSSL.vm.build.cleanup.$(TESTSSL.vm.type))
 
@@ -723,9 +728,9 @@ $(_TESTSSL.vm.get._tag) $(_NL)\
 $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 \# syntax=docker/dockerfile:1 $(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
-COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
+COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.14'                           $(_NL)\
+LABEL	VERSION='1.15'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -741,7 +746,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.default.label)'      $(_NL)\
-LABEL	VERSION='1.14'                           $(_NL)\
+LABEL	VERSION='1.15'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -887,12 +892,12 @@ define _TESTSSL.get-sigs
     # SHA1 checksum                             tarball$(_NL)\
     #------------------------------------------+---------------------$(_NL)\
     $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-        $(subst $1,,$($(_t))  $(_t))$(TESTSSL.vm.src.suffix)$(_NL)\
+        $(subst $1,,$($(_t))  $(_t))$(TESTSSL.src.suffix)$(_NL)\
     )
 endef
 examples:
-	@echo "$(call _TESTSSL.get-sigs,TESTSSL.sig.)"
-# TODO: $TESTSSL.vm.src.suffix is the default, may be different for some tarballs
+	@echo "$(call _TESTSSL.get-sigs,TESTSSL.src.sig.)"
+# TODO: $TESTSSL.src.suffix is the default, may be different for some tarballs
 # TODO: prepend tarball by $TESTSSL.host.copy/ ; then output checked like:
 #       make examples | sha1sum -c -
 
