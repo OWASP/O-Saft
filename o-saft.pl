@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.56 24/06/07 13:03:38"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.57 24/06/07 22:01:33"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -415,7 +415,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.56"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.57"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2805,6 +2805,7 @@ sub _get_data0      {
 sub _get_cipherslist    {
     #? return array of cipher suites (names or keys) according command-line options
     #  evaluates the --cipher= --cipher-range= option
+    # TODO: ugly code, needs to be redesigned ...
     my $mode    = shift;# 'names' returns array with cipher suite names;
                         # 'keys'  returns array with hex keys of cipher suite names
     my $ssl     = shift;# used for mode=intern only
@@ -2837,7 +2838,8 @@ sub _get_cipherslist    {
     if ($pattern) {
         if (_is_cfg_ciphermode('intern|dump')) {
             foreach my $name (split(":", $pattern)) {
-                push(@ciphers, Ciphers::find_names($name)); # "" avoids some undef
+                # find names, aliases and constants
+                push(@ciphers, Ciphers::get_key($name));
             }
         } else { # _is_cfg_ciphermode('openssl')
             # 'intern' is the default cipher range (see o-saft-lib.pm), which
@@ -2858,7 +2860,7 @@ sub _get_cipherslist    {
             }
         }
     } # pattern
-    if (0 >= @ciphers) {        # empty list, check range
+    if (0 >= @ciphers) {        # empty list then check range
         # $range should not be used when --cipher= was given
         # however, if --cipher= did not result in valid ciphers, range is used
         # this slighly differs from documentation in doc/help.txt
@@ -2887,6 +2889,7 @@ sub _get_cipherslist    {
     }
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
     trace("_get_cipherslist\t= [ @ciphers ] }");
+exit;
     return @ciphers;
 } # _get_cipherslist
 
@@ -6461,7 +6464,7 @@ while ($#argv >= 0) {
             if (defined $cfg{'cipherpatterns'}->{$arg}) { # our own aliases are lower case
                 $arg  = $cfg{'cipherpatterns'}->{$arg}[1];
             } else {    # anything else,
-                if ($arg !~ m/^[XxA-Z0-9-]+$/) { # must be upper case
+                if ($arg !~ m/^[XxA-Z0-9_-]+$/) { # must be upper case; _ in constant names
                      # x in RegEx to allow hex keys of ciphers like 0x0300C014
                     _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
                     $arg = "";
