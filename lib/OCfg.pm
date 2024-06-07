@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.29 24/06/06 21:18:17";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.30 24/06/07 02:02:45";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2161,12 +2161,12 @@ our %cfg = (    # main data structure for configuration
                         0x0300009C .. 0x030000A7, 0x030000BA .. 0x030000C5,
                         0x0300C023 .. 0x0300C032, 0x0300C072 .. 0x0300C079,
                         0x0300CC13 .. 0x0300CC15, 0x0300D000 .. 0x0300D005,
-                        0x0300C100 .. 0x0300C102, 0x0300FFFF,
+                        0x0300C100 .. 0x0300C102, 0x030000FE, 0x0300FFFF,
                        ",
         'TLSv13'    =>          # constants for TLSv1.3 ciphers
                        "0x03001301 .. 0x03001305, 0x0300FF85, 0x0300FF87,
                         0x030000C6,   0x030000C7, 0x0300C0B4, 0x0300C0B5,
-                        0x0300C100 .. 0x0300C107,
+                        0x0300C100 .. 0x0300C107, 0x030000FE,
                        ",
                             # GREASE ciphers added in _cfg_init()
         'GREASE'    =>          # constants for GREASE ciphers
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.29"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.30"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3595,7 +3595,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.29 2024/06/06
+3.30 2024/06/07
 
 =head1 AUTHOR
 
