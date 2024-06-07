@@ -207,7 +207,8 @@
 #       List of feature, likes, etc. to be done in future:
 #
 #       6/2024
-#       * provide variable TESTSSL.vm.install as list of files to be installed
+#       * correct and improve values for USAGE_*
+#       * provide variable TESTSSL.src.install as list of files to be installed
 #         (simplifies macro TESTSSL.vm.build.install.VENDOR )
 #       * build proper server.pem and install it (openssl)
 #       * provide variable TESTSSL.vm.server.cert (for building sef-signed cert)
@@ -425,14 +426,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Makefile.testssl 1.15 24/06/07 12:09:19
+#?      @(#) Makefile.testssl 1.16 24/06/07 12:38:32
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.15
+_SID.testssl       := 1.16
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -503,6 +504,7 @@ TESTSSL.vars.ALL  =\
     TESTSSL.host.copy       - directory on hosts to copy data for build $(_NL)\
     TESTSSL.vm.tmp          - temporary directory during build          $(_NL)\
     TESTSSL.vm.from         - base context (OS) to be used for build    $(_NL)\
+    TESTSSL.vm.version      - unique version number of build context    $(_NL)\
     TESTSSL.vm.type         - type of the server (usually the vendor)   $(_NL)\
     TESTSSL.vm.user         - user to be used for executing commands    $(_NL)\
     TESTSSL.vm.home         - user's home directory                     $(_NL)\
@@ -557,6 +559,7 @@ TESTSSL.host.port      ?= $(TESTSSL.default.port)
 TESTSSL.host.copy      ?= t.docker
 TESTSSL.vm.tmp         ?= /tmp_src
 TESTSSL.vm.from        ?= alpine:3.20
+TESTSSL.vm.version     ?=  undef, set in specific file
 TESTSSL.vm.type        ?=  testssl
 TESTSSL.vm.user        ?=  testssl
 TESTSSL.vm.home        ?= /testssl
@@ -587,16 +590,16 @@ TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
 %-build-n:            TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
 %-build:              TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
 
-# settings done automatically (but can be done with make environment)
+# settings done automatically (but can be from with make environment also)
 TESTSSL.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
-TESTSSL.host.port   = $(TESTSSL.vm.port)
-TESTSSL.vm.hostname = $(TESTSSL.vm.type)
-TESTSSL.vm.user     = $(TESTSSL.vm.type)
-TESTSSL.vm.home     = /$(TESTSSL.vm.type)
-TESTSSL.vm.context  = $(TESTSSL.vm.build.context) $(TESTSSL.vm.build.server)
-TESTSSL.vm.help     = $(TESTSSL.vm.server.help)
+TESTSSL.host.port       = $(TESTSSL.vm.port)
+TESTSSL.vm.hostname     = $(TESTSSL.vm.type)
+TESTSSL.vm.user         = $(TESTSSL.vm.type)
+TESTSSL.vm.home         = /$(TESTSSL.vm.type)
+TESTSSL.vm.context      = $(TESTSSL.vm.build.context) $(TESTSSL.vm.build.server)
+TESTSSL.vm.help         = $(TESTSSL.vm.server.help)
 # use TLS as default server; may change in future
-TESTSSL.vm.server   = $(TESTSSL.vm.server.tls)
+TESTSSL.vm.server       = $(TESTSSL.vm.server.tls)
 # distingush client and server
 # note that suffix is .client instead of -client because latter would tricker %-client
 # this may change in future
@@ -730,7 +733,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.15'                           $(_NL)\
+LABEL	VERSION='1.16'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -741,14 +744,15 @@ WORKDIR $(TESTSSL.vm.tmp)                       $(_NL)\
 
 # .testing and .cleanup are not critical, hence no "||exit 1"
 # others will force an error, so the remaining system can be inspected later
+# TODO: content of USAGE_TCP should be identical to %-run target
 TESTSSL.vm.build.server = $(_NL)\
 $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
-LABEL	TESTSSL='$(TESTSSL.default.label)'      $(_NL)\
-LABEL	VERSION='1.15'                           $(_NL)\
+LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
+LABEL	VERSION='1.16'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
-LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
+LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
 ENV	TESTSSL_DIR     /$(TESTSSL.vm.type)     $(_NL)\
 ENV	LD_RUN_PATH     /$(TESTSSL.vm.type)/bin $(_NL)\
