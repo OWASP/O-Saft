@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.18 24/06/07 10:22:49
+# SID   @(#) help.txt 3.19 24/06/07 13:13:31
 
 NAME
 
@@ -1360,20 +1360,24 @@ OPTIONS
           (--no-SSL variants): Don't test ciphers for this SSL/TLS version.
 
       --no-tcp
+      --no-tls
 
           Shortcut for:
           --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12 --no-tlsv13
 
       --tcp
+      --tls
 
           Shortcut for:  --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12 --tlsv13
 
       --no-udp
+      --no-dtls
 
           Shortcut for:
           --no-dtlsv09 --no-dtlsv1 --no-dtlsv11 --no-dtlsv12 --no-dtlsv13
 
       --udp
+      --dtls
 
           Shortcut for:  --dtlsv09 --dtlsv1 --dtlsv11 --dtlsv12 --dtlsv13
 
@@ -1540,7 +1544,7 @@ OPTIONS
       --cipher=CIPHER
 
           Only check for 'CIPHER' instead of using ciphers from internal list
-          (default). Multiple options are can be specified.
+          (default). Multiple options can be specified.
 
           'CIPHER' can be any cipher suite name or (internal) hex key, see:
 
@@ -4732,6 +4736,18 @@ EXAMPLES
 
         * Test for a specific ciphers
           $0 +cipher --cipher=ADH-AES256-SHA some.tld
+
+        * Test for DTLS ciphers only
+          $0 +cipher --no-tls
+
+        * Test for SSL/TLS ciphers only
+          $0 +cipher --no-dtls
+
+        * Test for TLSv1.3 ciphers only
+          $0 +cipher --no-tls --no-dtls --tlsv13
+
+        * Consequently following tests no ciphers at all
+          $0 +cipher --no-tls --no-dtls
 
         * Test using a private libssl.so, libcrypto.so and openssl
           $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
