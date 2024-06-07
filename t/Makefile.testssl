@@ -420,14 +420,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) ˜W 1.13 24/06/07 11:26:57
+#?      @(#) ¯;c\ 1.14 24/06/07 11:30:43
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.13
+_SID.testssl       := 1.14
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -503,6 +503,7 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.home         - user's home directory                     $(_NL)\
     TESTSSL.vm.port         - listening port of the server in the image $(_NL)\
     TESTSSL.vm.hostname     - hostname of the image                     $(_NL)\
+    TESTSSL.vm.run.args     - additional arguments used for run, exec   $(_NL)\
     TESTSSL.vm.run.env      - additional environment used for run, exec $(_NL)\
     TESTSSL.vm.client       - client program to be started              $(_NL)\
     TESTSSL.vm.client.help  - client program's argument to show its help$(_NL)\
@@ -556,6 +557,7 @@ TESTSSL.vm.user        ?=  testssl
 TESTSSL.vm.home        ?= /testssl
 TESTSSL.vm.port        ?=  3443
 TESTSSL.vm.hostname    ?=  testssl
+TESTSSL.vm.run.args     =
 TESTSSL.vm.run.env      =
 TESTSSL.vm.client       =
 TESTSSL.vm.client.help  =
@@ -723,7 +725,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.vm.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.13'                           $(_NL)\
+LABEL	VERSION='1.14'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -739,7 +741,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	TESTSSL='$(TESTSSL.default.label)'      $(_NL)\
-LABEL	VERSION='1.13'                           $(_NL)\
+LABEL	VERSION='1.14'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -811,6 +813,7 @@ HELP-%-runtls = start docker image '%' listening for  TLS
 		-p $(TESTSSL.vm.port):$(TESTSSL.vm.port)/udp \
 		--hostname $(TESTSSL.vm.hostname) \
 		$(TESTSSL.vm.run.env) \
+		$(TESTSSL.vm.run.args) \
 		--name $(*).run --detach \
 		$(_tag) \
 		$(TESTSSL.args)
@@ -842,6 +845,7 @@ HELP-%-shell  = give a shell in docker image '%'
 		-p $(TESTSSL.default.port):$(TESTSSL.vm.port)/udp \
 		--hostname $(TESTSSL.vm.hostname) \
 		$(TESTSSL.vm.run.env) \
+		$(TESTSSL.vm.run.args) \
 		--user $(TESTSSL.vm.user) \
 		--entrypoint=/bin/sh \
 		$(_tag)
