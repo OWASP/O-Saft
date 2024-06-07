@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.32 24/06/07 16:57:02";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.33 24/06/07 17:17:11";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -653,7 +653,9 @@ sub get_key     {
     TRY: {
         last TRY if defined $ciphers{$key};  # cipher's hex key itself
         $typ = 'names';
-        foreach my $key (keys %ciphers) {
+        # Perl dragon: foreach's variable is localized to the loop, hence $_
+        foreach $_ (keys %ciphers) { ## no critic qw(Variables::RequireLexicalLoopIterators)
+            $key = $_;
             my @names = get_names($key);
             last TRY if (0 < (grep{/^$txt$/i} @names));
                 # TODO above grep my return "Use of uninitialized value $_"
@@ -663,7 +665,8 @@ sub get_key     {
         $typ = 'const';
         $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
         $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
-        foreach my $key (keys %ciphers) {
+        foreach $_ (keys %ciphers) { ## no critic qw(Variables::RequireLexicalLoopIterators)
+            $key = $_;
             my @names = get_consts($key);
             last TRY if (0 < (grep{/^$txt$/i} @names));
         }
@@ -1755,7 +1758,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.32 2024/06/07
+3.33 2024/06/07
 
 
 =head1 AUTHOR
