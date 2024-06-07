@@ -11,14 +11,14 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.wolfssl 1.3 24/06/06 16:32:04
+#?      @(#) Makefile.testssl.wolfssl 1.4 24/06/07 12:10:30
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl   := 1.3
+_SID.testssl.wolfssl   := 1.4
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
@@ -27,22 +27,22 @@ _SID.testssl.wolfssl   := 1.3
 # for description of available variables please see: make vars
 
 # SHA1 checksums for some tarballs:
-TESTSSL.sig.wolfssl-3.15.3 = db52169fd00825c55d6f8a66a01fe9f793e2a290
-TESTSSL.sig.wolfssl-4.3.0  = 4174af818c9900ece2ad725bf0882f008a1aceb9
-TESTSSL.sig.wolfssl-4.7.0  = d9f99ac451b2f063ddb80d9661afbe0063bfc169
-TESTSSL.sig.wolfssl-5.1.0  = 28ee16cd404795e1ce77456d762e46278f68f533
-TESTSSL.sig.wolfssl-5.5.4  = 4bcc579575c83669e6628a64aa7ff953ce7271e9
-TESTSSL.sig.wolfssl-5.6.6  = cb7f6edc0fe05add3b1e17e299a26998150e3345
-TESTSSL.sig.wolfssl-5.7.0  = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
+TESTSSL.src.sig.wolfssl-3.15.3  = db52169fd00825c55d6f8a66a01fe9f793e2a290
+TESTSSL.src.sig.wolfssl-4.3.0   = 4174af818c9900ece2ad725bf0882f008a1aceb9
+TESTSSL.src.sig.wolfssl-4.7.0   = d9f99ac451b2f063ddb80d9661afbe0063bfc169
+TESTSSL.src.sig.wolfssl-5.1.0   = 28ee16cd404795e1ce77456d762e46278f68f533
+TESTSSL.src.sig.wolfssl-5.5.4   = 4bcc579575c83669e6628a64aa7ff953ce7271e9
+TESTSSL.src.sig.wolfssl-5.6.6   = cb7f6edc0fe05add3b1e17e299a26998150e3345
+TESTSSL.src.sig.wolfssl-5.7.0   = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 
-TESTSSL.vm.configure.wolfssl    = --enable-all
+TESTSSL.src.configure.wolfssl   = --enable-all
 
 # define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
-wolfssl-%:            TESTSSL.vm.version    = 1.3
+wolfssl-%:            TESTSSL.vm.version    = 1.4
 wolfssl-%:            TESTSSL.vm.type       = wolfssl
 wolfssl-%:            TESTSSL.vm.port       = 11111
-wolfssl-%:            TESTSSL.vm.packages   = $(TESTSSL.default.apk)
-wolfssl-%:            TESTSSL.vm.configure += $(TESTSSL.vm.configure.wolfssl)
+wolfssl-%:            TESTSSL.src.packages  = $(TESTSSL.default.apk)
+wolfssl-%:            TESTSSL.src.configure += $(TESTSSL.src.configure.wolfssl)
 wolfssl-%:            TESTSSL.vm.client     = client
 wolfssl-%:            TESTSSL.vm.client.help= --help
 wolfssl-%:            TESTSSL.vm.server.help= --help
@@ -55,6 +55,10 @@ wolfssl-%:            TESTSSL.vm.server.args= -p $(TESTSSL.vm.port) -i -x -v 1 -
 #	-m          Force Server Initiated Secure Renegotiation
 # for Debugging:
 #	-x          Print server errors but do not close connection
+wolfssl-%:            TESTSSL.vm.run.args   = --network=host
+#   6/2024 ah: workaround 'cause wolfSSL's server struggles with forwarded port
+#       from host to docker image (docker's -e option)
+#       run still uses "-e port:port" options but "--network=host" ignores them
 
 # wolfssl's tarball name have differnent suffix
 wolfssl-%-build-n:    TESTSSL.vm.src.suffix = -stable.tar.gz
@@ -64,7 +68,7 @@ wolfssl-%-build:      TESTSSL.vm.src.suffix = -stable.tar.gz
 # sometimes ./autogen.sh does not exist, call is if available only
 TESTSSL.vm.build.compile.wolfssl = \
 	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
-	./configure $(TESTSSL.vm.configure) && \\ $(_NL)\
+	./configure $(TESTSSL.src.configure) && \\ $(_NL)\
 	make
 
 TESTSSL.vm.build.install.wolfssl = \
