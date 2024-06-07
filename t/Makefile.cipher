@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.1 24/01/23 13:39:20
+#?      @(#) Makefile.cipher 3.2 24/06/07 13:26:40
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 3.1
+_SID.cipher        := 3.2
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -133,7 +133,15 @@ testcmd-cipher-+cipher-dh_%:        TEST.args  += +cipher-dh
 testcmd-cipher-+cipher-default_%:   TEST.args  += +cipher-default
 testcmd-cipher-+cipher-selected_%:  TEST.args  += +cipher-selected
 testcmd-cipher-+cipher-strong_%:    TEST.args  += +cipher-strong
-testcmd-cipher-+cipher---trace-host_%:  TEST.args  += +cipher --showhost --trace-KEY
+testcmd-cipher-+cipher---notcp_%:   TEST.args  += --no-tcp
+testcmd-cipher-+cipher---notls_%:   TEST.args  += --no-tls
+testcmd-cipher-+cipher---noudp_%:   TEST.args  += --no-udp
+testcmd-cipher-+cipher---nodtls_%:  TEST.args  += --no-dtls
+testcmd-cipher-+cipher---notls-nodtls-tlsv12_%:  TEST.args  += --no-tls --no-dtls --tlsv12
+testcmd-cipher-+cipher---notls-nodtls-dtlsv12_%: TEST.args  += --no-tls --no-dtls --dtlsv12
+testcmd-cipher-+cipher---notls-dtlsv12_%:   TEST.args  += --no-tls --dtlsv12
+testcmd-cipher-+cipher---nodtls-tlsv12_%:   TEST.args  += --no-dtls --tlsv12
+testcmd-cipher-+cipher---trace-host_%:      TEST.args  += +cipher --showhost --trace-KEY
 testcmd-cipher-+cipher---openssl-local_%:   TEST.args  += --ciphermode=openssl --openssl=$(TEST.openssl) --openssl-cnf=$(TEST.openssl-cnf)
 testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
 
