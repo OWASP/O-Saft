@@ -11,14 +11,14 @@
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.libressl 1.2 24/06/06 16:39:18
+#?      @(#) Makefile.testssl.libressl 1.3 24/06/07 12:13:22
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.2
+_SID.testssl.libressl  := 1.3
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
@@ -27,19 +27,19 @@ _SID.testssl.libressl  := 1.2
 # for description of available variables please see: make vars
 
 # SHA1 checksums for some tarballs:
-TESTSSL.sig.libressl-3.8.3 = 9d39cd629255863689a5b9caab7b96f898119edf
-TESTSSL.sig.libressl-3.8.4 = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
-TESTSSL.sig.libressl-3.9.2 = e2397fd72dd3d213985a6309cd75de5c945bd035
+TESTSSL.src.sig.libressl-3.8.3  = 9d39cd629255863689a5b9caab7b96f898119edf
+TESTSSL.src.sig.libressl-3.8.4  = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
+TESTSSL.src.sig.libressl-3.9.2  = e2397fd72dd3d213985a6309cd75de5c945bd035
 
-TESTSSL.vm.configure.libressl =\
+TESTSSL.src.configure.libressl  =\
 	--enable-static --disable-option-checking --disable-tests --enable-nc
 
 # define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
-libressl-%:           TESTSSL.vm.version    = 1.2
+libressl-%:           TESTSSL.vm.version    = 1.3
 libressl-%:           TESTSSL.vm.type       = libressl
 libressl-%:           TESTSSL.vm.port       = 5443
-libressl-%:           TESTSSL.vm.packages  = $(TESTSSL.default.apk)
-libressl-%:           TESTSSL.vm.configure += $(TESTSSL.vm.configure.libressl)
+libressl-%:           TESTSSL.src.packages = $(TESTSSL.default.apk)
+libressl-%:           TESTSSL.src.configure += $(TESTSSL.src.configure.libressl)
 libressl-%:           TESTSSL.vm.client     = openssl
 libressl-%:           TESTSSL.vm.client.help= s_client help
 libressl-%:           TESTSSL.vm.server.help= s_server help
@@ -52,7 +52,7 @@ libressl-%:           TESTSSL.vm.server.args= s_server -accept $(TESTSSL.vm.port
 # sometimes ./autogen.sh does not exist, call is if available only
 TESTSSL.vm.build.compile.libressl = \
 	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
-	./configure $(TESTSSL.vm.configure)          && \\ $(_NL)\
+	./configure $(TESTSSL.src.configure)         && \\ $(_NL)\
 	make
 
 # TODO: starting liberssl's openssl fails with following error:
