@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.31 24/06/07 15:46:34";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.32 24/06/07 16:57:02";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -649,7 +649,7 @@ sub get_key     {
     my $key = uc($txt);
        $key =~ s/X/x/g; # 0X... -> 0x...
     my $typ = 'key';
-    _trace("get_key($txt)");
+    # ah: too noisy here# _trace("get_key($txt)");
     TRY: {
         last TRY if defined $ciphers{$key};  # cipher's hex key itself
         $typ = 'names';
@@ -669,7 +669,7 @@ sub get_key     {
         }
         $typ = 'no key found';
     }
-    _trace("get_key: found '$txt' in %cipher{$typ}");
+    # ah: too noisy here# _trace("get_key: found '$txt' in %cipher{$typ}");
     return $key if ($typ !~ /^no key/);
     _warn("521: $typ for '$txt'");  # most likely a programming error %cfg or <DATA> herein
     return '';
@@ -1755,7 +1755,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.31 2024/06/07
+3.32 2024/06/07
 
 
 =head1 AUTHOR
