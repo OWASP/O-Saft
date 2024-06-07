@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.2 24/06/07 13:26:40
+#?      @(#) Makefile.cipher 3.3 24/06/07 13:31:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 3.2
+_SID.cipher        := 3.3
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -153,6 +153,14 @@ ALL.testciphermisc     = \
 	testcmd-cipher-+cipher-default_ \
 	testcmd-cipher-+cipher-selected_ \
 	testcmd-cipher-+cipher-strong_  \
+	testcmd-cipher-+cipher---notcp_ \
+	testcmd-cipher-+cipher---notls_ \
+	testcmd-cipher-+cipher---noudp_ \
+	testcmd-cipher-+cipher---nodtls_ \
+	testcmd-cipher-+cipher---notls-dtlsv12_ \
+	testcmd-cipher-+cipher---nodtls-tlsv12_ \
+	testcmd-cipher-+cipher---notls-nodtls-tlsv12_ \
+	testcmd-cipher-+cipher---notls-nodtls-dtlsv12_ \
 	testcmd-cipher-+cipher--trace-host_ \
 	testcmd-cipher-+cipher---openssl-local_ \
 	testcmd-cipher-+ciphercheck_
