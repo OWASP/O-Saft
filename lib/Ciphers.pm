@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.34 24/06/07 19:51:57";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.35 24/06/07 22:00:28";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -651,12 +651,12 @@ sub get_key     {
     my $typ = 'key';
     # ah: too noisy here# _trace("get_key($txt)");
     TRY: {
-        last TRY if defined $ciphers{$key};  # cipher's hex key itself
+        last TRY if defined $ciphers{$key}; # cipher's hex key itself
         $typ = 'names';
         # Perl dragon: foreach's variable is localized to the loop, hence $_
         foreach $_ (keys %ciphers) { ## no critic qw(Variables::RequireLexicalLoopIterators)
             $key = $_;
-            my @names = get_names($key);
+            my @names = get_names($key);    # returns aliases too
             last TRY if (0 < (grep{/^$txt$/i} @names));
                 # TODO above grep my return "Use of uninitialized value $_"
                 #      if the passed key is not found in @names
@@ -1758,7 +1758,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.34 2024/06/07
+3.35 2024/06/07
 
 
 =head1 AUTHOR
