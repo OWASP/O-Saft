@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.17 24/05/31 11:16:05
+# SID   @(#) help.txt 3.18 24/06/07 10:22:49
 
 NAME
 
@@ -1619,19 +1619,21 @@ OPTIONS
           Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
           * 'rfc'             - all ciphers defined in various RFCs; default
-          * 'shifted'         - 'rfc', shifted by 64 bytes to the right
+          * 'shifted'         - 'rfc' + some shifted by 64 bytes to the right
+          * 'intern'          - 'rfc' + 'shifted'
           * 'long'            - like 'rfc' but more lazy list of constants
           * 'huge'            - all constants  0x03000000 .. 0x0300FFFF
           * 'safe'            - all constants  0x03000000 .. 0x032FFFFF
           * 'full'            - all constants  0x03000000 .. 0x03FFFFFF
           * 'SSLv2'           - all ciphers according RFC for SSLv2
-          * 'SSLv2_long'      - more lazy list of constants for SSLv2 ciphers
+          * 'SSLv2_long'      - more lazy list of constants for SSLv2
           * 'SSLv3'           - all ciphers according RFC for SSLv3
           * 'SSLv3_SSLv2'     - all ciphers for SSLv3 with SSLv2
           * 'TLSv12'          - all ciphers according RFC for TLSv12
           * 'TLSv13'          - all ciphers according RFC for TLSv13
-          * 'c0xx'            - constants for ciphers using ECC 0x0300C000 .. 0x0300C0FF
-          * 'ccxx'            - constants for ciphers using ECC 0x0300CC00 .. 0x0300CCFF
+          * 'GREASE'          - all GREASE ciphers according RFC
+          * 'c0xx'            - ECC ciphers, constants 0x0300C000 .. 0x0300C0FF
+          * 'ccxx'            - ECC ciphers, constants 0x0300CC00 .. 0x0300CCFF
           * 'ecc'             - all constants for ciphers using ECC
 
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
