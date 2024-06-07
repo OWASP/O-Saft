@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.33 24/06/07 17:17:11";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.34 24/06/07 19:51:57";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -1067,12 +1067,12 @@ sub show_getter     {
     printf("%-10s(%s)\t%s\t%s\n", "get_sec",   $key, "sec",   get_sec(  $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_ssl",   $key, "ssl",   get_ssl(  $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_name",  $key, "name",  get_name( $key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names",     scalar(get_names($key)) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_aliases", $key, "aliases", scalar(get_aliases($key))||"" ); # "" to avoid perl warning if there are no aliases
+    printf("%-10s(%s)\t%s\t%s\n", "get_names", $key, "names", join(" ", get_names($key)) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_aliases", $key, "aliases", join(" ", get_aliases($key)) );
     printf("%-10s(%s)\t%s\t%s\n", "get_const", $key, "const", get_const($key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_consts", $key, "consts",   scalar(get_consts($key)) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_consts", $key, "consts",   join(" ", get_consts($key)) );
     printf("%-10s(%s)\t%s\t%s\n", "get_note",  $key, "note",  get_note( $key) );
-    printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", get_notes($key) );
+    printf("%-10s(%s)\t%s\t%s\n", "get_notes", $key, "notes", join("", get_notes($key)) );
     printf("%-10s(%s)\t%s\t%s\n", "get_iana",  $key, "iana",  get_iana( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_pfs",   $key, "pfs",   get_iana( $key) );
     printf("%-10s(%s)\t%s\t%s\n", "get_encsize",$key, "encsize", get_encsize( $key) );
@@ -1758,7 +1758,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.33 2024/06/07
+3.34 2024/06/07
 
 
 =head1 AUTHOR
