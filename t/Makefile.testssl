@@ -426,14 +426,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Makefile.testssl 1.16 24/06/07 12:38:32
+#?      @(#) üSJ\ 1.17 24/06/07 16:47:00
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.16
+_SID.testssl       := 1.17
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -733,7 +733,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.16'                           $(_NL)\
+LABEL	VERSION='1.17'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -750,7 +750,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.16'                           $(_NL)\
+LABEL	VERSION='1.17'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -897,7 +897,9 @@ define _TESTSSL.get-sigs
     #------------------------------------------+---------------------$(_NL)\
     $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
         $(subst $1,,$($(_t))  $(_t))$(TESTSSL.src.suffix)$(_NL)\
-    )
+    )\
+    #-----------------------------------------+---------------------$(_NL)\
+    # name of tarball may be incorrect.
 endef
 examples:
 	@echo "$(call _TESTSSL.get-sigs,TESTSSL.src.sig.)"
