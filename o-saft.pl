@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.55 24/06/07 01:10:55"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.56 24/06/07 13:03:38"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -415,7 +415,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.55"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.56"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6984,10 +6984,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?nodtlsv?11$/i)     { $cfg{'DTLSv11'}   = 0;    }
     if ($arg =~ /^--?nodtlsv?12$/i)     { $cfg{'DTLSv12'}   = 0;    }
     if ($arg =~ /^--?nodtlsv?13$/i)     { $cfg{'DTLSv13'}   = 0;    }
-    if ($arg =~ /^--notcp/i)            { $cfg{$_} = 0 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
-    if ($arg =~ /^--tcp/i)              { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
-    if ($arg =~ /^--noudp/i)            { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
-    if ($arg =~ /^--udp/i)              { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
+    if ($arg =~ /^--no(?:tcp|tls)$/i)   { $cfg{$_} = 0 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
+    if ($arg =~ /^--(?:tcp|tls)$/i)     { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
+    if ($arg =~ /^--no(?:udp|dtls)$/i)  { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
+    if ($arg =~ /^--(?:udp|dtls)$/i)    { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     # options for +cipher
     if ($arg eq   '-cipher')            { $typ = 'CIPHER_ITEM';     } # openssl
     if ($arg eq  '--cipher')            { $typ = 'CIPHER_ITEM';     }
