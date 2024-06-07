@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.29 24/06/07 01:57:28";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.30 24/06/07 15:23:29";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -658,7 +658,7 @@ sub get_key     {
     $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
     $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
     foreach my $key (keys %ciphers) {
-        my @names = get_const($key);
+        my @names = get_consts($key);
         return $key if (0 < (grep{/^$txt$/i} @names));
     }
     _warn("521: no key found for '$txt'");  # most likely a programming error %cfg or <DATA> herein
@@ -1744,7 +1744,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.29 2024/06/07
+3.30 2024/06/07
 
 
 =head1 AUTHOR
