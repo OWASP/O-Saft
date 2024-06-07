@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.30 24/06/07 15:23:29";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.31 24/06/07 15:46:34";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -329,6 +329,7 @@ our @cipher_iana_recomended =
 *_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $OCfg::cfg{'trace'});   return; } if not defined &_trace2;
 *_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $OCfg::cfg{'verbose'}); return; } if not defined &_v_print;
 *_v2print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (1 < $OCfg::cfg{'verbose'}); return; } if not defined &_v2print;
+    # TODO: \n in print() above wrong if called stand-alone
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -647,21 +648,30 @@ sub get_key     {
     my $txt = shift;
     my $key = uc($txt);
        $key =~ s/X/x/g; # 0X... -> 0x...
-    return $key if defined $ciphers{$key};  # cipher's hex key itself
-    foreach my $key (keys %ciphers) {
-        my @names = get_names($key);
-        return $key if (0 < (grep{/^$txt$/i} @names));
-            # TODO above grep my return "Use of uninitialized value $_"
-            #      if the passed key is not found in @names
+    my $typ = 'key';
+    _trace("get_key($txt)");
+    TRY: {
+        last TRY if defined $ciphers{$key};  # cipher's hex key itself
+        $typ = 'names';
+        foreach my $key (keys %ciphers) {
+            my @names = get_names($key);
+            last TRY if (0 < (grep{/^$txt$/i} @names));
+                # TODO above grep my return "Use of uninitialized value $_"
+                #      if the passed key is not found in @names
+        }
+        # any other text, try to normalise ...  # example:  SSL_CK_NULL_WITH_MD5
+        $typ = 'const';
+        $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
+        $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
+        foreach my $key (keys %ciphers) {
+            my @names = get_consts($key);
+            last TRY if (0 < (grep{/^$txt$/i} @names));
+        }
+        $typ = 'no key found';
     }
-    # any other text, try to normalise ...      # example:  SSL_CK_NULL_WITH_MD5
-    $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
-    $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
-    foreach my $key (keys %ciphers) {
-        my @names = get_consts($key);
-        return $key if (0 < (grep{/^$txt$/i} @names));
-    }
-    _warn("521: no key found for '$txt'");  # most likely a programming error %cfg or <DATA> herein
+    _trace("get_key: found '$txt' in %cipher{$typ}");
+    return $key if ($typ !~ /^no key/);
+    _warn("521: $typ for '$txt'");  # most likely a programming error %cfg or <DATA> herein
     return '';
 } # get_key
 
@@ -1606,6 +1616,7 @@ sub _main   {
         if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit 0; }
         if ($arg eq '--usage')          { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
+        if ($arg eq '--trace')          { $OCfg::cfg{'trace'}++;   next; }
         if ($arg eq '--v')              { $OCfg::cfg{'verbose'}++; next; }
         # ----------------------------- commands
         if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
@@ -1744,7 +1755,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.30 2024/06/07
+3.31 2024/06/07
 
 
 =head1 AUTHOR
