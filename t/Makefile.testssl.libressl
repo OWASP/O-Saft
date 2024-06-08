@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) f&∂‰'V 1.5 24/06/09 00:24:24
+#?      @(#) ùÆ.’V 1.6 24/06/09 01:19:30
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.5
+_SID.testssl.libressl  := 1.6
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-libressl-%:     TESTSSL.vm.version      = 1.5
+libressl-%:     TESTSSL.vm.version      = 1.6
 libressl-%:     TESTSSL.vm.type         = libressl
 libressl-%:     TESTSSL.vm.port         = 5443
 libressl-%:     TESTSSL.vm.client       = openssl
@@ -44,20 +44,20 @@ libressl-%:     TESTSSL.src.install    += $(TESTSSL.src.install.libressl)
 #__________________________________________ variables for sources and build __|
 
 TESTSSL.src.tar.libressl-3.9.2  = libressl-3.9.2.tar.gz
-TESTSSL.src.sig.libressl-3.9.2  = e2397fd72dd3d213985a6309cd75de5c945bd035
+TESTSSL.src.sha.libressl-3.9.2  = e2397fd72dd3d213985a6309cd75de5c945bd035
 TESTSSL.src.pgp.libressl-3.9.2  =
 TESTSSL.src.git.libressl-3.9.2  = 
 TESTSSL.src.url.libressl-3.9.2  = https://github.com/libressl/portable/releases/download/v3.9.2/libressl-3.9.2.tar.gz
 
 TESTSSL.src.tar.libressl-3.8.4  = libressl-3.8.4.tar.gz
-TESTSSL.src.sig.libressl-3.8.4  = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
+TESTSSL.src.sha.libressl-3.8.4  = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
 TESTSSL.src.pgp.libressl-3.8.4  = https://github.com/libressl/portable/releases/download/v3.9.2/libressl-3.9.2.tar.gz.asc
 TESTSSL.src.git.libressl-3.8.4  = 
 TESTSSL.src.url.libressl-3.8.4  = https://github.com/libressl/portable/releases/download/v3.8.4/libressl-3.8.4.tar.gz
 #  .pgp. not yet used
 
 TESTSSL.src.tar.libressl-3.8.3  = libressl-3.8.3.tar.gz
-TESTSSL.src.sig.libressl-3.8.3  = 9d39cd629255863689a5b9caab7b96f898119edf
+TESTSSL.src.sha.libressl-3.8.3  = 9d39cd629255863689a5b9caab7b96f898119edf
 TESTSSL.src.pgp.libressl-3.8.3  =
 TESTSSL.src.git.libressl-3.8.3  = 
 TESTSSL.src.url.libressl-3.8.3  = https://github.com/libressl/portable/releases/download/v3.8.3/libressl-3.8.3.tar.gz
