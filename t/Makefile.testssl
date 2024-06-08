@@ -503,14 +503,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) õ!O^ 1.25 24/06/09 01:18:25
+#?      @(#) Makefile.testssl 1.26 24/06/09 01:31:57
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.25
+_SID.testssl       := 1.26
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -575,15 +575,15 @@ HELP-%-dbx = debug: show information about includes,$(_NL)\t\t  show passed argu
 TESTSSL.vars.ALL  =\
    \#_variables_name        - description                               $(_NL)\
    \#---------------------- +-------------------------------------------$(_NL)\
-    TESTSSL.default.label   - fixed value TESTSSL (should not be changed)$(_NL)\
+    TESTSSL.default.label   - fixed value TESTSSL (shouldn't be changed)$(_NL)\
     TESTSSL.default.apk     - default required packages for apk (alpine)$(_NL)\
     TESTSSL.default.apt     - default required packages for apt (debian)$(_NL)\
     TESTSSL.default.port    - listening port on host; used in %-shell target$(_NL)\
-    TESTSSL.host.port       - listening port on host connect to server  $(_NL)\
+    TESTSSL.host.port       - listening port on host connected to server$(_NL)\
     TESTSSL.host.copy       - directory on hosts to copy data for build $(_NL)\
     TESTSSL.vm.tmp          - temporary directory during build          $(_NL)\
     TESTSSL.vm.from         - base context (OS) to be used for build    $(_NL)\
-    TESTSSL.vm.version      - unique version number of build context    $(_NL)\
+    TESTSSL.vm.version      - unique version string of builder script   $(_NL)\
     TESTSSL.vm.type         - type of the server (usually the vendor)   $(_NL)\
     TESTSSL.vm.user         - user to be used for executing commands    $(_NL)\
     TESTSSL.vm.home         - user's home directory                     $(_NL)\
@@ -598,7 +598,7 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
     TESTSSL.src.tar         - filename of tarball (without path)        $(_NL)\
-    TESTSSL.src.sig         - (reserve for future use)                  $(_NL)\
+    TESTSSL.src.sig         - (reserved for future use)                 $(_NL)\
     TESTSSL.src.sha         - SHA1 signature of tarball                 $(_NL)\
     TESTSSL.src.pgp         - PGP signature of tarball (NOT YET IMPLEMENTED)$(_NL)\
     TESTSSL.src.url         - URL of tarball (NOT YET IMPLEMENTED)      $(_NL)\
@@ -832,7 +832,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.25'                           $(_NL)\
+LABEL	VERSION='1.26'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -848,8 +848,8 @@ TESTSSL.vm.build.server = $(_NL)\
 $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
-LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.25'                           $(_NL)\
+LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.version)'$(_NL)\
+LABEL	VERSION='1.26'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
